@@ -20,7 +20,6 @@
 //
 package org.astermail.android.ui.settings.detail
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -60,7 +59,8 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.shimmer_brush
+import org.astermail.android.design.components.shimmer
+import org.astermail.android.design.components.shimmer_state
 import org.astermail.android.settings.DomainPurchaseViewModel
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
@@ -268,7 +268,7 @@ private fun domains_list_header(count: Int?, on_show_add: () -> Unit) {
                 modifier = Modifier
                     .width(84.dp)
                     .height(13.dp)
-                    .background(shimmer_brush(), SquircleShape(6.dp)),
+                    .shimmer(shimmer_state(), SquircleShape(6.dp)),
             )
         } else {
             Text(

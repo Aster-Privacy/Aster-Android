@@ -1549,11 +1549,17 @@ fun InboxScreen(
                         empty_settled = true
                     }
                 }
-                if (skeleton_target || (show_skeleton && threads.isEmpty())) {
+                val inbox_error_now = threads.isEmpty() && inbox_state.error != null
+                val category_skeleton = hidden_by_category && (category_drain_active || !empty_settled)
+                val empty_skeleton = !hidden_by_category && threads.isEmpty() && !empty_settled
+                val skeleton_now = skeleton_target ||
+                    (show_skeleton && threads.isEmpty()) ||
+                    (!inbox_error_now && !contradicts_unread && (category_skeleton || empty_skeleton))
+                if (skeleton_now) {
                     Box(Modifier.padding(top = header_height_dp)) {
                         inbox_skeleton(list_density = settings_state.preferences?.mail_list_density)
                     }
-                } else if (threads.isEmpty() && inbox_state.error != null) {
+                } else if (inbox_error_now) {
                     Box(Modifier.padding(top = header_height_dp)) {
                         inbox_error_state(inbox_state.error.orEmpty()) {
                             mail_vm.load_inbox(current_folder, force = true)
@@ -1564,14 +1570,6 @@ fun InboxScreen(
                         inbox_error_state(stringResource(R.string.error_generic)) {
                             mail_vm.load_inbox(current_folder, force = true)
                         }
-                    }
-                } else if (hidden_by_category && category_drain_active) {
-                    Box(Modifier.padding(top = header_height_dp)) {
-                        inbox_skeleton(list_density = settings_state.preferences?.mail_list_density)
-                    }
-                } else if (hidden_by_category && !empty_settled) {
-                    Box(Modifier.padding(top = header_height_dp)) {
-                        inbox_skeleton(list_density = settings_state.preferences?.mail_list_density)
                     }
                 } else if (hidden_by_category) {
                     org.astermail.android.ui.common.overscroll_stretch(
@@ -1585,10 +1583,6 @@ fun InboxScreen(
                                 null
                             },
                         )
-                    }
-                } else if (threads.isEmpty() && !empty_settled) {
-                    Box(Modifier.padding(top = header_height_dp)) {
-                        inbox_skeleton(list_density = settings_state.preferences?.mail_list_density)
                     }
                 } else if (threads.isEmpty()) {
                     org.astermail.android.ui.common.overscroll_stretch(

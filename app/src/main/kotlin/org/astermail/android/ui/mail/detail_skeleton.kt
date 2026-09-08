@@ -37,16 +37,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.components.shimmer_brush
+import org.astermail.android.design.components.shimmer
+import org.astermail.android.design.components.shimmer_state
 
 @Composable
 fun detail_skeleton(modifier: Modifier = Modifier) {
     val colors = AsterMaterial.colors
-    val brush = shimmer_brush()
+    val state = shimmer_state()
 
     Column(
         modifier = modifier
@@ -58,8 +58,7 @@ fun detail_skeleton(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth(0.6f)
                 .height(20.dp)
-                .clip(RoundedCornerShape(6.dp))
-                .background(brush),
+                .shimmer(state, RoundedCornerShape(6.dp)),
         )
         Spacer(Modifier.height(AsterSpacing.lg))
 
@@ -67,8 +66,7 @@ fun detail_skeleton(modifier: Modifier = Modifier) {
             Box(
                 modifier = Modifier
                     .size(36.dp)
-                    .clip(CircleShape)
-                    .background(brush),
+                    .shimmer(state, CircleShape),
             )
             Spacer(Modifier.width(AsterSpacing.md))
             Column {
@@ -76,16 +74,14 @@ fun detail_skeleton(modifier: Modifier = Modifier) {
                     modifier = Modifier
                         .width(140.dp)
                         .height(14.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(brush),
+                        .shimmer(state, RoundedCornerShape(6.dp)),
                 )
                 Spacer(Modifier.height(4.dp))
                 Box(
                     modifier = Modifier
                         .width(100.dp)
                         .height(12.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(brush),
+                        .shimmer(state, RoundedCornerShape(6.dp)),
                 )
             }
         }
@@ -96,8 +92,7 @@ fun detail_skeleton(modifier: Modifier = Modifier) {
                 modifier = Modifier
                     .fillMaxWidth(if (it == 5) 0.4f else 1f)
                     .height(13.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(brush),
+                    .shimmer(state, RoundedCornerShape(6.dp)),
             )
             Spacer(Modifier.height(8.dp))
         }
@@ -106,7 +101,7 @@ fun detail_skeleton(modifier: Modifier = Modifier) {
 
 @Composable
 fun email_body_skeleton(modifier: Modifier = Modifier) {
-    val brush = shimmer_brush()
+    val state = shimmer_state()
 
     Column(modifier = modifier.padding(horizontal = 8.dp, vertical = AsterSpacing.md)) {
         val widths = listOf(1f, 0.95f, 1f, 0.85f, 1f, 0.9f, 1f, 0.7f, 1f, 0.5f)
@@ -115,8 +110,7 @@ fun email_body_skeleton(modifier: Modifier = Modifier) {
                 modifier = Modifier
                     .fillMaxWidth(fraction)
                     .height(13.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(brush),
+                    .shimmer(state, RoundedCornerShape(6.dp)),
             )
             Spacer(Modifier.height(8.dp))
         }

@@ -21,7 +21,6 @@
 
 package org.astermail.android.ui.settings.detail
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,7 +39,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -49,7 +47,9 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
-import org.astermail.android.design.components.shimmer_brush
+import org.astermail.android.design.components.shimmer
+import org.astermail.android.design.components.shimmer_appearance
+import org.astermail.android.design.components.shimmer_state
 
 @Composable
 internal fun remember_load_settled(is_loading: Boolean): Boolean {
@@ -67,7 +67,7 @@ internal fun remember_load_settled(is_loading: Boolean): Boolean {
 
 @Composable
 internal fun skeleton_block(
-    brush: Brush,
+    state: shimmer_appearance,
     width: Dp,
     height: Dp,
     corner: Dp = 6.dp,
@@ -76,13 +76,13 @@ internal fun skeleton_block(
         modifier = Modifier
             .width(width)
             .height(height)
-            .background(brush, SquircleShape(corner)),
+            .shimmer(state, SquircleShape(corner)),
     )
 }
 
 @Composable
 internal fun skeleton_block_fill(
-    brush: Brush,
+    state: shimmer_appearance,
     height: Dp,
     corner: Dp = 6.dp,
     fraction: Float = 1f,
@@ -91,13 +91,13 @@ internal fun skeleton_block_fill(
         modifier = Modifier
             .fillMaxWidth(fraction)
             .height(height)
-            .background(brush, SquircleShape(corner)),
+            .shimmer(state, SquircleShape(corner)),
     )
 }
 
 @Composable
 internal fun skeleton_list_row(
-    brush: Brush,
+    state: shimmer_appearance,
     leading_circle: Boolean = false,
     title_fraction: Float = 0.52f,
     subtitle_fraction: Float = 0.34f,
@@ -110,17 +110,17 @@ internal fun skeleton_list_row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (leading_circle) {
-            Box(modifier = Modifier.size(34.dp).background(brush, CircleShape))
+            Box(modifier = Modifier.size(34.dp).shimmer(state, CircleShape))
             Spacer(Modifier.width(AsterSpacing.md))
         }
         Column(modifier = Modifier.weight(1f)) {
-            skeleton_block_fill(brush, 13.dp, fraction = title_fraction)
+            skeleton_block_fill(state, 13.dp, fraction = title_fraction)
             Spacer(Modifier.height(7.dp))
-            skeleton_block_fill(brush, 10.dp, fraction = subtitle_fraction)
+            skeleton_block_fill(state, 10.dp, fraction = subtitle_fraction)
         }
         if (trailing_width > 0.dp) {
             Spacer(Modifier.width(AsterSpacing.md))
-            skeleton_block(brush, trailing_width, 26.dp, corner = 13.dp)
+            skeleton_block(state, trailing_width, 26.dp, corner = 13.dp)
         }
     }
 }
@@ -131,12 +131,12 @@ internal fun skeleton_card_list(
     leading_circle: Boolean = false,
     trailing_width: Dp = 0.dp,
 ) {
-    val brush = shimmer_brush()
+    val state = shimmer_state()
     Box(modifier = Modifier.clearAndSetSemantics {}) {
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             repeat(rows) { idx ->
                 skeleton_list_row(
-                    brush = brush,
+                    state = state,
                     leading_circle = leading_circle,
                     title_fraction = if (idx % 2 == 0) 0.55f else 0.42f,
                     subtitle_fraction = if (idx % 2 == 0) 0.33f else 0.4f,
@@ -150,18 +150,18 @@ internal fun skeleton_card_list(
 
 @Composable
 internal fun skeleton_hero_card(lines: Int = 2, bar: Boolean = false) {
-    val brush = shimmer_brush()
+    val state = shimmer_state()
     Box(modifier = Modifier.clearAndSetSemantics {}) {
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-                skeleton_block_fill(brush, 18.dp, fraction = 0.6f)
+                skeleton_block_fill(state, 18.dp, fraction = 0.6f)
                 repeat(lines) {
                     Spacer(Modifier.height(9.dp))
-                    skeleton_block_fill(brush, 12.dp, fraction = if (it % 2 == 0) 0.45f else 0.72f)
+                    skeleton_block_fill(state, 12.dp, fraction = if (it % 2 == 0) 0.45f else 0.72f)
                 }
                 if (bar) {
                     Spacer(Modifier.height(AsterSpacing.md))
-                    skeleton_block_fill(brush, 14.dp, corner = 7.dp)
+                    skeleton_block_fill(state, 14.dp, corner = 7.dp)
                 }
             }
         }
@@ -170,12 +170,12 @@ internal fun skeleton_hero_card(lines: Int = 2, bar: Boolean = false) {
 
 @Composable
 internal fun skeleton_section_label() {
-    val brush = shimmer_brush()
+    val state = shimmer_state()
     Box(
         modifier = Modifier
             .clearAndSetSemantics {}
             .padding(top = AsterSpacing.md, bottom = AsterSpacing.xs),
     ) {
-        skeleton_block(brush, 96.dp, 10.dp)
+        skeleton_block(state, 96.dp, 10.dp)
     }
 }

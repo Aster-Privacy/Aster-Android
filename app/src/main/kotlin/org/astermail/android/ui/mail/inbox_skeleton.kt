@@ -41,13 +41,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.components.shimmer_brush
-import org.astermail.android.ui.theme.local_accessibility
+import org.astermail.android.design.components.shimmer
+import org.astermail.android.design.components.shimmer_appearance
+import org.astermail.android.design.components.shimmer_state
 
 const val inbox_skeleton_tag = "inbox_skeleton"
 const val inbox_skeleton_row_tag = "inbox_skeleton_row"
@@ -58,6 +58,7 @@ fun inbox_skeleton(
     list_density: String? = null,
     row_count: Int = 10,
 ) {
+    val state = shimmer_state()
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -66,6 +67,7 @@ fun inbox_skeleton(
     ) {
         items(row_count) { index ->
             inbox_skeleton_row(
+                state = state,
                 list_density = list_density,
                 is_first = index == 0,
                 is_last = index == row_count - 1,
@@ -76,13 +78,12 @@ fun inbox_skeleton(
 
 @Composable
 fun inbox_skeleton_row(
+    state: shimmer_appearance = shimmer_state(),
     list_density: String? = null,
     is_first: Boolean = false,
     is_last: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
-    val reduce_motion = local_accessibility.current.reduce_motion
-    val brush = shimmer_brush(animated = !reduce_motion)
     val metrics = remember(list_density) { inbox_row_metrics(list_density) }
     val shape = remember(is_first, is_last) { inbox_group_shape(is_first, is_last) }
     val card_color = remember(colors) { inbox_card_read_color(colors) }
@@ -109,8 +110,7 @@ fun inbox_skeleton_row(
         Box(
             modifier = Modifier
                 .size(metrics.avatar_size)
-                .clip(CircleShape)
-                .background(brush),
+                .shimmer(state, CircleShape),
         )
         Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
@@ -122,16 +122,14 @@ fun inbox_skeleton_row(
                     modifier = Modifier
                         .width(120.dp)
                         .height(14.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(brush),
+                        .shimmer(state, RoundedCornerShape(4.dp)),
                 )
                 Spacer(Modifier.weight(1f))
                 Box(
                     modifier = Modifier
                         .width(40.dp)
                         .height(12.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(brush),
+                        .shimmer(state, RoundedCornerShape(4.dp)),
                 )
             }
             Spacer(Modifier.height(metrics.line_gap + 4.dp))
@@ -139,16 +137,14 @@ fun inbox_skeleton_row(
                 modifier = Modifier
                     .fillMaxWidth(0.7f)
                     .height(13.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(brush),
+                    .shimmer(state, RoundedCornerShape(4.dp)),
             )
             Spacer(Modifier.height(metrics.line_gap + 3.dp))
             Box(
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
                     .height(12.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(brush),
+                    .shimmer(state, RoundedCornerShape(4.dp)),
             )
         }
     }

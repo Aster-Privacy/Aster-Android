@@ -73,7 +73,8 @@ import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterTopBar
-import org.astermail.android.design.components.shimmer_brush
+import org.astermail.android.design.components.shimmer
+import org.astermail.android.design.components.shimmer_state
 import org.astermail.android.settings.SettingsViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.ui.common.current_user_avatar
@@ -275,18 +276,19 @@ private fun profile_header(
             }
             Spacer(Modifier.size(14.dp))
             if (profile_loading) {
+                val profile_shimmer = shimmer_state()
                 Box(
                     modifier = Modifier
                         .width(150.dp)
                         .height(20.dp)
-                        .background(shimmer_brush(), SquircleShape(6.dp)),
+                        .shimmer(profile_shimmer, SquircleShape(6.dp)),
                 )
                 Spacer(Modifier.size(6.dp))
                 Box(
                     modifier = Modifier
                         .width(196.dp)
                         .height(13.dp)
-                        .background(shimmer_brush(), SquircleShape(6.dp)),
+                        .shimmer(profile_shimmer, SquircleShape(6.dp)),
                 )
             } else {
                 Text(
@@ -315,7 +317,7 @@ private fun profile_header(
                 modifier = Modifier
                     .width(112.dp)
                     .height(33.dp)
-                    .background(shimmer_brush(), SquircleShape(999.dp)),
+                    .shimmer(shimmer_state(), SquircleShape(999.dp)),
             )
         } else if (is_free) {
             Spacer(Modifier.size(12.dp))

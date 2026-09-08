@@ -80,7 +80,8 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.shimmer_brush
+import org.astermail.android.design.components.shimmer
+import org.astermail.android.design.components.shimmer_state
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
@@ -319,9 +320,10 @@ fun SecurityScreen(
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (score == null) {
-                            skeleton_block(shimmer_brush(), 34.dp, 15.dp)
+                            val score_shimmer = shimmer_state()
+                            skeleton_block(score_shimmer, 34.dp, 15.dp)
                             Spacer(Modifier.width(AsterSpacing.xs))
-                            skeleton_block(shimmer_brush(), 52.dp, 17.dp, corner = 6.dp)
+                            skeleton_block(score_shimmer, 52.dp, 17.dp, corner = 6.dp)
                         } else {
                             Text(
                                 text = "$score / 7",
@@ -373,8 +375,7 @@ fun SecurityScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(6.dp)
-                                .clip(CircleShape)
-                                .background(shimmer_brush()),
+                                .shimmer(shimmer_state(), CircleShape),
                         )
                     }
                 }

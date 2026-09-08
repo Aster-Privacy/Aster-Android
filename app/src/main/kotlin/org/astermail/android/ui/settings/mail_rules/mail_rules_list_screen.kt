@@ -79,6 +79,7 @@ import org.astermail.android.api.mail_rules.MailRule
 import org.astermail.android.api.mail_rules.MatchMode
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
@@ -200,7 +201,7 @@ fun MailRulesListScreen(
 
 @Composable
 private fun mail_rules_skeleton() {
-    val brush = org.astermail.android.design.components.shimmer_brush()
+    val state = org.astermail.android.design.components.shimmer_state()
     Column(modifier = Modifier.fillMaxSize()) {
         repeat(6) {
             Row(
@@ -212,8 +213,7 @@ private fun mail_rules_skeleton() {
                 Box(
                     modifier = Modifier
                         .size(10.dp)
-                        .clip(CircleShape)
-                        .background(brush),
+                        .shimmer(state, CircleShape),
                 )
                 Spacer(Modifier.width(AsterSpacing.md))
                 Column(modifier = Modifier.weight(1f)) {
@@ -221,23 +221,20 @@ private fun mail_rules_skeleton() {
                         modifier = Modifier
                             .width(140.dp)
                             .height(14.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(brush),
+                            .shimmer(state, RoundedCornerShape(4.dp)),
                     )
                     Spacer(Modifier.height(5.dp))
                     Box(
                         modifier = Modifier
                             .width(80.dp)
                             .height(11.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(brush),
+                            .shimmer(state, RoundedCornerShape(4.dp)),
                     )
                 }
                 Box(
                     modifier = Modifier
                         .size(28.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(brush),
+                        .shimmer(state, RoundedCornerShape(6.dp)),
                 )
             }
             AsterDivider()
