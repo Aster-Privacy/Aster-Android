@@ -60,8 +60,25 @@ private val secure_prefs_namespaces = listOf(
 @HiltAndroidApp
 class AsterApplication : Application(), ImageLoaderFactory {
 
+    private fun install_crash_reporting() {
+        runCatching {
+            val previous = Thread.getDefaultUncaughtExceptionHandler()
+            Thread.setDefaultUncaughtExceptionHandler { thread, error ->
+                runCatching {
+                    org.astermail.android.api.errors.ClientErrorReporter.report(
+                        feature = "app",
+                        error_code = "uncaught_exception",
+                        severity = "error",
+                    )
+                }
+                previous?.uncaughtException(thread, error)
+            }
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
+        install_crash_reporting()
         start_secure_prefs_warm()
         org.astermail.android.ui.mail.AsterTimePreferences.set_use_24h(
             android.text.format.DateFormat.is24HourFormat(this),

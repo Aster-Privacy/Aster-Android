@@ -21,6 +21,10 @@
 
 package org.astermail.android.api
 
+import org.astermail.android.api.errors.ClientErrorReporter
+import org.astermail.android.api.errors.feature_of_path
+import org.astermail.android.api.errors.http_error_code as build_http_error_code
+
 import android.os.Build
 import io.ktor.client.HttpClient
 import io.ktor.client.call.HttpClientCall
@@ -168,6 +172,7 @@ class ApiClient(
     initial_csrf: String? = null,
     private val csrf_refresher: suspend () -> String? = { null },
     private val allow_cleartext_for_test: Boolean = false,
+    release_name: String = BuildConfig.VERSION_NAME,
 ) {
     val json: Json = Json {
         ignoreUnknownKeys = true
@@ -288,10 +293,12 @@ class ApiClient(
     }
 
     init {
+        ClientErrorReporter.configure(base_url, release_name)
         http.plugin(HttpSend).intercept { request ->
             apply_folder_unlock_header(request)
             apply_low_network_timeout(request)
             val original_call: HttpClientCall = execute(request)
+            report_failed_call(request.url.encodedPath, original_call.response.status.value)
             if (original_call.response.status != HttpStatusCode.Forbidden) {
                 return@intercept original_call
             }
@@ -334,6 +341,20 @@ class ApiClient(
                 reattach_fresh_bearer(request)
                 execute(request)
             }
+        }
+    }
+
+    private fun report_failed_call(path: String, status: Int) {
+        runCatching {
+            if (status < 400) return
+            if (ClientErrorReporter.is_report_path(path)) return
+            val feature = feature_of_path(path)
+            ClientErrorReporter.report(
+                feature = feature,
+                error_code = build_http_error_code(feature, status),
+                severity = if (status >= 500) "error" else "warn",
+                http_status = status,
+            )
         }
     }
 

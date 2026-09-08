@@ -165,6 +165,7 @@ object NetworkModule {
         lateinit var client: ApiClient
         client = ApiClient(
             base_url = BuildConfig.API_BASE_URL,
+            release_name = BuildConfig.VERSION_NAME,
             allow_cleartext_for_test = BuildConfig.API_BASE_URL.startsWith("http://"),
             token_provider = token_provider,
             on_csrf_changed = { token -> token_store.save_csrf(token) },
