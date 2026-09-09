@@ -1,0 +1,11 @@
+New in this version:
+
+- Conversations read as separate cards again, matching your mail list.
+- Turn on a constant connection to get new mail instantly without Google services.
+- Long-press the sender or reply-to address in message details to copy it.
+
+Fixed:
+
+- Low network mode stays off unless you turn it on.
+- A queued draft can no longer be sent twice, and folder counts update after a send.
+- Quiet hours no longer keep resending, and recovery codes offer a retry if they fail to load.
