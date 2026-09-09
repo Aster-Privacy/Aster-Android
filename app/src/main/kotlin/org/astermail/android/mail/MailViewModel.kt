@@ -3775,10 +3775,12 @@ class MailViewModel @Inject constructor(
             repository.send_result_events.collect { result ->
                 if (result.isSuccess) {
                     invalidate_caches(listOf("sent", "drafts"))
+                    load_stats(force = true)
                     viewModelScope.launch {
                         repeat(2) { attempt ->
                             kotlinx.coroutines.delay(if (attempt == 0) 1_200L else 5_000L)
                             invalidate_caches(listOf("sent", "drafts"))
+                            load_stats(force = true)
                             val current = _inbox_state.value.current_folder
                             if (current == "sent" || current == "drafts") {
                                 silent_revalidate(current)
