@@ -2220,6 +2220,7 @@
     <string name="alias_delete_confirm_message">هل تريد حذف %1$s؟ لا يمكن التراجع عن هذا.</string>
     <string name="alias_action_add">إضافة</string>
     <string name="alias_directory_key_label">مفتاح الدليل</string>
+    <string name="alias_directory_key_placeholder">shopping</string>
     <string name="alias_directory_example">anything%1$s%2$s@astermail.org</string>
     <string name="alias_directory_available">هذا الدليل متاح.</string>
     <string name="alias_directory_not_available">هذا الدليل محجوز بالفعل.</string>

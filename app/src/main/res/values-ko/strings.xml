@@ -2205,6 +2205,7 @@
     <string name="alias_delete_confirm_message">%1$s을(를) 삭제할까요? 되돌릴 수 없습니다.</string>
     <string name="alias_action_add">추가</string>
     <string name="alias_directory_key_label">디렉터리 키</string>
+    <string name="alias_directory_key_placeholder">shopping</string>
     <string name="alias_directory_example">anything%1$s%2$s@astermail.org</string>
     <string name="alias_directory_available">이 디렉터리는 사용할 수 있습니다.</string>
     <string name="alias_directory_not_available">이 디렉터리는 이미 사용 중입니다.</string>

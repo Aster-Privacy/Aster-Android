@@ -2214,6 +2214,7 @@
     <string name="alias_delete_confirm_message">Удалить %1$s? Отменить это будет нельзя.</string>
     <string name="alias_action_add">Добавить</string>
     <string name="alias_directory_key_label">Ключ каталога</string>
+    <string name="alias_directory_key_placeholder">shopping</string>
     <string name="alias_directory_example">anything%1$s%2$s@astermail.org</string>
     <string name="alias_directory_available">Этот каталог свободен.</string>
     <string name="alias_directory_not_available">Этот каталог уже занят.</string>

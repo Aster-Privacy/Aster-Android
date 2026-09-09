@@ -2209,6 +2209,7 @@
     <string name="alias_delete_confirm_message">%1$s löschen? Das lässt sich nicht rückgängig machen.</string>
     <string name="alias_action_add">Hinzufügen</string>
     <string name="alias_directory_key_label">Verzeichnisschlüssel</string>
+    <string name="alias_directory_key_placeholder">einkaufen</string>
     <string name="alias_directory_example">anything%1$s%2$s@astermail.org</string>
     <string name="alias_directory_available">Dieses Verzeichnis ist frei.</string>
     <string name="alias_directory_not_available">Dieses Verzeichnis ist bereits vergeben.</string>

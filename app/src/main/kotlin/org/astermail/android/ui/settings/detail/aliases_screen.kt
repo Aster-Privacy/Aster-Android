@@ -1593,6 +1593,7 @@ private fun directories_tab(
             value = dir_key,
             onValueChange = { dir_key = it.trim().lowercase().filter { c -> c.isLetterOrDigit() || c == '-' } },
             label = stringResource(R.string.alias_directory_key_label),
+            placeholder = stringResource(R.string.alias_directory_key_placeholder),
             modifier = Modifier.weight(1f),
         )
         Box {
