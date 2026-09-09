@@ -559,6 +559,20 @@ fun EncryptionScreen(
                             fontSize = 12.sp,
                         )
                     }
+                } else if (state.recovery_codes_status_load_failed) {
+                    Text(
+                        text = stringResource(R.string.failed_to_load),
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                    )
+                    Spacer(Modifier.size(AsterSpacing.xs))
+                    Text(
+                        text = stringResource(R.string.retry),
+                        color = colors.accent_blue,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.clickable { vm.load_recovery_codes_status() },
+                    )
                 } else {
                     Text(
                         text = stringResource(R.string.loading_recovery_codes_status),

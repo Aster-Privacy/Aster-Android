@@ -246,6 +246,7 @@ data class SettingsUiState(
     val security_loading: Boolean = false,
     val pgp_key_info: org.astermail.android.api.encryption.PgpKeyInfo? = null,
     val recovery_codes_status: org.astermail.android.api.encryption.RecoveryCodesStatus? = null,
+    val recovery_codes_status_load_failed: Boolean = false,
     val encryption_settings: org.astermail.android.api.encryption.EncryptionSettings? = null,
     val spam_settings: org.astermail.android.api.preferences.SpamSettings? = null,
     val encryption_settings_load_failed: Boolean = false,
@@ -3296,11 +3297,13 @@ class SettingsViewModel @Inject constructor(
 
     fun load_recovery_codes_status() {
         viewModelScope.launch {
+            _state.update { it.copy(recovery_codes_status_load_failed = false) }
             try {
                 val status = encryption_api.get_recovery_codes_status()
-                _state.update { it.copy(recovery_codes_status = status) }
+                _state.update { it.copy(recovery_codes_status = status, recovery_codes_status_load_failed = false) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { it.copy(recovery_codes_status_load_failed = it.recovery_codes_status == null) }
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_recovery_codes_status", t)
             }
         }
