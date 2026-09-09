@@ -26,6 +26,7 @@ import dagger.hilt.android.EntryPointAccessors
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CoroutineScope
@@ -61,12 +62,12 @@ object QuietHoursSync {
         val app_context = context.applicationContext
 
         scope.launch {
-            val ok = runCatching {
+            val settled = runCatching {
                 val client = EntryPointAccessors.fromApplication(
                     app_context,
                     UnifiedPushState.ApiClientEntryPoint::class.java,
                 ).api_client()
-                client.http.put("${client.base_url}/api/sync/v1/quiet-hours") {
+                val status = client.http.put("${client.base_url}/api/sync/v1/quiet-hours") {
                     contentType(ContentType.Application.Json)
                     setBody(
                         SyncQuietHoursRequest(
@@ -76,10 +77,11 @@ object QuietHoursSync {
                             timezone = timezone,
                         ),
                     )
-                }.status.isSuccess()
+                }.status
+                status.isSuccess() || status == HttpStatusCode.Forbidden
             }.getOrDefault(false)
 
-            if (ok) {
+            if (settled) {
                 prefs.edit().putString(KEY_SYNCED_MARKER, marker).apply()
             }
         }
