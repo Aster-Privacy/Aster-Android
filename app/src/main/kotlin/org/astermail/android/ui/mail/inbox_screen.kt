@@ -350,6 +350,7 @@ fun InboxScreen(
         }
     }
     val show_onboarding_checklist = onboarding != null &&
+        current_folder == "inbox" &&
         onboarding.dismissed_at == null &&
         onboarding_tasks.values.any { !it }
     val onboarding_task_context = LocalContext.current
