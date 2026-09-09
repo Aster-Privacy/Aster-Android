@@ -72,4 +72,5 @@
     <string name="billing_free_upgrade_title">Zyskaj więcej dzięki %1$s</string>
     <string name="billing_free_upgrade_price_note">Plany zaczynają się od %1$s miesięcznie.</string>
     <string name="billing_cancel_plan">Anuluj plan</string>
+    <string name="billing_save_amount">Oszczędź %1$s</string>
 </resources>

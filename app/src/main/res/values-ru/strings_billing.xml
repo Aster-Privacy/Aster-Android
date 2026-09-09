@@ -72,4 +72,5 @@
     <string name="billing_free_upgrade_title">Больше возможностей с %1$s</string>
     <string name="billing_free_upgrade_price_note">Тарифы начинаются от %1$s в месяц.</string>
     <string name="billing_cancel_plan">Отменить тариф</string>
+    <string name="billing_save_amount">Экономия %1$s</string>
 </resources>

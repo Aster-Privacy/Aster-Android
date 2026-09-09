@@ -72,4 +72,5 @@
     <string name="billing_free_upgrade_title">%1$s でもっと使える</string>
     <string name="billing_free_upgrade_price_note">プランは月額 %1$s から。</string>
     <string name="billing_cancel_plan">プランをキャンセル</string>
+    <string name="billing_save_amount">%1$sお得</string>
 </resources>

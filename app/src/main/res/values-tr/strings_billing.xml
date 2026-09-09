@@ -72,4 +72,5 @@
     <string name="billing_free_upgrade_title">%1$s ile daha fazlasını yapın</string>
     <string name="billing_free_upgrade_price_note">Planlar ayda %1$s fiyatından başlar.</string>
     <string name="billing_cancel_plan">Planı İptal Et</string>
+    <string name="billing_save_amount">%1$s tasarruf edin</string>
 </resources>

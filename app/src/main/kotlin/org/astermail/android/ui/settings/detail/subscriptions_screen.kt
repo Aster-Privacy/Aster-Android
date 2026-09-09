@@ -28,6 +28,7 @@ import android.content.Context
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -2040,12 +2041,6 @@ private fun current_plan_card(
     }
 }
 
-private fun addon_badge_res(name: String): Int? = when (name.trim().uppercase(Locale.ROOT)) {
-    "100 GB" -> R.string.popular
-    "10 TB" -> R.string.billing_best_value
-    else -> null
-}
-
 @Composable
 private fun storage_addons_card(
     available: List<org.astermail.android.api.billing.StorageAddonItem>,
@@ -2065,12 +2060,7 @@ private fun storage_addons_card(
                 text = stringResource(R.string.storage_addons_description),
                 color = colors.text_secondary,
                 fontSize = 13.sp,
-            )
-            Spacer(Modifier.height(AsterSpacing.xs))
-            Text(
-                text = stringResource(R.string.settings_storage_addons_monthly_note),
-                color = colors.text_tertiary,
-                fontSize = 12.sp,
+                lineHeight = 18.sp,
             )
             if (active.isNotEmpty()) {
                 Spacer(Modifier.height(AsterSpacing.lg))
@@ -2078,21 +2068,17 @@ private fun storage_addons_card(
                     text = stringResource(R.string.billing_active_addons),
                     color = colors.text_secondary,
                     fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Medium,
                 )
                 Spacer(Modifier.height(AsterSpacing.sm))
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(SquircleShape(12.dp))
-                        .background(colors.bg_secondary),
-                ) {
-                    active.forEachIndexed { idx, addon ->
-                        if (idx > 0) AsterDivider()
+                Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
+                    active.forEach { addon ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
+                                .clip(SquircleShape(14.dp))
+                                .background(colors.bg_secondary)
+                                .padding(AsterSpacing.md),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -2102,6 +2088,11 @@ private fun storage_addons_card(
                                     color = colors.text_primary,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Medium,
+                                )
+                                Text(
+                                    text = format_price(addon.price_cents, currency) + per_month,
+                                    color = colors.text_tertiary,
+                                    fontSize = 12.sp,
                                 )
                                 if (addon.cancel_at_period_end && addon.current_period_end != null) {
                                     Spacer(Modifier.height(2.dp))
@@ -2113,10 +2104,11 @@ private fun storage_addons_card(
                                 }
                             }
                             Spacer(Modifier.width(AsterSpacing.sm))
-                            Text(
-                                text = format_price(addon.price_cents, currency) + per_month,
-                                color = colors.text_tertiary,
-                                fontSize = 13.sp,
+                            Icon(
+                                imageVector = TablerIcons.CircleCheck,
+                                contentDescription = null,
+                                tint = colors.success,
+                                modifier = Modifier.size(18.dp),
                             )
                         }
                     }
@@ -2124,31 +2116,44 @@ private fun storage_addons_card(
             }
             if (available.isNotEmpty()) {
                 Spacer(Modifier.height(AsterSpacing.lg))
-                available.chunked(2).forEachIndexed { row_idx, pair ->
-                    if (row_idx > 0) Spacer(Modifier.height(AsterSpacing.sm))
-                    Row(
-                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                    ) {
-                        pair.forEach { addon ->
-                            addon_tile(
-                                addon = addon,
-                                selected = addon.id == selected_id,
-                                currency = currency,
-                                enabled = !is_acting,
-                                on_click = { on_select(addon.id) },
-                                modifier = Modifier.weight(1f).fillMaxHeight(),
-                            )
+                Column(
+                    modifier = Modifier.selectableGroup(),
+                    verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                ) {
+                    available.chunked(2).forEach { pair ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                        ) {
+                            pair.forEach { addon ->
+                                addon_tile(
+                                    addon = addon,
+                                    selected = addon.id == selected_id,
+                                    currency = currency,
+                                    enabled = !is_acting,
+                                    on_click = { on_select(addon.id) },
+                                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                                )
+                            }
+                            if (pair.size == 1) Spacer(Modifier.weight(1f))
                         }
-                        if (pair.size == 1) Spacer(Modifier.weight(1f))
                     }
                 }
-                Spacer(Modifier.height(AsterSpacing.lg))
+                Spacer(Modifier.height(AsterSpacing.md))
                 AsterButton(
                     label = stringResource(R.string.buy_more_storage),
                     onClick = on_buy,
                     enabled = !is_acting,
                     is_loading = is_buying,
+                )
+                Spacer(Modifier.height(AsterSpacing.sm))
+                Text(
+                    text = stringResource(R.string.settings_storage_addons_monthly_note),
+                    color = colors.text_tertiary,
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
@@ -2165,54 +2170,37 @@ private fun addon_tile(
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(12.dp)
-    val badge_res = addon_badge_res(addon.name)
+    val shape = SquircleShape(14.dp)
+    val background by animateColorAsState(
+        targetValue = if (selected) colors.accent_blue.copy(alpha = if (colors.is_dark) 0.14f else 0.07f) else colors.bg_secondary,
+        label = "addon_bg",
+    )
+    val outline by animateColorAsState(
+        targetValue = if (selected) colors.accent_blue else Color.Transparent,
+        label = "addon_border",
+    )
     Column(
         modifier = modifier
             .clip(shape)
-            .background(if (selected) colors.accent_blue.copy(alpha = 0.08f) else colors.bg_secondary)
-            .border(
-                width = if (selected) 1.5.dp else 1.dp,
-                color = if (selected) colors.accent_blue else colors.border_primary,
-                shape = shape,
-            )
+            .background(background)
+            .border(width = 1.5.dp, color = outline, shape = shape)
             .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = on_click)
-            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.md),
+            .padding(AsterSpacing.md),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = addon.name,
-                color = colors.text_primary,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f, fill = false),
-            )
-            if (selected) {
-                Spacer(Modifier.width(6.dp))
-                Icon(
-                    imageVector = TablerIcons.CircleCheck,
-                    contentDescription = null,
-                    tint = colors.accent_blue,
-                    modifier = Modifier.size(16.dp),
-                )
-            }
-        }
+        Text(
+            text = addon.name,
+            color = colors.text_primary,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
         Spacer(Modifier.height(2.dp))
         Text(
             text = format_price(addon.price_cents, currency) + stringResource(R.string.fix_billing_per_month_short),
             color = colors.text_tertiary,
             fontSize = 12.sp,
         )
-        if (badge_res != null) {
-            Spacer(Modifier.height(AsterSpacing.sm))
-            if (badge_res == R.string.billing_best_value) {
-                galaxy_badge(text = stringResource(badge_res), font_size = 9.sp)
-            } else {
-                status_pill(text = stringResource(badge_res), accent = colors.accent_blue)
-            }
-        }
     }
 }
 
@@ -2329,14 +2317,31 @@ private fun billing_history_card(
 }
 
 @Composable
-private fun plan_tier_surface(
-    highlighted: Boolean,
-    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
+private fun plan_outline_button(
+    label: String,
+    enabled: Boolean,
+    on_click: () -> Unit,
+    filled: Boolean = false,
 ) {
-    if (highlighted) {
-        galaxy_surface(modifier = Modifier.fillMaxWidth(), content = content)
-    } else {
-        AsterCard(modifier = Modifier.fillMaxWidth(), content = content)
+    val colors = AsterMaterial.colors
+    val shape = SquircleShape(12.dp)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(42.dp)
+            .clip(shape)
+            .background(if (filled) colors.accent_blue else colors.bg_card)
+            .border(1.dp, if (filled) Color.Transparent else colors.border_primary, shape)
+            .clickable(enabled = enabled, role = Role.Button, onClick = on_click),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            color = if (filled) Color.White else if (enabled) colors.text_primary else colors.text_muted,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
     }
 }
 
@@ -2357,148 +2362,153 @@ private fun plan_tier_card(
     on_choose: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val plan_name = stringResource(tier.name_res)
     val is_yearly = billing_interval == "year"
-    val shown_cents = if (is_yearly) yearly_cents?.let { it / 12 } else monthly_cents
+    val shown_cents = if (is_yearly) yearly_cents else monthly_cents
     val price_known = shown_cents != null
-    val savings = org.astermail.android.billing.yearly_savings_percent(monthly_cents, yearly_cents)
-    val is_current_tier = is_current || is_interval_switch
-    val show_badge = is_current_tier || is_recommended
-    Box(modifier = Modifier.fillMaxWidth().padding(top = if (show_badge) 10.dp else 0.dp)) {
-        plan_tier_surface(highlighted = is_recommended && !is_current_tier) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.lg)
-                    .padding(top = if (show_badge) AsterSpacing.xxl else AsterSpacing.lg, bottom = AsterSpacing.lg),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = plan_name,
-                    color = colors.text_primary,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(2.dp))
+    val savings_cents = if (monthly_cents != null && yearly_cents != null) monthly_cents * 12 - yearly_cents else null
+    val shape = SquircleShape(16.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(colors.bg_secondary)
+            .border(
+                width = if (is_current) 2.dp else 1.dp,
+                color = if (is_current) colors.accent_blue else colors.border_primary,
+                shape = shape,
+            ),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.lg)
+                .padding(top = AsterSpacing.lg, bottom = AsterSpacing.md),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            if (is_current) {
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(colors.accent_blue.copy(alpha = 0.10f))
+                        .border(1.dp, colors.accent_blue.copy(alpha = 0.25f), CircleShape)
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.current_plan),
+                        color = colors.accent_blue,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+                Spacer(Modifier.height(AsterSpacing.sm))
+            }
+            Text(
+                text = stringResource(tier.name_res),
+                color = colors.text_primary,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(6.dp))
+            if (price_known) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = format_price(shown_cents ?: 0, currency),
+                        color = colors.text_primary,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 32.sp,
+                        maxLines = 1,
+                    )
+                    Text(
+                        text = stringResource(if (is_yearly) R.string.fix_billing_per_year_short else R.string.fix_billing_per_month_short),
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(bottom = 4.dp),
+                    )
+                }
+                Spacer(Modifier.height(AsterSpacing.xs))
+                if (savings_cents != null && savings_cents > 0) {
+                    if (is_yearly) {
+                        Text(
+                            text = stringResource(R.string.billing_save_amount, format_price(savings_cents, currency)),
+                            color = colors.success,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    } else {
+                        Text(
+                            text = format_price(yearly_cents ?: 0, currency) +
+                                stringResource(R.string.fix_billing_per_year_short) +
+                                " · " +
+                                stringResource(R.string.billing_save_amount, format_price(savings_cents, currency)),
+                            color = colors.text_tertiary,
+                            fontSize = 11.sp,
+                        )
+                    }
+                } else {
+                    Text(
+                        text = stringResource(tier.tagline_res),
+                        color = colors.text_tertiary,
+                        fontSize = 11.sp,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            } else {
                 Text(
                     text = stringResource(tier.tagline_res),
                     color = colors.text_tertiary,
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
                 )
-                Spacer(Modifier.height(AsterSpacing.md))
-                if (price_known) {
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        Text(
-                            text = format_price(shown_cents ?: 0, currency),
-                            color = colors.text_primary,
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                        )
-                        Text(
-                            text = stringResource(R.string.fix_billing_per_month_short),
-                            color = colors.text_tertiary,
-                            fontSize = 13.sp,
-                            modifier = Modifier.padding(bottom = 5.dp),
-                        )
-                    }
-                    if (is_yearly && yearly_cents != null) {
-                        Spacer(Modifier.height(AsterSpacing.xs))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (savings != null && savings > 0) {
-                                status_pill(text = stringResource(R.string.save_percent, savings), accent = colors.success)
-                                Spacer(Modifier.width(6.dp))
-                            }
-                            Text(
-                                text = format_price(yearly_cents, currency) + stringResource(R.string.fix_billing_per_year_short) + " · " + stringResource(R.string.fix_billing_billed_annually),
-                                color = colors.text_tertiary,
-                                fontSize = 12.sp,
-                            )
-                        }
-                    }
-                } else {
-                    Text(
-                        text = stringResource(R.string.see_pricing),
-                        color = colors.text_tertiary,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-                Spacer(Modifier.height(AsterSpacing.lg))
-                if (is_current) {
-                    AsterSecondaryButton(
-                        label = stringResource(R.string.current_plan),
-                        onClick = {},
-                        enabled = false,
-                    )
-                } else if (!price_known) {
-                    AsterSecondaryButton(
-                        label = stringResource(R.string.see_pricing),
-                        onClick = on_see_pricing,
-                        enabled = plans_failed,
-                    )
-                } else if (is_interval_switch) {
-                    AsterButton(
-                        label = stringResource(R.string.switch_to_yearly),
-                        onClick = on_choose,
-                    )
-                } else if (is_recommended) {
-                    AsterButton(
-                        label = if (is_free_user) stringResource(R.string.fix_billing_get_plan, plan_name) else stringResource(R.string.upgrade_to, plan_name),
-                        onClick = on_choose,
-                    )
-                } else {
-                    AsterSecondaryButton(
-                        label = when {
-                            is_downgrade -> stringResource(R.string.downgrade_to, plan_name)
-                            is_free_user -> stringResource(R.string.fix_billing_get_plan, plan_name)
-                            else -> stringResource(R.string.upgrade_to, plan_name)
-                        },
-                        onClick = on_choose,
-                    )
-                }
-                Spacer(Modifier.height(AsterSpacing.lg))
-                AsterDivider()
-                Spacer(Modifier.height(AsterSpacing.md))
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    if (tier.lead_res != null) {
-                        Text(
-                            text = stringResource(tier.lead_res).uppercase(),
-                            color = colors.text_tertiary,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            letterSpacing = 0.5.sp,
-                        )
-                        Spacer(Modifier.height(AsterSpacing.xs))
-                    }
-                    tier.features.forEach { feature_res ->
-                        feature_row(feature_res)
-                    }
-                }
+            }
+            Spacer(Modifier.height(AsterSpacing.md))
+            when {
+                is_current -> plan_outline_button(
+                    label = stringResource(R.string.current_plan),
+                    enabled = false,
+                    on_click = {},
+                )
+                !price_known -> plan_outline_button(
+                    label = stringResource(R.string.see_pricing),
+                    enabled = plans_failed,
+                    on_click = on_see_pricing,
+                )
+                is_recommended && !is_interval_switch && !is_downgrade -> plan_outline_button(
+                    label = stringResource(R.string.billing_subscribe),
+                    enabled = true,
+                    on_click = on_choose,
+                    filled = true,
+                )
+                else -> plan_outline_button(
+                    label = when {
+                        is_interval_switch -> stringResource(R.string.switch_to_yearly)
+                        is_downgrade -> stringResource(R.string.downgrade)
+                        else -> stringResource(R.string.billing_subscribe)
+                    },
+                    enabled = true,
+                    on_click = on_choose,
+                )
             }
         }
-        if (show_badge) {
-            Box(modifier = Modifier.align(Alignment.TopCenter)) {
-                if (is_current_tier) {
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(colors.success)
-                            .padding(horizontal = 10.dp, vertical = 4.dp),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.current_plan).uppercase(),
-                            color = Color.White,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.6.sp,
-                        )
-                    }
-                } else {
-                    galaxy_badge(text = stringResource(R.string.fix_billing_plan_recommended), font_size = 10.sp)
-                }
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.border_primary))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.lg)
+                .padding(top = AsterSpacing.md, bottom = AsterSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+        ) {
+            if (tier.lead_res != null) {
+                Text(
+                    text = stringResource(tier.lead_res),
+                    color = colors.accent_blue,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+            tier.features.forEach { feature_res ->
+                feature_row(feature_res)
             }
         }
     }
@@ -2507,36 +2517,20 @@ private fun plan_tier_card(
 @Composable
 private fun feature_row(@StringRes feature_res: Int) {
     val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier.padding(vertical = 3.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             imageVector = TablerIcons.Check,
             contentDescription = null,
             tint = colors.accent_blue,
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(14.dp),
         )
         Spacer(Modifier.width(AsterSpacing.sm))
-        Text(text = stringResource(feature_res), color = colors.text_primary, fontSize = 13.sp)
-    }
-}
-
-@Composable
-private fun aster_plan_badge(
-    text: String,
-    accent: androidx.compose.ui.graphics.Color,
-    font_size: TextUnit = 10.sp,
-    horizontal_padding: Dp = 8.dp,
-    vertical_padding: Dp = 3.dp,
-) {
-    Box(
-        modifier = Modifier
-            .clip(androidx.compose.foundation.shape.RoundedCornerShape(6.dp))
-            .background(accent)
-            .padding(horizontal = horizontal_padding, vertical = vertical_padding),
-    ) {
-        Text(text = text, color = Color.White, fontSize = font_size, fontWeight = FontWeight.Bold)
+        Text(
+            text = stringResource(feature_res),
+            color = colors.text_secondary,
+            fontSize = 12.sp,
+            lineHeight = 16.sp,
+        )
     }
 }
 
