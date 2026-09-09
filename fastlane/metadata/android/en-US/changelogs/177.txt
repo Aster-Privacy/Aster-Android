@@ -1,0 +1,9 @@
+New in this version:
+
+- Aliases opens with a create button, a count for each state, and actions in the expanded row.
+
+Fixed:
+
+- The loading placeholder no longer restarts partway through when your inbox opens.
+- Your mail list stays responsive while it loads.
+- Sending works again on accounts that were missing their Sent folder, and the send button no longer spins without end.
