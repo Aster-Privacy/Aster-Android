@@ -1070,7 +1070,7 @@ fun MailDetailScreen(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .background(inbox_card_read_color(colors))
+                    .background(colors.bg_primary)
                     .clipToBounds(),
             ) {
             LazyColumn(
@@ -2044,19 +2044,20 @@ internal fun expanded_message(
     }
 
     val card_color = inbox_card_read_color(colors)
+    val card_shape = remember(is_first_card, is_last_card) {
+        inbox_group_shape(is_first_card, is_last_card)
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(
+                start = inbox_card_horizontal_margin,
+                end = inbox_card_horizontal_margin,
+                bottom = if (is_last_card) 0.dp else inbox_group_split,
+            )
+            .clip(card_shape)
             .background(card_color),
     ) {
-        if (!is_first_card) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(colors.border_thread_divider),
-            )
-        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -3740,19 +3741,20 @@ private fun collapsed_message(
     val is_undecryptable = msg.is_undecryptable || (msg.sender_email.isBlank() && msg.body.isBlank())
     val card_color = inbox_card_read_color(colors)
 
+    val card_shape = remember(is_first_card, is_last_card) {
+        inbox_group_shape(is_first_card, is_last_card)
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(
+                start = inbox_card_horizontal_margin,
+                end = inbox_card_horizontal_margin,
+                bottom = if (is_last_card) 0.dp else inbox_group_split,
+            )
+            .clip(card_shape)
             .background(card_color),
     ) {
-        if (!is_first_card) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(colors.border_thread_divider),
-            )
-        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
