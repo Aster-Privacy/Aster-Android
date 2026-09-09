@@ -53,4 +53,23 @@
     <string name="settings_plan_duo_tagline">एक ही बिल पर दो खाते।</string>
     <string name="settings_plan_family_tagline">एक ही प्लान पर छह खाते तक।</string>
     <string name="subscription_refresh_failed">Aster आपके प्लान का ब्योरा रीफ़्रेश नहीं कर सका।</string>
+    <string name="billing_plan_type_individual">व्यक्तिगत</string>
+    <string name="billing_plan_type_family">परिवार</string>
+    <string name="billing_active_addons">आपके चालू ऐड-ऑन</string>
+    <string name="billing_best_value">सबसे किफ़ायती</string>
+    <string name="billing_everything_in">%1$s की हर सुविधा, साथ में</string>
+    <string name="billing_money_back_guarantee">30 दिन की पैसे वापसी की गारंटी</string>
+    <string name="billing_cancel_anytime">कभी भी रद्द करें</string>
+    <string name="billing_storage_select_option_first">और स्टोरेज खरीदने के लिए पहले कोई विकल्प चुनें।</string>
+    <string name="billing_manage_payment">भुगतान प्रबंधित करें</string>
+    <string name="billing_storage_limit_description">जब तक आप जगह खाली नहीं करते, नई मेल रुकी रहेगी। कुछ ईमेल हटाने या प्लान बढ़ाने से वह फिर आने लगेगी। पहले से मौजूद मेल सुरक्षित है।</string>
+    <string name="billing_crypto_paid_until">%1$s तक भुगतान किया गया (क्रिप्टो)</string>
+    <string name="billing_crypto_no_renew_notice">क्रिप्टो से की गई खरीद अपने आप नवीनीकृत नहीं होती।</string>
+    <string name="billing_crypto_renew_link">क्रिप्टो से नवीनीकृत करें</string>
+    <string name="billing_subscribe">सदस्यता लें</string>
+    <string name="billing_upgrade_for_more_short">और पाने के लिए खोलें</string>
+    <string name="billing_add_storage_link">और स्टोरेज जोड़ें</string>
+    <string name="billing_free_upgrade_title">%1$s के साथ और पाएँ</string>
+    <string name="billing_free_upgrade_price_note">प्लान %1$s प्रति माह से शुरू होते हैं।</string>
+    <string name="billing_cancel_plan">प्लान रद्द करें</string>
 </resources>

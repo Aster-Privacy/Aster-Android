@@ -53,4 +53,23 @@
     <string name="settings_plan_duo_tagline">حسابان على فاتورة واحدة.</string>
     <string name="settings_plan_family_tagline">حتى ستة حسابات على خطة واحدة.</string>
     <string name="subscription_refresh_failed">تعذّر على Aster تحديث تفاصيل خطتك.</string>
+    <string name="billing_plan_type_individual">فردي</string>
+    <string name="billing_plan_type_family">عائلي</string>
+    <string name="billing_active_addons">إضافاتك النشطة</string>
+    <string name="billing_best_value">أفضل قيمة</string>
+    <string name="billing_everything_in">كل مزايا %1$s، بالإضافة إلى</string>
+    <string name="billing_money_back_guarantee">ضمان استرداد المال خلال 30 يومًا</string>
+    <string name="billing_cancel_anytime">يمكنك الإلغاء في أي وقت</string>
+    <string name="billing_storage_select_option_first">لشراء مساحة إضافية، حدد خيارًا أولاً.</string>
+    <string name="billing_manage_payment">إدارة الدفع</string>
+    <string name="billing_storage_limit_description">البريد الجديد متوقف حتى تتوفر مساحة. حذف بعض الرسائل أو ترقية الخطة يعيد تدفقه. البريد الموجود بأمان.</string>
+    <string name="billing_crypto_paid_until">مدفوع حتى %1$s (عملة مشفرة)</string>
+    <string name="billing_crypto_no_renew_notice">مشتريات العملة المشفرة لا تُجدَّد تلقائيًا.</string>
+    <string name="billing_crypto_renew_link">التجديد بالعملة المشفرة</string>
+    <string name="billing_subscribe">اشترك</string>
+    <string name="billing_upgrade_for_more_short">افتح المزيد</string>
+    <string name="billing_add_storage_link">إضافة مزيد من التخزين</string>
+    <string name="billing_free_upgrade_title">احصل على المزيد مع %1$s</string>
+    <string name="billing_free_upgrade_price_note">تبدأ الخطط من %1$s شهريًا.</string>
+    <string name="billing_cancel_plan">إلغاء الخطة</string>
 </resources>

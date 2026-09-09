@@ -53,4 +53,23 @@
     <string name="settings_plan_duo_tagline">Zwei Konten auf einer Rechnung.</string>
     <string name="settings_plan_family_tagline">Bis zu sechs Konten in einem Tarif.</string>
     <string name="subscription_refresh_failed">Aster konnte deine Tarifdetails nicht aktualisieren.</string>
+    <string name="billing_plan_type_individual">Einzelperson</string>
+    <string name="billing_plan_type_family">Familie</string>
+    <string name="billing_active_addons">Ihre aktiven Zusätze</string>
+    <string name="billing_best_value">Bestes Angebot</string>
+    <string name="billing_everything_in">Alles aus %1$s, plus</string>
+    <string name="billing_money_back_guarantee">30 Tage Geld-zurück-Garantie</string>
+    <string name="billing_cancel_anytime">Jederzeit kündbar</string>
+    <string name="billing_storage_select_option_first">Um mehr Speicher zu kaufen, wähle zuerst eine Option aus.</string>
+    <string name="billing_manage_payment">Zahlung verwalten</string>
+    <string name="billing_storage_limit_description">Neue Mails sind pausiert, bis Platz frei wird. Ein Aufräumen einiger Mails oder eine Tarif-Erweiterung lässt sie wieder fließen. Bestehende Mails sind sicher.</string>
+    <string name="billing_crypto_paid_until">Bezahlt bis %1$s (Krypto)</string>
+    <string name="billing_crypto_no_renew_notice">Krypto-Käufe verlängern sich nicht automatisch.</string>
+    <string name="billing_crypto_renew_link">Mit Krypto verlängern</string>
+    <string name="billing_subscribe">Abonnieren</string>
+    <string name="billing_upgrade_for_more_short">Für mehr freischalten</string>
+    <string name="billing_add_storage_link">Mehr Speicher hinzufügen</string>
+    <string name="billing_free_upgrade_title">Mehr erreichen mit %1$s</string>
+    <string name="billing_free_upgrade_price_note">Tarife beginnen bei %1$s pro Monat.</string>
+    <string name="billing_cancel_plan">Plan kündigen</string>
 </resources>

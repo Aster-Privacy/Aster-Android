@@ -53,4 +53,23 @@
     <string name="settings_plan_duo_tagline">2 つのアカウントをまとめて 1 つの請求に。</string>
     <string name="settings_plan_family_tagline">1 つのプランで最大 6 アカウントまで。</string>
     <string name="subscription_refresh_failed">プランの詳細を更新できませんでした。</string>
+    <string name="billing_plan_type_individual">個人</string>
+    <string name="billing_plan_type_family">ファミリー</string>
+    <string name="billing_active_addons">有効なアドオン</string>
+    <string name="billing_best_value">お得</string>
+    <string name="billing_everything_in">%1$sのすべての機能に加えて</string>
+    <string name="billing_money_back_guarantee">30 日間の返金保証</string>
+    <string name="billing_cancel_anytime">いつでも解約できます</string>
+    <string name="billing_storage_select_option_first">ストレージを追加するには、最初にオプションを選択します。</string>
+    <string name="billing_manage_payment">支払い管理</string>
+    <string name="billing_storage_limit_description">空き容量ができるまで、新着メールは一時停止します。メールを削除するか、プランをアップグレードすると、再び受信できるようになります。既存のメールは安全です。</string>
+    <string name="billing_crypto_paid_until">%1$sまで有効（仮想通貨）</string>
+    <string name="billing_crypto_no_renew_notice">仮想通貨での購入は自動更新されません。</string>
+    <string name="billing_crypto_renew_link">仮想通貨で更新</string>
+    <string name="billing_subscribe">登録する</string>
+    <string name="billing_upgrade_for_more_short">アップグレードで解放</string>
+    <string name="billing_add_storage_link">ストレージを追加</string>
+    <string name="billing_free_upgrade_title">%1$s でもっと使える</string>
+    <string name="billing_free_upgrade_price_note">プランは月額 %1$s から。</string>
+    <string name="billing_cancel_plan">プランをキャンセル</string>
 </resources>

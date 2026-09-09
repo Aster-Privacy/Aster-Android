@@ -53,4 +53,23 @@
     <string name="settings_plan_duo_tagline">Две учётные записи в одном счёте.</string>
     <string name="settings_plan_family_tagline">До шести учётных записей в одном тарифе.</string>
     <string name="subscription_refresh_failed">Aster не удалось обновить сведения о вашем тарифе.</string>
+    <string name="billing_plan_type_individual">Индивидуальный</string>
+    <string name="billing_plan_type_family">Семейный</string>
+    <string name="billing_active_addons">Ваши активные дополнения</string>
+    <string name="billing_best_value">Лучшая цена</string>
+    <string name="billing_everything_in">Всё из тарифа %1$s, плюс</string>
+    <string name="billing_money_back_guarantee">Возврат денег в течение 30 дней</string>
+    <string name="billing_cancel_anytime">Отмена в любой момент</string>
+    <string name="billing_storage_select_option_first">Чтобы купить больше места, сначала выберите вариант.</string>
+    <string name="billing_manage_payment">Управление оплатой</string>
+    <string name="billing_storage_limit_description">Поступление новых писем приостановлено до освобождения места. Удаление части писем или повышение тарифа возвращает их поток. Существующая почта в безопасности.</string>
+    <string name="billing_crypto_paid_until">Оплачено до %1$s (крипто)</string>
+    <string name="billing_crypto_no_renew_notice">Крипто-покупки не продлеваются автоматически.</string>
+    <string name="billing_crypto_renew_link">Продлить криптовалютой</string>
+    <string name="billing_subscribe">Подписаться</string>
+    <string name="billing_upgrade_for_more_short">Разблокировать дополнительно</string>
+    <string name="billing_add_storage_link">Добавить хранилище</string>
+    <string name="billing_free_upgrade_title">Больше возможностей с %1$s</string>
+    <string name="billing_free_upgrade_price_note">Тарифы начинаются от %1$s в месяц.</string>
+    <string name="billing_cancel_plan">Отменить тариф</string>
 </resources>

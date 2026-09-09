@@ -53,4 +53,23 @@
     <string name="settings_plan_duo_tagline">Tek faturada iki hesap.</string>
     <string name="settings_plan_family_tagline">Tek planda altı hesaba kadar.</string>
     <string name="subscription_refresh_failed">Aster, plan bilgilerinizi yenileyemedi.</string>
+    <string name="billing_plan_type_individual">Bireysel</string>
+    <string name="billing_plan_type_family">Aile</string>
+    <string name="billing_active_addons">Aktif Eklentileriniz</string>
+    <string name="billing_best_value">En İyi Değer</string>
+    <string name="billing_everything_in">%1$s planındaki her şey, ayrıca</string>
+    <string name="billing_money_back_guarantee">30 gün para iade garantisi</string>
+    <string name="billing_cancel_anytime">İstediğiniz zaman iptal edin</string>
+    <string name="billing_storage_select_option_first">Daha fazla depolama satın almak için önce bir seçenek belirle.</string>
+    <string name="billing_manage_payment">Ödemeyi Yönet</string>
+    <string name="billing_storage_limit_description">Yer açana kadar yeni postalar duraklatıldı. Bir miktar e-postayı temizlemek ya da planınızı yükseltmek akışı geri getirir. Mevcut postalarınız güvende.</string>
+    <string name="billing_crypto_paid_until">%1$s tarihine kadar ödendi (kripto)</string>
+    <string name="billing_crypto_no_renew_notice">Kripto ödemeleri otomatik olarak yenilenmez.</string>
+    <string name="billing_crypto_renew_link">Kripto ile yenile</string>
+    <string name="billing_subscribe">Abone Ol</string>
+    <string name="billing_upgrade_for_more_short">Daha fazlası için açın</string>
+    <string name="billing_add_storage_link">Daha fazla depolama ekle</string>
+    <string name="billing_free_upgrade_title">%1$s ile daha fazlasını yapın</string>
+    <string name="billing_free_upgrade_price_note">Planlar ayda %1$s fiyatından başlar.</string>
+    <string name="billing_cancel_plan">Planı İptal Et</string>
 </resources>

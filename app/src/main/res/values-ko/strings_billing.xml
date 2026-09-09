@@ -53,4 +53,23 @@
     <string name="settings_plan_duo_tagline">계정 두 개를 한 번에 결제합니다.</string>
     <string name="settings_plan_family_tagline">한 요금제로 계정을 최대 여섯 개까지 쓸 수 있습니다.</string>
     <string name="subscription_refresh_failed">Aster가 요금제 정보를 새로 고치지 못했습니다.</string>
+    <string name="billing_plan_type_individual">개인</string>
+    <string name="billing_plan_type_family">가족</string>
+    <string name="billing_active_addons">활성 추가 기능</string>
+    <string name="billing_best_value">최고 가치</string>
+    <string name="billing_everything_in">%1$s의 모든 기능에 더해</string>
+    <string name="billing_money_back_guarantee">30일 환불 보장</string>
+    <string name="billing_cancel_anytime">언제든지 해지 가능</string>
+    <string name="billing_storage_select_option_first">저장 공간을 더 구입하려면 먼저 옵션을 선택하세요.</string>
+    <string name="billing_manage_payment">결제 관리</string>
+    <string name="billing_storage_limit_description">공간을 비울 때까지 새 메일 수신이 잠시 멈춥니다. 이메일 일부를 정리하거나 요금제를 업그레이드하면 다시 흐릅니다. 기존 메일은 안전합니다.</string>
+    <string name="billing_crypto_paid_until">%1$s까지 결제됨 (암호화폐)</string>
+    <string name="billing_crypto_no_renew_notice">암호화폐 구매는 자동 갱신되지 않습니다.</string>
+    <string name="billing_crypto_renew_link">암호화폐로 갱신</string>
+    <string name="billing_subscribe">구독</string>
+    <string name="billing_upgrade_for_more_short">잠금 해제하여 더 많은 기능</string>
+    <string name="billing_add_storage_link">저장 공간 추가</string>
+    <string name="billing_free_upgrade_title">%1$s(으)로 더 많은 기능 사용</string>
+    <string name="billing_free_upgrade_price_note">요금제는 월 %1$s부터 시작합니다.</string>
+    <string name="billing_cancel_plan">플랜 취소</string>
 </resources>

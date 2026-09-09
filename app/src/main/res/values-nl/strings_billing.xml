@@ -53,4 +53,23 @@
     <string name="settings_plan_duo_tagline">Twee accounts op één rekening.</string>
     <string name="settings_plan_family_tagline">Tot zes accounts op één abonnement.</string>
     <string name="subscription_refresh_failed">Aster kon je abonnementsgegevens niet vernieuwen.</string>
+    <string name="billing_plan_type_individual">Individueel</string>
+    <string name="billing_plan_type_family">Gezin</string>
+    <string name="billing_active_addons">Je actieve add-ons</string>
+    <string name="billing_best_value">Beste waarde</string>
+    <string name="billing_everything_in">Alles uit %1$s, plus</string>
+    <string name="billing_money_back_guarantee">30 dagen niet-goed-geldterug</string>
+    <string name="billing_cancel_anytime">Altijd opzegbaar</string>
+    <string name="billing_storage_select_option_first">Selecteer eerst een optie om meer opslag te kopen.</string>
+    <string name="billing_manage_payment">Betaling beheren</string>
+    <string name="billing_storage_limit_description">Nieuwe post is gepauzeerd tot u ruimte vrijmaakt. Wat e-mails wissen of uw abonnement upgraden laat het weer stromen. Bestaande post is veilig.</string>
+    <string name="billing_crypto_paid_until">Betaald tot %1$s (crypto)</string>
+    <string name="billing_crypto_no_renew_notice">Dit abonnement wordt niet automatisch verlengd</string>
+    <string name="billing_crypto_renew_link">Handmatig verlengen</string>
+    <string name="billing_subscribe">Abonneren</string>
+    <string name="billing_upgrade_for_more_short">Ontgrendel voor meer</string>
+    <string name="billing_add_storage_link">Meer opslag toevoegen</string>
+    <string name="billing_free_upgrade_title">Doe meer met %1$s</string>
+    <string name="billing_free_upgrade_price_note">Abonnementen beginnen bij %1$s per maand.</string>
+    <string name="billing_cancel_plan">Abonnement annuleren</string>
 </resources>

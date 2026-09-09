@@ -53,4 +53,23 @@
     <string name="settings_plan_duo_tagline">Deux comptes sur une seule facture.</string>
     <string name="settings_plan_family_tagline">Jusqu\'à six comptes sur une seule offre.</string>
     <string name="subscription_refresh_failed">Aster n\'a pas pu actualiser les détails de votre offre.</string>
+    <string name="billing_plan_type_individual">Individuel</string>
+    <string name="billing_plan_type_family">Famille</string>
+    <string name="billing_active_addons">Vos extensions actives</string>
+    <string name="billing_best_value">Meilleur rapport qualité-prix</string>
+    <string name="billing_everything_in">Tout %1$s, et en plus</string>
+    <string name="billing_money_back_guarantee">Garantie satisfait ou remboursé de 30 jours</string>
+    <string name="billing_cancel_anytime">Annulez à tout moment</string>
+    <string name="billing_storage_select_option_first">Pour acheter plus de stockage, sélectionnez d’abord une option.</string>
+    <string name="billing_manage_payment">Gérer le paiement</string>
+    <string name="billing_storage_limit_description">Le nouveau courrier est en pause jusqu\'à ce que vous libériez de l\'espace. Effacer quelques messages, ou mettre à niveau votre plan, le laissera circuler à nouveau. Le courrier existant est en sécurité.</string>
+    <string name="billing_crypto_paid_until">Payé jusqu\'au %1$s (crypto)</string>
+    <string name="billing_crypto_no_renew_notice">Ce forfait ne se renouvelle pas automatiquement.</string>
+    <string name="billing_crypto_renew_link">Renouveler</string>
+    <string name="billing_subscribe">S\'abonner</string>
+    <string name="billing_upgrade_for_more_short">Débloquer pour plus</string>
+    <string name="billing_add_storage_link">Ajouter du stockage</string>
+    <string name="billing_free_upgrade_title">Allez plus loin avec %1$s</string>
+    <string name="billing_free_upgrade_price_note">Les offres commencent à %1$s par mois.</string>
+    <string name="billing_cancel_plan">Annuler le forfait</string>
 </resources>
