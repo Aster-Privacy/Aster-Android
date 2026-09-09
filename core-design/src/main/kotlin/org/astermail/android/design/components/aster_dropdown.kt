@@ -287,6 +287,7 @@ fun aster_dropdown_item(
     destructive: Boolean = false,
     enabled: Boolean = true,
     tint: Color? = null,
+    icon_tint: Color? = null,
     test_tag: String? = null,
     count: Int = 0,
     indent: androidx.compose.ui.unit.Dp = 0.dp,
@@ -357,7 +358,7 @@ fun aster_dropdown_item(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = content_color,
+                tint = if (enabled && icon_tint != null) icon_tint else content_color,
                 modifier = Modifier.size(dropdown_leading_icon_size),
             )
             Spacer(Modifier.width(dropdown_leading_icon_gap))

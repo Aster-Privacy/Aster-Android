@@ -2342,6 +2342,7 @@ data class quick_folder_node(
     val depth: Int,
     val has_children: Boolean,
     val parent_id: String?,
+    val color: String? = null,
 )
 
 private fun folder_ancestor_ids(nodes: List<quick_folder_node>, id: String?): Set<String> {
@@ -2385,6 +2386,9 @@ private fun folder_tree_dropdown_items(
         aster_dropdown_item(
             label = node.name,
             icon = TablerIcons.Folder,
+            icon_tint = node.color
+                ?.takeIf { it.startsWith("#") }
+                ?.let { org.astermail.android.design.parse_hex_color_safe(it) },
             selected = node.id == current_folder,
             count = folder_unread_counts[node.id] ?: 0,
             indent = (node.depth * 14).dp,

@@ -1352,6 +1352,9 @@ fun FoldersScreen(
                                 title = folder_name,
                                 subtitle = count_text,
                                 icon = TablerIcons.Folder,
+                                icon_tint = f.encrypted_color
+                                    ?.takeIf { it.startsWith("#") }
+                                    ?.let { org.astermail.android.design.parse_hex_color_safe(it) },
                                 on_click = if (f.is_system || f.is_locked) null else ({ pending_folder_rename = f }),
                                 trailing = {
                                     if (!f.is_system) {

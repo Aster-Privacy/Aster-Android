@@ -4342,7 +4342,10 @@ internal fun label_picker_sheet(
                         Icon(
                             imageVector = TablerIcons.Folder,
                             contentDescription = null,
-                            tint = colors.text_primary,
+                            tint = item.encrypted_color
+                                ?.takeIf { it.startsWith("#") }
+                                ?.let { org.astermail.android.design.parse_hex_color_safe(it) }
+                                ?: colors.text_primary,
                             modifier = Modifier.size(20.dp),
                         )
                         Spacer(Modifier.width(AsterSpacing.md))

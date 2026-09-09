@@ -325,6 +325,7 @@ internal fun detail_row(
     trailing: (@Composable () -> Unit)? = null,
     info_title: String? = null,
     info_description: String? = null,
+    icon_tint: androidx.compose.ui.graphics.Color? = null,
 ) {
     val colors = AsterMaterial.colors
     Row(
@@ -339,7 +340,7 @@ internal fun detail_row(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = colors.text_secondary,
+                tint = icon_tint ?: colors.text_secondary,
                 modifier = Modifier.size(22.dp),
             )
             Spacer(Modifier.width(AsterSpacing.md))

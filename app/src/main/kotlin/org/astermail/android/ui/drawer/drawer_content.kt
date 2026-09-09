@@ -152,6 +152,7 @@ data class folder_parent_option(
     val label: String,
     val depth: Int,
     val path_label: String,
+    val color: String? = null,
 )
 
 data class drawer_label_item(
@@ -581,6 +582,7 @@ fun DrawerContent(
                                             menu_open = true
                                         }
                                     },
+                                    icon_tint = item.color?.let { parse_hex_color_safe(it) },
                                 )
                                 folder_actions_menu(
                                     item = item,
@@ -1323,7 +1325,8 @@ private fun folder_color_dialog(
                                     Modifier.border(1.dp, colors.border_secondary, CircleShape)
                                 }
                             )
-                            .clickable { selected_color = hex },
+                            .clickable { selected_color = hex }
+                            .testTag("folder_color_swatch_$hex"),
                         contentAlignment = Alignment.Center,
                     ) {
                         if (is_selected) {
@@ -1411,6 +1414,7 @@ private fun folder_move_dialog(
                         aster_dropdown_item(
                             label = " ".repeat(option.depth) + option.label,
                             icon = TablerIcons.Folder,
+                            icon_tint = option.color?.let { parse_hex_color_safe(it) },
                             selected = selected_parent == option,
                             on_click = {
                                 selected_parent = option
@@ -1673,6 +1677,7 @@ internal fun create_folder_dialog(
                             aster_dropdown_item(
                                 label = " ".repeat(option.depth) + option.label,
                                 icon = TablerIcons.Folder,
+                                icon_tint = option.color?.let { parse_hex_color_safe(it) },
                                 selected = selected_parent == option,
                                 on_click = {
                                     selected_parent = option
@@ -2275,6 +2280,7 @@ private fun drawer_row(
     expanded: Boolean = false,
     on_toggle_expand: () -> Unit = {},
     on_long_click: (() -> Unit)? = null,
+    icon_tint: Color? = null,
 ) {
     val colors = AsterMaterial.colors
     val bg by animateColorAsState(
@@ -2288,7 +2294,7 @@ private fun drawer_row(
         label = "row_text",
     )
     val icon_color by animateColorAsState(
-        targetValue = if (selected) colors.text_primary else colors.text_muted,
+        targetValue = icon_tint ?: if (selected) colors.text_primary else colors.text_muted,
         animationSpec = tween(durationMillis = 150),
         label = "row_icon",
     )

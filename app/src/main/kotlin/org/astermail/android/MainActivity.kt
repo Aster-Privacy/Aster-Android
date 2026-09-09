@@ -1787,6 +1787,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 path_label = org.astermail.android.folders.folder_path(settings_state.labels, label.label_token)
                     .filter { it.isNotBlank() && !looks_encrypted(it) }
                     .joinToString(" · "),
+                color = label.encrypted_color?.takeIf { it.startsWith("#") },
             )
         }
 
@@ -1800,6 +1801,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 depth = node.depth,
                 has_children = node.has_children,
                 parent_id = node.label.parent_token?.takeIf { it.isNotBlank() },
+                color = node.label.encrypted_color?.takeIf { it.startsWith("#") },
             )
         }
 

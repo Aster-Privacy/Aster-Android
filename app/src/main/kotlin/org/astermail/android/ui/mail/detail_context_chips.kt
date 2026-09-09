@@ -99,6 +99,7 @@ import org.astermail.android.R
 import org.astermail.android.api.labels.LabelItem
 import org.astermail.android.api.tags.TagItem
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.parse_hex_color_safe
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.folders.is_folder_protected
 import org.astermail.android.looks_encrypted
@@ -119,6 +120,7 @@ internal data class detail_folder_chip_data(
     val name: String,
     val icon: ImageVector,
     val tint_kind: String,
+    val custom_color: Color? = null,
 )
 
 internal fun detail_custom_folder(item: InboxItem, folders: List<LabelItem>): LabelItem? =
@@ -176,6 +178,9 @@ internal fun detail_folder_chip_for(
             name = custom.encrypted_name.orEmpty(),
             icon = if (is_folder_protected(custom)) TablerIcons.Lock else TablerIcons.Folder,
             tint_kind = "accent",
+            custom_color = custom.encrypted_color
+                ?.takeIf { it.startsWith("#") }
+                ?.let { parse_hex_color_safe(it) },
         )
     }
     val folder_id = detail_system_folder_id(item)
@@ -189,7 +194,7 @@ internal fun detail_folder_chip_for(
 @Composable
 internal fun detail_folder_chip(data: detail_folder_chip_data, modifier: Modifier = Modifier) {
     val colors = AsterMaterial.colors
-    val tint = when (data.tint_kind) {
+    val tint = data.custom_color ?: when (data.tint_kind) {
         "danger" -> colors.danger
         "warning" -> colors.warning
         else -> colors.accent_blue
