@@ -1299,19 +1299,10 @@
     <string name="server_returned_no_address">서버가 주소를 반환하지 않았습니다</string>
     <string name="scan_complete">스캔 완료</string>
     <string name="current_password_incorrect">현재 비밀번호가 올바르지 않습니다</string>
-    <string name="password_change_background_reencrypt_failed">비밀번호가 변경되었지만 보낸 메일과 설정 일부가 다시 암호화되지 않았습니다. 메일이나 설정이 읽힐 수 없는 상태라면 고객 지원에 문의하세요.</string>
-    <string name="restore_sent_mail">보낸 메일 복원</string>
-    <string name="restore_sent_mail_description">비밀번호 변경 전에 보낸 메일이 열리지 않으면 그때 사용하던 비밀번호를 입력하세요. Aster Mail이 해당 사본을 현재 비밀번호로 다시 암호화합니다.</string>
-    <string name="previous_password">이전 비밀번호</string>
-    <string name="enter_previous_password">이전 비밀번호 입력</string>
-    <string name="restore_sent_mail_running">보낸 메일 확인 중... %1$d개 확인됨</string>
-    <string name="restore_sent_mail_result">보낸 이메일 %1$d개가 이제 현재 비밀번호로 열립니다. %2$d개는 여전히 다른 이전 비밀번호가 필요합니다.</string>
-    <string name="restore_sent_mail_nothing">모든 보낸 이메일이 이미 현재 비밀번호로 열립니다.</string>
-    <string name="restore_sent_mail_failed">일부 보낸 메일을 업데이트하지 못했습니다. 연결을 확인하고 다시 시도하세요.</string>
-    <string name="restore_sent_mail_session_expired">세션 키를 사용할 수 없습니다. 로그아웃한 뒤 다시 로그인하고 다시 시도하세요.</string>
+    <string name="password_change_background_reencrypt_failed">비밀번호가 변경되었습니다. Aster Mail이 보낸 메일 일부를 다시 암호화하고 있으며 백그라운드에서 완료합니다.</string>
     <plurals name="password_change_sent_mail_locked">
-        <item quantity="one">비밀번호가 변경되었습니다. 보낸 이메일 %1$d개가 이전 비밀번호로 암호화되어 있어 업데이트되지 않았습니다. 복원하려면 설정 &gt; 보안 &gt; 비밀번호 변경 &gt; 보낸 메일 복원을 여세요.</item>
-        <item quantity="other">비밀번호가 변경되었습니다. 보낸 이메일 %1$d개가 이전 비밀번호로 암호화되어 있어 업데이트되지 않았습니다. 복원하려면 설정 &gt; 보안 &gt; 비밀번호 변경 &gt; 보낸 메일 복원을 여세요.</item>
+        <item quantity="one">비밀번호가 변경되었습니다. 보낸 메일 %1$d개는 이전 비밀번호로 암호화되어 잠긴 상태로 남습니다.</item>
+        <item quantity="other">비밀번호가 변경되었습니다. 보낸 메일 %1$d개는 이전 비밀번호로 암호화되어 잠긴 상태로 남습니다.</item>
     </plurals>
     <string name="compose_email_hint">메일 작성</string>
     <string name="snooze_later_today">오늘 늦게</string>
@@ -3185,4 +3176,15 @@
     <string name="no_contacts_match">\"%1$s\"와 일치하는 연락처가 없습니다.</string>
     <string name="no_contacts_in_trash">휴지통이 비어 있습니다</string>
     <string name="contacts_already_in_trash">일부 연락처가 이미 휴지통에 있습니다. 대신 복원하세요.</string>
+    <string name="emoji_search_placeholder">이모티콘 검색</string>
+    <string name="emoji_search_no_results">이모티콘을 찾을 수 없음</string>
+    <string name="emoji_group_recent">최근 사용</string>
+    <string name="emoji_group_smileys">스마일리 및 사람</string>
+    <string name="emoji_group_nature">동물 및 자연</string>
+    <string name="emoji_group_food">음식 및 음료</string>
+    <string name="emoji_group_activity">활동</string>
+    <string name="emoji_group_travel">여행 및 장소</string>
+    <string name="emoji_group_objects">사물</string>
+    <string name="emoji_group_symbols">기호</string>
+    <string name="domain_catch_all_hint">이 도메인의 모든 주소로 보낸 메일을 받습니다.</string>
 </resources>

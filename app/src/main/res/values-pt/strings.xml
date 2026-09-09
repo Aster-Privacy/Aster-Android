@@ -1300,19 +1300,10 @@
     <string name="server_returned_no_address">O servidor não retornou um endereço</string>
     <string name="scan_complete">Verificação completa</string>
     <string name="current_password_incorrect">A senha atual está incorreta</string>
-    <string name="password_change_background_reencrypt_failed">A tua palavra-passe foi alterada, mas parte do correio enviado e das definições não terminou de ser novamente encriptada. Contacta o suporte se algo aparecer ilegível.</string>
-    <string name="restore_sent_mail">Restaurar e-mails enviados</string>
-    <string name="restore_sent_mail_description">Se os e-mails enviados antes de uma alteração de senha não abrirem, digite a senha que você usava na época. O Aster Mail criptografa essas cópias novamente com sua senha atual.</string>
-    <string name="previous_password">Senha anterior</string>
-    <string name="enter_previous_password">Digite a senha anterior</string>
-    <string name="restore_sent_mail_running">Verificando e-mails enviados... %1$d verificados</string>
-    <string name="restore_sent_mail_result">%1$d e-mails enviados agora abrem com sua senha atual. %2$d ainda precisam de outra senha anterior.</string>
-    <string name="restore_sent_mail_nothing">Todos os e-mails enviados já abrem com sua senha atual.</string>
-    <string name="restore_sent_mail_failed">Alguns e-mails enviados não puderam ser atualizados. Verifique sua conexão e tente novamente.</string>
-    <string name="restore_sent_mail_session_expired">As chaves da sua sessão não estão disponíveis. Saia, entre novamente e tente de novo.</string>
+    <string name="password_change_background_reencrypt_failed">Sua senha mudou. O Aster Mail ainda está criptografando novamente parte dos e-mails enviados e conclui isso em segundo plano.</string>
     <plurals name="password_change_sent_mail_locked">
-        <item quantity="one">Sua senha foi alterada. %1$d e-mails enviados estavam criptografados com uma senha anterior e não foram atualizados. Para restaurá-los, abra Ajustes &gt; Segurança &gt; Alterar senha &gt; Restaurar e-mails enviados.</item>
-        <item quantity="other">Sua senha foi alterada. %1$d e-mails enviados estavam criptografados com uma senha anterior e não foram atualizados. Para restaurá-los, abra Ajustes &gt; Segurança &gt; Alterar senha &gt; Restaurar e-mails enviados.</item>
+        <item quantity="one">Sua senha mudou. %1$d e-mails enviados foram criptografados com uma senha anterior e continuam bloqueados.</item>
+        <item quantity="other">Sua senha mudou. %1$d e-mails enviados foram criptografados com uma senha anterior e continuam bloqueados.</item>
     </plurals>
     <string name="compose_email_hint">Compor e-mail</string>
     <string name="snooze_later_today">Mais tarde hoje</string>
@@ -3203,4 +3194,15 @@
     <string name="no_contacts_match">Nenhum contato corresponde a \"%1$s\"</string>
     <string name="no_contacts_in_trash">A lixeira está vazia</string>
     <string name="contacts_already_in_trash">Alguns contatos já estão na Lixeira. Restaure-os em vez disso.</string>
+    <string name="emoji_search_placeholder">Pesquisar emoji</string>
+    <string name="emoji_search_no_results">Nenhum emoji encontrado</string>
+    <string name="emoji_group_recent">Usados recentemente</string>
+    <string name="emoji_group_smileys">Smileys e pessoas</string>
+    <string name="emoji_group_nature">Animais e natureza</string>
+    <string name="emoji_group_food">Comida e bebida</string>
+    <string name="emoji_group_activity">Atividades</string>
+    <string name="emoji_group_travel">Viagens e lugares</string>
+    <string name="emoji_group_objects">Objetos</string>
+    <string name="emoji_group_symbols">Símbolos</string>
+    <string name="domain_catch_all_hint">Receba as mensagens enviadas para qualquer endereço deste domínio.</string>
 </resources>

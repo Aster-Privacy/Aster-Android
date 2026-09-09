@@ -869,14 +869,19 @@ private fun referral_history_row(item: org.astermail.android.api.labels.Referral
             }
         }
         Spacer(Modifier.width(AsterSpacing.sm))
+        val status_bg = org.astermail.android.ui.mail.chip_background(
+            status_color,
+            colors.bg_primary,
+            colors.is_dark,
+        )
         Text(
             text = stringResource(if (is_completed) R.string.completed else R.string.pending),
-            color = status_color,
+            color = org.astermail.android.ui.mail.chip_content(status_color, status_bg, colors.is_dark),
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier
                 .clip(RoundedCornerShape(AsterRadius.pill))
-                .background(status_color.copy(alpha = 0.15f))
+                .background(status_bg)
                 .padding(horizontal = 8.dp, vertical = 3.dp),
         )
         if (item.referrer_credit_cents > 0) {

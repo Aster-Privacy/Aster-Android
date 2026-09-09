@@ -50,6 +50,16 @@ class PreferencesCacheStore(context: Context? = null) {
         runCatching { prefs?.edit()?.putString(key, payload)?.apply() }
     }
 
+    fun read_badge_preferences(account_key: String?): String? {
+        val key = badge_prefs_entry_key(account_key) ?: return null
+        return runCatching { prefs?.getString(key, null) }.getOrNull()
+    }
+
+    fun write_badge_preferences(account_key: String?, payload: String) {
+        val key = badge_prefs_entry_key(account_key) ?: return
+        runCatching { prefs?.edit()?.putString(key, payload)?.apply() }
+    }
+
     fun read_signatures(account_key: String?): String? {
         val key = signature_entry_key(account_key) ?: return null
         return runCatching { prefs?.getString(key, null) }.getOrNull()
@@ -73,12 +83,14 @@ class PreferencesCacheStore(context: Context? = null) {
     fun clear(account_key: String?) {
         val key = entry_key(account_key) ?: return
         val badge_key = badge_entry_key(account_key)
+        val badge_prefs_key = badge_prefs_entry_key(account_key)
         val signature_key = signature_entry_key(account_key)
         val alias_key = alias_entry_key(account_key)
         runCatching {
             prefs?.edit()?.apply {
                 remove(key)
                 if (badge_key != null) remove(badge_key)
+                if (badge_prefs_key != null) remove(badge_prefs_key)
                 if (signature_key != null) remove(signature_key)
                 if (alias_key != null) remove(alias_key)
             }?.commit()
@@ -101,6 +113,12 @@ class PreferencesCacheStore(context: Context? = null) {
         return "$badge_key_prefix$id"
     }
 
+    private fun badge_prefs_entry_key(account_key: String?): String? {
+        val id = account_key?.trim().orEmpty()
+        if (id.isEmpty()) return null
+        return "$badge_prefs_key_prefix$id"
+    }
+
     private fun signature_entry_key(account_key: String?): String? {
         val id = account_key?.trim().orEmpty()
         if (id.isEmpty()) return null
@@ -117,6 +135,7 @@ class PreferencesCacheStore(context: Context? = null) {
         const val prefs_name = "aster_preferences_cache"
         const val key_prefix = "prefs_json_"
         const val badge_key_prefix = "badges_json_"
+        const val badge_prefs_key_prefix = "badge_prefs_json_"
         const val signature_key_prefix = "signatures_json_"
         const val alias_key_prefix = "alias_prefs_json_"
     }

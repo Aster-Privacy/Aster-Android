@@ -1299,19 +1299,10 @@
     <string name="server_returned_no_address">サーバーがアドレスを返しませんでした</string>
     <string name="scan_complete">スキャン完了</string>
     <string name="current_password_incorrect">現在のパスワードが正しくありません</string>
-    <string name="password_change_background_reencrypt_failed">パスワードは変更されましたが、送信済みメールと設定の一部の再暗号化が完了していません。メールや設定が読めない場合はサポートにご連絡ください。</string>
-    <string name="restore_sent_mail">送信済みメールを復元</string>
-    <string name="restore_sent_mail_description">パスワード変更前に送信したメールが開けない場合は、当時使用していたパスワードを入力してください。Aster Mail はそれらのコピーを現在のパスワードで再暗号化します。</string>
-    <string name="previous_password">以前のパスワード</string>
-    <string name="enter_previous_password">以前のパスワードを入力</string>
-    <string name="restore_sent_mail_running">送信済みメールを確認しています... %1$d 件確認済み</string>
-    <string name="restore_sent_mail_result">%1$d 件の送信済みメールが現在のパスワードで開けるようになりました。%2$d 件は別の以前のパスワードが必要です。</string>
-    <string name="restore_sent_mail_nothing">すべての送信済みメールはすでに現在のパスワードで開けます。</string>
-    <string name="restore_sent_mail_failed">一部の送信済みメールを更新できませんでした。接続を確認して、もう一度お試しください。</string>
-    <string name="restore_sent_mail_session_expired">セッションキーを利用できません。サインアウトしてからサインインし直し、もう一度お試しください。</string>
+    <string name="password_change_background_reencrypt_failed">パスワードが変更されました。Aster Mail は送信済みメールの一部を再暗号化中で、バックグラウンドで完了します。</string>
     <plurals name="password_change_sent_mail_locked">
-        <item quantity="one">パスワードが変更されました。%1$d 件の送信済みメールは以前のパスワードで暗号化されており、更新されませんでした。復元するには、設定 &gt; セキュリティ &gt; パスワードを変更 &gt; 送信済みメールを復元 を開いてください。</item>
-        <item quantity="other">パスワードが変更されました。%1$d 件の送信済みメールは以前のパスワードで暗号化されており、更新されませんでした。復元するには、設定 &gt; セキュリティ &gt; パスワードを変更 &gt; 送信済みメールを復元 を開いてください。</item>
+        <item quantity="one">パスワードが変更されました。%1$d 件の送信済みメールは以前のパスワードで暗号化されているため、ロックされたままです。</item>
+        <item quantity="other">パスワードが変更されました。%1$d 件の送信済みメールは以前のパスワードで暗号化されているため、ロックされたままです。</item>
     </plurals>
     <string name="compose_email_hint">メールを作成</string>
     <string name="snooze_later_today">今日中</string>
@@ -3185,4 +3176,15 @@
     <string name="no_contacts_match">\"%1$s\" に一致する連絡先はありません</string>
     <string name="no_contacts_in_trash">ゴミ箱は空です</string>
     <string name="contacts_already_in_trash">一部の連絡先はすでにゴミ箱にあります。復元してください。</string>
+    <string name="emoji_search_placeholder">絵文字を検索</string>
+    <string name="emoji_search_no_results">絵文字が見つかりません</string>
+    <string name="emoji_group_recent">最近使用した絵文字</string>
+    <string name="emoji_group_smileys">スマイリーと人</string>
+    <string name="emoji_group_nature">動物と自然</string>
+    <string name="emoji_group_food">食べ物と飲み物</string>
+    <string name="emoji_group_activity">アクティビティ</string>
+    <string name="emoji_group_travel">旅行と場所</string>
+    <string name="emoji_group_objects">物</string>
+    <string name="emoji_group_symbols">記号</string>
+    <string name="domain_catch_all_hint">このドメインのすべてのアドレス宛てのメールを受信します。</string>
 </resources>

@@ -208,30 +208,6 @@ private const val default_label_color = "#3b82f6"
 private val label_icon_presets: List<Pair<String, ImageVector>> =
     org.astermail.android.ui.common.label_icon_catalog
 
-private val category_icons: Map<String, androidx.compose.ui.graphics.vector.ImageVector> = mapOf(
-    "inbox" to TablerIcons.Inbox,
-    "tag" to TablerIcons.Discount,
-    "users" to TablerIcons.Users,
-    "bell" to TablerIcons.Bell,
-    "chat" to TablerIcons.MessageDots,
-    "credit_card" to TablerIcons.CreditCard,
-    "plane" to TablerIcons.Plane,
-    "shopping_bag" to TablerIcons.ShoppingCart,
-    "star" to TablerIcons.Star,
-    "heart" to TablerIcons.Heart,
-    "briefcase" to TablerIcons.Briefcase,
-    "home" to TablerIcons.Home,
-    "globe" to TablerIcons.World,
-    "academic_cap" to TablerIcons.School,
-    "megaphone" to TablerIcons.Speakerphone,
-    "gift" to TablerIcons.Gift,
-    "folder" to TablerIcons.Folder,
-    "sparkles" to TablerIcons.Wand,
-)
-
-private fun category_icon(icon: String): androidx.compose.ui.graphics.vector.ImageVector =
-    category_icons[icon] ?: TablerIcons.Tag
-
 private fun parse_hex_color(hex: String): Color =
     parse_hex_color_safe(hex) ?: Color(0xFF3B82F6)
 
@@ -459,7 +435,7 @@ fun DrawerContent(
                         androidx.compose.foundation.layout.Column {
                             category_children.forEachIndexed { index, entry ->
                                 drawer_row(
-                                    icon = category_icon(entry.icon),
+                                    icon = org.astermail.android.ui.common.category_icon_for(entry.icon),
                                     label = entry.label,
                                     count = category_unread[entry.id] ?: 0,
                                     is_unread_count = true,

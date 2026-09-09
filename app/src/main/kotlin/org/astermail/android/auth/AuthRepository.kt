@@ -121,6 +121,7 @@ class AuthRepository @Inject constructor(
     private val ratchet_bootstrap_service: org.astermail.android.mail.ratchet.RatchetBootstrapService,
     private val system_folder_bootstrap: org.astermail.android.mail.SystemFolderBootstrap,
     private val sent_mail_resealer: org.astermail.android.mail.SentMailResealer,
+    private val sent_mail_reseal_finisher: org.astermail.android.mail.SentMailResealFinisher,
     private val identity_pins: dagger.Lazy<org.astermail.android.mail.ratchet.RatchetIdentityPinStore>,
     @ApplicationContext private val context: Context,
 ) {
@@ -795,10 +796,14 @@ class AuthRepository @Inject constructor(
 
             runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
 
+            sent_mail_reseal_finisher.mark_pending(current_password_bytes)
+
             val reseal = runCatching {
                 sent_mail_resealer.run(current_password_bytes, new_password_bytes)
             }.getOrElse { org.astermail.android.mail.SentMailResealSummary(failed = 1) }
                 .let { if (pgp_rewrapped) it else it.copy(failed = it.failed + 1) }
+
+            if (reseal.failed == 0) sent_mail_reseal_finisher.mark_done()
 
             mail_repository.clear_caches()
             database.decrypted_mail_dao().clear_all()
@@ -811,24 +816,6 @@ class AuthRepository @Inject constructor(
             stored_salt.fill(0)
             preserved_data_kek.fill(0)
             reseal
-        }
-    }
-
-    suspend fun restore_sent_mail(
-        previous_password: String,
-        on_progress: ((org.astermail.android.mail.SentMailResealSummary) -> Unit)? = null,
-    ): Result<org.astermail.android.mail.SentMailResealSummary> = runCatching {
-        val current = session_key_store.get_passphrase()
-            ?: throw ApiError.ValidationError(
-                listOf(context.getString(R.string.restore_sent_mail_session_expired)),
-                "CLIENT_MESSAGE",
-            )
-        val previous = previous_password.toByteArray(Charsets.UTF_8)
-        try {
-            sent_mail_resealer.run(previous, current, on_progress)
-        } finally {
-            previous.fill(0)
-            current.fill(0)
         }
     }
 

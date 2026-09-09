@@ -67,6 +67,9 @@ class SessionKeyStore(context: Context? = null) {
     private var data_kek: ByteArray? = null
 
     @Volatile
+    private var pending_reseal_passphrase: ByteArray? = null
+
+    @Volatile
     private var ratchet_identity_jwk: String? = null
 
     @Volatile
@@ -117,6 +120,7 @@ class SessionKeyStore(context: Context? = null) {
                     legacy_keks = saved_keks.split("\n").filter { it.isNotBlank() }
                 }
                 data_kek = decode_b64_field(p, key_data_kek)
+                pending_reseal_passphrase = decode_b64_field(p, key_pending_reseal_pass)
                 ratchet_identity_jwk = p.getString(key_ratchet_identity_jwk, null)
                 ratchet_identity_public_b64 = p.getString(key_ratchet_identity_pub, null)
                 ratchet_signed_prekey_jwk = p.getString(key_ratchet_spk_jwk, null)
@@ -239,6 +243,28 @@ class SessionKeyStore(context: Context? = null) {
             passphrase?.let { it.fill(0) }
             passphrase = bytes.copyOf()
             prefs?.edit()?.putString(key_passphrase, encode_b64(bytes))?.commit()
+        }
+    }
+
+    fun put_pending_reseal_passphrase(bytes: ByteArray) {
+        synchronized(lock) {
+            pending_reseal_passphrase?.let { it.fill(0) }
+            pending_reseal_passphrase = bytes.copyOf()
+            prefs?.edit()?.putString(key_pending_reseal_pass, encode_b64(bytes))?.commit()
+        }
+    }
+
+    fun get_pending_reseal_passphrase(): ByteArray? {
+        synchronized(lock) {
+            return pending_reseal_passphrase?.copyOf()
+        }
+    }
+
+    fun clear_pending_reseal_passphrase() {
+        synchronized(lock) {
+            pending_reseal_passphrase?.fill(0)
+            pending_reseal_passphrase = null
+            prefs?.edit()?.remove(key_pending_reseal_pass)?.commit()
         }
     }
 
@@ -411,6 +437,8 @@ class SessionKeyStore(context: Context? = null) {
             legacy_keks = null
             data_kek?.fill(0)
             data_kek = null
+            pending_reseal_passphrase?.fill(0)
+            pending_reseal_passphrase = null
             ratchet_identity_jwk = null
             ratchet_identity_public_b64 = null
             ratchet_signed_prekey_jwk = null
@@ -445,6 +473,7 @@ class SessionKeyStore(context: Context? = null) {
         private const val key_previous_keys = "previous_keys"
         private const val key_legacy_keks = "legacy_keks"
         private const val key_data_kek = "data_kek"
+        private const val key_pending_reseal_pass = "pending_reseal_pass"
         private const val key_ratchet_identity_jwk = "ratchet_identity_jwk"
         private const val key_ratchet_identity_pub = "ratchet_identity_pub"
         private const val key_ratchet_spk_jwk = "ratchet_spk_jwk"

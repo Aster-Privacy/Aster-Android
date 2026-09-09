@@ -315,6 +315,16 @@
     <string name="star">Star</string>
     <string name="react">React</string>
     <string name="add_reaction">Add reaction</string>
+    <string name="emoji_search_placeholder">Search emoji</string>
+    <string name="emoji_search_no_results">No emoji found</string>
+    <string name="emoji_group_recent">Recently used</string>
+    <string name="emoji_group_smileys">Smileys and people</string>
+    <string name="emoji_group_nature">Animals and nature</string>
+    <string name="emoji_group_food">Food and drink</string>
+    <string name="emoji_group_activity">Activities</string>
+    <string name="emoji_group_travel">Travel and places</string>
+    <string name="emoji_group_objects">Objects</string>
+    <string name="emoji_group_symbols">Symbols</string>
     <string name="reactions_disabled">Reactions are turned off in your settings.</string>
     <string name="cannot_react_own_message">You cannot react to your own message.</string>
     <string name="cannot_react_draft">You cannot react to a draft or scheduled message.</string>
@@ -434,6 +444,8 @@
     <string name="message_location">Location</string>
     <string name="lock_message">Lock message</string>
     <string name="delete_draft">Delete draft</string>
+    <string name="delete_draft_question">Delete draft?</string>
+    <string name="delete_draft_confirm_description">This draft is deleted permanently and you cannot recover it.</string>
     <string name="attach_files">Attach files</string>
     <string name="archived">Archived</string>
     <string name="unstarred">Unstarred</string>
@@ -621,6 +633,7 @@
     <string name="filter_to">To</string>
     <string name="filter_has_attachment">Has attachment</string>
     <string name="filter_unread">Unread</string>
+    <string name="filter_unread_only">Unread only</string>
     <string name="filter_starred">Starred</string>
     <string name="filter_encrypted">Encrypted</string>
     <string name="decrypting_indexing">Decrypting and indexing mail...</string>
@@ -1841,19 +1854,10 @@
     <string name="server_returned_no_address">Server returned no address</string>
     <string name="scan_complete">Scan complete</string>
     <string name="current_password_incorrect">Current password is incorrect</string>
-    <string name="password_change_background_reencrypt_failed">Your password changed, but some of your sent mail and settings did not finish re-encrypting. Contact support if any mail or settings look unreadable.</string>
-    <string name="restore_sent_mail">Restore sent mail</string>
-    <string name="restore_sent_mail_description">If sent mail from before a password change won\'t open, enter the password you used at that time. Aster Mail re-encrypts those copies with your current password.</string>
-    <string name="previous_password">Previous password</string>
-    <string name="enter_previous_password">Enter the previous password</string>
-    <string name="restore_sent_mail_running">Checking sent mail... %1$d checked</string>
-    <string name="restore_sent_mail_result">%1$d sent emails now open with your current password. %2$d still need a different earlier password.</string>
-    <string name="restore_sent_mail_nothing">Every sent email already opens with your current password.</string>
-    <string name="restore_sent_mail_failed">Some sent mail could not be updated. Check your connection and try again.</string>
-    <string name="restore_sent_mail_session_expired">Your session keys are not available. Sign out, sign back in, and try again.</string>
+    <string name="password_change_background_reencrypt_failed">Your password changed. Aster Mail is still re-encrypting some of your sent mail and finishes that in the background.</string>
     <plurals name="password_change_sent_mail_locked">
-        <item quantity="one">Your password changed. %1$d sent emails were encrypted with an earlier password and did not update. To restore them, open Settings &gt; Security &gt; Change password &gt; Restore sent mail.</item>
-        <item quantity="other">Your password changed. %1$d sent emails were encrypted with an earlier password and did not update. To restore them, open Settings &gt; Security &gt; Change password &gt; Restore sent mail.</item>
+        <item quantity="one">Your password changed. %1$d sent emails were encrypted with an older password and stay locked.</item>
+        <item quantity="other">Your password changed. %1$d sent emails were encrypted with an older password and stay locked.</item>
     </plurals>
     <string name="compose_email_hint">Compose email</string>
     <string name="snooze_later_today">Later today</string>
@@ -2312,6 +2316,7 @@
     <string name="alias_unsubscribe_block">Block contact</string>
     <string name="alias_unsubscribe_block_desc">Block the sender and disable the alias</string>
     <string name="catch_all">Catch-all</string>
+    <string name="domain_catch_all_hint">Receive mail sent to any address on this domain.</string>
     <string name="dns_records">DNS Records</string>
     <string name="verify_dns_records">Verify DNS Records</string>
     <string name="create_directory">Create Directory</string>
@@ -2680,6 +2685,8 @@
     <string name="score_fair">Fair</string>
     <string name="score_partial">Partial</string>
     <string name="score_strong">Strong</string>
+    <string name="score_complete">All set</string>
+    <string name="score_steps_left">%1$d left</string>
     <string name="check_passkey_registered">Passkey registered</string>
     <string name="check_verified_recovery_email">Verified recovery email</string>
     <string name="check_read_receipts_off">Read receipts off</string>

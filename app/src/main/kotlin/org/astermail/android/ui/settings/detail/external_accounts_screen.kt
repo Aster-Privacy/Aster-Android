@@ -1078,16 +1078,18 @@ private fun sync_health_color(
 @Composable
 private fun account_badge(label: String, tone: androidx.compose.ui.graphics.Color) {
     val shape = SquircleShape(7.dp)
+    val colors = AsterMaterial.colors
+    val tone_background = org.astermail.android.ui.mail.chip_background(tone, colors.bg_primary, colors.is_dark)
     Text(
         text = label,
-        color = tone,
+        color = org.astermail.android.ui.mail.chip_content(tone, tone_background, colors.is_dark),
         fontSize = 10.sp,
         fontWeight = FontWeight.SemiBold,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
         modifier = Modifier
             .clip(shape)
-            .background(tone.copy(alpha = 0.12f))
+            .background(tone_background)
             .padding(horizontal = 6.dp, vertical = 2.dp),
     )
 }

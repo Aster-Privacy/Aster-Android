@@ -96,7 +96,8 @@ import org.astermail.android.design.aster_reduce_motion
 
 private val dropdown_surface_shape = SquircleShape(16.dp)
 private val dropdown_item_shape = SquircleShape(11.dp)
-private val dropdown_elevation = 16.dp
+private val dropdown_elevation = 12.dp
+private val dropdown_shadow_gutter = 26.dp
 private val dropdown_surface_padding = 7.dp
 private val dropdown_item_min_height = 34.dp
 private val dropdown_item_padding_vertical = 8.dp
@@ -121,25 +122,28 @@ private class aster_dropdown_position_provider(
     ): IntOffset {
         val x_offset = with(density) { offset.x.roundToPx() }
         val y_offset = with(density) { offset.y.roundToPx() }
+        val gutter = with(density) { dropdown_shadow_gutter.roundToPx() }
+        val surface_width = (popupContentSize.width - gutter * 2).coerceAtLeast(0)
+        val surface_height = (popupContentSize.height - gutter * 2).coerceAtLeast(0)
 
         var x = anchorBounds.left + x_offset
         var flip_x = false
-        if (x + popupContentSize.width > windowSize.width) {
-            x = anchorBounds.right - popupContentSize.width - x_offset
+        if (x + surface_width > windowSize.width) {
+            x = anchorBounds.right - surface_width - x_offset
             flip_x = true
         }
-        x = x.coerceIn(0, (windowSize.width - popupContentSize.width).coerceAtLeast(0))
+        x = x.coerceIn(0, (windowSize.width - surface_width).coerceAtLeast(0))
 
         val below = anchorBounds.bottom + y_offset
-        val above = anchorBounds.top - popupContentSize.height - y_offset
-        val flip_y = below + popupContentSize.height > windowSize.height && above >= 0
+        val above = anchorBounds.top - surface_height - y_offset
+        val flip_y = below + surface_height > windowSize.height && above >= 0
         on_flip(flip_x, flip_y)
         val y = if (flip_y) {
             above
         } else {
-            below.coerceAtMost((windowSize.height - popupContentSize.height).coerceAtLeast(0))
+            below.coerceAtMost((windowSize.height - surface_height).coerceAtLeast(0))
         }
-        return IntOffset(x, y)
+        return IntOffset(x - gutter, y - gutter)
     }
 }
 
@@ -232,41 +236,43 @@ fun aster_dropdown_menu(
                     }
                 }
             }
-            Column(
-                modifier = modifier
-                    .then(
-                        if (progress == null) {
-                            Modifier
-                        } else {
-                            Modifier.graphicsLayer {
-                                val t = progress.value
-                                val from = if (transition.targetState == EnterExitState.Visible) {
-                                    AsterScale.menu_enter_from
-                                } else {
-                                    AsterScale.menu_exit_to
+            Box(modifier = Modifier.padding(dropdown_shadow_gutter)) {
+                Column(
+                    modifier = modifier
+                        .then(
+                            if (progress == null) {
+                                Modifier
+                            } else {
+                                Modifier.graphicsLayer {
+                                    val t = progress.value
+                                    val from = if (transition.targetState == EnterExitState.Visible) {
+                                        AsterScale.menu_enter_from
+                                    } else {
+                                        AsterScale.menu_exit_to
+                                    }
+                                    val scale = from + (1f - from) * t
+                                    scaleX = scale
+                                    scaleY = scale
+                                    translationY = (1f - t) * (if (opens_upward) slide_px else -slide_px)
+                                    transformOrigin = TransformOrigin(
+                                        pivotFractionX = if (opens_leftward) 1f else 0f,
+                                        pivotFractionY = if (opens_upward) 1f else 0f,
+                                    )
                                 }
-                                val scale = from + (1f - from) * t
-                                scaleX = scale
-                                scaleY = scale
-                                translationY = (1f - t) * (if (opens_upward) slide_px else -slide_px)
-                                transformOrigin = TransformOrigin(
-                                    pivotFractionX = if (opens_leftward) 1f else 0f,
-                                    pivotFractionY = if (opens_upward) 1f else 0f,
-                                )
-                            }
-                        },
-                    )
-                    .shadow(dropdown_elevation, dropdown_surface_shape, clip = false)
-                    .clip(dropdown_surface_shape)
-                    .background(colors.dropdown_bg)
-                    .defaultMinSize(minWidth = min_width)
-                    .widthIn(max = max_width)
-                    .width(IntrinsicSize.Max)
-                    .heightIn(max = max_height)
-                    .verticalScroll(rememberScrollState())
-                    .padding(dropdown_surface_padding),
-                content = content,
-            )
+                            },
+                        )
+                        .shadow(dropdown_elevation, dropdown_surface_shape, clip = false)
+                        .clip(dropdown_surface_shape)
+                        .background(colors.dropdown_bg)
+                        .defaultMinSize(minWidth = min_width)
+                        .widthIn(max = max_width)
+                        .width(IntrinsicSize.Max)
+                        .heightIn(max = max_height)
+                        .verticalScroll(rememberScrollState())
+                        .padding(dropdown_surface_padding),
+                    content = content,
+                )
+            }
         }
     }
 }

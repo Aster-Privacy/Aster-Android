@@ -374,14 +374,16 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
 
 @Composable
 private fun recovery_status_badge(text: String, tint: Color) {
+    val colors = AsterMaterial.colors
+    val background = org.astermail.android.ui.mail.chip_background(tint, colors.bg_primary, colors.is_dark)
     Box(
         modifier = Modifier
-            .background(tint.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+            .background(background, RoundedCornerShape(8.dp))
             .padding(horizontal = AsterSpacing.sm, vertical = 2.dp),
     ) {
         Text(
             text = text,
-            color = tint,
+            color = org.astermail.android.ui.mail.chip_content(tint, background, colors.is_dark),
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,

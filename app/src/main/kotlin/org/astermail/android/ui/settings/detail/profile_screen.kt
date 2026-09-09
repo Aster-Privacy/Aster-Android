@@ -308,13 +308,19 @@ fun ProfileScreen(
 
 @Composable
 private fun badge_chip(badge: Badge) {
+    val colors = AsterMaterial.colors
     val visual = remember(badge.slug) { badge_visual_for(badge.slug) }
     val shape = remember { RoundedCornerShape(10.dp) }
+    val background = org.astermail.android.ui.mail.chip_background(
+        visual.color,
+        colors.bg_primary,
+        colors.is_dark,
+    )
+    val content = org.astermail.android.ui.mail.chip_content(visual.color, background, colors.is_dark)
     Row(
         modifier = Modifier
             .clip(shape)
-            .background(visual.color.copy(alpha = 0.13f))
-            .border(1.dp, visual.color.copy(alpha = 0.30f), shape)
+            .background(background, shape)
             .padding(horizontal = 10.dp, vertical = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(5.dp),
@@ -322,12 +328,12 @@ private fun badge_chip(badge: Badge) {
         Icon(
             imageVector = visual.icon,
             contentDescription = null,
-            tint = visual.color,
+            tint = content,
             modifier = Modifier.size(14.dp),
         )
         Text(
             text = badge.display_name,
-            color = visual.color,
+            color = content,
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
         )
@@ -335,7 +341,7 @@ private fun badge_chip(badge: Badge) {
         if (order != null && order >= 1) {
             Text(
                 text = format_find_order(order),
-                color = visual.color.copy(alpha = 0.70f),
+                color = content.copy(alpha = 0.70f),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
             )

@@ -155,14 +155,19 @@ internal fun panel_locked_section(title: String) {
 @Composable
 internal fun panel_row_chip(label: String) {
     val colors = AsterMaterial.colors
+    val danger_background = org.astermail.android.ui.mail.chip_background(
+        colors.danger,
+        colors.bg_primary,
+        colors.is_dark,
+    )
     Text(
         text = label,
-        color = colors.danger,
+        color = org.astermail.android.ui.mail.chip_content(colors.danger, danger_background, colors.is_dark),
         fontSize = 10.sp,
         fontWeight = FontWeight.Medium,
         modifier = Modifier
             .clip(CircleShape)
-            .background(colors.danger.copy(alpha = 0.14f))
+            .background(danger_background)
             .padding(horizontal = 6.dp, vertical = 2.dp),
     )
 }

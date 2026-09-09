@@ -2402,6 +2402,55 @@ private fun preference_option(
 }
 
 @Composable
+private fun domain_status_badge(text: String, tint: Color) {
+    val colors = AsterMaterial.colors
+    val background = org.astermail.android.ui.mail.chip_background(tint, colors.bg_card, colors.is_dark)
+    Box(
+        modifier = Modifier
+            .background(background, SquircleShape(8.dp))
+            .padding(horizontal = AsterSpacing.sm, vertical = 2.dp),
+    ) {
+        Text(
+            text = text,
+            color = org.astermail.android.ui.mail.chip_content(tint, background, colors.is_dark),
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun domain_setup_progress(done: Int, total: Int) {
+    val colors = AsterMaterial.colors
+    val complete = total > 0 && done >= total
+    val fraction = if (total <= 0) 0f else (done.toFloat() / total.toFloat()).coerceIn(0f, 1f)
+    val fill_tint = if (complete) colors.success else colors.accent_blue
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(6.dp)
+                .background(colors.bg_tertiary, SquircleShape(999.dp)),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(fraction)
+                    .height(6.dp)
+                    .background(fill_tint, SquircleShape(999.dp)),
+            )
+        }
+        Spacer(Modifier.width(AsterSpacing.sm))
+        Text(
+            text = stringResource(R.string.domain_records_verified, done, total),
+            color = if (complete) colors.success else colors.text_tertiary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+@Composable
 private fun domain_card(
     domain: CustomDomain,
     is_expanded: Boolean,
@@ -2478,10 +2527,10 @@ private fun domain_card(
                             },
                         ),
                     )
-                    Text(
+                    v_gap(3.dp)
+                    domain_status_badge(
                         text = status_label,
-                        color = if (is_active) colors.success else if (is_blocked) colors.danger else colors.warning,
-                        fontSize = 12.sp,
+                        tint = if (is_active) colors.success else if (is_blocked) colors.danger else colors.warning,
                     )
                     if (grace_ends != null) {
                         Text(
@@ -2515,7 +2564,20 @@ private fun domain_card(
                 v_gap(AsterSpacing.md)
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.catch_all), color = colors.text_primary.copy(alpha = if (catch_all_locked) 0.4f else 1f), fontSize = 14.sp, modifier = Modifier.weight(1f))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.catch_all),
+                            color = colors.text_primary.copy(alpha = if (catch_all_locked) 0.4f else 1f),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                        Text(
+                            text = stringResource(R.string.domain_catch_all_hint),
+                            color = colors.text_tertiary,
+                            fontSize = 12.sp,
+                        )
+                    }
+                    Spacer(Modifier.width(AsterSpacing.sm))
                     AsterSwitch(
                         checked = domain.catch_all_enabled && !catch_all_locked,
                         onCheckedChange = { if (!catch_all_locked) on_toggle_catch_all() },
@@ -2524,37 +2586,40 @@ private fun domain_card(
                 }
 
                 v_gap(AsterSpacing.md)
-                Text(stringResource(R.string.domain_dns_records), color = colors.text_secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                v_gap(4.dp)
-                Text(
-                    text = stringResource(R.string.domain_dns_instructions),
-                    color = colors.text_tertiary,
-                    fontSize = 12.sp,
-                )
-                v_gap(AsterSpacing.sm)
 
-                val record_states = listOf(
+                val flag_states = listOf(
                     "TXT" to domain.txt_verified,
                     "MX" to domain.mx_verified,
                     "SPF" to domain.spf_verified,
                     "DKIM" to domain.dkim_verified,
                     "DMARC" to domain.dmarc_configured,
                 )
+                val total_records = if (dns_records.isNotEmpty()) dns_records.size else flag_states.size
+                val done_records = if (dns_records.isNotEmpty()) {
+                    dns_records.count { it.verified }
+                } else {
+                    flag_states.count { it.second }
+                }
+
                 Text(
-                    text = stringResource(
-                        R.string.domain_records_verified,
-                        record_states.count { it.second },
-                        record_states.size,
-                    ),
-                    color = colors.text_tertiary,
-                    fontSize = 12.sp,
+                    text = stringResource(R.string.domain_dns_records),
+                    color = colors.text_primary,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
-                v_gap(4.dp)
-                record_states.forEach { (label, verified) -> dns_record_row(label, verified) }
+                v_gap(2.dp)
+                Text(
+                    text = stringResource(R.string.domain_dns_instructions),
+                    color = colors.text_tertiary,
+                    fontSize = 12.sp,
+                )
+                v_gap(AsterSpacing.sm)
+                domain_setup_progress(done = done_records, total = total_records)
+                v_gap(AsterSpacing.sm)
 
-                if (dns_records.isNotEmpty()) {
-                    v_gap(AsterSpacing.sm)
+                if (dns_records.isEmpty()) {
+                    flag_states.forEach { (label, verified) -> dns_record_row(label, verified) }
+                } else {
                     dns_records.forEachIndexed { index, record ->
                         if (index > 0) v_gap(AsterSpacing.sm)
                         dns_record_detail(
@@ -2602,25 +2667,18 @@ private fun dns_record_detail(record: DnsRecord, on_copy: (String, String) -> Un
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(colors.bg_secondary, RoundedCornerShape(10.dp))
-            .padding(AsterSpacing.sm),
+            .background(colors.bg_secondary, SquircleShape(14.dp))
+            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = if (record.verified) TablerIcons.Check else TablerIcons.Clock,
-                contentDescription = null,
-                tint = if (record.verified) colors.success else colors.text_muted,
-                modifier = Modifier.size(16.dp),
-            )
-            Spacer(Modifier.width(AsterSpacing.sm))
             Text(
                 text = record.type.uppercase(),
                 color = colors.text_primary,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1f),
             )
-            Spacer(Modifier.width(AsterSpacing.sm))
-            Text(
+            domain_status_badge(
                 text = if (record.verified) {
                     stringResource(R.string.domain_record_found)
                 } else if (record.required) {
@@ -2628,9 +2686,7 @@ private fun dns_record_detail(record: DnsRecord, on_copy: (String, String) -> Un
                 } else {
                     stringResource(R.string.domain_record_recommended)
                 },
-                color = if (record.verified) colors.success else colors.text_tertiary,
-                fontSize = 11.sp,
-                modifier = Modifier.weight(1f),
+                tint = if (record.verified) colors.success else if (record.required) colors.warning else colors.text_tertiary,
             )
         }
         v_gap(4.dp)

@@ -3371,8 +3371,9 @@ private fun chip_input(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .shadow(8.dp, SquircleShape(18.dp))
-                            .background(colors.bg_card, SquircleShape(18.dp))
+                            .shadow(12.dp, SquircleShape(18.dp), clip = false)
+                            .clip(SquircleShape(18.dp))
+                            .background(colors.bg_card)
                             .heightIn(max = 200.dp)
                             .verticalScroll(rememberScrollState())
                             .padding(vertical = 4.dp),

@@ -1302,21 +1302,10 @@
     <string name="server_returned_no_address">Сервер не вернул адрес</string>
     <string name="scan_complete">Сканирование завершено</string>
     <string name="current_password_incorrect">Текущий пароль неверен</string>
-    <string name="password_change_background_reencrypt_failed">Пароль изменён, но часть отправленных писем и настроек не была перешифрована. Обратитесь в службу поддержки, если письма или настройки отображаются неверно.</string>
-    <string name="restore_sent_mail">Восстановить отправленные письма</string>
-    <string name="restore_sent_mail_description">Если отправленные письма, созданные до смены пароля, не открываются, введите пароль, который вы использовали тогда. Aster Mail заново зашифрует эти копии вашим текущим паролем.</string>
-    <string name="previous_password">Предыдущий пароль</string>
-    <string name="enter_previous_password">Введите предыдущий пароль</string>
-    <string name="restore_sent_mail_running">Проверка отправленных писем... проверено: %1$d</string>
-    <string name="restore_sent_mail_result">%1$d отправленных писем теперь открываются текущим паролем. %2$d по-прежнему требуют другой прежний пароль.</string>
-    <string name="restore_sent_mail_nothing">Все отправленные письма уже открываются текущим паролем.</string>
-    <string name="restore_sent_mail_failed">Некоторые отправленные письма не удалось обновить. Проверьте подключение и повторите попытку.</string>
-    <string name="restore_sent_mail_session_expired">Ключи сеанса недоступны. Выйдите, войдите снова и повторите попытку.</string>
+    <string name="password_change_background_reencrypt_failed">Пароль изменен. Aster Mail еще перешифровывает часть отправленных писем и завершит это в фоновом режиме.</string>
     <plurals name="password_change_sent_mail_locked">
-        <item quantity="one">Пароль изменён. %1$d отправленных писем были зашифрованы прежним паролем и не обновились. Чтобы восстановить их, откройте Настройки &gt; Безопасность &gt; Изменить пароль &gt; Восстановить отправленные письма.</item>
-        <item quantity="few">Пароль изменён. %1$d отправленных писем были зашифрованы прежним паролем и не обновились. Чтобы восстановить их, откройте Настройки &gt; Безопасность &gt; Изменить пароль &gt; Восстановить отправленные письма.</item>
-        <item quantity="many">Пароль изменён. %1$d отправленных писем были зашифрованы прежним паролем и не обновились. Чтобы восстановить их, откройте Настройки &gt; Безопасность &gt; Изменить пароль &gt; Восстановить отправленные письма.</item>
-        <item quantity="other">Пароль изменён. %1$d отправленных писем были зашифрованы прежним паролем и не обновились. Чтобы восстановить их, откройте Настройки &gt; Безопасность &gt; Изменить пароль &gt; Восстановить отправленные письма.</item>
+        <item quantity="one">Пароль изменен. %1$d отправленных писем зашифрованы прежним паролем и остаются заблокированными.</item>
+        <item quantity="other">Пароль изменен. %1$d отправленных писем зашифрованы прежним паролем и остаются заблокированными.</item>
     </plurals>
     <string name="compose_email_hint">Написать письмо</string>
     <string name="snooze_later_today">Позже сегодня</string>
@@ -3245,4 +3234,15 @@
     <string name="no_contacts_match">Нет контактов по запросу «%1$s»</string>
     <string name="no_contacts_in_trash">Корзина пуста</string>
     <string name="contacts_already_in_trash">Некоторые контакты уже в Корзине. Восстановите их.</string>
+    <string name="emoji_search_placeholder">Поиск эмодзи</string>
+    <string name="emoji_search_no_results">Эмодзи не найдены</string>
+    <string name="emoji_group_recent">Недавние</string>
+    <string name="emoji_group_smileys">Смайлики и люди</string>
+    <string name="emoji_group_nature">Животные и природа</string>
+    <string name="emoji_group_food">Еда и напитки</string>
+    <string name="emoji_group_activity">Активности</string>
+    <string name="emoji_group_travel">Путешествия и места</string>
+    <string name="emoji_group_objects">Объекты</string>
+    <string name="emoji_group_symbols">Символы</string>
+    <string name="domain_catch_all_hint">Получайте письма, отправленные на любой адрес в этом домене.</string>
 </resources>

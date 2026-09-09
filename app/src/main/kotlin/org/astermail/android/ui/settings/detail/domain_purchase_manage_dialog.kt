@@ -25,6 +25,8 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.Check
 import compose.icons.tablericons.Clock
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -51,6 +53,7 @@ import org.astermail.android.api.settings.CustomDomain
 import org.astermail.android.api.settings.DnsRecord
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDialogPrimaryButton
@@ -261,10 +264,10 @@ private fun manage_domain_mail_setup(
     val verified_count = record_states.count { it.second }
     val all_verified = verified_count == record_states.size
 
-    manage_row(
+    manage_badge_row(
         label = stringResource(R.string.domain_manage_verification),
-        value = manage_domain_status_label(domain),
-        value_color = when {
+        text = manage_domain_status_label(domain),
+        tint = when {
             domain.status.equals("suspended", ignoreCase = true) ||
                 domain.status.equals("failed", ignoreCase = true) -> colors.danger
             all_verified || domain.status.equals("active", ignoreCase = true) -> colors.success
@@ -276,16 +279,9 @@ private fun manage_domain_mail_setup(
         value = domain.verified_at?.let { format_day(it) }
             ?: stringResource(R.string.domain_manage_never_verified),
     )
-    manage_row(
-        label = stringResource(R.string.domain_manage_records),
-        value = stringResource(
-            R.string.domain_records_verified,
-            verified_count,
-            record_states.size,
-        ),
-    )
-
-    Spacer(Modifier.height(AsterSpacing.xs))
+    Spacer(Modifier.height(AsterSpacing.sm))
+    manage_setup_progress(done = verified_count, total = record_states.size)
+    Spacer(Modifier.height(AsterSpacing.sm))
     record_states.forEach { (label, verified) ->
         manage_dns_status_row(
             label = label,
@@ -396,13 +392,79 @@ private fun manage_dns_status_row(label: String, verified: Boolean, detail: Stri
         } else {
             Spacer(Modifier.weight(1f))
         }
-        Text(
+        manage_status_badge(
             text = stringResource(
                 if (verified) R.string.domain_record_found else R.string.domain_record_pending,
             ),
-            color = if (verified) colors.success else colors.text_muted,
+            tint = if (verified) colors.success else colors.warning,
+        )
+    }
+}
+
+@Composable
+private fun manage_status_badge(text: String, tint: androidx.compose.ui.graphics.Color) {
+    val colors = AsterMaterial.colors
+    val background = org.astermail.android.ui.mail.chip_background(tint, colors.bg_card, colors.is_dark)
+    Box(
+        modifier = Modifier
+            .background(background, SquircleShape(8.dp))
+            .padding(horizontal = AsterSpacing.sm, vertical = 2.dp),
+    ) {
+        Text(
+            text = text,
+            color = org.astermail.android.ui.mail.chip_content(tint, background, colors.is_dark),
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun manage_badge_row(label: String, text: String, tint: androidx.compose.ui.graphics.Color) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            color = colors.text_tertiary,
+            fontSize = 14.sp,
+            modifier = Modifier.weight(1f),
+        )
+        manage_status_badge(text = text, tint = tint)
+    }
+}
+
+@Composable
+private fun manage_setup_progress(done: Int, total: Int) {
+    val colors = AsterMaterial.colors
+    val complete = total > 0 && done >= total
+    val fraction = if (total <= 0) 0f else (done.toFloat() / total.toFloat()).coerceIn(0f, 1f)
+    val fill_tint = if (complete) colors.success else colors.accent_blue
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(6.dp)
+                .background(colors.bg_tertiary, SquircleShape(999.dp)),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(fraction)
+                    .height(6.dp)
+                    .background(fill_tint, SquircleShape(999.dp)),
+            )
+        }
+        Spacer(Modifier.width(AsterSpacing.sm))
+        Text(
+            text = stringResource(R.string.domain_records_verified, done, total),
+            color = if (complete) colors.success else colors.text_tertiary,
             fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
+            fontWeight = FontWeight.SemiBold,
         )
     }
 }

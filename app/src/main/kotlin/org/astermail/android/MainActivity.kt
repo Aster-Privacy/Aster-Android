@@ -1684,7 +1684,6 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             inbox_category = "primary"
         }
     }
-    val category_titles = category_entries.associate { it.id to it.label }
     val theme_vm_inbox: ThemeViewModel = hiltViewModel()
 
     androidx.compose.runtime.LaunchedEffect(prefs?.custom_categories) {
@@ -2304,7 +2303,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_open_import = { nav_controller.navigate(routes.settings_detail("import")) },
                             current_folder = effective_mail_folder,
                             inbox_category = inbox_category,
-                            display_title = if (effective_selected_folder == "inbox" && categories_enabled) category_titles[inbox_category] else null,
+                            display_title = null,
                             on_folder_change = { selected_folder = it },
                             custom_folders = quick_custom_folders,
                             on_custom_folder_change = { id, name -> request_custom_folder(id, name) },
@@ -2316,6 +2315,12 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_all_mail_scope_change = { spam, trash ->
                                 all_mail_include_spam = spam
                                 all_mail_include_trash = trash
+                            },
+                            category_unread = category_unread,
+                            on_select_category = { cat ->
+                                filter_kind = null
+                                selected_folder = "inbox"
+                                inbox_category = cat
                             },
                         )
                     }

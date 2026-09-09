@@ -99,6 +99,7 @@ import org.astermail.android.design.mirror_in_rtl
 private const val activity_preview_count = 5
 private const val security_settle_delay_ms = 90L
 private const val security_load_timeout_ms = 5000L
+private const val security_score_max = 7
 
 @Composable
 private fun format_audit_event(type: String): String {
@@ -240,12 +241,10 @@ fun SecurityScreen(
         s
     }
 
-    val score_label = when (score) {
-        null -> "…"
-        in 0..2 -> stringResource(R.string.score_weak)
-        in 3..4 -> stringResource(R.string.score_fair)
-        in 5..6 -> stringResource(R.string.score_partial)
-        else -> stringResource(R.string.score_strong)
+    val score_label = when {
+        score == null -> "…"
+        score >= security_score_max -> stringResource(R.string.score_complete)
+        else -> stringResource(R.string.score_steps_left, security_score_max - score)
     }
     val score_color = when (score) {
         null -> colors.text_muted
@@ -326,20 +325,29 @@ fun SecurityScreen(
                             skeleton_block(score_shimmer, 52.dp, 17.dp, corner = 6.dp)
                         } else {
                             Text(
-                                text = "$score / 7",
+                                text = "$score / $security_score_max",
                                 color = score_color,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
                             )
                             Spacer(Modifier.width(AsterSpacing.xs))
+                            val badge_background = org.astermail.android.ui.mail.chip_background(
+                                score_color,
+                                colors.bg_primary,
+                                colors.is_dark,
+                            )
                             Box(
                                 modifier = Modifier
-                                    .background(score_color.copy(alpha = 0.15f), SquircleShape(6.dp))
+                                    .background(badge_background, SquircleShape(6.dp))
                                     .padding(horizontal = AsterSpacing.xs, vertical = 2.dp),
                             ) {
                                 Text(
                                     text = score_label,
-                                    color = score_color,
+                                    color = org.astermail.android.ui.mail.chip_content(
+                                        score_color,
+                                        badge_background,
+                                        colors.is_dark,
+                                    ),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.SemiBold,
                                 )
@@ -365,7 +373,7 @@ fun SecurityScreen(
                     if (score != null) {
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth(fraction = (score / 7f).coerceIn(0f, 1f))
+                                .fillMaxWidth(fraction = (score / security_score_max.toFloat()).coerceIn(0f, 1f))
                                 .height(6.dp)
                                 .clip(CircleShape)
                                 .background(score_color),
@@ -385,13 +393,70 @@ fun SecurityScreen(
                     exit = shrinkVertically() + fadeOut(),
                 ) {
                     Column(modifier = Modifier.padding(top = AsterSpacing.md)) {
-                        score_checklist_row(stringResource(R.string.two_factor_auth), sec?.totp_enabled == true, colors) { on_open("two_factor") }
-                        score_checklist_row(stringResource(R.string.check_passkey_registered), hardware_keys_count > 0, colors) { on_open("encryption") }
-                        score_checklist_row(stringResource(R.string.check_verified_recovery_email), recovery_email_verified, colors) { on_open("recovery_email") }
-                        score_checklist_row(stringResource(R.string.login_alerts), state.login_alerts_enabled == true, colors) { vm.set_login_alerts(state.login_alerts_enabled != true) }
-                        score_checklist_row(stringResource(R.string.block_tracking_pixels), prefs?.block_tracking_pixels == true, colors) { toggle { it.copy(block_tracking_pixels = it.block_tracking_pixels != true) } }
-                        score_checklist_row(stringResource(R.string.block_remote_images), prefs?.block_external_images == true, colors) { toggle { val on = it.block_external_images != true; it.copy(block_external_images = on, load_remote_images = if (on) "never" else "always") } }
-                        score_checklist_row(stringResource(R.string.strip_exif), prefs?.strip_exif_on_compose == true, colors) { toggle { it.copy(strip_exif = it.strip_exif_on_compose != true, strip_exif_on_compose = it.strip_exif_on_compose != true) } }
+                        score_checklist_row(
+                            label = stringResource(R.string.two_factor_auth),
+                            checked = sec?.totp_enabled == true,
+                            colors = colors,
+                            on_open = { on_open("two_factor") },
+                            on_toggle = null,
+                        )
+                        score_checklist_row(
+                            label = stringResource(R.string.check_passkey_registered),
+                            checked = hardware_keys_count > 0,
+                            colors = colors,
+                            on_open = { on_open("encryption") },
+                            on_toggle = null,
+                        )
+                        score_checklist_row(
+                            label = stringResource(R.string.check_verified_recovery_email),
+                            checked = recovery_email_verified,
+                            colors = colors,
+                            on_open = { on_open("recovery_email") },
+                            on_toggle = null,
+                        )
+                        score_checklist_row(
+                            label = stringResource(R.string.login_alerts),
+                            checked = state.login_alerts_enabled == true,
+                            colors = colors,
+                            on_open = null,
+                            on_toggle = { vm.set_login_alerts(state.login_alerts_enabled != true) },
+                        )
+                        score_checklist_row(
+                            label = stringResource(R.string.block_tracking_pixels),
+                            checked = prefs?.block_tracking_pixels == true,
+                            colors = colors,
+                            on_open = { on_open("privacy") },
+                            on_toggle = { toggle { it.copy(block_tracking_pixels = it.block_tracking_pixels != true) } },
+                        )
+                        score_checklist_row(
+                            label = stringResource(R.string.block_remote_images),
+                            checked = prefs?.block_external_images == true,
+                            colors = colors,
+                            on_open = { on_open("privacy") },
+                            on_toggle = {
+                                toggle {
+                                    val on = it.block_external_images != true
+                                    it.copy(
+                                        block_external_images = on,
+                                        load_remote_images = if (on) "never" else "always",
+                                    )
+                                }
+                            },
+                        )
+                        score_checklist_row(
+                            label = stringResource(R.string.strip_exif),
+                            checked = prefs?.strip_exif_on_compose == true,
+                            colors = colors,
+                            on_open = { on_open("privacy") },
+                            on_toggle = {
+                                toggle {
+                                    it.copy(
+                                        strip_exif = it.strip_exif_on_compose != true,
+                                        strip_exif_on_compose = it.strip_exif_on_compose != true,
+                                    )
+                                }
+                            },
+                        )
                     }
                 }
             }
@@ -1105,43 +1170,55 @@ private fun score_checklist_row(
     label: String,
     checked: Boolean,
     colors: org.astermail.android.design.AsterSemanticColors,
-    on_click: () -> Unit,
+    on_open: (() -> Unit)?,
+    on_toggle: (() -> Unit)?,
 ) {
+    val row_action = on_open ?: on_toggle
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(SquircleShape(8.dp))
-            .clickable(onClick = on_click)
-            .padding(vertical = 5.dp, horizontal = 2.dp),
+            .then(if (row_action == null) Modifier else Modifier.clickable(onClick = row_action))
+            .padding(vertical = 3.dp, horizontal = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (checked) {
-            Icon(
-                imageVector = TablerIcons.CircleCheck,
-                contentDescription = null,
-                tint = colors.success,
-                modifier = Modifier.size(17.dp),
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .size(17.dp)
-                    .border(1.5.dp, colors.text_muted, CircleShape),
-            )
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clip(CircleShape)
+                .then(if (on_toggle == null) Modifier else Modifier.clickable(onClick = on_toggle)),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (checked) {
+                Icon(
+                    imageVector = TablerIcons.CircleCheck,
+                    contentDescription = null,
+                    tint = colors.success,
+                    modifier = Modifier.size(17.dp),
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(17.dp)
+                        .border(1.5.dp, colors.text_muted, CircleShape),
+                )
+            }
         }
-        Spacer(Modifier.width(AsterSpacing.sm))
+        Spacer(Modifier.width(AsterSpacing.xs))
         Text(
             text = label,
             color = if (checked) colors.text_primary else colors.text_tertiary,
             fontSize = 13.sp,
             modifier = Modifier.weight(1f),
         )
-        Icon(
-            imageVector = TablerIcons.ChevronRight,
-            contentDescription = null,
-            tint = colors.text_muted,
-            modifier = Modifier.size(14.dp).mirror_in_rtl(),
-        )
+        if (on_open != null) {
+            Icon(
+                imageVector = TablerIcons.ChevronRight,
+                contentDescription = null,
+                tint = colors.text_muted,
+                modifier = Modifier.size(14.dp).mirror_in_rtl(),
+            )
+        }
     }
 }
 

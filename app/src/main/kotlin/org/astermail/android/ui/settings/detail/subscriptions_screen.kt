@@ -1899,15 +1899,20 @@ private fun plan_tier_card(
             }
             if (is_yearly && save_cents != null) {
                 Spacer(Modifier.height(AsterSpacing.sm))
+                val save_bg = org.astermail.android.ui.mail.chip_background(
+                    colors.success,
+                    colors.bg_primary,
+                    colors.is_dark,
+                )
                 Box(
                     modifier = Modifier
                         .clip(SquircleShape(10.dp))
-                        .background(colors.success.copy(alpha = 0.15f))
+                        .background(save_bg)
                         .padding(horizontal = AsterSpacing.sm, vertical = 3.dp),
                 ) {
                     Text(
                         text = stringResource(R.string.plan_save_per_year, format_price(save_cents, currency)),
-                        color = colors.success,
+                        color = org.astermail.android.ui.mail.chip_content(colors.success, save_bg, colors.is_dark),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                     )

@@ -31,8 +31,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 data class BadgeVisual(val icon: ImageVector, val color: Color)
 
 private val BADGE_VISUALS: Map<String, BadgeVisual> = mapOf(
-    "big_bang" to BadgeVisual(TablerIcons.Wand, Color(0xFFFBBF24)),
-    "event_horizon" to BadgeVisual(TablerIcons.MoonStars, Color(0xFF8B5CF6)),
+    "big_bang" to BadgeVisual(TablerIcons.Flare, Color(0xFFFBBF24)),
+    "event_horizon" to BadgeVisual(TablerIcons.Moon, Color(0xFF8B5CF6)),
     "black_hole" to BadgeVisual(TablerIcons.World, Color(0xFF6366F1)),
     "singularity" to BadgeVisual(TablerIcons.Bulb, Color(0xFF94A3B8)),
     "supernova" to BadgeVisual(TablerIcons.Sun, Color(0xFFF97316)),

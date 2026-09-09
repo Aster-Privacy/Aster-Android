@@ -28,6 +28,7 @@ import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
 import compose.icons.tablericons.AlertTriangle
 import compose.icons.tablericons.*
+import compose.icons.tablericons.Plus
 
 import org.astermail.android.ui.icons.pin_icon
 import org.astermail.android.ui.icons.pin_icon_filled
@@ -191,7 +192,20 @@ import org.astermail.android.design.mirror_in_rtl
 import org.astermail.android.util.clip_units
 import org.astermail.android.util.clip_with_ellipsis
 
-private val placeholder_body_height = 140.dp
+private val placeholder_body_height = 240.dp
+private const val thread_draft_remove_ms = 260L
+
+private val body_tag_regex = Regex("<[^>]{0,4000}>")
+private val body_image_tag_regex = Regex("<img", RegexOption.IGNORE_CASE)
+
+private fun estimated_body_height(html: String, width_dp: Int): androidx.compose.ui.unit.Dp {
+    val sample = if (html.length > 200000) html.substring(0, 200000) else html
+    val text_length = body_tag_regex.replace(sample, " ").trim().length
+    val chars_per_line = (width_dp / 7).coerceAtLeast(24)
+    val lines = (text_length + chars_per_line - 1) / chars_per_line + 2
+    val images = body_image_tag_regex.findAll(sample).count().coerceAtMost(10)
+    return (lines * 19 + images * 150).coerceIn(120, 1600).dp
+}
 
 private fun escape_body_text(raw: String): String = raw
     .replace("&", "&amp;")
@@ -1466,47 +1480,11 @@ fun MailDetailScreen(
                             }
                         },
                     )
-                    val thread_draft_token = thread_state.item?.thread_token
-                    if (!thread_draft_token.isNullOrBlank()) {
-                        val lifecycle_owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-                        var thread_draft by remember(thread_draft_token) {
-                            mutableStateOf<org.astermail.android.mail.InboxItem?>(null)
-                        }
-                        var draft_probe_key by remember(thread_draft_token) { mutableStateOf(0) }
-                        DisposableEffect(lifecycle_owner, thread_draft_token) {
-                            val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-                                if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) draft_probe_key++
-                            }
-                            lifecycle_owner.lifecycle.addObserver(observer)
-                            onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }
-                        }
-                        LaunchedEffect(thread_draft_token, draft_probe_key) {
-                            thread_draft = mail_vm.load_thread_draft(thread_draft_token)
-                        }
-                        val draft = thread_draft
-                        if (draft != null) {
-                            val summary = draft.subject.takeIf {
-                                it.isNotBlank() && it != stringResource(R.string.no_subject)
-                            } ?: draft.preview
-                            thread_draft_chip(
-                                summary = summary,
-                                on_edit = {
-                                    context.startActivity(
-                                        org.astermail.android.ComposeActivity.intent_for(
-                                            context,
-                                            mode = "draft",
-                                            draft_id = draft.id,
-                                        ),
-                                    )
-                                },
-                                on_delete = {
-                                    mail_vm.delete_thread_draft(draft.id) { ok ->
-                                        if (ok) thread_draft = null
-                                    }
-                                },
-                            )
-                        }
-                    }
+                    thread_draft_slot(
+                        email_id = email_id,
+                        thread_token = thread_state.item?.thread_token,
+                        mail_vm = mail_vm,
+                    )
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -2393,7 +2371,8 @@ internal fun expanded_message(
                 email_body_skeleton(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = AsterSpacing.xs, bottom = AsterSpacing.sm)
+                        .height(placeholder_body_height)
+                        .clipToBounds()
                         .testTag("message_body"),
                 )
             }
@@ -2629,66 +2608,153 @@ private fun reply_action_row(
 }
 
 @Composable
+private fun thread_draft_slot(
+    email_id: String,
+    thread_token: String?,
+    mail_vm: MailViewModel,
+) {
+    val context = LocalContext.current
+    val lifecycle_owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    var resolved_token by remember(email_id) {
+        mutableStateOf(thread_token?.takeIf { it.isNotBlank() } ?: mail_vm.thread_token_for(email_id))
+    }
+    LaunchedEffect(email_id, thread_token) {
+        val incoming = thread_token?.takeIf { it.isNotBlank() }
+        if (incoming != null) resolved_token = incoming
+    }
+    val token = resolved_token
+    if (token.isNullOrBlank()) return
+    var thread_draft by remember(token) { mutableStateOf<org.astermail.android.mail.InboxItem?>(null) }
+    var draft_probe_key by remember(token) { mutableStateOf(0) }
+    DisposableEffect(lifecycle_owner, token) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) draft_probe_key++
+        }
+        lifecycle_owner.lifecycle.addObserver(observer)
+        onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }
+    }
+    LaunchedEffect(token, draft_probe_key) {
+        thread_draft = mail_vm.load_thread_draft(token)
+    }
+    val draft = thread_draft ?: return
+    val no_subject = stringResource(R.string.no_subject)
+    val summary = draft.subject.takeIf { it.isNotBlank() && it != no_subject } ?: draft.preview
+    thread_draft_chip(
+        summary = summary,
+        on_edit = {
+            context.startActivity(
+                org.astermail.android.ComposeActivity.intent_for(
+                    context,
+                    mode = "draft",
+                    draft_id = draft.id,
+                ),
+            )
+        },
+        on_delete = {
+            mail_vm.delete_thread_draft(draft.id) { ok ->
+                thread_draft = null
+                if (!ok) draft_probe_key++
+            }
+        },
+    )
+}
+
+@Composable
 private fun thread_draft_chip(
     summary: String,
     on_edit: () -> Unit,
     on_delete: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = AsterSpacing.md)
-            .padding(bottom = AsterSpacing.sm)
-            .clip(SquircleShape(14.dp))
-            .background(colors.bg_secondary)
-            .clickable(onClick = on_edit)
-            .padding(horizontal = AsterSpacing.sm, vertical = 8.dp)
-            .testTag("thread_draft_chip"),
-        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-        verticalAlignment = Alignment.CenterVertically,
+    val reduce_motion = aster_reduce_motion()
+    var confirm_open by remember { mutableStateOf(false) }
+    var removing by remember { mutableStateOf(false) }
+
+    LaunchedEffect(removing) {
+        if (!removing) return@LaunchedEffect
+        kotlinx.coroutines.delay(if (reduce_motion) 0L else thread_draft_remove_ms)
+        on_delete()
+    }
+
+    AnimatedVisibility(
+        visible = !removing,
+        enter = fadeIn(animationSpec = tween(AsterDuration.instant)),
+        exit = if (reduce_motion) {
+            fadeOut(animationSpec = tween(AsterDuration.instant))
+        } else {
+            shrinkVertically(animationSpec = tween(thread_draft_remove_ms.toInt())) +
+                fadeOut(animationSpec = tween(thread_draft_remove_ms.toInt()))
+        },
     ) {
-        Icon(
-            imageVector = TablerIcons.Pencil,
-            contentDescription = null,
-            tint = colors.accent_blue,
-            modifier = Modifier.size(16.dp),
-        )
-        Text(
-            text = stringResource(R.string.sender_draft),
-            style = MaterialTheme.typography.labelMedium,
-            color = colors.text_primary,
-        )
-        Text(
-            text = summary,
-            style = MaterialTheme.typography.bodySmall,
-            color = colors.text_secondary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        Box(
+        Row(
             modifier = Modifier
-                .clip(SquircleShape(999.dp))
-                .clickable(onClick = on_delete)
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-                .testTag("thread_draft_delete"),
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.md)
+                .padding(bottom = AsterSpacing.sm)
+                .clip(SquircleShape(14.dp))
+                .background(colors.bg_secondary)
+                .clickable(onClick = on_edit)
+                .padding(horizontal = AsterSpacing.sm, vertical = 8.dp)
+                .testTag("thread_draft_chip"),
+            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = stringResource(R.string.delete),
-                style = MaterialTheme.typography.labelMedium,
-                color = colors.accent_blue,
+            Icon(
+                imageVector = TablerIcons.Pencil,
+                contentDescription = null,
+                tint = colors.accent_blue,
+                modifier = Modifier.size(16.dp),
             )
+            Text(
+                text = stringResource(R.string.sender_draft),
+                style = MaterialTheme.typography.labelMedium,
+                color = colors.text_primary,
+            )
+            Text(
+                text = summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.text_secondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            Box(
+                modifier = Modifier
+                    .clip(SquircleShape(999.dp))
+                    .clickable { confirm_open = true }
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .testTag("thread_draft_delete"),
+            ) {
+                Text(
+                    text = stringResource(R.string.delete),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.accent_blue,
+                )
+            }
         }
     }
-}
 
-private val QUICK_REACTIONS = listOf("👍", "❤️", "😂", "🎉", "😮", "😢")
+    if (confirm_open) {
+        org.astermail.android.design.components.AsterAlertDialog(
+            on_dismiss = { confirm_open = false },
+            title = stringResource(R.string.delete_draft_question),
+            message = stringResource(R.string.delete_draft_confirm_description),
+            confirm_label = stringResource(R.string.delete),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            on_confirm = {
+                confirm_open = false
+                removing = true
+            },
+        )
+    }
+}
 
 @Composable
 private fun reaction_quick_picker(visible: Boolean, on_pick: (String) -> Unit) {
     val colors = AsterMaterial.colors
     val picker_reduce_motion = aster_reduce_motion()
+    var picker_sheet_open by remember { mutableStateOf(false) }
     AnimatedVisibility(
         visible = visible,
         enter = if (picker_reduce_motion) {
@@ -2717,7 +2783,7 @@ private fun reaction_quick_picker(visible: Boolean, on_pick: (String) -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            QUICK_REACTIONS.forEach { emoji ->
+            quick_reaction_emoji.forEach { emoji ->
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -2730,7 +2796,33 @@ private fun reaction_quick_picker(visible: Boolean, on_pick: (String) -> Unit) {
                     Text(text = emoji, fontSize = 18.sp)
                 }
             }
+            Box(
+                modifier = Modifier
+                    .width(40.dp)
+                    .height(40.dp)
+                    .clip(SquircleShape(999.dp))
+                    .background(colors.bg_tertiary)
+                    .clickable { picker_sheet_open = true },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = TablerIcons.Plus,
+                    contentDescription = stringResource(R.string.add_reaction),
+                    tint = colors.text_secondary,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
         }
+    }
+
+    if (picker_sheet_open) {
+        reaction_picker_sheet(
+            on_close = { picker_sheet_open = false },
+            on_pick = { emoji ->
+                picker_sheet_open = false
+                on_pick(emoji)
+            },
+        )
     }
 }
 
@@ -3937,6 +4029,9 @@ private object action_menu_position_provider : PopupPositionProvider {
     ): IntOffset = IntOffset.Zero
 }
 
+private val action_menu_elevation = 12.dp
+private val action_menu_shadow_gutter = 22.dp
+
 @Composable
 internal fun action_menu_sheet(
     expanded: Boolean,
@@ -3964,8 +4059,6 @@ internal fun action_menu_sheet(
     val shape = SquircleShape(20.dp)
     val scrim_interaction = remember { MutableInteractionSource() }
     val menu_reduce_motion = aster_reduce_motion()
-    val menu_scrim_enter = if (menu_reduce_motion) AsterDuration.instant else AsterDuration.scrim_enter
-    val menu_scrim_exit = if (menu_reduce_motion) AsterDuration.instant else AsterDuration.scrim_exit
     val menu_pop_fade_enter = if (menu_reduce_motion) AsterDuration.instant else AsterDuration.menu_fade_enter
     val menu_pop_enter = if (menu_reduce_motion) AsterDuration.instant else AsterDuration.menu_enter
     val menu_pop_fade_exit = if (menu_reduce_motion) AsterDuration.instant else AsterDuration.menu_fade_exit
@@ -3976,28 +4069,21 @@ internal fun action_menu_sheet(
         properties = PopupProperties(focusable = true),
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            AnimatedVisibility(
-                visibleState = visible_state,
-                enter = fadeIn(animationSpec = tween(menu_scrim_enter)),
-                exit = fadeOut(animationSpec = tween(menu_scrim_exit)),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.28f))
-                        .clickable(
-                            interactionSource = scrim_interaction,
-                            indication = null,
-                            onClick = on_close,
-                        ),
-                )
-            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(
+                        interactionSource = scrim_interaction,
+                        indication = null,
+                        onClick = on_close,
+                    ),
+            )
             AnimatedVisibility(
                 visibleState = visible_state,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .navigationBarsPadding()
-                    .padding(end = AsterSpacing.sm, bottom = AsterSpacing.sm),
+                    .padding(end = action_menu_shadow_gutter, bottom = action_menu_shadow_gutter),
                 enter = fadeIn(
                     animationSpec = tween(
                         menu_pop_fade_enter,
@@ -4025,7 +4111,7 @@ internal fun action_menu_sheet(
                 Column(
                     modifier = Modifier
                         .testTag("action_menu")
-                        .shadow(18.dp, shape, clip = false)
+                        .shadow(action_menu_elevation, shape, clip = false)
                         .clip(shape)
                         .background(colors.dropdown_bg)
                         .widthIn(min = 240.dp, max = 320.dp)
@@ -5024,6 +5110,7 @@ internal fun email_html_view(
         (html_cache.height_key(html_hash, allow_external, screen_width_dp, text_zoom) * 31L + (if (dyslexia_font) 1L else 0L)) *
             31L + email_font_id.hashCode().toLong()
     }
+    val estimated_height = remember(html_hash, screen_width_dp) { estimated_body_height(html, screen_width_dp) }
     val cached_height = remember(height_cache_key) { body_height_cache.get(height_cache_key) }
     var content_height_dp by remember(height_cache_key) { mutableStateOf((cached_height ?: 0f).dp) }
     var has_measured by remember(height_cache_key) { mutableStateOf(cached_height != null) }
@@ -5170,7 +5257,7 @@ internal fun email_html_view(
                 0.dp
             }
             if (content_height_dp <= 0.dp) {
-                content_height_dp = if (native > 0.dp) native else placeholder_body_height
+                content_height_dp = if (native > 0.dp) native else estimated_height
             }
             has_measured = true
             on_ready()
@@ -5623,7 +5710,7 @@ internal fun email_html_view(
                 }
             },
             modifier = run {
-                val target = if (has_measured && content_height_dp > 0.dp) content_height_dp else placeholder_body_height
+                val target = if (has_measured && content_height_dp > 0.dp) content_height_dp else estimated_height
                 Modifier
                     .fillMaxWidth()
                     .height(target)

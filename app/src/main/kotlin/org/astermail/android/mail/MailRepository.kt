@@ -1420,7 +1420,8 @@ class MailRepository @Inject constructor(
 
     suspend fun fetch_thread_draft(thread_token: String): InboxItem? {
         if (thread_token.isBlank()) return null
-        val draft = runCatching { mail_api.get_thread_draft(thread_token) }.getOrNull() ?: return null
+        val probe = runCatching { mail_api.get_thread_draft(thread_token) }
+        val draft = probe.getOrNull() ?: return null
         draft_item_cache[draft.id] = draft
         return decrypt_draft_item(draft)
     }
@@ -1499,6 +1500,17 @@ class MailRepository @Inject constructor(
         }
     }
 
+    fun thread_token_for(original_email_id: String): String? {
+        if (!is_uuid(original_email_id)) return null
+        return try {
+            val digest = MessageDigest.getInstance("SHA-256")
+                .digest(("astermail-thread:" + original_email_id).toByteArray(Charsets.UTF_8))
+            android.util.Base64.encodeToString(digest, android.util.Base64.NO_WRAP)
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
     suspend fun get_or_create_thread_token(
         original_email_id: String,
         existing_thread_token: String?,
@@ -1515,10 +1527,18 @@ class MailRepository @Inject constructor(
             val (encrypted_meta, meta_nonce) = encrypt_envelope(meta_json)
             try {
                 mail_api.create_thread(thread_token, encrypted_meta, meta_nonce)
+            } catch (conflict: org.astermail.android.api.ApiError.Conflict) {
+                Unit
             } catch (e: org.astermail.android.api.ApiError.UnknownError) {
                 if (!e.detail.contains("already exists", ignoreCase = true)) throw e
             }
-            mail_api.link_mail_to_thread(original_email_id, thread_token)
+            try {
+                mail_api.link_mail_to_thread(original_email_id, thread_token)
+            } catch (conflict: org.astermail.android.api.ApiError.Conflict) {
+                Unit
+            } catch (e: org.astermail.android.api.ApiError.UnknownError) {
+                if (!e.detail.contains("already", ignoreCase = true)) throw e
+            }
             thread_token
         } catch (cancelled: CancellationException) {
             throw cancelled
@@ -4005,15 +4025,20 @@ class MailRepository @Inject constructor(
                     }
                 }
 
+                val normalized_draft_type = normalize_draft_type(draft_type)
+                val linked_thread_token = thread_token?.takeIf { it.isNotBlank() }
+                    ?: reply_to_id
+                        ?.takeIf { is_uuid(it) && normalized_draft_type == "reply" }
+                        ?.let { runCatching { get_or_create_thread_token(it, null) }.getOrNull() }
                 val response = mail_api.create_draft(
                     org.astermail.android.api.mail.CreateDraftRequestBody(
-                        draft_type = normalize_draft_type(draft_type),
+                        draft_type = normalized_draft_type,
                         encrypted_content = encrypted_envelope,
                         content_nonce = envelope_nonce,
                         content_hash = content_hash,
                         reply_to_id = reply_to_id?.takeIf { is_uuid(it) },
                         forward_from_id = null,
-                        thread_token = thread_token?.takeIf { it.isNotBlank() },
+                        thread_token = linked_thread_token,
                         size_bytes = encrypted_envelope.length,
                     ),
                 )

@@ -118,6 +118,7 @@ class MailViewModel @Inject constructor(
     private val repository: MailRepository,
     private val search_index_manager: SearchIndexManager,
     private val identity_pins: org.astermail.android.mail.ratchet.RatchetIdentityPinStore,
+    private val sent_mail_reseal_finisher: SentMailResealFinisher,
 ) : ViewModel() {
 
     val identity_changes: StateFlow<List<org.astermail.android.mail.ratchet.IdentityChange>> =
@@ -2582,6 +2583,8 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    fun thread_token_for(email_id: String): String? = repository.thread_token_for(email_id)
+
     suspend fun load_thread_draft(thread_token: String): InboxItem? =
         repository.fetch_thread_draft(thread_token)
 
@@ -3758,6 +3761,9 @@ class MailViewModel @Inject constructor(
 
     init {
         seed_inbox_attachment_flags()
+        viewModelScope.launch {
+            runCatching { sent_mail_reseal_finisher.finish_pending() }
+        }
         viewModelScope.launch {
             org.astermail.android.api.network.low_network_state.is_active
                 .drop(1)

@@ -192,6 +192,7 @@ data class SettingsUiState(
     val custom_domain_addresses: List<CustomDomainAddressInfo> = emptyList(),
     val domains: List<CustomDomain> = emptyList(),
     val domains_loading: Boolean = false,
+    val domain_dns_records: Map<String, List<org.astermail.android.api.settings.DnsRecord>> = emptyMap(),
     val storage: StorageOverview? = null,
     val subscription: SubscriptionInfo? = null,
     val subscription_load_failed: Boolean = false,
@@ -496,6 +497,7 @@ class SettingsViewModel @Inject constructor(
 
     fun load_badges() {
         hydrate_cached_badges()
+        hydrate_cached_badge_preferences()
         viewModelScope.launch {
             try {
                 val result = user_api.fetch_badges()
@@ -512,6 +514,7 @@ class SettingsViewModel @Inject constructor(
             try {
                 val prefs = user_api.fetch_badge_preferences()
                 _state.value = _state.value.copy(badge_preferences = prefs)
+                persist_cached_badge_preferences(prefs)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_badge_preferences", t)
@@ -546,6 +549,31 @@ class SettingsViewModel @Inject constructor(
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "update_badge_preferences", t)
             }
         }
+    }
+
+    private fun hydrate_cached_badge_preferences() {
+        if (_state.value.badge_preferences != null) return
+        val raw = preferences_cache.read_badge_preferences(cache_account_key()) ?: return
+        val cached = runCatching {
+            cached_preferences_json.decodeFromString(
+                org.astermail.android.api.user.BadgePreferences.serializer(),
+                raw,
+            )
+        }.getOrNull() ?: return
+        _state.value = _state.value.copy(badge_preferences = cached)
+    }
+
+    private fun persist_cached_badge_preferences(
+        prefs: org.astermail.android.api.user.BadgePreferences,
+    ) {
+        val key = cache_account_key() ?: return
+        val raw = runCatching {
+            cached_preferences_json.encodeToString(
+                org.astermail.android.api.user.BadgePreferences.serializer(),
+                prefs,
+            )
+        }.getOrNull() ?: return
+        preferences_cache.write_badge_preferences(key, raw)
     }
 
     private fun hydrate_cached_badges() {
@@ -2257,6 +2285,7 @@ class SettingsViewModel @Inject constructor(
             try {
                 val response = settings_api.list_domains()
                 _state.value = _state.value.copy(domains = response.domains, domains_loading = false)
+                prefetch_domain_dns_records(response.domains.map { it.id })
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) {
                     _state.value = _state.value.copy(domains_loading = false)
@@ -2322,9 +2351,25 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun prefetch_domain_dns_records(domain_ids: List<String>) {
+        if (domain_ids.isEmpty()) return
+        viewModelScope.launch {
+            val loaded = domain_ids.map { domain_id ->
+                async {
+                    domain_id to runCatching { settings_api.get_dns_records(domain_id).records }.getOrNull()
+                }
+            }.awaitAll()
+            val records = loaded.mapNotNull { (domain_id, list) -> list?.let { domain_id to it } }
+            if (records.isEmpty()) return@launch
+            _state.update { it.copy(domain_dns_records = it.domain_dns_records + records) }
+        }
+    }
+
     suspend fun get_dns_records_now(domain_id: String): List<org.astermail.android.api.settings.DnsRecord>? {
         return try {
-            settings_api.get_dns_records(domain_id).records
+            val records = settings_api.get_dns_records(domain_id).records
+            _state.update { it.copy(domain_dns_records = it.domain_dns_records + (domain_id to records)) }
+            records
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
             if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "get_dns_records_now", t)

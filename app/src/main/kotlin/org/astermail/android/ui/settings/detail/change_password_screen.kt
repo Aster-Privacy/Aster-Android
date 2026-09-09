@@ -146,46 +146,6 @@ fun ChangePasswordScreen(
         }
 
         v_gap(AsterSpacing.xxl)
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            detail_row(
-                title = stringResource(R.string.restore_sent_mail),
-                subtitle = stringResource(R.string.restore_sent_mail_description),
-            )
-        }
-        v_gap(AsterSpacing.lg)
-        password_field(
-            label = stringResource(R.string.previous_password),
-            value = state.restore_previous_password,
-            on_change = view_model::set_restore_previous_password,
-            visible = false,
-            on_toggle = {},
-            enabled = !state.restore_running,
-            content_type = ContentType.Password,
-        )
-        if (state.restore_running) {
-            v_gap(AsterSpacing.md)
-            Text(
-                text = stringResource(R.string.restore_sent_mail_running, state.restore_progress),
-                color = colors.text_secondary,
-                fontSize = 13.sp,
-            )
-        }
-        state.restore_error?.let { err ->
-            v_gap(AsterSpacing.md)
-            Text(text = err, color = colors.danger, fontSize = 13.sp)
-        }
-        state.restore_result?.let { result ->
-            v_gap(AsterSpacing.md)
-            Text(text = result, color = colors.success, fontSize = 13.sp)
-        }
-        v_gap(AsterSpacing.lg)
-        AsterSecondaryButton(
-            label = stringResource(R.string.restore_sent_mail),
-            onClick = { view_model.restore_sent_mail() },
-            enabled = !state.restore_running && state.restore_previous_password.isNotBlank(),
-            is_loading = state.restore_running,
-        )
-        v_gap(AsterSpacing.xxl)
     }
 }
 

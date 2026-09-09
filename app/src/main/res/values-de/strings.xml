@@ -1301,19 +1301,10 @@
     <string name="server_returned_no_address">Server hat keine Adresse zurückgegeben</string>
     <string name="scan_complete">Scan abgeschlossen</string>
     <string name="current_password_incorrect">Aktuelles Passwort ist falsch</string>
-    <string name="password_change_background_reencrypt_failed">Dein Passwort wurde geändert, aber ein Teil deiner gesendeten Nachrichten und Einstellungen wurde nicht neu verschlüsselt. Wende dich an den Support, wenn Nachrichten oder Einstellungen unlesbar wirken.</string>
-    <string name="restore_sent_mail">Gesendete E-Mails wiederherstellen</string>
-    <string name="restore_sent_mail_description">Wenn sich gesendete E-Mails aus der Zeit vor einer Passwortänderung nicht öffnen lassen, gib das damals verwendete Passwort ein. Aster Mail verschlüsselt diese Kopien mit deinem aktuellen Passwort neu.</string>
-    <string name="previous_password">Vorheriges Passwort</string>
-    <string name="enter_previous_password">Vorheriges Passwort eingeben</string>
-    <string name="restore_sent_mail_running">Gesendete E-Mails werden geprüft... %1$d geprüft</string>
-    <string name="restore_sent_mail_result">%1$d gesendete E-Mails lassen sich jetzt mit deinem aktuellen Passwort öffnen. %2$d benötigen weiterhin ein anderes früheres Passwort.</string>
-    <string name="restore_sent_mail_nothing">Alle gesendeten E-Mails lassen sich bereits mit deinem aktuellen Passwort öffnen.</string>
-    <string name="restore_sent_mail_failed">Einige gesendete E-Mails konnten nicht aktualisiert werden. Prüfe deine Verbindung und versuche es erneut.</string>
-    <string name="restore_sent_mail_session_expired">Deine Sitzungsschlüssel sind nicht verfügbar. Melde dich ab, wieder an und versuche es erneut.</string>
+    <string name="password_change_background_reencrypt_failed">Dein Passwort wurde geändert. Aster Mail verschlüsselt einen Teil deiner gesendeten Nachrichten noch neu und schließt das im Hintergrund ab.</string>
     <plurals name="password_change_sent_mail_locked">
-        <item quantity="one">Dein Passwort wurde geändert. %1$d gesendete E-Mails waren mit einem früheren Passwort verschlüsselt und wurden nicht aktualisiert. Öffne zum Wiederherstellen Einstellungen &gt; Sicherheit &gt; Passwort ändern &gt; Gesendete E-Mails wiederherstellen.</item>
-        <item quantity="other">Dein Passwort wurde geändert. %1$d gesendete E-Mails waren mit einem früheren Passwort verschlüsselt und wurden nicht aktualisiert. Öffne zum Wiederherstellen Einstellungen &gt; Sicherheit &gt; Passwort ändern &gt; Gesendete E-Mails wiederherstellen.</item>
+        <item quantity="one">Dein Passwort wurde geändert. %1$d gesendete E-Mails wurden mit einem älteren Passwort verschlüsselt und bleiben gesperrt.</item>
+        <item quantity="other">Dein Passwort wurde geändert. %1$d gesendete E-Mails wurden mit einem älteren Passwort verschlüsselt und bleiben gesperrt.</item>
     </plurals>
     <string name="compose_email_hint">E-Mail verfassen</string>
     <string name="snooze_later_today">Später heute</string>
@@ -3204,4 +3195,15 @@
     <string name="no_contacts_match">Keine Kontakte stimmen mit \"%1$s\" überein</string>
     <string name="no_contacts_in_trash">Der Papierkorb ist leer</string>
     <string name="contacts_already_in_trash">Einige Kontakte sind bereits im Papierkorb. Stellen Sie sie stattdessen wieder her.</string>
+    <string name="emoji_search_placeholder">Emoji suchen</string>
+    <string name="emoji_search_no_results">Keine Emojis gefunden</string>
+    <string name="emoji_group_recent">Zuletzt verwendet</string>
+    <string name="emoji_group_smileys">Smileys und Personen</string>
+    <string name="emoji_group_nature">Tiere und Natur</string>
+    <string name="emoji_group_food">Essen und Trinken</string>
+    <string name="emoji_group_activity">Aktivitäten</string>
+    <string name="emoji_group_travel">Reisen und Orte</string>
+    <string name="emoji_group_objects">Objekte</string>
+    <string name="emoji_group_symbols">Symbole</string>
+    <string name="domain_catch_all_hint">Empfange E-Mails an jede Adresse dieser Domain.</string>
 </resources>

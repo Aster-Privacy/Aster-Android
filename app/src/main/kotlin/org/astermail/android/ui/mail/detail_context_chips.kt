@@ -45,7 +45,6 @@ import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.foundation.text.InlineTextContent
-import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -59,7 +58,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
@@ -102,14 +104,16 @@ import org.astermail.android.folders.is_folder_protected
 import org.astermail.android.looks_encrypted
 import org.astermail.android.mail.InboxItem
 
-internal val detail_chip_text_size = 11.sp
-internal val detail_chip_icon_size = 11.dp
+internal val detail_chip_text_size = 10.sp
+internal val detail_chip_icon_size = 10.dp
 internal val detail_chip_icon_gap = 3.dp
-internal val detail_chip_padding_h = 6.dp
+internal val detail_chip_padding_h = 5.dp
 internal val detail_chip_padding_v = 2.dp
-internal val detail_chip_shape = RoundedCornerShape(6.dp)
-internal val detail_chip_height = 18.dp
+internal val detail_chip_shape = RoundedCornerShape(5.dp)
+internal val detail_chip_height = 16.dp
 internal val detail_chip_max_text_width = 120.dp
+internal val detail_subject_text_size = 24.sp
+internal val detail_subject_line_height = 31.sp
 
 internal data class detail_folder_chip_data(
     val name: String,
@@ -342,22 +346,66 @@ internal fun detail_subject_line(
                 height = with(density) { chip_height.toSp() },
                 placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
             ),
-            children = { DisableSelection { chip.render() } },
+            children = {},
         )
     }
-    selectable_subject(state = selection_state, modifier = modifier) {
-        Text(
-            text = text,
-            inlineContent = inline_content,
-            color = colors.text_primary,
-            fontSize = 24.sp,
-            lineHeight = 31.sp,
-            fontWeight = FontWeight.Bold,
-            maxLines = max_lines,
-            overflow = TextOverflow.Ellipsis,
-            onTextLayout = { layout -> on_overflow(layout.hasVisualOverflow) },
-            modifier = Modifier.testTag("detail_subject_line"),
+    val subject_style = remember(base_style) {
+        base_style.merge(
+            TextStyle(fontSize = detail_subject_text_size, fontWeight = FontWeight.Bold),
         )
+    }
+    val chip_gap_px = remember(subject_style, density.density, density.fontScale) {
+        measurer.measure(detail_chip_placeholder_gap, subject_style).size.width.toFloat()
+    }
+    val selection_line_px = with(density) { detail_subject_line_height.toPx() }
+    var chip_slots by remember { mutableStateOf<List<Rect?>>(emptyList()) }
+    Box(modifier = modifier) {
+        selectable_subject(state = selection_state) {
+            Text(
+                text = text,
+                inlineContent = inline_content,
+                color = colors.text_primary,
+                fontSize = detail_subject_text_size,
+                lineHeight = detail_subject_line_height,
+                fontWeight = FontWeight.Bold,
+                maxLines = max_lines,
+                overflow = TextOverflow.Ellipsis,
+                onTextLayout = { layout ->
+                    on_overflow(layout.hasVisualOverflow)
+                    chip_slots = layout.placeholderRects
+                },
+                modifier = Modifier.testTag("detail_subject_line"),
+            )
+        }
+        if (selection_state.has_selection) {
+            chips.indices.forEach { index ->
+                val slot = chip_slots.getOrNull(index) ?: return@forEach
+                Box(
+                    modifier = Modifier
+                        .offset {
+                            IntOffset(
+                                (slot.left - chip_gap_px).roundToInt(),
+                                (slot.center.y - selection_line_px / 2f).roundToInt(),
+                            )
+                        }
+                        .size(
+                            width = with(density) { (slot.width + chip_gap_px).toDp() },
+                            height = with(density) { selection_line_px.toDp() },
+                        )
+                        .background(colors.bg_primary),
+                )
+            }
+        }
+        chips.forEachIndexed { index, chip ->
+            val slot = chip_slots.getOrNull(index) ?: return@forEachIndexed
+            Box(
+                modifier = Modifier.offset {
+                    IntOffset(slot.left.roundToInt(), slot.top.roundToInt())
+                },
+            ) {
+                chip.render()
+            }
+        }
     }
 }
 

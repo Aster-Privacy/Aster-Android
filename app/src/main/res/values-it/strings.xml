@@ -1300,19 +1300,10 @@
     <string name="server_returned_no_address">Il server non ha restituito un indirizzo</string>
     <string name="scan_complete">Scansione completata</string>
     <string name="current_password_incorrect">La password attuale non è corretta</string>
-    <string name="password_change_background_reencrypt_failed">La tua password è stata cambiata, ma una parte della posta inviata e delle impostazioni non ha completato la ricifratura. Contatta l’assistenza se qualcosa risulta illeggibile.</string>
-    <string name="restore_sent_mail">Ripristina la posta inviata</string>
-    <string name="restore_sent_mail_description">Se le email inviate prima di un cambio di password non si aprono, inserisci la password che usavi allora. Aster Mail cifra di nuovo quelle copie con la password attuale.</string>
-    <string name="previous_password">Password precedente</string>
-    <string name="enter_previous_password">Inserisci la password precedente</string>
-    <string name="restore_sent_mail_running">Controllo della posta inviata... %1$d controllate</string>
-    <string name="restore_sent_mail_result">%1$d email inviate ora si aprono con la password attuale. %2$d richiedono ancora un\'altra password precedente.</string>
-    <string name="restore_sent_mail_nothing">Tutte le email inviate si aprono già con la password attuale.</string>
-    <string name="restore_sent_mail_failed">Alcune email inviate non sono state aggiornate. Controlla la connessione e riprova.</string>
-    <string name="restore_sent_mail_session_expired">Le chiavi della sessione non sono disponibili. Esci, accedi di nuovo e riprova.</string>
+    <string name="password_change_background_reencrypt_failed">La tua password è cambiata. Aster Mail sta ancora ricifrando parte della posta inviata e completa questa operazione in background.</string>
     <plurals name="password_change_sent_mail_locked">
-        <item quantity="one">La password è cambiata. %1$d email inviate erano cifrate con una password precedente e non sono state aggiornate. Per ripristinarle, apri Impostazioni &gt; Sicurezza &gt; Cambia password &gt; Ripristina la posta inviata.</item>
-        <item quantity="other">La password è cambiata. %1$d email inviate erano cifrate con una password precedente e non sono state aggiornate. Per ripristinarle, apri Impostazioni &gt; Sicurezza &gt; Cambia password &gt; Ripristina la posta inviata.</item>
+        <item quantity="one">La tua password è cambiata. %1$d email inviate sono state cifrate con una password precedente e restano bloccate.</item>
+        <item quantity="other">La tua password è cambiata. %1$d email inviate sono state cifrate con una password precedente e restano bloccate.</item>
     </plurals>
     <string name="compose_email_hint">Componi email</string>
     <string name="snooze_later_today">Più tardi oggi</string>
@@ -3203,4 +3194,15 @@
     <string name="no_contacts_match">Nessun contatto corrisponde a \"%1$s\"</string>
     <string name="no_contacts_in_trash">Il cestino è vuoto</string>
     <string name="contacts_already_in_trash">Alcuni contatti sono già nel Cestino. Ripristinali invece.</string>
+    <string name="emoji_search_placeholder">Cerca emoji</string>
+    <string name="emoji_search_no_results">Nessun emoji trovato</string>
+    <string name="emoji_group_recent">Usati di recente</string>
+    <string name="emoji_group_smileys">Faccine e persone</string>
+    <string name="emoji_group_nature">Animali e natura</string>
+    <string name="emoji_group_food">Cibo e bevande</string>
+    <string name="emoji_group_activity">Attività</string>
+    <string name="emoji_group_travel">Viaggi e luoghi</string>
+    <string name="emoji_group_objects">Oggetti</string>
+    <string name="emoji_group_symbols">Simboli</string>
+    <string name="domain_catch_all_hint">Ricevi i messaggi inviati a qualsiasi indirizzo di questo dominio.</string>
 </resources>

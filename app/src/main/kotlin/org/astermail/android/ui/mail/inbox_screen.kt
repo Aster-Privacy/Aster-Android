@@ -252,6 +252,8 @@ fun InboxScreen(
     all_mail_include_spam: Boolean = false,
     all_mail_include_trash: Boolean = false,
     on_all_mail_scope_change: (Boolean, Boolean) -> Unit = { _, _ -> },
+    category_unread: Map<String, Int> = emptyMap(),
+    on_select_category: (String) -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
@@ -694,9 +696,11 @@ fun InboxScreen(
     } else {
         null
     }
+    var unread_only by rememberSaveable { mutableStateOf(false) }
     var threads by remember { mutableStateOf<List<ThreadRow>>(emptyList()) }
     var threads_pending by remember { mutableStateOf(true) }
     var threads_folder by remember { mutableStateOf(current_folder) }
+    val thread_gate = remember { InboxThreadGate() }
     val grouping_enabled = settings_state.preferences?.conversation_grouping != false
     LaunchedEffect(
         current_folder,
@@ -708,6 +712,7 @@ fun InboxScreen(
         cached_participants,
         grouping_enabled,
     ) {
+        thread_gate.observe(threads_folder == current_folder, active_category, emails_fingerprint)
         threads_pending = true
         if (threads_folder != current_folder) {
             threads = emptyList()
@@ -809,7 +814,11 @@ fun InboxScreen(
             0
         }
     }
-    val visible_threads = threads
+    val visible_threads = if (unread_only && categories_enabled) {
+        threads.filter { it.has_unread }
+    } else {
+        threads
+    }
     val top_thread_key = visible_threads.firstOrNull()?.thread_id
     LaunchedEffect(top_thread_key) {
         val near_top = list_state.firstVisibleItemIndex == 0 ||
@@ -1521,7 +1530,11 @@ fun InboxScreen(
                     }
                 }
                 val skeleton_target = inbox_state.initial ||
-                    ((inbox_state.is_loading || threads_pending) && threads.isEmpty())
+                    (
+                        !thread_gate.category_only &&
+                            (inbox_state.is_loading || threads_pending) &&
+                            threads.isEmpty()
+                        )
                 var show_skeleton by remember { mutableStateOf(skeleton_target) }
                 var skeleton_shown_at by remember { mutableStateOf(0L) }
                 LaunchedEffect(skeleton_target) {
@@ -1552,8 +1565,15 @@ fun InboxScreen(
                     }
                 }
                 val inbox_error_now = threads.isEmpty() && inbox_state.error != null
-                val category_skeleton = hidden_by_category && (category_drain_active || !empty_settled)
-                val empty_skeleton = !hidden_by_category && threads.isEmpty() && !empty_settled
+                val category_skeleton = hidden_by_category &&
+                    (
+                        (category_drain_active && inbox_state.is_loading_more) ||
+                            (!thread_gate.category_only && !empty_settled)
+                        )
+                val empty_skeleton = !hidden_by_category &&
+                    threads.isEmpty() &&
+                    !empty_settled &&
+                    !thread_gate.category_only
                 val skeleton_now = skeleton_target ||
                     (show_skeleton && threads.isEmpty()) ||
                     (!inbox_error_now && !contradicts_unread && (category_skeleton || empty_skeleton))
@@ -1989,6 +2009,9 @@ fun InboxScreen(
                         all_mail_include_spam = all_mail_include_spam,
                         all_mail_include_trash = all_mail_include_trash,
                         on_all_mail_scope_change = on_all_mail_scope_change,
+                        show_unread_filter = categories_enabled,
+                        unread_only = unread_only,
+                        on_toggle_unread_only = { unread_only = !unread_only },
                     )
                 }
             }
@@ -2463,6 +2486,9 @@ internal fun inbox_top_bar(
     all_mail_include_spam: Boolean = false,
     all_mail_include_trash: Boolean = false,
     on_all_mail_scope_change: (Boolean, Boolean) -> Unit = { _, _ -> },
+    show_unread_filter: Boolean = false,
+    unread_only: Boolean = false,
+    on_toggle_unread_only: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val divider_alpha by animateFloatAsState(
@@ -2472,61 +2498,7 @@ internal fun inbox_top_bar(
     var folder_menu_open by remember { mutableStateOf(false) }
     var overflow_menu_open by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = AsterSpacing.xs)
-                .padding(top = AsterSpacing.sm, bottom = AsterSpacing.xs)
-                .height(52.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            AsterIconButton(
-                icon = TablerIcons.Menu2,
-                content_description = stringResource(R.string.open_drawer),
-                onClick = on_open_drawer,
-                modifier = Modifier.testTag("account_avatar"),
-            )
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(52.dp)
-                    .padding(horizontal = AsterSpacing.sm)
-                    .clip(SquircleShape(26.dp))
-                    .background(search_field_bg_color(colors))
-                    .clickable { on_open_search() }
-                    .padding(horizontal = AsterSpacing.lg)
-                    .testTag("search"),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    text = if (search_scope_title != null) {
-                        stringResource(R.string.inbox_search_in_category, search_scope_title)
-                    } else {
-                        stringResource(R.string.inbox_search_in_folder, folder_title.lowercase(java.util.Locale.getDefault()))
-                    },
-                    color = colors.text_secondary,
-                    fontSize = 16.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-            }
-            AsterIconButton(
-                icon = TablerIcons.Settings,
-                content_description = stringResource(R.string.settings),
-                onClick = on_open_settings,
-                modifier = Modifier.testTag("settings"),
-            )
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = AsterSpacing.lg, end = AsterSpacing.sm)
-                .padding(top = AsterSpacing.sm, bottom = AsterSpacing.xs),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+    val folder_switcher: @Composable () -> Unit = {
             Box {
                 Row(
                     modifier = Modifier
@@ -2596,29 +2568,9 @@ internal fun inbox_top_bar(
                     }
                 }
             }
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .horizontalScroll(rememberScrollState()),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (is_all_mail_folder(current_folder)) {
-                    Spacer(Modifier.width(AsterSpacing.sm))
-                    all_mail_scope_chip(
-                        label = stringResource(R.string.include_spam),
-                        active = all_mail_include_spam,
-                        on_click = { on_all_mail_scope_change(!all_mail_include_spam, all_mail_include_trash) },
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    all_mail_scope_chip(
-                        label = stringResource(R.string.include_trash),
-                        active = all_mail_include_trash,
-                        on_click = { on_all_mail_scope_change(all_mail_include_spam, !all_mail_include_trash) },
-                    )
-                    Spacer(Modifier.width(AsterSpacing.sm))
-                }
-            }
-            debug_build_pill_inline()
+    }
+
+    val overflow_button: @Composable () -> Unit = {
             Box {
                 AsterIconButton(
                     icon = TablerIcons.DotsVertical,
@@ -2643,6 +2595,17 @@ internal fun inbox_top_bar(
                     ) {
                         overflow_menu_open = false
                         on_enter_select_mode()
+                    }
+                    if (show_unread_filter) {
+                        aster_dropdown_item(
+                            label = stringResource(R.string.filter_unread_only),
+                            icon = TablerIcons.MailOpened,
+                            selected = unread_only,
+                            on_click = {
+                                overflow_menu_open = false
+                                on_toggle_unread_only()
+                            },
+                        )
                     }
                     overflow_menu_item(
                         label = stringResource(R.string.refresh),
@@ -2680,6 +2643,86 @@ internal fun inbox_top_bar(
                     }
                 }
             }
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.xs)
+                .padding(top = AsterSpacing.sm, bottom = AsterSpacing.xs)
+                .height(52.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AsterIconButton(
+                icon = TablerIcons.Menu2,
+                content_description = stringResource(R.string.open_drawer),
+                onClick = on_open_drawer,
+                modifier = Modifier.testTag("account_avatar"),
+            )
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp)
+                    .padding(horizontal = AsterSpacing.sm)
+                    .clip(SquircleShape(26.dp))
+                    .background(search_field_bg_color(colors))
+                    .clickable { on_open_search() }
+                    .padding(horizontal = AsterSpacing.lg)
+                    .testTag("search"),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    text = if (search_scope_title != null) {
+                        stringResource(R.string.inbox_search_in_category, search_scope_title)
+                    } else {
+                        stringResource(R.string.inbox_search_in_folder, folder_title.lowercase(java.util.Locale.getDefault()))
+                    },
+                    color = colors.text_secondary,
+                    fontSize = 16.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+            }
+            AsterIconButton(
+                icon = TablerIcons.Settings,
+                content_description = stringResource(R.string.settings),
+                onClick = on_open_settings,
+                modifier = Modifier.testTag("settings"),
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = AsterSpacing.lg, end = AsterSpacing.sm)
+                .padding(top = AsterSpacing.sm, bottom = AsterSpacing.xs),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            folder_switcher()
+            Row(
+                modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (is_all_mail_folder(current_folder)) {
+                    Spacer(Modifier.width(AsterSpacing.sm))
+                    all_mail_scope_chip(
+                        label = stringResource(R.string.include_spam),
+                        active = all_mail_include_spam,
+                        on_click = { on_all_mail_scope_change(!all_mail_include_spam, all_mail_include_trash) },
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    all_mail_scope_chip(
+                        label = stringResource(R.string.include_trash),
+                        active = all_mail_include_trash,
+                        on_click = { on_all_mail_scope_change(all_mail_include_spam, !all_mail_include_trash) },
+                    )
+                    Spacer(Modifier.width(AsterSpacing.sm))
+                }
+            }
+            debug_build_pill_inline()
+            overflow_button()
         }
         if (divider_alpha > 0f) {
             AsterDivider(modifier = Modifier.fillMaxWidth())

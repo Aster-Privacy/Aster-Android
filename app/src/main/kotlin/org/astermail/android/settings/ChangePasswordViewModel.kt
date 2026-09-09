@@ -45,11 +45,6 @@ data class ChangePasswordUiState(
     val error: String? = null,
     val success: Boolean = false,
     val notice: String? = null,
-    val restore_previous_password: String = "",
-    val restore_running: Boolean = false,
-    val restore_progress: Int = 0,
-    val restore_result: String? = null,
-    val restore_error: String? = null,
 )
 
 @HiltViewModel
@@ -135,55 +130,5 @@ class ChangePasswordViewModel @Inject constructor(
 
     fun reset() {
         _state.value = ChangePasswordUiState()
-    }
-
-    fun set_restore_previous_password(value: String) {
-        _state.value = _state.value.copy(
-            restore_previous_password = value,
-            restore_error = null,
-            restore_result = null,
-        )
-    }
-
-    fun restore_sent_mail() {
-        val s = _state.value
-        if (s.restore_running) return
-        if (s.restore_previous_password.isBlank()) {
-            _state.value = s.copy(restore_error = context.getString(R.string.enter_previous_password))
-            return
-        }
-        _state.value = s.copy(restore_running = true, restore_progress = 0, restore_error = null, restore_result = null)
-        viewModelScope.launch {
-            val result = auth_repository.restore_sent_mail(s.restore_previous_password) { progress ->
-                _state.value = _state.value.copy(restore_progress = progress.checked)
-            }
-            result.onSuccess { summary ->
-                val text = when {
-                    summary.failed > 0 -> context.getString(R.string.restore_sent_mail_failed)
-                    summary.rewritten == 0 && summary.unreadable == 0 -> context.getString(R.string.restore_sent_mail_nothing)
-                    else -> context.getString(
-                        R.string.restore_sent_mail_result,
-                        summary.rewritten,
-                        summary.unreadable,
-                    )
-                }
-                _state.value = _state.value.copy(
-                    restore_running = false,
-                    restore_result = if (summary.failed > 0) null else text,
-                    restore_error = if (summary.failed > 0) text else null,
-                    restore_previous_password = if (summary.rewritten > 0) "" else _state.value.restore_previous_password,
-                    notice = if (summary.rewritten > 0) null else _state.value.notice,
-                )
-            }.onFailure { t ->
-                _state.value = _state.value.copy(
-                    restore_running = false,
-                    restore_error = org.astermail.android.localized_api_error(
-                        context,
-                        t,
-                        context.getString(R.string.restore_sent_mail_failed),
-                    ),
-                )
-            }
-        }
     }
 }

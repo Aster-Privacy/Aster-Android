@@ -93,6 +93,14 @@ fun DomainsScreen(
     var domains_error by remember { mutableStateOf<String?>(null) }
     var domains_reload_tick by remember { mutableIntStateOf(0) }
 
+    val cached_dns = state.domain_dns_records
+    val effective_dns = remember(cached_dns, domain_dns) { cached_dns + domain_dns }
+
+    LaunchedEffect(state.domains) {
+        val only = state.domains.singleOrNull() ?: return@LaunchedEffect
+        if (expanded_domain_id == null) expanded_domain_id = only.id
+    }
+
     val purchase_vm: DomainPurchaseViewModel = hiltViewModel()
     val purchase_state by purchase_vm.state.collectAsStateWithLifecycle()
 
@@ -184,7 +192,7 @@ fun DomainsScreen(
                 state = state,
                 scope = scope,
                 expanded_domain_id = expanded_domain_id,
-                domain_dns = domain_dns,
+                domain_dns = effective_dns,
                 verifying_domain_id = verifying_domain_id,
                 verify_results = domain_verify_results,
                 on_expanded_change = { expanded_domain_id = it },
@@ -224,7 +232,7 @@ fun DomainsScreen(
             on_complete_purchase = { purchase_vm.complete_purchase(it) },
             on_renew = { purchase_vm.renew_order(it) },
             custom_domains = state.domains,
-            dns_records_for = { id -> domain_dns[id].orEmpty() },
+            dns_records_for = { id -> effective_dns[id].orEmpty() },
             verifying_domain_id = verifying_domain_id,
             verify_message_for = { id -> domain_verify_results[id]?.message },
             catch_all_locked = catch_all_locked,

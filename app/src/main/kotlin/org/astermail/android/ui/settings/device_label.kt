@@ -162,15 +162,18 @@ fun clean_trusted_device_label(raw: String): String {
 
 @Composable
 fun device_badge(label: String, color: Color = AsterMaterial.colors.accent_blue) {
+    val colors = AsterMaterial.colors
+    val background = org.astermail.android.ui.mail.chip_background(color, colors.bg_primary, colors.is_dark)
+    val content = org.astermail.android.ui.mail.chip_content(color, background, colors.is_dark)
     Box(
         modifier = Modifier
-            .background(color.copy(alpha = 0.15f), SquircleShape(8.dp))
+            .background(background, SquircleShape(8.dp))
             .padding(horizontal = AsterSpacing.sm, vertical = 3.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = label,
-            color = color,
+            color = content,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
         )
