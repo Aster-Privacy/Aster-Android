@@ -743,6 +743,14 @@ class MailRepository @Inject constructor(
         draft_id: String?,
         allow_non_post_quantum: Boolean = false,
     ): String {
+        val already_queued = draft_id?.takeIf { it.isNotBlank() }?.let { existing_draft_id ->
+            pending_rows_for_current_account()?.firstOrNull { queued ->
+                queued.draft_id == existing_draft_id &&
+                    queued.id != pending_id &&
+                    queued.status != STATUS_FAILED
+            }
+        }
+        if (already_queued != null) return already_queued.id
         val now = System.currentTimeMillis()
         val row = PendingSendEntity(
             id = pending_id,
