@@ -1323,8 +1323,8 @@
     <string name="aster_email">Aster-e-mail</string>
     <string name="pgp_encrypted_subject">Versleuteld bericht</string>
     <string name="pgp_encrypted_body">Dit bericht is versleuteld met PGP. Open de Aster-webapp op een apparaat met de bijbehorende PGP-sleutel om het te lezen.</string>
-    <string name="no_folders_yet_create">Nog geen mappen - maak er een in Instellingen</string>
-    <string name="no_labels_yet_create">Nog geen labels - maak er een via de zijbalk</string>
+    <string name="no_folders_yet_create">Nog geen mappen. Open Instellingen &gt; Mappen om er een te maken.</string>
+    <string name="no_labels_yet_create">Nog geen labels. Open Instellingen &gt; Labels om er een te maken.</string>
     <string name="clipboard_label_referral">Verwijzingslink</string>
     <string name="clipboard_label_identity_fingerprint">Identiteitsvingerafdruk</string>
     <string name="clipboard_label_identity_public_key">Publieke identiteitssleutel</string>
@@ -2141,7 +2141,7 @@
     <string name="block_tracking_links_info_desc">Links in e-mail lopen vaak eerst via de server van de afzender, zodat die kan vastleggen of je klikte. Dit haalt die omleidingen weg, zodat links direct naar de bestemming gaan.</string>
     <string name="warn_suspicious_links_subtitle">Toon waarschuwing voordat externe links in e-mails worden geopend</string>
     <string name="warn_suspicious_links_info_title">Waarschuwingen bij externe links</string>
-    <string name="warn_suspicious_links_info_desc">Toont een waarschuwing voordat een link buiten Aster opengaat. Zo herken je phishing voordat je doorklikt.</string>
+    <string name="warn_suspicious_links_info_desc">Toont een waarschuwing voordat een link buiten Aster wordt geopend. Zo herken je phishingpogingen voordat je tikt.</string>
     <string name="section_privacy_security">Privacy</string>
     <string name="strip_exif_info_title">Wat zijn afbeeldingsmetagegevens?</string>
     <string name="strip_exif_info_desc">Foto\'s van telefoons en camera\'s bevatten verborgen gegevens: gps-coördinaten, apparaatmodel, tijdstip en lensinformatie. Als je een afbeelding verstuurt, gaan die gegevens mee. Aster verwijdert ze voor het uploaden, zodat ontvangers alleen de foto zien.</string>

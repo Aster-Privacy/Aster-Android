@@ -1871,8 +1871,8 @@
     <string name="pgp_signature_valid">Signature verified</string>
     <string name="pgp_signature_invalid">Signature does not match</string>
     <string name="pgp_recipient_description">The sender encrypted this message with OpenPGP before sending it. Only a device holding your private key can decrypt it, so no one in between can read it.</string>
-    <string name="no_folders_yet_create">No folders yet - create one from the sidebar</string>
-    <string name="no_labels_yet_create">No labels yet - create one from the sidebar</string>
+    <string name="no_folders_yet_create">No folders yet. To create one, open Settings &gt; Folders.</string>
+    <string name="no_labels_yet_create">No labels yet. To create one, open Settings &gt; Labels.</string>
     <string name="clipboard_label_referral">Referral link</string>
     <string name="clipboard_label_identity_fingerprint">Identity fingerprint</string>
     <string name="clipboard_label_identity_public_key">Identity public key</string>
@@ -2259,7 +2259,7 @@
     <string name="block_html_rendering_subtitle">Show incoming emails as plain text to prevent tracking, layout spoofing, and visual phishing</string>
     <string name="warn_suspicious_links_subtitle">Show warning before opening external links in emails</string>
     <string name="warn_suspicious_links_info_title">External Link Warnings</string>
-    <string name="warn_suspicious_links_info_desc">Shows a warning before opening any link that goes outside Aster. Helps you spot phishing attempts before you click through.</string>
+    <string name="warn_suspicious_links_info_desc">Shows a warning before opening any link that goes outside Aster. Helps you spot phishing attempts before you tap through.</string>
     <string name="section_privacy_security">Privacy</string>
     <string name="strip_exif">Strip Image Metadata</string>
     <string name="strip_exif_subtitle">Remove EXIF and other metadata from images before sending to protect your location and device information</string>

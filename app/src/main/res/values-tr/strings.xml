@@ -1323,8 +1323,8 @@
     <string name="aster_email">Aster e-postası</string>
     <string name="pgp_encrypted_subject">Şifreli mesaj</string>
     <string name="pgp_encrypted_body">Bu mesaj PGP ile şifrelenmiştir. Okumak için eşleşen PGP anahtarına sahip bir cihazda Aster web uygulamasını açın.</string>
-    <string name="no_folders_yet_create">Henüz klasör yok - Ayarlar\'da bir tane oluştur</string>
-    <string name="no_labels_yet_create">Henüz etiket yok - kenar çubuğundan bir tane oluştur</string>
+    <string name="no_folders_yet_create">Henüz klasör yok. Bir klasör oluşturmak için Ayarlar &gt; Klasörler bölümünü açın.</string>
+    <string name="no_labels_yet_create">Henüz etiket yok. Bir etiket oluşturmak için Ayarlar &gt; Etiketler bölümünü açın.</string>
     <string name="clipboard_label_referral">Yönlendirme bağlantısı</string>
     <string name="clipboard_label_identity_fingerprint">Kimlik parmak izi</string>
     <string name="clipboard_label_identity_public_key">Genel kimlik anahtarı</string>
@@ -2141,7 +2141,7 @@
     <string name="block_tracking_links_info_desc">E-postalardaki bağlantılar tıklayıp tıklamadığını kaydetmek için çoğu zaman önce gönderenin sunucusuna uğrar. Bu ayar o yönlendirmeleri kaldırır ve bağlantılar doğrudan hedefe gider.</string>
     <string name="warn_suspicious_links_subtitle">E-postalardaki harici bağlantıları açmadan önce uyarı göster</string>
     <string name="warn_suspicious_links_info_title">Dış bağlantı uyarıları</string>
-    <string name="warn_suspicious_links_info_desc">Aster dışına çıkan her bağlantıyı açmadan önce uyarı gösterir. Tıklamadan önce oltalama girişimlerini fark etmeni sağlar.</string>
+    <string name="warn_suspicious_links_info_desc">Aster dışına giden bir bağlantı açılmadan önce uyarı gösterir. Dokunmadan önce kimlik avı girişimlerini fark etmenize yardımcı olur.</string>
     <string name="section_privacy_security">Gizlilik</string>
     <string name="strip_exif_info_title">Görsel üstverisi nedir?</string>
     <string name="strip_exif_info_desc">Telefon ve fotoğraf makineleriyle çekilen fotoğraflar gizli veriler taşır: GPS koordinatları, cihaz modeli, çekim zamanı ve objektif bilgisi. Bir görsel gönderdiğinde bu veriler de gider. Aster yüklemeden önce bunları siler, böylece alıcı yalnızca fotoğrafı görür.</string>

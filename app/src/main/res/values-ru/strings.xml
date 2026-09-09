@@ -1327,8 +1327,8 @@
     <string name="aster_email">Письмо Aster</string>
     <string name="pgp_encrypted_subject">Зашифрованное сообщение</string>
     <string name="pgp_encrypted_body">Это сообщение зашифровано PGP. Откройте веб-приложение Aster на устройстве с соответствующим ключом PGP, чтобы прочитать его.</string>
-    <string name="no_folders_yet_create">Папок пока нет - создайте одну на боковой панели</string>
-    <string name="no_labels_yet_create">Меток пока нет - создайте одну на боковой панели</string>
+    <string name="no_folders_yet_create">Папок пока нет. Чтобы создать папку, откройте Настройки &gt; Папки.</string>
+    <string name="no_labels_yet_create">Меток пока нет. Чтобы создать метку, откройте Настройки &gt; Метки.</string>
     <string name="clipboard_label_referral">Реферальная ссылка</string>
     <string name="clipboard_label_identity_fingerprint">Отпечаток идентификации</string>
     <string name="clipboard_label_identity_public_key">Публичный ключ идентификации</string>
@@ -2149,7 +2149,7 @@
     <string name="block_tracking_links_info_desc">Ссылки в письмах часто сначала ведут через сервер отправителя, чтобы записать ваш клик. Эта настройка убирает такие переходы, и ссылки ведут прямо к цели.</string>
     <string name="warn_suspicious_links_subtitle">Показывать предупреждение перед открытием внешних ссылок в письмах</string>
     <string name="warn_suspicious_links_info_title">Предупреждения о внешних ссылках</string>
-    <string name="warn_suspicious_links_info_desc">Показывает предупреждение перед открытием любой ссылки за пределы Aster. Помогает распознать фишинг до клика.</string>
+    <string name="warn_suspicious_links_info_desc">Показывает предупреждение перед открытием любой ссылки за пределами Aster. Помогает распознать фишинг до нажатия.</string>
     <string name="section_privacy_security">Конфиденциальность</string>
     <string name="strip_exif_info_title">Что такое метаданные изображения?</string>
     <string name="strip_exif_info_desc">Фотографии с телефонов и камер содержат скрытые данные: координаты GPS, модель устройства, время съёмки и сведения об объективе. При отправке изображения эти данные уходят вместе с ним. Aster удаляет их перед загрузкой, поэтому получатель видит только само фото.</string>

@@ -1324,8 +1324,8 @@
     <string name="aster_email">Aster-E-Mail</string>
     <string name="pgp_encrypted_subject">Verschlüsselte Nachricht</string>
     <string name="pgp_encrypted_body">Diese Nachricht ist PGP-verschlüsselt. Öffne die Aster-Web-App auf einem Gerät mit dem passenden PGP-Schlüssel, um sie zu lesen.</string>
-    <string name="no_folders_yet_create">Noch keine Ordner - erstelle einen in den Einstellungen</string>
-    <string name="no_labels_yet_create">Noch keine Labels - erstelle eines über die Seitenleiste</string>
+    <string name="no_folders_yet_create">Noch keine Ordner. Um einen zu erstellen, öffne Einstellungen &gt; Ordner.</string>
+    <string name="no_labels_yet_create">Noch keine Labels. Um eines zu erstellen, öffne Einstellungen &gt; Labels.</string>
     <string name="clipboard_label_referral">Empfehlungslink</string>
     <string name="clipboard_label_identity_fingerprint">Identitätsfingerabdruck</string>
     <string name="clipboard_label_identity_public_key">Öffentlicher Identitätsschlüssel</string>
@@ -2142,7 +2142,7 @@
     <string name="block_tracking_links_info_desc">Links in E-Mails führen oft zuerst über den Server des Absenders, damit dieser deine Klicks mitschreiben kann. Diese Umleitungen werden entfernt, sodass Links direkt zum Ziel führen.</string>
     <string name="warn_suspicious_links_subtitle">Warnung anzeigen, bevor externe Links in E-Mails geöffnet werden</string>
     <string name="warn_suspicious_links_info_title">Warnungen bei externen Links</string>
-    <string name="warn_suspicious_links_info_desc">Zeigt eine Warnung, bevor ein Link außerhalb von Aster geöffnet wird. So erkennst du Phishing-Versuche, bevor du klickst.</string>
+    <string name="warn_suspicious_links_info_desc">Zeigt eine Warnung, bevor ein Link außerhalb von Aster geöffnet wird. So erkennst du Phishing-Versuche, bevor du tippst.</string>
     <string name="section_privacy_security">Privatsphäre</string>
     <string name="strip_exif_info_title">Was sind Bild-Metadaten?</string>
     <string name="strip_exif_info_desc">Fotos von Handys und Kameras enthalten versteckte Daten: GPS-Koordinaten, Gerätemodell, Aufnahmezeit und Objektivinfos. Beim Versenden reisen diese Daten mit. Aster entfernt sie vor dem Hochladen, sodass Empfänger nur das Bild sehen.</string>

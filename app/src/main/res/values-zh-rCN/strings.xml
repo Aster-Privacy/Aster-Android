@@ -1322,8 +1322,8 @@
     <string name="aster_email">Aster 邮件</string>
     <string name="pgp_encrypted_subject">加密消息</string>
     <string name="pgp_encrypted_body">此消息已使用 PGP 加密。请在持有匹配 PGP 密钥的设备上打开 Aster 网页版以阅读。</string>
-    <string name="no_folders_yet_create">还没有文件夹 - 在设置中创建一个</string>
-    <string name="no_labels_yet_create">还没有标签 - 从侧边栏创建一个</string>
+    <string name="no_folders_yet_create">还没有文件夹。若要创建文件夹，请打开“设置”&gt;“文件夹”。</string>
+    <string name="no_labels_yet_create">还没有标签。若要创建标签，请打开“设置”&gt;“标签”。</string>
     <string name="clipboard_label_referral">推荐链接</string>
     <string name="clipboard_label_identity_fingerprint">身份指纹</string>
     <string name="clipboard_label_identity_public_key">身份公钥</string>
@@ -2138,7 +2138,7 @@
     <string name="block_tracking_links_info_desc">邮件中的链接常常先经过发件人的服务器，以便记录你是否点击。此选项会去掉这些跳转，让链接直达目的地。</string>
     <string name="warn_suspicious_links_subtitle">打开邮件中的外部链接前显示警告</string>
     <string name="warn_suspicious_links_info_title">外部链接警告</string>
-    <string name="warn_suspicious_links_info_desc">在打开任何离开 Aster 的链接前显示警告，帮助你在点击前识别钓鱼企图。</string>
+    <string name="warn_suspicious_links_info_desc">打开任何离开 Aster 的链接前显示警告。帮助您在点按之前识别钓鱼企图。</string>
     <string name="section_privacy_security">隐私</string>
     <string name="strip_exif_info_title">什么是图片元数据？</string>
     <string name="strip_exif_info_desc">手机和相机拍摄的照片会嵌入隐藏信息：GPS 坐标、设备型号、拍摄时间和镜头参数。发送图片时这些信息会一并带走。Aster 会在上传前将其清除，收件人只会看到照片本身。</string>

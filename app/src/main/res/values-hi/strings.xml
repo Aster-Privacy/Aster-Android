@@ -1704,8 +1704,8 @@
     <string name="aster_email">Aster ईमेल</string>
     <string name="pgp_encrypted_subject">एन्क्रिप्टेड संदेश</string>
     <string name="pgp_encrypted_body">यह संदेश PGP से एन्क्रिप्टेड है। इसे पढ़ने के लिए Aster वेब ऐप उस डिवाइस पर खोलें जिसके पास मेल खाती PGP कुंजी है।</string>
-    <string name="no_folders_yet_create">अभी तक कोई फ़ोल्डर नहीं - साइडबार से एक बनाएं</string>
-    <string name="no_labels_yet_create">अभी तक कोई लेबल नहीं - साइडबार से एक बनाएं</string>
+    <string name="no_folders_yet_create">अभी तक कोई फ़ोल्डर नहीं है. एक बनाने के लिए, सेटिंग &gt; फ़ोल्डर खोलें.</string>
+    <string name="no_labels_yet_create">अभी तक कोई लेबल नहीं है. एक बनाने के लिए, सेटिंग &gt; लेबल खोलें.</string>
     <string name="clipboard_label_referral">रेफ़रल लिंक</string>
     <string name="clipboard_label_identity_fingerprint">पहचान की फ़िंगरप्रिंट</string>
     <string name="clipboard_label_identity_public_key">पहचान की सार्वजनिक कुंजी</string>
@@ -2063,7 +2063,7 @@
     <string name="block_html_rendering_subtitle">ट्रैकिंग, लेआउट धोखाधड़ी और दिखने में असली लगने वाली फ़िशिंग रोकने के लिए आने वाली ईमेल सादे टेक्स्ट में दिखाएं</string>
     <string name="warn_suspicious_links_subtitle">ईमेल में बाहरी लिंक खोलने से पहले चेतावनी दिखाएं</string>
     <string name="warn_suspicious_links_info_title">बाहरी लिंक की चेतावनियां</string>
-    <string name="warn_suspicious_links_info_desc">Aster से बाहर जाने वाला कोई भी लिंक खोलने से पहले चेतावनी दिखाता है। इससे आप क्लिक करने से पहले फ़िशिंग की कोशिशें पहचान सकते हैं।</string>
+    <string name="warn_suspicious_links_info_desc">Aster से बाहर जाने वाला कोई भी लिंक खोलने से पहले चेतावनी दिखाता है। टैप करने से पहले फ़िशिंग पहचानने में मदद करता है।</string>
     <string name="section_privacy_security">निजता</string>
     <string name="strip_exif">तस्वीर का मेटाडेटा हटाएं</string>
     <string name="strip_exif_subtitle">अपनी जगह और डिवाइस की जानकारी बचाने के लिए भेजने से पहले तस्वीरों से EXIF और दूसरा मेटाडेटा हटाएं</string>

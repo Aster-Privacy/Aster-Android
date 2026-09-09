@@ -1322,8 +1322,8 @@
     <string name="aster_email">Aster 메일</string>
     <string name="pgp_encrypted_subject">암호화된 메시지</string>
     <string name="pgp_encrypted_body">이 메시지는 PGP로 암호화되어 있습니다. 일치하는 PGP 키가 있는 기기에서 Aster 웹 앱을 열어 읽어보세요.</string>
-    <string name="no_folders_yet_create">폴더가 아직 없습니다 - 설정에서 만들어 보세요</string>
-    <string name="no_labels_yet_create">라벨이 아직 없습니다 - 사이드바에서 만들어 보세요</string>
+    <string name="no_folders_yet_create">아직 폴더가 없습니다. 만들려면 설정 &gt; 폴더를 여세요.</string>
+    <string name="no_labels_yet_create">아직 라벨이 없습니다. 만들려면 설정 &gt; 라벨을 여세요.</string>
     <string name="clipboard_label_referral">추천 링크</string>
     <string name="clipboard_label_identity_fingerprint">신원 지문</string>
     <string name="clipboard_label_identity_public_key">신원 공개 키</string>
@@ -2138,7 +2138,7 @@
     <string name="block_tracking_links_info_desc">메일 속 링크는 클릭 여부를 기록하려고 보낸 사람의 서버를 먼저 거치는 경우가 많습니다. 이 설정은 그 우회를 없애 링크가 곧바로 목적지로 가게 합니다.</string>
     <string name="warn_suspicious_links_subtitle">이메일의 외부 링크를 열기 전에 경고를 표시합니다</string>
     <string name="warn_suspicious_links_info_title">외부 링크 경고</string>
-    <string name="warn_suspicious_links_info_desc">Aster 밖으로 나가는 링크를 열기 전에 경고를 표시합니다. 클릭하기 전에 피싱을 알아채는 데 도움이 됩니다.</string>
+    <string name="warn_suspicious_links_info_desc">Aster 외부로 나가는 링크를 열기 전에 경고를 표시합니다. 탭하기 전에 피싱 시도를 알아차릴 수 있습니다.</string>
     <string name="section_privacy_security">개인정보</string>
     <string name="strip_exif_info_title">이미지 메타데이터란?</string>
     <string name="strip_exif_info_desc">휴대폰이나 카메라로 찍은 사진에는 GPS 좌표, 기기 모델, 촬영 시각, 렌즈 정보 같은 숨은 데이터가 담깁니다. 이미지를 보내면 이 데이터도 함께 갑니다. Aster는 업로드 전에 이를 제거해 받는 사람에게는 사진만 전달됩니다.</string>

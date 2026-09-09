@@ -1331,8 +1331,8 @@
     <string name="aster_email">بريد Aster</string>
     <string name="pgp_encrypted_subject">رسالة مشفرة</string>
     <string name="pgp_encrypted_body">هذه الرسالة مشفرة بـ PGP. افتح تطبيق ويب Aster على جهاز يحتوي على مفتاح PGP المطابق لقراءتها.</string>
-    <string name="no_folders_yet_create">لا توجد مجلدات بعد - أنشئ واحدًا في الإعدادات</string>
-    <string name="no_labels_yet_create">لا توجد تسميات بعد - أنشئ واحدة من الشريط الجانبي</string>
+    <string name="no_folders_yet_create">لا توجد مجلدات بعد. لإنشاء مجلد، افتح الإعدادات &gt; المجلدات.</string>
+    <string name="no_labels_yet_create">لا توجد تصنيفات بعد. لإنشاء تصنيف، افتح الإعدادات &gt; التصنيفات.</string>
     <string name="clipboard_label_referral">رابط الإحالة</string>
     <string name="clipboard_label_identity_fingerprint">بصمة الهوية</string>
     <string name="clipboard_label_identity_public_key">المفتاح العام للهوية</string>
@@ -2157,7 +2157,7 @@
     <string name="block_tracking_links_info_desc">غالبًا ما تمر روابط الرسائل عبر خادم المرسل أولًا لتسجيل ما إذا كنت قد نقرت. هذا الخيار يزيل ذلك التحويل فتذهب الروابط مباشرة إلى وجهتها.</string>
     <string name="warn_suspicious_links_subtitle">إظهار تحذير قبل فتح الروابط الخارجية في الرسائل</string>
     <string name="warn_suspicious_links_info_title">تحذيرات الروابط الخارجية</string>
-    <string name="warn_suspicious_links_info_desc">يعرض تحذيرًا قبل فتح أي رابط يخرج من Aster. يساعدك على كشف محاولات التصيّد قبل النقر.</string>
+    <string name="warn_suspicious_links_info_desc">يعرض تحذيرًا قبل فتح أي رابط يخرج من Aster. يساعدك على اكتشاف محاولات التصيد قبل النقر.</string>
     <string name="section_privacy_security">الخصوصية</string>
     <string name="strip_exif_info_title">ما هي بيانات الصورة الوصفية؟</string>
     <string name="strip_exif_info_desc">تحتوي الصور الملتقطة بالهواتف والكاميرات على بيانات مخفية: إحداثيات GPS وطراز الجهاز والوقت ومعلومات العدسة. عند إرسال صورة تنتقل هذه البيانات معها. يزيلها Aster قبل الرفع فلا يرى المستلم سوى الصورة نفسها.</string>

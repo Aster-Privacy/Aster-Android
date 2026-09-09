@@ -1379,8 +1379,8 @@
     <string name="aster_email">E-mail Aster</string>
     <string name="pgp_encrypted_subject">Message chiffré</string>
     <string name="pgp_encrypted_body">Ce message est chiffré PGP. Ouvrez l\'application web Aster sur un appareil disposant de la clé PGP correspondante pour le lire.</string>
-    <string name="no_folders_yet_create">Aucun dossier - créez-en un dans les Paramètres</string>
-    <string name="no_labels_yet_create">Aucun libellé - créez-en un depuis la barre latérale</string>
+    <string name="no_folders_yet_create">Aucun dossier pour le moment. Pour en créer un, ouvrez Paramètres &gt; Dossiers.</string>
+    <string name="no_labels_yet_create">Aucun libellé pour le moment. Pour en créer un, ouvrez Paramètres &gt; Libellés.</string>
     <string name="clipboard_label_referral">Lien de parrainage</string>
     <string name="clipboard_label_identity_fingerprint">Empreinte d\'identité</string>
     <string name="clipboard_label_identity_public_key">Clé publique d\'identité</string>
@@ -1526,7 +1526,7 @@
     <string name="block_tracking_links_info_desc">Les liens dans les e-mails redirigent souvent d\'abord via le serveur de l\'expéditeur pour enregistrer si vous avez cliqué. Cela supprime ces redirections pour que les liens pointent directement vers la destination.</string>
     <string name="warn_suspicious_links_subtitle">Afficher un avertissement avant d\'ouvrir des liens externes dans les e-mails</string>
     <string name="warn_suspicious_links_info_title">Avertissements de liens externes</string>
-    <string name="warn_suspicious_links_info_desc">Affiche un avertissement avant d\'ouvrir tout lien sortant d\'Aster. Vous aide à repérer les tentatives de phishing avant de cliquer.</string>
+    <string name="warn_suspicious_links_info_desc">Affiche un avertissement avant d\'ouvrir tout lien sortant d\'Aster. Vous aide à repérer les tentatives de phishing avant de toucher le lien.</string>
     <string name="section_privacy_security">Confidentialité</string>
     <string name="strip_exif">Supprimer les métadonnées des images</string>
     <string name="strip_exif_subtitle">Supprimer les métadonnées EXIF et autres des images avant l\'envoi pour protéger votre emplacement et les informations de votre appareil</string>

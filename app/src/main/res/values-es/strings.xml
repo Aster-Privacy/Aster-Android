@@ -1324,8 +1324,8 @@
     <string name="aster_email">Correo Aster</string>
     <string name="pgp_encrypted_subject">Mensaje cifrado</string>
     <string name="pgp_encrypted_body">Este mensaje está cifrado con PGP. Abre la app web de Aster en un dispositivo que tenga la clave PGP correspondiente para leerlo.</string>
-    <string name="no_folders_yet_create">Aún no hay carpetas - crea una en Ajustes</string>
-    <string name="no_labels_yet_create">Aún no hay etiquetas - crea una desde la barra lateral</string>
+    <string name="no_folders_yet_create">Aún no hay carpetas. Para crear una, abre Configuración &gt; Carpetas.</string>
+    <string name="no_labels_yet_create">Aún no hay etiquetas. Para crear una, abre Configuración &gt; Etiquetas.</string>
     <string name="clipboard_label_referral">Enlace de referencia</string>
     <string name="clipboard_label_identity_fingerprint">Huella de identidad</string>
     <string name="clipboard_label_identity_public_key">Clave pública de identidad</string>
@@ -2142,7 +2142,7 @@
     <string name="block_tracking_links_info_desc">Los enlaces de los correos suelen pasar antes por el servidor de quien envía para registrar si has hecho clic. Esto elimina esas redirecciones para que los enlaces vayan directos al destino.</string>
     <string name="warn_suspicious_links_subtitle">Mostrar advertencia antes de abrir enlaces externos en correos</string>
     <string name="warn_suspicious_links_info_title">Avisos de enlaces externos</string>
-    <string name="warn_suspicious_links_info_desc">Muestra un aviso antes de abrir cualquier enlace que salga de Aster. Ayuda a detectar intentos de phishing antes de hacer clic.</string>
+    <string name="warn_suspicious_links_info_desc">Muestra un aviso antes de abrir cualquier enlace que salga de Aster. Te ayuda a detectar intentos de phishing antes de tocarlo.</string>
     <string name="section_privacy_security">Privacidad</string>
     <string name="strip_exif_info_title">¿Qué son los metadatos de imagen?</string>
     <string name="strip_exif_info_desc">Las fotos hechas con móviles y cámaras llevan datos ocultos: coordenadas GPS, modelo del dispositivo, fecha y hora e información del objetivo. Al enviar una imagen, esos datos viajan con ella. Aster los elimina antes de subirla, así quien la recibe solo ve la foto.</string>

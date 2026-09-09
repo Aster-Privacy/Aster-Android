@@ -1327,8 +1327,8 @@
     <string name="aster_email">E-mail Aster</string>
     <string name="pgp_encrypted_subject">Wiadomość zaszyfrowana</string>
     <string name="pgp_encrypted_body">Ta wiadomość jest zaszyfrowana PGP. Otwórz aplikację webową Aster na urządzeniu z odpowiednim kluczem PGP, aby ją odczytać.</string>
-    <string name="no_folders_yet_create">Brak folderów - utwórz jeden w Ustawieniach</string>
-    <string name="no_labels_yet_create">Brak etykiet - utwórz jedną w pasku bocznym</string>
+    <string name="no_folders_yet_create">Brak folderów. Aby utworzyć folder, otwórz Ustawienia &gt; Foldery.</string>
+    <string name="no_labels_yet_create">Brak etykiet. Aby utworzyć etykietę, otwórz Ustawienia &gt; Etykiety.</string>
     <string name="clipboard_label_referral">Link polecający</string>
     <string name="clipboard_label_identity_fingerprint">Odcisk tożsamości</string>
     <string name="clipboard_label_identity_public_key">Klucz publiczny tożsamości</string>
@@ -2149,7 +2149,7 @@
     <string name="block_tracking_links_info_desc">Odnośniki w wiadomościach często prowadzą najpierw przez serwer nadawcy, aby zapisać Twoje kliknięcie. Ta opcja usuwa takie przekierowania, więc odnośniki prowadzą prosto do celu.</string>
     <string name="warn_suspicious_links_subtitle">Pokaż ostrzeżenie przed otwarciem linków zewnętrznych w e-mailach</string>
     <string name="warn_suspicious_links_info_title">Ostrzeżenia o odnośnikach zewnętrznych</string>
-    <string name="warn_suspicious_links_info_desc">Pokazuje ostrzeżenie przed otwarciem każdego odnośnika prowadzącego poza Aster. Pomaga rozpoznać próbę wyłudzenia, zanim klikniesz.</string>
+    <string name="warn_suspicious_links_info_desc">Pokazuje ostrzeżenie przed otwarciem linku prowadzącego poza Aster. Pomaga rozpoznać próby phishingu, zanim go dotkniesz.</string>
     <string name="section_privacy_security">Prywatność</string>
     <string name="strip_exif_info_title">Czym są metadane obrazu?</string>
     <string name="strip_exif_info_desc">Zdjęcia z telefonów i aparatów zawierają ukryte dane: współrzędne GPS, model urządzenia, datę oraz informacje o obiektywie. Wysyłając obraz, wysyłasz też te dane. Aster usuwa je przed przesłaniem, więc odbiorca widzi wyłącznie zdjęcie.</string>
