@@ -3440,6 +3440,22 @@ internal fun message_details_panel(
         org.astermail.android.crypto.PgpSignatureStatus.NONE,
 ) {
     val colors = AsterMaterial.colors
+    val panel_context = LocalContext.current
+    val panel_haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val panel_haptics_enabled = org.astermail.android.ui.theme.local_accessibility.current.haptic_enabled
+    val copy_address = { value: String ->
+        val address = copyable_email_address(value)
+        if (panel_haptics_enabled) {
+            panel_haptics.performHapticFeedback(
+                androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress,
+            )
+        }
+        val copied = write_to_clipboard(
+            panel_context,
+            android.content.ClipData.newPlainText("email_address", address),
+        )
+        show_copy_result_toast(panel_context, address, copied)
+    }
     var show_security by remember { mutableStateOf(false) }
     val raw_headers_text = remember(raw_headers) {
         raw_headers.joinToString("\n") { "${it.first}: ${it.second}" }
@@ -3461,9 +3477,17 @@ internal fun message_details_panel(
             .background(colors.bg_secondary)
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
     ) {
-        detail_meta_row(label = stringResource(R.string.from), value = sender)
+        detail_meta_row(
+            label = stringResource(R.string.from),
+            value = sender,
+            on_long_click = { copy_address(sender) },
+        )
         if (reply_to != null) {
-            detail_meta_row(label = stringResource(R.string.reply_to_label), value = reply_to)
+            detail_meta_row(
+                label = stringResource(R.string.reply_to_label),
+                value = reply_to,
+                on_long_click = { copy_address(reply_to) },
+            )
         }
         detail_meta_row(label = stringResource(R.string.date), value = date_text)
         detail_meta_row(
@@ -3541,6 +3565,22 @@ private fun security_details_dialog(
     on_close: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
+    val dialog_context = LocalContext.current
+    val dialog_haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val dialog_haptics_enabled = org.astermail.android.ui.theme.local_accessibility.current.haptic_enabled
+    val copy_dialog_address = { value: String ->
+        val address = copyable_email_address(value)
+        if (dialog_haptics_enabled) {
+            dialog_haptics.performHapticFeedback(
+                androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress,
+            )
+        }
+        val copied = write_to_clipboard(
+            dialog_context,
+            android.content.ClipData.newPlainText("email_address", address),
+        )
+        show_copy_result_toast(dialog_context, address, copied)
+    }
     org.astermail.android.design.components.AsterDialog(
         on_dismiss = on_close,
         title = stringResource(R.string.security_details_title),
@@ -3586,6 +3626,7 @@ private fun security_details_dialog(
                     detail_meta_row(
                         label = stringResource(R.string.received_on_label),
                         value = received_on,
+                        on_long_click = { copy_dialog_address(received_on) },
                     )
                 }
                 if (authentication != null) {
@@ -3627,12 +3668,23 @@ private fun detail_meta_row(
     icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
     value_tint: androidx.compose.ui.graphics.Color? = null,
     on_click: (() -> Unit)? = null,
+    on_long_click: (() -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .then(if (on_click != null) Modifier.clickable(onClick = on_click) else Modifier)
+            .then(
+                if (on_click != null || on_long_click != null) {
+                    Modifier.combinedClickable(
+                        hapticFeedbackEnabled = false,
+                        onClick = on_click ?: {},
+                        onLongClick = on_long_click,
+                    )
+                } else {
+                    Modifier
+                },
+            )
             .padding(vertical = 5.dp),
         verticalAlignment = Alignment.Top,
     ) {
