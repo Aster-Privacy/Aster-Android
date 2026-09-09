@@ -1314,6 +1314,8 @@
     <string name="restore_sent_mail_session_expired">Klucze sesji są niedostępne. Wyloguj się, zaloguj ponownie i spróbuj jeszcze raz.</string>
     <plurals name="password_change_sent_mail_locked">
         <item quantity="one">Hasło zostało zmienione. %1$d wysłanych wiadomości było zaszyfrowanych wcześniejszym hasłem i nie zostało zaktualizowanych. Aby je przywrócić, otwórz Ustawienia &gt; Bezpieczeństwo &gt; Zmień hasło &gt; Przywróć wysłane wiadomości.</item>
+        <item quantity="few">Hasło zostało zmienione. %1$d wysłanych wiadomości było zaszyfrowanych wcześniejszym hasłem i nie zostało zaktualizowanych. Aby je przywrócić, otwórz Ustawienia &gt; Bezpieczeństwo &gt; Zmień hasło &gt; Przywróć wysłane wiadomości.</item>
+        <item quantity="many">Hasło zostało zmienione. %1$d wysłanych wiadomości było zaszyfrowanych wcześniejszym hasłem i nie zostało zaktualizowanych. Aby je przywrócić, otwórz Ustawienia &gt; Bezpieczeństwo &gt; Zmień hasło &gt; Przywróć wysłane wiadomości.</item>
         <item quantity="other">Hasło zostało zmienione. %1$d wysłanych wiadomości było zaszyfrowanych wcześniejszym hasłem i nie zostało zaktualizowanych. Aby je przywrócić, otwórz Ustawienia &gt; Bezpieczeństwo &gt; Zmień hasło &gt; Przywróć wysłane wiadomości.</item>
     </plurals>
     <string name="compose_email_hint">Napisz wiadomość</string>
