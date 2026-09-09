@@ -1,0 +1,4 @@
+Fixed:
+
+- A folder now shows the color you picked everywhere it appears: the sidebar, the folder list in Settings, the move-to-folder sheet, the folder chip in a message, and the folder switcher above your mail list.
+- Picking a parent folder shows each option in its own color, so nested folders are easier to tell apart.
