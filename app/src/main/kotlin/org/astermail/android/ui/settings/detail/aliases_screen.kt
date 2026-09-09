@@ -88,6 +88,7 @@ import org.astermail.android.settings.AliasDetailState
 import org.astermail.android.ui.common.show_copied_toast
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -804,31 +805,39 @@ private fun alias_segmented_tabs(
     on_select: (Int) -> Unit,
 ) {
     val colors = AsterMaterial.colors
+    val shape = SquircleShape(999.dp)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
-        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
     ) {
-        labels.forEachIndexed { i, label ->
-            val active = selected == i
-            val shape = CircleShape
-            Box(
-                modifier = Modifier
-                    .clip(shape)
-                    .background(if (active) colors.accent_blue else colors.bg_secondary)
-                    .clickable { on_select(i) }
-                    .padding(horizontal = AsterSpacing.lg, vertical = 9.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = label,
-                    color = if (active) Color.White else colors.text_secondary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                )
+        Row(
+            modifier = Modifier
+                .clip(shape)
+                .border(1.dp, colors.border_secondary, shape)
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            labels.forEachIndexed { i, label ->
+                val active = selected == i
+                Box(
+                    modifier = Modifier
+                        .clip(shape)
+                        .background(if (active) colors.accent_blue else Color.Transparent)
+                        .clickable(role = Role.Tab) { on_select(i) }
+                        .padding(horizontal = 11.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = label,
+                        color = if (active) Color.White else colors.text_muted,
+                        fontSize = 13.sp,
+                        fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
+                        maxLines = 1,
+                    )
+                }
             }
         }
     }
@@ -839,7 +848,7 @@ private fun alias_create_button(on_click: () -> Unit) {
     val colors = AsterMaterial.colors
     Row(
         modifier = Modifier
-            .clip(CircleShape)
+            .clip(SquircleShape(999.dp))
             .background(colors.accent_blue)
             .clickable(onClick = on_click)
             .padding(horizontal = 14.dp, vertical = 8.dp),
@@ -871,21 +880,27 @@ private fun alias_count_chip(
     on_click: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
+    val shape = SquircleShape(999.dp)
     Row(
         modifier = Modifier
-            .clip(CircleShape)
+            .clip(shape)
             .background(if (active) colors.accent_blue.copy(alpha = 0.14f) else colors.bg_secondary)
+            .border(
+                1.dp,
+                if (active) colors.accent_blue.copy(alpha = 0.5f) else colors.border_secondary,
+                shape,
+            )
             .clickable(onClick = on_click)
-            .padding(start = 14.dp, end = 10.dp, top = 7.dp, bottom = 7.dp)
+            .padding(horizontal = 12.dp, vertical = 6.dp)
             .testTag(test_tag),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
             text = label,
             color = if (active) colors.accent_blue else colors.text_secondary,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
             maxLines = 1,
         )
         Text(
@@ -930,7 +945,7 @@ private fun alias_action_pill(
     val colors = AsterMaterial.colors
     Row(
         modifier = modifier
-            .clip(CircleShape)
+            .clip(SquircleShape(999.dp))
             .background(colors.bg_secondary)
             .clickable(onClick = on_click)
             .padding(horizontal = 10.dp, vertical = 6.dp),
@@ -1014,12 +1029,12 @@ private fun alias_filter_chip(
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
         modifier = Modifier
-            .clip(CircleShape)
+            .clip(SquircleShape(999.dp))
             .background(if (active) colors.accent_blue.copy(alpha = 0.14f) else colors.bg_secondary)
             .border(
                 1.dp,
                 if (active) colors.accent_blue.copy(alpha = 0.5f) else colors.border_secondary,
-                CircleShape,
+                SquircleShape(999.dp),
             )
             .clickable(onClick = on_click)
             .padding(horizontal = 12.dp, vertical = 6.dp)
@@ -1036,12 +1051,12 @@ private fun alias_toggle_chip(label: String, active: Boolean, on_click: () -> Un
         fontSize = 11.sp,
         fontWeight = FontWeight.Medium,
         modifier = Modifier
-            .clip(CircleShape)
+            .clip(SquircleShape(999.dp))
             .background(if (active) colors.accent_blue.copy(alpha = 0.14f) else colors.bg_secondary)
             .border(
                 1.dp,
                 if (active) colors.accent_blue.copy(alpha = 0.5f) else colors.border_secondary,
-                CircleShape,
+                SquircleShape(999.dp),
             )
             .clickable(onClick = on_click)
             .padding(horizontal = 8.dp, vertical = 3.dp),
