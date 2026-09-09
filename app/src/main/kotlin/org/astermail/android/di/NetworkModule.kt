@@ -21,9 +21,11 @@
 
 package org.astermail.android.di
 
+import android.content.Context
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import javax.inject.Singleton
@@ -158,6 +160,7 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provide_api_client(
+        @ApplicationContext context: Context,
         token_provider: TokenProvider,
         token_store: TokenStore,
         session_refresher: dagger.Lazy<SessionRefresher>,
@@ -170,6 +173,7 @@ object NetworkModule {
             token_provider = token_provider,
             on_csrf_changed = { token -> token_store.save_csrf(token) },
             initial_csrf = token_store.csrf_token,
+            device_id = org.astermail.android.api.DeviceIdStore.get(context),
             csrf_refresher = {
                 if (session_refresher.get().refresh() == RefreshOutcome.Success) {
                     client.get_csrf()

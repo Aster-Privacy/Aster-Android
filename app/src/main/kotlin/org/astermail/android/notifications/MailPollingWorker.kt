@@ -135,6 +135,7 @@ class MailPollingWorker(
             base_url = BuildConfig.API_BASE_URL,
             token_provider = token_provider,
             allow_cleartext_for_test = BuildConfig.API_BASE_URL.startsWith("http://"),
+            device_id = org.astermail.android.api.DeviceIdStore.get(context),
         )
         try {
             check_billing_state(prefs, client)

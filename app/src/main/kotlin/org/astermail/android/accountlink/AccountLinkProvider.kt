@@ -96,6 +96,8 @@ class AccountLinkProvider : ContentProvider() {
                 putString(KEY_EMAIL, account.email)
                 putString(KEY_DISPLAY_NAME, account.display_name)
                 putString(KEY_PROFILE_COLOR, account.profile_color)
+                putString(KEY_PROFILE_PICTURE, account.profile_picture)
+                putString(KEY_API_BASE, ApiBuildConfig.API_BASE_URL)
                 putBoolean(KEY_IS_CURRENT, is_current)
             }
         }
@@ -212,6 +214,7 @@ class AccountLinkProvider : ContentProvider() {
             allow_cleartext_for_test = ApiBuildConfig.API_BASE_URL.startsWith("http://"),
             token_provider = provider,
             initial_csrf = snapshot.csrf_token,
+            device_id = context?.let { org.astermail.android.api.DeviceIdStore.get(it) },
         )
         try {
             block(client)
@@ -275,6 +278,8 @@ class AccountLinkProvider : ContentProvider() {
         const val KEY_EMAIL = "email"
         const val KEY_DISPLAY_NAME = "display_name"
         const val KEY_PROFILE_COLOR = "profile_color"
+        const val KEY_PROFILE_PICTURE = "profile_picture"
+        const val KEY_API_BASE = "api_base"
         const val KEY_IS_CURRENT = "is_current"
         const val KEY_OK = "ok"
         const val KEY_ERROR = "error"

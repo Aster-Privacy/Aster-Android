@@ -173,6 +173,7 @@ class ApiClient(
     private val csrf_refresher: suspend () -> String? = { null },
     private val allow_cleartext_for_test: Boolean = false,
     release_name: String = BuildConfig.VERSION_NAME,
+    private val device_id: String? = null,
 ) {
     val json: Json = Json {
         ignoreUnknownKeys = true
@@ -279,6 +280,7 @@ class ApiClient(
             contentType(ContentType.Application.Json)
             header(HttpHeaders.UserAgent, build_user_agent())
             header(HttpHeaders.Referrer, "${base_url.trimEnd('/')}/")
+            device_id?.let { header(DEVICE_ID_HEADER, it) }
         }
 
         HttpResponseValidator {
