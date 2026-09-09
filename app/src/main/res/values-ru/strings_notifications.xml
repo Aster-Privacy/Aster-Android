@@ -25,4 +25,14 @@
     <string name="notif_blocked_title">Уведомления отключены</string>
     <string name="notif_blocked_subtitle">Aster Mail не может показывать уведомления, пока вы их не разрешите. Нажмите, чтобы открыть настройки системы.</string>
     <string name="notif_channel_downloads_name">Загрузки</string>
+    <string name="notif_channel_persistent_push_name">Фоновое подключение</string>
+    <string name="notif_channel_persistent_push_description">Показывает, когда Aster Mail удерживает подключение для мгновенных уведомлений о почте</string>
+    <string name="notif_persistent_push_title">Подключено для мгновенной почты</string>
+    <string name="notif_persistent_push_body">Новая почта приходит без ожидания фоновой проверки.</string>
+    <string name="notif_persistent_push_stop">Отключить</string>
+    <string name="persistent_push_title">Удерживать подключение</string>
+    <string name="persistent_push_subtitle">Aster Mail остаётся подключённым к серверу, поэтому новая почта приходит сразу. Включите это, если push-уведомления не доходят до телефона. Добавляется постоянное уведомление и расходуется больше заряда.</string>
+    <string name="persistent_push_autostart_title">Разрешить автозапуск</string>
+    <string name="persistent_push_autostart_subtitle">Некоторые телефоны закрывают фоновые подключения. В настройках системы разрешите Aster Mail запускаться автоматически и отключите ограничения батареи.</string>
+    <string name="notif_delivery_section">Доставка</string>
 </resources>

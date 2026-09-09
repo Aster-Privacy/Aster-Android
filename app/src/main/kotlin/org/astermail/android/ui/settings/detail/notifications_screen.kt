@@ -161,6 +161,9 @@ fun NotificationsScreen(
     var save_trigger by remember { mutableIntStateOf(0) }
     var prefs_loaded by remember { mutableStateOf(false) }
 
+    var persistent_push by remember {
+        mutableStateOf(org.astermail.android.notifications.PersistentPushService.is_enabled(context))
+    }
     val is_battery_exempt = remember { mutableStateOf(false) }
     val notifications_allowed = remember { mutableStateOf(true) }
     fun refresh_battery_exempt() {
@@ -308,7 +311,15 @@ fun NotificationsScreen(
         } else {
             section_label(stringResource(R.string.channels))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
-                switch_row(stringResource(R.string.push_notifications), stringResource(R.string.push_notifications_subtitle), push) { push = it; save_trigger++; MailPollingWorker.set_push_enabled(context, it) }
+                switch_row(stringResource(R.string.push_notifications), stringResource(R.string.push_notifications_subtitle), push) {
+                    push = it
+                    save_trigger++
+                    MailPollingWorker.set_push_enabled(context, it)
+                    if (!it && persistent_push) {
+                        persistent_push = false
+                        org.astermail.android.notifications.PersistentPushService.set_enabled(context, false)
+                    }
+                }
                 AsterDivider(modifier = Modifier)
                 switch_row(stringResource(R.string.sound), stringResource(R.string.sound_subtitle), sound) { sound = it; save_trigger++; MailPollingWorker.set_notification_alerts(context, it, vibrate) }
                 AsterDivider(modifier = Modifier)
@@ -340,6 +351,31 @@ fun NotificationsScreen(
                                 Uri.parse("package:${context.packageName}"),
                             )
                             org.astermail.android.ui.common.start_external_intent(context, intent)
+                        },
+                    )
+                }
+            }
+            v_gap(AsterSpacing.lg)
+            section_label(stringResource(R.string.notif_delivery_section))
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                switch_row(
+                    stringResource(R.string.persistent_push_title),
+                    stringResource(R.string.persistent_push_subtitle),
+                    persistent_push,
+                ) {
+                    persistent_push = it
+                    org.astermail.android.notifications.PersistentPushService.set_enabled(context, it)
+                }
+                if (persistent_push) {
+                    AsterDivider(modifier = Modifier)
+                    detail_row(
+                        title = stringResource(R.string.persistent_push_autostart_title),
+                        subtitle = stringResource(R.string.persistent_push_autostart_subtitle),
+                        on_click = {
+                            org.astermail.android.ui.common.start_external_intent(
+                                context,
+                                org.astermail.android.notifications.autostart_settings_intent(context),
+                            )
                         },
                     )
                 }

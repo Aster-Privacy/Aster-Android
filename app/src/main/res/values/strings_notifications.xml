@@ -25,4 +25,14 @@
     <string name="mute_folder_notifications">Mute folder notifications</string>
     <string name="unmute_folder_notifications">Unmute folder notifications</string>
     <string name="notif_channel_downloads_name">Downloads</string>
+    <string name="notif_channel_persistent_push_name">Background connection</string>
+    <string name="notif_channel_persistent_push_description">Shows when Aster Mail keeps a connection open for instant mail notifications</string>
+    <string name="notif_persistent_push_title">Connected for instant mail</string>
+    <string name="notif_persistent_push_body">New mail arrives without waiting for a background check.</string>
+    <string name="notif_persistent_push_stop">Turn off</string>
+    <string name="persistent_push_title">Keep a connection open</string>
+    <string name="persistent_push_subtitle">Aster Mail stays connected to the server so new mail arrives right away. Turn this on if push notifications never reach your phone. It adds a permanent notification and uses more battery.</string>
+    <string name="persistent_push_autostart_title">Allow automatic startup</string>
+    <string name="persistent_push_autostart_subtitle">Some phones close background connections. In system settings, allow Aster Mail to start automatically and turn off any battery restrictions.</string>
+    <string name="notif_delivery_section">Delivery</string>
 </resources>

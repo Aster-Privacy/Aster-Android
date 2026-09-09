@@ -25,4 +25,14 @@
     <string name="notif_blocked_title">通知がオフになっています</string>
     <string name="notif_blocked_subtitle">許可するまで Aster Mail は通知を表示できません。タップしてシステム設定を開いてください。</string>
     <string name="notif_channel_downloads_name">ダウンロード</string>
+    <string name="notif_channel_persistent_push_name">バックグラウンド接続</string>
+    <string name="notif_channel_persistent_push_description">Aster Mail がメールを即座に通知するために接続を維持していることを示します</string>
+    <string name="notif_persistent_push_title">即時受信のため接続中</string>
+    <string name="notif_persistent_push_body">バックグラウンドの確認を待たずに新着メールが届きます。</string>
+    <string name="notif_persistent_push_stop">オフにする</string>
+    <string name="persistent_push_title">接続を維持する</string>
+    <string name="persistent_push_subtitle">Aster Mail がサーバーへの接続を維持し、新着メールがすぐに届きます。プッシュ通知がスマートフォンに届かない場合にオンにしてください。常時表示の通知が追加され、バッテリーの消費が増えます。</string>
+    <string name="persistent_push_autostart_title">自動起動を許可する</string>
+    <string name="persistent_push_autostart_subtitle">一部のスマートフォンはバックグラウンド接続を終了します。システム設定で Aster Mail の自動起動を許可し、バッテリー制限をオフにしてください。</string>
+    <string name="notif_delivery_section">配信</string>
 </resources>

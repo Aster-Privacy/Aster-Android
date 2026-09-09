@@ -25,4 +25,14 @@
     <string name="notif_blocked_title">الإشعارات مُعطّلة</string>
     <string name="notif_blocked_subtitle">لا يمكن لتطبيق Aster Mail عرض الإشعارات حتى تسمح بها. انقر لفتح إعدادات النظام.</string>
     <string name="notif_channel_downloads_name">التنزيلات</string>
+    <string name="notif_channel_persistent_push_name">اتصال في الخلفية</string>
+    <string name="notif_channel_persistent_push_description">يوضح متى يُبقي Aster Mail الاتصال مفتوحًا لتلقي إشعارات البريد فورًا</string>
+    <string name="notif_persistent_push_title">متصل لتلقي البريد فورًا</string>
+    <string name="notif_persistent_push_body">يصل البريد الجديد دون انتظار فحص في الخلفية.</string>
+    <string name="notif_persistent_push_stop">إيقاف</string>
+    <string name="persistent_push_title">إبقاء الاتصال مفتوحًا</string>
+    <string name="persistent_push_subtitle">يظل Aster Mail متصلًا بالخادم ليصل البريد الجديد فورًا. فعّل هذا الخيار إذا كانت إشعارات الدفع لا تصل إلى هاتفك. يضيف إشعارًا دائمًا ويستهلك مزيدًا من البطارية.</string>
+    <string name="persistent_push_autostart_title">السماح بالتشغيل التلقائي</string>
+    <string name="persistent_push_autostart_subtitle">تغلق بعض الهواتف الاتصالات في الخلفية. من إعدادات النظام، اسمح لـ Aster Mail بالتشغيل التلقائي وأوقف قيود البطارية.</string>
+    <string name="notif_delivery_section">التسليم</string>
 </resources>

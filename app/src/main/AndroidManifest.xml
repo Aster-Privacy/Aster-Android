@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
@@ -20,6 +22,16 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="otpauth" />
         </intent>
+        <package android:name="com.miui.securitycenter" />
+        <package android:name="com.huawei.systemmanager" />
+        <package android:name="com.coloros.safecenter" />
+        <package android:name="com.oplus.safecenter" />
+        <package android:name="com.iqoo.secure" />
+        <package android:name="com.vivo.permissionmanager" />
+        <package android:name="com.letv.android.letvsafe" />
+        <package android:name="com.asus.mobilemanager" />
+        <package android:name="com.samsung.android.lool" />
+        <package android:name="com.transsion.phonemaster" />
     </queries>
 
     <application
@@ -131,6 +143,16 @@
             android:name=".notifications.MailNotificationActionReceiver"
             android:enabled="true"
             android:exported="false" />
+
+        <service
+            android:name=".notifications.PersistentPushService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            android:stopWithTask="false">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps an authenticated connection open to the Aster Mail server so new mail notifications arrive on devices where Google Play services push delivery is unavailable. The connection is opt-in and off by default." />
+        </service>
 
         <service
             android:name=".notifications.AsterPushService"

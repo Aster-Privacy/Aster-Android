@@ -25,4 +25,14 @@
     <string name="notif_blocked_title">通知已关闭</string>
     <string name="notif_blocked_subtitle">在你允许之前，Aster Mail 无法显示通知。点按以打开系统设置。</string>
     <string name="notif_channel_downloads_name">下载</string>
+    <string name="notif_channel_persistent_push_name">后台连接</string>
+    <string name="notif_channel_persistent_push_description">显示 Aster Mail 何时保持连接以即时推送邮件通知</string>
+    <string name="notif_persistent_push_title">已连接，可即时收信</string>
+    <string name="notif_persistent_push_body">新邮件无需等待后台检查即可送达。</string>
+    <string name="notif_persistent_push_stop">关闭</string>
+    <string name="persistent_push_title">保持连接</string>
+    <string name="persistent_push_subtitle">Aster Mail 与服务器保持连接，新邮件立即送达。如果推送通知始终无法到达你的手机，请开启此选项。它会添加一条常驻通知，并增加耗电量。</string>
+    <string name="persistent_push_autostart_title">允许自动启动</string>
+    <string name="persistent_push_autostart_subtitle">某些手机会关闭后台连接。请在系统设置中允许 Aster Mail 自动启动，并关闭电池限制。</string>
+    <string name="notif_delivery_section">送达</string>
 </resources>

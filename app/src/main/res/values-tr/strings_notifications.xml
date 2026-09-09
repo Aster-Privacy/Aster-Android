@@ -25,4 +25,14 @@
     <string name="notif_blocked_title">Bildirimler kapalı</string>
     <string name="notif_blocked_subtitle">İzin verene kadar Aster Mail bildirim gösteremez. Sistem ayarlarını açmak için dokunun.</string>
     <string name="notif_channel_downloads_name">İndirilenler</string>
+    <string name="notif_channel_persistent_push_name">Arka plan bağlantısı</string>
+    <string name="notif_channel_persistent_push_description">Aster Mail\'in anında posta bildirimleri için bağlantıyı açık tuttuğunu gösterir</string>
+    <string name="notif_persistent_push_title">Anında posta için bağlı</string>
+    <string name="notif_persistent_push_body">Yeni posta, arka plan denetimini beklemeden gelir.</string>
+    <string name="notif_persistent_push_stop">Kapat</string>
+    <string name="persistent_push_title">Bağlantıyı açık tut</string>
+    <string name="persistent_push_subtitle">Aster Mail sunucuya bağlı kalır, böylece yeni posta hemen gelir. Anında bildirimler telefonunuza hiç ulaşmıyorsa bunu açın. Kalıcı bir bildirim ekler ve daha fazla pil harcar.</string>
+    <string name="persistent_push_autostart_title">Otomatik başlatmaya izin ver</string>
+    <string name="persistent_push_autostart_subtitle">Bazı telefonlar arka plan bağlantılarını kapatır. Sistem ayarlarında Aster Mail\'in otomatik başlamasına izin verin ve pil kısıtlamalarını kapatın.</string>
+    <string name="notif_delivery_section">Teslim</string>
 </resources>

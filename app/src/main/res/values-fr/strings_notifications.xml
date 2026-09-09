@@ -25,4 +25,14 @@
     <string name="mute_folder_notifications">Désactiver les notifications du dossier</string>
     <string name="unmute_folder_notifications">Réactiver les notifications du dossier</string>
     <string name="notif_channel_downloads_name">Téléchargements</string>
+    <string name="notif_channel_persistent_push_name">Connexion en arrière-plan</string>
+    <string name="notif_channel_persistent_push_description">Indique quand Aster Mail garde une connexion ouverte pour des notifications de courrier instantanées</string>
+    <string name="notif_persistent_push_title">Connecté pour un courrier instantané</string>
+    <string name="notif_persistent_push_body">Le nouveau courrier arrive sans attendre une vérification en arrière-plan.</string>
+    <string name="notif_persistent_push_stop">Désactiver</string>
+    <string name="persistent_push_title">Garder une connexion ouverte</string>
+    <string name="persistent_push_subtitle">Aster Mail reste connecté au serveur pour que le nouveau courrier arrive immédiatement. Activez cette option si les notifications push n\'atteignent jamais votre téléphone. Elle ajoute une notification permanente et consomme plus de batterie.</string>
+    <string name="persistent_push_autostart_title">Autoriser le démarrage automatique</string>
+    <string name="persistent_push_autostart_subtitle">Certains téléphones ferment les connexions en arrière-plan. Dans les paramètres système, autorisez Aster Mail à démarrer automatiquement et désactivez les restrictions de batterie.</string>
+    <string name="notif_delivery_section">Distribution</string>
 </resources>

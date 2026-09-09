@@ -25,4 +25,14 @@
     <string name="notif_blocked_title">Powiadomienia są wyłączone</string>
     <string name="notif_blocked_subtitle">Aster Mail nie może wyświetlać powiadomień, dopóki ich nie włączysz. Dotknij, aby otworzyć ustawienia systemu.</string>
     <string name="notif_channel_downloads_name">Pobrane</string>
+    <string name="notif_channel_persistent_push_name">Połączenie w tle</string>
+    <string name="notif_channel_persistent_push_description">Pokazuje, kiedy Aster Mail utrzymuje otwarte połączenie dla natychmiastowych powiadomień o poczcie</string>
+    <string name="notif_persistent_push_title">Połączono, poczta przychodzi natychmiast</string>
+    <string name="notif_persistent_push_body">Nowa poczta przychodzi bez czekania na sprawdzenie w tle.</string>
+    <string name="notif_persistent_push_stop">Wyłącz</string>
+    <string name="persistent_push_title">Utrzymuj otwarte połączenie</string>
+    <string name="persistent_push_subtitle">Aster Mail pozostaje połączony z serwerem, dzięki czemu nowa poczta przychodzi od razu. Włącz tę opcję, jeśli powiadomienia push nigdy nie docierają do telefonu. Dodaje stałe powiadomienie i zużywa więcej baterii.</string>
+    <string name="persistent_push_autostart_title">Zezwól na automatyczne uruchamianie</string>
+    <string name="persistent_push_autostart_subtitle">Niektóre telefony zamykają połączenia w tle. W ustawieniach systemowych zezwól aplikacji Aster Mail na automatyczne uruchamianie i wyłącz ograniczenia baterii.</string>
+    <string name="notif_delivery_section">Dostarczanie</string>
 </resources>

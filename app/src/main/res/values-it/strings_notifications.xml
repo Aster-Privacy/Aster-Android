@@ -25,4 +25,14 @@
     <string name="notif_blocked_title">Le notifiche sono disattivate</string>
     <string name="notif_blocked_subtitle">Aster Mail non può mostrare notifiche finché non le consenti. Tocca per aprire le impostazioni di sistema.</string>
     <string name="notif_channel_downloads_name">Download</string>
+    <string name="notif_channel_persistent_push_name">Connessione in background</string>
+    <string name="notif_channel_persistent_push_description">Indica quando Aster Mail mantiene una connessione aperta per le notifiche immediate della posta</string>
+    <string name="notif_persistent_push_title">Connesso per la posta immediata</string>
+    <string name="notif_persistent_push_body">La nuova posta arriva senza attendere un controllo in background.</string>
+    <string name="notif_persistent_push_stop">Disattiva</string>
+    <string name="persistent_push_title">Mantieni una connessione aperta</string>
+    <string name="persistent_push_subtitle">Aster Mail resta connesso al server, così la nuova posta arriva subito. Attiva questa opzione se le notifiche push non raggiungono mai il tuo telefono. Aggiunge una notifica permanente e consuma più batteria.</string>
+    <string name="persistent_push_autostart_title">Consenti l\'avvio automatico</string>
+    <string name="persistent_push_autostart_subtitle">Alcuni telefoni chiudono le connessioni in background. Nelle impostazioni di sistema, consenti ad Aster Mail di avviarsi automaticamente e disattiva le restrizioni della batteria.</string>
+    <string name="notif_delivery_section">Recapito</string>
 </resources>

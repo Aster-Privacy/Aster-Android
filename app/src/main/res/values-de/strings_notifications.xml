@@ -25,4 +25,14 @@
     <string name="notif_blocked_title">Benachrichtigungen sind deaktiviert</string>
     <string name="notif_blocked_subtitle">Aster Mail kann keine Benachrichtigungen anzeigen, bis Sie sie zulassen. Tippen Sie, um die Systemeinstellungen zu öffnen.</string>
     <string name="notif_channel_downloads_name">Downloads</string>
+    <string name="notif_channel_persistent_push_name">Hintergrundverbindung</string>
+    <string name="notif_channel_persistent_push_description">Zeigt an, wenn Aster Mail eine Verbindung für sofortige E-Mail-Benachrichtigungen offen hält</string>
+    <string name="notif_persistent_push_title">Verbunden für sofortige E-Mails</string>
+    <string name="notif_persistent_push_body">Neue E-Mails kommen an, ohne auf eine Hintergrundprüfung zu warten.</string>
+    <string name="notif_persistent_push_stop">Ausschalten</string>
+    <string name="persistent_push_title">Verbindung offen halten</string>
+    <string name="persistent_push_subtitle">Aster Mail bleibt mit dem Server verbunden, sodass neue E-Mails sofort ankommen. Aktivieren Sie dies, wenn Push-Benachrichtigungen Ihr Telefon nie erreichen. Es fügt eine dauerhafte Benachrichtigung hinzu und verbraucht mehr Akku.</string>
+    <string name="persistent_push_autostart_title">Automatischen Start erlauben</string>
+    <string name="persistent_push_autostart_subtitle">Manche Telefone schließen Hintergrundverbindungen. Erlauben Sie Aster Mail in den Systemeinstellungen den automatischen Start und deaktivieren Sie alle Akkubeschränkungen.</string>
+    <string name="notif_delivery_section">Zustellung</string>
 </resources>

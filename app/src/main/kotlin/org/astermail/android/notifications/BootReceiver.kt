@@ -32,6 +32,7 @@ class BootReceiver : BroadcastReceiver() {
         ) {
             MailPollingWorker.enqueue(context)
             UnifiedPushState.sync_registration(context)
+            PersistentPushService.start_if_enabled(context)
         }
     }
 }

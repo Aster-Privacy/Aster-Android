@@ -25,4 +25,14 @@
     <string name="notif_blocked_title">알림이 꺼져 있습니다</string>
     <string name="notif_blocked_subtitle">허용하기 전까지 Aster Mail은 알림을 표시할 수 없습니다. 탭하여 시스템 설정을 여세요.</string>
     <string name="notif_channel_downloads_name">다운로드</string>
+    <string name="notif_channel_persistent_push_name">백그라운드 연결</string>
+    <string name="notif_channel_persistent_push_description">Aster Mail이 즉시 메일 알림을 받기 위해 연결을 유지하는지 표시합니다</string>
+    <string name="notif_persistent_push_title">즉시 수신을 위해 연결됨</string>
+    <string name="notif_persistent_push_body">백그라운드 확인을 기다리지 않고 새 메일이 도착합니다.</string>
+    <string name="notif_persistent_push_stop">끄기</string>
+    <string name="persistent_push_title">연결 유지</string>
+    <string name="persistent_push_subtitle">Aster Mail이 서버에 연결된 상태를 유지하여 새 메일이 바로 도착합니다. 푸시 알림이 휴대전화에 도착하지 않는 경우 켜세요. 상시 알림이 추가되고 배터리를 더 사용합니다.</string>
+    <string name="persistent_push_autostart_title">자동 시작 허용</string>
+    <string name="persistent_push_autostart_subtitle">일부 휴대전화는 백그라운드 연결을 종료합니다. 시스템 설정에서 Aster Mail의 자동 시작을 허용하고 배터리 제한을 끄세요.</string>
+    <string name="notif_delivery_section">전송</string>
 </resources>

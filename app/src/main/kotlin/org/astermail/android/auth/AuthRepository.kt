@@ -420,6 +420,7 @@ class AuthRepository @Inject constructor(
         }
         runCatching { UnifiedPushState.clear_backend_registration(context) }
         runCatching { UnifiedPushState.sync_registration(context) }
+        runCatching { org.astermail.android.notifications.PersistentPushService.start_if_enabled(context) }
         background_scope.launch { runCatching { ensure_pgp_key_published() } }
         background_scope.launch { runCatching { system_folder_bootstrap.ensure_system_folders() } }
         background_scope.launch { runCatching { backfill_server_recovery_email() } }
@@ -609,6 +610,7 @@ class AuthRepository @Inject constructor(
         _session_expired.value = false
         runCatching { UnifiedPushState.clear_backend_registration(context) }
         runCatching { UnifiedPushState.sync_registration(context) }
+        runCatching { org.astermail.android.notifications.PersistentPushService.start_if_enabled(context) }
         background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
         RegisterSuccess(recovery_codes = recovery_codes, recovery_backup_saved = recovery_backup_saved)
     }
@@ -886,6 +888,7 @@ class AuthRepository @Inject constructor(
         } catch (e: Throwable) {
             if (e is CancellationException) throw e
         }
+        runCatching { org.astermail.android.notifications.PersistentPushService.stop(context) }
         runCatching { token_store.clear() }
         runCatching { api_client.invalidate_bearer_cache() }
         runCatching { session_key_store.clear() }

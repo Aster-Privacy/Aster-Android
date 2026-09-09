@@ -25,4 +25,14 @@
     <string name="notif_blocked_title">Meldingen staan uit</string>
     <string name="notif_blocked_subtitle">Aster Mail kan geen meldingen tonen totdat je ze toestaat. Tik om de systeeminstellingen te openen.</string>
     <string name="notif_channel_downloads_name">Downloads</string>
+    <string name="notif_channel_persistent_push_name">Achtergrondverbinding</string>
+    <string name="notif_channel_persistent_push_description">Geeft aan wanneer Aster Mail een verbinding openhoudt voor directe e-mailmeldingen</string>
+    <string name="notif_persistent_push_title">Verbonden voor directe e-mail</string>
+    <string name="notif_persistent_push_body">Nieuwe e-mail komt binnen zonder te wachten op een achtergrondcontrole.</string>
+    <string name="notif_persistent_push_stop">Uitschakelen</string>
+    <string name="persistent_push_title">Verbinding openhouden</string>
+    <string name="persistent_push_subtitle">Aster Mail blijft verbonden met de server, zodat nieuwe e-mail meteen binnenkomt. Schakel dit in als pushmeldingen je telefoon nooit bereiken. Het voegt een permanente melding toe en verbruikt meer batterij.</string>
+    <string name="persistent_push_autostart_title">Automatisch starten toestaan</string>
+    <string name="persistent_push_autostart_subtitle">Sommige telefoons sluiten achtergrondverbindingen. Sta Aster Mail in de systeeminstellingen toe automatisch te starten en schakel batterijbeperkingen uit.</string>
+    <string name="notif_delivery_section">Bezorging</string>
 </resources>

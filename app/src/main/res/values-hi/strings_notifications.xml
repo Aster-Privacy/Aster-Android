@@ -25,4 +25,14 @@
     <string name="mute_folder_notifications">फ़ोल्डर की सूचनाएं म्यूट करें</string>
     <string name="unmute_folder_notifications">फ़ोल्डर की सूचनाएं अनम्यूट करें</string>
     <string name="notif_channel_downloads_name">डाउनलोड</string>
+    <string name="notif_channel_persistent_push_name">बैकग्राउंड कनेक्शन</string>
+    <string name="notif_channel_persistent_push_description">दिखाता है कि Aster Mail तुरंत मेल सूचनाओं के लिए कनेक्शन खुला रखता है</string>
+    <string name="notif_persistent_push_title">तुरंत मेल के लिए कनेक्ट किया गया</string>
+    <string name="notif_persistent_push_body">नया मेल बैकग्राउंड जाँच की प्रतीक्षा किए बिना आता है.</string>
+    <string name="notif_persistent_push_stop">बंद करें</string>
+    <string name="persistent_push_title">कनेक्शन खुला रखें</string>
+    <string name="persistent_push_subtitle">Aster Mail सर्वर से जुड़ा रहता है, जिससे नया मेल तुरंत आता है. अगर पुश सूचनाएँ आपके फ़ोन तक कभी नहीं पहुँचतीं, तो इसे चालू करें. यह एक स्थायी सूचना जोड़ता है और अधिक बैटरी खर्च करता है.</string>
+    <string name="persistent_push_autostart_title">अपने आप शुरू होने दें</string>
+    <string name="persistent_push_autostart_subtitle">कुछ फ़ोन बैकग्राउंड कनेक्शन बंद कर देते हैं. सिस्टम सेटिंग में Aster Mail को अपने आप शुरू होने दें और बैटरी प्रतिबंध बंद करें.</string>
+    <string name="notif_delivery_section">डिलीवरी</string>
 </resources>
