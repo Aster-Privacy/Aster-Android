@@ -5033,6 +5033,7 @@ class SettingsViewModel @Inject constructor(
         failed_preferences_save = null
         _state.value = _state.value.copy(preferences = prefs, save_status = SaveStatus.SAVING)
         persist_cached_preferences(prefs)
+        apply_low_network_preference(prefs)
         save_preferences_job = viewModelScope.launch {
             try {
                 val identity_key = await_identity_key()
@@ -5057,6 +5058,7 @@ class SettingsViewModel @Inject constructor(
                     last_preferences_raw_json = payload
                     last_synced_preferences = to_save
                     persist_cached_preferences(to_save)
+                    apply_low_network_preference(to_save)
                     mirror_synced_preferences(to_save)
                     _state.value = _state.value.copy(
                         preferences = to_save,

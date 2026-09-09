@@ -154,12 +154,4 @@ class low_network_policy_test {
         assertTrue(should_reduce_motion(reduce_motion = true, low_network = false))
         assertFalse(should_reduce_motion(reduce_motion = false, low_network = false))
     }
-
-    @Test
-    fun data_saver_counts_only_on_a_metered_connection() {
-        assertTrue(is_data_saver_restricted(true, RESTRICT_BACKGROUND_STATUS_ENABLED))
-        assertFalse(is_data_saver_restricted(false, RESTRICT_BACKGROUND_STATUS_ENABLED))
-        assertFalse(is_data_saver_restricted(true, RESTRICT_BACKGROUND_STATUS_WHITELISTED))
-        assertFalse(is_data_saver_restricted(true, RESTRICT_BACKGROUND_STATUS_DISABLED))
-    }
 }

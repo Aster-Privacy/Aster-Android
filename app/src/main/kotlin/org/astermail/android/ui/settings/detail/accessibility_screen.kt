@@ -24,8 +24,11 @@ package org.astermail.android.ui.settings.detail
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -49,7 +52,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -125,6 +131,7 @@ private fun access_toggle_row(
 fun AccessibilityScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
+    focus_id: String = "",
 ) {
     val vm: SettingsViewModel = shared_settings_view_model()
     val theme_vm: ThemeViewModel = hiltViewModel()
@@ -146,6 +153,25 @@ fun AccessibilityScreen(
     var low_network by remember(prefs_seeded) { mutableStateOf(prefs?.low_network_mode ?: false) }
     var save_trigger by remember { mutableIntStateOf(0) }
     var prefs_loaded by remember { mutableStateOf(false) }
+    val scroll_state = rememberScrollState()
+    var focus_handled by remember { mutableStateOf(false) }
+    var focus_visible by remember { mutableStateOf(false) }
+    val focus_alpha by animateFloatAsState(
+        targetValue = if (focus_visible) 1f else 0f,
+        animationSpec = tween(durationMillis = 350),
+        label = "low_network_focus",
+    )
+
+    LaunchedEffect(focus_id, prefs_seeded) {
+        if (focus_id != SETTINGS_FOCUS_LOW_NETWORK || focus_handled) return@LaunchedEffect
+        if (!prefs_seeded) return@LaunchedEffect
+        focus_handled = true
+        delay(120)
+        if (scroll_state.maxValue > 0) scroll_state.animateScrollTo(scroll_state.maxValue)
+        focus_visible = true
+        delay(2400)
+        focus_visible = false
+    }
 
     LaunchedEffect(prefs, state.preferences_authoritative) {
         if (prefs != null && state.preferences_authoritative && !prefs_loaded) {
@@ -227,7 +253,11 @@ fun AccessibilityScreen(
         onDispose { flush_on_exit.value() }
     }
 
-    detail_scaffold(title = stringResource(R.string.settings_accessibility), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.settings_accessibility),
+        on_back = on_back,
+        scroll_state = scroll_state,
+    ) {
         preferences_save_error_banner()
         if (prefs == null || !state.preferences_authoritative) {
             preferences_load_placeholder()
@@ -329,7 +359,28 @@ fun AccessibilityScreen(
 
             // ── Network ────────────────────────────────────────────────────────
             section_label(stringResource(R.string.network))
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
+            AsterCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .drawWithContent {
+                        drawContent()
+                        if (focus_alpha <= 0f) return@drawWithContent
+                        val stroke_width = 2.dp.toPx()
+                        drawRoundRect(
+                            color = colors.accent_blue.copy(alpha = focus_alpha),
+                            topLeft = androidx.compose.ui.geometry.Offset(
+                                stroke_width / 2f,
+                                stroke_width / 2f,
+                            ),
+                            size = androidx.compose.ui.geometry.Size(
+                                size.width - stroke_width,
+                                size.height - stroke_width,
+                            ),
+                            cornerRadius = CornerRadius(14.dp.toPx()),
+                            style = Stroke(width = stroke_width),
+                        )
+                    },
+            ) {
                 access_toggle_row(
                     title = stringResource(R.string.low_network_mode),
                     subtitle = stringResource(R.string.low_network_mode_subtitle),
@@ -342,3 +393,5 @@ fun AccessibilityScreen(
         v_gap(AsterSpacing.xxl)
     }
 }
+
+const val SETTINGS_FOCUS_LOW_NETWORK = "low_network"

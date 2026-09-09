@@ -53,21 +53,12 @@ class low_network_state_test {
     }
 
     @Test
-    fun data_saver_activates_the_state_without_the_preference() {
-        low_network_state.set_data_saver(true)
-        assertTrue(low_network_state.active())
-        assertFalse(low_network_state.is_preference_enabled())
-        assertTrue(low_network_state.is_data_saver_enabled())
-    }
-
-    @Test
-    fun the_state_stays_active_while_either_source_is_on() {
+    fun only_the_preference_activates_the_state() {
         low_network_state.set_preference(true)
-        low_network_state.set_data_saver(true)
-        low_network_state.set_preference(false)
         assertTrue(low_network_state.active())
-        low_network_state.set_data_saver(false)
+        low_network_state.set_preference(false)
         assertFalse(low_network_state.active())
+        assertFalse(low_network_state.is_preference_enabled())
     }
 
     @Test

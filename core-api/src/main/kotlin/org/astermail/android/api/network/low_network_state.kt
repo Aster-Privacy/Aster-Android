@@ -29,7 +29,6 @@ import kotlinx.coroutines.flow.asStateFlow
 object low_network_state {
 
     private val preference_enabled = AtomicBoolean(false)
-    private val data_saver_enabled = AtomicBoolean(false)
     private val active = MutableStateFlow(false)
 
     val is_active: StateFlow<Boolean> = active.asStateFlow()
@@ -39,24 +38,16 @@ object low_network_state {
         recompute()
     }
 
-    fun set_data_saver(enabled: Boolean) {
-        data_saver_enabled.set(enabled)
-        recompute()
-    }
-
     fun is_preference_enabled(): Boolean = preference_enabled.get()
-
-    fun is_data_saver_enabled(): Boolean = data_saver_enabled.get()
 
     fun active(): Boolean = active.value
 
     fun reset() {
         preference_enabled.set(false)
-        data_saver_enabled.set(false)
         recompute()
     }
 
     private fun recompute() {
-        active.value = preference_enabled.get() || data_saver_enabled.get()
+        active.value = preference_enabled.get()
     }
 }

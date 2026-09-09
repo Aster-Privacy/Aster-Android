@@ -484,6 +484,10 @@ private object routes {
 
     fun mail_detail_for(email_id: String) = "mail_detail/" + java.net.URLEncoder.encode(email_id, "UTF-8")
     fun settings_detail(id: String) = "settings_$id"
+
+    val settings_low_network =
+        "settings_accessibility?focus=" +
+            org.astermail.android.ui.settings.detail.SETTINGS_FOCUS_LOW_NETWORK
     fun domain_order_for(order_id: String) = "domain_order/$order_id"
     fun contact_detail_for(contact_id: String) = "contact_detail/$contact_id"
     fun contact_edit_for(contact_id: String) = "contact_edit/$contact_id"
@@ -1351,8 +1355,17 @@ private fun AsterNavHost() {
         composable(routes.settings_detail("diagnostics")) {
             DiagnosticsScreen(on_back = { back(); Unit })
         }
-        composable(routes.settings_detail("accessibility")) {
-            AccessibilityScreen(on_back = { back(); Unit })
+        composable(
+            route = routes.settings_detail("accessibility") + "?focus={focus}",
+            arguments = listOf(navArgument("focus") {
+                type = NavType.StringType
+                defaultValue = ""
+            }),
+        ) { entry ->
+            AccessibilityScreen(
+                on_back = { back(); Unit },
+                focus_id = entry.arguments?.getString("focus").orEmpty(),
+            )
         }
         composable(routes.settings_detail("behavior")) {
             BehaviorScreen(on_back = { back(); Unit }, on_open = open_detail)
@@ -2207,6 +2220,9 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_view_pending_send = { nav_controller.navigate(routes.pending_send_preview) },
                             on_open_email = { id -> open_mail_detail(nav_controller, id) },
                             on_open_settings = { nav_controller.navigate(routes.settings) },
+                            on_open_low_network = {
+                                nav_controller.navigate(routes.settings_low_network)
+                            },
                             on_open_upgrade = { nav_controller.navigate(routes.settings_detail("billing")) },
                             on_open_recovery_email = { nav_controller.navigate(routes.settings_detail("recovery_email")) },
                             on_open_import = { nav_controller.navigate(routes.settings_detail("import")) },
@@ -2280,6 +2296,9 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                                 }
                             },
                             on_open_settings = { nav_controller.navigate(routes.settings) },
+                            on_open_low_network = {
+                                nav_controller.navigate(routes.settings_low_network)
+                            },
                             on_open_upgrade = { nav_controller.navigate(routes.settings_detail("billing")) },
                             on_open_recovery_email = { nav_controller.navigate(routes.settings_detail("recovery_email")) },
                             on_open_import = { nav_controller.navigate(routes.settings_detail("import")) },

@@ -32,10 +32,6 @@ const val LOW_NETWORK_POLL_CHAIN_DELAY_MINUTES = 15L
 const val DEFAULT_POLL_CHAIN_DELAY_MINUTES = 3L
 const val LOW_NETWORK_STATS_TTL_MS = 20L * 60L * 1000L
 const val LOW_NETWORK_MIN_REQUEST_TIMEOUT_MS = 45_000L
-const val RESTRICT_BACKGROUND_STATUS_DISABLED = 1
-const val RESTRICT_BACKGROUND_STATUS_WHITELISTED = 2
-const val RESTRICT_BACKGROUND_STATUS_ENABLED = 3
-
 fun effective_inbox_page_size(configured_page_size: Int, low_network: Boolean): Int {
     val clamped = configured_page_size.coerceIn(MIN_INBOX_PAGE_SIZE, MAX_INBOX_PAGE_SIZE)
     if (!low_network) return clamped
@@ -84,6 +80,3 @@ fun effective_request_timeout_ms(default_timeout_ms: Long, low_network: Boolean)
 
 fun should_reduce_motion(reduce_motion: Boolean, low_network: Boolean): Boolean =
     reduce_motion || low_network
-
-fun is_data_saver_restricted(is_metered: Boolean, restrict_background_status: Int): Boolean =
-    is_metered && restrict_background_status == RESTRICT_BACKGROUND_STATUS_ENABLED

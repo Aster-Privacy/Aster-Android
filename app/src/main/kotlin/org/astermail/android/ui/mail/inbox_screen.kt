@@ -236,6 +236,7 @@ fun InboxScreen(
     on_view_pending_send: () -> Unit = {},
     on_open_email: (String) -> Unit,
     on_open_settings: () -> Unit = {},
+    on_open_low_network: () -> Unit = {},
     on_open_upgrade: () -> Unit = {},
     on_open_recovery_email: () -> Unit = {},
     on_open_import: () -> Unit = {},
@@ -1747,7 +1748,7 @@ fun InboxScreen(
                         }
                         if (!select_mode && low_network_on) {
                             item(key = "_low_network_notice", contentType = "low_network_notice") {
-                                low_network_banner(on_open_settings = on_open_settings)
+                                low_network_banner(on_open_settings = on_open_low_network)
                             }
                         }
                         val spam_retention_days = settings_state.preferences?.auto_delete_spam_days ?: 0
