@@ -297,7 +297,15 @@ class ApiClient(
         http.plugin(HttpSend).intercept { request ->
             apply_folder_unlock_header(request)
             apply_low_network_timeout(request)
-            val original_call: HttpClientCall = execute(request)
+            val original_call: HttpClientCall = try {
+                execute(request)
+            } catch (error: Throwable) {
+                report_transport_failure(
+                    request.url.encodedPathSegments.joinToString("/"),
+                    error,
+                )
+                throw error
+            }
             report_failed_call(request.url.encodedPathSegments.joinToString("/"), original_call.response.status.value)
             if (original_call.response.status != HttpStatusCode.Forbidden) {
                 return@intercept original_call
@@ -354,6 +362,24 @@ class ApiClient(
                 error_code = build_http_error_code(feature, status),
                 severity = if (status >= 500) "error" else "warn",
                 http_status = status,
+            )
+        }
+    }
+
+    private fun report_transport_failure(path: String, error: Throwable) {
+        runCatching {
+            if (error is kotlinx.coroutines.CancellationException) return
+            if (ClientErrorReporter.is_report_path(path)) return
+            val feature = feature_of_path(path)
+            val suffix = if (error is io.ktor.client.plugins.HttpRequestTimeoutException) {
+                "timeout"
+            } else {
+                "unreachable"
+            }
+            ClientErrorReporter.report(
+                feature = feature,
+                error_code = "${feature}_$suffix".take(64),
+                severity = "error",
             )
         }
     }
