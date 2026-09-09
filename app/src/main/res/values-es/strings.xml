@@ -3051,6 +3051,10 @@
     <string name="translation_offer_download">Este mensaje está en %1$s. Al traducirlo se descarga un paquete de idioma.</string>
     <string name="contact_support">Contactar con soporte</string>
     <string name="domain_purchase_manage">Gestionar</string>
+    <string name="domain_purchase_cancel_payment_title">¿Cancelar este pago?</string>
+    <string name="domain_purchase_cancel_payment_message">¿Seguro que quieres cancelar este pago del dominio personalizado?</string>
+    <string name="domain_purchase_cancel_payment_confirm">Cancelar pago</string>
+    <string name="domain_purchase_cancel_payment_keep">Mantener pago</string>
     <string name="domain_purchase_manage_description">Revisa este registro y renuévalo antes de que caduque.</string>
     <string name="domain_purchase_manage_status">Estado</string>
     <string name="domain_purchase_manage_status_active">Activo</string>

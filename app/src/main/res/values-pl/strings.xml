@@ -3080,6 +3080,10 @@
     <string name="translation_offer_download">Ta wiadomość jest w języku %1$s. Tłumaczenie pobierze pakiet językowy.</string>
     <string name="contact_support">Skontaktuj się z pomocą techniczną</string>
     <string name="domain_purchase_manage">Zarządzaj</string>
+    <string name="domain_purchase_cancel_payment_title">Anulować tę płatność?</string>
+    <string name="domain_purchase_cancel_payment_message">Czy na pewno chcesz anulować tę płatność za domenę własną?</string>
+    <string name="domain_purchase_cancel_payment_confirm">Anuluj płatność</string>
+    <string name="domain_purchase_cancel_payment_keep">Zachowaj płatność</string>
     <string name="domain_purchase_manage_description">Sprawdź tę rejestrację i odnów ją przed wygaśnięciem.</string>
     <string name="domain_purchase_manage_status">Stan</string>
     <string name="domain_purchase_manage_status_active">Aktywna</string>

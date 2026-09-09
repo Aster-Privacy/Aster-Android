@@ -3080,6 +3080,10 @@
     <string name="translation_offer_download">Это письмо на языке %1$s. Перевод загрузит языковой пакет.</string>
     <string name="contact_support">Связаться с поддержкой</string>
     <string name="domain_purchase_manage">Управление</string>
+    <string name="domain_purchase_cancel_payment_title">Отменить этот платёж?</string>
+    <string name="domain_purchase_cancel_payment_message">Вы действительно хотите отменить этот платёж за пользовательский домен?</string>
+    <string name="domain_purchase_cancel_payment_confirm">Отменить платёж</string>
+    <string name="domain_purchase_cancel_payment_keep">Оставить платёж</string>
     <string name="domain_purchase_manage_description">Проверьте эту регистрацию и продлите её до истечения срока.</string>
     <string name="domain_purchase_manage_status">Статус</string>
     <string name="domain_purchase_manage_status_active">Активен</string>

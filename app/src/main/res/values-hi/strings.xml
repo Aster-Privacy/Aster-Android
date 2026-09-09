@@ -2939,6 +2939,10 @@
     <string name="translation_offer_download">यह संदेश %1$s में है। इसका अनुवाद करने पर एक भाषा पैक डाउनलोड होता है।</string>
     <string name="contact_support">सहायता से संपर्क करें</string>
     <string name="domain_purchase_manage">प्रबंधित करें</string>
+    <string name="domain_purchase_cancel_payment_title">यह भुगतान रद्द करें?</string>
+    <string name="domain_purchase_cancel_payment_message">क्या आप वाकई कस्टम डोमेन के लिए यह भुगतान रद्द करना चाहते हैं?</string>
+    <string name="domain_purchase_cancel_payment_confirm">भुगतान रद्द करें</string>
+    <string name="domain_purchase_cancel_payment_keep">भुगतान रखें</string>
     <string name="domain_purchase_manage_description">इस पंजीकरण को देखें और समाप्त होने से पहले नवीनीकृत करें।</string>
     <string name="domain_purchase_manage_status">स्थिति</string>
     <string name="domain_purchase_manage_status_active">सक्रिय</string>

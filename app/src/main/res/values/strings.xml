@@ -3176,6 +3176,10 @@
     <string name="translation_offer_download">This message is in %1$s. Translating it downloads a language pack.</string>
     <string name="contact_support">Contact support</string>
     <string name="domain_purchase_manage">Manage</string>
+    <string name="domain_purchase_cancel_payment_title">Cancel this payment?</string>
+    <string name="domain_purchase_cancel_payment_message">Are you sure you want to cancel this payment for the custom domain?</string>
+    <string name="domain_purchase_cancel_payment_confirm">Cancel payment</string>
+    <string name="domain_purchase_cancel_payment_keep">Keep payment</string>
     <string name="domain_purchase_manage_description">Review this registration and renew it before it expires.</string>
     <string name="domain_purchase_manage_status">Status</string>
     <string name="domain_purchase_manage_status_active">Active</string>

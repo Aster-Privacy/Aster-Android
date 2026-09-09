@@ -3050,6 +3050,10 @@
     <string name="translation_offer_download">Dit bericht is in het %1$s. Vertalen downloadt een taalpakket.</string>
     <string name="contact_support">Contact opnemen met support</string>
     <string name="domain_purchase_manage">Beheren</string>
+    <string name="domain_purchase_cancel_payment_title">Deze betaling annuleren?</string>
+    <string name="domain_purchase_cancel_payment_message">Weet je zeker dat je deze betaling voor het eigen domein wilt annuleren?</string>
+    <string name="domain_purchase_cancel_payment_confirm">Betaling annuleren</string>
+    <string name="domain_purchase_cancel_payment_keep">Betaling behouden</string>
     <string name="domain_purchase_manage_description">Bekijk deze registratie en verleng deze voordat ze verloopt.</string>
     <string name="domain_purchase_manage_status">Status</string>
     <string name="domain_purchase_manage_status_active">Actief</string>

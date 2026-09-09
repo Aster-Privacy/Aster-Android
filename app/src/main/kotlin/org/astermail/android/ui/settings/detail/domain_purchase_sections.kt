@@ -55,8 +55,10 @@ import org.astermail.android.api.settings.CustomDomain
 import org.astermail.android.api.settings.DnsRecord
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.settings.DomainPurchaseUiState
 import org.astermail.android.settings.is_domain_order_in_flight
 import org.astermail.android.design.mirror_in_rtl
@@ -243,6 +245,21 @@ private fun purchased_domain_row(
 ) {
     val colors = AsterMaterial.colors
     val in_flight = is_domain_order_in_flight(order.status)
+    var show_cancel_confirm by remember { mutableStateOf(false) }
+    if (show_cancel_confirm) {
+        AsterAlertDialog(
+            on_dismiss = { show_cancel_confirm = false },
+            title = stringResource(R.string.domain_purchase_cancel_payment_title),
+            message = stringResource(R.string.domain_purchase_cancel_payment_message),
+            confirm_label = stringResource(R.string.domain_purchase_cancel_payment_confirm),
+            cancel_label = stringResource(R.string.domain_purchase_cancel_payment_keep),
+            confirm_style = DialogConfirmStyle.destructive,
+            on_confirm = {
+                show_cancel_confirm = false
+                on_cancel(order.id)
+            },
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -329,7 +346,7 @@ private fun purchased_domain_row(
                     )
                 } else {
                     TextButton(
-                        onClick = { on_cancel(order.id) },
+                        onClick = { show_cancel_confirm = true },
                         enabled = state.cancelling_order_id == null,
                     ) {
                         Text(

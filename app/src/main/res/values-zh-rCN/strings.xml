@@ -3037,6 +3037,10 @@
     <string name="translation_offer_download">这封邮件是%1$s。翻译会下载一个语言包。</string>
     <string name="contact_support">联系支持团队</string>
     <string name="domain_purchase_manage">管理</string>
+    <string name="domain_purchase_cancel_payment_title">取消此付款？</string>
+    <string name="domain_purchase_cancel_payment_message">确定要取消这笔自定义域名的付款吗？</string>
+    <string name="domain_purchase_cancel_payment_confirm">取消付款</string>
+    <string name="domain_purchase_cancel_payment_keep">保留付款</string>
     <string name="domain_purchase_manage_description">查看此注册信息，并在到期前续期。</string>
     <string name="domain_purchase_manage_status">状态</string>
     <string name="domain_purchase_manage_status_active">有效</string>

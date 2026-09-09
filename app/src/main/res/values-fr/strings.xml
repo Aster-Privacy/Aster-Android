@@ -3077,6 +3077,10 @@
     <string name="translation_offer_download">Ce message est en %1$s. Le traduire télécharge un pack linguistique.</string>
     <string name="contact_support">Contacter l\'assistance</string>
     <string name="domain_purchase_manage">Gérer</string>
+    <string name="domain_purchase_cancel_payment_title">Annuler ce paiement ?</string>
+    <string name="domain_purchase_cancel_payment_message">Voulez-vous vraiment annuler ce paiement pour le domaine personnalisé ?</string>
+    <string name="domain_purchase_cancel_payment_confirm">Annuler le paiement</string>
+    <string name="domain_purchase_cancel_payment_keep">Conserver le paiement</string>
     <string name="domain_purchase_manage_description">Vérifiez cet enregistrement et renouvelez-le avant son expiration.</string>
     <string name="domain_purchase_manage_status">Statut</string>
     <string name="domain_purchase_manage_status_active">Actif</string>

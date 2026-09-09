@@ -3050,6 +3050,10 @@
     <string name="translation_offer_download">Bu ileti %1$s dilinde. Çevirmek bir dil paketi indirir.</string>
     <string name="contact_support">Destek ile iletişime geç</string>
     <string name="domain_purchase_manage">Yönet</string>
+    <string name="domain_purchase_cancel_payment_title">Bu ödeme iptal edilsin mi?</string>
+    <string name="domain_purchase_cancel_payment_message">Özel alan adı için bu ödemeyi iptal etmek istediğinden emin misin?</string>
+    <string name="domain_purchase_cancel_payment_confirm">Ödemeyi iptal et</string>
+    <string name="domain_purchase_cancel_payment_keep">Ödemeyi koru</string>
     <string name="domain_purchase_manage_description">Bu kaydı gözden geçir ve süresi dolmadan yenile.</string>
     <string name="domain_purchase_manage_status">Durum</string>
     <string name="domain_purchase_manage_status_active">Etkin</string>

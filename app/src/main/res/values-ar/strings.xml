@@ -3110,6 +3110,10 @@
     <string name="translation_offer_download">هذه الرسالة بلغة %1$s. تنزّل الترجمة حزمة لغة.</string>
     <string name="contact_support">تواصل مع الدعم</string>
     <string name="domain_purchase_manage">إدارة</string>
+    <string name="domain_purchase_cancel_payment_title">إلغاء هذه الدفعة؟</string>
+    <string name="domain_purchase_cancel_payment_message">هل تريد بالتأكيد إلغاء هذه الدفعة للنطاق المخصص؟</string>
+    <string name="domain_purchase_cancel_payment_confirm">إلغاء الدفع</string>
+    <string name="domain_purchase_cancel_payment_keep">الاحتفاظ بالدفع</string>
     <string name="domain_purchase_manage_description">راجع هذا التسجيل وجدّده قبل انتهاء صلاحيته.</string>
     <string name="domain_purchase_manage_status">الحالة</string>
     <string name="domain_purchase_manage_status_active">نشط</string>

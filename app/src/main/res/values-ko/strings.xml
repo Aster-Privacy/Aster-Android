@@ -3037,6 +3037,10 @@
     <string name="translation_offer_download">이 메일은 %1$s입니다. 번역하면 언어 팩을 다운로드합니다.</string>
     <string name="contact_support">고객 지원에 문의</string>
     <string name="domain_purchase_manage">관리</string>
+    <string name="domain_purchase_cancel_payment_title">이 결제를 취소할까요?</string>
+    <string name="domain_purchase_cancel_payment_message">맞춤 도메인에 대한 이 결제를 정말 취소하시겠어요?</string>
+    <string name="domain_purchase_cancel_payment_confirm">결제 취소</string>
+    <string name="domain_purchase_cancel_payment_keep">결제 유지</string>
     <string name="domain_purchase_manage_description">이 등록 내용을 확인하고 만료되기 전에 갱신하세요.</string>
     <string name="domain_purchase_manage_status">상태</string>
     <string name="domain_purchase_manage_status_active">활성</string>
