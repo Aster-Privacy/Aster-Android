@@ -313,6 +313,54 @@ data class AliasDirectory(
 )
 
 @Serializable
+data class SmtpTokenRow(
+    val id: String = "",
+    val selector: String = "",
+    val bound_address: String = "",
+    val label_encrypted: String? = null,
+    val label_nonce: String? = null,
+    val is_active: Boolean = true,
+    val last_used_at: String? = null,
+    val expires_at: String? = null,
+    val created_at: String = "",
+    val decrypted_label: String = "",
+)
+
+@Serializable
+data class ListSmtpTokensResponse(
+    val tokens: List<SmtpTokenRow> = emptyList(),
+)
+
+@Serializable
+data class SmtpTokenSettings(
+    val host: String = "",
+    val port: Int = 0,
+    val security: String = "",
+    val username: String = "",
+    val password: String = "",
+)
+
+@Serializable
+data class CreateSmtpTokenRequest(
+    val label_encrypted: String,
+    val label_nonce: String,
+    val from_address: String,
+    val from_address_hash: String,
+    val expires_in_days: Int? = null,
+)
+
+@Serializable
+data class CreateSmtpTokenResponse(
+    val id: String = "",
+    val selector: String = "",
+    val bound_address: String = "",
+    val token: String = "",
+    val expires_at: String? = null,
+    val created_at: String = "",
+    val smtp_settings: SmtpTokenSettings = SmtpTokenSettings(),
+)
+
+@Serializable
 data class ListDirectoriesResponse(
     val directories: List<AliasDirectory> = emptyList(),
     val total: Long = 0,
@@ -678,6 +726,9 @@ interface SettingsApi {
     suspend fun delete_directory(directory_id: String)
     suspend fun get_alias_preferences(): AliasPreferences
     suspend fun update_alias_preferences(request: UpdateAliasPreferencesRequest)
+    suspend fun list_smtp_tokens(): ListSmtpTokensResponse
+    suspend fun create_smtp_token(request: CreateSmtpTokenRequest): CreateSmtpTokenResponse
+    suspend fun revoke_smtp_token(token_id: String)
     suspend fun get_connection_preference(): ConnectionPreference
     suspend fun update_connection_preference(method: String)
 }
@@ -1107,6 +1158,29 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
             setBody(request)
         }
         return decode_or_throw(response)
+    }
+
+    override suspend fun list_smtp_tokens(): ListSmtpTokensResponse {
+        val response = client.http.get("${client.base_url}/api/developer/v1/smtp-tokens")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun create_smtp_token(request: CreateSmtpTokenRequest): CreateSmtpTokenResponse {
+        val response = client.http.post("${client.base_url}/api/developer/v1/smtp-tokens") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun revoke_smtp_token(token_id: String) {
+        val response = client.http.delete("${client.base_url}/api/developer/v1/smtp-tokens/$token_id") {
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        if (response.status.value !in 200..299) {
+            throw client.map_http_status(response.status.value, "")
+        }
     }
 
     override suspend fun get_twin_address(): TwinAddressResponse {

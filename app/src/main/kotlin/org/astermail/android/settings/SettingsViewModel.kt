@@ -216,6 +216,10 @@ data class SettingsUiState(
     val webhooks: List<WebhookInfo> = emptyList(),
     val directories: List<AliasDirectory> = emptyList(),
     val directories_loading: Boolean = false,
+    val smtp_tokens: List<org.astermail.android.api.settings.SmtpTokenRow> = emptyList(),
+    val smtp_tokens_loading: Boolean = false,
+    val smtp_token_creating: Boolean = false,
+    val smtp_token_created: org.astermail.android.api.settings.CreateSmtpTokenResponse? = null,
     val deleted_aliases: List<DecryptedDeletedAlias> = emptyList(),
     val deleted_aliases_loading: Boolean = false,
     val alias_preferences: AliasPreferences? = null,
@@ -2567,6 +2571,59 @@ class SettingsViewModel @Inject constructor(
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
             false
+        }
+    }
+
+    fun load_smtp_tokens() {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(smtp_tokens_loading = true)
+            try {
+                val response = settings_api.list_smtp_tokens()
+                val decrypted = response.tokens.map { decrypt_smtp_token(it) }
+                _state.value = _state.value.copy(smtp_tokens = decrypted, smtp_tokens_loading = false)
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(smtp_tokens_loading = false)
+            }
+        }
+    }
+
+    fun create_smtp_token(name: String, local_part: String, domain: String) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(smtp_token_creating = true)
+            try {
+                val (enc_label, label_nonce) = encrypt_alias_field(name)
+                val normalized = normalize_alias_local_part(local_part)
+                val response = settings_api.create_smtp_token(
+                    org.astermail.android.api.settings.CreateSmtpTokenRequest(
+                        label_encrypted = enc_label,
+                        label_nonce = label_nonce,
+                        from_address = "$local_part@$domain",
+                        from_address_hash = compute_domain_address_hash(normalized, domain),
+                    )
+                )
+                _state.value = _state.value.copy(smtp_token_creating = false, smtp_token_created = response)
+                load_smtp_tokens()
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(smtp_token_creating = false, action_result = user_facing_error(t))
+            }
+        }
+    }
+
+    fun clear_created_smtp_token() {
+        _state.value = _state.value.copy(smtp_token_created = null)
+    }
+
+    fun revoke_smtp_token(token_id: String) {
+        viewModelScope.launch {
+            try {
+                settings_api.revoke_smtp_token(token_id)
+                _state.update { s -> s.copy(smtp_tokens = s.smtp_tokens.filter { it.id != token_id }) }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(action_result = user_facing_error(t))
+            }
         }
     }
 
@@ -6048,6 +6105,20 @@ class SettingsViewModel @Inject constructor(
     private fun compute_directory_key_hash(key: String): String {
         val hash = MessageDigest.getInstance("SHA-256").digest(key.lowercase(java.util.Locale.ROOT).toByteArray(Charsets.UTF_8))
         return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
+    }
+
+    private fun decrypt_smtp_token(
+        row: org.astermail.android.api.settings.SmtpTokenRow,
+    ): org.astermail.android.api.settings.SmtpTokenRow {
+        val enc = row.label_encrypted
+        val nonce = row.label_nonce
+        if (enc.isNullOrBlank() || nonce.isNullOrBlank()) return row
+        return try {
+            row.copy(decrypted_label = decrypt_alias_field(enc, nonce))
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            row
+        }
     }
 
     private fun compute_directory_address_hash(key: String, domain: String): String {

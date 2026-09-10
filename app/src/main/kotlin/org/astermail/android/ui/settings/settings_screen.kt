@@ -101,16 +101,31 @@ data class settings_section(
 internal fun build_settings_sections(is_family: Boolean) = listOf(
     settings_section(
         R.string.settings_general,
+        listOf(
+            settings_row_item("appearance", R.string.settings_appearance, icon = TablerIcons.Palette),
+            settings_row_item("accessibility", R.string.settings_accessibility, icon = TablerIcons.Typography),
+        ),
+    ),
+    settings_section(
+        R.string.settings_security,
+        listOf(
+            settings_row_item("security", R.string.settings_security, icon = TablerIcons.Shield),
+            settings_row_item("encryption", R.string.settings_encryption, icon = TablerIcons.Key),
+            settings_row_item("trusted_devices", R.string.trusted_devices, icon = TablerIcons.DeviceDesktop),
+        ),
+    ),
+    settings_section(
+        R.string.settings_aliases_and_domains,
+        listOf(
+            settings_row_item("aliases", R.string.settings_aliases, icon = TablerIcons.At),
+            settings_row_item("domains", R.string.settings_domains, icon = TablerIcons.World),
+        ),
+    ),
+    settings_section(
+        R.string.settings_billing,
         buildList {
-            add(settings_row_item("appearance", R.string.settings_appearance, icon = TablerIcons.Palette))
-            add(settings_row_item("accessibility", R.string.settings_accessibility, icon = TablerIcons.Typography))
-            add(settings_row_item("security", R.string.settings_security, icon = TablerIcons.Shield))
-            add(settings_row_item("encryption", R.string.settings_encryption, icon = TablerIcons.Key))
-            add(settings_row_item("trusted_devices", R.string.trusted_devices, icon = TablerIcons.DeviceDesktop))
-            add(settings_row_item("aliases", R.string.settings_aliases, icon = TablerIcons.At))
-            add(settings_row_item("domains", R.string.settings_domains, icon = TablerIcons.World))
-            add(settings_row_item("billing", R.string.settings_plans_billing, icon = TablerIcons.CreditCard))
             add(settings_row_item("storage", R.string.settings_storage, icon = TablerIcons.Database))
+            add(settings_row_item("billing", R.string.settings_plans_billing, icon = TablerIcons.CreditCard))
             add(settings_row_item("referral", R.string.refer_a_friend, icon = TablerIcons.Users))
             if (is_family) add(settings_row_item("family", R.string.settings_family, icon = TablerIcons.Home))
         },
@@ -124,8 +139,6 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
             settings_row_item("customize_toolbar", R.string.customize_toolbar, icon = TablerIcons.LayoutBottombar),
             settings_row_item("signature", R.string.settings_signature, icon = TablerIcons.Edit),
             settings_row_item("templates", R.string.settings_templates, icon = TablerIcons.FileText),
-            settings_row_item("import", R.string.settings_import, icon = TablerIcons.CloudUpload),
-            settings_row_item("external_accounts", R.string.external_accounts, icon = TablerIcons.ArrowsRightLeft),
             settings_row_item("sender_filters", R.string.mail_management, icon = TablerIcons.Filter),
             settings_row_item("mail_rules", R.string.mail_rules_title, icon = TablerIcons.Bolt),
             settings_row_item("folders", R.string.folders, icon = TablerIcons.Folder),
@@ -135,6 +148,10 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
     settings_section(
         R.string.settings_advanced,
         listOf(
+            settings_row_item("import", R.string.settings_import, icon = TablerIcons.CloudUpload),
+            settings_row_item("external_accounts", R.string.external_accounts, icon = TablerIcons.ArrowsRightLeft),
+            settings_row_item("connection", R.string.settings_connection, icon = TablerIcons.Wifi),
+            settings_row_item("smtp_tokens", R.string.settings_smtp_tokens, icon = TablerIcons.Send),
             settings_row_item("about", R.string.about, icon = TablerIcons.InfoCircle),
             settings_row_item("contact_support", R.string.contact_support, icon = TablerIcons.Lifebuoy),
             settings_row_item("feedback", R.string.settings_feedback, icon = TablerIcons.MessageReport),

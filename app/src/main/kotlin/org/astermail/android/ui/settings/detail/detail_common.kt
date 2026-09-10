@@ -297,14 +297,20 @@ internal fun section_header_action(
 internal fun info_dialog_button(title: String, description: String) {
     val colors = AsterMaterial.colors
     var show by remember { mutableStateOf(false) }
-    Icon(
-        imageVector = TablerIcons.InfoCircle,
-        contentDescription = stringResource(R.string.info),
-        tint = colors.text_muted,
+    Box(
         modifier = Modifier
-            .size(15.dp)
+            .size(24.dp)
+            .clip(CircleShape)
             .clickable { show = true },
-    )
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = TablerIcons.InfoCircle,
+            contentDescription = stringResource(R.string.info),
+            tint = colors.text_tertiary,
+            modifier = Modifier.size(16.dp),
+        )
+    }
     if (show) {
         AsterAlertDialog(
             on_dismiss = { show = false },
@@ -357,7 +363,7 @@ internal fun detail_row(
                     modifier = Modifier.weight(1f, fill = false),
                 )
                 if (info_title != null && info_description != null) {
-                    Spacer(Modifier.width(5.dp))
+                    Spacer(Modifier.width(2.dp))
                     info_dialog_button(title = info_title, description = info_description)
                 }
             }
