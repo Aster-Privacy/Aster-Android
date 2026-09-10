@@ -1,10 +1,10 @@
 New:
 - Generate send-only SMTP tokens for a verified custom domain in Settings (Star plan and above).
 - Redesigned plans page with a storage meter and clearer add-ons.
-- Canceling a custom domain payment now asks you to confirm first.
+- Canceling a custom domain payment asks you to confirm first.
 
 Fixed:
-- Signing in again on the same device replaces the earlier session instead of adding a duplicate.
-- SMTP token errors show on screen, and revoking a token confirms when it completes.
+- Signing in again on the same device replaces the earlier session.
+- SMTP token errors show on screen, and revoking a token confirms when done.
 - Clearer crypto payment status steps.
-- Remaining untranslated text is now translated in every language.
+- Remaining untranslated text is now translated.
