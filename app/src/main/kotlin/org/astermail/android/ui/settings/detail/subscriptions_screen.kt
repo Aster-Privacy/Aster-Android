@@ -644,7 +644,6 @@ fun SubscriptionsScreen(
         } else {
             section_label(stringResource(R.string.current_plan))
             current_plan_card(
-                plan_code = current_code,
                 plan_name = sub?.effective_plan_name
                     ?: if (state.error != null) stringResource(R.string.failed_to_load) else plan_free_label,
                 description = if (is_paid_plan) {
@@ -1749,7 +1748,6 @@ private fun status_pill(text: String, accent: Color) {
 
 @Composable
 private fun current_plan_card(
-    plan_code: String,
     plan_name: String,
     description: String?,
     discount: String?,
@@ -1784,7 +1782,7 @@ private fun current_plan_card(
     hero_surface(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
             Row(verticalAlignment = Alignment.Top) {
-                icon_tile(icon = tier_icon(plan_code), muted = !is_paid)
+                icon_tile(icon = TablerIcons.CreditCard, muted = !is_paid)
                 Spacer(Modifier.width(AsterSpacing.md))
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1952,6 +1950,13 @@ private fun current_plan_card(
                 AsterDivider()
                 Spacer(Modifier.height(AsterSpacing.lg))
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = TablerIcons.Crown,
+                        contentDescription = null,
+                        tint = colors.text_primary,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(AsterSpacing.sm))
                     Text(
                         text = stringResource(R.string.billing_free_upgrade_title, free_teaser.plan_name),
                         color = colors.text_primary,
@@ -1963,7 +1968,7 @@ private fun current_plan_card(
                     galaxy_badge(text = stringResource(R.string.fix_billing_plan_recommended))
                 }
                 Spacer(Modifier.height(AsterSpacing.sm))
-                free_teaser.features.forEach { feature_row(it) }
+                free_teaser.features.forEach { feature_row(it, icon = TablerIcons.CircleCheck) }
                 if (free_teaser.price_note != null) {
                     Spacer(Modifier.height(AsterSpacing.sm))
                     Text(
@@ -2367,184 +2372,176 @@ private fun plan_tier_card(
         show_recommended -> Modifier.border(1.5.dp, galaxy_border_brush(colors.accent_blue, colors.text_primary), shape)
         else -> Modifier.border(1.dp, colors.border_primary, shape)
     }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(border_modifier)
-            .clip(shape)
-            .background(colors.bg_secondary)
-            .then(
-                if (show_recommended || is_current) {
-                    Modifier
-                        .background(
-                            Brush.verticalGradient(
-                                0.00f to colors.accent_blue.copy(alpha = if (colors.is_dark) 0.16f else 0.08f),
-                                0.45f to Color.Transparent,
-                            ),
-                        )
-                        .starfield(colors.accent_blue, colors.is_dark, band_fraction = 0.34f, edges_only = true)
-                } else {
-                    Modifier
-                },
-            ),
-    ) {
+    val badge_text = when {
+        is_current -> stringResource(R.string.current_plan)
+        show_recommended -> stringResource(R.string.fix_billing_plan_recommended)
+        else -> null
+    }
+    Box(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = AsterSpacing.lg)
-                .padding(top = AsterSpacing.lg, bottom = AsterSpacing.md),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .padding(top = if (badge_text != null) 10.dp else 0.dp)
+                .then(border_modifier)
+                .clip(shape)
+                .background(colors.bg_secondary)
+                .then(
+                    if (show_recommended || is_current) {
+                        Modifier
+                            .background(
+                                Brush.verticalGradient(
+                                    0.00f to colors.accent_blue.copy(alpha = if (colors.is_dark) 0.16f else 0.08f),
+                                    0.45f to Color.Transparent,
+                                ),
+                            )
+                            .starfield(colors.accent_blue, colors.is_dark, band_fraction = 0.34f, edges_only = true)
+                    } else {
+                        Modifier
+                    },
+                ),
         ) {
-            if (is_current) {
-                Box(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(colors.accent_blue.copy(alpha = 0.10f))
-                        .border(1.dp, colors.accent_blue.copy(alpha = 0.25f), CircleShape)
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                ) {
-                    Text(
-                        text = stringResource(R.string.current_plan),
-                        color = colors.accent_blue,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
-                Spacer(Modifier.height(AsterSpacing.md))
-            } else if (show_recommended) {
-                galaxy_badge(text = stringResource(R.string.fix_billing_plan_recommended))
-                Spacer(Modifier.height(AsterSpacing.md))
-            }
-            icon_tile(icon = tier_icon(tier.code), size = 44.dp, corner = 14.dp)
-            Spacer(Modifier.height(AsterSpacing.sm))
-            Text(
-                text = stringResource(tier.name_res),
-                color = colors.text_primary,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(Modifier.height(6.dp))
-            if (price_known) {
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        text = format_price(shown_cents ?: 0, currency),
-                        color = colors.text_primary,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        lineHeight = 32.sp,
-                        maxLines = 1,
-                    )
-                    Text(
-                        text = stringResource(if (is_yearly) R.string.fix_billing_per_year_short else R.string.fix_billing_per_month_short),
-                        color = colors.text_tertiary,
-                        fontSize = 13.sp,
-                        modifier = Modifier.padding(bottom = 4.dp),
-                    )
-                }
-                Spacer(Modifier.height(AsterSpacing.xs))
-                if (savings_cents != null && savings_cents > 0) {
-                    if (is_yearly) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AsterSpacing.lg)
+                    .padding(top = if (badge_text != null) AsterSpacing.xxl else AsterSpacing.lg, bottom = AsterSpacing.md),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = stringResource(tier.name_res),
+                    color = colors.text_primary,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(6.dp))
+                if (price_known) {
+                    Row(verticalAlignment = Alignment.Bottom) {
                         Text(
-                            text = stringResource(R.string.billing_save_amount, format_price(savings_cents, currency)),
-                            color = colors.success,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
+                            text = format_price(shown_cents ?: 0, currency),
+                            color = colors.text_primary,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 32.sp,
+                            maxLines = 1,
                         )
+                        Text(
+                            text = stringResource(if (is_yearly) R.string.fix_billing_per_year_short else R.string.fix_billing_per_month_short),
+                            color = colors.text_tertiary,
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(bottom = 4.dp),
+                        )
+                    }
+                    Spacer(Modifier.height(AsterSpacing.xs))
+                    if (savings_cents != null && savings_cents > 0) {
+                        if (is_yearly) {
+                            Text(
+                                text = stringResource(R.string.billing_save_amount, format_price(savings_cents, currency)),
+                                color = colors.success,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                            )
+                        } else {
+                            Text(
+                                text = format_price(yearly_cents ?: 0, currency) +
+                                    stringResource(R.string.fix_billing_per_year_short) +
+                                    " · " +
+                                    stringResource(R.string.billing_save_amount, format_price(savings_cents, currency)),
+                                color = colors.text_tertiary,
+                                fontSize = 11.sp,
+                            )
+                        }
                     } else {
                         Text(
-                            text = format_price(yearly_cents ?: 0, currency) +
-                                stringResource(R.string.fix_billing_per_year_short) +
-                                " · " +
-                                stringResource(R.string.billing_save_amount, format_price(savings_cents, currency)),
+                            text = stringResource(tier.tagline_res),
                             color = colors.text_tertiary,
                             fontSize = 11.sp,
+                            textAlign = TextAlign.Center,
                         )
                     }
                 } else {
                     Text(
                         text = stringResource(tier.tagline_res),
                         color = colors.text_tertiary,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         textAlign = TextAlign.Center,
                     )
                 }
-            } else {
-                Text(
-                    text = stringResource(tier.tagline_res),
-                    color = colors.text_tertiary,
-                    fontSize = 12.sp,
-                    textAlign = TextAlign.Center,
-                )
+                Spacer(Modifier.height(AsterSpacing.md))
+                when {
+                    is_current -> plan_outline_button(
+                        label = stringResource(R.string.current_plan),
+                        enabled = false,
+                        on_click = {},
+                    )
+                    !price_known -> plan_outline_button(
+                        label = stringResource(R.string.see_pricing),
+                        enabled = plans_failed,
+                        on_click = on_see_pricing,
+                    )
+                    is_recommended && !is_interval_switch && !is_downgrade -> plan_outline_button(
+                        label = stringResource(R.string.billing_subscribe),
+                        enabled = true,
+                        on_click = on_choose,
+                        filled = true,
+                    )
+                    else -> plan_outline_button(
+                        label = when {
+                            is_interval_switch -> stringResource(R.string.switch_to_yearly)
+                            is_downgrade -> stringResource(R.string.downgrade)
+                            else -> stringResource(R.string.billing_subscribe)
+                        },
+                        enabled = true,
+                        on_click = on_choose,
+                    )
+                }
             }
-            Spacer(Modifier.height(AsterSpacing.md))
-            when {
-                is_current -> plan_outline_button(
-                    label = stringResource(R.string.current_plan),
-                    enabled = false,
-                    on_click = {},
-                )
-                !price_known -> plan_outline_button(
-                    label = stringResource(R.string.see_pricing),
-                    enabled = plans_failed,
-                    on_click = on_see_pricing,
-                )
-                is_recommended && !is_interval_switch && !is_downgrade -> plan_outline_button(
-                    label = stringResource(R.string.billing_subscribe),
-                    enabled = true,
-                    on_click = on_choose,
-                    filled = true,
-                )
-                else -> plan_outline_button(
-                    label = when {
-                        is_interval_switch -> stringResource(R.string.switch_to_yearly)
-                        is_downgrade -> stringResource(R.string.downgrade)
-                        else -> stringResource(R.string.billing_subscribe)
-                    },
-                    enabled = true,
-                    on_click = on_choose,
-                )
+            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.border_primary))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AsterSpacing.lg)
+                    .padding(top = AsterSpacing.md, bottom = AsterSpacing.lg),
+                verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+            ) {
+                if (tier.lead_res != null) {
+                    Text(
+                        text = stringResource(tier.lead_res),
+                        color = colors.accent_blue,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+                tier.features.forEach { feature_res ->
+                    feature_row(feature_res)
+                }
             }
         }
-        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.border_primary))
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = AsterSpacing.lg)
-                .padding(top = AsterSpacing.md, bottom = AsterSpacing.lg),
-            verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-        ) {
-            if (tier.lead_res != null) {
-                Text(
-                    text = stringResource(tier.lead_res),
-                    color = colors.accent_blue,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
-                )
-            }
-            tier.features.forEach { feature_res ->
-                feature_row(feature_res)
-            }
+        if (badge_text != null) {
+            galaxy_badge(text = badge_text, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }
 
 @Composable
-private fun feature_row(@StringRes feature_res: Int) {
+private fun feature_row(
+    @StringRes feature_res: Int,
+    icon: androidx.compose.ui.graphics.vector.ImageVector = plan_feature_icon(feature_res),
+) {
     val colors = AsterMaterial.colors
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(verticalAlignment = Alignment.Top) {
         Icon(
-            imageVector = TablerIcons.Check,
+            imageVector = icon,
             contentDescription = null,
             tint = colors.accent_blue,
-            modifier = Modifier.size(14.dp),
+            modifier = Modifier.padding(top = 1.dp).size(16.dp),
         )
-        Spacer(Modifier.width(AsterSpacing.sm))
+        Spacer(Modifier.width(AsterSpacing.md))
         Text(
             text = stringResource(feature_res),
             color = colors.text_secondary,
-            fontSize = 12.sp,
-            lineHeight = 16.sp,
+            fontSize = 13.sp,
+            lineHeight = 18.sp,
         )
     }
 }

@@ -18,6 +18,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -43,22 +44,63 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import compose.icons.TablerIcons
-import compose.icons.tablericons.Flare
-import compose.icons.tablericons.Home
-import compose.icons.tablericons.Planet
-import compose.icons.tablericons.Rocket
-import compose.icons.tablericons.Star
-import compose.icons.tablericons.Users
+import compose.icons.tablericons.*
+import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.SquircleShape
 
-internal fun tier_icon(code: String): ImageVector = when (code) {
-    "star" -> TablerIcons.Star
-    "nova" -> TablerIcons.Flare
-    "supernova" -> TablerIcons.Rocket
-    "duo" -> TablerIcons.Users
-    "family" -> TablerIcons.Home
-    else -> TablerIcons.Planet
+internal fun plan_feature_icon(@StringRes feature_res: Int): ImageVector = when (feature_res) {
+    R.string.settings_plan_bullet_free_storage,
+    R.string.settings_plan_bullet_star_storage,
+    R.string.settings_plan_bullet_nova_storage,
+    R.string.settings_plan_bullet_supernova_storage,
+    R.string.settings_plan_bullet_duo_storage,
+    R.string.settings_plan_bullet_family_storage,
+    -> TablerIcons.Database
+    R.string.settings_plan_bullet_star_attachments,
+    R.string.settings_plan_bullet_nova_attachments,
+    R.string.settings_plan_bullet_supernova_attachments,
+    -> TablerIcons.Paperclip
+    R.string.settings_plan_bullet_free_aliases,
+    R.string.settings_plan_bullet_star_aliases,
+    R.string.settings_plan_bullet_unlimited_aliases,
+    R.string.settings_plan_bullet_shared_aliases,
+    -> TablerIcons.At
+    R.string.settings_plan_bullet_star_domains,
+    R.string.settings_plan_bullet_nova_domains,
+    R.string.settings_plan_bullet_unlimited_domains,
+    -> TablerIcons.World
+    R.string.settings_plan_bullet_daily_send_limits,
+    R.string.settings_plan_bullet_daily_emails,
+    -> TablerIcons.Send
+    R.string.settings_plan_bullet_star_templates,
+    R.string.settings_plan_bullet_unlimited_templates,
+    -> TablerIcons.Template
+    R.string.settings_plan_bullet_unlimited_signatures -> TablerIcons.Signature
+    R.string.settings_plan_bullet_tracker_protection -> TablerIcons.Shield
+    R.string.settings_plan_bullet_vacation_reply -> TablerIcons.Umbrella
+    R.string.settings_plan_bullet_catch_all -> TablerIcons.Inbox
+    R.string.settings_plan_bullet_auto_forwarding -> TablerIcons.MailForward
+    R.string.settings_plan_bullet_quiet_hours -> TablerIcons.Moon
+    R.string.settings_plan_bullet_custom_avatars -> TablerIcons.Photo
+    R.string.settings_plan_bullet_external_accounts -> TablerIcons.Refresh
+    R.string.settings_plan_bullet_bridge_access -> TablerIcons.DeviceMobile
+    R.string.settings_plan_bullet_priority_support,
+    R.string.settings_plan_bullet_dedicated_support,
+    -> TablerIcons.Lifebuoy
+    R.string.settings_plan_bullet_carddav_import -> TablerIcons.Download
+    R.string.settings_plan_bullet_contact_merge -> TablerIcons.Users
+    R.string.settings_plan_bullet_encrypted_export -> TablerIcons.Upload
+    R.string.settings_plan_bullet_protected_folders -> TablerIcons.Lock
+    R.string.settings_plan_bullet_key_rotation -> TablerIcons.Key
+    R.string.settings_plan_bullet_receipt_tracking -> TablerIcons.Receipt
+    R.string.settings_plan_bullet_early_access -> TablerIcons.Rocket
+    R.string.settings_plan_bullet_e2ee -> TablerIcons.ShieldLock
+    R.string.settings_plan_bullet_zero_knowledge -> TablerIcons.EyeOff
+    R.string.settings_plan_bullet_duo_members,
+    R.string.settings_plan_bullet_family_members,
+    -> TablerIcons.Users
+    else -> TablerIcons.CircleCheck
 }
 
 private val star_seeds = listOf(
