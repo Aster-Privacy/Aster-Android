@@ -64,6 +64,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -643,6 +644,7 @@ fun SubscriptionsScreen(
         } else {
             section_label(stringResource(R.string.current_plan))
             current_plan_card(
+                plan_code = current_code,
                 plan_name = sub?.effective_plan_name
                     ?: if (state.error != null) stringResource(R.string.failed_to_load) else plan_free_label,
                 description = if (is_paid_plan) {
@@ -1746,27 +1748,8 @@ private fun status_pill(text: String, accent: Color) {
 }
 
 @Composable
-private fun storage_bar(fraction: Float, is_over: Boolean) {
-    val colors = AsterMaterial.colors
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(6.dp)
-            .clip(CircleShape)
-            .background(colors.bg_tertiary),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(fraction.coerceIn(0.02f, 1f))
-                .height(6.dp)
-                .clip(CircleShape)
-                .background(if (is_over) colors.danger else colors.accent_blue),
-        )
-    }
-}
-
-@Composable
 private fun current_plan_card(
+    plan_code: String,
     plan_name: String,
     description: String?,
     discount: String?,
@@ -1798,9 +1781,11 @@ private fun current_plan_card(
     on_upgrade: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    AsterCard(modifier = Modifier.fillMaxWidth()) {
+    hero_surface(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
             Row(verticalAlignment = Alignment.Top) {
+                icon_tile(icon = tier_icon(plan_code), muted = !is_paid)
+                Spacer(Modifier.width(AsterSpacing.md))
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
@@ -1908,7 +1893,7 @@ private fun current_plan_card(
                     )
                 }
                 Spacer(Modifier.height(AsterSpacing.sm))
-                storage_bar(
+                gradient_bar(
                     fraction = storage_used_bytes.toFloat() / storage_limit_bytes.toFloat(),
                     is_over = storage_over_limit,
                 )
@@ -2187,14 +2172,23 @@ private fun addon_tile(
             .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = on_click)
             .padding(AsterSpacing.md),
     ) {
-        Text(
-            text = addon.name,
-            color = colors.text_primary,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = addon.name,
+                color = colors.text_primary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            Icon(
+                imageVector = if (selected) TablerIcons.CircleCheck else TablerIcons.Database,
+                contentDescription = null,
+                tint = if (selected) colors.accent_blue else colors.text_muted,
+                modifier = Modifier.size(16.dp),
+            )
+        }
         Spacer(Modifier.height(2.dp))
         Text(
             text = format_price(addon.price_cents, currency) + stringResource(R.string.fix_billing_per_month_short),
@@ -2367,15 +2361,31 @@ private fun plan_tier_card(
     val price_known = shown_cents != null
     val savings_cents = if (monthly_cents != null && yearly_cents != null) monthly_cents * 12 - yearly_cents else null
     val shape = SquircleShape(16.dp)
+    val show_recommended = is_recommended && !is_current && !is_interval_switch && !is_downgrade
+    val border_modifier = when {
+        is_current -> Modifier.border(2.dp, colors.accent_blue, shape)
+        show_recommended -> Modifier.border(1.5.dp, galaxy_border_brush(colors.accent_blue, colors.text_primary), shape)
+        else -> Modifier.border(1.dp, colors.border_primary, shape)
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .then(border_modifier)
             .clip(shape)
             .background(colors.bg_secondary)
-            .border(
-                width = if (is_current) 2.dp else 1.dp,
-                color = if (is_current) colors.accent_blue else colors.border_primary,
-                shape = shape,
+            .then(
+                if (show_recommended || is_current) {
+                    Modifier
+                        .background(
+                            Brush.verticalGradient(
+                                0.00f to colors.accent_blue.copy(alpha = if (colors.is_dark) 0.16f else 0.08f),
+                                0.45f to Color.Transparent,
+                            ),
+                        )
+                        .starfield(colors.accent_blue, colors.is_dark, band_fraction = 0.34f, edges_only = true)
+                } else {
+                    Modifier
+                },
             ),
     ) {
         Column(
@@ -2400,8 +2410,13 @@ private fun plan_tier_card(
                         fontWeight = FontWeight.Medium,
                     )
                 }
-                Spacer(Modifier.height(AsterSpacing.sm))
+                Spacer(Modifier.height(AsterSpacing.md))
+            } else if (show_recommended) {
+                galaxy_badge(text = stringResource(R.string.fix_billing_plan_recommended))
+                Spacer(Modifier.height(AsterSpacing.md))
             }
+            icon_tile(icon = tier_icon(tier.code), size = 44.dp, corner = 14.dp)
+            Spacer(Modifier.height(AsterSpacing.sm))
             Text(
                 text = stringResource(tier.name_res),
                 color = colors.text_primary,
