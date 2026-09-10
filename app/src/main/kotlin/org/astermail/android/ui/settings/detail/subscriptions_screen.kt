@@ -78,6 +78,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.astermail.android.R
+import kotlin.math.roundToInt
 import org.astermail.android.billing.BillingViewModel
 import org.astermail.android.billing.is_resumable_crypto_invoice
 import java.util.Locale
@@ -1871,6 +1872,8 @@ private fun current_plan_card(
                 }
             }
             if (storage_limit_bytes > 0) {
+                val storage_fraction = storage_used_bytes.toFloat() / storage_limit_bytes.toFloat()
+                val storage_percent = (storage_fraction * 100f).roundToInt().coerceIn(0, if (storage_over_limit) 999 else 100)
                 Spacer(Modifier.height(AsterSpacing.lg))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1884,17 +1887,68 @@ private fun current_plan_card(
                         fontWeight = FontWeight.Medium,
                     )
                     Text(
-                        text = format_bytes(storage_used_bytes) + " / " + format_bytes(storage_limit_bytes),
-                        color = if (storage_over_limit) colors.danger else colors.text_tertiary,
-                        fontSize = 12.sp,
-                        fontWeight = if (storage_over_limit) FontWeight.SemiBold else FontWeight.Normal,
+                        text = java.text.NumberFormat.getPercentInstance().format(storage_percent / 100.0),
+                        color = if (storage_over_limit) colors.danger else colors.text_primary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
                     )
                 }
                 Spacer(Modifier.height(AsterSpacing.sm))
                 gradient_bar(
-                    fraction = storage_used_bytes.toFloat() / storage_limit_bytes.toFloat(),
+                    fraction = storage_fraction,
                     is_over = storage_over_limit,
                 )
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.storage_used_format, format_bytes(storage_used_bytes), format_bytes(storage_limit_bytes)),
+                        color = if (storage_over_limit) colors.danger else colors.text_tertiary,
+                        fontSize = 12.sp,
+                        fontWeight = if (storage_over_limit) FontWeight.SemiBold else FontWeight.Normal,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (free_teaser != null) {
+                        Text(
+                            text = stringResource(R.string.billing_add_storage_link),
+                            color = colors.accent_blue,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier
+                                .clip(SquircleShape(6.dp))
+                                .clickable(role = Role.Button) { on_upgrade() }
+                                .padding(horizontal = 4.dp, vertical = 2.dp),
+                        )
+                    }
+                }
+                if (free_teaser != null && (storage_over_limit || storage_fraction >= 0.7f)) {
+                    Spacer(Modifier.height(AsterSpacing.sm))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(SquircleShape(10.dp))
+                            .background((if (storage_over_limit) colors.danger else colors.warning).copy(alpha = 0.10f))
+                            .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = TablerIcons.AlertTriangle,
+                            contentDescription = null,
+                            tint = if (storage_over_limit) colors.danger else colors.warning,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(Modifier.width(AsterSpacing.sm))
+                        Text(
+                            text = stringResource(R.string.settings_plan_storage_tight_note, storage_percent, free_teaser.plan_name),
+                            color = colors.text_primary,
+                            fontSize = 12.sp,
+                            lineHeight = 16.sp,
+                        )
+                    }
+                }
             }
             if (is_paid && is_crypto) {
                 Spacer(Modifier.height(AsterSpacing.lg))

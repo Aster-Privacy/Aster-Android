@@ -239,33 +239,45 @@ internal fun icon_tile(
 }
 
 @Composable
-internal fun gradient_bar(fraction: Float, is_over: Boolean, height: Dp = 8.dp) {
+internal fun gradient_bar(fraction: Float, is_over: Boolean, height: Dp = 10.dp) {
     val colors = AsterMaterial.colors
-    val target = fraction.coerceIn(0.02f, 1f)
+    val target = if (fraction <= 0f) 0f else fraction.coerceIn(0.035f, 1f)
     val animated by animateFloatAsState(
         targetValue = target,
         animationSpec = tween(durationMillis = 700),
         label = "storage_fill",
     )
     val accent = if (is_over) colors.danger else colors.accent_blue
+    val track = colors.text_primary.copy(alpha = if (colors.is_dark) 0.10f else 0.07f)
+    val track_edge = colors.text_primary.copy(alpha = if (colors.is_dark) 0.08f else 0.05f)
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(height)
             .clip(CircleShape)
-            .background(colors.bg_tertiary),
+            .background(track)
+            .border(1.dp, track_edge, CircleShape),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(animated)
-                .height(height)
-                .clip(CircleShape)
-                .background(
-                    Brush.horizontalGradient(
-                        0.0f to blend(accent, Color.White, 0.30f),
-                        1.0f to accent,
+        if (animated > 0f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(animated)
+                    .height(height)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.horizontalGradient(
+                            0.0f to blend(accent, Color.White, 0.35f),
+                            1.0f to accent,
+                        ),
+                    )
+                    .background(
+                        Brush.verticalGradient(
+                            0.0f to Color.White.copy(alpha = 0.28f),
+                            0.5f to Color.Transparent,
+                            1.0f to Color.Black.copy(alpha = 0.10f),
+                        ),
                     ),
-                ),
-        )
+            )
+        }
     }
 }
