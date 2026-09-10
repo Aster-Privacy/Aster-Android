@@ -351,6 +351,7 @@
     <string name="filter_to">إلى</string>
     <string name="filter_has_attachment">يحتوي على مرفق</string>
     <string name="filter_unread">غير مقروء</string>
+    <string name="filter_unread_only">غير المقروءة فقط</string>
     <string name="filter_starred">مميز بنجمة</string>
     <string name="filter_encrypted">مشفر</string>
     <string name="decrypting_indexing">جارٍ فك التشفير والفهرسة...</string>
@@ -1627,6 +1628,8 @@
     <string name="score_fair">مقبول</string>
     <string name="score_partial">جزئي</string>
     <string name="score_strong">قوي</string>
+    <string name="score_complete">كل شيء جاهز</string>
+    <string name="score_steps_left">بقي %1$d</string>
     <string name="check_passkey_registered">مفتاح مرور مُسجّل</string>
     <string name="check_verified_recovery_email">بريد استرداد مُوثّق</string>
     <string name="check_read_receipts_off">إيصالات القراءة مُعطّلة</string>
@@ -1728,6 +1731,8 @@
     <string name="message_location">الموقع</string>
     <string name="lock_message">قفل الرسالة</string>
     <string name="delete_draft">حذف المسودة</string>
+    <string name="delete_draft_question">حذف المسودة؟</string>
+    <string name="delete_draft_confirm_description">تُحذف هذه المسودة نهائيًا ولا يمكنك استعادتها.</string>
     <string name="attach_files">إرفاق ملفات</string>
     <string name="to_label_prefix">إلى %s</string>
     <string name="failed_to_delete_draft">تعذّر حذف المسودة</string>

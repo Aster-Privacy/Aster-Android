@@ -351,6 +351,7 @@
     <string name="filter_to">Do</string>
     <string name="filter_has_attachment">Ma załącznik</string>
     <string name="filter_unread">Nieprzeczytane</string>
+    <string name="filter_unread_only">Tylko nieprzeczytane</string>
     <string name="filter_starred">Oznaczone gwiazdką</string>
     <string name="filter_encrypted">Zaszyfrowane</string>
     <string name="decrypting_indexing">Odszyfrowywanie i indeksowanie poczty...</string>
@@ -1623,6 +1624,8 @@
     <string name="score_fair">Przeciętny</string>
     <string name="score_partial">Częściowy</string>
     <string name="score_strong">Silny</string>
+    <string name="score_complete">Wszystko gotowe</string>
+    <string name="score_steps_left">Pozostało %1$d</string>
     <string name="check_passkey_registered">Zarejestrowany klucz dostępu</string>
     <string name="check_verified_recovery_email">Zweryfikowany e-mail odzyskiwania</string>
     <string name="check_read_receipts_off">Potwierdzenia odczytu wyłączone</string>
@@ -1722,6 +1725,8 @@
     <string name="message_location">Lokalizacja</string>
     <string name="lock_message">Zablokuj wiadomość</string>
     <string name="delete_draft">Usuń wersję roboczą</string>
+    <string name="delete_draft_question">Usunąć wersję roboczą?</string>
+    <string name="delete_draft_confirm_description">Ta wersja robocza zostanie trwale usunięta i nie można jej odzyskać.</string>
     <string name="attach_files">Załącz pliki</string>
     <string name="to_label_prefix">do %s</string>
     <string name="failed_to_delete_draft">Nie udało się usunąć wersji roboczej</string>

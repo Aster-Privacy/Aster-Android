@@ -351,6 +351,7 @@
     <string name="filter_to">Aan</string>
     <string name="filter_has_attachment">Heeft bijlage</string>
     <string name="filter_unread">Ongelezen</string>
+    <string name="filter_unread_only">Alleen ongelezen</string>
     <string name="filter_starred">Met ster</string>
     <string name="filter_encrypted">Versleuteld</string>
     <string name="decrypting_indexing">E-mail ontsleutelen en indexeren...</string>
@@ -1619,6 +1620,8 @@
     <string name="score_fair">Redelijk</string>
     <string name="score_partial">Gedeeltelijk</string>
     <string name="score_strong">Sterk</string>
+    <string name="score_complete">Alles in orde</string>
+    <string name="score_steps_left">Nog %1$d</string>
     <string name="check_passkey_registered">Passkey geregistreerd</string>
     <string name="check_verified_recovery_email">Geverifieerd herstel-e-mailadres</string>
     <string name="check_read_receipts_off">Leesbevestigingen uit</string>
@@ -1716,6 +1719,8 @@
     <string name="message_location">Locatie</string>
     <string name="lock_message">Bericht vergrendelen</string>
     <string name="delete_draft">Concept verwijderen</string>
+    <string name="delete_draft_question">Concept verwijderen?</string>
+    <string name="delete_draft_confirm_description">Dit concept wordt definitief verwijderd en je kunt het niet herstellen.</string>
     <string name="attach_files">Bestanden bijvoegen</string>
     <string name="to_label_prefix">aan %s</string>
     <string name="failed_to_delete_draft">Concept kon niet worden verwijderd</string>

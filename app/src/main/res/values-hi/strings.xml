@@ -403,6 +403,8 @@
     <string name="message_location">स्थान</string>
     <string name="lock_message">संदेश लॉक करें</string>
     <string name="delete_draft">ड्राफ़्ट हटाएं</string>
+    <string name="delete_draft_question">ड्राफ़्ट हटाएं?</string>
+    <string name="delete_draft_confirm_description">यह ड्राफ़्ट स्थायी रूप से हट जाता है और आप इसे वापस नहीं पा सकते।</string>
     <string name="attach_files">फ़ाइलें अटैच करें</string>
     <string name="archived">आर्काइव किया गया</string>
     <string name="unstarred">तारा हटा दिया गया</string>
@@ -578,6 +580,7 @@
     <string name="filter_to">प्रति</string>
     <string name="filter_has_attachment">अटैचमेंट है</string>
     <string name="filter_unread">अपठित</string>
+    <string name="filter_unread_only">सिर्फ़ बिना पढ़े</string>
     <string name="filter_starred">तारांकित</string>
     <string name="filter_encrypted">एन्क्रिप्टेड</string>
     <string name="decrypting_indexing">मेल डिक्रिप्ट और अनुक्रमित हो रही है...</string>
@@ -2478,6 +2481,8 @@
     <string name="score_fair">ठीक-ठाक</string>
     <string name="score_partial">आंशिक</string>
     <string name="score_strong">मज़बूत</string>
+    <string name="score_complete">सब तैयार है</string>
+    <string name="score_steps_left">%1$d बाकी</string>
     <string name="check_passkey_registered">पासकी दर्ज हो गई</string>
     <string name="check_verified_recovery_email">पुष्ट रिकवरी ईमेल</string>
     <string name="check_read_receipts_off">पढ़े जाने की रसीदें बंद</string>

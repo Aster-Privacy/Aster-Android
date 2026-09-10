@@ -351,6 +351,7 @@
     <string name="filter_to">받는 사람</string>
     <string name="filter_has_attachment">첨부 파일 있음</string>
     <string name="filter_unread">읽지 않음</string>
+    <string name="filter_unread_only">읽지 않은 것만</string>
     <string name="filter_starred">별표 표시</string>
     <string name="filter_encrypted">암호화됨</string>
     <string name="decrypting_indexing">복호화 및 색인 중...</string>
@@ -1617,6 +1618,8 @@
     <string name="score_fair">보통</string>
     <string name="score_partial">부분</string>
     <string name="score_strong">강함</string>
+    <string name="score_complete">모두 완료</string>
+    <string name="score_steps_left">%1$d개 남음</string>
     <string name="check_passkey_registered">패스키 등록됨</string>
     <string name="check_verified_recovery_email">인증된 복구 이메일</string>
     <string name="check_read_receipts_off">읽음 확인 끔</string>
@@ -1713,6 +1716,8 @@
     <string name="message_location">위치</string>
     <string name="lock_message">메시지 잠그기</string>
     <string name="delete_draft">임시보관 삭제</string>
+    <string name="delete_draft_question">초안을 삭제할까요?</string>
+    <string name="delete_draft_confirm_description">이 초안은 영구적으로 삭제되며 복구할 수 없습니다.</string>
     <string name="attach_files">파일 첨부</string>
     <string name="to_label_prefix">받는 사람 %s</string>
     <string name="failed_to_delete_draft">임시보관을 삭제하지 못했습니다</string>

@@ -351,6 +351,7 @@
     <string name="filter_to">宛先</string>
     <string name="filter_has_attachment">添付ファイルあり</string>
     <string name="filter_unread">未読</string>
+    <string name="filter_unread_only">未読のみ</string>
     <string name="filter_starred">スター付き</string>
     <string name="filter_encrypted">暗号化済み</string>
     <string name="decrypting_indexing">復号とインデックス作成中...</string>
@@ -1617,6 +1618,8 @@
     <string name="score_fair">普通</string>
     <string name="score_partial">一部</string>
     <string name="score_strong">強力</string>
+    <string name="score_complete">設定完了</string>
+    <string name="score_steps_left">残り %1$d</string>
     <string name="check_passkey_registered">パスキー登録済み</string>
     <string name="check_verified_recovery_email">確認済みの復旧用メール</string>
     <string name="check_read_receipts_off">開封確認オフ</string>
@@ -1713,6 +1716,8 @@
     <string name="message_location">場所</string>
     <string name="lock_message">メッセージをロック</string>
     <string name="delete_draft">下書きを削除</string>
+    <string name="delete_draft_question">下書きを削除しますか？</string>
+    <string name="delete_draft_confirm_description">この下書きは完全に削除され、元に戻すことはできません。</string>
     <string name="attach_files">ファイルを添付</string>
     <string name="to_label_prefix">宛先 %s</string>
     <string name="failed_to_delete_draft">下書きを削除できませんでした</string>

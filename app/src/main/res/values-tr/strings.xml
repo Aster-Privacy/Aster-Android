@@ -351,6 +351,7 @@
     <string name="filter_to">Kime</string>
     <string name="filter_has_attachment">Ek var</string>
     <string name="filter_unread">Okunmamış</string>
+    <string name="filter_unread_only">Yalnızca okunmamış</string>
     <string name="filter_starred">Yıldızlı</string>
     <string name="filter_encrypted">Şifreli</string>
     <string name="decrypting_indexing">E-posta çözülüyor ve dizinleniyor...</string>
@@ -1619,6 +1620,8 @@
     <string name="score_fair">Orta</string>
     <string name="score_partial">Kısmi</string>
     <string name="score_strong">Güçlü</string>
+    <string name="score_complete">Her şey hazır</string>
+    <string name="score_steps_left">%1$d kaldı</string>
     <string name="check_passkey_registered">Geçiş anahtarı kayıtlı</string>
     <string name="check_verified_recovery_email">Doğrulanmış kurtarma e-postası</string>
     <string name="check_read_receipts_off">Okundu bilgisi kapalı</string>
@@ -1716,6 +1719,8 @@
     <string name="message_location">Konum</string>
     <string name="lock_message">Mesajı kilitle</string>
     <string name="delete_draft">Taslağı sil</string>
+    <string name="delete_draft_question">Taslak silinsin mi?</string>
+    <string name="delete_draft_confirm_description">Bu taslak kalıcı olarak silinir ve geri alınamaz.</string>
     <string name="attach_files">Dosya ekle</string>
     <string name="to_label_prefix">kime %s</string>
     <string name="failed_to_delete_draft">Taslak silinemedi</string>

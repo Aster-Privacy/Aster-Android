@@ -351,6 +351,7 @@
     <string name="filter_to">收件人</string>
     <string name="filter_has_attachment">有附件</string>
     <string name="filter_unread">未读</string>
+    <string name="filter_unread_only">仅未读</string>
     <string name="filter_starred">已加星标</string>
     <string name="filter_encrypted">已加密</string>
     <string name="decrypting_indexing">正在解密和建立索引...</string>
@@ -1617,6 +1618,8 @@
     <string name="score_fair">一般</string>
     <string name="score_partial">部分</string>
     <string name="score_strong">强</string>
+    <string name="score_complete">全部完成</string>
+    <string name="score_steps_left">还剩 %1$d</string>
     <string name="check_passkey_registered">已注册通行密钥</string>
     <string name="check_verified_recovery_email">已验证的恢复邮箱</string>
     <string name="check_read_receipts_off">已关闭已读回执</string>
@@ -1713,6 +1716,8 @@
     <string name="message_location">位置</string>
     <string name="lock_message">锁定邮件</string>
     <string name="delete_draft">删除草稿</string>
+    <string name="delete_draft_question">删除草稿？</string>
+    <string name="delete_draft_confirm_description">此草稿将被永久删除，无法恢复。</string>
     <string name="attach_files">添加附件</string>
     <string name="to_label_prefix">发给 %s</string>
     <string name="failed_to_delete_draft">无法删除草稿</string>

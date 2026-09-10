@@ -352,6 +352,7 @@
     <string name="filter_to">An</string>
     <string name="filter_has_attachment">Mit Anhang</string>
     <string name="filter_unread">Ungelesen</string>
+    <string name="filter_unread_only">Nur ungelesene</string>
     <string name="filter_starred">Markiert</string>
     <string name="filter_encrypted">Verschlüsselt</string>
     <string name="decrypting_indexing">E-Mails werden entschlüsselt und indexiert...</string>
@@ -1620,6 +1621,8 @@
     <string name="score_fair">Mäßig</string>
     <string name="score_partial">Teilweise</string>
     <string name="score_strong">Stark</string>
+    <string name="score_complete">Alles erledigt</string>
+    <string name="score_steps_left">Noch %1$d</string>
     <string name="check_passkey_registered">Passkey registriert</string>
     <string name="check_verified_recovery_email">Bestätigte Wiederherstellungsadresse</string>
     <string name="check_read_receipts_off">Lesebestätigungen aus</string>
@@ -1717,6 +1720,8 @@
     <string name="message_location">Ort</string>
     <string name="lock_message">Nachricht sperren</string>
     <string name="delete_draft">Entwurf löschen</string>
+    <string name="delete_draft_question">Entwurf löschen?</string>
+    <string name="delete_draft_confirm_description">Dieser Entwurf wird endgültig gelöscht und kann nicht wiederhergestellt werden.</string>
     <string name="attach_files">Dateien anhängen</string>
     <string name="to_label_prefix">an %s</string>
     <string name="failed_to_delete_draft">Entwurf konnte nicht gelöscht werden</string>

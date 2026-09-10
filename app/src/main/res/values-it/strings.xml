@@ -351,6 +351,7 @@
     <string name="filter_to">A</string>
     <string name="filter_has_attachment">Ha allegato</string>
     <string name="filter_unread">Non letto</string>
+    <string name="filter_unread_only">Solo non lette</string>
     <string name="filter_starred">Preferito</string>
     <string name="filter_encrypted">Crittografato</string>
     <string name="decrypting_indexing">Decrittazione e indicizzazione della posta...</string>
@@ -1619,6 +1620,8 @@
     <string name="score_fair">Discreto</string>
     <string name="score_partial">Parziale</string>
     <string name="score_strong">Forte</string>
+    <string name="score_complete">Tutto pronto</string>
+    <string name="score_steps_left">Ne mancano %1$d</string>
     <string name="check_passkey_registered">Passkey registrata</string>
     <string name="check_verified_recovery_email">Email di recupero verificata</string>
     <string name="check_read_receipts_off">Conferme di lettura disattivate</string>
@@ -1716,6 +1719,8 @@
     <string name="message_location">Posizione</string>
     <string name="lock_message">Blocca messaggio</string>
     <string name="delete_draft">Elimina bozza</string>
+    <string name="delete_draft_question">Eliminare la bozza?</string>
+    <string name="delete_draft_confirm_description">Questa bozza viene eliminata definitivamente e non puoi recuperarla.</string>
     <string name="attach_files">Allega file</string>
     <string name="to_label_prefix">a %s</string>
     <string name="failed_to_delete_draft">Impossibile eliminare la bozza</string>

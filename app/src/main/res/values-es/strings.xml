@@ -352,6 +352,7 @@
     <string name="filter_to">Para</string>
     <string name="filter_has_attachment">Con adjunto</string>
     <string name="filter_unread">No leído</string>
+    <string name="filter_unread_only">Solo no leídos</string>
     <string name="filter_starred">Destacado</string>
     <string name="filter_encrypted">Cifrado</string>
     <string name="decrypting_indexing">Descifrando e indexando correos...</string>
@@ -1620,6 +1621,8 @@
     <string name="score_fair">Aceptable</string>
     <string name="score_partial">Parcial</string>
     <string name="score_strong">Fuerte</string>
+    <string name="score_complete">Todo listo</string>
+    <string name="score_steps_left">Quedan %1$d</string>
     <string name="check_passkey_registered">Clave de acceso registrada</string>
     <string name="check_verified_recovery_email">Correo de recuperación verificado</string>
     <string name="check_read_receipts_off">Confirmaciones de lectura desactivadas</string>
@@ -1717,6 +1720,8 @@
     <string name="message_location">Ubicación</string>
     <string name="lock_message">Bloquear mensaje</string>
     <string name="delete_draft">Eliminar borrador</string>
+    <string name="delete_draft_question">¿Eliminar el borrador?</string>
+    <string name="delete_draft_confirm_description">Este borrador se elimina de forma permanente y no puedes recuperarlo.</string>
     <string name="attach_files">Adjuntar archivos</string>
     <string name="to_label_prefix">para %s</string>
     <string name="failed_to_delete_draft">No se pudo eliminar el borrador</string>

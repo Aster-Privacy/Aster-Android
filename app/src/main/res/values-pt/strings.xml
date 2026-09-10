@@ -351,6 +351,7 @@
     <string name="filter_to">Para</string>
     <string name="filter_has_attachment">Tem anexo</string>
     <string name="filter_unread">Não lido</string>
+    <string name="filter_unread_only">Apenas não lidos</string>
     <string name="filter_starred">Com estrela</string>
     <string name="filter_encrypted">Criptografado</string>
     <string name="decrypting_indexing">Descriptografando e indexando e-mails...</string>
@@ -510,7 +511,7 @@
     <string name="smtp_token_revoked_toast">Token SMTP revogado</string>
     <string name="smtp_token_not_e2e_title">As mensagens enviadas com tokens SMTP não têm criptografia de ponta a ponta</string>
     <string name="smtp_token_not_e2e_body">O e-mail enviado por meio de um token SMTP é protegido por TLS em trânsito e armazenado com criptografia de acesso zero em nossos servidores, mas não tem criptografia de ponta a ponta. O Aster não pode aplicar criptografia de ponta a ponta a e-mails originados fora dos aplicativos Aster. Use tokens SMTP apenas para e-mails automatizados ou transacionais em que a criptografia de ponta a ponta não seja necessária.</string>
-    <string name="clipboard_label_smtp_token">Definições de SMTP</string>
+    <string name="clipboard_label_smtp_token">Configurações de SMTP</string>
     <string name="settings_aliases_subtitle">Gerenciar endereços</string>
     <string name="settings_billing">Faturamento</string>
     <string name="settings_billing_subtitle">Plano, faturas, métodos de pagamento</string>
@@ -1619,6 +1620,8 @@
     <string name="score_fair">Razoável</string>
     <string name="score_partial">Parcial</string>
     <string name="score_strong">Forte</string>
+    <string name="score_complete">Tudo pronto</string>
+    <string name="score_steps_left">Faltam %1$d</string>
     <string name="check_passkey_registered">Chave de acesso registada</string>
     <string name="check_verified_recovery_email">Email de recuperação verificado</string>
     <string name="check_read_receipts_off">Confirmações de leitura desativadas</string>
@@ -1716,6 +1719,8 @@
     <string name="message_location">Local</string>
     <string name="lock_message">Bloquear mensagem</string>
     <string name="delete_draft">Excluir rascunho</string>
+    <string name="delete_draft_question">Excluir rascunho?</string>
+    <string name="delete_draft_confirm_description">Este rascunho é excluído permanentemente e você não pode recuperá-lo.</string>
     <string name="attach_files">Anexar arquivos</string>
     <string name="to_label_prefix">para %s</string>
     <string name="failed_to_delete_draft">Não foi possível excluir o rascunho</string>

@@ -375,6 +375,7 @@
     <string name="filter_to">À</string>
     <string name="filter_has_attachment">Avec pièce jointe</string>
     <string name="filter_unread">Non lu</string>
+    <string name="filter_unread_only">Non lus uniquement</string>
     <string name="filter_starred">Favoris</string>
     <string name="filter_encrypted">Chiffré</string>
     <string name="decrypting_indexing">Déchiffrement et indexation des e-mails...</string>
@@ -1846,6 +1847,8 @@
     <string name="delete_account_warning_title">Cette action est irréversible</string>
     <string name="delete_alias_confirm_message">Supprimer définitivement %1$s ? Les e-mails envoyés à cet alias seront rejetés.</string>
     <string name="delete_draft">Supprimer le brouillon</string>
+    <string name="delete_draft_question">Supprimer le brouillon ?</string>
+    <string name="delete_draft_confirm_description">Ce brouillon est supprimé définitivement et vous ne pouvez pas le récupérer.</string>
     <string name="delete_signature">Supprimer la signature</string>
     <string name="show_aster_branding">Filigrane Aster Mail</string>
     <string name="show_aster_branding_description">Afficher « Sécurisé par Aster Mail » en bas des e-mails sortants.</string>
@@ -2250,6 +2253,8 @@
     <string name="score_fair">Correct</string>
     <string name="score_partial">Partiel</string>
     <string name="score_strong">Fort</string>
+    <string name="score_complete">Tout est prêt</string>
+    <string name="score_steps_left">Encore %1$d</string>
     <string name="check_passkey_registered">Clé d\'accès enregistrée</string>
     <string name="check_verified_recovery_email">Adresse de récupération vérifiée</string>
     <string name="check_read_receipts_off">Accusés de lecture désactivés</string>

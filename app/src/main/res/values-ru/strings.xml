@@ -351,6 +351,7 @@
     <string name="filter_to">Кому</string>
     <string name="filter_has_attachment">С вложением</string>
     <string name="filter_unread">Непрочитанные</string>
+    <string name="filter_unread_only">Только непрочитанные</string>
     <string name="filter_starred">Избранные</string>
     <string name="filter_encrypted">Зашифрованные</string>
     <string name="decrypting_indexing">Расшифровка и индексация почты...</string>
@@ -1623,6 +1624,8 @@
     <string name="score_fair">Средняя</string>
     <string name="score_partial">Частичная</string>
     <string name="score_strong">Надёжная</string>
+    <string name="score_complete">Всё готово</string>
+    <string name="score_steps_left">Осталось %1$d</string>
     <string name="check_passkey_registered">Ключ доступа добавлен</string>
     <string name="check_verified_recovery_email">Подтверждённая почта для восстановления</string>
     <string name="check_read_receipts_off">Уведомления о прочтении выключены</string>
@@ -1722,6 +1725,8 @@
     <string name="message_location">Расположение</string>
     <string name="lock_message">Заблокировать сообщение</string>
     <string name="delete_draft">Удалить черновик</string>
+    <string name="delete_draft_question">Удалить черновик?</string>
+    <string name="delete_draft_confirm_description">Этот черновик удаляется навсегда, и восстановить его нельзя.</string>
     <string name="attach_files">Прикрепить файлы</string>
     <string name="to_label_prefix">кому %s</string>
     <string name="failed_to_delete_draft">Не удалось удалить черновик</string>
