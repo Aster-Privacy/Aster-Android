@@ -133,24 +133,6 @@ internal fun Modifier.starfield(
     val star_color = if (is_dark) blend(Color.White, accent, 0.12f) else accent
     return drawBehind {
         val band = size.height * band_fraction
-        val wash_alpha = if (is_dark) 0.11f else 0.055f
-        drawRect(
-            brush = Brush.radialGradient(
-                0.0f to accent.copy(alpha = wash_alpha),
-                0.5f to accent.copy(alpha = wash_alpha * 0.35f),
-                1.0f to Color.Transparent,
-                center = Offset(size.width * 0.74f, -band * 0.30f),
-                radius = size.width * 0.78f,
-            ),
-        )
-        drawRect(
-            brush = Brush.radialGradient(
-                0.0f to accent.copy(alpha = wash_alpha * 0.55f),
-                1.0f to Color.Transparent,
-                center = Offset(size.width * 0.10f, band * 0.70f),
-                radius = size.width * 0.42f,
-            ),
-        )
         val count = star_seeds.size
         star_seeds.forEachIndexed { index, (fx, fy) ->
             if (edges_only && fx > 0.22f && fx < 0.78f) return@forEachIndexed
@@ -192,11 +174,8 @@ internal fun hero_surface(
             .background(colors.bg_card)
             .background(
                 Brush.verticalGradient(
-                    0.00f to accent.copy(alpha = if (colors.is_dark) 0.14f else 0.07f),
-                    0.18f to accent.copy(alpha = if (colors.is_dark) 0.085f else 0.042f),
-                    0.36f to accent.copy(alpha = if (colors.is_dark) 0.04f else 0.02f),
-                    0.52f to accent.copy(alpha = 0.012f),
-                    0.66f to Color.Transparent,
+                    0.00f to accent.copy(alpha = if (colors.is_dark) 0.16f else 0.08f),
+                    0.40f to Color.Transparent,
                 ),
             )
             .starfield(accent, colors.is_dark, band_fraction = 0.30f, edges_only = true),
