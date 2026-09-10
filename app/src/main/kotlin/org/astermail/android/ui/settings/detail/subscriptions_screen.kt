@@ -1979,7 +1979,7 @@ private fun current_plan_card(
                 }
                 Spacer(Modifier.height(AsterSpacing.lg))
                 AsterButton(
-                    label = stringResource(R.string.billing_upgrade_for_more_short),
+                    label = stringResource(R.string.fix_billing_get_plan, free_teaser.plan_name),
                     onClick = on_upgrade,
                 )
             } else if (show_manage_payment || ends_at_period_end || show_cancel) {
@@ -2435,12 +2435,7 @@ private fun plan_tier_card(
                     Spacer(Modifier.height(AsterSpacing.xs))
                     if (savings_cents != null && savings_cents > 0) {
                         if (is_yearly) {
-                            Text(
-                                text = stringResource(R.string.billing_save_amount, format_price(savings_cents, currency)),
-                                color = colors.success,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium,
-                            )
+                            galaxy_badge(text = stringResource(R.string.billing_save_amount, format_price(savings_cents, currency)))
                         } else {
                             Text(
                                 text = format_price(yearly_cents ?: 0, currency) +
@@ -2480,7 +2475,7 @@ private fun plan_tier_card(
                         on_click = on_see_pricing,
                     )
                     is_recommended && !is_interval_switch && !is_downgrade -> plan_outline_button(
-                        label = stringResource(R.string.billing_subscribe),
+                        label = stringResource(R.string.fix_billing_get_plan, stringResource(tier.name_res)),
                         enabled = true,
                         on_click = on_choose,
                         filled = true,
@@ -2493,6 +2488,17 @@ private fun plan_tier_card(
                         },
                         enabled = true,
                         on_click = on_choose,
+                    )
+                }
+                if (show_recommended) {
+                    Spacer(Modifier.height(AsterSpacing.sm))
+                    Text(
+                        text = stringResource(R.string.billing_money_back_guarantee) + " · " + stringResource(R.string.billing_cancel_anytime),
+                        color = colors.text_tertiary,
+                        fontSize = 11.sp,
+                        lineHeight = 14.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }

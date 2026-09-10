@@ -19,7 +19,11 @@
 package org.astermail.android.ui.settings.detail
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -48,6 +52,8 @@ import compose.icons.tablericons.*
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.SquircleShape
+import kotlin.math.PI
+import kotlin.math.sin
 
 internal fun plan_feature_icon(@StringRes feature_res: Int): ImageVector = when (feature_res) {
     R.string.settings_plan_bullet_free_storage,
@@ -110,35 +116,63 @@ private val star_seeds = listOf(
     0.48f to 0.92f, 0.76f to 0.90f, 0.09f to 0.40f, 0.63f to 0.38f, 0.90f to 0.84f,
 )
 
+@Composable
 internal fun Modifier.starfield(
     accent: Color,
     is_dark: Boolean,
     band_fraction: Float = 0.42f,
     edges_only: Boolean = false,
-): Modifier = drawBehind {
-    val band = size.height * band_fraction
-    val glow_center = Offset(size.width * 0.86f, band * 0.05f)
-    drawCircle(
-        brush = Brush.radialGradient(
-            0.0f to accent.copy(alpha = if (is_dark) 0.30f else 0.16f),
-            0.55f to accent.copy(alpha = if (is_dark) 0.08f else 0.04f),
-            1.0f to Color.Transparent,
-            center = glow_center,
-            radius = size.width * 0.42f,
-        ),
-        radius = size.width * 0.42f,
-        center = glow_center,
+): Modifier {
+    val transition = rememberInfiniteTransition(label = "starfield")
+    val phase by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(durationMillis = 9000, easing = LinearEasing)),
+        label = "twinkle",
     )
-    val star_color = if (is_dark) Color.White else accent
-    star_seeds.forEachIndexed { index, (fx, fy) ->
-        if (edges_only && fx > 0.22f && fx < 0.78f) return@forEachIndexed
-        val radius = if (index % 4 == 0) 1.9.dp.toPx() else 1.1.dp.toPx()
-        val alpha = if (is_dark) (if (index % 3 == 0) 0.42f else 0.20f) else (if (index % 3 == 0) 0.24f else 0.12f)
-        drawCircle(
-            color = star_color.copy(alpha = alpha),
-            radius = radius,
-            center = Offset(size.width * fx, band * fy),
+    val star_color = if (is_dark) blend(Color.White, accent, 0.12f) else accent
+    return drawBehind {
+        val band = size.height * band_fraction
+        val wash_alpha = if (is_dark) 0.11f else 0.055f
+        drawRect(
+            brush = Brush.radialGradient(
+                0.0f to accent.copy(alpha = wash_alpha),
+                0.5f to accent.copy(alpha = wash_alpha * 0.35f),
+                1.0f to Color.Transparent,
+                center = Offset(size.width * 0.74f, -band * 0.30f),
+                radius = size.width * 0.78f,
+            ),
         )
+        drawRect(
+            brush = Brush.radialGradient(
+                0.0f to accent.copy(alpha = wash_alpha * 0.55f),
+                1.0f to Color.Transparent,
+                center = Offset(size.width * 0.10f, band * 0.70f),
+                radius = size.width * 0.42f,
+            ),
+        )
+        val count = star_seeds.size
+        star_seeds.forEachIndexed { index, (fx, fy) ->
+            if (edges_only && fx > 0.22f && fx < 0.78f) return@forEachIndexed
+            val center = Offset(size.width * fx, band * fy)
+            val twinkle = 0.62f + 0.38f * sin(2.0 * PI * (phase + index.toFloat() / count)).toFloat()
+            val core = if (index % 4 == 0) 1.3.dp.toPx() else 0.85.dp.toPx()
+            val halo = core * 5.5f
+            val base_alpha = if (is_dark) (if (index % 3 == 0) 0.62f else 0.34f) else (if (index % 3 == 0) 0.34f else 0.18f)
+            val alpha = base_alpha * twinkle
+            drawCircle(
+                brush = Brush.radialGradient(
+                    0.0f to star_color.copy(alpha = alpha * 0.55f),
+                    0.4f to star_color.copy(alpha = alpha * 0.14f),
+                    1.0f to Color.Transparent,
+                    center = center,
+                    radius = halo,
+                ),
+                radius = halo,
+                center = center,
+            )
+            drawCircle(color = star_color.copy(alpha = alpha), radius = core, center = center)
+        }
     }
 }
 
