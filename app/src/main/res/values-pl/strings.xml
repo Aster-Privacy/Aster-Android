@@ -2391,7 +2391,9 @@
     <string name="crypto_native_manual_review">W trakcie weryfikacji</string>
     <string name="crypto_native_manual_review_body">Ta płatność wymaga szybkiej weryfikacji ręcznej. Zwykle trwa to kilka godzin, a plan zostaje przyznany automatycznie.</string>
     <string name="crypto_native_transaction">Transakcja</string>
-    <string name="crypto_native_refund_notice">Nadpłaty do 2x są automatycznie dopisywane do salda konta. Skontaktuj się z pomocą, jeśli coś się nie zgadza.</string>
+    <string name="crypto_native_status_title">Status płatności</string>
+    <string name="crypto_native_awaiting_hint">Oczekiwanie na Twój przelew</string>
+    <string name="crypto_native_refund_notice">Jeśli wyślesz więcej niż należna kwota, różnica zostanie dodana do salda konta. Jeśli coś wygląda niepoprawnie, skontaktuj się z pomocą techniczną.</string>
     <string name="crypto_native_underpaid_body">Otrzymaliśmy %1$s z %2$s %3$s. Wyślij pozostałe %4$s %3$s na ten sam adres, aby dokończyć tę płatność.</string>
     <string name="crypto_native_invoice_title">Zapłać w %1$s</string>
     <string name="crypto_native_awaiting_body">Zeskanuj kod lub skopiuj dane do portfela. Ta strona odświeża się automatycznie.</string>

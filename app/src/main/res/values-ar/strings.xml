@@ -2399,7 +2399,9 @@
     <string name="crypto_native_manual_review">قيد المراجعة</string>
     <string name="crypto_native_manual_review_body">تحتاج هذه الدفعة إلى مراجعة يدوية سريعة. تكتمل عادة خلال ساعات وتُفعّل خطتك تلقائيًا.</string>
     <string name="crypto_native_transaction">المعاملة</string>
-    <string name="crypto_native_refund_notice">تُضاف المبالغ الزائدة حتى ضعفين إلى رصيد حسابك تلقائيًا. تواصل مع الدعم إذا لاحظت أي خطأ.</string>
+    <string name="crypto_native_status_title">حالة الدفع</string>
+    <string name="crypto_native_awaiting_hint">في انتظار تحويلك</string>
+    <string name="crypto_native_refund_notice">إذا أرسلت أكثر من المبلغ المستحق، يُضاف الفرق إلى رصيد حسابك. إذا بدا لك أن هناك خطأ، فتواصل مع الدعم.</string>
     <string name="crypto_native_underpaid_body">استلمنا %1$s من %2$s %3$s. أرسل المتبقي %4$s %3$s إلى العنوان نفسه لإتمام هذه الدفعة.</string>
     <string name="crypto_native_invoice_title">الدفع بـ %1$s</string>
     <string name="crypto_native_awaiting_body">امسح الرمز أو انسخ التفاصيل إلى محفظتك. تُحدَّث هذه الصفحة تلقائيًا.</string>

@@ -2391,7 +2391,9 @@
     <string name="crypto_native_manual_review">На проверке</string>
     <string name="crypto_native_manual_review_body">Этот платёж требует быстрой ручной проверки. Обычно она занимает несколько часов, после чего тариф зачисляется автоматически.</string>
     <string name="crypto_native_transaction">Транзакция</string>
-    <string name="crypto_native_refund_notice">Переплата до 2x автоматически зачисляется на баланс счёта. Если что-то не так, напишите в поддержку.</string>
+    <string name="crypto_native_status_title">Статус платежа</string>
+    <string name="crypto_native_awaiting_hint">Ожидание вашего перевода</string>
+    <string name="crypto_native_refund_notice">Если вы отправите больше, чем нужно, разница будет зачислена на баланс вашего аккаунта. Если что-то выглядит неправильно, обратитесь в поддержку.</string>
     <string name="crypto_native_underpaid_body">Получено %1$s из %2$s %3$s. Отправьте оставшиеся %4$s %3$s на тот же адрес, чтобы завершить платёж.</string>
     <string name="crypto_native_invoice_title">Оплата через %1$s</string>
     <string name="crypto_native_awaiting_body">Отсканируйте код или скопируйте данные в кошелёк. Страница обновляется автоматически.</string>

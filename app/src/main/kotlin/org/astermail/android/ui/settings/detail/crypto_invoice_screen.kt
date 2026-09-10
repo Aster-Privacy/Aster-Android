@@ -34,6 +34,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -471,7 +473,7 @@ private fun crypto_active_view(
         }
 
         Spacer(Modifier.height(AsterSpacing.lg))
-        Text(stringResource(R.string.crypto_native_refund_notice), fontSize = 11.sp, color = colors.text_muted, lineHeight = 16.sp)
+        Text(stringResource(R.string.crypto_native_refund_notice), fontSize = 12.sp, color = colors.text_tertiary, lineHeight = 17.sp)
 
         if (cancel_error != null) {
             Spacer(Modifier.height(AsterSpacing.md))
@@ -582,63 +584,95 @@ private fun crypto_progress_stepper(status: String, confirmations: Int, min_conf
         "manual_review" -> 1
         else -> 0
     }
+    val marker_size = 26.dp
     Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            stringResource(R.string.crypto_native_status_title),
+            fontSize = 12.sp,
+            color = colors.text_tertiary,
+            fontWeight = FontWeight.Medium,
+        )
+        Spacer(Modifier.height(AsterSpacing.md))
         labels.forEachIndexed { index, label ->
             val is_done = index < active_index
             val is_current = index == active_index
+            val is_last = index == labels.lastIndex
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                verticalAlignment = Alignment.Top,
             ) {
-                Box(
-                    modifier = Modifier.size(24.dp),
-                    contentAlignment = Alignment.Center
+                Column(
+                    modifier = Modifier.fillMaxHeight(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    if (is_done) {
-                        Icon(
-                            TablerIcons.Check,
-                            contentDescription = null,
-                            tint = colors.success,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    } else if (is_current) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            color = colors.accent_blue,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
+                    Box(
+                        modifier = Modifier
+                            .size(marker_size)
+                            .clip(CircleShape)
+                            .background(
+                                when {
+                                    is_done -> colors.success
+                                    is_current -> colors.accent_blue
+                                    else -> Color.Transparent
+                                },
+                            )
+                            .then(
+                                if (is_done || is_current) Modifier else Modifier.border(1.5.dp, colors.border_secondary, CircleShape),
+                            ),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (is_done) {
+                            Icon(
+                                TablerIcons.Check,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(15.dp),
+                            )
+                        } else {
+                            Text(
+                                "${index + 1}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (is_current) Color.White else colors.text_muted,
+                            )
+                        }
+                    }
+                    if (!is_last) {
                         Box(
                             modifier = Modifier
-                                .size(20.dp)
+                                .width(2.dp)
+                                .weight(1f)
+                                .padding(vertical = 3.dp)
                                 .clip(CircleShape)
-                                .border(1.dp, colors.border_secondary, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("${index + 1}", fontSize = 11.sp, color = colors.text_muted)
-                        }
+                                .background(if (is_done) colors.success else colors.border_secondary),
+                        )
                     }
                 }
                 Spacer(Modifier.width(AsterSpacing.md))
-                Column {
+                Column(modifier = Modifier.padding(top = 3.dp, bottom = if (is_last) 0.dp else AsterSpacing.lg)) {
                     Text(
                         label,
                         fontSize = 14.sp,
                         color = if (index <= active_index) colors.text_primary else colors.text_tertiary,
-                        fontWeight = if (is_current) FontWeight.Medium else FontWeight.Normal
+                        fontWeight = if (is_current) FontWeight.SemiBold else FontWeight.Normal,
                     )
+                    if (is_current && index == 0) {
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            stringResource(R.string.crypto_native_awaiting_hint),
+                            fontSize = 12.sp,
+                            color = colors.text_secondary,
+                        )
+                    }
                     if (index == 2 && is_current && status == "confirming") {
-                        Spacer(Modifier.height(AsterSpacing.xs))
+                        Spacer(Modifier.height(2.dp))
                         Text(
                             stringResource(R.string.crypto_native_status_confirming, confirmations, min_confirmations),
                             fontSize = 12.sp,
-                            color = colors.text_secondary
+                            color = colors.text_secondary,
                         )
                     }
                 }
-            }
-            if (index != labels.lastIndex) {
-                Spacer(Modifier.height(AsterSpacing.md))
             }
         }
     }
@@ -652,8 +686,8 @@ private fun crypto_notice_box(icon: ImageVector, tint: Color, title: String?, bo
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(tint.copy(alpha = 0.08f))
-            .border(1.dp, tint.copy(alpha = 0.25f), shape)
+            .background(blend(colors.bg_card, tint, 0.06f))
+            .border(1.dp, blend(colors.bg_card, tint, 0.30f), shape)
             .padding(AsterSpacing.md),
         verticalAlignment = Alignment.Top
     ) {

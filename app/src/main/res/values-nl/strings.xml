@@ -2383,7 +2383,9 @@
     <string name="crypto_native_manual_review">In behandeling</string>
     <string name="crypto_native_manual_review_body">Deze betaling vereist een korte handmatige controle. Dat duurt meestal een paar uur en je abonnement wordt automatisch bijgeschreven.</string>
     <string name="crypto_native_transaction">Transactie</string>
-    <string name="crypto_native_refund_notice">Te veel betaalde bedragen tot 2x worden automatisch bij je saldo opgeteld. Neem contact op met support als er iets niet klopt.</string>
+    <string name="crypto_native_status_title">Betalingsstatus</string>
+    <string name="crypto_native_awaiting_hint">Wachten op je overboeking</string>
+    <string name="crypto_native_refund_notice">Als je meer dan het verschuldigde bedrag verstuurt, wordt het verschil bij je accountsaldo opgeteld. Neem contact op met de klantenservice als er iets niet klopt.</string>
     <string name="crypto_native_underpaid_body">We ontvingen %1$s van %2$s %3$s. Stuur de resterende %4$s %3$s naar hetzelfde adres om deze betaling af te ronden.</string>
     <string name="crypto_native_invoice_title">Betalen met %1$s</string>
     <string name="crypto_native_awaiting_body">Scan de code of kopieer de gegevens naar je wallet. Deze pagina wordt automatisch bijgewerkt.</string>

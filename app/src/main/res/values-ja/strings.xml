@@ -2379,7 +2379,9 @@
     <string name="crypto_native_manual_review">審査中</string>
     <string name="crypto_native_manual_review_body">この支払いには簡単な手動確認が必要です。通常は数時間で完了し、プランは自動的に反映されます。</string>
     <string name="crypto_native_transaction">トランザクション</string>
-    <string name="crypto_native_refund_notice">2 倍までの過払い分は自動的に残高に反映されます。問題がある場合はサポートにご連絡ください。</string>
+    <string name="crypto_native_status_title">支払い状況</string>
+    <string name="crypto_native_awaiting_hint">送金を待っています</string>
+    <string name="crypto_native_refund_notice">支払額より多く送金した場合、差額はアカウント残高に追加されます。何か問題があると思われる場合は、サポートにお問い合わせください。</string>
     <string name="crypto_native_underpaid_body">%2$s %3$s のうち %1$s を受け取りました。この支払いを完了するには、残りの %4$s %3$s を同じアドレスに送金してください。</string>
     <string name="crypto_native_invoice_title">%1$s で支払う</string>
     <string name="crypto_native_awaiting_body">コードをスキャンするか、詳細をウォレットにコピーしてください。このページは自動的に更新されます。</string>

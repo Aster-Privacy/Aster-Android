@@ -1776,7 +1776,9 @@
     <string name="crypto_native_manual_review">En cours d\'examen</string>
     <string name="crypto_native_manual_review_body">Ce paiement nécessite une vérification manuelle rapide. Elle prend généralement quelques heures et votre forfait est crédité automatiquement.</string>
     <string name="crypto_native_transaction">Transaction</string>
-    <string name="crypto_native_refund_notice">Les trop-perçus jusqu\'à 2x sont crédités automatiquement sur votre solde. Contactez le support en cas de problème.</string>
+    <string name="crypto_native_status_title">Statut du paiement</string>
+    <string name="crypto_native_awaiting_hint">En attente de votre transfert</string>
+    <string name="crypto_native_refund_notice">Si vous envoyez plus que le montant dû, la différence est ajoutée au solde de votre compte. Si quelque chose vous semble anormal, contactez l\'assistance.</string>
     <string name="crypto_native_underpaid_body">Nous avons reçu %1$s sur %2$s %3$s. Envoyez les %4$s %3$s restants à la même adresse pour terminer ce paiement.</string>
     <string name="crypto_native_invoice_title">Payer avec %1$s</string>
     <string name="crypto_native_awaiting_body">Scannez le code ou copiez les informations dans votre portefeuille. Cette page se met à jour automatiquement.</string>

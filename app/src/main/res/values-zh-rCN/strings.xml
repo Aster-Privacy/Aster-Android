@@ -2379,7 +2379,9 @@
     <string name="crypto_native_manual_review">审核中</string>
     <string name="crypto_native_manual_review_body">此付款需要一次快速人工审核，通常几小时内完成，方案会自动到账。</string>
     <string name="crypto_native_transaction">交易</string>
-    <string name="crypto_native_refund_notice">2 倍以内的多付金额会自动计入账户余额。如有异常请联系支持。</string>
+    <string name="crypto_native_status_title">付款状态</string>
+    <string name="crypto_native_awaiting_hint">正在等待您的转账</string>
+    <string name="crypto_native_refund_notice">如果您发送的金额超过应付金额，差额会计入您的账户余额。如果发现异常，请联系支持团队。</string>
     <string name="crypto_native_underpaid_body">已收到 %2$s %3$s 中的 %1$s。请将剩余的 %4$s %3$s 发送到同一地址以完成付款。</string>
     <string name="crypto_native_invoice_title">使用 %1$s 付款</string>
     <string name="crypto_native_awaiting_body">扫描二维码或将信息复制到钱包。此页面会自动更新。</string>

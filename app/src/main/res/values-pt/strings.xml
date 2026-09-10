@@ -2383,7 +2383,9 @@
     <string name="crypto_native_manual_review">Em análise</string>
     <string name="crypto_native_manual_review_body">Este pagamento precisa de uma análise manual rápida. Costuma levar algumas horas e o plano é creditado automaticamente.</string>
     <string name="crypto_native_transaction">Transação</string>
-    <string name="crypto_native_refund_notice">Valores pagos a mais até 2x são creditados no seu saldo automaticamente. Fale com o suporte se algo parecer errado.</string>
+    <string name="crypto_native_status_title">Status do pagamento</string>
+    <string name="crypto_native_awaiting_hint">Aguardando sua transferência</string>
+    <string name="crypto_native_refund_notice">Se você enviar mais do que o valor devido, a diferença é adicionada ao saldo da sua conta. Se algo parecer errado, entre em contato com o suporte.</string>
     <string name="crypto_native_underpaid_body">Recebemos %1$s de %2$s %3$s. Envie os %4$s %3$s restantes para o mesmo endereço para concluir o pagamento.</string>
     <string name="crypto_native_invoice_title">Pagar com %1$s</string>
     <string name="crypto_native_awaiting_body">Escaneie o código ou copie os dados na sua carteira. Esta página atualiza sozinha.</string>

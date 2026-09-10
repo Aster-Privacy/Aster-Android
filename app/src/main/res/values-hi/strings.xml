@@ -2308,7 +2308,9 @@
     <string name="crypto_native_manual_review">जांच जारी है</string>
     <string name="crypto_native_manual_review_body">इस भुगतान की हाथ से एक छोटी समीक्षा ज़रूरी है। यह आमतौर पर कुछ घंटों में पूरी हो जाती है और आपके प्लान में रकम अपने आप जुड़ जाती है।</string>
     <string name="crypto_native_transaction">लेनदेन</string>
-    <string name="crypto_native_refund_notice">दोगुने तक की अतिरिक्त रकम आपके खाते के बैलेंस में अपने आप जुड़ जाती है। कुछ भी गलत लगे तो सहायता से संपर्क करें।</string>
+    <string name="crypto_native_status_title">भुगतान की स्थिति</string>
+    <string name="crypto_native_awaiting_hint">आपके ट्रांसफ़र का इंतज़ार है</string>
+    <string name="crypto_native_refund_notice">अगर आप देय राशि से ज़्यादा भेजते हैं, तो अंतर आपके खाते के बैलेंस में जोड़ दिया जाता है। अगर कुछ गलत लगे, तो सहायता से संपर्क करें।</string>
     <string name="crypto_native_underpaid_body">हमें %2$s %3$s में से %1$s मिला। यह भुगतान पूरा करने के लिए बाकी %4$s %3$s उसी पते पर भेजें।</string>
     <string name="crypto_native_invoice_title">%1$s से भुगतान करें</string>
     <string name="crypto_native_awaiting_body">कोड स्कैन करें या ब्योरा अपने वॉलेट में कॉपी करें। यह पेज अपने आप अपडेट होता है।</string>

@@ -2379,7 +2379,9 @@
     <string name="crypto_native_manual_review">검토 중</string>
     <string name="crypto_native_manual_review_body">이 결제는 간단한 수동 검토가 필요합니다. 보통 몇 시간 내에 완료되며 플랜은 자동으로 적용됩니다.</string>
     <string name="crypto_native_transaction">거래</string>
-    <string name="crypto_native_refund_notice">2배 이내의 초과 결제 금액은 계정 잔액에 자동으로 적립됩니다. 이상이 있으면 지원팀에 문의하세요.</string>
+    <string name="crypto_native_status_title">결제 상태</string>
+    <string name="crypto_native_awaiting_hint">전송을 기다리는 중</string>
+    <string name="crypto_native_refund_notice">결제 금액보다 많이 보내면 차액이 계정 잔액에 추가됩니다. 문제가 있어 보이면 지원팀에 문의하세요.</string>
     <string name="crypto_native_underpaid_body">%2$s %3$s 중 %1$s을 받았습니다. 결제를 완료하려면 남은 %4$s %3$s을 같은 주소로 보내세요.</string>
     <string name="crypto_native_invoice_title">%1$s로 결제</string>
     <string name="crypto_native_awaiting_body">코드를 스캔하거나 세부 정보를 지갑에 복사하세요. 이 페이지는 자동으로 갱신됩니다.</string>

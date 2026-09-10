@@ -2384,7 +2384,9 @@
     <string name="crypto_native_manual_review">In Prüfung</string>
     <string name="crypto_native_manual_review_body">Diese Zahlung braucht eine kurze manuelle Prüfung. Das dauert meist wenige Stunden, danach wird Ihr Tarif automatisch gutgeschrieben.</string>
     <string name="crypto_native_transaction">Transaktion</string>
-    <string name="crypto_native_refund_notice">Überzahlungen bis zum 2-Fachen werden automatisch Ihrem Guthaben gutgeschrieben. Wenden Sie sich an den Support, falls etwas nicht stimmt.</string>
+    <string name="crypto_native_status_title">Zahlungsstatus</string>
+    <string name="crypto_native_awaiting_hint">Warten auf Ihre Überweisung</string>
+    <string name="crypto_native_refund_notice">Wenn Sie mehr als den fälligen Betrag senden, wird die Differenz Ihrem Guthaben gutgeschrieben. Wenn etwas nicht stimmt, wenden Sie sich an den Support.</string>
     <string name="crypto_native_underpaid_body">Wir haben %1$s von %2$s %3$s erhalten. Senden Sie die restlichen %4$s %3$s an dieselbe Adresse, um diese Zahlung abzuschließen.</string>
     <string name="crypto_native_invoice_title">Mit %1$s bezahlen</string>
     <string name="crypto_native_awaiting_body">Scannen Sie den Code oder kopieren Sie die Daten in Ihre Wallet. Diese Seite aktualisiert sich automatisch.</string>
