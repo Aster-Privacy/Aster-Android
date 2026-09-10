@@ -71,11 +71,13 @@ internal fun blend(base: Color, target: Color, amount: Float): Color = Color(
 
 @Composable
 internal fun galaxy_border_brush(accent: Color, tail: Color): Brush = Brush.verticalGradient(
-    0.00f to blend(accent, Color.White, 0.30f),
-    0.14f to accent,
-    0.38f to accent.copy(alpha = 0.40f),
-    0.66f to accent.copy(alpha = 0.10f),
-    1.00f to tail.copy(alpha = 0.10f),
+    0.00f to blend(accent, Color.White, 0.18f).copy(alpha = 0.95f),
+    0.10f to accent.copy(alpha = 0.80f),
+    0.22f to accent.copy(alpha = 0.55f),
+    0.38f to accent.copy(alpha = 0.34f),
+    0.56f to accent.copy(alpha = 0.20f),
+    0.76f to accent.copy(alpha = 0.13f),
+    1.00f to tail.copy(alpha = 0.11f),
 )
 
 @Composable
@@ -96,8 +98,9 @@ internal fun galaxy_surface(
             .background(
                 Brush.verticalGradient(
                     0.00f to accent.copy(alpha = 0.08f),
-                    0.22f to accent.copy(alpha = 0.02f),
-                    0.46f to Color.Transparent,
+                    0.18f to accent.copy(alpha = 0.045f),
+                    0.34f to accent.copy(alpha = 0.018f),
+                    0.50f to Color.Transparent,
                 ),
             ),
         content = content,
@@ -115,10 +118,9 @@ internal fun galaxy_badge(
         modifier = modifier
             .clip(CircleShape)
             .background(
-                Brush.verticalGradient(
-                    0.00f to blend(accent, Color.White, 0.22f),
-                    0.46f to accent,
-                    1.00f to blend(accent, Color.Black, 0.12f),
+                Brush.linearGradient(
+                    0.00f to blend(accent, Color.White, 0.16f),
+                    1.00f to blend(accent, Color.Black, 0.06f),
                 ),
             )
             .padding(horizontal = 8.dp, vertical = 3.dp),

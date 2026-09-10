@@ -193,8 +193,10 @@ internal fun hero_surface(
             .background(
                 Brush.verticalGradient(
                     0.00f to accent.copy(alpha = if (colors.is_dark) 0.14f else 0.07f),
-                    0.32f to accent.copy(alpha = 0.03f),
-                    0.55f to Color.Transparent,
+                    0.18f to accent.copy(alpha = if (colors.is_dark) 0.085f else 0.042f),
+                    0.36f to accent.copy(alpha = if (colors.is_dark) 0.04f else 0.02f),
+                    0.52f to accent.copy(alpha = 0.012f),
+                    0.66f to Color.Transparent,
                 ),
             )
             .starfield(accent, colors.is_dark, band_fraction = 0.30f, edges_only = true),
@@ -216,9 +218,8 @@ internal fun icon_tile(
         Brush.verticalGradient(listOf(colors.bg_tertiary, colors.bg_tertiary))
     } else {
         Brush.linearGradient(
-            0.00f to blend(accent, Color.White, 0.28f),
-            0.55f to accent,
-            1.00f to blend(accent, Color.Black, 0.18f),
+            0.00f to blend(accent, Color.White, 0.20f),
+            1.00f to blend(accent, Color.Black, 0.10f),
         )
     }
     Box(
@@ -266,15 +267,14 @@ internal fun gradient_bar(fraction: Float, is_over: Boolean, height: Dp = 10.dp)
                     .clip(CircleShape)
                     .background(
                         Brush.horizontalGradient(
-                            0.0f to blend(accent, Color.White, 0.35f),
+                            0.0f to blend(accent, Color.White, 0.28f),
                             1.0f to accent,
                         ),
                     )
                     .background(
                         Brush.verticalGradient(
-                            0.0f to Color.White.copy(alpha = 0.28f),
-                            0.5f to Color.Transparent,
-                            1.0f to Color.Black.copy(alpha = 0.10f),
+                            0.0f to Color.White.copy(alpha = 0.16f),
+                            1.0f to Color.Transparent,
                         ),
                     ),
             )

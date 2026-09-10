@@ -2445,7 +2445,10 @@ private fun plan_tier_card(
                             .background(
                                 Brush.verticalGradient(
                                     0.00f to colors.accent_blue.copy(alpha = if (colors.is_dark) 0.16f else 0.08f),
-                                    0.45f to Color.Transparent,
+                                    0.14f to colors.accent_blue.copy(alpha = if (colors.is_dark) 0.095f else 0.048f),
+                                    0.30f to colors.accent_blue.copy(alpha = if (colors.is_dark) 0.045f else 0.022f),
+                                    0.44f to colors.accent_blue.copy(alpha = 0.014f),
+                                    0.58f to Color.Transparent,
                                 ),
                             )
                             .starfield(colors.accent_blue, colors.is_dark, band_fraction = 0.34f, edges_only = true)
