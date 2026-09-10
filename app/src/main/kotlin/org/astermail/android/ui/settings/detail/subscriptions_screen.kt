@@ -896,7 +896,7 @@ fun SubscriptionsScreen(
             Icon(
                 imageVector = TablerIcons.ShieldCheck,
                 contentDescription = null,
-                tint = colors.success,
+                tint = colors.text_tertiary,
                 modifier = Modifier.size(14.dp),
             )
             Spacer(Modifier.width(6.dp))
@@ -1345,14 +1345,14 @@ private fun cancel_subscription_flow(
                                 .fillMaxWidth()
                                 .heightIn(min = 48.dp)
                                 .clip(SquircleShape(10.dp))
-                                .background(colors.success.copy(alpha = 0.12f))
+                                .background(colors.accent_blue.copy(alpha = 0.12f))
                                 .clickable(role = Role.Button, onClick = on_switch_yearly)
                                 .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
                                 text = stringResource(R.string.switch_yearly_save, yearly_savings),
-                                color = colors.success,
+                                color = colors.accent_blue,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier.weight(1f),
@@ -1360,7 +1360,7 @@ private fun cancel_subscription_flow(
                             Icon(
                                 imageVector = TablerIcons.ChevronRight,
                                 contentDescription = null,
-                                tint = colors.success,
+                                tint = colors.accent_blue,
                                 modifier = Modifier.size(16.dp),
                             )
                         }
@@ -1798,7 +1798,7 @@ private fun current_plan_card(
                         )
                         if (discount != null) {
                             Spacer(Modifier.width(AsterSpacing.sm))
-                            status_pill(text = discount, accent = colors.success)
+                            status_pill(text = discount, accent = colors.accent_blue)
                         }
                     }
                     if (description != null) {
@@ -1965,14 +1965,14 @@ private fun current_plan_card(
                         .fillMaxWidth()
                         .heightIn(min = 48.dp)
                         .clip(SquircleShape(10.dp))
-                        .background(colors.success.copy(alpha = 0.12f))
+                        .background(colors.accent_blue.copy(alpha = 0.12f))
                         .clickable(enabled = !is_acting, role = Role.Button) { on_switch_yearly() }
                         .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = stringResource(R.string.switch_yearly_save, yearly_savings),
-                        color = colors.success,
+                        color = colors.accent_blue,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.weight(1f),
@@ -1980,7 +1980,7 @@ private fun current_plan_card(
                     Icon(
                         imageVector = TablerIcons.ChevronRight,
                         contentDescription = null,
-                        tint = colors.success,
+                        tint = colors.accent_blue,
                         modifier = Modifier.size(16.dp),
                     )
                 }
@@ -2151,7 +2151,7 @@ private fun storage_addons_card(
                             Icon(
                                 imageVector = TablerIcons.CircleCheck,
                                 contentDescription = null,
-                                tint = colors.success,
+                                tint = colors.accent_blue,
                                 modifier = Modifier.size(18.dp),
                             )
                         }
