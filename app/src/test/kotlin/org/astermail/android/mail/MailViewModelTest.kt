@@ -96,7 +96,7 @@ class MailViewModelTest {
         identity_pins = mockk(relaxed = true)
         every { identity_pins.unacknowledged_changes } returns
             kotlinx.coroutines.flow.MutableStateFlow(emptyList())
-        vm = MailViewModel(context, repository, search_index_manager, identity_pins)
+        vm = MailViewModel(context, repository, search_index_manager, identity_pins, mockk(relaxed = true))
     }
 
     @After
@@ -1984,7 +1984,7 @@ class MailViewModelTest {
         every { repository.new_mail_events } returns new_mail
         coEvery { repository.fetch_inbox(any(), any(), any(), any(), any(), any()) } returns
             Result.success(InboxPage(items = emptyList(), has_more = false, next_cursor = null, total = 0))
-        vm = MailViewModel(context, repository, search_index_manager, identity_pins)
+        vm = MailViewModel(context, repository, search_index_manager, identity_pins, mockk(relaxed = true))
         vm.foreground_check = { true }
         advanceUntilIdle()
         io.mockk.clearMocks(repository, answers = false, recordedCalls = true, childMocks = false, verificationMarks = true, exclusionRules = false)
