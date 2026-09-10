@@ -2619,7 +2619,12 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 settings_api.revoke_smtp_token(token_id)
-                _state.update { s -> s.copy(smtp_tokens = s.smtp_tokens.filter { it.id != token_id }) }
+                _state.update { s ->
+                    s.copy(
+                        smtp_tokens = s.smtp_tokens.filter { it.id != token_id },
+                        action_result = context.getString(R.string.smtp_token_revoked_toast),
+                    )
+                }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(action_result = user_facing_error(t))

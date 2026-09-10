@@ -83,8 +83,19 @@ fun SmtpTokensScreen(on_back: () -> Unit) {
         vm.load_custom_domain_addresses()
     }
 
+    LaunchedEffect(state.action_result) {
+        val msg = state.action_result ?: return@LaunchedEffect
+        android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        vm.clear_action_result()
+    }
+
+    LaunchedEffect(state.smtp_token_created) {
+        if (state.smtp_token_created != null) show_create = false
+    }
+
     val is_locked = plan_state.limits?.plan_code == "free" && !plan_state.is_loading
-    val addresses = state.custom_domain_addresses.filterNot { it.decryption_failed }
+    val addresses = state.custom_domain_addresses
+        .filterNot { it.decryption_failed || it.encrypted_local_part.isBlank() }
     val clipboard_label = stringResource(R.string.clipboard_label_smtp_token)
 
     detail_scaffold(title = stringResource(R.string.settings_smtp_tokens), on_back = on_back) {
@@ -151,7 +162,6 @@ fun SmtpTokensScreen(on_back: () -> Unit) {
             is_busy = state.smtp_token_creating,
             on_dismiss = { show_create = false },
             on_create = { local_part, domain, name ->
-                show_create = false
                 vm.create_smtp_token(name, local_part, domain)
             },
         )
@@ -211,11 +221,6 @@ fun SmtpTokensScreen(on_back: () -> Unit) {
             on_confirm = {
                 pending_revoke = null
                 vm.revoke_smtp_token(revoke_target.id)
-                android.widget.Toast.makeText(
-                    context,
-                    context.getString(R.string.smtp_token_revoked_toast),
-                    android.widget.Toast.LENGTH_SHORT,
-                ).show()
             },
         )
     }
