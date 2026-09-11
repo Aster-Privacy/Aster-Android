@@ -81,7 +81,7 @@ internal fun illustrated_option_card(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(24f / 9f)
+                .aspectRatio(16f / 9f)
                 .clip(SquircleShape(12.dp))
                 .background(colors.bg_secondary),
         ) {
