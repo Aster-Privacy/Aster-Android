@@ -1,0 +1,10 @@
+Bug fixes and improvements:
+
+- Sign out in one tap, without a confirmation step
+- Enter a backup code at the two-factor authentication prompt
+- Inbox categories use clearer names and add Newsletters
+- Compose opens the sender picker and keeps the sender you pick
+- Show or hide Cc from the compose header
+- Security checks open the setting they refer to
+- Domain search keeps your results and explains search limits
+- A long subject keeps its labels visible
