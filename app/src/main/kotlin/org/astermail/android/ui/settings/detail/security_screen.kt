@@ -25,6 +25,8 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -56,10 +58,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -70,6 +78,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.astermail.android.R
 import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.api.security.AuditEvent
@@ -100,6 +109,9 @@ private const val activity_preview_count = 5
 private const val security_settle_delay_ms = 90L
 private const val security_load_timeout_ms = 5000L
 private const val security_score_max = 7
+private const val anchor_highlight_ms = 1600L
+private const val anchor_highlight_fade_ms = 350
+private const val anchor_highlight_alpha = 0.14f
 
 @Composable
 private fun format_audit_event(type: String): String {
@@ -268,6 +280,56 @@ fun SecurityScreen(
     var hardware_keys_expanded by remember { mutableStateOf(false) }
     var show_revoke_all_confirm by remember { mutableStateOf(false) }
     val scroll_state = rememberScrollState()
+    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val anchor_coordinates = remember { mutableMapOf<security_anchor, LayoutCoordinates>() }
+    var content_top_coordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    var highlighted_anchor by remember { mutableStateOf<security_anchor?>(null) }
+    var highlight_visible by remember { mutableStateOf(false) }
+    var highlight_token by remember { mutableStateOf(0) }
+    val highlight_alpha by animateFloatAsState(
+        targetValue = if (highlight_visible) 1f else 0f,
+        animationSpec = tween(durationMillis = anchor_highlight_fade_ms),
+        label = "security_anchor_highlight",
+    )
+
+    LaunchedEffect(highlight_token) {
+        if (highlight_token == 0) return@LaunchedEffect
+        highlight_visible = true
+        delay(anchor_highlight_ms)
+        highlight_visible = false
+    }
+
+    fun scroll_to_anchor(anchor: security_anchor) {
+        val top = content_top_coordinates?.takeIf { it.isAttached } ?: return
+        val resolved = resolve_security_anchor(anchor) { candidate ->
+            anchor_coordinates[candidate]?.isAttached == true
+        } ?: return
+        val target = anchor_coordinates[resolved] ?: return
+        val margin = with(density) { AsterSpacing.lg.toPx() }
+        val offset = top.localPositionOf(target, Offset.Zero).y - margin
+        highlighted_anchor = resolved
+        highlight_token += 1
+        scope.launch {
+            scroll_state.animateScrollTo(offset.toInt().coerceIn(0, scroll_state.maxValue))
+        }
+    }
+
+    fun open_check(check: security_check) {
+        when (val target = security_check_target_for(check)) {
+            is security_check_target.screen -> on_open(target.route_id)
+            is security_check_target.section -> scroll_to_anchor(target.anchor)
+        }
+    }
+
+    fun anchor_modifier(anchor: security_anchor): Modifier = Modifier
+        .fillMaxWidth()
+        .onGloballyPositioned { anchor_coordinates[anchor] = it }
+        .drawBehind {
+            if (highlighted_anchor != anchor || highlight_alpha <= 0f) return@drawBehind
+            drawRect(colors.accent_blue.copy(alpha = anchor_highlight_alpha * highlight_alpha))
+        }
+
     val totp_sub = when {
         sec == null -> stringResource(R.string.two_factor_subtitle_add)
         sec.totp_enabled -> stringResource(R.string.enabled)
@@ -298,6 +360,11 @@ fun SecurityScreen(
             return@detail_scaffold
         }
 
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .onGloballyPositioned { content_top_coordinates = it },
+        )
         preferences_save_error_banner()
         section_label(stringResource(R.string.section_account_protection))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -399,42 +466,42 @@ fun SecurityScreen(
                             label = stringResource(R.string.two_factor_auth),
                             checked = sec?.totp_enabled == true,
                             colors = colors,
-                            on_open = { on_open("two_factor") },
+                            on_open = { open_check(security_check.two_factor) },
                             on_toggle = null,
                         )
                         score_checklist_row(
                             label = stringResource(R.string.check_passkey_registered),
                             checked = hardware_keys_count > 0,
                             colors = colors,
-                            on_open = { on_open("encryption") },
+                            on_open = { open_check(security_check.passkey) },
                             on_toggle = null,
                         )
                         score_checklist_row(
                             label = stringResource(R.string.check_verified_recovery_email),
                             checked = recovery_email_verified,
                             colors = colors,
-                            on_open = { on_open("recovery_email") },
+                            on_open = { open_check(security_check.recovery_email) },
                             on_toggle = null,
                         )
                         score_checklist_row(
                             label = stringResource(R.string.login_alerts),
                             checked = state.login_alerts_enabled == true,
                             colors = colors,
-                            on_open = null,
+                            on_open = { open_check(security_check.login_alerts) },
                             on_toggle = { vm.set_login_alerts(state.login_alerts_enabled != true) },
                         )
                         score_checklist_row(
                             label = stringResource(R.string.block_tracking_pixels),
                             checked = prefs?.block_tracking_pixels == true,
                             colors = colors,
-                            on_open = { on_open("privacy") },
+                            on_open = { open_check(security_check.tracking_pixels) },
                             on_toggle = { toggle { it.copy(block_tracking_pixels = it.block_tracking_pixels != true) } },
                         )
                         score_checklist_row(
                             label = stringResource(R.string.block_remote_images),
                             checked = prefs?.block_external_images == true,
                             colors = colors,
-                            on_open = { on_open("privacy") },
+                            on_open = { open_check(security_check.remote_images) },
                             on_toggle = {
                                 toggle {
                                     val on = it.block_external_images != true
@@ -449,7 +516,7 @@ fun SecurityScreen(
                             label = stringResource(R.string.strip_exif),
                             checked = prefs?.strip_exif_on_compose == true,
                             colors = colors,
-                            on_open = { on_open("privacy") },
+                            on_open = { open_check(security_check.strip_exif) },
                             on_toggle = {
                                 toggle {
                                     it.copy(
@@ -491,27 +558,29 @@ fun SecurityScreen(
                 on_click = { on_open("two_factor") },
             )
             AsterDivider()
-            detail_row(
-                title = stringResource(R.string.login_alerts),
-                subtitle = stringResource(R.string.login_alerts_subtitle),
-                icon = TablerIcons.BellRinging,
-                info_title = stringResource(R.string.login_alerts_info_title),
-                info_description = stringResource(R.string.login_alerts_info_desc),
-                trailing = {
-                    if (state.login_alerts_enabled == null && state.login_alerts_load_failed) {
-                        AsterGhostButton(
-                            label = stringResource(R.string.retry),
-                            onClick = { vm.load_login_alerts() },
-                        )
-                    } else {
-                        AsterSwitch(
-                            checked = state.login_alerts_enabled == true,
-                            onCheckedChange = { v -> vm.set_login_alerts(v) },
-                            enabled = state.login_alerts_enabled != null,
-                        )
-                    }
-                },
-            )
+            Box(modifier = anchor_modifier(security_anchor.login_alerts)) {
+                detail_row(
+                    title = stringResource(R.string.login_alerts),
+                    subtitle = stringResource(R.string.login_alerts_subtitle),
+                    icon = TablerIcons.BellRinging,
+                    info_title = stringResource(R.string.login_alerts_info_title),
+                    info_description = stringResource(R.string.login_alerts_info_desc),
+                    trailing = {
+                        if (state.login_alerts_enabled == null && state.login_alerts_load_failed) {
+                            AsterGhostButton(
+                                label = stringResource(R.string.retry),
+                                onClick = { vm.load_login_alerts() },
+                            )
+                        } else {
+                            AsterSwitch(
+                                checked = state.login_alerts_enabled == true,
+                                onCheckedChange = { v -> vm.set_login_alerts(v) },
+                                enabled = state.login_alerts_enabled != null,
+                            )
+                        }
+                    },
+                )
+            }
             AsterDivider()
             detail_row(
                 title = stringResource(R.string.active_sessions),
@@ -520,51 +589,52 @@ fun SecurityScreen(
                 on_click = { on_open("sessions") },
             )
             AsterDivider()
-            if (hardware_keys_count == 0 && state.hardware_keys_load_failed) {
-                detail_row(
-                    title = stringResource(R.string.passkeys_security_keys),
-                    subtitle = stringResource(R.string.failed_to_load),
-                    icon = TablerIcons.AlertCircle,
-                    on_click = { vm.load_hardware_keys() },
-                )
-            }
-            if (hardware_keys_count > 0) {
-                detail_row(
-                    title = stringResource(R.string.passkeys_security_keys),
-                    subtitle = androidx.compose.ui.res.pluralStringResource(R.plurals.passkeys_registered_count, hardware_keys_count, hardware_keys_count),
-                    icon = TablerIcons.Key,
-                    trailing = {
-                        AsterIconButton(
-                            icon = if (hardware_keys_expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
-                            content_description = null,
-                            onClick = { hardware_keys_expanded = !hardware_keys_expanded },
-                        )
-                    },
-                )
-                AnimatedVisibility(
-                    visible = hardware_keys_expanded,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut(),
-                ) {
-                    Column {
-                        state.hardware_keys.forEach { key ->
-                            AsterDivider()
-                            hardware_key_row(
-                                key = key,
-                                on_delete = { vm.delete_hardware_key(key.id) },
-                                on_rename = { new_name -> vm.rename_hardware_key(key.id, new_name) },
-                                colors = colors,
+            Column(modifier = anchor_modifier(security_anchor.passkeys)) {
+                if (hardware_keys_count == 0 && state.hardware_keys_load_failed) {
+                    detail_row(
+                        title = stringResource(R.string.passkeys_security_keys),
+                        subtitle = stringResource(R.string.failed_to_load),
+                        icon = TablerIcons.AlertCircle,
+                        on_click = { vm.load_hardware_keys() },
+                    )
+                }
+                if (hardware_keys_count > 0) {
+                    detail_row(
+                        title = stringResource(R.string.passkeys_security_keys),
+                        subtitle = androidx.compose.ui.res.pluralStringResource(R.plurals.passkeys_registered_count, hardware_keys_count, hardware_keys_count),
+                        icon = TablerIcons.Key,
+                        trailing = {
+                            AsterIconButton(
+                                icon = if (hardware_keys_expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
+                                content_description = null,
+                                onClick = { hardware_keys_expanded = !hardware_keys_expanded },
                             )
+                        },
+                    )
+                    AnimatedVisibility(
+                        visible = hardware_keys_expanded,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut(),
+                    ) {
+                        Column {
+                            state.hardware_keys.forEach { key ->
+                                AsterDivider()
+                                hardware_key_row(
+                                    key = key,
+                                    on_delete = { vm.delete_hardware_key(key.id) },
+                                    on_rename = { new_name -> vm.rename_hardware_key(key.id, new_name) },
+                                    colors = colors,
+                                )
+                            }
                         }
                     }
+                } else if (!state.hardware_keys_load_failed) {
+                    detail_row(
+                        title = stringResource(R.string.passkeys_security_keys),
+                        subtitle = stringResource(R.string.passkeys_none_subtitle),
+                        icon = TablerIcons.Key,
+                    )
                 }
-            } else if (!state.hardware_keys_load_failed) {
-                AsterDivider()
-                detail_row(
-                    title = stringResource(R.string.passkeys_security_keys),
-                    subtitle = stringResource(R.string.passkeys_none_subtitle),
-                    icon = TablerIcons.Key,
-                )
             }
         }
 
@@ -619,37 +689,41 @@ fun SecurityScreen(
         } else {
             section_label(stringResource(R.string.section_tracking_protection))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
-                detail_row(
-                    title = stringResource(R.string.tracking_protection_enabled),
-                    subtitle = stringResource(R.string.tracking_protection_enabled_subtitle),
-                    icon = TablerIcons.ShieldCheck,
-                    trailing = {
-                        AsterSwitch(
-                            checked = prefs.block_external_content != false,
-                            onCheckedChange = { v ->
-                                toggle {
-                                    if (v) it.copy(block_external_content = true, block_tracking_pixels = true)
-                                    else it.copy(block_external_content = false)
-                                }
-                            },
-                        )
-                    },
-                )
-                if (prefs.block_external_content != false) {
-                    AsterDivider()
+                Box(modifier = anchor_modifier(security_anchor.tracking_protection)) {
                     detail_row(
-                        title = stringResource(R.string.block_tracking_pixels),
-                        subtitle = stringResource(R.string.block_tracking_pixels_subtitle_security),
-                        icon = TablerIcons.Target,
-                        info_title = stringResource(R.string.block_tracking_pixels_info_title),
-                        info_description = stringResource(R.string.block_tracking_pixels_info_desc),
+                        title = stringResource(R.string.tracking_protection_enabled),
+                        subtitle = stringResource(R.string.tracking_protection_enabled_subtitle),
+                        icon = TablerIcons.ShieldCheck,
                         trailing = {
                             AsterSwitch(
-                                checked = prefs.block_tracking_pixels != false,
-                                onCheckedChange = { v -> toggle { it.copy(block_tracking_pixels = v) } },
+                                checked = prefs.block_external_content != false,
+                                onCheckedChange = { v ->
+                                    toggle {
+                                        if (v) it.copy(block_external_content = true, block_tracking_pixels = true)
+                                        else it.copy(block_external_content = false)
+                                    }
+                                },
                             )
                         },
                     )
+                }
+                if (prefs.block_external_content != false) {
+                    AsterDivider()
+                    Box(modifier = anchor_modifier(security_anchor.tracking_pixels)) {
+                        detail_row(
+                            title = stringResource(R.string.block_tracking_pixels),
+                            subtitle = stringResource(R.string.block_tracking_pixels_subtitle_security),
+                            icon = TablerIcons.Target,
+                            info_title = stringResource(R.string.block_tracking_pixels_info_title),
+                            info_description = stringResource(R.string.block_tracking_pixels_info_desc),
+                            trailing = {
+                                AsterSwitch(
+                                    checked = prefs.block_tracking_pixels != false,
+                                    onCheckedChange = { v -> toggle { it.copy(block_tracking_pixels = v) } },
+                                )
+                            },
+                        )
+                    }
                     AsterDivider()
                     detail_row(
                         title = stringResource(R.string.block_tracking_links),
@@ -671,30 +745,32 @@ fun SecurityScreen(
 
             section_label(stringResource(R.string.section_images))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
-                detail_row(
-                    title = stringResource(R.string.block_remote_images),
-                    subtitle = stringResource(R.string.block_remote_images_subtitle_security),
-                    icon = TablerIcons.PhotoOff,
-                    info_title = stringResource(R.string.block_remote_images_info_title),
-                    info_description = stringResource(R.string.block_remote_images_info_desc),
-                    trailing = {
-                        AsterSwitch(
-                            checked = prefs.block_external_images != false,
-                            onCheckedChange = { v ->
-                                toggle {
-                                    it.copy(
-                                        block_external_images = v,
-                                        load_remote_images = when {
-                                            !v -> "always"
-                                            it.load_remote_images == "ask" -> "ask"
-                                            else -> "never"
-                                        },
-                                    )
-                                }
-                            },
-                        )
-                    },
-                )
+                Box(modifier = anchor_modifier(security_anchor.remote_images)) {
+                    detail_row(
+                        title = stringResource(R.string.block_remote_images),
+                        subtitle = stringResource(R.string.block_remote_images_subtitle_security),
+                        icon = TablerIcons.PhotoOff,
+                        info_title = stringResource(R.string.block_remote_images_info_title),
+                        info_description = stringResource(R.string.block_remote_images_info_desc),
+                        trailing = {
+                            AsterSwitch(
+                                checked = prefs.block_external_images != false,
+                                onCheckedChange = { v ->
+                                    toggle {
+                                        it.copy(
+                                            block_external_images = v,
+                                            load_remote_images = when {
+                                                !v -> "always"
+                                                it.load_remote_images == "ask" -> "ask"
+                                                else -> "never"
+                                            },
+                                        )
+                                    }
+                                },
+                            )
+                        },
+                    )
+                }
                 AsterDivider()
                 remote_image_loading_row(
                     selected_id = prefs.load_remote_images,
@@ -732,19 +808,21 @@ fun SecurityScreen(
                     },
                 )
                 AsterDivider()
-                detail_row(
-                    title = stringResource(R.string.strip_exif),
-                    subtitle = stringResource(R.string.strip_exif_subtitle),
-                    icon = TablerIcons.ShieldLock,
-                    info_title = stringResource(R.string.strip_exif_info_title),
-                    info_description = stringResource(R.string.strip_exif_info_desc),
-                    trailing = {
-                        AsterSwitch(
-                            checked = prefs.strip_exif_on_compose != false,
-                            onCheckedChange = { v -> toggle { it.copy(strip_exif = v, strip_exif_on_compose = v) } },
-                        )
-                    },
-                )
+                Box(modifier = anchor_modifier(security_anchor.strip_exif)) {
+                    detail_row(
+                        title = stringResource(R.string.strip_exif),
+                        subtitle = stringResource(R.string.strip_exif_subtitle),
+                        icon = TablerIcons.ShieldLock,
+                        info_title = stringResource(R.string.strip_exif_info_title),
+                        info_description = stringResource(R.string.strip_exif_info_desc),
+                        trailing = {
+                            AsterSwitch(
+                                checked = prefs.strip_exif_on_compose != false,
+                                onCheckedChange = { v -> toggle { it.copy(strip_exif = v, strip_exif_on_compose = v) } },
+                            )
+                        },
+                    )
+                }
             }
 
             v_gap(AsterSpacing.lg)
