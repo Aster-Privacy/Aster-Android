@@ -67,7 +67,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -283,6 +285,14 @@ fun ComposeScreen(
         contacts_vm.load_contacts()
         external_accounts_vm.load()
     }
+    LaunchedEffect(settings_state.default_sender_loaded) {
+        if (settings_state.default_sender_loaded) return@LaunchedEffect
+        for (attempt in 1..default_sender_retry_attempts) {
+            delay(default_sender_retry_delay_ms(attempt))
+            if (settings_vm.state.value.default_sender_loaded) return@LaunchedEffect
+            settings_vm.load_default_sender()
+        }
+    }
     LaunchedEffect(draft_id, reply_to, mode) {
         if (!draft_id.isNullOrBlank() && mode == "draft") {
             mail_vm.load_draft(draft_id)
@@ -386,6 +396,9 @@ fun ComposeScreen(
         }
     }
 
+    val external_sender_ids = remember(external_accounts_state) {
+        org.astermail.android.imports.external_sender_ids(external_accounts_state)
+    }
     val primary_sender_email = remember(
         settings_state.default_sender_id,
         settings_state.default_sender_loaded,
@@ -393,6 +406,7 @@ fun ComposeScreen(
         settings_state.aliases,
         settings_state.ghost_aliases,
         settings_state.custom_domain_addresses,
+        external_sender_ids,
     ) {
         if (!settings_state.default_sender_loaded &&
             seed_identity.primary_sender_email.isNotBlank()
@@ -405,6 +419,7 @@ fun ComposeScreen(
                 settings_state.aliases,
                 settings_state.ghost_aliases,
                 settings_state.custom_domain_addresses,
+                external_sender_ids,
             )
         }
     }
@@ -437,21 +452,14 @@ fun ComposeScreen(
         }
     }
 
-    val received_on_alias = remember(reply_to, thread_state.messages, alias_options, mode, user_email) {
-        if (mode == "new" || mode == "draft") {
-            null
-        } else {
-            val msg = thread_state.messages.firstOrNull { it.id == reply_to }
-                ?: thread_state.messages.filter { it.raw_item.item_type != "sent" }.maxByOrNull { it.timestamp }
-                ?: thread_state.messages.lastOrNull()
-            val delivered_to = msg?.raw_headers?.let {
-                org.astermail.android.ui.mail.extract_delivered_to(it)
-            }
-            val recipients = listOfNotNull(delivered_to) +
-                (msg?.to_addresses ?: emptyList()) +
-                (msg?.cc_addresses ?: emptyList())
-            compute_received_on_alias(recipients, alias_options, user_email)
-        }
+    val received_on_alias = remember(reply_to, thread_state.messages, thread_state.item, alias_options, mode, user_email) {
+        resolve_live_received_on_alias(
+            reply_to = reply_to,
+            mode = mode,
+            thread = thread_snapshot_from(thread_state),
+            alias_options = alias_options,
+            user_email = user_email,
+        )
     }
 
     val initial_state = remember {
@@ -578,12 +586,19 @@ fun ComposeScreen(
     var show_attach_sheet by remember { mutableStateOf(false) }
     var show_from_sheet by remember { mutableStateOf(false) }
     var show_overflow_sheet by remember { mutableStateOf(false) }
+    val ime_insets = WindowInsets.ime
+    val insets_density = LocalDensity.current
+    val from_sheet_pending = remember { java.util.concurrent.atomic.AtomicBoolean(false) }
     val open_from_sheet = {
-        if (!show_from_sheet) {
+        if (!show_from_sheet && from_sheet_pending.compareAndSet(false, true)) {
             dismiss_keyboard()
             scope.launch {
-                kotlinx.coroutines.delay(90)
-                show_from_sheet = true
+                try {
+                    wait_for_ime_hidden(ime_insets, insets_density)
+                    show_from_sheet = true
+                } finally {
+                    from_sheet_pending.set(false)
+                }
             }
         }
         Unit
@@ -2073,65 +2088,33 @@ fun ComposeScreen(
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
         ) {
-            field_row(label = stringResource(R.string.from)) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 24.dp)
-                        .combinedClickable(
-                            hapticFeedbackEnabled = false,
-                            onClick = { open_from_sheet() },
-                            onLongClick = { copy_from_address(from_alias) },
-                        )
-                        .testTag("from_field"),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (from_alias.isBlank()) {
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clip(CircleShape)
-                                .background(colors.text_tertiary.copy(alpha = 0.16f)),
-                        )
-                        Spacer(Modifier.width(AsterSpacing.sm))
-                        Box(
-                            modifier = Modifier
-                                .width(160.dp)
-                                .height(12.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(colors.text_tertiary.copy(alpha = 0.16f)),
-                        )
-                        Spacer(Modifier.weight(1f))
-                    } else {
-                        org.astermail.android.ui.mail.SenderAvatar(
-                            email = from_alias,
-                            name = settings_state.user?.display_name.orEmpty(),
-                            size = 24.dp,
-                            profile_picture_url = settings_state.user?.profile_picture,
-                        )
-                        Spacer(Modifier.width(AsterSpacing.sm))
-                        Text(
-                            text = from_alias,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = colors.text_primary,
-                            maxLines = 1,
-                            softWrap = false,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = true),
-                        )
-                    }
-                    Spacer(Modifier.width(AsterSpacing.xs))
-                    Icon(
-                        imageVector = TablerIcons.ChevronDown,
-                        contentDescription = stringResource(R.string.send_from),
-                        tint = colors.text_tertiary,
-                        modifier = Modifier.size(20.dp),
+            compose_from_row(
+                address = from_alias,
+                on_open = { open_from_sheet() },
+                on_long_press = { copy_from_address(from_alias) },
+                avatar = {
+                    org.astermail.android.ui.mail.SenderAvatar(
+                        email = from_alias,
+                        name = settings_state.user?.display_name.orEmpty(),
+                        size = 24.dp,
+                        profile_picture_url = settings_state.user?.profile_picture,
                     )
-                }
-            }
+                },
+            )
             AsterDivider()
 
-            field_row(label = stringResource(R.string.to)) {
+            compose_field_row(
+                label = stringResource(R.string.to),
+                on_label_click = { cc_expanded = !cc_expanded },
+                label_click_description = stringResource(R.string.toggle_cc_bcc),
+                label_test_tag = "to_label",
+                trailing = {
+                    compose_cc_caret(
+                        expanded = cc_expanded,
+                        on_toggle = { cc_expanded = !cc_expanded },
+                    )
+                },
+            ) {
                 chip_input(
                     chips = to_chips,
                     show_encryption_indicator = settings_state.preferences?.show_encryption_indicators != false,
@@ -2155,12 +2138,6 @@ fun ComposeScreen(
                         to_chips = to_chips.filterIndexed { i, _ -> i != idx }
                         schedule_draft_save()
                     },
-                    trailing = {
-                        caret_toggle(
-                            expanded = cc_expanded,
-                            on_toggle = { cc_expanded = !cc_expanded },
-                        )
-                    },
                     suggestions = all_contacts.filter { it.email.isNotBlank() },
                     on_suggestion_pick = { email ->
                         to_chips = to_chips + email
@@ -2181,7 +2158,7 @@ fun ComposeScreen(
                 ) + fadeOut(animationSpec = androidx.compose.animation.core.tween(durationMillis = org.astermail.android.design.AsterDuration.dialog_exit)),
             ) {
             Column {
-            field_row(label = stringResource(R.string.cc)) {
+            compose_field_row(label = stringResource(R.string.cc)) {
                     chip_input(
                         chips = cc_chips,
                         show_encryption_indicator = settings_state.preferences?.show_encryption_indicators != false,
@@ -2213,7 +2190,7 @@ fun ComposeScreen(
                     )
                 }
                 AsterDivider()
-                field_row(label = stringResource(R.string.bcc)) {
+                compose_field_row(label = stringResource(R.string.bcc)) {
                     chip_input(
                         chips = bcc_chips,
                         show_encryption_indicator = settings_state.preferences?.show_encryption_indicators != false,
@@ -2690,6 +2667,7 @@ fun ComposeScreen(
                         settings_state.aliases,
                         settings_state.ghost_aliases,
                         settings_state.custom_domain_addresses,
+                        external_sender_ids,
                     )
                 }
                 settings_vm.set_default_sender(next)
@@ -3134,25 +3112,6 @@ private fun send_fab(enabled: Boolean, on_click: () -> Unit) {
     }
 }
 
-@Composable
-private fun caret_toggle(expanded: Boolean, on_toggle: () -> Unit) {
-    val colors = AsterMaterial.colors
-    val rotation by animateFloatAsState(
-        targetValue = if (expanded) 180f else 0f,
-        label = "caret_rotation",
-    )
-    Icon(
-        imageVector = TablerIcons.ChevronDown,
-        contentDescription = stringResource(R.string.toggle_cc_bcc),
-        tint = colors.text_tertiary,
-        modifier = Modifier
-            .size(22.dp)
-            .rotate(rotation)
-            .clip(CircleShape)
-            .clickable(onClick = on_toggle),
-    )
-}
-
 private data class chip_parse_result(val new_chips: List<String>, val remaining: String)
 
 private val compose_mode_options = listOf(
@@ -3192,33 +3151,12 @@ private fun parse_chips(value: String): chip_parse_result {
 }
 
 @Composable
-private fun field_row(label: String, content: @Composable () -> Unit) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = colors.text_tertiary,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.width(56.dp),
-        )
-        Box(modifier = Modifier.weight(1f)) { content() }
-    }
-}
-
-@Composable
 private fun chip_input(
     chips: List<String>,
     input: String,
     on_input_change: (String) -> Unit,
     on_commit: () -> Unit,
     on_remove: (Int) -> Unit,
-    trailing: (@Composable () -> Unit)? = null,
     suggestions: List<Contact> = emptyList(),
     on_suggestion_pick: ((String) -> Unit)? = null,
     focus_requester: androidx.compose.ui.focus.FocusRequester? = null,
@@ -3285,10 +3223,6 @@ private fun chip_input(
                         inner()
                     },
                 )
-            }
-            if (trailing != null) {
-                Spacer(Modifier.width(AsterSpacing.sm))
-                trailing()
             }
         }
         val suggestions_visible = filtered_suggestions.isNotEmpty() && on_suggestion_pick != null

@@ -27,6 +27,7 @@ import org.astermail.android.api.settings.CustomDomainAddressInfo
 
 private const val GHOST_PREFIX = "ghost-"
 private const val DOMAIN_PREFIX = "domain-"
+private const val EXTERNAL_PREFIX = "external-"
 
 fun resolve_primary_sender_email(
     default_sender_id: String?,
@@ -34,6 +35,7 @@ fun resolve_primary_sender_email(
     aliases: List<AliasInfo>,
     ghost_aliases: List<GhostAlias>,
     custom_domain_addresses: List<CustomDomainAddressInfo> = emptyList(),
+    external_senders: Map<String, String> = emptyMap(),
 ): String {
     if (default_sender_id.isNullOrBlank() || default_sender_id == "primary") return user_email
     aliases.firstOrNull { it.id == default_sender_id }?.let { return it.address }
@@ -46,6 +48,11 @@ fun resolve_primary_sender_email(
         val did = default_sender_id.removePrefix(DOMAIN_PREFIX)
         custom_domain_addresses.firstOrNull { it.id == did }?.let { return it.address }
     }
+    if (default_sender_id.startsWith(EXTERNAL_PREFIX)) {
+        external_senders[default_sender_id.removePrefix(EXTERNAL_PREFIX)]
+            ?.takeIf { it.isNotBlank() }
+            ?.let { return it }
+    }
     return user_email
 }
 
@@ -55,10 +62,14 @@ fun sender_id_for_email(
     aliases: List<AliasInfo>,
     ghost_aliases: List<GhostAlias>,
     custom_domain_addresses: List<CustomDomainAddressInfo> = emptyList(),
+    external_senders: Map<String, String> = emptyMap(),
 ): String? {
     if (email == user_email) return "primary"
     aliases.firstOrNull { it.address == email }?.let { return it.id }
     ghost_aliases.firstOrNull { it.address == email }?.let { return GHOST_PREFIX + it.id }
     custom_domain_addresses.firstOrNull { it.address == email }?.let { return it.id }
+    external_senders.entries
+        .firstOrNull { it.value.equals(email, ignoreCase = true) }
+        ?.let { return EXTERNAL_PREFIX + it.key }
     return null
 }

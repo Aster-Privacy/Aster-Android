@@ -497,3 +497,14 @@ fun external_sender_map(state: ExternalAccountsUiState): Map<String, String> {
     }
     return result
 }
+
+fun external_sender_ids(state: ExternalAccountsUiState): Map<String, String> {
+    val result = LinkedHashMap<String, String>()
+    state.accounts.forEach { account ->
+        if (!account.is_enabled || account.oauth_provider != null) return@forEach
+        val email = state.decrypted[account.account_token]?.email?.trim().orEmpty()
+        if (email.isBlank() || email.endsWith("@import") || !email.contains('@')) return@forEach
+        result.putIfAbsent(account.id, email)
+    }
+    return result
+}

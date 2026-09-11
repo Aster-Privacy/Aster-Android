@@ -114,6 +114,33 @@ fun resolve_thread_ghost_match(
 fun split_address_list(value: String): List<String> =
     value.split(",").map { it.trim() }.filter { it.isNotEmpty() }
 
+const val default_sender_retry_attempts = 4
+
+fun default_sender_retry_delay_ms(attempt: Int): Long =
+    2_000L * (1L shl (attempt.coerceIn(1, 6) - 1))
+
+fun is_thread_compose(reply_to: String?, mode: String?): Boolean =
+    !reply_to.isNullOrBlank() && !mode.isNullOrBlank() && mode != "new" && mode != "draft"
+
+fun resolve_live_received_on_alias(
+    reply_to: String?,
+    mode: String?,
+    thread: compose_thread_snapshot,
+    alias_options: List<String>,
+    user_email: String,
+): String? {
+    if (!is_thread_compose(reply_to, mode)) return null
+    if (!thread.covers(reply_to)) return null
+    val message = thread.messages.firstOrNull { it.id == reply_to }
+        ?: thread.messages.filterNot { it.is_sent }.maxByOrNull { it.timestamp }
+        ?: thread.messages.lastOrNull()
+        ?: return null
+    val recipients = listOfNotNull(message.delivered_to) +
+        message.to_addresses +
+        message.cc_addresses
+    return compute_received_on_alias(recipients, alias_options, user_email)
+}
+
 fun build_compose_initial_state(
     args: compose_screen_args,
     identity: compose_identity_snapshot,
@@ -123,8 +150,7 @@ fun build_compose_initial_state(
     val alias_options = identity.alias_options
     val user_email = identity.user_email
     val ghost_match = resolve_thread_ghost_match(args.thread_ghost_email, identity.ghost_addresses)
-    val is_thread_mode = !args.reply_to.isNullOrBlank() && !effective_mode.isNullOrBlank() &&
-        effective_mode != "new" && effective_mode != "draft"
+    val is_thread_mode = is_thread_compose(args.reply_to, effective_mode)
     val target = if (is_thread_mode) {
         thread.messages.firstOrNull { it.id == args.reply_to } ?: thread.messages.lastOrNull()
     } else {
