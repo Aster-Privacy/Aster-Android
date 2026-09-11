@@ -461,6 +461,10 @@ class MailRepository @Inject constructor(
     private val draft_save_mutex = kotlinx.coroutines.sync.Mutex()
     private val draft_session_ids = java.util.concurrent.ConcurrentHashMap<String, String>()
     private val draft_versions = java.util.concurrent.ConcurrentHashMap<String, Int>()
+    private val closed_draft_sessions = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+    private val retiring_draft_ids = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+    private val _draft_changes = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 8)
+    val draft_changes: kotlinx.coroutines.flow.SharedFlow<Unit> = _draft_changes
 
     fun get_user_email(): String? = session_key_store.get_user_email()
 
@@ -817,6 +821,7 @@ class MailRepository @Inject constructor(
             runCatching { pending_send_dao.delete_by_id(pending_id) }
             delete_outbox_attachments(pending_id)
             clear_undo_canceled(pending_id)
+            _draft_changes.tryEmit(Unit)
         }
     }
 
@@ -865,6 +870,7 @@ class MailRepository @Inject constructor(
             _send_result_events.tryEmit(Result.failure(IllegalStateException("attachment payload unavailable", err)))
             runCatching { pending_send_dao.mark_failed(pending_id) }
             refresh_failed_send_count()
+            _draft_changes.tryEmit(Unit)
             return PendingSendOutcome.FAILED
         }
         val recipients = runCatching {
@@ -878,6 +884,7 @@ class MailRepository @Inject constructor(
             _send_result_events.tryEmit(Result.failure(IllegalStateException("recipient list unreadable", err)))
             runCatching { pending_send_dao.mark_failed(pending_id) }
             refresh_failed_send_count()
+            _draft_changes.tryEmit(Unit)
             return PendingSendOutcome.FAILED
         }
         if (recipients.first.isEmpty() && recipients.second.isEmpty() && recipients.third.isEmpty()) {
@@ -885,6 +892,7 @@ class MailRepository @Inject constructor(
             _send_result_events.tryEmit(Result.failure(IllegalStateException("recipient list empty")))
             runCatching { pending_send_dao.mark_failed(pending_id) }
             refresh_failed_send_count()
+            _draft_changes.tryEmit(Unit)
             return PendingSendOutcome.FAILED
         }
         val result = send_email(
@@ -926,6 +934,7 @@ class MailRepository @Inject constructor(
                 _send_result_events.tryEmit(Result.failure(err ?: IllegalStateException("send rejected")))
                 runCatching { pending_send_dao.mark_failed(pending_id) }
                 refresh_failed_send_count()
+                _draft_changes.tryEmit(Unit)
                 PendingSendOutcome.FAILED
             } else {
                 runCatching { pending_send_dao.mark_pending(pending_id) }
@@ -1491,8 +1500,16 @@ class MailRepository @Inject constructor(
         if (thread_token.isBlank()) return null
         val probe = runCatching { mail_api.get_thread_draft(thread_token) }
         val draft = probe.getOrNull() ?: return null
+        if (is_draft_leaving_thread(draft.id)) return null
         draft_item_cache[draft.id] = draft
         return decrypt_draft_item(draft)
+    }
+
+    private suspend fun is_draft_leaving_thread(draft_id: String): Boolean {
+        if (draft_id in retiring_draft_ids) return true
+        return pending_rows_for_current_account().orEmpty().any { row ->
+            row.draft_id == draft_id && row.status != STATUS_FAILED
+        }
     }
 
     suspend fun fetch_draft_for_compose(
@@ -2102,6 +2119,7 @@ class MailRepository @Inject constructor(
     suspend fun delete_draft(draft_id: String): Result<Unit> = runCatching {
         mail_api.delete_draft(draft_id)
         forget_draft(draft_id)
+        _draft_changes.tryEmit(Unit)
         Unit
     }
 
@@ -4094,6 +4112,9 @@ class MailRepository @Inject constructor(
 
         draft_save_mutex.withLock {
             kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                if (session_id != null && session_id in closed_draft_sessions) {
+                    throw IllegalStateException("draft session closed")
+                }
                 val target_id = session_id?.let { draft_session_ids[it] }
                     ?: existing_draft_id?.takeIf { it.isNotBlank() }
 
@@ -4189,6 +4210,39 @@ class MailRepository @Inject constructor(
     fun release_draft_session(session_id: String) {
         draft_session_ids.remove(session_id)
     }
+
+    fun end_draft_session(session_id: String) {
+        closed_draft_sessions.add(session_id)
+        draft_session_ids.remove(session_id)
+    }
+
+    suspend fun settle_draft_session(session_id: String?, fallback_draft_id: String?): String? =
+        draft_save_mutex.withLock {
+            session_id?.let { draft_session_ids[it] } ?: fallback_draft_id?.takeIf { it.isNotBlank() }
+        }
+
+    fun discard_sent_draft(draft_id: String?, session_id: String?): kotlinx.coroutines.Deferred<Boolean> =
+        app_scope.async {
+            val target = draft_save_mutex.withLock {
+                val resolved = session_id?.let { draft_session_ids[it] }
+                    ?: draft_id?.takeIf { it.isNotBlank() }
+                session_id?.let { end_draft_session(it) }
+                resolved?.also { retiring_draft_ids.add(it) }
+            }
+            if (target == null) return@async false
+            _draft_changes.tryEmit(Unit)
+            val deleted = runCatching { mail_api.delete_draft(target) }.fold(
+                onSuccess = { true },
+                onFailure = { it is org.astermail.android.api.ApiError.NotFoundError },
+            )
+            if (deleted) {
+                forget_draft(target)
+            } else {
+                retiring_draft_ids.remove(target)
+            }
+            _draft_changes.tryEmit(Unit)
+            deleted
+        }
 
     private fun normalize_draft_type(mode: String): String = when (mode) {
         "reply", "reply_all" -> "reply"

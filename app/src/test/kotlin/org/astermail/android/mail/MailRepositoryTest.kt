@@ -30,6 +30,7 @@ import io.mockk.verify
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -1207,6 +1208,95 @@ class MailRepositoryTest {
 
         assertEquals(second_uuid, second.getOrThrow())
         coVerify(exactly = 0) { mail_api.update_draft(any(), any()) }
+    }
+
+    private suspend fun <T> await_real(block: suspend () -> T): T =
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            kotlinx.coroutines.withTimeout(5_000) { block() }
+        }
+
+    private fun stub_thread_draft(thread_token: String) {
+        coEvery { mail_api.get_thread_draft(thread_token) } returns
+            org.astermail.android.api.mail.DraftItem(id = draft_uuid, thread_token = thread_token)
+    }
+
+    @Test
+    fun `thread draft stays hidden while the sent draft delete is in flight`() = runTest {
+        stub_thread_draft("thread_a")
+        val delete_started = CompletableDeferred<Unit>()
+        val gate = CompletableDeferred<Unit>()
+        coEvery { mail_api.delete_draft(draft_uuid) } coAnswers {
+            delete_started.complete(Unit)
+            gate.await()
+            DeleteResponse(success = true, deleted_count = 1)
+        }
+
+        assertNotNull(repo.fetch_thread_draft("thread_a"))
+
+        val pending = repo.discard_sent_draft(draft_uuid, "compose_send_1")
+        await_real { delete_started.await() }
+
+        assertNull(repo.fetch_thread_draft("thread_a"))
+
+        gate.complete(Unit)
+        assertTrue(await_real { pending.await() })
+    }
+
+    @Test
+    fun `sent draft is deleted even when compose never learned its id`() = runTest {
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        coEvery { mail_api.create_draft(any()) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = draft_uuid, version = 1)
+        coEvery { mail_api.delete_draft(draft_uuid) } returns DeleteResponse(success = true, deleted_count = 1)
+
+        repo.save_draft(subject = "Hello", body_html = "<p>1</p>", session_id = "compose_send_2")
+        val deleted = await_real { repo.discard_sent_draft("", "compose_send_2").await() }
+
+        assertTrue(deleted)
+        coVerify(exactly = 1) { mail_api.delete_draft(draft_uuid) }
+    }
+
+    @Test
+    fun `autosave landing after send cannot recreate the draft`() = runTest {
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        coEvery { mail_api.create_draft(any()) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = draft_uuid, version = 1)
+        coEvery { mail_api.delete_draft(draft_uuid) } returns DeleteResponse(success = true, deleted_count = 1)
+
+        repo.save_draft(subject = "Hello", body_html = "<p>1</p>", session_id = "compose_send_3")
+        await_real { repo.discard_sent_draft(draft_uuid, "compose_send_3").await() }
+        val late = repo.save_draft(subject = "Hello", body_html = "<p>12</p>", session_id = "compose_send_3")
+
+        assertTrue(late.isFailure)
+        coVerify(exactly = 1) { mail_api.create_draft(any()) }
+        coVerify(exactly = 0) { mail_api.update_draft(any(), any()) }
+    }
+
+    @Test
+    fun `thread draft is hidden while its undo send is queued`() = runTest {
+        stub_thread_draft("thread_b")
+
+        pending_send_dao.upsert(pending_row(id = "pending_1", status = "pending", draft_id = draft_uuid))
+        assertNull(repo.fetch_thread_draft("thread_b"))
+
+        pending_send_dao.upsert(pending_row(id = "pending_1", status = "failed", draft_id = draft_uuid))
+        assertNotNull(repo.fetch_thread_draft("thread_b"))
+    }
+
+    @Test
+    fun `draft_changes emits when the sent draft is deleted`() = runTest {
+        coEvery { mail_api.delete_draft(draft_uuid) } returns DeleteResponse(success = true, deleted_count = 1)
+        val signal = CompletableDeferred<Unit>()
+        val watcher = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch(
+            start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED,
+        ) {
+            repo.draft_changes.first()
+            signal.complete(Unit)
+        }
+
+        await_real { repo.discard_sent_draft(draft_uuid, "compose_send_4").await() }
+        await_real { signal.await() }
+        watcher.cancel()
     }
 
     @Test

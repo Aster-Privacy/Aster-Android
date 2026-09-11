@@ -2759,6 +2759,9 @@ private fun thread_draft_slot(
         lifecycle_owner.lifecycle.addObserver(observer)
         onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }
     }
+    LaunchedEffect(token) {
+        mail_vm.draft_changes.collect { draft_probe_key++ }
+    }
     LaunchedEffect(token, draft_probe_key) {
         thread_draft = mail_vm.load_thread_draft(token)
     }

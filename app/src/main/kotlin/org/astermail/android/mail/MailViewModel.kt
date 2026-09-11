@@ -2598,16 +2598,20 @@ class MailViewModel @Inject constructor(
     suspend fun load_thread_draft(thread_token: String): InboxItem? =
         repository.fetch_thread_draft(thread_token)
 
-    fun release_draft_session(session_id: String) {
-        repository.release_draft_session(session_id)
+    val draft_changes: kotlinx.coroutines.flow.Flow<Any>
+        get() = kotlinx.coroutines.flow.merge(repository.draft_changes, repository.send_result_events)
+
+    fun end_draft_session(session_id: String) {
+        repository.end_draft_session(session_id)
     }
 
+    suspend fun settle_draft_session(session_id: String, fallback_draft_id: String): String? =
+        repository.settle_draft_session(session_id, fallback_draft_id)
+
     fun discard_sent_draft(draft_id: String, session_id: String? = null) {
-        session_id?.let { repository.release_draft_session(it) }
-        if (draft_id.isBlank()) return
+        val pending = repository.discard_sent_draft(draft_id, session_id)
         viewModelScope.launch {
-            val deleted = repository.delete_draft(draft_id).isSuccess
-            if (deleted) {
+            if (runCatching { pending.await() }.getOrDefault(false)) {
                 runCatching { invalidate_caches(listOf("drafts")) }
                 runCatching { load_stats() }
             }

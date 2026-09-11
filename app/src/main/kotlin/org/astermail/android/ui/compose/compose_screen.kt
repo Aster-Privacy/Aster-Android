@@ -1891,7 +1891,7 @@ fun ComposeScreen(
                     sender_alias_hash = if (snap_from != user_email) alias_hash_map[snap_from]?.takeIf { it.isNotBlank() } else null,
                     suppress_branding = suppress_branding,
                     undo_seconds = undo_send_seconds,
-                    draft_id = current_draft_id.takeIf { it.isNotBlank() },
+                    draft_id = mail_vm.settle_draft_session(draft_session_id, current_draft_id),
                     allow_non_post_quantum = allow_non_post_quantum,
                 )
                 is_sending = false
@@ -1899,7 +1899,7 @@ fun ComposeScreen(
                 result.fold(
                     onSuccess = {
                         sent = true
-                        mail_vm.release_draft_session(draft_session_id)
+                        mail_vm.end_draft_session(draft_session_id)
                         on_sent()
                     },
                     onFailure = { t ->
