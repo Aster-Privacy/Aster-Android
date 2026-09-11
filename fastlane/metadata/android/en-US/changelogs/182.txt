@@ -1,8 +1,9 @@
 Bug fixes and improvements:
 
-- A reply you send shows your own text in Sent and in the message list
+- Your inbox no longer keeps reloading when the app renews your sign-in
+- Replies you send show your own text in Sent and in the message list
 - Sent messages no longer stay in Drafts
-- When the server refuses a message, you see the reason and it stops retrying
-- A sent message no longer reports a failure when its Sent copy is missing attachments
-- Recently deleted aliases open on their own screen, and your matching addresses show on the Aliases screen
-- The Aliases screen no longer stays loading when you have no aliases
+- If the server refuses a message, you see why and it stops retrying
+- Sent messages no longer fail when the Sent copy lacks attachments
+- Recently deleted aliases have their own screen, and Aliases shows matching addresses
+- The Aliases screen no longer stays loading with no aliases
