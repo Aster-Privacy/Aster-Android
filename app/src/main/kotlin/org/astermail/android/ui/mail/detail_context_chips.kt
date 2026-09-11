@@ -24,6 +24,10 @@ package org.astermail.android.ui.mail
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -37,8 +41,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.foundation.text.appendInlineContent
@@ -286,6 +292,7 @@ private data class detail_inline_chip(
     val render: @Composable () -> Unit,
 )
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun detail_subject_line(
     subject: String,
@@ -340,13 +347,6 @@ internal fun detail_subject_line(
             )
         }
     }
-    val text = buildAnnotatedString {
-        append(subject)
-        chips.forEach { chip ->
-            append(detail_chip_placeholder_gap)
-            appendInlineContent(chip.id, detail_chip_placeholder_text)
-        }
-    }
     val inline_content = chips.associate { chip ->
         chip.id to InlineTextContent(
             placeholder = Placeholder(
@@ -367,51 +367,108 @@ internal fun detail_subject_line(
     }
     val selection_line_px = with(density) { detail_subject_line_height.toPx() }
     var chip_slots by remember { mutableStateOf<List<Rect?>>(emptyList()) }
-    Box(modifier = modifier) {
-        selectable_subject(state = selection_state) {
-            Text(
-                text = text,
-                inlineContent = inline_content,
-                color = colors.text_primary,
-                fontSize = detail_subject_text_size,
-                lineHeight = detail_subject_line_height,
-                fontWeight = FontWeight.Bold,
-                maxLines = max_lines,
-                overflow = TextOverflow.Ellipsis,
-                onTextLayout = { layout ->
-                    on_overflow(layout.hasVisualOverflow)
-                    chip_slots = layout.placeholderRects
-                },
-                modifier = Modifier.testTag("detail_subject_line"),
-            )
-        }
-        if (selection_state.has_selection) {
-            chips.indices.forEach { index ->
-                val slot = chip_slots.getOrNull(index) ?: return@forEach
-                Box(
-                    modifier = Modifier
-                        .offset {
-                            IntOffset(
-                                (slot.left - chip_gap_px).roundToInt(),
-                                (slot.center.y - selection_line_px / 2f).roundToInt(),
-                            )
-                        }
-                        .size(
-                            width = with(density) { (slot.width + chip_gap_px).toDp() },
-                            height = with(density) { selection_line_px.toDp() },
-                        )
-                        .background(colors.bg_primary),
-                )
+    BoxWithConstraints(modifier = modifier) {
+        val has_bounded_width = constraints.hasBoundedWidth
+        val fit_width = (constraints.maxWidth - with(density) { detail_subject_fit_margin.roundToPx() })
+            .coerceAtLeast(0)
+        val placeholders = chips.map { chip -> inline_content.getValue(chip.id).placeholder }
+        val chips_below = remember(
+            subject,
+            placeholders,
+            fit_width,
+            has_bounded_width,
+            max_lines,
+            subject_style,
+            density.density,
+            density.fontScale,
+        ) {
+            detail_subject_chips_below(
+                chip_count = placeholders.size,
+                max_lines = max_lines,
+                has_bounded_width = has_bounded_width,
+            ) {
+                val starts = detail_subject_placeholder_starts(subject.length, placeholders.size)
+                measurer.measure(
+                    text = AnnotatedString(detail_subject_plain_text(subject, placeholders.size)),
+                    style = subject_style,
+                    placeholders = placeholders.mapIndexed { index, placeholder ->
+                        AnnotatedString.Range(placeholder, starts[index], starts[index] + 1)
+                    },
+                    constraints = Constraints(maxWidth = fit_width),
+                    density = density,
+                ).lineCount
             }
         }
-        chips.forEachIndexed { index, chip ->
-            val slot = chip_slots.getOrNull(index) ?: return@forEachIndexed
-            Box(
-                modifier = Modifier.offset {
-                    IntOffset(slot.left.roundToInt(), slot.top.roundToInt())
-                },
-            ) {
-                chip.render()
+        val text = buildAnnotatedString {
+            append(subject)
+            if (!chips_below) {
+                chips.forEach { chip ->
+                    append(detail_chip_placeholder_gap)
+                    appendInlineContent(chip.id, detail_chip_placeholder_text)
+                }
+            }
+        }
+        Column {
+            Box {
+                selectable_subject(state = selection_state) {
+                    Text(
+                        text = text,
+                        inlineContent = inline_content,
+                        color = colors.text_primary,
+                        fontSize = detail_subject_text_size,
+                        lineHeight = detail_subject_line_height,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = max_lines,
+                        overflow = TextOverflow.Ellipsis,
+                        onTextLayout = { layout ->
+                            on_overflow(chips_below || layout.hasVisualOverflow)
+                            chip_slots = layout.placeholderRects
+                        },
+                        modifier = Modifier.testTag("detail_subject_line"),
+                    )
+                }
+                if (selection_state.has_selection && !chips_below) {
+                    chips.indices.forEach { index ->
+                        val slot = chip_slots.getOrNull(index) ?: return@forEach
+                        Box(
+                            modifier = Modifier
+                                .offset {
+                                    IntOffset(
+                                        (slot.left - chip_gap_px).roundToInt(),
+                                        (slot.center.y - selection_line_px / 2f).roundToInt(),
+                                    )
+                                }
+                                .size(
+                                    width = with(density) { (slot.width + chip_gap_px).toDp() },
+                                    height = with(density) { selection_line_px.toDp() },
+                                )
+                                .background(colors.bg_primary),
+                        )
+                    }
+                }
+                if (!chips_below) {
+                    chips.forEachIndexed { index, chip ->
+                        val slot = chip_slots.getOrNull(index) ?: return@forEachIndexed
+                        Box(
+                            modifier = Modifier.offset {
+                                IntOffset(slot.left.roundToInt(), slot.top.roundToInt())
+                            },
+                        ) {
+                            chip.render()
+                        }
+                    }
+                }
+            }
+            if (chips_below) {
+                FlowRow(
+                    modifier = Modifier.padding(top = detail_subject_chip_row_gap),
+                    horizontalArrangement = Arrangement.spacedBy(with(density) { chip_gap_px.toDp() }),
+                    verticalArrangement = Arrangement.spacedBy(detail_chip_icon_gap),
+                ) {
+                    chips.forEach { chip ->
+                        key(chip.id) { chip.render() }
+                    }
+                }
             }
         }
     }
@@ -419,6 +476,27 @@ internal fun detail_subject_line(
 
 internal const val detail_chip_placeholder_gap = "\u00A0"
 internal const val detail_chip_placeholder_text = "\u200B"
+internal val detail_subject_fit_margin = 1.dp
+internal val detail_subject_chip_row_gap = 6.dp
+
+internal fun detail_subject_plain_text(subject: String, chip_count: Int): String =
+    subject + (detail_chip_placeholder_gap + detail_chip_placeholder_text).repeat(chip_count)
+
+internal fun detail_subject_placeholder_starts(subject_length: Int, chip_count: Int): List<Int> =
+    List(chip_count) { index ->
+        subject_length + index * (detail_chip_placeholder_gap.length + detail_chip_placeholder_text.length) +
+            detail_chip_placeholder_gap.length
+    }
+
+internal fun detail_subject_chips_below(
+    chip_count: Int,
+    max_lines: Int,
+    has_bounded_width: Boolean,
+    inline_line_count: () -> Int,
+): Boolean {
+    if (chip_count == 0 || max_lines == Int.MAX_VALUE || !has_bounded_width) return false
+    return inline_line_count() > max_lines
+}
 
 internal fun strip_subject_chip_placeholders(copied: String): String =
     copied
