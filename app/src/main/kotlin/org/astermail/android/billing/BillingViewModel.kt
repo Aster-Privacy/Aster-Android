@@ -751,6 +751,10 @@ class BillingViewModel @Inject constructor(
         _state.value = _state.value.copy(checkout_url = null, awaiting_checkout = true)
     }
 
+    fun discard_checkout_url() {
+        _state.value = _state.value.copy(checkout_url = null)
+    }
+
     fun consume_portal_url() {
         _state.value = _state.value.copy(portal_url = null, awaiting_portal = true)
     }

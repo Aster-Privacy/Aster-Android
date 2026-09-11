@@ -273,6 +273,8 @@ fun SubscriptionsScreen(
     val billing_vm: BillingViewModel = org.astermail.android.billing.billing_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
     val billing_state by billing_vm.state.collectAsStateWithLifecycle()
+    val offer_vm = org.astermail.android.ui.upgrade.special_offer_view_model()
+    val offer_state by offer_vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val context = LocalContext.current
 
@@ -1030,6 +1032,25 @@ fun SubscriptionsScreen(
         } else {
             null
         }
+        val picker_offer = if (
+            picker_addon == null &&
+            picker_monthly != null &&
+            offer_state.applies_to_card(pending_plan_code, billing_interval)
+        ) {
+            review_offer_price(
+                original = format_price(picker_monthly, detected_currency),
+                discounted = format_price(
+                    org.astermail.android.ui.upgrade.special_offer_price_cents(
+                        picker_monthly.toLong(),
+                        offer_state.effective_percent_off,
+                    ).toInt(),
+                    detected_currency,
+                ),
+                badge = stringResource(R.string.save_percent, offer_state.effective_percent_off),
+            )
+        } else {
+            null
+        }
         payment_review_dialog(
             title = stringResource(R.string.checkout_review_title),
             plan_name = picker_tier?.let { stringResource(it.name_res) }
@@ -1048,6 +1069,7 @@ fun SubscriptionsScreen(
             features = picker_tier?.features.orEmpty(),
             is_busy = billing_state.is_acting,
             initial_method = picker_method,
+            offer = picker_offer,
             on_dismiss = {
                 show_payment_picker = false
                 picker_method = payment_method_card
@@ -1202,6 +1224,26 @@ fun SubscriptionsScreen(
     }
 
     if (show_crypto_terms) {
+        val crypto_offer_prices = if (pending_addon_id == null) {
+            val offer_plan = pending_plan_code.orEmpty()
+            org.astermail.android.ui.upgrade.special_offer_term_prices(
+                offer = offer_state,
+                plan_code = pending_plan_code,
+                monthly_cents = org.astermail.android.billing.api_plan_price_cents(
+                    billing_state.available_plans,
+                    offer_plan,
+                    "month",
+                )?.toLong(),
+                yearly_cents = org.astermail.android.billing.api_plan_price_cents(
+                    billing_state.available_plans,
+                    offer_plan,
+                    "year",
+                )?.toLong(),
+                badge = stringResource(R.string.save_percent, offer_state.effective_percent_off),
+            )
+        } else {
+            emptyMap()
+        }
         crypto_term_dialog(
             on_dismiss = {
                 show_crypto_terms = false
@@ -1220,6 +1262,7 @@ fun SubscriptionsScreen(
                     else -> pending_addon_id?.let { billing_vm.purchase_addon_crypto(it, term) }
                 }
             },
+            offer_prices = crypto_offer_prices,
         )
     }
 
@@ -1545,9 +1588,10 @@ private fun crypto_resume_card(
 }
 
 @Composable
-private fun crypto_term_dialog(
+internal fun crypto_term_dialog(
     on_dismiss: () -> Unit,
     on_confirm: (Int) -> Unit,
+    offer_prices: Map<Int, review_offer_price> = emptyMap(),
 ) {
     val colors = AsterMaterial.colors
     var selected_term by remember { mutableStateOf(1) }
@@ -1577,15 +1621,20 @@ private fun crypto_term_dialog(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(
-                            label,
-                            color = if (term_active) Color.White else colors.text_primary,
-                            fontSize = 14.sp,
-                            fontWeight = if (term_active) FontWeight.SemiBold else FontWeight.Normal,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f),
-                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                label,
+                                color = if (term_active) Color.White else colors.text_primary,
+                                fontSize = 14.sp,
+                                fontWeight = if (term_active) FontWeight.SemiBold else FontWeight.Normal,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            offer_prices[months]?.let { term_offer ->
+                                Spacer(Modifier.height(AsterSpacing.xs))
+                                offer_price_line(term_offer, on_accent = term_active)
+                            }
+                        }
                         if (term_active) {
                             Spacer(Modifier.width(AsterSpacing.sm))
                             Icon(TablerIcons.Check, null, tint = Color.White, modifier = Modifier.size(18.dp))
