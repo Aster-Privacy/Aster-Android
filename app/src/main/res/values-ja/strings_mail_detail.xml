@@ -31,4 +31,5 @@
     <string name="no_raw_headers">このメッセージのヘッダー情報はありません。</string>
     <string name="copy_headers">ヘッダーをコピー</string>
     <string name="headers_copied">ヘッダーをコピーしました</string>
+    <string name="print_failed">このメールを印刷できません。もう一度お試しください。</string>
 </resources>

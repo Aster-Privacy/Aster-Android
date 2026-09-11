@@ -87,7 +87,7 @@ object app_language {
         configuration.setLocale(locale)
         configuration.setLayoutDirection(locale)
 
-        return context.createConfigurationContext(configuration)
+        return language_context(context, context.createConfigurationContext(configuration))
     }
 
     fun apply(context: Context): Context {

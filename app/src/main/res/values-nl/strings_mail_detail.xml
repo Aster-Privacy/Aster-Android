@@ -31,4 +31,5 @@
     <string name="no_raw_headers">Voor dit bericht zijn geen ruwe headers beschikbaar.</string>
     <string name="copy_headers">Headers kopiëren</string>
     <string name="headers_copied">Headers gekopieerd</string>
+    <string name="print_failed">Deze e-mail kan niet worden afgedrukt. Probeer het nog eens.</string>
 </resources>

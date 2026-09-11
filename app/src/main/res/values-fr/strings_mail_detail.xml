@@ -31,4 +31,5 @@
     <string name="no_raw_headers">Ce message n\'a pas d\'en-têtes bruts.</string>
     <string name="copy_headers">Copier les en-têtes</string>
     <string name="headers_copied">En-têtes copiés</string>
+    <string name="print_failed">Impossible d\'imprimer cet e-mail. Réessayez.</string>
 </resources>

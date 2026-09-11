@@ -31,4 +31,5 @@
     <string name="no_raw_headers">Esta mensagem não tem cabeçalhos brutos.</string>
     <string name="copy_headers">Copiar os cabeçalhos</string>
     <string name="headers_copied">Cabeçalhos copiados</string>
+    <string name="print_failed">Não é possível imprimir este e-mail. Tente de novo.</string>
 </resources>

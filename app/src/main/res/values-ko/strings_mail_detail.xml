@@ -31,4 +31,5 @@
     <string name="no_raw_headers">이 메시지의 원본 헤더가 없습니다.</string>
     <string name="copy_headers">헤더 복사</string>
     <string name="headers_copied">헤더를 복사했습니다</string>
+    <string name="print_failed">이 이메일을 인쇄할 수 없습니다. 다시 시도하세요.</string>
 </resources>

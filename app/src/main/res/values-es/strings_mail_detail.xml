@@ -31,4 +31,5 @@
     <string name="no_raw_headers">No hay cabeceras sin procesar para este mensaje.</string>
     <string name="copy_headers">Copiar las cabeceras</string>
     <string name="headers_copied">Cabeceras copiadas</string>
+    <string name="print_failed">No se puede imprimir este correo. Inténtalo otra vez.</string>
 </resources>

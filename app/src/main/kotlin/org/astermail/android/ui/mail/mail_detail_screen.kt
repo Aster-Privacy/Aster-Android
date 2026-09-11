@@ -191,7 +191,6 @@ import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.translation.TranslationDownloadPolicy
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
-import org.astermail.android.util.clip_units
 import org.astermail.android.util.clip_with_ellipsis
 
 private val placeholder_body_height = 240.dp
@@ -1030,7 +1029,30 @@ fun MailDetailScreen(
                             show_topbar_menu = false
                             val msg = messages.lastOrNull()
                             if (msg != null) {
-                                print_email(context, msg, email?.subject.orEmpty())
+                                val print_subject = email?.subject.orEmpty()
+                                val print_allow_external = !block_external_images ||
+                                    msg.id in allow_external_ids ||
+                                    is_aster_system_sender(msg)
+                                val print_tracking_protection = settings_state.preferences?.block_external_content != false
+                                val print_sanitize_options = EmailHtmlSanitizer.SanitizeOptions(
+                                    clean_tracking_links = print_tracking_protection &&
+                                        settings_state.preferences?.block_tracking_links != false,
+                                    remove_tracking_pixels = print_tracking_protection &&
+                                        settings_state.preferences?.block_tracking_pixels != false,
+                                    block_remote_fonts = settings_state.preferences?.block_remote_fonts != false,
+                                    block_remote_css = settings_state.preferences?.block_remote_css != false,
+                                )
+                                scope.launch {
+                                    print_email(
+                                        context = context,
+                                        msg = msg,
+                                        subject = print_subject,
+                                        allow_external = print_allow_external,
+                                        sanitize_options = print_sanitize_options,
+                                    ) {
+                                        show_toast(context.getString(R.string.print_failed))
+                                    }
+                                }
                             } else {
                                 show_toast(context.getString(R.string.nothing_to_print))
                             }
@@ -4616,55 +4638,41 @@ internal fun snooze_options(
     return if (later_today_is_today) paired else paired.drop(1)
 }
 
-private fun print_email(context: android.content.Context, msg: ThreadMessage, subject: String) {
-    val print_manager = context.getSystemService(android.content.Context.PRINT_SERVICE) as? android.print.PrintManager
-        ?: return
-    val safe_subject = subject.ifBlank { context.getString(R.string.aster_email) }.clip_units(80)
-    val sender = "${displayed_sender_name(msg.display_sender_name, msg.sender_name)} " +
-        "<${displayed_sender_email(msg.display_sender_email, msg.sender_email)}>"
-    val timestamp_text = msg.timestamp.format_full_datetime()
-    val body = msg.body_html?.takeIf { it.isNotBlank() }?.let { EmailHtmlSanitizer.sanitize(it) }
-        ?: "<pre>${android.text.Html.escapeHtml(msg.body)}</pre>"
-    val html = """
-        <html><head><meta charset="utf-8">
-        <style>
-          body { font-family: -apple-system, sans-serif; color: #111; padding: 24px; }
-          .meta { color: #666; font-size: 12px; margin-bottom: 16px; }
-          h1 { font-size: 18px; margin: 0 0 8px 0; }
-          hr { border: none; border-top: 1px solid #ddd; margin: 16px 0; }
-        </style></head><body>
-          <h1>${android.text.Html.escapeHtml(safe_subject)}</h1>
-          <div class="meta">From: ${android.text.Html.escapeHtml(sender)}<br/>$timestamp_text</div>
-          <hr/>
-          $body
-        </body></html>
-    """.trimIndent()
-    val web_view = android.webkit.WebView(context)
-    web_view.settings.javaScriptEnabled = false
-    web_view.settings.allowFileAccess = false
-    web_view.settings.allowContentAccess = false
-    @Suppress("DEPRECATION")
-    web_view.settings.allowFileAccessFromFileURLs = false
-    @Suppress("DEPRECATION")
-    web_view.settings.allowUniversalAccessFromFileURLs = false
-    web_view.settings.blockNetworkImage = true
-    web_view.settings.blockNetworkLoads = true
-    web_view.settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
-    web_view.webViewClient = object : android.webkit.WebViewClient() {
-        override fun onPageFinished(view: android.webkit.WebView, url: String?) {
-            val adapter = view.createPrintDocumentAdapter(safe_subject)
-            print_manager.print(safe_subject, adapter, android.print.PrintAttributes.Builder().build())
-            view.postDelayed({
-                runCatching {
-                    view.stopLoading()
-                    view.loadUrl("about:blank")
-                    (view.parent as? android.view.ViewGroup)?.removeView(view)
-                    view.destroy()
-                }
-            }, 1500)
-        }
+private suspend fun print_email(
+    context: android.content.Context,
+    msg: ThreadMessage,
+    subject: String,
+    allow_external: Boolean,
+    sanitize_options: EmailHtmlSanitizer.SanitizeOptions,
+    on_failure: () -> Unit,
+) {
+    val labels = email_print_labels(
+        from = context.getString(R.string.from_label),
+        to = context.getString(R.string.to_label),
+        cc = context.getString(R.string.cc),
+        date = context.getString(R.string.date),
+        image_blocked = context.getString(R.string.image_blocked_placeholder),
+    )
+    val job_name = print_job_name(subject, context.getString(R.string.aster_email))
+    val failure_message = context.getString(R.string.print_failed)
+    val html = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+        runCatching {
+            val body = build_email_print_body(msg, allow_external, sanitize_options, labels.image_blocked)
+            build_email_print_html(msg, subject, msg.timestamp.format_full_datetime(), labels, body)
+        }.getOrNull()
     }
-    web_view.loadDataWithBaseURL("about:blank", html, "text/html", "UTF-8", null)
+    if (html == null) {
+        on_failure()
+        return
+    }
+    print_email_document(
+        context = context,
+        job_name = job_name,
+        html = html,
+        allow_network = allow_external,
+        failure_message = failure_message,
+        on_failure = on_failure,
+    )
 }
 
 @Composable
@@ -5307,7 +5315,7 @@ internal fun email_html_view(
         if (has_measured) on_ready()
     }
 
-    val proxy_base = "https://app.astermail.org/api/images/v1/proxy?url="
+    val proxy_base = REMOTE_IMAGE_PROXY_BASE
 
     fun proxy_html(raw: String): String {
         val cid_normalized = resolve_inline_cids(raw, inline_images)

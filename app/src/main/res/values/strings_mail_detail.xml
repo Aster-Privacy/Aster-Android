@@ -31,4 +31,5 @@
     <string name="no_raw_headers">No raw headers available for this message.</string>
     <string name="copy_headers">Copy headers</string>
     <string name="headers_copied">Headers copied</string>
+    <string name="print_failed">Can\'t print this email. Try again.</string>
 </resources>

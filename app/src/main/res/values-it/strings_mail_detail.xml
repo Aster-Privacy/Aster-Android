@@ -31,4 +31,5 @@
     <string name="no_raw_headers">Per questo messaggio non ci sono intestazioni grezze.</string>
     <string name="copy_headers">Copia le intestazioni</string>
     <string name="headers_copied">Intestazioni copiate</string>
+    <string name="print_failed">Impossibile stampare questa email. Riprova.</string>
 </resources>

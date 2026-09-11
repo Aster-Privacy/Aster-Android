@@ -31,4 +31,5 @@
     <string name="no_raw_headers">Für diese Nachricht gibt es keine Rohkopfzeilen.</string>
     <string name="copy_headers">Kopfzeilen kopieren</string>
     <string name="headers_copied">Kopfzeilen kopiert</string>
+    <string name="print_failed">Diese E-Mail kann nicht gedruckt werden. Versuch es noch einmal.</string>
 </resources>

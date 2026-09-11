@@ -31,4 +31,5 @@
     <string name="no_raw_headers">इस संदेश के कच्चे हेडर उपलब्ध नहीं हैं।</string>
     <string name="copy_headers">हेडर कॉपी करें</string>
     <string name="headers_copied">हेडर कॉपी हो गए</string>
+    <string name="print_failed">यह ईमेल प्रिंट नहीं हो सका। फिर से कोशिश करें।</string>
 </resources>

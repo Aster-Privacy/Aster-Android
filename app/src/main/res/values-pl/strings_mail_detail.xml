@@ -31,4 +31,5 @@
     <string name="no_raw_headers">Ta wiadomość nie ma surowych nagłówków.</string>
     <string name="copy_headers">Kopiuj nagłówki</string>
     <string name="headers_copied">Skopiowano nagłówki</string>
+    <string name="print_failed">Nie można wydrukować tej wiadomości. Spróbuj jeszcze raz.</string>
 </resources>

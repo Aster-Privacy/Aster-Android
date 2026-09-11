@@ -31,4 +31,5 @@
     <string name="no_raw_headers">У этого письма нет исходных заголовков.</string>
     <string name="copy_headers">Скопировать заголовки</string>
     <string name="headers_copied">Заголовки скопированы</string>
+    <string name="print_failed">Не удалось распечатать это письмо. Попробуйте ещё раз.</string>
 </resources>

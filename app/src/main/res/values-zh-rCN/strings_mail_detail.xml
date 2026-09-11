@@ -31,4 +31,5 @@
     <string name="no_raw_headers">这封邮件没有原始邮件头。</string>
     <string name="copy_headers">复制邮件头</string>
     <string name="headers_copied">已复制邮件头</string>
+    <string name="print_failed">无法打印此邮件，请重试。</string>
 </resources>

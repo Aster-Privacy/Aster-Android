@@ -31,4 +31,5 @@
     <string name="no_raw_headers">لا تتوفر ترويسات خام لهذه الرسالة.</string>
     <string name="copy_headers">نسخ الترويسات</string>
     <string name="headers_copied">تم نسخ الترويسات</string>
+    <string name="print_failed">تعذّرت طباعة هذه الرسالة. حاول مرة أخرى.</string>
 </resources>
