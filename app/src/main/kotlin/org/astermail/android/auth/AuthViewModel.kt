@@ -39,7 +39,7 @@ import org.astermail.android.api.recovery_email.RecoveryEmailError
 sealed interface AuthUiState {
     data object Idle : AuthUiState
     data object Loading : AuthUiState
-    data class Error(val message: String) : AuthUiState
+    data class Error(val message: String, val restart_login: Boolean = false) : AuthUiState
     data object AccountSuspended : AuthUiState
     data object Success : AuthUiState
     data class TotpChallenge(val challenge: org.astermail.android.auth.TotpChallenge) : AuthUiState
@@ -100,20 +100,46 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun submit_totp(code: String, challenge: org.astermail.android.auth.TotpChallenge, trust_device: Boolean = false) {
+    fun submit_totp(
+        code: String,
+        challenge: org.astermail.android.auth.TotpChallenge,
+        trust_device: Boolean = false,
+        use_backup_code: Boolean = false,
+    ) {
         if (_ui_state.value == AuthUiState.Loading) return
         _ui_state.value = AuthUiState.Loading
         viewModelScope.launch(Dispatchers.IO) {
             val result = runCatching {
                 kotlinx.coroutines.withTimeout(25_000L) {
-                    repository.verify_totp(code, challenge, trust_device).getOrThrow()
+                    repository.verify_totp(code, challenge, trust_device, use_backup_code).getOrThrow()
                 }
             }
             _ui_state.value = result.fold(
                 onSuccess = { AuthUiState.Success },
-                onFailure = { failure_state(it) },
+                onFailure = { second_factor_failure_state(it, challenge) },
             )
         }
+    }
+
+    private fun second_factor_failure_state(
+        cause: Throwable,
+        challenge: org.astermail.android.auth.TotpChallenge,
+    ): AuthUiState {
+        if (is_pending_login_expired(cause) && !repository.is_signed_in.value) {
+            challenge.password_bytes.fill(0)
+            challenge.password_hash_bytes.fill(0)
+            return AuthUiState.Error(map_error(cause), restart_login = true)
+        }
+        return failure_state(cause)
+    }
+
+    private fun is_pending_login_expired(cause: Throwable): Boolean =
+        server_error_code(cause) == org.astermail.android.PENDING_LOGIN_EXPIRED_CODE
+
+    private fun server_error_code(cause: Throwable): String? = when (cause) {
+        is ApiError.ValidationError -> cause.code
+        is ApiError.ForbiddenError -> cause.code
+        else -> null
     }
 
     private fun failure_state(cause: Throwable): AuthUiState {

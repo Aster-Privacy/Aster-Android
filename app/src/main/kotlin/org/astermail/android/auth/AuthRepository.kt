@@ -326,15 +326,43 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun verify_totp(code: String, challenge: TotpChallenge, trust_device: Boolean): Result<Unit> = runCatching {
-        val outcome = auth_api.verify_totp_login(
-            TotpLoginVerifyRequest(
-                code = code,
-                pending_login_token = challenge.pending_login_token,
-                trust_device = trust_device,
-                remember_me = challenge.remember_me,
-            ),
+    suspend fun verify_totp(
+        code: String,
+        challenge: TotpChallenge,
+        trust_device: Boolean,
+        use_backup_code: Boolean = false,
+    ): Result<Unit> = runCatching {
+        val request = TotpLoginVerifyRequest(
+            code = code.trim(),
+            pending_login_token = challenge.pending_login_token,
+            trust_device = trust_device,
+            remember_me = challenge.remember_me,
+            device_label = login_device_label(),
         )
+        val outcome = if (use_backup_code) {
+            auth_api.verify_backup_code_login(request)
+        } else {
+            auth_api.verify_totp_login(request)
+        }
+        finish_second_factor_login(outcome, challenge, trust_device)
+    }
+
+    fun login_device_label(): String? {
+        val manufacturer = android.os.Build.MANUFACTURER.orEmpty().trim()
+        val model = android.os.Build.MODEL.orEmpty().trim()
+        val label = when {
+            model.isEmpty() -> manufacturer
+            manufacturer.isEmpty() || model.startsWith(manufacturer, ignoreCase = true) -> model
+            else -> "${manufacturer.replaceFirstChar { it.titlecase(Locale.ROOT) }} $model"
+        }
+        return label.take(64).takeIf { it.isNotBlank() }
+    }
+
+    private suspend fun finish_second_factor_login(
+        outcome: org.astermail.android.api.auth.TotpVerifyOutcome,
+        challenge: TotpChallenge,
+        trust_device: Boolean,
+    ) {
         if (trust_device) {
             outcome.trusted_device_token?.takeIf { it.isNotBlank() }?.let { token ->
                 trusted_device_store.put_token(challenge.email, token)
