@@ -177,9 +177,10 @@ class RatchetDecryptor @Inject constructor(
 
             var state = state_store.load(conversation_id)
             val state_loaded_locally = state != null
-            val replayed_bootstrap = is_fresh_bootstrap && state != null && runCatching {
+            val bootstrap_already_accepted = can_bootstrap && runCatching {
                 identity_pins.is_replayed_bootstrap(conversation_id, recipient.ephemeral_key.orEmpty())
             }.getOrDefault(false)
+            val replayed_bootstrap = is_fresh_bootstrap && state != null && bootstrap_already_accepted
             if (state != null && is_fresh_bootstrap && !replayed_bootstrap) {
                 state = null
             }
@@ -267,7 +268,9 @@ class RatchetDecryptor @Inject constructor(
                     envelope.sender_identity_key,
                 )
                 if (final_recovery != null) {
-                    record_identity_pin(conversation_id, sender_email, envelope.sender_identity_key)
+                    if (RatchetIdentityPinRules.records_identity(IdentitySighting.RECOVERY_LANE, bootstrap_already_accepted)) {
+                        record_identity_pin(conversation_id, sender_email, envelope.sender_identity_key)
+                    }
                     cache_plaintext(message_id, final_recovery)
                     return@with_lock final_recovery
                 }
@@ -275,8 +278,11 @@ class RatchetDecryptor @Inject constructor(
                 return@with_lock null
             }
 
-            record_identity_pin(conversation_id, sender_email, envelope.sender_identity_key, chained)
-            if (is_fresh_bootstrap) {
+            val sighting = if (chained) IdentitySighting.CHAINED else IdentitySighting.BOOTSTRAP
+            if (RatchetIdentityPinRules.records_identity(sighting, bootstrap_already_accepted)) {
+                record_identity_pin(conversation_id, sender_email, envelope.sender_identity_key, chained)
+            }
+            if (is_fresh_bootstrap || sighting == IdentitySighting.BOOTSTRAP) {
                 runCatching {
                     identity_pins.record_bootstrap(conversation_id, recipient.ephemeral_key.orEmpty())
                 }

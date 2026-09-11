@@ -113,6 +113,7 @@ class RatchetDecryptorTest {
         syncer: RatchetStateSyncer,
         auth_repo: AuthRepository,
         plaintext_cache: RatchetPlaintextCache = mockk(relaxed = true),
+        identity_pins: RatchetIdentityPinStore = mockk(relaxed = true),
     ): RatchetDecryptor = RatchetDecryptor(
         state_store,
         session_key_store,
@@ -120,9 +121,16 @@ class RatchetDecryptorTest {
         syncer,
         ConversationLocks(),
         dagger.Lazy { auth_repo },
-        mockk(relaxed = true),
+        identity_pins,
         plaintext_cache,
     )
+
+    private fun pin_store(replayed_bootstrap: Boolean = false): RatchetIdentityPinStore {
+        val identity_pins = mockk<RatchetIdentityPinStore>(relaxed = true)
+        coEvery { identity_pins.is_replayed_bootstrap(any(), any()) } returns replayed_bootstrap
+        coEvery { identity_pins.record(any(), any(), any(), any(), any()) } returns IdentityPinOutcome.UNCHANGED
+        return identity_pins
+    }
 
     private data class ReceiverKeys(
         val identity_jwk: String,
@@ -632,5 +640,178 @@ class RatchetDecryptorTest {
         decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_2")
 
         coVerify(exactly = 1) { plaintext_cache.put("msg_2", "durable body") }
+    }
+
+    @Test
+    fun `recovery lane decrypt never touches the identity pin`() = runTest {
+        val fixture = build_fixture()
+
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "first message")
+        val receiver_state = receiver_state_from(fixture)
+        assertEquals("first message", DoubleRatchet.decrypt(receiver_state, recipient_data_for(fixture, enc0)))
+
+        val stale_state = deep_copy(receiver_state)
+        val corrupt_kp = RatchetCrypto.generate_p256_keypair()
+        stale_state.dh_keypair = stale_state.dh_keypair.copy(
+            secret_key = RatchetCrypto.b64_encode(RatchetCrypto.private_to_raw_d(corrupt_kp.private_key)),
+        )
+
+        val reply_state = deep_copy(receiver_state)
+        val enc_reply = DoubleRatchet.encrypt(reply_state, "reply from kchaos")
+        DoubleRatchet.decrypt(fixture.sender_state, recipient_data_for(fixture, enc_reply))
+
+        val enc2 = DoubleRatchet.encrypt(fixture.sender_state, "third message")
+        val unrelated_identity = RatchetCrypto.generate_p256_keypair().public_raw
+        val body = envelope_json(
+            unrelated_identity,
+            recipient_data_for(fixture, enc2).copy(ephemeral_key = null, recovery = lane_for_sender(fixture, enc2, unrelated_identity)),
+        )
+
+        val state_store = mockk<RatchetStateStore>(relaxed = true)
+        coEvery { state_store.load(fixture.conversation_id) } returns stale_state
+        val syncer = mockk<RatchetStateSyncer>(relaxed = true)
+        coEvery { syncer.fetch_from_server(fixture.conversation_id) } returns null
+        val auth_repo = mockk<AuthRepository>(relaxed = true)
+        coEvery { auth_repo.try_refresh_vault_keys() } returns false
+        val identity_pins = pin_store()
+
+        val session_key_store = SessionKeyStore(null)
+        seed_session_key_store(session_key_store, fixture.receiver_keys)
+
+        val decryptor = new_decryptor(
+            state_store,
+            session_key_store,
+            mockk(relaxed = true),
+            syncer,
+            auth_repo,
+            identity_pins = identity_pins,
+        )
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)
+
+        assertEquals("third message", result)
+        coVerify(exactly = 0) { identity_pins.record(any(), any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `chained decrypt records the sender identity as confirmed`() = runTest {
+        val fixture = build_fixture()
+
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "first message")
+        val receiver_state = receiver_state_from(fixture)
+        assertEquals("first message", DoubleRatchet.decrypt(receiver_state, recipient_data_for(fixture, enc0)))
+
+        val enc1 = DoubleRatchet.encrypt(fixture.sender_state, "second message")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc1))
+
+        val state_store = mockk<RatchetStateStore>(relaxed = true)
+        coEvery { state_store.load(fixture.conversation_id) } returns receiver_state
+        val syncer = mockk<RatchetStateSyncer>(relaxed = true)
+        coEvery { syncer.sync(any(), any()) } returns true
+        val identity_pins = pin_store(replayed_bootstrap = true)
+
+        val session_key_store = SessionKeyStore(null)
+        seed_session_key_store(session_key_store, fixture.receiver_keys)
+
+        val decryptor = new_decryptor(
+            state_store,
+            session_key_store,
+            mockk(relaxed = true),
+            syncer,
+            mockk(relaxed = true),
+            identity_pins = identity_pins,
+        )
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)
+
+        assertEquals("second message", result)
+        val sender_identity_b64 = RatchetCrypto.b64_encode(fixture.sender_identity_raw)
+        coVerify(exactly = 1) {
+            identity_pins.record(fixture.conversation_id, sender_email, sender_identity_b64, any(), true)
+        }
+    }
+
+    @Test
+    fun `new bootstrap records the sender identity unconfirmed and remembers the ephemeral key`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "hello kchaos")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
+
+        val state_store = mockk<RatchetStateStore>(relaxed = true)
+        coEvery { state_store.load(any()) } returns null
+        val syncer = mockk<RatchetStateSyncer>(relaxed = true)
+        coEvery { syncer.fetch_from_server(any()) } returns null
+        coEvery { syncer.sync(any(), any()) } returns true
+        val identity_pins = pin_store()
+
+        val session_key_store = SessionKeyStore(null)
+        seed_session_key_store(session_key_store, fixture.receiver_keys)
+
+        val decryptor = new_decryptor(
+            state_store,
+            session_key_store,
+            mockk(relaxed = true),
+            syncer,
+            mockk(relaxed = true),
+            identity_pins = identity_pins,
+        )
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)
+
+        assertEquals("hello kchaos", result)
+        coVerify(exactly = 1) {
+            identity_pins.record(fixture.conversation_id, sender_email, any(), any(), false)
+        }
+        val ephemeral_b64 = RatchetCrypto.b64_encode(fixture.sender_ephemeral_raw)
+        coVerify(exactly = 1) { identity_pins.record_bootstrap(fixture.conversation_id, ephemeral_b64) }
+    }
+
+    @Test
+    fun `reopening an already accepted bootstrap does not flag the sender identity`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "hello kchaos")
+        val receiver_state = receiver_state_from(fixture)
+        assertEquals("hello kchaos", DoubleRatchet.decrypt(receiver_state, recipient_data_for(fixture, enc0)))
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
+
+        val state_store = mockk<RatchetStateStore>(relaxed = true)
+        coEvery { state_store.load(fixture.conversation_id) } returns receiver_state
+        val syncer = mockk<RatchetStateSyncer>(relaxed = true)
+        coEvery { syncer.sync(any(), any()) } returns true
+        val identity_pins = pin_store(replayed_bootstrap = true)
+
+        val session_key_store = SessionKeyStore(null)
+        seed_session_key_store(session_key_store, fixture.receiver_keys)
+
+        val decryptor = new_decryptor(
+            state_store,
+            session_key_store,
+            mockk(relaxed = true),
+            syncer,
+            mockk(relaxed = true),
+            identity_pins = identity_pins,
+        )
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)
+
+        assertEquals("hello kchaos", result)
+        coVerify(exactly = 0) { identity_pins.record(any(), any(), any(), any(), any()) }
+    }
+
+    private fun lane_for_sender(
+        fixture: Fixture,
+        enc: DoubleRatchet.EncryptResult,
+        sender_identity_raw: ByteArray,
+    ): RecoveryLaneData {
+        val sealed = RecoveryLane.seal(
+            RatchetCrypto.b64_encode(enc.message_key),
+            fixture.conversation_id,
+            RatchetCrypto.b64_encode(sender_identity_raw),
+            RecoveryLane.RecipientKeys(fixture.receiver_keys.identity_public_b64, null),
+        )
+        return RecoveryLaneData(
+            v = sealed.v,
+            epk = sealed.epk,
+            kem_ct = sealed.kem_ct,
+            ciphertext = sealed.ciphertext,
+            nonce = sealed.nonce,
+            rid = sealed.rid,
+        )
     }
 }

@@ -51,6 +51,24 @@ class RatchetIdentityPinRulesTest {
     }
 
     @Test
+    fun chained_decrypt_always_records_the_identity() {
+        assertTrue(RatchetIdentityPinRules.records_identity(IdentitySighting.CHAINED, bootstrap_already_accepted = false))
+        assertTrue(RatchetIdentityPinRules.records_identity(IdentitySighting.CHAINED, bootstrap_already_accepted = true))
+    }
+
+    @Test
+    fun bootstrap_records_the_identity_only_the_first_time() {
+        assertTrue(RatchetIdentityPinRules.records_identity(IdentitySighting.BOOTSTRAP, bootstrap_already_accepted = false))
+        assertFalse(RatchetIdentityPinRules.records_identity(IdentitySighting.BOOTSTRAP, bootstrap_already_accepted = true))
+    }
+
+    @Test
+    fun recovery_lane_never_records_the_identity() {
+        assertFalse(RatchetIdentityPinRules.records_identity(IdentitySighting.RECOVERY_LANE, bootstrap_already_accepted = false))
+        assertFalse(RatchetIdentityPinRules.records_identity(IdentitySighting.RECOVERY_LANE, bootstrap_already_accepted = true))
+    }
+
+    @Test
     fun unconsumed_pq_prekey_is_accepted() {
         assertTrue(RatchetIdentityPinRules.pq_prekey_accepts(null, "eph-1"))
         assertTrue(RatchetIdentityPinRules.pq_prekey_accepts("", "eph-1"))

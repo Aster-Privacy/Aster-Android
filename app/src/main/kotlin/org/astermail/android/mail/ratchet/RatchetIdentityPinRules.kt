@@ -28,9 +28,21 @@ enum class IdentityPinDecision {
     REPLACE,
 }
 
+enum class IdentitySighting {
+    CHAINED,
+    BOOTSTRAP,
+    RECOVERY_LANE,
+}
+
 object RatchetIdentityPinRules {
 
     private const val account_prefix = "acct/"
+
+    fun records_identity(sighting: IdentitySighting, bootstrap_already_accepted: Boolean): Boolean = when (sighting) {
+        IdentitySighting.CHAINED -> true
+        IdentitySighting.BOOTSTRAP -> !bootstrap_already_accepted
+        IdentitySighting.RECOVERY_LANE -> false
+    }
 
     fun decide(stored_fingerprint: String?, current_fingerprint: String, confirmed: Boolean): IdentityPinDecision = when {
         stored_fingerprint.isNullOrBlank() -> IdentityPinDecision.PIN_FIRST
