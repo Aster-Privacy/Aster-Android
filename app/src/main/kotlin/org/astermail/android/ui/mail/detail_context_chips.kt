@@ -106,6 +106,7 @@ import org.astermail.android.looks_encrypted
 import org.astermail.android.mail.InboxItem
 
 internal val detail_chip_text_size = 10.sp
+internal val detail_chip_line_height = 14.sp
 internal val detail_chip_icon_size = 10.dp
 internal val detail_chip_icon_gap = 3.dp
 internal val detail_chip_padding_h = 5.dp
@@ -221,6 +222,7 @@ internal fun detail_folder_chip(data: detail_folder_chip_data, modifier: Modifie
             text = data.name,
             color = content,
             fontSize = detail_chip_text_size,
+            lineHeight = detail_chip_line_height,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -263,6 +265,7 @@ internal fun detail_label_chip(tag: TagItem, modifier: Modifier = Modifier) {
             text = tag.encrypted_name,
             color = content,
             fontSize = detail_chip_text_size,
+            lineHeight = detail_chip_line_height,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -299,7 +302,7 @@ internal fun detail_subject_line(
     val base_style = LocalTextStyle.current
     val chip_text_style = remember(base_style) {
         base_style.merge(
-            TextStyle(fontSize = detail_chip_text_size, fontWeight = FontWeight.Medium),
+            TextStyle(fontSize = detail_chip_text_size, lineHeight = detail_chip_line_height, fontWeight = FontWeight.Medium),
         )
     }
     val chip_height = detail_inline_chip_height(measurer, chip_text_style, density)
