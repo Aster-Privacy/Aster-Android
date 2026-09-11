@@ -56,6 +56,7 @@ import org.astermail.android.api.preferences.PreferencesApi
 import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.api.settings.AliasInfo
 import org.astermail.android.api.settings.AliasListResponse
+import org.astermail.android.api.settings.TwinAddressResponse
 import org.astermail.android.api.settings.DeletedAliasInfo
 import org.astermail.android.api.settings.ListDeletedAliasesResponse
 import org.astermail.android.api.settings.BlockedSenderInfo
@@ -753,6 +754,55 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, vm.state.value.aliases.size)
+    }
+
+    @Test
+    fun `load_aliases settles its own loading flag while another load is still running`() = runTest {
+        val never = kotlinx.coroutines.CompletableDeferred<LabelsListResponse>()
+        coEvery { labels_api.list_labels(include_counts = any(), folder_type = any()) } coAnswers { never.await() }
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(emptyList())
+        every { session_key_store.get_identity_key() } returns null
+
+        vm.load_aliases()
+        advanceUntilIdle()
+        vm.load_labels(folder_type = "folder")
+        advanceUntilIdle()
+
+        assertTrue(vm.state.value.is_loading)
+        assertFalse(vm.state.value.aliases_loading)
+        assertTrue(vm.state.value.aliases.isEmpty())
+        never.cancel()
+    }
+
+    @Test
+    fun `load_aliases clears its loading flag when the request fails`() = runTest {
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } throws RuntimeException("offline")
+
+        vm.load_aliases()
+        advanceUntilIdle()
+
+        assertFalse(vm.state.value.aliases_loading)
+    }
+
+    @Test
+    fun `load_twin_address keeps a finished alias load settled`() = runTest {
+        val alias_gate = kotlinx.coroutines.CompletableDeferred<AliasListResponse>()
+        val twin_gate = kotlinx.coroutines.CompletableDeferred<TwinAddressResponse>()
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } coAnswers { alias_gate.await() }
+        coEvery { settings_api.get_twin_address() } coAnswers { twin_gate.await() }
+        every { session_key_store.get_identity_key() } returns null
+        vm.load_aliases()
+        vm.load_twin_address()
+        advanceUntilIdle()
+        assertTrue(vm.state.value.aliases_loading)
+        alias_gate.complete(AliasListResponse(emptyList()))
+        advanceUntilIdle()
+        assertFalse(vm.state.value.aliases_loading)
+        twin_gate.complete(TwinAddressResponse(address = "user@aster.cx", domain = "aster.cx", local_part = "user", state = "available"))
+        advanceUntilIdle()
+        assertFalse(vm.state.value.aliases_loading)
+        assertFalse(vm.state.value.is_loading)
+        assertEquals("user@aster.cx", vm.state.value.twin_address?.address)
     }
 
     private fun routing_hash_of(address: String): String =

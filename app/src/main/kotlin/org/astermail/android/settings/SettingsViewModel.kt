@@ -263,6 +263,7 @@ data class SettingsUiState(
     val badges: List<Badge> = emptyList(),
     val badge_preferences: org.astermail.android.api.user.BadgePreferences? = null,
     val is_loading: Boolean = false,
+    val aliases_loading: Boolean = false,
     val error: String? = null,
     val save_status: SaveStatus = SaveStatus.IDLE,
     val action_result: String? = null,
@@ -1245,7 +1246,7 @@ class SettingsViewModel @Inject constructor(
         if (!force && last_aliases_load_ms != 0L && now - last_aliases_load_ms < LIST_TTL_MS) return
         last_aliases_load_ms = now
         viewModelScope.launch {
-            _state.value = _state.value.copy(is_loading = true, error = null)
+            _state.value = _state.value.copy(is_loading = true, aliases_loading = true, error = null)
             try {
                 val page_size = 1000
                 val max_pages = 50
@@ -1294,12 +1295,14 @@ class SettingsViewModel @Inject constructor(
                     aliases = decrypted,
                     max_aliases = max_aliases,
                     is_loading = false,
+                    aliases_loading = false,
                 )
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 last_aliases_load_ms = 0L
                 _state.value = _state.value.copy(
                     is_loading = false,
+                    aliases_loading = false,
                     error = user_facing_error(t),
                 )
             }
@@ -2741,11 +2744,12 @@ class SettingsViewModel @Inject constructor(
     fun load_twin_address() {
         viewModelScope.launch {
             try {
-                _state.value = _state.value.copy(twin_address = settings_api.get_twin_address())
+                val twin_address = settings_api.get_twin_address()
+                _state.update { it.copy(twin_address = twin_address) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_twin_address", t)
-                _state.value = _state.value.copy(twin_address = null)
+                _state.update { it.copy(twin_address = null) }
             }
         }
     }

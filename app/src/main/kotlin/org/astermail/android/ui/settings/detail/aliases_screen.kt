@@ -445,7 +445,7 @@ private fun aliases_tab(
     var alias_filter by remember { mutableStateOf(AliasFilter.All) }
     var alias_domain_filter by remember { mutableStateOf<String?>(null) }
     var note_editing by remember { mutableStateOf<Pair<String, String>?>(null) }
-    val alias_load_settled = remember_load_settled(state.is_loading)
+    val alias_load_settled = remember_load_settled(state.aliases_loading)
     val always_expand_aliases = state.alias_preferences?.alias_always_expand == true
     val colors = AsterMaterial.colors
     val query = alias_query.trim()
@@ -631,7 +631,7 @@ private fun aliases_tab(
                 bottom = AsterSpacing.lg,
             ),
         ) {
-            if (state.aliases.isEmpty() && (state.is_loading || !alias_load_settled)) {
+            if (state.aliases.isEmpty() && (state.aliases_loading || !alias_load_settled)) {
                 item(key = "alias_loading") {
                     skeleton_card_list(rows = 5, leading_circle = true, trailing_width = 44.dp)
                 }
