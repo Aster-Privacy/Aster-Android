@@ -10,4 +10,5 @@
     <string name="domain_manage_catch_all_description">このドメインのすべてのアドレス宛のメールを受信します。</string>
     <string name="domain_manage_recheck">DNS レコードを再確認</string>
     <string name="domain_manage_rechecking">DNS レコードを確認中</string>
+    <string name="domain_purchase_search_rate_limited">検索回数が多すぎます。1分後にもう一度お試しください。</string>
 </resources>

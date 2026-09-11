@@ -40,6 +40,9 @@ import org.astermail.android.api.ApiError
 object DomainPurchaseConflict : Exception("domain conflict")
 object DomainPurchasePaused : Exception("domain purchases paused")
 
+const val RETRY_AFTER_SECS_KEY = "retry_after_secs"
+const val DOMAIN_SEARCH_RATE_LIMITED_CODE = "DOMAIN_SEARCH_RATE_LIMITED"
+
 @Serializable
 data class DomainSearchResult(
     val domain: String,
@@ -170,12 +173,20 @@ class DomainPurchaseApiImpl(private val client: ApiClient) : DomainPurchaseApi {
         }
     }
 
+    private fun with_retry_after(error: ApiError.RateLimited, header: String?): ApiError.RateLimited {
+        if (error.details.containsKey(RETRY_AFTER_SECS_KEY)) return error
+        val secs = header?.trim()?.toLongOrNull()?.takeIf { it > 0 } ?: return error
+        return error.copy(details = error.details + (RETRY_AFTER_SECS_KEY to secs.toString()))
+    }
+
     private suspend inline fun <reified T> decode_or_throw(response: HttpResponse): T {
         if (response.status.value !in 200..299) {
             val body = try { response.body<String>() } catch (_: Throwable) { "" }
             if (response.status.value == 409) throw DomainPurchaseConflict
             if (parse_server_code(body) == "SERVICE_UNAVAILABLE") throw DomainPurchasePaused
-            throw client.map_http_status(response.status.value, body)
+            val error = client.map_http_status(response.status.value, body)
+            if (error is ApiError.RateLimited) throw with_retry_after(error, response.headers["Retry-After"])
+            throw error
         }
         return try {
             response.body()

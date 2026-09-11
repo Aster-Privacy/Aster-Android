@@ -10,4 +10,5 @@
     <string name="domain_manage_catch_all_description">Получайте письма, отправленные на любой адрес в этом домене.</string>
     <string name="domain_manage_recheck">Проверить записи DNS еще раз</string>
     <string name="domain_manage_rechecking">Проверка записей DNS</string>
+    <string name="domain_purchase_search_rate_limited">Слишком много поисковых запросов. Повторите попытку через минуту.</string>
 </resources>

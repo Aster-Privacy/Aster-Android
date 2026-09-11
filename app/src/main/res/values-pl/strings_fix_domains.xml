@@ -10,4 +10,5 @@
     <string name="domain_manage_catch_all_description">Odbieraj wiadomości wysyłane na dowolny adres w tej domenie.</string>
     <string name="domain_manage_recheck">Sprawdź rekordy DNS ponownie</string>
     <string name="domain_manage_rechecking">Sprawdzanie rekordów DNS</string>
+    <string name="domain_purchase_search_rate_limited">Zbyt wiele wyszukiwań. Spróbuj ponownie za minutę.</string>
 </resources>

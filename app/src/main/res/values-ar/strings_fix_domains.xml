@@ -10,4 +10,5 @@
     <string name="domain_manage_catch_all_description">تسليم الرسائل المُرسلة إلى أي عنوان على هذا النطاق.</string>
     <string name="domain_manage_recheck">إعادة فحص سجلات DNS</string>
     <string name="domain_manage_rechecking">جارٍ فحص سجلات DNS</string>
+    <string name="domain_purchase_search_rate_limited">عمليات بحث كثيرة جدًا. حاول مرة أخرى بعد دقيقة.</string>
 </resources>

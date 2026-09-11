@@ -10,4 +10,5 @@
     <string name="domain_manage_catch_all_description">Ontvang berichten die naar elk adres op dit domein worden gestuurd.</string>
     <string name="domain_manage_recheck">DNS-records opnieuw controleren</string>
     <string name="domain_manage_rechecking">DNS-records worden gecontroleerd</string>
+    <string name="domain_purchase_search_rate_limited">Te veel zoekopdrachten. Probeer het over een minuut opnieuw.</string>
 </resources>

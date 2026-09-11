@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.astermail.android.api.ApiError
+import org.astermail.android.api.domains.DOMAIN_SEARCH_RATE_LIMITED_CODE
 import org.astermail.android.api.domains.DomainCheckoutRequest
 import org.astermail.android.api.domains.DomainOrder
 import org.astermail.android.api.domains.DomainOrderRenewRequest
@@ -43,6 +44,7 @@ import org.astermail.android.api.domains.DomainPurchaseApi
 import org.astermail.android.api.domains.DomainPurchaseConflict
 import org.astermail.android.api.domains.DomainPurchasePaused
 import org.astermail.android.api.domains.DomainSearchResult
+import org.astermail.android.api.domains.RETRY_AFTER_SECS_KEY
 
 enum class DomainPurchaseErrorKind { generic, taken, limit, slow_down, paused, not_allowed }
 
@@ -54,6 +56,15 @@ val domain_order_hidden_statuses = setOf("expired", "refunded", "failed", "cance
 fun is_domain_order_in_flight(status: String): Boolean =
     status !in domain_order_terminal_statuses && status != "pending_payment"
 
+private const val SHORT_RETRY_MAX_SECS = 2L
+
+fun domain_search_retry_after_secs(error: ApiError.RateLimited): Long? =
+    error.details[RETRY_AFTER_SECS_KEY]?.trim()?.toLongOrNull()?.takeIf { it > 0 }
+
+fun is_domain_search_throttled(error: ApiError.RateLimited): Boolean =
+    error.code == DOMAIN_SEARCH_RATE_LIMITED_CODE ||
+        (domain_search_retry_after_secs(error) ?: 0L) > SHORT_RETRY_MAX_SECS
+
 data class DomainPurchaseUiState(
     val query: String = "",
     val searching: Boolean = false,
@@ -64,6 +75,8 @@ data class DomainPurchaseUiState(
     val next_suggest_page: Int = 1,
     val loading_more_suggestions: Boolean = false,
     val search_failed: Boolean = false,
+    val search_rate_limited: Boolean = false,
+    val more_suggestions_rate_limited: Boolean = false,
     val selected: DomainSearchResult? = null,
     val years: Int = 1,
     val payment_method: String = "stripe",
@@ -98,7 +111,7 @@ class DomainPurchaseViewModel @Inject constructor(
 
     fun set_query(raw: String) {
         val query = raw.lowercase(java.util.Locale.ROOT).trimStart()
-        _state.update { it.copy(query = query, search_failed = false) }
+        _state.update { it.copy(query = query, search_failed = false, search_rate_limited = false) }
         search_job?.cancel()
         val trimmed = query.trim()
         if (trimmed.length < MIN_QUERY_LENGTH) {
@@ -125,11 +138,11 @@ class DomainPurchaseViewModel @Inject constructor(
         val trimmed = _state.value.query.trim()
         if (trimmed.length < MIN_QUERY_LENGTH) return
         search_job?.cancel()
-        _state.update { it.copy(searching = true, search_failed = false) }
+        _state.update { it.copy(searching = true, search_failed = false, search_rate_limited = false) }
         search_job = viewModelScope.launch { run_search(trimmed) }
     }
 
-    private suspend fun run_search(trimmed: String) {
+    private suspend fun run_search(trimmed: String, retried: Boolean = false) {
         try {
             val response = purchase_api.search(trimmed)
             if (_state.value.query.trim() != trimmed) return
@@ -142,6 +155,8 @@ class DomainPurchaseViewModel @Inject constructor(
                     has_more_suggestions = response.has_more_suggestions,
                     next_suggest_page = response.next_suggest_page,
                     search_failed = false,
+                    search_rate_limited = false,
+                    more_suggestions_rate_limited = false,
                 )
             }
         } catch (t: CancellationException) {
@@ -149,37 +164,80 @@ class DomainPurchaseViewModel @Inject constructor(
         } catch (t: Throwable) {
             if (_state.value.query.trim() != trimmed) return
             if (t is ApiError.RateLimited) {
-                delay(RATE_LIMIT_RETRY_MS)
-                if (_state.value.query.trim() == trimmed) run_search(trimmed)
+                handle_search_rate_limited(trimmed, t, retried)
                 return
             }
-            _state.update { it.copy(searching = false, search_failed = true) }
+            _state.update { it.copy(searching = false, search_failed = true, search_rate_limited = false) }
         }
+    }
+
+    private suspend fun handle_search_rate_limited(trimmed: String, error: ApiError.RateLimited, retried: Boolean) {
+        if (!retried && !is_domain_search_throttled(error)) {
+            delay(short_retry_delay_ms(error))
+            if (_state.value.query.trim() == trimmed) run_search(trimmed, retried = true)
+            return
+        }
+        _state.update { it.copy(searching = false, search_failed = false, search_rate_limited = true) }
+        if (retried) return
+        delay(throttled_retry_delay_ms(error))
+        if (_state.value.query.trim() != trimmed) return
+        _state.update { it.copy(searching = true, search_rate_limited = false) }
+        run_search(trimmed, retried = true)
     }
 
     fun load_more_suggestions() {
         val current = _state.value
         if (current.loading_more_suggestions || current.searched_query.isBlank()) return
-        _state.update { it.copy(loading_more_suggestions = true) }
+        _state.update { it.copy(loading_more_suggestions = true, more_suggestions_rate_limited = false) }
         viewModelScope.launch {
-            try {
-                val response = purchase_api.search(current.searched_query, current.next_suggest_page)
-                _state.update {
-                    val seen = it.suggestions.map { s -> s.domain }.toSet()
-                    it.copy(
-                        loading_more_suggestions = false,
-                        suggestions = it.suggestions + response.suggestions.filter { s -> s.domain !in seen },
-                        has_more_suggestions = response.has_more_suggestions,
-                        next_suggest_page = response.next_suggest_page,
-                    )
-                }
-            } catch (t: CancellationException) {
-                throw t
-            } catch (_: Throwable) {
+            fetch_more_suggestions(current.searched_query, current.next_suggest_page)
+        }
+    }
+
+    private suspend fun fetch_more_suggestions(query: String, page: Int, retried: Boolean = false) {
+        try {
+            val response = purchase_api.search(query, page)
+            if (_state.value.searched_query != query) {
                 _state.update { it.copy(loading_more_suggestions = false) }
+                return
+            }
+            _state.update {
+                val seen = it.suggestions.map { s -> s.domain }.toSet()
+                it.copy(
+                    loading_more_suggestions = false,
+                    suggestions = it.suggestions + response.suggestions.filter { s -> s.domain !in seen },
+                    has_more_suggestions = response.has_more_suggestions,
+                    next_suggest_page = response.next_suggest_page,
+                    more_suggestions_rate_limited = false,
+                )
+            }
+        } catch (t: CancellationException) {
+            throw t
+        } catch (t: Throwable) {
+            if (t is ApiError.RateLimited && !retried && !is_domain_search_throttled(t)) {
+                delay(short_retry_delay_ms(t))
+                if (_state.value.searched_query == query) {
+                    fetch_more_suggestions(query, page, retried = true)
+                } else {
+                    _state.update { it.copy(loading_more_suggestions = false) }
+                }
+                return
+            }
+            _state.update {
+                it.copy(
+                    loading_more_suggestions = false,
+                    more_suggestions_rate_limited = t is ApiError.RateLimited && it.searched_query == query,
+                )
             }
         }
     }
+
+    private fun short_retry_delay_ms(error: ApiError.RateLimited): Long =
+        maxOf(RATE_LIMIT_RETRY_MS, (domain_search_retry_after_secs(error) ?: 0L) * 1_000L)
+
+    private fun throttled_retry_delay_ms(error: ApiError.RateLimited): Long =
+        (domain_search_retry_after_secs(error) ?: DEFAULT_THROTTLE_RETRY_SECS)
+            .coerceIn(1L, MAX_THROTTLE_RETRY_SECS) * 1_000L
 
     fun select_result(result: DomainSearchResult) {
         _state.update { it.copy(selected = result, years = 1, checkout_error = null) }
@@ -420,6 +478,8 @@ class DomainPurchaseViewModel @Inject constructor(
         private const val MIN_QUERY_LENGTH = 3
         private const val SEARCH_DEBOUNCE_MS = 800L
         private const val RATE_LIMIT_RETRY_MS = 1_100L
+        private const val DEFAULT_THROTTLE_RETRY_SECS = 60L
+        private const val MAX_THROTTLE_RETRY_SECS = 300L
         private const val ORDER_POLL_INTERVAL_MS = 5_000L
         private const val MAX_POLL_FAILURES = 3
     }

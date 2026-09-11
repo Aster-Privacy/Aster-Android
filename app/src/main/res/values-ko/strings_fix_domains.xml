@@ -10,4 +10,5 @@
     <string name="domain_manage_catch_all_description">이 도메인의 모든 주소로 보낸 메일을 받습니다.</string>
     <string name="domain_manage_recheck">DNS 레코드 다시 확인</string>
     <string name="domain_manage_rechecking">DNS 레코드 확인 중</string>
+    <string name="domain_purchase_search_rate_limited">검색 횟수가 너무 많습니다. 1분 후에 다시 시도하세요.</string>
 </resources>

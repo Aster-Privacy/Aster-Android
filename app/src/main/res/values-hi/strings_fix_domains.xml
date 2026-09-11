@@ -10,4 +10,5 @@
     <string name="domain_manage_catch_all_description">इस डोमेन के किसी भी पते पर भेजी गई मेल पहुंचाएं।</string>
     <string name="domain_manage_recheck">DNS रिकॉर्ड दोबारा जांचें</string>
     <string name="domain_manage_rechecking">DNS रिकॉर्ड जांचे जा रहे हैं</string>
+    <string name="domain_purchase_search_rate_limited">बहुत ज़्यादा खोजें की गई हैं। एक मिनट बाद फिर से कोशिश करें।</string>
 </resources>

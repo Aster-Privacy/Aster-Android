@@ -10,4 +10,5 @@
     <string name="domain_manage_catch_all_description">Bu alan adındaki herhangi bir adrese gönderilen postaları alın.</string>
     <string name="domain_manage_recheck">DNS kayıtlarını yeniden denetle</string>
     <string name="domain_manage_rechecking">DNS kayıtları denetleniyor</string>
+    <string name="domain_purchase_search_rate_limited">Çok fazla arama yapıldı. Bir dakika sonra yeniden deneyin.</string>
 </resources>

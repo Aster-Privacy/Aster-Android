@@ -10,4 +10,5 @@
     <string name="domain_manage_catch_all_description">接收发送到此域名下任意地址的邮件。</string>
     <string name="domain_manage_recheck">重新检查 DNS 记录</string>
     <string name="domain_manage_rechecking">正在检查 DNS 记录</string>
+    <string name="domain_purchase_search_rate_limited">搜索次数过多。请一分钟后重试。</string>
 </resources>

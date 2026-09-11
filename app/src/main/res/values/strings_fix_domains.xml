@@ -10,4 +10,5 @@
     <string name="domain_manage_catch_all_description">Deliver mail sent to any address at this domain.</string>
     <string name="domain_manage_recheck">Recheck DNS records</string>
     <string name="domain_manage_rechecking">Checking DNS records</string>
+    <string name="domain_purchase_search_rate_limited">Too many searches. Try again in a minute.</string>
 </resources>

@@ -180,6 +180,9 @@ private fun purchase_search_content(vm: DomainPurchaseViewModel, state: DomainPu
     v_gap(AsterSpacing.md)
 
     when {
+        state.search_rate_limited -> {
+            error_banner(stringResource(R.string.domain_purchase_search_rate_limited))
+        }
         state.search_failed -> {
             error_banner(stringResource(R.string.domain_purchase_search_failed))
             v_gap(AsterSpacing.sm)
@@ -265,6 +268,14 @@ private fun search_results_list(vm: DomainPurchaseViewModel, state: DomainPurcha
                     )
                 }
             }
+        }
+        if (state.more_suggestions_rate_limited) {
+            v_gap(AsterSpacing.xs)
+            Text(
+                text = stringResource(R.string.domain_purchase_search_rate_limited),
+                color = colors.danger,
+                fontSize = 13.sp,
+            )
         }
     }
 }
