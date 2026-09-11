@@ -32,9 +32,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -46,8 +46,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
@@ -312,6 +317,11 @@ internal fun chain_drawable_for(chain: String): Int =
         else -> R.drawable.ic_coin_generic
     }
 
+private const val BADGE_CENTER_FRACTION = 0.75f
+private const val BADGE_CUTOUT_FRACTION = 0.25f
+private const val BADGE_ORIGIN_FRACTION = 0.545f
+private const val BADGE_SIZE_FRACTION = 0.41f
+
 @Composable
 internal fun coin_mark(
     currency: String,
@@ -320,32 +330,40 @@ internal fun coin_mark(
     size: Dp = 24.dp,
     modifier: Modifier = Modifier,
     show_chain: Boolean = true,
-    ring_color: Color = AsterMaterial.colors.bg_tertiary,
 ) {
     val coin = coin_drawable_for(currency, chain)
     val chain_mark = chain_drawable_for(chain)
-    Box(modifier = modifier.size(size), contentAlignment = Alignment.BottomEnd) {
+    val show_badge = show_chain && chain_mark != coin && chain_mark != R.drawable.ic_coin_generic
+    Box(modifier = modifier.size(size)) {
         Image(
             painter = painterResource(coin),
             contentDescription = label,
-            modifier = Modifier.size(size),
+            modifier = Modifier
+                .size(size)
+                .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+                .drawWithContent {
+                    drawContent()
+                    if (show_badge) {
+                        drawCircle(
+                            color = Color.Black,
+                            radius = this.size.minDimension * BADGE_CUTOUT_FRACTION,
+                            center = Offset(
+                                this.size.width * BADGE_CENTER_FRACTION,
+                                this.size.height * BADGE_CENTER_FRACTION,
+                            ),
+                            blendMode = BlendMode.Clear,
+                        )
+                    }
+                },
         )
-        if (show_chain && chain_mark != coin) {
-            Box(
+        if (show_badge) {
+            Image(
+                painter = painterResource(chain_mark),
+                contentDescription = null,
                 modifier = Modifier
-                    .size(size * 0.5f)
-                    .clip(CircleShape)
-                    .background(ring_color)
-                    .padding(2.dp),
-            ) {
-                Image(
-                    painter = painterResource(chain_mark),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape),
-                )
-            }
+                    .offset(x = size * BADGE_ORIGIN_FRACTION, y = size * BADGE_ORIGIN_FRACTION)
+                    .size(size * BADGE_SIZE_FRACTION),
+            )
         }
     }
 }

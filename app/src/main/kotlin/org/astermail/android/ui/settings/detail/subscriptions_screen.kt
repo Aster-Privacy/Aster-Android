@@ -1638,7 +1638,6 @@ private fun crypto_coin_dialog(
                             chain = coin.chain,
                             label = coin.display_name,
                             size = 26.dp,
-                            ring_color = colors.bg_secondary,
                         )
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
