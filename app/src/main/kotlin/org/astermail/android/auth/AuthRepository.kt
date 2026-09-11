@@ -132,6 +132,10 @@ class AuthRepository @Inject constructor(
 
     private val _is_signed_in = MutableStateFlow(token_store.access_token != null)
     val is_signed_in: StateFlow<Boolean> = _is_signed_in.asStateFlow()
+    private val _active_account_id = MutableStateFlow(
+        if (token_store.access_token != null) account_store.get_current_id() else null,
+    )
+    val active_account_id: StateFlow<String?> = _active_account_id.asStateFlow()
 
     private val _session_expired = MutableStateFlow(false)
     val session_expired: StateFlow<Boolean> = _session_expired.asStateFlow()
@@ -480,6 +484,7 @@ class AuthRepository @Inject constructor(
                 ),
             )
             runCatching { save_session_snapshot(login_resp.user_id) }
+            _active_account_id.value = login_resp.user_id
             _is_signed_in.value = true
             _session_expired.value = false
         }
@@ -672,6 +677,7 @@ class AuthRepository @Inject constructor(
             ),
         )
         save_session_snapshot(register_resp.user_id)
+        _active_account_id.value = register_resp.user_id
         _is_signed_in.value = true
         _session_expired.value = false
         runCatching { UnifiedPushState.clear_backend_registration(context) }
@@ -733,6 +739,7 @@ class AuthRepository @Inject constructor(
             loader.memoryCache?.clear()
             loader.diskCache?.clear()
         }
+        _active_account_id.value = account_id
         _is_signed_in.value = true
         _session_expired.value = false
         background_scope.launch { runCatching { ensure_csrf_ready() } }
@@ -923,6 +930,7 @@ class AuthRepository @Inject constructor(
             sign_out_internal(remove_account = true)
             if (!_is_signed_in.value) break
         }
+        _active_account_id.value = null
         _is_signed_in.value = false
     }
 
@@ -985,6 +993,7 @@ class AuthRepository @Inject constructor(
             val restored = runCatching { try_restore_session(next_account.id) }.getOrDefault(false)
             if (restored) return@runCatching
         }
+        _active_account_id.value = null
         _is_signed_in.value = false
     }
 
@@ -1282,6 +1291,7 @@ class AuthRepository @Inject constructor(
             account_store.set_current(next_account.id)
             if (try_restore_session(next_account.id)) return@runCatching
         }
+        _active_account_id.value = null
         _is_signed_in.value = false
     }
 

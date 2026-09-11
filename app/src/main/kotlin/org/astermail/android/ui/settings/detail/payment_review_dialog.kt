@@ -22,10 +22,13 @@
 package org.astermail.android.ui.settings.detail
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,6 +36,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,6 +69,12 @@ import org.astermail.android.design.components.AsterDialogPrimaryButton
 
 internal const val payment_method_card = "card"
 internal const val payment_method_crypto = "crypto"
+
+internal data class review_offer_price(
+    val original: String,
+    val discounted: String,
+    val badge: String,
+)
 
 private const val review_feature_preview = 5
 
@@ -172,12 +183,103 @@ private fun checkout_abandon_dialog(
 }
 
 @Composable
+internal fun offer_save_badge(
+    text: String,
+    modifier: Modifier = Modifier,
+    outlined: Boolean = false,
+) {
+    val colors = AsterMaterial.colors
+    Box(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(colors.accent_blue)
+            .then(if (outlined) Modifier.border(1.dp, colors.on_accent, CircleShape) else Modifier)
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+    ) {
+        Text(
+            text = text,
+            color = colors.on_accent,
+            fontSize = 11.sp,
+            lineHeight = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun offer_price_line(offer: review_offer_price, on_accent: Boolean = false) {
+    val colors = AsterMaterial.colors
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+        verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
+    ) {
+        Text(
+            text = offer.original,
+            color = if (on_accent) colors.on_accent else colors.text_tertiary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            textDecoration = TextDecoration.LineThrough,
+            modifier = Modifier.align(Alignment.CenterVertically),
+        )
+        Text(
+            text = offer.discounted,
+            color = if (on_accent) colors.on_accent else colors.text_primary,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.align(Alignment.CenterVertically),
+        )
+        offer_save_badge(
+            text = offer.badge,
+            outlined = on_accent,
+            modifier = Modifier.align(Alignment.CenterVertically),
+        )
+    }
+}
+
+@Composable
+private fun offer_amount_row(offer: review_offer_price) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(R.string.checkout_amount_due),
+            color = colors.text_primary,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(AsterSpacing.sm))
+        Text(
+            text = offer.original,
+            color = colors.text_tertiary,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            textDecoration = TextDecoration.LineThrough,
+            maxLines = 1,
+        )
+        Spacer(Modifier.width(AsterSpacing.sm))
+        Text(
+            text = offer.discounted,
+            color = colors.text_primary,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
 private fun review_method_tile(
     active: Boolean,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     note: String,
     on_click: () -> Unit,
+    offer: review_offer_price? = null,
     marks: @Composable () -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -217,6 +319,10 @@ private fun review_method_tile(
                 }
             }
         }
+        if (offer != null) {
+            Spacer(Modifier.height(AsterSpacing.sm))
+            offer_price_line(offer)
+        }
         Spacer(Modifier.height(AsterSpacing.sm))
         marks()
         Spacer(Modifier.height(AsterSpacing.sm))
@@ -236,6 +342,7 @@ internal fun payment_review_dialog(
     features: List<Int>,
     is_busy: Boolean,
     initial_method: String = payment_method_card,
+    offer: review_offer_price? = null,
     on_dismiss: () -> Unit,
     on_confirm: (String) -> Unit,
 ) {
@@ -289,6 +396,10 @@ internal fun payment_review_dialog(
                                 Spacer(Modifier.width(AsterSpacing.sm))
                                 galaxy_badge(text = stringResource(R.string.checkout_best_value))
                             }
+                            if (offer != null) {
+                                Spacer(Modifier.width(AsterSpacing.sm))
+                                offer_save_badge(text = offer.badge)
+                            }
                         }
                         if (!interval_label.isNullOrBlank()) {
                             Spacer(Modifier.height(2.dp))
@@ -316,12 +427,16 @@ internal fun payment_review_dialog(
                             Spacer(Modifier.height(AsterSpacing.xs))
                         }
                         Spacer(Modifier.height(AsterSpacing.xs))
-                        summary_row(
-                            label = stringResource(R.string.checkout_amount_due),
-                            value = amount_text,
-                            value_color = colors.text_primary,
-                            emphasized = true,
-                        )
+                        if (offer != null) {
+                            offer_amount_row(offer)
+                        } else {
+                            summary_row(
+                                label = stringResource(R.string.checkout_amount_due),
+                                value = amount_text,
+                                value_color = colors.text_primary,
+                                emphasized = true,
+                            )
+                        }
                         Spacer(Modifier.height(AsterSpacing.sm))
                         Text(
                             text = stringResource(R.string.checkout_money_back),
@@ -346,6 +461,7 @@ internal fun payment_review_dialog(
                         method = payment_method_card
                         touched = true
                     },
+                    offer = offer,
                     marks = { card_brand_marks() },
                 )
                 review_method_tile(
@@ -357,6 +473,7 @@ internal fun payment_review_dialog(
                         method = payment_method_crypto
                         touched = true
                     },
+                    offer = offer,
                     marks = { coin_stack() },
                 )
                 security_marks(label = stringResource(R.string.checkout_stripe_secure))
