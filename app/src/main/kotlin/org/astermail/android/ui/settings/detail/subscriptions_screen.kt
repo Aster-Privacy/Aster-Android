@@ -371,6 +371,9 @@ fun SubscriptionsScreen(
         today = java.time.LocalDate.now().toString(),
     )
     val current_code = sub?.plan?.code ?: plan_code_of(sub?.effective_plan_name)
+    LaunchedEffect(current_code) {
+        offer_vm.on_plan_code(current_code)
+    }
     val storage_overview = state.storage
     val recommendation = compute_plan_recommendation(
         current_plan_code = current_code,

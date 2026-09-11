@@ -102,6 +102,7 @@ class SpecialOfferViewModel @Inject constructor(
     private var account_id: String? = null
     private var generation = 0L
     private var load_succeeded = false
+    private var last_plan_code: String? = null
     private var load_job: Job? = null
     private var account_job = SupervisorJob(viewModelScope.coroutineContext[Job])
 
@@ -119,6 +120,7 @@ class SpecialOfferViewModel @Inject constructor(
         account_job = SupervisorJob(viewModelScope.coroutineContext[Job])
         load_job = null
         load_succeeded = false
+        last_plan_code = null
         _state.value = SpecialOfferState()
         if (id != null) fetch()
     }
@@ -128,6 +130,14 @@ class SpecialOfferViewModel @Inject constructor(
 
     fun retry_load() {
         if (account_id == null || load_succeeded || load_job?.isActive == true) return
+        fetch()
+    }
+
+    fun on_plan_code(plan_code: String?) {
+        val previous = last_plan_code
+        if (plan_code != null) last_plan_code = plan_code
+        if (account_id == null || previous == null || plan_code == null || previous == plan_code) return
+        load_job?.cancel()
         fetch()
     }
 
