@@ -31,6 +31,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 import org.astermail.android.util.clip_units
+import org.astermail.android.mail.thread_card_preview
 
 data class Email(
     val id: String,
@@ -365,6 +366,7 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         is_encrypted = msg.is_encrypted,
         trackers_blocked = 0,
         is_read = msg.is_read,
+        preview = thread_card_preview(html, display_body).clip_units(80),
         raw_headers = msg.raw_headers,
         is_undecryptable = msg.is_undecryptable,
         display_sender_name = msg.display_sender_name,

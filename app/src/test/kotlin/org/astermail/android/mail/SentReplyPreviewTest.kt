@@ -65,4 +65,27 @@ class SentReplyPreviewTest {
             clean_body_preview("", "<div>Just a plain note with no quoting at all.</div>"),
         )
     }
+
+    @Test
+    fun a_reply_thread_card_shows_only_my_own_text() {
+        val preview = thread_card_preview(reply_body, "Thanks for getting back to me From: Lifetime Labs")
+
+        assertTrue(preview, preview.startsWith("Thanks for getting back to me"))
+        assertFalse(preview, preview.contains("From:"))
+        assertFalse(preview, preview.contains("all great questions"))
+    }
+
+    @Test
+    fun a_thread_card_without_html_keeps_the_plain_body() {
+        assertEquals("Plain text body", thread_card_preview(null, "Plain text body"))
+    }
+
+    @Test
+    fun a_forward_thread_card_still_shows_the_quoted_body() {
+        val forward_only =
+            "<div class=\"aster_quote gmail_quote\"><blockquote class=\"gmail_quote\">" +
+                quoted_original + "</blockquote></div>"
+
+        assertEquals("fallback body", thread_card_preview(forward_only, "fallback body"))
+    }
 }

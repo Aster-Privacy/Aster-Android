@@ -227,6 +227,14 @@ fun strip_quoted_html(html: String): String {
     return html.substring(0, match.range.first)
 }
 
+fun thread_card_preview(body_html: String?, display_body: String): String {
+    if (body_html != null && !looks_like_ciphertext(body_html)) {
+        val unquoted = strip_body_html(strip_quoted_html(body_html))
+        if (unquoted.length > 4) return unquoted
+    }
+    return display_body
+}
+
 fun clean_body_preview(body_text: String, body_html: String?): String {
     if (body_html != null && !looks_like_ciphertext(body_html)) {
         val preheader = extract_preheader_text(body_html)
