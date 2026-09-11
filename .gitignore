@@ -34,6 +34,7 @@ _ui*.xml
 /app/google-services.json
 /scripts/*
 !/scripts/release.sh
+!/scripts/build_fdroid_in_container.sh
 !/scripts/README_release.md
 /.test_artifacts/
 /test_screenshots/
@@ -45,3 +46,9 @@ _ui*.xml
 /.tmp/
 /BUGS.md
 /.claude/
+
+/*TESTLIST*
+/*BUG_BATCH*
+/*_20[0-9][0-9]_[0-9][0-9]_[0-9][0-9]*
+/*_NOTES*.md
+/*_PLAN*.md
