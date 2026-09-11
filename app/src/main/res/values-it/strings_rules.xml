@@ -39,7 +39,7 @@
     <string name="rules_category_newsletters">Newsletter</string>
     <string name="rules_category_social">Social</string>
     <string name="rules_category_updates">Notifiche</string>
-    <string name="rules_category_transactions">Acquisti</string>
+    <string name="rules_category_transactions">Ricevute</string>
     <string name="rules_category_forums">Discussioni</string>
 
     <string name="rules_no_labels">Nessuna etichetta</string>
@@ -62,16 +62,16 @@
     <string name="rules_category_shopping">Acquisti</string>
     <string name="categories_title">Categorie</string>
     <string name="categories_description">Scegli quali schede di categoria appaiono nella posta in arrivo e creane di tue. Tutto lo smistamento avviene sul tuo dispositivo.</string>
-    <string name="category_info_primary">Tutto ciò che non rientra in un\'altra categoria. Sempre attiva.</string>
-    <string name="category_info_promotions">Email pubblicitarie, offerte e promozioni.</string>
+    <string name="category_info_primary">Tutto ciò che non corrisponde a un\'altra categoria. Sempre attiva.</string>
+    <string name="category_info_promotions">Email di marketing, offerte e sconti.</string>
     <string name="category_info_newsletters">Newsletter e mailing list a cui ti sei iscritto.</string>
     <string name="category_info_social">Notifiche da social network e community.</string>
-    <string name="category_info_updates">Ricevute, conferme e avvisi automatici.</string>
+    <string name="category_info_updates">Ricevute, conferme e notifiche di servizio.</string>
     <string name="category_info_transactions">Ordini, pagamenti e ricevute di negozi e servizi.</string>
-    <string name="category_info_forums">Mailing list e gruppi di discussione.</string>
-    <string name="category_info_finance">Banca, fatture, pagamenti e investimenti.</string>
-    <string name="category_info_travel">Prenotazioni, carte d\'imbarco e itinerari.</string>
-    <string name="category_info_shopping">Conferme d\'ordine e avvisi di spedizione.</string>
+    <string name="category_info_forums">Messaggi da mailing list, forum e gruppi di discussione.</string>
+    <string name="category_info_finance">Estratti conto, fatture e avvisi da banche e servizi finanziari.</string>
+    <string name="category_info_travel">Prenotazioni, itinerari e conferme da compagnie aeree, hotel e servizi di trasporto.</string>
+    <string name="category_info_shopping">Conferme d\'ordine, aggiornamenti di spedizione e avvisi di consegna.</string>
     <string name="custom_categories_title">Categorie personali</string>
     <string name="custom_categories_tutorial">Come funzionano le categorie personali</string>
     <string name="custom_category_locked_badge">A pagamento</string>

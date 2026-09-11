@@ -39,7 +39,7 @@
     <string name="rules_category_newsletters">Рассылки</string>
     <string name="rules_category_social">Соцсети</string>
     <string name="rules_category_updates">Уведомления</string>
-    <string name="rules_category_transactions">Покупки</string>
+    <string name="rules_category_transactions">Чеки</string>
     <string name="rules_category_forums">Обсуждения</string>
 
     <string name="rules_no_labels">Меток пока нет</string>
@@ -62,16 +62,16 @@
     <string name="rules_category_shopping">Покупки</string>
     <string name="categories_title">Категории</string>
     <string name="categories_description">Выберите, какие вкладки категорий показывать во входящих, и создайте свои. Вся сортировка идёт на вашем устройстве.</string>
-    <string name="category_info_primary">Всё, что не попало в другие категории. Всегда включена.</string>
-    <string name="category_info_promotions">Рекламные письма, акции и скидки.</string>
+    <string name="category_info_primary">Все, что не подходит под другую категорию. Всегда включена.</string>
+    <string name="category_info_promotions">Маркетинговые письма, предложения и акции.</string>
     <string name="category_info_newsletters">Рассылки и списки рассылки, на которые вы подписались.</string>
-    <string name="category_info_social">Уведомления из соцсетей и сообществ.</string>
-    <string name="category_info_updates">Чеки, подтверждения и автоматические уведомления.</string>
+    <string name="category_info_social">Уведомления из социальных сетей и сообществ.</string>
+    <string name="category_info_updates">Чеки, подтверждения и сервисные уведомления.</string>
     <string name="category_info_transactions">Заказы, платежи и чеки от магазинов и сервисов.</string>
-    <string name="category_info_forums">Рассылки и группы обсуждений.</string>
-    <string name="category_info_finance">Банк, счета, платежи и инвестиции.</string>
-    <string name="category_info_travel">Бронирования, посадочные талоны и маршруты.</string>
-    <string name="category_info_shopping">Подтверждения заказов и уведомления о доставке.</string>
+    <string name="category_info_forums">Сообщения из рассылок, форумов и групп обсуждений.</string>
+    <string name="category_info_finance">Выписки, счета и уведомления от банков и финансовых сервисов.</string>
+    <string name="category_info_travel">Бронирования, маршруты и подтверждения от авиакомпаний, отелей и служб такси.</string>
+    <string name="category_info_shopping">Подтверждения заказов, обновления доставки и уведомления о вручении.</string>
     <string name="custom_categories_title">Свои категории</string>
     <string name="custom_categories_tutorial">Как работают свои категории</string>
     <string name="custom_category_locked_badge">Платно</string>

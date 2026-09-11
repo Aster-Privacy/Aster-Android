@@ -62,7 +62,7 @@
     <string name="rules_snooze_current">Current: %1$s</string>
     <string name="categories_title">Categories</string>
     <string name="categories_description">Choose which category tabs appear in your inbox and create your own. All sorting happens locally on your device.</string>
-    <string name="category_info_primary">Everything that does not match another category. Always on.</string>
+    <string name="category_info_primary">Everything that doesn\'t match another category. Always on.</string>
     <string name="category_info_promotions">Marketing emails, offers, and deals.</string>
     <string name="category_info_newsletters">Digests and mailing lists you subscribed to.</string>
     <string name="category_info_social">Notifications from social networks and communities.</string>

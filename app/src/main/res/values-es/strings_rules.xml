@@ -39,7 +39,7 @@
     <string name="rules_category_newsletters">Boletines</string>
     <string name="rules_category_social">Social</string>
     <string name="rules_category_updates">Notificaciones</string>
-    <string name="rules_category_transactions">Compras</string>
+    <string name="rules_category_transactions">Recibos</string>
     <string name="rules_category_forums">Debates</string>
 
     <string name="rules_no_labels">Aún no hay etiquetas</string>
@@ -62,16 +62,16 @@
     <string name="rules_category_shopping">Compras</string>
     <string name="categories_title">Categorías</string>
     <string name="categories_description">Elige qué pestañas de categoría aparecen en tu bandeja y crea las tuyas. Todo el orden se calcula en tu dispositivo.</string>
-    <string name="category_info_primary">Todo lo que no encaja en otra categoría. Siempre activa.</string>
+    <string name="category_info_primary">Todo lo que no coincide con otra categoría. Siempre activa.</string>
     <string name="category_info_promotions">Correos de marketing, ofertas y promociones.</string>
     <string name="category_info_newsletters">Boletines y listas de correo a los que te suscribiste.</string>
-    <string name="category_info_social">Avisos de redes sociales y comunidades.</string>
-    <string name="category_info_updates">Recibos, confirmaciones y avisos automáticos.</string>
+    <string name="category_info_social">Notificaciones de redes sociales y comunidades.</string>
+    <string name="category_info_updates">Recibos, confirmaciones y notificaciones de servicio.</string>
     <string name="category_info_transactions">Pedidos, pagos y recibos de tiendas y servicios.</string>
-    <string name="category_info_forums">Listas de correo y grupos de debate.</string>
-    <string name="category_info_finance">Banca, facturas, pagos e inversiones.</string>
-    <string name="category_info_travel">Reservas, tarjetas de embarque e itinerarios.</string>
-    <string name="category_info_shopping">Confirmaciones de pedido y avisos de envío.</string>
+    <string name="category_info_forums">Mensajes de listas de correo, foros y grupos de discusión.</string>
+    <string name="category_info_finance">Extractos, facturas y alertas de bancos y servicios financieros.</string>
+    <string name="category_info_travel">Reservas, itinerarios y confirmaciones de aerolíneas, hoteles y servicios de transporte.</string>
+    <string name="category_info_shopping">Confirmaciones de pedidos, actualizaciones de envío y avisos de entrega.</string>
     <string name="custom_categories_title">Categorías propias</string>
     <string name="custom_categories_tutorial">Cómo funcionan las categorías propias</string>
     <string name="custom_category_locked_badge">De pago</string>

@@ -35,7 +35,7 @@
     <string name="rules_category_newsletters">न्यूज़लेटर</string>
     <string name="rules_category_social">सोशल</string>
     <string name="rules_category_updates">सूचनाएं</string>
-    <string name="rules_category_transactions">खरीदारी</string>
+    <string name="rules_category_transactions">रसीदें</string>
     <string name="rules_category_forums">चर्चाएं</string>
     <string name="rules_category_finance">वित्त</string>
     <string name="rules_category_travel">यात्रा</string>
@@ -57,7 +57,7 @@
     <string name="rules_snooze_current">मौजूदा: %1$s</string>
     <string name="categories_title">श्रेणियां</string>
     <string name="categories_description">चुनें कि आपके इनबॉक्स में कौन से श्रेणी टैब दिखें, और अपने टैब बनाएं। सारी छंटाई आपके डिवाइस पर ही होती है।</string>
-    <string name="category_info_primary">वह सब जो किसी दूसरी श्रेणी से मेल नहीं खाता। हमेशा चालू रहती है।</string>
+    <string name="category_info_primary">वह सब कुछ जो किसी और श्रेणी से मेल नहीं खाता। हमेशा चालू।</string>
     <string name="category_info_promotions">मार्केटिंग ईमेल, ऑफ़र और डील।</string>
     <string name="category_info_newsletters">आपने जिन न्यूज़लेटर और मेलिंग सूचियों की सदस्यता ली है।</string>
     <string name="category_info_social">सोशल नेटवर्क और समुदायों से आई सूचनाएं।</string>
