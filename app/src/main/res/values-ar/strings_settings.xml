@@ -85,8 +85,6 @@
     <string name="settings_diagnostics_secure_storage">التخزين الآمن</string>
     <string name="settings_diagnostics_storage_ok">سليم</string>
     <string name="settings_diagnostics_storage_degraded">متدهور، سجّل الخروج ثم سجّل الدخول مرة أخرى</string>
-    <string name="log_out_confirm_title">تسجيل الخروج؟</string>
-    <string name="log_out_confirm_message">تسجيل الخروج من %1$s على هذا الجهاز؟</string>
     <string name="revoke_session_confirm_message">إخراج هذا الجهاز من حسابك؟</string>
     <string name="sign_out_all_other_confirm_message">تسجيل الخروج من كل الأجهزة عدا هذا؟</string>
     <string name="alias_forward_limit_reached">لقد بلغت الحد الأقصى من العناوين البديلة النشطة في خطتك</string>

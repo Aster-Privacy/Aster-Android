@@ -135,8 +135,6 @@
     <string name="settings_diagnostics_secure_storage">सुरक्षित स्टोरेज</string>
     <string name="settings_diagnostics_storage_ok">ठीक</string>
     <string name="settings_diagnostics_storage_degraded">कमज़ोर, साइन आउट करके दोबारा साइन इन करें</string>
-    <string name="log_out_confirm_title">साइन आउट करें?</string>
-    <string name="log_out_confirm_message">इस डिवाइस पर %1$s से साइन आउट करें?</string>
     <string name="revoke_session_confirm_message">इस डिवाइस को अपने खाते से साइन आउट करें?</string>
     <string name="sign_out_all_other_confirm_message">इस डिवाइस को छोड़कर हर डिवाइस साइन आउट करें?</string>
     <string name="alias_forward_limit_reached">आप अपने प्लान के लिए सक्रिय एलियास की अधिकतम संख्या तक पहुंच गए हैं</string>

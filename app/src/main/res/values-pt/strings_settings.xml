@@ -85,8 +85,6 @@
     <string name="settings_diagnostics_secure_storage">Armazenamento seguro</string>
     <string name="settings_diagnostics_storage_ok">Saudável</string>
     <string name="settings_diagnostics_storage_degraded">Degradado, termina sessão e inicia sessão novamente</string>
-    <string name="log_out_confirm_title">Sair da conta?</string>
-    <string name="log_out_confirm_message">Sair de %1$s neste aparelho?</string>
     <string name="revoke_session_confirm_message">Desconectar este aparelho da sua conta?</string>
     <string name="sign_out_all_other_confirm_message">Sair de todos os aparelhos menos deste?</string>
     <string name="alias_forward_limit_reached">Você chegou ao máximo de apelidos ativos do seu plano</string>

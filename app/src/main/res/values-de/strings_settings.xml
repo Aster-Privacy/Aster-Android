@@ -85,8 +85,6 @@
     <string name="settings_diagnostics_secure_storage">Sicherer Speicher</string>
     <string name="settings_diagnostics_storage_ok">Fehlerfrei</string>
     <string name="settings_diagnostics_storage_degraded">Beeinträchtigt, melde dich ab und wieder an</string>
-    <string name="log_out_confirm_title">Abmelden?</string>
-    <string name="log_out_confirm_message">%1$s auf diesem Gerät abmelden?</string>
     <string name="revoke_session_confirm_message">Dieses Gerät von deinem Konto abmelden?</string>
     <string name="sign_out_all_other_confirm_message">Alle Geräte außer diesem abmelden?</string>
     <string name="alias_forward_limit_reached">Du hast die Höchstzahl aktiver Aliase deines Tarifs erreicht</string>

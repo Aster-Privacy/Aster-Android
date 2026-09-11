@@ -85,8 +85,6 @@
     <string name="settings_diagnostics_secure_storage">Защищённое хранилище</string>
     <string name="settings_diagnostics_storage_ok">Исправно</string>
     <string name="settings_diagnostics_storage_degraded">Повреждено, выйдите и войдите снова</string>
-    <string name="log_out_confirm_title">Выйти?</string>
-    <string name="log_out_confirm_message">Выйти из %1$s на этом устройстве?</string>
     <string name="revoke_session_confirm_message">Отключить это устройство от вашего аккаунта?</string>
     <string name="sign_out_all_other_confirm_message">Выйти на всех устройствах, кроме этого?</string>
     <string name="alias_forward_limit_reached">Достигнут предел активных псевдонимов на вашем тарифе</string>

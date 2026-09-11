@@ -85,8 +85,6 @@
     <string name="settings_diagnostics_secure_storage">Beveiligde opslag</string>
     <string name="settings_diagnostics_storage_ok">In orde</string>
     <string name="settings_diagnostics_storage_degraded">Verminderd, meld je af en weer aan</string>
-    <string name="log_out_confirm_title">Afmelden?</string>
-    <string name="log_out_confirm_message">%1$s op dit toestel afmelden?</string>
     <string name="revoke_session_confirm_message">Dit toestel afmelden bij je account?</string>
     <string name="sign_out_all_other_confirm_message">Alle toestellen behalve dit afmelden?</string>
     <string name="alias_forward_limit_reached">Je hebt het maximum aantal actieve aliassen van je abonnement bereikt</string>

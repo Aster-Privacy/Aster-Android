@@ -85,8 +85,6 @@
     <string name="settings_diagnostics_secure_storage">Almacenamiento seguro</string>
     <string name="settings_diagnostics_storage_ok">Correcto</string>
     <string name="settings_diagnostics_storage_degraded">Degradado, cierra sesión y vuelve a iniciarla</string>
-    <string name="log_out_confirm_title">¿Cerrar sesión?</string>
-    <string name="log_out_confirm_message">¿Cerrar la sesión de %1$s en este dispositivo?</string>
     <string name="revoke_session_confirm_message">¿Cerrar la sesión de este dispositivo en tu cuenta?</string>
     <string name="sign_out_all_other_confirm_message">¿Cerrar sesión en todos los dispositivos menos este?</string>
     <string name="alias_forward_limit_reached">Has llegado al máximo de alias activos de tu plan</string>

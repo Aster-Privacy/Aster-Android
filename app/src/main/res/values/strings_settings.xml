@@ -148,8 +148,6 @@
     <string name="settings_diagnostics_storage_ok">Healthy</string>
     <string name="settings_diagnostics_storage_degraded">Degraded, sign out and sign back in</string>
 
-    <string name="log_out_confirm_title">Sign out?</string>
-    <string name="log_out_confirm_message">Sign out of %1$s on this device?</string>
     <string name="revoke_session_confirm_message">Sign this device out of your account?</string>
     <string name="sign_out_all_other_confirm_message">Sign out every device except this one?</string>
     <string name="alias_forward_limit_reached">You have reached the maximum number of active aliases for your plan</string>

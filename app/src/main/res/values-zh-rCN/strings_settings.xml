@@ -85,8 +85,6 @@
     <string name="settings_diagnostics_secure_storage">安全存储</string>
     <string name="settings_diagnostics_storage_ok">正常</string>
     <string name="settings_diagnostics_storage_degraded">已降级，请退出登录后重新登录</string>
-    <string name="log_out_confirm_title">要退出登录吗？</string>
-    <string name="log_out_confirm_message">在这台设备上退出 %1$s 吗？</string>
     <string name="revoke_session_confirm_message">让这台设备退出你的账号吗？</string>
     <string name="sign_out_all_other_confirm_message">退出除本机以外的所有设备吗？</string>
     <string name="alias_forward_limit_reached">你的套餐可用的启用别名数量已达上限</string>

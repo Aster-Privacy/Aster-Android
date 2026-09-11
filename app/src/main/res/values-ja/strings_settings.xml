@@ -85,8 +85,6 @@
     <string name="settings_diagnostics_secure_storage">セキュアストレージ</string>
     <string name="settings_diagnostics_storage_ok">正常</string>
     <string name="settings_diagnostics_storage_degraded">劣化しています。サインアウトしてからサインインし直してください</string>
-    <string name="log_out_confirm_title">サインアウトしますか？</string>
-    <string name="log_out_confirm_message">この端末で %1$s からサインアウトしますか？</string>
     <string name="revoke_session_confirm_message">この端末をアカウントからサインアウトしますか？</string>
     <string name="sign_out_all_other_confirm_message">この端末以外をすべてサインアウトしますか？</string>
     <string name="alias_forward_limit_reached">現在のプランで使えるエイリアスの上限に達しました</string>
