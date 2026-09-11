@@ -5241,7 +5241,8 @@ internal fun email_html_view(
     val visual_ready = remember(height_cache_key) { mutableStateOf(false) }
     val renderer_gone = remember { mutableStateOf(false) }
     var web_generation by remember(height_cache_key) { mutableStateOf(0) }
-    val regen_count = remember(height_cache_key) { intArrayOf(0) }
+    val reload_policy = remember(height_cache_key) { body_reload_policy() }
+    val renderer_exhausted = remember(height_cache_key) { mutableStateOf(false) }
 
     LaunchedEffect(height_cache_key, page_painted.value) {
         if (page_painted.value) return@LaunchedEffect
@@ -5395,6 +5396,22 @@ internal fun email_html_view(
     LaunchedEffect(renderer_gone.value) {
         if (!renderer_gone.value) return@LaunchedEffect
         renderer_gone.value = false
+        web_ref[0] = null
+        when (reload_policy.on_renderer_gone()) {
+            renderer_gone_action.stop -> {
+                white_page_ref[0] = false
+                renderer_exhausted.value = true
+                has_measured = true
+                page_painted.value = true
+                on_ready()
+                return@LaunchedEffect
+            }
+            renderer_gone_action.plain_text_fallback -> {
+                prebuilt_html = runCatching { build_html(plain_text_fallback_body(html)) }
+                    .getOrElse { plain_text_fallback_document(html, bg_hex, fg_hex) }
+            }
+            renderer_gone_action.regenerate -> Unit
+        }
         has_measured = false
         page_painted.value = false
         visual_ready.value = false
@@ -5404,22 +5421,17 @@ internal fun email_html_view(
 
     LaunchedEffect(loaded_built, web_generation) {
         if (loaded_built.isEmpty()) return@LaunchedEffect
-        fun page_alive(): Boolean {
-            val web = web_ref[0] ?: return true
-            return page_painted.value || visual_ready.value || web.contentHeight > 0
-        }
-        var reloads = 0
-        while (reloads < 2) {
+        reload_policy.begin_load()
+        while (reload_policy.reloads_remaining()) {
             delay(2200)
             val web = web_ref[0] ?: return@LaunchedEffect
-            if (page_alive()) return@LaunchedEffect
-            reloads++
+            if (!reload_policy.should_reload(page_painted.value, visual_ready.value, web.contentHeight)) return@LaunchedEffect
             visual_ready.value = false
             web.loadDataWithBaseURL("https://mail-content.invalid/", loaded_built, "text/html", "UTF-8", null)
         }
         delay(2600)
-        if (!page_alive() && regen_count[0] < 1) {
-            regen_count[0]++
+        val regen_web = web_ref[0] ?: return@LaunchedEffect
+        if (reload_policy.should_regenerate(page_painted.value, visual_ready.value, regen_web.contentHeight)) {
             has_measured = false
             page_painted.value = false
             visual_ready.value = false
@@ -5692,7 +5704,24 @@ internal fun email_html_view(
                     .background(androidx.compose.ui.graphics.Color.White),
             )
         }
-        androidx.compose.runtime.key(web_generation) {
+        if (renderer_exhausted.value) {
+            val fallback_text = remember(html) { org.astermail.android.mail.html_to_plain_text(html) }
+            val fallback_color = remember(fg_hex) {
+                androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(fg_hex))
+            }
+            androidx.compose.foundation.text.selection.SelectionContainer(
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = fallback_text,
+                    color = fallback_color,
+                    fontSize = (15f * text_zoom / 100f).sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                )
+            }
+        } else androidx.compose.runtime.key(web_generation) {
         androidx.compose.ui.viewinterop.AndroidView(
             factory = { ctx ->
                 android.webkit.WebView(ctx).apply {
@@ -5870,7 +5899,7 @@ internal fun email_html_view(
             },
         )
         }
-        if (!has_measured || !page_painted.value) {
+        if (!renderer_exhausted.value && (!has_measured || !page_painted.value)) {
             email_body_skeleton(
                 modifier = Modifier
                     .matchParentSize()
