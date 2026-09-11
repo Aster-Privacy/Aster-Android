@@ -29,9 +29,8 @@ import org.junit.Test
 class AvatarProfileColorTest {
 
     @Test
-    fun pink_profile_color_wins_over_seed_palette() {
-        val pink = "#ec4899"
-        val (background, text) = avatar_colors_for("sher@aster.cx", pink)
+    fun pink_profile_color_wins_over_generated_palette() {
+        val (background, text) = avatar_colors_for("sher@aster.cx", "#ec4899")
         assertEquals(Color(0xFFEC4899), background)
         assertEquals(Color.White, text)
         assertEquals(avatar_colors_for("sher@aster.cx"), avatar_colors_for("sher@aster.cx", null))
@@ -45,34 +44,24 @@ class AvatarProfileColorTest {
     }
 
     @Test
-    fun invalid_profile_color_falls_back_to_seed_palette() {
+    fun invalid_profile_color_falls_back_to_generated_palette() {
         assertNull(parse_profile_color("not-a-color"))
         assertNull(parse_profile_color(""))
         assertNull(parse_profile_color(null))
+        assertNull(parse_profile_color("#١٢٣٤٥٦"))
         assertEquals(avatar_colors_for("aster"), avatar_colors_for("aster", "zzzzzz"))
     }
 
     @Test
-    fun seed_ignores_display_name_when_an_address_is_known() {
-        assertEquals(
-            avatar_seed_for("Sher@Aster.cx", ""),
-            avatar_seed_for("sher@aster.cx", "Sher Holmes"),
-        )
-        assertEquals(
-            avatar_colors_for(avatar_seed_for("sher@aster.cx", "")),
-            avatar_colors_for(avatar_seed_for("sher@aster.cx", "Sher Holmes")),
-        )
+    fun light_profile_color_gets_dark_text() {
+        assertEquals(Color(0xFFFDE047) to Color(0xFF111827), avatar_colors_for("aster", "#fde047"))
+        assertEquals(Color(0xFFFFFFFF) to Color(0xFF111827), avatar_colors_for("aster", "#fff"))
     }
 
     @Test
-    fun seed_falls_back_to_the_name_without_an_address() {
-        assertEquals("sher holmes", avatar_seed_for("  ", "Sher Holmes"))
-        assertEquals("", avatar_seed_for("", ""))
-    }
-
-    @Test
-    fun light_backgrounds_get_dark_text() {
-        assertEquals(Color(0xFF111827), contrast_text_for(Color(0xFFFFFFFF)))
-        assertEquals(Color.White, contrast_text_for(Color(0xFF000000)))
+    fun key_uses_the_raw_address_like_the_web_client() {
+        assertEquals("Sher@Aster.cx", avatar_key_for("Sher@Aster.cx", "Sher Holmes"))
+        assertEquals("Sher Holmes", avatar_key_for("", "Sher Holmes"))
+        assertEquals("?", avatar_key_for("", ""))
     }
 }

@@ -45,6 +45,7 @@ fun ContactAvatar(
     size: Dp = 40.dp,
     modifier: Modifier = Modifier,
     content_description: String? = null,
+    profile_color: String = "",
 ) {
     val bitmap = remember(avatar_url) { decode_contact_photo(avatar_url) }
 
@@ -64,6 +65,8 @@ fun ContactAvatar(
         size = size,
         modifier = modifier,
         profile_picture_url = avatar_url.takeIf { it.startsWith("http", ignoreCase = true) },
+        profile_color = profile_color,
+        use_peer_profile_color = false,
     )
 }
 

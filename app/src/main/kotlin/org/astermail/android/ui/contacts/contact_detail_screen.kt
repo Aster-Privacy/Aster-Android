@@ -232,6 +232,7 @@ fun ContactDetailScreen(
                     name = contact.name,
                     size = 96.dp,
                     content_description = stringResource(R.string.contact_photo),
+                    profile_color = contact.profile_color,
                 )
                 Spacer(Modifier.height(AsterSpacing.md))
                 Text(

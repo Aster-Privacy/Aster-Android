@@ -31,42 +31,70 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 
-private val avatar_palette: List<Pair<Color, Color>> = listOf(
-    Color(0xFF3B82F6) to Color.White,
-    Color(0xFF10B981) to Color.White,
-    Color(0xFFF59E0B) to Color(0xFF1F1300),
-    Color(0xFFEC4899) to Color.White,
-    Color(0xFF8B5CF6) to Color.White,
-    Color(0xFF14B8A6) to Color.White,
-    Color(0xFFEF4444) to Color.White,
-    Color(0xFF6366F1) to Color.White,
-    Color(0xFF0EA5E9) to Color.White,
-    Color(0xFFF97316) to Color.White,
+internal val avatar_palette_hex: List<String> = listOf(
+    "#1e88e5",
+    "#e53935",
+    "#43a047",
+    "#fb8c00",
+    "#8e24aa",
+    "#d81b60",
+    "#00acc1",
+    "#5e35b1",
+    "#f4511e",
+    "#00897b",
+    "#3949ab",
+    "#c0ca33",
+    "#6d4c41",
+    "#039be5",
+    "#7cb342",
+    "#ff6f00",
 )
 
-fun avatar_seed_for(email: String, name: String): String {
-    val address = email.trim().lowercase()
-    if (address.isNotEmpty()) return address
-    return name.trim().lowercase()
+private val avatar_text_dark = Color(0xFF111827)
+
+private val avatar_text_light = Color(0xFFFFFFFF)
+
+private val avatar_palette: List<Pair<Color, Color>> = avatar_palette_hex.map { hex ->
+    Color(0xFF000000L or hex.removePrefix("#").toLong(16)) to contrast_text_for_hex(hex)
 }
 
-fun avatar_colors_for(seed: String): Pair<Color, Color> {
-    if (seed.isEmpty()) return avatar_palette[0]
-    val idx = (seed.hashCode() % avatar_palette.size + avatar_palette.size) % avatar_palette.size
-    return avatar_palette[idx]
+fun avatar_key_for(email: String, name: String): String = email.ifEmpty { name.ifEmpty { "?" } }
+
+internal fun avatar_hash(value: String): Int {
+    var hash = 0
+    for (unit in value) {
+        hash = (hash shl 5) - hash + unit.code
+    }
+    return hash
 }
 
-private const val avatar_luminance_crossover = 0.55f
+fun avatar_color_index(key: String): Int =
+    (kotlin.math.abs(avatar_hash(key).toLong()) % avatar_palette_hex.size).toInt()
 
-private fun to_linear(channel: Float): Float =
-    if (channel <= 0.03928f) channel / 12.92f
-    else Math.pow(((channel + 0.055f) / 1.055f).toDouble(), 2.4).toFloat()
+fun avatar_colors_for(key: String): Pair<Color, Color> = avatar_palette[avatar_color_index(key)]
 
-fun contrast_text_for(background: Color): Color {
-    val luminance = 0.2126f * to_linear(background.red) +
-        0.7152f * to_linear(background.green) +
-        0.0722f * to_linear(background.blue)
-    return if (luminance > avatar_luminance_crossover) Color(0xFF111827) else Color.White
+private const val avatar_luminance_crossover = 0.55
+
+private fun to_linear(channel: Double): Double =
+    if (channel <= 0.03928) channel / 12.92
+    else Math.pow((channel + 0.055) / 1.055, 2.4)
+
+private fun is_ascii_hex(value: String): Boolean =
+    value.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }
+
+private fun relative_luminance_of_hex(hex: String): Double? {
+    val normalized = hex.replaceFirst("#", "")
+    val full = if (normalized.length == 3) normalized.map { "$it$it" }.joinToString("") else normalized
+    if (full.length != 6 || !is_ascii_hex(full)) return null
+    val r = full.substring(0, 2).toInt(16) / 255.0
+    val g = full.substring(2, 4).toInt(16) / 255.0
+    val b = full.substring(4, 6).toInt(16) / 255.0
+    return 0.2126 * to_linear(r) + 0.7152 * to_linear(g) + 0.0722 * to_linear(b)
+}
+
+fun contrast_text_for_hex(hex: String): Color {
+    val luminance = relative_luminance_of_hex(hex) ?: return avatar_text_light
+    return if (luminance > avatar_luminance_crossover) avatar_text_dark else avatar_text_light
 }
 
 fun parse_profile_color(hex: String?): Color? {
@@ -77,14 +105,13 @@ fun parse_profile_color(hex: String?): Color? {
         8 -> raw.substring(0, 6)
         else -> return null
     }
-    if (!full.all { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }) return null
-    val value = full.toLongOrNull(16) ?: return null
-    return Color(0xFF000000L or value)
+    if (!is_ascii_hex(full)) return null
+    return Color(0xFF000000L or full.toLong(16))
 }
 
-fun avatar_colors_for(seed: String, profile_color: String?): Pair<Color, Color> {
-    val chosen = parse_profile_color(profile_color) ?: return avatar_colors_for(seed)
-    return chosen to contrast_text_for(chosen)
+fun avatar_colors_for(key: String, profile_color: String?): Pair<Color, Color> {
+    val chosen = parse_profile_color(profile_color) ?: return avatar_colors_for(key)
+    return chosen to contrast_text_for_hex(profile_color.orEmpty())
 }
 
 fun initial_for(name: String, fallback_email: String): String {

@@ -1049,6 +1049,7 @@ private fun trash_pane(
                         avatar_url = contact.avatar_url,
                         email = contact.email,
                         name = contact.name,
+                        profile_color = contact.profile_color,
                     )
                     Spacer(Modifier.width(AsterSpacing.md))
                     Column(modifier = Modifier.weight(1f)) {
@@ -1417,6 +1418,7 @@ private fun merge_dialog(
                         avatar_url = contact.avatar_url,
                         email = contact.email,
                         name = contact.name,
+                        profile_color = contact.profile_color,
                     )
                         Spacer(Modifier.width(AsterSpacing.md))
                         Column(modifier = Modifier.weight(1f)) {
@@ -1526,6 +1528,7 @@ private fun ContactRow(
                         avatar_url = contact.avatar_url,
                         email = contact.email,
                         name = contact.name,
+                        profile_color = contact.profile_color,
                     )
             }
         }

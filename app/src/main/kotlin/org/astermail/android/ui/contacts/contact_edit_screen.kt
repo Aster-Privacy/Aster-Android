@@ -290,6 +290,7 @@ fun ContactEditScreen(
                     name = name,
                     size = 80.dp,
                     content_description = stringResource(R.string.contact_photo),
+                    profile_color = source?.profile_color.orEmpty(),
                 )
                 Spacer(Modifier.height(AsterSpacing.sm))
                 AsterActionRow(

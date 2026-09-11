@@ -97,7 +97,7 @@ import org.astermail.android.ui.common.plan_ring
 import org.astermail.android.ui.common.remember_has_paid_plan
 import org.astermail.android.ui.mail.SenderAvatar
 import org.astermail.android.ui.mail.avatar_colors_for
-import org.astermail.android.ui.mail.avatar_seed_for
+import org.astermail.android.ui.mail.avatar_key_for
 import org.astermail.android.ui.mail.avatar_initial_style
 import org.astermail.android.ui.mail.initial_for
 import androidx.compose.ui.res.pluralStringResource
@@ -382,6 +382,7 @@ fun DrawerContent(
             account_email = current_account?.email ?: user_email,
             account_name = current_account?.display_name.orEmpty(),
             profile_picture = current_account?.profile_picture,
+            profile_color = current_account?.profile_color,
             on_click = {
                 on_open_workspace_sheet()
                 show_workspace_sheet = true
@@ -1885,7 +1886,7 @@ private fun workspace_switcher_sheet(
                         .padding(horizontal = AsterSpacing.sm, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    val (av_bg, av_fg) = avatar_colors_for(avatar_seed_for(current_email, ""))
+                    val (av_bg, av_fg) = avatar_colors_for(avatar_key_for(current_email, ""))
                     Box(
                         modifier = Modifier
                             .size(32.dp)
@@ -1931,6 +1932,7 @@ private fun workspace_switcher_sheet(
                         name = display,
                         size = 32.dp,
                         profile_picture_url = account.profile_picture,
+                        profile_color = account.profile_color,
                     )
                     Spacer(Modifier.width(AsterSpacing.md))
                     Column(modifier = Modifier.weight(1f)) {
@@ -2042,6 +2044,7 @@ private fun workspace_header(
     account_email: String,
     account_name: String,
     profile_picture: String?,
+    profile_color: String? = null,
     on_click: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -2066,6 +2069,7 @@ private fun workspace_header(
                     name = account_name,
                     size = 40.dp,
                     profile_picture_url = profile_picture,
+                    profile_color = profile_color,
                     modifier = Modifier.testTag("account_avatar"),
                 )
             }

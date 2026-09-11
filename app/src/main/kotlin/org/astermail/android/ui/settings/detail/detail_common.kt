@@ -70,14 +70,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.SubcomposeAsyncImage
-import coil.compose.SubcomposeAsyncImageContent
-import coil.compose.AsyncImagePainter
 import androidx.compose.foundation.layout.Arrangement
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.settings.SaveStatus
@@ -91,7 +87,6 @@ import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterTopBar
-import org.astermail.android.ui.mail.avatar_initial_style
 import org.astermail.android.design.mirror_in_rtl
 
 internal fun absolute_date_label(iso: String?): String {
@@ -507,44 +502,6 @@ internal fun detail_row(
                 modifier = Modifier.size(20.dp).mirror_in_rtl(),
             )
         }
-    }
-}
-
-@Composable
-internal fun avatar_circle(seed: String, size_dp: Int = 60, image_url: String? = null) {
-    val colors = AsterMaterial.colors
-    val initials_fallback = @Composable {
-        val initial = seed.firstOrNull()?.uppercase() ?: "A"
-        Box(
-            modifier = Modifier
-                .size(size_dp.dp)
-                .background(colors.avatar_bg, CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = initial,
-                color = colors.avatar_text,
-                style = avatar_initial_style((size_dp / 2.4).sp),
-            )
-        }
-    }
-    if (!image_url.isNullOrBlank()) {
-        SubcomposeAsyncImage(
-            model = image_url,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(size_dp.dp)
-                .clip(CircleShape),
-        ) {
-            when (painter.state) {
-                is AsyncImagePainter.State.Success -> SubcomposeAsyncImageContent()
-                is AsyncImagePainter.State.Error -> initials_fallback()
-                else -> initials_fallback()
-            }
-        }
-    } else {
-        initials_fallback()
     }
 }
 

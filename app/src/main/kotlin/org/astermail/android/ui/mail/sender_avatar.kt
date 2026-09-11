@@ -147,6 +147,8 @@ fun SenderAvatar(
     modifier: Modifier = Modifier,
     profile_picture_url: String? = null,
     sender_authenticated: Boolean = false,
+    profile_color: String? = null,
+    use_peer_profile_color: Boolean = true,
 ) {
     val context = LocalContext.current
     val low_network = org.astermail.android.network.low_network_active()
@@ -155,8 +157,7 @@ fun SenderAvatar(
     val own_picture = remember(email, own_avatars) { OwnAddressAvatars.get(email) }
     val resolved_profile_picture = profile_picture_url?.takeIf { it.isNotBlank() } ?: own_picture
     if (!resolved_profile_picture.isNullOrBlank() && remote_avatars_allowed) {
-        val seed_fb = avatar_seed_for(email, name)
-        val (bg_fb, fg_fb) = avatar_colors_for(seed_fb)
+        val (bg_fb, fg_fb) = avatar_colors_for(avatar_key_for(email, name), profile_color)
         var loaded_pp by remember(resolved_profile_picture) { mutableStateOf(false) }
         Box(
             modifier = modifier.size(size).clip(CircleShape).background(if (loaded_pp) Color.Transparent else bg_fb),
@@ -192,8 +193,7 @@ fun SenderAvatar(
         return
     }
 
-    val seed = avatar_seed_for(email, name)
-    val (bg, fg) = avatar_colors_for(seed)
+    val (bg, fg) = avatar_colors_for(avatar_key_for(email, name), profile_color)
     val domain = remember(email) { extract_domain(email) }
     val root_domain = remember(domain) { get_root_domain(domain) }
 
@@ -207,7 +207,14 @@ fun SenderAvatar(
             AsterSystemAvatar(size = size, modifier = modifier)
             return
         }
-        AsterDomainAvatar(email = email, name = name, size = size, modifier = modifier)
+        AsterDomainAvatar(
+            email = email,
+            name = name,
+            size = size,
+            modifier = modifier,
+            profile_color = profile_color,
+            use_peer_profile_color = use_peer_profile_color,
+        )
         return
     }
 
@@ -331,6 +338,8 @@ private fun AsterDomainAvatar(
     name: String,
     size: Dp,
     modifier: Modifier = Modifier,
+    profile_color: String? = null,
+    use_peer_profile_color: Boolean = true,
 ) {
     val context = LocalContext.current
     val low_network = org.astermail.android.network.low_network_active()
@@ -357,7 +366,9 @@ private fun AsterDomainAvatar(
     val resolved_pic = profile?.profile_picture
         ?.takeIf { it.isNotBlank() }
         ?.takeIf { org.astermail.android.api.network.should_load_remote_avatar(low_network) }
-    val (aster_bg, aster_fg) = avatar_colors_for(avatar_seed_for(email, name), profile?.profile_color)
+    val chosen_profile_color = profile_color?.takeIf { it.isNotEmpty() }
+        ?: profile?.profile_color?.takeIf { use_peer_profile_color }
+    val (aster_bg, aster_fg) = avatar_colors_for(avatar_key_for(email, name), chosen_profile_color)
     if (resolved_pic != null) {
         var loaded by remember(resolved_pic) { mutableStateOf(false) }
         Box(
