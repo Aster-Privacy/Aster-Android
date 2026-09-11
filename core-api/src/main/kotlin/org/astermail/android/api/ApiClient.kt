@@ -142,6 +142,7 @@ object DualStackDns : okhttp3.Dns {
 interface TokenProvider {
     suspend fun load(): BearerTokens?
     suspend fun refresh(): BearerTokens?
+    suspend fun refresh(failed_access_token: String?): BearerTokens? = refresh()
     suspend fun clear()
 }
 
@@ -261,7 +262,12 @@ class ApiClient(
         install(Auth) {
             bearer {
                 loadTokens { token_provider.load() }
-                refreshTokens { token_provider.refresh() }
+                refreshTokens {
+                    val failed = response.call.request.headers[HttpHeaders.Authorization]
+                        ?.removePrefix("Bearer ")
+                        ?.trim()
+                    token_provider.refresh(failed)
+                }
                 sendWithoutRequest { request ->
                     val path = request.url.buildString()
                     val is_public = path.endsWith("/auth/login") ||

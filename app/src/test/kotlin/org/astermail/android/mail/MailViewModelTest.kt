@@ -1383,6 +1383,89 @@ class MailViewModelTest {
     }
 
     @Test
+    fun `a failed background reload keeps the open message on screen`() = runTest {
+        val inbox_item = fake_inbox_page(1).items[0]
+        val thread_messages = listOf(
+            ThreadMessageDecrypted(
+                id = "msg_1",
+                sender_name = "Alice",
+                sender_email = "alice@example.com",
+                to_label = "me",
+                timestamp = "2026-04-26T10:00:00Z",
+                body_text = "Hello",
+                body_html = "<p>Hello</p>",
+                is_encrypted = true,
+                is_read = true,
+                raw_item = mockk(relaxed = true),
+            ),
+        )
+        coEvery { repository.fetch_single_message("id_1") } returns Result.success(inbox_item)
+        coEvery { repository.fetch_thread("thread_1") } returns Result.success(thread_messages)
+
+        vm.load_thread("id_1")
+        advanceUntilIdle()
+        assertEquals("msg_1", vm.thread_state.value.messages.single().id)
+
+        coEvery { repository.fetch_single_message("id_1") } returns
+            Result.failure(org.astermail.android.api.ApiError.UnauthorizedError)
+
+        repeat(3) {
+            vm.load_thread("id_1")
+            advanceUntilIdle()
+        }
+
+        val state = vm.thread_state.value
+        assertFalse(state.is_loading)
+        assertNull(state.error)
+        assertEquals("id_1", state.item?.id)
+        assertEquals("msg_1", state.messages.single().id)
+    }
+
+    @Test
+    fun `a seeded message that fails to load shows an error instead of a skeleton`() = runTest {
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns
+            Result.success(fake_inbox_page(1))
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        coEvery { repository.fetch_single_message("id_1") } returns
+            Result.failure(org.astermail.android.api.ApiError.UnauthorizedError)
+
+        vm.load_thread("id_1")
+        advanceUntilIdle()
+
+        val state = vm.thread_state.value
+        assertFalse(state.is_loading)
+        assertNotNull(state.error)
+    }
+
+    @Test
+    fun `load_more stops after an auth failure instead of retrying`() = runTest {
+        val page1 = fake_inbox_page(3, has_more = true, next_cursor = "c1")
+        coEvery { repository.fetch_inbox(any(), cursor = isNull(), any(), any()) } returns
+            Result.success(page1)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        var page_requests = 0
+        coEvery { repository.fetch_inbox(any(), cursor = eq("c1"), any(), any()) } answers {
+            page_requests += 1
+            Result.failure(org.astermail.android.api.ApiError.UnauthorizedError)
+        }
+
+        repeat(5) {
+            vm.load_more()
+            advanceUntilIdle()
+        }
+
+        assertEquals(1, page_requests)
+        val state = vm.inbox_state.value
+        assertEquals(3, state.items.size)
+        assertFalse(state.is_loading_more)
+    }
+
+    @Test
     fun `load_thread fetch_thread failure falls back to single message`() = runTest {
         val item = fake_inbox_page(1).items[0]
         coEvery { repository.fetch_single_message("id_1") } returns Result.success(item)

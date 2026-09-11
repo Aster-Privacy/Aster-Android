@@ -53,8 +53,8 @@ import org.astermail.android.R
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.BuildConfig
-import org.astermail.android.api.TokenProvider
-import org.astermail.android.api.auth.AuthApiImpl
+import org.astermail.android.api.auth.RefreshOutcome
+import org.astermail.android.api.auth.SessionTokenProvider
 import org.astermail.android.api.billing.BillingApiImpl
 import org.astermail.android.api.mail.MailApiImpl
 import org.astermail.android.mail.MailRepository
@@ -63,7 +63,6 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import io.ktor.client.plugins.auth.providers.BearerTokens
 import java.util.concurrent.TimeUnit
 
 private fun localized(context: Context): Context =
@@ -103,33 +102,17 @@ class MailPollingWorker(
         }
 
         lateinit var client: ApiClient
-        val token_provider = object : TokenProvider {
-            override suspend fun load(): BearerTokens? {
-                val access = token_store.access_token ?: return null
-                val refresh = token_store.refresh_token ?: access
-                return BearerTokens(access, refresh)
-            }
-            override suspend fun refresh(): BearerTokens? {
-                return try {
-                    val current_refresh = token_store.refresh_token
-                    val response = AuthApiImpl(client).refresh(current_refresh)
-                    val new_refresh = response.refresh_token ?: current_refresh ?: response.access_token
-                    token_store.save(response.access_token, new_refresh)
-                    BearerTokens(response.access_token, new_refresh)
-                } catch (cancelled: CancellationException) {
-                    throw cancelled
-                } catch (t: Throwable) {
-                    val is_definitive_auth_failure = t is ApiError.UnauthorizedError ||
-                        t is ApiError.ForbiddenError
-                    if (is_definitive_auth_failure) {
-                        null
-                    } else {
-                        load()
-                    }
-                }
-            }
-            override suspend fun clear() {}
-        }
+        val token_provider = SessionTokenProvider(
+            read_access_token = { token_store.access_token },
+            read_refresh_token = { token_store.refresh_token },
+            refresh_session = {
+                runCatching {
+                    dagger.hilt.android.EntryPointAccessors
+                        .fromApplication(applicationContext, PersistentPushService.SessionEntryPoint::class.java)
+                        .session_refresher()
+                }.getOrNull()?.refresh() ?: RefreshOutcome.Transient
+            },
+        )
 
         client = ApiClient(
             base_url = BuildConfig.API_BASE_URL,

@@ -27,7 +27,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import io.ktor.client.plugins.auth.providers.BearerTokens
 import javax.inject.Singleton
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.BuildConfig
@@ -40,6 +39,7 @@ import org.astermail.android.api.auth.AuthApi
 import org.astermail.android.api.auth.AuthApiImpl
 import org.astermail.android.api.auth.RefreshOutcome
 import org.astermail.android.api.auth.SessionRefresher
+import org.astermail.android.api.auth.SessionTokenProvider
 import org.astermail.android.api.billing.BillingApi
 import org.astermail.android.api.billing.BillingApiImpl
 import org.astermail.android.api.external_accounts.ExternalAccountsApi
@@ -113,24 +113,12 @@ object NetworkModule {
     fun provide_token_provider(
         token_store: TokenStore,
         session_refresher: dagger.Lazy<SessionRefresher>,
-    ): TokenProvider = object : TokenProvider {
-        override suspend fun load(): BearerTokens? {
-            val access = token_store.access_token ?: return null
-            val refresh = token_store.refresh_token ?: access
-            return BearerTokens(access, refresh)
-        }
-
-        override suspend fun refresh(): BearerTokens? {
-            if (session_refresher.get().refresh() == RefreshOutcome.AuthFailed) return null
-            val access = token_store.access_token ?: return null
-            val refresh = token_store.refresh_token ?: access
-            return BearerTokens(access, refresh)
-        }
-
-        override suspend fun clear() {
-            token_store.clear()
-        }
-    }
+    ): TokenProvider = SessionTokenProvider(
+        read_access_token = { token_store.access_token },
+        read_refresh_token = { token_store.refresh_token },
+        refresh_session = { session_refresher.get().refresh() },
+        clear_tokens = { token_store.clear() },
+    )
 
     @Provides
     @Singleton

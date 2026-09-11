@@ -68,6 +68,29 @@ class SessionSnapshotStore(context: Context? = null) {
         }
     }
 
+    fun update_tokens(
+        account_id: String,
+        expected_refresh: String?,
+        token_access: String?,
+        token_refresh: String?,
+        csrf_token: String?,
+    ): Boolean = synchronized(lock) {
+        val p = prefs ?: return false
+        if (token_access.isNullOrEmpty() || token_refresh.isNullOrEmpty()) return false
+        val stored_access = runCatching { p.getString("${account_id}_$key_token_access", null) }
+            .getOrNull() ?: return false
+        if (expected_refresh != null) {
+            val stored_refresh = runCatching { p.getString("${account_id}_$key_token_refresh", null) }
+                .getOrNull() ?: stored_access
+            if (stored_refresh != expected_refresh) return false
+        }
+        val e = p.edit()
+        e.putString("${account_id}_$key_token_access", token_access)
+        e.putString("${account_id}_$key_token_refresh", token_refresh)
+        if (csrf_token != null) e.putString("${account_id}_$key_csrf_token", csrf_token)
+        e.commit()
+    }
+
     fun has(account_id: String): Boolean = synchronized(lock) {
         val p = prefs ?: return false
         runCatching { p.getString("${account_id}_$key_token_access", null) != null }.getOrDefault(false)

@@ -5625,7 +5625,7 @@ internal fun email_html_view(
                     var resp = fetch(current_token)
                     if (resp.code == 401) {
                         resp.close()
-                        val refreshed = settings_vm.refresh_access_token_blocking()
+                        val refreshed = settings_vm.refresh_access_token_blocking(current_token)
                         if (refreshed.isNullOrBlank()) return transparent_pixel()
                         resp = fetch(refreshed)
                     }

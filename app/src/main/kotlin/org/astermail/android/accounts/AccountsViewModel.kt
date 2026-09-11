@@ -83,6 +83,7 @@ class AccountsViewModel @Inject constructor(
         }
         if (is_switching) return
         is_switching = true
+        auth_repository.store_current_session_tokens()
         account_store.set_current(account_id)
         org.astermail.android.billing.AttachmentLimits.reset()
         org.astermail.android.billing.AvailablePlansCache.reset()

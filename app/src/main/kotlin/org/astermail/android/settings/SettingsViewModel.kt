@@ -5664,20 +5664,20 @@ class SettingsViewModel @Inject constructor(
 
     fun get_access_token(): String? = token_store.access_token
 
-    fun refresh_access_token_blocking(): String? {
+    fun refresh_access_token_blocking(failed_access_token: String): String? {
+        val stored = token_store.access_token
+        if (!stored.isNullOrEmpty() && stored != failed_access_token) return stored
         return try {
             kotlinx.coroutines.runBlocking {
-                val current_refresh = token_store.refresh_token
-                val response = auth_api.refresh(current_refresh)
-                val new_refresh = response.refresh_token ?: current_refresh
-                if (new_refresh != null) {
-                    token_store.save(response.access_token, new_refresh)
+                when (auth_repository.refresh_session()) {
+                    org.astermail.android.api.auth.RefreshOutcome.Success ->
+                        token_store.access_token?.takeIf { it != failed_access_token }
+                    else -> null
                 }
-                response.access_token
             }
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
-            token_store.access_token
+            null
         }
     }
 

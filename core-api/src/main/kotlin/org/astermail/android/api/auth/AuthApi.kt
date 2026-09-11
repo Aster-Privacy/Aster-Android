@@ -22,6 +22,7 @@
 package org.astermail.android.api.auth
 
 import io.ktor.client.call.body
+import io.ktor.client.plugins.auth.AuthCircuitBreaker
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -343,6 +344,7 @@ class AuthApiImpl(private val client: ApiClient) : AuthApi {
     override suspend fun refresh(refresh_token: String?): RefreshResponse {
         val response = client.http.post("${client.base_url}$base/refresh") {
             contentType(ContentType.Application.Json)
+            attributes.put(AuthCircuitBreaker, Unit)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(NativeRefreshRequest(refresh_token))
         }
@@ -356,6 +358,7 @@ class AuthApiImpl(private val client: ApiClient) : AuthApi {
     override suspend fun logout() {
         val response = client.http.post("${client.base_url}$base/logout") {
             contentType(ContentType.Application.Json)
+            attributes.put(AuthCircuitBreaker, Unit)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody("{}")
         }

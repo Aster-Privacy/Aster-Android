@@ -39,6 +39,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.astermail.android.crypto.AesGcm
@@ -146,9 +147,14 @@ class AuthRepository @Inject constructor(
         kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO,
     )
 
+    private val dead_session_mutex = kotlinx.coroutines.sync.Mutex()
+
     init {
         session_refresher.on_auth_failure { presented ->
             handle_refresh_auth_failure(presented)
+        }
+        session_refresher.on_refreshed { presented ->
+            sync_refreshed_snapshot(presented)
         }
     }
     private val pgp_publish_attempted_user_ids =
@@ -189,24 +195,20 @@ class AuthRepository @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: ApiError.UnauthorizedError) {
-            // The access token has likely expired. Ktor's bearer auth only
-            // auto-refreshes on a 401 carrying a WWW-Authenticate challenge,
-            // which the backend does not send, so we refresh explicitly before
-            // giving up. Only sign out if the refresh fails *definitively*
-            // (the backend rejects the refresh token); a transient network
-            // failure must not sign the user out.
+            val presented = token_store.refresh_token
             when (try_refresh_session()) {
                 RefreshOutcome.Success -> {
+                    val refreshed = token_store.refresh_token
                     try {
                         auth_api.me()
                     } catch (e2: CancellationException) {
                         throw e2
                     } catch (e2: ApiError.UnauthorizedError) {
-                        force_sign_out()
+                        sign_out_dead_session(refreshed)
                     } catch (_: Throwable) {
                     }
                 }
-                RefreshOutcome.AuthFailed -> if (_is_signed_in.value) force_sign_out()
+                RefreshOutcome.AuthFailed -> sign_out_dead_session(presented)
                 RefreshOutcome.Transient -> {
                 }
             }
@@ -219,10 +221,43 @@ class AuthRepository @Inject constructor(
     }
 
     private suspend fun handle_refresh_auth_failure(presented: String?) {
-        if (!_is_signed_in.value) return
-        if (presented == null || presented != token_store.refresh_token) return
-        force_sign_out()
+        if (presented.isNullOrEmpty()) return
+        sign_out_dead_session(presented)
     }
+
+    private suspend fun sign_out_dead_session(presented: String?) {
+        dead_session_mutex.withLock {
+            if (!_is_signed_in.value) return
+            if (presented != token_store.refresh_token) return
+            withContext(NonCancellable) { force_sign_out() }
+        }
+    }
+
+    private fun sync_refreshed_snapshot(presented: String?) {
+        if (presented.isNullOrEmpty()) return
+        val account_id = session_key_store.get_user_id() ?: return
+        val access = token_store.access_token
+        val refresh = token_store.refresh_token
+        if (refresh == presented) return
+        runCatching {
+            session_snapshot_store.update_tokens(account_id, presented, access, refresh, api_client.get_csrf())
+        }
+    }
+
+    fun store_current_session_tokens() {
+        val account_id = session_key_store.get_user_id() ?: return
+        runCatching {
+            session_snapshot_store.update_tokens(
+                account_id,
+                null,
+                token_store.access_token,
+                token_store.refresh_token,
+                api_client.get_csrf(),
+            )
+        }
+    }
+
+    suspend fun refresh_session(): RefreshOutcome = try_refresh_session()
 
     private suspend fun try_refresh_session(): RefreshOutcome {
         if (token_store.refresh_token == null) return RefreshOutcome.AuthFailed
@@ -338,6 +373,7 @@ class AuthRepository @Inject constructor(
         val access = login_resp.access_token ?: throw ApiError.UnknownError("missing access_token")
         val previous_user_id = session_key_store.get_user_id()
         if (previous_user_id != null && previous_user_id != login_resp.user_id) {
+            store_current_session_tokens()
             session_key_store.clear()
             if (!clear_decrypted_mail_cache_blocking()) {
                 throw ApiError.UnknownError("could not clear the previous account's local mail cache")
@@ -549,6 +585,7 @@ class AuthRepository @Inject constructor(
             ?: throw ApiError.UnknownError("missing access_token on register")
         val previous_user_id = session_key_store.get_user_id()
         if (previous_user_id != null && previous_user_id != register_resp.user_id) {
+            store_current_session_tokens()
             session_key_store.clear()
             runCatching {
                 withTimeoutOrNull(3_000L) { database.decrypted_mail_dao().clear_all() }

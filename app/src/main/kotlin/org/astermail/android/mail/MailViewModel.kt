@@ -700,7 +700,8 @@ class MailViewModel @Inject constructor(
                 load_gen == inbox_load_generation &&
                 _inbox_state.value.current_folder == folder &&
                 !is_offline_failure(result.exceptionOrNull()) &&
-                !is_cancellation(result.exceptionOrNull())
+                !is_cancellation(result.exceptionOrNull()) &&
+                result.exceptionOrNull() !is org.astermail.android.api.ApiError.UnauthorizedError
             ) {
                 kotlinx.coroutines.delay(500L)
                 result = runCatching {
@@ -849,16 +850,21 @@ class MailViewModel @Inject constructor(
             var pages_scanned = 0
             while (true) {
                 var fetch_cancelled = false
+                var auth_failed = false
                 val page = try {
                     val result = fetch_for_folder(started_folder, cursor)
                     if (result.exceptionOrNull() is kotlinx.coroutines.CancellationException) {
                         fetch_cancelled = true
                         null
                     } else {
+                        auth_failed = result.exceptionOrNull() is org.astermail.android.api.ApiError.UnauthorizedError
                         result.getOrNull()
                     }
                 } catch (e: kotlinx.coroutines.CancellationException) {
                     throw e
+                } catch (e: org.astermail.android.api.ApiError.UnauthorizedError) {
+                    auth_failed = true
+                    null
                 } catch (e: Exception) {
                     null
                 }
@@ -871,7 +877,7 @@ class MailViewModel @Inject constructor(
                     return@launch
                 }
                 if (page == null) {
-                    load_more_failures++
+                    load_more_failures = if (auth_failed) LOAD_MORE_FAILURE_LIMIT else load_more_failures + 1
                     if (load_more_failures >= LOAD_MORE_FAILURE_LIMIT) {
                         load_more_retry_at =
                             load_more_clock_ms() + LOAD_MORE_RETRY_COOLDOWN_MS
@@ -880,7 +886,7 @@ class MailViewModel @Inject constructor(
                         _inbox_state.update { it.copy(is_loading_more = false, next_cursor = cursor) }
                     } else {
                         _inbox_state.update { it.copy(is_loading_more = false) }
-                        emit_toast(context.getString(R.string.failed_to_load))
+                        if (!auth_failed) emit_toast(context.getString(R.string.failed_to_load))
                     }
                     return@launch
                 }
