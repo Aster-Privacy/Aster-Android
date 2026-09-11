@@ -2,4 +2,5 @@
 <paths>
     <cache-path name="shared_attachments" path="shared_attachments/" />
     <cache-path name="shared_exports" path="exports/" />
+    <external-path name="public_downloads" path="Download/" />
 </paths>

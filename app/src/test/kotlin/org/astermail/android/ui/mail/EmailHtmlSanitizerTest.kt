@@ -366,4 +366,20 @@ class EmailHtmlSanitizerTest {
         assertTrue(repaired.contains("keep"))
         assertFalse(repaired.contains("drop"))
     }
+
+    @Test
+    fun reserves_image_box_and_loads_eagerly() {
+        val out = EmailHtmlSanitizer.sanitize(
+            """<img src="https://example.com/a.png" width="600" height="300" loading="lazy" style="border:0">""",
+        )
+        assertTrue(out.contains("aspect-ratio:600/300"))
+        assertTrue(out.contains("loading=\"eager\""))
+        assertFalse(out.contains("loading=\"lazy\""))
+    }
+
+    @Test
+    fun leaves_images_without_plain_dimensions_alone() {
+        val out = EmailHtmlSanitizer.sanitize("""<img src="https://example.com/a.png" width="100%" height="auto">""")
+        assertFalse(out.contains("aspect-ratio"))
+    }
 }

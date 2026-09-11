@@ -63,6 +63,7 @@ import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterSecondaryButton
@@ -83,7 +84,7 @@ fun SignatureScreen(
     val signatures by vm.signatures.collectAsStateWithLifecycle()
     val state by vm.state.collectAsStateWithLifecycle()
     val plan_state by plan_vm.state.collectAsStateWithLifecycle()
-    val is_paid = plan_state.limits?.let { it.plan_code != "free" } ?: false
+    val is_paid: Boolean? = plan_state.limits?.let { it.plan_code != "free" }
     var editing by remember { mutableStateOf<DecryptedSignature?>(null) }
     var creating by remember { mutableStateOf(false) }
     var pending_delete by remember { mutableStateOf<DecryptedSignature?>(null) }
@@ -226,7 +227,7 @@ fun SignatureScreen(
                 Spacer(Modifier.width(AsterSpacing.md))
                 AsterSwitch(
                     checked = state.preferences?.show_aster_branding == true,
-                    enabled = is_paid && state.preferences != null && state.preferences_authoritative,
+                    enabled = is_paid == true && state.preferences != null && state.preferences_authoritative,
                     onCheckedChange = { checked ->
                         val base = state.preferences ?: return@AsterSwitch
                         vm.save_preferences(base.copy(show_aster_branding = checked))
@@ -234,7 +235,7 @@ fun SignatureScreen(
                 )
             }
         }
-        if (!is_paid) {
+        if (is_paid == false) {
             v_gap(AsterSpacing.md)
             Text(
                 text = stringResource(R.string.show_aster_branding_free_note),
@@ -439,10 +440,9 @@ private fun signature_edit_modal(
                 modifier = Modifier.padding(bottom = AsterSpacing.sm),
             )
         }
-        Row(
+        AsterActionRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
-            verticalAlignment = Alignment.CenterVertically,
+            spacing = AsterSpacing.md,
         ) {
             Box(modifier = Modifier.weight(1f)) {
                 AsterSecondaryButton(

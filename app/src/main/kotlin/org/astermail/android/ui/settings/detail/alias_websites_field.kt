@@ -63,6 +63,7 @@ import compose.icons.tablericons.X
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTextField
@@ -210,10 +211,9 @@ internal fun alias_websites_field(
                     .fillMaxWidth()
                     .testTag("alias_website_input"),
             )
-            Row(
+            AsterActionRow(
                 modifier = Modifier.fillMaxWidth().padding(top = AsterSpacing.xs),
-                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                verticalAlignment = Alignment.CenterVertically,
+                spacing = AsterSpacing.sm,
             ) {
                 AsterSecondaryButton(
                     label = stringResource(R.string.cancel),

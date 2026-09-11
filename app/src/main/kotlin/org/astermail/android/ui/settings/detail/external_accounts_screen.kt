@@ -91,6 +91,7 @@ import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDialog
@@ -904,8 +905,9 @@ fun ExternalAccountsScreen(
                                         label = stringResource(R.string.ext_smtp_username),
                                     )
                                     v_gap(AsterSpacing.md)
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                                    AsterActionRow(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        spacing = AsterSpacing.sm,
                                     ) {
                                         AsterButton(
                                             label = stringResource(R.string.ext_save_changes),

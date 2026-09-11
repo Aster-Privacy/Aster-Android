@@ -108,6 +108,27 @@ data class CheckoutSessionRequest(
 )
 
 @Serializable
+data class SpecialOfferStatusResponse(
+    val available: Boolean = false,
+    val auto_show: Boolean = false,
+    val shown: Boolean = false,
+    val dismissed: Boolean = false,
+    val plan_code: String = "nova",
+    val percent_off: Int = 0,
+    val duration_months: Int = 0,
+)
+
+@Serializable
+data class SpecialOfferClaimResponse(
+    val granted: Boolean = false,
+)
+
+@Serializable
+data class SpecialOfferAckResponse(
+    val ok: Boolean = false,
+)
+
+@Serializable
 data class CheckoutSessionResponse(
     val session_id: String = "",
     val url: String = "",
@@ -458,6 +479,10 @@ interface BillingApi {
     suspend fun get_available_plans(): AvailablePlansResponse
     suspend fun get_plan_limits(): PlanLimitsResponse
     suspend fun create_checkout_session(request: CheckoutSessionRequest): CheckoutSessionResponse
+    suspend fun get_special_offer(): SpecialOfferStatusResponse
+    suspend fun claim_special_offer(): SpecialOfferClaimResponse
+    suspend fun accept_special_offer(): SpecialOfferAckResponse
+    suspend fun dismiss_special_offer(): SpecialOfferAckResponse
     suspend fun create_portal_session(): PortalSessionResponse
     suspend fun get_billing_history(page: Int = 1, per_page: Int = 20): BillingHistoryResponse
     suspend fun cancel_subscription(request: CancelSubscriptionRequest): CancelSubscriptionResponse
@@ -509,6 +534,31 @@ class BillingApiImpl(private val client: ApiClient) : BillingApi {
 
     override suspend fun get_plan_limits(): PlanLimitsResponse =
         decode_or_throw(client.http.get("${client.base_url}$base/plans/limits"))
+
+    private suspend fun post_special_offer(path: String): SpecialOfferAckResponse {
+        val response = client.http.post("${client.base_url}/api/core/v1/offers/special/$path") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(emptyMap<String, String>())
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun get_special_offer(): SpecialOfferStatusResponse =
+        decode_or_throw(client.http.get("${client.base_url}/api/core/v1/offers/special"))
+
+    override suspend fun claim_special_offer(): SpecialOfferClaimResponse {
+        val response = client.http.post("${client.base_url}/api/core/v1/offers/special/claim") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(emptyMap<String, String>())
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun accept_special_offer(): SpecialOfferAckResponse = post_special_offer("accept")
+
+    override suspend fun dismiss_special_offer(): SpecialOfferAckResponse = post_special_offer("dismiss")
 
     override suspend fun create_checkout_session(request: CheckoutSessionRequest): CheckoutSessionResponse {
         val response = client.http.post("${client.base_url}$base/checkout-session") {

@@ -618,6 +618,9 @@ private fun AsterNavHost() {
                 nav_controller.navigate(routes.settings_detail("billing"))
             },
         )
+        if (!is_locked) {
+            org.astermail.android.ui.upgrade.SpecialOfferHost()
+        }
         androidx.compose.runtime.LaunchedEffect(Unit) {
             org.astermail.android.api.AuthEventBus.unauthorized.collect {
                 auth_gate.auth_repository.handle_unauthorized_signal()
@@ -1311,7 +1314,13 @@ private fun AsterNavHost() {
                 on_back = { back(); Unit },
                 on_open = open_detail,
                 on_open_folder = { folder_id, folder_name ->
-                    nav_controller.navigate(routes.folder_filter_for(folder_id, folder_name))
+                    val inbox_entry = try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
+                    if (inbox_entry != null) {
+                        inbox_entry.savedStateHandle[open_folder_request_key] = folder_id
+                        nav_controller.popBackStack(routes.inbox, inclusive = false)
+                    } else {
+                        nav_controller.navigate(routes.folder_filter_for(folder_id, folder_name))
+                    }
                 },
             )
         }
@@ -1520,6 +1529,8 @@ private val mail_folder_ids = setOf(
     "inbox", "sent", "drafts", "trash", "spam", "archive",
     "starred", "all", "scheduled", "snoozed",
 )
+
+private const val open_folder_request_key = "open_folder_request"
 
 @Composable
 private fun InboxWithDrawer(nav_controller: NavHostController) {
@@ -1905,6 +1916,25 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         filter_value = token
         filter_name = name
         selected_folder = token
+    }
+
+    val open_folder_request_handle = remember(nav_controller) {
+        try { nav_controller.getBackStackEntry(routes.inbox).savedStateHandle } catch (_: Throwable) { null }
+    }
+    val open_folder_request by (
+        open_folder_request_handle?.getStateFlow(open_folder_request_key, "")
+            ?: kotlinx.coroutines.flow.MutableStateFlow("")
+        ).collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(open_folder_request) {
+        val requested = open_folder_request
+        if (requested.isBlank()) return@LaunchedEffect
+        open_folder_request_handle?.set(open_folder_request_key, "")
+        if (requested in mail_folder_ids) {
+            filter_kind = null
+            filter_value = ""
+            filter_name = ""
+            selected_folder = requested
+        }
     }
 
     val request_custom_folder: (String, String) -> Unit = { token, name ->

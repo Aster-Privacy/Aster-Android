@@ -57,6 +57,7 @@ private const val PULL_REFRESH_BACKSTOP_MS = 20_000L
 private const val WARM_CACHE_MIN_ITEMS = 8
 private const val WARM_CACHE_WINDOW = 200
 private const val WARM_CACHE_MAX_AGE_MS = 300_000L
+private const val WARM_CACHE_STALE_MAX_AGE_MS = 86_400_000L
 private const val BULK_ACTION_CONCURRENCY = 6
 private const val RESTORE_PROTECTION_MS = 15_000L
 private const val REMOVAL_PROTECTION_MS = 15_000L
@@ -668,8 +669,10 @@ class MailViewModel @Inject constructor(
             if (_inbox_state.value.items.isEmpty()) {
                 val warm_age = System.currentTimeMillis() - search_index_manager.last_inbox_sync_at()
                 val warm_is_fresh = warm_age in 0..WARM_CACHE_MAX_AGE_MS
-                val persisted = if (list_order == null && folder == "inbox" && warm_is_fresh) {
-                    runCatching { search_index_manager.get_warm_items(WARM_CACHE_WINDOW) }.getOrNull().orEmpty()
+                val warm_is_usable = warm_age in 0..WARM_CACHE_STALE_MAX_AGE_MS
+                val warm_window = if (warm_is_fresh) WARM_CACHE_WINDOW else page_size
+                val persisted = if (list_order == null && folder == "inbox" && warm_is_usable) {
+                    runCatching { search_index_manager.get_warm_items(warm_window) }.getOrNull().orEmpty()
                 } else {
                     emptyList()
                 }
@@ -733,6 +736,7 @@ class MailViewModel @Inject constructor(
                     folder_cache[folder] = _inbox_state.value
                     folder_cache_time[folder] = System.currentTimeMillis()
                     search_index_manager.on_items_loaded(page.items)
+                    if (folder == "inbox" && list_order == null) search_index_manager.mark_inbox_synced()
                     reconcile_cache_window(folder, page)
                     search_index_manager.ensure_index_built()
                 },
@@ -3968,6 +3972,8 @@ class MailViewModel @Inject constructor(
             spf_result = raw.spf_result,
             dkim_result = raw.dkim_result,
             dmarc_result = raw.dmarc_result,
+            sender_verified = raw.sender_verified,
+            sender_verified_domain = raw.sender_verified_domain,
             is_reaction = raw.is_reaction,
             message_group_id = raw.message_group_id,
             reactions = raw.reactions,

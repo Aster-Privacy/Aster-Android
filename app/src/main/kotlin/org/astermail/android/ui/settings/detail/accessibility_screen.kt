@@ -75,28 +75,6 @@ import org.astermail.android.ui.theme.ThemeViewModel
 import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
-private fun access_option_row(label: String, selected: Boolean, on_click: () -> Unit) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = on_click)
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(text = label, color = colors.text_primary, fontSize = 15.sp, modifier = Modifier.weight(1f))
-        if (selected) {
-            Box(
-                modifier = Modifier.size(20.dp).background(colors.accent_blue, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(imageVector = TablerIcons.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
-            }
-        }
-    }
-}
-
-@Composable
 private fun access_toggle_row(
     title: String,
     subtitle: String? = null,
@@ -272,7 +250,7 @@ fun AccessibilityScreen(
                     "large" to stringResource(R.string.font_large),
                     "extra_large" to stringResource(R.string.font_extra_large),
                 ).forEachIndexed { i, (id, label) ->
-                    access_option_row(label, font_size == id) {
+                    choice_option_row(label, font_size == id) {
                         font_size = id
                         theme_vm.set_text_size_from_key(id)
                         save_trigger++

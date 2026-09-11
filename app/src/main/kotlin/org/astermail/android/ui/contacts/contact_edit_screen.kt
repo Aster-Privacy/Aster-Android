@@ -78,6 +78,7 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
@@ -291,9 +292,9 @@ fun ContactEditScreen(
                     content_description = stringResource(R.string.contact_photo),
                 )
                 Spacer(Modifier.height(AsterSpacing.sm))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                    verticalAlignment = Alignment.CenterVertically,
+                AsterActionRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    spacing = AsterSpacing.sm,
                 ) {
                     AsterGhostButton(
                         label = if (avatar_url.isBlank()) {

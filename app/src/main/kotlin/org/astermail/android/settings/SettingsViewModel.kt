@@ -181,6 +181,8 @@ data class AllowedSenderView(
 data class SettingsUiState(
     val user: UserInfo? = null,
     val sessions: List<SessionInfo> = emptyList(),
+    val revoking_session_ids: Set<String> = emptySet(),
+    val revoking_all_sessions: Boolean = false,
     val blocked_senders: List<BlockedSenderView> = emptyList(),
     val blocked_senders_loading: Boolean = false,
     val blocked_senders_error: String? = null,
@@ -264,6 +266,7 @@ data class SettingsUiState(
     val error: String? = null,
     val save_status: SaveStatus = SaveStatus.IDLE,
     val action_result: String? = null,
+    val muted_categories_override: List<String>? = null,
     val default_sender_id: String? = null,
     val default_sender_loaded: Boolean = false,
     val connection_method: String = "direct",
@@ -742,21 +745,30 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun revoke_session(session_id: String) {
+        if (session_id in _state.value.revoking_session_ids) return
+        _state.update { it.copy(revoking_session_ids = it.revoking_session_ids + session_id) }
         viewModelScope.launch {
             try {
                 settings_api.revoke_session(session_id)
-                _state.value = _state.value.copy(
-                    sessions = _state.value.sessions.filter { it.id != session_id },
-                    action_result = context.getString(R.string.session_revoked),
-                )
+                _state.update {
+                    it.copy(
+                        sessions = it.sessions.filter { s -> s.id != session_id },
+                        revoking_session_ids = it.revoking_session_ids - session_id,
+                        action_result = context.getString(R.string.session_revoked),
+                    )
+                }
                 val refreshed = settings_api.list_sessions()
-                _state.value = _state.value.copy(sessions = refreshed.sessions)
+                _state.update { it.copy(sessions = refreshed.sessions) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(
-                    action_result = localized_api_error(context, t, context.getString(R.string.failed_revoke_session)),
-                )
+                _state.update {
+                    it.copy(
+                        revoking_session_ids = it.revoking_session_ids - session_id,
+                        action_result = localized_api_error(context, t, context.getString(R.string.failed_revoke_session)),
+                    )
+                }
             } finally {
+                _state.update { it.copy(revoking_session_ids = it.revoking_session_ids - session_id) }
                 auth_repository.handle_unauthorized_signal(force = true)
             }
         }
@@ -798,18 +810,26 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun logout_others() {
+        if (_state.value.revoking_all_sessions) return
+        _state.update { it.copy(revoking_all_sessions = true) }
         viewModelScope.launch {
             try {
                 settings_api.logout_others()
-                _state.value = _state.value.copy(
-                    sessions = _state.value.sessions.filter { it.is_current },
-                    action_result = context.getString(R.string.all_other_sessions_signed_out),
-                )
+                _state.update {
+                    it.copy(
+                        sessions = it.sessions.filter { s -> s.is_current },
+                        revoking_all_sessions = false,
+                        action_result = context.getString(R.string.all_other_sessions_signed_out),
+                    )
+                }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(
-                    action_result = localized_api_error(context, t, context.getString(R.string.failed_sign_out_other_sessions)),
-                )
+                _state.update {
+                    it.copy(
+                        revoking_all_sessions = false,
+                        action_result = localized_api_error(context, t, context.getString(R.string.failed_sign_out_other_sessions)),
+                    )
+                }
             }
         }
     }
@@ -3553,14 +3573,13 @@ class SettingsViewModel @Inject constructor(
                         ),
                     )
                 }
+                _storage_format_events.trySend(true)
             } else {
                 val current = _state.value.preferences
                 if (current != null) {
                     save_preferences(current.copy(storage_format = prefs.storage_format))
                 }
-                _state.update {
-                    it.copy(action_result = context.getString(R.string.settings_save_failed_banner))
-                }
+                _storage_format_events.trySend(false)
             }
         }
     }
@@ -4189,12 +4208,20 @@ class SettingsViewModel @Inject constructor(
             return
         }
         val base = _state.value.preferences ?: UserPreferences()
-        val muted = base.muted_notification_categories
+        val muted = _state.value.muted_categories_override ?: base.muted_notification_categories
         val is_muting = category_id !in muted
         val next = if (is_muting) muted + category_id else muted - category_id
+        _state.update { it.copy(muted_categories_override = next) }
         org.astermail.android.notifications.MailPollingWorker
             .set_muted_notification_categories(context, next)
         save_preferences(base.copy(muted_notification_categories = next))
+        val job = save_preferences_job
+        viewModelScope.launch {
+            job?.join()
+            _state.update {
+                if (it.muted_categories_override == next) it.copy(muted_categories_override = null) else it
+            }
+        }
     }
 
     fun load_tags(force: Boolean = true) {
@@ -5123,6 +5150,9 @@ class SettingsViewModel @Inject constructor(
 
     private val _preference_save_failures = Channel<String>(Channel.BUFFERED)
     val preference_save_failures: Flow<String> = _preference_save_failures.receiveAsFlow()
+
+    private val _storage_format_events = Channel<Boolean>(Channel.BUFFERED)
+    val storage_format_events: Flow<Boolean> = _storage_format_events.receiveAsFlow()
 
     private fun report_preference_save_failure(message: String) {
         _preference_save_failures.trySend(message)

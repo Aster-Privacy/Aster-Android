@@ -5,6 +5,9 @@
 #   bash scripts/release.sh 0.6.156 --dry-run  build and sign, publish nothing
 #
 # Builds from a clean clone of origin/main so no in-progress work is ever packaged.
+# The full flavor builds on this machine; the fdroid flavor builds from the tag inside
+# the F-Droid buildserver container (scripts/build_fdroid_in_container.sh), so the bytes
+# match what F-Droid rebuilds. Docker Desktop must be running.
 # Signing happens locally and never in CI: the keystore stays off the public repo.
 #
 # F-Droid contract: the fdroiddata recipe pins AllowedAPKSigningKeys to our certificate
@@ -54,6 +57,8 @@ for bt in 35.0.0 34.0.0; do
 done
 [ -n "$apksigner" ] || die "apksigner not found under $sdk/build-tools"
 command -v gh >/dev/null || die "gh CLI not found"
+command -v docker >/dev/null || die "docker not found, the fdroid flavor builds inside the F-Droid buildserver image"
+docker info >/dev/null 2>&1 || die "docker is not running"
 gh auth status >/dev/null 2>&1 || die "gh is not authenticated"
 [ -f "$repo_root/app/google-services.json" ] || die "app/google-services.json missing (gitignored build input)"
 [ -f "$repo_root/keystore/aster-mail-upload-v3.jks" ] || die "signing keystore missing"
@@ -127,11 +132,14 @@ echo "committed and tagged v$ver"
 say "build full flavor (signed)"
 ./gradlew --no-daemon assembleFullRelease bundleFullRelease
 
-say "build fdroid flavor (unsigned)"
-./gradlew --no-daemon assembleFdroidRelease
+# The fdroid flavor is built on Linux inside the F-Droid buildserver image, from the
+# tag, the way F-Droid builds it. A Windows build differs: R8 writes CRLF into
+# META-INF/services on Windows, and the copied signature then fails to verify.
+say "build fdroid flavor (unsigned, F-Droid buildserver container)"
+bash scripts/build_fdroid_in_container.sh "v$ver" "$work/fdroid-$ver"
 
 full_apk="app/build/outputs/apk/full/release/app-full-release.apk"
-fdroid_unsigned="app/build/outputs/apk/fdroid/release/app-fdroid-release-unsigned.apk"
+fdroid_unsigned="$work/fdroid-$ver/app-fdroid-release-unsigned.apk"
 aab="app/build/outputs/bundle/fullRelease/app-full-release.aab"
 [ -f "$full_apk" ] || die "full APK not produced at $full_apk"
 [ -f "$fdroid_unsigned" ] || die "fdroid APK not produced at $fdroid_unsigned"
@@ -194,12 +202,13 @@ echo "  OK fdroid APK carries no Google Play Services, Firebase, or Play classes
 
 # Text assets are packed raw, so a CRLF checkout of an html or js file changes the
 # APK bytes and F-Droid's Linux rebuild no longer matches. .gitattributes forces LF,
-# this catches a checkout that ignored it. Python reads the entries in binary mode,
-# because unzip -p on Windows rewrites newlines on the way out.
+# this catches a checkout that ignored it. META-INF/services is covered too: R8 on
+# Windows writes those with CRLF, which is what broke 0.6.170. Python reads the
+# entries in binary mode, because unzip -p on Windows rewrites newlines on the way out.
 crlf=$(python - "$out_dir/Aster-Mail-fdroid-$ver.apk" <<'PYEOL'
 import re, sys, zipfile
 z = zipfile.ZipFile(sys.argv[1])
-hits = [n for n in z.namelist() if re.search(r"\.(html|js|css|json|txt)$", n) and b"\r" in z.read(n)]
+hits = [n for n in z.namelist() if (re.search(r"\.(html|js|css|json|txt)$", n) or n.startswith("META-INF/services/")) and b"\r" in z.read(n)]
 for n in hits:
     print("CRLF:", n, file=sys.stderr)
 print(len(hits))

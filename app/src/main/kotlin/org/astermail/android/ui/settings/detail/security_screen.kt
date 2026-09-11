@@ -303,8 +303,10 @@ fun SecurityScreen(
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier
-                    .padding(AsterSpacing.md)
-                    .clickable { score_expanded = !score_expanded },
+                    .fillMaxWidth()
+                    .clip(SquircleShape(14.dp))
+                    .clickable { score_expanded = !score_expanded }
+                    .padding(AsterSpacing.md),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1159,7 +1161,10 @@ private fun app_lock_row(
                 text = stringResource(R.string.app_lock_change_pin),
                 color = colors.accent_blue,
                 fontSize = 13.sp,
-                modifier = Modifier.clickable(onClick = on_change_pin),
+                modifier = Modifier
+                    .clip(SquircleShape(8.dp))
+                    .clickable(onClick = on_change_pin)
+                    .padding(horizontal = AsterSpacing.xs, vertical = 2.dp),
             )
         }
     }

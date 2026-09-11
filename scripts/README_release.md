@@ -22,9 +22,9 @@ Add `--dry-run` to build, sign, and verify without pushing or publishing anythin
 | CI gate | Refuses to start if the latest checks on `origin/main` are failing. Override with `ASTER_SKIP_CI_CHECK=1` only when you know why. |
 | Clean clone | Clones `origin/main` into `../.release_work`. Your working tree is never packaged, so another session's uncommitted edits can't reach an APK. |
 | Bump | Sets `versionName` and `versionCode` in `app/build.gradle.kts`, commits, tags. |
-| Build | `assembleFullRelease bundleFullRelease`, then `assembleFdroidRelease` in a second gradle call. The two calls are separate on purpose, see below. |
+| Build | `assembleFullRelease bundleFullRelease` on this machine, then the `fdroid` flavor from the tag inside the F-Droid buildserver container (`scripts/build_fdroid_in_container.sh`, Docker Desktop must be running). The two builds are separate on purpose, see below. |
 | Sign | Signs the unsigned fdroid APK with `apksigner` and `--alignment-preserved`, never `zipalign`. |
-| Verify | Both APKs must carry cert SHA-256 `88b0a8a6…`, the fdroid APK must have no `0xd935` alignment padding, and its dex must reference no Google Play Services, Firebase, or Play classes. |
+| Verify | Both APKs must carry cert SHA-256 `88b0a8a6…`, the fdroid APK must have no `0xd935` alignment padding, no CRLF in text assets or `META-INF/services`, and its dex must reference no Google Play Services, Firebase, or Play classes. |
 | Publish | Creates the GitHub release with `Aster-Mail.apk`, `Aster-Mail-<version>-full.apk`, and `Aster-Mail-fdroid-<version>.apk`, then re-uploads `Aster-Mail.apk` to the current Aster-Mail **Latest** release, which is what astermail.org serves. |
 | Play | Uploads the AAB with `fastlane supply` if a service account is configured, otherwise copies the AAB to `~/Downloads` and says so. |
 | Audit | Runs `Claude/scripts/audit_android_channels.sh` and prints the per-channel result. |
@@ -58,8 +58,12 @@ That contract sets three hard rules for every release:
 - Every tag must carry `Aster-Mail-fdroid-<version>.apk`, signed with
   `keystore/aster-mail-upload-v3.jks`. Cert SHA-256 `88b0a8a6…` is pinned in the recipe and is the
   app's identity on every channel, so the key is never rotated.
-- The fdroid APK must be reproducible from the tagged source. Build it from the clean clone at the
-  tag, with nothing in `core-crypto/src/main/jniLibs`, and never apply any post-processing.
+- The fdroid APK must be reproducible from the tagged source. Build it from the tag inside
+  `registry.gitlab.com/fdroid/fdroidserver:buildserver-trixie`, the image F-Droid's own pipeline
+  uses, with nothing in `core-crypto/src/main/jniLibs`, and never apply any post-processing. A
+  Windows build is not reproducible: R8 writes `META-INF/services` entries with CRLF line endings
+  on Windows, which is why the 0.6.170 fdroid asset had to be rebuilt and replaced. The script
+  fails the release if any text asset or `META-INF/services` entry carries CRLF.
 - Never `zipalign` the fdroid APK. Build-tools 35 and newer re-align during signing by default and
   rewrite zip padding into `0xd935` extra fields that F-Droid's rebuild does not have, so the signed
   byte ranges no longer match. The script passes `--alignment-preserved` whenever build-tools is not

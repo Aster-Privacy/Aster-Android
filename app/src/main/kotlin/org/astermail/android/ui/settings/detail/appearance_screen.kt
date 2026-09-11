@@ -508,6 +508,7 @@ fun AppearanceScreen(
                             Box(
                                 modifier = Modifier
                                     .size(28.dp)
+                                    .clip(CircleShape)
                                     .background(parse_hex_color(hex), CircleShape)
                                     .border(if (is_selected) 2.dp else 0.dp, colors.text_primary, CircleShape)
                                     .clickable {
@@ -708,39 +709,14 @@ private fun font_option_row(
     on_click: () -> Unit,
     test_tag: String,
 ) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = on_click)
-            .testTag(test_tag)
-            .padding(horizontal = AsterSpacing.lg, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = label,
-                color = colors.text_primary,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                fontFamily = family,
-            )
-            Text(
-                text = stringResource(R.string.font_preview_sample),
-                color = colors.text_tertiary,
-                fontSize = 13.sp,
-                fontFamily = family,
-            )
-        }
-        if (selected) {
-            Icon(
-                imageVector = TablerIcons.Check,
-                contentDescription = null,
-                tint = colors.accent_blue,
-                modifier = Modifier.size(20.dp),
-            )
-        }
-    }
+    choice_option_row(
+        label = label,
+        selected = selected,
+        on_click = on_click,
+        subtitle = stringResource(R.string.font_preview_sample),
+        label_font_family = family,
+        test_tag = test_tag,
+    )
 }
 
 @Composable

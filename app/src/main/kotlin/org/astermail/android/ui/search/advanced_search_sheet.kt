@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.sp
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
@@ -481,13 +482,12 @@ internal fun advanced_search_sheet(
 
             AsterDivider()
 
-            Row(
+            AsterActionRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
                     .padding(top = 14.dp, bottom = 18.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                spacing = 12.dp,
             ) {
                 AsterSecondaryButton(
                     label = stringResource(R.string.cancel),

@@ -22,6 +22,10 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="otpauth" />
         </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="*/*" />
+        </intent>
         <package android:name="com.miui.securitycenter" />
         <package android:name="com.huawei.systemmanager" />
         <package android:name="com.coloros.safecenter" />

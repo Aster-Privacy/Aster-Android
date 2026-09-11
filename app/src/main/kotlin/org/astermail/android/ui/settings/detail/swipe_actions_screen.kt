@@ -186,53 +186,22 @@ private fun swipe_action_option(
     selected: Boolean,
     on_click: () -> Unit,
 ) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = on_click)
-            .background(if (selected) colors.accent_blue.copy(alpha = 0.08f) else Color.Transparent)
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (option.icon != null && option.color != null) {
-            Icon(
-                imageVector = option.icon,
-                contentDescription = null,
-                tint = option.color,
-                modifier = Modifier.size(20.dp),
-            )
-            Spacer(Modifier.width(AsterSpacing.md))
-        }
-        Text(
-            text = option.label,
-            color = colors.text_primary,
-            fontSize = 15.sp,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            modifier = Modifier.weight(1f),
-        )
-        Spacer(Modifier.width(AsterSpacing.md))
-        Box(
-            modifier = Modifier
-                .size(22.dp)
-                .clip(CircleShape)
-                .background(if (selected) colors.accent_blue else Color.Transparent)
-                .border(
-                    width = if (selected) 0.dp else 1.5.dp,
-                    color = if (selected) Color.Transparent else colors.border_secondary,
-                    shape = CircleShape,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (selected) {
+    choice_option_row(
+        label = option.label,
+        selected = selected,
+        on_click = on_click,
+        leading = if (option.icon != null && option.color != null) {
+            {
                 Icon(
-                    imageVector = TablerIcons.Check,
+                    imageVector = option.icon,
                     contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(14.dp),
+                    tint = option.color,
+                    modifier = Modifier.size(20.dp),
                 )
             }
-        }
-    }
+        } else {
+            null
+        },
+    )
 }
 

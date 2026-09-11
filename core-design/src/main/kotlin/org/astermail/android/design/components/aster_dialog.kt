@@ -261,12 +261,10 @@ fun AsterDialog(
                         body()
                     }
                 }
-                Row(
+                AsterActionRow(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp, vertical = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                    verticalAlignment = Alignment.CenterVertically,
                     content = footer,
                 )
             }
@@ -360,12 +358,10 @@ fun AsterAlertDialog(
                         extra_content()
                     }
                 }
-                Row(
+                AsterActionRow(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp, vertical = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     if (cancel_label != null) {
                         AsterDialogOutlineButton(
@@ -410,6 +406,8 @@ private fun dialog_button_label(label: String, color: Color, is_loading: Boolean
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = color,
+                maxLines = 1,
+                softWrap = false,
             )
         }
     }

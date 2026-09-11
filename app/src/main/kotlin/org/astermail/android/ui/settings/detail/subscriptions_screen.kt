@@ -86,6 +86,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
@@ -100,6 +101,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.text.style.TextAlign
 import kotlinx.coroutines.launch
 import org.astermail.android.ui.mail.chip_background
+import org.astermail.android.ui.mail.chip_border
 import org.astermail.android.ui.mail.chip_content
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
@@ -564,7 +566,7 @@ fun SubscriptionsScreen(
                         fontSize = 13.sp,
                     )
                     Spacer(Modifier.height(AsterSpacing.md))
-                    Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
+                    AsterActionRow(modifier = Modifier.fillMaxWidth(), spacing = AsterSpacing.sm) {
                         Box(modifier = Modifier.weight(1f)) {
                             AsterButton(
                                 label = stringResource(R.string.finish_plan_setup_action),
@@ -1636,6 +1638,7 @@ private fun crypto_coin_dialog(
                             chain = coin.chain,
                             label = coin.display_name,
                             size = 26.dp,
+                            ring_color = colors.bg_secondary,
                         )
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
@@ -1740,6 +1743,7 @@ private fun status_pill(text: String, accent: Color) {
         modifier = Modifier
             .clip(CircleShape)
             .background(background)
+            .border(1.dp, chip_border(accent, colors.bg_card, colors.is_dark), CircleShape)
             .padding(horizontal = 8.dp, vertical = 3.dp),
     ) {
         Text(
@@ -1862,7 +1866,7 @@ private fun current_plan_card(
                     Icon(
                         imageVector = if (ends_at_period_end) TablerIcons.AlertTriangle else TablerIcons.Refresh,
                         contentDescription = null,
-                        tint = if (ends_at_period_end) colors.danger else colors.text_tertiary,
+                        tint = if (ends_at_period_end) colors.text_secondary else colors.text_tertiary,
                         modifier = Modifier.size(14.dp),
                     )
                     Spacer(Modifier.width(6.dp))
@@ -1872,7 +1876,7 @@ private fun current_plan_card(
                         } else {
                             stringResource(R.string.renews_format, absolute_date_label(period_end))
                         },
-                        color = if (ends_at_period_end) colors.danger else colors.text_tertiary,
+                        color = if (ends_at_period_end) colors.text_secondary else colors.text_tertiary,
                         fontSize = 13.sp,
                     )
                 }
@@ -2046,10 +2050,9 @@ private fun current_plan_card(
                 Spacer(Modifier.height(AsterSpacing.lg))
                 AsterDivider()
                 Spacer(Modifier.height(AsterSpacing.lg))
-                Row(
+                AsterActionRow(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                    verticalAlignment = Alignment.CenterVertically,
+                    spacing = AsterSpacing.sm,
                 ) {
                     if (show_manage_payment) {
                         Box(modifier = Modifier.weight(1f)) {
@@ -2148,7 +2151,7 @@ private fun storage_addons_card(
                                     Spacer(Modifier.height(2.dp))
                                     Text(
                                         text = stringResource(R.string.ends_date, absolute_date_label(addon.current_period_end)),
-                                        color = colors.warning,
+                                        color = colors.text_secondary,
                                         fontSize = 12.sp,
                                     )
                                 }

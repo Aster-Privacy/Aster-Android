@@ -885,6 +885,7 @@ class AuthRepository @Inject constructor(
         runCatching { org.astermail.android.util.purge_sensitive_export_files(context, 0L) }
         runCatching { org.astermail.android.billing.AttachmentLimits.reset() }
         runCatching { org.astermail.android.billing.AvailablePlansCache.reset() }
+        runCatching { org.astermail.android.billing.PlanLimitsCache.reset() }
         runCatching { theme_store.clear() }
         runCatching { org.astermail.android.ui.compose.compose_seed_store.clear(context) }
         runCatching { org.astermail.android.notifications.MutedFolderSync.reset(context) }
@@ -1102,10 +1103,12 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    fun identity_keys_present(): Boolean =
+        session_key_store.get_identity_key() != null && session_key_store.has_ratchet_keys()
+
     fun try_recover_identity_key(): Boolean {
+        if (identity_keys_present()) return true
         val identity_already_present = session_key_store.get_identity_key() != null
-        val ratchet_already_present = session_key_store.has_ratchet_keys()
-        if (identity_already_present && ratchet_already_present) return true
         val (encrypted_vault_b64, vault_nonce_b64) = session_key_store.get_encrypted_vault() ?: return identity_already_present
         val passphrase = session_key_store.get_passphrase() ?: return identity_already_present
         return try {

@@ -133,7 +133,7 @@ fun color_scheme_for(is_dark: Boolean, palette: ColorThemePalette?) =
 
 private fun build_light_color_scheme(palette: ColorThemePalette?) = lightColorScheme(
     primary = palette?.accent_color ?: AsterColors.accent_blue,
-    onPrimary = Color.White,
+    onPrimary = palette?.on_accent ?: Color.White,
     primaryContainer = palette?.bg_selected ?: AsterColors.light_bg_selected,
     onPrimaryContainer = palette?.text_primary ?: AsterColors.light_text_primary,
     secondary = palette?.text_secondary ?: AsterColors.light_text_secondary,
@@ -162,7 +162,7 @@ private fun build_light_color_scheme(palette: ColorThemePalette?) = lightColorSc
 
 private fun build_dark_color_scheme(palette: ColorThemePalette?) = darkColorScheme(
     primary = palette?.accent_color ?: AsterColors.accent_blue,
-    onPrimary = Color.White,
+    onPrimary = palette?.on_accent ?: Color.White,
     primaryContainer = palette?.bg_selected ?: AsterColors.dark_bg_selected,
     onPrimaryContainer = palette?.text_primary ?: AsterColors.dark_text_primary,
     secondary = palette?.text_secondary ?: AsterColors.dark_text_secondary,

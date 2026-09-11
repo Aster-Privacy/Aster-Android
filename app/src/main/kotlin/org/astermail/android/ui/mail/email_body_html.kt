@@ -426,6 +426,40 @@ setTimeout(report_h_exact,120);
 setTimeout(report_h_exact,400);
 setTimeout(report_h_exact,1200);
   }
+  var aster_final_sent=false;var aster_final_last=0;var aster_final_timer=null;var aster_loaded=false;
+  function aster_final_height(){
+var m=document.getElementById('m');
+if(!m)return 0;
+var saved=m.style.getPropertyValue('transform');
+if(saved)m.style.setProperty('transform','none','important');
+var h=measure_h();
+if(saved)m.style.setProperty('transform',saved,'important');
+var sc=window.__aster_fit_scale||1;
+return Math.round(h*sc);
+  }
+  window.__aster_final_height=aster_final_height;
+  function aster_report_final(){
+aster_final_timer=null;
+if(!aster_loaded)return;
+var h=aster_final_height();
+if(h<=0)return;
+if(aster_final_sent&&Math.abs(h-aster_final_last)<8)return;
+aster_final_sent=true;aster_final_last=h;
+console.log('ASTER_HEIGHT_FINAL:'+h);
+  }
+  function aster_schedule_final(delay){
+if(aster_final_timer)clearTimeout(aster_final_timer);
+aster_final_timer=setTimeout(aster_report_final,delay||160);
+  }
+  window.__aster_schedule_final=aster_schedule_final;
+  function aster_mark_loaded(){
+if(aster_loaded)return;
+aster_loaded=true;
+try{if(window.__aster_collapse_images)window.__aster_collapse_images()}catch(_){}
+try{if(window.__aster_relax)window.__aster_relax()}catch(_){}
+try{if(window.__aster_fit)window.__aster_fit()}catch(_){}
+aster_schedule_final(120);
+  }
   function watch_media(root){
 try{
   var im=root.querySelectorAll('img');
@@ -1002,6 +1036,19 @@ for(var d=0;d<dts.length;d++){
   (function(el){el.addEventListener('toggle',function(){if(el.open)watch_media(el);schedule_h()})})(dts[d]);
 }
   }catch(_){}
+  try{
+if(window.ResizeObserver){
+  var ro_m=document.getElementById('m');
+  if(ro_m){
+    var ro=new ResizeObserver(function(){aster_schedule_final(160)});
+    ro.observe(ro_m);
+  }
+}
+  }catch(_){}
+  try{if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){aster_schedule_final(120)})}catch(_){}
+  if(document.readyState==='complete')aster_mark_loaded();
+  else window.addEventListener('load',aster_mark_loaded,{once:true});
+  setTimeout(aster_mark_loaded,4000);
   report_h_exact();
 })();
 </script></body></html>"""

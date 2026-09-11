@@ -45,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -149,6 +150,7 @@ private fun category_mute_button(
     Box(
         modifier = Modifier
             .size(34.dp)
+            .clip(CircleShape)
             .then(if (is_enabled) Modifier.clickable(onClick = on_toggle) else Modifier),
         contentAlignment = Alignment.Center,
     ) {
@@ -378,6 +380,7 @@ fun category_settings_section(
                         Box(
                             modifier = Modifier
                                 .size(34.dp)
+                                .clip(CircleShape)
                                 .clickable {
                                     editing = rule
                                     editor_open = true
@@ -394,6 +397,7 @@ fun category_settings_section(
                         Box(
                             modifier = Modifier
                                 .size(34.dp)
+                                .clip(CircleShape)
                                 .clickable { deleting = rule },
                             contentAlignment = Alignment.Center,
                         ) {

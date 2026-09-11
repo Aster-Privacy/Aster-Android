@@ -79,6 +79,9 @@ data class ColorThemePalette(
     val thread_card_border: Color,
     val thread_header_bg: Color,
     val thread_content_bg: Color,
+    val on_accent: Color = Color.White,
+    val secondary_control_bg: Color = bg_secondary,
+    val secondary_control_border: Color = Color.Transparent,
 )
 
 private fun c(hex: String): Color = Color(("FF" + hex.removePrefix("#")).toLong(16))
@@ -108,6 +111,9 @@ private fun palette(
     thread_card_border: String,
     thread_header_bg: String,
     thread_content_bg: String,
+    on_accent: String = "#ffffff",
+    secondary_control_bg: String = bg_secondary,
+    secondary_control_border: String? = null,
 ): ColorThemePalette = ColorThemePalette(
     bg_primary = c(bg_primary),
     bg_secondary = c(bg_secondary),
@@ -138,6 +144,9 @@ private fun palette(
     thread_card_border = c(thread_card_border),
     thread_header_bg = c(thread_header_bg),
     thread_content_bg = c(thread_content_bg),
+    on_accent = c(on_accent),
+    secondary_control_bg = c(secondary_control_bg),
+    secondary_control_border = secondary_control_border?.let { c(it) } ?: Color.Transparent,
 )
 
 object AsterColorThemes {
@@ -310,15 +319,17 @@ object AsterColorThemes {
     )
 
     val black = palette(
-        bg_primary = "#0a0a0a", bg_secondary = "#000000", bg_tertiary = "#141414", bg_hover = "#1f1f1f",
+        bg_primary = "#0a0a0a", bg_secondary = "#000000", bg_tertiary = "#161616", bg_hover = "#1f1f1f",
         bg_selected = "#262626", avatar_bg = "#262626", avatar_text = "#e5e5e5",
-        border_primary = "#2e2e2e", border_secondary = "#1a1a1a",
-        text_primary = "#ffffff", text_secondary = "#e5e5e5", text_tertiary = "#a3a3a3", text_muted = "#737373",
-        accent_color = "#d4d4d8", accent_color_hover = "#e4e4e7",
+        border_primary = "#2e2e2e", border_secondary = "#1f1f1f",
+        text_primary = "#ffffff", text_secondary = "#d4d4d4", text_tertiary = "#a3a3a3", text_muted = "#8a8a8a",
+        accent_color = "#f4f4f5", accent_color_hover = "#ffffff",
         sidebar_bg = "#000000", sidebar_hover = "#0a0a0a",
-        input_bg = "#141414", input_border = "#2e2e2e",
-        thread_card_bg = "#141414", thread_card_bg_hover = "#1f1f1f", thread_card_border = "#2e2e2e",
-        thread_header_bg = "#141414", thread_content_bg = "#0a0a0a",
+        input_bg = "#161616", input_border = "#2e2e2e",
+        thread_card_bg = "#161616", thread_card_bg_hover = "#1f1f1f", thread_card_border = "#2e2e2e",
+        thread_header_bg = "#161616", thread_content_bg = "#0a0a0a",
+        on_accent = "#0a0a0a",
+        secondary_control_bg = "#1a1a1a", secondary_control_border = "#2e2e2e",
     )
 
     fun palette_for(id: ColorThemeId): ColorThemePalette? = when (id) {
@@ -382,6 +393,9 @@ object AsterColorThemes {
             thread_header_bg = palette.thread_header_bg,
             thread_content_bg = palette.thread_content_bg,
             star = palette.accent_color,
+            on_accent = palette.on_accent,
+            secondary_control_bg = palette.secondary_control_bg,
+            secondary_control_border = palette.secondary_control_border,
         )
     }
 }

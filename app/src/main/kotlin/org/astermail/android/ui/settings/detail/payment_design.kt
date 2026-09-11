@@ -32,9 +32,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -127,7 +127,7 @@ internal fun galaxy_badge(
     ) {
         Text(
             text = text.uppercase(),
-            color = Color.White,
+            color = AsterMaterial.colors.on_accent,
             fontSize = font_size,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.6.sp,
@@ -277,8 +277,8 @@ internal fun card_brand_marks(modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         brand_tile(Color.White, hairline, R.drawable.ic_brand_visa, 30.dp, 30.dp, "Visa")
-        brand_tile(Color.White, hairline, R.drawable.ic_brand_mastercard, 26.dp, 16.dp, "Mastercard")
-        brand_tile(Color(0xFF006FCF), null, R.drawable.ic_brand_amex, 30.dp, 30.dp, "American Express")
+        brand_tile(Color.White, hairline, R.drawable.ic_brand_mastercard, 24.dp, 16.dp, "Mastercard")
+        brand_tile(Color(0xFF016FD0), null, R.drawable.ic_brand_amex, 22.dp, 22.dp, "American Express")
         brand_tile(Color.White, hairline, R.drawable.ic_brand_discover, 30.dp, 30.dp, "Discover")
     }
 }
@@ -319,8 +319,9 @@ internal fun coin_mark(
     label: String,
     size: Dp = 24.dp,
     modifier: Modifier = Modifier,
+    show_chain: Boolean = true,
+    ring_color: Color = AsterMaterial.colors.bg_tertiary,
 ) {
-    val colors = AsterMaterial.colors
     val coin = coin_drawable_for(currency, chain)
     val chain_mark = chain_drawable_for(chain)
     Box(modifier = modifier.size(size), contentAlignment = Alignment.BottomEnd) {
@@ -329,16 +330,22 @@ internal fun coin_mark(
             contentDescription = label,
             modifier = Modifier.size(size),
         )
-        if (chain_mark != coin) {
-            Image(
-                painter = painterResource(chain_mark),
-                contentDescription = null,
+        if (show_chain && chain_mark != coin) {
+            Box(
                 modifier = Modifier
-                    .size(size * 0.42f)
-                    .offset(x = 2.dp, y = 2.dp)
-                    .border(1.5.dp, colors.bg_tertiary, CircleShape)
-                    .clip(CircleShape),
-            )
+                    .size(size * 0.5f)
+                    .clip(CircleShape)
+                    .background(ring_color)
+                    .padding(2.dp),
+            ) {
+                Image(
+                    painter = painterResource(chain_mark),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape),
+                )
+            }
         }
     }
 }
@@ -360,7 +367,7 @@ internal fun coin_stack(modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         stacked_coins.forEach { (currency, chain, label) ->
-            coin_mark(currency = currency, chain = chain, label = label, size = 22.dp)
+            coin_mark(currency = currency, chain = chain, label = label, size = 22.dp, show_chain = false)
         }
     }
 }

@@ -87,33 +87,6 @@ import org.astermail.android.translation.translation_supported
 import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
-private fun behavior_option(label: String, selected: Boolean, on_click: () -> Unit) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = on_click)
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(label, color = colors.text_primary, fontSize = 15.sp, modifier = Modifier.weight(1f))
-        if (selected) {
-            Box(
-                modifier = Modifier.size(20.dp).background(colors.accent_blue, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.Check,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(13.dp),
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun behavior_toggle(
     title: String,
     subtitle: String? = null,
@@ -301,7 +274,7 @@ fun BehaviorScreen(
     }
 
     fun save(snap: UserPreferences? = null) {
-        val base = snap ?: prefs ?: return
+        val base = snap ?: vm.state.value.preferences ?: return
         vm.save_preferences(
             base.copy(
                 mark_as_read = mark_read,
@@ -365,38 +338,26 @@ fun BehaviorScreen(
             // ── Reading & Conversations ──────────────────────────────────────────
             section_label(stringResource(R.string.section_reading_conversations))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = stringResource(R.string.mark_as_read),
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
-                )
+                choice_group_title(stringResource(R.string.mark_as_read))
                 listOf(
                     "immediate" to stringResource(R.string.immediately),
                     "1_second" to stringResource(R.string.after_1_second),
                     "3_seconds" to stringResource(R.string.after_3_seconds),
                     "never" to stringResource(R.string.never_manual),
                 ).forEachIndexed { i, (id, label) ->
-                    behavior_option(label, mark_read == id) { mark_read = id; save_trigger++ }
+                    choice_option_row(label, mark_read == id) { mark_read = id; save_trigger++ }
                     if (i < 3) AsterDivider(modifier = Modifier)
                 }
             }
             v_gap(AsterSpacing.md)
             AsterCard(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = stringResource(R.string.auto_advance_label),
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
-                )
+                choice_group_title(stringResource(R.string.auto_advance_label))
                 listOf(
                     "Go to next message" to stringResource(R.string.auto_advance_next),
                     "Go to previous message" to stringResource(R.string.auto_advance_previous),
                     "Go back to message list" to stringResource(R.string.auto_advance_back),
                 ).forEachIndexed { i, (id, label) ->
-                    behavior_option(label, auto_advance == id) { auto_advance = id; save_trigger++ }
+                    choice_option_row(label, auto_advance == id) { auto_advance = id; save_trigger++ }
                     if (i < 2) AsterDivider(modifier = Modifier)
                 }
             }
@@ -416,18 +377,12 @@ fun BehaviorScreen(
                     on_change = { inbox_categories = it; save_trigger++ },
                 )
                 AsterDivider(modifier = Modifier)
-                Text(
-                    text = stringResource(R.string.sort_by),
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
-                )
+                choice_group_title(stringResource(R.string.sort_by))
                 listOf(
                     false to stringResource(R.string.sort_newest),
                     true to stringResource(R.string.sort_oldest),
                 ).forEachIndexed { i, (oldest_first, label) ->
-                    behavior_option(label, inbox_sort_oldest_first == oldest_first) {
+                    choice_option_row(label, inbox_sort_oldest_first == oldest_first) {
                         inbox_sort_oldest_first = oldest_first
                         save_trigger++
                     }
@@ -471,21 +426,9 @@ fun BehaviorScreen(
             }
             v_gap(AsterSpacing.md)
             AsterCard(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = stringResource(R.string.emails_per_page),
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
-                )
-                Text(
-                    text = stringResource(R.string.emails_per_page_subtitle),
-                    color = colors.text_tertiary,
-                    fontSize = 13.sp,
-                    modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = 4.dp),
-                )
+                choice_group_title(stringResource(R.string.emails_per_page), stringResource(R.string.emails_per_page_subtitle))
                 listOf(10, 20, 30, 50, 100).forEachIndexed { i, n ->
-                    behavior_option("$n", inbox_page_size == n) { inbox_page_size = n; save_trigger++ }
+                    choice_option_row("$n", inbox_page_size == n) { inbox_page_size = n; save_trigger++ }
                     if (i < 4) AsterDivider(modifier = Modifier)
                 }
             }
@@ -496,7 +439,9 @@ fun BehaviorScreen(
                     enabled_categories = enabled_categories,
                     custom_categories = custom_categories,
                     custom_category_limit = custom_category_limit,
-                    muted_categories = prefs?.muted_notification_categories ?: emptyList(),
+                    muted_categories = state.muted_categories_override
+                        ?: prefs?.muted_notification_categories
+                        ?: emptyList(),
                     on_enabled_change = { enabled_categories = it; save_trigger++ },
                     on_custom_change = { custom_categories = it; save_trigger++ },
                     on_toggle_muted = { vm.toggle_category_notifications(it) },
@@ -524,16 +469,10 @@ fun BehaviorScreen(
             // ── Composing & Replies ──────────────────────────────────────────────
             section_label(stringResource(R.string.section_composing_replies))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = stringResource(R.string.default_reply),
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
-                )
-                behavior_option(stringResource(R.string.reply_to_sender), default_reply == "reply") { default_reply = "reply"; save_trigger++ }
+                choice_group_title(stringResource(R.string.default_reply))
+                choice_option_row(stringResource(R.string.reply_to_sender), default_reply == "reply") { default_reply = "reply"; save_trigger++ }
                 AsterDivider(modifier = Modifier)
-                behavior_option(stringResource(R.string.reply_to_all), default_reply == "reply_all") { default_reply = "reply_all"; save_trigger++ }
+                choice_option_row(stringResource(R.string.reply_to_all), default_reply == "reply_all") { default_reply = "reply_all"; save_trigger++ }
                 AsterDivider(modifier = Modifier)
                 behavior_toggle(
                     title = stringResource(R.string.auto_save_recipients),
@@ -561,14 +500,9 @@ fun BehaviorScreen(
                 ) {
                     Column {
                         AsterDivider(modifier = Modifier)
-                        Text(
-                            text = stringResource(R.string.cancellation_period),
-                            color = colors.text_tertiary,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.sm, bottom = 2.dp),
-                        )
+                        choice_group_title(stringResource(R.string.cancellation_period))
                         listOf(3, 5, 10, 15, 20, 30).forEachIndexed { i, secs ->
-                            behavior_option(stringResource(R.string.undo_send_delay_seconds, secs), undo_send_secs == secs) { undo_send_secs = secs; save_trigger++ }
+                            choice_option_row(stringResource(R.string.undo_send_delay_seconds, secs), undo_send_secs == secs) { undo_send_secs = secs; save_trigger++ }
                             if (i < 5) AsterDivider(modifier = Modifier)
                         }
                     }
@@ -605,36 +539,24 @@ fun BehaviorScreen(
                 ) {
                     Column {
                         AsterDivider(modifier = Modifier)
-                        Text(
-                            text = stringResource(R.string.spam_sensitivity),
-                            color = colors.text_primary,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
-                        )
+                        choice_group_title(stringResource(R.string.spam_sensitivity))
                         listOf(
                             "low" to stringResource(R.string.spam_sensitivity_low),
                             "medium" to stringResource(R.string.spam_sensitivity_medium),
                             "high" to stringResource(R.string.spam_sensitivity_high),
                         ).forEachIndexed { i, (id, label) ->
-                            behavior_option(label, spam_sensitivity == id) { spam_sensitivity = id; push_spam_settings(); save_trigger++ }
+                            choice_option_row(label, spam_sensitivity == id) { spam_sensitivity = id; push_spam_settings(); save_trigger++ }
                             if (i < 2) AsterDivider(modifier = Modifier)
                         }
                         AsterDivider(modifier = Modifier)
-                        Text(
-                            text = stringResource(R.string.auto_delete_spam),
-                            color = colors.text_primary,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
-                        )
+                        choice_group_title(stringResource(R.string.auto_delete_spam))
                         listOf(
                             7 to stringResource(R.string.auto_delete_spam_7),
                             14 to stringResource(R.string.auto_delete_spam_14),
                             30 to stringResource(R.string.auto_delete_spam_30),
                             0 to stringResource(R.string.auto_delete_spam_never),
                         ).forEachIndexed { i, (days, label) ->
-                            behavior_option(label, auto_delete_spam_days == days) { auto_delete_spam_days = days; push_spam_settings(); save_trigger++ }
+                            choice_option_row(label, auto_delete_spam_days == days) { auto_delete_spam_days = days; push_spam_settings(); save_trigger++ }
                             if (i < 3) AsterDivider(modifier = Modifier)
                         }
                     }
@@ -646,19 +568,13 @@ fun BehaviorScreen(
             // ── Protected Folders ────────────────────────────────────────────────
             section_label(stringResource(R.string.section_protected_folders))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = stringResource(R.string.folder_lock_mode),
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
-                )
-                behavior_option(
+                choice_group_title(stringResource(R.string.folder_lock_mode))
+                choice_option_row(
                     label = stringResource(R.string.folder_lock_session),
                     selected = folder_lock_mode == "session",
                 ) { folder_lock_mode = "session"; save_trigger++ }
                 AsterDivider(modifier = Modifier)
-                behavior_option(
+                choice_option_row(
                     label = stringResource(R.string.folder_lock_on_leave),
                     selected = folder_lock_mode == "on_leave",
                 ) { folder_lock_mode = "on_leave"; save_trigger++ }
@@ -732,25 +648,13 @@ internal fun ColumnScope.translation_settings_section(
 
     section_label(stringResource(R.string.section_translation))
     AsterCard(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = stringResource(R.string.translate_incoming_label),
-            color = colors.text_primary,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
-        )
-        Text(
-            text = stringResource(R.string.translate_incoming_subtitle),
-            color = colors.text_tertiary,
-            fontSize = 13.sp,
-            modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = 4.dp),
-        )
+        choice_group_title(stringResource(R.string.translate_incoming_label), stringResource(R.string.translate_incoming_subtitle))
         listOf(
             "off" to stringResource(R.string.translate_mode_off),
             "ask" to stringResource(R.string.translate_mode_ask),
             "always" to stringResource(R.string.translate_mode_always),
         ).forEachIndexed { i, (id, label) ->
-            behavior_option(label, translate_incoming == id) {
+            choice_option_row(label, translate_incoming == id) {
                 if (id != "off" && translate_incoming == "off") {
                     on_request_mode(id)
                 } else {
@@ -763,21 +667,9 @@ internal fun ColumnScope.translation_settings_section(
     if (translate_incoming != "off") {
         v_gap(AsterSpacing.md)
         AsterCard(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = stringResource(R.string.translate_my_languages_label),
-                color = colors.text_primary,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
-            )
-            Text(
-                text = stringResource(R.string.translate_my_languages_subtitle),
-                color = colors.text_tertiary,
-                fontSize = 13.sp,
-                modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = 4.dp),
-            )
+            choice_group_title(stringResource(R.string.translate_my_languages_label), stringResource(R.string.translate_my_languages_subtitle))
             translation_language_codes.forEachIndexed { i, code ->
-                behavior_option(language_display_name(code), translate_languages.contains(code)) {
+                choice_option_row(language_display_name(code), translate_languages.contains(code), multi_select = true) {
                     on_languages_change(
                         if (translate_languages.contains(code)) {
                             translate_languages - code
@@ -791,21 +683,9 @@ internal fun ColumnScope.translation_settings_section(
         }
         v_gap(AsterSpacing.md)
         AsterCard(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = stringResource(R.string.translate_never_languages_label),
-                color = colors.text_primary,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
-            )
-            Text(
-                text = stringResource(R.string.translate_never_languages_subtitle),
-                color = colors.text_tertiary,
-                fontSize = 13.sp,
-                modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = 4.dp),
-            )
+            choice_group_title(stringResource(R.string.translate_never_languages_label), stringResource(R.string.translate_never_languages_subtitle))
             translation_language_codes.forEachIndexed { i, code ->
-                behavior_option(language_display_name(code), translate_never.contains(code)) {
+                choice_option_row(language_display_name(code), translate_never.contains(code), multi_select = true) {
                     on_never_change(
                         if (translate_never.contains(code)) {
                             translate_never - code

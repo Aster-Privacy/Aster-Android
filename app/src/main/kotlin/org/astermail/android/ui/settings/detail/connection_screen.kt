@@ -132,56 +132,19 @@ private fun connection_method_option(
     enabled: Boolean,
     on_click: () -> Unit,
 ) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = enabled, onClick = on_click)
-            .background(if (selected) colors.accent_blue.copy(alpha = 0.08f) else Color.Transparent)
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            imageVector = option.icon,
-            contentDescription = null,
-            tint = option.color,
-            modifier = Modifier.size(20.dp),
-        )
-        Spacer(Modifier.width(AsterSpacing.md))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = option.label,
-                color = colors.text_primary,
-                fontSize = 15.sp,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+    choice_option_row(
+        label = option.label,
+        selected = selected,
+        on_click = on_click,
+        subtitle = option.description,
+        enabled = enabled,
+        leading = {
+            Icon(
+                imageVector = option.icon,
+                contentDescription = null,
+                tint = option.color,
+                modifier = Modifier.size(20.dp),
             )
-            Text(
-                text = option.description,
-                color = colors.text_tertiary,
-                fontSize = 13.sp,
-            )
-        }
-        Spacer(Modifier.width(AsterSpacing.md))
-        Box(
-            modifier = Modifier
-                .size(22.dp)
-                .clip(CircleShape)
-                .background(if (selected) colors.accent_blue else Color.Transparent)
-                .border(
-                    width = if (selected) 0.dp else 1.5.dp,
-                    color = if (selected) Color.Transparent else colors.border_secondary,
-                    shape = CircleShape,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (selected) {
-                Icon(
-                    imageVector = TablerIcons.Check,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(14.dp),
-                )
-            }
-        }
-    }
+        },
+    )
 }

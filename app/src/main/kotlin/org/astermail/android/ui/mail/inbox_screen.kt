@@ -1578,9 +1578,7 @@ fun InboxScreen(
                     (show_skeleton && threads.isEmpty()) ||
                     (!inbox_error_now && !contradicts_unread && (category_skeleton || empty_skeleton))
                 if (skeleton_now) {
-                    Box(Modifier.padding(top = header_height_dp)) {
-                        inbox_skeleton(list_density = settings_state.preferences?.mail_list_density)
-                    }
+                    Box(Modifier.padding(top = header_height_dp))
                 } else if (inbox_error_now) {
                     Box(Modifier.padding(top = header_height_dp)) {
                         inbox_error_state(inbox_state.error.orEmpty()) {
@@ -1935,6 +1933,11 @@ fun InboxScreen(
                         bottom_padding = list_bottom_pad,
                     )
                 }
+                inbox_skeleton_overlay(
+                    visible = skeleton_now,
+                    modifier = Modifier.padding(top = header_height_dp),
+                    list_density = settings_state.preferences?.mail_list_density,
+                )
                 pull_indicator()
             }
         }
@@ -2677,16 +2680,31 @@ internal fun inbox_top_bar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
             ) {
+                val scope_label = search_scope_title ?: folder_title.lowercase(java.util.Locale.getDefault())
+                val full_label = if (search_scope_title != null) {
+                    stringResource(R.string.inbox_search_in_category, search_scope_title)
+                } else {
+                    stringResource(R.string.inbox_search_in_folder, scope_label)
+                }
+                val short_label = if (scope_label.contains('@')) {
+                    stringResource(R.string.inbox_search_in_category, scope_label.substringBefore('@'))
+                } else {
+                    null
+                }
+                val fallback_label = stringResource(R.string.search_mail)
+                val candidates = remember(full_label, short_label, fallback_label) {
+                    listOfNotNull(full_label, short_label, fallback_label).distinct()
+                }
+                var candidate_index by remember(candidates) { mutableStateOf(0) }
                 Text(
-                    text = if (search_scope_title != null) {
-                        stringResource(R.string.inbox_search_in_category, search_scope_title)
-                    } else {
-                        stringResource(R.string.inbox_search_in_folder, folder_title.lowercase(java.util.Locale.getDefault()))
-                    },
+                    text = candidates[candidate_index],
                     color = colors.text_secondary,
                     fontSize = 16.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    onTextLayout = { layout ->
+                        if (layout.hasVisualOverflow && candidate_index < candidates.lastIndex) candidate_index++
+                    },
                     modifier = Modifier.weight(1f, fill = false),
                 )
             }

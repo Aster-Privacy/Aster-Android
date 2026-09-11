@@ -24,6 +24,7 @@ package org.astermail.android.design.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -87,6 +88,8 @@ private fun aster_button_content(
                 fontSize = aster_button_label_size,
                 fontWeight = FontWeight.SemiBold,
                 color = content_color,
+                maxLines = 1,
+                softWrap = false,
             )
         }
     }
@@ -107,6 +110,7 @@ fun AsterButton(
         enabled = enabled,
         is_loading = is_loading,
         fill = AsterMaterial.colors.accent_blue,
+        content_color = AsterMaterial.colors.on_accent,
     )
 }
 
@@ -118,6 +122,7 @@ private fun depth_button(
     enabled: Boolean,
     is_loading: Boolean,
     fill: Color,
+    content_color: Color = Color.White,
 ) {
     val interactive = enabled && !is_loading
     val interaction = remember { MutableInteractionSource() }
@@ -146,7 +151,7 @@ private fun depth_button(
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .clip(aster_button_shape)
             .background(press_color.copy(alpha = alpha), aster_button_shape)
-            .border(1.dp, Color.White.copy(alpha = 0.10f * alpha), aster_button_shape)
+            .border(1.dp, content_color.copy(alpha = 0.10f * alpha), aster_button_shape)
             .clickable(
                 enabled = interactive,
                 interactionSource = interaction,
@@ -156,7 +161,7 @@ private fun depth_button(
             .padding(horizontal = AsterSpacing.lg),
         contentAlignment = Alignment.Center,
     ) {
-        aster_button_content(label, is_loading, Color.White.copy(alpha = if (interactive) 1f else 0.8f))
+        aster_button_content(label, is_loading, content_color.copy(alpha = if (interactive) 1f else 0.8f))
     }
 }
 
@@ -189,11 +194,11 @@ fun AsterSecondaryButton(
             .graphicsLayer { scaleX = scale; scaleY = scale },
         shape = aster_button_shape,
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = colors.bg_secondary,
+            containerColor = colors.secondary_control_bg,
             contentColor = colors.text_primary,
             disabledContentColor = colors.text_muted,
         ),
-        border = null,
+        border = if (colors.secondary_control_border == Color.Transparent) null else BorderStroke(1.dp, colors.secondary_control_border),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = AsterSpacing.lg),
     ) {
         aster_button_content(label, is_loading, colors.text_primary)

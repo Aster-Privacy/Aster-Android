@@ -26,7 +26,10 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -62,6 +65,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
@@ -256,6 +263,118 @@ internal fun section_label(text: String) {
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier.padding(top = AsterSpacing.md, bottom = AsterSpacing.xs),
     )
+}
+
+@Composable
+internal fun choice_group_title(text: String, subtitle: String? = null) {
+    val colors = AsterMaterial.colors
+    Column(
+        modifier = Modifier.padding(
+            start = AsterSpacing.lg,
+            end = AsterSpacing.lg,
+            top = AsterSpacing.md,
+            bottom = AsterSpacing.xs,
+        ),
+    ) {
+        Text(
+            text = text.uppercase(),
+            color = colors.text_tertiary,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 0.6.sp,
+        )
+        if (subtitle != null) {
+            Text(
+                text = subtitle,
+                color = colors.text_tertiary,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(top = 2.dp),
+            )
+        }
+    }
+}
+
+@Composable
+internal fun choice_option_row(
+    label: String,
+    selected: Boolean,
+    subtitle: String? = null,
+    enabled: Boolean = true,
+    multi_select: Boolean = false,
+    label_font_family: FontFamily? = null,
+    test_tag: String? = null,
+    leading: (@Composable () -> Unit)? = null,
+    on_click: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val interaction = if (multi_select) {
+        Modifier.toggleable(value = selected, enabled = enabled, role = Role.Checkbox, onValueChange = { on_click() })
+    } else {
+        Modifier.selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = on_click)
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(androidx.compose.ui.graphics.RectangleShape)
+            .then(interaction)
+            .background(if (selected) colors.accent_blue.copy(alpha = 0.08f) else Color.Transparent)
+            .then(if (test_tag != null) Modifier.testTag(test_tag) else Modifier)
+            .heightIn(min = 54.dp)
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        choice_indicator(selected = selected, enabled = enabled, multi_select = multi_select)
+        Spacer(Modifier.width(AsterSpacing.md))
+        if (leading != null) {
+            leading()
+            Spacer(Modifier.width(AsterSpacing.md))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                color = if (enabled) colors.text_primary else colors.text_tertiary,
+                fontSize = 15.sp,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                fontFamily = label_font_family,
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                    fontFamily = label_font_family,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun choice_indicator(selected: Boolean, enabled: Boolean, multi_select: Boolean) {
+    val colors = AsterMaterial.colors
+    val accent = if (enabled) colors.accent_blue else colors.accent_blue.copy(alpha = 0.4f)
+    val ring = if (enabled) colors.border_secondary else colors.border_secondary.copy(alpha = 0.5f)
+    val shape = if (multi_select) RoundedCornerShape(6.dp) else CircleShape
+    Box(
+        modifier = Modifier
+            .size(22.dp)
+            .clip(shape)
+            .background(if (selected && multi_select) accent else Color.Transparent)
+            .border(2.dp, if (selected) accent else ring, shape),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (selected && multi_select) {
+            Icon(
+                imageVector = TablerIcons.Check,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(14.dp),
+            )
+        } else if (selected) {
+            Box(modifier = Modifier.size(11.dp).background(accent, CircleShape))
+        }
+    }
 }
 
 @Composable

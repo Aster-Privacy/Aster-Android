@@ -84,6 +84,7 @@ import org.astermail.android.api.imports.UploadInitRequest
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterCard
 
 private const val CHUNK_SIZE = 4 * 1024 * 1024
@@ -667,7 +668,7 @@ fun ImportScreen(
                                         }
                                     }
                                     Spacer(Modifier.size(AsterSpacing.sm))
-                                    Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
+                                    AsterActionRow(modifier = Modifier.fillMaxWidth(), spacing = AsterSpacing.sm) {
                                         org.astermail.android.design.components.AsterButton(
                                             label = stringResource(R.string.import_pause),
                                             onClick = { vm.pause(job.id) },

@@ -50,6 +50,8 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
@@ -108,6 +110,7 @@ private fun switch_row(
                         modifier = Modifier
                             .padding(start = AsterSpacing.xs)
                             .size(16.dp)
+                            .clip(CircleShape)
                             .clickable { info_open = !info_open },
                     )
                 }

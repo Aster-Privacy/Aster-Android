@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- Order and delivery messages show a card with the store, the items, and buttons to track the package or view the order
+- Downloaded attachments offer Open, Open folder, and Share
+- Storage folders open the full folder, and payment logos are accurate everywhere
+- Clearer option lists, a redesigned trusted devices screen, and a smoother loading reveal
+- Fixes for the black theme, message viewer resizing, wrapped buttons, and category mute flicker

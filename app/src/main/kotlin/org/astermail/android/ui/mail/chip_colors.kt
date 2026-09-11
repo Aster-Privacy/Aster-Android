@@ -116,7 +116,17 @@ private fun readable_ink(background: Color): Color =
         chip_ink_dark
     }
 
+private const val chip_neutral_max_saturation = 0.04f
+
+private const val chip_neutral_min_lightness = 0.85f
+
+private fun is_neutral_light(label: Color, is_dark: Boolean): Boolean {
+    val hsl = to_hsl(label)
+    return is_dark && hsl.saturation <= chip_neutral_max_saturation && hsl.lightness >= chip_neutral_min_lightness
+}
+
 internal fun chip_background(label: Color, surface: Color, is_dark: Boolean): Color {
+    if (is_neutral_light(label, is_dark)) return mix(surface, label, 0.12f)
     val base = to_hsl(label)
     val saturation = if (base.saturation <= 0.04f) {
         base.saturation
@@ -144,7 +154,7 @@ internal fun chip_background(label: Color, surface: Color, is_dark: Boolean): Co
 }
 
 internal fun chip_border(label: Color, surface: Color, is_dark: Boolean): Color =
-    chip_background(label, surface, is_dark)
+    if (is_neutral_light(label, is_dark)) mix(surface, label, 0.16f) else chip_background(label, surface, is_dark)
 
 internal fun chip_subtle_background(label: Color, surface: Color, is_dark: Boolean): Color =
     mix(surface, label, if (is_dark) 0.15f else 0.12f)

@@ -656,14 +656,10 @@ fun ThreadInboxRow(
                             )
                         }
                     }
-                    Text(
-                        text = low_network_preview(email.preview),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = preview_color,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Normal,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                    inbox_preview_or_order_line(
+                        email = email,
+                        preview_text = low_network_preview(email.preview),
+                        preview_color = preview_color,
                         modifier = Modifier.weight(1f),
                     )
                     trailing_controls()

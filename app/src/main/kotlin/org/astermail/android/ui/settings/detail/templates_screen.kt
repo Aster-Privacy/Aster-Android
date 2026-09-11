@@ -51,6 +51,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.style.TextOverflow
@@ -274,6 +276,7 @@ private fun template_row(
             tint = colors.text_tertiary,
             modifier = Modifier
                 .size(36.dp)
+                .clip(CircleShape)
                 .clickable(onClick = on_edit)
                 .padding(8.dp),
         )
@@ -283,6 +286,7 @@ private fun template_row(
             tint = colors.danger,
             modifier = Modifier
                 .size(36.dp)
+                .clip(CircleShape)
                 .clickable(onClick = on_delete)
                 .padding(8.dp),
         )

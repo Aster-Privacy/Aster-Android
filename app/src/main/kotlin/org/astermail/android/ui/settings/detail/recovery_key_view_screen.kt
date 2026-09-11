@@ -69,6 +69,7 @@ import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterSecondaryButton
@@ -247,9 +248,9 @@ fun RecoveryKeyViewScreen(
             ) {
                 Column {
                     v_gap(AsterSpacing.lg)
-                    Row(
+                    AsterActionRow(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                        spacing = AsterSpacing.sm,
                     ) {
                         AsterSecondaryButton(
                             label = stringResource(R.string.copy_to_clipboard),

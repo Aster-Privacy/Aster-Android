@@ -57,6 +57,7 @@ import compose.icons.tablericons.Star
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterSecondaryButton
@@ -206,24 +207,26 @@ fun FirstRunPromptCard(
 
                 Spacer(Modifier.height(AsterSpacing.md))
 
-                Row(
+                AsterActionRow(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically,
+                    spacing = AsterSpacing.xs,
                 ) {
                     TextButton(onClick = on_dismiss) {
                         Text(
                             text = dismiss_label,
                             style = MaterialTheme.typography.labelLarge,
                             color = colors.text_secondary,
+                            maxLines = 1,
+                            softWrap = false,
                         )
                     }
-                    Spacer(Modifier.width(AsterSpacing.xs))
                     TextButton(onClick = on_action) {
                         Text(
                             text = action_label,
                             style = MaterialTheme.typography.labelLarge,
                             color = colors.accent_blue,
+                            maxLines = 1,
+                            softWrap = false,
                         )
                     }
                 }

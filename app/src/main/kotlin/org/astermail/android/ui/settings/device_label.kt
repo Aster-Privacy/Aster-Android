@@ -22,6 +22,7 @@
 package org.astermail.android.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -165,9 +166,11 @@ fun device_badge(label: String, color: Color = AsterMaterial.colors.accent_blue)
     val colors = AsterMaterial.colors
     val background = org.astermail.android.ui.mail.chip_background(color, colors.bg_primary, colors.is_dark)
     val content = org.astermail.android.ui.mail.chip_content(color, background, colors.is_dark)
+    val border = org.astermail.android.ui.mail.chip_border(color, colors.bg_primary, colors.is_dark)
     Box(
         modifier = Modifier
             .background(background, SquircleShape(8.dp))
+            .border(1.dp, border, SquircleShape(8.dp))
             .padding(horizontal = AsterSpacing.sm, vertical = 3.dp),
         contentAlignment = Alignment.Center,
     ) {

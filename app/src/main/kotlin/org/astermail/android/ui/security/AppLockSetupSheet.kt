@@ -83,6 +83,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.security.AppLockStore
@@ -294,8 +295,8 @@ fun AppLockSetupSheet(
                         on_click = { chosen_mode = "text" },
                     )
                     Spacer(Modifier.height(4.dp))
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                    AsterActionRow(
+                        spacing = AsterSpacing.sm,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         AsterSecondaryButton(

@@ -40,12 +40,29 @@ data class PlanLimitsUiState(
     val load_failed: Boolean = false,
 )
 
+object PlanLimitsCache {
+    @Volatile
+    private var cached_limits: PlanLimitsResponse? = null
+
+    fun limits(): PlanLimitsResponse? = cached_limits
+
+    fun update(limits: PlanLimitsResponse) {
+        cached_limits = limits
+    }
+
+    fun reset() {
+        cached_limits = null
+    }
+}
+
 @HiltViewModel
 class PlanLimitsViewModel @Inject constructor(
     private val billing_api: BillingApi,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(PlanLimitsUiState())
+    private val _state = MutableStateFlow(
+        PlanLimitsUiState(limits = PlanLimitsCache.limits(), plans = AvailablePlansCache.plans()),
+    )
     val state: StateFlow<PlanLimitsUiState> = _state.asStateFlow()
 
     init {
@@ -56,6 +73,7 @@ class PlanLimitsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = billing_api.get_plan_limits()
+                PlanLimitsCache.update(response)
                 _state.value = _state.value.copy(limits = response, is_loading = false, load_failed = false)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t

@@ -75,6 +75,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDialogPrimaryButton
@@ -217,9 +218,9 @@ private fun import_file_card(
                 )
             }
         }
-        Row(
+        AsterActionRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+            spacing = AsterSpacing.sm,
         ) {
             AsterGhostButton(
                 label = stringResource(R.string.alias_import_remove_file),

@@ -94,6 +94,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
@@ -379,11 +380,11 @@ fun EncryptionScreen(
 
                     AsterDivider()
 
-                    Row(
+                    AsterActionRow(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(AsterSpacing.lg),
-                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                        spacing = AsterSpacing.sm,
                     ) {
                         AsterSecondaryButton(
                             label = stringResource(R.string.export_public_key),
@@ -820,9 +821,9 @@ fun EncryptionScreen(
                     Spacer(Modifier.size(AsterSpacing.md))
                     recovery_codes_block(codes = new_recovery_codes)
                     Spacer(Modifier.size(AsterSpacing.md))
-                    Row(
+                    AsterActionRow(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                        spacing = AsterSpacing.sm,
                     ) {
                         AsterSecondaryButton(
                             label = stringResource(R.string.copy_all_codes),

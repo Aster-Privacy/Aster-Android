@@ -48,7 +48,9 @@ class AuthGateViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
-    private val _is_ready = MutableStateFlow(false)
+    private val _is_ready = MutableStateFlow(
+        !auth_repository.is_signed_in.value || auth_repository.identity_keys_present(),
+    )
     val is_ready: StateFlow<Boolean> = _is_ready.asStateFlow()
 
     val is_signed_in: StateFlow<Boolean> = auth_repository.is_signed_in
@@ -67,7 +69,7 @@ class AuthGateViewModel @Inject constructor(
     }
 
     init {
-        if (auth_repository.is_signed_in.value) {
+        if (!_is_ready.value) {
             viewModelScope.launch {
                 val recovery = launch(Dispatchers.Default) {
                     runCatching { auth_repository.try_recover_identity_key() }
@@ -75,8 +77,6 @@ class AuthGateViewModel @Inject constructor(
                 withTimeoutOrNull(IDENTITY_RECOVERY_TIMEOUT_MS) { recovery.join() }
                 _is_ready.value = true
             }
-        } else {
-            _is_ready.value = true
         }
         if (auth_repository.is_signed_in.value) {
             viewModelScope.launch {

@@ -553,6 +553,7 @@ object EmailHtmlSanitizer {
                 }
             }
             for (k in to_remove) el.removeAttr(k)
+            if (el.tagName().equals("img", ignoreCase = true)) reserve_image_box(el)
             if (el.tagName().equals("a", ignoreCase = true)) {
                 el.attr("target", "_blank")
                 el.attr("rel", "noopener noreferrer nofollow")
@@ -564,6 +565,20 @@ object EmailHtmlSanitizer {
                 }
             }
         }
+    }
+
+    private val plain_dimension = Regex("^\\d{1,5}$")
+
+    private fun reserve_image_box(img: Element) {
+        if (img.hasAttr("loading")) img.attr("loading", "eager")
+        val width = img.attr("width").trim()
+        val height = img.attr("height").trim()
+        if (!plain_dimension.matches(width) || !plain_dimension.matches(height)) return
+        if (width == "0" || height == "0") return
+        val style = img.attr("style")
+        if (style.contains("aspect-ratio", ignoreCase = true)) return
+        val ratio = "aspect-ratio:$width/$height"
+        img.attr("style", if (style.isBlank()) ratio else style.trimEnd().trimEnd(';') + ";" + ratio)
     }
 
     private fun scrub_style_blocks(doc: Document, options: SanitizeOptions = SanitizeOptions()) {

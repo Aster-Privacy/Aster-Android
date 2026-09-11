@@ -43,7 +43,9 @@ import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -716,6 +718,56 @@ fun MailDetailScreen(
     var preview_attachment by remember { mutableStateOf<MessageAttachment?>(null) }
     var preview_bytes by remember { mutableStateOf<ByteArray?>(null) }
     var is_downloading_attachment by remember { mutableStateOf(false) }
+    var options_attachment by remember { mutableStateOf<MessageAttachment?>(null) }
+    val save_as_pending = remember { arrayOfNulls<ByteArray>(1) }
+    val save_as_launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val target = result.data?.data
+        val bytes = save_as_pending[0]
+        save_as_pending[0] = null
+        if (target == null || bytes == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val written = withContext(Dispatchers.IO) {
+                runCatching {
+                    context.contentResolver.openOutputStream(target, "wt")?.use { out ->
+                        out.write(bytes)
+                        out.flush()
+                    } != null
+                }.getOrDefault(false)
+            }
+            org.astermail.android.ui.common.app_toast.show(
+                context.getString(if (written) R.string.attachment_saved else R.string.failed_to_save),
+            )
+        }
+    }
+    fun open_saved_or_toast(saved: saved_attachment) {
+        if (!open_saved_attachment(context, saved)) {
+            org.astermail.android.ui.common.app_toast.show(context.getString(R.string.no_app_to_open))
+        }
+    }
+    fun announce_saved(saved: saved_attachment?) {
+        if (saved == null) {
+            org.astermail.android.ui.common.app_toast.show(context.getString(R.string.failed_to_save))
+            return
+        }
+        org.astermail.android.ui.common.app_toast.show(
+            TopToastState(
+                message = context.getString(R.string.saved_to_downloads),
+                undo_label = context.getString(R.string.open),
+                on_undo = { open_saved_or_toast(saved) },
+            ),
+        )
+    }
+    fun with_attachment_bytes(att: MessageAttachment, block: (MessageAttachment, ByteArray) -> Unit) {
+        mail_vm.download_attachment(att) { result ->
+            result.onSuccess { (resolved_att, bytes) -> block(resolved_att, bytes) }
+                .onFailure { error ->
+                    org.astermail.android.ui.common.app_toast.show(
+                        if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
+                        else context.getString(R.string.failed_to_download, att.filename),
+                    )
+                }
+        }
+    }
 
     val messages = remember(email_id, api_messages) { api_messages.distinctBy { it.id } }
     val is_thread_encrypted = remember(messages) { thread_is_end_to_end_encrypted(messages) }
@@ -1054,28 +1106,24 @@ fun MailDetailScreen(
             val subject_text = email?.subject?.ifBlank { stringResource(R.string.no_subject) }
                 ?: stringResource(R.string.no_subject)
 
-            if (email == null) {
-                if (thread_state.is_loading) {
-                    detail_skeleton()
-                } else {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.padding(horizontal = AsterSpacing.lg),
-                        ) {
-                            Text(
-                                text = thread_state.error
-                                    ?: stringResource(R.string.message_unavailable),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = colors.text_muted,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            )
-                            org.astermail.android.design.components.AsterDialogPrimaryButton(
-                                label = stringResource(R.string.retry),
-                                onClick = { mail_vm.load_thread(email_id) },
-                            )
-                        }
+            if (email == null && !thread_state.is_loading) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.padding(horizontal = AsterSpacing.lg),
+                    ) {
+                        Text(
+                            text = thread_state.error
+                                ?: stringResource(R.string.message_unavailable),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.text_muted,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        )
+                        org.astermail.android.design.components.AsterDialogPrimaryButton(
+                            label = stringResource(R.string.retry),
+                            onClick = { mail_vm.load_thread(email_id) },
+                        )
                     }
                 }
                 return@Column
@@ -1087,7 +1135,7 @@ fun MailDetailScreen(
                     .background(colors.bg_primary)
                     .clipToBounds(),
             ) {
-            LazyColumn(
+            if (email != null) LazyColumn(
                 state = list_state,
                 modifier = Modifier
                     .fillMaxSize()
@@ -1208,6 +1256,7 @@ fun MailDetailScreen(
                     val is_last_card = is_last
 
                     if (is_expanded) {
+                        order_details_card_for_message(msg = msg, subject = email?.subject.orEmpty())
                         expanded_message(
                             msg = msg,
                             is_last = is_last,
@@ -1331,22 +1380,15 @@ fun MailDetailScreen(
                             },
                             on_attachment_download = { att ->
                                 show_toast(context.getString(R.string.downloading_file, att.filename))
-                                mail_vm.download_attachment(att) { result ->
-                                    result.onSuccess { (resolved_att, bytes) ->
-                                        request_storage_access {
-                                            scope.launch {
-                                                val saved = save_attachment_to_storage(context, resolved_att, bytes)
-                                                show_toast(if (saved) context.getString(R.string.saved_file, resolved_att.filename) else context.getString(R.string.failed_to_save))
-                                            }
+                                with_attachment_bytes(att) { resolved_att, bytes ->
+                                    request_storage_access {
+                                        scope.launch {
+                                            announce_saved(save_attachment_to_storage(context, resolved_att, bytes))
                                         }
-                                    }.onFailure { error ->
-                                        show_toast(
-                                            if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
-                                            else context.getString(R.string.failed_to_download, att.filename),
-                                        )
                                     }
                                 }
                             },
+                            on_attachment_options = { att -> options_attachment = att },
                             reactions = if (reactions_enabled) message_reactions[msg.id].orEmpty() else emptyList(),
                             on_react = { emoji ->
                                 val blocked = reaction_restriction_for(msg)
@@ -1391,6 +1433,7 @@ fun MailDetailScreen(
 
                 item { Spacer(Modifier.height(bottom_bar_height)) }
             }
+            detail_skeleton_overlay(visible = email == null)
 
             }
         }
@@ -1699,12 +1742,8 @@ fun MailDetailScreen(
                     request_storage_access {
                         scope.launch {
                             val saved = save_attachment_to_storage(context, att, byt)
-                            Toast.makeText(
-                                context,
-                                if (saved) context.getString(R.string.saved_file, att.filename) else context.getString(R.string.failed_to_save),
-                                Toast.LENGTH_SHORT,
-                            ).show()
-                            if (saved) {
+                            announce_saved(saved)
+                            if (saved != null) {
                                 preview_attachment = null
                                 preview_bytes = null
                             }
@@ -1720,6 +1759,43 @@ fun MailDetailScreen(
             src = src,
             auth_header = settings_vm.get_access_token()?.let { "Bearer $it" },
             on_dismiss = { lightbox_src = null },
+        )
+    }
+
+    options_attachment?.let { att ->
+        attachment_options_sheet(
+            attachment = att,
+            on_close = { options_attachment = null },
+            on_open = {
+                with_attachment_bytes(att) { resolved_att, bytes ->
+                    val opened = runCatching {
+                        open_attachment_externally(context, resolved_att.filename, resolved_att.content_type, bytes)
+                    }.getOrDefault(false)
+                    if (!opened) show_toast(context.getString(R.string.no_app_to_open))
+                }
+            },
+            on_open_downloads = {
+                if (!open_downloads_folder(context)) show_toast(context.getString(R.string.no_app_to_open))
+            },
+            on_share = {
+                with_attachment_bytes(att) { resolved_att, bytes ->
+                    if (!share_attachment(context, resolved_att.filename, resolved_att.content_type, bytes)) {
+                        show_toast(context.getString(R.string.no_app_to_open))
+                    }
+                }
+            },
+            on_save_as = {
+                with_attachment_bytes(att) { resolved_att, bytes ->
+                    save_as_pending[0] = bytes
+                    val launched = runCatching {
+                        save_as_launcher.launch(save_as_intent(resolved_att.filename, resolved_att.content_type))
+                    }.isSuccess
+                    if (!launched) {
+                        save_as_pending[0] = null
+                        show_toast(context.getString(R.string.no_app_to_open))
+                    }
+                }
+            },
         )
     }
 
@@ -1983,6 +2059,7 @@ internal fun expanded_message(
     on_more: () -> Unit,
     on_attachment_tap: (MessageAttachment) -> Unit = {},
     on_attachment_download: (MessageAttachment) -> Unit = {},
+    on_attachment_options: (MessageAttachment) -> Unit = {},
     attachments_failed: Boolean = false,
     on_retry_attachments: () -> Unit = {},
     reactions: List<DecryptedReaction> = emptyList(),
@@ -2008,6 +2085,20 @@ internal fun expanded_message(
     var show_details by remember { mutableStateOf(false) }
     var addresses_expanded by remember(msg.id) { mutableStateOf(false) }
     var sender_name_truncated by remember(msg.id) { mutableStateOf(false) }
+    var show_sender_verified by remember(msg.id) { mutableStateOf(false) }
+    if (show_sender_verified) {
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { show_sender_verified = false },
+            title = stringResource(R.string.sender_verified_title),
+            message = stringResource(R.string.sender_verified_message, msg.sender_verified_domain ?: ""),
+            footer = {
+                org.astermail.android.design.components.AsterDialogPrimaryButton(
+                    label = stringResource(R.string.done),
+                    onClick = { show_sender_verified = false },
+                )
+            },
+        )
+    }
     val tracker_report = remember(msg.body_html) { EmailHtmlSanitizer.analyze_trackers(msg.body_html) }
     val tracker_count = remember(tracker_report, msg.trackers_blocked) {
         maxOf(msg.trackers_blocked, tracker_report.total)
@@ -2085,6 +2176,18 @@ internal fun expanded_message(
                                 onLongClick = { copy_email(shown_sender_email) },
                             ),
                     )
+                    if (msg.sender_verified_domain != null) {
+                        Spacer(Modifier.width(4.dp))
+                        Icon(
+                            imageVector = TablerIcons.CircleCheck,
+                            contentDescription = stringResource(R.string.sender_verified_badge),
+                            tint = colors.accent_blue,
+                            modifier = Modifier
+                                .size(16.dp)
+                                .clip(CircleShape)
+                                .clickable { show_sender_verified = true },
+                        )
+                    }
                 }
                 Spacer(Modifier.height(1.dp))
                 Row(
@@ -2517,6 +2620,7 @@ internal fun expanded_message(
                 attachments = visible_attachments,
                 on_tap = on_attachment_tap,
                 on_download = on_attachment_download,
+                on_options = on_attachment_options,
             )
         } else if (attachments_failed) {
             Box(
@@ -3393,20 +3497,19 @@ private fun raw_source_dialog(
 @Composable
 private fun message_detail_row(label: String, value: String) {
     val colors = AsterMaterial.colors
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Text(
             text = label,
             color = colors.text_muted,
             fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.width(78.dp),
+            fontWeight = FontWeight.SemiBold,
         )
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.height(2.dp))
         Text(
             text = value,
             color = colors.text_primary,
             fontSize = 13.sp,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
@@ -3778,36 +3881,37 @@ private fun detail_meta_row(
                     Modifier
                 },
             )
-            .padding(vertical = 5.dp),
-        verticalAlignment = Alignment.Top,
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = label,
-            color = colors.text_muted,
-            fontSize = 13.sp,
-            modifier = Modifier.width(116.dp),
-        )
-        Row(
-            modifier = Modifier.weight(1f),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = value_tint ?: colors.text_muted,
-                    modifier = Modifier.size(15.dp),
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (icon != null) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = value_tint ?: colors.text_muted,
+                        modifier = Modifier.size(15.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                }
+                Text(
+                    text = label,
+                    color = colors.text_primary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
                 )
-                Spacer(Modifier.width(6.dp))
             }
+            Spacer(Modifier.height(2.dp))
             Text(
                 text = value,
                 color = value_tint ?: colors.text_secondary,
                 fontSize = 13.sp,
-                modifier = Modifier.weight(1f, fill = false),
+                modifier = Modifier.fillMaxWidth(),
             )
         }
         if (on_click != null) {
+            Spacer(Modifier.width(8.dp))
             Icon(
                 imageVector = TablerIcons.ChevronRight,
                 contentDescription = null,
@@ -4696,7 +4800,8 @@ private fun is_safe_unsubscribe_url(url: String): Boolean {
 }
 
 private const val FALLBACK_MEASURE_JS =
-    "(function(){var m=document.getElementById('m');if(!m)return 0;" +
+    "(function(){if(window.__aster_final_height){var f=window.__aster_final_height();if(f>0)return f;}" +
+        "var m=document.getElementById('m');if(!m)return 0;" +
         "var sy=window.pageYOffset||document.documentElement.scrollTop||0;" +
         "if(document.documentElement.getAttribute('data-nl'))return Math.ceil(m.getBoundingClientRect().bottom+sy);" +
         "var pb=parseFloat(window.getComputedStyle(document.body).paddingBottom)||0;" +
@@ -5128,10 +5233,8 @@ internal fun email_html_view(
         if ((web_ref[0]?.contentHeight ?: 0) > 0) page_painted.value = true
     }
 
-    val measure_js = """(function(){
-        var el=document.getElementById('m');
-        if(el) console.log('ASTER_HEIGHT:'+Math.ceil(el.getBoundingClientRect().bottom+(window.pageYOffset||0)));
-    })()"""
+    val settled_height_ref = remember(html_hash) { floatArrayOf(cached_height ?: 0f) }
+    var zoom_active by remember(height_cache_key) { mutableStateOf(false) }
 
     fun build_html(body: String): String = build_email_html(
         body = body,
@@ -5178,15 +5281,20 @@ internal fun email_html_view(
                 measured_scale_ref[0] = scale_ref[0]
                 if (zoom_last_ref[0] > 0f) zoom_base_ref[0] = zoom_last_ref[0]
                 has_measured = true
-                if (is_natural) body_height_cache.put(height_cache_key, new_dp.value)
+                if (is_natural) {
+                    body_height_cache.put(height_cache_key, new_dp.value)
+                    settled_height_ref[0] = new_dp.value
+                }
                 on_ready()
-            } else if (exact || new_dp > content_height_dp) {
+            } else if (exact) {
                 val delta = kotlin.math.abs((new_dp - content_height_dp).value)
                 if (delta >= 8f) {
                     content_height_dp = new_dp
                     measured_dp_ref[0] = new_dp.value
                     measured_scale_ref[0] = scale_ref[0]
                     if (zoom_last_ref[0] > 0f) zoom_base_ref[0] = zoom_last_ref[0]
+                    body_height_cache.put(height_cache_key, new_dp.value)
+                    settled_height_ref[0] = new_dp.value
                 }
             }
         }
@@ -5238,7 +5346,7 @@ internal fun email_html_view(
         if (prebuilt_html == null) return@LaunchedEffect
         var attempts = 0
         while (!has_measured && attempts < 12) {
-            delay(if (attempts == 0) 600L else 400L)
+            delay(if (attempts == 0) 3000L else 500L)
             attempts++
             val web = web_ref[0] ?: continue
             web.evaluateJavascript(FALLBACK_MEASURE_JS) { result ->
@@ -5247,6 +5355,7 @@ internal fun email_html_view(
                     content_height_dp = (parsed * scale_ref[0]).toInt().dp
                     measured_dp_ref[0] = content_height_dp.value
                     measured_scale_ref[0] = scale_ref[0]
+                    settled_height_ref[0] = content_height_dp.value
                     has_measured = true
                     on_ready()
                 }
@@ -5347,9 +5456,11 @@ internal fun email_html_view(
                 val base_dp = measured_dp_ref[0]
                 if (base_dp <= 0f) return
                 if (kotlin.math.abs(ratio - 1f) < 0.01f) {
+                    zoom_active = false
                     content_height_dp = base_dp.dp
                     return
                 }
+                zoom_active = true
                 content_height_dp = (base_dp * ratio).coerceIn(1f, 24000f).dp
             }
 
@@ -5652,16 +5763,12 @@ internal fun email_html_view(
                     webChromeClient = object : android.webkit.WebChromeClient() {
                         override fun onConsoleMessage(message: android.webkit.ConsoleMessage?): Boolean {
                             val msg = message?.message() ?: return false
-                            if (msg.startsWith("ASTER_HEIGHT_EXACT:")) {
-                                val parsed = msg.substring("ASTER_HEIGHT_EXACT:".length).toIntOrNull()
+                            if (msg.startsWith("ASTER_HEIGHT_FINAL:")) {
+                                val parsed = msg.substring("ASTER_HEIGHT_FINAL:".length).toIntOrNull()
                                 if (parsed != null) height_sink.report(parsed, exact = true)
                                 return true
                             }
-                            if (msg.startsWith("ASTER_HEIGHT:")) {
-                                val parsed = msg.substring("ASTER_HEIGHT:".length).toIntOrNull()
-                                if (parsed != null) height_sink.report(parsed)
-                                return true
-                            }
+                            if (msg.startsWith("ASTER_HEIGHT_EXACT:") || msg.startsWith("ASTER_HEIGHT:")) return true
                             return false
                         }
                     }
@@ -5709,14 +5816,22 @@ internal fun email_html_view(
                     measured_scale_ref[0] = nl_scale_ref[0]
                     if (has_measured && measured_dp_ref[0] <= 0f) measured_dp_ref[0] = content_height_dp.value
                     web_view.loadDataWithBaseURL("https://mail-content.invalid/", built, "text/html", "UTF-8", null)
-                    if (!has_measured) web_view.evaluateJavascript(measure_js, null)
                 }
             },
             modifier = run {
-                val target = if (has_measured && content_height_dp > 0.dp) content_height_dp else estimated_height
+                val target = when {
+                    has_measured && content_height_dp > 0.dp -> content_height_dp
+                    settled_height_ref[0] > 0f -> settled_height_ref[0].dp
+                    else -> estimated_height
+                }
+                val animated_target by animateDpAsState(
+                    targetValue = target,
+                    animationSpec = if (zoom_active) snap() else tween(durationMillis = 220),
+                    label = "body_height",
+                )
                 Modifier
                     .fillMaxWidth()
-                    .height(target)
+                    .height(animated_target)
                     .clipToBounds()
                     .then(if (body_reveal < 1f) Modifier.alpha(body_reveal) else Modifier)
             },
@@ -5804,6 +5919,7 @@ private fun attachment_section(
     attachments: List<MessageAttachment>,
     on_tap: (MessageAttachment) -> Unit,
     on_download: (MessageAttachment) -> Unit,
+    on_options: (MessageAttachment) -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
 
@@ -5847,6 +5963,7 @@ private fun attachment_section(
                         attachment = att,
                         on_tap = { on_tap(att) },
                         on_download = { on_download(att) },
+                        on_long_press = { on_options(att) },
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -5865,6 +5982,7 @@ private fun attachment_chip(
     on_tap: () -> Unit,
     on_download: () -> Unit,
     modifier: Modifier = Modifier,
+    on_long_press: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val type_color = attachment_type_color(attachment.content_type)
@@ -5880,7 +5998,7 @@ private fun attachment_chip(
         Row(
             modifier = Modifier
                 .weight(1f)
-                .clickable(onClick = on_tap),
+                .combinedClickable(onClick = on_tap, onLongClick = on_long_press),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -6072,11 +6190,13 @@ private fun safe_view_mime(filename: String, declared: String): String {
     return if (mime.lowercase() in blocked) "application/octet-stream" else mime
 }
 
+private data class saved_attachment(val uri: android.net.Uri, val mime: String)
+
 private suspend fun save_attachment_to_storage(
     context: android.content.Context,
     attachment: MessageAttachment,
     bytes: ByteArray,
-): Boolean = withContext(Dispatchers.IO) {
+): saved_attachment? = withContext(Dispatchers.IO) {
     try {
         val safe_name = sanitize_filename(attachment.filename)
         val mime = safe_view_mime(safe_name, attachment.content_type)
@@ -6096,9 +6216,9 @@ private suspend fun save_attachment_to_storage(
                 val done = ContentValues().apply { put(MediaStore.Downloads.IS_PENDING, 0) }
                 context.contentResolver.update(uri, done, null, null)
                 show_download_notification(context, safe_name, uri, mime)
-                true
+                saved_attachment(uri, mime)
             } else {
-                false
+                null
             }
         } else {
             @Suppress("DEPRECATION")
@@ -6106,17 +6226,129 @@ private suspend fun save_attachment_to_storage(
             dir.mkdirs()
             val file = java.io.File(dir, safe_name)
             if (!file.canonicalPath.startsWith(dir.canonicalPath + java.io.File.separator)) {
-                return@withContext false
+                return@withContext null
             }
             file.writeBytes(bytes)
-            val uri = android.net.Uri.fromFile(file)
+            val uri = androidx.core.content.FileProvider.getUriForFile(
+                context,
+                context.packageName + ".fileprovider",
+                file,
+            )
             show_download_notification(context, safe_name, uri, mime)
-            true
+            saved_attachment(uri, mime)
         }
     } catch (cancelled: CancellationException) {
         throw cancelled
     } catch (_: Throwable) {
-        false
+        null
+    }
+}
+
+private fun open_saved_attachment(context: android.content.Context, saved: saved_attachment): Boolean {
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(saved.uri, saved.mime)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    return runCatching { context.startActivity(intent) }.isSuccess
+}
+
+private fun open_downloads_folder(context: android.content.Context): Boolean {
+    val intent = Intent(android.app.DownloadManager.ACTION_VIEW_DOWNLOADS).apply {
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    return runCatching { context.startActivity(intent) }.isSuccess
+}
+
+private fun share_attachment(
+    context: android.content.Context,
+    filename: String,
+    content_type: String,
+    bytes: ByteArray,
+): Boolean {
+    val safe_name = sanitize_filename(filename)
+    val mime = safe_view_mime(safe_name, content_type)
+    val uri = runCatching {
+        val dir = java.io.File(context.cacheDir, "shared_attachments").apply { mkdirs() }
+        val target = java.io.File(dir, System.nanoTime().toString() + "_" + safe_name)
+        target.writeBytes(bytes)
+        androidx.core.content.FileProvider.getUriForFile(context, context.packageName + ".fileprovider", target)
+    }.getOrNull() ?: return false
+    val send = Intent(Intent.ACTION_SEND).apply {
+        type = mime
+        putExtra(Intent.EXTRA_STREAM, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    val chooser = Intent.createChooser(send, null).apply {
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    return runCatching { context.startActivity(chooser) }.isSuccess
+}
+
+private fun save_as_intent(filename: String, content_type: String): Intent {
+    val safe_name = sanitize_filename(filename)
+    return Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+        addCategory(Intent.CATEGORY_OPENABLE)
+        type = safe_view_mime(safe_name, content_type)
+        putExtra(Intent.EXTRA_TITLE, safe_name)
+    }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun attachment_options_sheet(
+    attachment: MessageAttachment,
+    on_close: () -> Unit,
+    on_open: () -> Unit,
+    on_open_downloads: () -> Unit,
+    on_share: () -> Unit,
+    on_save_as: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val state = rememberModalBottomSheetState()
+    ModalBottomSheet(
+        onDismissRequest = on_close,
+        sheetState = state,
+        containerColor = colors.bg_card,
+        tonalElevation = 0.dp,
+        dragHandle = { AsterDragHandle() },
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding(),
+        ) {
+            Text(
+                text = display_filename(attachment.filename),
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                style = androidx.compose.material3.LocalTextStyle.current.copy(
+                    textDirection = androidx.compose.ui.text.style.TextDirection.Ltr,
+                ),
+                modifier = Modifier.padding(horizontal = AsterSpacing.xl, vertical = AsterSpacing.xs),
+            )
+            AsterDivider()
+            sheet_row(stringResource(R.string.open), colors.text_primary, TablerIcons.ExternalLink) {
+                on_close()
+                on_open()
+            }
+            sheet_row(stringResource(R.string.open_downloads_folder), colors.text_primary, TablerIcons.Folder) {
+                on_close()
+                on_open_downloads()
+            }
+            sheet_row(stringResource(R.string.share_attachment), colors.text_primary, TablerIcons.Share) {
+                on_close()
+                on_share()
+            }
+            sheet_row(stringResource(R.string.save_as), colors.text_primary, TablerIcons.Download) {
+                on_close()
+                on_save_as()
+            }
+            Spacer(Modifier.height(AsterSpacing.sm))
+        }
     }
 }
 
@@ -6137,10 +6369,17 @@ private fun show_download_notification(
             )
             nm.createNotificationChannel(channel)
         }
-        val open_intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+        val view_intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
             setDataAndType(uri, mime)
             addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        val open_intent = if (view_intent.resolveActivity(context.packageManager) != null) {
+            view_intent
+        } else {
+            android.content.Intent(android.app.DownloadManager.ACTION_VIEW_DOWNLOADS).apply {
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
         }
         val pending = android.app.PendingIntent.getActivity(
             context, filename.hashCode(), open_intent,

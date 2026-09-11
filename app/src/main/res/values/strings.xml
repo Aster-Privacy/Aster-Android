@@ -1810,6 +1810,7 @@
     <string name="no_devices_found">No devices found</string>
     <string name="could_not_load_devices">Could not load devices</string>
     <string name="revoke_all_other">Revoke all other devices</string>
+    <string name="revoke_all_devices_description">Signs out every device except this one.</string>
 
     <!-- Auth errors -->
     <string name="error_invalid_email">Enter a valid email</string>
@@ -2119,6 +2120,20 @@
     <string name="storage_locked_description">Incoming mail will be rejected until you free up space or add storage.</string>
     <string name="storage_locked_bounce_warning">Permanent bounce in %1$s.</string>
     <string name="usage_of">%1$s of %2$s</string>
+    <string name="special_offer_title">Private mail, half price</string>
+    <string name="special_offer_price_period">per month</string>
+    <string name="special_offer_hero_duration">for %1$d months</string>
+    <string name="special_offer_fine_print">You pay %1$s per month for the first %2$d months. Your plan then renews at %3$s per month until you cancel it in Settings.</string>
+    <string name="special_offer_dismiss">Don\'t show this offer again</string>
+    <string name="special_offer_cta_upgrade">Upgrade for %1$s per month</string>
+    <string name="special_offer_reassurance">Cancel anytime. Aster never shows ads or tracks you.</string>
+    <string name="special_offer_compare_storage">Encrypted storage</string>
+    <string name="special_offer_compare_aliases">Aliases</string>
+    <string name="special_offer_compare_domains">Custom domains</string>
+    <string name="special_offer_compare_attachments">Attachment size</string>
+    <string name="special_offer_compare_vanguard">Aster Vanguard</string>
+    <string name="special_offer_compare_included">Included</string>
+    <string name="special_offer_compare_not_included">Not included</string>
     <string name="usage_unlimited">Unlimited</string>
     <string name="usage_storage">Storage</string>
     <string name="upgrade_inline_card_title">Upgrade to add more</string>
@@ -3256,7 +3271,7 @@
     <string name="checkout_payment_details">Payment Details</string>
     <string name="checkout_best_value">Best Value</string>
     <string name="checkout_plan_recommended">Recommended</string>
-    <string name="checkout_continue">Continue to Checkout</string>
+    <string name="checkout_continue">Continue to checkout</string>
     <string name="checkout_money_back">30-day money-back guarantee</string>
     <string name="checkout_stripe_secure">Secured by Stripe</string>
     <string name="checkout_abandon_title">Cancel this order?</string>
@@ -3296,4 +3311,38 @@
     <string name="no_contacts_match">No contacts match \"%1$s\"</string>
     <string name="no_contacts_in_trash">Trash is empty</string>
     <string name="contacts_already_in_trash">Some contacts are already in Trash. Restore them instead.</string>
+    <string name="storage_format_updated">Storage format updated</string>
+    <string name="storage_format_update_failed">Could not change the storage format</string>
+    <string name="saved_to_downloads">Saved to Downloads</string>
+    <string name="open_downloads_folder">Open Downloads folder</string>
+    <string name="share_attachment">Share</string>
+    <string name="save_as">Save as</string>
+    <string name="attachment_saved">File saved</string>
+    <string name="order_card_order_from">Order from %1$s</string>
+    <string name="order_card_package_from">Package from %1$s</string>
+    <string name="order_card_title_generic">Order details</string>
+    <string name="order_card_expected_by">Expected by %1$s</string>
+    <string name="order_card_order_number_short">Order %1$s</string>
+    <string name="order_card_ordered_from">Ordered from</string>
+    <string name="order_card_order_number">Order number</string>
+    <string name="order_card_expected">Expected</string>
+    <string name="order_card_delivered_on">Delivered</string>
+    <string name="order_card_tracking_number">Tracking number</string>
+    <string name="order_card_total">Total</string>
+    <string name="order_card_items">Items</string>
+    <string name="order_card_track_package">Track package</string>
+    <string name="order_card_view_order">View order</string>
+    <string name="order_card_collapse">Collapse order details</string>
+    <string name="order_card_expand">Expand order details</string>
+    <string name="shipping_status_label_created">Label created</string>
+    <string name="shipping_status_shipped">Shipped</string>
+    <string name="shipping_status_in_transit">In transit</string>
+    <string name="shipping_status_out_for_delivery">Out for delivery</string>
+    <string name="shipping_status_delivered">Delivered</string>
+    <string name="shipping_status_exception">Delivery issue</string>
+    <string name="shipping_status_unknown">Shipment update</string>
+    <string name="inbox_arrives_on">Arrives %1$s</string>
+    <string name="sender_verified_badge">Verified sender</string>
+    <string name="sender_verified_title">Verified sender</string>
+    <string name="sender_verified_message">The sender of this email has verified that they own %1$s.</string>
 </resources>

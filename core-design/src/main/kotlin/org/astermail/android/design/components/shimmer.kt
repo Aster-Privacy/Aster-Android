@@ -105,6 +105,7 @@ fun shimmer_state(animated: Boolean = true): shimmer_appearance {
 fun Modifier.shimmer(
     state: shimmer_appearance,
     shape: Shape = RectangleShape,
+    phase_shift: Float = 0f,
 ): Modifier = this
     .clip(shape)
     .drawWithCache {
@@ -122,7 +123,8 @@ fun Modifier.shimmer(
         onDrawBehind {
             drawRect(state.base)
             if (band_brush != null && state.animated) {
-                translate(left = state.phase.value * travel - band) {
+                val local_phase = ((state.phase.value - phase_shift) % 1f + 1f) % 1f
+                translate(left = local_phase * travel - band) {
                     drawRect(
                         brush = band_brush,
                         topLeft = Offset.Zero,

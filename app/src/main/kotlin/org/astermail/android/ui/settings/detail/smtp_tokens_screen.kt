@@ -45,6 +45,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -279,7 +281,7 @@ private fun smtp_token_row(token: SmtpTokenRow, on_revoke: () -> Unit) {
             imageVector = TablerIcons.Trash,
             contentDescription = stringResource(R.string.revoke),
             tint = colors.danger,
-            modifier = Modifier.size(20.dp).clickable(onClick = on_revoke),
+            modifier = Modifier.size(20.dp).clip(CircleShape).clickable(onClick = on_revoke),
         )
     }
 }

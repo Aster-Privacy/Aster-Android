@@ -181,11 +181,10 @@ fun FilteredInboxScreen(
                 on_open_drawer = on_open_drawer,
             )
             AsterDivider(modifier = Modifier.fillMaxWidth())
-            if (inbox_state.is_loading || inbox_state.current_folder != requested_folder) {
-                inbox_skeleton(
-                    modifier = Modifier.padding(top = inbox_group_split),
-                    list_density = settings_state.preferences?.mail_list_density,
-                )
+            val skeleton_now = inbox_state.is_loading || inbox_state.current_folder != requested_folder
+            Box(modifier = Modifier.fillMaxSize()) {
+            if (skeleton_now) {
+                Box(Modifier.fillMaxSize())
             } else if (threads.isEmpty() && inbox_state.error != null) {
                 inbox_error_state(inbox_state.error.orEmpty()) {
                     mail_vm.load_inbox(requested_folder, force = true)
@@ -244,6 +243,12 @@ fun FilteredInboxScreen(
                         modifier = Modifier.align(Alignment.TopEnd),
                     )
                 }
+            }
+            inbox_skeleton_overlay(
+                visible = skeleton_now,
+                modifier = Modifier.padding(top = inbox_group_split),
+                list_density = settings_state.preferences?.mail_list_density,
+            )
             }
         }
     }

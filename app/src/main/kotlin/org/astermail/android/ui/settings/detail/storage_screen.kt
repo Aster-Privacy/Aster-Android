@@ -133,6 +133,13 @@ fun StorageScreen(
         }
     }
 
+    LaunchedEffect(vm) {
+        vm.storage_format_events.collect { saved ->
+            val message = if (saved) R.string.storage_format_updated else R.string.storage_format_update_failed
+            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
     LaunchedEffect(billing_state.portal_url) {
         val url = billing_state.portal_url ?: return@LaunchedEffect
         org.astermail.android.billing.open_billing_tab(context, url)

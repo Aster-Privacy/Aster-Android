@@ -225,39 +225,23 @@ fun CustomizeToolbarScreen(
                 )
                 catalog.forEachIndexed { i, action ->
                     val is_current = slots.getOrNull(active.index) == action.id
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                set_slot(active, action.id)
-                                editing = null
-                            }
-                            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md)
-                            .testTag("toolbar_choice_${action.id}"),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = action.icon,
-                            contentDescription = null,
-                            tint = colors.text_secondary,
-                            modifier = Modifier.size(22.dp),
-                        )
-                        Spacer(Modifier.width(AsterSpacing.md))
-                        Text(
-                            text = stringResource(action.label_res),
-                            color = colors.text_primary,
-                            fontSize = 15.sp,
-                            modifier = Modifier.weight(1f),
-                        )
-                        if (is_current) {
+                    choice_option_row(
+                        label = stringResource(action.label_res),
+                        selected = is_current,
+                        on_click = {
+                            set_slot(active, action.id)
+                            editing = null
+                        },
+                        test_tag = "toolbar_choice_${action.id}",
+                        leading = {
                             Icon(
-                                imageVector = TablerIcons.Check,
+                                imageVector = action.icon,
                                 contentDescription = null,
-                                tint = colors.accent_blue,
-                                modifier = Modifier.size(20.dp),
+                                tint = colors.text_secondary,
+                                modifier = Modifier.size(22.dp),
                             )
-                        }
-                    }
+                        },
+                    )
                     if (i < catalog.lastIndex) AsterDivider(modifier = Modifier)
                 }
             }
