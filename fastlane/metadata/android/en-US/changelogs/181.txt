@@ -4,4 +4,4 @@ Bug fixes and improvements:
 - Downloaded attachments offer Open, Open folder, and Share
 - Storage folders open the full folder, and payment logos are accurate everywhere
 - Clearer option lists, a redesigned trusted devices screen, and a smoother loading reveal
-- Fixes for the black theme, message viewer resizing, wrapped buttons, and category mute flicker
+- Fixes for the black theme, message viewer flicker and resizing, wrapped buttons, and category mute flicker

@@ -5226,6 +5226,7 @@ internal fun email_html_view(
     val visual_ready = remember(height_cache_key) { mutableStateOf(false) }
     val renderer_gone = remember { mutableStateOf(false) }
     var web_generation by remember(height_cache_key) { mutableStateOf(0) }
+    val regen_count = remember(height_cache_key) { intArrayOf(0) }
 
     LaunchedEffect(height_cache_key, page_painted.value) {
         if (page_painted.value) return@LaunchedEffect
@@ -5342,11 +5343,11 @@ internal fun email_html_view(
         prebuilt_html = result
     }
 
-    LaunchedEffect(height_cache_key, prebuilt_html) {
+    LaunchedEffect(height_cache_key, prebuilt_html, web_generation) {
         if (prebuilt_html == null) return@LaunchedEffect
         var attempts = 0
         while (!has_measured && attempts < 12) {
-            delay(if (attempts == 0) 3000L else 500L)
+            delay(if (attempts == 0) 2500L else 500L)
             attempts++
             val web = web_ref[0] ?: continue
             web.evaluateJavascript(FALLBACK_MEASURE_JS) { result ->
@@ -5388,21 +5389,25 @@ internal fun email_html_view(
 
     LaunchedEffect(loaded_built, web_generation) {
         if (loaded_built.isEmpty()) return@LaunchedEffect
+        fun page_alive(): Boolean {
+            val web = web_ref[0] ?: return true
+            return page_painted.value || visual_ready.value || web.contentHeight > 0
+        }
         var reloads = 0
         while (reloads < 2) {
             delay(2200)
             val web = web_ref[0] ?: return@LaunchedEffect
-            if (visual_ready.value && web.contentHeight > 0) return@LaunchedEffect
+            if (page_alive()) return@LaunchedEffect
             reloads++
-            has_measured = false
-            page_painted.value = false
             visual_ready.value = false
             web.loadDataWithBaseURL("https://mail-content.invalid/", loaded_built, "text/html", "UTF-8", null)
         }
         delay(2600)
-        if (!visual_ready.value) {
+        if (!page_alive() && regen_count[0] < 1) {
+            regen_count[0]++
             has_measured = false
             page_painted.value = false
+            visual_ready.value = false
             loaded_built = ""
             web_generation++
         }
@@ -5766,6 +5771,11 @@ internal fun email_html_view(
                             if (msg.startsWith("ASTER_HEIGHT_FINAL:")) {
                                 val parsed = msg.substring("ASTER_HEIGHT_FINAL:".length).toIntOrNull()
                                 if (parsed != null) height_sink.report(parsed, exact = true)
+                                return true
+                            }
+                            if (msg.startsWith("ASTER_HEIGHT_EARLY:")) {
+                                val parsed = msg.substring("ASTER_HEIGHT_EARLY:".length).toIntOrNull()
+                                if (parsed != null) height_sink.report(parsed, exact = false)
                                 return true
                             }
                             if (msg.startsWith("ASTER_HEIGHT_EXACT:") || msg.startsWith("ASTER_HEIGHT:")) return true
