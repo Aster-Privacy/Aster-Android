@@ -78,13 +78,13 @@ class MailCategorizerTest {
     }
 
     @Test
-    fun transactional_receipts_are_updates() {
+    fun transactional_receipts_are_transactions() {
         val env = envelope(
             from_email = "receipts@acme.com",
             from_name = "Acme Store",
             subject = "Your order #12345 has shipped",
         )
-        assertEquals("updates", classify(env, null))
+        assertEquals("transactions", classify(env, null))
     }
 
     @Test
@@ -162,23 +162,23 @@ class MailCategorizerTest {
     }
 
     @Test
-    fun transactional_service_notification_is_updates() {
+    fun delivery_notification_is_transactions() {
         val env = envelope(
             from_email = "no-reply@ups.com",
             from_name = "UPS",
             subject = "Your package was delivered",
         )
-        assertEquals("updates", classify(env, null))
+        assertEquals("transactions", classify(env, null))
     }
 
     @Test
-    fun receipt_from_service_domain_no_bulk_markers_is_updates() {
+    fun receipt_from_service_domain_no_bulk_markers_is_transactions() {
         val env = envelope(
             from_email = "auto-confirm@amazon.com",
             from_name = "Amazon",
             subject = "Your order #112-9 has shipped",
         )
-        assertEquals("updates", classify(env, null))
+        assertEquals("transactions", classify(env, null))
     }
 
     @Test
@@ -217,6 +217,8 @@ class MailCategorizerTest {
     @Test
     fun category_for_tab_folds_forums_into_updates() {
         assertEquals("updates", category_for_tab("forums"))
+        assertEquals("updates", category_for_tab("transactions"))
+        assertEquals("promotions", category_for_tab("newsletters"))
         assertEquals("primary", category_for_tab("important"))
         assertEquals("primary", category_for_tab(null))
         assertEquals("social", category_for_tab("social"))
@@ -253,13 +255,13 @@ class MailCategorizerTest {
     }
 
     @Test
-    fun shipping_update_from_retailer_is_updates() {
+    fun shipping_update_from_retailer_is_transactions() {
         val env = envelope(
             from_email = "orders@etsy.com",
             from_name = "Etsy",
             subject = "Your order has shipped",
         )
-        assertEquals("updates", classify(env, null))
+        assertEquals("transactions", classify(env, null))
     }
 
     @Test
@@ -330,5 +332,112 @@ class MailCategorizerTest {
         assertEquals("finance", category_for_tab("finance", tabs))
         assertEquals("updates", category_for_tab("travel", tabs))
         assertEquals("primary", category_for_tab("custom:news", tabs))
+    }
+
+    @Test
+    fun security_alert_from_service_stays_updates() {
+        val env = envelope(
+            from_email = "no-reply@github.com",
+            from_name = "GitHub",
+            subject = "A new sign-in to your account",
+            raw_headers = listOf("Auto-Submitted" to "auto-generated"),
+        )
+        assertEquals("updates", classify(env, null))
+    }
+
+    @Test
+    fun tagged_mailing_list_digest_stays_forums() {
+        val env = envelope(
+            from_email = "announce@example.org",
+            from_name = "Dev List",
+            subject = "[dev] weekly digest",
+            raw_headers = listOf("List-Id" to "<dev.example.org>"),
+        )
+        assertEquals("forums", classify(env, null))
+    }
+
+    @Test
+    fun postable_discussion_list_stays_forums() {
+        val env = envelope(
+            from_email = "announce@example.org",
+            from_name = "Rust Users",
+            subject = "Weekly roundup",
+            raw_headers = listOf(
+                "List-Id" to "<users.example.org>",
+                "List-Post" to "<mailto:users@example.org>",
+            ),
+        )
+        assertEquals("forums", classify(env, null))
+    }
+
+    @Test
+    fun discussion_localpart_stays_forums() {
+        val env = envelope(
+            from_email = "discuss@example.org",
+            from_name = "Group",
+            subject = "Monthly digest",
+            raw_headers = listOf("List-Id" to "<discuss.example.org>"),
+        )
+        assertEquals("forums", classify(env, null))
+    }
+
+    @Test
+    fun editorial_send_is_newsletters() {
+        val env = envelope(
+            from_email = "editor@example.org",
+            from_name = "The Daily",
+            subject = "Issue #42",
+            raw_headers = listOf(
+                "List-Id" to "<thedaily.example.org>",
+                "List-Unsubscribe" to "<mailto:u@example.org>",
+            ),
+        )
+        assertEquals("newsletters", classify(env, null))
+    }
+
+    @Test
+    fun publishing_platform_is_newsletters_even_when_selling() {
+        val env = envelope(
+            from_email = "writer@substack.com",
+            from_name = "A Writer",
+            subject = "50% off a paid subscription",
+            list_unsubscribe = "<https://substack.com/unsub>",
+        )
+        assertEquals("newsletters", classify(env, null))
+    }
+
+    @Test
+    fun hard_sell_from_a_list_stays_promotions() {
+        val env = envelope(
+            from_email = "newsletter@acme.com",
+            from_name = "Acme",
+            subject = "Flash sale: 40% off this weekend",
+            list_unsubscribe = "<https://acme.com/unsub>",
+        )
+        assertEquals("promotions", classify(env, null))
+    }
+
+    @Test
+    fun newsletter_subject_without_list_markers_stays_primary() {
+        val env = envelope(
+            from_email = "jane@example.org",
+            from_name = "Jane",
+            subject = "Draft of the newsletter",
+        )
+        assertEquals("primary", classify(env, null))
+    }
+
+    @Test
+    fun rule_can_target_new_categories() {
+        val env = envelope(from_email = "jane@example.org", subject = "Hello")
+        assertEquals("newsletters", classify(env, null, "newsletters"))
+        assertEquals("transactions", classify(env, null, "transactions"))
+    }
+
+    @Test
+    fun enabled_new_tabs_keep_their_mail() {
+        val tabs = listOf("primary", "promotions", "newsletters", "social", "updates", "transactions")
+        assertEquals("newsletters", category_for_tab("newsletters", tabs))
+        assertEquals("transactions", category_for_tab("transactions", tabs))
     }
 }

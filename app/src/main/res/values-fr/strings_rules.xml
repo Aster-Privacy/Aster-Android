@@ -33,12 +33,14 @@
     <string name="rules_unit_mb">Mo</string>
     <string name="rules_unit_gb">Go</string>
 
-    <string name="rules_category_primary">Principal</string>
+    <string name="rules_category_primary">Boîte de réception</string>
     <string name="rules_category_important">Important</string>
-    <string name="rules_category_promotions">Promotions</string>
+    <string name="rules_category_promotions">Bons plans</string>
+    <string name="rules_category_newsletters">Lettres d’information</string>
     <string name="rules_category_social">Réseaux sociaux</string>
-    <string name="rules_category_updates">Mises à jour</string>
-    <string name="rules_category_forums">Forums</string>
+    <string name="rules_category_updates">Notifications</string>
+    <string name="rules_category_transactions">Achats</string>
+    <string name="rules_category_forums">Discussions</string>
 
     <string name="rules_no_labels">Aucun libellé pour l\'instant</string>
     <string name="rules_remove">Supprimer</string>
@@ -62,8 +64,10 @@
     <string name="categories_description">Choisissez les onglets de catégorie affichés dans votre boîte de réception et créez les vôtres. Tout le tri se fait sur votre appareil.</string>
     <string name="category_info_primary">Tout ce qui n\'entre dans aucune autre catégorie. Toujours active.</string>
     <string name="category_info_promotions">Messages promotionnels, offres et réductions.</string>
+    <string name="category_info_newsletters">Lettres d’information et listes de diffusion auxquelles vous vous êtes abonné.</string>
     <string name="category_info_social">Notifications des réseaux sociaux et des communautés.</string>
     <string name="category_info_updates">Reçus, confirmations et avis automatiques.</string>
+    <string name="category_info_transactions">Commandes, paiements et reçus des boutiques et des services.</string>
     <string name="category_info_forums">Listes de diffusion et groupes de discussion.</string>
     <string name="category_info_finance">Banque, factures, paiements et placements.</string>
     <string name="category_info_travel">Réservations, cartes d\'embarquement et itinéraires.</string>

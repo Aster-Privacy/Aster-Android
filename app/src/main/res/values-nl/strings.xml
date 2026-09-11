@@ -2094,7 +2094,7 @@
     <string name="section_reading_conversations">Lezen &amp; gesprekken</string>
     <string name="conversation_grouping_subtitle">E-mails uit hetzelfde gesprek bij elkaar zetten</string>
     <string name="inbox_categories">Categorieën in Postvak IN</string>
-    <string name="inbox_categories_subtitle">Sorteert inkomende mail in Algemeen, Sociaal, Aanbiedingen en Updates</string>
+    <string name="inbox_categories_subtitle">Sorteert inkomende mail in tabbladen zoals Aanbiedingen, Sociaal en Meldingen</string>
     <string name="conversation_order_label">Volgorde van het gesprek</string>
     <string name="show_message_size">Berichtgrootte tonen</string>
     <string name="show_alias_indicators">Aliasindicatoren tonen</string>

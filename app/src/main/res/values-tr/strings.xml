@@ -2094,7 +2094,7 @@
     <string name="section_reading_conversations">Okuma ve sohbetler</string>
     <string name="conversation_grouping_subtitle">Aynı sohbetteki e-postaları bir arada göster</string>
     <string name="inbox_categories">Gelen kutusu kategorileri</string>
-    <string name="inbox_categories_subtitle">Gelen postaları Birincil, Sosyal, Tanıtım ve Güncellemeler olarak ayırır</string>
+    <string name="inbox_categories_subtitle">Gelen postaları İndirimler, Sosyal ve Bildirimler gibi sekmelere ayırır</string>
     <string name="conversation_order_label">Sohbet sıralaması</string>
     <string name="show_message_size">İleti boyutunu göster</string>
     <string name="show_alias_indicators">Takma ad göstergelerini göster</string>

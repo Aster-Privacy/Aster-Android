@@ -4743,6 +4743,14 @@ class SettingsViewModel @Inject constructor(
                 .set_muted_folder_tokens(context, prefs.muted_folder_tokens)
             org.astermail.android.notifications.MailPollingWorker
                 .set_muted_notification_categories(context, prefs.muted_notification_categories)
+            org.astermail.android.notifications.MailPollingWorker.set_active_category_tabs(
+                context,
+                org.astermail.android.mail.active_category_tabs(
+                    prefs.enabled_categories,
+                    org.astermail.android.mail.sanitize_custom_categories(prefs.custom_categories),
+                    -1,
+                ),
+            )
             org.astermail.android.notifications.MailPollingWorker
                 .set_notify_new_email(context, prefs.notify_new_email)
             org.astermail.android.notifications.MailPollingWorker

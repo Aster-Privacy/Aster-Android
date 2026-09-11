@@ -33,12 +33,14 @@
     <string name="rules_unit_mb">MB</string>
     <string name="rules_unit_gb">GB</string>
 
-    <string name="rules_category_primary">Birincil</string>
+    <string name="rules_category_primary">Gelen Kutusu</string>
     <string name="rules_category_important">Önemli</string>
-    <string name="rules_category_promotions">Tanıtımlar</string>
+    <string name="rules_category_promotions">İndirimler</string>
+    <string name="rules_category_newsletters">Bültenler</string>
     <string name="rules_category_social">Sosyal</string>
-    <string name="rules_category_updates">Güncellemeler</string>
-    <string name="rules_category_forums">Forumlar</string>
+    <string name="rules_category_updates">Bildirimler</string>
+    <string name="rules_category_transactions">Alışverişler</string>
+    <string name="rules_category_forums">Tartışmalar</string>
 
     <string name="rules_no_labels">Henüz etiket yok</string>
     <string name="rules_remove">Kaldır</string>
@@ -62,8 +64,10 @@
     <string name="categories_description">Gelen kutunda hangi kategori sekmelerinin görüneceğini seç, kendi kategorilerini oluştur. Tüm ayıklama cihazında yapılır.</string>
     <string name="category_info_primary">Başka bir kategoriye girmeyen her şey. Her zaman açık.</string>
     <string name="category_info_promotions">Tanıtım e-postaları, kampanyalar ve indirimler.</string>
+    <string name="category_info_newsletters">Abone olduğunuz bültenler ve posta listeleri.</string>
     <string name="category_info_social">Sosyal ağlardan ve topluluklardan gelen bildirimler.</string>
     <string name="category_info_updates">Makbuzlar, onaylar ve otomatik bildirimler.</string>
+    <string name="category_info_transactions">Mağaza ve hizmetlerden gelen siparişler, ödemeler ve makbuzlar.</string>
     <string name="category_info_forums">E-posta listeleri ve tartışma grupları.</string>
     <string name="category_info_finance">Banka, faturalar, ödemeler ve yatırım.</string>
     <string name="category_info_travel">Rezervasyonlar, biniş kartları ve seyahat planları.</string>

@@ -2106,7 +2106,7 @@
     <string name="section_reading_conversations">القراءة والمحادثات</string>
     <string name="conversation_grouping_subtitle">تجميع رسائل المحادثة نفسها معًا</string>
     <string name="inbox_categories">فئات البريد الوارد</string>
-    <string name="inbox_categories_subtitle">فرز البريد الوارد إلى الأساسي والاجتماعي والعروض والتحديثات</string>
+    <string name="inbox_categories_subtitle">فرز البريد الوارد في علامات تبويب مثل الصفقات والتواصل والإشعارات</string>
     <string name="conversation_order_label">ترتيب المحادثة</string>
     <string name="show_message_size">إظهار حجم الرسالة</string>
     <string name="show_alias_indicators">إظهار مؤشرات الأسماء المستعارة</string>

@@ -1185,14 +1185,10 @@ internal fun action_target_display(action: Action, folder_label: String?): Strin
 }
 
 @Composable
-private fun category_label(category: String): String = when (category) {
-    "primary" -> stringResource(R.string.rules_category_primary)
-    "important" -> stringResource(R.string.rules_category_important)
-    "promotions" -> stringResource(R.string.rules_category_promotions)
-    "social" -> stringResource(R.string.rules_category_social)
-    "updates" -> stringResource(R.string.rules_category_updates)
-    "forums" -> stringResource(R.string.rules_category_forums)
-    else -> category
+private fun category_label(category: String): String {
+    if (category == "important") return stringResource(R.string.rules_category_important)
+    val builtin = org.astermail.android.mail.builtin_category(category) ?: return category
+    return stringResource(builtin.label_res)
 }
 
 private fun needs_value(c: Condition): Boolean = when (c) {
@@ -1473,7 +1469,7 @@ private fun action_target_picker(
         is Action.Categorize -> options_picker(
             on_dismiss = on_dismiss,
             title = stringResource(R.string.mail_rules_action_categorize),
-            items = listOf("primary", "important", "promotions", "social", "updates", "forums")
+            items = org.astermail.android.mail.RULE_CATEGORY_TARGETS
                 .map { picker_item(it, category_label(it)) },
             selected_id = action.category,
             on_pick = { on_set(action.copy(category = it)) },

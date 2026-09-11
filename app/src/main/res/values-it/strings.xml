@@ -2094,7 +2094,7 @@
     <string name="section_reading_conversations">Lettura e conversazioni</string>
     <string name="conversation_grouping_subtitle">Raggruppa le email della stessa conversazione</string>
     <string name="inbox_categories">Categorie della posta in arrivo</string>
-    <string name="inbox_categories_subtitle">Ordina la posta in arrivo in Principale, Social, Promozioni e Aggiornamenti</string>
+    <string name="inbox_categories_subtitle">Ordina la posta in arrivo in schede come Promozioni, Social e Notifiche</string>
     <string name="conversation_order_label">Ordine della conversazione</string>
     <string name="show_message_size">Mostra la dimensione del messaggio</string>
     <string name="show_alias_indicators">Mostra indicatori alias</string>

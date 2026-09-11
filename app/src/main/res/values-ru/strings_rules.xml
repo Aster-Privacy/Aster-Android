@@ -33,12 +33,14 @@
     <string name="rules_unit_mb">МБ</string>
     <string name="rules_unit_gb">ГБ</string>
 
-    <string name="rules_category_primary">Основное</string>
+    <string name="rules_category_primary">Входящие</string>
     <string name="rules_category_important">Важное</string>
-    <string name="rules_category_promotions">Промоакции</string>
+    <string name="rules_category_promotions">Скидки</string>
+    <string name="rules_category_newsletters">Рассылки</string>
     <string name="rules_category_social">Соцсети</string>
-    <string name="rules_category_updates">Обновления</string>
-    <string name="rules_category_forums">Форумы</string>
+    <string name="rules_category_updates">Уведомления</string>
+    <string name="rules_category_transactions">Покупки</string>
+    <string name="rules_category_forums">Обсуждения</string>
 
     <string name="rules_no_labels">Меток пока нет</string>
     <string name="rules_remove">Удалить</string>
@@ -56,14 +58,16 @@
     <string name="rules_snooze_1_week">1 неделя</string>
     <string name="rules_snooze_current">Текущее: %1$s</string>
     <string name="rules_category_finance">Финансы</string>
-    <string name="rules_category_travel">Поездки</string>
+    <string name="rules_category_travel">Путешествия</string>
     <string name="rules_category_shopping">Покупки</string>
     <string name="categories_title">Категории</string>
     <string name="categories_description">Выберите, какие вкладки категорий показывать во входящих, и создайте свои. Вся сортировка идёт на вашем устройстве.</string>
     <string name="category_info_primary">Всё, что не попало в другие категории. Всегда включена.</string>
     <string name="category_info_promotions">Рекламные письма, акции и скидки.</string>
+    <string name="category_info_newsletters">Рассылки и списки рассылки, на которые вы подписались.</string>
     <string name="category_info_social">Уведомления из соцсетей и сообществ.</string>
     <string name="category_info_updates">Чеки, подтверждения и автоматические уведомления.</string>
+    <string name="category_info_transactions">Заказы, платежи и чеки от магазинов и сервисов.</string>
     <string name="category_info_forums">Рассылки и группы обсуждений.</string>
     <string name="category_info_finance">Банк, счета, платежи и инвестиции.</string>
     <string name="category_info_travel">Бронирования, посадочные талоны и маршруты.</string>

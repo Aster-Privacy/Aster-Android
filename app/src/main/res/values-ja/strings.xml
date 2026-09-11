@@ -2091,7 +2091,7 @@
     <string name="section_reading_conversations">閲覧とスレッド</string>
     <string name="conversation_grouping_subtitle">同じスレッドのメールをまとめる</string>
     <string name="inbox_categories">受信トレイの分類</string>
-    <string name="inbox_categories_subtitle">受信メールをメイン、ソーシャル、プロモーション、お知らせに振り分けます</string>
+    <string name="inbox_categories_subtitle">受信メールをセール、ソーシャル、通知などのタブに振り分けます</string>
     <string name="conversation_order_label">スレッドの並び順</string>
     <string name="show_message_size">メールのサイズを表示</string>
     <string name="show_alias_indicators">エイリアスインジケーターを表示</string>

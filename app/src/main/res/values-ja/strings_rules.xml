@@ -33,12 +33,14 @@
     <string name="rules_unit_mb">MB</string>
     <string name="rules_unit_gb">GB</string>
 
-    <string name="rules_category_primary">メイン</string>
+    <string name="rules_category_primary">受信トレイ</string>
     <string name="rules_category_important">重要</string>
-    <string name="rules_category_promotions">プロモーション</string>
+    <string name="rules_category_promotions">セール</string>
+    <string name="rules_category_newsletters">ニュースレター</string>
     <string name="rules_category_social">ソーシャル</string>
-    <string name="rules_category_updates">更新情報</string>
-    <string name="rules_category_forums">フォーラム</string>
+    <string name="rules_category_updates">通知</string>
+    <string name="rules_category_transactions">買い物</string>
+    <string name="rules_category_forums">ディスカッション</string>
 
     <string name="rules_no_labels">ラベルがありません</string>
     <string name="rules_remove">削除</string>
@@ -55,15 +57,17 @@
     <string name="rules_snooze_3_days">3 日</string>
     <string name="rules_snooze_1_week">1 週間</string>
     <string name="rules_snooze_current">現在: %1$s</string>
-    <string name="rules_category_finance">お金</string>
+    <string name="rules_category_finance">金融</string>
     <string name="rules_category_travel">旅行</string>
-    <string name="rules_category_shopping">買い物</string>
+    <string name="rules_category_shopping">ショッピング</string>
     <string name="categories_title">カテゴリ</string>
     <string name="categories_description">受信トレイに表示するカテゴリタブを選び、自分だけのカテゴリも作れます。仕分けはすべて端末内で行われます。</string>
     <string name="category_info_primary">ほかのカテゴリに当てはまらないメール。常に有効です。</string>
     <string name="category_info_promotions">宣伝メール、セール、割引のお知らせ。</string>
+    <string name="category_info_newsletters">登録したニュースレターやメーリングリストです。</string>
     <string name="category_info_social">SNS やコミュニティからの通知。</string>
     <string name="category_info_updates">領収書、確認、自動のお知らせ。</string>
+    <string name="category_info_transactions">ストアやサービスからの注文、支払い、領収書です。</string>
     <string name="category_info_forums">メーリングリストやディスカッショングループ。</string>
     <string name="category_info_finance">銀行、請求、支払い、投資。</string>
     <string name="category_info_travel">予約、搭乗券、旅程。</string>

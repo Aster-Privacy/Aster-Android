@@ -405,6 +405,7 @@ class MailPollingWorker(
         private const val KEY_VIBRATE_ENABLED = "notification_vibrate_enabled"
         private const val KEY_MUTED_FOLDER_TOKENS = "muted_folder_tokens"
         private const val KEY_MUTED_NOTIFICATION_CATEGORIES = "muted_notification_categories"
+        private const val KEY_ACTIVE_CATEGORY_TABS = "active_category_tabs"
         private const val KEY_PROTECTED_FOLDER_TOKENS = "protected_folder_tokens"
         private const val KEY_PROTECTED_FOLDER_TOKENS_KNOWN = "protected_folder_tokens_known"
         private const val KEY_QUIET_HOURS_ENABLED = "quiet_hours_enabled"
@@ -611,12 +612,33 @@ class MailPollingWorker(
                 .apply()
         }
 
+        fun active_category_tabs(context: Context): List<String>? {
+            val stored = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getString(KEY_ACTIVE_CATEGORY_TABS, null) ?: return null
+            return stored.split('\n').filter { it.isNotBlank() }.ifEmpty { null }
+        }
+
+        fun set_active_category_tabs(context: Context, tabs: Collection<String>) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putString(
+                    KEY_ACTIVE_CATEGORY_TABS,
+                    tabs.filter { it.isNotBlank() }.distinct().joinToString("\n"),
+                )
+                .apply()
+        }
+
         fun is_item_in_muted_category(
             item: org.astermail.android.mail.InboxItem,
             muted: Set<String>,
+            active_tabs: List<String>? = null,
         ): Boolean {
             if (muted.isEmpty()) return false
-            return org.astermail.android.mail.category_for_tab(item.category) in muted
+            if (active_tabs == null) {
+                return item.category in muted ||
+                    org.astermail.android.mail.category_for_tab(item.category) in muted
+            }
+            return org.astermail.android.mail.category_for_tab(item.category, active_tabs) in muted
         }
 
         fun item_folder_tokens(item: org.astermail.android.mail.InboxItem): List<String> =
@@ -1036,6 +1058,7 @@ class MailPollingWorker(
         ): org.astermail.android.mail.InboxItem? {
             val muted = muted_folder_tokens(context)
             val muted_categories = muted_notification_categories(context)
+            val category_tabs = active_category_tabs(context)
             val protected_tokens = protected_folder_tokens(context)
             val sign_in_marker = NotificationDedupe.sign_in_marker(context)
             return items.firstOrNull {
@@ -1044,7 +1067,7 @@ class MailPollingWorker(
                     !was_item_notified(context, it.id) &&
                     !is_item_in_muted_folder(it, muted) &&
                     !is_item_in_protected_folder(it, protected_tokens) &&
-                    !is_item_in_muted_category(it, muted_categories) &&
+                    !is_item_in_muted_category(it, muted_categories, category_tabs) &&
                     !NotificationDedupe.is_probable_sign_in_alert_mail(sign_in_marker, it.sender_email) &&
                     is_item_notifiable_by_type(context, it)
             }

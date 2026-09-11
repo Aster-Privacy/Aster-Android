@@ -2004,7 +2004,7 @@
     <string name="section_reading_conversations">पढ़ना और बातचीत</string>
     <string name="conversation_grouping_subtitle">एक ही बातचीत के ईमेल एक साथ रखें</string>
     <string name="inbox_categories">इनबॉक्स की श्रेणियां</string>
-    <string name="inbox_categories_subtitle">आने वाली मेल को मुख्य, सामाजिक, प्रचार और अपडेट में बांटें</string>
+    <string name="inbox_categories_subtitle">आने वाली मेल को ऑफ़र, सोशल और सूचनाएं जैसे टैब में बांटें</string>
     <string name="conversation_order_label">बातचीत का क्रम</string>
     <string name="show_message_size">संदेश का आकार दिखाएं</string>
     <string name="show_alias_indicators">एलियास के संकेत दिखाएं</string>

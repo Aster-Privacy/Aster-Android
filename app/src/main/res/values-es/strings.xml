@@ -2095,7 +2095,7 @@
     <string name="section_reading_conversations">Lectura y conversaciones</string>
     <string name="conversation_grouping_subtitle">Agrupar los correos de una misma conversación</string>
     <string name="inbox_categories">Categorías de la bandeja</string>
-    <string name="inbox_categories_subtitle">Clasifica el correo entrante en Principal, Social, Promociones y Novedades</string>
+    <string name="inbox_categories_subtitle">Clasifica el correo entrante en pestañas como Descuentos, Social y Notificaciones</string>
     <string name="conversation_order_label">Orden de la conversación</string>
     <string name="show_message_size">Mostrar el tamaño del mensaje</string>
     <string name="show_alias_indicators">Mostrar indicadores de alias</string>

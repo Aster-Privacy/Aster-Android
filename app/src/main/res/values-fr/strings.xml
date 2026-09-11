@@ -2424,7 +2424,7 @@
     <string name="copy_fingerprint_action">Copier l\'empreinte</string>
     <string name="copy_public_key_action">Copier la clé publique</string>
     <string name="inbox_categories">Catégories de la boîte de réception</string>
-    <string name="inbox_categories_subtitle">Trie le courrier entrant en Principal, Réseaux sociaux, Promotions et Mises à jour</string>
+    <string name="inbox_categories_subtitle">Trie le courrier entrant dans des onglets comme Bons plans, Réseaux sociaux et Notifications</string>
     <string name="hardware_key_rename">Renommer la clé</string>
     <string name="hardware_key_rename_placeholder">Nommez cette clé</string>
     <string name="hardware_key_renamed">Nom mis à jour</string>

@@ -33,12 +33,14 @@
     <string name="rules_unit_mb">MB</string>
     <string name="rules_unit_gb">GB</string>
 
-    <string name="rules_category_primary">Główne</string>
+    <string name="rules_category_primary">Odebrane</string>
     <string name="rules_category_important">Ważne</string>
     <string name="rules_category_promotions">Promocje</string>
-    <string name="rules_category_social">Społeczności</string>
-    <string name="rules_category_updates">Aktualizacje</string>
-    <string name="rules_category_forums">Fora</string>
+    <string name="rules_category_newsletters">Newslettery</string>
+    <string name="rules_category_social">Społecznościowe</string>
+    <string name="rules_category_updates">Powiadomienia</string>
+    <string name="rules_category_transactions">Zakupy</string>
+    <string name="rules_category_forums">Dyskusje</string>
 
     <string name="rules_no_labels">Brak etykiet</string>
     <string name="rules_remove">Usuń</string>
@@ -62,8 +64,10 @@
     <string name="categories_description">Wybierz, które karty kategorii mają się pojawiać w skrzynce, i twórz własne. Całe sortowanie odbywa się na twoim urządzeniu.</string>
     <string name="category_info_primary">Wszystko, co nie pasuje do innej kategorii. Zawsze włączona.</string>
     <string name="category_info_promotions">Wiadomości reklamowe, oferty i promocje.</string>
+    <string name="category_info_newsletters">Newslettery i listy mailingowe, które subskrybujesz.</string>
     <string name="category_info_social">Powiadomienia z serwisów społecznościowych i społeczności.</string>
     <string name="category_info_updates">Potwierdzenia, paragony i automatyczne powiadomienia.</string>
+    <string name="category_info_transactions">Zamówienia, płatności i potwierdzenia ze sklepów i serwisów.</string>
     <string name="category_info_forums">Listy mailingowe i grupy dyskusyjne.</string>
     <string name="category_info_finance">Bank, faktury, płatności i inwestycje.</string>
     <string name="category_info_travel">Rezerwacje, karty pokładowe i plany podróży.</string>

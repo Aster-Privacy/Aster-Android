@@ -63,9 +63,11 @@ import compose.icons.tablericons.Heart
 import compose.icons.tablericons.Home
 import compose.icons.tablericons.Inbox
 import compose.icons.tablericons.MessageDots
+import compose.icons.tablericons.News
 import compose.icons.tablericons.Pencil
 import compose.icons.tablericons.Plane
 import compose.icons.tablericons.Plus
+import compose.icons.tablericons.Receipt
 import compose.icons.tablericons.School
 import compose.icons.tablericons.ShoppingCart
 import compose.icons.tablericons.Speakerphone
@@ -113,6 +115,8 @@ private val category_setting_icons: Map<String, ImageVector> = mapOf(
     "globe" to TablerIcons.World,
     "academic_cap" to TablerIcons.School,
     "megaphone" to TablerIcons.Speakerphone,
+    "newspaper" to TablerIcons.News,
+    "receipt" to TablerIcons.Receipt,
     "gift" to TablerIcons.Gift,
     "folder" to TablerIcons.Folder,
     "sparkles" to TablerIcons.Wand,
@@ -123,8 +127,10 @@ private fun category_setting_icon(icon: String): ImageVector =
 
 private fun builtin_info_res(id: String): Int = when (id) {
     "promotions" -> R.string.category_info_promotions
+    "newsletters" -> R.string.category_info_newsletters
     "social" -> R.string.category_info_social
     "updates" -> R.string.category_info_updates
+    "transactions" -> R.string.category_info_transactions
     "forums" -> R.string.category_info_forums
     "finance" -> R.string.category_info_finance
     "travel" -> R.string.category_info_travel

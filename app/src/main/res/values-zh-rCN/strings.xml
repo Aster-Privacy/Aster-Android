@@ -2091,7 +2091,7 @@
     <string name="section_reading_conversations">阅读与会话</string>
     <string name="conversation_grouping_subtitle">把同一会话的邮件归到一起</string>
     <string name="inbox_categories">收件箱分类</string>
-    <string name="inbox_categories_subtitle">把收到的邮件分入主要、社交、推广和动态</string>
+    <string name="inbox_categories_subtitle">把收到的邮件分入促销、社交、通知等标签页</string>
     <string name="conversation_order_label">会话排序</string>
     <string name="show_message_size">显示邮件大小</string>
     <string name="show_alias_indicators">显示别名标识</string>

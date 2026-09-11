@@ -33,12 +33,14 @@
     <string name="rules_unit_mb">م.ب</string>
     <string name="rules_unit_gb">ج.ب</string>
 
-    <string name="rules_category_primary">الرئيسي</string>
+    <string name="rules_category_primary">البريد الوارد</string>
     <string name="rules_category_important">مهم</string>
-    <string name="rules_category_promotions">العروض</string>
-    <string name="rules_category_social">التواصل الاجتماعي</string>
-    <string name="rules_category_updates">التحديثات</string>
-    <string name="rules_category_forums">المنتديات</string>
+    <string name="rules_category_promotions">الصفقات</string>
+    <string name="rules_category_newsletters">النشرات</string>
+    <string name="rules_category_social">التواصل</string>
+    <string name="rules_category_updates">الإشعارات</string>
+    <string name="rules_category_transactions">المشتريات</string>
+    <string name="rules_category_forums">النقاشات</string>
 
     <string name="rules_no_labels">لا توجد تصنيفات بعد</string>
     <string name="rules_remove">إزالة</string>
@@ -55,15 +57,17 @@
     <string name="rules_snooze_3_days">3 أيام</string>
     <string name="rules_snooze_1_week">أسبوع واحد</string>
     <string name="rules_snooze_current">الحالي: %1$s</string>
-    <string name="rules_category_finance">المال</string>
+    <string name="rules_category_finance">المالية</string>
     <string name="rules_category_travel">السفر</string>
     <string name="rules_category_shopping">التسوق</string>
     <string name="categories_title">الفئات</string>
     <string name="categories_description">اختر تبويبات الفئات التي تظهر في بريدك الوارد وأنشئ فئاتك الخاصة. يتم كل الفرز محليًا على جهازك.</string>
     <string name="category_info_primary">كل ما لا يطابق فئة أخرى. مفعّل دائمًا.</string>
     <string name="category_info_promotions">رسائل تسويقية وعروض وصفقات.</string>
+    <string name="category_info_newsletters">النشرات وقوائم المراسلة التي اشتركت فيها.</string>
     <string name="category_info_social">إشعارات من الشبكات الاجتماعية والمجتمعات.</string>
     <string name="category_info_updates">الإيصالات والتأكيدات والتنبيهات الآلية.</string>
+    <string name="category_info_transactions">الطلبات والمدفوعات والإيصالات من المتاجر والخدمات.</string>
     <string name="category_info_forums">القوائم البريدية ومجموعات النقاش.</string>
     <string name="category_info_finance">البنوك والفواتير والمدفوعات والاستثمار.</string>
     <string name="category_info_travel">الحجوزات وبطاقات الصعود ومواعيد الرحلات.</string>

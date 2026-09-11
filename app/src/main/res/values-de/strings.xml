@@ -2095,7 +2095,7 @@
     <string name="section_reading_conversations">Lesen &amp; Unterhaltungen</string>
     <string name="conversation_grouping_subtitle">E-Mails derselben Unterhaltung zusammenfassen</string>
     <string name="inbox_categories">Posteingangs-Kategorien</string>
-    <string name="inbox_categories_subtitle">Eingehende Mail nach Allgemein, Sozial, Angebote und Updates sortieren</string>
+    <string name="inbox_categories_subtitle">Eingehende Mail in Tabs wie Angebote, Soziale Netzwerke und Benachrichtigungen sortieren</string>
     <string name="conversation_order_label">Reihenfolge der Unterhaltung</string>
     <string name="show_message_size">Nachrichtengröße anzeigen</string>
     <string name="show_alias_indicators">Alias-Kennzeichnung anzeigen</string>

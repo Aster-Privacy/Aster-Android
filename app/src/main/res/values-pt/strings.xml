@@ -2094,7 +2094,7 @@
     <string name="section_reading_conversations">Leitura e conversas</string>
     <string name="conversation_grouping_subtitle">Agrupar os e-mails da mesma conversa</string>
     <string name="inbox_categories">Categorias da caixa de entrada</string>
-    <string name="inbox_categories_subtitle">Separa o correio recebido em Principal, Social, Promoções e Novidades</string>
+    <string name="inbox_categories_subtitle">Separa o correio recebido em abas como Promoções, Redes sociais e Notificações</string>
     <string name="conversation_order_label">Ordem da conversa</string>
     <string name="show_message_size">Mostrar o tamanho da mensagem</string>
     <string name="show_alias_indicators">Mostrar indicadores de alias</string>

@@ -2100,7 +2100,7 @@
     <string name="section_reading_conversations">Czytanie i rozmowy</string>
     <string name="conversation_grouping_subtitle">Grupuj wiadomości z tej samej rozmowy</string>
     <string name="inbox_categories">Kategorie skrzynki</string>
-    <string name="inbox_categories_subtitle">Dzieli przychodzącą pocztę na Główne, Społeczności, Oferty i Aktualizacje</string>
+    <string name="inbox_categories_subtitle">Dzieli przychodzącą pocztę na karty, takie jak Promocje, Społecznościowe i Powiadomienia</string>
     <string name="conversation_order_label">Kolejność w rozmowie</string>
     <string name="show_message_size">Pokaż rozmiar wiadomości</string>
     <string name="show_alias_indicators">Pokaż wskaźniki aliasów</string>

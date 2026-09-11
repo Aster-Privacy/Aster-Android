@@ -33,12 +33,14 @@
     <string name="rules_unit_mb">MB</string>
     <string name="rules_unit_gb">GB</string>
 
-    <string name="rules_category_primary">Principal</string>
+    <string name="rules_category_primary">Bandeja de entrada</string>
     <string name="rules_category_important">Importante</string>
-    <string name="rules_category_promotions">Promociones</string>
-    <string name="rules_category_social">Redes sociales</string>
-    <string name="rules_category_updates">Actualizaciones</string>
-    <string name="rules_category_forums">Foros</string>
+    <string name="rules_category_promotions">Descuentos</string>
+    <string name="rules_category_newsletters">Boletines</string>
+    <string name="rules_category_social">Social</string>
+    <string name="rules_category_updates">Notificaciones</string>
+    <string name="rules_category_transactions">Compras</string>
+    <string name="rules_category_forums">Debates</string>
 
     <string name="rules_no_labels">Aún no hay etiquetas</string>
     <string name="rules_remove">Quitar</string>
@@ -62,8 +64,10 @@
     <string name="categories_description">Elige qué pestañas de categoría aparecen en tu bandeja y crea las tuyas. Todo el orden se calcula en tu dispositivo.</string>
     <string name="category_info_primary">Todo lo que no encaja en otra categoría. Siempre activa.</string>
     <string name="category_info_promotions">Correos de marketing, ofertas y promociones.</string>
+    <string name="category_info_newsletters">Boletines y listas de correo a los que te suscribiste.</string>
     <string name="category_info_social">Avisos de redes sociales y comunidades.</string>
     <string name="category_info_updates">Recibos, confirmaciones y avisos automáticos.</string>
+    <string name="category_info_transactions">Pedidos, pagos y recibos de tiendas y servicios.</string>
     <string name="category_info_forums">Listas de correo y grupos de debate.</string>
     <string name="category_info_finance">Banca, facturas, pagos e inversiones.</string>
     <string name="category_info_travel">Reservas, tarjetas de embarque e itinerarios.</string>

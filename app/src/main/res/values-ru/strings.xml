@@ -2100,7 +2100,7 @@
     <string name="section_reading_conversations">Чтение и переписки</string>
     <string name="conversation_grouping_subtitle">Объединять письма одной переписки</string>
     <string name="inbox_categories">Категории входящих</string>
-    <string name="inbox_categories_subtitle">Сортирует входящие письма по разделам: Основные, Соцсети, Промо и Обновления</string>
+    <string name="inbox_categories_subtitle">Сортирует входящие письма по вкладкам, например Скидки, Соцсети и Уведомления</string>
     <string name="conversation_order_label">Порядок в переписке</string>
     <string name="show_message_size">Показывать размер письма</string>
     <string name="show_alias_indicators">Показывать индикаторы псевдонимов</string>

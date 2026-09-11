@@ -24,7 +24,7 @@ package org.astermail.android.mail
 import org.astermail.android.api.mail.MailItemMetadata
 import org.astermail.android.api.preferences.CustomCategoryRule
 
-val CATEGORY_TABS: List<String> = listOf("primary", "promotions", "social", "updates")
+val CATEGORY_TABS: List<String> = listOf("primary") + DEFAULT_ENABLED_CATEGORIES
 
 private val RULE_CATEGORY_IDS: Set<String> = BUILTIN_CATEGORY_IDS + "important"
 
@@ -56,6 +56,8 @@ private val PROMO_LOCALPARTS: Set<String> = setOf(
     "newsletter",
     "newsletters",
 )
+
+private val LIST_SUBJECT_TAG = Regex("""^\s*\[[^\]]{1,40}\]""")
 
 private const val MAX_HEADER_VALUE = 2048
 private const val MAX_SUBJECT = 512
@@ -113,6 +115,9 @@ private fun matches_any(text: String, patterns: List<Regex>): Boolean {
     }
     return false
 }
+
+private fun updates_bucket(subject: String): String =
+    if (matches_any(subject, TRANSACTIONS_SUBJECT_PATTERNS)) "transactions" else "updates"
 
 private fun match_custom_category(
     auth_domains: List<String>,
@@ -211,6 +216,34 @@ fun classify(
         return "shopping"
     }
 
+    val list_shaped =
+        headers.containsKey("list-id") ||
+            headers.containsKey("list-post") ||
+            headers.containsKey("mailing-list") ||
+            !envelope.list_unsubscribe.isNullOrEmpty() ||
+            headers.containsKey("list-unsubscribe")
+    val hard_sell = matches_any(subject, PROMOTIONS_SUBJECT_PATTERNS)
+    val discussion_shaped =
+        headers.containsKey("list-post") ||
+            headers.containsKey("mailing-list") ||
+            DISCUSSION_SENDER_LOCALPARTS.contains(localpart) ||
+            (headers.containsKey("list-id") && LIST_SUBJECT_TAG.containsMatchIn(subject))
+
+    if (in_any(NEWSLETTER_DOMAIN_SUFFIXES)) {
+        return "newsletters"
+    }
+
+    if (list_shaped &&
+        !hard_sell &&
+        !discussion_shaped &&
+        (
+            NEWSLETTER_SENDER_LOCALPARTS.contains(localpart) ||
+                matches_any(subject, NEWSLETTER_SUBJECT_PATTERNS)
+            )
+    ) {
+        return "newsletters"
+    }
+
     val has_list_headers =
         headers.containsKey("list-id") ||
             headers.containsKey("list-post") ||
@@ -243,7 +276,7 @@ fun classify(
                 in_any(FINANCE_DOMAIN_SUFFIXES) ||
                 in_any(TRAVEL_DOMAIN_SUFFIXES)
         if (known_service && matches_any(subject, UPDATES_SUBJECT_PATTERNS)) {
-            return "updates"
+            return updates_bucket(subject)
         }
         return "primary"
     }
@@ -251,14 +284,14 @@ fun classify(
     val promo_signal =
         in_any(MARKETING_DOMAIN_SUFFIXES) ||
             PROMO_LOCALPARTS.contains(localpart) ||
-            matches_any(subject, PROMOTIONS_SUBJECT_PATTERNS)
+            hard_sell
     val trusted_transactional =
         in_any(UPDATES_DOMAIN_SUFFIXES) || UPDATES_LOCALPARTS.contains(localpart)
     val transactional_signal =
         trusted_transactional || matches_any(subject, UPDATES_SUBJECT_PATTERNS)
 
     if (transactional_signal && (!promo_signal || trusted_transactional)) {
-        return "updates"
+        return updates_bucket(subject)
     }
 
     if (promo_signal) {

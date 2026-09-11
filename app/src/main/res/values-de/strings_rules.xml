@@ -33,12 +33,14 @@
     <string name="rules_unit_mb">MB</string>
     <string name="rules_unit_gb">GB</string>
 
-    <string name="rules_category_primary">Allgemein</string>
+    <string name="rules_category_primary">Posteingang</string>
     <string name="rules_category_important">Wichtig</string>
-    <string name="rules_category_promotions">Werbung</string>
+    <string name="rules_category_promotions">Angebote</string>
+    <string name="rules_category_newsletters">Newsletter</string>
     <string name="rules_category_social">Soziale Netzwerke</string>
-    <string name="rules_category_updates">Updates</string>
-    <string name="rules_category_forums">Foren</string>
+    <string name="rules_category_updates">Benachrichtigungen</string>
+    <string name="rules_category_transactions">Einkäufe</string>
+    <string name="rules_category_forums">Diskussionen</string>
 
     <string name="rules_no_labels">Noch keine Labels</string>
     <string name="rules_remove">Entfernen</string>
@@ -57,13 +59,15 @@
     <string name="rules_snooze_current">Aktuell: %1$s</string>
     <string name="rules_category_finance">Finanzen</string>
     <string name="rules_category_travel">Reisen</string>
-    <string name="rules_category_shopping">Einkaufen</string>
+    <string name="rules_category_shopping">Shopping</string>
     <string name="categories_title">Kategorien</string>
     <string name="categories_description">Wähle, welche Kategorie-Tabs im Posteingang erscheinen, und lege eigene an. Sortiert wird ausschließlich lokal auf deinem Gerät.</string>
     <string name="category_info_primary">Alles, was in keine andere Kategorie passt. Immer aktiv.</string>
     <string name="category_info_promotions">Werbemails, Angebote und Rabatte.</string>
+    <string name="category_info_newsletters">Übersichten und Verteiler, die du abonniert hast.</string>
     <string name="category_info_social">Benachrichtigungen aus sozialen Netzwerken und Communities.</string>
     <string name="category_info_updates">Belege, Bestätigungen und automatische Hinweise.</string>
+    <string name="category_info_transactions">Bestellungen, Zahlungen und Belege von Shops und Diensten.</string>
     <string name="category_info_forums">Mailinglisten und Diskussionsgruppen.</string>
     <string name="category_info_finance">Bank, Rechnungen, Zahlungen und Geldanlage.</string>
     <string name="category_info_travel">Buchungen, Bordkarten und Reisepläne.</string>

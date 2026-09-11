@@ -33,12 +33,14 @@
     <string name="rules_unit_mb">MB</string>
     <string name="rules_unit_gb">GB</string>
 
-    <string name="rules_category_primary">기본</string>
+    <string name="rules_category_primary">받은편지함</string>
     <string name="rules_category_important">중요</string>
-    <string name="rules_category_promotions">프로모션</string>
+    <string name="rules_category_promotions">할인</string>
+    <string name="rules_category_newsletters">뉴스레터</string>
     <string name="rules_category_social">소셜</string>
-    <string name="rules_category_updates">업데이트</string>
-    <string name="rules_category_forums">포럼</string>
+    <string name="rules_category_updates">알림</string>
+    <string name="rules_category_transactions">구매</string>
+    <string name="rules_category_forums">토론</string>
 
     <string name="rules_no_labels">라벨이 없습니다</string>
     <string name="rules_remove">제거</string>
@@ -62,8 +64,10 @@
     <string name="categories_description">받은편지함에 보일 카테고리 탭을 고르고 직접 만들 수도 있습니다. 분류는 모두 기기 안에서 이루어집니다.</string>
     <string name="category_info_primary">다른 카테고리에 해당하지 않는 메일. 항상 켜져 있습니다.</string>
     <string name="category_info_promotions">홍보 메일, 할인, 특가 안내.</string>
+    <string name="category_info_newsletters">구독한 뉴스레터와 메일링 리스트입니다.</string>
     <string name="category_info_social">소셜 네트워크와 커뮤니티 알림.</string>
     <string name="category_info_updates">영수증, 확인 메일, 자동 안내.</string>
+    <string name="category_info_transactions">상점과 서비스에서 온 주문, 결제, 영수증입니다.</string>
     <string name="category_info_forums">메일링 리스트와 토론 그룹.</string>
     <string name="category_info_finance">은행, 청구서, 결제, 투자.</string>
     <string name="category_info_travel">예약, 탑승권, 일정.</string>

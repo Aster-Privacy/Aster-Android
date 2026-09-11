@@ -33,7 +33,9 @@ import compose.icons.tablericons.Heart
 import compose.icons.tablericons.Home
 import compose.icons.tablericons.Inbox
 import compose.icons.tablericons.MessageDots
+import compose.icons.tablericons.News
 import compose.icons.tablericons.Plane
+import compose.icons.tablericons.Receipt
 import compose.icons.tablericons.School
 import compose.icons.tablericons.ShoppingCart
 import compose.icons.tablericons.Speakerphone
@@ -58,6 +60,8 @@ val category_icon_catalog: Map<String, ImageVector> = mapOf(
     "globe" to TablerIcons.World,
     "academic_cap" to TablerIcons.School,
     "megaphone" to TablerIcons.Speakerphone,
+    "newspaper" to TablerIcons.News,
+    "receipt" to TablerIcons.Receipt,
     "gift" to TablerIcons.Gift,
     "folder" to TablerIcons.Folder,
     "sparkles" to TablerIcons.Wand,

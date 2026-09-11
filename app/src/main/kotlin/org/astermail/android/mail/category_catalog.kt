@@ -36,8 +36,24 @@ data class BuiltinCategory(
 val BUILTIN_CATEGORIES: List<BuiltinCategory> = listOf(
     BuiltinCategory("primary", "inbox", R.string.rules_category_primary, true, false, "primary"),
     BuiltinCategory("promotions", "tag", R.string.rules_category_promotions, true, true, "primary"),
+    BuiltinCategory(
+        "newsletters",
+        "newspaper",
+        R.string.rules_category_newsletters,
+        false,
+        true,
+        "promotions",
+    ),
     BuiltinCategory("social", "users", R.string.rules_category_social, true, true, "primary"),
     BuiltinCategory("updates", "bell", R.string.rules_category_updates, true, true, "primary"),
+    BuiltinCategory(
+        "transactions",
+        "receipt",
+        R.string.rules_category_transactions,
+        false,
+        true,
+        "updates",
+    ),
     BuiltinCategory("forums", "chat", R.string.rules_category_forums, false, true, "updates"),
     BuiltinCategory("finance", "credit_card", R.string.rules_category_finance, false, true, "updates"),
     BuiltinCategory("travel", "plane", R.string.rules_category_travel, false, true, "updates"),
@@ -55,6 +71,8 @@ val BUILTIN_CATEGORY_IDS: Set<String> = BUILTIN_CATEGORIES.map { it.id }.toSet()
 
 val DEFAULT_ENABLED_CATEGORIES: List<String> =
     BUILTIN_CATEGORIES.filter { it.default_enabled && it.id != "primary" }.map { it.id }
+
+val RULE_CATEGORY_TARGETS: List<String> = BUILTIN_CATEGORIES.map { it.id }
 
 fun builtin_category(id: String): BuiltinCategory? = BUILTIN_CATEGORIES.firstOrNull { it.id == id }
 
@@ -131,6 +149,8 @@ val CUSTOM_CATEGORY_ICON_CHOICES: List<String> = listOf(
     "plane",
     "academic_cap",
     "megaphone",
+    "newspaper",
+    "receipt",
     "gift",
     "folder",
     "sparkles",

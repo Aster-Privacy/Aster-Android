@@ -2091,7 +2091,7 @@
     <string name="section_reading_conversations">읽기 및 대화</string>
     <string name="conversation_grouping_subtitle">같은 대화의 메일을 묶어서 보기</string>
     <string name="inbox_categories">받은편지함 분류</string>
-    <string name="inbox_categories_subtitle">받은 메일을 기본, 소셜, 프로모션, 알림으로 나눕니다</string>
+    <string name="inbox_categories_subtitle">받은 메일을 할인, 소셜, 알림 같은 탭으로 나눕니다</string>
     <string name="conversation_order_label">대화 정렬 순서</string>
     <string name="show_message_size">메일 크기 표시</string>
     <string name="show_alias_indicators">별칭 표시 보기</string>

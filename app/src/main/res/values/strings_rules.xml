@@ -33,12 +33,14 @@
     <string name="rules_unit_mb">MB</string>
     <string name="rules_unit_gb">GB</string>
 
-    <string name="rules_category_primary">Primary</string>
+    <string name="rules_category_primary">Inbox</string>
     <string name="rules_category_important">Important</string>
-    <string name="rules_category_promotions">Promotions</string>
+    <string name="rules_category_promotions">Deals</string>
+    <string name="rules_category_newsletters">Newsletters</string>
     <string name="rules_category_social">Social</string>
-    <string name="rules_category_updates">Updates</string>
-    <string name="rules_category_forums">Forums</string>
+    <string name="rules_category_updates">Notifications</string>
+    <string name="rules_category_transactions">Purchases</string>
+    <string name="rules_category_forums">Discussions</string>
     <string name="rules_category_finance">Finance</string>
     <string name="rules_category_travel">Travel</string>
     <string name="rules_category_shopping">Shopping</string>
@@ -62,8 +64,10 @@
     <string name="categories_description">Choose which category tabs appear in your inbox and create your own. All sorting happens locally on your device.</string>
     <string name="category_info_primary">Everything that does not match another category. Always on.</string>
     <string name="category_info_promotions">Marketing emails, offers, and deals.</string>
+    <string name="category_info_newsletters">Digests and mailing lists you subscribed to.</string>
     <string name="category_info_social">Notifications from social networks and communities.</string>
     <string name="category_info_updates">Receipts, confirmations, and service notifications.</string>
+    <string name="category_info_transactions">Orders, payments, and receipts from stores and services.</string>
     <string name="category_info_forums">Messages from mailing lists, forums, and discussion groups.</string>
     <string name="category_info_finance">Statements, invoices, and alerts from banks and financial services.</string>
     <string name="category_info_travel">Bookings, itineraries, and confirmations from airlines, hotels, and rideshare.</string>

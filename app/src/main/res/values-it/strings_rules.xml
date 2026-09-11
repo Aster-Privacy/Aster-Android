@@ -33,12 +33,14 @@
     <string name="rules_unit_mb">MB</string>
     <string name="rules_unit_gb">GB</string>
 
-    <string name="rules_category_primary">Principale</string>
+    <string name="rules_category_primary">Posta in arrivo</string>
     <string name="rules_category_important">Importante</string>
     <string name="rules_category_promotions">Promozioni</string>
+    <string name="rules_category_newsletters">Newsletter</string>
     <string name="rules_category_social">Social</string>
-    <string name="rules_category_updates">Aggiornamenti</string>
-    <string name="rules_category_forums">Forum</string>
+    <string name="rules_category_updates">Notifiche</string>
+    <string name="rules_category_transactions">Acquisti</string>
+    <string name="rules_category_forums">Discussioni</string>
 
     <string name="rules_no_labels">Nessuna etichetta</string>
     <string name="rules_remove">Rimuovi</string>
@@ -62,8 +64,10 @@
     <string name="categories_description">Scegli quali schede di categoria appaiono nella posta in arrivo e creane di tue. Tutto lo smistamento avviene sul tuo dispositivo.</string>
     <string name="category_info_primary">Tutto ciò che non rientra in un\'altra categoria. Sempre attiva.</string>
     <string name="category_info_promotions">Email pubblicitarie, offerte e promozioni.</string>
+    <string name="category_info_newsletters">Newsletter e mailing list a cui ti sei iscritto.</string>
     <string name="category_info_social">Notifiche da social network e community.</string>
     <string name="category_info_updates">Ricevute, conferme e avvisi automatici.</string>
+    <string name="category_info_transactions">Ordini, pagamenti e ricevute di negozi e servizi.</string>
     <string name="category_info_forums">Mailing list e gruppi di discussione.</string>
     <string name="category_info_finance">Banca, fatture, pagamenti e investimenti.</string>
     <string name="category_info_travel">Prenotazioni, carte d\'imbarco e itinerari.</string>
