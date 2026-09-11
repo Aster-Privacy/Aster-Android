@@ -38,6 +38,8 @@ data class TotpStatusResponse(
     val enabled: Boolean = false,
     val backup_codes_remaining: Int = 0,
     val verified_at: String? = null,
+    val hardware_keys_registered: Boolean = false,
+    val available_methods: List<String> = emptyList(),
 )
 
 @Serializable

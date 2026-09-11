@@ -27,6 +27,7 @@ import org.astermail.android.api.ApiError
 import org.astermail.android.api.server_supplied_detail
 
 const val FAMILY_2FA_REQUIRED_CODE = "FAMILY_2FA_REQUIRED"
+const val PENDING_LOGIN_EXPIRED_CODE = "PENDING_LOGIN_EXPIRED"
 
 fun localized_server_code(context: Context, t: Throwable): String? {
     val forbidden = t as? ApiError.ForbiddenError ?: return null
@@ -41,6 +42,8 @@ private val validation_code_strings = mapOf(
     "TWO_FACTOR_CODE_REQUIRED" to R.string.error_2fa_code_required,
     "ACCOUNT_PASSWORD_REQUIRED" to R.string.error_account_password_required,
     "INVALID_BACKUP_CODE" to R.string.error_invalid_backup_code,
+    PENDING_LOGIN_EXPIRED_CODE to R.string.session_expired_sign_in,
+    "TOTP_REQUIRED" to R.string.error_2fa_code_required,
     "INVALID_RECOVERY_CODE" to R.string.error_invalid_code,
     "INVALID_RECOVERY_PHRASE" to R.string.error_invalid_recovery_phrase,
     "INVALID_OR_EXPIRED_CODE" to R.string.error_sign_in_code_invalid,

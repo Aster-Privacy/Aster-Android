@@ -70,6 +70,7 @@ data class TotpChallengeResponse(
     val totp_required: Boolean = false,
     val pending_login_token: String,
     val available_methods: List<String> = emptyList(),
+    val backup_code_available: Boolean = false,
 )
 
 @Serializable
@@ -78,6 +79,7 @@ data class TotpLoginVerifyRequest(
     val pending_login_token: String,
     val trust_device: Boolean = false,
     val remember_me: Boolean = false,
+    val device_label: String? = null,
 )
 
 data class TotpVerifyOutcome(
@@ -213,6 +215,7 @@ interface AuthApi {
     suspend fun get_user_salt(user_hash: String): SaltResponse
     suspend fun login(request: LoginRequest, trusted_device_token: String? = null): LoginResult
     suspend fun verify_totp_login(request: TotpLoginVerifyRequest): TotpVerifyOutcome
+    suspend fun verify_backup_code_login(request: TotpLoginVerifyRequest): TotpVerifyOutcome
     suspend fun register(request: RegisterRequest): RegisterResponse
     suspend fun refresh(refresh_token: String?): RefreshResponse
     suspend fun logout()
@@ -262,11 +265,21 @@ class AuthApiImpl(private val client: ApiClient) : AuthApi {
         )
     }
 
-    override suspend fun verify_totp_login(request: TotpLoginVerifyRequest): TotpVerifyOutcome {
-        val response = client.http.post("${client.base_url}$base/totp/verify") {
+    override suspend fun verify_totp_login(request: TotpLoginVerifyRequest): TotpVerifyOutcome =
+        post_second_factor("$base/totp/verify", request)
+
+    override suspend fun verify_backup_code_login(request: TotpLoginVerifyRequest): TotpVerifyOutcome =
+        post_second_factor("$base/totp/backup-code", request)
+
+    private suspend fun post_second_factor(path: String, request: TotpLoginVerifyRequest): TotpVerifyOutcome {
+        val response = client.http.post("${client.base_url}$path") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }
+        return second_factor_outcome(response)
+    }
+
+    private suspend fun second_factor_outcome(response: HttpResponse): TotpVerifyOutcome {
         val body: LoginResponse = decode_or_throw(response)
         client.set_csrf(body.csrf_token)
         val set_cookies = response.headers.getAll(HttpHeaders.SetCookie)

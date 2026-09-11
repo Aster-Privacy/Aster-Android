@@ -121,6 +121,10 @@ fun SignInScreen(
         when (state) {
             is AuthUiState.Success -> if (!signed_in_fired) { signed_in_fired = true; on_signed_in() }
             is AuthUiState.TotpChallenge -> cached_totp_challenge = (state as AuthUiState.TotpChallenge).challenge
+            is AuthUiState.Error -> if ((state as AuthUiState.Error).restart_login) {
+                cached_totp_challenge = null
+                password = ""
+            }
             else -> Unit
         }
     }
@@ -412,16 +416,23 @@ private fun TotpVerifyScreen(
 ) {
     val colors = AsterMaterial.colors
     val state by view_model.ui_state.collectAsStateWithLifecycle()
+    val totp_available = challenge.available_methods.isEmpty() ||
+        challenge.available_methods.contains(second_factor_method_totp)
     var code by remember { mutableStateOf("") }
-    var use_backup by remember { mutableStateOf(false) }
+    var use_backup by remember { mutableStateOf(!totp_available) }
     var trust_device by remember { mutableStateOf(false) }
     val is_loading = state is AuthUiState.Loading
     val error_message = (state as? AuthUiState.Error)?.message
     val code_focus = remember { FocusRequester() }
     val code_ready = if (use_backup) {
-        code.count { it.isLetterOrDigit() } >= 12
+        is_backup_code_length(code.count { it.isLetterOrDigit() })
     } else {
-        code.length >= 6
+        code.length == 6
+    }
+    val submit_code: () -> Unit = {
+        if (code_ready && !is_loading) {
+            view_model.submit_totp(code, challenge, trust_device, use_backup_code = use_backup)
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -484,11 +495,7 @@ private fun TotpVerifyScreen(
                         imeAction = ImeAction.Done,
                     ),
                     keyboard_actions = KeyboardActions(
-                        onDone = {
-                            if (code_ready && !is_loading) {
-                                view_model.submit_totp(code, challenge, trust_device)
-                            }
-                        },
+                        onDone = { submit_code() },
                     ),
                     leading_icon = {
                         Icon(
@@ -528,30 +535,39 @@ private fun TotpVerifyScreen(
 
                 AsterButton(
                     label = stringResource(R.string.totp_verify_button),
-                    onClick = { view_model.submit_totp(code, challenge, trust_device) },
+                    onClick = submit_code,
                     enabled = code_ready && !is_loading,
                     is_loading = is_loading,
                 )
 
-                Spacer(Modifier.height(AsterSpacing.md))
+                if (totp_available) {
+                    Spacer(Modifier.height(AsterSpacing.md))
 
-                Text(
-                    text = if (use_backup) {
-                        stringResource(R.string.totp_use_authenticator)
-                    } else {
-                        stringResource(R.string.totp_use_backup_code)
-                    },
-                    color = colors.accent_blue,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .clickable(enabled = !is_loading) { use_backup = !use_backup },
-                )
+                    Text(
+                        text = if (use_backup) {
+                            stringResource(R.string.totp_use_authenticator)
+                        } else {
+                            stringResource(R.string.totp_use_backup_code)
+                        },
+                        color = colors.accent_blue,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .clickable(enabled = !is_loading) {
+                                if (state is AuthUiState.Error) view_model.reset_state()
+                                use_backup = !use_backup
+                            },
+                    )
+                }
             }
         }
     }
 }
+
+private const val second_factor_method_totp = "totp"
+
+private fun is_backup_code_length(length: Int): Boolean = length == 8 || length == 12
 
 @Composable
 internal fun error_banner(message: String) {
