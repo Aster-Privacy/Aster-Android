@@ -165,7 +165,7 @@ class DomainPurchaseViewModelTest {
     }
 
     @Test
-    fun `changing the query cancels the scheduled retry`() = runTest {
+    fun `typing during the cooldown waits for it and drops the old retry`() = runTest {
         coEvery { purchase_api.search("example", any()) } throws throttled(60)
         coEvery { purchase_api.search("another", any()) } returns found
         vm.set_query("example")
@@ -173,11 +173,100 @@ class DomainPurchaseViewModelTest {
         assertTrue(vm.state.value.search_rate_limited)
 
         vm.set_query("another")
-        assertFalse(vm.state.value.search_rate_limited)
-        advanceUntilIdle()
+        assertTrue(vm.state.value.search_rate_limited)
+        assertFalse(vm.state.value.searching)
+        advanceTimeBy(30_000)
+        runCurrent()
+        coVerify(exactly = 0) { purchase_api.search("another", any()) }
+        assertTrue(vm.state.value.search_rate_limited)
 
+        advanceUntilIdle()
         coVerify(exactly = 1) { purchase_api.search("example", any()) }
         coVerify(exactly = 1) { purchase_api.search("another", any()) }
+        assertFalse(vm.state.value.search_rate_limited)
+        assertEquals("another", vm.state.value.searched_query)
+    }
+
+    @Test
+    fun `a throttle keeps the previous results on screen`() = runTest {
+        coEvery { purchase_api.search("example", any()) } returns found
+        coEvery { purchase_api.search("examples", any()) } throws throttled(60)
+        vm.set_query("example")
+        pass_debounce()
+        vm.set_query("examples")
+        pass_debounce()
+
+        val state = vm.state.value
+        assertTrue(state.search_rate_limited)
+        assertFalse(state.search_failed)
+        assertEquals("example", state.searched_query)
+        assertEquals(found.results, state.results)
+        assertEquals(found.suggestions, state.suggestions)
+    }
+
+    @Test
+    fun `retry during the cooldown does not call the server early`() = runTest {
+        coEvery { purchase_api.search(any(), any()) } throws throttled(60) andThenThrows throttled(60) andThen found
+        vm.set_query("example")
+        advanceTimeBy(60_802)
+        runCurrent()
+        coVerify(exactly = 2) { purchase_api.search(any(), any()) }
+
+        vm.retry_search()
+        runCurrent()
+        assertTrue(vm.state.value.search_rate_limited)
+        advanceTimeBy(59_000)
+        runCurrent()
+        coVerify(exactly = 2) { purchase_api.search(any(), any()) }
+
+        advanceUntilIdle()
+        coVerify(exactly = 3) { purchase_api.search(any(), any()) }
+        assertEquals(found.results, vm.state.value.results)
+    }
+
+    @Test
+    fun `load more during the cooldown does not call the server`() = runTest {
+        coEvery { purchase_api.search("example", null) } returns found
+        coEvery { purchase_api.search("examples", null) } throws throttled(60)
+        vm.set_query("example")
+        pass_debounce()
+        vm.set_query("examples")
+        pass_debounce()
+
+        vm.load_more_suggestions()
+        runCurrent()
+
+        assertTrue(vm.state.value.more_suggestions_rate_limited)
+        assertFalse(vm.state.value.loading_more_suggestions)
+        coVerify(exactly = 1) { purchase_api.search("example", any()) }
+        coVerify(exactly = 0) { purchase_api.search(any(), 2) }
+    }
+
+    @Test
+    fun `an unreadable retry after waits the default minute`() = runTest {
+        coEvery { purchase_api.search(any(), any()) } throws ApiError.RateLimited(
+            code = "DOMAIN_SEARCH_RATE_LIMITED",
+            details = mapOf("retry_after_secs" to "soon"),
+        ) andThen found
+        vm.set_query("example")
+        pass_debounce()
+
+        advanceTimeBy(59_000)
+        runCurrent()
+        coVerify(exactly = 1) { purchase_api.search(any(), any()) }
+
+        advanceTimeBy(1_001)
+        runCurrent()
+        coVerify(exactly = 2) { purchase_api.search(any(), any()) }
+        assertEquals(found.results, vm.state.value.results)
+    }
+
+    @Test
+    fun `throttle delay is clamped to a sane range`() {
+        assertEquals(300_000L, domain_search_throttle_delay_ms(throttled(99_999)))
+        assertEquals(42_000L, domain_search_throttle_delay_ms(throttled(42)))
+        assertEquals(60_000L, domain_search_throttle_delay_ms(throttled(0)))
+        assertEquals(60_000L, domain_search_throttle_delay_ms(ApiError.RateLimited(code = "DOMAIN_SEARCH_RATE_LIMITED")))
     }
 
     @Test

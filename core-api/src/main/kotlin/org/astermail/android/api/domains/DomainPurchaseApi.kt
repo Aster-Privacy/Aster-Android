@@ -43,6 +43,20 @@ object DomainPurchasePaused : Exception("domain purchases paused")
 const val RETRY_AFTER_SECS_KEY = "retry_after_secs"
 const val DOMAIN_SEARCH_RATE_LIMITED_CODE = "DOMAIN_SEARCH_RATE_LIMITED"
 
+private const val MAX_RETRY_AFTER_HEADER_DIGITS = 6
+
+fun parse_retry_after_header(header: String?): Long? {
+    val raw = header?.trim().orEmpty()
+    if (raw.isEmpty() || raw.length > MAX_RETRY_AFTER_HEADER_DIGITS || !raw.all { it in '0'..'9' }) return null
+    return raw.toLongOrNull()?.takeIf { it > 0 }
+}
+
+fun with_retry_after(error: ApiError.RateLimited, header: String?): ApiError.RateLimited {
+    if (error.details[RETRY_AFTER_SECS_KEY]?.trim()?.toLongOrNull()?.let { it > 0 } == true) return error
+    val secs = parse_retry_after_header(header) ?: return error
+    return error.copy(details = error.details + (RETRY_AFTER_SECS_KEY to secs.toString()))
+}
+
 @Serializable
 data class DomainSearchResult(
     val domain: String,
@@ -171,12 +185,6 @@ class DomainPurchaseApiImpl(private val client: ApiClient) : DomainPurchaseApi {
         } catch (_: Throwable) {
             null
         }
-    }
-
-    private fun with_retry_after(error: ApiError.RateLimited, header: String?): ApiError.RateLimited {
-        if (error.details.containsKey(RETRY_AFTER_SECS_KEY)) return error
-        val secs = header?.trim()?.toLongOrNull()?.takeIf { it > 0 } ?: return error
-        return error.copy(details = error.details + (RETRY_AFTER_SECS_KEY to secs.toString()))
     }
 
     private suspend inline fun <reified T> decode_or_throw(response: HttpResponse): T {

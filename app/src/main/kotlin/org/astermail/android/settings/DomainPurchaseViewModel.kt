@@ -65,6 +65,13 @@ fun is_domain_search_throttled(error: ApiError.RateLimited): Boolean =
     error.code == DOMAIN_SEARCH_RATE_LIMITED_CODE ||
         (domain_search_retry_after_secs(error) ?: 0L) > SHORT_RETRY_MAX_SECS
 
+private const val DEFAULT_THROTTLE_RETRY_SECS = 60L
+private const val MAX_THROTTLE_RETRY_SECS = 300L
+
+fun domain_search_throttle_delay_ms(error: ApiError.RateLimited): Long =
+    (domain_search_retry_after_secs(error) ?: DEFAULT_THROTTLE_RETRY_SECS)
+        .coerceIn(1L, MAX_THROTTLE_RETRY_SECS) * 1_000L
+
 data class DomainPurchaseUiState(
     val query: String = "",
     val searching: Boolean = false,
@@ -105,19 +112,22 @@ class DomainPurchaseViewModel @Inject constructor(
     val state: StateFlow<DomainPurchaseUiState> = _state.asStateFlow()
 
     private var search_job: Job? = null
+    private var search_cooldown: Job? = null
 
     private val prefs
         get() = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     fun set_query(raw: String) {
         val query = raw.lowercase(java.util.Locale.ROOT).trimStart()
-        _state.update { it.copy(query = query, search_failed = false, search_rate_limited = false) }
+        val cooling = is_cooling_down()
+        _state.update { it.copy(query = query, search_failed = false, search_rate_limited = cooling) }
         search_job?.cancel()
         val trimmed = query.trim()
         if (trimmed.length < MIN_QUERY_LENGTH) {
             _state.update {
                 it.copy(
                     searching = false,
+                    search_rate_limited = false,
                     searched_query = "",
                     results = emptyList(),
                     suggestions = emptyList(),
@@ -127,9 +137,10 @@ class DomainPurchaseViewModel @Inject constructor(
             }
             return
         }
-        _state.update { it.copy(searching = true) }
+        _state.update { it.copy(searching = !cooling) }
         search_job = viewModelScope.launch {
             delay(SEARCH_DEBOUNCE_MS)
+            wait_for_cooldown()
             run_search(trimmed)
         }
     }
@@ -138,8 +149,26 @@ class DomainPurchaseViewModel @Inject constructor(
         val trimmed = _state.value.query.trim()
         if (trimmed.length < MIN_QUERY_LENGTH) return
         search_job?.cancel()
-        _state.update { it.copy(searching = true, search_failed = false, search_rate_limited = false) }
-        search_job = viewModelScope.launch { run_search(trimmed) }
+        val cooling = is_cooling_down()
+        _state.update { it.copy(searching = !cooling, search_failed = false, search_rate_limited = cooling) }
+        search_job = viewModelScope.launch {
+            wait_for_cooldown()
+            run_search(trimmed)
+        }
+    }
+
+    private fun is_cooling_down(): Boolean = search_cooldown?.isActive == true
+
+    private fun start_cooldown(ms: Long) {
+        search_cooldown?.cancel()
+        search_cooldown = viewModelScope.launch { delay(ms) }
+    }
+
+    private suspend fun wait_for_cooldown() {
+        val cooldown = search_cooldown?.takeIf { it.isActive } ?: return
+        _state.update { it.copy(searching = false, search_rate_limited = true) }
+        cooldown.join()
+        _state.update { it.copy(searching = true, search_rate_limited = false) }
     }
 
     private suspend fun run_search(trimmed: String, retried: Boolean = false) {
@@ -172,14 +201,16 @@ class DomainPurchaseViewModel @Inject constructor(
     }
 
     private suspend fun handle_search_rate_limited(trimmed: String, error: ApiError.RateLimited, retried: Boolean) {
-        if (!retried && !is_domain_search_throttled(error)) {
+        val throttled = is_domain_search_throttled(error)
+        if (!retried && !throttled) {
             delay(short_retry_delay_ms(error))
             if (_state.value.query.trim() == trimmed) run_search(trimmed, retried = true)
             return
         }
+        start_cooldown(rate_limit_cooldown_ms(error))
         _state.update { it.copy(searching = false, search_failed = false, search_rate_limited = true) }
         if (retried) return
-        delay(throttled_retry_delay_ms(error))
+        search_cooldown?.join()
         if (_state.value.query.trim() != trimmed) return
         _state.update { it.copy(searching = true, search_rate_limited = false) }
         run_search(trimmed, retried = true)
@@ -188,6 +219,10 @@ class DomainPurchaseViewModel @Inject constructor(
     fun load_more_suggestions() {
         val current = _state.value
         if (current.loading_more_suggestions || current.searched_query.isBlank()) return
+        if (is_cooling_down()) {
+            _state.update { it.copy(more_suggestions_rate_limited = true) }
+            return
+        }
         _state.update { it.copy(loading_more_suggestions = true, more_suggestions_rate_limited = false) }
         viewModelScope.launch {
             fetch_more_suggestions(current.searched_query, current.next_suggest_page)
@@ -223,6 +258,7 @@ class DomainPurchaseViewModel @Inject constructor(
                 }
                 return
             }
+            if (t is ApiError.RateLimited) start_cooldown(rate_limit_cooldown_ms(t))
             _state.update {
                 it.copy(
                     loading_more_suggestions = false,
@@ -235,9 +271,8 @@ class DomainPurchaseViewModel @Inject constructor(
     private fun short_retry_delay_ms(error: ApiError.RateLimited): Long =
         maxOf(RATE_LIMIT_RETRY_MS, (domain_search_retry_after_secs(error) ?: 0L) * 1_000L)
 
-    private fun throttled_retry_delay_ms(error: ApiError.RateLimited): Long =
-        (domain_search_retry_after_secs(error) ?: DEFAULT_THROTTLE_RETRY_SECS)
-            .coerceIn(1L, MAX_THROTTLE_RETRY_SECS) * 1_000L
+    private fun rate_limit_cooldown_ms(error: ApiError.RateLimited): Long =
+        if (is_domain_search_throttled(error)) domain_search_throttle_delay_ms(error) else short_retry_delay_ms(error)
 
     fun select_result(result: DomainSearchResult) {
         _state.update { it.copy(selected = result, years = 1, checkout_error = null) }
@@ -478,8 +513,6 @@ class DomainPurchaseViewModel @Inject constructor(
         private const val MIN_QUERY_LENGTH = 3
         private const val SEARCH_DEBOUNCE_MS = 800L
         private const val RATE_LIMIT_RETRY_MS = 1_100L
-        private const val DEFAULT_THROTTLE_RETRY_SECS = 60L
-        private const val MAX_THROTTLE_RETRY_SECS = 300L
         private const val ORDER_POLL_INTERVAL_MS = 5_000L
         private const val MAX_POLL_FAILURES = 3
     }

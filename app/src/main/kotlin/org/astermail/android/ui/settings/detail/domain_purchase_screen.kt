@@ -179,10 +179,11 @@ private fun purchase_search_content(vm: DomainPurchaseViewModel, state: DomainPu
     )
     v_gap(AsterSpacing.md)
 
+    if (state.search_rate_limited) {
+        error_banner(stringResource(R.string.domain_purchase_search_rate_limited))
+        v_gap(AsterSpacing.sm)
+    }
     when {
-        state.search_rate_limited -> {
-            error_banner(stringResource(R.string.domain_purchase_search_rate_limited))
-        }
         state.search_failed -> {
             error_banner(stringResource(R.string.domain_purchase_search_failed))
             v_gap(AsterSpacing.sm)
@@ -190,7 +191,7 @@ private fun purchase_search_content(vm: DomainPurchaseViewModel, state: DomainPu
                 Text(stringResource(R.string.retry), color = colors.accent_blue, fontSize = 14.sp)
             }
         }
-        state.searched_query.isBlank() && !state.searching -> {
+        state.searched_query.isBlank() && !state.searching && !state.search_rate_limited -> {
             v_gap(AsterSpacing.xl)
             Column(
                 modifier = Modifier.fillMaxWidth(),
