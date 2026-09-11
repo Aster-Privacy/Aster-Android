@@ -85,8 +85,6 @@
     <string name="settings_diagnostics_secure_storage">Archiviazione sicura</string>
     <string name="settings_diagnostics_storage_ok">Integra</string>
     <string name="settings_diagnostics_storage_degraded">Degradata, esci e accedi di nuovo</string>
-    <string name="log_out_confirm_title">Uscire?</string>
-    <string name="log_out_confirm_message">Vuoi uscire da %1$s su questo dispositivo?</string>
     <string name="revoke_session_confirm_message">Vuoi disconnettere questo dispositivo dal tuo account?</string>
     <string name="sign_out_all_other_confirm_message">Vuoi disconnettere tutti i dispositivi tranne questo?</string>
     <string name="alias_forward_limit_reached">Hai raggiunto il numero massimo di alias attivi previsto dal tuo piano</string>

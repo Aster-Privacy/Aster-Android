@@ -85,8 +85,6 @@
     <string name="settings_diagnostics_secure_storage">Güvenli depolama</string>
     <string name="settings_diagnostics_storage_ok">Sağlıklı</string>
     <string name="settings_diagnostics_storage_degraded">Bozulmuş, oturumu kapatıp yeniden açın</string>
-    <string name="log_out_confirm_title">Çıkış yapılsın mı?</string>
-    <string name="log_out_confirm_message">Bu cihazda %1$s hesabından çıkılsın mı?</string>
     <string name="revoke_session_confirm_message">Bu cihaz hesabından çıkarılsın mı?</string>
     <string name="sign_out_all_other_confirm_message">Bu cihaz dışındaki tüm cihazlardan çıkılsın mı?</string>
     <string name="alias_forward_limit_reached">Planındaki etkin takma ad sayısının üst sınırına ulaştın</string>

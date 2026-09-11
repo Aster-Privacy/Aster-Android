@@ -267,7 +267,6 @@ fun DrawerContent(
 ) {
     val colors = AsterMaterial.colors
     var show_workspace_sheet by remember { mutableStateOf(false) }
-    var show_logout_confirm by remember { mutableStateOf(false) }
     val current_workspace = user_email
 
     val sidebar_prefs_context = LocalContext.current
@@ -809,28 +808,7 @@ fun DrawerContent(
             },
             on_logout = {
                 show_workspace_sheet = false
-                show_logout_confirm = true
-            },
-        )
-    }
-
-    if (show_logout_confirm) {
-        org.astermail.android.design.components.AsterDialog(
-            on_dismiss = { show_logout_confirm = false },
-            title = stringResource(R.string.log_out_confirm_title),
-            message = stringResource(R.string.log_out_confirm_message, current_workspace),
-            footer = {
-                org.astermail.android.design.components.AsterDialogOutlineButton(
-                    label = stringResource(R.string.cancel),
-                    onClick = { show_logout_confirm = false },
-                )
-                org.astermail.android.design.components.AsterDialogDestructiveButton(
-                    label = stringResource(R.string.log_out),
-                    onClick = {
-                        show_logout_confirm = false
-                        on_logout()
-                    },
-                )
+                on_logout()
             },
         )
     }

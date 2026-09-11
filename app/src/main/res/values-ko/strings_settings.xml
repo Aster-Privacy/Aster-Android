@@ -85,8 +85,6 @@
     <string name="settings_diagnostics_secure_storage">보안 저장소</string>
     <string name="settings_diagnostics_storage_ok">정상</string>
     <string name="settings_diagnostics_storage_degraded">손상됨, 로그아웃한 후 다시 로그인하세요</string>
-    <string name="log_out_confirm_title">로그아웃할까요?</string>
-    <string name="log_out_confirm_message">이 기기에서 %1$s 계정을 로그아웃할까요?</string>
     <string name="revoke_session_confirm_message">이 기기를 계정에서 로그아웃할까요?</string>
     <string name="sign_out_all_other_confirm_message">이 기기만 남기고 모두 로그아웃할까요?</string>
     <string name="alias_forward_limit_reached">현재 요금제에서 쓸 수 있는 별칭 수를 모두 채웠습니다</string>

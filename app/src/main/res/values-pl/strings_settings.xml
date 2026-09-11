@@ -85,8 +85,6 @@
     <string name="settings_diagnostics_secure_storage">Bezpieczne przechowywanie</string>
     <string name="settings_diagnostics_storage_ok">Sprawne</string>
     <string name="settings_diagnostics_storage_degraded">Uszkodzone, wyloguj się i zaloguj ponownie</string>
-    <string name="log_out_confirm_title">Wylogować?</string>
-    <string name="log_out_confirm_message">Wylogować %1$s na tym urządzeniu?</string>
     <string name="revoke_session_confirm_message">Wylogować to urządzenie z twojego konta?</string>
     <string name="sign_out_all_other_confirm_message">Wylogować wszystkie urządzenia poza tym?</string>
     <string name="alias_forward_limit_reached">Osiągnięto maksymalną liczbę aktywnych aliasów w twoim planie</string>
