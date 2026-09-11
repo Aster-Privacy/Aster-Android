@@ -4,4 +4,4 @@ Bug fixes and improvements:
 - Sent messages no longer stay in Drafts
 - When the server refuses a message, you see the reason and it stops retrying
 - A sent message no longer reports a failure when its Sent copy is missing attachments
-- Recently deleted aliases open on their own screen, and every reserved sibling address shows on the Aliases screen
+- Recently deleted aliases open on their own screen, and your matching addresses show on the Aliases screen

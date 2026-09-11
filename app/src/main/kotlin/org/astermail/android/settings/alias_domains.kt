@@ -40,3 +40,7 @@ fun is_premium_alias_domain(domain: String): Boolean =
 
 fun plan_allows_premium_alias_domains(plan_code: String?): Boolean =
     plan_code != null && PREMIUM_ALIAS_DOMAIN_PLANS.contains(plan_code.lowercase())
+
+fun twin_domain_offerable(domain: String, state: String, premium_allowed: Boolean): Boolean =
+    (state == "reserved" || state == "available") &&
+        (premium_allowed || !is_premium_alias_domain(domain))

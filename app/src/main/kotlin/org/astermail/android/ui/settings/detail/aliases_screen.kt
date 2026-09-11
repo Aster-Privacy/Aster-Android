@@ -582,7 +582,7 @@ private fun aliases_tab(
                 }
             }
             val twin = state.twin_address
-            val twin_siblings = remember(twin) {
+            val twin_siblings = remember(twin, premium_domains_allowed) {
                 val all = if (twin == null) {
                     emptyList()
                 } else if (twin.siblings.isNotEmpty()) {
@@ -597,7 +597,13 @@ private fun aliases_tab(
                         ),
                     )
                 }
-                all.filter { it.state == "reserved" || it.state == "available" }
+                all.filter {
+                    org.astermail.android.settings.twin_domain_offerable(
+                        it.domain,
+                        it.state,
+                        premium_domains_allowed,
+                    )
+                }
             }
             twin_siblings.forEach { sibling ->
                 v_gap(AsterSpacing.sm)
