@@ -30,7 +30,15 @@ Builds:
       - app/src/full/assets/bergamot
   - versionName: 0.6.170
     versionCode: 180
-    commit: 98a88af8b66e282e6f2cf069236979ef04e58c5b
+    commit: e5db86ce0d849df423d302b4b16ffef1152a7c61
+    subdir: app
+    gradle:
+      - fdroid
+    scandelete:
+      - app/src/full/assets/bergamot
+  - versionName: 0.6.171
+    versionCode: 181
+    commit: 6d71d51368e53db26529ccddcc9639c6cbd91e2e
     subdir: app
     gradle:
       - fdroid
@@ -41,5 +49,5 @@ AllowedAPKSigningKeys: 88b0a8a6fb94ee73a454a0f92732bd408e92e51ec1e9556744e5f0055
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 0.6.170
-CurrentVersionCode: 180
+CurrentVersion: 0.6.171
+CurrentVersionCode: 181
