@@ -36,3 +36,19 @@ fun build_contact_mail_query(addresses: List<String?>): String {
         if (address.any { it.isWhitespace() }) "contact:\"$address\"" else "contact:$address"
     }
 }
+
+private val full_address_regex = Regex("""^[^\s@]+@[^\s@]+\.[^\s@]+$""")
+
+fun is_full_address(value: String): Boolean = full_address_regex.matches(value.trim())
+
+fun address_field_matches(field: String?, address: String): Boolean {
+    if (field.isNullOrBlank()) return false
+    val candidate = field.substringAfterLast('<', field).substringBefore('>').trim()
+    return candidate.equals(address.trim(), ignoreCase = true)
+}
+
+fun build_sender_mail_query(address: String?): String? {
+    val value = address?.replace("\"", "")?.trim()?.lowercase().orEmpty()
+    if (value.isEmpty()) return null
+    return if (value.any { it.isWhitespace() }) "from:\"$value\"" else "from:$value"
+}

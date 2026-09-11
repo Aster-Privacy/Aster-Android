@@ -1886,7 +1886,11 @@ fun MailDetailScreen(
                     show_copy_failed_toast(context)
                 }
             },
-            on_search_sender = { address -> on_navigate?.invoke("search:from:$address") },
+            on_search_sender = { address ->
+                org.astermail.android.ui.search.build_sender_mail_query(address)?.let { query ->
+                    on_navigate?.invoke("search:$query")
+                }
+            },
             on_send_email = { address ->
                 context.startActivity(
                     org.astermail.android.ComposeActivity.intent_for(context, prefill_to = address),

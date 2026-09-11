@@ -239,13 +239,23 @@ internal fun matches_item(
 
 private fun evaluate_operator(item: InboxItem, op: SearchOperator): Boolean {
     val result = when (op.key) {
-        "from" -> item.sender_name.contains(op.value, ignoreCase = true) ||
-            item.sender_email.contains(op.value, ignoreCase = true) ||
-            item.display_sender_name?.contains(op.value, ignoreCase = true) == true ||
-            item.display_sender_email?.contains(op.value, ignoreCase = true) == true
+        "from" -> if (is_full_address(op.value)) {
+            address_field_matches(item.sender_email, op.value) ||
+                address_field_matches(item.display_sender_email, op.value)
+        } else {
+            item.sender_name.contains(op.value, ignoreCase = true) ||
+                item.sender_email.contains(op.value, ignoreCase = true) ||
+                item.display_sender_name?.contains(op.value, ignoreCase = true) == true ||
+                item.display_sender_email?.contains(op.value, ignoreCase = true) == true
+        }
         "to" -> item.to_addresses.any { it.contains(op.value, ignoreCase = true) } ||
             item.received_on?.contains(op.value, ignoreCase = true) == true
-        "contact" -> item.sender_name.contains(op.value, ignoreCase = true) ||
+        "contact" -> if (is_full_address(op.value)) {
+            address_field_matches(item.sender_email, op.value) ||
+                address_field_matches(item.display_sender_email, op.value) ||
+                item.to_addresses.any { address_field_matches(it, op.value) } ||
+                address_field_matches(item.received_on, op.value)
+        } else item.sender_name.contains(op.value, ignoreCase = true) ||
             item.sender_email.contains(op.value, ignoreCase = true) ||
             item.display_sender_name?.contains(op.value, ignoreCase = true) == true ||
             item.display_sender_email?.contains(op.value, ignoreCase = true) == true ||

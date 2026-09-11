@@ -1116,7 +1116,9 @@ private fun AsterNavHost() {
                 on_back = { nav_controller.popBackStack(); Unit },
                 on_open_search = { nav_controller.navigate(routes.search) },
                 on_search_sender = { sender ->
-                    nav_controller.navigate(routes.search_for("from:" + sender))
+                    org.astermail.android.ui.search.build_sender_mail_query(sender)?.let { query ->
+                        nav_controller.navigate(routes.search_for(query))
+                    }
                 },
             )
         }
@@ -1305,7 +1307,9 @@ private fun AsterNavHost() {
                 on_back = { back(); Unit },
                 on_open_search = { nav_controller.navigate(routes.search) },
                 on_search_sender = { sender ->
-                    nav_controller.navigate(routes.search_for("from:" + sender))
+                    org.astermail.android.ui.search.build_sender_mail_query(sender)?.let { query ->
+                        nav_controller.navigate(routes.search_for(query))
+                    }
                 },
             )
         }
@@ -2287,7 +2291,9 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_open_drawer = { scope.launch { drawer_state.open() } },
                             on_open_search = { nav_controller.navigate(routes.search) },
                             on_search_sender = { sender ->
-                                nav_controller.navigate(routes.search_for("from:" + sender))
+                                org.astermail.android.ui.search.build_sender_mail_query(sender)?.let { query ->
+                                    nav_controller.navigate(routes.search_for(query))
+                                }
                             },
                         )
                     }
