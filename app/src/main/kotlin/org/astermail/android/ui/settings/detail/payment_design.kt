@@ -319,10 +319,10 @@ internal fun chain_drawable_for(chain: String): Int =
 
 private const val COIN_INSET_FRACTION = 0.1f
 private const val COIN_SIZE_FRACTION = 0.8f
-private const val BADGE_CENTER_FRACTION = 0.8125f
-private const val BADGE_CUTOUT_FRACTION = 0.225f
-private const val BADGE_ORIGIN_FRACTION = 0.625f
-private const val BADGE_SIZE_FRACTION = 0.375f
+private const val BADGE_CENTER_FRACTION = 0.8375f
+private const val BADGE_CUTOUT_FRACTION = 0.19375f
+private const val BADGE_ORIGIN_FRACTION = 0.675f
+private const val BADGE_SIZE_FRACTION = 0.325f
 
 @Composable
 internal fun coin_mark(
