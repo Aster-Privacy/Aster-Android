@@ -317,10 +317,12 @@ internal fun chain_drawable_for(chain: String): Int =
         else -> R.drawable.ic_coin_generic
     }
 
-private const val BADGE_CENTER_FRACTION = 0.75f
-private const val BADGE_CUTOUT_FRACTION = 0.25f
-private const val BADGE_ORIGIN_FRACTION = 0.545f
-private const val BADGE_SIZE_FRACTION = 0.41f
+private const val COIN_INSET_FRACTION = 0.1f
+private const val COIN_SIZE_FRACTION = 0.8f
+private const val BADGE_CENTER_FRACTION = 0.8125f
+private const val BADGE_CUTOUT_FRACTION = 0.225f
+private const val BADGE_ORIGIN_FRACTION = 0.625f
+private const val BADGE_SIZE_FRACTION = 0.375f
 
 @Composable
 internal fun coin_mark(
@@ -339,17 +341,20 @@ internal fun coin_mark(
             painter = painterResource(coin),
             contentDescription = label,
             modifier = Modifier
-                .size(size)
+                .offset(x = size * COIN_INSET_FRACTION, y = size * COIN_INSET_FRACTION)
+                .size(size * COIN_SIZE_FRACTION)
                 .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
                 .drawWithContent {
                     drawContent()
                     if (show_badge) {
+                        val box = size.toPx()
+                        val inset = box * COIN_INSET_FRACTION
                         drawCircle(
                             color = Color.Black,
-                            radius = this.size.minDimension * BADGE_CUTOUT_FRACTION,
+                            radius = box * BADGE_CUTOUT_FRACTION,
                             center = Offset(
-                                this.size.width * BADGE_CENTER_FRACTION,
-                                this.size.height * BADGE_CENTER_FRACTION,
+                                box * BADGE_CENTER_FRACTION - inset,
+                                box * BADGE_CENTER_FRACTION - inset,
                             ),
                             blendMode = BlendMode.Clear,
                         )
