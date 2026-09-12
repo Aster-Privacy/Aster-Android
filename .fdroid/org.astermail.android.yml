@@ -60,10 +60,18 @@ Builds:
       - fdroid
     scandelete:
       - app/src/full/assets/bergamot
+  - versionName: 0.6.174
+    versionCode: 184
+    commit: d124d0a523241a7f2ff9829ba9b1c98956965e3c
+    subdir: app
+    gradle:
+      - fdroid
+    scandelete:
+      - app/src/full/assets/bergamot
 
 AllowedAPKSigningKeys: 88b0a8a6fb94ee73a454a0f92732bd408e92e51ec1e9556744e5f00556100977
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 0.6.173
-CurrentVersionCode: 183
+CurrentVersion: 0.6.174
+CurrentVersionCode: 184
