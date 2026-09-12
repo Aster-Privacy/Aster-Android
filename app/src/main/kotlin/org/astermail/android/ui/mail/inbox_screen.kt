@@ -2078,26 +2078,10 @@ fun InboxScreen(
                 on_confirm = { scope_selection_confirmed = true },
             )
             if (alias_direction != null && !select_mode) {
-                org.astermail.android.ui.settings.detail.aster_segmented(
+                alias_direction_switcher(
                     value = alias_direction,
-                    options = listOf(
-                        org.astermail.android.ui.settings.detail.switcher_option(
-                            org.astermail.android.mail.alias_direction_all,
-                            stringResource(R.string.alias_direction_all),
-                        ),
-                        org.astermail.android.ui.settings.detail.switcher_option(
-                            org.astermail.android.mail.alias_direction_received,
-                            stringResource(R.string.alias_direction_received),
-                        ),
-                        org.astermail.android.ui.settings.detail.switcher_option(
-                            org.astermail.android.mail.alias_direction_sent,
-                            stringResource(R.string.alias_direction_sent),
-                        ),
-                    ),
                     on_change = on_alias_direction_change,
-                    modifier = Modifier
-                        .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs)
-                        .testTag("alias_direction"),
+                    modifier = Modifier.testTag(alias_direction_switcher_tag),
                 )
             }
           }
