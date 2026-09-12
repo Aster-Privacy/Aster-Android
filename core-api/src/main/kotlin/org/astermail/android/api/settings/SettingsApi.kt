@@ -541,6 +541,9 @@ data class CustomDomain(
     val created_at: String = "",
     val verified_at: String? = null,
     val downgrade_grace_expires_at: String? = null,
+    val is_shared: Boolean = false,
+    val shared_from: String? = null,
+    val can_create_aliases: Boolean = true,
 )
 
 @Serializable

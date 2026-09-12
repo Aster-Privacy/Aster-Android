@@ -2902,6 +2902,9 @@
     <string name="alias_grace_upgrade_hint">このエイリアスを使い続けるにはプランをアップグレードしてください</string>
     <string name="domain_grace_ends">%1$sに終了</string>
     <string name="domain_grace_upgrade_hint">このドメインを使い続けるにはプランをアップグレードしてください</string>
+    <string name="domain_shared_label">共有</string>
+    <string name="domain_shared_by">%1$s が共有</string>
+    <string name="domain_shared_hint">このドメインはファミリープランの他のメンバーのものです。設定を変更できるのは所有者だけです。</string>
     <string name="error_family_2fa_required">ファミリープランでは2ファクタ認証が必要です。このアカウントを引き続き使うには、「設定」&gt;「セキュリティ」でオンにしてください。</string>
     <string name="label_icon_group_essentials">基本</string>
     <string name="label_icon_group_mail">メール</string>

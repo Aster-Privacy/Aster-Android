@@ -1638,7 +1638,7 @@ private fun directories_tab(
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
     val domain_options = remember(state.domains, premium_domains_allowed) {
-        alias_domain_options(state.domains, include_premium = premium_domains_allowed)
+        alias_domain_options(state.domains.filter { !it.is_shared }, include_premium = premium_domains_allowed)
     }
     var dir_key by remember { mutableStateOf("") }
     var dir_domain by remember { mutableStateOf(domain_options.first().domain_name) }
@@ -2563,6 +2563,8 @@ private fun domain_card(
     }
     var confirm_delete by remember(domain.id) { mutableStateOf(false) }
     var name_expanded by remember(domain.id) { mutableStateOf(false) }
+    val shared_label = domain.shared_from?.let { stringResource(R.string.domain_shared_by, it) }
+        ?: stringResource(R.string.domain_shared_label)
 
     if (confirm_delete) {
         org.astermail.android.design.components.AsterAlertDialog(
@@ -2611,6 +2613,10 @@ private fun domain_card(
                         text = status_label,
                         tint = if (is_active) colors.success else if (is_blocked) colors.danger else colors.warning,
                     )
+                    if (domain.is_shared) {
+                        v_gap(3.dp)
+                        domain_status_badge(text = shared_label, tint = colors.accent_blue)
+                    }
                     if (grace_ends != null) {
                         Text(
                             text = stringResource(R.string.domain_grace_ends, grace_ends),
@@ -2629,12 +2635,14 @@ private fun domain_card(
                     content_description = if (is_expanded) stringResource(R.string.domain_collapse) else stringResource(R.string.domain_expand),
                     onClick = on_expand,
                 )
-                AsterIconButton(
-                    icon = TablerIcons.Trash,
-                    content_description = stringResource(R.string.domain_delete_domain),
-                    onClick = { confirm_delete = true },
-                    tint = colors.danger,
-                )
+                if (!domain.is_shared) {
+                    AsterIconButton(
+                        icon = TablerIcons.Trash,
+                        content_description = stringResource(R.string.domain_delete_domain),
+                        onClick = { confirm_delete = true },
+                        tint = colors.danger,
+                    )
+                }
             }
 
             if (is_expanded) {
@@ -2642,26 +2650,34 @@ private fun domain_card(
                 AsterDivider()
                 v_gap(AsterSpacing.md)
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(R.string.catch_all),
-                            color = colors.text_primary.copy(alpha = if (catch_all_locked) 0.4f else 1f),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                        )
-                        Text(
-                            text = stringResource(R.string.domain_catch_all_hint),
-                            color = colors.text_tertiary,
-                            fontSize = 12.sp,
+                if (domain.is_shared) {
+                    Text(
+                        text = stringResource(R.string.domain_shared_hint),
+                        color = colors.text_tertiary,
+                        fontSize = 12.sp,
+                    )
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(R.string.catch_all),
+                                color = colors.text_primary.copy(alpha = if (catch_all_locked) 0.4f else 1f),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                            )
+                            Text(
+                                text = stringResource(R.string.domain_catch_all_hint),
+                                color = colors.text_tertiary,
+                                fontSize = 12.sp,
+                            )
+                        }
+                        Spacer(Modifier.width(AsterSpacing.sm))
+                        AsterSwitch(
+                            checked = domain.catch_all_enabled && !catch_all_locked,
+                            onCheckedChange = { if (!catch_all_locked) on_toggle_catch_all() },
+                            enabled = !catch_all_locked,
                         )
                     }
-                    Spacer(Modifier.width(AsterSpacing.sm))
-                    AsterSwitch(
-                        checked = domain.catch_all_enabled && !catch_all_locked,
-                        onCheckedChange = { if (!catch_all_locked) on_toggle_catch_all() },
-                        enabled = !catch_all_locked,
-                    )
                 }
 
                 v_gap(AsterSpacing.md)
@@ -2717,12 +2733,14 @@ private fun domain_card(
                     )
                 }
 
-                v_gap(AsterSpacing.md)
-                AsterSecondaryButton(
-                    label = if (is_verifying) stringResource(R.string.domain_verifying) else stringResource(R.string.verify_dns_records),
-                    onClick = { if (!is_verifying) on_verify() },
-                    enabled = !is_verifying,
-                )
+                if (!domain.is_shared) {
+                    v_gap(AsterSpacing.md)
+                    AsterSecondaryButton(
+                        label = if (is_verifying) stringResource(R.string.domain_verifying) else stringResource(R.string.verify_dns_records),
+                        onClick = { if (!is_verifying) on_verify() },
+                        enabled = !is_verifying,
+                    )
+                }
             }
         }
     }
@@ -2857,7 +2875,7 @@ internal fun alias_domain_options(
             }
             ) +
         domains
-            .filter { it.status == "active" }
+            .filter { it.status == "active" && it.can_create_aliases }
             .map { AliasDomainOption(it.domain_name, it.id) }
 
 private fun resolve_default_alias_domain(

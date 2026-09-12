@@ -2910,6 +2910,9 @@
     <string name="alias_grace_upgrade_hint">Passa a un piano superiore per mantenere attivo questo alias</string>
     <string name="domain_grace_ends">Termina il %1$s</string>
     <string name="domain_grace_upgrade_hint">Passa a un piano superiore per mantenere attivo questo dominio</string>
+    <string name="domain_shared_label">Condiviso</string>
+    <string name="domain_shared_by">Condiviso da %1$s</string>
+    <string name="domain_shared_hint">Questo dominio appartiene a un altro membro del tuo piano Famiglia. Solo il proprietario può modificarne le impostazioni.</string>
     <string name="error_family_2fa_required">Il tuo piano famiglia richiede l’autenticazione a due fattori. Per continuare a usare questo account, attivala in Impostazioni &gt; Sicurezza.</string>
     <string name="label_icon_group_essentials">ESSENZIALI</string>
     <string name="label_icon_group_mail">POSTA</string>
