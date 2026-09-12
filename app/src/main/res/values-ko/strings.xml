@@ -3244,6 +3244,9 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">포함</string>
     <string name="special_offer_compare_not_included">포함되지 않음</string>
+    <string name="special_offers">특별 혜택</string>
+    <string name="special_offers_description">할인된 요금제 혜택을 앱에서 가끔 표시합니다. 끄면 혜택이 표시되지 않으며 혜택 결과에도 포함되지 않습니다.</string>
+    <string name="special_offers_save_failed">특별 혜택 설정을 저장하지 못했습니다. 다시 시도하세요.</string>
     <string name="storage_format_updated">저장 형식이 업데이트되었습니다</string>
     <string name="storage_format_update_failed">저장 형식을 변경할 수 없습니다</string>
     <string name="saved_to_downloads">다운로드에 저장됨</string>

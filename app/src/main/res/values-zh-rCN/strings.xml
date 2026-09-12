@@ -3244,6 +3244,9 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">已包含</string>
     <string name="special_offer_compare_not_included">不包含</string>
+    <string name="special_offers">特别优惠</string>
+    <string name="special_offers_description">在应用中偶尔显示套餐折扣优惠。关闭后，你不会看到优惠，也不会被计入优惠结果。</string>
+    <string name="special_offers_save_failed">特别优惠设置未保存。请重试。</string>
     <string name="storage_format_updated">存储格式已更新</string>
     <string name="storage_format_update_failed">无法更改存储格式</string>
     <string name="saved_to_downloads">已保存到“下载”</string>

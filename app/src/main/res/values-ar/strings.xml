@@ -3342,6 +3342,9 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">مُضمَّن</string>
     <string name="special_offer_compare_not_included">غير مُضمَّن</string>
+    <string name="special_offers">العروض الخاصة</string>
+    <string name="special_offers_description">اعرض من حين لآخر عروضًا مخفّضة على الخطط داخل التطبيق. عند إيقاف هذا الخيار، لا تظهر لك العروض ولا تُحتسب ضمن نتائج العروض.</string>
+    <string name="special_offers_save_failed">لم يُحفظ إعداد العروض الخاصة. حاول مرة أخرى.</string>
     <string name="storage_format_updated">تم تحديث صيغة التخزين</string>
     <string name="storage_format_update_failed">تعذر تغيير صيغة التخزين</string>
     <string name="saved_to_downloads">تم الحفظ في التنزيلات</string>

@@ -3263,6 +3263,9 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Inbegriffen</string>
     <string name="special_offer_compare_not_included">Nicht inbegriffen</string>
+    <string name="special_offers">Sonderangebote</string>
+    <string name="special_offers_description">Gelegentlich vergünstigte Tarifangebote in der App anzeigen. Wenn dies ausgeschaltet ist, siehst du keine Angebote und wirst in den Angebotsergebnissen nicht mitgezählt.</string>
+    <string name="special_offers_save_failed">Deine Einstellung für Sonderangebote wurde nicht gespeichert. Versuche es erneut.</string>
     <string name="storage_format_updated">Speicherformat aktualisiert</string>
     <string name="storage_format_update_failed">Speicherformat konnte nicht geändert werden</string>
     <string name="saved_to_downloads">In Downloads gespeichert</string>

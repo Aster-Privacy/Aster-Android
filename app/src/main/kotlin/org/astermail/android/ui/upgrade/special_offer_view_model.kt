@@ -29,6 +29,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.astermail.android.api.billing.BillingApi
 
@@ -47,11 +49,37 @@ data class SpecialOfferState(
 @HiltViewModel
 class SpecialOfferViewModel @Inject constructor(
     private val billing_api: BillingApi,
+    private val offer_preferences: OfferPreferencesStore,
 ) : ViewModel() {
     private val _state = MutableStateFlow(SpecialOfferState())
     val state: StateFlow<SpecialOfferState> = _state.asStateFlow()
 
     private var has_loaded = false
+    private var auto_show_suppressed = false
+
+    init {
+        viewModelScope.launch {
+            offer_preferences.state.map { it.enabled }.distinctUntilChanged().collect { enabled ->
+                if (!enabled) {
+                    suppress()
+                } else if (auto_show_suppressed) {
+                    refresh()
+                }
+            }
+        }
+    }
+
+    private fun offers_enabled(): Boolean = offer_preferences.state.value.enabled
+
+    private fun suppress() {
+        auto_show_suppressed = true
+        _state.value = _state.value.copy(is_open = false, available = false, auto_show = false)
+    }
+
+    private fun refresh() {
+        has_loaded = false
+        load()
+    }
 
     fun load() {
         if (has_loaded) return
@@ -59,10 +87,11 @@ class SpecialOfferViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val status = billing_api.get_special_offer()
+                val enabled = offers_enabled()
                 _state.value = _state.value.copy(
                     is_loaded = true,
-                    available = status.available,
-                    auto_show = status.auto_show,
+                    available = status.available && enabled,
+                    auto_show = status.auto_show && enabled && !auto_show_suppressed,
                     percent_off = status.percent_off,
                     duration_months = status.duration_months,
                     plan_code = status.plan_code.ifBlank { "nova" },
@@ -77,7 +106,7 @@ class SpecialOfferViewModel @Inject constructor(
     }
 
     fun claim_and_open() {
-        if (_state.value.is_claiming || _state.value.is_open) return
+        if (_state.value.is_claiming || _state.value.is_open || !offers_enabled()) return
         _state.value = _state.value.copy(is_claiming = true)
         viewModelScope.launch {
             val granted = try {
@@ -87,7 +116,7 @@ class SpecialOfferViewModel @Inject constructor(
             } catch (t: Throwable) {
                 false
             }
-            _state.value = _state.value.copy(is_claiming = false, is_open = granted, auto_show = false)
+            _state.value = _state.value.copy(is_claiming = false, is_open = granted && offers_enabled(), auto_show = false)
         }
     }
 

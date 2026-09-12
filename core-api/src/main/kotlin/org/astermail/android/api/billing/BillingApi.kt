@@ -26,6 +26,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
@@ -126,6 +127,11 @@ data class SpecialOfferClaimResponse(
 @Serializable
 data class SpecialOfferAckResponse(
     val ok: Boolean = false,
+)
+
+@Serializable
+data class OfferPreferences(
+    val in_app_offers_enabled: Boolean = true,
 )
 
 @Serializable
@@ -483,6 +489,8 @@ interface BillingApi {
     suspend fun claim_special_offer(): SpecialOfferClaimResponse
     suspend fun accept_special_offer(): SpecialOfferAckResponse
     suspend fun dismiss_special_offer(): SpecialOfferAckResponse
+    suspend fun get_offer_preferences(): OfferPreferences
+    suspend fun set_offer_preferences(request: OfferPreferences): OfferPreferences
     suspend fun create_portal_session(): PortalSessionResponse
     suspend fun get_billing_history(page: Int = 1, per_page: Int = 20): BillingHistoryResponse
     suspend fun cancel_subscription(request: CancelSubscriptionRequest): CancelSubscriptionResponse
@@ -559,6 +567,18 @@ class BillingApiImpl(private val client: ApiClient) : BillingApi {
     override suspend fun accept_special_offer(): SpecialOfferAckResponse = post_special_offer("accept")
 
     override suspend fun dismiss_special_offer(): SpecialOfferAckResponse = post_special_offer("dismiss")
+
+    override suspend fun get_offer_preferences(): OfferPreferences =
+        decode_or_throw(client.http.get("${client.base_url}/api/core/v1/offers/preferences"))
+
+    override suspend fun set_offer_preferences(request: OfferPreferences): OfferPreferences {
+        val response = client.http.put("${client.base_url}/api/core/v1/offers/preferences") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
 
     override suspend fun create_checkout_session(request: CheckoutSessionRequest): CheckoutSessionResponse {
         val response = client.http.post("${client.base_url}$base/checkout-session") {
