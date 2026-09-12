@@ -60,6 +60,8 @@ data class Email(
     val folder_chip: list_folder_chip? = null,
     val is_external: Boolean = false,
     val system_origin: Boolean = false,
+    val send_status: String? = null,
+    val send_error: String? = null,
 )
 
 data class list_folder_chip(
@@ -217,6 +219,8 @@ data class ThreadMessage(
     val pgp_encrypted: Boolean = false,
     val pgp_signature: org.astermail.android.crypto.PgpSignatureStatus =
         org.astermail.android.crypto.PgpSignatureStatus.NONE,
+    val send_status: String? = null,
+    val send_error: String? = null,
 )
 
 val ThreadMessage.is_e2e_encrypted: Boolean
@@ -338,6 +342,8 @@ fun inbox_item_to_email(
         folder_chip = folder_chip,
         is_external = item.raw_item.is_external,
         system_origin = item.raw_item.system_origin,
+        send_status = item.raw_item.send_status,
+        send_error = item.raw_item.send_error,
     )
 }
 
@@ -382,6 +388,8 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         has_recipient_key = msg.raw_item.has_recipient_key,
         pgp_encrypted = msg.pgp_encrypted,
         pgp_signature = msg.pgp_signature,
+        send_status = msg.raw_item.send_status,
+        send_error = msg.raw_item.send_error,
     )
 }
 

@@ -1769,6 +1769,9 @@
     <string name="standard_point_server">接收方邮件服务器可以读取内容</string>
     <string name="standard_point_storage">到达 Aster 后即加密存储</string>
     <string name="phishing_signal_authentication_failed">%1$s 未通过发件人身份验证</string>
+    <string name="send_failed_title">此邮件未送达</string>
+    <string name="send_failed_help">请检查地址，然后重新发送邮件。</string>
+    <string name="send_failed_chip">未送达</string>
     <string name="sender_unverified_title">无法验证发件人</string>
     <string name="sender_unverified_description">用于证明邮件来自 %1$s 的检查未通过。请谨慎对待其中的链接、附件以及任何要求你执行的操作。</string>
     <string name="sender_authentication">发件人检查</string>

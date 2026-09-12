@@ -2374,6 +2374,10 @@ internal fun expanded_message(
             if (msg.body_html != null) count_external_content(msg.body_html) else ExternalContentCounts(0, 0, 0, 0)
         }
 
+        if (msg.send_status == "failed" || msg.send_status == "bounced") {
+            send_failure_banner(reason = msg.send_error)
+        }
+
         val show_unsub_banner = show_unsub && unsub_info.has_unsubscribe
         val show_external_banner = external_counts.total > 0 && !allow_external
 
@@ -6906,6 +6910,56 @@ private fun identity_changed_banner(sender: String, on_acknowledge: () -> Unit) 
                     .clickable { on_acknowledge() }
                     .padding(horizontal = 10.dp, vertical = 6.dp),
             )
+        }
+    }
+}
+
+@Composable
+private fun send_failure_banner(reason: String?) {
+    val colors = AsterMaterial.colors
+    val shape = SquircleShape(16.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.md)
+            .padding(bottom = AsterSpacing.sm)
+            .clip(shape)
+            .background(colors.danger.copy(alpha = 0.10f))
+            .border(1.dp, colors.danger.copy(alpha = 0.35f), shape)
+            .padding(AsterSpacing.md),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Icon(
+            imageVector = TablerIcons.AlertTriangle,
+            contentDescription = null,
+            tint = colors.danger,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(AsterSpacing.sm))
+        Column {
+            Text(
+                text = stringResource(R.string.send_failed_title),
+                color = colors.danger,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = stringResource(R.string.send_failed_help),
+                color = colors.text_secondary,
+                fontSize = 12.sp,
+                lineHeight = 17.sp,
+            )
+            val detail = reason?.trim().orEmpty()
+            if (detail.isNotEmpty()) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = detail,
+                    color = colors.text_secondary,
+                    fontSize = 11.sp,
+                    lineHeight = 16.sp,
+                )
+            }
         }
     }
 }

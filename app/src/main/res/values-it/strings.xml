@@ -1772,6 +1772,9 @@
     <string name="standard_point_server">Il server di posta ricevente può leggere il contenuto</string>
     <string name="standard_point_storage">Viene archiviato cifrato appena arriva ad Aster</string>
     <string name="phishing_signal_authentication_failed">%1$s non ha superato l\'autenticazione del mittente</string>
+    <string name="send_failed_title">Questo messaggio non è stato consegnato</string>
+    <string name="send_failed_help">Controlla l’indirizzo, poi invia di nuovo il messaggio.</string>
+    <string name="send_failed_chip">Non consegnato</string>
     <string name="sender_unverified_title">Impossibile verificare il mittente</string>
     <string name="sender_unverified_description">I controlli che dimostrano la provenienza da %1$s non sono stati superati. Fai attenzione a link, allegati e a qualsiasi richiesta.</string>
     <string name="sender_authentication">Controlli sul mittente</string>

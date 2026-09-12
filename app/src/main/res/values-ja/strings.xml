@@ -1769,6 +1769,9 @@
     <string name="standard_point_server">受信側のメールサーバーは内容を読めます</string>
     <string name="standard_point_storage">Asterに届くと暗号化して保存されます</string>
     <string name="phishing_signal_authentication_failed">%1$sは送信者認証に合格しませんでした</string>
+    <string name="send_failed_title">このメッセージは配送されませんでした</string>
+    <string name="send_failed_help">アドレスを確認してから、メッセージを再送信してください。</string>
+    <string name="send_failed_chip">未配送</string>
     <string name="sender_unverified_title">送信者を検証できませんでした</string>
     <string name="sender_unverified_description">%1$sからの送信であることを証明する検査に合格しませんでした。リンクや添付ファイル、要求される操作に注意してください。</string>
     <string name="sender_authentication">送信者の検査</string>

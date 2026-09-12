@@ -1778,6 +1778,9 @@
     <string name="standard_point_server">Odbierający serwer poczty może odczytać treść</string>
     <string name="standard_point_storage">Po dotarciu do Aster jest przechowywane w postaci zaszyfrowanej</string>
     <string name="phishing_signal_authentication_failed">%1$s nie przeszedł uwierzytelnienia nadawcy</string>
+    <string name="send_failed_title">Ta wiadomość nie została dostarczona</string>
+    <string name="send_failed_help">Sprawdź adres, a następnie wyślij wiadomość ponownie.</string>
+    <string name="send_failed_chip">Niedostarczona</string>
     <string name="sender_unverified_title">Nie udało się zweryfikować nadawcy</string>
     <string name="sender_unverified_description">Kontrole potwierdzające, że wiadomość pochodzi od %1$s, nie powiodły się. Uważaj na linki, załączniki i wszelkie prośby.</string>
     <string name="sender_authentication">Kontrole nadawcy</string>

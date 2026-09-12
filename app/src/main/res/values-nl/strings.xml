@@ -1772,6 +1772,9 @@
     <string name="standard_point_server">De ontvangende mailserver kan de inhoud lezen</string>
     <string name="standard_point_storage">Wordt versleuteld opgeslagen zodra het bij Aster aankomt</string>
     <string name="phishing_signal_authentication_failed">%1$s is niet door de afzendercontrole gekomen</string>
+    <string name="send_failed_title">Dit bericht is niet bezorgd</string>
+    <string name="send_failed_help">Controleer het adres en verstuur het bericht opnieuw.</string>
+    <string name="send_failed_chip">Niet bezorgd</string>
     <string name="sender_unverified_title">Afzender kon niet worden geverifieerd</string>
     <string name="sender_unverified_description">De controles die aantonen dat een bericht van %1$s komt, zijn niet geslaagd. Wees voorzichtig met links, bijlagen en alles wat er wordt gevraagd.</string>
     <string name="sender_authentication">Afzendercontroles</string>

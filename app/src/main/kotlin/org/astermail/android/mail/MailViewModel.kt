@@ -3989,6 +3989,7 @@ class MailViewModel @Inject constructor(
             ephemeral_key = raw.ephemeral_key,
             ephemeral_pq_key = raw.ephemeral_pq_key,
             send_status = raw.send_status,
+            send_error = raw.send_error,
             message_ts = raw.message_ts,
             created_at = raw.created_at,
             metadata = raw.metadata,
