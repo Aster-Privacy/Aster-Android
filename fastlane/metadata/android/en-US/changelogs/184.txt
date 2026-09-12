@@ -1,0 +1,3 @@
+- If you get a win-back discount, the price you pay shows at checkout
+- The discount also applies to the yearly and crypto payment terms
+- Your plan card shows the original price next to the offer price
