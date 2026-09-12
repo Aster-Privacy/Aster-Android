@@ -3279,4 +3279,12 @@
     <string name="sender_verified_badge">認証済みの送信者</string>
     <string name="sender_verified_title">認証済みの送信者</string>
     <string name="sender_verified_message">このメールの送信者は %1$s を所有していることを確認済みです。</string>
+    <string name="alias_sent_mail_label">送信済みメール</string>
+    <string name="alias_sent_mail_desc">このアドレスから送信したメールを確認できます。</string>
+    <string name="alias_view_sent">送信済みメールを表示</string>
+    <string name="alias_direction_label">メールの方向</string>
+    <string name="alias_direction_all">すべて</string>
+    <string name="alias_direction_received">受信</string>
+    <string name="alias_direction_sent">送信済み</string>
+    <string name="alias_sent_indexing">以前の送信済みメールを現在インデックス中です。</string>
 </resources>

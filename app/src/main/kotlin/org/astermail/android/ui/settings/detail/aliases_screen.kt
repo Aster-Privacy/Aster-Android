@@ -141,6 +141,7 @@ fun AliasesScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit,
     open_create: Boolean = false,
+    on_open_alias_mail: (id: String, address: String, routing_token: String) -> Unit = { _, _, _ -> },
 ) {
     val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
@@ -291,6 +292,7 @@ fun AliasesScreen(
                     state = state,
                     context = context,
                     scope = scope,
+                    on_view_sent = { alias -> on_open_alias_mail(alias.id, alias.address, alias.alias_address_hash) },
                     show_import = show_alias_import,
                     show_export = show_alias_export,
                     on_dismiss_import = { show_alias_import = false },
@@ -424,6 +426,7 @@ private fun aliases_tab(
     context: Context,
     scope: kotlinx.coroutines.CoroutineScope,
     on_show_create: () -> Unit,
+    on_view_sent: (org.astermail.android.api.settings.AliasInfo) -> Unit = {},
     show_import: Boolean = false,
     show_export: Boolean = false,
     on_dismiss_import: () -> Unit = {},
@@ -701,6 +704,11 @@ private fun aliases_tab(
                                 vm = vm,
                                 rule_delivery = alias_rule_delivery_note(alias, state.mail_rules, state.labels),
                                 rule_label = alias_rule_label_note(alias, state.mail_rules, state.tags),
+                                on_view_sent = if (alias.alias_address_hash.isNotBlank()) {
+                                    { on_view_sent(alias) }
+                                } else {
+                                    null
+                                },
                             )
                         },
                     )

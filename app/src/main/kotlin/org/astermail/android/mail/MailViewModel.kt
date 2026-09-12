@@ -129,6 +129,13 @@ class MailViewModel @Inject constructor(
         identity_pins.acknowledge_sender(sender_email)
     }
 
+    val sender_alias_backfill_status: StateFlow<MailRepository.SenderAliasBackfillStatus> =
+        repository.sender_alias_backfill_status
+
+    fun start_sender_alias_backfill(hash_by_address: Map<String, String>) {
+        viewModelScope.launch { repository.backfill_sender_alias(hash_by_address) }
+    }
+
     private val _inbox_state = MutableStateFlow(InboxUiState())
     val inbox_state: StateFlow<InboxUiState> = _inbox_state.asStateFlow()
 
@@ -4086,8 +4093,16 @@ class MailViewModel @Inject constructor(
                 repository.fetch_inbox(limit = limit, item_type = null, tag_token = tag_token, offset = cursor?.toIntOrNull(), order = list_order)
             }
             folder.startsWith("routing:") -> {
-                val routing_token = folder.removePrefix("routing:")
-                repository.fetch_inbox(limit = limit, item_type = null, routing_token = routing_token, offset = cursor?.toIntOrNull(), order = list_order)
+                val routing_scope = parse_alias_routing_folder(folder)
+                    ?: alias_routing_scope(folder.removePrefix("routing:"), alias_direction_all)
+                repository.fetch_inbox(
+                    limit = limit,
+                    item_type = null,
+                    routing_token = routing_scope.routing_token,
+                    offset = cursor?.toIntOrNull(),
+                    order = list_order,
+                    direction = alias_direction_query(routing_scope.direction),
+                )
             }
             else -> repository.fetch_inbox(limit = limit, item_type = null, label_token = folder, offset = cursor?.toIntOrNull(), order = list_order)
         }

@@ -3279,4 +3279,12 @@
     <string name="sender_verified_badge">인증된 발신자</string>
     <string name="sender_verified_title">인증된 발신자</string>
     <string name="sender_verified_message">이 이메일의 발신자가 %1$s을(를) 소유하고 있음을 확인했습니다.</string>
+    <string name="alias_sent_mail_label">보낸 메일</string>
+    <string name="alias_sent_mail_desc">이 주소에서 보낸 메일을 확인합니다.</string>
+    <string name="alias_view_sent">보낸 메일 보기</string>
+    <string name="alias_direction_label">이메일 방향</string>
+    <string name="alias_direction_all">전체</string>
+    <string name="alias_direction_received">받은 이메일</string>
+    <string name="alias_direction_sent">보낸 이메일</string>
+    <string name="alias_sent_indexing">이전에 보낸 이메일을 아직 색인하고 있습니다.</string>
 </resources>

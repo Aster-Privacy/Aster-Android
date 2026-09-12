@@ -418,3 +418,21 @@ data class SyncMailItemsResponse(
     val sync_token: String? = null,
     val deleted_ids: List<String> = emptyList(),
 )
+
+@Serializable
+data class SenderAliasBackfillItem(
+    val item_id: String,
+    val sender_alias_hash: String,
+)
+
+@Serializable
+data class SenderAliasBackfillRequest(
+    val items: List<SenderAliasBackfillItem>,
+)
+
+@Serializable
+data class SenderAliasBackfillResponse(
+    val success: Boolean = false,
+    val updated: Int = 0,
+    val skipped: Int = 0,
+)

@@ -3297,4 +3297,12 @@
     <string name="sender_verified_badge">Geverifieerde afzender</string>
     <string name="sender_verified_title">Geverifieerde afzender</string>
     <string name="sender_verified_message">De afzender van deze e-mail heeft bevestigd eigenaar te zijn van %1$s.</string>
+    <string name="alias_sent_mail_label">Verzonden e-mail</string>
+    <string name="alias_sent_mail_desc">Bekijk de berichten die je vanaf dit adres hebt verzonden.</string>
+    <string name="alias_view_sent">Verzonden e-mail tonen</string>
+    <string name="alias_direction_label">Richting van e-mail</string>
+    <string name="alias_direction_all">Alle</string>
+    <string name="alias_direction_received">Ontvangen</string>
+    <string name="alias_direction_sent">Verzonden</string>
+    <string name="alias_sent_indexing">Oudere verzonden e-mail wordt nog geïndexeerd.</string>
 </resources>

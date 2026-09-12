@@ -3297,4 +3297,12 @@
     <string name="sender_verified_badge">Doğrulanmış gönderen</string>
     <string name="sender_verified_title">Doğrulanmış gönderen</string>
     <string name="sender_verified_message">Bu e-postanın göndereni %1$s alan adının sahibi olduğunu doğruladı.</string>
+    <string name="alias_sent_mail_label">Gönderilen postalar</string>
+    <string name="alias_sent_mail_desc">Bu adresten gönderdiğin iletileri gör.</string>
+    <string name="alias_view_sent">Gönderilen postaları görüntüle</string>
+    <string name="alias_direction_label">Posta yönü</string>
+    <string name="alias_direction_all">Tümü</string>
+    <string name="alias_direction_received">Gelen</string>
+    <string name="alias_direction_sent">Gönderilen</string>
+    <string name="alias_sent_indexing">Daha eski gönderilen postalar hâlâ dizinleniyor.</string>
 </resources>

@@ -114,6 +114,9 @@ private const val SENT_FOLDER_TOKEN_ATTEMPTS = 3
 private const val SENT_FOLDER_TOKEN_RETRY_MS = 350L
 private const val SENT_FOLDER_TOKEN_MATERIAL = "folder:sent"
 private const val SENT_FOLDER_RESOLVE_TIMEOUT_MS = 20_000L
+private const val SENDER_ALIAS_BACKFILL_PAGE_SIZE = 100
+private const val SENDER_ALIAS_BACKFILL_CHUNK = 200
+private const val SENDER_ALIAS_BACKFILL_MAX_PAGES = 500
 private const val UNDO_SAFETY_DRAFT_TIMEOUT_MS = 12_000L
 private const val METADATA_PATCH_ATTEMPTS = 3
 private const val METADATA_PATCH_RETRY_DELAY_MS = 400L
@@ -553,6 +556,64 @@ class MailRepository @Inject constructor(
     }
 
     private fun sent_folder_prefs_key(): String = session_key_store.get_user_id() ?: "anonymous"
+
+    enum class SenderAliasBackfillStatus { idle, running, done }
+
+    private val _sender_alias_backfill_status = kotlinx.coroutines.flow.MutableStateFlow(SenderAliasBackfillStatus.idle)
+    val sender_alias_backfill_status: kotlinx.coroutines.flow.StateFlow<SenderAliasBackfillStatus> =
+        _sender_alias_backfill_status
+
+    private val sender_alias_backfill_mutex = kotlinx.coroutines.sync.Mutex()
+
+    private val sender_alias_backfill_prefs by lazy {
+        context.getSharedPreferences("aster_sender_alias_backfill", android.content.Context.MODE_PRIVATE)
+    }
+
+    suspend fun backfill_sender_alias(hash_by_address: Map<String, String>) {
+        if (hash_by_address.isEmpty()) return
+        val user_key = session_key_store.get_user_id() ?: return
+        if (sender_alias_backfill_prefs.getBoolean(user_key, false)) {
+            _sender_alias_backfill_status.value = SenderAliasBackfillStatus.done
+            return
+        }
+        if (!sender_alias_backfill_mutex.tryLock()) return
+        try {
+            _sender_alias_backfill_status.value = SenderAliasBackfillStatus.running
+            var cursor: String? = null
+            var pages = 0
+            do {
+                val response = mail_api.list_messages(
+                    limit = SENDER_ALIAS_BACKFILL_PAGE_SIZE,
+                    cursor = cursor,
+                    item_type = "sent",
+                    group_by_thread = false,
+                    skip_total = true,
+                )
+                val batch = decrypt_items_batch(response.items)
+                val entries = batch.visible.mapNotNull { item ->
+                    hash_by_address[item.sender_email.trim().lowercase()]?.let { hash ->
+                        org.astermail.android.api.mail.SenderAliasBackfillItem(item.id, hash)
+                    }
+                }
+                entries.chunked(SENDER_ALIAS_BACKFILL_CHUNK).forEach { chunk ->
+                    mail_api.backfill_sender_alias(
+                        org.astermail.android.api.mail.SenderAliasBackfillRequest(chunk),
+                    )
+                }
+                cursor = response.next_cursor
+                pages += 1
+            } while (response.has_more && cursor != null && pages < SENDER_ALIAS_BACKFILL_MAX_PAGES)
+            sender_alias_backfill_prefs.edit().putBoolean(user_key, true).apply()
+            _sender_alias_backfill_status.value = SenderAliasBackfillStatus.done
+        } catch (cancelled: CancellationException) {
+            _sender_alias_backfill_status.value = SenderAliasBackfillStatus.idle
+            throw cancelled
+        } catch (error: Throwable) {
+            _sender_alias_backfill_status.value = SenderAliasBackfillStatus.idle
+        } finally {
+            sender_alias_backfill_mutex.unlock()
+        }
+    }
 
     private suspend fun resolve_sent_folder_token(): String? {
         cached_sent_folder_token?.takeIf { it.isNotBlank() }?.let { return it }
@@ -1218,6 +1279,7 @@ class MailRepository @Inject constructor(
         order: String? = null,
         include_spam: Boolean? = null,
         include_trash: Boolean? = null,
+        direction: String? = null,
     ): Result<InboxPage> = runCatching {
         val is_received = item_type == "received"
         val is_plain_inbox = is_received && label_token == null && tag_token == null && routing_token == null
@@ -1236,6 +1298,7 @@ class MailRepository @Inject constructor(
             include_spam = include_spam,
             include_trash = include_trash,
             routing_token = routing_token,
+            direction = direction,
             order = order,
             group_by_thread = conversation_grouping,
             skip_total = if (cursor != null || (offset ?: 0) > 0) true else null,

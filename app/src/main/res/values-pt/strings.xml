@@ -3297,4 +3297,12 @@
     <string name="sender_verified_badge">Remetente verificado</string>
     <string name="sender_verified_title">Remetente verificado</string>
     <string name="sender_verified_message">O remetente deste e-mail verificou que é proprietário de %1$s.</string>
+    <string name="alias_sent_mail_label">Mensagens enviadas</string>
+    <string name="alias_sent_mail_desc">Veja as mensagens que você enviou deste endereço.</string>
+    <string name="alias_view_sent">Ver mensagens enviadas</string>
+    <string name="alias_direction_label">Direção do correio</string>
+    <string name="alias_direction_all">Todos</string>
+    <string name="alias_direction_received">Recebidos</string>
+    <string name="alias_direction_sent">Enviados</string>
+    <string name="alias_sent_indexing">As mensagens enviadas mais antigas ainda estão sendo indexadas.</string>
 </resources>

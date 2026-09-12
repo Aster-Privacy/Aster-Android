@@ -62,7 +62,10 @@ interface MailApi {
         order: String? = null,
         skip_total: Boolean? = null,
         include_envelope: Boolean? = null,
+        direction: String? = null,
     ): MailItemsListResponse
+
+    suspend fun backfill_sender_alias(request: SenderAliasBackfillRequest): SenderAliasBackfillResponse
 
     suspend fun get_message(item_id: String): MailItem
 
@@ -201,6 +204,7 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
         order: String?,
         skip_total: Boolean?,
         include_envelope: Boolean?,
+        direction: String?,
     ): MailItemsListResponse {
         val response = client.http.get("${client.base_url}$base/messages") {
             timeout {
@@ -225,6 +229,18 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             order?.let { parameter("order", it) }
             skip_total?.let { parameter("skip_total", it) }
             include_envelope?.let { parameter("include_envelope", it) }
+            direction?.let { parameter("direction", it) }
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun backfill_sender_alias(
+        request: SenderAliasBackfillRequest,
+    ): SenderAliasBackfillResponse {
+        val response = client.http.post("${client.base_url}$base/messages/backfill-sender-alias") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
         }
         return decode_or_throw(response)
     }

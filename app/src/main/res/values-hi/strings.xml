@@ -3187,4 +3187,12 @@
     <string name="sender_verified_badge">सत्यापित भेजने वाला</string>
     <string name="sender_verified_title">सत्यापित भेजने वाला</string>
     <string name="sender_verified_message">इस ईमेल के भेजने वाले ने पुष्टि की है कि %1$s उनका है।</string>
+    <string name="alias_sent_mail_label">भेजे गए मेल</string>
+    <string name="alias_sent_mail_desc">इस पते से भेजे गए संदेश देखें।</string>
+    <string name="alias_view_sent">भेजे गए मेल देखें</string>
+    <string name="alias_direction_label">मेल दिशा</string>
+    <string name="alias_direction_all">सभी</string>
+    <string name="alias_direction_received">प्राप्त</string>
+    <string name="alias_direction_sent">भेजे गए</string>
+    <string name="alias_sent_indexing">पुराने भेजे गए मेल को अब भी अनुक्रमित किया जा रहा है।</string>
 </resources>

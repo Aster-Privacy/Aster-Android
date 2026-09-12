@@ -1268,6 +1268,19 @@ private fun AsterNavHost() {
                 on_back = { back(); Unit },
                 on_open = open_detail,
                 open_create = entry.arguments?.getBoolean("create") ?: false,
+                on_open_alias_mail = { id, address, routing_token ->
+                    org.astermail.android.mail.alias_inbox_requests.submit(
+                        org.astermail.android.mail.alias_inbox_request(
+                            id = id,
+                            address = address,
+                            routing_token = routing_token,
+                            direction = org.astermail.android.mail.alias_direction_sent,
+                        ),
+                    )
+                    if (!nav_controller.popBackStack(routes.inbox, false)) {
+                        nav_controller.navigate(routes.inbox)
+                    }
+                },
             )
         }
         composable(routes.settings_detail("domains")) {
@@ -1548,6 +1561,19 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     var all_mail_include_trash by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var filter_value by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
     var filter_name by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
+    var alias_direction by androidx.compose.runtime.saveable.rememberSaveable {
+        mutableStateOf(org.astermail.android.mail.alias_direction_all)
+    }
+    val pending_alias_inbox by org.astermail.android.mail.alias_inbox_requests.pending.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(pending_alias_inbox) {
+        val request = pending_alias_inbox ?: return@LaunchedEffect
+        filter_kind = org.astermail.android.mail.filter_kind_alias
+        filter_value = request.routing_token
+        filter_name = request.address
+        alias_direction = request.direction
+        selected_folder = request.id
+        org.astermail.android.mail.alias_inbox_requests.consume(request)
+    }
     val colors = AsterMaterial.colors
 
     val mail_vm: org.astermail.android.mail.MailViewModel = hiltViewModel()
@@ -2044,6 +2070,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         filter_kind = "alias"
                         filter_value = routing_token
                         filter_name = name
+                        alias_direction = org.astermail.android.mail.alias_direction_all
                         selected_folder = id
                     } else {
                         nav_controller.navigate(routes.search_for("to:$name"))
@@ -2254,6 +2281,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         val effective_folder = org.astermail.android.mail.mail_folder_for_filter(
                             effective_filter_kind,
                             filter_value,
+                            alias_direction,
                         )
                         InboxScreen(
                             on_open_drawer = { scope.launch { drawer_state.open() } },
@@ -2271,6 +2299,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_open_import = { nav_controller.navigate(routes.settings_detail("import")) },
                             current_folder = effective_folder,
                             display_title = filter_name,
+                            alias_direction = if (effective_filter_kind == org.astermail.android.mail.filter_kind_alias) alias_direction else null,
+                            on_alias_direction_change = { alias_direction = it },
                             on_folder_change = { id ->
                                 filter_kind = null
                                 selected_folder = id

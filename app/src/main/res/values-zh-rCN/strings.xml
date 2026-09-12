@@ -3279,4 +3279,12 @@
     <string name="sender_verified_badge">已验证的发件人</string>
     <string name="sender_verified_title">已验证的发件人</string>
     <string name="sender_verified_message">此邮件的发件人已验证其拥有 %1$s。</string>
+    <string name="alias_sent_mail_label">已发送邮件</string>
+    <string name="alias_sent_mail_desc">查看你从此地址发送的邮件。</string>
+    <string name="alias_view_sent">查看已发送邮件</string>
+    <string name="alias_direction_label">邮件方向</string>
+    <string name="alias_direction_all">全部</string>
+    <string name="alias_direction_received">收到</string>
+    <string name="alias_direction_sent">已发送</string>
+    <string name="alias_sent_indexing">较早的已发送邮件仍在索引中。</string>
 </resources>

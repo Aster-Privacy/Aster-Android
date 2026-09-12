@@ -3298,4 +3298,12 @@
     <string name="sender_verified_badge">Verifizierter Absender</string>
     <string name="sender_verified_title">Verifizierter Absender</string>
     <string name="sender_verified_message">Der Absender dieser E-Mail hat bestätigt, dass ihm %1$s gehört.</string>
+    <string name="alias_sent_mail_label">Gesendete Nachrichten</string>
+    <string name="alias_sent_mail_desc">Sieh dir die Nachrichten an, die du von dieser Adresse gesendet hast.</string>
+    <string name="alias_view_sent">Gesendete Nachrichten anzeigen</string>
+    <string name="alias_direction_label">Nachrichtenrichtung</string>
+    <string name="alias_direction_all">Alle</string>
+    <string name="alias_direction_received">Empfangen</string>
+    <string name="alias_direction_sent">Gesendet</string>
+    <string name="alias_sent_indexing">Ältere gesendete Nachrichten werden noch indexiert.</string>
 </resources>
