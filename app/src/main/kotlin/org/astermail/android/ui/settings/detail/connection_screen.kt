@@ -22,11 +22,8 @@
 package org.astermail.android.ui.settings.detail
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -90,11 +87,9 @@ fun ConnectionScreen(on_back: () -> Unit) {
             preferences_load_placeholder()
         } else {
             section_label(stringResource(R.string.connection_method_header))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(IntrinsicSize.Max),
-                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(AsterSpacing.md),
             ) {
                 options.forEach { option ->
                     illustrated_option_card(
@@ -103,8 +98,7 @@ fun ConnectionScreen(on_back: () -> Unit) {
                         subtitle = option.description,
                         selected = state.connection_method == option.id,
                         modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
+                            .fillMaxWidth()
                             .testTag("connection_option_${option.id}"),
                         on_click = {
                             if (!state.connection_saving && state.connection_method != option.id) {
