@@ -60,6 +60,11 @@ class OfferPreferencesStore @Inject constructor(
         }
     }
 
+    fun reset() {
+        write_generation++
+        _state.value = OfferPreferencesState()
+    }
+
     suspend fun set_enabled(enabled: Boolean): Boolean {
         val previous = _state.value.enabled
         val generation = ++write_generation

@@ -26,6 +26,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,10 +58,12 @@ class SpecialOfferViewModel @Inject constructor(
 
     private var has_loaded = false
     private var auto_show_suppressed = false
+    private var preference_fallback = false
 
     init {
         viewModelScope.launch {
             offer_preferences.state.map { it.enabled }.distinctUntilChanged().collect { enabled ->
+                preference_fallback = false
                 if (!enabled) {
                     suppress()
                 } else if (auto_show_suppressed) {
@@ -69,7 +73,7 @@ class SpecialOfferViewModel @Inject constructor(
         }
     }
 
-    private fun offers_enabled(): Boolean = offer_preferences.state.value.enabled
+    private fun offers_enabled(): Boolean = preference_fallback || offer_preferences.state.value.enabled
 
     private fun suppress() {
         auto_show_suppressed = true
@@ -86,7 +90,12 @@ class SpecialOfferViewModel @Inject constructor(
         has_loaded = true
         viewModelScope.launch {
             try {
-                val status = billing_api.get_special_offer()
+                val (status, preference_loaded) = coroutineScope {
+                    val status_request = async { billing_api.get_special_offer() }
+                    val preference_request = async { offer_preferences.load() }
+                    status_request.await() to preference_request.await()
+                }
+                preference_fallback = !preference_loaded
                 val enabled = offers_enabled()
                 _state.value = _state.value.copy(
                     is_loaded = true,

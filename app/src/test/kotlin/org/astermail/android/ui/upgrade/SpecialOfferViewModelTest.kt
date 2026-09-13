@@ -48,6 +48,7 @@ class SpecialOfferViewModelTest {
     private lateinit var billing_api: BillingApi
     private lateinit var store: OfferPreferencesStore
     private lateinit var vm: SpecialOfferViewModel
+    private var server_offers_enabled = true
 
     private val auto_show_offer = SpecialOfferStatusResponse(
         available = true,
@@ -62,7 +63,15 @@ class SpecialOfferViewModelTest {
         billing_api = mockk(relaxed = true)
         coEvery { billing_api.get_special_offer() } returns auto_show_offer
         coEvery { billing_api.claim_special_offer() } returns SpecialOfferClaimResponse(granted = true)
-        coEvery { billing_api.set_offer_preferences(any()) } coAnswers { firstArg<OfferPreferences>() }
+        server_offers_enabled = true
+        coEvery { billing_api.get_offer_preferences() } coAnswers {
+            OfferPreferences(in_app_offers_enabled = server_offers_enabled)
+        }
+        coEvery { billing_api.set_offer_preferences(any()) } coAnswers {
+            val preferences = firstArg<OfferPreferences>()
+            server_offers_enabled = preferences.in_app_offers_enabled
+            preferences
+        }
         store = OfferPreferencesStore(billing_api)
         vm = SpecialOfferViewModel(billing_api, store)
     }
@@ -139,5 +148,78 @@ class SpecialOfferViewModelTest {
         advanceUntilIdle()
 
         assertTrue(vm.state.value.available)
+    }
+
+    @Test
+    fun `load reads the preference of the signed in account`() = runTest {
+        server_offers_enabled = false
+
+        vm.load()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { billing_api.get_offer_preferences() }
+        assertFalse(vm.state.value.available)
+        assertFalse(vm.state.value.auto_show)
+    }
+
+    @Test
+    fun `switching to an account with offers on shows its offer`() = runTest {
+        store.set_enabled(false)
+        advanceUntilIdle()
+        vm.load()
+        advanceUntilIdle()
+        assertFalse(vm.state.value.available)
+
+        server_offers_enabled = true
+        store.reset()
+        advanceUntilIdle()
+
+        assertTrue(store.state.value.enabled)
+        assertTrue(vm.state.value.available)
+        vm.claim_and_open()
+        advanceUntilIdle()
+        assertTrue(vm.state.value.is_open)
+    }
+
+    @Test
+    fun `stale opt out does not hide the offer for a new account`() = runTest {
+        store.set_enabled(false)
+        advanceUntilIdle()
+        server_offers_enabled = true
+        val fresh_vm = SpecialOfferViewModel(billing_api, store)
+
+        fresh_vm.load()
+        advanceUntilIdle()
+
+        assertTrue(store.state.value.enabled)
+        assertTrue(fresh_vm.state.value.available)
+    }
+
+    @Test
+    fun `failed preference load trusts the server offer`() = runTest {
+        store.set_enabled(false)
+        advanceUntilIdle()
+        coEvery { billing_api.get_offer_preferences() } throws java.io.IOException("offline")
+        val fresh_vm = SpecialOfferViewModel(billing_api, store)
+
+        fresh_vm.load()
+        advanceUntilIdle()
+
+        assertTrue(fresh_vm.state.value.available)
+        fresh_vm.claim_and_open()
+        advanceUntilIdle()
+        assertTrue(fresh_vm.state.value.is_open)
+    }
+
+    @Test
+    fun `failed preference load keeps a server opt out`() = runTest {
+        coEvery { billing_api.get_offer_preferences() } throws java.io.IOException("offline")
+        coEvery { billing_api.get_special_offer() } returns auto_show_offer.copy(available = false, auto_show = false)
+
+        vm.load()
+        advanceUntilIdle()
+
+        assertFalse(vm.state.value.available)
+        assertFalse(vm.state.value.auto_show)
     }
 }

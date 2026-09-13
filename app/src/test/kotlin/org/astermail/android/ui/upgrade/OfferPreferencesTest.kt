@@ -146,4 +146,31 @@ class OfferPreferencesTest {
         assertTrue(vm.state.value.available)
         assertTrue(vm.state.value.enabled)
     }
+
+    @Test
+    fun `reset restores defaults for the next account`() = runTest {
+        coEvery { billing_api.get_offer_preferences() } returns OfferPreferences(in_app_offers_enabled = false)
+        store.load()
+        assertFalse(store.state.value.enabled)
+
+        store.reset()
+
+        assertTrue(store.state.value.enabled)
+        assertFalse(store.state.value.loaded)
+    }
+
+    @Test
+    fun `load from the previous account does not land after reset`() = runTest {
+        val load_response = CompletableDeferred<OfferPreferences>()
+        coEvery { billing_api.get_offer_preferences() } coAnswers { load_response.await() }
+
+        val load = async { store.load() }
+        runCurrent()
+        store.reset()
+        load_response.complete(OfferPreferences(in_app_offers_enabled = false))
+        load.await()
+
+        assertTrue(store.state.value.enabled)
+        assertFalse(store.state.value.loaded)
+    }
 }
