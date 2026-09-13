@@ -100,6 +100,7 @@ internal const val SEND_RETRY_MAX_ATTEMPTS = 8
 private const val STATUS_PENDING = "pending"
 private const val STATUS_FAILED = "failed"
 private const val SENDING_CLAIM_STALE_MS = 5 * 60 * 1000L
+private const val MAX_ATTACHMENT_META_BATCH_SIZE = 50
 
 private const val RATCHET_UNDECRYPTABLE_TTL_MS = 10L * 60L * 1000L
 private const val RATCHET_PREFETCH_CONCURRENCY = 8
@@ -2918,10 +2919,16 @@ class MailRepository @Inject constructor(
         seq_num,
     )
 
+    private suspend fun batch_attachment_meta_chunked(
+        mail_item_ids: List<String>,
+    ) = mail_item_ids.distinct().chunked(MAX_ATTACHMENT_META_BATCH_SIZE).fold(
+        emptyMap<String, List<org.astermail.android.api.mail.AttachmentMetaItem>>(),
+    ) { acc, chunk -> acc + mail_api.batch_attachment_meta(chunk).items }
+
     suspend fun probe_messages_with_attachments(mail_item_ids: List<String>): Result<List<String>> {
         return try {
-            val response = mail_api.batch_attachment_meta(mail_item_ids)
-            Result.success(response.items.filter { it.value.isNotEmpty() }.keys.toList())
+            val items = batch_attachment_meta_chunked(mail_item_ids)
+            Result.success(items.filter { it.value.isNotEmpty() }.keys.toList())
         } catch (t: kotlin.coroutines.cancellation.CancellationException) {
             throw t
         } catch (t: Throwable) {
@@ -2937,13 +2944,13 @@ class MailRepository @Inject constructor(
         mail_item_ids: List<String>,
     ): Result<Map<String, List<org.astermail.android.ui.mail.MessageAttachment>>> {
         return try {
-            val response = mail_api.batch_attachment_meta(mail_item_ids)
-            var metas = decrypt_batch_attachment_metas(response.items)
+            val batch_items = batch_attachment_meta_chunked(mail_item_ids)
+            var metas = decrypt_batch_attachment_metas(batch_items)
             val stale_parents = metas.filterValues { list ->
                 list.any { (_, meta) -> attachment_meta_needs_heal(meta) }
             }.keys
             if (stale_parents.isNotEmpty() && heal_attachment_keys_for_messages(stale_parents)) {
-                metas = decrypt_batch_attachment_metas(response.items)
+                metas = decrypt_batch_attachment_metas(batch_items)
             }
             metas.mapValues { (_, list) ->
                 list.map { (att, meta) ->
