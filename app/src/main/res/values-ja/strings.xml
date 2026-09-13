@@ -2967,6 +2967,10 @@
     <string name="price_per_interval">%1$s / %2$s</string>
     <string name="purge_all_aliases_message">削除済みのエイリアスをすべて完全に削除しますか？元に戻せません。</string>
     <string name="recovery_backup_not_saved">これらのコードはまだアカウントに保存されていないため、復旧に使用できません。接続を確認して再実行してください。</string>
+    <string name="are_you_sure">よろしいですか？</string>
+    <string name="go_back">戻る</string>
+    <string name="continue_anyway">続行する</string>
+    <string name="recovery_codes_skip_warning">リカバリーコードがないと、パスワードを忘れた場合に誰もこのアカウントを取り戻すことはできず、暗号化されたデータも永久に失われます。保存せずに続行しますか?</string>
     <string name="revoke_session_confirm">この端末はすぐにサインアウトされ、再度サインインが必要になります。</string>
     <string name="scheduled_action_failed">予約送信メールを更新できませんでした</string>
     <string name="scheduled_cancelled">予約送信を取り消しました</string>
@@ -3312,6 +3316,10 @@
     <string name="import_mail_action">メールを取り込む</string>
     <string name="import_mail_skip">空の受信トレイで始める</string>
     <string name="import_mail_privacy_note">後から設定で取り込むこともできます。</string>
+    <string name="import_provider_gmail_desc">Google TakeoutからのMBOX</string>
+    <string name="import_provider_outlook_desc">PST、MBOX、またはEMLファイル</string>
+    <string name="import_provider_yahoo_desc">MBOXまたはEMLエクスポート</string>
+    <string name="import_provider_mbox_desc">MBOX、EML、またはPSTファイルをアップロード</string>
     <string name="other_devices">その他のデバイス</string>
     <string name="other_devices_with_count">その他のデバイス (%d)</string>
     <string name="no_other_devices">他にサインインしているデバイスはありません</string>

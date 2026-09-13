@@ -2967,6 +2967,10 @@
     <string name="price_per_interval">%1$s / %2$s</string>
     <string name="purge_all_aliases_message">永久删除所有已删除的别名？此操作无法撤销。</string>
     <string name="recovery_backup_not_saved">这些代码尚未保存到你的帐号，因此无法用于恢复帐号。请检查网络连接并重试。</string>
+    <string name="are_you_sure">确定吗？</string>
+    <string name="go_back">返回</string>
+    <string name="continue_anyway">仍然继续</string>
+    <string name="recovery_codes_skip_warning">如果没有恢复码，您一旦忘记密码就再也无法登入这个账户，加密数据也会永久丢失。确定要不保存就继续吗？</string>
     <string name="revoke_session_confirm">此设备会立即退出登录，并需要重新登录。</string>
     <string name="scheduled_action_failed">无法更新定时邮件</string>
     <string name="scheduled_cancelled">已取消定时发送</string>
@@ -3312,6 +3316,10 @@
     <string name="import_mail_action">导入邮件</string>
     <string name="import_mail_skip">从空收件箱开始</string>
     <string name="import_mail_privacy_note">你也可以稍后在设置中导入。</string>
+    <string name="import_provider_gmail_desc">来自 Google Takeout 的 MBOX</string>
+    <string name="import_provider_outlook_desc">PST、MBOX 或 EML 文件</string>
+    <string name="import_provider_yahoo_desc">MBOX 或 EML 导出</string>
+    <string name="import_provider_mbox_desc">上传 MBOX、EML 或 PST 文件</string>
     <string name="other_devices">其他设备</string>
     <string name="other_devices_with_count">其他设备 (%d)</string>
     <string name="no_other_devices">没有其他已登录的设备</string>

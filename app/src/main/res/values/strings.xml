@@ -3179,6 +3179,10 @@
     <string name="purge_all_aliases_message">This removes every alias in this list for good. This cannot be undone.</string>
     <string name="purge_all_aliases_title">Delete all deleted aliases?</string>
     <string name="recovery_backup_not_saved">These codes aren\'t saved to your account yet, so they can\'t recover it. Check your connection and retry.</string>
+    <string name="are_you_sure">Are you sure?</string>
+    <string name="go_back">Go back</string>
+    <string name="continue_anyway">Continue anyway</string>
+    <string name="recovery_codes_skip_warning">Without recovery codes, no one can get you back into this account if you forget your password, and your encrypted data would be lost for good. Continue without saving them?</string>
     <string name="revoke_session_confirm">This device is signed out right away and has to sign in again.</string>
     <string name="scheduled_action_failed">Couldn\'t update the scheduled message</string>
     <string name="scheduled_cancelled">Scheduled message canceled</string>
@@ -3379,6 +3383,10 @@
     <string name="import_mail_action">Import mail</string>
     <string name="import_mail_skip">Start with an empty inbox</string>
     <string name="import_mail_privacy_note">You can also import later from Settings.</string>
+    <string name="import_provider_gmail_desc">MBOX from Google Takeout</string>
+    <string name="import_provider_outlook_desc">PST, MBOX, or EML files</string>
+    <string name="import_provider_yahoo_desc">MBOX or EML export</string>
+    <string name="import_provider_mbox_desc">Upload MBOX, EML, or PST files</string>
     <string name="other_devices">Other devices</string>
     <string name="other_devices_with_count">Other devices (%d)</string>
     <string name="no_other_devices">No other devices are signed in</string>

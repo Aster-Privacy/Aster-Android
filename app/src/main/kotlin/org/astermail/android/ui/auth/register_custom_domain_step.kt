@@ -79,6 +79,7 @@ fun RegisterCustomDomainStep(
             text = stringResource(R.string.custom_domain_step_title),
             color = colors.text_primary,
             fontSize = 30.sp,
+            lineHeight = 36.sp,
             fontWeight = FontWeight.ExtraBold,
             letterSpacing = (-0.3).sp,
             textAlign = TextAlign.Center,

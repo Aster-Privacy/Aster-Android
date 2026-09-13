@@ -117,6 +117,7 @@ fun RegisterPasswordStep(
             text = stringResource(R.string.secure_your_account),
             color = colors.text_primary,
             fontSize = 30.sp,
+            lineHeight = 36.sp,
             fontWeight = FontWeight.ExtraBold,
             letterSpacing = (-0.3).sp,
             textAlign = TextAlign.Center,

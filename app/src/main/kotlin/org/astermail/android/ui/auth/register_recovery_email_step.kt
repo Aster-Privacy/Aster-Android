@@ -79,6 +79,7 @@ fun RegisterRecoveryEmailStep(
             text = stringResource(R.string.password_recovery_email_title),
             color = colors.text_primary,
             fontSize = 30.sp,
+            lineHeight = 36.sp,
             fontWeight = FontWeight.ExtraBold,
             letterSpacing = (-0.3).sp,
             textAlign = TextAlign.Center,

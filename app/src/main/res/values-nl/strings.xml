@@ -2978,6 +2978,10 @@
     <string name="price_per_interval">%1$s / %2$s</string>
     <string name="purge_all_aliases_message">Alle verwijderde aliassen definitief verwijderen? Dit kan niet ongedaan worden gemaakt.</string>
     <string name="recovery_backup_not_saved">Deze codes zijn nog niet in je account opgeslagen en kunnen het dus niet herstellen. Controleer je verbinding en probeer het opnieuw.</string>
+    <string name="are_you_sure">Weet je het zeker?</string>
+    <string name="go_back">Ga terug</string>
+    <string name="continue_anyway">Toch doorgaan</string>
+    <string name="recovery_codes_skip_warning">Zonder herstelcodes kan niemand u terug in dit account helpen als u uw wachtwoord vergeet, en uw versleutelde gegevens zouden voorgoed verloren zijn. Doorgaan zonder ze op te slaan?</string>
     <string name="revoke_session_confirm">Dit apparaat wordt meteen uitgelogd en moet opnieuw inloggen.</string>
     <string name="scheduled_action_failed">Kan het geplande bericht niet bijwerken</string>
     <string name="scheduled_cancelled">Gepland bericht geannuleerd</string>
@@ -3330,6 +3334,10 @@
     <string name="import_mail_action">Mail importeren</string>
     <string name="import_mail_skip">Beginnen met een lege inbox</string>
     <string name="import_mail_privacy_note">Je kunt ook later importeren via Instellingen.</string>
+    <string name="import_provider_gmail_desc">MBOX van Google Takeout</string>
+    <string name="import_provider_outlook_desc">PST-, MBOX- of EML-bestanden</string>
+    <string name="import_provider_yahoo_desc">MBOX- of EML-export</string>
+    <string name="import_provider_mbox_desc">Upload MBOX-, EML- of PST-bestanden</string>
     <string name="other_devices">Andere apparaten</string>
     <string name="other_devices_with_count">Andere apparaten (%d)</string>
     <string name="no_other_devices">Er zijn geen andere apparaten aangemeld</string>

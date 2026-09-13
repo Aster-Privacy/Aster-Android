@@ -3030,6 +3030,10 @@
     <string name="price_per_interval">%1$s / %2$s</string>
     <string name="purge_all_aliases_message">حذف كل الأسماء المستعارة المحذوفة نهائيًا؟ لا يمكن التراجع عن ذلك.</string>
     <string name="recovery_backup_not_saved">لم يتم حفظ هذه الرموز في حسابك بعد، لذلك لا يمكنها استعادته. تحقق من اتصالك ثم أعد المحاولة.</string>
+    <string name="are_you_sure">هل أنت متأكد؟</string>
+    <string name="go_back">الرجوع</string>
+    <string name="continue_anyway">المتابعة على أي حال</string>
+    <string name="recovery_codes_skip_warning">بدون رموز الاسترداد، لا يستطيع أحد إعادتك إلى هذا الحساب إن نسيت كلمة المرور، وستضيع بياناتك المشفّرة نهائيًا. هل تريد المتابعة دون حفظها؟</string>
     <string name="revoke_session_confirm">سيتم تسجيل خروج هذا الجهاز فورًا وسيحتاج إلى تسجيل الدخول مرة أخرى.</string>
     <string name="scheduled_action_failed">تعذر تحديث الرسالة المجدولة</string>
     <string name="scheduled_cancelled">تم إلغاء الرسالة المجدولة</string>
@@ -3410,6 +3414,10 @@
     <string name="import_mail_action">استيراد البريد</string>
     <string name="import_mail_skip">ابدأ بصندوق فارغ</string>
     <string name="import_mail_privacy_note">يمكنك أيضًا الاستيراد لاحقًا من الإعدادات.</string>
+    <string name="import_provider_gmail_desc">MBOX من Google Takeout</string>
+    <string name="import_provider_outlook_desc">ملفات PST أو MBOX أو EML</string>
+    <string name="import_provider_yahoo_desc">تصدير MBOX أو EML</string>
+    <string name="import_provider_mbox_desc">رفع ملفات MBOX أو EML أو PST</string>
     <string name="other_devices">أجهزة أخرى</string>
     <string name="other_devices_with_count">أجهزة أخرى (%d)</string>
     <string name="no_other_devices">لا توجد أجهزة أخرى مسجّل الدخول عليها</string>

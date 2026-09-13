@@ -42,6 +42,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -56,7 +60,9 @@ import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
+import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.design.components.AsterSecondaryButton
 
 @Composable
@@ -74,6 +80,23 @@ fun RegisterRecoveryStep(
     val copied_message = stringResource(R.string.copied_to_clipboard)
     val saved_message = stringResource(R.string.saved_file, RECOVERY_CODES_FILE_NAME)
     val failed_message = stringResource(R.string.failed_to_save)
+    var has_saved by remember { mutableStateOf(false) }
+    var show_skip_confirm by remember { mutableStateOf(false) }
+
+    if (show_skip_confirm) {
+        AsterAlertDialog(
+            on_dismiss = { show_skip_confirm = false },
+            title = stringResource(R.string.are_you_sure),
+            message = stringResource(R.string.recovery_codes_skip_warning),
+            confirm_label = stringResource(R.string.continue_anyway),
+            cancel_label = stringResource(R.string.go_back),
+            on_confirm = {
+                show_skip_confirm = false
+                on_continue()
+            },
+            confirm_style = DialogConfirmStyle.destructive,
+        )
+    }
 
     auth_centered_column {
         Image(
@@ -163,6 +186,7 @@ fun RegisterRecoveryStep(
             label = stringResource(R.string.copy_to_clipboard),
             onClick = {
                 if (copy_recovery_codes(context, codes)) {
+                    has_saved = true
                     Toast.makeText(context, copied_message, Toast.LENGTH_SHORT).show()
                 } else {
                     show_copy_failed_toast(context)
@@ -177,6 +201,7 @@ fun RegisterRecoveryStep(
             onClick = {
                 request_storage_access {
                     val saved = download_recovery_codes(context, codes)
+                    if (saved) has_saved = true
                     Toast.makeText(context, if (saved) saved_message else failed_message, Toast.LENGTH_SHORT).show()
                 }
             },
@@ -186,7 +211,7 @@ fun RegisterRecoveryStep(
 
         AsterSecondaryButton(
             label = stringResource(R.string.continue_action),
-            onClick = on_continue,
+            onClick = { if (has_saved) on_continue() else show_skip_confirm = true },
         )
     }
 }

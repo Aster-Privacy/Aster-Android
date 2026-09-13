@@ -2978,6 +2978,10 @@
     <string name="price_per_interval">%1$s / %2$s</string>
     <string name="purge_all_aliases_message">Silinen tüm takma adlar kalıcı olarak silinsin mi? Bu geri alınamaz.</string>
     <string name="recovery_backup_not_saved">Bu kodlar henüz hesabınıza kaydedilmedi, bu yüzden hesabınızı kurtaramaz. Bağlantınızı kontrol edip yeniden deneyin.</string>
+    <string name="are_you_sure">Emin misiniz?</string>
+    <string name="go_back">Geri dön</string>
+    <string name="continue_anyway">Yine de devam et</string>
+    <string name="recovery_codes_skip_warning">Kurtarma kodları olmadan, parolanızı unutursanız kimse bu hesaba sizi geri sokamaz ve şifreli verileriniz kalıcı olarak kaybolur. Bunları kaydetmeden devam edilsin mi?</string>
     <string name="revoke_session_confirm">Bu cihazın oturumu hemen kapanır ve yeniden oturum açması gerekir.</string>
     <string name="scheduled_action_failed">Planlanmış ileti güncellenemedi</string>
     <string name="scheduled_cancelled">Planlanmış gönderim iptal edildi</string>
@@ -3330,6 +3334,10 @@
     <string name="import_mail_action">Postayı içe aktar</string>
     <string name="import_mail_skip">Boş gelen kutusuyla başla</string>
     <string name="import_mail_privacy_note">Daha sonra Ayarlar\'dan da içe aktarabilirsin.</string>
+    <string name="import_provider_gmail_desc">Google Takeout\'tan MBOX</string>
+    <string name="import_provider_outlook_desc">PST, MBOX veya EML dosyaları</string>
+    <string name="import_provider_yahoo_desc">MBOX veya EML dışa aktarımı</string>
+    <string name="import_provider_mbox_desc">MBOX, EML veya PST dosyaları yükleyin</string>
     <string name="other_devices">Diğer cihazlar</string>
     <string name="other_devices_with_count">Diğer cihazlar (%d)</string>
     <string name="no_other_devices">Oturum açmış başka cihaz yok</string>

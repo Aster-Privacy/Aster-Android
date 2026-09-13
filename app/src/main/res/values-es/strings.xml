@@ -2979,6 +2979,10 @@
     <string name="price_per_interval">%1$s / %2$s</string>
     <string name="purge_all_aliases_message">¿Eliminar definitivamente todos los alias borrados? No se puede deshacer.</string>
     <string name="recovery_backup_not_saved">Estos códigos aún no están guardados en tu cuenta, así que no pueden recuperarla. Comprueba tu conexión y vuelve a intentarlo.</string>
+    <string name="are_you_sure">¿Estás seguro?</string>
+    <string name="go_back">Volver</string>
+    <string name="continue_anyway">Continuar de todos modos</string>
+    <string name="recovery_codes_skip_warning">Sin códigos de recuperación, nadie podrá devolverte el acceso a esta cuenta si olvidas tu contraseña, y tus datos cifrados se perderían para siempre. ¿Continuar sin guardarlos?</string>
     <string name="revoke_session_confirm">La sesión de este dispositivo se cierra de inmediato y tendrá que iniciarla de nuevo.</string>
     <string name="scheduled_action_failed">No se pudo actualizar el mensaje programado</string>
     <string name="scheduled_cancelled">Mensaje programado cancelado</string>
@@ -3331,6 +3335,10 @@
     <string name="import_mail_action">Importar correo</string>
     <string name="import_mail_skip">Empezar con la bandeja vacía</string>
     <string name="import_mail_privacy_note">También puedes importar más tarde desde Ajustes.</string>
+    <string name="import_provider_gmail_desc">MBOX de Google Takeout</string>
+    <string name="import_provider_outlook_desc">Archivos PST, MBOX o EML</string>
+    <string name="import_provider_yahoo_desc">Exportación MBOX o EML</string>
+    <string name="import_provider_mbox_desc">Sube archivos MBOX, EML o PST</string>
     <string name="other_devices">Otros dispositivos</string>
     <string name="other_devices_with_count">Otros dispositivos (%d)</string>
     <string name="no_other_devices">No hay otros dispositivos con la sesión iniciada</string>

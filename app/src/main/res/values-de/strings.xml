@@ -2979,6 +2979,10 @@
     <string name="price_per_interval">%1$s / %2$s</string>
     <string name="purge_all_aliases_message">Alle gelöschten Aliase endgültig löschen? Das kann nicht rückgängig gemacht werden.</string>
     <string name="recovery_backup_not_saved">Diese Codes sind noch nicht in deinem Konto gespeichert und können es daher nicht wiederherstellen. Prüfe deine Verbindung und versuche es erneut.</string>
+    <string name="are_you_sure">Sind Sie sicher?</string>
+    <string name="go_back">Zurückgehen</string>
+    <string name="continue_anyway">Trotzdem fortfahren</string>
+    <string name="recovery_codes_skip_warning">Ohne Wiederherstellungscodes kann niemand Ihren Zugang zu diesem Konto wiederherstellen, falls Sie Ihr Passwort vergessen, und Ihre verschlüsselten Daten wären für immer verloren. Trotzdem ohne Speichern fortfahren?</string>
     <string name="revoke_session_confirm">Dieses Gerät wird sofort abgemeldet und muss sich erneut anmelden.</string>
     <string name="scheduled_action_failed">Die geplante Nachricht konnte nicht aktualisiert werden</string>
     <string name="scheduled_cancelled">Geplante Nachricht abgebrochen</string>
@@ -3331,6 +3335,10 @@
     <string name="import_mail_action">E-Mails importieren</string>
     <string name="import_mail_skip">Mit leerem Posteingang starten</string>
     <string name="import_mail_privacy_note">Du kannst auch später in den Einstellungen importieren.</string>
+    <string name="import_provider_gmail_desc">MBOX von Google Takeout</string>
+    <string name="import_provider_outlook_desc">PST-, MBOX- oder EML-Dateien</string>
+    <string name="import_provider_yahoo_desc">MBOX- oder EML-Export</string>
+    <string name="import_provider_mbox_desc">MBOX-, EML- oder PST-Dateien hochladen</string>
     <string name="other_devices">Andere Geräte</string>
     <string name="other_devices_with_count">Andere Geräte (%d)</string>
     <string name="no_other_devices">Keine anderen Geräte angemeldet</string>

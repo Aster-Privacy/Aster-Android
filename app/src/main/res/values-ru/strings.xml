@@ -3004,6 +3004,10 @@
     <string name="price_per_interval">%1$s / %2$s</string>
     <string name="purge_all_aliases_message">Удалить навсегда все удалённые псевдонимы? Отменить будет нельзя.</string>
     <string name="recovery_backup_not_saved">Эти коды ещё не сохранены в вашей учётной записи, поэтому они не смогут её восстановить. Проверьте подключение и повторите попытку.</string>
+    <string name="are_you_sure">Вы уверены?</string>
+    <string name="go_back">Вернуться</string>
+    <string name="continue_anyway">Всё равно продолжить</string>
+    <string name="recovery_codes_skip_warning">Без кодов восстановления никто не сможет вернуть доступ к этой учётной записи, если пароль будет забыт, и зашифрованные данные окажутся утрачены безвозвратно. Продолжить без их сохранения?</string>
     <string name="revoke_session_confirm">Это устройство будет сразу же отключено и потребует повторного входа.</string>
     <string name="scheduled_action_failed">Не удалось обновить запланированное письмо</string>
     <string name="scheduled_cancelled">Отправка отменена</string>
@@ -3370,6 +3374,10 @@
     <string name="import_mail_action">Импортировать почту</string>
     <string name="import_mail_skip">Начать с пустого ящика</string>
     <string name="import_mail_privacy_note">Импортировать можно и позже в настройках.</string>
+    <string name="import_provider_gmail_desc">MBOX из Google Takeout</string>
+    <string name="import_provider_outlook_desc">Файлы PST, MBOX или EML</string>
+    <string name="import_provider_yahoo_desc">Экспорт в формате MBOX или EML</string>
+    <string name="import_provider_mbox_desc">Загрузите файлы MBOX, EML или PST</string>
     <string name="other_devices">Другие устройства</string>
     <string name="other_devices_with_count">Другие устройства (%d)</string>
     <string name="no_other_devices">Нет других устройств, на которых выполнен вход</string>

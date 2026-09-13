@@ -3004,6 +3004,10 @@
     <string name="price_per_interval">%1$s / %2$s</string>
     <string name="purge_all_aliases_message">Trwale usunąć wszystkie usunięte aliasy? Nie można tego cofnąć.</string>
     <string name="recovery_backup_not_saved">Te kody nie są jeszcze zapisane na Twoim koncie, więc nie mogą go odzyskać. Sprawdź połączenie i spróbuj ponownie.</string>
+    <string name="are_you_sure">Czy na pewno?</string>
+    <string name="go_back">Wróć</string>
+    <string name="continue_anyway">Kontynuuj mimo to</string>
+    <string name="recovery_codes_skip_warning">Bez kodów odzyskiwania nikt nie odzyska dostępu do tego konta, jeśli hasło zostanie zapomniane, a zaszyfrowane dane zostaną utracone na zawsze. Kontynuować bez ich zapisania?</string>
     <string name="revoke_session_confirm">To urządzenie zostanie natychmiast wylogowane i będzie musiało zalogować się ponownie.</string>
     <string name="scheduled_action_failed">Nie można zaktualizować zaplanowanej wiadomości</string>
     <string name="scheduled_cancelled">Anulowano zaplanowaną wiadomość</string>
@@ -3370,6 +3374,10 @@
     <string name="import_mail_action">Importuj pocztę</string>
     <string name="import_mail_skip">Zacznij z pustą skrzynką</string>
     <string name="import_mail_privacy_note">Możesz też zaimportować później w Ustawieniach.</string>
+    <string name="import_provider_gmail_desc">MBOX z Google Takeout</string>
+    <string name="import_provider_outlook_desc">Pliki PST, MBOX lub EML</string>
+    <string name="import_provider_yahoo_desc">Eksport MBOX lub EML</string>
+    <string name="import_provider_mbox_desc">Prześlij pliki MBOX, EML lub PST</string>
     <string name="other_devices">Inne urządzenia</string>
     <string name="other_devices_with_count">Inne urządzenia (%d)</string>
     <string name="no_other_devices">Brak innych zalogowanych urządzeń</string>

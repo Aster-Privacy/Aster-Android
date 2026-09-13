@@ -3005,6 +3005,10 @@
     <string name="price_per_interval">%1$s / %2$s</string>
     <string name="purge_all_aliases_message">Supprimer définitivement tous les alias supprimés ? Cette action est irréversible.</string>
     <string name="recovery_backup_not_saved">Ces codes ne sont pas encore enregistrés dans votre compte et ne peuvent donc pas le récupérer. Vérifiez votre connexion et réessayez.</string>
+    <string name="are_you_sure">Êtes-vous sûr ?</string>
+    <string name="go_back">Retour</string>
+    <string name="continue_anyway">Continuer quand même</string>
+    <string name="recovery_codes_skip_warning">Sans codes de récupération, personne ne peut vous redonner accès à ce compte si vous oubliez votre mot de passe, et vos données chiffrées seraient perdues pour de bon. Continuer sans les enregistrer ?</string>
     <string name="revoke_session_confirm">Cet appareil est déconnecté immédiatement et devra se reconnecter.</string>
     <string name="scheduled_action_failed">Impossible de mettre à jour le message programmé</string>
     <string name="scheduled_cancelled">Message programmé annulé</string>
@@ -3357,6 +3361,10 @@
     <string name="import_mail_action">Importer le courrier</string>
     <string name="import_mail_skip">Commencer avec une boîte vide</string>
     <string name="import_mail_privacy_note">Vous pouvez aussi importer plus tard depuis les Réglages.</string>
+    <string name="import_provider_gmail_desc">MBOX depuis Google Takeout</string>
+    <string name="import_provider_outlook_desc">Fichiers PST, MBOX ou EML</string>
+    <string name="import_provider_yahoo_desc">Export MBOX ou EML</string>
+    <string name="import_provider_mbox_desc">Téléverser des fichiers MBOX, EML ou PST</string>
     <string name="other_devices">Autres appareils</string>
     <string name="other_devices_with_count">Autres appareils (%d)</string>
     <string name="no_other_devices">Aucun autre appareil n’est connecté</string>

@@ -117,6 +117,7 @@ fun RegisterScreen(
     }
 
     BackHandler(enabled = can_go_back) { handle_back() }
+    BackHandler(enabled = !can_go_back) { }
 
     Box(
         modifier = Modifier

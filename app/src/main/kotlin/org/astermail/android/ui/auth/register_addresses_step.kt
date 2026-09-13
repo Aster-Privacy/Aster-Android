@@ -56,6 +56,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
@@ -67,6 +68,7 @@ import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 
 private val address_domains = listOf("astermail.org", "aster.cx")
+private const val alias_create_cooldown_ms = 10_500L
 
 private class address_slot(default_domain: String) {
     var value by mutableStateOf("")
@@ -91,6 +93,7 @@ fun RegisterAddressesStep(
     val default_domain = state.email_domain.value.takeIf { it in address_domains } ?: address_domains.first()
     val slots = remember { List(3) { address_slot(default_domain) } }
     var is_adding by remember { mutableStateOf(false) }
+    var last_created_at by remember { mutableStateOf(0L) }
     val begin_end_error = stringResource(R.string.address_must_begin_end_alphanumeric)
     val generic_error = stringResource(R.string.address_create_failed)
 
@@ -111,8 +114,13 @@ fun RegisterAddressesStep(
                 scope.launch {
                     slots.forEach { slot ->
                         if (!slot.added && slot.value.isNotBlank()) {
+                            val since_last = System.currentTimeMillis() - last_created_at
+                            if (last_created_at > 0L && since_last < alias_create_cooldown_ms) {
+                                delay(alias_create_cooldown_ms - since_last)
+                            }
                             val ok = view_model.create_alias_now(slot.value.trim(), slot.domain)
                             if (ok) {
+                                last_created_at = System.currentTimeMillis()
                                 slot.added = true
                                 slot.error = null
                             } else {
@@ -140,6 +148,7 @@ fun RegisterAddressesStep(
             text = stringResource(R.string.addresses_step_title),
             color = colors.text_primary,
             fontSize = 30.sp,
+            lineHeight = 36.sp,
             fontWeight = FontWeight.ExtraBold,
             letterSpacing = (-0.3).sp,
             textAlign = TextAlign.Center,

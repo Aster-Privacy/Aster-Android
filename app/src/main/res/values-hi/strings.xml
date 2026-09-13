@@ -2929,6 +2929,10 @@
     <string name="purge_all_aliases_message">यह इस सूची का हर एलियास हमेशा के लिए हटा देता है। इसे पहले जैसा नहीं किया जा सकता।</string>
     <string name="purge_all_aliases_title">सारे हटाए गए एलियास मिटाएं?</string>
     <string name="recovery_backup_not_saved">ये कोड अभी आपके खाते में सहेजे नहीं गए हैं, इसलिए इनसे खाता वापस नहीं मिलेगा। अपना कनेक्शन जांचें और फिर से कोशिश करें।</string>
+    <string name="are_you_sure">क्या आप निश्चित हैं?</string>
+    <string name="go_back">वापस जाएं</string>
+    <string name="continue_anyway">फिर भी जारी रखें</string>
+    <string name="recovery_codes_skip_warning">रिकवरी कोड के बिना, पासवर्ड भूल जाने पर कोई भी आपको इस खाते में वापस नहीं ला सकता, और आपका एन्क्रिप्टेड डेटा हमेशा के लिए चला जाएगा। इन्हें सहेजे बिना जारी रखें?</string>
     <string name="revoke_session_confirm">यह डिवाइस तुरंत साइन आउट हो जाता है और उसे फिर से साइन इन करना होगा।</string>
     <string name="scheduled_action_failed">तय समय वाला संदेश अपडेट नहीं हो सका</string>
     <string name="scheduled_cancelled">तय समय वाला संदेश रद्द हुआ</string>
@@ -3220,6 +3224,10 @@
     <string name="import_mail_action">मेल इंपोर्ट करें</string>
     <string name="import_mail_skip">खाली इनबॉक्स से शुरू करें</string>
     <string name="import_mail_privacy_note">आप बाद में सेटिंग्स से भी इंपोर्ट कर सकते हैं।</string>
+    <string name="import_provider_gmail_desc">Google Takeout से MBOX</string>
+    <string name="import_provider_outlook_desc">PST, MBOX या EML फ़ाइलें</string>
+    <string name="import_provider_yahoo_desc">MBOX या EML एक्सपोर्ट</string>
+    <string name="import_provider_mbox_desc">MBOX, EML या PST फ़ाइलें अपलोड करें</string>
     <string name="other_devices">अन्य डिवाइस</string>
     <string name="other_devices_with_count">अन्य डिवाइस (%d)</string>
     <string name="no_other_devices">कोई अन्य डिवाइस साइन इन नहीं है</string>
