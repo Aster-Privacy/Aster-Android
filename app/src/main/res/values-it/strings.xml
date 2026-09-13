@@ -3360,4 +3360,10 @@
     <string name="alias_direction_received">Ricevuti</string>
     <string name="alias_direction_sent">Inviati</string>
     <string name="alias_sent_indexing">I messaggi inviati più vecchi sono ancora in fase di indicizzazione.</string>
+    <string name="enc_keys_section_title">Chiavi di crittografia</string>
+    <string name="enc_openpgp_key_title">La tua chiave OpenPGP</string>
+    <string name="enc_verification_code_label">Codice di verifica</string>
+    <string name="enc_verification_code_info_title">Cos\'è questo codice?</string>
+    <string name="enc_verification_code_info_description">Un breve codice creato dalla tua chiave di crittografia. Se la persona con cui scrivi confronta questo codice con il proprio e corrisponde, entrambi potete essere certi che i vostri messaggi sono privati e non sono stati alterati.</string>
+    <string name="enc_copy_verification_code">Copia codice di verifica</string>
 </resources>

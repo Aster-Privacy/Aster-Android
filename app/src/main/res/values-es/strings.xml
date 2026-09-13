@@ -3361,4 +3361,10 @@
     <string name="alias_direction_received">Recibidos</string>
     <string name="alias_direction_sent">Enviados</string>
     <string name="alias_sent_indexing">El correo enviado más antiguo se está indexando.</string>
+    <string name="enc_keys_section_title">Claves de cifrado</string>
+    <string name="enc_openpgp_key_title">Tu clave OpenPGP</string>
+    <string name="enc_verification_code_label">Código de verificación</string>
+    <string name="enc_verification_code_info_title">¿Qué es este código?</string>
+    <string name="enc_verification_code_info_description">Un código corto creado a partir de tu clave de cifrado. Si la persona con la que te escribes compara este código con el suyo y coincide, ambos pueden estar seguros de que sus mensajes son privados y no han sido manipulados.</string>
+    <string name="enc_copy_verification_code">Copiar código de verificación</string>
 </resources>

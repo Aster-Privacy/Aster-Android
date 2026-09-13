@@ -3361,4 +3361,10 @@
     <string name="alias_direction_received">Empfangen</string>
     <string name="alias_direction_sent">Gesendet</string>
     <string name="alias_sent_indexing">Ältere gesendete Nachrichten werden noch indexiert.</string>
+    <string name="enc_keys_section_title">Verschlüsselungsschlüssel</string>
+    <string name="enc_openpgp_key_title">Dein OpenPGP-Schlüssel</string>
+    <string name="enc_verification_code_label">Bestätigungscode</string>
+    <string name="enc_verification_code_info_title">Was ist dieser Code?</string>
+    <string name="enc_verification_code_info_description">Ein kurzer Code, der aus deinem Verschlüsselungsschlüssel erstellt wird. Wenn die Person, mit der du schreibst, diesen Code mit ihrem eigenen vergleicht und er übereinstimmt, könnt ihr beide sicher sein, dass eure Nachrichten privat sind und nicht verändert wurden.</string>
+    <string name="enc_copy_verification_code">Bestätigungscode kopieren</string>
 </resources>

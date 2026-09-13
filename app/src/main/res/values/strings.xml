@@ -3405,4 +3405,10 @@
     <string name="alias_direction_received">Received</string>
     <string name="alias_direction_sent">Sent</string>
     <string name="alias_sent_indexing">Older sent mail is still being indexed.</string>
+    <string name="enc_keys_section_title">Encryption Keys</string>
+    <string name="enc_openpgp_key_title">OpenPGP key</string>
+    <string name="enc_verification_code_label">Verification code</string>
+    <string name="enc_verification_code_info_title">What\'s this code?</string>
+    <string name="enc_verification_code_info_description">A short code created from your encryption key. If someone you email compares it with the code on their end and it matches, you can both be sure your messages are private and haven\'t been tampered with.</string>
+    <string name="enc_copy_verification_code">Copy verification code</string>
 </resources>

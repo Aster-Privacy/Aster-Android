@@ -3342,4 +3342,10 @@
     <string name="alias_direction_received">收到</string>
     <string name="alias_direction_sent">已发送</string>
     <string name="alias_sent_indexing">较早的已发送邮件仍在索引中。</string>
+    <string name="enc_keys_section_title">加密密钥</string>
+    <string name="enc_openpgp_key_title">您的 OpenPGP 密钥</string>
+    <string name="enc_verification_code_label">验证码</string>
+    <string name="enc_verification_code_info_title">这是什么？</string>
+    <string name="enc_verification_code_info_description">由您的加密密钥生成的一段简短验证码。如果对方将此验证码与他们那端的验证码进行比对且一致,双方就可以确信消息是私密的且未被篡改。</string>
+    <string name="enc_copy_verification_code">复制验证码</string>
 </resources>

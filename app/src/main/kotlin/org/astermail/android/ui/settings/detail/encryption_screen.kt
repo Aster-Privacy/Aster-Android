@@ -242,7 +242,7 @@ fun EncryptionScreen(
     detail_scaffold(title = stringResource(R.string.encryption_title), on_back = on_back) {
 
         preferences_save_error_banner()
-        section_label(stringResource(R.string.your_key))
+        section_label(stringResource(R.string.enc_keys_section_title))
 
         if (view == null) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -264,39 +264,30 @@ fun EncryptionScreen(
             }
         } else if (key_available && fingerprint != null) {
             val pgp_info = state.pgp_key_info
-            val algorithm_title = run {
+            val algorithm_line = run {
                 val raw = pgp_info?.algorithm.orEmpty().lowercase()
-                val size = when {
-                    (pgp_info?.key_size ?: 0) > 0 -> pgp_info!!.key_size
-                    else -> raw.filter { it.isDigit() }.toIntOrNull() ?: 0
-                }
+                val size = pgp_info?.key_size ?: 0
                 when {
-                    raw.startsWith("rsa") && size > 0 -> "RSA-$size"
-                    raw.startsWith("rsa") -> "RSA"
+                    raw.isBlank() -> null
                     raw.contains("25519") -> "Curve25519"
                     raw.contains("448") -> "Curve448"
                     raw.contains("p256") || raw.contains("p-256") -> "NIST P-256"
                     raw.contains("p384") || raw.contains("p-384") -> "NIST P-384"
-                    raw.isNotBlank() -> raw.replace('_', ' ').uppercase()
-                    else -> null
+                    raw.startsWith("rsa") && size > 0 -> "RSA-$size"
+                    else -> raw.replace('_', ' ').uppercase()
                 }
             }
             val created_at = pgp_info?.created_at.orEmpty()
-            val expires_at = pgp_info?.expires_at.orEmpty()
             val date_line = listOfNotNull(
+                algorithm_line,
                 if (created_at.isNotBlank()) {
                     stringResource(R.string.created_at_format, absolute_date_label(created_at))
                 } else {
                     null
                 },
-                if (expires_at.isNotBlank()) {
-                    stringResource(R.string.expires_format, absolute_date_label(expires_at))
-                } else {
-                    stringResource(R.string.fix_enc_never_expires)
-                },
             ).joinToString(" · ")
             val grouped_fingerprint = remember(fingerprint) { format_fingerprint(fingerprint) }
-            val fingerprint_label = stringResource(R.string.enc_key_fingerprint_label)
+            val fingerprint_label = stringResource(R.string.enc_verification_code_label)
             AsterCard(modifier = Modifier.fillMaxWidth().testTag("your_key_card")) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(
@@ -305,37 +296,23 @@ fun EncryptionScreen(
                             .padding(AsterSpacing.lg),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(SquircleShape(AsterRadius.lg))
-                                .background(colors.bg_secondary)
-                                .border(1.dp, colors.border_secondary, SquircleShape(AsterRadius.lg)),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = TablerIcons.Key,
-                                contentDescription = null,
-                                tint = colors.text_primary,
-                                modifier = Modifier.size(22.dp),
-                            )
-                        }
-                        Spacer(Modifier.width(AsterSpacing.md))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = algorithm_title ?: stringResource(R.string.fix_enc_key_card_title),
+                                text = stringResource(R.string.enc_openpgp_key_title),
                                 color = colors.text_primary,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
                                 modifier = Modifier.testTag("your_key_title"),
                             )
-                            Spacer(Modifier.size(2.dp))
-                            Text(
-                                text = date_line,
-                                color = colors.text_tertiary,
-                                fontSize = 13.sp,
-                                lineHeight = 18.sp,
-                            )
+                            if (date_line.isNotBlank()) {
+                                Spacer(Modifier.size(2.dp))
+                                Text(
+                                    text = date_line,
+                                    color = colors.text_tertiary,
+                                    fontSize = 13.sp,
+                                    lineHeight = 18.sp,
+                                )
+                            }
                         }
                         Spacer(Modifier.width(AsterSpacing.sm))
                         verified_badge(text = stringResource(R.string.active))
@@ -357,8 +334,8 @@ fun EncryptionScreen(
                             )
                             Spacer(Modifier.width(AsterSpacing.xs))
                             info_dialog_button(
-                                title = fingerprint_label,
-                                description = stringResource(R.string.fingerprint_description),
+                                title = stringResource(R.string.enc_verification_code_info_title),
+                                description = stringResource(R.string.enc_verification_code_info_description),
                             )
                         }
                         Spacer(Modifier.size(AsterSpacing.sm))
@@ -385,7 +362,7 @@ fun EncryptionScreen(
                             )
                             AsterIconButton(
                                 icon = TablerIcons.Copy,
-                                content_description = stringResource(R.string.copy_fingerprint_action),
+                                content_description = stringResource(R.string.enc_copy_verification_code),
                                 onClick = {
                                     if (copy_to_clipboard(context, context.getString(R.string.clipboard_label_identity_fingerprint), grouped_fingerprint)) {
                                         Toast.makeText(context, context.getString(R.string.fingerprint_copied), Toast.LENGTH_SHORT).show()
@@ -400,15 +377,16 @@ fun EncryptionScreen(
 
                     AsterDivider()
 
-                    Column(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(AsterSpacing.lg),
-                        verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         AsterButton(
                             label = stringResource(R.string.export_public_key),
-                            modifier = Modifier.testTag("export_public_key_button"),
+                            modifier = Modifier.weight(1f).testTag("export_public_key_button"),
                             onClick = {
                                 scope.launch {
                                     val armored = vm.export_public_key_now()
@@ -420,46 +398,31 @@ fun EncryptionScreen(
                                 }
                             },
                         )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            AsterSecondaryButton(
-                                label = stringResource(R.string.export_private_key_label),
-                                modifier = Modifier.weight(1f).testTag("export_private_key_button"),
-                                onClick = {
-                                    export_private_password = ""
-                                    export_private_error = null
-                                    show_export_private_dialog = true
-                                },
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .size(52.dp)
-                                    .clip(CircleShape)
-                                    .background(colors.bg_secondary)
-                                    .border(1.dp, colors.border_secondary, CircleShape),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                AsterIconButton(
-                                    icon = TablerIcons.Copy,
-                                    content_description = stringResource(R.string.copy_public_key),
-                                    modifier = Modifier.testTag("copy_public_key_button"),
-                                    onClick = {
-                                        scope.launch {
-                                            val armored = vm.export_public_key_now()
-                                            if (armored != null && copy_to_clipboard(context, context.getString(R.string.clipboard_label_identity_public_key), armored)) {
-                                                Toast.makeText(context, context.getString(R.string.public_key_copied), Toast.LENGTH_SHORT).show()
-                                            } else {
-                                                show_copy_failed_toast(context)
-                                            }
-                                        }
-                                    },
-                                    icon_size = 20,
-                                )
-                            }
-                        }
+                        AsterButton(
+                            label = stringResource(R.string.export_private_key_label),
+                            modifier = Modifier.weight(1f).testTag("export_private_key_button"),
+                            onClick = {
+                                export_private_password = ""
+                                export_private_error = null
+                                show_export_private_dialog = true
+                            },
+                        )
+                        AsterIconButton(
+                            icon = TablerIcons.Copy,
+                            content_description = stringResource(R.string.copy_public_key),
+                            modifier = Modifier.testTag("copy_public_key_button"),
+                            onClick = {
+                                scope.launch {
+                                    val armored = vm.export_public_key_now()
+                                    if (armored != null && copy_to_clipboard(context, context.getString(R.string.clipboard_label_identity_public_key), armored)) {
+                                        Toast.makeText(context, context.getString(R.string.public_key_copied), Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        show_copy_failed_toast(context)
+                                    }
+                                }
+                            },
+                            icon_size = 18,
+                        )
                     }
                 }
             }

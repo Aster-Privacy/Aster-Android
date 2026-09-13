@@ -3360,4 +3360,10 @@
     <string name="alias_direction_received">Gelen</string>
     <string name="alias_direction_sent">Gönderilen</string>
     <string name="alias_sent_indexing">Daha eski gönderilen postalar hâlâ dizinleniyor.</string>
+    <string name="enc_keys_section_title">Şifreleme Anahtarları</string>
+    <string name="enc_openpgp_key_title">OpenPGP anahtarınız</string>
+    <string name="enc_verification_code_label">Doğrulama kodu</string>
+    <string name="enc_verification_code_info_title">Bu kod ne işe yarar?</string>
+    <string name="enc_verification_code_info_description">Şifreleme anahtarınızdan oluşturulan kısa bir kod. Yazıştığınız kişi bu kodu kendi tarafındaki kodla karşılaştırır ve eşleşirse, mesajlarınızın gizli olduğundan ve değiştirilmediğinden ikiniz de emin olabilirsiniz.</string>
+    <string name="enc_copy_verification_code">Doğrulama kodunu kopyala</string>
 </resources>

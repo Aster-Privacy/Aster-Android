@@ -3342,4 +3342,10 @@
     <string name="alias_direction_received">受信</string>
     <string name="alias_direction_sent">送信済み</string>
     <string name="alias_sent_indexing">以前の送信済みメールを現在インデックス中です。</string>
+    <string name="enc_keys_section_title">暗号化キー</string>
+    <string name="enc_openpgp_key_title">あなたのOpenPGPキー</string>
+    <string name="enc_verification_code_label">確認コード</string>
+    <string name="enc_verification_code_info_title">このコードは何ですか?</string>
+    <string name="enc_verification_code_info_description">暗号化キーから作成された短いコードです。メールをやり取りする相手がこのコードを自分側のコードと照合して一致すれば、お互いのメッセージが非公開で改ざんされていないことを確認できます。</string>
+    <string name="enc_copy_verification_code">確認コードをコピー</string>
 </resources>

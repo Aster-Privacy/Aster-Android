@@ -3387,4 +3387,10 @@
     <string name="alias_direction_received">Reçus</string>
     <string name="alias_direction_sent">Envoyés</string>
     <string name="alias_sent_indexing">Les anciens messages envoyés sont en cours d\'indexation.</string>
+    <string name="enc_keys_section_title">Clés de chiffrement</string>
+    <string name="enc_openpgp_key_title">Votre clé OpenPGP</string>
+    <string name="enc_verification_code_label">Code de vérification</string>
+    <string name="enc_verification_code_info_title">Qu\'est-ce que ce code ?</string>
+    <string name="enc_verification_code_info_description">Un court code créé à partir de votre clé de chiffrement. Si la personne avec qui vous correspondez compare ce code avec le sien et qu\'ils correspondent, vous pouvez tous les deux être sûrs que vos messages sont privés et n\'ont pas été modifiés.</string>
+    <string name="enc_copy_verification_code">Copier le code de vérification</string>
 </resources>

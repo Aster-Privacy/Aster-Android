@@ -1,0 +1,5 @@
+- Sign-up guides you through notifications, extra addresses, a custom domain, and importing mail
+- Messages that fail to send now show the reason
+- Reactions appear right away
+- Aliases can show only sent or received mail, and family members can use shared domains
+- Redesigned sign-in activity, trusted devices, encryption key, plan and billing, and referral screens

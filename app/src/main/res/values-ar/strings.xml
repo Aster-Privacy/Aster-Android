@@ -3440,4 +3440,10 @@
     <string name="alias_direction_received">الواردة</string>
     <string name="alias_direction_sent">المرسلة</string>
     <string name="alias_sent_indexing">لا يزال يتم فهرسة البريد المرسل الأقدم.</string>
+    <string name="enc_keys_section_title">مفاتيح التشفير</string>
+    <string name="enc_openpgp_key_title">مفتاح OpenPGP الخاص بك</string>
+    <string name="enc_verification_code_label">رمز التحقق</string>
+    <string name="enc_verification_code_info_title">ما هذا الرمز؟</string>
+    <string name="enc_verification_code_info_description">رمز قصير يُنشأ من مفتاح التشفير الخاص بك. إذا قارن الشخص الذي تتراسل معه هذا الرمز برمزه وتطابقا، يمكن لكليكما التأكد من أن رسائلكما خاصة ولم يتم العبث بها.</string>
+    <string name="enc_copy_verification_code">نسخ رمز التحقق</string>
 </resources>

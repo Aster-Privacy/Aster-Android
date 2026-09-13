@@ -3400,4 +3400,10 @@
     <string name="alias_direction_received">Odebrane</string>
     <string name="alias_direction_sent">Wysłane</string>
     <string name="alias_sent_indexing">Starsze wysłane wiadomości są jeszcze indeksowane.</string>
+    <string name="enc_keys_section_title">Klucze szyfrowania</string>
+    <string name="enc_openpgp_key_title">Twój klucz OpenPGP</string>
+    <string name="enc_verification_code_label">Kod weryfikacyjny</string>
+    <string name="enc_verification_code_info_title">Czym jest ten kod?</string>
+    <string name="enc_verification_code_info_description">Krótki kod utworzony na podstawie Twojego klucza szyfrującego. Jeśli osoba, z którą korespondujesz, porówna ten kod ze swoim i się zgadza, oboje możecie mieć pewność, że Wasze wiadomości są prywatne i nie zostały zmienione.</string>
+    <string name="enc_copy_verification_code">Kopiuj kod weryfikacyjny</string>
 </resources>

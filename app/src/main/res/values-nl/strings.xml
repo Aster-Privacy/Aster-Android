@@ -3360,4 +3360,10 @@
     <string name="alias_direction_received">Ontvangen</string>
     <string name="alias_direction_sent">Verzonden</string>
     <string name="alias_sent_indexing">Oudere verzonden e-mail wordt nog geïndexeerd.</string>
+    <string name="enc_keys_section_title">Versleutelingssleutels</string>
+    <string name="enc_openpgp_key_title">Je OpenPGP-sleutel</string>
+    <string name="enc_verification_code_label">Verificatiecode</string>
+    <string name="enc_verification_code_info_title">Wat is deze code?</string>
+    <string name="enc_verification_code_info_description">Een korte code die is gemaakt op basis van je versleutelingssleutel. Als iemand met wie je mailt deze code vergelijkt met die van hen en ze komen overeen, kunnen jullie er beiden zeker van zijn dat jullie berichten privé zijn en niet zijn gemanipuleerd.</string>
+    <string name="enc_copy_verification_code">Verificatiecode kopiëren</string>
 </resources>

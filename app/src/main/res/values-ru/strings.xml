@@ -3400,4 +3400,10 @@
     <string name="alias_direction_received">Полученные</string>
     <string name="alias_direction_sent">Отправленные</string>
     <string name="alias_sent_indexing">Ранее отправленные письма ещё индексируются.</string>
+    <string name="enc_keys_section_title">Ключи шифрования</string>
+    <string name="enc_openpgp_key_title">Ваш ключ OpenPGP</string>
+    <string name="enc_verification_code_label">Код подтверждения</string>
+    <string name="enc_verification_code_info_title">Что это за код?</string>
+    <string name="enc_verification_code_info_description">Короткий код, созданный на основе вашего ключа шифрования. Если собеседник сверит этот код со своим и они совпадут, вы оба можете быть уверены, что переписка приватна и не была подменена.</string>
+    <string name="enc_copy_verification_code">Копировать код подтверждения</string>
 </resources>

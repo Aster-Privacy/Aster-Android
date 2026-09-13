@@ -3250,4 +3250,10 @@
     <string name="alias_direction_received">प्राप्त</string>
     <string name="alias_direction_sent">भेजे गए</string>
     <string name="alias_sent_indexing">पुराने भेजे गए मेल को अब भी अनुक्रमित किया जा रहा है।</string>
+    <string name="enc_keys_section_title">एन्क्रिप्शन कुंजियां</string>
+    <string name="enc_openpgp_key_title">OpenPGP कुंजी</string>
+    <string name="enc_verification_code_label">पुष्टि कोड</string>
+    <string name="enc_verification_code_info_title">यह कोड क्या है?</string>
+    <string name="enc_verification_code_info_description">आपकी एन्क्रिप्शन कुंजी से बना एक छोटा कोड। अगर जिसे आप ईमेल करते हैं वह इसकी तुलना अपनी तरफ़ के कोड से करे और दोनों मिल जाएं, तो आप दोनों पक्के हो सकते हैं कि आपके संदेश निजी हैं और उनसे छेड़छाड़ नहीं हुई।</string>
+    <string name="enc_copy_verification_code">पुष्टिकरण कोड कॉपी करें</string>
 </resources>

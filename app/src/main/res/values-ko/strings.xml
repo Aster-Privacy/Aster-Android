@@ -3342,4 +3342,10 @@
     <string name="alias_direction_received">받은 이메일</string>
     <string name="alias_direction_sent">보낸 이메일</string>
     <string name="alias_sent_indexing">이전에 보낸 이메일을 아직 색인하고 있습니다.</string>
+    <string name="enc_keys_section_title">암호화 키</string>
+    <string name="enc_openpgp_key_title">내 OpenPGP 키</string>
+    <string name="enc_verification_code_label">확인 코드</string>
+    <string name="enc_verification_code_info_title">이 코드는 무엇인가요?</string>
+    <string name="enc_verification_code_info_description">암호화 키로 만들어진 짧은 코드입니다. 메일을 주고받는 상대방이 이 코드를 자신의 코드와 비교했을 때 일치하면, 두 사람 모두 메시지가 비공개이며 조작되지 않았음을 확신할 수 있습니다.</string>
+    <string name="enc_copy_verification_code">확인 코드 복사</string>
 </resources>
