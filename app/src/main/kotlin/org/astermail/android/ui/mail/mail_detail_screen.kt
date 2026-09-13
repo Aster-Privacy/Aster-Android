@@ -54,6 +54,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -2682,7 +2683,7 @@ internal fun expanded_message(
             }
         }
 
-        reaction_chip_row(reactions = reactions, my_email = my_email)
+        reaction_chip_row(reactions = reactions, my_email = my_email, on_react = on_react)
 
         Spacer(Modifier.height(AsterSpacing.md))
     }
@@ -2980,14 +2981,17 @@ private fun reaction_quick_picker(visible: Boolean, on_pick: (String) -> Unit) {
 }
 
 @Composable
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 private fun reaction_chip_row(
     reactions: List<DecryptedReaction>,
     my_email: String,
+    on_react: (String) -> Unit,
 ) {
     if (reactions.isEmpty()) return
     val colors = AsterMaterial.colors
+    val reduce_motion = aster_reduce_motion()
     var info_emoji by remember { mutableStateOf<String?>(null) }
+    var picker_sheet_open by remember { mutableStateOf(false) }
     val groups = remember(reactions, my_email) {
         reactions.groupBy { it.emoji }
             .map { (emoji, list) ->
@@ -2997,42 +3001,108 @@ private fun reaction_chip_row(
                     list.any { it.is_own || it.reactor_email.equals(my_email, ignoreCase = true) },
                 )
             }
-            .sortedByDescending { it.second }
     }
     FlowRow(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm)
+            .padding(horizontal = AsterSpacing.md)
+            .padding(top = AsterSpacing.sm, bottom = AsterSpacing.xs)
             .testTag("reaction_chip_row"),
-        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
-        verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         groups.forEach { (emoji, count, mine) ->
-            val shape = SquircleShape(999.dp)
-            Row(
-                modifier = Modifier
-                    .height(30.dp)
-                    .clip(shape)
-                    .background(if (mine) colors.accent_blue.copy(alpha = 0.16f) else colors.bg_tertiary)
-                    .border(
-                        width = 1.dp,
-                        color = if (mine) colors.accent_blue.copy(alpha = 0.55f) else colors.border_primary,
-                        shape = shape,
-                    )
-                    .clickable { info_emoji = emoji }
-                    .padding(horizontal = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(text = emoji, fontSize = 15.sp)
-                Text(
-                    text = count.toString(),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (mine) colors.accent_blue else colors.text_secondary,
+            androidx.compose.runtime.key(emoji) {
+                val appear = remember {
+                    MutableTransitionState(reduce_motion).apply { targetState = true }
+                }
+                val bg by androidx.compose.animation.animateColorAsState(
+                    targetValue = if (mine) colors.accent_blue.copy(alpha = 0.16f) else colors.bg_tertiary,
+                    animationSpec = tween(if (reduce_motion) 0 else AsterDuration.instant),
+                    label = "reaction_chip_bg",
                 )
+                val edge by androidx.compose.animation.animateColorAsState(
+                    targetValue = if (mine) colors.accent_blue.copy(alpha = 0.5f) else androidx.compose.ui.graphics.Color.Transparent,
+                    animationSpec = tween(if (reduce_motion) 0 else AsterDuration.instant),
+                    label = "reaction_chip_edge",
+                )
+                AnimatedVisibility(
+                    visibleState = appear,
+                    enter = if (reduce_motion) {
+                        fadeIn(animationSpec = snap())
+                    } else {
+                        scaleIn(
+                            initialScale = 0.6f,
+                            animationSpec = spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessMedium),
+                        ) + fadeIn(animationSpec = tween(120))
+                    },
+                ) {
+                    val shape = SquircleShape(999.dp)
+                    Row(
+                        modifier = Modifier
+                            .height(32.dp)
+                            .clip(shape)
+                            .background(bg)
+                            .border(width = 1.dp, color = edge, shape = shape)
+                            .combinedClickable(
+                                onClick = { if (mine) info_emoji = emoji else on_react(emoji) },
+                                onLongClick = { info_emoji = emoji },
+                            )
+                            .padding(start = 8.dp, end = 11.dp)
+                            .testTag("reaction_chip"),
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(text = emoji, fontSize = 16.sp)
+                        androidx.compose.animation.AnimatedContent(
+                            targetState = count,
+                            transitionSpec = {
+                                if (reduce_motion) {
+                                    fadeIn(snap()) togetherWith fadeOut(snap())
+                                } else {
+                                    (slideInVertically(tween(160)) { it / 2 } + fadeIn(tween(160))) togetherWith
+                                        (slideOutVertically(tween(160)) { -it / 2 } + fadeOut(tween(120)))
+                                }
+                            },
+                            label = "reaction_chip_count",
+                        ) { value ->
+                            Text(
+                                text = value.toString(),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (mine) colors.accent_blue else colors.text_secondary,
+                            )
+                        }
+                    }
+                }
             }
         }
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(SquircleShape(999.dp))
+                .background(colors.bg_tertiary.copy(alpha = 0.6f))
+                .clickable { picker_sheet_open = true }
+                .testTag("reaction_chip_add"),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = TablerIcons.MoodSmile,
+                contentDescription = stringResource(R.string.add_reaction),
+                tint = colors.text_muted,
+                modifier = Modifier.size(17.dp),
+            )
+        }
+    }
+
+    if (picker_sheet_open) {
+        reaction_picker_sheet(
+            on_close = { picker_sheet_open = false },
+            on_pick = { emoji ->
+                picker_sheet_open = false
+                on_react(emoji)
+            },
+        )
     }
 
     info_emoji?.let { emoji ->
