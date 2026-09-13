@@ -2348,6 +2348,9 @@
     <string name="standard_point_server">Le serveur de messagerie destinataire peut lire le contenu</string>
     <string name="standard_point_storage">Stocké chiffré dès son arrivée chez Aster</string>
     <string name="phishing_signal_authentication_failed">%1$s n\'a pas passé l\'authentification de l\'expéditeur</string>
+    <string name="send_failed_title">Ce message n’a pas été remis</string>
+    <string name="send_failed_help">Vérifiez l’adresse, puis renvoyez le message.</string>
+    <string name="send_failed_chip">Non remis</string>
     <string name="sender_unverified_title">Impossible de vérifier l\'expéditeur</string>
     <string name="sender_unverified_description">Les contrôles prouvant qu\'un message vient de %1$s ont échoué. Méfiez-vous des liens, des pièces jointes et de tout ce qui vous est demandé.</string>
     <string name="sender_authentication">Contrôles de l\'expéditeur</string>

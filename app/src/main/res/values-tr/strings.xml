@@ -1772,6 +1772,9 @@
     <string name="standard_point_server">Alıcı posta sunucusu içeriği okuyabilir</string>
     <string name="standard_point_storage">Aster\'a ulaştığında şifrelenerek saklanır</string>
     <string name="phishing_signal_authentication_failed">%1$s gönderen doğrulamasından geçemedi</string>
+    <string name="send_failed_title">Bu ileti teslim edilmedi</string>
+    <string name="send_failed_help">Adresi kontrol edin, sonra iletiyi yeniden gönderin.</string>
+    <string name="send_failed_chip">Teslim edilmedi</string>
     <string name="sender_unverified_title">Gönderen doğrulanamadı</string>
     <string name="sender_unverified_description">Mesajın %1$s adresinden geldiğini kanıtlayan kontroller geçilemedi. Bağlantılara, eklere ve istenen işlemlere dikkat edin.</string>
     <string name="sender_authentication">Gönderen kontrolleri</string>

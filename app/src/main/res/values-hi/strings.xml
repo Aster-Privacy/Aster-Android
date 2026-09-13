@@ -539,6 +539,9 @@
     <string name="identity_changed_title">एन्क्रिप्शन कुंजी बदल गई</string>
     <string name="identity_changed_description">%1$s की एन्क्रिप्शन कुंजी उससे अलग है जो आपने पहले देखी थी। ऐसा तब होता है जब कोई नए डिवाइस पर साइन इन करता है या अपना खाता रीसेट करता है, लेकिन इसका मतलब यह भी हो सकता है कि कोई आपके संदेश बीच में पढ़ रहा है। इस बातचीत पर भरोसा करने से पहले उनसे किसी दूसरे माध्यम पर पुष्टि करें।</string>
     <string name="identity_changed_dismiss">मैंने इसकी पुष्टि कर ली</string>
+    <string name="send_failed_title">यह संदेश डिलीवर नहीं हुआ</string>
+    <string name="send_failed_help">पता जांचें, फिर संदेश दोबारा भेजें।</string>
+    <string name="send_failed_chip">डिलीवर नहीं हुआ</string>
     <string name="sender_unverified_title">प्रेषक की पुष्टि नहीं हो सकी</string>
     <string name="sender_unverified_description">यह साबित करने वाली जांचें कि संदेश %1$s से आया है, पास नहीं हुईं। लिंक, अटैचमेंट और इसमें कही गई किसी भी बात से सावधान रहें।</string>
     <string name="sender_authentication">प्रेषक की जांच</string>

@@ -1784,6 +1784,9 @@
     <string name="standard_point_server">يمكن لخادم البريد المستقبِل قراءة المحتوى</string>
     <string name="standard_point_storage">يُخزَّن مشفّرًا فور وصوله إلى Aster</string>
     <string name="phishing_signal_authentication_failed">لم يجتز %1$s مصادقة المرسل</string>
+    <string name="send_failed_title">تعذّر تسليم هذه الرسالة</string>
+    <string name="send_failed_help">تحقق من العنوان، ثم أرسل الرسالة مرة أخرى.</string>
+    <string name="send_failed_chip">لم تُسلّم</string>
     <string name="sender_unverified_title">تعذّر التحقق من المرسل</string>
     <string name="sender_unverified_description">لم تنجح الفحوص التي تثبت أن الرسالة جاءت من %1$s. كن حذرًا مع الروابط والمرفقات وأي إجراء تطلبه.</string>
     <string name="sender_authentication">فحوص المرسل</string>

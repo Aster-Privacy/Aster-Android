@@ -1778,6 +1778,9 @@
     <string name="standard_point_server">Принимающий почтовый сервер может прочитать содержимое</string>
     <string name="standard_point_storage">Сохраняется в зашифрованном виде сразу по прибытии в Aster</string>
     <string name="phishing_signal_authentication_failed">%1$s не прошёл проверку подлинности отправителя</string>
+    <string name="send_failed_title">Это сообщение не доставлено</string>
+    <string name="send_failed_help">Проверьте адрес, затем отправьте сообщение снова.</string>
+    <string name="send_failed_chip">Не доставлено</string>
     <string name="sender_unverified_title">Не удалось проверить отправителя</string>
     <string name="sender_unverified_description">Проверки, подтверждающие отправку от %1$s, не пройдены. Будьте осторожны со ссылками, вложениями и любыми просьбами.</string>
     <string name="sender_authentication">Проверки отправителя</string>

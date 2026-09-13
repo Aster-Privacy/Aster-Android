@@ -1773,6 +1773,9 @@
     <string name="standard_point_server">Der empfangende Mailserver kann den Inhalt lesen</string>
     <string name="standard_point_storage">Wird verschlüsselt gespeichert, sobald sie Aster erreicht</string>
     <string name="phishing_signal_authentication_failed">%1$s hat die Absenderprüfung nicht bestanden</string>
+    <string name="send_failed_title">Diese Nachricht wurde nicht zugestellt</string>
+    <string name="send_failed_help">Prüfe die Adresse und sende die Nachricht dann erneut.</string>
+    <string name="send_failed_chip">Nicht zugestellt</string>
     <string name="sender_unverified_title">Absender konnte nicht verifiziert werden</string>
     <string name="sender_unverified_description">Die Prüfungen, die belegen, dass eine Nachricht von %1$s stammt, sind fehlgeschlagen. Sei vorsichtig mit Links, Anhängen und allem, was verlangt wird.</string>
     <string name="sender_authentication">Absenderprüfungen</string>

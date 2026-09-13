@@ -590,6 +590,9 @@
     <string name="identity_changed_title">Encryption key changed</string>
     <string name="identity_changed_description">The encryption key for %1$s is different from the one you saw before. This happens when someone signs in on a new device or resets their account, but it can also mean someone is intercepting your messages. Confirm with them through another channel before you trust this conversation.</string>
     <string name="identity_changed_dismiss">I verified this</string>
+    <string name="send_failed_title">This message wasn’t delivered</string>
+    <string name="send_failed_help">Check the address, then send the message again.</string>
+    <string name="send_failed_chip">Not delivered</string>
     <string name="sender_unverified_title">Sender could not be verified</string>
     <string name="sender_unverified_description">The checks that prove a message came from %1$s did not pass. Be careful with links, attachments and anything it asks you to do.</string>
     <string name="sender_authentication">Sender checks</string>

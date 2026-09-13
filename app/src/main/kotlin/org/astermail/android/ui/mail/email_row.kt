@@ -324,6 +324,10 @@ fun EmailRow(
                     alias_chip(it, modifier = Modifier.weight(1f, fill = false))
                 }
             }
+            if (is_send_failure(email.send_status)) {
+                Spacer(Modifier.height(4.dp))
+                send_failed_chip()
+            }
         }
     }
 }
@@ -627,6 +631,10 @@ fun ThreadInboxRow(
                         Spacer(Modifier.width(6.dp))
                         alias_chip(it, modifier = Modifier.widthIn(max = 148.dp))
                     }
+                    if (is_send_failure(email.send_status)) {
+                        Spacer(Modifier.width(6.dp))
+                        send_failed_chip()
+                    }
                 }
                 if (!has_preview) trailing_controls()
             }
@@ -795,6 +803,41 @@ private fun first_name(full: String): String {
     val trimmed = full.trim()
     val space = trimmed.indexOf(' ')
     return if (space > 0) trimmed.substring(0, space) else trimmed
+}
+
+internal fun is_send_failure(send_status: String?): Boolean =
+    send_status == "failed" || send_status == "bounced"
+
+@Composable
+internal fun send_failed_chip(modifier: Modifier = Modifier) {
+    val colors = AsterMaterial.colors
+    val shape = RoundedCornerShape(4.dp)
+    Row(
+        modifier = modifier
+            .clip(shape)
+            .background(colors.danger.copy(alpha = 0.12f), shape)
+            .border(1.dp, colors.danger.copy(alpha = 0.35f), shape)
+            .padding(horizontal = 6.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Icon(
+            imageVector = TablerIcons.AlertTriangle,
+            contentDescription = null,
+            tint = colors.danger,
+            modifier = Modifier.size(11.dp),
+        )
+        Text(
+            text = stringResource(R.string.send_failed_chip),
+            style = MaterialTheme.typography.labelSmall,
+            color = colors.danger,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            lineHeight = 14.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
 }
 
 @Composable

@@ -1773,6 +1773,9 @@
     <string name="standard_point_server">El servidor de correo receptor puede leer el contenido</string>
     <string name="standard_point_storage">Se guarda cifrado en cuanto llega a Aster</string>
     <string name="phishing_signal_authentication_failed">%1$s no superó la autenticación del remitente</string>
+    <string name="send_failed_title">Este mensaje no se entregó</string>
+    <string name="send_failed_help">Comprueba la dirección y vuelve a enviar el mensaje.</string>
+    <string name="send_failed_chip">No entregado</string>
     <string name="sender_unverified_title">No se pudo verificar el remitente</string>
     <string name="sender_unverified_description">Las comprobaciones que demuestran que un mensaje viene de %1$s no se superaron. Ten cuidado con los enlaces, los adjuntos y lo que te pida hacer.</string>
     <string name="sender_authentication">Comprobaciones del remitente</string>

@@ -1769,6 +1769,9 @@
     <string name="standard_point_server">받는 메일 서버가 내용을 읽을 수 있습니다</string>
     <string name="standard_point_storage">Aster에 도착하면 암호화되어 저장됩니다</string>
     <string name="phishing_signal_authentication_failed">%1$s이(가) 발신자 인증을 통과하지 못했습니다</string>
+    <string name="send_failed_title">이 메시지가 전달되지 않았습니다</string>
+    <string name="send_failed_help">주소를 확인한 다음 메시지를 다시 보내세요.</string>
+    <string name="send_failed_chip">전달 안 됨</string>
     <string name="sender_unverified_title">발신자를 확인할 수 없습니다</string>
     <string name="sender_unverified_description">%1$s에서 왔음을 증명하는 검사를 통과하지 못했습니다. 링크, 첨부파일, 요구하는 행동에 주의하세요.</string>
     <string name="sender_authentication">발신자 검사</string>
