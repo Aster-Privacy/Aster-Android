@@ -32,6 +32,11 @@ enum class RegisterStep {
     password,
     generating,
     recovery_key,
+    recovery_email,
+    notifications,
+    addresses,
+    custom_domain,
+    import_mail,
 }
 
 class RegisterFlowState(
@@ -74,12 +79,7 @@ fun remember_register_flow_state(): RegisterFlowState {
 }
 
 fun step_progress(step: RegisterStep): Float {
-    val order = listOf(
-        RegisterStep.email,
-        RegisterStep.password,
-        RegisterStep.generating,
-        RegisterStep.recovery_key,
-    )
+    val order = RegisterStep.values()
     val idx = order.indexOf(step)
     return (idx + 1).toFloat() / order.size.toFloat()
 }

@@ -286,10 +286,10 @@ class ThemeStore(context: Context) {
         scope.launch { app_context.theme_data_store.edit { it[key_onboarding_seen] = seen } }
     }
 
-    fun mark_first_run(now_ms: Long) {
+    fun mark_first_run(now_ms: Long, setup_pending: Boolean = true) {
         scope.launch {
             app_context.theme_data_store.edit {
-                it[key_first_run_setup_pending] = true
+                it[key_first_run_setup_pending] = setup_pending
                 it[key_first_run_plan_pending] = true
                 it[key_first_run_at] = now_ms
                 it[key_recovery_snooze_until] = 0L

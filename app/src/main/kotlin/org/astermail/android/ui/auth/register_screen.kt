@@ -22,7 +22,7 @@
 package org.astermail.android.ui.auth
 
 import compose.icons.TablerIcons
-import compose.icons.tablericons.*
+import compose.icons.tablericons.ArrowLeft
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
@@ -41,15 +41,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.auth.AuthUiState
 import org.astermail.android.auth.AuthViewModel
 import org.astermail.android.design.AsterMaterial
@@ -59,7 +60,7 @@ import org.astermail.android.design.components.AsterIconButton
 @Composable
 fun RegisterScreen(
     on_back: () -> Unit,
-    on_registered: () -> Unit,
+    on_registered: (destination: String?) -> Unit,
     on_sign_in: () -> Unit,
     on_terms_click: () -> Unit,
     on_privacy_click: () -> Unit,
@@ -67,13 +68,17 @@ fun RegisterScreen(
 ) {
     val colors = AsterMaterial.colors
     val state = remember_register_flow_state()
+    val context = LocalContext.current
     val auth_state by view_model.ui_state.collectAsStateWithLifecycle()
     val recovery_codes by view_model.recovery_codes.collectAsStateWithLifecycle()
     val recovery_backup_failed by view_model.recovery_backup_failed.collectAsStateWithLifecycle()
     val is_retrying_recovery_backup by view_model.is_retrying_recovery_backup.collectAsStateWithLifecycle()
+    val recovery_email_error by view_model.recovery_email_error.collectAsStateWithLifecycle()
+    val is_saving_recovery_email by view_model.is_saving_recovery_email.collectAsStateWithLifecycle()
 
     LaunchedEffect(recovery_codes) {
         if (recovery_codes != null && state.step.value == RegisterStep.generating) {
+            mark_signed_up_now(context)
             state.step.value = RegisterStep.recovery_key
         }
     }
@@ -98,6 +103,7 @@ fun RegisterScreen(
 
     val is_loading = auth_state is AuthUiState.Loading
     val error_message = (auth_state as? AuthUiState.Error)?.message
+    val can_go_back = state.step.value == RegisterStep.email || state.step.value == RegisterStep.password
 
     val handle_back: () -> Unit = {
         when (state.step.value) {
@@ -110,7 +116,7 @@ fun RegisterScreen(
         }
     }
 
-    BackHandler { handle_back() }
+    BackHandler(enabled = can_go_back) { handle_back() }
 
     Box(
         modifier = Modifier
@@ -123,8 +129,7 @@ fun RegisterScreen(
             register_progress_header(
                 step = state.step.value,
                 on_back = handle_back,
-                show_back = state.step.value == RegisterStep.email ||
-                    state.step.value == RegisterStep.password,
+                show_back = can_go_back,
             )
 
             Box(modifier = Modifier.fillMaxWidth().fillMaxHeight()) {
@@ -165,8 +170,39 @@ fun RegisterScreen(
                         on_retry_backup = { view_model.retry_recovery_backup() },
                         on_continue = {
                             view_model.consume_recovery_codes()
-                            on_registered()
+                            state.step.value = RegisterStep.recovery_email
                         },
+                    )
+                    RegisterStep.recovery_email -> RegisterRecoveryEmailStep(
+                        state = state,
+                        error_message = recovery_email_error,
+                        is_saving = is_saving_recovery_email,
+                        on_continue = {
+                            view_model.save_recovery_email(state.recovery_email.value.trim()) {
+                                state.recovery_email_saved.value = true
+                                state.step.value = RegisterStep.notifications
+                            }
+                        },
+                        on_skip = {
+                            view_model.clear_recovery_email_error()
+                            state.step.value = RegisterStep.notifications
+                        },
+                    )
+                    RegisterStep.notifications -> RegisterNotificationsStep(
+                        on_done = { state.step.value = RegisterStep.addresses },
+                    )
+                    RegisterStep.addresses -> RegisterAddressesStep(
+                        state = state,
+                        on_done = { state.step.value = RegisterStep.custom_domain },
+                    )
+                    RegisterStep.custom_domain -> RegisterCustomDomainStep(
+                        on_own_domain = { on_registered("domains") },
+                        on_new_domain = { on_registered("buy_domain") },
+                        on_skip = { state.step.value = RegisterStep.import_mail },
+                    )
+                    RegisterStep.import_mail -> RegisterImportMailStep(
+                        on_import = { on_registered("import") },
+                        on_skip = { on_registered(null) },
                     )
                 }
             }
@@ -187,17 +223,18 @@ private fun register_progress_header(
         animationSpec = tween(durationMillis = 400),
         label = "register_progress",
     )
-
-    if (step == RegisterStep.generating) {
-        Spacer(Modifier.height(16.dp))
-        return
-    }
+    val header_alpha by animateFloatAsState(
+        targetValue = if (step == RegisterStep.generating) 0f else 1f,
+        animationSpec = tween(durationMillis = 300),
+        label = "register_header_alpha",
+    )
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
-            .padding(horizontal = AsterSpacing.xl),
+            .padding(horizontal = AsterSpacing.xl)
+            .alpha(header_alpha),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (show_back) {

@@ -174,7 +174,7 @@ class AuthViewModel @Inject constructor(
             return
         }
         _ui_state.value = AuthUiState.Loading
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.Default) {
             val result = repository.register(trimmed, password, captcha_token, remember_me)
             result.fold(
                 onSuccess = { success ->
