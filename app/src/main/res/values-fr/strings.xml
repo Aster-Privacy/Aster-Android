@@ -3379,4 +3379,12 @@
     <string name="referral_step_1_title">Partagez votre lien</string>
     <string name="referral_step_2_title">Votre ami s\'abonne</string>
     <string name="referral_step_3_title">Vous gagnez du crédit</string>
+    <string name="alias_sent_mail_label">Messages envoyés</string>
+    <string name="alias_sent_mail_desc">Consultez les messages que vous avez envoyés depuis cette adresse.</string>
+    <string name="alias_view_sent">Voir les messages envoyés</string>
+    <string name="alias_direction_label">Direction du courrier</string>
+    <string name="alias_direction_all">Tous</string>
+    <string name="alias_direction_received">Reçus</string>
+    <string name="alias_direction_sent">Envoyés</string>
+    <string name="alias_sent_indexing">Les anciens messages envoyés sont en cours d\'indexation.</string>
 </resources>

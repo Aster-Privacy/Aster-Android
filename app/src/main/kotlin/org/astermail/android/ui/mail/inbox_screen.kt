@@ -254,6 +254,8 @@ fun InboxScreen(
     on_all_mail_scope_change: (Boolean, Boolean) -> Unit = { _, _ -> },
     category_unread: Map<String, Int> = emptyMap(),
     on_select_category: (String) -> Unit = {},
+    alias_direction: String? = null,
+    on_alias_direction_change: (String) -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
@@ -264,6 +266,35 @@ fun InboxScreen(
     val inbox_state by mail_vm.inbox_state.collectAsStateWithLifecycle()
     val attachment_ids by mail_vm.inbox_attachment_ids.collectAsStateWithLifecycle()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
+    val sender_alias_backfill_status by mail_vm.sender_alias_backfill_status.collectAsStateWithLifecycle()
+    val alias_sent_visible = alias_direction != null &&
+        alias_direction != org.astermail.android.mail.alias_direction_received
+    LaunchedEffect(alias_sent_visible, settings_state.aliases, settings_state.ghost_aliases) {
+        if (!alias_sent_visible) return@LaunchedEffect
+        val hash_by_address = buildMap {
+            settings_state.aliases
+                .filterNot { it.decryption_failed || it.alias_address_hash.isBlank() }
+                .forEach { put(it.address.trim().lowercase(), it.alias_address_hash) }
+            settings_state.ghost_aliases
+                .filterNot { it.decryption_failed || it.decrypted_address.isBlank() || it.alias_address_hash.isBlank() }
+                .forEach { put(it.decrypted_address.trim().lowercase(), it.alias_address_hash) }
+        }
+        mail_vm.start_sender_alias_backfill(hash_by_address)
+    }
+    var sender_alias_backfill_seen_running by remember { mutableStateOf(false) }
+    LaunchedEffect(sender_alias_backfill_status, current_folder) {
+        when (sender_alias_backfill_status) {
+            org.astermail.android.mail.MailRepository.SenderAliasBackfillStatus.running ->
+                sender_alias_backfill_seen_running = true
+            org.astermail.android.mail.MailRepository.SenderAliasBackfillStatus.done -> {
+                if (sender_alias_backfill_seen_running) {
+                    sender_alias_backfill_seen_running = false
+                    if (alias_sent_visible) mail_vm.load_inbox(current_folder, force = true)
+                }
+            }
+            else -> sender_alias_backfill_seen_running = false
+        }
+    }
     val haptic_enabled = settings_state.preferences?.haptic_enabled ?: true
     val context_for_prefs = LocalContext.current
     val plan_prefs = remember { context_for_prefs.getSharedPreferences("aster_plan", android.content.Context.MODE_PRIVATE) }
@@ -1885,6 +1916,26 @@ fun InboxScreen(
                             }
                         }
 
+                        if (
+                            alias_sent_visible &&
+                            sender_alias_backfill_status == org.astermail.android.mail.MailRepository.SenderAliasBackfillStatus.running
+                        ) {
+                            item(key = "_alias_sent_indexing", contentType = "alias_sent_indexing") {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .animateItem()
+                                        .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.alias_sent_indexing),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = colors.text_muted,
+                                    )
+                                }
+                            }
+                        }
                         if (inbox_state.is_loading_more) {
                             items(
                                 count = 3,
@@ -2016,6 +2067,8 @@ fun InboxScreen(
                         } else {
                             null
                         },
+                        alias_direction = alias_direction,
+                        on_alias_direction_change = on_alias_direction_change,
                     )
             scope_selection_banner(
                 offered = can_offer_scope_selection,
@@ -2496,6 +2549,8 @@ internal fun inbox_top_bar(
     unread_only: Boolean = false,
     on_toggle_unread_only: () -> Unit = {},
     selection_content: (@Composable () -> Unit)? = null,
+    alias_direction: String? = null,
+    on_alias_direction_change: (String) -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val divider_alpha by animateFloatAsState(
@@ -2589,6 +2644,20 @@ internal fun inbox_top_bar(
                     expanded = overflow_menu_open,
                     on_dismiss = { overflow_menu_open = false },
                 ) {
+                    if (alias_direction != null) {
+                        aster_dropdown_section_label(stringResource(R.string.alias_direction_label))
+                        listOf(
+                            org.astermail.android.mail.alias_direction_all to R.string.alias_direction_all,
+                            org.astermail.android.mail.alias_direction_received to R.string.alias_direction_received,
+                            org.astermail.android.mail.alias_direction_sent to R.string.alias_direction_sent,
+                        ).forEach { (id, label) ->
+                            sort_menu_item(stringResource(label), alias_direction == id) {
+                                overflow_menu_open = false
+                                if (alias_direction != id) on_alias_direction_change(id)
+                            }
+                        }
+                        aster_dropdown_divider()
+                    }
                     overflow_menu_item(
                         label = stringResource(if (has_unread) R.string.mark_all_read else R.string.mark_all_unread),
                         icon = if (has_unread) TablerIcons.MailOpened else TablerIcons.Mail,

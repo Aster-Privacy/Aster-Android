@@ -3397,4 +3397,12 @@
     <string name="referral_step_1_title">Share your link</string>
     <string name="referral_step_2_title">Your friend subscribes</string>
     <string name="referral_step_3_title">You earn credit</string>
+    <string name="alias_sent_mail_label">Sent mail</string>
+    <string name="alias_sent_mail_desc">See the messages you sent from this address.</string>
+    <string name="alias_view_sent">View sent mail</string>
+    <string name="alias_direction_label">Mail direction</string>
+    <string name="alias_direction_all">All</string>
+    <string name="alias_direction_received">Received</string>
+    <string name="alias_direction_sent">Sent</string>
+    <string name="alias_sent_indexing">Older sent mail is still being indexed.</string>
 </resources>

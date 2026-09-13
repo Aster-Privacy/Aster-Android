@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import compose.icons.TablerIcons
 import compose.icons.tablericons.ChevronDown
+import compose.icons.tablericons.Send
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
@@ -76,6 +77,7 @@ internal fun alias_detail_panel(
     vm: SettingsViewModel,
     rule_delivery: AliasRuleDeliveryNote? = null,
     rule_label: AliasRuleLabelNote? = null,
+    on_view_sent: (() -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     Column(
@@ -91,7 +93,7 @@ internal fun alias_detail_panel(
                 .height(1.dp)
                 .background(colors.border_secondary),
         )
-        alias_details_section(alias, vm)
+        alias_details_section(alias, vm, on_view_sent)
         alias_delivery_section(alias, vm, detail, rule_delivery, rule_label)
         if (detail.loading) {
             Row(
@@ -176,9 +178,53 @@ internal fun panel_row_chip(label: String) {
 private fun alias_details_section(
     alias: org.astermail.android.api.settings.AliasInfo,
     vm: SettingsViewModel,
+    on_view_sent: (() -> Unit)?,
 ) {
+    val colors = AsterMaterial.colors
     Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
         panel_section_title(stringResource(R.string.alias_panel_details_title))
+        if (on_view_sent != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(colors.bg_secondary)
+                    .clickable(onClick = on_view_sent)
+                    .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm)
+                    .testTag("alias_view_sent"),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = TablerIcons.Send,
+                    contentDescription = null,
+                    tint = colors.text_muted,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(AsterSpacing.sm))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.alias_sent_mail_label),
+                        color = colors.text_primary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Text(
+                        text = stringResource(R.string.alias_sent_mail_desc),
+                        color = colors.text_muted,
+                        fontSize = 12.sp,
+                    )
+                }
+                Spacer(Modifier.width(AsterSpacing.sm))
+                Text(
+                    text = stringResource(R.string.alias_view_sent),
+                    color = colors.accent_blue,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
         alias_inline_field(
             label = stringResource(R.string.alias_panel_display_name),
             placeholder = stringResource(R.string.alias_panel_display_name_placeholder),

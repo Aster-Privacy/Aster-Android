@@ -3392,4 +3392,12 @@
     <string name="referral_step_1_title">Udostępnij swój link</string>
     <string name="referral_step_2_title">Znajomy wykupuje subskrypcję</string>
     <string name="referral_step_3_title">Zdobywasz środki</string>
+    <string name="alias_sent_mail_label">Wysłane wiadomości</string>
+    <string name="alias_sent_mail_desc">Zobacz wiadomości wysłane z tego adresu.</string>
+    <string name="alias_view_sent">Pokaż wysłane wiadomości</string>
+    <string name="alias_direction_label">Kierunek poczty</string>
+    <string name="alias_direction_all">Wszystkie</string>
+    <string name="alias_direction_received">Odebrane</string>
+    <string name="alias_direction_sent">Wysłane</string>
+    <string name="alias_sent_indexing">Starsze wysłane wiadomości są jeszcze indeksowane.</string>
 </resources>

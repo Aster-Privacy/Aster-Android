@@ -3352,4 +3352,12 @@
     <string name="referral_step_1_title">Condividi il tuo link</string>
     <string name="referral_step_2_title">Il tuo amico si abbona</string>
     <string name="referral_step_3_title">Guadagni credito</string>
+    <string name="alias_sent_mail_label">Messaggi inviati</string>
+    <string name="alias_sent_mail_desc">Consulta i messaggi che hai inviato da questo indirizzo.</string>
+    <string name="alias_view_sent">Mostra i messaggi inviati</string>
+    <string name="alias_direction_label">Direzione della posta</string>
+    <string name="alias_direction_all">Tutti</string>
+    <string name="alias_direction_received">Ricevuti</string>
+    <string name="alias_direction_sent">Inviati</string>
+    <string name="alias_sent_indexing">I messaggi inviati più vecchi sono ancora in fase di indicizzazione.</string>
 </resources>

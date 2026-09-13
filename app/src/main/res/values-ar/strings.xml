@@ -3432,4 +3432,12 @@
     <string name="referral_step_1_title">شارك رابطك</string>
     <string name="referral_step_2_title">يشترك صديقك</string>
     <string name="referral_step_3_title">تحصل على رصيد</string>
+    <string name="alias_sent_mail_label">البريد المرسل</string>
+    <string name="alias_sent_mail_desc">اطلع على الرسائل التي أرسلتها من هذا العنوان.</string>
+    <string name="alias_view_sent">عرض البريد المرسل</string>
+    <string name="alias_direction_label">اتجاه البريد</string>
+    <string name="alias_direction_all">الكل</string>
+    <string name="alias_direction_received">الواردة</string>
+    <string name="alias_direction_sent">المرسلة</string>
+    <string name="alias_sent_indexing">لا يزال يتم فهرسة البريد المرسل الأقدم.</string>
 </resources>
