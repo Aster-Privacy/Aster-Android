@@ -1,0 +1,1 @@
+- Connection settings show each connection method as a large card, stacked one above the other, so the illustrations and descriptions are easier to read
