@@ -79,7 +79,7 @@ class ThemeViewModel @Inject constructor(
     fun set_haptic_enabled(v: Boolean) = theme_store.set_haptic_enabled(v)
     fun set_dyslexia_font(v: Boolean) = theme_store.set_dyslexia_font(v)
     fun mark_onboarding_seen() = theme_store.set_onboarding_seen(true)
-    fun mark_first_run() = theme_store.mark_first_run(System.currentTimeMillis())
+    fun mark_first_run(setup_pending: Boolean = true) = theme_store.mark_first_run(System.currentTimeMillis(), setup_pending)
     fun clear_first_run_setup() = theme_store.clear_first_run_setup()
     fun clear_first_run_plan() = theme_store.clear_first_run_plan()
     fun snooze_recovery(duration_ms: Long) =

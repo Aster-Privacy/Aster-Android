@@ -22,46 +22,42 @@
 package org.astermail.android.ui.auth
 
 import compose.icons.TablerIcons
-import compose.icons.tablericons.*
+import compose.icons.tablericons.Inbox
+import compose.icons.tablericons.Lock
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterGhostButton
-import org.astermail.android.design.components.AsterTextField
 
 @Composable
-fun RegisterRecoveryEmailStep(
-    state: RegisterFlowState,
-    error_message: String?,
-    is_saving: Boolean,
-    on_continue: () -> Unit,
+fun RegisterImportMailStep(
+    on_import: () -> Unit,
     on_skip: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -76,7 +72,7 @@ fun RegisterRecoveryEmailStep(
         Spacer(Modifier.height(AsterSpacing.xl))
 
         Text(
-            text = stringResource(R.string.password_recovery_email_title),
+            text = stringResource(R.string.import_mail_step_title),
             color = colors.text_primary,
             fontSize = 30.sp,
             fontWeight = FontWeight.ExtraBold,
@@ -85,7 +81,7 @@ fun RegisterRecoveryEmailStep(
         )
         Spacer(Modifier.height(AsterSpacing.md))
         Text(
-            text = stringResource(R.string.recovery_email_step_desc),
+            text = stringResource(R.string.import_mail_step_desc),
             color = colors.text_tertiary,
             fontSize = 14.sp,
             textAlign = TextAlign.Center,
@@ -93,52 +89,58 @@ fun RegisterRecoveryEmailStep(
 
         Spacer(Modifier.height(AsterSpacing.xxl))
 
-        androidx.compose.animation.AnimatedVisibility(
-            visible = error_message != null,
-            enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
-            exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut(),
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(colors.bg_card, SquircleShape(16.dp))
+                .border(1.dp, colors.border_primary, SquircleShape(16.dp))
+                .padding(AsterSpacing.xl),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column {
-                error_banner(message = error_message ?: "")
-                Spacer(Modifier.height(AsterSpacing.lg))
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .background(colors.bg_secondary, SquircleShape(14.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = TablerIcons.Inbox,
+                    contentDescription = null,
+                    tint = colors.accent_blue,
+                    modifier = Modifier.size(28.dp),
+                )
+            }
+            Spacer(Modifier.height(AsterSpacing.lg))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = TablerIcons.Lock,
+                    contentDescription = null,
+                    tint = colors.text_muted,
+                    modifier = Modifier.size(14.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = stringResource(R.string.import_mail_privacy_note),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                )
             }
         }
 
-        AsterTextField(
-            value = state.recovery_email.value,
-            onValueChange = { state.recovery_email.value = it },
-            label = stringResource(R.string.recovery_email),
-            placeholder = stringResource(R.string.recovery_email_placeholder),
-            keyboard_options = KeyboardOptions(
-                keyboardType = KeyboardType.Email,
-                imeAction = ImeAction.Done,
-            ),
-            keyboard_actions = KeyboardActions(
-                onDone = {
-                    if (state.recovery_email.value.isNotBlank() && !is_saving) on_continue()
-                },
-            ),
-            leading_icon = {
-                Icon(TablerIcons.Mail, null, tint = colors.text_muted)
-            },
-        )
-
-        Spacer(Modifier.height(AsterSpacing.xl))
+        Spacer(Modifier.height(AsterSpacing.xxl))
 
         AsterButton(
-            label = stringResource(R.string.continue_action),
-            onClick = on_continue,
-            enabled = state.recovery_email.value.isNotBlank() && !is_saving,
-            is_loading = is_saving,
+            label = stringResource(R.string.import_mail_action),
+            onClick = on_import,
         )
 
         Spacer(Modifier.height(AsterSpacing.sm))
 
         AsterGhostButton(
-            label = stringResource(R.string.skip_for_now),
+            label = stringResource(R.string.import_mail_skip),
             onClick = on_skip,
             modifier = Modifier.fillMaxWidth(),
-            enabled = !is_saving,
         )
     }
 }

@@ -36,6 +36,8 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.lifecycle.Lifecycle
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import org.astermail.android.security.AppLockViewModel
+import org.astermail.android.ui.auth.mark_signed_up_now
+import org.astermail.android.ui.auth.within_sign_up_quiet_period
 import org.astermail.android.security.LockdownStore
 import org.astermail.android.ui.common.nav_anim_duration_ms
 import org.astermail.android.ui.common.nav_anim_collapse_ms
@@ -506,8 +508,6 @@ private fun AsterNavHost() {
     val is_signed_in_state by auth_gate.is_signed_in.collectAsStateWithLifecycle()
     val is_locked by lock_vm.store.is_locked.collectAsStateWithLifecycle()
 
-    request_notification_permission(should_request = is_signed_in_state && !is_locked)
-
     val nav_scope = rememberCoroutineScope()
 
     if (!is_ready) {
@@ -544,6 +544,11 @@ private fun AsterNavHost() {
         }
     }
     val nav_controller = rememberNavController()
+    val notification_prompt_route by nav_controller.currentBackStackEntryAsState()
+    request_notification_permission(
+        should_request = is_signed_in_state && !is_locked &&
+            notification_prompt_route?.destination?.route != routes.register,
+    )
     val context = LocalContext.current
     val a11y = local_accessibility.current
     val nav_duration = if (a11y.reduce_motion) 0 else nav_anim_duration_ms
@@ -618,7 +623,8 @@ private fun AsterNavHost() {
                 nav_controller.navigate(routes.settings_detail("billing"))
             },
         )
-        if (!is_locked) {
+        val offer_route by nav_controller.currentBackStackEntryAsState()
+        if (!is_locked && offer_route?.destination?.route != routes.register && !within_sign_up_quiet_period(context)) {
             org.astermail.android.ui.upgrade.SpecialOfferHost()
         }
         androidx.compose.runtime.LaunchedEffect(Unit) {
@@ -764,10 +770,14 @@ private fun AsterNavHost() {
                         nav_controller.navigate(routes.welcome) { popUpTo(0) { inclusive = true } }
                     }
                 },
-                on_registered = {
-                    theme_vm.mark_first_run()
+                on_registered = { destination ->
+                    mark_signed_up_now(context)
+                    theme_vm.mark_first_run(setup_pending = false)
                     nav_controller.navigate(routes.inbox) {
                         popUpTo(routes.welcome) { inclusive = true }
+                    }
+                    if (destination != null) {
+                        nav_controller.navigate(routes.settings_detail(destination))
                     }
                 },
                 on_sign_in = {

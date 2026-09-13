@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
@@ -314,14 +315,6 @@ private fun password_strength_hint(
         label = "password_strength_fraction",
     )
 
-    val hint = when {
-        !length_ok -> stringResource(R.string.requirement_8_chars)
-        !upper_ok -> stringResource(R.string.requirement_uppercase)
-        !lower_ok -> stringResource(R.string.requirement_lowercase)
-        !number_ok -> stringResource(R.string.requirement_number)
-        else -> null
-    }
-
     Column(modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
@@ -336,14 +329,48 @@ private fun password_strength_hint(
                     .background(bar_color, RoundedCornerShape(2.dp)),
             )
         }
-        if (hint != null) {
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = hint,
-                color = colors.text_tertiary,
-                fontSize = 12.sp,
-            )
-        }
+        Spacer(Modifier.height(AsterSpacing.sm))
+        password_requirement_row(stringResource(R.string.requirement_8_chars), length_ok)
+        password_requirement_row(stringResource(R.string.requirement_uppercase), upper_ok)
+        password_requirement_row(stringResource(R.string.requirement_lowercase), lower_ok)
+        password_requirement_row(stringResource(R.string.requirement_number), number_ok)
+    }
+}
+
+@Composable
+private fun password_requirement_row(
+    label: String,
+    met: Boolean,
+) {
+    val colors = AsterMaterial.colors
+    val icon_color by androidx.compose.animation.animateColorAsState(
+        targetValue = if (met) colors.success else colors.text_muted,
+        animationSpec = androidx.compose.animation.core.tween(durationMillis = 220),
+        label = "password_requirement_icon",
+    )
+    val text_color by androidx.compose.animation.animateColorAsState(
+        targetValue = if (met) colors.text_primary else colors.text_tertiary,
+        animationSpec = androidx.compose.animation.core.tween(durationMillis = 220),
+        label = "password_requirement_text",
+    )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = TablerIcons.Check,
+            contentDescription = null,
+            tint = icon_color,
+            modifier = Modifier.size(16.dp),
+        )
+        Spacer(Modifier.width(AsterSpacing.sm))
+        Text(
+            text = label,
+            color = text_color,
+            fontSize = 13.sp,
+        )
     }
 }
 
