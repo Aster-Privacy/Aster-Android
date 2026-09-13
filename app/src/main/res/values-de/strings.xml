@@ -2911,6 +2911,9 @@
     <string name="alias_grace_upgrade_hint">Führen Sie ein Upgrade durch, um diesen Alias aktiv zu halten</string>
     <string name="domain_grace_ends">Endet am %1$s</string>
     <string name="domain_grace_upgrade_hint">Führen Sie ein Upgrade durch, um diese Domain aktiv zu halten</string>
+    <string name="domain_shared_label">Geteilt</string>
+    <string name="domain_shared_by">Geteilt von %1$s</string>
+    <string name="domain_shared_hint">Diese Domain gehört einem anderen Mitglied Ihres Familientarifs. Nur der Eigentümer kann ihre Einstellungen ändern.</string>
     <string name="error_family_2fa_required">Ihr Familientarif erfordert eine Zwei-Faktor-Authentifizierung. Um dieses Konto weiter zu nutzen, aktivieren Sie sie unter Einstellungen &gt; Sicherheit.</string>
     <string name="label_icon_group_essentials">GRUNDLAGEN</string>
     <string name="label_icon_group_mail">MAIL</string>

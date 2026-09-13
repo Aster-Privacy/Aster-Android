@@ -2838,6 +2838,9 @@
     <string name="alias_grace_upgrade_hint">यह एलियास चालू रखने के लिए प्लान बढ़ाएं</string>
     <string name="domain_grace_ends">%1$s को खत्म</string>
     <string name="domain_grace_upgrade_hint">यह डोमेन चालू रखने के लिए प्लान बढ़ाएं</string>
+    <string name="domain_shared_label">साझा किया गया</string>
+    <string name="domain_shared_by">%1$s द्वारा साझा</string>
+    <string name="domain_shared_hint">यह डोमेन आपके फ़ैमिली प्लान के किसी अन्य सदस्य का है। केवल मालिक ही इसकी सेटिंग बदल सकता है।</string>
     <string name="error_family_2fa_required">आपके फ़ैमिली प्लान के लिए दो-चरणीय प्रमाणीकरण ज़रूरी है। यह खाता चलाते रहने के लिए इसे सेटिंग &gt; सुरक्षा में चालू करें।</string>
     <string name="label_icon_group_essentials">ज़रूरी</string>
     <string name="label_icon_group_mail">मेल</string>
