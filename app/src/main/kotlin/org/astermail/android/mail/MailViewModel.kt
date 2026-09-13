@@ -174,6 +174,8 @@ class MailViewModel @Inject constructor(
 
     private var reactions_enabled = true
 
+    private val PENDING_REACTION_PREFIX = "pending_"
+
     fun set_reactions_enabled(enabled: Boolean) {
         if (reactions_enabled == enabled) return
         reactions_enabled = enabled
@@ -204,6 +206,16 @@ class MailViewModel @Inject constructor(
                         Triple(msg.id, summary.reaction_mail_item_id, summary.is_own),
                     )
                 }
+            }
+        }
+        val pending_by_message = _message_reactions.value.mapValues { (_, list) ->
+            list.filter { it.reaction_mail_item_id.startsWith(PENDING_REACTION_PREFIX) }
+        }.filterValues { it.isNotEmpty() }
+        for ((message_id, pending) in pending_by_message) {
+            if (messages.none { it.id == message_id }) continue
+            val bucket = direct.getOrPut(message_id) { ArrayList() }
+            for (reaction in pending) {
+                if (bucket.none { it.emoji == reaction.emoji && it.is_own }) bucket.add(reaction)
             }
         }
         _message_reactions.value = direct.mapValues { it.value.toList() }
@@ -271,7 +283,7 @@ class MailViewModel @Inject constructor(
             return
         }
         val optimistic = DecryptedReaction(
-            reaction_mail_item_id = "pending_${message_id}_$emoji",
+            reaction_mail_item_id = "$PENDING_REACTION_PREFIX${message_id}_$emoji",
             emoji = emoji,
             reactor_email = from_email,
             is_own = true,
