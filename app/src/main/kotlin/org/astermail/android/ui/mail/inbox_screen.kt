@@ -2066,6 +2066,8 @@ fun InboxScreen(
                         show_unread_filter = categories_enabled,
                         unread_only = unread_only,
                         on_toggle_unread_only = { unread_only = !unread_only },
+                        alias_direction = alias_direction,
+                        on_alias_direction_change = on_alias_direction_change,
                     )
                 }
             }
@@ -2077,13 +2079,6 @@ fun InboxScreen(
                 crosses_categories = categories_enabled,
                 on_confirm = { scope_selection_confirmed = true },
             )
-            if (alias_direction != null && !select_mode) {
-                alias_direction_switcher(
-                    value = alias_direction,
-                    on_change = on_alias_direction_change,
-                    modifier = Modifier.testTag(alias_direction_switcher_tag),
-                )
-            }
           }
         }
 
@@ -2554,6 +2549,8 @@ internal fun inbox_top_bar(
     show_unread_filter: Boolean = false,
     unread_only: Boolean = false,
     on_toggle_unread_only: () -> Unit = {},
+    alias_direction: String? = null,
+    on_alias_direction_change: (String) -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val divider_alpha by animateFloatAsState(
@@ -2647,6 +2644,20 @@ internal fun inbox_top_bar(
                     expanded = overflow_menu_open,
                     on_dismiss = { overflow_menu_open = false },
                 ) {
+                    if (alias_direction != null) {
+                        aster_dropdown_section_label(stringResource(R.string.alias_direction_label))
+                        listOf(
+                            org.astermail.android.mail.alias_direction_all to R.string.alias_direction_all,
+                            org.astermail.android.mail.alias_direction_received to R.string.alias_direction_received,
+                            org.astermail.android.mail.alias_direction_sent to R.string.alias_direction_sent,
+                        ).forEach { (id, label) ->
+                            sort_menu_item(stringResource(label), alias_direction == id) {
+                                overflow_menu_open = false
+                                if (alias_direction != id) on_alias_direction_change(id)
+                            }
+                        }
+                        aster_dropdown_divider()
+                    }
                     overflow_menu_item(
                         label = stringResource(if (has_unread) R.string.mark_all_read else R.string.mark_all_unread),
                         icon = if (has_unread) TablerIcons.MailOpened else TablerIcons.Mail,
