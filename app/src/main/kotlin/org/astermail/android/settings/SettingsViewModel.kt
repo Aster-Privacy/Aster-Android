@@ -3743,9 +3743,10 @@ class SettingsViewModel @Inject constructor(
     }
 
     suspend fun export_public_key_now(): String? {
+        _state.value.pgp_key_info?.public_key_armored?.takeIf { it.isNotBlank() }?.let { return it }
         return try {
             val result = encryption_api.export_public_key()
-            result.public_key_armored.ifBlank { null }
+            result.public_key_armored.ifBlank { result.public_key }.ifBlank { null }
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
             null

@@ -559,24 +559,41 @@ private fun aliases_tab(
                         on_click = { alias_filter = AliasFilter.Disabled },
                     )
                     if (alias_domains.size > 1) {
-                        Box(
-                            modifier = Modifier
-                                .size(width = 1.dp, height = 18.dp)
-                                .background(colors.border_secondary),
-                        )
-                        alias_filter_chip(
-                            label = stringResource(R.string.alias_filter_all_domains),
-                            active = alias_domain_filter == null,
-                            test_tag = "alias_filter_all_domains",
-                            on_click = { alias_domain_filter = null },
-                        )
-                        alias_domains.forEach { domain_name ->
+                        var domain_menu_open by remember { mutableStateOf(false) }
+                        Box {
                             alias_filter_chip(
-                                label = "@$domain_name",
-                                active = alias_domain_filter == domain_name,
-                                test_tag = "alias_filter_domain_$domain_name",
-                                on_click = { alias_domain_filter = domain_name },
+                                label = alias_domain_filter?.let { "@$it" }
+                                    ?: stringResource(R.string.alias_filter_all_domains),
+                                active = alias_domain_filter != null,
+                                test_tag = "alias_filter_domain",
+                                on_click = { domain_menu_open = true },
+                                trailing_icon = TablerIcons.ChevronDown,
                             )
+                            aster_dropdown_menu(
+                                expanded = domain_menu_open,
+                                on_dismiss = { domain_menu_open = false },
+                            ) {
+                                aster_dropdown_item(
+                                    label = stringResource(R.string.alias_filter_all_domains),
+                                    selected = alias_domain_filter == null,
+                                    test_tag = "alias_filter_all_domains",
+                                    on_click = {
+                                        alias_domain_filter = null
+                                        domain_menu_open = false
+                                    },
+                                )
+                                alias_domains.forEach { domain_name ->
+                                    aster_dropdown_item(
+                                        label = "@$domain_name",
+                                        selected = alias_domain_filter == domain_name,
+                                        test_tag = "alias_filter_domain_$domain_name",
+                                        on_click = {
+                                            alias_domain_filter = domain_name
+                                            domain_menu_open = false
+                                        },
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -869,48 +886,39 @@ private fun alias_filter_chip(
     active: Boolean,
     test_tag: String,
     on_click: () -> Unit,
+    trailing_icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
 ) {
     val colors = AsterMaterial.colors
-    Text(
-        text = label,
-        color = if (active) colors.accent_blue else colors.text_secondary,
-        fontSize = 12.sp,
-        fontWeight = FontWeight.Medium,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
+    val content = if (active) colors.on_accent else colors.text_primary
+    Row(
         modifier = Modifier
+            .height(34.dp)
             .clip(CircleShape)
-            .background(if (active) colors.accent_blue.copy(alpha = 0.14f) else colors.bg_secondary)
-            .border(
-                1.dp,
-                if (active) colors.accent_blue.copy(alpha = 0.5f) else colors.border_secondary,
-                CircleShape,
-            )
+            .background(if (active) colors.accent_blue else colors.bg_card)
+            .border(1.dp, if (active) colors.accent_blue else colors.border_primary, CircleShape)
             .clickable(onClick = on_click)
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(start = 14.dp, end = if (trailing_icon != null) 10.dp else 14.dp)
             .testTag(test_tag),
-    )
-}
-
-@Composable
-private fun alias_toggle_chip(label: String, active: Boolean, on_click: () -> Unit) {
-    val colors = AsterMaterial.colors
-    Text(
-        text = label,
-        color = if (active) colors.accent_blue else colors.text_muted,
-        fontSize = 11.sp,
-        fontWeight = FontWeight.Medium,
-        modifier = Modifier
-            .clip(CircleShape)
-            .background(if (active) colors.accent_blue.copy(alpha = 0.14f) else colors.bg_secondary)
-            .border(
-                1.dp,
-                if (active) colors.accent_blue.copy(alpha = 0.5f) else colors.border_secondary,
-                CircleShape,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            text = label,
+            color = content,
+            fontSize = 13.sp,
+            fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (trailing_icon != null) {
+            Icon(
+                imageVector = trailing_icon,
+                contentDescription = null,
+                tint = content,
+                modifier = Modifier.size(16.dp),
             )
-            .clickable(onClick = on_click)
-            .padding(horizontal = 8.dp, vertical = 3.dp),
-    )
+        }
+    }
 }
 
 private fun copy_address(context: Context, address: String) {
@@ -1028,12 +1036,14 @@ internal fun alias_list_row(
     val haptics = LocalHapticFeedback.current
     val shape = list_item_shape(idx, last_index)
     val note_val = alias.encrypted_note
+    var row_menu_open by remember(alias.id) { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
             .background(colors.bg_card)
             .border(1.dp, colors.border_secondary, shape)
+            .testTag("alias_row_${alias.id}")
             .combinedClickable(
                 hapticFeedbackEnabled = false,
                 onClick = {
@@ -1063,12 +1073,21 @@ internal fun alias_list_row(
                     Text(
                         text = alias.address,
                         color = if (alias.decryption_failed) colors.text_muted else colors.text_primary,
-                        fontSize = 14.sp,
+                        fontSize = 15.sp,
+                        lineHeight = 20.sp,
                         fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false),
+                        modifier = Modifier.weight(1f, fill = false).testTag("alias_address_${alias.id}"),
                     )
+                    if (alias.is_pinned && !alias.decryption_failed) {
+                        Icon(
+                            imageVector = pin_icon_filled,
+                            contentDescription = stringResource(R.string.alias_unpin),
+                            tint = colors.accent_blue,
+                            modifier = Modifier.size(14.dp),
+                        )
+                    }
                     if (!alias.decryption_failed && !alias.is_enabled) {
                         panel_row_chip(stringResource(R.string.alias_status_disabled_badge))
                     }
@@ -1119,42 +1138,75 @@ internal fun alias_list_row(
                     }
                 }
             }
-            if (on_toggle_pin != null && !alias.decryption_failed) {
-                AsterIconButton(
-                    icon = if (alias.is_pinned) pin_icon_filled else pin_icon,
-                    content_description = if (alias.is_pinned) {
-                        stringResource(R.string.alias_unpin)
-                    } else {
-                        stringResource(R.string.alias_pin)
-                    },
-                    onClick = on_toggle_pin,
-                    tint = if (alias.is_pinned) colors.accent_blue else colors.text_secondary,
-                    modifier = Modifier.testTag("alias_pin_${alias.id}"),
-                )
-            }
+            Spacer(Modifier.width(AsterSpacing.sm))
             AsterSwitch(
                 checked = alias.is_enabled,
                 enabled = grace_ends == null,
                 onCheckedChange = { on_toggle() },
             )
-            Spacer(Modifier.width(AsterSpacing.sm))
-            AsterIconButton(
-                icon = TablerIcons.Trash,
-                content_description = stringResource(R.string.delete),
-                onClick = on_delete,
-                tint = colors.danger,
-            )
-            if (on_toggle_expanded != null) {
+            Box {
                 AsterIconButton(
-                    icon = if (expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
-                    content_description = if (expanded) {
-                        stringResource(R.string.alias_collapse_settings)
-                    } else {
-                        stringResource(R.string.alias_expand_settings)
-                    },
-                    onClick = on_toggle_expanded,
-                    modifier = Modifier.testTag("alias_expand_${alias.id}"),
+                    icon = TablerIcons.DotsVertical,
+                    content_description = stringResource(R.string.more_options),
+                    onClick = { row_menu_open = true },
+                    modifier = Modifier.testTag("alias_menu_${alias.id}"),
                 )
+                aster_dropdown_menu(
+                    expanded = row_menu_open,
+                    on_dismiss = { row_menu_open = false },
+                ) {
+                    if (on_toggle_expanded != null && !alias.decryption_failed) {
+                        aster_dropdown_item(
+                            label = if (expanded) {
+                                stringResource(R.string.alias_collapse_settings)
+                            } else {
+                                stringResource(R.string.alias_expand_settings)
+                            },
+                            icon = if (expanded) TablerIcons.ChevronUp else TablerIcons.Settings,
+                            test_tag = "alias_expand_${alias.id}",
+                            on_click = {
+                                row_menu_open = false
+                                on_toggle_expanded()
+                            },
+                        )
+                    }
+                    if (on_toggle_pin != null && !alias.decryption_failed) {
+                        aster_dropdown_item(
+                            label = if (alias.is_pinned) {
+                                stringResource(R.string.alias_unpin)
+                            } else {
+                                stringResource(R.string.alias_pin)
+                            },
+                            icon = if (alias.is_pinned) pin_icon_filled else pin_icon,
+                            test_tag = "alias_pin_${alias.id}",
+                            on_click = {
+                                row_menu_open = false
+                                on_toggle_pin()
+                            },
+                        )
+                    }
+                    if (on_edit_note != null && !alias.decryption_failed) {
+                        aster_dropdown_item(
+                            label = stringResource(R.string.alias_note_title),
+                            icon = TablerIcons.Notes,
+                            test_tag = "alias_note_${alias.id}",
+                            on_click = {
+                                row_menu_open = false
+                                on_edit_note()
+                            },
+                        )
+                    }
+                    aster_dropdown_item(
+                        label = stringResource(R.string.delete),
+                        icon = TablerIcons.Trash,
+                        destructive = true,
+                        test_tag = "alias_delete_${alias.id}",
+                        on_click = {
+                            row_menu_open = false
+                            on_delete()
+                        },
+                    )
+                }
             }
         }
         if (expanded && panel_content != null) {
@@ -1285,9 +1337,10 @@ private fun custom_domain_address_row(
             Text(
                 text = addr.address,
                 color = if (addr.decryption_failed) colors.text_muted else colors.text_primary,
-                fontSize = 14.sp,
+                fontSize = 15.sp,
+                lineHeight = 20.sp,
                 fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
             Spacer(Modifier.height(4.dp))
@@ -2409,11 +2462,11 @@ private fun preference_chip(label: String) {
     Box(
         modifier = Modifier
             .clip(SquircleShape(999.dp))
-            .background(colors.accent_blue.copy(alpha = 0.12f))
-            .border(1.dp, colors.accent_blue.copy(alpha = 0.4f), SquircleShape(999.dp))
+            .background(colors.bg_secondary)
+            .border(1.dp, colors.border_primary, SquircleShape(999.dp))
             .padding(horizontal = 10.dp, vertical = 4.dp),
     ) {
-        Text(label, color = colors.accent_blue, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        Text(label, color = colors.text_primary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -2430,9 +2483,9 @@ private fun preference_option(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(if (selected) colors.accent_blue.copy(alpha = 0.12f) else colors.bg_secondary)
+            .background(if (selected) colors.bg_card else colors.bg_secondary)
             .border(
-                1.dp,
+                if (selected) 2.dp else 1.dp,
                 if (selected) colors.accent_blue else colors.border_secondary,
                 shape,
             )

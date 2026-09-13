@@ -3298,4 +3298,26 @@
     <string name="sender_verified_badge">Verifizierter Absender</string>
     <string name="sender_verified_title">Verifizierter Absender</string>
     <string name="sender_verified_message">Der Absender dieser E-Mail hat bestätigt, dass ihm %1$s gehört.</string>
+    <string name="other_devices">Andere Geräte</string>
+    <string name="other_devices_with_count">Andere Geräte (%d)</string>
+    <string name="no_other_devices">Keine anderen Geräte angemeldet</string>
+    <plurals name="devices_show_more">
+        <item quantity="zero">%d weitere anzeigen</item>
+        <item quantity="one">%d weitere anzeigen</item>
+        <item quantity="two">%d weitere anzeigen</item>
+        <item quantity="few">%d weitere anzeigen</item>
+        <item quantity="many">%d weitere anzeigen</item>
+        <item quantity="other">%d weitere anzeigen</item>
+    </plurals>
+    <string name="enc_key_fingerprint_label">Schlüssel-Fingerabdruck</string>
+    <string name="category_notifications_muted_toast">Benachrichtigungen für %1$s stummgeschaltet</string>
+    <string name="category_notifications_unmuted_toast">Benachrichtigungen für %1$s aktiviert</string>
+    <string name="settings_section_support">Support</string>
+    <string name="about_troubleshooting">Fehlerbehebung</string>
+    <string name="smtp_tokens_summary">Kennwörter nur zum Senden, mit denen deine Apps und Skripte E-Mails von deiner eigenen Domain senden.</string>
+    <string name="smtp_token_not_e2e_short">Nicht Ende-zu-Ende-verschlüsselt</string>
+    <string name="smtp_token_subtitle">%1$s · Zuletzt verwendet %2$s</string>
+    <string name="referral_step_1_title">Teile deinen Link</string>
+    <string name="referral_step_2_title">Dein Kontakt schließt ein Abo ab</string>
+    <string name="referral_step_3_title">Du erhältst Guthaben</string>
 </resources>

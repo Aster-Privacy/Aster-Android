@@ -134,7 +134,7 @@ internal fun alias_add_row(
                 .clip(RoundedCornerShape(12.dp))
                 .background(
                     if (can_add) {
-                        AsterMaterial.colors.accent_blue.copy(alpha = 0.16f)
+                        AsterMaterial.colors.accent_blue
                     } else {
                         AsterMaterial.colors.bg_secondary
                     },
@@ -150,13 +150,13 @@ internal fun alias_add_row(
             Icon(
                 imageVector = TablerIcons.Plus,
                 contentDescription = null,
-                tint = if (can_add) AsterMaterial.colors.accent_blue else AsterMaterial.colors.text_muted,
+                tint = if (can_add) AsterMaterial.colors.on_accent else AsterMaterial.colors.text_muted,
                 modifier = Modifier.size(16.dp),
             )
             Spacer(Modifier.width(4.dp))
             Text(
                 text = button_label,
-                color = if (can_add) AsterMaterial.colors.accent_blue else AsterMaterial.colors.text_muted,
+                color = if (can_add) AsterMaterial.colors.on_accent else AsterMaterial.colors.text_muted,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,

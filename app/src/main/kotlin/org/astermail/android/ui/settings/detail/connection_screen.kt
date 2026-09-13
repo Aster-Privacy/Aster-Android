@@ -1,4 +1,4 @@
-﻿//
+//
 // Aster Communications Inc.
 //
 // Copyright (c) 2026 Aster Communications Inc.
@@ -21,41 +21,25 @@
 
 package org.astermail.android.ui.settings.detail
 
-import compose.icons.TablerIcons
-import compose.icons.tablericons.*
-
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 
@@ -66,8 +50,7 @@ private data class ConnectionMethodOption(
     val id: String,
     val label: String,
     val description: String,
-    val icon: ImageVector,
-    val color: Color,
+    val image: Int,
 )
 
 @Composable
@@ -83,15 +66,13 @@ fun ConnectionScreen(on_back: () -> Unit) {
             id = CONNECTION_METHOD_DIRECT,
             label = stringResource(R.string.connection_direct),
             description = stringResource(R.string.connection_direct_description),
-            icon = TablerIcons.Bolt,
-            color = colors.accent_blue,
+            image = R.drawable.settings_direct,
         ),
         ConnectionMethodOption(
             id = CONNECTION_METHOD_CDN_RELAY,
             label = stringResource(R.string.connection_cdn_relay),
             description = stringResource(R.string.connection_cdn_relay_description),
-            icon = TablerIcons.Shield,
-            color = colors.success,
+            image = R.drawable.settings_cdn,
         ),
     )
 
@@ -109,42 +90,31 @@ fun ConnectionScreen(on_back: () -> Unit) {
             preferences_load_placeholder()
         } else {
             section_label(stringResource(R.string.connection_method_header))
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                options.forEachIndexed { i, option ->
-                    connection_method_option(
-                        option = option,
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Max),
+                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+            ) {
+                options.forEach { option ->
+                    illustrated_option_card(
+                        image = option.image,
+                        title = option.label,
+                        subtitle = option.description,
                         selected = state.connection_method == option.id,
-                        enabled = !state.connection_saving,
-                        on_click = { vm.update_connection_preference(option.id) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .testTag("connection_option_${option.id}"),
+                        on_click = {
+                            if (!state.connection_saving && state.connection_method != option.id) {
+                                vm.update_connection_preference(option.id)
+                            }
+                        },
                     )
-                    if (i < options.lastIndex) AsterDivider(modifier = Modifier)
                 }
             }
         }
         v_gap(AsterSpacing.xxl)
     }
-}
-
-@Composable
-private fun connection_method_option(
-    option: ConnectionMethodOption,
-    selected: Boolean,
-    enabled: Boolean,
-    on_click: () -> Unit,
-) {
-    choice_option_row(
-        label = option.label,
-        selected = selected,
-        on_click = on_click,
-        subtitle = option.description,
-        enabled = enabled,
-        leading = {
-            Icon(
-                imageVector = option.icon,
-                contentDescription = null,
-                tint = option.color,
-                modifier = Modifier.size(20.dp),
-            )
-        },
-    )
 }

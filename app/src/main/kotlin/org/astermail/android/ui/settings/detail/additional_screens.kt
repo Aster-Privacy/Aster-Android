@@ -40,7 +40,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -75,33 +74,21 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.res.imageResource
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.pluralStringResource
@@ -125,7 +112,6 @@ import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.UpgradeGate
-import org.astermail.android.design.darken
 import org.astermail.android.design.lighten
 import org.astermail.android.folders.flatten_folder_tree
 import org.astermail.android.folders.folder_sibling_group
@@ -211,16 +197,12 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
         }
         v_gap(AsterSpacing.lg)
 
-        revoke_all_devices_card(
-            enabled = state.sessions.size > 1,
-            in_flight = state.revoking_all_sessions,
-            on_click = { show_revoke_all_confirm = true },
-        )
-        v_gap(AsterSpacing.lg)
-
-        section_label(pluralStringResource(R.plurals.devices_count, state.sessions.size, state.sessions.size))
         if (state.sessions.isEmpty() && (state.is_loading || !devices_load_settled)) {
-            skeleton_card_list(rows = 6, leading_circle = true, trailing_width = 72.dp)
+            section_label(stringResource(R.string.this_device))
+            skeleton_card_list(rows = 1, leading_circle = true, trailing_width = 72.dp)
+            v_gap(AsterSpacing.lg)
+            section_label(stringResource(R.string.other_devices))
+            skeleton_card_list(rows = 5, leading_circle = true, trailing_width = 72.dp)
         } else if (state.sessions.isEmpty()) {
             load_failed_card(state.error ?: stringResource(R.string.could_not_load_devices)) {
                 vm.load_sessions()
@@ -229,6 +211,7 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
             val exited_ids = remember { mutableSetOf<String>() }
             val last_displayed = remember { mutableListOf<org.astermail.android.api.settings.SessionInfo>() }
             var removal_tick by remember { mutableIntStateOf(0) }
+            var visible_limit by rememberSaveable { mutableIntStateOf(devices_page_size) }
             val displayed = remember(state.sessions, removal_tick) {
                 val by_id = state.sessions.associateBy { it.id }
                 exited_ids.removeAll(by_id.keys)
@@ -245,47 +228,113 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
                 merged.toList()
             }
             val current_ids = remember(state.sessions) { state.sessions.map { it.id }.toSet() }
-            val last_visible_id = displayed.lastOrNull { it.id in current_ids }?.id
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                displayed.forEach { s ->
-                    key(s.id) {
-                        animated_session_row(
-                            visible = s.id in current_ids,
-                            on_exited = {
-                                exited_ids.add(s.id)
-                                removal_tick++
-                            },
-                        ) {
-                            val icon = org.astermail.android.ui.settings.device_client_icon(
-                                org.astermail.android.ui.settings.device_client_kind(s.browser, s.device_type, s.os),
+            val current_sessions = displayed.filter { it.is_current }
+            val other_sessions = displayed.filterNot { it.is_current }
+            val other_live_count = state.sessions.count { !it.is_current }
+            val shown_others = other_sessions.take(visible_limit)
+            val hidden_count = (other_sessions.size - shown_others.size).coerceAtLeast(0)
+            val next_page = minOf(hidden_count, devices_page_size)
+
+            val session_row: @Composable (org.astermail.android.api.settings.SessionInfo, Boolean) -> Unit = { s, show_divider ->
+                key(s.id) {
+                    animated_session_row(
+                        visible = s.id in current_ids,
+                        on_exited = {
+                            exited_ids.add(s.id)
+                            removal_tick++
+                        },
+                    ) {
+                        val icon = org.astermail.android.ui.settings.device_client_icon(
+                            org.astermail.android.ui.settings.device_client_kind(s.browser, s.device_type, s.os),
+                        )
+                        val name = org.astermail.android.ui.settings.device_display_name(s.browser, s.device_type)
+                            .ifEmpty { stringResource(R.string.unknown_device) }
+                        val last_seen = if (s.is_current) stringResource(R.string.active_now) else relative_time_label(s.last_active)
+                        Column {
+                            detail_row(
+                                title = name,
+                                subtitle = last_seen,
+                                icon = icon,
+                                on_click = null,
+                                trailing = {
+                                    if (s.is_current) {
+                                        org.astermail.android.ui.settings.this_device_badge()
+                                    } else {
+                                        revoke_pill_button(
+                                            label = stringResource(R.string.revoke),
+                                            in_flight = s.id in state.revoking_session_ids,
+                                            on_click = { pending_revoke_session = s.id },
+                                        )
+                                    }
+                                },
                             )
-                            val name = org.astermail.android.ui.settings.device_display_name(s.browser, s.device_type)
-                                .ifEmpty { stringResource(R.string.unknown_device) }
-                            val last_seen = if (s.is_current) stringResource(R.string.active_now) else relative_time_label(s.last_active)
-                            Column {
-                                detail_row(
-                                    title = name,
-                                    subtitle = last_seen,
-                                    icon = icon,
-                                    on_click = null,
-                                    trailing = {
-                                        if (s.is_current) {
-                                            org.astermail.android.ui.settings.this_device_badge()
-                                        } else {
-                                            revoke_pill_button(
-                                                label = stringResource(R.string.revoke),
-                                                in_flight = s.id in state.revoking_session_ids,
-                                                on_click = { pending_revoke_session = s.id },
-                                            )
-                                        }
-                                    },
-                                )
-                                if (s.id != last_visible_id) AsterDivider(modifier = Modifier)
-                            }
+                            if (show_divider) AsterDivider(modifier = Modifier)
                         }
                     }
                 }
             }
+
+            if (current_sessions.isNotEmpty()) {
+                section_label(stringResource(R.string.this_device))
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    current_sessions.forEachIndexed { idx, s ->
+                        session_row(s, idx < current_sessions.lastIndex)
+                    }
+                }
+                v_gap(AsterSpacing.lg)
+            }
+
+            section_label(
+                if (other_live_count > 0) {
+                    stringResource(R.string.other_devices_with_count, other_live_count)
+                } else {
+                    stringResource(R.string.other_devices)
+                },
+            )
+            AsterCard(modifier = Modifier.fillMaxWidth().testTag("other_devices_card")) {
+                if (other_sessions.isEmpty()) {
+                    detail_row(
+                        title = stringResource(R.string.no_other_devices),
+                        icon = TablerIcons.ShieldCheck,
+                    )
+                } else {
+                    shown_others.forEach { s -> session_row(s, true) }
+                    if (hidden_count > 0) {
+                        devices_list_action_row(
+                            label = pluralStringResource(R.plurals.devices_show_more, next_page, next_page),
+                            icon = TablerIcons.ChevronDown,
+                            tint = colors.accent_blue,
+                            test_tag = "devices_show_more",
+                            on_click = { visible_limit += devices_page_size },
+                        )
+                        AsterDivider(modifier = Modifier)
+                    } else if (visible_limit > devices_page_size) {
+                        devices_list_action_row(
+                            label = stringResource(R.string.show_less),
+                            icon = TablerIcons.ChevronUp,
+                            tint = colors.accent_blue,
+                            test_tag = "devices_show_less",
+                            on_click = { visible_limit = devices_page_size },
+                        )
+                        AsterDivider(modifier = Modifier)
+                    }
+                    devices_list_action_row(
+                        label = stringResource(R.string.revoke_all_other),
+                        icon = TablerIcons.Logout,
+                        tint = colors.danger,
+                        test_tag = "revoke_all_devices",
+                        enabled = other_live_count > 0,
+                        in_flight = state.revoking_all_sessions,
+                        on_click = { show_revoke_all_confirm = true },
+                    )
+                }
+            }
+            Text(
+                text = stringResource(R.string.revoke_all_devices_description),
+                color = colors.text_tertiary,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(horizontal = AsterSpacing.xs, vertical = AsterSpacing.sm),
+            )
         }
         v_gap(AsterSpacing.xxl)
     }
@@ -342,7 +391,7 @@ private fun animated_session_row(
 }
 
 @Composable
-private fun revoke_pill_button(
+internal fun revoke_pill_button(
     label: String,
     in_flight: Boolean,
     on_click: () -> Unit,
@@ -376,82 +425,54 @@ private fun revoke_pill_button(
     }
 }
 
-@Composable
-private fun revoke_all_devices_card(
-    enabled: Boolean,
-    in_flight: Boolean,
-    on_click: () -> Unit,
-) {
-    val colors = AsterMaterial.colors
-    AsterCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.fillMaxWidth().padding(AsterSpacing.md)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                androidx.compose.material3.Icon(
-                    imageVector = TablerIcons.Logout,
-                    contentDescription = null,
-                    tint = colors.danger,
-                    modifier = Modifier.size(22.dp),
-                )
-                Spacer(Modifier.width(AsterSpacing.md))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.revoke_all_other),
-                        color = colors.text_primary,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    Text(
-                        text = stringResource(R.string.revoke_all_devices_description),
-                        color = colors.text_tertiary,
-                        fontSize = 13.sp,
-                    )
-                }
-            }
-            Spacer(Modifier.height(AsterSpacing.md))
-            tonal_action_button(
-                label = stringResource(R.string.revoke_all_action),
-                enabled = enabled,
-                in_flight = in_flight,
-                on_click = on_click,
-            )
-        }
-    }
-}
+private const val devices_page_size = 10
 
 @Composable
-private fun tonal_action_button(
+internal fun devices_list_action_row(
     label: String,
-    enabled: Boolean,
-    in_flight: Boolean,
+    icon: ImageVector,
+    tint: Color,
+    test_tag: String,
     on_click: () -> Unit,
+    enabled: Boolean = true,
+    in_flight: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
-    val shape = RoundedCornerShape(AsterRadius.pill)
     val interactive = enabled && !in_flight
-    Box(
+    val resolved_tint = if (enabled) tint else colors.text_muted
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(48.dp)
-            .clip(shape)
-            .background(colors.bg_tertiary.copy(alpha = if (interactive) 1f else 0.6f), shape)
+            .heightIn(min = 52.dp)
             .clickable(enabled = interactive, onClick = on_click)
-            .padding(horizontal = AsterSpacing.lg),
-        contentAlignment = Alignment.Center,
+            .testTag(test_tag)
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (in_flight) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(18.dp),
-                color = colors.text_primary,
-                strokeWidth = 2.dp,
-            )
-        } else {
-            Text(
-                text = label,
-                color = if (enabled) colors.text_primary else colors.text_muted,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
+        Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+            if (in_flight) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    color = resolved_tint,
+                    strokeWidth = 2.dp,
+                )
+            } else {
+                androidx.compose.material3.Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = resolved_tint,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
+        Spacer(Modifier.width(AsterSpacing.md))
+        Text(
+            text = label,
+            color = resolved_tint,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 
@@ -514,18 +535,21 @@ fun ReferralScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
             val commission_percent =
                 if (referral.commission_percent > 0) referral.commission_percent else 10
 
-            referral_hero(
+            referral_intro()
+
+            v_gap(AsterSpacing.lg)
+            referral_link_card(
                 link = link,
-                earned_cents = earned_cents,
                 on_copy = copy_link,
                 on_share = share_link,
             )
 
             v_gap(AsterSpacing.md)
-            referral_stats_row(
+            referral_stats_card(
                 total = referral.total_referrals,
                 pending = referral.pending_referrals,
                 completed = referral.completed_referrals,
+                earned_cents = earned_cents,
             )
 
             v_gap(AsterSpacing.lg)
@@ -548,12 +572,7 @@ fun ReferralScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
             if (history.isEmpty()) {
                 referral_empty_history()
             } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(SquircleShape(AsterRadius.xl))
-                        .border(1.dp, colors.border_secondary, SquircleShape(AsterRadius.xl)),
-                ) {
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
                     history.forEachIndexed { index, item ->
                         if (index > 0) AsterDivider()
                         referral_history_row(item)
@@ -566,278 +585,190 @@ fun ReferralScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 }
 
 @Composable
-private fun referral_hero(
+private fun referral_intro() {
+    val colors = AsterMaterial.colors
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = AsterSpacing.xs)) {
+        Text(
+            text = stringResource(R.string.invite_friends),
+            color = colors.text_primary,
+            fontSize = 20.sp,
+            lineHeight = 26.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Spacer(Modifier.height(AsterSpacing.xs))
+        Text(
+            text = stringResource(R.string.referral_program_description),
+            color = colors.text_secondary,
+            fontSize = 14.sp,
+            lineHeight = 20.sp,
+        )
+    }
+}
+
+@Composable
+private fun referral_link_card(
     link: String,
-    earned_cents: Long,
     on_copy: () -> Unit,
     on_share: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val accent = colors.accent_blue.darken(0.12f)
-    val graphic = ImageBitmap.imageResource(R.drawable.referral_decentralized)
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(SquircleShape(AsterRadius.xxl))
-            .background(accent),
-    ) {
-        Canvas(modifier = Modifier.matchParentSize()) {
-            if (size.width <= 0f || size.height <= 0f) return@Canvas
-            val region_left = size.width * 0.45f
-            val region_width = size.width - region_left
-            val scale = maxOf(region_width / graphic.width, size.height / graphic.height)
-            val draw_width = (graphic.width * scale).toInt()
-            val draw_height = (graphic.height * scale).toInt()
-            val region = Rect(Offset(region_left, 0f), androidx.compose.ui.geometry.Size(region_width, size.height))
-            drawIntoCanvas { canvas ->
-                val paint = Paint().apply { blendMode = BlendMode.Screen }
-                canvas.saveLayer(region, paint)
-                drawImage(
-                    image = graphic,
-                    dstOffset = IntOffset(
-                        (region_left + (region_width - draw_width) / 2f).toInt(),
-                        ((size.height - draw_height) / 2f).toInt(),
-                    ),
-                    dstSize = IntSize(draw_width, draw_height),
-                    alpha = 0.60f,
-                )
-                drawRect(
-                    brush = Brush.horizontalGradient(
-                        0.0f to Color.Transparent,
-                        0.35f to Color.Black,
-                        0.90f to Color.Black,
-                        1.0f to Color.Transparent,
-                        startX = region_left,
-                        endX = size.width,
-                    ),
-                    topLeft = region.topLeft,
-                    size = region.size,
-                    blendMode = BlendMode.DstIn,
-                )
-                canvas.restore()
-            }
-        }
-        Column(modifier = Modifier.padding(AsterSpacing.xl)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    val has_link = link.isNotEmpty()
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(AsterSpacing.lg)) {
             Text(
                 text = stringResource(R.string.your_referral_link),
-                color = Color.White,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f),
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
             )
-            Spacer(Modifier.width(AsterSpacing.sm))
-            Text(
-                text = format_cents(earned_cents) + " " + stringResource(R.string.total_earned),
-                color = Color.White,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
+            Spacer(Modifier.height(AsterSpacing.sm))
+            Row(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(AsterRadius.pill))
-                    .background(Color.White.copy(alpha = 0.15f))
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
-            )
-        }
-        Spacer(Modifier.height(6.dp))
-        Text(
-            text = stringResource(R.string.referral_program_description),
-            color = Color.White.copy(alpha = 0.70f),
-            fontSize = 13.sp,
-            lineHeight = 18.sp,
-        )
-        Spacer(Modifier.height(AsterSpacing.lg))
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(38.dp)
-                .clip(RoundedCornerShape(AsterRadius.md))
-                .background(Color.Black.copy(alpha = 0.20f))
-                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(AsterRadius.md))
-                .clickable(enabled = link.isNotEmpty(), onClick = on_copy)
-                .padding(horizontal = AsterSpacing.md),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            androidx.compose.material3.Icon(
-                imageVector = TablerIcons.Gift,
-                contentDescription = null,
-                tint = Color.White.copy(alpha = 0.60f),
-                modifier = Modifier.size(15.dp),
-            )
-            Spacer(Modifier.width(AsterSpacing.sm))
-            Text(
-                text = link.ifEmpty { stringResource(R.string.no_link_available) },
-                color = Color.White,
-                fontSize = 12.sp,
-                fontFamily = FontFamily.Monospace,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Spacer(Modifier.height(AsterSpacing.sm))
-        Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-            referral_hero_button(
-                modifier = Modifier.weight(1f),
-                icon = TablerIcons.Copy,
-                label = stringResource(R.string.copy_link),
-                accent = accent,
-                on_click = on_copy,
-                enabled = link.isNotEmpty(),
-            )
-            referral_hero_button(
-                modifier = Modifier.weight(1f),
-                icon = TablerIcons.Send,
-                label = stringResource(R.string.share_link),
-                accent = accent,
-                on_click = on_share,
-                enabled = link.isNotEmpty(),
-            )
-        }
-        }
-    }
-}
-
-@Composable
-private fun referral_hero_button(
-    modifier: Modifier = Modifier,
-    icon: ImageVector,
-    label: String,
-    accent: Color,
-    on_click: () -> Unit,
-    enabled: Boolean = true,
-) {
-    val ink = accent.darken(0.42f).copy(alpha = if (enabled) 1f else 0.45f)
-    Row(
-        modifier = modifier
-            .height(38.dp)
-            .clip(RoundedCornerShape(AsterRadius.md))
-            .background(Color.White.copy(alpha = if (enabled) 1f else 0.55f))
-            .clickable(enabled = enabled, onClick = on_click),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        androidx.compose.material3.Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = ink,
-            modifier = Modifier.size(15.dp),
-        )
-        Spacer(Modifier.width(6.dp))
-        Text(
-            text = label,
-            color = ink,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
-
-@Composable
-private fun referral_stats_row(total: Long, pending: Long, completed: Long) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-    ) {
-        referral_stat_ring(
-            modifier = Modifier.weight(1f),
-            value = total,
-            max = total,
-            accent = colors.text_secondary,
-            icon = TablerIcons.Users,
-            label = stringResource(R.string.total_referrals),
-        )
-        referral_stat_ring(
-            modifier = Modifier.weight(1f),
-            value = pending,
-            max = total,
-            accent = colors.warning,
-            icon = TablerIcons.Clock,
-            label = stringResource(R.string.pending),
-        )
-        referral_stat_ring(
-            modifier = Modifier.weight(1f),
-            value = completed,
-            max = total,
-            accent = colors.success,
-            icon = TablerIcons.Check,
-            label = stringResource(R.string.completed),
-        )
-    }
-}
-
-@Composable
-private fun referral_stat_ring(
-    modifier: Modifier = Modifier,
-    value: Long,
-    max: Long,
-    accent: Color,
-    icon: ImageVector,
-    label: String,
-) {
-    val colors = AsterMaterial.colors
-    val ratio = when {
-        max > 0L -> (value.toFloat() / max.toFloat()).coerceIn(0f, 1f)
-        value > 0L -> 1f
-        else -> 0f
-    }
-    Column(
-        modifier = modifier
-            .clip(SquircleShape(AsterRadius.xl))
-            .border(1.dp, colors.border_secondary, SquircleShape(AsterRadius.xl))
-            .padding(vertical = AsterSpacing.md, horizontal = AsterSpacing.xs),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(modifier = Modifier.size(44.dp), contentAlignment = Alignment.Center) {
-            val track = colors.border_secondary
-            Canvas(modifier = Modifier.size(44.dp)) {
-                val stroke = 4.dp.toPx()
-                val inset = stroke / 2f
-                val arc_size = androidx.compose.ui.geometry.Size(
-                    size.width - stroke,
-                    size.height - stroke,
+                    .fillMaxWidth()
+                    .height(44.dp)
+                    .clip(SquircleShape(AsterRadius.md))
+                    .background(colors.bg_secondary)
+                    .padding(start = AsterSpacing.md, end = AsterSpacing.xs),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = link.ifEmpty { stringResource(R.string.no_link_available) },
+                    color = if (has_link) colors.text_primary else colors.text_tertiary,
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
                 )
-                drawArc(
-                    color = track,
-                    startAngle = 0f,
-                    sweepAngle = 360f,
-                    useCenter = false,
-                    topLeft = Offset(inset, inset),
-                    size = arc_size,
-                    style = Stroke(width = stroke),
-                )
-                if (ratio > 0f) {
-                    drawArc(
-                        color = accent,
-                        startAngle = -90f,
-                        sweepAngle = 360f * ratio,
-                        useCenter = false,
-                        topLeft = Offset(inset, inset),
-                        size = arc_size,
-                        style = Stroke(width = stroke, cap = StrokeCap.Round),
+                Spacer(Modifier.width(AsterSpacing.xs))
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .clickable(enabled = has_link, onClick = on_copy),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    androidx.compose.material3.Icon(
+                        imageVector = TablerIcons.Copy,
+                        contentDescription = stringResource(R.string.copy_link),
+                        tint = if (has_link) colors.text_secondary else colors.text_muted,
+                        modifier = Modifier.size(18.dp),
                     )
                 }
             }
-            androidx.compose.material3.Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = accent,
-                modifier = Modifier.size(16.dp),
+            Spacer(Modifier.height(AsterSpacing.md))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+            ) {
+                AsterButton(
+                    label = stringResource(R.string.share_link),
+                    onClick = on_share,
+                    modifier = Modifier.weight(1f),
+                    enabled = has_link,
+                )
+                AsterSecondaryButton(
+                    label = stringResource(R.string.copy),
+                    onClick = on_copy,
+                    modifier = Modifier.weight(1f),
+                    enabled = has_link,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun referral_stats_card(
+    total: Long,
+    pending: Long,
+    completed: Long,
+    earned_cents: Long,
+) {
+    val colors = AsterMaterial.colors
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min)
+                .padding(vertical = AsterSpacing.lg),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            referral_stat_column(
+                modifier = Modifier.weight(1f),
+                value = total,
+                label = stringResource(R.string.total_referrals),
+            )
+            referral_stat_divider()
+            referral_stat_column(
+                modifier = Modifier.weight(1f),
+                value = pending,
+                label = stringResource(R.string.pending),
+            )
+            referral_stat_divider()
+            referral_stat_column(
+                modifier = Modifier.weight(1f),
+                value = completed,
+                label = stringResource(R.string.completed),
             )
         }
-        Spacer(Modifier.height(AsterSpacing.sm))
+        AsterDivider()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.total_earned),
+                color = colors.text_secondary,
+                fontSize = 14.sp,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(AsterSpacing.sm))
+            Text(
+                text = format_cents(earned_cents),
+                color = colors.text_primary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
+
+@Composable
+private fun referral_stat_divider() {
+    val colors = AsterMaterial.colors
+    Box(
+        modifier = Modifier
+            .width(1.dp)
+            .fillMaxHeight()
+            .background(colors.border_primary),
+    )
+}
+
+@Composable
+private fun referral_stat_column(
+    modifier: Modifier = Modifier,
+    value: Long,
+    label: String,
+) {
+    val colors = AsterMaterial.colors
+    Column(
+        modifier = modifier.padding(horizontal = AsterSpacing.xs),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         Text(
             text = value.toString(),
-            color = accent,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
+            color = colors.text_primary,
+            fontSize = 22.sp,
+            lineHeight = 28.sp,
+            fontWeight = FontWeight.SemiBold,
         )
-        Spacer(Modifier.height(1.dp))
+        Spacer(Modifier.height(2.dp))
         Text(
             text = label,
-            color = colors.text_muted,
-            fontSize = 10.5.sp,
+            color = colors.text_tertiary,
+            fontSize = 12.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -846,48 +777,66 @@ private fun referral_stat_ring(
 
 @Composable
 private fun referral_steps_card() {
-    val colors = AsterMaterial.colors
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(SquircleShape(AsterRadius.lg))
-            .background(colors.bg_tertiary)
-            .border(1.dp, colors.border_secondary, SquircleShape(AsterRadius.lg))
-            .padding(AsterSpacing.md),
-        verticalArrangement = Arrangement.spacedBy(AsterSpacing.md),
-    ) {
-        referral_step_row(1, stringResource(R.string.referral_step_1))
-        referral_step_row(2, stringResource(R.string.referral_step_2))
-        referral_step_row(3, stringResource(R.string.referral_step_3))
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(AsterSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(AsterSpacing.lg),
+        ) {
+            referral_step_row(
+                1,
+                stringResource(R.string.referral_step_1_title),
+                stringResource(R.string.referral_step_1),
+            )
+            referral_step_row(
+                2,
+                stringResource(R.string.referral_step_2_title),
+                stringResource(R.string.referral_step_2),
+            )
+            referral_step_row(
+                3,
+                stringResource(R.string.referral_step_3_title),
+                stringResource(R.string.referral_step_3),
+            )
+        }
     }
 }
 
 @Composable
-private fun referral_step_row(number: Int, body: String) {
+private fun referral_step_row(number: Int, title: String, body: String) {
     val colors = AsterMaterial.colors
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
         Box(
             modifier = Modifier
-                .size(24.dp)
-                .border(1.5.dp, colors.accent_blue.copy(alpha = 0.55f), CircleShape),
+                .size(28.dp)
+                .clip(CircleShape)
+                .background(colors.bg_tertiary),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = number.toString(),
-                color = colors.accent_blue,
-                fontSize = 12.sp,
-                lineHeight = 12.sp,
-                fontWeight = FontWeight.Bold,
+                color = colors.text_primary,
+                fontSize = 13.sp,
+                lineHeight = 13.sp,
+                fontWeight = FontWeight.SemiBold,
             )
         }
         Spacer(Modifier.width(AsterSpacing.md))
-        Text(
-            text = body,
-            color = colors.text_secondary,
-            fontSize = 13.sp,
-            lineHeight = 18.sp,
-            modifier = Modifier.weight(1f),
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                color = colors.text_primary,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = body,
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+            )
+        }
     }
 }
 
@@ -898,101 +847,54 @@ private fun referral_rewards_card(
     max_cents: Long,
 ) {
     val colors = AsterMaterial.colors
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(SquircleShape(AsterRadius.lg))
-            .background(colors.bg_tertiary)
-            .border(1.dp, colors.border_secondary, SquircleShape(AsterRadius.lg))
-            .padding(AsterSpacing.lg),
-        verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-    ) {
-        Text(
-            text = stringResource(R.string.referral_reward_info),
-            color = colors.text_secondary,
-            fontSize = 13.sp,
-            lineHeight = 18.sp,
-        )
-        Text(
-            text = stringResource(R.string.referral_commission_info, commission_percent),
-            color = colors.text_secondary,
-            fontSize = 13.sp,
-            lineHeight = 18.sp,
-        )
-        if (max_cents > 0L) {
-            Spacer(Modifier.height(AsterSpacing.xs))
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                referral_semicircle_gauge(
-                    percent = (earned_cents.toFloat() / max_cents.toFloat()) * 100f,
-                    bottom_label = stringResource(R.string.referral_gauge_earned_label),
-                )
-                Spacer(Modifier.height(AsterSpacing.sm))
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(AsterSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+        ) {
+            Text(
+                text = stringResource(R.string.referral_reward_info),
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+            )
+            Text(
+                text = stringResource(R.string.referral_commission_info, commission_percent),
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+            )
+            if (max_cents > 0L) {
+                val ratio = (earned_cents.toFloat() / max_cents.toFloat()).coerceIn(0f, 1f)
+                Spacer(Modifier.height(AsterSpacing.xs))
                 Text(
                     text = stringResource(
                         R.string.referral_max_credits,
                         format_cents(earned_cents),
                         format_cents(max_cents),
                     ),
-                    color = colors.text_muted,
-                    fontSize = 11.sp,
+                    color = colors.text_primary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
                 )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(AsterRadius.pill))
+                        .background(colors.bg_tertiary),
+                ) {
+                    if (ratio > 0f) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(ratio)
+                                .fillMaxHeight()
+                                .clip(RoundedCornerShape(AsterRadius.pill))
+                                .background(colors.accent_blue),
+                        )
+                    }
+                }
             }
-        }
-    }
-}
-
-@Composable
-private fun referral_semicircle_gauge(percent: Float, bottom_label: String) {
-    val colors = AsterMaterial.colors
-    val clamped = percent.coerceIn(0f, 100f)
-    val track = colors.border_secondary
-    val accent = colors.accent_blue
-    Box(
-        modifier = Modifier.width(180.dp).height(96.dp),
-        contentAlignment = Alignment.BottomCenter,
-    ) {
-        Canvas(modifier = Modifier.fillMaxWidth().height(96.dp)) {
-            val stroke = 14.dp.toPx()
-            val diameter = size.width - stroke
-            val arc_size = androidx.compose.ui.geometry.Size(diameter, diameter)
-            val top_left = Offset(stroke / 2f, stroke / 2f)
-            drawArc(
-                color = track,
-                startAngle = 180f,
-                sweepAngle = 180f,
-                useCenter = false,
-                topLeft = top_left,
-                size = arc_size,
-                style = Stroke(width = stroke, cap = StrokeCap.Round),
-            )
-            if (clamped > 0f) {
-                drawArc(
-                    color = accent,
-                    startAngle = 180f,
-                    sweepAngle = 180f * (clamped / 100f),
-                    useCenter = false,
-                    topLeft = top_left,
-                    size = arc_size,
-                    style = Stroke(width = stroke, cap = StrokeCap.Round),
-                )
-            }
-        }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = kotlin.math.round(clamped).toInt().toString() + "%",
-                color = colors.text_primary,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = bottom_label,
-                color = colors.text_muted,
-                fontSize = 11.sp,
-            )
         }
     }
 }
@@ -1000,26 +902,41 @@ private fun referral_semicircle_gauge(percent: Float, bottom_label: String) {
 @Composable
 private fun referral_empty_history() {
     val colors = AsterMaterial.colors
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(SquircleShape(AsterRadius.xl))
-            .border(1.dp, colors.border_secondary, SquircleShape(AsterRadius.xl))
-            .padding(vertical = AsterSpacing.xxl),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        androidx.compose.material3.Icon(
-            imageVector = TablerIcons.Users,
-            contentDescription = null,
-            tint = colors.text_muted,
-            modifier = Modifier.size(30.dp),
-        )
-        Spacer(Modifier.height(AsterSpacing.sm))
-        Text(
-            text = stringResource(R.string.no_referrals_yet),
-            color = colors.text_muted,
-            fontSize = 12.sp,
-        )
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xl),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(colors.bg_secondary),
+                contentAlignment = Alignment.Center,
+            ) {
+                androidx.compose.material3.Icon(
+                    imageVector = TablerIcons.Users,
+                    contentDescription = null,
+                    tint = colors.text_secondary,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+            Spacer(Modifier.height(AsterSpacing.md))
+            Text(
+                text = stringResource(R.string.no_referrals_yet),
+                color = colors.text_primary,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = stringResource(R.string.referral_history_empty_hint),
+                color = colors.text_tertiary,
+                fontSize = 13.sp,
+            )
+        }
     }
 }
 
@@ -1027,7 +944,6 @@ private fun referral_empty_history() {
 private fun referral_history_row(item: org.astermail.android.api.labels.ReferralHistoryItem) {
     val colors = AsterMaterial.colors
     val is_completed = item.status == "completed"
-    val status_color = if (is_completed) colors.success else colors.warning
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1048,34 +964,28 @@ private fun referral_history_row(item: org.astermail.android.api.labels.Referral
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = date_label,
-                    color = colors.text_muted,
-                    fontSize = 11.5.sp,
+                    color = colors.text_tertiary,
+                    fontSize = 12.sp,
                 )
             }
         }
         Spacer(Modifier.width(AsterSpacing.sm))
-        val status_bg = org.astermail.android.ui.mail.chip_background(
-            status_color,
-            colors.bg_primary,
-            colors.is_dark,
-        )
-        Text(
-            text = stringResource(if (is_completed) R.string.completed else R.string.pending),
-            color = org.astermail.android.ui.mail.chip_content(status_color, status_bg, colors.is_dark),
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier
-                .clip(RoundedCornerShape(AsterRadius.pill))
-                .background(status_bg)
-                .padding(horizontal = 8.dp, vertical = 3.dp),
-        )
-        if (item.referrer_credit_cents > 0) {
-            Spacer(Modifier.width(AsterSpacing.sm))
+        Column(horizontalAlignment = Alignment.End) {
             Text(
-                text = "+" + format_cents(item.referrer_credit_cents),
-                color = colors.success,
-                fontSize = 13.5.sp,
+                text = if (item.referrer_credit_cents > 0) {
+                    "+" + format_cents(item.referrer_credit_cents)
+                } else {
+                    format_cents(0L)
+                },
+                color = colors.text_primary,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = stringResource(if (is_completed) R.string.completed else R.string.pending),
+                color = if (is_completed) colors.success else colors.text_tertiary,
+                fontSize = 12.sp,
             )
         }
     }

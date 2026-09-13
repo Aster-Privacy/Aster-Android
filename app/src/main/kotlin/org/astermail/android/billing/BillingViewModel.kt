@@ -105,6 +105,8 @@ object AvailablePlansCache {
 
 const val CHECKOUT_POLL_INTERVAL_MS = 3_000L
 const val CHECKOUT_POLL_TIMEOUT_MS = 60_000L
+const val CHECKOUT_QUIET_POLL_TIMEOUT_MS = 15_000L
+const val CHECKOUT_POLL_REQUEST_TIMEOUT_MS = 10_000L
 const val CHECKOUT_TARGET_PREFS = "aster_billing_checkout_target"
 const val CHECKOUT_TARGET_PLAN_KEY = "plan_code"
 const val CHECKOUT_TARGET_INTERVAL_KEY = "billing_interval"
@@ -505,21 +507,24 @@ class BillingViewModel @Inject constructor(
 
     private fun poll_after_return(returned_paid: Boolean = false) {
         if (poll_job?.isActive == true) return
-        _state.update { it.copy(awaiting_checkout = false, awaiting_portal = false, checking_payment = true) }
+        _state.update { it.copy(awaiting_checkout = false, awaiting_portal = false, checking_payment = returned_paid) }
         poll_job = viewModelScope.launch {
             val before = snapshot_before_checkout
-            val deadline = CHECKOUT_POLL_TIMEOUT_MS
-            var elapsed = 0L
+            val deadline = if (returned_paid) CHECKOUT_POLL_TIMEOUT_MS else CHECKOUT_QUIET_POLL_TIMEOUT_MS
+            val started_at = android.os.SystemClock.elapsedRealtime()
             var changed = false
-            while (true) {
-                reload_subscription()
-                if (before == null || subscription_signature(_state.value.subscription) != before) {
-                    changed = true
-                    break
+            try {
+                while (true) {
+                    kotlinx.coroutines.withTimeoutOrNull(CHECKOUT_POLL_REQUEST_TIMEOUT_MS) { reload_subscription() }
+                    if (before == null || subscription_signature(_state.value.subscription) != before) {
+                        changed = true
+                        break
+                    }
+                    if (android.os.SystemClock.elapsedRealtime() - started_at >= deadline) break
+                    delay(CHECKOUT_POLL_INTERVAL_MS)
                 }
-                if (elapsed >= deadline) break
-                delay(CHECKOUT_POLL_INTERVAL_MS)
-                elapsed += CHECKOUT_POLL_INTERVAL_MS
+            } finally {
+                if (!changed) _state.update { it.copy(checking_payment = false, is_loading = false) }
             }
             load_payment_methods()
             load_storage_addons()

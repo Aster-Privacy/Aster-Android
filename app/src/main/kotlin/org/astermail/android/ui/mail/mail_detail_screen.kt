@@ -1230,6 +1230,26 @@ fun MailDetailScreen(
                                     },
                                 ),
                         )
+                        if (api_item?.raw_item?.metadata?.is_pinned == true) {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .clickable {
+                                        mail_vm.toggle_pin(email_id)
+                                        show_toast(context.getString(R.string.unpinned))
+                                    }
+                                    .testTag("detail_pin_indicator"),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = pin_icon_filled,
+                                    contentDescription = stringResource(R.string.unpin),
+                                    tint = colors.accent_blue,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                        }
                         org.astermail.android.ui.common.star_toggle_icon(
                             is_starred = is_starred,
                             icon = if (is_starred) Icons.Filled.Star else TablerIcons.Star,

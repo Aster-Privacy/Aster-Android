@@ -26,7 +26,9 @@ import android.content.ClipData
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -69,7 +71,7 @@ import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.ui.common.write_to_clipboard
 
 @Composable
-fun SmtpTokensScreen(on_back: () -> Unit) {
+fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
     val vm: SettingsViewModel = shared_settings_view_model()
     val plan_vm: PlanLimitsViewModel = hiltViewModel()
     val state by vm.state.collectAsStateWithLifecycle()
@@ -101,18 +103,28 @@ fun SmtpTokensScreen(on_back: () -> Unit) {
     val clipboard_label = stringResource(R.string.clipboard_label_smtp_token)
 
     detail_scaffold(title = stringResource(R.string.settings_smtp_tokens), on_back = on_back) {
-        Text(
-            text = stringResource(R.string.smtp_tokens_description),
-            color = colors.text_tertiary,
-            fontSize = 13.sp,
-            modifier = Modifier.padding(bottom = AsterSpacing.md),
-        )
+        if (!is_locked) {
+            Text(
+                text = stringResource(R.string.smtp_tokens_summary),
+                color = colors.text_tertiary,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(bottom = AsterSpacing.md),
+            )
+        }
 
         when {
-            is_locked -> notice_card(
-                title = stringResource(R.string.smtp_tokens_upgrade_title),
-                body = stringResource(R.string.smtp_tokens_upgrade_description),
-            )
+            is_locked -> {
+                notice_card(
+                    title = stringResource(R.string.smtp_tokens_upgrade_title),
+                    body = stringResource(R.string.smtp_tokens_upgrade_description),
+                )
+                v_gap(AsterSpacing.md)
+                AsterButton(
+                    label = stringResource(R.string.upgrade),
+                    onClick = on_upgrade,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
 
             addresses.isEmpty() -> notice_card(
                 title = stringResource(R.string.smtp_tokens_no_domain_title),
@@ -120,23 +132,55 @@ fun SmtpTokensScreen(on_back: () -> Unit) {
             )
 
             else -> {
-                notice_card(
-                    title = stringResource(R.string.smtp_token_not_e2e_title),
-                    body = stringResource(R.string.smtp_token_not_e2e_body),
-                )
-
-                section_label(stringResource(R.string.settings_smtp_tokens))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.smtp_token_not_e2e_short),
+                        color = colors.text_secondary,
+                        fontSize = 13.sp,
+                    )
+                    Spacer(modifier = Modifier.width(AsterSpacing.xs))
+                    info_dialog_button(
+                        title = stringResource(R.string.smtp_token_not_e2e_title),
+                        description = stringResource(R.string.smtp_token_not_e2e_body),
+                    )
+                }
 
                 if (state.smtp_tokens_loading && state.smtp_tokens.isEmpty()) {
+                    v_gap(AsterSpacing.md)
                     preferences_load_placeholder()
                 } else if (state.smtp_tokens.isEmpty()) {
-                    Text(
-                        text = stringResource(R.string.smtp_tokens_empty),
-                        color = colors.text_tertiary,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(vertical = AsterSpacing.md),
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = AsterSpacing.xl),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(CircleShape)
+                                .background(colors.bg_secondary),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = TablerIcons.Key,
+                                contentDescription = null,
+                                tint = colors.text_secondary,
+                                modifier = Modifier.size(26.dp),
+                            )
+                        }
+                        v_gap(AsterSpacing.md)
+                        Text(
+                            text = stringResource(R.string.smtp_tokens_empty),
+                            color = colors.text_secondary,
+                            fontSize = 14.sp,
+                        )
+                    }
                 } else {
+                    section_label(stringResource(R.string.settings_smtp_tokens))
                     AsterCard(modifier = Modifier.fillMaxWidth()) {
                         state.smtp_tokens.forEachIndexed { i, token ->
                             smtp_token_row(token = token, on_revoke = { pending_revoke = token })
@@ -267,13 +311,19 @@ private fun smtp_token_row(token: SmtpTokenRow, on_revoke: () -> Unit) {
                 color = colors.text_primary,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             )
-            Text(text = token.bound_address, color = colors.text_tertiary, fontSize = 13.sp)
             Text(
-                text = stringResource(R.string.smtp_token_last_used) + ": " +
-                    (token.last_used_at ?: stringResource(R.string.smtp_token_never_used)),
+                text = stringResource(
+                    R.string.smtp_token_subtitle,
+                    token.bound_address,
+                    format_smtp_last_used(token.last_used_at) ?: stringResource(R.string.smtp_token_never_used),
+                ),
                 color = colors.text_tertiary,
-                fontSize = 12.sp,
+                fontSize = 13.sp,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             )
         }
         Spacer(modifier = Modifier.width(AsterSpacing.sm))
@@ -284,6 +334,15 @@ private fun smtp_token_row(token: SmtpTokenRow, on_revoke: () -> Unit) {
             modifier = Modifier.size(20.dp).clip(CircleShape).clickable(onClick = on_revoke),
         )
     }
+}
+
+private fun format_smtp_last_used(raw: String?): String? {
+    if (raw.isNullOrBlank()) return null
+    return runCatching {
+        java.time.OffsetDateTime.parse(raw)
+            .atZoneSameInstant(java.time.ZoneId.systemDefault())
+            .format(java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.MEDIUM))
+    }.getOrElse { raw }
 }
 
 @Composable
@@ -300,7 +359,6 @@ private fun smtp_token_create_dialog(
     AsterAlertDialog(
         on_dismiss = on_dismiss,
         title = stringResource(R.string.smtp_token_create_title),
-        message = stringResource(R.string.smtp_token_create_description),
         confirm_label = stringResource(R.string.smtp_token_generate),
         cancel_label = stringResource(R.string.cancel),
         confirm_enabled = name.isNotBlank() && selected != null && !is_busy,
@@ -348,12 +406,6 @@ private fun smtp_token_create_dialog(
                         if (i < addresses.lastIndex) AsterDivider(modifier = Modifier)
                     }
                 }
-                v_gap(AsterSpacing.xs)
-                Text(
-                    text = stringResource(R.string.smtp_token_address_hint),
-                    color = colors.text_tertiary,
-                    fontSize = 12.sp,
-                )
             }
         },
     )

@@ -112,6 +112,7 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
             settings_row_item("security", R.string.settings_security, icon = TablerIcons.Shield),
             settings_row_item("encryption", R.string.settings_encryption, icon = TablerIcons.Key),
             settings_row_item("trusted_devices", R.string.trusted_devices, icon = TablerIcons.DeviceDesktop),
+            settings_row_item("connection", R.string.settings_connection, icon = TablerIcons.Wifi),
         ),
     ),
     settings_section(
@@ -146,17 +147,19 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
         ),
     ),
     settings_section(
-        R.string.settings_advanced,
+        R.string.tools,
         listOf(
             settings_row_item("import", R.string.settings_import, icon = TablerIcons.CloudUpload),
             settings_row_item("external_accounts", R.string.external_accounts, icon = TablerIcons.ArrowsRightLeft),
-            settings_row_item("connection", R.string.settings_connection, icon = TablerIcons.Wifi),
             settings_row_item("smtp_tokens", R.string.settings_smtp_tokens, icon = TablerIcons.Send),
-            settings_row_item("about", R.string.about, icon = TablerIcons.InfoCircle),
+        ),
+    ),
+    settings_section(
+        R.string.settings_section_support,
+        listOf(
             settings_row_item("contact_support", R.string.contact_support, icon = TablerIcons.Lifebuoy),
             settings_row_item("feedback", R.string.settings_feedback, icon = TablerIcons.MessageReport),
-            settings_row_item("developer", R.string.developer, icon = TablerIcons.Code),
-            settings_row_item("diagnostics", R.string.settings_diagnostics, icon = TablerIcons.Bug),
+            settings_row_item("about", R.string.about, icon = TablerIcons.InfoCircle),
         ),
     ),
 )

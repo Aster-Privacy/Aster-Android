@@ -129,6 +129,13 @@ fun AboutScreen(
             AsterDivider()
             detail_row(title = stringResource(R.string.source_on_github), subtitle = stringResource(R.string.licensed_agpl), icon = TablerIcons.ExternalLink, on_click = { open_url("https://github.com/Aster-Privacy/Aster-Android") })
         }
+        v_gap(AsterSpacing.lg)
+        section_label(stringResource(R.string.about_troubleshooting))
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            detail_row(title = stringResource(R.string.settings_diagnostics), icon = TablerIcons.Bug, on_click = { on_open("diagnostics") })
+            AsterDivider()
+            detail_row(title = stringResource(R.string.developer), icon = TablerIcons.Code, on_click = { on_open("developer") })
+        }
         v_gap(AsterSpacing.xxl)
     }
 }

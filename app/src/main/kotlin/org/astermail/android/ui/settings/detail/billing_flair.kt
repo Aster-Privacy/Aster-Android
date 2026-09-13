@@ -19,41 +19,26 @@
 package org.astermail.android.ui.settings.detail
 
 import androidx.annotation.StringRes
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
-import org.astermail.android.design.SquircleShape
-import kotlin.math.PI
-import kotlin.math.sin
 
 internal fun plan_feature_icon(@StringRes feature_res: Int): ImageVector = when (feature_res) {
     R.string.settings_plan_bullet_free_storage,
@@ -109,154 +94,47 @@ internal fun plan_feature_icon(@StringRes feature_res: Int): ImageVector = when 
     else -> TablerIcons.CircleCheck
 }
 
-private val star_seeds = listOf(
-    0.06f to 0.18f, 0.13f to 0.62f, 0.21f to 0.09f, 0.29f to 0.41f, 0.36f to 0.78f,
-    0.44f to 0.22f, 0.52f to 0.55f, 0.58f to 0.12f, 0.66f to 0.70f, 0.73f to 0.31f,
-    0.81f to 0.08f, 0.87f to 0.48f, 0.93f to 0.24f, 0.97f to 0.66f, 0.17f to 0.88f,
-    0.48f to 0.92f, 0.76f to 0.90f, 0.09f to 0.40f, 0.63f to 0.38f, 0.90f to 0.84f,
-)
-
 @Composable
-internal fun Modifier.starfield(
-    accent: Color,
-    is_dark: Boolean,
-    band_fraction: Float = 0.42f,
-    edges_only: Boolean = false,
-): Modifier {
-    val transition = rememberInfiniteTransition(label = "starfield")
-    val phase by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(durationMillis = 9000, easing = LinearEasing)),
-        label = "twinkle",
-    )
-    val star_color = if (is_dark) blend(Color.White, accent, 0.12f) else accent
-    return drawBehind {
-        val band = size.height * band_fraction
-        val count = star_seeds.size
-        star_seeds.forEachIndexed { index, (fx, fy) ->
-            if (edges_only && fx > 0.22f && fx < 0.78f) return@forEachIndexed
-            val center = Offset(size.width * fx, band * fy)
-            val twinkle = 0.62f + 0.38f * sin(2.0 * PI * (phase + index.toFloat() / count)).toFloat()
-            val core = if (index % 4 == 0) 1.3.dp.toPx() else 0.85.dp.toPx()
-            val halo = core * 5.5f
-            val base_alpha = if (is_dark) (if (index % 3 == 0) 0.62f else 0.34f) else (if (index % 3 == 0) 0.34f else 0.18f)
-            val alpha = base_alpha * twinkle
-            drawCircle(
-                brush = Brush.radialGradient(
-                    0.0f to star_color.copy(alpha = alpha * 0.55f),
-                    0.4f to star_color.copy(alpha = alpha * 0.14f),
-                    1.0f to Color.Transparent,
-                    center = center,
-                    radius = halo,
-                ),
-                radius = halo,
-                center = center,
-            )
-            drawCircle(color = star_color.copy(alpha = alpha), radius = core, center = center)
-        }
-    }
-}
-
-@Composable
-internal fun hero_surface(
-    modifier: Modifier = Modifier,
-    corner: Dp = 16.dp,
-    content: @Composable ColumnScope.() -> Unit,
-) {
+internal fun solid_progress_bar(fraction: Float, is_over: Boolean, height: Dp = 6.dp) {
     val colors = AsterMaterial.colors
-    val accent = colors.accent_blue
-    val shape = SquircleShape(corner)
-    Column(
-        modifier = modifier
-            .border(1.dp, galaxy_border_brush(accent, colors.text_primary), shape)
-            .clip(shape)
-            .background(colors.bg_card)
-            .background(
-                Brush.verticalGradient(
-                    0.00f to accent.copy(alpha = if (colors.is_dark) 0.16f else 0.08f),
-                    0.40f to Color.Transparent,
-                ),
-            )
-            .starfield(accent, colors.is_dark, band_fraction = 0.30f, edges_only = true),
-        content = content,
-    )
-}
-
-@Composable
-internal fun icon_tile(
-    icon: ImageVector,
-    size: Dp = 40.dp,
-    corner: Dp = 12.dp,
-    accent: Color = AsterMaterial.colors.accent_blue,
-    muted: Boolean = false,
-) {
-    val colors = AsterMaterial.colors
-    val shape = SquircleShape(corner)
-    val brush = if (muted) {
-        Brush.verticalGradient(listOf(colors.bg_tertiary, colors.bg_tertiary))
-    } else {
-        Brush.linearGradient(
-            0.00f to blend(accent, Color.White, 0.20f),
-            1.00f to blend(accent, Color.Black, 0.10f),
-        )
-    }
-    Box(
-        modifier = Modifier
-            .size(size)
-            .clip(shape)
-            .background(brush)
-            .then(if (muted) Modifier.border(1.dp, colors.border_primary, shape) else Modifier),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = if (muted) colors.text_secondary else Color.White,
-            modifier = Modifier.size(size * 0.5f),
-        )
-    }
-}
-
-@Composable
-internal fun gradient_bar(fraction: Float, is_over: Boolean, height: Dp = 10.dp) {
-    val colors = AsterMaterial.colors
-    val target = if (fraction <= 0f) 0f else fraction.coerceIn(0.035f, 1f)
-    val animated by animateFloatAsState(
-        targetValue = target,
-        animationSpec = tween(durationMillis = 700),
-        label = "storage_fill",
-    )
-    val accent = if (is_over) colors.danger else colors.accent_blue
-    val track = colors.text_primary.copy(alpha = if (colors.is_dark) 0.10f else 0.07f)
-    val track_edge = colors.text_primary.copy(alpha = if (colors.is_dark) 0.08f else 0.05f)
+    val filled = if (fraction <= 0f) 0f else fraction.coerceIn(0.02f, 1f)
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(height)
             .clip(CircleShape)
-            .background(track)
-            .border(1.dp, track_edge, CircleShape),
+            .background(colors.bg_tertiary),
     ) {
-        if (animated > 0f) {
+        if (filled > 0f) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(animated)
-                    .height(height)
+                    .fillMaxWidth(filled)
+                    .fillMaxHeight()
                     .clip(CircleShape)
-                    .background(
-                        Brush.horizontalGradient(
-                            0.0f to blend(accent, Color.White, 0.28f),
-                            1.0f to accent,
-                        ),
-                    )
-                    .background(
-                        Brush.verticalGradient(
-                            0.0f to Color.White.copy(alpha = 0.16f),
-                            1.0f to Color.Transparent,
-                        ),
-                    ),
+                    .background(if (is_over) colors.danger else colors.accent_blue),
             )
         }
+    }
+}
+
+@Composable
+internal fun solid_badge(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AsterMaterial.colors
+    Box(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(colors.accent_blue)
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+    ) {
+        Text(
+            text = text,
+            color = colors.on_accent,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
     }
 }
