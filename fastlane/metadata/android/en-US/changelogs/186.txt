@@ -1,0 +1,4 @@
+- Sign out with one tap, without a confirmation
+- Enter a backup code at the second-factor prompt when you don't have your authenticator
+- Messages the server refuses stop retrying and show the reason
+- Sign-up confirms before you skip saving backup codes, and back stays inside sign-up
