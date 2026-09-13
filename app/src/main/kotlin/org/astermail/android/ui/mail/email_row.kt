@@ -232,6 +232,17 @@ fun EmailRow(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
+                if (is_pinned) {
+                    Icon(
+                        imageVector = pin_icon_filled,
+                        contentDescription = stringResource(R.string.pinned),
+                        tint = colors.accent_blue,
+                        modifier = Modifier
+                            .padding(start = AsterSpacing.sm)
+                            .size(14.dp)
+                            .testTag("row_pin_indicator"),
+                    )
+                }
                 if (email.has_attachment) {
                     Icon(
                         imageVector = TablerIcons.Paperclip,
@@ -263,16 +274,6 @@ fun EmailRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (is_pinned) {
-                        Icon(
-                            imageVector = pin_icon_filled,
-                            contentDescription = stringResource(R.string.pinned),
-                            tint = colors.accent_blue,
-                            modifier = Modifier
-                                .size(14.dp)
-                                .rotate(-38f),
-                        )
-                    }
                     star_button(
                         is_starred = email.is_starred,
                         interactive = !select_mode,
@@ -539,6 +540,17 @@ fun ThreadInboxRow(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
+                if (is_pinned) {
+                    Icon(
+                        imageVector = pin_icon_filled,
+                        contentDescription = stringResource(R.string.pinned),
+                        tint = colors.accent_blue,
+                        modifier = Modifier
+                            .padding(start = AsterSpacing.sm)
+                            .size(14.dp)
+                            .testTag("row_pin_indicator"),
+                    )
+                }
                 if (thread.has_attachment) {
                     Icon(
                         imageVector = TablerIcons.Paperclip,
@@ -585,17 +597,6 @@ fun ThreadInboxRow(
                         }
                     }
                     Text(size_str, color = colors.text_muted, fontSize = 11.sp)
-                }
-                if (is_pinned) {
-                    Spacer(Modifier.width(AsterSpacing.sm))
-                    Icon(
-                        imageVector = pin_icon_filled,
-                        contentDescription = stringResource(R.string.pinned),
-                        tint = colors.accent_blue,
-                        modifier = Modifier
-                            .size(14.dp)
-                            .rotate(-38f),
-                    )
                 }
                 Spacer(Modifier.width(AsterSpacing.sm))
                 star_button(

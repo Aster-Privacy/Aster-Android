@@ -3404,4 +3404,26 @@
     <string name="import_mail_action">استيراد البريد</string>
     <string name="import_mail_skip">ابدأ بصندوق فارغ</string>
     <string name="import_mail_privacy_note">يمكنك أيضًا الاستيراد لاحقًا من الإعدادات.</string>
+    <string name="other_devices">أجهزة أخرى</string>
+    <string name="other_devices_with_count">أجهزة أخرى (%d)</string>
+    <string name="no_other_devices">لا توجد أجهزة أخرى مسجّل الدخول عليها</string>
+    <plurals name="devices_show_more">
+        <item quantity="zero">عرض %d إضافية</item>
+        <item quantity="one">عرض %d إضافية</item>
+        <item quantity="two">عرض %d إضافية</item>
+        <item quantity="few">عرض %d إضافية</item>
+        <item quantity="many">عرض %d إضافية</item>
+        <item quantity="other">عرض %d إضافية</item>
+    </plurals>
+    <string name="enc_key_fingerprint_label">بصمة المفتاح</string>
+    <string name="category_notifications_muted_toast">تم كتم الإشعارات لـ %1$s</string>
+    <string name="category_notifications_unmuted_toast">تم تشغيل الإشعارات لـ %1$s</string>
+    <string name="settings_section_support">الدعم</string>
+    <string name="about_troubleshooting">استكشاف الأخطاء وإصلاحها</string>
+    <string name="smtp_tokens_summary">كلمات مرور للإرسال فقط تتيح لتطبيقاتك ونصوصك البرمجية إرسال البريد من نطاقك المخصص.</string>
+    <string name="smtp_token_not_e2e_short">غير مشفّر من طرف إلى طرف</string>
+    <string name="smtp_token_subtitle">%1$s · آخر استخدام %2$s</string>
+    <string name="referral_step_1_title">شارك رابطك</string>
+    <string name="referral_step_2_title">يشترك صديقك</string>
+    <string name="referral_step_3_title">تحصل على رصيد</string>
 </resources>

@@ -1328,12 +1328,8 @@ private fun AsterNavHost() {
                 on_back = { back(); Unit },
                 on_open = open_detail,
                 on_open_folder = { folder_id, folder_name ->
-                    val inbox_entry = try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
-                    if (inbox_entry != null) {
-                        inbox_entry.savedStateHandle[open_folder_request_key] = folder_id
-                        nav_controller.popBackStack(routes.inbox, inclusive = false)
-                    } else {
-                        nav_controller.navigate(routes.folder_filter_for(folder_id, folder_name))
+                    nav_controller.navigate(routes.folder_filter_for(folder_id, folder_name)) {
+                        launchSingleTop = true
                     }
                 },
             )
@@ -1497,10 +1493,16 @@ composable(routes.settings_detail("family")) {
             ConnectionScreen(on_back = { back(); Unit })
         }
         composable(routes.settings_detail("smtp_tokens")) {
-            SmtpTokensScreen(on_back = { back(); Unit })
+            SmtpTokensScreen(
+                on_back = { back(); Unit },
+                on_upgrade = { nav_controller.navigate(routes.settings_detail("billing")) { launchSingleTop = true } },
+            )
         }
         composable(routes.settings_detail("about")) {
-            AboutScreen(on_back = { back(); Unit })
+            AboutScreen(
+                on_back = { back(); Unit },
+                on_open = { id -> nav_controller.navigate(routes.settings_detail(id)) { launchSingleTop = true } },
+            )
         }
         composable(routes.settings_detail("developer")) {
             DeveloperScreen(on_back = { back(); Unit })

@@ -226,16 +226,16 @@ internal fun aster_segmented(
                             .clip(CircleShape)
                             .background(
                                 if (active) {
-                                    Color.White.copy(alpha = 0.22f)
+                                    Color.White
                                 } else {
-                                    colors.accent_blue.copy(alpha = 0.16f)
+                                    colors.accent_blue
                                 },
                             )
                             .padding(horizontal = 6.dp, vertical = 2.dp),
                     ) {
                         Text(
                             text = option.badge,
-                            color = if (active) Color.White else colors.accent_blue,
+                            color = if (active) colors.accent_blue else Color.White,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                         )

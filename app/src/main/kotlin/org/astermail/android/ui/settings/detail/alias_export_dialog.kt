@@ -260,7 +260,7 @@ fun alias_export_dialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(SquircleShape(12.dp))
-                            .background(colors.warning.copy(alpha = 0.12f))
+                            .background(colors.bg_secondary)
                             .padding(AsterSpacing.md),
                         verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
                     ) {

@@ -511,24 +511,30 @@ internal fun verified_badge(
     icon: ImageVector? = TablerIcons.Check,
 ) {
     val colors = AsterMaterial.colors
+    val tone = colors.success
+    val background = org.astermail.android.ui.mail.chip_background(tone, colors.bg_primary, colors.is_dark)
+    val content = org.astermail.android.ui.mail.chip_content(tone, background, colors.is_dark)
+    val border = org.astermail.android.ui.mail.chip_border(tone, colors.bg_primary, colors.is_dark)
     Row(
         modifier = Modifier
-            .background(colors.success.copy(alpha = 0.12f), CircleShape)
-            .padding(horizontal = 8.dp, vertical = 3.dp),
+            .background(background, SquircleShape(8.dp))
+            .border(1.dp, border, SquircleShape(8.dp))
+            .padding(horizontal = AsterSpacing.sm, vertical = 3.dp)
+            .testTag("verified_badge"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = colors.success,
+                tint = content,
                 modifier = Modifier.size(11.dp),
             )
             Spacer(Modifier.width(3.dp))
         }
         Text(
             text = text,
-            color = colors.success,
+            color = content,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,

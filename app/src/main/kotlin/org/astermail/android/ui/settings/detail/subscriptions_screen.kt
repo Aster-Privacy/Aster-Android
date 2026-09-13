@@ -64,14 +64,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -94,15 +91,11 @@ import org.astermail.android.ui.common.open_external_url
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTextField
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.text.style.TextAlign
 import kotlinx.coroutines.launch
-import org.astermail.android.ui.mail.chip_background
-import org.astermail.android.ui.mail.chip_border
-import org.astermail.android.ui.mail.chip_content
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 
@@ -1371,7 +1364,8 @@ private fun cancel_subscription_flow(
                                 .fillMaxWidth()
                                 .heightIn(min = 48.dp)
                                 .clip(SquircleShape(10.dp))
-                                .background(colors.accent_blue.copy(alpha = 0.12f))
+                                .background(colors.bg_secondary)
+                                .border(1.dp, colors.border_primary, SquircleShape(10.dp))
                                 .clickable(role = Role.Button, onClick = on_switch_plan)
                                 .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -1398,7 +1392,8 @@ private fun cancel_subscription_flow(
                                 .fillMaxWidth()
                                 .heightIn(min = 48.dp)
                                 .clip(SquircleShape(10.dp))
-                                .background(colors.accent_blue.copy(alpha = 0.12f))
+                                .background(colors.bg_secondary)
+                                .border(1.dp, colors.border_primary, SquircleShape(10.dp))
                                 .clickable(role = Role.Button, onClick = on_switch_yearly)
                                 .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -1451,7 +1446,7 @@ private fun cancel_subscription_flow(
                                 .fillMaxWidth()
                                 .heightIn(min = 48.dp)
                                 .clip(SquircleShape(10.dp))
-                                .background(if (active) colors.accent_blue.copy(alpha = 0.10f) else Color.Transparent)
+                                .background(if (active) colors.bg_secondary else Color.Transparent)
                                 .selectable(
                                     selected = active,
                                     role = Role.RadioButton,
@@ -1757,8 +1752,8 @@ private fun storage_limit_notice() {
         modifier = Modifier
             .fillMaxWidth()
             .clip(SquircleShape(12.dp))
-            .background(colors.danger.copy(alpha = 0.10f))
-            .border(1.dp, colors.danger.copy(alpha = 0.35f), SquircleShape(12.dp))
+            .background(colors.bg_card)
+            .border(1.dp, colors.border_primary, SquircleShape(12.dp))
             .padding(AsterSpacing.md),
         verticalAlignment = Alignment.Top,
     ) {
@@ -1783,27 +1778,6 @@ private fun storage_limit_notice() {
                 fontSize = 13.sp,
             )
         }
-    }
-}
-
-@Composable
-private fun status_pill(text: String, accent: Color) {
-    val colors = AsterMaterial.colors
-    val background = chip_background(accent, colors.bg_card, colors.is_dark)
-    Box(
-        modifier = Modifier
-            .clip(CircleShape)
-            .background(background)
-            .border(1.dp, chip_border(accent, colors.bg_card, colors.is_dark), CircleShape)
-            .padding(horizontal = 8.dp, vertical = 3.dp),
-    ) {
-        Text(
-            text = text,
-            color = chip_content(accent, background, colors.is_dark),
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-        )
     }
 }
 
@@ -1841,33 +1815,35 @@ private fun current_plan_card(
     on_add_storage: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    hero_surface(modifier = Modifier.fillMaxWidth()) {
+    val show_crypto_notice = is_paid && is_crypto && paid_until != null
+    val show_action_rows = free_teaser == null && (show_manage_payment || ends_at_period_end || show_cancel)
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
             Row(verticalAlignment = Alignment.Top) {
-                icon_tile(icon = TablerIcons.CreditCard, muted = !is_paid)
-                Spacer(Modifier.width(AsterSpacing.md))
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = plan_name,
-                            color = colors.text_primary,
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false),
-                        )
-                        if (discount != null) {
-                            Spacer(Modifier.width(AsterSpacing.sm))
-                            status_pill(text = discount, accent = colors.accent_blue)
-                        }
-                    }
+                    Text(
+                        text = plan_name,
+                        color = colors.text_primary,
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                     if (description != null) {
                         Spacer(Modifier.height(2.dp))
                         Text(
                             text = description,
-                            color = colors.text_tertiary,
-                            fontSize = 12.sp,
+                            color = colors.text_secondary,
+                            fontSize = 13.sp,
+                        )
+                    }
+                    if (discount != null) {
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = discount,
+                            color = colors.accent_blue,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
                         )
                     }
                 }
@@ -1878,59 +1854,43 @@ private fun current_plan_card(
                             Text(
                                 text = price_text,
                                 color = colors.text_primary,
-                                fontSize = 17.sp,
+                                fontSize = 19.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 maxLines = 1,
                             )
                             Text(
                                 text = interval_short,
-                                color = colors.text_tertiary,
-                                fontSize = 12.sp,
+                                color = colors.text_secondary,
+                                fontSize = 13.sp,
                                 modifier = Modifier.padding(bottom = 2.dp),
                             )
                         }
                         Text(
                             text = billed_note,
-                            color = colors.text_muted,
-                            fontSize = 11.sp,
+                            color = colors.text_secondary,
+                            fontSize = 12.sp,
                         )
                     }
                 }
             }
-            if (is_paid && is_crypto && paid_until != null) {
-                Spacer(Modifier.height(AsterSpacing.md))
+            if (show_crypto_notice) {
+                Spacer(Modifier.height(AsterSpacing.sm))
                 Text(
-                    text = stringResource(R.string.billing_crypto_paid_until, absolute_date_label(paid_until)),
+                    text = stringResource(R.string.billing_crypto_paid_until, absolute_date_label(paid_until.orEmpty())),
                     color = colors.text_secondary,
                     fontSize = 13.sp,
                 )
-                Spacer(Modifier.height(AsterSpacing.xs))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    status_pill(
-                        text = stringResource(R.string.billing_crypto_no_renew_notice),
-                        accent = colors.warning,
-                    )
-                }
             } else if (is_paid && period_end != null) {
-                Spacer(Modifier.height(AsterSpacing.md))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = if (ends_at_period_end) TablerIcons.AlertTriangle else TablerIcons.Refresh,
-                        contentDescription = null,
-                        tint = if (ends_at_period_end) colors.text_secondary else colors.text_tertiary,
-                        modifier = Modifier.size(14.dp),
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        text = if (ends_at_period_end) {
-                            stringResource(R.string.ends_date, absolute_date_label(period_end))
-                        } else {
-                            stringResource(R.string.renews_format, absolute_date_label(period_end))
-                        },
-                        color = if (ends_at_period_end) colors.text_secondary else colors.text_tertiary,
-                        fontSize = 13.sp,
-                    )
-                }
+                Spacer(Modifier.height(AsterSpacing.sm))
+                Text(
+                    text = if (ends_at_period_end) {
+                        stringResource(R.string.ends_date, absolute_date_label(period_end))
+                    } else {
+                        stringResource(R.string.renews_format, absolute_date_label(period_end))
+                    },
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                )
             }
             if (storage_limit_bytes > 0) {
                 val storage_fraction = storage_used_bytes.toFloat() / storage_limit_bytes.toFloat()
@@ -1943,23 +1903,23 @@ private fun current_plan_card(
                 ) {
                     Text(
                         text = stringResource(R.string.storage),
-                        color = colors.text_secondary,
-                        fontSize = 13.sp,
+                        color = colors.text_primary,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                     )
                     Text(
                         text = java.text.NumberFormat.getPercentInstance().format(storage_percent / 100.0),
-                        color = if (storage_over_limit) colors.danger else colors.text_primary,
+                        color = if (storage_over_limit) colors.danger else colors.text_secondary,
                         fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = if (storage_over_limit) FontWeight.SemiBold else FontWeight.Normal,
                     )
                 }
                 Spacer(Modifier.height(AsterSpacing.sm))
-                gradient_bar(
+                solid_progress_bar(
                     fraction = storage_fraction,
                     is_over = storage_over_limit,
                 )
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(AsterSpacing.sm))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -1967,8 +1927,8 @@ private fun current_plan_card(
                 ) {
                     Text(
                         text = stringResource(R.string.storage_used_format, format_bytes(storage_used_bytes), format_bytes(storage_limit_bytes)),
-                        color = if (storage_over_limit) colors.danger else colors.text_tertiary,
-                        fontSize = 12.sp,
+                        color = if (storage_over_limit) colors.danger else colors.text_secondary,
+                        fontSize = 13.sp,
                         fontWeight = if (storage_over_limit) FontWeight.SemiBold else FontWeight.Normal,
                         modifier = Modifier.weight(1f),
                     )
@@ -1976,7 +1936,7 @@ private fun current_plan_card(
                         Text(
                             text = stringResource(R.string.billing_add_storage_link),
                             color = colors.accent_blue,
-                            fontSize = 12.sp,
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier
                                 .clip(SquircleShape(6.dp))
@@ -1985,91 +1945,70 @@ private fun current_plan_card(
                         )
                     }
                 }
-                if (free_teaser != null && (storage_over_limit || storage_fraction >= 0.7f)) {
-                    Spacer(Modifier.height(AsterSpacing.sm))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(SquircleShape(10.dp))
-                            .background((if (storage_over_limit) colors.danger else colors.warning).copy(alpha = 0.10f))
-                            .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = TablerIcons.AlertTriangle,
-                            contentDescription = null,
-                            tint = if (storage_over_limit) colors.danger else colors.warning,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(Modifier.width(AsterSpacing.sm))
-                        Text(
-                            text = stringResource(R.string.settings_plan_storage_tight_note, storage_percent, free_teaser.plan_name),
-                            color = colors.text_primary,
-                            fontSize = 12.sp,
-                            lineHeight = 16.sp,
-                        )
-                    }
-                }
             }
-            if (is_paid && is_crypto) {
-                Spacer(Modifier.height(AsterSpacing.lg))
-                AsterSecondaryButton(
-                    label = stringResource(R.string.billing_crypto_renew_link),
-                    onClick = on_crypto_renew,
-                    enabled = !is_acting,
-                )
-            }
-            if (show_yearly_switch) {
-                Spacer(Modifier.height(AsterSpacing.md))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 48.dp)
-                        .clip(SquircleShape(10.dp))
-                        .background(colors.accent_blue.copy(alpha = 0.12f))
-                        .clickable(enabled = !is_acting, role = Role.Button) { on_switch_yearly() }
-                        .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(R.string.switch_yearly_save, yearly_savings),
-                        color = colors.accent_blue,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Icon(
-                        imageVector = TablerIcons.ChevronRight,
-                        contentDescription = null,
-                        tint = colors.accent_blue,
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
-            }
-            if (show_family_link) {
-                Spacer(Modifier.height(AsterSpacing.sm))
-                Text(
-                    text = stringResource(R.string.family_manage_web),
-                    color = colors.accent_blue,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .heightIn(min = 48.dp)
-                        .clip(SquircleShape(10.dp))
-                        .clickable(role = Role.Button) { on_family_manage() }
-                        .padding(vertical = 14.dp),
-                )
-            }
-            if (free_teaser != null) {
-                Spacer(Modifier.height(AsterSpacing.lg))
+        }
+        if (show_crypto_notice) {
+            AsterDivider()
+            plan_note_row(
+                icon = TablerIcons.AlertTriangle,
+                icon_tint = colors.warning,
+                text = stringResource(R.string.billing_crypto_no_renew_notice),
+            )
+        }
+        if (free_teaser != null && storage_limit_bytes > 0) {
+            val storage_fraction = storage_used_bytes.toFloat() / storage_limit_bytes.toFloat()
+            if (storage_over_limit || storage_fraction >= 0.7f) {
+                val storage_percent = (storage_fraction * 100f).roundToInt().coerceIn(0, if (storage_over_limit) 999 else 100)
                 AsterDivider()
-                Spacer(Modifier.height(AsterSpacing.lg))
+                plan_note_row(
+                    icon = TablerIcons.AlertTriangle,
+                    icon_tint = if (storage_over_limit) colors.danger else colors.warning,
+                    text = stringResource(R.string.settings_plan_storage_tight_note, storage_percent, free_teaser.plan_name),
+                )
+            }
+        }
+        if (is_paid && is_crypto) {
+            AsterDivider()
+            plan_action_row(
+                label = stringResource(R.string.billing_crypto_renew_link),
+                color = colors.accent_blue,
+                enabled = !is_acting,
+                leading_icon = TablerIcons.Refresh,
+                show_chevron = true,
+                on_click = on_crypto_renew,
+            )
+        }
+        if (show_yearly_switch) {
+            AsterDivider()
+            plan_action_row(
+                label = stringResource(R.string.switch_yearly_save, yearly_savings),
+                color = colors.accent_blue,
+                enabled = !is_acting,
+                leading_icon = TablerIcons.Calendar,
+                show_chevron = true,
+                on_click = on_switch_yearly,
+            )
+        }
+        if (show_family_link) {
+            AsterDivider()
+            plan_action_row(
+                label = stringResource(R.string.family_manage_web),
+                color = colors.accent_blue,
+                enabled = true,
+                leading_icon = TablerIcons.Users,
+                show_chevron = true,
+                on_click = on_family_manage,
+            )
+        }
+        if (free_teaser != null) {
+            AsterDivider()
+            Column(modifier = Modifier.padding(AsterSpacing.lg)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = TablerIcons.Crown,
                         contentDescription = null,
-                        tint = colors.text_primary,
-                        modifier = Modifier.size(16.dp),
+                        tint = colors.accent_blue,
+                        modifier = Modifier.size(18.dp),
                     )
                     Spacer(Modifier.width(AsterSpacing.sm))
                     Text(
@@ -2080,16 +2019,24 @@ private fun current_plan_card(
                         modifier = Modifier.weight(1f),
                     )
                     Spacer(Modifier.width(AsterSpacing.sm))
-                    galaxy_badge(text = stringResource(R.string.fix_billing_plan_recommended))
+                    Text(
+                        text = stringResource(R.string.fix_billing_plan_recommended),
+                        color = colors.accent_blue,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                    )
                 }
-                Spacer(Modifier.height(AsterSpacing.sm))
-                free_teaser.features.forEach { feature_row(it, icon = TablerIcons.CircleCheck) }
+                Spacer(Modifier.height(AsterSpacing.md))
+                Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
+                    free_teaser.features.forEach { feature_row(it, icon = TablerIcons.CircleCheck) }
+                }
                 if (free_teaser.price_note != null) {
-                    Spacer(Modifier.height(AsterSpacing.sm))
+                    Spacer(Modifier.height(AsterSpacing.md))
                     Text(
                         text = free_teaser.price_note,
-                        color = colors.text_tertiary,
-                        fontSize = 12.sp,
+                        color = colors.text_secondary,
+                        fontSize = 13.sp,
                     )
                 }
                 Spacer(Modifier.height(AsterSpacing.lg))
@@ -2097,50 +2044,125 @@ private fun current_plan_card(
                     label = stringResource(R.string.fix_billing_get_plan, free_teaser.plan_name),
                     onClick = on_upgrade,
                 )
-            } else if (show_manage_payment || ends_at_period_end || show_cancel) {
-                Spacer(Modifier.height(AsterSpacing.lg))
-                AsterDivider()
-                Spacer(Modifier.height(AsterSpacing.lg))
-                AsterActionRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    spacing = AsterSpacing.sm,
-                ) {
-                    if (show_manage_payment) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            AsterSecondaryButton(
-                                label = stringResource(R.string.billing_manage_payment),
-                                onClick = on_manage_payment,
-                                enabled = !is_acting,
-                                is_loading = is_acting && acting_action == "portal",
-                            )
-                        }
-                    }
-                    if (ends_at_period_end) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            AsterButton(
-                                label = stringResource(R.string.reactivate),
-                                onClick = on_reactivate,
-                                enabled = !is_acting,
-                                is_loading = is_acting && acting_action == "reactivate",
-                            )
-                        }
-                    } else if (show_cancel) {
-                        Text(
-                            text = stringResource(R.string.billing_cancel_plan),
-                            color = colors.danger,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .weight(1f)
-                                .heightIn(min = 48.dp)
-                                .clip(SquircleShape(10.dp))
-                                .clickable(enabled = !is_acting, role = Role.Button) { on_cancel() }
-                                .padding(vertical = 14.dp),
-                        )
-                    }
-                }
             }
+        } else if (show_action_rows) {
+            if (show_manage_payment) {
+                AsterDivider()
+                plan_action_row(
+                    label = stringResource(R.string.billing_manage_payment),
+                    color = colors.text_primary,
+                    enabled = !is_acting,
+                    loading = is_acting && acting_action == "portal",
+                    leading_icon = TablerIcons.CreditCard,
+                    show_chevron = true,
+                    on_click = on_manage_payment,
+                )
+            }
+            if (ends_at_period_end) {
+                AsterDivider()
+                plan_action_row(
+                    label = stringResource(R.string.reactivate),
+                    color = colors.accent_blue,
+                    enabled = !is_acting,
+                    loading = is_acting && acting_action == "reactivate",
+                    on_click = on_reactivate,
+                )
+            } else if (show_cancel) {
+                AsterDivider()
+                plan_action_row(
+                    label = stringResource(R.string.billing_cancel_plan),
+                    color = colors.danger,
+                    enabled = !is_acting,
+                    on_click = on_cancel,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun plan_note_row(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon_tint: Color,
+    text: String,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = icon_tint,
+            modifier = Modifier.padding(top = 1.dp).size(16.dp),
+        )
+        Spacer(Modifier.width(AsterSpacing.md))
+        Text(
+            text = text,
+            color = colors.text_secondary,
+            fontSize = 13.sp,
+            lineHeight = 18.sp,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun plan_action_row(
+    label: String,
+    color: Color,
+    enabled: Boolean,
+    on_click: () -> Unit,
+    loading: Boolean = false,
+    leading_icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    show_chevron: Boolean = false,
+) {
+    val colors = AsterMaterial.colors
+    val text_color = if (enabled || loading) color else colors.text_muted
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp)
+            .clickable(enabled = enabled, role = Role.Button, onClick = on_click)
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (leading_icon != null) {
+            Icon(
+                imageVector = leading_icon,
+                contentDescription = null,
+                tint = colors.text_secondary,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(Modifier.width(AsterSpacing.md))
+        }
+        Text(
+            text = label,
+            color = text_color,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        if (loading) {
+            Spacer(Modifier.width(AsterSpacing.sm))
+            androidx.compose.material3.CircularProgressIndicator(
+                color = colors.accent_blue,
+                strokeWidth = 2.dp,
+                modifier = Modifier.size(16.dp),
+            )
+        } else if (show_chevron) {
+            Spacer(Modifier.width(AsterSpacing.sm))
+            Icon(
+                imageVector = TablerIcons.ChevronRight,
+                contentDescription = null,
+                tint = colors.text_tertiary,
+                modifier = Modifier.size(18.dp),
+            )
         }
     }
 }
@@ -2275,19 +2297,15 @@ private fun addon_tile(
 ) {
     val colors = AsterMaterial.colors
     val shape = SquircleShape(14.dp)
-    val background by animateColorAsState(
-        targetValue = if (selected) colors.accent_blue.copy(alpha = if (colors.is_dark) 0.14f else 0.07f) else colors.bg_secondary,
-        label = "addon_bg",
-    )
     val outline by animateColorAsState(
-        targetValue = if (selected) colors.accent_blue else Color.Transparent,
+        targetValue = if (selected) colors.accent_blue else colors.border_primary,
         label = "addon_border",
     )
     Column(
         modifier = modifier
             .clip(shape)
-            .background(background)
-            .border(width = 1.5.dp, color = outline, shape = shape)
+            .background(colors.bg_secondary)
+            .border(width = if (selected) 2.dp else 1.dp, color = outline, shape = shape)
             .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = on_click)
             .padding(AsterSpacing.md),
     ) {
@@ -2416,10 +2434,13 @@ private fun billing_history_card(
                                 fontWeight = FontWeight.SemiBold,
                                 maxLines = 1,
                             )
-                            Spacer(Modifier.height(4.dp))
-                            status_pill(
+                            Spacer(Modifier.height(2.dp))
+                            Text(
                                 text = invoice_status_label(item.status),
-                                accent = invoice_status_accent(item.status, colors),
+                                color = invoice_status_accent(item.status, colors),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1,
                             )
                         }
                     }
@@ -2483,7 +2504,7 @@ private fun plan_tier_card(
     val show_recommended = is_recommended && !is_current && !is_interval_switch && !is_downgrade
     val border_modifier = when {
         is_current -> Modifier.border(2.dp, colors.accent_blue, shape)
-        show_recommended -> Modifier.border(1.5.dp, galaxy_border_brush(colors.accent_blue, colors.text_primary), shape)
+        show_recommended -> Modifier.border(1.5.dp, colors.accent_blue, shape)
         else -> Modifier.border(1.dp, colors.border_primary, shape)
     }
     val badge_text = when {
@@ -2498,21 +2519,7 @@ private fun plan_tier_card(
                 .padding(top = if (badge_text != null) 10.dp else 0.dp)
                 .then(border_modifier)
                 .clip(shape)
-                .background(colors.bg_secondary)
-                .then(
-                    if (show_recommended || is_current) {
-                        Modifier
-                            .background(
-                                Brush.verticalGradient(
-                                    0.00f to colors.accent_blue.copy(alpha = if (colors.is_dark) 0.16f else 0.08f),
-                                    0.40f to Color.Transparent,
-                                ),
-                            )
-                            .starfield(colors.accent_blue, colors.is_dark, band_fraction = 0.34f, edges_only = true)
-                    } else {
-                        Modifier
-                    },
-                ),
+                .background(colors.bg_secondary),
         ) {
             Column(
                 modifier = Modifier
@@ -2549,7 +2556,7 @@ private fun plan_tier_card(
                     Spacer(Modifier.height(AsterSpacing.xs))
                     if (savings_cents != null && savings_cents > 0) {
                         if (is_yearly) {
-                            galaxy_badge(text = stringResource(R.string.billing_save_amount, format_price(savings_cents, currency)))
+                            solid_badge(text = stringResource(R.string.billing_save_amount, format_price(savings_cents, currency)))
                         } else {
                             Text(
                                 text = format_price(yearly_cents ?: 0, currency) +
@@ -2638,7 +2645,7 @@ private fun plan_tier_card(
             }
         }
         if (badge_text != null) {
-            galaxy_badge(text = badge_text, modifier = Modifier.align(Alignment.TopCenter))
+            solid_badge(text = badge_text, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }
@@ -2731,8 +2738,9 @@ private fun notice_row(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(SquircleShape(10.dp))
-            .background(accent.copy(alpha = 0.10f))
+            .clip(SquircleShape(14.dp))
+            .background(colors.bg_card)
+            .border(1.dp, colors.border_primary, SquircleShape(14.dp))
             .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),

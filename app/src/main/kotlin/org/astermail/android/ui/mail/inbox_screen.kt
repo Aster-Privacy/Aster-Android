@@ -1970,19 +1970,6 @@ fun InboxScreen(
         ) {
           Column(modifier = Modifier.fillMaxWidth()) {
             Spacer(Modifier.height(status_bar_top))
-            androidx.compose.animation.Crossfade(targetState = select_mode, label = "topbar_mode") { mode ->
-                if (mode) {
-                    select_mode_top_bar(
-                        selected_count = selection_count,
-                        on_close = ::exit_select_mode,
-                        on_select_all = ::toggle_select_all,
-                        show_divider = scrolled_elevation,
-                        current_folder = current_folder,
-                        counting = select_all_loading,
-                        all_selected = select_all_active ||
-                            (visible_threads.isNotEmpty() && selection_count >= visible_threads.size),
-                    )
-                } else {
                     inbox_top_bar(
                         folder_title = display_title ?: folder_display_name(current_folder),
                         search_scope_title = active_category_label,
@@ -2015,9 +2002,21 @@ fun InboxScreen(
                         show_unread_filter = categories_enabled,
                         unread_only = unread_only,
                         on_toggle_unread_only = { unread_only = !unread_only },
+                        selection_content = if (select_mode) {
+                            {
+                                select_mode_top_bar(
+                                    selected_count = selection_count,
+                                    on_close = ::exit_select_mode,
+                                    on_select_all = ::toggle_select_all,
+                                    counting = select_all_loading,
+                                    all_selected = select_all_active ||
+                                        (visible_threads.isNotEmpty() && selection_count >= visible_threads.size),
+                                )
+                            }
+                        } else {
+                            null
+                        },
                     )
-                }
-            }
             scope_selection_banner(
                 offered = can_offer_scope_selection,
                 confirmed = scope_selection,
@@ -2496,6 +2495,7 @@ internal fun inbox_top_bar(
     show_unread_filter: Boolean = false,
     unread_only: Boolean = false,
     on_toggle_unread_only: () -> Unit = {},
+    selection_content: (@Composable () -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     val divider_alpha by animateFloatAsState(
@@ -2715,7 +2715,9 @@ internal fun inbox_top_bar(
                 modifier = Modifier.testTag("settings"),
             )
         }
-        Row(
+        if (selection_content != null) {
+            selection_content()
+        } else Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = AsterSpacing.lg, end = AsterSpacing.sm)
@@ -2785,57 +2787,48 @@ private fun select_mode_top_bar(
     selected_count: Int,
     on_close: () -> Unit,
     on_select_all: () -> Unit,
-    show_divider: Boolean,
-    current_folder: String = "inbox",
     counting: Boolean = false,
     all_selected: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
-    val divider_alpha by animateFloatAsState(
-        targetValue = if (show_divider) 1f else 0f,
-        label = "select_divider_alpha",
-    )
-    Column(modifier = Modifier.fillMaxWidth().background(colors.bg_primary)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = AsterSpacing.xs),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            AsterIconButton(
-                icon = TablerIcons.X,
-                content_description = stringResource(R.string.exit_selection),
-                onClick = on_close,
-                modifier = Modifier.testTag("exit_select"),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = AsterSpacing.xs, end = AsterSpacing.sm)
+            .padding(top = AsterSpacing.xs)
+            .height(48.dp)
+            .testTag("select_mode_bar"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AsterIconButton(
+            icon = TablerIcons.X,
+            content_description = stringResource(R.string.exit_selection),
+            onClick = on_close,
+            modifier = Modifier.testTag("exit_select"),
+        )
+        Spacer(Modifier.width(AsterSpacing.xs))
+        Text(
+            text = if (selected_count == 0) stringResource(R.string.select) else stringResource(R.string.inbox_selected_count, selected_count),
+            style = MaterialTheme.typography.titleMedium,
+            color = colors.text_primary,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        if (counting) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(16.dp).testTag("select_all_progress"),
+                strokeWidth = 2.dp,
+                color = colors.accent_blue,
             )
             Spacer(Modifier.width(AsterSpacing.xs))
-            Text(
-                text = if (selected_count == 0) stringResource(R.string.select) else stringResource(R.string.inbox_selected_count, selected_count),
-                style = MaterialTheme.typography.titleMedium,
-                color = colors.text_primary,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
-            if (counting) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp).testTag("select_all_progress"),
-                    strokeWidth = 2.dp,
-                    color = colors.accent_blue,
-                )
-                Spacer(Modifier.width(AsterSpacing.xs))
-            }
-            org.astermail.android.ui.common.select_all_button(
-                on_click = on_select_all,
-                modifier = Modifier.testTag("select_all"),
-                all_selected = all_selected,
-            )
         }
-        if (divider_alpha > 0f) {
-            AsterDivider(modifier = Modifier.fillMaxWidth())
-        }
+        org.astermail.android.ui.common.select_all_button(
+            on_click = on_select_all,
+            modifier = Modifier.testTag("select_all"),
+            all_selected = all_selected,
+        )
     }
 }
 

@@ -203,6 +203,8 @@ fun StorageScreen(
                 else -> colors.accent_blue
             }
             val free_bytes = (total_bytes - used_bytes).coerceAtLeast(0L)
+            val segments = stats?.let { storage_segments(it) }.orEmpty()
+            val show_segments = !over_limit && fraction < 0.8f && segments.any { it.count > 0 }
 
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(AsterSpacing.lg)) {
@@ -231,22 +233,14 @@ fun StorageScreen(
                         animationSpec = tween(durationMillis = 420),
                         label = "storage_bar",
                     )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(colors.bg_hover),
-                    ) {
-                        if (animated_fraction > 0f) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth(animated_fraction)
-                                    .height(8.dp)
-                                    .clip(RoundedCornerShape(999.dp))
-                                    .background(bar_color),
-                            )
-                        }
+                    storage_usage_bar(
+                        segments = if (show_segments) segments else emptyList(),
+                        fraction = animated_fraction,
+                        fallback_color = bar_color,
+                    )
+                    if (show_segments) {
+                        Spacer(Modifier.height(AsterSpacing.md))
+                        storage_legend(segments)
                     }
                 }
             }
@@ -281,6 +275,16 @@ fun StorageScreen(
                 }
             }
             v_gap(AsterSpacing.lg)
+            storage_distribution_section(segments, on_open_folder)
+            storage_cleanup_section(
+                trash_count = stats?.trash ?: 0,
+                spam_count = stats?.spam ?: 0,
+                is_emptying_spam = is_emptying_spam,
+                is_emptying_trash = is_emptying_trash,
+                on_empty_trash = { show_empty_trash_confirm = true },
+                on_empty_spam = { show_empty_spam_confirm = true },
+                on_open_folder = on_open_folder,
+            )
             storage_plan_section(
                 plan_name = state.subscription?.effective_plan_name,
                 total_bytes = total_bytes,
@@ -289,7 +293,6 @@ fun StorageScreen(
                 family_allocation_bytes = storage?.family_allocation_bytes ?: 0L,
                 plan_limit_bytes = storage?.plan_limit_bytes ?: 0L,
             )
-            v_gap(AsterSpacing.lg)
             section_label(stringResource(R.string.storage_format))
             val prefs = state.preferences
             if (prefs == null) {
@@ -326,18 +329,8 @@ fun StorageScreen(
                     )
                 }
             }
-            storage_distribution_section(stats, on_open_folder)
-            storage_mailbox_section(stats, used_bytes)
-            storage_cleanup_section(
-                trash_count = stats?.trash ?: 0,
-                spam_count = stats?.spam ?: 0,
-                is_emptying_spam = is_emptying_spam,
-                is_emptying_trash = is_emptying_trash,
-                on_empty_trash = { show_empty_trash_confirm = true },
-                on_empty_spam = { show_empty_spam_confirm = true },
-                on_open_folder = on_open_folder,
-            )
             v_gap(AsterSpacing.lg)
+            storage_mailbox_section(stats, used_bytes)
             Text(
                 text = stringResource(R.string.buy_more_storage_note),
                 color = colors.text_tertiary,

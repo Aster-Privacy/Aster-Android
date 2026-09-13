@@ -3306,4 +3306,26 @@
     <string name="import_mail_action">메일 가져오기</string>
     <string name="import_mail_skip">빈 받은편지함으로 시작</string>
     <string name="import_mail_privacy_note">나중에 설정에서 가져올 수도 있습니다.</string>
+    <string name="other_devices">다른 기기</string>
+    <string name="other_devices_with_count">다른 기기 (%d)</string>
+    <string name="no_other_devices">로그인된 다른 기기가 없습니다</string>
+    <plurals name="devices_show_more">
+        <item quantity="zero">%d개 더 보기</item>
+        <item quantity="one">%d개 더 보기</item>
+        <item quantity="two">%d개 더 보기</item>
+        <item quantity="few">%d개 더 보기</item>
+        <item quantity="many">%d개 더 보기</item>
+        <item quantity="other">%d개 더 보기</item>
+    </plurals>
+    <string name="enc_key_fingerprint_label">키 지문</string>
+    <string name="category_notifications_muted_toast">%1$s 알림을 음소거했습니다</string>
+    <string name="category_notifications_unmuted_toast">%1$s 알림을 켰습니다</string>
+    <string name="settings_section_support">지원</string>
+    <string name="about_troubleshooting">문제 해결</string>
+    <string name="smtp_tokens_summary">앱과 스크립트가 맞춤 도메인에서 메일을 보낼 수 있게 하는 발송 전용 비밀번호입니다.</string>
+    <string name="smtp_token_not_e2e_short">종단간 암호화되지 않음</string>
+    <string name="smtp_token_subtitle">%1$s · 마지막 사용 %2$s</string>
+    <string name="referral_step_1_title">링크 공유하기</string>
+    <string name="referral_step_2_title">친구가 구독하기</string>
+    <string name="referral_step_3_title">크레딧 받기</string>
 </resources>

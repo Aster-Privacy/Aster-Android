@@ -24,7 +24,13 @@ package org.astermail.android.ui.settings.detail
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -211,59 +217,109 @@ internal fun legend_row(segment: storage_segment, total: Int, on_open: () -> Uni
 }
 
 @Composable
-internal fun distribution_donut(segments: List<storage_segment>, total: Int) {
+internal fun storage_usage_bar(
+    segments: List<storage_segment>,
+    fraction: Float,
+    fallback_color: Color,
+) {
     val colors = AsterMaterial.colors
-    val track_color = colors.bg_secondary
-    Box(
-        modifier = Modifier.size(172.dp),
-        contentAlignment = Alignment.Center,
+    val visible = segments.filter { it.count > 0 }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(12.dp)
+            .clip(RoundedCornerShape(999.dp))
+            .background(colors.bg_hover)
+            .testTag("storage_usage_bar"),
     ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val stroke_px = 18.dp.toPx()
-            val top_left = Offset(stroke_px / 2f, stroke_px / 2f)
-            val arc_size = Size(size.width - stroke_px, size.height - stroke_px)
-            val stroke = Stroke(width = stroke_px, cap = StrokeCap.Butt)
-            drawArc(
-                color = track_color,
-                startAngle = 0f,
-                sweepAngle = 360f,
-                useCenter = false,
-                topLeft = top_left,
-                size = arc_size,
-                style = stroke,
-            )
-            if (total <= 0) return@Canvas
-            val visible = segments.filter { it.count > 0 }
-            val gap = if (visible.size > 1) 2.5f else 0f
-            var cursor = -90f
-            visible.forEach { segment ->
-                val sweep = segment.count * 360f / total
-                drawArc(
-                    color = segment.color,
-                    startAngle = cursor + gap / 2f,
-                    sweepAngle = (sweep - gap).coerceAtLeast(1.5f),
-                    useCenter = false,
-                    topLeft = top_left,
-                    size = arc_size,
-                    style = stroke,
+        if (fraction > 0f) {
+            if (visible.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(fraction)
+                        .fillMaxHeight()
+                        .background(fallback_color),
                 )
-                cursor += sweep
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(fraction)
+                        .fillMaxHeight(),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    visible.forEach { segment ->
+                        Box(
+                            modifier = Modifier
+                                .weight(segment.count.toFloat())
+                                .fillMaxHeight()
+                                .background(segment.color),
+                        )
+                    }
+                }
             }
         }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = format_count(total),
-                color = colors.text_primary,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = stringResource(R.string.storage_donut_caption),
-                color = colors.text_muted,
-                fontSize = 12.sp,
-            )
+    }
+}
+
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+internal fun storage_legend(segments: List<storage_segment>) {
+    val colors = AsterMaterial.colors
+    androidx.compose.foundation.layout.FlowRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("storage_legend"),
+        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        segments.filter { it.count > 0 }.forEach { segment ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(segment.color),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = segment.label,
+                    color = colors.text_secondary,
+                    fontSize = 12.sp,
+                )
+            }
         }
     }
+}
+
+@Composable
+internal fun storage_segments(stats: MailUserStatsResponse): List<storage_segment> {
+    val distribution = compute_distribution(stats)
+    return listOf(
+        storage_segment(
+            stringResource(R.string.folder_inbox), distribution.inbox, segment_inbox,
+            "inbox", TablerIcons.Inbox,
+        ),
+        storage_segment(
+            stringResource(R.string.archived), distribution.archived, segment_archived,
+            "archive", TablerIcons.Archive,
+        ),
+        storage_segment(
+            stringResource(R.string.sent), distribution.sent, segment_sent,
+            "sent", TablerIcons.Send,
+        ),
+        storage_segment(
+            stringResource(R.string.folder_drafts), distribution.drafts, segment_drafts,
+            "drafts", TablerIcons.FileText,
+        ),
+        storage_segment(
+            stringResource(R.string.folder_spam), distribution.spam, segment_spam,
+            "spam", TablerIcons.AlertOctagon,
+        ),
+        storage_segment(
+            stringResource(R.string.folder_trash), distribution.trash, segment_trash,
+            "trash", TablerIcons.Trash,
+        ),
+    )
 }
 
 @Composable
@@ -333,57 +389,16 @@ internal fun storage_plan_section(
 
 @Composable
 internal fun storage_distribution_section(
-    stats: MailUserStatsResponse?,
+    segments: List<storage_segment>,
     on_open_folder: (String, String) -> Unit,
 ) {
-    if (stats == null) return
     val colors = AsterMaterial.colors
-    val distribution = compute_distribution(stats)
-    val segments = listOf(
-        storage_segment(
-            stringResource(R.string.folder_inbox), distribution.inbox, segment_inbox,
-            "inbox", TablerIcons.Inbox,
-        ),
-        storage_segment(
-            stringResource(R.string.archived), distribution.archived, segment_archived,
-            "archive", TablerIcons.Archive,
-        ),
-        storage_segment(
-            stringResource(R.string.sent), distribution.sent, segment_sent,
-            "sent", TablerIcons.Send,
-        ),
-        storage_segment(
-            stringResource(R.string.folder_drafts), distribution.drafts, segment_drafts,
-            "drafts", TablerIcons.FileText,
-        ),
-        storage_segment(
-            stringResource(R.string.folder_spam), distribution.spam, segment_spam,
-            "spam", TablerIcons.AlertOctagon,
-        ),
-        storage_segment(
-            stringResource(R.string.folder_trash), distribution.trash, segment_trash,
-            "trash", TablerIcons.Trash,
-        ),
-    )
-    val total = distribution.total
+    val total = segments.sumOf { it.count }
     if (total <= 0) return
     section_label(stringResource(R.string.storage_where_section))
-    AsterCard(modifier = Modifier.fillMaxWidth()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    start = AsterSpacing.md,
-                    end = AsterSpacing.md,
-                    top = AsterSpacing.lg,
-                    bottom = AsterSpacing.md,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            distribution_donut(segments, total)
-        }
-        segments.filter { it.count > 0 }.forEach { segment ->
-            AsterDivider()
+    AsterCard(modifier = Modifier.fillMaxWidth().testTag("storage_where_card")) {
+        segments.filter { it.count > 0 }.forEachIndexed { index, segment ->
+            if (index > 0) AsterDivider()
             legend_row(segment, total) { on_open_folder(segment.folder_id, segment.label) }
         }
     }

@@ -3324,4 +3324,26 @@
     <string name="import_mail_action">Importa la posta</string>
     <string name="import_mail_skip">Inizia con una casella vuota</string>
     <string name="import_mail_privacy_note">Puoi importare anche più tardi dalle Impostazioni.</string>
+    <string name="other_devices">Altri dispositivi</string>
+    <string name="other_devices_with_count">Altri dispositivi (%d)</string>
+    <string name="no_other_devices">Nessun altro dispositivo ha eseguito l’accesso</string>
+    <plurals name="devices_show_more">
+        <item quantity="zero">Mostra altri %d</item>
+        <item quantity="one">Mostra altri %d</item>
+        <item quantity="two">Mostra altri %d</item>
+        <item quantity="few">Mostra altri %d</item>
+        <item quantity="many">Mostra altri %d</item>
+        <item quantity="other">Mostra altri %d</item>
+    </plurals>
+    <string name="enc_key_fingerprint_label">Impronta della chiave</string>
+    <string name="category_notifications_muted_toast">Notifiche disattivate per %1$s</string>
+    <string name="category_notifications_unmuted_toast">Notifiche attivate per %1$s</string>
+    <string name="settings_section_support">Assistenza</string>
+    <string name="about_troubleshooting">Risoluzione dei problemi</string>
+    <string name="smtp_tokens_summary">Password di solo invio che consentono alle tue app e ai tuoi script di inviare email dal tuo dominio personalizzato.</string>
+    <string name="smtp_token_not_e2e_short">Non crittografato end-to-end</string>
+    <string name="smtp_token_subtitle">%1$s · Ultimo utilizzo %2$s</string>
+    <string name="referral_step_1_title">Condividi il tuo link</string>
+    <string name="referral_step_2_title">Il tuo amico si abbona</string>
+    <string name="referral_step_3_title">Guadagni credito</string>
 </resources>

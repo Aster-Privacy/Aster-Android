@@ -26,16 +26,12 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -50,14 +46,10 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -70,7 +62,6 @@ import org.astermail.android.ui.common.picker_theme_res
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.components.UpgradeGate
@@ -87,7 +78,6 @@ private fun switch_row(
     on_change: (Boolean) -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    var info_open by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -103,28 +93,12 @@ private fun switch_row(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = title, color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
                 if (info != null) {
-                    Icon(
-                        imageVector = Icons.Outlined.Info,
-                        contentDescription = info,
-                        tint = colors.text_tertiary,
-                        modifier = Modifier
-                            .padding(start = AsterSpacing.xs)
-                            .size(16.dp)
-                            .clip(CircleShape)
-                            .clickable { info_open = !info_open },
-                    )
+                    androidx.compose.foundation.layout.Spacer(Modifier.padding(start = AsterSpacing.xs))
+                    info_dialog_button(title = title, description = info)
                 }
             }
             if (subtitle != null) {
                 Text(text = subtitle, color = colors.text_tertiary, fontSize = 13.sp)
-            }
-            if (info != null && info_open) {
-                Text(
-                    text = info,
-                    color = colors.text_tertiary,
-                    fontSize = 13.sp,
-                    modifier = Modifier.padding(top = AsterSpacing.xs),
-                )
             }
         }
         AsterSwitch(

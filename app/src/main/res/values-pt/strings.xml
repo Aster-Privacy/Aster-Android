@@ -3324,4 +3324,26 @@
     <string name="import_mail_action">Importar e-mail</string>
     <string name="import_mail_skip">Começar com a caixa vazia</string>
     <string name="import_mail_privacy_note">Também pode importar mais tarde em Definições.</string>
+    <string name="other_devices">Outros dispositivos</string>
+    <string name="other_devices_with_count">Outros dispositivos (%d)</string>
+    <string name="no_other_devices">Nenhum outro dispositivo conectado</string>
+    <plurals name="devices_show_more">
+        <item quantity="zero">Mostrar mais %d</item>
+        <item quantity="one">Mostrar mais %d</item>
+        <item quantity="two">Mostrar mais %d</item>
+        <item quantity="few">Mostrar mais %d</item>
+        <item quantity="many">Mostrar mais %d</item>
+        <item quantity="other">Mostrar mais %d</item>
+    </plurals>
+    <string name="enc_key_fingerprint_label">Impressão digital da chave</string>
+    <string name="category_notifications_muted_toast">Notificações silenciadas para %1$s</string>
+    <string name="category_notifications_unmuted_toast">Notificações ativadas para %1$s</string>
+    <string name="settings_section_support">Suporte</string>
+    <string name="about_troubleshooting">Solução de problemas</string>
+    <string name="smtp_tokens_summary">Senhas somente de envio para que seus apps e scripts enviem e-mails do seu domínio personalizado.</string>
+    <string name="smtp_token_not_e2e_short">Sem criptografia de ponta a ponta</string>
+    <string name="smtp_token_subtitle">%1$s · Último uso %2$s</string>
+    <string name="referral_step_1_title">Compartilhe seu link</string>
+    <string name="referral_step_2_title">Seu amigo assina</string>
+    <string name="referral_step_3_title">Você ganha crédito</string>
 </resources>

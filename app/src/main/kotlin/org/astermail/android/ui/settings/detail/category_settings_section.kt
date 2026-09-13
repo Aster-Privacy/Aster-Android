@@ -47,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -149,15 +150,30 @@ private fun category_mute_button(
     on_toggle: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
+    val context = androidx.compose.ui.platform.LocalContext.current
     val description = stringResource(
         if (is_muted) R.string.unmute_category_notifications else R.string.mute_category_notifications,
+        label,
+    )
+    val toast_text = stringResource(
+        if (is_muted) R.string.category_notifications_unmuted_toast else R.string.category_notifications_muted_toast,
         label,
     )
     Box(
         modifier = Modifier
             .size(34.dp)
             .clip(CircleShape)
-            .then(if (is_enabled) Modifier.clickable(onClick = on_toggle) else Modifier),
+            .then(
+                if (is_enabled) {
+                    Modifier.clickable {
+                        on_toggle()
+                        android.widget.Toast.makeText(context, toast_text, android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Modifier
+                },
+            )
+            .testTag("category_mute_$label"),
         contentAlignment = Alignment.Center,
     ) {
         Icon(

@@ -3306,4 +3306,26 @@
     <string name="import_mail_action">メールを取り込む</string>
     <string name="import_mail_skip">空の受信トレイで始める</string>
     <string name="import_mail_privacy_note">後から設定で取り込むこともできます。</string>
+    <string name="other_devices">その他のデバイス</string>
+    <string name="other_devices_with_count">その他のデバイス (%d)</string>
+    <string name="no_other_devices">他にサインインしているデバイスはありません</string>
+    <plurals name="devices_show_more">
+        <item quantity="zero">さらに %d 件を表示</item>
+        <item quantity="one">さらに %d 件を表示</item>
+        <item quantity="two">さらに %d 件を表示</item>
+        <item quantity="few">さらに %d 件を表示</item>
+        <item quantity="many">さらに %d 件を表示</item>
+        <item quantity="other">さらに %d 件を表示</item>
+    </plurals>
+    <string name="enc_key_fingerprint_label">鍵のフィンガープリント</string>
+    <string name="category_notifications_muted_toast">%1$s の通知をミュートしました</string>
+    <string name="category_notifications_unmuted_toast">%1$s の通知をオンにしました</string>
+    <string name="settings_section_support">サポート</string>
+    <string name="about_troubleshooting">トラブルシューティング</string>
+    <string name="smtp_tokens_summary">アプリやスクリプトからカスタムドメインでメールを送信するための送信専用パスワードです。</string>
+    <string name="smtp_token_not_e2e_short">エンドツーエンド暗号化されていません</string>
+    <string name="smtp_token_subtitle">%1$s · 最終使用 %2$s</string>
+    <string name="referral_step_1_title">リンクを共有</string>
+    <string name="referral_step_2_title">友達が有料プランに登録</string>
+    <string name="referral_step_3_title">クレジットを獲得</string>
 </resources>

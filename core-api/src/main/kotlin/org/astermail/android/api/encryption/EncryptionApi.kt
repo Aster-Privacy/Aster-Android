@@ -107,6 +107,7 @@ data class ExportKeyRequest(
 @Serializable
 data class ExportKeyResponse(
     val public_key_armored: String = "",
+    val public_key: String = "",
     val fingerprint: String = "",
     val private_key_encrypted: String? = null,
     val encrypted_private_key_blob: String? = null,

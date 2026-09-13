@@ -3364,4 +3364,26 @@
     <string name="import_mail_action">Импортировать почту</string>
     <string name="import_mail_skip">Начать с пустого ящика</string>
     <string name="import_mail_privacy_note">Импортировать можно и позже в настройках.</string>
+    <string name="other_devices">Другие устройства</string>
+    <string name="other_devices_with_count">Другие устройства (%d)</string>
+    <string name="no_other_devices">Нет других устройств, на которых выполнен вход</string>
+    <plurals name="devices_show_more">
+        <item quantity="zero">Показать ещё %d</item>
+        <item quantity="one">Показать ещё %d</item>
+        <item quantity="two">Показать ещё %d</item>
+        <item quantity="few">Показать ещё %d</item>
+        <item quantity="many">Показать ещё %d</item>
+        <item quantity="other">Показать ещё %d</item>
+    </plurals>
+    <string name="enc_key_fingerprint_label">Отпечаток ключа</string>
+    <string name="category_notifications_muted_toast">Уведомления для %1$s отключены</string>
+    <string name="category_notifications_unmuted_toast">Уведомления для %1$s включены</string>
+    <string name="settings_section_support">Поддержка</string>
+    <string name="about_troubleshooting">Устранение неполадок</string>
+    <string name="smtp_tokens_summary">Пароли только для отправки, с которыми ваши приложения и скрипты отправляют почту с вашего домена.</string>
+    <string name="smtp_token_not_e2e_short">Без сквозного шифрования</string>
+    <string name="smtp_token_subtitle">%1$s · Последнее использование %2$s</string>
+    <string name="referral_step_1_title">Поделитесь ссылкой</string>
+    <string name="referral_step_2_title">Друг оформляет подписку</string>
+    <string name="referral_step_3_title">Вы получаете бонусы</string>
 </resources>

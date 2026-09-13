@@ -3214,4 +3214,26 @@
     <string name="import_mail_action">मेल इंपोर्ट करें</string>
     <string name="import_mail_skip">खाली इनबॉक्स से शुरू करें</string>
     <string name="import_mail_privacy_note">आप बाद में सेटिंग्स से भी इंपोर्ट कर सकते हैं।</string>
+    <string name="other_devices">अन्य डिवाइस</string>
+    <string name="other_devices_with_count">अन्य डिवाइस (%d)</string>
+    <string name="no_other_devices">कोई अन्य डिवाइस साइन इन नहीं है</string>
+    <plurals name="devices_show_more">
+        <item quantity="zero">%d और दिखाएं</item>
+        <item quantity="one">%d और दिखाएं</item>
+        <item quantity="two">%d और दिखाएं</item>
+        <item quantity="few">%d और दिखाएं</item>
+        <item quantity="many">%d और दिखाएं</item>
+        <item quantity="other">%d और दिखाएं</item>
+    </plurals>
+    <string name="enc_key_fingerprint_label">की फ़िंगरप्रिंट</string>
+    <string name="category_notifications_muted_toast">%1$s के लिए सूचनाएं म्यूट की गईं</string>
+    <string name="category_notifications_unmuted_toast">%1$s के लिए सूचनाएं चालू हैं</string>
+    <string name="settings_section_support">सहायता</string>
+    <string name="about_troubleshooting">समस्या निवारण</string>
+    <string name="smtp_tokens_summary">केवल भेजने वाले पासवर्ड, जिनसे आपके ऐप और स्क्रिप्ट आपके कस्टम डोमेन से मेल भेज सकते हैं।</string>
+    <string name="smtp_token_not_e2e_short">एंड-टू-एंड एन्क्रिप्टेड नहीं</string>
+    <string name="smtp_token_subtitle">%1$s · अंतिम उपयोग %2$s</string>
+    <string name="referral_step_1_title">अपना लिंक शेयर करें</string>
+    <string name="referral_step_2_title">आपका दोस्त सदस्यता लेता है</string>
+    <string name="referral_step_3_title">आपको क्रेडिट मिलता है</string>
 </resources>
