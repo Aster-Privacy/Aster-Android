@@ -54,8 +54,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.aster_reduce_motion
@@ -73,6 +79,9 @@ internal const val skeleton_sweep_lag = 0.06f
 internal const val skeleton_defer_ms = 150L
 internal const val skeleton_min_visible_ms = 450L
 internal const val skeleton_fade_out_ms = 200
+
+internal fun skeleton_visible_after(has_data: Boolean, pending: Boolean, pending_for_ms: Long): Boolean =
+    !has_data && pending && pending_for_ms >= skeleton_defer_ms
 internal val skeleton_reveal_rise = 6.dp
 
 @Composable
@@ -130,7 +139,12 @@ fun inbox_skeleton_overlay(
     LaunchedEffect(visible) {
         if (visible) {
             if (shown) return@LaunchedEffect
+            val pending_since = android.os.SystemClock.uptimeMillis()
             delay(skeleton_defer_ms)
+            val pending_for = android.os.SystemClock.uptimeMillis() - pending_since
+            if (!skeleton_visible_after(has_data = false, pending = visible, pending_for_ms = pending_for)) {
+                return@LaunchedEffect
+            }
             shown_at = android.os.SystemClock.uptimeMillis()
             shown = true
         } else if (shown) {
@@ -145,7 +159,14 @@ fun inbox_skeleton_overlay(
         enter = EnterTransition.None,
         exit = fadeOut(tween(skeleton_fade_out_ms)),
     ) {
-        inbox_skeleton(list_density = list_density)
+        val loading_label = stringResource(R.string.loading)
+        inbox_skeleton(
+            list_density = list_density,
+            modifier = Modifier.semantics {
+                liveRegion = LiveRegionMode.Polite
+                contentDescription = loading_label
+            },
+        )
     }
 }
 

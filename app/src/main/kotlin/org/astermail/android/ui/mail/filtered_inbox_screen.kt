@@ -181,7 +181,9 @@ fun FilteredInboxScreen(
                 on_open_drawer = on_open_drawer,
             )
             AsterDivider(modifier = Modifier.fillMaxWidth())
-            val skeleton_now = inbox_state.is_loading || inbox_state.current_folder != requested_folder
+            val showing_requested = inbox_state.current_folder == requested_folder
+            val has_rows = showing_requested && threads.isNotEmpty()
+            val skeleton_now = !has_rows && (inbox_state.is_loading || !showing_requested)
             Box(modifier = Modifier.fillMaxSize()) {
             if (skeleton_now) {
                 Box(Modifier.fillMaxSize())

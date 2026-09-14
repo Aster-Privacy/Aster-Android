@@ -1546,6 +1546,9 @@ fun InboxScreen(
                     !inbox_state.is_loading &&
                     !inbox_state.initial &&
                     current_folder == "inbox" &&
+                    inbox_state.error == null &&
+                    inbox_state.list_loaded_at > 0L &&
+                    inbox_state.stats_loaded_at > inbox_state.list_loaded_at &&
                     (inbox_state.stats?.unread ?: 0) > 0
                 var contradicts_unread by remember { mutableStateOf(false) }
                 LaunchedEffect(unread_mismatch) {
@@ -1556,7 +1559,7 @@ fun InboxScreen(
                         contradicts_unread = true
                     }
                 }
-                val skeleton_target = inbox_state.initial ||
+                val skeleton_target = (inbox_state.initial && threads.isEmpty()) ||
                     (
                         !thread_gate.category_only &&
                             (inbox_state.is_loading || threads_pending) &&
@@ -3511,7 +3514,7 @@ private fun execute_swipe_action(
         "toggle_read" -> {
             val was_read = emails.filter { (it.thread_id == thread_id || it.id == thread_id) }.all { it.is_read }
             if (was_read) {
-                ids.forEach { mail_vm.mark_unread(it) }
+                mail_vm.mark_unread_bulk(ids)
             } else {
                 mail_vm.mark_read_bulk(ids)
             }
