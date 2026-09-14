@@ -2480,7 +2480,15 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         now_ms >= recovery_snooze_until &&
         !settings_state.recovery_email_set
 
+    val inbox_plan_code = plan_state_inbox.limits?.plan_code
+    androidx.compose.runtime.LaunchedEffect(inbox_plan_code, first_run_plan_pending) {
+        if (first_run_plan_pending && inbox_plan_code != null && inbox_plan_code != "free") {
+            theme_vm_inbox.clear_first_run_plan()
+        }
+    }
+
     val show_plan_prompt = plan_prompt_due &&
+        inbox_plan_code == "free" &&
         first_run_plan_pending &&
         !first_run_setup_pending &&
         !plan_prompt_dismissed &&
