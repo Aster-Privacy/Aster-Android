@@ -2995,7 +2995,7 @@ private fun reaction_chip_row(
     val colors = AsterMaterial.colors
     val reduce_motion = aster_reduce_motion()
     var info_emoji by remember { mutableStateOf<String?>(null) }
-    var picker_sheet_open by remember { mutableStateOf(false) }
+    val chip_palette = reaction_chip_palette(is_dark = colors.bg_primary.luminance() < 0.5f)
     val groups = remember(reactions, my_email) {
         reactions.groupBy { it.emoji }
             .map { (emoji, list) ->
@@ -3021,14 +3021,9 @@ private fun reaction_chip_row(
                     MutableTransitionState(reduce_motion).apply { targetState = true }
                 }
                 val bg by androidx.compose.animation.animateColorAsState(
-                    targetValue = if (mine) colors.accent_blue.copy(alpha = 0.16f) else colors.bg_tertiary,
+                    targetValue = if (mine) chip_palette.own_fill else chip_palette.other_fill,
                     animationSpec = tween(if (reduce_motion) 0 else AsterDuration.instant),
                     label = "reaction_chip_bg",
-                )
-                val edge by androidx.compose.animation.animateColorAsState(
-                    targetValue = if (mine) colors.accent_blue.copy(alpha = 0.5f) else androidx.compose.ui.graphics.Color.Transparent,
-                    animationSpec = tween(if (reduce_motion) 0 else AsterDuration.instant),
-                    label = "reaction_chip_edge",
                 )
                 AnimatedVisibility(
                     visibleState = appear,
@@ -3047,7 +3042,6 @@ private fun reaction_chip_row(
                             .height(32.dp)
                             .clip(shape)
                             .background(bg)
-                            .border(width = 1.dp, color = edge, shape = shape)
                             .combinedClickable(
                                 onClick = { if (mine) info_emoji = emoji else on_react(emoji) },
                                 onLongClick = { info_emoji = emoji },
@@ -3073,40 +3067,14 @@ private fun reaction_chip_row(
                             Text(
                                 text = value.toString(),
                                 fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (mine) colors.accent_blue else colors.text_secondary,
+                                fontWeight = FontWeight.Normal,
+                                color = if (mine) chip_palette.own_text else chip_palette.other_text,
                             )
                         }
                     }
                 }
             }
         }
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(SquircleShape(999.dp))
-                .background(colors.bg_tertiary.copy(alpha = 0.6f))
-                .clickable { picker_sheet_open = true }
-                .testTag("reaction_chip_add"),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = TablerIcons.MoodSmile,
-                contentDescription = stringResource(R.string.add_reaction),
-                tint = colors.text_muted,
-                modifier = Modifier.size(17.dp),
-            )
-        }
-    }
-
-    if (picker_sheet_open) {
-        reaction_picker_sheet(
-            on_close = { picker_sheet_open = false },
-            on_pick = { emoji ->
-                picker_sheet_open = false
-                on_react(emoji)
-            },
-        )
     }
 
     info_emoji?.let { emoji ->

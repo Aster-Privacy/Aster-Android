@@ -318,13 +318,15 @@
     <string name="emoji_search_placeholder">Search emoji</string>
     <string name="emoji_search_no_results">No emoji found</string>
     <string name="emoji_group_recent">Recently used</string>
-    <string name="emoji_group_smileys">Smileys and people</string>
+    <string name="emoji_group_emotion">Smileys and emotion</string>
+    <string name="emoji_group_people">People and body</string>
     <string name="emoji_group_nature">Animals and nature</string>
     <string name="emoji_group_food">Food and drink</string>
     <string name="emoji_group_activity">Activities</string>
     <string name="emoji_group_travel">Travel and places</string>
     <string name="emoji_group_objects">Objects</string>
     <string name="emoji_group_symbols">Symbols</string>
+    <string name="emoji_group_flags">Flags</string>
     <string name="reactions_disabled">Reactions are turned off in your settings.</string>
     <string name="cannot_react_own_message">You cannot react to your own message.</string>
     <string name="cannot_react_draft">You cannot react to a draft or scheduled message.</string>

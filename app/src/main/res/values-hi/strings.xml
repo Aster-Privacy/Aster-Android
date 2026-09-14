@@ -3147,13 +3147,15 @@
     <string name="emoji_search_placeholder">इमोजी खोजें</string>
     <string name="emoji_search_no_results">कोई इमोजी नहीं मिला</string>
     <string name="emoji_group_recent">हाल ही में इस्तेमाल किए गए</string>
-    <string name="emoji_group_smileys">स्माइली और लोग</string>
+    <string name="emoji_group_emotion">स्माइली और भावनाएं</string>
+    <string name="emoji_group_people">लोग और शरीर</string>
     <string name="emoji_group_nature">जानवर और प्रकृति</string>
     <string name="emoji_group_food">खाना और पेय</string>
     <string name="emoji_group_activity">गतिविधियां</string>
     <string name="emoji_group_travel">यात्रा और स्थान</string>
     <string name="emoji_group_objects">वस्तुएं</string>
     <string name="emoji_group_symbols">प्रतीक</string>
+    <string name="emoji_group_flags">झंडे</string>
     <string name="domain_catch_all_hint">इस डोमेन के किसी भी पते पर भेजा गया मेल पाएं.</string>
     <string name="special_offer_title">निजी मेल, आधी कीमत में</string>
     <string name="special_offer_price_period">प्रति माह</string>

@@ -3257,13 +3257,15 @@
     <string name="emoji_search_placeholder">Emoji ara</string>
     <string name="emoji_search_no_results">Emoji bulunamadı</string>
     <string name="emoji_group_recent">Son kullanılanlar</string>
-    <string name="emoji_group_smileys">İfadeler ve insanlar</string>
+    <string name="emoji_group_emotion">İfadeler ve duygular</string>
+    <string name="emoji_group_people">İnsanlar ve vücut</string>
     <string name="emoji_group_nature">Hayvanlar ve doğa</string>
     <string name="emoji_group_food">Yiyecek ve içecek</string>
     <string name="emoji_group_activity">Etkinlikler</string>
     <string name="emoji_group_travel">Seyahat ve yerler</string>
     <string name="emoji_group_objects">Nesneler</string>
     <string name="emoji_group_symbols">Semboller</string>
+    <string name="emoji_group_flags">Bayraklar</string>
     <string name="domain_catch_all_hint">Bu alan adındaki herhangi bir adrese gönderilen postaları alın.</string>
     <string name="special_offer_title">Gizli e-posta, yarı fiyatına</string>
     <string name="special_offer_price_period">aylık</string>

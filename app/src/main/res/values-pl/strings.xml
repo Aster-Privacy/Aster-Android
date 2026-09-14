@@ -3297,13 +3297,15 @@
     <string name="emoji_search_placeholder">Szukaj emoji</string>
     <string name="emoji_search_no_results">Nie znaleziono emoji</string>
     <string name="emoji_group_recent">Ostatnio używane</string>
-    <string name="emoji_group_smileys">Uśmiechy i ludzie</string>
+    <string name="emoji_group_emotion">Uśmiechy i emocje</string>
+    <string name="emoji_group_people">Ludzie i ciało</string>
     <string name="emoji_group_nature">Zwierzęta i natura</string>
     <string name="emoji_group_food">Jedzenie i napoje</string>
     <string name="emoji_group_activity">Aktywności</string>
     <string name="emoji_group_travel">Podróże i miejsca</string>
     <string name="emoji_group_objects">Obiekty</string>
     <string name="emoji_group_symbols">Symbole</string>
+    <string name="emoji_group_flags">Flagi</string>
     <string name="domain_catch_all_hint">Odbieraj wiadomości wysyłane na dowolny adres w tej domenie.</string>
     <string name="special_offer_title">Prywatna poczta o połowę taniej</string>
     <string name="special_offer_price_period">miesięcznie</string>

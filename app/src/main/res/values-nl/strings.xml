@@ -3257,13 +3257,15 @@
     <string name="emoji_search_placeholder">Emoji zoeken</string>
     <string name="emoji_search_no_results">Geen emoji gevonden</string>
     <string name="emoji_group_recent">Onlangs gebruikt</string>
-    <string name="emoji_group_smileys">Smileys en mensen</string>
+    <string name="emoji_group_emotion">Smileys en emoties</string>
+    <string name="emoji_group_people">Mensen en lichaam</string>
     <string name="emoji_group_nature">Dieren en natuur</string>
     <string name="emoji_group_food">Eten en drinken</string>
     <string name="emoji_group_activity">Activiteiten</string>
     <string name="emoji_group_travel">Reizen en plaatsen</string>
     <string name="emoji_group_objects">Objecten</string>
     <string name="emoji_group_symbols">Symbolen</string>
+    <string name="emoji_group_flags">Vlaggen</string>
     <string name="domain_catch_all_hint">Ontvang e-mail die naar elk adres op dit domein wordt gestuurd.</string>
     <string name="special_offer_title">Privé-e-mail voor de helft van de prijs</string>
     <string name="special_offer_price_period">per maand</string>

@@ -3284,13 +3284,15 @@
     <string name="emoji_search_placeholder">Rechercher un emoji</string>
     <string name="emoji_search_no_results">Aucun emoji trouvé</string>
     <string name="emoji_group_recent">Utilisés récemment</string>
-    <string name="emoji_group_smileys">Smileys et personnes</string>
+    <string name="emoji_group_emotion">Smileys et émotions</string>
+    <string name="emoji_group_people">Personnes et corps</string>
     <string name="emoji_group_nature">Animaux et nature</string>
     <string name="emoji_group_food">Nourriture et boissons</string>
     <string name="emoji_group_activity">Activités</string>
     <string name="emoji_group_travel">Voyages et lieux</string>
     <string name="emoji_group_objects">Objets</string>
     <string name="emoji_group_symbols">Symboles</string>
+    <string name="emoji_group_flags">Drapeaux</string>
     <string name="domain_catch_all_hint">Recevez les messages envoyés à toute adresse de ce domaine.</string>
     <string name="special_offer_title">La messagerie privée à moitié prix</string>
     <string name="special_offer_price_period">par mois</string>

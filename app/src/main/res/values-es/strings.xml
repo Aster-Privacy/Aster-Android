@@ -3258,13 +3258,15 @@
     <string name="emoji_search_placeholder">Buscar emoji</string>
     <string name="emoji_search_no_results">No se encontraron emojis</string>
     <string name="emoji_group_recent">Usados recientemente</string>
-    <string name="emoji_group_smileys">Caras y personas</string>
+    <string name="emoji_group_emotion">Caras y emociones</string>
+    <string name="emoji_group_people">Personas y cuerpo</string>
     <string name="emoji_group_nature">Animales y naturaleza</string>
     <string name="emoji_group_food">Comida y bebida</string>
     <string name="emoji_group_activity">Actividades</string>
     <string name="emoji_group_travel">Viajes y lugares</string>
     <string name="emoji_group_objects">Objetos</string>
     <string name="emoji_group_symbols">Símbolos</string>
+    <string name="emoji_group_flags">Banderas</string>
     <string name="domain_catch_all_hint">Recibe el correo enviado a cualquier dirección de este dominio.</string>
     <string name="special_offer_title">Correo privado a mitad de precio</string>
     <string name="special_offer_price_period">al mes</string>

@@ -22,15 +22,30 @@
 package org.astermail.android.ui.mail
 
 import androidx.annotation.StringRes
+import androidx.compose.ui.graphics.vector.ImageVector
+import compose.icons.TablerIcons
+import compose.icons.tablericons.BallFootball
+import compose.icons.tablericons.Bulb
+import compose.icons.tablericons.Flag
+import compose.icons.tablericons.HandStop
+import compose.icons.tablericons.Heart
+import compose.icons.tablericons.Leaf
+import compose.icons.tablericons.MoodSmile
+import compose.icons.tablericons.Pizza
+import compose.icons.tablericons.Plane
 import org.astermail.android.R
 
 data class emoji_entry(val glyph: String, val keywords: String)
 
-data class emoji_group(@StringRes val title: Int, val entries: List<emoji_entry>)
+data class emoji_group(
+    @StringRes val title: Int,
+    val icon: ImageVector,
+    val entries: List<emoji_entry>,
+)
 
 val quick_reaction_emoji = listOf("👍", "❤️", "😂", "🎉", "😮", "😢")
 
-private val smileys_and_people = listOf(
+private val smileys_and_emotion = listOf(
     emoji_entry("😀", "grin grinning smile happy"),
     emoji_entry("😃", "smile happy joy"),
     emoji_entry("😄", "smile happy laugh"),
@@ -134,6 +149,9 @@ private val smileys_and_people = listOf(
     emoji_entry("🙈", "see no evil monkey"),
     emoji_entry("🙉", "hear no evil monkey"),
     emoji_entry("🙊", "speak no evil monkey"),
+)
+
+private val people_and_body = listOf(
     emoji_entry("👋", "wave hello hi bye"),
     emoji_entry("🤚", "raised back of hand"),
     emoji_entry("🖐️", "hand fingers splayed"),
@@ -802,6 +820,9 @@ private val symbols = listOf(
     emoji_entry("🔺", "red triangle up"),
     emoji_entry("🔻", "red triangle down"),
     emoji_entry("🔱", "trident"),
+)
+
+private val flags = listOf(
     emoji_entry("🏁", "chequered flag finish"),
     emoji_entry("🚩", "triangular flag"),
     emoji_entry("🎌", "crossed flags"),
@@ -811,11 +832,13 @@ private val symbols = listOf(
 )
 
 val emoji_catalog: List<emoji_group> = listOf(
-    emoji_group(R.string.emoji_group_smileys, smileys_and_people),
-    emoji_group(R.string.emoji_group_nature, animals_and_nature),
-    emoji_group(R.string.emoji_group_food, food_and_drink),
-    emoji_group(R.string.emoji_group_activity, activity),
-    emoji_group(R.string.emoji_group_travel, travel_and_places),
-    emoji_group(R.string.emoji_group_objects, objects),
-    emoji_group(R.string.emoji_group_symbols, symbols),
+    emoji_group(R.string.emoji_group_emotion, TablerIcons.MoodSmile, smileys_and_emotion),
+    emoji_group(R.string.emoji_group_people, TablerIcons.HandStop, people_and_body),
+    emoji_group(R.string.emoji_group_nature, TablerIcons.Leaf, animals_and_nature),
+    emoji_group(R.string.emoji_group_food, TablerIcons.Pizza, food_and_drink),
+    emoji_group(R.string.emoji_group_activity, TablerIcons.BallFootball, activity),
+    emoji_group(R.string.emoji_group_travel, TablerIcons.Plane, travel_and_places),
+    emoji_group(R.string.emoji_group_objects, TablerIcons.Bulb, objects),
+    emoji_group(R.string.emoji_group_symbols, TablerIcons.Heart, symbols),
+    emoji_group(R.string.emoji_group_flags, TablerIcons.Flag, flags),
 )
