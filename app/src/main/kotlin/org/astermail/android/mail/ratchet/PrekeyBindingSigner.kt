@@ -38,10 +38,28 @@ import org.bouncycastle.openpgp.operator.bc.BcPGPDigestCalculatorProvider
 
 object PrekeyBindingSigner {
     private const val canonical_prefix = "aster-ratchet-prekey-v1:"
+    private const val canonical_prefix_v2 = "aster-ratchet-prekey-v2:"
     private const val armored_private_key_header = "-----BEGIN PGP PRIVATE KEY"
 
     fun canonical_binding(kem_identity_key_b64: String, signed_prekey_b64: String): String =
         "$canonical_prefix$kem_identity_key_b64.$signed_prekey_b64"
+
+    fun canonical_binding_v2(
+        kem_identity_key_b64: String,
+        signed_prekey_b64: String,
+        pq_identity_key_b64: String,
+    ): String = "$canonical_prefix_v2$kem_identity_key_b64.$signed_prekey_b64.$pq_identity_key_b64"
+
+    fun binding_for_bundle(
+        kem_identity_key_b64: String,
+        signed_prekey_b64: String,
+        pq_identity_key_b64: String?,
+    ): String =
+        if (pq_identity_key_b64.isNullOrBlank()) {
+            canonical_binding(kem_identity_key_b64, signed_prekey_b64)
+        } else {
+            canonical_binding_v2(kem_identity_key_b64, signed_prekey_b64, pq_identity_key_b64)
+        }
 
     fun looks_like_armored_private_key(value: String): Boolean =
         value.trimStart().startsWith(armored_private_key_header)

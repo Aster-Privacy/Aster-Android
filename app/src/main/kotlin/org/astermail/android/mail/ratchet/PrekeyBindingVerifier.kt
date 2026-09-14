@@ -50,25 +50,33 @@ object PrekeyBindingVerifier {
         recipient_public_key_armored: String?,
         kem_identity_key_b64: String,
         signed_prekey_b64: String,
+        pq_identity_key_b64: String? = null,
     ): PrekeyBindingResult {
         if (signature_block.isBlank()) return PrekeyBindingResult.UNSIGNED_LEGACY
         if (!is_pgp_signature(signature_block)) return PrekeyBindingResult.UNSIGNED_LEGACY
         if (recipient_public_key_armored.isNullOrBlank()) return PrekeyBindingResult.UNSIGNED_LEGACY
 
-        return runCatching {
-            val signature = extract_signature(signature_block)
-                ?: return@runCatching PrekeyBindingResult.INVALID
-            val public_key = find_verifying_key(recipient_public_key_armored, signature.keyID)
-                ?: return@runCatching PrekeyBindingResult.INVALID
-
-            signature.init(BcPGPContentVerifierBuilderProvider(), public_key)
-            val expected = PrekeyBindingSigner
-                .canonical_binding(kem_identity_key_b64, signed_prekey_b64)
-                .toByteArray(Charsets.UTF_8)
-            signature.update(expected)
-            if (signature.verify()) PrekeyBindingResult.VERIFIED else PrekeyBindingResult.INVALID
-        }.getOrElse { PrekeyBindingResult.INVALID }
+        val candidates = buildList {
+            if (!pq_identity_key_b64.isNullOrBlank()) {
+                add(PrekeyBindingSigner.canonical_binding_v2(kem_identity_key_b64, signed_prekey_b64, pq_identity_key_b64))
+            }
+            add(PrekeyBindingSigner.canonical_binding(kem_identity_key_b64, signed_prekey_b64))
+        }
+        val verified = candidates.any { text ->
+            verify_text(signature_block, recipient_public_key_armored, text)
+        }
+        return if (verified) PrekeyBindingResult.VERIFIED else PrekeyBindingResult.INVALID
     }
+
+    private fun verify_text(signature_block: String, public_key_armored: String, text: String): Boolean =
+        runCatching {
+            val signature = extract_signature(signature_block) ?: return@runCatching false
+            val public_key = find_verifying_key(public_key_armored, signature.keyID)
+                ?: return@runCatching false
+            signature.init(BcPGPContentVerifierBuilderProvider(), public_key)
+            signature.update(text.toByteArray(Charsets.UTF_8))
+            signature.verify()
+        }.getOrDefault(false)
 
     private fun extract_signature(signature_block: String): PGPSignature? {
         val start = signature_block.indexOf(signature_header)

@@ -173,6 +173,7 @@ class RatchetEncryptor @Inject constructor(
             recipient_public_key_armored = verifying_key,
             kem_identity_key_b64 = bundle.kem_identity_key,
             signed_prekey_b64 = bundle.signed_prekey,
+            pq_identity_key_b64 = bundle.pq_kem_public_key,
         )
         if (result == PrekeyBindingResult.INVALID) {
             verifying_key_cache.remove(recipient_email.lowercase(java.util.Locale.ROOT))
