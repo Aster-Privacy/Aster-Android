@@ -65,6 +65,7 @@ import compose.icons.tablericons.CircleCheck
 import compose.icons.tablericons.ExternalLink
 import compose.icons.tablericons.Eye
 import compose.icons.tablericons.EyeOff
+import compose.icons.tablericons.Folder
 import compose.icons.tablericons.Key
 import compose.icons.tablericons.Lock
 import compose.icons.tablericons.Mail
@@ -84,13 +85,18 @@ internal const val gmail_wizard_two_step_url =
 
 internal const val gmail_wizard_app_password_url = "https://myaccount.google.com/apppasswords"
 
-private const val gmail_wizard_total_steps = 4
+internal const val gmail_wizard_label_settings_url = "https://mail.google.com/mail/u/0/#settings/labels"
+
+internal const val gmail_wizard_imap_settings_url = "https://mail.google.com/mail/u/0/#settings/fwdandpop"
+
+private const val gmail_wizard_total_steps = 5
 
 private val gmail_email_pattern = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
 
 private val gmail_wizard_step_icons = listOf(
     TablerIcons.Lock,
     TablerIcons.Key,
+    TablerIcons.Folder,
     TablerIcons.Mail,
     TablerIcons.CircleCheck,
 )
@@ -111,7 +117,7 @@ internal fun gmail_setup_wizard(
     var password_visible by remember { mutableStateOf(false) }
     val email_is_valid = remember(email) { gmail_email_pattern.matches(email.trim()) }
     val password_is_filled = password.isNotBlank()
-    val can_advance = (step != 3 || email_is_valid) && (step != 4 || password_is_filled)
+    val can_advance = (step != 4 || email_is_valid) && (step != 5 || password_is_filled)
 
     AsterDialog(
         on_dismiss = on_dismiss,
@@ -165,7 +171,8 @@ internal fun gmail_setup_wizard(
                             1 -> R.string.ext_gmail_wizard_step_1_title
                             2 -> R.string.ext_gmail_wizard_step_2_title
                             3 -> R.string.ext_gmail_wizard_step_3_title
-                            else -> R.string.ext_gmail_wizard_step_4_title
+                            4 -> R.string.ext_gmail_wizard_step_4_title
+                            else -> R.string.ext_gmail_wizard_step_5_title
                         },
                     ),
                     body = stringResource(
@@ -173,7 +180,8 @@ internal fun gmail_setup_wizard(
                             1 -> R.string.ext_gmail_wizard_step_1_body
                             2 -> R.string.ext_gmail_wizard_step_2_body
                             3 -> R.string.ext_gmail_wizard_step_3_body
-                            else -> R.string.ext_gmail_wizard_step_4_body
+                            4 -> R.string.ext_gmail_wizard_step_4_body
+                            else -> R.string.ext_gmail_wizard_step_5_body
                         },
                     ),
                 )
@@ -204,6 +212,22 @@ internal fun gmail_setup_wizard(
                     }
 
                     3 -> {
+                        Spacer(Modifier.height(AsterSpacing.md))
+                        gmail_wizard_link(
+                            label = stringResource(R.string.ext_gmail_wizard_step_3_labels_action),
+                            on_click = {
+                                open_gmail_wizard_url(context, gmail_wizard_label_settings_url)
+                            },
+                        )
+                        gmail_wizard_link(
+                            label = stringResource(R.string.ext_gmail_wizard_step_3_imap_action),
+                            on_click = {
+                                open_gmail_wizard_url(context, gmail_wizard_imap_settings_url)
+                            },
+                        )
+                    }
+
+                    4 -> {
                         Spacer(Modifier.height(AsterSpacing.md))
                         AsterTextField(
                             value = email,
@@ -242,6 +266,13 @@ internal fun gmail_setup_wizard(
                                 )
                             },
                             content_type = ContentType.Password,
+                        )
+                        Spacer(Modifier.height(AsterSpacing.sm))
+                        Text(
+                            text = stringResource(R.string.ext_gmail_wizard_import_note),
+                            color = colors.text_muted,
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp,
                         )
                     }
                 }
