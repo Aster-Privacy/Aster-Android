@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.common
 
+import android.app.UiModeManager
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
@@ -68,6 +69,26 @@ fun theme_boot_splash_style(context: Context): Int {
         }
     } catch (_: Throwable) {
         R.style.Theme_Aster_Splash_Dark
+    }
+}
+
+fun apply_app_night_mode(context: Context) {
+    runCatching {
+        val snapshot = ThemeStore.boot_snapshot(context)
+        apply_app_night_mode(context, snapshot.theme_mode, snapshot.color_theme)
+    }
+}
+
+fun apply_app_night_mode(context: Context, theme_mode: ThemeMode, color_theme: String) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+    runCatching {
+        val night_mode = when {
+            AsterColorThemes.is_dark_only(ColorThemeId.from_key(color_theme)) -> UiModeManager.MODE_NIGHT_YES
+            theme_mode == ThemeMode.light -> UiModeManager.MODE_NIGHT_NO
+            theme_mode == ThemeMode.dark -> UiModeManager.MODE_NIGHT_YES
+            else -> UiModeManager.MODE_NIGHT_AUTO
+        }
+        context.getSystemService(UiModeManager::class.java)?.setApplicationNightMode(night_mode)
     }
 }
 

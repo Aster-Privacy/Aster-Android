@@ -26,9 +26,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -64,6 +66,10 @@ fun aster_theme_root(content: @Composable () -> Unit) {
     val custom_theme_seed by theme_vm.custom_theme_seed.collectAsStateWithLifecycle()
     val custom_theme_overrides by theme_vm.custom_theme_overrides.collectAsStateWithLifecycle()
     val font_choice by theme_vm.font_choice.collectAsStateWithLifecycle()
+    val app_context = LocalContext.current.applicationContext
+    LaunchedEffect(mode_state, color_theme) {
+        apply_app_night_mode(app_context, mode_state, color_theme)
+    }
     val resolved_mode = when (mode_state) {
         ThemeMode.system -> AsterThemeMode.system
         ThemeMode.light -> AsterThemeMode.light
