@@ -3427,4 +3427,5 @@
     <string name="billing_play_blocked">У вас уже есть подписка. Чтобы изменить ее, управляйте ею там, где вы ее оформили.</string>
     <string name="billing_play_verify_failed">Покупка выполнена, но еще не подтверждена. Aster Mail подтвердит ее автоматически при следующем открытии приложения.</string>
     <string name="billing_play_manage">Управлять в Google Play</string>
+    <string name="billing_play_not_on_device">Ваша подписка не связана с аккаунтом Google на этом устройстве. Управляйте ею в Google Play.</string>
 </resources>

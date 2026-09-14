@@ -98,7 +98,7 @@ internal fun domain_purchase_manage_dialog(
     order: DomainOrder,
     renewing: Boolean,
     renew_error: DomainPurchaseErrorKind?,
-    on_renew: () -> Unit,
+    on_renew: (() -> Unit)?,
     on_dismiss: () -> Unit,
     domain: CustomDomain? = null,
     dns_records: List<DnsRecord> = emptyList(),
@@ -233,12 +233,14 @@ internal fun domain_purchase_manage_dialog(
                 label = stringResource(R.string.close),
                 onClick = on_dismiss,
             )
-            AsterDialogPrimaryButton(
-                label = stringResource(R.string.domain_purchase_renew),
-                onClick = on_renew,
-                enabled = !renewing,
-                is_loading = renewing,
-            )
+            if (on_renew != null) {
+                AsterDialogPrimaryButton(
+                    label = stringResource(R.string.domain_purchase_renew),
+                    onClick = on_renew,
+                    enabled = !renewing,
+                    is_loading = renewing,
+                )
+            }
         },
     )
 }

@@ -3369,4 +3369,5 @@
     <string name="billing_play_blocked">이미 구독 중입니다. 변경하려면 구매한 곳에서 관리하세요.</string>
     <string name="billing_play_verify_failed">구매가 완료되었지만 아직 확인되지 않았습니다. 다음에 앱을 열면 Aster Mail이 자동으로 확인합니다.</string>
     <string name="billing_play_manage">Google Play에서 관리</string>
+    <string name="billing_play_not_on_device">구독이 이 기기의 Google 계정에 연결되어 있지 않습니다. Google Play에서 관리하세요.</string>
 </resources>

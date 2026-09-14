@@ -74,6 +74,7 @@ class BillingViewModelTest {
         billing_api = mockk(relaxed = true)
         auth_repository = mockk(relaxed = true)
         coEvery { auth_repository.stored_password_hash_b64() } returns "cached_hash"
+        io.mockk.every { auth_repository.active_account_id } returns kotlinx.coroutines.flow.MutableStateFlow("user1")
         vm = BillingViewModel(application, billing_api, auth_repository)
     }
 

@@ -52,7 +52,7 @@ fun payment_failed_banner(
     plan_name: String,
     due_date: String,
     is_loading: Boolean,
-    on_update_card: () -> Unit,
+    on_update_card: (() -> Unit)?,
     modifier: Modifier = Modifier,
     days_left: Int? = null,
 ) {
@@ -101,11 +101,13 @@ fun payment_failed_banner(
                 modifier = Modifier.padding(start = 28.dp),
             )
         }
-        Spacer(Modifier.height(AsterSpacing.xs))
-        AsterSecondaryButton(
-            label = if (is_loading) stringResource(R.string.loading) else stringResource(R.string.payment_failed_update_card),
-            onClick = on_update_card,
-            enabled = !is_loading,
-        )
+        if (on_update_card != null) {
+            Spacer(Modifier.height(AsterSpacing.xs))
+            AsterSecondaryButton(
+                label = if (is_loading) stringResource(R.string.loading) else stringResource(R.string.payment_failed_update_card),
+                onClick = on_update_card,
+                enabled = !is_loading,
+            )
+        }
     }
 }

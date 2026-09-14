@@ -109,7 +109,7 @@ internal fun domain_purchase_area(
             on_buy = on_buy,
             on_open_order = on_open_order,
             on_cancel = on_cancel,
-            on_complete_purchase = on_complete_purchase,
+            on_complete_purchase = if (can_buy) on_complete_purchase else null,
             on_manage = { manage_order_id = it },
         )
         v_gap(AsterSpacing.md)
@@ -130,7 +130,11 @@ internal fun domain_purchase_area(
             on_load_dns = { linked_domain?.let { on_load_dns(it.id) } },
             on_verify = { linked_domain?.let { on_verify_domain(it.id) } },
             on_toggle_catch_all = { linked_domain?.let { on_toggle_catch_all(it.id) } },
-            on_renew = { on_renew(manage_order.id) },
+            on_renew = if (can_buy) {
+                { on_renew(manage_order.id) }
+            } else {
+                null
+            },
             on_dismiss = { manage_order_id = null },
         )
     }
@@ -190,7 +194,7 @@ private fun purchased_domains_section(
     on_buy: () -> Unit,
     on_open_order: (DomainOrder) -> Unit,
     on_cancel: (String) -> Unit,
-    on_complete_purchase: (DomainOrder) -> Unit,
+    on_complete_purchase: ((DomainOrder) -> Unit)?,
     on_manage: (String) -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -241,7 +245,7 @@ private fun purchased_domain_row(
     state: DomainPurchaseUiState,
     on_open_order: (DomainOrder) -> Unit,
     on_cancel: (String) -> Unit,
-    on_complete_purchase: (DomainOrder) -> Unit,
+    on_complete_purchase: ((DomainOrder) -> Unit)?,
     on_manage: (String) -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -364,7 +368,7 @@ private fun purchased_domain_row(
                         strokeWidth = 2.dp,
                         color = colors.accent_blue,
                     )
-                } else {
+                } else if (on_complete_purchase != null) {
                     TextButton(onClick = { on_complete_purchase(order) }) {
                         Text(
                             text = stringResource(R.string.domain_purchase_complete_purchase),

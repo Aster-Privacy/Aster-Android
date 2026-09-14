@@ -1845,6 +1845,7 @@ fun FamilyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 
     val sub = state.subscription
     val is_family = sub?.effective_plan_name?.contains("family", ignoreCase = true) == true
+    val play_install = org.astermail.android.billing.remember_play_install()
 
     detail_scaffold(title = stringResource(R.string.family_plan), on_back = on_back) {
         if (state.is_loading && sub == null) {
@@ -1858,15 +1859,17 @@ fun FamilyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
             load_failed_card(state.error) { vm.load_subscription() }
         } else if (is_family) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
-                detail_row(
-                    title = stringResource(R.string.manage_family),
-                    subtitle = stringResource(R.string.manage_family_subtitle),
-                    icon = TablerIcons.Users,
-                    on_click = {
-                        org.astermail.android.ui.common.open_external_url(context, "https://app.astermail.org/settings/family")
-                    },
-                )
-                AsterDivider(modifier = Modifier)
+                if (!play_install) {
+                    detail_row(
+                        title = stringResource(R.string.manage_family),
+                        subtitle = stringResource(R.string.manage_family_subtitle),
+                        icon = TablerIcons.Users,
+                        on_click = {
+                            org.astermail.android.ui.common.open_external_url(context, "https://app.astermail.org/settings/family")
+                        },
+                    )
+                    AsterDivider(modifier = Modifier)
+                }
                 detail_row(
                     title = stringResource(R.string.kids_reserved_addresses),
                     subtitle = stringResource(R.string.kids_reserved_subtitle),
@@ -1891,13 +1894,15 @@ fun FamilyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                     )
                 }
             }
-            v_gap(AsterSpacing.lg)
-            AsterButton(
-                label = stringResource(R.string.view_plans),
-                onClick = {
-                    org.astermail.android.ui.common.open_external_url(context, "https://app.astermail.org/settings/billing")
-                },
-            )
+            if (!play_install) {
+                v_gap(AsterSpacing.lg)
+                AsterButton(
+                    label = stringResource(R.string.view_plans),
+                    onClick = {
+                        org.astermail.android.ui.common.open_external_url(context, "https://app.astermail.org/settings/billing")
+                    },
+                )
+            }
         }
         v_gap(AsterSpacing.xxl)
     }
@@ -1909,6 +1914,7 @@ fun KidsReservedScreen(on_back: () -> Unit) {
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val context = LocalContext.current
+    val play_install = org.astermail.android.billing.remember_play_install()
     var release_target by remember { mutableStateOf<org.astermail.android.api.family.ReservedAddress?>(null) }
 
     LaunchedEffect(Unit) { vm.load_reserved_addresses() }
@@ -1958,14 +1964,16 @@ fun KidsReservedScreen(on_back: () -> Unit) {
             }
         }
 
-        AsterButton(
-            label = stringResource(R.string.kids_reserve_on_web),
-            onClick = {
-                org.astermail.android.ui.common.open_external_url(context, "https://app.astermail.org/settings/family")
-            },
-        )
+        if (!play_install) {
+            AsterButton(
+                label = stringResource(R.string.kids_reserve_on_web),
+                onClick = {
+                    org.astermail.android.ui.common.open_external_url(context, "https://app.astermail.org/settings/family")
+                },
+            )
 
-        v_gap(AsterSpacing.lg)
+            v_gap(AsterSpacing.lg)
+        }
 
         if (state.is_loading && state.reserved_addresses.isEmpty()) {
             Box(

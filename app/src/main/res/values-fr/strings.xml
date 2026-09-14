@@ -3414,4 +3414,5 @@
     <string name="billing_play_blocked">Vous avez déjà un abonnement. Pour le modifier, gérez-le là où vous l\'avez acheté.</string>
     <string name="billing_play_verify_failed">Votre achat a abouti, mais il n\'est pas encore confirmé. Aster Mail le confirmera automatiquement à la prochaine ouverture de l\'app.</string>
     <string name="billing_play_manage">Gérer dans Google Play</string>
+    <string name="billing_play_not_on_device">Votre abonnement n\'est pas associé au compte Google de cet appareil. Gérez-le dans Google Play.</string>
 </resources>

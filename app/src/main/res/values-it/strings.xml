@@ -3387,4 +3387,5 @@
     <string name="billing_play_blocked">Hai già un abbonamento. Per modificarlo, gestiscilo dove l\'hai acquistato.</string>
     <string name="billing_play_verify_failed">L\'acquisto è andato a buon fine, ma non è ancora confermato. Aster Mail lo conferma automaticamente alla prossima apertura dell\'app.</string>
     <string name="billing_play_manage">Gestisci in Google Play</string>
+    <string name="billing_play_not_on_device">Il tuo abbonamento non è collegato all\'account Google di questo dispositivo. Gestiscilo in Google Play.</string>
 </resources>

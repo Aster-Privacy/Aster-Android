@@ -34,6 +34,8 @@ import org.astermail.android.api.billing.GooglePlayProduct
 const val PLAY_STORE_PACKAGE = "com.android.vending"
 const val GOOGLE_PLAY_PROVIDER = "google_play"
 const val PLAY_BLOCKED_ACTIVE_SUBSCRIPTION = "active_subscription"
+const val PLAY_MONTHLY_BASE_PLAN = "monthly"
+const val PLAY_YEARLY_BASE_PLAN = "yearly"
 
 data class PlayOffer(
     val product_id: String,
@@ -132,15 +134,34 @@ fun play_offer_for(
 ): PlayOffer? {
     val product = play_product_for_plan(products, plan_code) ?: return null
     val interval = if (billing_interval == "year") "year" else "month"
-    return offers.firstOrNull { it.product_id == product.product_id && it.billing_interval == interval }
+    val base_plan_id = play_base_plan_id(interval)
+    val product_offers = offers.filter { it.product_id == product.product_id }
+    product_offers.firstOrNull { it.base_plan_id == base_plan_id }?.let { return it }
+    if (base_plan_id in product.base_plan_ids) return null
+    return product_offers.firstOrNull { offer ->
+        offer.billing_interval == interval &&
+            (product.base_plan_ids.isEmpty() || offer.base_plan_id in product.base_plan_ids)
+    }
 }
+
+fun play_base_plan_id(billing_interval: String): String =
+    if (billing_interval == "year") PLAY_YEARLY_BASE_PLAN else PLAY_MONTHLY_BASE_PLAN
+
+fun play_price_label(
+    offers: List<PlayOffer>,
+    products: List<GooglePlayProduct>,
+    plan_code: String,
+    billing_interval: String,
+): String? = play_offer_for(offers, products, plan_code, billing_interval)
+    ?.formatted_price
+    ?.takeIf { it.isNotBlank() }
 
 fun apply_play_prices(
     plans: List<AvailablePlan>,
     offers: List<PlayOffer>,
     products: List<GooglePlayProduct>,
 ): List<AvailablePlan> {
-    if (offers.isEmpty() || products.isEmpty()) return plans
+    if (offers.isEmpty() || products.isEmpty()) return plans.filter { it.price_cents <= 0 && it.yearly_price_cents <= 0 }
     return plans.mapNotNull { plan ->
         if (plan.price_cents <= 0 && plan.yearly_price_cents <= 0) return@mapNotNull plan
         val monthly = play_offer_for(offers, products, plan.code, "month")

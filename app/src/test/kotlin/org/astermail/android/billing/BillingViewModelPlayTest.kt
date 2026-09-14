@@ -28,6 +28,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -38,6 +39,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import org.astermail.android.api.ApiError
 import org.astermail.android.api.billing.BillingApi
 import org.astermail.android.api.billing.CheckoutSessionRequest
 import org.astermail.android.api.billing.GooglePlayConfigResponse
@@ -84,6 +86,7 @@ class BillingViewModelPlayTest {
     private lateinit var auth_repository: AuthRepository
     private lateinit var store: fake_play_store
     private lateinit var vm: BillingViewModel
+    private val active_account = MutableStateFlow<String?>("user1")
 
     private val star_month = PlayOffer("star", "monthly", "tok_star_m", "$3.49", 3_490_000, "EUR", "month")
     private val star_year = PlayOffer("star", "yearly", "tok_star_y", "$33.99", 33_990_000, "EUR", "year")
@@ -92,6 +95,10 @@ class BillingViewModelPlayTest {
         obfuscated_account_id = "acct_hash",
         products = listOf(GooglePlayProduct("star", "star", listOf("monthly", "yearly"))),
     )
+    private val confirmed = GooglePlayVerifyResponse(plan_code = "star", pending = false)
+
+    private fun owned_star(token: String, acknowledged: Boolean) =
+        PlayOwnedPurchase(token, listOf("star"), is_purchased = true, is_pending = false, is_acknowledged = acknowledged)
 
     @Before
     fun setup() {
@@ -100,6 +107,7 @@ class BillingViewModelPlayTest {
         billing_api = mockk(relaxed = true)
         auth_repository = mockk(relaxed = true)
         every { auth_repository.is_signed_in } returns MutableStateFlow(true)
+        every { auth_repository.active_account_id } returns active_account
         store = fake_play_store().apply { offers = listOf(star_month, star_year) }
         vm = BillingViewModel(application, billing_api, auth_repository)
         vm.play_store = store
@@ -112,13 +120,26 @@ class BillingViewModelPlayTest {
     }
 
     @Test
-    fun `stays on stripe checkout when play is disabled on the server`() = runTest {
+    fun `never opens stripe checkout on a play install when play is disabled on the server`() = runTest {
         coEvery { billing_api.get_google_play_config() } returns GooglePlayConfigResponse(enabled = false)
         vm.start_checkout("star", "month")
         advanceUntilIdle()
         assertFalse(vm.state.value.play_enabled)
         assertNull(vm.state.value.play_purchase_request)
-        coVerify { billing_api.create_checkout_session(any<CheckoutSessionRequest>()) }
+        assertNull(vm.state.value.checkout_url)
+        assertNotNull(vm.state.value.error)
+        assertFalse(vm.state.value.is_acting)
+        coVerify(exactly = 0) { billing_api.create_checkout_session(any<CheckoutSessionRequest>()) }
+    }
+
+    @Test
+    fun `never opens stripe checkout on a play install when the config request fails`() = runTest {
+        coEvery { billing_api.get_google_play_config() } throws ApiError.NetworkError
+        vm.start_checkout("star", "month")
+        advanceUntilIdle()
+        assertNull(vm.state.value.play_purchase_request)
+        assertNotNull(vm.state.value.error)
+        coVerify(exactly = 0) { billing_api.create_checkout_session(any<CheckoutSessionRequest>()) }
     }
 
     @Test
@@ -146,22 +167,56 @@ class BillingViewModelPlayTest {
     }
 
     @Test
-    fun `blocks a second subscription from another provider`() = runTest {
-        coEvery { billing_api.get_google_play_config() } returns enabled_config.copy(purchase_blocked_reason = "active_subscription")
+    fun `passes the owned token when a play subscriber changes plan`() = runTest {
+        coEvery { billing_api.get_google_play_config() } returns enabled_config
+        coEvery { billing_api.get_subscription() } returns SubscriptionResponse(
+            plan = PlanInfo(code = "star", price_cents = 349),
+            status = "active",
+            payment_provider = "google_play",
+        )
+        store.owned = listOf(owned_star("tok_old", acknowledged = true))
+        vm.start_checkout("star", "year")
+        advanceUntilIdle()
+        val request = vm.state.value.play_purchase_request
+        assertNotNull(request)
+        assertEquals("tok_old", request!!.old_purchase_token)
+        coVerify(exactly = 0) { billing_api.verify_google_play_purchase(any()) }
+    }
+
+    @Test
+    fun `opens play subscriptions when a play subscriber owns nothing on this device`() = runTest {
+        coEvery { billing_api.get_google_play_config() } returns enabled_config
+        coEvery { billing_api.get_subscription() } returns SubscriptionResponse(
+            plan = PlanInfo(code = "star", price_cents = 349),
+            status = "active",
+            payment_provider = "google_play",
+        )
+        vm.start_checkout("star", "year")
+        advanceUntilIdle()
+        assertNull(vm.state.value.play_purchase_request)
+        assertTrue(vm.state.value.portal_url.orEmpty().startsWith("https://play.google.com/store/account/subscriptions"))
+    }
+
+    @Test
+    fun `redeems an owned but unverified purchase instead of launching a new one`() = runTest {
+        coEvery { billing_api.get_google_play_config() } returns enabled_config
+        coEvery { billing_api.verify_google_play_purchase(any()) } returns confirmed
+        store.owned = listOf(owned_star("purchase_3", acknowledged = true))
         vm.start_checkout("star", "month")
         advanceUntilIdle()
         assertNull(vm.state.value.play_purchase_request)
-        assertNotNull(vm.state.value.error)
+        assertTrue(store.purchases.isEmpty())
+        coVerify(atLeast = 1) { billing_api.verify_google_play_purchase(GooglePlayVerifyRequest("star", "purchase_3")) }
+        assertNotNull(vm.state.value.info)
+        assertFalse(vm.state.value.is_acting)
     }
 
     @Test
     fun `verifies a completed purchase with the server`() = runTest {
         coEvery { billing_api.get_google_play_config() } returns enabled_config
-        coEvery { billing_api.verify_google_play_purchase(any()) } returns GooglePlayVerifyResponse(plan_code = "star", pending = false)
+        coEvery { billing_api.verify_google_play_purchase(any()) } returns confirmed
         coEvery { billing_api.get_subscription() } returns SubscriptionResponse(plan = PlanInfo(code = "star", price_cents = 349), status = "active")
-        store.outcome = PlayPurchaseOutcome.Purchased(
-            listOf(PlayOwnedPurchase("purchase_1", listOf("star"), is_purchased = true, is_pending = false, is_acknowledged = false)),
-        )
+        store.outcome = PlayPurchaseOutcome.Purchased(listOf(owned_star("purchase_1", acknowledged = false)))
         vm.start_checkout("star", "month")
         advanceUntilIdle()
         vm.launch_play_purchase(mockk(relaxed = true))
@@ -188,14 +243,93 @@ class BillingViewModelPlayTest {
     @Test
     fun `redeems unacknowledged purchases once`() = runTest {
         coEvery { billing_api.get_google_play_config() } returns enabled_config
-        coEvery { billing_api.verify_google_play_purchase(any()) } returns GooglePlayVerifyResponse(plan_code = "star", pending = false)
-        store.owned = listOf(PlayOwnedPurchase("purchase_2", listOf("star"), is_purchased = true, is_pending = false, is_acknowledged = false))
+        coEvery { billing_api.verify_google_play_purchase(any()) } returns confirmed
+        store.owned = listOf(owned_star("purchase_2", acknowledged = false))
         vm.ensure_play_config()
         advanceUntilIdle()
         vm.redeem_play_purchases()
         advanceUntilIdle()
         coVerify(exactly = 1) { billing_api.verify_google_play_purchase(GooglePlayVerifyRequest("star", "purchase_2")) }
         assertTrue(vm.state.value.play_enabled)
+    }
+
+    @Test
+    fun `re-verifies an acknowledged purchase the backend does not attribute to play`() = runTest {
+        coEvery { billing_api.get_google_play_config() } returns enabled_config
+        coEvery { billing_api.verify_google_play_purchase(any()) } returns confirmed
+        store.owned = listOf(owned_star("purchase_5", acknowledged = true))
+        vm.ensure_play_config()
+        advanceUntilIdle()
+        coVerify(exactly = 1) { billing_api.verify_google_play_purchase(GooglePlayVerifyRequest("star", "purchase_5")) }
+    }
+
+    @Test
+    fun `retries verification after a server error`() = runTest {
+        coEvery { billing_api.get_google_play_config() } returns enabled_config
+        var calls = 0
+        coEvery { billing_api.verify_google_play_purchase(any()) } coAnswers {
+            calls += 1
+            if (calls < 3) throw ApiError.ServerError(503)
+            confirmed
+        }
+        store.owned = listOf(owned_star("purchase_6", acknowledged = false))
+        vm.ensure_play_config()
+        advanceUntilIdle()
+        assertEquals(3, calls)
+    }
+
+    @Test
+    fun `does not retry verification after a client error`() = runTest {
+        coEvery { billing_api.get_google_play_config() } returns enabled_config
+        var calls = 0
+        coEvery { billing_api.verify_google_play_purchase(any()) } coAnswers {
+            calls += 1
+            throw ApiError.ServerError(400)
+        }
+        store.owned = listOf(owned_star("purchase_7", acknowledged = false))
+        vm.ensure_play_config()
+        advanceUntilIdle()
+        assertEquals(1, calls)
+    }
+
+    @Test
+    fun `queues a forced redeem that arrives while another is running`() = runTest {
+        coEvery { billing_api.get_google_play_config() } returns enabled_config
+        val gate = CompletableDeferred<Unit>()
+        var calls = 0
+        coEvery { billing_api.verify_google_play_purchase(any()) } coAnswers {
+            calls += 1
+            gate.await()
+            confirmed
+        }
+        store.owned = listOf(owned_star("purchase_8", acknowledged = false))
+        vm.ensure_play_config()
+        advanceUntilIdle()
+        assertEquals(1, calls)
+        vm.redeem_play_purchases(force = true)
+        gate.complete(Unit)
+        advanceUntilIdle()
+        assertEquals(2, calls)
+    }
+
+    @Test
+    fun `resets play state when the active account changes`() = runTest {
+        coEvery { billing_api.get_google_play_config() } returns enabled_config
+        coEvery { billing_api.verify_google_play_purchase(any()) } returns confirmed
+        store.owned = listOf(owned_star("purchase_9", acknowledged = false))
+        advanceUntilIdle()
+        vm.ensure_play_config()
+        advanceUntilIdle()
+        assertTrue(vm.state.value.play_enabled)
+        coVerify(exactly = 1) { billing_api.verify_google_play_purchase(GooglePlayVerifyRequest("star", "purchase_9")) }
+        active_account.value = "user2"
+        advanceUntilIdle()
+        assertFalse(vm.state.value.play_enabled)
+        assertNull(vm.state.value.play_account_id)
+        assertTrue(vm.state.value.play_offers.isEmpty())
+        vm.ensure_play_config()
+        advanceUntilIdle()
+        coVerify(exactly = 2) { billing_api.verify_google_play_purchase(GooglePlayVerifyRequest("star", "purchase_9")) }
     }
 
     @Test
@@ -210,6 +344,22 @@ class BillingViewModelPlayTest {
         vm.open_portal()
         advanceUntilIdle()
         assertTrue(vm.state.value.portal_url.orEmpty().startsWith("https://play.google.com/store/account/subscriptions"))
+        coVerify(exactly = 0) { billing_api.create_portal_session() }
+    }
+
+    @Test
+    fun `blocks stripe management for a stripe subscriber on a play install`() = runTest {
+        coEvery { billing_api.get_subscription() } returns SubscriptionResponse(
+            plan = PlanInfo(code = "star", price_cents = 349),
+            status = "active",
+            payment_provider = "stripe",
+        )
+        vm.load_subscription()
+        advanceUntilIdle()
+        vm.open_portal()
+        advanceUntilIdle()
+        assertNull(vm.state.value.portal_url)
+        assertNotNull(vm.state.value.error)
         coVerify(exactly = 0) { billing_api.create_portal_session() }
     }
 }

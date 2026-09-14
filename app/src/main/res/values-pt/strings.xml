@@ -3387,4 +3387,5 @@
     <string name="billing_play_blocked">Você já tem uma assinatura. Para alterá-la, gerencie-a onde você a comprou.</string>
     <string name="billing_play_verify_failed">Sua compra foi concluída, mas ainda não foi confirmada. O Aster Mail a confirmará automaticamente na próxima vez que você abrir o app.</string>
     <string name="billing_play_manage">Gerenciar no Google Play</string>
+    <string name="billing_play_not_on_device">Sua assinatura não está vinculada à conta do Google neste dispositivo. Gerencie-a no Google Play.</string>
 </resources>

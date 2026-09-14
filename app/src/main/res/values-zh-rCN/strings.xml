@@ -3369,4 +3369,5 @@
     <string name="billing_play_blocked">你已有订阅。如需更改，请在购买订阅的地方进行管理。</string>
     <string name="billing_play_verify_failed">你的购买已完成，但尚未确认。下次打开应用时，Aster Mail 会自动确认。</string>
     <string name="billing_play_manage">在 Google Play 中管理</string>
+    <string name="billing_play_not_on_device">你的订阅未关联到此设备上的 Google 账号。请在 Google Play 中管理。</string>
 </resources>

@@ -49,23 +49,28 @@ object PlayBilling : PlayStore {
 
     override val is_supported: Boolean = true
 
-    private val updates = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    private val updates = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
     override val purchase_updates: Flow<Unit> = updates.asSharedFlow()
 
     private val lock = Any()
     private var client: BillingClient? = null
     private var connection: CompletableDeferred<Boolean>? = null
-    @Volatile
-    private var pending_flow: CompletableDeferred<PlayPurchaseOutcome>? = null
+    private class PendingFlow(val product_id: String, val deferred: CompletableDeferred<PlayPurchaseOutcome>)
+
+    private var pending_flow: PendingFlow? = null
     private val product_details = ConcurrentHashMap<String, ProductDetails>()
 
     private val listener = PurchasesUpdatedListener { result, purchases ->
         val outcome = outcome_for(result, purchases)
-        val waiting = pending_flow
-        pending_flow = null
-        if (waiting != null && !waiting.isCompleted) {
-            waiting.complete(outcome)
-        } else if (outcome is PlayPurchaseOutcome.Purchased || outcome is PlayPurchaseOutcome.Pending) {
+        val owner = synchronized(lock) {
+            val waiting = pending_flow
+            val owns = waiting != null && (purchases.isNullOrEmpty() || purchases.any { waiting.product_id in it.products })
+            if (owns) pending_flow = null
+            if (owns) waiting else null
+        }
+        if (owner != null) {
+            owner.deferred.complete(outcome)
+        } else if (!purchases.isNullOrEmpty()) {
             updates.tryEmit(Unit)
         }
     }
@@ -74,7 +79,9 @@ object PlayBilling : PlayStore {
         when (result.responseCode) {
             BillingClient.BillingResponseCode.OK -> {
                 val owned = purchases.orEmpty().map { it.to_owned() }
-                if (owned.isNotEmpty() && owned.all { it.is_pending }) {
+                if (owned.isEmpty()) {
+                    PlayPurchaseOutcome.Cancelled
+                } else if (owned.all { it.is_pending }) {
                     PlayPurchaseOutcome.Pending
                 } else {
                     PlayPurchaseOutcome.Purchased(owned)
@@ -204,21 +211,35 @@ object PlayBilling : PlayStore {
                     .build(),
             )
         }
-        val waiting = CompletableDeferred<PlayPurchaseOutcome>()
-        pending_flow?.complete(PlayPurchaseOutcome.Cancelled)
-        pending_flow = waiting
+        val waiting = PendingFlow(offer.product_id, CompletableDeferred())
+        val previous = synchronized(lock) {
+            val existing = pending_flow
+            pending_flow = waiting
+            existing
+        }
+        previous?.deferred?.complete(PlayPurchaseOutcome.Cancelled)
         val launch = try {
             billing.launchBillingFlow(activity, builder.build())
         } catch (t: Throwable) {
             Log.w(TAG, "launchBillingFlow failed", t)
-            pending_flow = null
+            release(waiting)
             return PlayPurchaseOutcome.Unavailable
         }
         if (launch.responseCode != BillingClient.BillingResponseCode.OK) {
-            if (pending_flow === waiting) pending_flow = null
+            release(waiting)
             return outcome_for(launch, null)
         }
-        return waiting.await()
+        return try {
+            waiting.deferred.await()
+        } finally {
+            release(waiting)
+        }
+    }
+
+    private fun release(flow: PendingFlow) {
+        synchronized(lock) {
+            if (pending_flow === flow) pending_flow = null
+        }
     }
 
     override suspend fun owned_purchases(context: Context): List<PlayOwnedPurchase>? {

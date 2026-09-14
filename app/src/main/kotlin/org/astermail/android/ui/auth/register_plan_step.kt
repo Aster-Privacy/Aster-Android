@@ -226,7 +226,15 @@ fun RegisterPlanStep(
             }
             Spacer(Modifier.height(AsterSpacing.lg))
         }
-        if (plans_failed) {
+        if (plans_failed && play_install) {
+            Text(
+                text = stringResource(R.string.plans_unavailable),
+                color = colors.text_secondary,
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        } else if (plans_failed) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -278,6 +286,16 @@ fun RegisterPlanStep(
                     is_recommended = plan.code.lowercase() == "nova",
                     billing_interval = effective_interval,
                     currency = currency,
+                    price_label = if (play_install) {
+                        org.astermail.android.billing.play_price_label(
+                            state.play_offers,
+                            state.play_products,
+                            plan.code,
+                            effective_interval,
+                        )
+                    } else {
+                        null
+                    },
                     offer = if (
                         plan.price_cents > 0 &&
                         !play_install &&
@@ -313,7 +331,7 @@ fun RegisterPlanStep(
             Spacer(Modifier.height(AsterSpacing.md))
         }
 
-        if (selected_code == "free" || plans_failed) {
+        if (selected_code == "free" || plans_failed || play_install) {
             AsterButton(
                 label = stringResource(R.string.continue_with_free),
                 onClick = on_continue,
@@ -401,6 +419,7 @@ private fun plan_card(
     is_recommended: Boolean,
     billing_interval: String,
     currency: String,
+    price_label: String? = null,
     offer: org.astermail.android.ui.settings.detail.review_offer_price? = null,
     on_select: () -> Unit,
 ) {
@@ -448,7 +467,7 @@ private fun plan_card(
             val price_text = if (amount_cents > 0) {
                 stringResource(
                     R.string.settings_price_per_interval,
-                    org.astermail.android.billing.format_money(amount_cents.toLong(), currency),
+                    price_label ?: org.astermail.android.billing.format_money(amount_cents.toLong(), currency),
                     org.astermail.android.billing.billing_interval_label(context, price_interval),
                 )
             } else {

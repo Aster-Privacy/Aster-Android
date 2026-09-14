@@ -3388,4 +3388,5 @@
     <string name="billing_play_blocked">Du hast bereits ein Abo. Verwalte es dort, wo du es abgeschlossen hast, um es zu ändern.</string>
     <string name="billing_play_verify_failed">Dein Kauf war erfolgreich, ist aber noch nicht bestätigt. Aster Mail bestätigt ihn automatisch beim nächsten Öffnen der App.</string>
     <string name="billing_play_manage">In Google Play verwalten</string>
+    <string name="billing_play_not_on_device">Dein Abo ist nicht mit dem Google-Konto auf diesem Gerät verknüpft. Verwalte es in Google Play.</string>
 </resources>

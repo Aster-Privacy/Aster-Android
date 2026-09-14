@@ -110,9 +110,28 @@ class PlayStoreBillingTest {
     }
 
     @Test
-    fun `keeps plans unchanged without offers`() {
-        val plans = listOf(AvailablePlan(code = "duo", price_cents = 1299))
-        assertEquals(plans, apply_play_prices(plans, emptyList(), products))
+    fun `keeps only free plans without offers`() {
+        val plans = listOf(AvailablePlan(code = "free", price_cents = 0), AvailablePlan(code = "duo", price_cents = 1299))
+        assertEquals(listOf("free"), apply_play_prices(plans, emptyList(), products).map { it.code })
+    }
+
+    @Test
+    fun `matches the offer by base plan id`() {
+        val mislabeled = listOf(
+            PlayOffer("star", "yearly", "star-yearly", "", 33_990_000, "USD", "month"),
+            PlayOffer("star", "monthly", "star-monthly", "", 3_490_000, "USD", "year"),
+        )
+        assertEquals("star-yearly", play_offer_for(mislabeled, products, "star", "year")?.offer_token)
+        assertEquals("star-monthly", play_offer_for(mislabeled, products, "star", "month")?.offer_token)
+        val unknown = listOf(PlayOffer("star", "legacy", "star-legacy", "", 3_490_000, "USD", "month"))
+        assertNull(play_offer_for(unknown, products, "star", "month"))
+    }
+
+    @Test
+    fun `uses the play formatted price as the label`() {
+        val yen = listOf(PlayOffer("star", "monthly", "star-monthly", "¥500", 500_000_000, "JPY", "month"))
+        assertEquals("¥500", play_price_label(yen, products, "star", "month"))
+        assertNull(play_price_label(yen, products, "star", "year"))
     }
 
     @Test

@@ -514,13 +514,17 @@ fun SubscriptionsScreen(
                 plan_name = sub?.effective_plan_name ?: plan_free_label,
                 due_date = payment_failed_due,
                 is_loading = billing_state.is_acting && billing_state.acting_action == "portal",
-                on_update_card = {
-                    if (is_crypto_sub && !play_install) {
-                        pending_plan_code = current_code
-                        pending_addon_id = null
-                        show_crypto_terms = true
-                    } else if (!billing_state.is_acting) {
-                        billing_vm.open_portal()
+                on_update_card = if (play_install && !is_play_sub) {
+                    null
+                } else {
+                    {
+                        if (is_crypto_sub && !play_install) {
+                            pending_plan_code = current_code
+                            pending_addon_id = null
+                            show_crypto_terms = true
+                        } else if (!billing_state.is_acting) {
+                            billing_vm.open_portal()
+                        }
                     }
                 },
                 days_left = org.astermail.android.billing.payment_failed_days_left(
@@ -682,10 +686,10 @@ fun SubscriptionsScreen(
                 storage_over_limit = storage_over_limit,
                 is_acting = billing_state.is_acting,
                 acting_action = billing_state.acting_action,
-                show_yearly_switch = offer_yearly_switch,
+                show_yearly_switch = offer_yearly_switch && (!play_install || is_play_sub),
                 yearly_savings = yearly_savings ?: 0,
-                show_family_link = current_code in FAMILY_PLAN_CODES,
-                show_manage_payment = is_paid_plan && !is_crypto_sub,
+                show_family_link = current_code in FAMILY_PLAN_CODES && !play_install,
+                show_manage_payment = is_paid_plan && !is_crypto_sub && (!play_install || is_play_sub),
                 show_cancel = can_cancel,
                 free_teaser = if (is_paid_plan) {
                     null
@@ -886,9 +890,10 @@ fun SubscriptionsScreen(
         val effective_plan_type = if (play_install) "individual" else plan_type
         val visible_tiers = plan_tiers.filter { (it.code in FAMILY_PLAN_CODES) == (effective_plan_type == "family") }
         visible_tiers.forEach { tier ->
-            val is_downgrade = paid_stripe_current && tier_rank(tier.code) < current_rank
+            val is_downgrade = paid_stripe_current && !play_install && tier_rank(tier.code) < current_rank
             val is_interval_switch = tier.code == current_code &&
                 offer_yearly_switch &&
+                (!play_install || is_play_sub) &&
                 billing_interval == "year"
             plan_tier_card(
                 tier = tier,
@@ -901,8 +906,24 @@ fun SubscriptionsScreen(
                 monthly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, tier.code, "month"),
                 yearly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, tier.code, "year"),
                 currency = detected_currency,
+                price_label = if (play_install) {
+                    org.astermail.android.billing.play_price_label(
+                        billing_state.play_offers,
+                        billing_state.play_products,
+                        tier.code,
+                        billing_interval,
+                    )
+                } else {
+                    null
+                },
                 plans_failed = billing_state.plans_failed,
-                on_see_pricing = { org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.PRICING_URL) },
+                on_see_pricing = {
+                    if (play_install) {
+                        billing_vm.load_plans()
+                    } else {
+                        org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.PRICING_URL)
+                    }
+                },
                 on_choose = {
                     if (is_interval_switch) {
                         show_switch_yearly = true
@@ -935,22 +956,24 @@ fun SubscriptionsScreen(
                 fontSize = 12.sp,
             )
         }
-        v_gap(AsterSpacing.sm)
-        Text(
-            text = stringResource(R.string.view_all_features),
-            color = colors.accent_blue,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 48.dp)
-                .clip(SquircleShape(10.dp))
-                .clickable(role = Role.Button) {
-                    org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.PRICING_URL)
-                }
-                .padding(vertical = 14.dp),
-        )
+        if (!play_install) {
+            v_gap(AsterSpacing.sm)
+            Text(
+                text = stringResource(R.string.view_all_features),
+                color = colors.accent_blue,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+                    .clip(SquircleShape(10.dp))
+                    .clickable(role = Role.Button) {
+                        org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.PRICING_URL)
+                    }
+                    .padding(vertical = 14.dp),
+            )
+        }
 
         v_gap(AsterSpacing.lg)
         section_label(stringResource(R.string.billing_history))
@@ -1033,8 +1056,8 @@ fun SubscriptionsScreen(
         v_gap(AsterSpacing.xxl)
     }
 
-    LaunchedEffect(show_payment_picker, play_mode) {
-        if (!show_payment_picker || !play_mode) return@LaunchedEffect
+    LaunchedEffect(show_payment_picker, play_install) {
+        if (!show_payment_picker || !play_install) return@LaunchedEffect
         show_payment_picker = false
         val plan_code = pending_plan_code
         pending_addon_id = null
@@ -1043,7 +1066,7 @@ fun SubscriptionsScreen(
         }
     }
 
-    if (show_payment_picker && !play_mode) {
+    if (show_payment_picker && !play_install) {
         val picker_tier = pending_plan_code?.let { code -> plan_tiers.firstOrNull { it.code == code } }
         val picker_addon = pending_addon_id?.let { id ->
             billing_state.storage_addons?.available_addons?.firstOrNull { it.id == id }
@@ -1184,8 +1207,8 @@ fun SubscriptionsScreen(
         LaunchedEffect(Unit) { billing_vm.load_cancel_impact() }
         cancel_subscription_flow(
             billing_state = billing_state,
-            yearly_savings = if (offer_yearly_switch) yearly_savings else null,
-            downgrade_offer_label = cancel_offer_label,
+            yearly_savings = if (offer_yearly_switch && (!play_install || is_play_sub)) yearly_savings else null,
+            downgrade_offer_label = cancel_offer_label.takeIf { !play_install },
             on_switch_plan = {
                 show_cancel_flow = false
                 resume_cancel_flow = true
@@ -2528,6 +2551,7 @@ private fun plan_tier_card(
     monthly_cents: Int? = null,
     yearly_cents: Int? = null,
     currency: String,
+    price_label: String? = null,
     plans_failed: Boolean = false,
     on_see_pricing: () -> Unit = {},
     on_choose: () -> Unit,
@@ -2576,7 +2600,7 @@ private fun plan_tier_card(
                 if (price_known) {
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
-                            text = format_price(shown_cents ?: 0, currency),
+                            text = price_label ?: format_price(shown_cents ?: 0, currency),
                             color = colors.text_primary,
                             fontSize = 28.sp,
                             fontWeight = FontWeight.Bold,
