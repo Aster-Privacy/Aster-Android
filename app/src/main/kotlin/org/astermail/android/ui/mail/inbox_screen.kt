@@ -816,11 +816,7 @@ fun InboxScreen(
     }
 
     val folder_count = when (current_folder) {
-        "inbox" -> if (categories_enabled) {
-            threads.count { it.has_unread }
-        } else {
-            inbox_state.stats?.unread ?: 0
-        }
+        "inbox" -> inbox_state.stats?.unread ?: 0
         "sent" -> inbox_state.stats?.sent ?: 0
         "drafts" -> inbox_state.stats?.drafts ?: 0
         "starred" -> inbox_state.stats?.starred ?: 0
