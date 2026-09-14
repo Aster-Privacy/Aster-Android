@@ -21,9 +21,16 @@
 
 package org.astermail.android.ui.mail
 
+import androidx.compose.animation.core.snap
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.ui.semantics.stateDescription
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.ui.icons.pin_icon_filled
 
 import androidx.compose.animation.animateColorAsState
@@ -159,7 +166,7 @@ fun EmailRow(
             is_unread -> inbox_card_unread_color(colors)
             else -> inbox_card_read_color(colors)
         },
-        animationSpec = tween(durationMillis = 220),
+        animationSpec = if (aster_reduce_motion()) snap() else tween(durationMillis = 220),
         label = "row_bg",
     )
     val interaction_source = remember { MutableInteractionSource() }
@@ -171,10 +178,14 @@ fun EmailRow(
     val select_tap_label = stringResource(
         if (is_selected) R.string.inbox_a11y_deselect_thread else R.string.inbox_a11y_select_thread,
     )
+    val read_state_label = stringResource(
+        if (is_unread) R.string.inbox_a11y_state_unread else R.string.inbox_a11y_state_read,
+    )
 
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .semantics { stateDescription = read_state_label }
             .then(
                 if (select_mode) {
                     Modifier.select_tap(click_label = select_tap_label, on_tap = on_click)
@@ -371,31 +382,49 @@ private fun star_button(
         visible = tooltip_visible,
         on_dismiss = { tooltip_visible = false },
     ) {
+        val star_interaction = remember { MutableInteractionSource() }
         Box(
             modifier = modifier
                 .size(32.dp)
-                .graphicsLayer {
-                    scaleX = star_scale.value
-                    scaleY = star_scale.value
-                }
-                .then(
-                    if (interactive) {
-                        Modifier.combinedClickable(
-                            onClick = on_toggle,
-                            onLongClick = { tooltip_visible = true },
-                        )
-                    } else {
-                        Modifier
-                    },
-                ),
+                .wrapContentSize(unbounded = true),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                imageVector = if (is_starred) Icons.Filled.Star else TablerIcons.Star,
-                contentDescription = star_label,
-                tint = tint,
-                modifier = Modifier.size(20.dp),
-            )
+            Box(
+                modifier = Modifier
+                    .then(
+                        if (interactive) {
+                            Modifier
+                                .minimumInteractiveComponentSize()
+                                .combinedClickable(
+                                    interactionSource = star_interaction,
+                                    indication = null,
+                                    onClick = on_toggle,
+                                    onLongClick = { tooltip_visible = true },
+                                )
+                        } else {
+                            Modifier
+                        },
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .graphicsLayer {
+                            scaleX = star_scale.value
+                            scaleY = star_scale.value
+                        }
+                        .indication(star_interaction, LocalIndication.current),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = if (is_starred) Icons.Filled.Star else TablerIcons.Star,
+                        contentDescription = star_label,
+                        tint = tint,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
         }
     }
 }
@@ -430,7 +459,7 @@ fun ThreadInboxRow(
             is_unread -> inbox_card_unread_color(colors)
             else -> inbox_card_read_color(colors)
         },
-        animationSpec = tween(durationMillis = 220),
+        animationSpec = if (aster_reduce_motion()) snap() else tween(durationMillis = 220),
         label = "row_bg",
     )
     val interaction_source = remember { MutableInteractionSource() }
@@ -441,6 +470,9 @@ fun ThreadInboxRow(
     val group_shape = remember(is_first, is_last) { inbox_group_shape(is_first, is_last) }
     val select_tap_label = stringResource(
         if (is_selected) R.string.inbox_a11y_deselect_thread else R.string.inbox_a11y_select_thread,
+    )
+    val read_state_label = stringResource(
+        if (is_unread) R.string.inbox_a11y_state_unread else R.string.inbox_a11y_state_read,
     )
 
     Box(
@@ -464,6 +496,7 @@ fun ThreadInboxRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .semantics { stateDescription = read_state_label }
             .then(
                 if (select_mode) {
                     Modifier
