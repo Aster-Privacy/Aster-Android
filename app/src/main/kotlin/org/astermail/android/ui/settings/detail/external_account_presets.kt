@@ -88,18 +88,27 @@ internal fun is_external_preset_host(host: String): Boolean {
     return external_presets.values.any { it.host == normalized }
 }
 
-private val google_mail_hosts = setOf("imap.gmail.com", "smtp.gmail.com", "pop.gmail.com")
+private val google_mail_hosts = setOf(
+    "imap.gmail.com",
+    "smtp.gmail.com",
+    "pop.gmail.com",
+    "imap.googlemail.com",
+    "smtp.googlemail.com",
+    "pop.googlemail.com",
+)
 
-private val app_password_spaces = Regex("\\p{Zs}")
+private val app_password_whitespace = Regex("[\\s\\p{Z}\u180E\u200B\u2060\uFEFF]")
 
-private val app_password_groups = Regex("^[a-z0-9]{4}(?:\\p{Zs}[a-z0-9]{4}){3}$", RegexOption.IGNORE_CASE)
+private val app_password_letters = Regex("^[A-Za-z]{16}$")
+
+internal fun is_google_mail_host(host: String): Boolean = host.trim().lowercase() in google_mail_hosts
 
 internal fun normalize_app_password(host: String, password: String): String {
-    if (host.trim().lowercase() !in google_mail_hosts) return password
+    if (!is_google_mail_host(host)) return password
 
-    val trimmed = password.trim()
+    val stripped = app_password_whitespace.replace(password, "")
 
-    if (!app_password_groups.matches(trimmed)) return password
+    if (!app_password_letters.matches(stripped)) return password
 
-    return app_password_spaces.replace(trimmed, "")
+    return stripped
 }

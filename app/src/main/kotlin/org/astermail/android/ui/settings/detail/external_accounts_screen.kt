@@ -782,7 +782,12 @@ fun ExternalAccountsScreen(
                                     icon = TablerIcons.Pencil,
                                     content_description = stringResource(R.string.ext_edit_account),
                                     onClick = {
-                                        if (editing_token == acct.account_token) {
+                                        if (opens_gmail_wizard(acct.oauth_provider, acct.needs_reauth, account_email)) {
+                                            editing_token = null
+                                            imap_email = account_email.orEmpty()
+                                            imap_pass = ""
+                                            gmail_wizard_open = true
+                                        } else if (editing_token == acct.account_token) {
                                             editing_token = null
                                         } else {
                                             editing_token = acct.account_token
@@ -1157,6 +1162,13 @@ private fun oauth_provider_row(
             )
         }
     }
+}
+
+internal fun opens_gmail_wizard(oauth_provider: String?, needs_reauth: Boolean, email: String?): Boolean {
+    if (oauth_provider.equals("google", ignoreCase = true)) return true
+    if (!needs_reauth || email.isNullOrBlank()) return false
+
+    return external_provider_preset(email)?.host?.let(::is_google_mail_host) == true
 }
 
 @DrawableRes

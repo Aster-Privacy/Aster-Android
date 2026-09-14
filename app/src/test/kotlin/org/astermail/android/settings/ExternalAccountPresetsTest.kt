@@ -25,6 +25,7 @@ import org.astermail.android.ui.settings.detail.clean_sync_error
 import org.astermail.android.ui.settings.detail.external_provider_preset
 import org.astermail.android.ui.settings.detail.is_external_preset_host
 import org.astermail.android.ui.settings.detail.normalize_app_password
+import org.astermail.android.ui.settings.detail.opens_gmail_wizard
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -67,12 +68,45 @@ class ExternalAccountPresetsTest {
     }
 
     @Test
-    fun `app password spaces are stripped only for google hosts in the grouped format`() {
+    fun `app password whitespace is stripped for google hosts when sixteen letters remain`() {
         assertEquals("abcdefghijklmnop", normalize_app_password("imap.gmail.com", "abcd efgh ijkl mnop"))
         assertEquals("abcdefghijklmnop", normalize_app_password("smtp.gmail.com", " abcd efgh ijkl mnop "))
+        assertEquals("abcdefghijklmnop", normalize_app_password("IMAP.GMAIL.COM", "abcdefghijklmnop"))
+        assertEquals(
+            "abcdefghijklmnop",
+            normalize_app_password("imap.gmail.com", "abcd\u00A0efgh\u00A0ijkl\u00A0mnop"),
+        )
+        assertEquals(
+            "abcdefghijklmnop",
+            normalize_app_password("imap.gmail.com", "abcd\u2009efgh\u202Fijkl\u3000mnop"),
+        )
+        assertEquals("abcdefghijklmnop", normalize_app_password("smtp.gmail.com", "ab cd\tefgh\nijklmnop"))
+        assertEquals("abcdefghijklmnop", normalize_app_password("pop.gmail.com", "abcdefgh ijklmnop"))
+        assertEquals("abcdefghijklmnop", normalize_app_password("imap.googlemail.com", "abcd efgh ijkl mnop"))
+        assertEquals("ABCDefghIJKLmnop", normalize_app_password("imap.gmail.com", "ABCD efgh IJKL mnop"))
+    }
+
+    @Test
+    fun `app password passes through unchanged when it is not a google app password`() {
         assertEquals("abcd efgh ijkl mnop", normalize_app_password("imap.mail.me.com", "abcd efgh ijkl mnop"))
         assertEquals("my real password", normalize_app_password("imap.gmail.com", "my real password"))
         assertEquals("abcd efgh ijkl", normalize_app_password("imap.gmail.com", "abcd efgh ijkl"))
+        assertEquals("abcd efgh ijkl mnop1", normalize_app_password("imap.gmail.com", "abcd efgh ijkl mnop1"))
+        assertEquals("abcd efgh ijkl mnopq", normalize_app_password("imap.gmail.com", "abcd efgh ijkl mnopq"))
+        assertEquals("abc1 efgh ijkl mnop", normalize_app_password("imap.gmail.com", "abc1 efgh ijkl mnop"))
+        assertEquals("abcd\u00E9fgh ijkl mnop", normalize_app_password("imap.gmail.com", "abcd\u00E9fgh ijkl mnop"))
+    }
+
+    @Test
+    fun `legacy google and gmail accounts needing a new password reopen the setup wizard`() {
+        assertTrue(opens_gmail_wizard("google", false, null))
+        assertTrue(opens_gmail_wizard("Google", false, "a@example.org"))
+        assertTrue(opens_gmail_wizard(null, true, "someone@gmail.com"))
+        assertTrue(opens_gmail_wizard(null, true, "someone@googlemail.com"))
+        assertFalse(opens_gmail_wizard(null, false, "someone@gmail.com"))
+        assertFalse(opens_gmail_wizard(null, true, "someone@outlook.com"))
+        assertFalse(opens_gmail_wizard("microsoft", true, "someone@outlook.com"))
+        assertFalse(opens_gmail_wizard(null, true, null))
     }
 
     @Test
