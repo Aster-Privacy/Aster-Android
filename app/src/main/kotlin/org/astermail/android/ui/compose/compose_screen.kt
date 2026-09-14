@@ -202,6 +202,48 @@ data class AttachmentItem(
 
 private class AttachmentEncodeException(val filename: String, cause: Throwable?) : Exception(cause)
 
+private class DraftAttachmentCache {
+    var items: List<AttachmentItem> = emptyList()
+    var payloads: List<org.astermail.android.api.send.ExternalAttachmentPayload> = emptyList()
+}
+
+private suspend fun draft_attachment_payloads(
+    context: android.content.Context,
+    items: List<AttachmentItem>,
+    cache: DraftAttachmentCache,
+): List<org.astermail.android.api.send.ExternalAttachmentPayload> = withContext(Dispatchers.IO) {
+    if (items.isEmpty()) return@withContext emptyList()
+    if (items.size > org.astermail.android.mail.DRAFT_MAX_ATTACHMENT_COUNT) return@withContext emptyList()
+    val estimated_base64 = items.sumOf { it.size.coerceAtLeast(0L) } * 4L / 3L
+    if (org.astermail.android.mail.encrypted_draft_length(estimated_base64) > org.astermail.android.mail.DRAFT_MAX_SIZE_BYTES) {
+        return@withContext emptyList()
+    }
+    synchronized(cache) {
+        if (cache.items == items) return@withContext cache.payloads
+    }
+    val payloads = items.mapNotNull { att ->
+        try {
+            val bytes = context.contentResolver.openInputStream(att.uri)?.use { it.readBytes() }
+                ?: return@mapNotNull null
+            org.astermail.android.api.send.ExternalAttachmentPayload(
+                data = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP),
+                filename = att.name,
+                content_type = att.mime_type,
+                size_bytes = bytes.size.toLong(),
+            )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (t: Throwable) {
+            null
+        }
+    }
+    synchronized(cache) {
+        cache.items = items
+        cache.payloads = payloads
+    }
+    payloads
+}
+
 @OptIn(
     ExperimentalFoundationApi::class,
     ExperimentalMaterial3Api::class,
@@ -887,6 +929,9 @@ fun ComposeScreen(
     var send_error by remember { mutableStateOf<String?>(null) }
     var send_error_upgrade by remember { mutableStateOf(false) }
     var attachments by remember { mutableStateOf(listOf<AttachmentItem>()) }
+    var initial_attachments by remember { mutableStateOf(listOf<AttachmentItem>()) }
+    var observed_attachments by remember { mutableStateOf<List<AttachmentItem>?>(null) }
+    val draft_attachment_cache = remember { DraftAttachmentCache() }
     var inline_images by remember { mutableStateOf(listOf<AttachmentItem>()) }
     val format_bold = remember { mutableStateOf(false) }
     val format_italic = remember { mutableStateOf(false) }
@@ -1046,6 +1091,18 @@ fun ComposeScreen(
                     initial_bcc_chips = bcc_chips
                 }
                 if (cc_chips.isNotEmpty() || bcc_chips.isNotEmpty()) cc_expanded = true
+                if (attachments.isEmpty() && msg.draft_attachments.isNotEmpty()) {
+                    attachments = msg.draft_attachments.map { file ->
+                        AttachmentItem(
+                            uri = Uri.fromFile(java.io.File(file.path)),
+                            name = file.name,
+                            size = file.size_bytes,
+                            mime_type = file.mime_type,
+                        )
+                    }
+                    initial_attachments = attachments
+                    observed_attachments = attachments
+                }
                 val draft_from = msg.sender_email
                 if (draft_from.isNotBlank() && draft_from in alias_options) {
                     from_alias = draft_from
@@ -1171,7 +1228,7 @@ fun ComposeScreen(
         to_input.isNotBlank() ||
         cc_input.isNotBlank() ||
         bcc_input.isNotBlank() ||
-        attachments.isNotEmpty() ||
+        attachments != initial_attachments ||
         inline_images.isNotEmpty()
 
     val has_recipient = to_chips.isNotEmpty() || cc_chips.isNotEmpty() || bcc_chips.isNotEmpty() ||
@@ -1218,9 +1275,11 @@ fun ComposeScreen(
                 ),
             )
             if (sent || is_sending) return@launch
-            if (subject.isBlank() && body.isBlank() && to_chips.isEmpty()) return@launch
+            if (subject.isBlank() && body.isBlank() && to_chips.isEmpty() && attachments.isEmpty()) return@launch
             if (is_empty_new_draft()) return@launch
             draft_status = context.getString(R.string.saving)
+            val draft_payloads = draft_attachment_payloads(context, attachments, draft_attachment_cache)
+            if (sent || is_sending || discarded) return@launch
             val result = mail_vm.save_draft(
                 subject = subject,
                 body_html = draft_body_with_signature(),
@@ -1234,6 +1293,7 @@ fun ComposeScreen(
                 thread_token = draft_save_thread_token,
                 session_id = draft_session_id,
                 on_id_assigned = { assigned -> current_draft_id = assigned },
+                attachments = draft_payloads,
             )
             if (result.isSuccess) {
                 current_draft_id = result.getOrNull().orEmpty()
@@ -1394,15 +1454,26 @@ fun ComposeScreen(
         schedule_draft_save()
     }
 
+    LaunchedEffect(attachments) {
+        val previous = observed_attachments
+        observed_attachments = attachments
+        if (previous != null && previous != attachments) schedule_draft_save()
+    }
+
+    LaunchedEffect(alias_options, external_sender_tokens) {
+        mail_vm.set_own_addresses(alias_options.filter { it !in external_sender_tokens.keys })
+    }
+
     val lifecycle_owner_for_draft = androidx.lifecycle.compose.LocalLifecycleOwner.current
     androidx.compose.runtime.DisposableEffect(lifecycle_owner_for_draft) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_PAUSE) {
                 val auto_save_enabled = settings_state.preferences?.auto_save_drafts != false
                 if (auto_save_enabled && !sent && !discarded && !is_sending && !is_empty_new_draft() &&
-                    (subject.isNotBlank() || body.isNotBlank() || to_chips.isNotEmpty())
+                    (subject.isNotBlank() || body.isNotBlank() || to_chips.isNotEmpty() || attachments.isNotEmpty())
                 ) {
                     draft_save_job?.cancel()
+                    val pause_attachments = attachments
                     mail_vm.save_draft_and_finish(
                         subject = subject,
                         body_html = draft_body_with_signature(),
@@ -1415,6 +1486,9 @@ fun ComposeScreen(
                         reply_to_id = draft_save_reply_to,
                         thread_token = draft_save_thread_token,
                         session_id = draft_session_id,
+                        attachments_loader = {
+                            draft_attachment_payloads(context, pause_attachments, draft_attachment_cache)
+                        },
                     ) { _ -> }
                 }
             }
@@ -3029,6 +3103,7 @@ fun ComposeScreen(
                     onClick = {
                         show_discard_dialog = false
                         draft_save_job?.cancel()
+                        val dialog_attachments = attachments
                         mail_vm.save_draft_and_finish(
                             subject = subject,
                             body_html = draft_body_with_signature(),
@@ -3041,6 +3116,9 @@ fun ComposeScreen(
                             reply_to_id = draft_save_reply_to,
                             thread_token = draft_save_thread_token,
                             session_id = draft_session_id,
+                            attachments_loader = {
+                                draft_attachment_payloads(context, dialog_attachments, draft_attachment_cache)
+                            },
                         ) { ok ->
                             if (ok) {
                                 on_back()

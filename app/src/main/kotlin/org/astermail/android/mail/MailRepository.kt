@@ -158,6 +158,7 @@ data class DecryptedEnvelope(
     val pgp_encrypted: Boolean = false,
     val pgp_signature: org.astermail.android.crypto.PgpSignatureStatus =
         org.astermail.android.crypto.PgpSignatureStatus.NONE,
+    val draft_attachments: List<ExternalAttachmentPayload> = emptyList(),
 )
 
 const val PGP_ENCRYPTED_MESSAGE_HEADER = "-----BEGIN PGP MESSAGE-----"
@@ -396,6 +397,7 @@ data class ThreadMessageDecrypted(
     val pgp_encrypted: Boolean = false,
     val pgp_signature: org.astermail.android.crypto.PgpSignatureStatus =
         org.astermail.android.crypto.PgpSignatureStatus.NONE,
+    val draft_attachments: List<DraftAttachmentFile> = emptyList(),
 )
 
 @Singleton
@@ -688,6 +690,42 @@ class MailRepository @Inject constructor(
         return android.util.Base64.encodeToString(digest, android.util.Base64.NO_WRAP)
     }
 
+    @Volatile
+    private var registered_own_addresses: Set<String> = emptySet()
+
+    fun set_own_addresses(addresses: Collection<String>) {
+        registered_own_addresses = addresses
+            .map { normalize_own_address(it) }
+            .filter { it.isNotBlank() }
+            .toSet()
+    }
+
+    internal fun is_own_address(address: String, sender_email: String?): Boolean {
+        val target = normalize_own_address(address)
+        if (target.isBlank()) return false
+        if (target in registered_own_addresses) return true
+        if (sender_email != null && normalize_own_address(sender_email) == target) return true
+        val user_email = session_key_store.get_user_email() ?: return false
+        return normalize_own_address(user_email) == target
+    }
+
+    private fun own_public_key(): String? =
+        armored_public_key_from_private(session_key_store.get_identity_key())
+
+    private val completed_pending_ids = java.util.Collections.newSetFromMap(
+        java.util.concurrent.ConcurrentHashMap<String, Boolean>(),
+    )
+
+    private suspend fun adopt_late_safety_draft(pending_id: String, assigned_draft_id: String) {
+        val row = runCatching { pending_send_dao.get_by_id(pending_id) }.getOrNull()
+        when {
+            row != null -> if (row.draft_id.isNullOrBlank()) {
+                runCatching { pending_send_dao.update_draft_id(pending_id, assigned_draft_id) }
+            }
+            pending_id in completed_pending_ids -> delete_sent_draft(assigned_draft_id)
+        }
+    }
+
     private val outbox_attachments_dir: java.io.File by lazy {
         java.io.File(context.filesDir, "outbox_attachments").apply { mkdirs() }
     }
@@ -851,7 +889,8 @@ class MailRepository @Inject constructor(
             return pending_id
         }
         val safety_draft_id = draft_id?.takeIf { it.isNotBlank() } ?: run {
-            kotlinx.coroutines.withTimeoutOrNull(UNDO_SAFETY_DRAFT_TIMEOUT_MS) {
+            val timed_out = java.util.concurrent.atomic.AtomicBoolean(false)
+            val saved = kotlinx.coroutines.withTimeoutOrNull(UNDO_SAFETY_DRAFT_TIMEOUT_MS) {
                 save_draft(
                     subject = subject,
                     body_html = body_html,
@@ -860,8 +899,14 @@ class MailRepository @Inject constructor(
                     cc = cc,
                     bcc = bcc,
                     existing_draft_id = null,
+                    attachments = attachments,
+                    on_id_assigned = { assigned ->
+                        if (timed_out.get()) app_scope.launch { adopt_late_safety_draft(pending_id, assigned) }
+                    },
                 ).getOrNull()
             }
+            if (saved == null) timed_out.set(true)
+            saved
         }
         if (!safety_draft_id.isNullOrBlank()) {
             runCatching { pending_send_dao.update_draft_id(pending_id, safety_draft_id) }
@@ -975,9 +1020,12 @@ class MailRepository @Inject constructor(
         )
         val response = result.getOrNull()
         return if (result.isSuccess && response?.success == true) {
+            completed_pending_ids.add(pending_id)
+            val sent_draft_id = runCatching { pending_send_dao.get_by_id(pending_id)?.draft_id }.getOrNull()
+                ?.takeIf { it.isNotBlank() } ?: row.draft_id
             runCatching { pending_send_dao.delete_by_id(pending_id) }
             delete_outbox_attachments(pending_id)
-            row.draft_id?.takeIf { it.isNotBlank() }?.let { delete_sent_draft(it) }
+            sent_draft_id?.takeIf { it.isNotBlank() }?.let { delete_sent_draft(it) }
             _send_problem.value = false
             _send_result_events.tryEmit(Result.success(Unit))
             org.astermail.android.billing.ReviewPrompt.record_send(context)
@@ -996,6 +1044,7 @@ class MailRepository @Inject constructor(
                 _send_result_events.tryEmit(Result.failure(err ?: IllegalStateException("send rejected")))
                 runCatching { pending_send_dao.mark_failed(pending_id) }
                 refresh_failed_send_count()
+                preserve_failed_send_draft(pending_id, row, recipients, attachments)
                 _draft_changes.tryEmit(Unit)
                 PendingSendOutcome.FAILED
             } else {
@@ -1005,6 +1054,32 @@ class MailRepository @Inject constructor(
                 }
                 PendingSendOutcome.RETRY
             }
+        }
+    }
+
+    private suspend fun preserve_failed_send_draft(
+        pending_id: String,
+        row: PendingSendEntity,
+        recipients: Triple<List<String>, List<String>, List<String>>,
+        attachments: List<ExternalAttachmentPayload>,
+    ) {
+        val current_draft_id = runCatching { pending_send_dao.get_by_id(pending_id)?.draft_id }.getOrNull()
+            ?.takeIf { it.isNotBlank() } ?: row.draft_id?.takeIf { it.isNotBlank() }
+        if (attachments.isEmpty() && current_draft_id != null) return
+        val saved_id = runCatching {
+            save_draft(
+                subject = row.subject,
+                body_html = row.body_html,
+                sender_email = row.sender_email,
+                to = recipients.first,
+                cc = recipients.second,
+                bcc = recipients.third,
+                existing_draft_id = current_draft_id,
+                attachments = attachments,
+            ).getOrNull()
+        }.getOrNull()
+        if (!saved_id.isNullOrBlank() && saved_id != current_draft_id) {
+            runCatching { pending_send_dao.update_draft_id(pending_id, saved_id) }
         }
     }
 
@@ -1592,7 +1667,12 @@ class MailRepository @Inject constructor(
             pages++
         }
         val found = draft ?: throw IllegalStateException("draft not found")
-        val envelope = try_decrypt_envelope(found.encrypted_content, found.content_nonce, found.id)
+        val envelope = try_decrypt_envelope(
+            found.encrypted_content,
+            found.content_nonce,
+            found.id,
+            include_draft_attachments = true,
+        )
         val item = decrypt_draft_item(found)
         Pair(item, envelope)
     }
@@ -2233,7 +2313,7 @@ class MailRepository @Inject constructor(
             is_read = true,
             is_starred = false,
             is_encrypted = true,
-            has_attachments = false,
+            has_attachments = draft.has_attachments || draft.attachment_count > 0,
             is_trashed = false,
             is_archived = false,
             is_spam = false,
@@ -2480,6 +2560,7 @@ class MailRepository @Inject constructor(
         message_id: String? = null,
         ratchet_override: String? = null,
         decrypt_body_fields: Boolean = true,
+        include_draft_attachments: Boolean = false,
     ): DecryptedEnvelope? {
         if (encrypted_envelope.isNullOrBlank()) return null
         var unauthenticated = false
@@ -2541,7 +2622,13 @@ class MailRepository @Inject constructor(
             val json_str = String(decrypted, Charsets.UTF_8)
             decrypted.fill(0)
             InboundAttachmentKeyStore.register_from_envelope_json(message_id, json_str)
-            val parsed = parse_envelope_json(json_str)
+            val parsed = parse_envelope_json(json_str)?.let { envelope ->
+                if (include_draft_attachments) {
+                    envelope.copy(draft_attachments = parse_draft_attachments(json_str))
+                } else {
+                    envelope
+                }
+            }
             val carried = if (envelope_pgp_encrypted || envelope_pgp_signature != org.astermail.android.crypto.PgpSignatureStatus.NONE) {
                 parsed?.copy(
                     pgp_encrypted = envelope_pgp_encrypted,
@@ -3848,16 +3935,16 @@ class MailRepository @Inject constructor(
                     throw IllegalStateException(context.getString(R.string.e2e_identity_changed_blocked), t)
                 } catch (t: Throwable) {
                     if (t is CancellationException) throw t
-                    throw IllegalStateException(context.getString(R.string.e2e_encryption_failed), t)
+                    throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed), t)
                 }
-                encrypted ?: throw IllegalStateException(context.getString(R.string.e2e_encryption_failed))
+                encrypted ?: throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
             } else null
 
             val final_body = ratchet_body ?: body_html
             val final_subject = if (ratchet_body != null) "" else subject
 
             val internal_attachments = if (attachments.isNotEmpty()) {
-                build_internal_attachments(to + cc + bcc, attachments)
+                build_internal_attachments(to + cc + bcc, attachments, from_addr)
             } else {
                 emptyList()
             }
@@ -3984,20 +4071,30 @@ class MailRepository @Inject constructor(
             }.getOrNull()
         }
 
-    private suspend fun fetch_internal_public_keys(recipients: List<String>): List<String> {
+    internal suspend fun fetch_internal_public_keys(
+        recipients: List<String>,
+        sender_email: String? = null,
+    ): List<String> {
         val keys = ArrayList<String>()
+        val seen = HashSet<String>()
         for (recipient in recipients.filter { is_internal_recipient(it) }) {
+            if (!seen.add(normalize_own_address(recipient))) continue
             val username = recipient.substringBefore('@').trim()
             if (username.isEmpty()) continue
-            val key = try {
+            val own = is_own_address(recipient, sender_email)
+            var lookup_error: Throwable? = null
+            val server_key = try {
                 keys_api.get_recipient_public_key(username, recipient).public_key
             } catch (e: CancellationException) {
                 throw e
             } catch (t: Throwable) {
-                throw IllegalStateException(context.getString(R.string.e2e_encryption_failed), t)
+                lookup_error = t
+                null
             }
+            val key = server_key?.takeIf { it.isNotBlank() }
+                ?: if (own) own_public_key() else null
             if (key.isNullOrBlank()) {
-                throw IllegalStateException(context.getString(R.string.e2e_encryption_failed))
+                throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed), lookup_error)
             }
             keys.add(key)
         }
@@ -4007,11 +4104,12 @@ class MailRepository @Inject constructor(
     private suspend fun build_internal_attachments(
         recipients: List<String>,
         attachments: List<ExternalAttachmentPayload>,
+        sender_email: String? = null,
     ): List<SendAttachmentPayload> {
-        val recipient_keys = fetch_internal_public_keys(recipients)
+        val recipient_keys = fetch_internal_public_keys(recipients, sender_email)
         val has_internal_recipients = recipients.any { is_internal_recipient(it) }
         if (has_internal_recipients && recipient_keys.isEmpty()) {
-            throw IllegalStateException(context.getString(R.string.e2e_encryption_failed))
+            throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
         }
         return attachments.map { att ->
             try {
@@ -4036,7 +4134,7 @@ class MailRepository @Inject constructor(
 
                 val sealed_meta = if (recipient_keys.isNotEmpty()) {
                     PgpEncryptor.encrypt_to_keys(meta_json, recipient_keys)
-                        ?: throw IllegalStateException(
+                        ?: throw E2eEncryptionException(
                             context.getString(R.string.e2e_encryption_failed),
                         )
                 } else {
@@ -4064,7 +4162,7 @@ class MailRepository @Inject constructor(
                 )
             } catch (t: Throwable) {
                 if (t is CancellationException) throw t
-                throw IllegalStateException(
+                throw AttachmentPrepareException(
                     context.getString(R.string.attachment_prepare_failed, att.filename),
                     t,
                 )
@@ -4167,8 +4265,9 @@ class MailRepository @Inject constructor(
         thread_token: String? = null,
         session_id: String? = null,
         on_id_assigned: ((String) -> Unit)? = null,
+        attachments: List<ExternalAttachmentPayload> = emptyList(),
     ): Result<String> = runCatching {
-        val envelope = build_envelope_json(
+        fun envelope_for(list: List<ExternalAttachmentPayload>): String = build_envelope_json(
             subject = subject,
             body_html = body_html,
             from_email = sender_email.orEmpty(),
@@ -4176,8 +4275,20 @@ class MailRepository @Inject constructor(
             to = to,
             cc = cc,
             bcc = bcc,
+            attachments = list,
         )
-        val (encrypted_envelope, envelope_nonce) = encrypt_envelope(envelope)
+        val sealed_with_attachments = if (attachments.isNotEmpty() && draft_attachments_may_fit(attachments)) {
+            try {
+                val with_attachments = envelope_for(attachments)
+                if (draft_envelope_fits(with_attachments)) encrypt_envelope(with_attachments) else null
+            } catch (oom: OutOfMemoryError) {
+                null
+            }
+        } else {
+            null
+        }
+        val stored_attachment_count = if (sealed_with_attachments != null) attachments.size else 0
+        val (encrypted_envelope, envelope_nonce) = sealed_with_attachments ?: encrypt_envelope(envelope_for(emptyList()))
         val content_hash = content_hash_of(encrypted_envelope)
 
         draft_save_mutex.withLock {
@@ -4194,6 +4305,7 @@ class MailRepository @Inject constructor(
                         encrypted_content = encrypted_envelope,
                         content_nonce = envelope_nonce,
                         content_hash = content_hash,
+                        attachment_count = stored_attachment_count,
                     )
                     if (updated) {
                         draft_item_cache.remove(target_id)
@@ -4218,6 +4330,8 @@ class MailRepository @Inject constructor(
                         forward_from_id = null,
                         thread_token = linked_thread_token,
                         size_bytes = encrypted_envelope.length,
+                        has_attachments = stored_attachment_count > 0,
+                        attachment_count = stored_attachment_count,
                     ),
                 )
                 val new_id = response.id
@@ -4240,6 +4354,7 @@ class MailRepository @Inject constructor(
         encrypted_content: String,
         content_nonce: String,
         content_hash: String,
+        attachment_count: Int = 0,
     ): Boolean {
         var version = draft_versions[draft_id]
             ?: draft_item_cache[draft_id]?.version
@@ -4258,6 +4373,8 @@ class MailRepository @Inject constructor(
                         content_hash = content_hash,
                         version = version,
                         size_bytes = encrypted_content.length,
+                        has_attachments = attachment_count > 0,
+                        attachment_count = attachment_count,
                     ),
                 )
             }.getOrElse { error ->
@@ -4410,6 +4527,7 @@ class MailRepository @Inject constructor(
         to: List<String>,
         cc: List<String>,
         bcc: List<String> = emptyList(),
+        attachments: List<ExternalAttachmentPayload> = emptyList(),
     ): String {
         val obj = org.json.JSONObject()
         obj.put("subject", subject)
@@ -4431,6 +4549,7 @@ class MailRepository @Inject constructor(
         obj.put("sent_at", java.text.SimpleDateFormat(
             "yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US,
         ).apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }.format(java.util.Date()))
+        if (attachments.isNotEmpty()) obj.put(DRAFT_ATTACHMENTS_KEY, draft_attachments_json(attachments))
         return obj.toString()
     }
 
@@ -4667,11 +4786,29 @@ internal fun is_transient_send_cause(err: Throwable?): Boolean {
     return false
 }
 
+internal fun has_retryable_api_cause(err: Throwable?): Boolean {
+    var cause = err
+    var depth = 0
+    while (cause != null && depth < 8) {
+        if (cause is org.astermail.android.api.ApiError.NetworkError) return true
+        if (cause is org.astermail.android.api.ApiError.ServerError) return true
+        if (cause is org.astermail.android.api.ApiError.RateLimited) return true
+        if (cause is org.astermail.android.api.ApiError.UnauthorizedError) return true
+        if (cause is org.astermail.android.api.ApiError.UnknownError) return true
+        cause = cause.cause
+        depth++
+    }
+    return false
+}
+
 internal fun is_permanent_send_failure_cause(err: Throwable?): Boolean {
     if (is_transient_send_cause(err)) return false
     var cause = err
     var depth = 0
     while (cause != null && depth < 8) {
+        if (cause is E2eEncryptionException || cause is AttachmentPrepareException) {
+            return !has_retryable_api_cause(err)
+        }
         if (cause is org.astermail.android.mail.ratchet.RatchetEncryptionException) return true
         if (cause is org.astermail.android.mail.ratchet.PostQuantumUnavailableException) return true
         if (cause is OutOfMemoryError) return true
