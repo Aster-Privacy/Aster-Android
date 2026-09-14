@@ -667,6 +667,7 @@
     <string name="your_name">اسمك</string>
     <string name="display_name">الاسم المعروض</string>
     <string name="primary_address">العنوان الأساسي</string>
+    <string name="member_since">عضو منذ</string>
 
     <string name="security">الأمان</string>
     <string name="change_password">تغيير كلمة المرور</string>

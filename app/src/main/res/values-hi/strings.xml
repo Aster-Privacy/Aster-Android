@@ -988,6 +988,7 @@
     <string name="your_name">आपका नाम</string>
     <string name="display_name">दिखने वाला नाम</string>
     <string name="primary_address">मुख्य पता</string>
+    <string name="member_since">सदस्यता प्रारंभ</string>
     <string name="set_as_primary">मुख्य पता बनाएं</string>
     <string name="primary_badge">मुख्य</string>
     <string name="also_receives_at">%1$s पर भी मेल पाता है</string>

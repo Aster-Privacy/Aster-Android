@@ -668,6 +668,7 @@
     <string name="your_name">Tu nombre</string>
     <string name="display_name">Nombre para mostrar</string>
     <string name="primary_address">Dirección principal</string>
+    <string name="member_since">Miembro desde</string>
 
     <string name="security">Seguridad</string>
     <string name="change_password">Cambiar contraseña</string>

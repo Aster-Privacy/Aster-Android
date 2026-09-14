@@ -250,6 +250,22 @@ fun ProfileScreen(
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             detail_row(title = email, subtitle = stringResource(R.string.primary_address))
         }
+        val member_since = remember(user?.created_at) { format_member_since(user?.created_at) }
+        if (member_since.isNotEmpty()) {
+            v_gap(AsterSpacing.lg)
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                detail_row(
+                    title = stringResource(R.string.member_since),
+                    trailing = {
+                        Text(
+                            text = member_since,
+                            color = colors.text_tertiary,
+                            fontSize = 14.sp,
+                        )
+                    },
+                )
+            }
+        }
         if (state.badges.isNotEmpty()) {
             v_gap(AsterSpacing.lg)
             section_label(stringResource(R.string.badges))
@@ -346,6 +362,19 @@ private fun badge_chip(badge: Badge) {
                 fontWeight = FontWeight.Medium,
             )
         }
+    }
+}
+
+private fun format_member_since(raw: String?): String {
+    if (raw.isNullOrBlank()) return ""
+    return try {
+        val instant = java.time.OffsetDateTime.parse(raw).toInstant()
+        java.time.format.DateTimeFormatter
+            .ofLocalizedDate(java.time.format.FormatStyle.MEDIUM)
+            .withZone(org.astermail.android.ui.mail.AsterTimePreferences.account_zone_id())
+            .format(instant)
+    } catch (_: Throwable) {
+        ""
     }
 }
 
