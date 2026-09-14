@@ -370,9 +370,9 @@ fun SearchScreen(
     on_back: () -> Unit,
     on_open_email: (String) -> Unit,
     initial_query: String = "",
+    mail_vm: MailViewModel = hiltViewModel(),
 ) {
     val colors = AsterMaterial.colors
-    val mail_vm: MailViewModel = hiltViewModel()
     val settings_vm: org.astermail.android.settings.SettingsViewModel = org.astermail.android.settings.shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val context_for_prefs = androidx.compose.ui.platform.LocalContext.current

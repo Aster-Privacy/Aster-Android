@@ -867,6 +867,21 @@ private fun AsterNavHost() {
             }
             val settings_state by shared_settings_vm.state.collectAsStateWithLifecycle()
             val detail_thread_state by shared_mail_vm.thread_state.collectAsStateWithLifecycle()
+            val open_marked = androidx.compose.runtime.saveable.rememberSaveable(email_id) {
+                androidx.compose.runtime.mutableStateOf(false)
+            }
+            val open_mark_as_read = settings_state.preferences?.mark_as_read
+            androidx.compose.runtime.LaunchedEffect(email_id, open_mark_as_read) {
+                if (open_marked.value) return@LaunchedEffect
+                if (open_mark_as_read == null) return@LaunchedEffect
+                open_marked.value = true
+                shared_mail_vm.on_user_opened_mail(email_id, open_mark_as_read)
+            }
+            androidx.compose.runtime.DisposableEffect(email_id) {
+                onDispose {
+                    if (shared_mail_vm.cancel_opened_mail(email_id)) open_marked.value = false
+                }
+            }
             androidx.compose.runtime.LaunchedEffect(detail_thread_state.item?.id, detail_thread_state.is_loading) {
                 if (detail_thread_state.is_loading) return@LaunchedEffect
                 val reveal_id = pending.pending_reveal_email_id.value ?: return@LaunchedEffect
@@ -1089,10 +1104,14 @@ private fun AsterNavHost() {
             exitTransition = { nav_expand_exit(if (nav_duration == 0) 0 else nav_anim_collapse_ms) },
             popEnterTransition = { nav_expand_enter(if (nav_duration == 0) 0 else nav_anim_expand_ms) },
             popExitTransition = { nav_expand_exit(if (nav_duration == 0) 0 else nav_anim_collapse_ms) },
-        ) {
+        ) { entry ->
+            val inbox_entry = remember(entry) {
+                try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
+            }
             SearchScreen(
                 on_back = { pop_once(nav_controller) },
                 on_open_email = { id -> open_mail_detail(nav_controller, id) },
+                mail_vm = if (inbox_entry != null) hiltViewModel(inbox_entry) else hiltViewModel(),
             )
         }
         composable(
@@ -1104,10 +1123,14 @@ private fun AsterNavHost() {
             popExitTransition = { nav_expand_exit(if (nav_duration == 0) 0 else nav_anim_collapse_ms) },
         ) { entry ->
             val q = entry.arguments?.getString("q").orEmpty()
+            val inbox_entry = remember(entry) {
+                try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
+            }
             SearchScreen(
                 on_back = { pop_once(nav_controller) },
                 on_open_email = { id -> open_mail_detail(nav_controller, id) },
                 initial_query = q,
+                mail_vm = if (inbox_entry != null) hiltViewModel(inbox_entry) else hiltViewModel(),
             )
         }
         composable(routes.pending_send_preview) {
@@ -1591,9 +1614,13 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     val mail_vm: org.astermail.android.mail.MailViewModel = hiltViewModel()
     val inbox_state by mail_vm.inbox_state.collectAsStateWithLifecycle()
     val stats = inbox_state.stats
+    val label_unread_deltas by mail_vm.label_unread_deltas.collectAsStateWithLifecycle()
 
     val settings_vm: org.astermail.android.settings.SettingsViewModel = org.astermail.android.settings.shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(settings_state.labels) {
+        mail_vm.on_labels_loaded(System.identityHashCode(settings_state.labels))
+    }
 
     val accounts_vm: org.astermail.android.accounts.AccountsViewModel = hiltViewModel()
     val accounts_state by accounts_vm.state.collectAsStateWithLifecycle()
@@ -1815,7 +1842,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             id = label.label_token,
             label = readable_name ?: drawer_context.getString(R.string.folder_decrypt_failed),
             icon = if (org.astermail.android.folders.is_folder_protected(label)) TablerIcons.Lock else TablerIcons.Folder,
-            count = if (org.astermail.android.folders.requires_unlock(label)) 0 else label.unread_count?.toInt() ?: 0,
+            count = if (org.astermail.android.folders.requires_unlock(label)) {
+                0
+            } else {
+                ((label.unread_count?.toInt() ?: 0) + (label_unread_deltas[label.label_token] ?: 0)).coerceAtLeast(0)
+            },
             depth = node.depth,
             trail = node.trail,
             has_next = node.has_next,
@@ -1873,7 +1904,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         put("trash", stats?.trash ?: 0)
         folder_nodes.forEach { node ->
             if (org.astermail.android.folders.requires_unlock(node.label)) return@forEach
-            val unread = node.label.unread_count?.toInt() ?: 0
+            val unread = ((node.label.unread_count?.toInt() ?: 0) + (label_unread_deltas[node.label.label_token] ?: 0))
+                .coerceAtLeast(0)
             if (unread > 0) put(node.label.label_token, unread)
         }
     }

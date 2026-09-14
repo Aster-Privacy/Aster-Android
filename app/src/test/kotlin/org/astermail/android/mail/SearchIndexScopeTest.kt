@@ -86,7 +86,72 @@ class SearchIndexScopeTest {
         } returns page(listOf(item("i1")))
         val db = mockk<AsterDatabase>(relaxed = true)
         every { db.decrypted_mail_dao() } returns dao
-        manager = SearchIndexManager(dagger.Lazy { db }, mail_api, mockk(relaxed = true), mockk(relaxed = true))
+        repository = mockk(relaxed = true)
+        manager = SearchIndexManager(dagger.Lazy { db }, mail_api, repository, mockk(relaxed = true))
+    }
+
+    private lateinit var repository: MailRepository
+
+    private fun live_page(items: List<MailItem>) {
+        coEvery {
+            mail_api.list_messages(
+                limit = any(),
+                cursor = any(),
+                item_type = any(),
+                is_trashed = false,
+                is_archived = false,
+                is_spam = false,
+                skip_total = any(),
+            )
+        } returns page(items)
+    }
+
+    @Test
+    fun `a pending read wins over a stale unread on already indexed mail`() = runTest {
+        live_page(listOf(item("i1").copy(is_read = false)))
+        manager.add_read_overlay { id -> if (id == "i1") true else null }
+
+        manager.refresh_index_and_wait()
+
+        coVerify(exactly = 1) { dao.set_read(listOf("i1"), true) }
+        coVerify(exactly = 0) { dao.set_read(any(), false) }
+    }
+
+    @Test
+    fun `new mail written to the index keeps a pending read and drops it once cleared`() = runTest {
+        coEvery { dao.get_all_ids() } returns emptyList()
+        live_page(listOf(item("i2").copy(is_read = false)))
+        val stale = InboxItem(
+            id = "i2",
+            thread_token = "thread_2",
+            thread_message_count = 1,
+            sender_name = "Sender",
+            sender_email = "sender@example.com",
+            subject = "Subject",
+            preview = "Preview",
+            timestamp = "2026-04-26T10:00:00Z",
+            is_read = false,
+            is_starred = false,
+            is_encrypted = true,
+            has_attachments = false,
+            is_trashed = false,
+            is_archived = false,
+            is_spam = false,
+            labels = emptyList(),
+            raw_item = mockk(relaxed = true),
+        )
+        coEvery { repository.decrypt_items_for_cache(any()) } returns listOf(stale)
+        var pending: Boolean? = true
+        val overlay: (String) -> Boolean? = { id -> if (id == "i2") pending else null }
+        manager.add_read_overlay(overlay)
+
+        manager.refresh_index_and_wait()
+        coVerify { dao.insert_all(match { rows -> rows.single().is_read }) }
+
+        pending = null
+        manager.remove_read_overlay(overlay)
+        manager.refresh_index_and_wait()
+        coVerify { dao.insert_all(match { rows -> !rows.single().is_read }) }
     }
 
     @Test

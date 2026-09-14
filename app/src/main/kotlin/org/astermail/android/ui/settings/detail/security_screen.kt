@@ -231,7 +231,11 @@ fun SecurityScreen(
         state.vanguard_enabled != null &&
         !state.is_loading
 
-    var content_ready by remember { mutableStateOf(false) }
+    var content_ready by remember {
+        mutableStateOf(
+            sec != null && prefs != null && state.login_alerts_enabled != null && state.vanguard_enabled != null,
+        )
+    }
     LaunchedEffect(security_signals_ready) {
         if (security_signals_ready) {
             delay(security_settle_delay_ms)

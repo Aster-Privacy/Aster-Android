@@ -79,6 +79,7 @@ class AsterApplication : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
         install_crash_reporting()
+        runCatching { org.astermail.android.ui.common.apply_app_night_mode(this) }
         start_secure_prefs_warm()
         org.astermail.android.ui.mail.AsterTimePreferences.set_use_24h(
             android.text.format.DateFormat.is24HourFormat(this),

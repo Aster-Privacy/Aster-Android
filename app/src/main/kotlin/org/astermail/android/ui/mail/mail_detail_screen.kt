@@ -534,6 +534,7 @@ fun MailDetailScreen(
         identity_changes.mapNotNull { it.sender_email.trim().lowercase().takeIf { e -> e.isNotBlank() } }.toSet()
     }
     var reaction_picker_open by remember { mutableStateOf(false) }
+    var left_after_unread by remember(email_id) { mutableStateOf(false) }
 
     LaunchedEffect(reactions_enabled) {
         mail_vm.set_reactions_enabled(reactions_enabled)
@@ -548,17 +549,9 @@ fun MailDetailScreen(
     val unread_thread_ids = remember(thread_state.messages, thread_matches_email) {
         if (thread_matches_email) thread_state.messages.filter { !it.is_read }.map { it.id } else emptyList()
     }
-    LaunchedEffect(email_id, thread_matches_email, unread_thread_ids, settings_state.preferences?.mark_as_read) {
+    LaunchedEffect(email_id, thread_matches_email, unread_thread_ids) {
         if (!thread_matches_email) return@LaunchedEffect
-        val prefs = settings_state.preferences ?: return@LaunchedEffect
-        val delay_ms = when (prefs.mark_as_read) {
-            "immediate" -> 0L
-            "3_seconds" -> 3000L
-            "never" -> return@LaunchedEffect
-            else -> 1000L
-        }
-        if (delay_ms > 0) kotlinx.coroutines.delay(delay_ms)
-        mail_vm.mark_thread_read(email_id, unread_thread_ids)
+        mail_vm.on_opened_thread_known(email_id, unread_thread_ids)
     }
 
     LaunchedEffect(Unit) {
@@ -983,9 +976,12 @@ fun MailDetailScreen(
                             tint = colors.text_primary,
                         ) {
                             show_topbar_menu = false
-                            mail_vm.mark_unread(email_id)
-                            show_toast(context.getString(R.string.marked_as_unread))
-                            on_back()
+                            if (!left_after_unread) {
+                                left_after_unread = true
+                                mail_vm.mark_unread(email_id)
+                                show_toast(context.getString(R.string.marked_as_unread))
+                                on_back()
+                            }
                         }
                         detail_menu_action(
                             icon = if (is_pinned) pin_icon_filled else pin_icon,
@@ -1585,9 +1581,12 @@ fun MailDetailScreen(
                                     val read_state = api_item?.is_read == true
                                     if (read_state) {
                                         bottom_action(TablerIcons.Mail, stringResource(R.string.mark_as_unread), test_tag = "mark_read") {
-                                            mail_vm.mark_unread(email_id)
-                                            show_toast(context.getString(R.string.marked_as_unread))
-                                            on_back()
+                                            if (!left_after_unread) {
+                                                left_after_unread = true
+                                                mail_vm.mark_unread(email_id)
+                                                show_toast(context.getString(R.string.marked_as_unread))
+                                                on_back()
+                                            }
                                         }
                                     } else {
                                         bottom_action(TablerIcons.MailOpened, stringResource(R.string.mark_as_read), test_tag = "mark_read") {
@@ -1697,9 +1696,12 @@ fun MailDetailScreen(
             is_starred = is_starred,
             on_mark_unread = {
                 show_action_sheet = false
-                mail_vm.mark_unread(item_target)
-                show_toast(context.getString(R.string.marked_as_unread))
-                on_back()
+                if (!left_after_unread) {
+                    left_after_unread = true
+                    mail_vm.mark_unread(item_target)
+                    show_toast(context.getString(R.string.marked_as_unread))
+                    on_back()
+                }
             },
             on_archive = {
                 show_action_sheet = false

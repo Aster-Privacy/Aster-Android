@@ -86,6 +86,18 @@ class SearchIndexManager @Inject constructor(
 
     private val epoch = java.util.concurrent.atomic.AtomicInteger(0)
 
+    private val read_overlays = java.util.concurrent.CopyOnWriteArraySet<(String) -> Boolean?>()
+
+    fun add_read_overlay(overlay: (String) -> Boolean?) {
+        read_overlays.add(overlay)
+    }
+
+    fun remove_read_overlay(overlay: (String) -> Boolean?) {
+        read_overlays.remove(overlay)
+    }
+
+    private fun pending_read(id: String): Boolean? = read_overlays.firstNotNullOfOrNull { it(id) }
+
     @Volatile
     private var build_job: Job? = null
 
@@ -474,8 +486,8 @@ class SearchIndexManager @Inject constructor(
     }
 
     private suspend fun refresh_known_flags(items: List<MailItem>) {
-        val read = items.filter { it.is_read == true }.map { it.id }
-        val unread = items.filter { it.is_read == false }.map { it.id }
+        val read = items.filter { (pending_read(it.id) ?: it.is_read) == true }.map { it.id }
+        val unread = items.filter { (pending_read(it.id) ?: it.is_read) == false }.map { it.id }
         val starred = items.filter { it.is_starred == true }.map { it.id }
         val unstarred = items.filter { it.is_starred == false }.map { it.id }
         val pinned = items.filter { it.is_pinned == true }.map { it.id }
@@ -520,7 +532,7 @@ class SearchIndexManager @Inject constructor(
                 subject = item.subject,
                 preview = item.preview,
                 timestamp = item.timestamp,
-                is_read = item.is_read,
+                is_read = pending_read(item.id) ?: item.is_read,
                 is_starred = item.is_starred,
                 is_encrypted = item.is_encrypted,
                 has_attachments = item.has_attachments,
