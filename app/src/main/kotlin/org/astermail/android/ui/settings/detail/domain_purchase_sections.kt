@@ -93,18 +93,19 @@ internal fun domain_purchase_area(
     on_load_dns: (String) -> Unit = {},
     on_verify_domain: (String) -> Unit = {},
     on_toggle_catch_all: (String) -> Unit = {},
+    can_buy: Boolean = true,
 ) {
     val has_complete = state.orders.any { it.status == "complete" }
     var manage_order_id by remember { mutableStateOf<String?>(null) }
     val manage_order = state.orders.firstOrNull { it.id == manage_order_id }
-    if (!has_complete) {
+    if (!has_complete && can_buy) {
         domain_purchase_promo(on_buy = on_buy)
         v_gap(AsterSpacing.md)
     }
     if (state.orders.isNotEmpty()) {
         purchased_domains_section(
             state = state,
-            show_buy_action = has_complete,
+            show_buy_action = has_complete && can_buy,
             on_buy = on_buy,
             on_open_order = on_open_order,
             on_cancel = on_cancel,

@@ -160,14 +160,27 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
         UpgradeStore.close()
     }
 
+    LaunchedEffect(Unit) { billing_vm.ensure_play_config() }
+
+    LaunchedEffect(billing_state.play_purchase_request) {
+        if (billing_state.play_purchase_request != null) UpgradeStore.close()
+    }
+
     val colors = AsterMaterial.colors
-    val plans = plan_state.plans
+    val play_install = org.astermail.android.billing.remember_play_install()
+    val plans = if (billing_state.play_enabled) {
+        org.astermail.android.billing.apply_play_prices(plan_state.plans, billing_state.play_offers, billing_state.play_products)
+    } else {
+        plan_state.plans
+    }
     val has_yearly = upgrade_has_yearly(plans)
     val has_monthly = upgrade_has_monthly(plans)
     var billing_interval by remember { mutableStateOf(if (has_yearly) "year" else "month") }
     val effective_interval = if (billing_interval == "year" && has_yearly) "year" else "month"
     val plan_options = upgrade_plan_options(plans, effective_interval)
-    val currency = billing_state.subscription?.currency?.takeIf { it.isNotBlank() } ?: "usd"
+    val currency = billing_state.play_currency?.takeIf { billing_state.play_enabled }
+        ?: billing_state.subscription?.currency?.takeIf { it.isNotBlank() }
+        ?: "usd"
     val save_percent = upgrade_yearly_save_percent(plans)
     val offer_badge = stringResource(R.string.save_percent, offer_state.effective_percent_off)
     var selected_code by remember { mutableStateOf<String?>(null) }
@@ -391,6 +404,7 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
                         currency = currency,
                         offer = if (
                             plan.price_cents > 0 &&
+                            !play_install &&
                             offer_state.applies_to_card(plan.code.lowercase(), effective_interval)
                         ) {
                             special_offer_price_pair(

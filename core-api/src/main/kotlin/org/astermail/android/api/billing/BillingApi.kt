@@ -502,7 +502,37 @@ interface BillingApi {
     suspend fun get_crypto_native_invoice(invoice_id: String): CryptoNativeInvoiceStatus
     suspend fun cancel_crypto_native_invoice(invoice_id: String): CryptoNativeCancelResponse
     suspend fun list_pending_crypto_invoices(): CryptoNativePendingInvoicesResponse
+    suspend fun get_google_play_config(): GooglePlayConfigResponse
+    suspend fun verify_google_play_purchase(request: GooglePlayVerifyRequest): GooglePlayVerifyResponse
 }
+
+@Serializable
+data class GooglePlayProduct(
+    val product_id: String = "",
+    val plan_code: String = "",
+    val base_plan_ids: List<String> = emptyList(),
+)
+
+@Serializable
+data class GooglePlayConfigResponse(
+    val enabled: Boolean = false,
+    val obfuscated_account_id: String? = null,
+    val products: List<GooglePlayProduct> = emptyList(),
+    val purchase_blocked_reason: String? = null,
+)
+
+@Serializable
+data class GooglePlayVerifyRequest(
+    val product_id: String,
+    val purchase_token: String,
+)
+
+@Serializable
+data class GooglePlayVerifyResponse(
+    val plan_code: String? = null,
+    val paid_until: String? = null,
+    val pending: Boolean = false,
+)
 
 class BillingApiImpl(private val client: ApiClient) : BillingApi {
     private val base = "/api/payments/v1"
@@ -712,6 +742,18 @@ class BillingApiImpl(private val client: ApiClient) : BillingApi {
 
     override suspend fun list_pending_crypto_invoices(): CryptoNativePendingInvoicesResponse =
         decode_or_throw(client.http.get("${client.base_url}$base/crypto-native/invoices/pending"))
+
+    override suspend fun get_google_play_config(): GooglePlayConfigResponse =
+        decode_or_throw(client.http.get("${client.base_url}$base/google-play/config"))
+
+    override suspend fun verify_google_play_purchase(request: GooglePlayVerifyRequest): GooglePlayVerifyResponse {
+        val response = client.http.post("${client.base_url}$base/google-play/verify") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
 
     private suspend inline fun <reified T> decode_or_throw(response: HttpResponse): T {
         if (response.status.value !in 200..299) {

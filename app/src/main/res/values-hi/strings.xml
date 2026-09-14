@@ -3270,4 +3270,11 @@
     <string name="enc_verification_code_info_title">यह कोड क्या है?</string>
     <string name="enc_verification_code_info_description">आपकी एन्क्रिप्शन कुंजी से बना एक छोटा कोड। अगर जिसे आप ईमेल करते हैं वह इसकी तुलना अपनी तरफ़ के कोड से करे और दोनों मिल जाएं, तो आप दोनों पक्के हो सकते हैं कि आपके संदेश निजी हैं और उनसे छेड़छाड़ नहीं हुई।</string>
     <string name="enc_copy_verification_code">पुष्टिकरण कोड कॉपी करें</string>
+    <string name="billing_play_unavailable">Google Play से खरीदारी अभी उपलब्ध नहीं है। बाद में फिर से कोशिश करें।</string>
+    <string name="billing_play_failed">Google Play आपकी खरीदारी पूरी नहीं कर सका। फिर से कोशिश करें।</string>
+    <string name="billing_play_pending">आपकी खरीदारी लंबित है। Google Play के भुगतान की पुष्टि करने के बाद आपका प्लान चालू हो जाएगा।</string>
+    <string name="billing_play_success">आपका प्लान चालू है।</string>
+    <string name="billing_play_blocked">आपके पास पहले से एक सदस्यता है। इसे बदलने के लिए, वहीं प्रबंधित करें जहां से आपने इसे खरीदा था।</string>
+    <string name="billing_play_verify_failed">आपकी खरीदारी हो गई, लेकिन अभी तक इसकी पुष्टि नहीं हुई है। अगली बार ऐप खोलने पर Aster Mail इसकी पुष्टि अपने आप कर देगा।</string>
+    <string name="billing_play_manage">Google Play में प्रबंधित करें</string>
 </resources>

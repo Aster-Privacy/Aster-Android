@@ -3362,4 +3362,11 @@
     <string name="enc_verification_code_info_title">このコードは何ですか?</string>
     <string name="enc_verification_code_info_description">暗号化キーから作成された短いコードです。メールをやり取りする相手がこのコードを自分側のコードと照合して一致すれば、お互いのメッセージが非公開で改ざんされていないことを確認できます。</string>
     <string name="enc_copy_verification_code">確認コードをコピー</string>
+    <string name="billing_play_unavailable">現在 Google Play での購入はご利用いただけません。しばらくしてからもう一度お試しください。</string>
+    <string name="billing_play_failed">Google Play で購入を完了できませんでした。もう一度お試しください。</string>
+    <string name="billing_play_pending">購入は保留中です。Google Play が支払いを確認すると、プランが有効になります。</string>
+    <string name="billing_play_success">プランが有効になりました。</string>
+    <string name="billing_play_blocked">すでにサブスクリプションをお持ちです。変更するには、購入した場所で管理してください。</string>
+    <string name="billing_play_verify_failed">購入は完了しましたが、まだ確認されていません。次回アプリを開いたときに Aster Mail が自動的に確認します。</string>
+    <string name="billing_play_manage">Google Play で管理</string>
 </resources>

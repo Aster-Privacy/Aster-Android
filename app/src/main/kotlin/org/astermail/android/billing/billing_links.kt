@@ -57,6 +57,12 @@ fun parse_billing_return(uri: Uri?): billing_return_outcome? {
 
 fun open_billing_tab(context: Context, url: String): Boolean {
     val uri = Uri.parse(url)
+    if (uri.host == "play.google.com") {
+        val opened = runCatching {
+            context.startActivity(Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }.isSuccess
+        if (opened) return true
+    }
     val tab = runCatching {
         CustomTabsIntent.Builder().setShowTitle(true).build().apply {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

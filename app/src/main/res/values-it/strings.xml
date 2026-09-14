@@ -3380,4 +3380,11 @@
     <string name="enc_verification_code_info_title">Cos\'è questo codice?</string>
     <string name="enc_verification_code_info_description">Un breve codice creato dalla tua chiave di crittografia. Se la persona con cui scrivi confronta questo codice con il proprio e corrisponde, entrambi potete essere certi che i vostri messaggi sono privati e non sono stati alterati.</string>
     <string name="enc_copy_verification_code">Copia codice di verifica</string>
+    <string name="billing_play_unavailable">Gli acquisti con Google Play non sono disponibili al momento. Riprova più tardi.</string>
+    <string name="billing_play_failed">Google Play non è riuscito a completare l\'acquisto. Riprova.</string>
+    <string name="billing_play_pending">Il tuo acquisto è in attesa. Il piano si attiva quando Google Play conferma il pagamento.</string>
+    <string name="billing_play_success">Il tuo piano è attivo.</string>
+    <string name="billing_play_blocked">Hai già un abbonamento. Per modificarlo, gestiscilo dove l\'hai acquistato.</string>
+    <string name="billing_play_verify_failed">L\'acquisto è andato a buon fine, ma non è ancora confermato. Aster Mail lo conferma automaticamente alla prossima apertura dell\'app.</string>
+    <string name="billing_play_manage">Gestisci in Google Play</string>
 </resources>

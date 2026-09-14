@@ -623,6 +623,7 @@ private fun AsterNavHost() {
                 nav_controller.navigate(routes.settings_detail("billing"))
             },
         )
+        org.astermail.android.billing.PlayBillingHost()
         val offer_route by nav_controller.currentBackStackEntryAsState()
         if (!is_locked && offer_route?.destination?.route != routes.register && !within_sign_up_quiet_period(context)) {
             org.astermail.android.ui.upgrade.SpecialOfferHost()

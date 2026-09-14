@@ -331,16 +331,18 @@ fun StorageScreen(
             }
             v_gap(AsterSpacing.lg)
             storage_mailbox_section(stats, used_bytes)
-            Text(
-                text = stringResource(R.string.buy_more_storage_note),
-                color = colors.text_tertiary,
-                fontSize = 13.sp,
-            )
-            v_gap(AsterSpacing.sm)
-            AsterButton(
-                label = stringResource(R.string.buy_more_storage),
-                onClick = { on_open("billing_addons") },
-            )
+            if (!org.astermail.android.billing.remember_play_install()) {
+                Text(
+                    text = stringResource(R.string.buy_more_storage_note),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                )
+                v_gap(AsterSpacing.sm)
+                AsterButton(
+                    label = stringResource(R.string.buy_more_storage),
+                    onClick = { on_open("billing_addons") },
+                )
+            }
         }
         v_gap(AsterSpacing.xxl)
     }

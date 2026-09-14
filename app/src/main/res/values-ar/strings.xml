@@ -3460,4 +3460,11 @@
     <string name="enc_verification_code_info_title">ما هذا الرمز؟</string>
     <string name="enc_verification_code_info_description">رمز قصير يُنشأ من مفتاح التشفير الخاص بك. إذا قارن الشخص الذي تتراسل معه هذا الرمز برمزه وتطابقا، يمكن لكليكما التأكد من أن رسائلكما خاصة ولم يتم العبث بها.</string>
     <string name="enc_copy_verification_code">نسخ رمز التحقق</string>
+    <string name="billing_play_unavailable">عمليات الشراء عبر Google Play غير متاحة الآن. حاول مرة أخرى لاحقًا.</string>
+    <string name="billing_play_failed">تعذّر على Google Play إكمال عملية الشراء. حاول مرة أخرى.</string>
+    <string name="billing_play_pending">عملية الشراء قيد الانتظار. سيتم تفعيل خطتك بعد أن يؤكد Google Play الدفع.</string>
+    <string name="billing_play_success">خطتك مفعّلة.</string>
+    <string name="billing_play_blocked">لديك اشتراك بالفعل. لتغييره، أدِره من المكان الذي اشتريته منه.</string>
+    <string name="billing_play_verify_failed">تمت عملية الشراء، لكنها لم تُؤكَّد بعد. سيؤكدها Aster Mail تلقائيًا في المرة القادمة التي تفتح فيها التطبيق.</string>
+    <string name="billing_play_manage">الإدارة في Google Play</string>
 </resources>

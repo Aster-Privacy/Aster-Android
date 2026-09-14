@@ -3425,4 +3425,11 @@
     <string name="enc_verification_code_info_title">What\'s this code?</string>
     <string name="enc_verification_code_info_description">A short code created from your encryption key. If someone you email compares it with the code on their end and it matches, you can both be sure your messages are private and haven\'t been tampered with.</string>
     <string name="enc_copy_verification_code">Copy verification code</string>
+    <string name="billing_play_unavailable">Google Play purchases aren\'t available right now. Try again later.</string>
+    <string name="billing_play_failed">Google Play couldn\'t complete your purchase. Try again.</string>
+    <string name="billing_play_pending">Your purchase is pending. Your plan activates after Google Play confirms the payment.</string>
+    <string name="billing_play_success">Your plan is active.</string>
+    <string name="billing_play_blocked">You already have a subscription. To change it, manage it where you bought it.</string>
+    <string name="billing_play_verify_failed">Your purchase went through, but it isn\'t confirmed yet. Aster Mail confirms it automatically the next time you open the app.</string>
+    <string name="billing_play_manage">Manage in Google Play</string>
 </resources>
