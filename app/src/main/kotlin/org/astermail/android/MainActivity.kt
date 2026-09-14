@@ -870,10 +870,12 @@ private fun AsterNavHost() {
             val open_marked = androidx.compose.runtime.saveable.rememberSaveable(email_id) {
                 androidx.compose.runtime.mutableStateOf(false)
             }
-            androidx.compose.runtime.LaunchedEffect(email_id) {
+            val open_mark_as_read = settings_state.preferences?.mark_as_read
+            androidx.compose.runtime.LaunchedEffect(email_id, open_mark_as_read) {
                 if (open_marked.value) return@LaunchedEffect
+                if (open_mark_as_read == null) return@LaunchedEffect
                 open_marked.value = true
-                shared_mail_vm.on_user_opened_mail(email_id, settings_state.preferences?.mark_as_read)
+                shared_mail_vm.on_user_opened_mail(email_id, open_mark_as_read)
             }
             androidx.compose.runtime.DisposableEffect(email_id) {
                 onDispose {

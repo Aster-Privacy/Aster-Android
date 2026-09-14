@@ -2207,6 +2207,25 @@ class MailViewModelTest {
     }
 
     @Test
+    fun `open before the read preference loads does not mark read`() = runTest {
+        stub_thread_read_sync()
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(3))
+        var mark_read_calls = 0
+        coEvery { repository.mark_read(any(), any(), any()) } coAnswers {
+            mark_read_calls++
+            Result.success(Unit)
+        }
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.on_user_opened_mail("id_1", null)
+        advanceUntilIdle()
+
+        assertFalse(vm.inbox_state.value.items.first { it.id == "id_1" }.is_read)
+        assertEquals(0, mark_read_calls)
+    }
+
+    @Test
     fun `a stale fetch after thirty seconds cannot restore unread and a server failure rolls back`() = runTest {
         var now = 1_000_000L
         vm.override_clock_ms = { now }

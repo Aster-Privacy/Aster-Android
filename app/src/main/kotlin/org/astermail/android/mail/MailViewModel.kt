@@ -1454,7 +1454,7 @@ class MailViewModel @Inject constructor(
     fun on_user_opened_mail(item_id: String, mark_as_read: String?) {
         if (item_id == DEMO_PHISH_ITEM_ID) return
         if (mark_as_read != null) last_mark_as_read = mark_as_read
-        val delay_ms = when (mark_as_read ?: last_mark_as_read ?: "1_second") {
+        val delay_ms = when (mark_as_read ?: last_mark_as_read ?: return) {
             "never" -> return
             "immediate" -> 0L
             "3_seconds" -> 3_000L
