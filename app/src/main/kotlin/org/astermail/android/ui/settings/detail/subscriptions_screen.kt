@@ -951,7 +951,11 @@ fun SubscriptionsScreen(
             )
             Spacer(Modifier.width(6.dp))
             Text(
-                text = stringResource(R.string.billing_money_back_guarantee) + "  ·  " + stringResource(R.string.billing_cancel_anytime),
+                text = if (play_install) {
+                    stringResource(R.string.billing_cancel_anytime)
+                } else {
+                    stringResource(R.string.billing_money_back_guarantee) + "  ·  " + stringResource(R.string.billing_cancel_anytime)
+                },
                 color = colors.text_tertiary,
                 fontSize = 12.sp,
             )
@@ -2675,7 +2679,11 @@ private fun plan_tier_card(
                 if (show_recommended) {
                     Spacer(Modifier.height(AsterSpacing.sm))
                     Text(
-                        text = stringResource(R.string.billing_money_back_guarantee) + " · " + stringResource(R.string.billing_cancel_anytime),
+                        text = if (org.astermail.android.billing.remember_play_install()) {
+                            stringResource(R.string.billing_cancel_anytime)
+                        } else {
+                            stringResource(R.string.billing_money_back_guarantee) + " · " + stringResource(R.string.billing_cancel_anytime)
+                        },
                         color = colors.text_tertiary,
                         fontSize = 11.sp,
                         lineHeight = 14.sp,
