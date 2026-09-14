@@ -415,6 +415,13 @@ class MailViewModel @Inject constructor(
     private val opened_thread_ids = java.util.concurrent.ConcurrentHashMap<String, Set<String>>()
     private val opened_synced_ids = java.util.concurrent.ConcurrentHashMap<String, Set<String>>()
     private val notification_reads = java.util.concurrent.ConcurrentHashMap<String, LocalRead>()
+    private val opened_unread_at_open = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+    private val failed_open_ids = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+    private val index_read_overlay: (String) -> Boolean? = { id -> read_overrides[id] }
+
+    init {
+        search_index_manager.add_read_overlay(index_read_overlay)
+    }
 
     data class ToastEvent(
         val message: String,
@@ -491,6 +498,8 @@ class MailViewModel @Inject constructor(
         opened_thread_ids.clear()
         opened_synced_ids.clear()
         notification_reads.clear()
+        opened_unread_at_open.clear()
+        failed_open_ids.clear()
         labels_token = null
         replace_on_revalidate = false
         _inbox_state.value = InboxUiState()
@@ -506,6 +515,11 @@ class MailViewModel @Inject constructor(
         viewModelScope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
             runCatching { search_index_manager.clear() }
         }
+    }
+
+    override fun onCleared() {
+        search_index_manager.remove_read_overlay(index_read_overlay)
+        super.onCleared()
     }
 
     private fun apply_star_overrides(items: List<InboxItem>): List<InboxItem> {
@@ -1198,6 +1212,7 @@ class MailViewModel @Inject constructor(
             } ?: Result.failure(Exception(context.getString(R.string.something_went_wrong)))
             if (thread_gen != thread_load_generation) return@launch
             val item = item_result.getOrNull()
+            if (item != null) resume_failed_open(item_id)
             val thread_token = item?.thread_token
             if (thread_token != null) {
                 val fallback = listOf(message_from_item_safe(item))
@@ -1250,7 +1265,11 @@ class MailViewModel @Inject constructor(
                 load_reactions(msgs)
             } else {
                 val keep = _thread_state.value
-                _thread_state.value = if (keep.item?.id == item_id && keep.messages.any { !it.is_body_pending }) {
+                val kept = keep.item?.id == item_id && keep.messages.any { !it.is_body_pending }
+                if (!kept && item_result.exceptionOrNull()?.let { is_cancellation(it) } != true) {
+                    undo_failed_open(item_id)
+                }
+                _thread_state.value = if (kept) {
                     keep.copy(is_loading = false, error = null)
                 } else {
                     ThreadUiState(
@@ -1430,13 +1449,15 @@ class MailViewModel @Inject constructor(
     }
 
     private fun sync_read(item_id: String, is_read: Boolean, local: LocalRead) {
+        val gen = account_generation
         viewModelScope.launch {
             runCatching { search_index_manager.update_read(item_id, is_read) }
             var result = repository.mark_read(item_id, is_read, local.item?.raw_item)
-            if (result.isFailure) {
+            if (result.isFailure && gen == account_generation) {
                 kotlinx.coroutines.delay(1500L)
-                result = repository.mark_read(item_id, is_read, local.item?.raw_item)
+                if (gen == account_generation) result = repository.mark_read(item_id, is_read, local.item?.raw_item)
             }
+            if (gen != account_generation) return@launch
             if (read_sequence[item_id] != local.sequence) return@launch
             if (result.isSuccess) {
                 settle_read_flips(listOf(item_id), is_read)
@@ -1462,6 +1483,8 @@ class MailViewModel @Inject constructor(
         }
         mark_read_jobs.remove(item_id)?.cancel()
         opened_mail_ids[item_id] = false
+        failed_open_ids.remove(item_id)
+        find_item(item_id)?.let { opened_unread_at_open[item_id] = !it.is_read }
         if (delay_ms == 0L) {
             mark_opened(item_id)
             return
@@ -1485,7 +1508,22 @@ class MailViewModel @Inject constructor(
         opened_mail_ids.remove(item_id)
         opened_thread_ids.remove(item_id)
         opened_synced_ids.remove(item_id)
+        opened_unread_at_open.remove(item_id)
         return pending_job != null
+    }
+
+    private fun undo_failed_open(item_id: String) {
+        val was_unread = opened_unread_at_open[item_id] ?: return
+        cancel_opened_mail(item_id)
+        if (!was_unread) return
+        failed_open_ids[item_id] = true
+        if (read_overrides[item_id] == true) mark_unread(item_id)
+    }
+
+    private fun resume_failed_open(item_id: String) {
+        opened_unread_at_open.remove(item_id)
+        if (failed_open_ids.remove(item_id) == null) return
+        on_user_opened_mail(item_id, null)
     }
 
     private fun mark_opened(item_id: String) {
@@ -1524,6 +1562,7 @@ class MailViewModel @Inject constructor(
         }
         val prior = snapshot_read_states(extra)
         val sequence = next_mutation_sequence()
+        val gen = account_generation
         if (extra.isNotEmpty()) {
             val extra_set = extra.toSet()
             extra.forEach { read_sequence[it] = sequence }
@@ -1568,12 +1607,14 @@ class MailViewModel @Inject constructor(
                 } else {
                     emptySet()
                 }
+                if (gen != account_generation) return@launch
                 failed.removeAll(extra.toSet() - still_failing)
                 failed.addAll(still_failing)
                 val confirmed = extra.filter { it !in still_failing && read_sequence[it] == sequence }
                 settle_read_flips(confirmed, true)
                 runCatching { confirmed.forEach { search_index_manager.update_read(it, true) } }
             }
+            if (gen != account_generation) return@launch
             val revertable = failed.filter { it !in extra || read_sequence[it] == sequence }.toSet()
             if (revertable.isEmpty()) return@launch
             opened_synced_ids.computeIfPresent(item_id) { _, ids -> ids - revertable }
@@ -2534,9 +2575,12 @@ class MailViewModel @Inject constructor(
             _thread_state.value = thread.copy(item = thread.item.copy(is_read = false))
         }
         invalidate_caches(listOf("starred"))
+        val gen = account_generation
         viewModelScope.launch {
             persist_read_state(item_ids, false)
-            repository.mark_unread_bulk(item_ids).fold(
+            val result = repository.mark_unread_bulk(item_ids)
+            if (gen != account_generation) return@launch
+            result.fold(
                 onSuccess = {
                     settle_read_flips(item_ids, false)
                     persist_read_state(item_ids, false)
@@ -3307,9 +3351,12 @@ class MailViewModel @Inject constructor(
             _thread_state.value = thread.copy(item = thread.item.copy(is_read = true))
         }
         invalidate_caches(listOf("starred"))
+        val gen = account_generation
         viewModelScope.launch {
             persist_read_state(item_ids, true)
-            repository.mark_read_bulk(item_ids).fold(
+            val result = repository.mark_read_bulk(item_ids)
+            if (gen != account_generation) return@launch
+            result.fold(
                 onSuccess = {
                     settle_read_flips(item_ids, true)
                     persist_read_state(item_ids, true)
@@ -3362,6 +3409,7 @@ class MailViewModel @Inject constructor(
         note_read_flips(prior_reads, true)
         prior_reads.keys.forEach { read_overrides[it] = true }
         apply_bulk_read(folder, true)
+        val gen = account_generation
         viewModelScope.launch {
             val result = if (repository.folder_supports_bulk_scope(folder)) {
                 repository.mark_all_read_scope(folder)
@@ -3369,6 +3417,7 @@ class MailViewModel @Inject constructor(
                 val ids = prior_reads.keys.toList()
                 if (ids.isEmpty()) return@launch else repository.mark_read_bulk(ids)
             }
+            if (gen != account_generation) return@launch
             result.fold(
                 onSuccess = {
                     settle_read_flips(prior_reads.keys, true)
@@ -3390,6 +3439,7 @@ class MailViewModel @Inject constructor(
         note_read_flips(prior_reads, false)
         prior_reads.keys.forEach { read_overrides[it] = false }
         apply_bulk_read(folder, false)
+        val gen = account_generation
         viewModelScope.launch {
             val result = if (repository.folder_supports_bulk_scope(folder)) {
                 repository.mark_all_unread_scope(folder)
@@ -3397,6 +3447,7 @@ class MailViewModel @Inject constructor(
                 val ids = prior_reads.keys.toList()
                 if (ids.isEmpty()) return@launch else repository.mark_unread_bulk(ids)
             }
+            if (gen != account_generation) return@launch
             result.fold(
                 onSuccess = {
                     settle_read_flips(prior_reads.keys, false)
@@ -3419,46 +3470,36 @@ class MailViewModel @Inject constructor(
         repository.action_supports_bulk_scope(action)
 
     fun bulk_scope_action(folder: String, action: String, on_failure: (() -> Unit)? = null) {
+        if (action == "mark_read" || action == "mark_unread") {
+            bulk_scope_read(folder, action, action == "mark_read", on_failure)
+            return
+        }
         val prior = _inbox_state.value
         val snapshot = prior.items
-        val removes = action != "mark_read" && action != "mark_unread"
         val removed_ids = snapshot.map { it.id }
-        if (removes) {
-            _inbox_state.update { it.copy(items = emptyList(), has_more = false, next_cursor = null) }
-            adjust_stats_for_removed(snapshot)
-            pending_removed_ids.addAll(removed_ids)
-            protect_removed(removed_ids)
-        } else {
-            val read = action == "mark_read"
-            _inbox_state.update { s -> s.copy(items = s.items.map { it.copy(is_read = read) }) }
-            snapshot.forEach { read_overrides[it.id] = read }
-        }
+        _inbox_state.update { it.copy(items = emptyList(), has_more = false, next_cursor = null) }
+        adjust_stats_for_removed(snapshot)
+        pending_removed_ids.addAll(removed_ids)
+        protect_removed(removed_ids)
+        val gen = account_generation
         viewModelScope.launch {
-            repository.bulk_scope_action(folder, action).fold(
+            val result = repository.bulk_scope_action(folder, action)
+            if (gen != account_generation) return@launch
+            result.fold(
                 onSuccess = {
-                    if (!removes) {
-                        persist_read_state(removed_ids, action == "mark_read")
-                    }
                     try {
-                        if (removes) {
-                            runCatching { index_scope_removal(folder, action, removed_ids) }
-                        }
+                        runCatching { index_scope_removal(folder, action, removed_ids) }
                         invalidate_caches(listOf(folder))
                         load_stats(force = true)
                         refresh()
                         refresh_job?.join()
                     } finally {
-                        if (removes) pending_removed_ids.removeAll(removed_ids.toSet())
+                        pending_removed_ids.removeAll(removed_ids.toSet())
                     }
                 },
                 onFailure = {
-                    if (removes) {
-                        pending_removed_ids.removeAll(removed_ids.toSet())
-                        clear_removal_protection(removed_ids)
-                    }
-                    if (!removes) {
-                        snapshot.forEach { read_overrides.remove(it.id) }
-                    }
+                    pending_removed_ids.removeAll(removed_ids.toSet())
+                    clear_removal_protection(removed_ids)
                     _inbox_state.update {
                         it.copy(
                             items = snapshot,
@@ -3466,6 +3507,38 @@ class MailViewModel @Inject constructor(
                             next_cursor = prior.next_cursor,
                         )
                     }
+                    load_stats(force = true)
+                    if (on_failure != null) {
+                        on_failure()
+                    } else {
+                        emit_toast(context.getString(R.string.action_failed))
+                    }
+                },
+            )
+        }
+    }
+
+    private fun bulk_scope_read(folder: String, action: String, read: Boolean, on_failure: (() -> Unit)?) {
+        val prior_reads = collect_read_states(folder)
+        if (read) MailPollingWorker.cancel_message_notifications(context, prior_reads.keys.toList())
+        adjust_stats_unread(inbox_unread_delta(prior_reads, read))
+        note_read_flips(prior_reads, read)
+        prior_reads.keys.forEach { read_overrides[it] = read }
+        apply_bulk_read(folder, read)
+        val gen = account_generation
+        viewModelScope.launch {
+            val result = repository.bulk_scope_action(folder, action)
+            if (gen != account_generation) return@launch
+            result.fold(
+                onSuccess = {
+                    settle_read_flips(prior_reads.keys, read)
+                    persist_read_state(prior_reads.keys.toList(), read)
+                    invalidate_caches(listOf(folder))
+                    load_stats(force = true)
+                    refresh()
+                },
+                onFailure = {
+                    revert_bulk_read(folder, prior_reads, read)
                     load_stats(force = true)
                     if (on_failure != null) {
                         on_failure()
