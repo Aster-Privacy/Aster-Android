@@ -23,14 +23,17 @@ package org.astermail.android.mail
 
 import java.util.concurrent.ConcurrentHashMap
 
-class TimedOverrides(private val ttl_ms: Long) {
+class TimedOverrides(
+    private val ttl_ms: Long,
+    private val now: () -> Long = { System.currentTimeMillis() },
+) {
     private data class Entry(val value: Boolean, val at: Long)
 
     private val entries = ConcurrentHashMap<String, Entry>()
 
     operator fun get(id: String): Boolean? {
         val entry = entries[id] ?: return null
-        if (System.currentTimeMillis() - entry.at >= ttl_ms) {
+        if (now() - entry.at >= ttl_ms) {
             entries.remove(id, entry)
             return null
         }
@@ -38,7 +41,14 @@ class TimedOverrides(private val ttl_ms: Long) {
     }
 
     operator fun set(id: String, value: Boolean) {
-        entries[id] = Entry(value, System.currentTimeMillis())
+        entries[id] = Entry(value, now())
+    }
+
+    fun confirm(id: String, value: Boolean, grace_ms: Long) {
+        val cutoff = now() - ttl_ms + grace_ms
+        entries.computeIfPresent(id) { _, entry ->
+            if (entry.value != value || entry.at <= cutoff) entry else entry.copy(at = cutoff)
+        }
     }
 
     fun remove(id: String) {
@@ -49,8 +59,8 @@ class TimedOverrides(private val ttl_ms: Long) {
 
     fun isEmpty(): Boolean {
         if (entries.isEmpty()) return true
-        val now = System.currentTimeMillis()
-        entries.entries.removeIf { now - it.value.at >= ttl_ms }
+        val at_now = now()
+        entries.entries.removeIf { at_now - it.value.at >= ttl_ms }
         return entries.isEmpty()
     }
 
