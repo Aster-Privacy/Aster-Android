@@ -3895,7 +3895,7 @@ class MailRepository @Inject constructor(
         sender_alias_hash: String? = null,
         reply_subject: String? = null,
         in_reply_to: String? = null,
-    ): Result<Unit> = runCatching {
+    ): Result<String?> = runCatching {
         val from_addr = sender_email ?: session_key_store.get_user_email() ?: ""
         val payload = org.json.JSONObject().apply {
             put("aster_reaction", true)
@@ -3956,6 +3956,18 @@ class MailRepository @Inject constructor(
         if (!response.success) {
             throw IllegalStateException(
                 response.message.ifBlank { context.getString(R.string.reaction_failed) },
+            )
+        }
+        response.own_reaction_mail_item_id?.takeIf { it.isNotBlank() }
+    }
+
+    suspend fun remove_reaction(reaction_mail_item_id: String): Result<Unit> = runCatching {
+        val response = send_api.unreact(
+            org.astermail.android.api.send.UnreactRequest(reaction_mail_item_id = reaction_mail_item_id),
+        )
+        if (!response.success) {
+            throw IllegalStateException(
+                response.message.ifBlank { context.getString(R.string.reaction_remove_failed) },
             )
         }
     }

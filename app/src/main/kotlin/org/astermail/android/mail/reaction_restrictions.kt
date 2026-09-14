@@ -22,9 +22,12 @@
 package org.astermail.android.mail
 
 import org.astermail.android.R
+import org.astermail.android.api.ApiError
 
 const val MAX_REACTION_RECIPIENTS = 20
 const val MAX_REACTION_EMOJIS = 20
+const val MAX_OWN_REACTIONS = 2
+const val REACTION_LIMIT_REACHED_CODE = "REACTION_LIMIT_REACHED"
 
 enum class ReactionRestriction {
     disabled,
@@ -35,6 +38,7 @@ enum class ReactionRestriction {
     too_many_recipients,
     bcc,
     too_many_emojis,
+    reaction_limit,
     no_recipient,
 }
 
@@ -47,8 +51,12 @@ fun reaction_restriction_string(restriction: ReactionRestriction): Int = when (r
     ReactionRestriction.too_many_recipients -> R.string.cannot_react_too_many_recipients
     ReactionRestriction.bcc -> R.string.cannot_react_bcc
     ReactionRestriction.too_many_emojis -> R.string.cannot_react_too_many_emojis
+    ReactionRestriction.reaction_limit -> R.string.cannot_react_limit
     ReactionRestriction.no_recipient -> R.string.cannot_react_no_recipient
 }
+
+fun is_reaction_limit_error(t: Throwable?): Boolean =
+    t is ApiError.Conflict && t.code == REACTION_LIMIT_REACHED_CODE
 
 private fun normalize(value: String?): String = value?.trim()?.lowercase(java.util.Locale.ROOT).orEmpty()
 
@@ -119,6 +127,7 @@ fun reaction_restriction(
     if (reactions.map { it.emoji }.filter { it.isNotBlank() }.toSet().size >= MAX_REACTION_EMOJIS) {
         return ReactionRestriction.too_many_emojis
     }
+    if (reactions.count { it.is_own } >= MAX_OWN_REACTIONS) return ReactionRestriction.reaction_limit
     if (normalize(sender_email).isEmpty()) return ReactionRestriction.no_recipient
     return null
 }

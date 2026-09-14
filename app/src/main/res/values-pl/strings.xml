@@ -1701,7 +1701,9 @@
     <string name="cannot_react_bcc">Nie możesz zareagować na wiadomość, w której byłeś w UDW.</string>
     <string name="cannot_react_too_many_emojis">Ta wiadomość ma już maksymalną liczbę reakcji.</string>
     <string name="cannot_react_no_recipient">Ta wiadomość nie ma nadawcy, do którego można wysłać reakcję.</string>
+    <string name="cannot_react_limit">Do wiadomości możesz dodać maksymalnie dwie reakcje. Aby dodać kolejną, usuń jedną ze swoich.</string>
     <string name="reaction_failed">Nie udało się wysłać reakcji</string>
+    <string name="reaction_remove_failed">Nie udało się usunąć reakcji</string>
     <string name="copy_address">Kopiuj adres</string>
     <string name="sender_on_aster">Konto Aster</string>
     <string name="messages_from_sender">Znajdź pocztę od tego nadawcy</string>
@@ -2528,7 +2530,6 @@
     <string name="reaction_info_title">Reakcja</string>
     <string name="reaction_info_you">Zareagowałeś: %1$s</string>
     <string name="reaction_info_other">%1$s zareagował(a): %2$s</string>
-    <string name="reaction_cannot_be_removed">Reakcji nie można usunąć po wysłaniu.</string>
     <string name="folder_locked_title">Zablokowany folder</string>
     <string name="folder_locked_description">Podaj hasło do \"%1$s\", aby zobaczyć wiadomości.</string>
     <string name="folder_unlock_password_placeholder">Hasło folderu</string>

@@ -295,13 +295,13 @@ class MailViewModel @Inject constructor(
             reactor_email = from_email,
             is_own = true,
         )
+        val existing = _message_reactions.value[message_id].orEmpty()
+        if (existing.any { it.emoji == emoji && (it.is_own || it.reactor_email.equals(our_email, ignoreCase = true)) }) {
+            on_result(null)
+            return
+        }
         _message_reactions.update { current ->
-            val bucket = current[message_id].orEmpty()
-            if (bucket.any { it.emoji == emoji && (it.is_own || it.reactor_email.equals(our_email, ignoreCase = true)) }) {
-                current
-            } else {
-                current + (message_id to (bucket + optimistic))
-            }
+            current + (message_id to (current[message_id].orEmpty() + optimistic))
         }
         viewModelScope.launch(Dispatchers.IO) {
             val result = repository.send_reaction(
@@ -324,19 +324,72 @@ class MailViewModel @Inject constructor(
                         .filter { it.reaction_mail_item_id != optimistic.reaction_mail_item_id }
                     current + (message_id to bucket)
                 }
+            } else {
+                val confirmed_id = result.getOrNull()
+                if (confirmed_id != null) {
+                    _message_reactions.update { current ->
+                        val bucket = current[message_id].orEmpty()
+                        if (bucket.any { it.reaction_mail_item_id == confirmed_id }) {
+                            current + (message_id to bucket.filter { it.reaction_mail_item_id != optimistic.reaction_mail_item_id })
+                        } else {
+                            current + (
+                                message_id to bucket.map {
+                                    if (it.reaction_mail_item_id == optimistic.reaction_mail_item_id) {
+                                        it.copy(reaction_mail_item_id = confirmed_id)
+                                    } else {
+                                        it
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
             }
             kotlinx.coroutines.withContext(Dispatchers.Main) {
-                on_result(
-                    error?.let {
-                        org.astermail.android.localized_api_error(
-                            context,
-                            it,
-                            context.getString(R.string.reaction_failed),
-                        )
-                    },
-                )
+                on_result(error?.let { reaction_error_text(it, R.string.reaction_failed) })
             }
         }
+    }
+
+    fun remove_reaction(
+        message_id: String,
+        emoji: String,
+        on_result: (String?) -> Unit,
+    ) {
+        val target = _message_reactions.value[message_id].orEmpty()
+            .firstOrNull { it.emoji == emoji && it.is_own } ?: return
+        if (target.reaction_mail_item_id.startsWith(PENDING_REACTION_PREFIX)) return
+        _message_reactions.update { current ->
+            current + (
+                message_id to current[message_id].orEmpty()
+                    .filter { it.reaction_mail_item_id != target.reaction_mail_item_id }
+            )
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            val error = repository.remove_reaction(target.reaction_mail_item_id).exceptionOrNull()
+            if (error != null) {
+                _message_reactions.update { current ->
+                    val bucket = current[message_id].orEmpty()
+                    if (bucket.any { it.reaction_mail_item_id == target.reaction_mail_item_id }) {
+                        current
+                    } else {
+                        current + (message_id to (bucket + target))
+                    }
+                }
+            }
+            kotlinx.coroutines.withContext(Dispatchers.Main) {
+                on_result(error?.let { reaction_error_text(it, R.string.reaction_remove_failed) })
+            }
+        }
+    }
+
+    private fun reaction_error_text(error: Throwable, fallback: Int): String = when {
+        error is kotlinx.coroutines.CancellationException -> throw error
+        is_reaction_limit_error(error) -> context.getString(R.string.cannot_react_limit)
+        error is org.astermail.android.api.ApiError.RateLimited &&
+            error.detail.isNotBlank() && error.detail != "rate limited" -> error.detail
+        error is IllegalStateException && !error.message.isNullOrBlank() -> error.message.orEmpty()
+        else -> org.astermail.android.localized_api_error(context, error, context.getString(fallback))
     }
 
     private val _thread_participants = MutableStateFlow<Map<String, List<Pair<String, String>>>>(emptyMap())

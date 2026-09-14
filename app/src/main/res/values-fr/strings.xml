@@ -2290,7 +2290,9 @@
     <string name="cannot_react_bcc">Vous ne pouvez pas réagir à un message où vous étiez en Cci.</string>
     <string name="cannot_react_too_many_emojis">Ce message a déjà le nombre maximal de réactions.</string>
     <string name="cannot_react_no_recipient">Ce message n\'a aucun expéditeur à qui envoyer la réaction.</string>
+    <string name="cannot_react_limit">Vous pouvez ajouter jusqu\'à deux réactions à un message. Pour en ajouter une autre, retirez l\'une des vôtres.</string>
     <string name="reaction_failed">Impossible d\'envoyer la réaction</string>
+    <string name="reaction_remove_failed">Impossible de retirer la réaction</string>
     <string name="copy_address">Copier l\'adresse</string>
     <string name="sender_on_aster">Compte Aster</string>
     <string name="messages_from_sender">Trouver les messages de cet expéditeur</string>
@@ -2539,7 +2541,6 @@
     <string name="reaction_info_title">Réaction</string>
     <string name="reaction_info_you">Vous avez réagi avec %1$s</string>
     <string name="reaction_info_other">%1$s a réagi avec %2$s</string>
-    <string name="reaction_cannot_be_removed">Les réactions ne peuvent pas être retirées une fois envoyées.</string>
     <string name="folder_locked_title">Dossier verrouillé</string>
     <string name="folder_locked_description">Saisissez le mot de passe de \"%1$s\" pour voir ses e-mails.</string>
     <string name="folder_unlock_password_placeholder">Mot de passe du dossier</string>

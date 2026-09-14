@@ -336,11 +336,12 @@
     <string name="cannot_react_bcc">You cannot react to a message you were BCC\'d on.</string>
     <string name="cannot_react_too_many_emojis">This message already has the maximum number of reactions.</string>
     <string name="cannot_react_no_recipient">This message has no sender to send the reaction to.</string>
+    <string name="cannot_react_limit">You can add up to two reactions to a message. To add another, remove one of yours.</string>
     <string name="reaction_failed">Could not send reaction</string>
+    <string name="reaction_remove_failed">Could not remove reaction</string>
     <string name="reaction_info_title">Reaction</string>
     <string name="reaction_info_you">You reacted with %1$s</string>
     <string name="reaction_info_other">%1$s reacted with %2$s</string>
-    <string name="reaction_cannot_be_removed">Reactions cannot be removed once sent.</string>
     <string name="more">more</string>
     <string name="more_actions">More</string>
     <string name="mark_as_unread">Mark as unread</string>

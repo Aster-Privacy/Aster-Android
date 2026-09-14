@@ -1695,7 +1695,9 @@
     <string name="cannot_react_bcc">Non puoi reagire a un messaggio in cui eri in Ccn.</string>
     <string name="cannot_react_too_many_emojis">Questo messaggio ha già il numero massimo di reazioni.</string>
     <string name="cannot_react_no_recipient">Questo messaggio non ha un mittente a cui inviare la reazione.</string>
+    <string name="cannot_react_limit">Puoi aggiungere fino a due reazioni a un messaggio. Per aggiungerne un\'altra, rimuovi una delle tue.</string>
     <string name="reaction_failed">Impossibile inviare la reazione</string>
+    <string name="reaction_remove_failed">Impossibile rimuovere la reazione</string>
     <string name="copy_address">Copia indirizzo</string>
     <string name="sender_on_aster">Account Aster</string>
     <string name="messages_from_sender">Trova posta da questo mittente</string>
@@ -2512,7 +2514,6 @@
     <string name="reaction_info_title">Reazione</string>
     <string name="reaction_info_you">Hai reagito con %1$s</string>
     <string name="reaction_info_other">%1$s ha reagito con %2$s</string>
-    <string name="reaction_cannot_be_removed">Le reazioni non possono essere rimosse dopo l\'invio.</string>
     <string name="folder_locked_title">Cartella bloccata</string>
     <string name="folder_locked_description">Inserisci la password di \"%1$s\" per vedere la posta.</string>
     <string name="folder_unlock_password_placeholder">Password della cartella</string>

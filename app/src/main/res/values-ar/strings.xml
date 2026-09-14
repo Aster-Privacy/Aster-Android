@@ -1707,7 +1707,9 @@
     <string name="cannot_react_bcc">لا يمكنك التفاعل مع رسالة كنت فيها ضمن نسخة مخفية.</string>
     <string name="cannot_react_too_many_emojis">هذه الرسالة تحتوي بالفعل على الحد الأقصى من التفاعلات.</string>
     <string name="cannot_react_no_recipient">لا يوجد مرسل لهذه الرسالة لإرسال التفاعل إليه.</string>
+    <string name="cannot_react_limit">يمكنك إضافة تفاعلين كحد أقصى إلى الرسالة. لإضافة تفاعل آخر، أزل أحد تفاعلاتك.</string>
     <string name="reaction_failed">تعذّر إرسال التفاعل</string>
+    <string name="reaction_remove_failed">تعذّرت إزالة التفاعل</string>
     <string name="copy_address">نسخ العنوان</string>
     <string name="sender_on_aster">حساب Aster</string>
     <string name="messages_from_sender">البحث عن بريد من هذا المرسل</string>
@@ -2544,7 +2546,6 @@
     <string name="reaction_info_title">تفاعل</string>
     <string name="reaction_info_you">لقد تفاعلت بـ %1$s</string>
     <string name="reaction_info_other">تفاعل %1$s بـ %2$s</string>
-    <string name="reaction_cannot_be_removed">لا يمكن إزالة التفاعلات بعد إرسالها.</string>
     <string name="folder_locked_title">مجلد مقفل</string>
     <string name="folder_locked_description">أدخل كلمة مرور \"%1$s\" لعرض بريده.</string>
     <string name="folder_unlock_password_placeholder">كلمة مرور المجلد</string>

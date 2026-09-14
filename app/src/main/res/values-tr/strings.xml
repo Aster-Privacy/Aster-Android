@@ -1695,7 +1695,9 @@
     <string name="cannot_react_bcc">Gizli kopyada olduğunuz bir mesaja tepki veremezsiniz.</string>
     <string name="cannot_react_too_many_emojis">Bu mesaj zaten en fazla sayıda tepkiye sahip.</string>
     <string name="cannot_react_no_recipient">Bu mesajın tepki gönderilecek bir göndereni yok.</string>
+    <string name="cannot_react_limit">Bir mesaja en fazla iki tepki ekleyebilirsiniz. Başka bir tepki eklemek için tepkilerinizden birini kaldırın.</string>
     <string name="reaction_failed">Tepki gönderilemedi</string>
+    <string name="reaction_remove_failed">Tepki kaldırılamadı</string>
     <string name="copy_address">Adresi kopyala</string>
     <string name="sender_on_aster">Aster hesabı</string>
     <string name="messages_from_sender">Bu gönderenin postalarını bul</string>
@@ -2512,7 +2514,6 @@
     <string name="reaction_info_title">Tepki</string>
     <string name="reaction_info_you">%1$s ile tepki verdin</string>
     <string name="reaction_info_other">%1$s, %2$s ile tepki verdi</string>
-    <string name="reaction_cannot_be_removed">Tepkiler gönderildikten sonra kaldırılamaz.</string>
     <string name="folder_locked_title">Kilitli klasör</string>
     <string name="folder_locked_description">E-postaları görmek için \"%1$s\" klasörünün parolasını girin.</string>
     <string name="folder_unlock_password_placeholder">Klasör parolası</string>

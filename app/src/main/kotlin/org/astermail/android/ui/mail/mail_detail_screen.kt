@@ -1455,6 +1455,11 @@ fun MailDetailScreen(
                                     if (error != null) show_toast(error)
                                 }
                             },
+                            on_unreact = { emoji ->
+                                mail_vm.remove_reaction(message_id = msg.id, emoji = emoji) { error ->
+                                    if (error != null) show_toast(error)
+                                }
+                            },
                             is_system = is_system_sender,
                             can_collapse = messages.size > 1,
                         )
@@ -2111,6 +2116,7 @@ internal fun expanded_message(
     on_retry_attachments: () -> Unit = {},
     reactions: List<DecryptedReaction> = emptyList(),
     on_react: (String) -> Unit = {},
+    on_unreact: (String) -> Unit = {},
     is_system: Boolean = false,
     can_collapse: Boolean = true,
     show_raw_headers: Boolean = false,
@@ -2687,7 +2693,12 @@ internal fun expanded_message(
             }
         }
 
-        reaction_chip_row(reactions = reactions, my_email = my_email, on_react = on_react)
+        reaction_chip_row(
+            reactions = reactions,
+            my_email = my_email,
+            on_react = on_react,
+            on_unreact = on_unreact,
+        )
 
         Spacer(Modifier.height(AsterSpacing.md))
     }
@@ -2990,6 +3001,7 @@ private fun reaction_chip_row(
     reactions: List<DecryptedReaction>,
     my_email: String,
     on_react: (String) -> Unit,
+    on_unreact: (String) -> Unit,
 ) {
     if (reactions.isEmpty()) return
     val colors = AsterMaterial.colors
@@ -3043,7 +3055,7 @@ private fun reaction_chip_row(
                             .clip(shape)
                             .background(bg)
                             .combinedClickable(
-                                onClick = { if (mine) info_emoji = emoji else on_react(emoji) },
+                                onClick = { if (mine) on_unreact(emoji) else on_react(emoji) },
                                 onLongClick = { info_emoji = emoji },
                             )
                             .padding(start = 8.dp, end = 11.dp)
@@ -3104,12 +3116,6 @@ private fun reaction_chip_row(
                         )
                         Spacer(Modifier.height(AsterSpacing.xs))
                     }
-                    Spacer(Modifier.height(AsterSpacing.xs))
-                    Text(
-                        text = stringResource(R.string.reaction_cannot_be_removed),
-                        color = colors.text_muted,
-                        fontSize = 13.sp,
-                    )
                 }
             },
         )

@@ -1695,7 +1695,9 @@
     <string name="cannot_react_bcc">Não podes reagir a uma mensagem em que estavas em BCC.</string>
     <string name="cannot_react_too_many_emojis">Esta mensagem já tem o número máximo de reações.</string>
     <string name="cannot_react_no_recipient">Esta mensagem não tem remetente para enviar a reação.</string>
+    <string name="cannot_react_limit">Você pode adicionar até duas reações a uma mensagem. Para adicionar outra, remova uma das suas.</string>
     <string name="reaction_failed">Não foi possível enviar a reação</string>
+    <string name="reaction_remove_failed">Não foi possível remover a reação</string>
     <string name="copy_address">Copiar endereço</string>
     <string name="sender_on_aster">Conta Aster</string>
     <string name="messages_from_sender">Encontrar e-mails deste remetente</string>
@@ -2512,7 +2514,6 @@
     <string name="reaction_info_title">Reação</string>
     <string name="reaction_info_you">Você reagiu com %1$s</string>
     <string name="reaction_info_other">%1$s reagiu com %2$s</string>
-    <string name="reaction_cannot_be_removed">As reações não podem ser removidas depois de enviadas.</string>
     <string name="folder_locked_title">Pasta bloqueada</string>
     <string name="folder_locked_description">Digite a senha de \"%1$s\" para ver os e-mails.</string>
     <string name="folder_unlock_password_placeholder">Senha da pasta</string>

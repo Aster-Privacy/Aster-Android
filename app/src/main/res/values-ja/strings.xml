@@ -1692,7 +1692,9 @@
     <string name="cannot_react_bcc">BCCで受け取ったメッセージにはリアクションできません。</string>
     <string name="cannot_react_too_many_emojis">このメッセージはすでにリアクションの上限に達しています。</string>
     <string name="cannot_react_no_recipient">このメッセージにはリアクションの送信先となる送信者がいません。</string>
+    <string name="cannot_react_limit">1件のメッセージに追加できるリアクションは2つまでです。別のリアクションを追加するには、自分のリアクションを1つ削除してください。</string>
     <string name="reaction_failed">リアクションを送信できませんでした</string>
+    <string name="reaction_remove_failed">リアクションを削除できませんでした</string>
     <string name="copy_address">アドレスをコピー</string>
     <string name="sender_on_aster">Asterアカウント</string>
     <string name="messages_from_sender">この送信者のメールを検索</string>
@@ -2504,7 +2506,6 @@
     <string name="reaction_info_title">リアクション</string>
     <string name="reaction_info_you">あなたは %1$s でリアクションしました</string>
     <string name="reaction_info_other">%1$s さんが %2$s でリアクションしました</string>
-    <string name="reaction_cannot_be_removed">送信したリアクションは取り消せません。</string>
     <string name="folder_locked_title">ロックされたフォルダ</string>
     <string name="folder_locked_description">\"%1$s\" のメールを見るにはパスワードを入力してください。</string>
     <string name="folder_unlock_password_placeholder">フォルダのパスワード</string>
