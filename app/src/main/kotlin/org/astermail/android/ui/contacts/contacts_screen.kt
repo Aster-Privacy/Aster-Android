@@ -29,11 +29,6 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -373,41 +368,15 @@ fun ContactsScreen(
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.weight(1f),
                     )
-                    val sync_label = stringResource(
-                        if (ui_state.is_syncing) R.string.syncing else R.string.sync_contacts,
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .clickable { show_sync_confirm = true }
-                            .semantics { contentDescription = sync_label },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        AnimatedContent(
-                            targetState = ui_state.is_syncing,
-                            transitionSpec = {
-                                fadeIn(tween(org.astermail.android.design.AsterDuration.short_4)) togetherWith
-                                    fadeOut(tween(org.astermail.android.design.AsterDuration.menu_exit))
-                            },
-                            label = "sync_icon",
-                        ) { syncing ->
-                            if (syncing) {
-                                CircularProgressIndicator(
-                                    color = colors.accent_blue,
-                                    strokeWidth = 2.dp,
-                                    strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
-                                    modifier = Modifier.size(20.dp),
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = TablerIcons.Refresh,
-                                    contentDescription = stringResource(R.string.sync_contacts),
-                                    tint = colors.text_secondary,
-                                    modifier = Modifier.size(22.dp),
-                                )
-                            }
-                        }
+                    if (ui_state.is_syncing) {
+                        CircularProgressIndicator(
+                            color = colors.accent_blue,
+                            strokeWidth = 2.dp,
+                            strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
+                            modifier = Modifier
+                                .size(20.dp)
+                                .padding(end = AsterSpacing.sm),
+                        )
                     }
                     Box {
                         AsterIconButton(
@@ -420,6 +389,19 @@ fun ContactsScreen(
                             expanded = show_overflow_menu,
                             on_dismiss = { show_overflow_menu = false },
                         ) {
+                            aster_dropdown_item(
+                                label = stringResource(
+                                    if (ui_state.is_syncing) R.string.syncing else R.string.sync_contacts,
+                                ),
+                                icon = TablerIcons.Refresh,
+                                enabled = !ui_state.is_syncing,
+                                test_tag = "contacts_sync",
+                                on_click = {
+                                    show_overflow_menu = false
+                                    show_sync_confirm = true
+                                },
+                            )
+                            aster_dropdown_divider()
                             aster_dropdown_item(
                                 label = stringResource(R.string.import_contacts_file),
                                 icon = TablerIcons.Upload,
@@ -471,6 +453,33 @@ fun ContactsScreen(
                 }
             }
             AsterDivider()
+
+            if (ui_state.tab == ContactsTab.CONTACTS) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        org.astermail.android.ui.common.list_search_bar(
+                            query = query,
+                            on_query_change = { query = it },
+                            placeholder = stringResource(R.string.search_contacts),
+                            test_tag = "contact_search_bar",
+                        )
+                    }
+                    val favorites_label = stringResource(R.string.tab_favorites)
+                    AsterIconButton(
+                        icon = if (filter_favorites) Icons.Filled.Star else TablerIcons.Star,
+                        content_description = favorites_label,
+                        tint = if (filter_favorites) colors.star else colors.text_secondary,
+                        onClick = { filter_favorites = !filter_favorites },
+                        modifier = Modifier.semantics { contentDescription = favorites_label },
+                    )
+                }
+            }
 
             Row(
                 modifier = Modifier
@@ -526,48 +535,6 @@ fun ContactsScreen(
                     on_empty_trash = { show_empty_trash_confirm = true },
                 )
             } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xs),
-                ) {
-                    org.astermail.android.ui.common.list_search_bar(
-                        query = query,
-                        on_query_change = { query = it },
-                        placeholder = stringResource(R.string.search_contacts),
-                        test_tag = "contact_search_bar",
-                    )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xs),
-                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    FilterChip(
-                        label = stringResource(R.string.tab_all),
-                        active = !filter_favorites,
-                        on_click = { filter_favorites = false },
-                    )
-                    FilterChip(
-                        label = stringResource(R.string.tab_favorites),
-                        active = filter_favorites,
-                        on_click = { filter_favorites = true },
-                    )
-                    Spacer(Modifier.weight(1f))
-                    Text(
-                        text = context.resources.getQuantityString(
-                            R.plurals.contacts_count_plural,
-                            filtered.size,
-                            filtered.size,
-                        ),
-                        color = colors.text_muted,
-                        fontSize = 12.sp,
-                    )
-                }
-
                 if (
                     !ui_state.duplicates_dismissed &&
                     ui_state.duplicate_clusters.isNotEmpty() &&
@@ -957,20 +924,12 @@ private fun duplicate_banner(count: Int, on_review: () -> Unit, on_dismiss: () -
             .padding(AsterSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(colors.accent_blue.copy(alpha = 0.12f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = TablerIcons.Users,
-                contentDescription = null,
-                tint = colors.accent_blue,
-                modifier = Modifier.size(18.dp),
-            )
-        }
+        Icon(
+            imageVector = TablerIcons.Users,
+            contentDescription = null,
+            tint = colors.accent_blue,
+            modifier = Modifier.size(20.dp),
+        )
         Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
             Text(
