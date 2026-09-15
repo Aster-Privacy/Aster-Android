@@ -1024,11 +1024,18 @@ class ContactsViewModel @Inject constructor(
         val active = contacts.filter { it.deleted_at.isBlank() }
         val trashed = contacts.filter { it.deleted_at.isNotBlank() }
         val ids = active.map { it.id }.toSet()
+        val selected = state.selected_contact
+        val refreshed_selected = if (selected != null) {
+            (active + trashed).firstOrNull { it.id == selected.id } ?: selected
+        } else {
+            selected
+        }
         return state.copy(
             contacts = active,
             trashed_contacts = trashed.sortedByDescending { it.deleted_at },
             selected_ids = state.selected_ids.filter { it in ids }.toSet(),
             duplicate_clusters = find_duplicate_clusters(active),
+            selected_contact = refreshed_selected,
         )
     }
 
