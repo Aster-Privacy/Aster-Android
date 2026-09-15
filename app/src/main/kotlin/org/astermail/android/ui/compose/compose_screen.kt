@@ -3203,7 +3203,7 @@ private fun chip_input(
                         onSend = { on_commit() },
                     ),
                     modifier = Modifier
-                        .widthIn(min = 120.dp)
+                        .widthIn(min = if (chips.isEmpty()) 120.dp else 40.dp)
                         .let { m ->
                             if (focus_requester != null) {
                                 m.focusRequester(focus_requester)
@@ -3816,12 +3816,14 @@ private fun FromAliasSheet(
     var query by remember { mutableStateOf("") }
     val normalized_query = query.trim().lowercase()
     val first_option = options.firstOrNull()
-    val visible_options = remember(options, normalized_query) {
-        if (normalized_query.isEmpty()) {
+    val visible_options = remember(options, primary, normalized_query) {
+        val filtered = if (normalized_query.isEmpty()) {
             options
         } else {
             options.filter { it.lowercase().contains(normalized_query) }
         }
+        val (pinned, rest) = filtered.partition { it.equals(primary, ignoreCase = true) }
+        pinned + rest
     }
     ModalBottomSheet(
         onDismissRequest = on_close,
