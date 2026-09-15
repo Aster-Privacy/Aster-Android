@@ -156,6 +156,7 @@ fun AliasesScreen(
     val alias_export_locked = plan_vm.is_feature_locked("has_advanced_aliases") && !plan_state.is_loading
     val alias_pin_locked = plan_vm.is_feature_locked("has_advanced_aliases") && !plan_state.is_loading
     val instant_alias_delete_locked = plan_vm.is_feature_locked("has_instant_alias_delete") && !plan_state.is_loading
+    val alias_avatars_locked = plan_vm.is_feature_locked("has_alias_avatars") && !plan_state.is_loading
     val premium_domains_allowed = org.astermail.android.settings.plan_allows_premium_alias_domains(
         plan_state.limits?.plan_code,
     )
@@ -313,6 +314,7 @@ fun AliasesScreen(
                         show_deleted_aliases = true
                     },
                     instant_delete_locked = instant_alias_delete_locked,
+                    avatars_locked = alias_avatars_locked,
                     premium_domains_allowed = premium_domains_allowed,
                     alias_limit = plan_state.limits?.limits?.get("max_email_aliases")?.limit,
                     on_upgrade = { on_open("billing") },
@@ -436,6 +438,7 @@ private fun aliases_tab(
     export_locked: Boolean = false,
     pin_locked: Boolean = false,
     instant_delete_locked: Boolean = false,
+    avatars_locked: Boolean = false,
     premium_domains_allowed: Boolean = true,
     alias_limit: Int? = null,
     on_upgrade: () -> Unit = {},
@@ -726,6 +729,7 @@ private fun aliases_tab(
                                 } else {
                                     null
                                 },
+                                avatars_locked = avatars_locked,
                             )
                         },
                     )
@@ -751,8 +755,10 @@ private fun aliases_tab(
                         idx = idx,
                         last_index = visible_domain_addresses.lastIndex,
                         context = context,
+                        avatars_locked = avatars_locked,
                         on_toggle = { vm.toggle_domain_address(addr.id, addr.domain_name) },
                         on_delete = { pending_domain_address_delete = Triple(addr.id, addr.domain_name, addr.address) },
+                        on_change_avatar = { vm.update_domain_address_avatar(addr.id, addr.domain_name, it) },
                     )
                 }
             }
@@ -1318,63 +1324,79 @@ private fun custom_domain_address_row(
     idx: Int,
     last_index: Int,
     context: Context,
+    avatars_locked: Boolean,
     on_toggle: () -> Unit,
     on_delete: () -> Unit,
+    on_change_avatar: (String?) -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
     val shape = list_item_shape(idx, last_index)
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
             .background(colors.bg_card)
             .border(1.dp, colors.border_secondary, shape)
-            .combinedClickable(
-                hapticFeedbackEnabled = false,
-                onClick = { copy_address(context, addr.address) },
-                onLongClick = {
-                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    copy_address(context, addr.address)
-                },
-            )
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = addr.address,
-                color = if (addr.decryption_failed) colors.text_muted else colors.text_primary,
-                fontSize = 15.sp,
-                lineHeight = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .combinedClickable(
+                    hapticFeedbackEnabled = false,
+                    onClick = { copy_address(context, addr.address) },
+                    onLongClick = {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        copy_address(context, addr.address)
+                    },
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = addr.address,
+                    color = if (addr.decryption_failed) colors.text_muted else colors.text_primary,
+                    fontSize = 15.sp,
+                    lineHeight = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = if (addr.is_enabled) {
+                        stringResource(R.string.forwards_to_inbox)
+                    } else {
+                        stringResource(R.string.alias_status_disabled_badge)
+                    },
+                    color = if (addr.is_enabled) colors.text_tertiary else colors.danger,
+                    fontSize = 11.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            AsterSwitch(
+                checked = addr.is_enabled,
+                onCheckedChange = { on_toggle() },
             )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = if (addr.is_enabled) {
-                    stringResource(R.string.forwards_to_inbox)
-                } else {
-                    stringResource(R.string.alias_status_disabled_badge)
-                },
-                color = if (addr.is_enabled) colors.text_tertiary else colors.danger,
-                fontSize = 11.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+            Spacer(Modifier.width(AsterSpacing.sm))
+            AsterIconButton(
+                icon = TablerIcons.Trash,
+                content_description = stringResource(R.string.delete),
+                onClick = on_delete,
+                tint = colors.danger,
             )
         }
-        AsterSwitch(
-            checked = addr.is_enabled,
-            onCheckedChange = { on_toggle() },
-        )
-        Spacer(Modifier.width(AsterSpacing.sm))
-        AsterIconButton(
-            icon = TablerIcons.Trash,
-            content_description = stringResource(R.string.delete),
-            onClick = on_delete,
-            tint = colors.danger,
-        )
+        if (!addr.decryption_failed) {
+            Spacer(Modifier.height(AsterSpacing.sm))
+            alias_avatar_field(
+                address = addr.address,
+                profile_picture = addr.profile_picture,
+                locked = avatars_locked,
+                on_change = on_change_avatar,
+            )
+        }
     }
 }
 

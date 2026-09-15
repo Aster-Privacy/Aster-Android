@@ -1211,6 +1211,8 @@
     <string name="lang_arabic">Arabic</string>
     <string name="lang_hindi">Hindi</string>
     <string name="set_from_system">システムから設定（English）</string>
+    <string name="language_system_default">システム設定</string>
+    <string name="language_system_default_hint">ここで言語を選ぶまで、Aster Mail はデバイスの言語に従います。</string>
 
     <string name="about">このアプリについて</string>
     <string name="aster_logo">Asterロゴ</string>
@@ -2554,6 +2556,12 @@
     <string name="alias_panel_websites_placeholder">登録したサイトをカンマ区切りで追加</string>
     <string name="alias_website_invalid">有効なウェブサイトのアドレスを入力してください</string>
     <string name="alias_display_name_updated">表示名を保存しました</string>
+    <string name="alias_panel_photo">写真</string>
+    <string name="alias_panel_photo_add">写真を追加</string>
+    <string name="alias_panel_photo_remove">写真を削除</string>
+    <string name="alias_panel_photo_hint">この写真は、このアドレスから送信するメッセージに表示されます。</string>
+    <string name="alias_avatar_updated">写真を更新しました</string>
+    <string name="alias_avatar_removed">写真を削除しました</string>
     <string name="alias_websites_updated">ウェブサイトを保存しました</string>
     <string name="alias_stats_title">統計</string>
     <string name="alias_stats_received">受信</string>

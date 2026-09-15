@@ -1211,6 +1211,8 @@
     <string name="lang_arabic">Arabic</string>
     <string name="lang_hindi">Hindi</string>
     <string name="set_from_system">跟随系统 (English)</string>
+    <string name="language_system_default">跟随系统</string>
+    <string name="language_system_default_hint">在这里选择语言之前，Aster Mail 将跟随设备语言。</string>
 
     <string name="about">关于</string>
     <string name="aster_logo">Aster 标志</string>
@@ -2554,6 +2556,12 @@
     <string name="alias_panel_websites_placeholder">添加你注册过的网站，用逗号分隔</string>
     <string name="alias_website_invalid">请输入有效的网站地址</string>
     <string name="alias_display_name_updated">已保存显示名称</string>
+    <string name="alias_panel_photo">照片</string>
+    <string name="alias_panel_photo_add">添加照片</string>
+    <string name="alias_panel_photo_remove">移除照片</string>
+    <string name="alias_panel_photo_hint">这张照片会显示在你从该地址发送的邮件旁。</string>
+    <string name="alias_avatar_updated">照片已更新</string>
+    <string name="alias_avatar_removed">照片已移除</string>
     <string name="alias_websites_updated">已保存网站</string>
     <string name="alias_stats_title">统计</string>
     <string name="alias_stats_received">已接收</string>

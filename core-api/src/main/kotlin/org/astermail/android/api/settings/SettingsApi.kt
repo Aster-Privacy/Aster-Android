@@ -499,6 +499,7 @@ data class UpdateAliasRequest(
     val display_name_nonce: String? = null,
     val encrypted_websites: String? = null,
     val websites_nonce: String? = null,
+    val profile_picture: String? = null,
 )
 
 @Serializable
@@ -523,6 +524,7 @@ data class UpdateDomainAddressRequest(
     val is_enabled: Boolean? = null,
     val encrypted_display_name: String? = null,
     val display_name_nonce: String? = null,
+    val profile_picture: String? = null,
 )
 
 @Serializable
@@ -715,6 +717,8 @@ interface SettingsApi {
     suspend fun update_alias_note(alias_id: String, encrypted_note: String?, note_nonce: String?): Boolean
     suspend fun update_alias_display_name(alias_id: String, encrypted_name: String?, name_nonce: String?): Boolean
     suspend fun update_alias_websites(alias_id: String, encrypted_websites: String?, websites_nonce: String?): Boolean
+    suspend fun update_alias_profile_picture(alias_id: String, profile_picture: String?): Boolean
+    suspend fun update_domain_address_profile_picture(domain_id: String, address_id: String, profile_picture: String?): Boolean
     suspend fun list_all_domain_addresses(): AllDomainAddressesResponse
     suspend fun create_domain_address(domain_id: String, request: CreateDomainAddressRequest): CreateDomainAddressResponse
     suspend fun update_domain_address(domain_id: String, address_id: String, request: UpdateDomainAddressRequest)
@@ -1036,6 +1040,31 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
             "websites_nonce" to websites_nonce,
         ),
     )
+
+    override suspend fun update_alias_profile_picture(alias_id: String, profile_picture: String?): Boolean =
+        patch_alias_nullable_fields(
+            alias_id = alias_id,
+            fields = mapOf("profile_picture" to profile_picture),
+        )
+
+    override suspend fun update_domain_address_profile_picture(
+        domain_id: String,
+        address_id: String,
+        profile_picture: String?,
+    ): Boolean {
+        val body = JsonObject(
+            mapOf("profile_picture" to (profile_picture?.let { JsonPrimitive(it) } ?: JsonNull)),
+        )
+        val response = client.http.patch("${client.base_url}/api/addresses/v1/domains/$domain_id/addresses/$address_id") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(body)
+        }
+        if (response.status.value !in 200..299) {
+            throw client.map_http_status(response.status.value, "")
+        }
+        return true
+    }
 
     private suspend fun patch_alias_nullable_fields(alias_id: String, fields: Map<String, String?>): Boolean {
         val body = JsonObject(

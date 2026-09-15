@@ -78,6 +78,7 @@ internal fun alias_detail_panel(
     rule_delivery: AliasRuleDeliveryNote? = null,
     rule_label: AliasRuleLabelNote? = null,
     on_view_sent: (() -> Unit)? = null,
+    avatars_locked: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     Column(
@@ -93,7 +94,7 @@ internal fun alias_detail_panel(
                 .height(1.dp)
                 .background(colors.border_secondary),
         )
-        alias_details_section(alias, vm, on_view_sent)
+        alias_details_section(alias, vm, on_view_sent, avatars_locked)
         alias_delivery_section(alias, vm, detail, rule_delivery, rule_label)
         if (detail.loading) {
             Row(
@@ -179,6 +180,7 @@ private fun alias_details_section(
     alias: org.astermail.android.api.settings.AliasInfo,
     vm: SettingsViewModel,
     on_view_sent: (() -> Unit)?,
+    avatars_locked: Boolean,
 ) {
     val colors = AsterMaterial.colors
     Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
@@ -243,6 +245,12 @@ private fun alias_details_section(
             websites = alias.websites,
             on_add = { vm.add_alias_website(alias.id, it) },
             on_remove = { vm.remove_alias_website(alias.id, it) },
+        )
+        alias_avatar_field(
+            address = alias.address,
+            profile_picture = alias.profile_picture,
+            locked = avatars_locked,
+            on_change = { vm.update_alias_avatar(alias.id, it) },
         )
     }
 }

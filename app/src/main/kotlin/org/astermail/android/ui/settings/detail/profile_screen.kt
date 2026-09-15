@@ -544,7 +544,7 @@ private fun decode_avatar_bitmap(context: Context, uri: Uri): Bitmap? {
     return scaled
 }
 
-private fun read_image_as_data_uri(context: Context, uri: Uri): String? {
+internal fun read_image_as_data_uri(context: Context, uri: Uri): String? {
     return try {
         val bitmap = decode_avatar_bitmap(context, uri) ?: return null
         val format = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

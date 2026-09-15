@@ -487,7 +487,8 @@ class ApiErrorTest {
     @Test
     fun `UserPreferences defaults`() {
         val prefs = UserPreferences()
-        assertEquals("en", prefs.language)
+        assertEquals("", prefs.language)
+        assertFalse(prefs.language_explicit)
         assertEquals("system", prefs.theme)
         assertEquals("auto", prefs.time_zone)
         assertEquals("MM/DD/YYYY", prefs.date_format)

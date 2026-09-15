@@ -25,6 +25,7 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import androidx.activity.compose.BackHandler
+import org.astermail.android.mail.strip_non_rendered_blocks
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -208,7 +209,7 @@ fun TemplatesScreen(
 }
 
 private fun template_preview(content: String): String {
-    val without_tags = content.replace(Regex("<[^>]+>"), " ")
+    val without_tags = strip_non_rendered_blocks(content).replace(Regex("<[^>]+>"), " ")
     val decoded = without_tags
         .replace("&nbsp;", " ")
         .replace("&amp;", "&")

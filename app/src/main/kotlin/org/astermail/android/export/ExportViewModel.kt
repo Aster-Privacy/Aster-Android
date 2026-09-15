@@ -46,6 +46,7 @@ import org.astermail.android.api.contacts.ContactsApi
 import org.astermail.android.api.mail.MailApi
 import org.astermail.android.api.mail.MailItem
 import org.astermail.android.mail.DecryptedEnvelope
+import org.astermail.android.mail.html_to_plain_text
 import org.astermail.android.mail.MailRepository
 
 @HiltViewModel
@@ -344,14 +345,7 @@ class ExportViewModel @Inject constructor(
     private fun addr_header(name: String, email: String): String =
         if (name.isNotBlank()) "\"$name\" <$email>" else email
 
-    private fun strip_html(html: String): String =
-        html.replace(Regex("<[^>]+>"), "")
-            .replace("&amp;", "&")
-            .replace("&lt;", "<")
-            .replace("&gt;", ">")
-            .replace("&nbsp;", " ")
-            .replace("&quot;", "\"")
-            .trim()
+    private fun strip_html(html: String): String = html_to_plain_text(html)
 
     private fun write_readme(zos: ZipOutputStream): Long {
         val s = _state.value

@@ -23,12 +23,6 @@ package org.astermail.android.mail
 
 const val PREVIEW_MAX_LENGTH = 140
 
-private val STYLE_BLOCK_PATTERN = Regex("<style[^>]*>[\\s\\S]*?</style>", RegexOption.IGNORE_CASE)
-
-private val SCRIPT_BLOCK_PATTERN = Regex("<script[^>]*>[\\s\\S]*?</script>", RegexOption.IGNORE_CASE)
-
-private val HEAD_BLOCK_PATTERN = Regex("<head[^>]*>[\\s\\S]*?</head>", RegexOption.IGNORE_CASE)
-
 private val ANY_TAG_PATTERN = Regex("<[^>]+>")
 
 private val INVISIBLE_CHAR_PATTERN = Regex("[\\u200B-\\u200F\\u202A-\\u202E\\u2060\\u2066-\\u2069\\uFEFF\\u00AD\\u034F\\u115F\\u1160\\u17B4\\u17B5\\u180E\\u3164\\uFFA0\\uFFF9-\\uFFFC]")
@@ -75,12 +69,10 @@ fun looks_like_ciphertext(text: String): Boolean =
     CIPHERTEXT_MARKERS.any { text.contains(it) } || looks_like_bundle_fragment(text)
 
 fun strip_body_html(html: String): String {
-    var text = html
-    text = text.replace(STYLE_BLOCK_PATTERN, " ")
-    text = text.replace(SCRIPT_BLOCK_PATTERN, " ")
-    text = text.replace(HEAD_BLOCK_PATTERN, " ")
+    var text = strip_non_rendered_blocks(html)
     text = text.replace(ANY_TAG_PATTERN, " ")
     text = decode_html_entities(text)
+    text = strip_non_rendered_blocks(text)
     text = text.replace(ANY_TAG_PATTERN, " ")
     text = text.replace(INVISIBLE_CHAR_PATTERN, "")
     text = text.replace(WHITESPACE_RUN_PATTERN, " ")
@@ -108,10 +100,7 @@ fun looks_like_html_body(text: String): Boolean {
 }
 
 fun html_to_plain_text(html: String): String {
-    var text = html
-    text = text.replace(STYLE_BLOCK_PATTERN, " ")
-    text = text.replace(SCRIPT_BLOCK_PATTERN, " ")
-    text = text.replace(HEAD_BLOCK_PATTERN, " ")
+    var text = strip_non_rendered_blocks(html)
     text = text.replace(BREAK_TAG_PATTERN, "\n")
     text = text.replace(BLOCK_CLOSE_PATTERN, "\n")
     text = text.replace(HR_TAG_PATTERN, "\n")

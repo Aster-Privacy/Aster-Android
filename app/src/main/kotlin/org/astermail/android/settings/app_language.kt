@@ -23,6 +23,8 @@ import java.util.Locale
 object app_language {
     private const val PREFS_NAME = "aster_app_language"
     private const val KEY_CODE = "code"
+    private const val KEY_EXPLICIT = "explicit"
+    private const val KEY_LEGACY_RESET = "legacy_reset_done"
 
     val supported: List<Pair<String, String>> = listOf(
         "en" to "English",
@@ -42,15 +44,60 @@ object app_language {
         "hi" to "हिन्दी",
     )
 
-    fun stored_code(context: Context): String? =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(KEY_CODE, null)
+    fun stored_code(context: Context): String? {
+        reset_legacy_pin(context)
+
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(KEY_CODE, null)
+    }
 
     fun store_code(context: Context, code: String?): Boolean {
         val editor = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
 
-        if (code == null) editor.remove(KEY_CODE) else editor.putString(KEY_CODE, code)
+        if (code == null) {
+            editor.remove(KEY_CODE)
+            editor.remove(KEY_EXPLICIT)
+        } else {
+            editor.putString(KEY_CODE, code)
+            editor.putBoolean(KEY_EXPLICIT, true)
+        }
+
+        editor.putBoolean(KEY_LEGACY_RESET, true)
 
         return editor.commit()
+    }
+
+    fun system_code(context: Context): String? {
+        val locales = context.resources.configuration.locales
+
+        for (index in 0 until locales.size()) {
+            val candidate = normalize_code(locales[index].toLanguageTag())
+
+            if (candidate != null) return candidate
+        }
+
+        return null
+    }
+
+    private fun reset_legacy_pin(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+        if (prefs.getBoolean(KEY_LEGACY_RESET, false)) return
+
+        val editor = prefs.edit().putBoolean(KEY_LEGACY_RESET, true)
+
+        if (!prefs.getBoolean(KEY_EXPLICIT, false)) editor.remove(KEY_CODE)
+
+        editor.commit()
+    }
+
+    fun synced_code_to_store(language: String?, explicit: Boolean, stored: String?): String? {
+        val candidate = normalize_code(language) ?: return null
+
+        if (!explicit && candidate == "en") return null
+
+        if (candidate == stored) return null
+
+        return candidate
     }
 
     fun is_supported(code: String?): Boolean = supported.any { it.first == code }

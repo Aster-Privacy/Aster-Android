@@ -2085,9 +2085,8 @@ fun LanguageScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
     val context = LocalContext.current
     val activity = context as? android.app.Activity
     val languages = org.astermail.android.settings.app_language.supported
-    val prefs_seeded = prefs != null
-    var selected by remember(prefs_seeded) {
-        mutableStateOf(org.astermail.android.settings.app_language.normalize_code(prefs?.language) ?: "en")
+    var selected by remember {
+        mutableStateOf(org.astermail.android.settings.app_language.stored_code(context))
     }
     var lang_loaded by remember { mutableStateOf(false) }
 
@@ -2095,16 +2094,18 @@ fun LanguageScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
         if (prefs != null && !lang_loaded) {
             lang_loaded = true
             selected = org.astermail.android.settings.app_language.stored_code(context)
-                ?: org.astermail.android.settings.app_language.normalize_code(prefs.language)
-                ?: selected
         }
     }
 
-    fun save(code: String) {
+    fun save(code: String?) {
         if (code == selected) return
         selected = code
         org.astermail.android.settings.app_language.store_code(context, code)
-        prefs?.let { vm.save_preferences(it.copy(language = code)) }
+        prefs?.let {
+            vm.save_preferences(
+                it.copy(language = code.orEmpty(), language_explicit = code != null),
+            )
+        }
         activity?.recreate()
     }
 
@@ -2119,6 +2120,12 @@ fun LanguageScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
         } else {
             section_label(stringResource(R.string.display_language))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
+                choice_option_row(
+                    label = stringResource(R.string.language_system_default),
+                    selected = selected == null,
+                    on_click = { save(null) },
+                )
+                AsterDivider(modifier = Modifier)
                 languages.forEachIndexed { idx, (code, name) ->
                     choice_option_row(
                         label = name,
@@ -2128,18 +2135,12 @@ fun LanguageScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                     if (idx < languages.lastIndex) AsterDivider(modifier = Modifier)
                 }
             }
-            v_gap(AsterSpacing.xxl)
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = AsterSpacing.md),
-            ) {
-                AsterSecondaryButton(
-                    label = stringResource(R.string.set_from_system),
-                    onClick = {
-                        val device_language = android.content.res.Resources.getSystem()
-                            .configuration.locales[0].language
-                        val supported = languages.any { it.first == device_language }
-                        save(if (supported) device_language else "en")
-                    },
+            v_gap(AsterSpacing.md)
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = AsterSpacing.md)) {
+                Text(
+                    text = stringResource(R.string.language_system_default_hint),
+                    color = colors.text_tertiary,
+                    fontSize = 12.sp,
                 )
             }
         }

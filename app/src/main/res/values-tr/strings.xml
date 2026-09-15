@@ -1211,6 +1211,8 @@
     <string name="lang_arabic">Arabic</string>
     <string name="lang_hindi">Hindi</string>
     <string name="set_from_system">Sistem dili (English)</string>
+    <string name="language_system_default">Sistem varsayılanı</string>
+    <string name="language_system_default_hint">Burada bir dil seçene kadar Aster Mail cihazınızın dilini kullanır.</string>
 
     <string name="about">Hakkında</string>
     <string name="aster_logo">Aster logosu</string>
@@ -2562,6 +2564,12 @@
     <string name="alias_panel_websites_placeholder">Kayıt olduğunuz siteleri virgülle ayırarak ekleyin</string>
     <string name="alias_website_invalid">Geçerli bir web sitesi adresi girin</string>
     <string name="alias_display_name_updated">Görünen ad kaydedildi</string>
+    <string name="alias_panel_photo">Fotoğraf</string>
+    <string name="alias_panel_photo_add">Fotoğraf ekle</string>
+    <string name="alias_panel_photo_remove">Fotoğrafı kaldır</string>
+    <string name="alias_panel_photo_hint">Bu fotoğraf, bu adresten gönderdiğiniz iletilerin yanında görünür.</string>
+    <string name="alias_avatar_updated">Fotoğraf güncellendi</string>
+    <string name="alias_avatar_removed">Fotoğraf kaldırıldı</string>
     <string name="alias_websites_updated">Web siteleri kaydedildi</string>
     <string name="alias_stats_title">İstatistikler</string>
     <string name="alias_stats_received">Alınan</string>

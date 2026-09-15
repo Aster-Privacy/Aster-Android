@@ -1211,6 +1211,8 @@
     <string name="lang_arabic">Arabic</string>
     <string name="lang_hindi">Hindi</string>
     <string name="set_from_system">시스템 설정 (English)</string>
+    <string name="language_system_default">시스템 기본값</string>
+    <string name="language_system_default_hint">여기에서 언어를 선택하기 전까지 Aster Mail은 기기 언어를 따릅니다.</string>
 
     <string name="about">앱 정보</string>
     <string name="aster_logo">Aster 로고</string>
@@ -2554,6 +2556,12 @@
     <string name="alias_panel_websites_placeholder">가입한 사이트를 쉼표로 구분해 추가하세요</string>
     <string name="alias_website_invalid">유효한 웹사이트 주소를 입력하세요</string>
     <string name="alias_display_name_updated">표시 이름을 저장했습니다</string>
+    <string name="alias_panel_photo">사진</string>
+    <string name="alias_panel_photo_add">사진 추가</string>
+    <string name="alias_panel_photo_remove">사진 제거</string>
+    <string name="alias_panel_photo_hint">이 주소에서 보내는 메시지 옆에 이 사진이 표시됩니다.</string>
+    <string name="alias_avatar_updated">사진이 업데이트됨</string>
+    <string name="alias_avatar_removed">사진이 제거됨</string>
     <string name="alias_websites_updated">웹사이트를 저장했습니다</string>
     <string name="alias_stats_title">통계</string>
     <string name="alias_stats_received">수신</string>

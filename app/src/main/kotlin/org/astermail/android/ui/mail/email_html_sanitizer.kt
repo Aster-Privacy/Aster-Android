@@ -19,6 +19,8 @@
 package org.astermail.android.ui.mail
 
 import org.astermail.android.mail.Autolink
+import org.astermail.android.mail.degraded_email_html
+import org.astermail.android.mail.strip_script_like_blocks
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -84,8 +86,8 @@ object EmailHtmlSanitizer {
         if (raw_html.isBlank()) return ""
         return try {
             sanitize_unsafe(raw_html, options)
-        } catch (t: Throwable) {
-            org.jsoup.nodes.Entities.escape(raw_html.take(max_sanitizer_input_chars))
+        } catch (_: Throwable) {
+            degraded_email_html(raw_html.take(max_sanitizer_input_chars))
         }
     }
 
@@ -457,11 +459,8 @@ object EmailHtmlSanitizer {
     private fun strip_dangerous_blocks(html: String): String {
         var out = html
         out = strip_mso_conditionals(out)
-        out = out.replace(Regex("<script\\b[^>]*>[\\s\\S]*?</script\\s*>", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("<iframe\\b[^>]*>[\\s\\S]*?</iframe\\s*>", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("<object\\b[^>]*>[\\s\\S]*?</object\\s*>", RegexOption.IGNORE_CASE), "")
+        out = strip_script_like_blocks(out)
         out = out.replace(Regex("<embed\\b[^>]*/?>", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("<applet\\b[^>]*>[\\s\\S]*?</applet\\s*>", RegexOption.IGNORE_CASE), "")
         out = out.replace(Regex("<base\\b[^>]*/?>", RegexOption.IGNORE_CASE), "")
         out = out.replace(Regex("<meta\\b[^>]*http-equiv\\s*=\\s*[\"']?refresh[\"']?[^>]*/?>", RegexOption.IGNORE_CASE), "")
         out = out.replace(Regex("<link\\b[^>]*rel\\s*=\\s*[\"']?(?:import|prefetch|preload)[\"']?[^>]*/?>", RegexOption.IGNORE_CASE), "")

@@ -1867,6 +1867,67 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun update_alias_avatar(alias_id: String, data_uri: String?) {
+        val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
+        _state.update { s ->
+            s.copy(aliases = s.aliases.map { if (it.id == alias_id) it.copy(profile_picture = data_uri) else it })
+        }
+        viewModelScope.launch {
+            try {
+                settings_api.update_alias_profile_picture(alias_id, data_uri)
+                prime_own_alias_avatars(_state.value.aliases)
+                _state.value = _state.value.copy(
+                    action_result = context.getString(
+                        if (data_uri == null) R.string.alias_avatar_removed else R.string.alias_avatar_updated,
+                    ),
+                )
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { s ->
+                    s.copy(
+                        aliases = s.aliases.map {
+                            if (it.id == alias_id) it.copy(profile_picture = current.profile_picture) else it
+                        },
+                        action_result = user_facing_error(t),
+                    )
+                }
+            }
+        }
+    }
+
+    fun update_domain_address_avatar(address_id: String, domain_name: String, data_uri: String?) {
+        val domain_id = resolve_domain_id(domain_name) ?: return
+        val current = _state.value.custom_domain_addresses.firstOrNull { it.id == address_id } ?: return
+        _state.update { s ->
+            s.copy(
+                custom_domain_addresses = s.custom_domain_addresses.map {
+                    if (it.id == address_id) it.copy(profile_picture = data_uri) else it
+                },
+            )
+        }
+        viewModelScope.launch {
+            try {
+                settings_api.update_domain_address_profile_picture(domain_id, address_id, data_uri)
+                prime_own_domain_address_avatars(_state.value.custom_domain_addresses)
+                _state.value = _state.value.copy(
+                    action_result = context.getString(
+                        if (data_uri == null) R.string.alias_avatar_removed else R.string.alias_avatar_updated,
+                    ),
+                )
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { s ->
+                    s.copy(
+                        custom_domain_addresses = s.custom_domain_addresses.map {
+                            if (it.id == address_id) it.copy(profile_picture = current.profile_picture) else it
+                        },
+                        action_result = user_facing_error(t),
+                    )
+                }
+            }
+        }
+    }
+
     fun update_alias_websites(alias_id: String, websites: String) {
         val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
         val cleaned = sanitize_alias_text(websites)
@@ -4766,9 +4827,11 @@ class SettingsViewModel @Inject constructor(
                 prefs.quiet_hours_start.takeIf { it.isNotBlank() } ?: "22:00",
                 prefs.quiet_hours_end.takeIf { it.isNotBlank() } ?: "07:00",
             )
-            org.astermail.android.settings.app_language.normalize_code(prefs.language)
-                ?.takeIf { it != org.astermail.android.settings.app_language.stored_code(context) }
-                ?.let { org.astermail.android.settings.app_language.store_code(context, it) }
+            org.astermail.android.settings.app_language.synced_code_to_store(
+                language = prefs.language,
+                explicit = prefs.language_explicit,
+                stored = org.astermail.android.settings.app_language.stored_code(context),
+            )?.let { org.astermail.android.settings.app_language.store_code(context, it) }
         }
         val failure = result.exceptionOrNull() ?: return
         if (failure is kotlinx.coroutines.CancellationException) throw failure

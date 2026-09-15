@@ -45,6 +45,7 @@ class AppLanguagePrintServiceTest {
     private fun activity_base(stored_code: String?, localized: Context, activity_bound_service: Any): Context {
         val prefs = mockk<SharedPreferences>()
         every { prefs.getString("code", null) } returns stored_code
+        every { prefs.getBoolean(any(), any()) } returns true
         val resources = mockk<Resources>()
         every { resources.configuration } returns Configuration()
         val base = mockk<Context>()

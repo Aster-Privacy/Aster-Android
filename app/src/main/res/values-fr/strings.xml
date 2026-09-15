@@ -1269,6 +1269,8 @@
     <string name="lang_arabic">Arabic</string>
     <string name="lang_hindi">Hindi</string>
     <string name="set_from_system">Défini par le système (English)</string>
+    <string name="language_system_default">Réglage du système</string>
+    <string name="language_system_default_hint">Aster Mail suit la langue de votre appareil jusqu’à ce que vous en choisissiez une ici.</string>
 
     <!-- About -->
     <string name="about">À propos</string>
@@ -2589,6 +2591,12 @@
     <string name="alias_panel_websites_placeholder">Ajouter des sites où vous vous êtes inscrit, séparés par des virgules</string>
     <string name="alias_website_invalid">Saisissez une adresse de site web valide</string>
     <string name="alias_display_name_updated">Nom affiché enregistré</string>
+    <string name="alias_panel_photo">Photo</string>
+    <string name="alias_panel_photo_add">Ajouter une photo</string>
+    <string name="alias_panel_photo_remove">Supprimer la photo</string>
+    <string name="alias_panel_photo_hint">Cette photo apparaît à côté des messages que vous envoyez depuis cette adresse.</string>
+    <string name="alias_avatar_updated">Photo mise à jour</string>
+    <string name="alias_avatar_removed">Photo supprimée</string>
     <string name="alias_websites_updated">Sites web enregistrés</string>
     <string name="alias_stats_title">Statistiques</string>
     <string name="alias_stats_received">Reçus</string>

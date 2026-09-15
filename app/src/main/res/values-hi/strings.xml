@@ -1650,6 +1650,8 @@
     <string name="lang_arabic">अरबी</string>
     <string name="lang_hindi">हिन्दी</string>
     <string name="set_from_system">सिस्टम से लिया गया (अंग्रेज़ी)</string>
+    <string name="language_system_default">सिस्टम डिफ़ॉल्ट</string>
+    <string name="language_system_default_hint">जब तक आप यहाँ कोई भाषा नहीं चुनते, Aster Mail आपके डिवाइस की भाषा का पालन करता है।</string>
     <string name="about">बारे में</string>
     <string name="aster_logo">Aster का लोगो</string>
     <string name="version_format">वर्शन %s</string>
@@ -2512,6 +2514,12 @@
     <string name="alias_panel_websites">वेबसाइट</string>
     <string name="alias_panel_websites_placeholder">जिन वेबसाइटों पर आपने साइन अप किया है उन्हें कॉमा से अलग करके जोड़ें</string>
     <string name="alias_display_name_updated">प्रदर्शित नाम सहेजा गया</string>
+    <string name="alias_panel_photo">फ़ोटो</string>
+    <string name="alias_panel_photo_add">फ़ोटो जोड़ें</string>
+    <string name="alias_panel_photo_remove">फ़ोटो हटाएँ</string>
+    <string name="alias_panel_photo_hint">यह फ़ोटो इस पते से भेजे गए संदेशों के साथ दिखती है।</string>
+    <string name="alias_avatar_updated">फ़ोटो अपडेट हुई</string>
+    <string name="alias_avatar_removed">फ़ोटो हटाई गई</string>
     <string name="alias_websites_updated">वेबसाइटें सहेजी गईं</string>
     <string name="alias_website_invalid">कोई मान्य वेबसाइट पता डालें</string>
     <string name="alias_websites_limit_reached">आप 10 वेबसाइट तक जोड़ सकते हैं</string>

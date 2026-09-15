@@ -45,7 +45,8 @@ data class CustomCategoryRule(
 
 @Serializable
 data class UserPreferences(
-    val language: String = "en",
+    val language: String = "",
+    val language_explicit: Boolean = false,
     val theme: String = "system",
     val color_theme: String = "default",
     val custom_theme_seed: String = "#3b82f6",

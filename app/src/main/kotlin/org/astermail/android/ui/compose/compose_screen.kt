@@ -905,10 +905,7 @@ fun ComposeScreen(
         .compose_font_color_argb(
             org.astermail.android.api.preferences.effective_compose_font_color(settings_state.preferences),
         )
-    val compose_defaults_allowed = mode != "draft"
-
     val apply_compose_defaults: (android.text.Editable) -> Unit = apply_defaults@{ editable ->
-        if (!compose_defaults_allowed) return@apply_defaults
         editable.getSpans(0, editable.length, android.text.style.AbsoluteSizeSpan::class.java)
             .forEach { editable.removeSpan(it) }
         editable.getSpans(0, editable.length, android.text.style.ForegroundColorSpan::class.java)
