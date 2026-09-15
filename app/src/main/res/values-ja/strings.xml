@@ -84,10 +84,7 @@
     <string name="recovery_email_hidden">このアカウントに保存済み</string>
     <string name="recovery_email_status_unverified">確認待ち</string>
     <string name="skip_for_now">今はスキップ</string>
-    <string name="save_recovery_phrase">リカバリフレーズを保存</string>
-    <string name="recovery_phrase_description">これらの単語を順番に書き留めて、安全な場所に保管してください。パスワードを忘れた場合にアカウントを復旧する唯一の方法です。</string>
     <string name="tap_to_copy">タップしてコピー</string>
-    <string name="tap_phrase_to_copy">フレーズをタップしてコピー</string>
     <string name="copy_to_clipboard">クリップボードにコピー</string>
     <string name="choose_your_plan">プランを選択</string>
     <string name="plan_subtitle">無料で始めるか、有料プランでさらに多くの機能を。いつでも変更できます。</string>
@@ -3356,7 +3353,13 @@
     <string name="other_way_code_title">リカバリーコードを使う</string>
     <string name="other_way_email_desc">Aster Mail がリカバリーメールにリンクを送信します。リセット前のメールにはアクセスできなくなります。</string>
     <string name="other_way_email_title">リカバリーメールでリセットする</string>
-    <string name="other_way_none_desc">Aster Mail は暗号化されたデータを読み取れないため、これらのいずれかがないと誰も復元できません。新しいアカウントは作成できます。</string>
+    <string name="other_way_none_desc">サポートにお問い合わせください。次の手順をご案内します。</string>
+    <string name="change_account">別のアドレスを使う</string>
+    <string name="change_account_desc">別の Aster Mail アカウントを復元します。</string>
+    <string name="support_step_title">サポートに問い合わせる</string>
+    <string name="support_step_desc">Aster Mail は暗号化されたデータを読み取れないため、リカバリーコードまたは復旧用メールなしで解除できる人はいません。サポートがアカウントを確認し、次の手順を案内します。</string>
+    <string name="support_email_action">サポートにメールする</string>
+    <string name="support_help_center">ヘルプセンターを開く</string>
     <string name="other_way_none_title">どれも持っていない</string>
     <string name="other_ways_desc">アカウントに戻る方法を選択してください。</string>
     <string name="print_codes">印刷</string>

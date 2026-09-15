@@ -84,10 +84,7 @@
     <string name="recovery_email_hidden">Salvo nesta conta</string>
     <string name="recovery_email_status_unverified">Verificação pendente</string>
     <string name="skip_for_now">Pular por enquanto</string>
-    <string name="save_recovery_phrase">Salve sua frase de recuperação</string>
-    <string name="recovery_phrase_description">Anote estas palavras em ordem e guarde em um lugar seguro. Esta é a ÚNICA maneira de recuperar sua conta se você esquecer sua senha.</string>
     <string name="tap_to_copy">Toque para copiar</string>
-    <string name="tap_phrase_to_copy">Toque na frase para copiar</string>
     <string name="copy_to_clipboard">Copiar para a área de transferência</string>
     <string name="choose_your_plan">Escolha seu plano</string>
     <string name="plan_subtitle">Comece grátis ou desbloqueie mais com um plano pago. Você pode mudar a qualquer momento.</string>
@@ -3374,7 +3371,13 @@
     <string name="other_way_code_title">Usar um código de recuperação</string>
     <string name="other_way_email_desc">O Aster Mail envia uma ligação para o seu e-mail de recuperação. Perde o acesso ao correio anterior à reposição.</string>
     <string name="other_way_email_title">Repor com o seu e-mail de recuperação</string>
-    <string name="other_way_none_desc">O Aster Mail não consegue ler os seus dados cifrados, por isso ninguém os pode recuperar sem uma destas opções. Ainda pode criar uma conta.</string>
+    <string name="other_way_none_desc">Fale com o suporte e ajudamos com os próximos passos.</string>
+    <string name="change_account">Usar outro endereço</string>
+    <string name="change_account_desc">Recupere outra conta do Aster Mail.</string>
+    <string name="support_step_title">Falar com o suporte</string>
+    <string name="support_step_desc">O Aster Mail não consegue ler os seus dados encriptados, por isso ninguém os desbloqueia sem um código de recuperação ou o seu email de recuperação. O suporte pode verificar a sua conta e ajudar com os próximos passos.</string>
+    <string name="support_email_action">Enviar email ao suporte</string>
+    <string name="support_help_center">Abrir o centro de ajuda</string>
     <string name="other_way_none_title">Não tenho nenhuma destas opções</string>
     <string name="other_ways_desc">Escolha como quer voltar a aceder à sua conta.</string>
     <string name="print_codes">Imprimir</string>

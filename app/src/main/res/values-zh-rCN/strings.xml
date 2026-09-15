@@ -84,10 +84,7 @@
     <string name="recovery_email_hidden">已保存在此账户中</string>
     <string name="recovery_email_status_unverified">等待验证</string>
     <string name="skip_for_now">暂时跳过</string>
-    <string name="save_recovery_phrase">保存恢复短语</string>
-    <string name="recovery_phrase_description">按顺序写下这些单词并保存在安全的地方。这是忘记密码后恢复账户的唯一方式。</string>
     <string name="tap_to_copy">点击复制</string>
-    <string name="tap_phrase_to_copy">点击短语复制</string>
     <string name="copy_to_clipboard">复制到剪贴板</string>
     <string name="choose_your_plan">选择您的方案</string>
     <string name="plan_subtitle">免费开始或通过付费方案解锁更多功能。您可以随时更改。</string>
@@ -3356,7 +3353,13 @@
     <string name="other_way_code_title">使用恢复代码</string>
     <string name="other_way_email_desc">Aster Mail 会向你的恢复邮箱发送一个链接。你将无法访问重置前的邮件。</string>
     <string name="other_way_email_title">使用恢复邮箱重置</string>
-    <string name="other_way_none_desc">Aster Mail 无法读取你的加密数据，因此没有这些方式，任何人都无法恢复。你仍然可以创建账户。</string>
+    <string name="other_way_none_desc">联系支持团队，我们会协助你完成后续步骤。</string>
+    <string name="change_account">使用其他地址</string>
+    <string name="change_account_desc">恢复其他 Aster Mail 账户。</string>
+    <string name="support_step_title">联系支持团队</string>
+    <string name="support_step_desc">Aster Mail 无法读取你的加密数据，因此没有恢复代码或恢复邮箱，任何人都无法解锁。支持团队可以检查你的账户并说明后续步骤。</string>
+    <string name="support_email_action">给支持团队发邮件</string>
+    <string name="support_help_center">打开帮助中心</string>
     <string name="other_way_none_title">这些我都没有</string>
     <string name="other_ways_desc">选择你想要重新登录账户的方式。</string>
     <string name="print_codes">打印</string>

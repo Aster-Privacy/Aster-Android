@@ -123,10 +123,7 @@
     <string name="recovery_email_hidden">Saved on this account</string>
     <string name="recovery_email_status_unverified">Pending verification</string>
     <string name="skip_for_now">Skip for now</string>
-    <string name="save_recovery_phrase">Save your recovery phrase</string>
-    <string name="recovery_phrase_description">Write down these words in order and store them somewhere safe. This is the ONLY way to recover your account if you forget your password.</string>
     <string name="tap_to_copy">Tap to copy</string>
-    <string name="tap_phrase_to_copy">Tap the phrase to copy</string>
     <string name="copy_to_clipboard">Copy to clipboard</string>
     <string name="choose_your_plan">Choose your plan</string>
     <string name="plan_subtitle">Start free or unlock more with a paid plan. You can change this anytime.</string>
@@ -200,7 +197,13 @@
     <string name="other_way_email_title">Reset with your recovery email</string>
     <string name="other_way_email_desc">Aster Mail sends a link to your recovery email. You lose access to mail from before the reset.</string>
     <string name="other_way_none_title">I do not have any of these</string>
-    <string name="other_way_none_desc">Aster Mail cannot read your encrypted data, so no one can recover it without one of these. You can still create an account.</string>
+    <string name="other_way_none_desc">Contact support for help with what comes next.</string>
+    <string name="change_account">Use a different address</string>
+    <string name="change_account_desc">Recover a different Aster Mail account.</string>
+    <string name="support_step_title">Contact support</string>
+    <string name="support_step_desc">Aster Mail cannot read your encrypted data, so no one can unlock it without a recovery code or your recovery email. Support can check your account and help you with what comes next.</string>
+    <string name="support_email_action">Email support</string>
+    <string name="support_help_center">Visit the help center</string>
     <string name="reset_account_title">Reset your account?</string>
     <string name="reset_account_desc">Your encrypted mail, contacts, and files from before the reset stay locked until you recover them with your old password. You get a new, empty encryption key.</string>
     <string name="send_reset_link">Send reset link</string>

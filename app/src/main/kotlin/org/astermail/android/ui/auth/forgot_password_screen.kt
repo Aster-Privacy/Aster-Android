@@ -22,6 +22,7 @@
 package org.astermail.android.ui.auth
 
 import compose.icons.TablerIcons
+import org.astermail.android.ui.common.open_external_url
 import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
 import compose.icons.tablericons.*
@@ -106,6 +107,9 @@ import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.AsterTopBar
 
+private const val SUPPORT_MAIL_URL = "mailto:support@astermail.org"
+private const val HELP_CENTER_URL = "https://astermail.org/help"
+
 @Composable
 fun ForgotPasswordScreen(
     on_back: () -> Unit,
@@ -182,8 +186,10 @@ fun ForgotPasswordScreen(
                             is_loading = state.is_loading,
                             on_select_code = { view_model.go_to_code_step() },
                             on_select_email = { view_model.go_to_reset_email_confirm() },
-                            on_create_account = on_back,
+                            on_change_account = { view_model.go_to_email_step() },
+                            on_contact_support = { view_model.go_to_support() },
                         )
+                        RecoveryStep.support -> support_step()
                         RecoveryStep.reset_email_confirm -> reset_email_confirm_step(
                             is_loading = state.is_loading,
                             error = state.error,
@@ -404,7 +410,7 @@ private fun code_step(
     Spacer(Modifier.height(AsterSpacing.xl))
 
     AsterButton(
-        label = stringResource(R.string.verify_code),
+        label = stringResource(R.string.continue_action),
         onClick = { on_verify(code) },
         enabled = code.isNotBlank() && !is_loading,
         is_loading = is_loading,
@@ -484,7 +490,8 @@ private fun other_ways_step(
     is_loading: Boolean,
     on_select_code: () -> Unit,
     on_select_email: () -> Unit,
-    on_create_account: () -> Unit,
+    on_change_account: () -> Unit,
+    on_contact_support: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
 
@@ -528,12 +535,75 @@ private fun other_ways_step(
     Spacer(Modifier.height(AsterSpacing.md))
 
     recovery_option_row(
+        icon = TablerIcons.At,
+        title = stringResource(R.string.change_account),
+        description = stringResource(R.string.change_account_desc),
+        enabled = !is_loading,
+        on_click = on_change_account,
+    )
+
+    Spacer(Modifier.height(AsterSpacing.md))
+
+    recovery_option_row(
         icon = TablerIcons.Help,
         title = stringResource(R.string.other_way_none_title),
         description = stringResource(R.string.other_way_none_desc),
         enabled = !is_loading,
-        on_click = on_create_account,
+        on_click = on_contact_support,
     )
+
+    Spacer(Modifier.height(AsterSpacing.xxl))
+}
+
+@Composable
+private fun support_step() {
+    val colors = AsterMaterial.colors
+    val context = LocalContext.current
+
+    Spacer(Modifier.height(AsterSpacing.xl))
+    Image(
+        painter = painterResource(R.drawable.aster_wordmark),
+        contentDescription = null,
+        modifier = Modifier.height(40.dp),
+    )
+    Spacer(Modifier.height(AsterSpacing.xl))
+    Text(
+        text = stringResource(R.string.support_step_title),
+        color = colors.text_primary,
+        fontSize = 30.sp,
+        fontWeight = FontWeight.ExtraBold,
+        letterSpacing = (-0.3).sp,
+        textAlign = TextAlign.Center,
+    )
+    Spacer(Modifier.height(AsterSpacing.md))
+    Text(
+        text = stringResource(R.string.support_step_desc),
+        color = colors.text_tertiary,
+        fontSize = 14.sp,
+        textAlign = TextAlign.Center,
+    )
+
+    Spacer(Modifier.height(AsterSpacing.xxl))
+
+    AsterButton(
+        label = stringResource(R.string.support_email_action),
+        onClick = { open_external_url(context, SUPPORT_MAIL_URL) },
+    )
+
+    Spacer(Modifier.height(AsterSpacing.lg))
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = stringResource(R.string.support_help_center),
+            color = colors.accent_blue,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.clickable { open_external_url(context, HELP_CENTER_URL) },
+        )
+    }
 
     Spacer(Modifier.height(AsterSpacing.xxl))
 }

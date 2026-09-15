@@ -84,10 +84,7 @@
     <string name="recovery_email_hidden">Opgeslagen in dit account</string>
     <string name="recovery_email_status_unverified">Verificatie in behandeling</string>
     <string name="skip_for_now">Nu overslaan</string>
-    <string name="save_recovery_phrase">Sla je herstelfrase op</string>
-    <string name="recovery_phrase_description">Schrijf deze woorden op volgorde op en bewaar ze op een veilige plek. Dit is de ENIGE manier om je account te herstellen als je je wachtwoord vergeet.</string>
     <string name="tap_to_copy">Tik om te kopiëren</string>
-    <string name="tap_phrase_to_copy">Tik op de frase om te kopiëren</string>
     <string name="copy_to_clipboard">Naar klembord kopiëren</string>
     <string name="choose_your_plan">Kies je abonnement</string>
     <string name="plan_subtitle">Begin gratis of ontgrendel meer met een betaald abonnement. Je kunt altijd wijzigen.</string>
@@ -3374,7 +3371,13 @@
     <string name="other_way_code_title">Een herstelcode gebruiken</string>
     <string name="other_way_email_desc">Aster Mail stuurt een link naar je herstel-e-mail. Je verliest toegang tot e-mail van voor het opnieuw instellen.</string>
     <string name="other_way_email_title">Opnieuw instellen met je herstel-e-mail</string>
-    <string name="other_way_none_desc">Aster Mail kan je versleutelde gegevens niet lezen, dus niemand kan ze herstellen zonder een van deze opties. Je kunt nog steeds een account maken.</string>
+    <string name="other_way_none_desc">Neem contact op met support, dan helpen we je met de volgende stappen.</string>
+    <string name="change_account">Een ander adres gebruiken</string>
+    <string name="change_account_desc">Herstel een ander Aster Mail-account.</string>
+    <string name="support_step_title">Contact opnemen met support</string>
+    <string name="support_step_desc">Aster Mail kan je versleutelde gegevens niet lezen, dus niemand kan ze ontgrendelen zonder een herstelcode of je herstel-e-mail. Support kan je account controleren en je helpen met de volgende stappen.</string>
+    <string name="support_email_action">Support mailen</string>
+    <string name="support_help_center">Naar het helpcentrum</string>
     <string name="other_way_none_title">Ik heb hier niets van</string>
     <string name="other_ways_desc">Kies hoe je weer toegang tot je account wilt krijgen.</string>
     <string name="print_codes">Afdrukken</string>

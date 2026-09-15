@@ -84,10 +84,7 @@
     <string name="recovery_email_hidden">Сохранено в этом аккаунте</string>
     <string name="recovery_email_status_unverified">Ожидает подтверждения</string>
     <string name="skip_for_now">Пропустить пока</string>
-    <string name="save_recovery_phrase">Сохраните фразу восстановления</string>
-    <string name="recovery_phrase_description">Запишите эти слова по порядку и храните их в безопасном месте. Это ЕДИНСТВЕННЫЙ способ восстановить аккаунт, если вы забудете пароль.</string>
     <string name="tap_to_copy">Нажмите, чтобы скопировать</string>
-    <string name="tap_phrase_to_copy">Нажмите на фразу, чтобы скопировать</string>
     <string name="copy_to_clipboard">Копировать в буфер обмена</string>
     <string name="choose_your_plan">Выберите ваш тариф</string>
     <string name="plan_subtitle">Начните бесплатно или получите больше с платным планом. Изменить можно в любое время.</string>
@@ -3414,7 +3411,13 @@
     <string name="other_way_code_title">Использовать код восстановления</string>
     <string name="other_way_email_desc">Aster Mail отправляет ссылку на ваш резервный адрес. Вы теряете доступ к письмам, полученным до сброса.</string>
     <string name="other_way_email_title">Сбросить через резервный адрес</string>
-    <string name="other_way_none_desc">Aster Mail не может прочитать ваши зашифрованные данные, поэтому без одного из этих способов их никто не восстановит. Вы можете создать новый аккаунт.</string>
+    <string name="other_way_none_desc">Свяжитесь с поддержкой, и мы подскажем, что делать дальше.</string>
+    <string name="change_account">Указать другой адрес</string>
+    <string name="change_account_desc">Восстановите другой аккаунт Aster Mail.</string>
+    <string name="support_step_title">Связаться с поддержкой</string>
+    <string name="support_step_desc">Aster Mail не может прочитать ваши зашифрованные данные, поэтому никто не откроет их без кода восстановления или резервного адреса. Поддержка проверит аккаунт и подскажет, что делать дальше.</string>
+    <string name="support_email_action">Написать в поддержку</string>
+    <string name="support_help_center">Открыть центр помощи</string>
     <string name="other_way_none_title">У меня нет ничего из этого</string>
     <string name="other_ways_desc">Выберите, как вернуть доступ к аккаунту.</string>
     <string name="print_codes">Печать</string>

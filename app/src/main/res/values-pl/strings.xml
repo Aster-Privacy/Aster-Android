@@ -84,10 +84,7 @@
     <string name="recovery_email_hidden">Zapisano na tym koncie</string>
     <string name="recovery_email_status_unverified">Oczekuje na weryfikację</string>
     <string name="skip_for_now">Pomiń na razie</string>
-    <string name="save_recovery_phrase">Zapisz frazę odzyskiwania</string>
-    <string name="recovery_phrase_description">Zapisz te słowa w kolejności i przechowuj je w bezpiecznym miejscu. To JEDYNY sposób na odzyskanie konta, jeśli zapomnisz hasła.</string>
     <string name="tap_to_copy">Dotknij, aby skopiować</string>
-    <string name="tap_phrase_to_copy">Dotknij frazę, aby skopiować</string>
     <string name="copy_to_clipboard">Kopiuj do schowka</string>
     <string name="choose_your_plan">Wybierz swój plan</string>
     <string name="plan_subtitle">Zacznij za darmo lub odblokuj więcej z płatnym planem. Możesz zmienić w dowolnym momencie.</string>
@@ -3414,7 +3411,13 @@
     <string name="other_way_code_title">Użyj kodu odzyskiwania</string>
     <string name="other_way_email_desc">Aster Mail wysyła link na Twój adres odzyskiwania. Tracisz dostęp do poczty sprzed resetu.</string>
     <string name="other_way_email_title">Zresetuj przy użyciu adresu odzyskiwania</string>
-    <string name="other_way_none_desc">Aster Mail nie może odczytać Twoich zaszyfrowanych danych, więc nikt nie odzyska ich bez jednej z tych opcji. Nadal możesz założyć konto.</string>
+    <string name="other_way_none_desc">Skontaktuj się z pomocą, a podpowiemy, co dalej.</string>
+    <string name="change_account">Użyj innego adresu</string>
+    <string name="change_account_desc">Odzyskaj inne konto Aster Mail.</string>
+    <string name="support_step_title">Skontaktuj się z pomocą</string>
+    <string name="support_step_desc">Aster Mail nie odczytuje Twoich zaszyfrowanych danych, więc nikt ich nie odblokuje bez kodu odzyskiwania ani adresu odzyskiwania. Pomoc techniczna sprawdzi konto i podpowie, co dalej.</string>
+    <string name="support_email_action">Napisz do pomocy</string>
+    <string name="support_help_center">Otwórz centrum pomocy</string>
     <string name="other_way_none_title">Nie mam żadnej z tych opcji</string>
     <string name="other_ways_desc">Wybierz, jak chcesz odzyskać dostęp do konta.</string>
     <string name="print_codes">Drukuj</string>

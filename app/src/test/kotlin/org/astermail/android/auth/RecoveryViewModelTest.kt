@@ -416,12 +416,13 @@ class RecoveryViewModelTest {
     @Test
     fun `recovery_step enum has all expected values`() {
         val steps = RecoveryStep.entries
-        assertEquals(9, steps.size)
+        assertEquals(10, steps.size)
         assertTrue(steps.contains(RecoveryStep.email))
         assertTrue(steps.contains(RecoveryStep.email_sent))
         assertTrue(steps.contains(RecoveryStep.code))
         assertTrue(steps.contains(RecoveryStep.other_ways))
         assertTrue(steps.contains(RecoveryStep.reset_email_confirm))
+        assertTrue(steps.contains(RecoveryStep.support))
         assertTrue(steps.contains(RecoveryStep.password))
         assertTrue(steps.contains(RecoveryStep.processing))
         assertTrue(steps.contains(RecoveryStep.new_codes))

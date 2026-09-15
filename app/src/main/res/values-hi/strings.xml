@@ -116,10 +116,7 @@
     <string name="recovery_email_hidden">इस खाते पर सहेजा गया</string>
     <string name="recovery_email_status_unverified">पुष्टि बाकी है</string>
     <string name="skip_for_now">अभी छोड़ें</string>
-    <string name="save_recovery_phrase">अपना रिकवरी फ़्रेज़ सहेजें</string>
-    <string name="recovery_phrase_description">इन शब्दों को क्रम से लिख लें और किसी सुरक्षित जगह रखें। पासवर्ड भूल जाने पर खाता वापस पाने का यही एकमात्र तरीका है।</string>
     <string name="tap_to_copy">कॉपी करने के लिए टैप करें</string>
-    <string name="tap_phrase_to_copy">कॉपी करने के लिए वाक्यांश पर टैप करें</string>
     <string name="copy_to_clipboard">क्लिपबोर्ड पर कॉपी करें</string>
     <string name="choose_your_plan">अपना प्लान चुनें</string>
     <string name="plan_subtitle">मुफ़्त शुरू करें, या पेड प्लान से और सुविधाएं खोलें। आप इसे कभी भी बदल सकते हैं।</string>
@@ -3264,7 +3261,13 @@
     <string name="other_way_code_title">रिकवरी कोड इस्तेमाल करें</string>
     <string name="other_way_email_desc">Aster Mail आपके रिकवरी ईमेल पर एक लिंक भेजता है। रीसेट से पहले के मेल तक आपकी पहुंच खत्म हो जाती है।</string>
     <string name="other_way_email_title">रिकवरी ईमेल से रीसेट करें</string>
-    <string name="other_way_none_desc">Aster Mail आपका एन्क्रिप्ट किया गया डेटा नहीं पढ़ सकता, इसलिए इनमें से किसी एक के बिना कोई भी उसे रिकवर नहीं कर सकता। आप नया खाता बना सकते हैं।</string>
+    <string name="other_way_none_desc">सहायता से संपर्क करें, हम आगे के कदमों में मदद करेंगे।</string>
+    <string name="change_account">दूसरा पता इस्तेमाल करें</string>
+    <string name="change_account_desc">कोई दूसरा Aster Mail खाता पुनर्प्राप्त करें।</string>
+    <string name="support_step_title">सहायता से संपर्क करें</string>
+    <string name="support_step_desc">Aster Mail आपका एन्क्रिप्टेड डेटा नहीं पढ़ सकता, इसलिए रिकवरी कोड या रिकवरी ईमेल के बिना कोई उसे नहीं खोल सकता। सहायता टीम आपका खाता देख सकती है और आगे के कदमों में मदद कर सकती है।</string>
+    <string name="support_email_action">सहायता को ईमेल करें</string>
+    <string name="support_help_center">सहायता केंद्र खोलें</string>
     <string name="other_way_none_title">मेरे पास इनमें से कुछ नहीं है</string>
     <string name="other_ways_desc">चुनें कि आप अपने खाते में वापस कैसे आना चाहते हैं।</string>
     <string name="print_codes">प्रिंट करें</string>

@@ -84,10 +84,7 @@
     <string name="recovery_email_hidden">Bu hesapta kayıtlı</string>
     <string name="recovery_email_status_unverified">Doğrulama bekleniyor</string>
     <string name="skip_for_now">Şimdilik atla</string>
-    <string name="save_recovery_phrase">Kurtarma ifadenizi kaydedin</string>
-    <string name="recovery_phrase_description">Bu kelimeleri sırayla yazın ve güvenli bir yerde saklayın. Parolanızı unutursanız hesabınızı kurtarmanın TEK yolu budur.</string>
     <string name="tap_to_copy">Kopyalamak için dokunun</string>
-    <string name="tap_phrase_to_copy">İfadeye dokunarak kopyalayın</string>
     <string name="copy_to_clipboard">Panoya kopyala</string>
     <string name="choose_your_plan">Planınızı seçin</string>
     <string name="plan_subtitle">Ücretsiz başlayın veya ücretli planla daha fazlasını açın. İstediğiniz zaman değiştirebilirsiniz.</string>
@@ -3374,7 +3371,13 @@
     <string name="other_way_code_title">Kurtarma kodu kullanın</string>
     <string name="other_way_email_desc">Aster Mail kurtarma e-postanıza bir bağlantı gönderir. Sıfırlamadan önceki postalara erişiminizi kaybedersiniz.</string>
     <string name="other_way_email_title">Kurtarma e-postanızla sıfırlayın</string>
-    <string name="other_way_none_desc">Aster Mail şifrelenmiş verilerinizi okuyamaz, bu yüzden bunlardan biri olmadan kimse verilerinizi kurtaramaz. Yine de hesap oluşturabilirsiniz.</string>
+    <string name="other_way_none_desc">Destek ile iletişime geçin, sonraki adımlarda yardımcı olalım.</string>
+    <string name="change_account">Başka bir adres kullan</string>
+    <string name="change_account_desc">Başka bir Aster Mail hesabını kurtarın.</string>
+    <string name="support_step_title">Destek ile iletişime geçin</string>
+    <string name="support_step_desc">Aster Mail şifreli verilerinizi okuyamaz, bu yüzden kurtarma kodu veya kurtarma e-postanız olmadan kimse bunları açamaz. Destek ekibi hesabınızı kontrol edip sonraki adımlarda yardımcı olabilir.</string>
+    <string name="support_email_action">Desteğe e-posta gönder</string>
+    <string name="support_help_center">Yardım merkezini aç</string>
     <string name="other_way_none_title">Bunların hiçbiri bende yok</string>
     <string name="other_ways_desc">Hesabınıza nasıl geri dönmek istediğinizi seçin.</string>
     <string name="print_codes">Yazdır</string>

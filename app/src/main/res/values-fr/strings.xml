@@ -87,10 +87,7 @@
     <string name="recovery_email_hidden">Enregistré sur ce compte</string>
     <string name="recovery_email_status_unverified">Vérification en attente</string>
     <string name="skip_for_now">Passer pour l\'instant</string>
-    <string name="save_recovery_phrase">Enregistrer votre phrase de récupération</string>
-    <string name="recovery_phrase_description">Notez ces mots dans l\'ordre et conservez-les en lieu sûr. C\'est le SEUL moyen de récupérer votre compte si vous oubliez votre mot de passe.</string>
     <string name="tap_to_copy">Appuyez pour copier</string>
-    <string name="tap_phrase_to_copy">Appuyez sur la phrase pour copier</string>
     <string name="copy_to_clipboard">Copier dans le presse-papiers</string>
     <string name="choose_your_plan">Choisissez votre forfait</string>
     <string name="plan_subtitle">Commencez gratuitement ou débloquez plus avec un forfait payant. Vous pouvez changer à tout moment.</string>
@@ -3401,7 +3398,13 @@
     <string name="other_way_code_title">Utiliser un code de récupération</string>
     <string name="other_way_email_desc">Aster Mail envoie un lien à votre e-mail de récupération. Vous perdez l\'accès aux messages antérieurs à la réinitialisation.</string>
     <string name="other_way_email_title">Réinitialiser avec votre e-mail de récupération</string>
-    <string name="other_way_none_desc">Aster Mail ne peut pas lire vos données chiffrées, donc personne ne peut les récupérer sans l\'un de ces éléments. Vous pouvez toujours créer un compte.</string>
+    <string name="other_way_none_desc">Contactez le support et nous vous aidons pour la suite.</string>
+    <string name="change_account">Utiliser une autre adresse</string>
+    <string name="change_account_desc">Récupérez un autre compte Aster Mail.</string>
+    <string name="support_step_title">Contacter le support</string>
+    <string name="support_step_desc">Aster Mail ne peut pas lire vos données chiffrées, donc personne ne peut les déverrouiller sans un code de récupération ou votre e-mail de récupération. Le support peut vérifier votre compte et vous aider pour la suite.</string>
+    <string name="support_email_action">Écrire au support</string>
+    <string name="support_help_center">Ouvrir le centre d\'aide</string>
     <string name="other_way_none_title">Je n\'ai aucun de ces éléments</string>
     <string name="other_ways_desc">Choisissez comment récupérer l\'accès à votre compte.</string>
     <string name="print_codes">Imprimer</string>

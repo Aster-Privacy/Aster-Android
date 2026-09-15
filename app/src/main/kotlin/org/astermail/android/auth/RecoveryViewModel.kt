@@ -51,6 +51,7 @@ enum class RecoveryStep {
     code,
     other_ways,
     reset_email_confirm,
+    support,
     email_sent,
     password,
     processing,
@@ -162,12 +163,20 @@ class RecoveryViewModel @Inject constructor(
         _state.value = _state.value.copy(step = RecoveryStep.code, error = null)
     }
 
+    fun go_to_email_step() {
+        _state.value = _state.value.copy(step = RecoveryStep.email, email = "", error = null)
+    }
+
     fun go_to_other_ways() {
         _state.value = _state.value.copy(step = RecoveryStep.other_ways, error = null)
     }
 
     fun go_to_reset_email_confirm() {
         _state.value = _state.value.copy(step = RecoveryStep.reset_email_confirm, error = null)
+    }
+
+    fun go_to_support() {
+        _state.value = _state.value.copy(step = RecoveryStep.support, error = null)
     }
 
     fun send_reset_link() {
@@ -345,6 +354,7 @@ class RecoveryViewModel @Inject constructor(
             RecoveryStep.code -> RecoveryStep.email
             RecoveryStep.other_ways -> RecoveryStep.code
             RecoveryStep.reset_email_confirm -> RecoveryStep.other_ways
+            RecoveryStep.support -> RecoveryStep.other_ways
             RecoveryStep.password -> RecoveryStep.code
             else -> return
         }
