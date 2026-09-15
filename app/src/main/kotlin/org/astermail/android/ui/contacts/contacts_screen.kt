@@ -29,11 +29,6 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -63,7 +58,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -107,7 +102,6 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.aster_dropdown_divider
 import org.astermail.android.design.components.aster_dropdown_item
 import org.astermail.android.design.components.aster_dropdown_menu
-import org.astermail.android.design.mirror_in_rtl
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 
@@ -374,41 +368,15 @@ fun ContactsScreen(
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.weight(1f),
                     )
-                    val sync_label = stringResource(
-                        if (ui_state.is_syncing) R.string.syncing else R.string.sync_contacts,
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .clickable { show_sync_confirm = true }
-                            .semantics { contentDescription = sync_label },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        AnimatedContent(
-                            targetState = ui_state.is_syncing,
-                            transitionSpec = {
-                                fadeIn(tween(org.astermail.android.design.AsterDuration.short_4)) togetherWith
-                                    fadeOut(tween(org.astermail.android.design.AsterDuration.menu_exit))
-                            },
-                            label = "sync_icon",
-                        ) { syncing ->
-                            if (syncing) {
-                                CircularProgressIndicator(
-                                    color = colors.accent_blue,
-                                    strokeWidth = 2.dp,
-                                    strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
-                                    modifier = Modifier.size(20.dp),
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = TablerIcons.Refresh,
-                                    contentDescription = stringResource(R.string.sync_contacts),
-                                    tint = colors.text_secondary,
-                                    modifier = Modifier.size(22.dp),
-                                )
-                            }
-                        }
+                    if (ui_state.is_syncing) {
+                        CircularProgressIndicator(
+                            color = colors.accent_blue,
+                            strokeWidth = 2.dp,
+                            strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
+                            modifier = Modifier
+                                .size(20.dp)
+                                .padding(end = AsterSpacing.sm),
+                        )
                     }
                     Box {
                         AsterIconButton(
@@ -421,6 +389,19 @@ fun ContactsScreen(
                             expanded = show_overflow_menu,
                             on_dismiss = { show_overflow_menu = false },
                         ) {
+                            aster_dropdown_item(
+                                label = stringResource(
+                                    if (ui_state.is_syncing) R.string.syncing else R.string.sync_contacts,
+                                ),
+                                icon = TablerIcons.Refresh,
+                                enabled = !ui_state.is_syncing,
+                                test_tag = "contacts_sync",
+                                on_click = {
+                                    show_overflow_menu = false
+                                    show_sync_confirm = true
+                                },
+                            )
+                            aster_dropdown_divider()
                             aster_dropdown_item(
                                 label = stringResource(R.string.import_contacts_file),
                                 icon = TablerIcons.Upload,
@@ -472,6 +453,33 @@ fun ContactsScreen(
                 }
             }
             AsterDivider()
+
+            if (ui_state.tab == ContactsTab.CONTACTS) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        org.astermail.android.ui.common.list_search_bar(
+                            query = query,
+                            on_query_change = { query = it },
+                            placeholder = stringResource(R.string.search_contacts),
+                            test_tag = "contact_search_bar",
+                        )
+                    }
+                    val favorites_label = stringResource(R.string.tab_favorites)
+                    AsterIconButton(
+                        icon = if (filter_favorites) Icons.Filled.Star else TablerIcons.Star,
+                        content_description = favorites_label,
+                        tint = if (filter_favorites) colors.star else colors.text_secondary,
+                        onClick = { filter_favorites = !filter_favorites },
+                        modifier = Modifier.semantics { contentDescription = favorites_label },
+                    )
+                }
+            }
 
             Row(
                 modifier = Modifier
@@ -527,48 +535,6 @@ fun ContactsScreen(
                     on_empty_trash = { show_empty_trash_confirm = true },
                 )
             } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xs),
-                ) {
-                    org.astermail.android.ui.common.list_search_bar(
-                        query = query,
-                        on_query_change = { query = it },
-                        placeholder = stringResource(R.string.search_contacts),
-                        test_tag = "contact_search_bar",
-                    )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xs),
-                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    FilterChip(
-                        label = stringResource(R.string.tab_all),
-                        active = !filter_favorites,
-                        on_click = { filter_favorites = false },
-                    )
-                    FilterChip(
-                        label = stringResource(R.string.tab_favorites),
-                        active = filter_favorites,
-                        on_click = { filter_favorites = true },
-                    )
-                    Spacer(Modifier.weight(1f))
-                    Text(
-                        text = context.resources.getQuantityString(
-                            R.plurals.contacts_count_plural,
-                            filtered.size,
-                            filtered.size,
-                        ),
-                        color = colors.text_muted,
-                        fontSize = 12.sp,
-                    )
-                }
-
                 if (
                     !ui_state.duplicates_dismissed &&
                     ui_state.duplicate_clusters.isNotEmpty() &&
@@ -614,26 +580,37 @@ fun ContactsScreen(
                         modifier = Modifier.weight(1f),
                         contentPadding = PaddingValues(bottom = 88.dp),
                     ) {
+                        if (!filter_favorites && query.isBlank()) {
+                            val favorites = filtered.filter { it.is_favorite }
+                            if (favorites.isNotEmpty()) {
+                                item(key = "favorites_strip") {
+                                    favorites_strip(
+                                        favorites = favorites,
+                                        on_open_contact = on_open_contact,
+                                    )
+                                }
+                            }
+                        }
                         grouped.forEach { (letter, group) ->
                             stickyHeader {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(colors.bg_secondary)
+                                        .background(colors.bg_primary)
                                         .padding(
                                             horizontal = AsterSpacing.lg,
-                                            vertical = 4.dp,
+                                            vertical = AsterSpacing.xs,
                                         ),
                                 ) {
                                     Text(
                                         text = letter,
-                                        color = colors.text_tertiary,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.accent_blue,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
                                     )
                                 }
                             }
-                            itemsIndexed(group, key = { _, c -> c.id }) { i, c ->
+                            items(group, key = { c -> c.id }) { c ->
                                 ContactRow(
                                     contact = c,
                                     is_selected = c.id in ui_state.selected_ids,
@@ -647,7 +624,6 @@ fun ContactsScreen(
                                     },
                                     on_toggle_selection = { vm.toggle_selection(c.id) },
                                 )
-                                if (i < group.size - 1) AsterDivider()
                             }
                         }
                     }
@@ -656,25 +632,34 @@ fun ContactsScreen(
         }
 
         if (!ui_state.is_selecting && ui_state.tab != ContactsTab.TRASH) {
-            FloatingActionButton(
+            val fab_label = stringResource(
+                if (ui_state.tab == ContactsTab.GROUPS) R.string.new_group else R.string.new_contact,
+            )
+            ExtendedFloatingActionButton(
                 onClick = {
                     if (ui_state.tab == ContactsTab.GROUPS) show_new_group = true else on_create_contact()
                 },
                 containerColor = colors.accent_blue,
                 contentColor = Color.White,
-                shape = SquircleShape(18.dp),
+                shape = SquircleShape(AsterRadius.pill),
+                icon = {
+                    Icon(
+                        imageVector = TablerIcons.Plus,
+                        contentDescription = null,
+                    )
+                },
+                text = {
+                    Text(
+                        text = fab_label,
+                        fontWeight = FontWeight.Medium,
+                    )
+                },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(AsterSpacing.lg)
+                    .semantics { contentDescription = fab_label }
                     .testTag("fab_add_contact"),
-            ) {
-                Icon(
-                    imageVector = TablerIcons.Plus,
-                    contentDescription = stringResource(
-                        if (ui_state.tab == ContactsTab.GROUPS) R.string.new_group else R.string.new_contact,
-                    ),
-                )
-            }
+            )
         }
     }
 
@@ -932,35 +917,44 @@ private fun duplicate_banner(count: Int, on_review: () -> Unit, on_dismiss: () -
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xs)
-            .clip(SquircleShape(AsterRadius.md))
-            .background(colors.accent_blue.copy(alpha = 0.10f))
-            .border(1.dp, colors.accent_blue.copy(alpha = 0.28f), SquircleShape(AsterRadius.md))
-            .padding(start = AsterSpacing.md, end = AsterSpacing.xs, top = AsterSpacing.sm, bottom = AsterSpacing.sm),
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm)
+            .clip(SquircleShape(AsterRadius.xl))
+            .background(colors.bg_card)
+            .border(1.dp, colors.border_secondary, SquircleShape(AsterRadius.xl))
+            .padding(AsterSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = TablerIcons.Copy,
+            imageVector = TablerIcons.Users,
             contentDescription = null,
             tint = colors.accent_blue,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(20.dp),
         )
+        Spacer(Modifier.width(AsterSpacing.md))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.merge_contacts),
+                color = colors.text_primary,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = context.resources.getQuantityString(R.plurals.duplicate_contacts_found, count, count),
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+            )
+        }
         Spacer(Modifier.width(AsterSpacing.sm))
         Text(
-            text = context.resources.getQuantityString(R.plurals.duplicate_contacts_found, count, count),
-            color = colors.text_primary,
-            fontSize = 13.sp,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
             text = stringResource(R.string.review_duplicates),
-            color = colors.accent_blue,
+            color = Color.White,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
-                .clip(SquircleShape(AsterRadius.sm))
+                .clip(SquircleShape(AsterRadius.pill))
+                .background(colors.accent_blue)
                 .clickable(onClick = on_review)
-                .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.xs)
+                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm)
                 .testTag("review_duplicates"),
         )
         AsterIconButton(
@@ -1395,31 +1389,34 @@ private fun merge_dialog(
                     .heightIn(max = 320.dp)
                     .verticalScroll(rememberScrollState()),
             ) {
-                cluster.contacts.forEach { contact ->
+                cluster.contacts.forEachIndexed { index, contact ->
                     val is_primary = contact.id == primary_id
+                    if (index > 0) Spacer(Modifier.height(AsterSpacing.sm))
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = AsterSpacing.xs)
-                            .clip(SquircleShape(AsterRadius.md))
+                            .clip(SquircleShape(AsterRadius.lg))
                             .background(
-                                if (is_primary) colors.accent_blue.copy(alpha = 0.10f) else Color.Transparent,
+                                if (is_primary) colors.accent_blue.copy(alpha = 0.08f) else colors.bg_secondary,
                             )
                             .border(
                                 1.dp,
-                                if (is_primary) colors.accent_blue else colors.border_primary,
-                                SquircleShape(AsterRadius.md),
+                                if (is_primary) colors.accent_blue else colors.border_secondary,
+                                SquircleShape(AsterRadius.lg),
                             )
                             .clickable { primary_id = contact.id }
                             .padding(AsterSpacing.md),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        merge_radio_dot(selected = is_primary)
+                        Spacer(Modifier.width(AsterSpacing.md))
                         ContactAvatar(
-                        avatar_url = contact.avatar_url,
-                        email = contact.email,
-                        name = contact.name,
-                        profile_color = contact.profile_color,
-                    )
+                            avatar_url = contact.avatar_url,
+                            email = contact.email,
+                            name = contact.name,
+                            profile_color = contact.profile_color,
+                            size = 44.dp,
+                        )
                         Spacer(Modifier.width(AsterSpacing.md))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
@@ -1436,27 +1433,19 @@ private fun merge_dialog(
                             if (subtitle.isNotBlank()) {
                                 Text(
                                     text = subtitle,
-                                    color = colors.text_muted,
+                                    color = colors.text_secondary,
                                     fontSize = 13.sp,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                 )
                             }
-                            if (is_primary) {
-                                Text(
-                                    text = stringResource(R.string.merge_keep_this),
-                                    color = colors.accent_blue,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
-                                )
-                            }
                         }
                         if (is_primary) {
-                            Icon(
-                                imageVector = TablerIcons.Check,
-                                contentDescription = null,
-                                tint = colors.accent_blue,
-                                modifier = Modifier.size(18.dp),
+                            Text(
+                                text = stringResource(R.string.merge_keep_this),
+                                color = colors.accent_blue,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
                             )
                         }
                     }
@@ -1480,6 +1469,85 @@ private fun merge_dialog(
     )
 }
 
+@Composable
+private fun merge_radio_dot(selected: Boolean) {
+    val colors = AsterMaterial.colors
+    Box(
+        modifier = Modifier
+            .size(20.dp)
+            .clip(CircleShape)
+            .background(if (selected) colors.accent_blue else Color.Transparent)
+            .border(1.5.dp, if (selected) colors.accent_blue else colors.border_primary, CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (selected) {
+            Box(
+                modifier = Modifier
+                    .size(7.dp)
+                    .clip(CircleShape)
+                    .background(Color.White),
+            )
+        }
+    }
+}
+
+@Composable
+private fun favorites_strip(
+    favorites: List<Contact>,
+    on_open_contact: (String) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(R.string.tab_favorites),
+            color = colors.text_tertiary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(
+                horizontal = AsterSpacing.lg,
+                vertical = AsterSpacing.sm,
+            ),
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xs),
+            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.lg),
+        ) {
+            favorites.forEach { contact ->
+                Column(
+                    modifier = Modifier
+                        .width(64.dp)
+                        .clip(SquircleShape(AsterRadius.md))
+                        .clickable { on_open_contact(contact.id) }
+                        .padding(vertical = AsterSpacing.xs),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    ContactAvatar(
+                        avatar_url = contact.avatar_url,
+                        email = contact.email,
+                        name = contact.name,
+                        size = 56.dp,
+                        profile_color = contact.profile_color,
+                    )
+                    Spacer(Modifier.height(AsterSpacing.xs))
+                    Text(
+                        text = contact.name.ifBlank { contact.email }.substringBefore(" "),
+                        color = colors.text_secondary,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        }
+        AsterDivider()
+    }
+}
+
+private val contact_row_avatar_size = 48.dp
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ContactRow(
@@ -1498,7 +1566,7 @@ private fun ContactRow(
                 onClick = on_click,
                 onLongClick = on_toggle_selection,
             )
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -1511,7 +1579,7 @@ private fun ContactRow(
             if (is_selected) {
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(contact_row_avatar_size)
                         .clip(CircleShape)
                         .background(colors.accent_blue),
                     contentAlignment = Alignment.Center,
@@ -1520,26 +1588,27 @@ private fun ContactRow(
                         imageVector = TablerIcons.Check,
                         contentDescription = stringResource(R.string.selected),
                         tint = Color.White,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(22.dp),
                     )
                 }
             } else {
                 ContactAvatar(
-                        avatar_url = contact.avatar_url,
-                        email = contact.email,
-                        name = contact.name,
-                        profile_color = contact.profile_color,
-                    )
+                    avatar_url = contact.avatar_url,
+                    email = contact.email,
+                    name = contact.name,
+                    size = contact_row_avatar_size,
+                    profile_color = contact.profile_color,
+                )
             }
         }
-        Spacer(Modifier.width(AsterSpacing.md))
+        Spacer(Modifier.width(AsterSpacing.lg))
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = contact.name,
+                    text = contact.name.ifBlank { contact.email },
                     color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Normal,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),
@@ -1548,9 +1617,9 @@ private fun ContactRow(
                     Spacer(Modifier.width(AsterSpacing.xs))
                     Icon(
                         imageVector = Icons.Filled.Star,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.tab_favorites),
                         tint = colors.star,
-                        modifier = Modifier.size(13.dp),
+                        modifier = Modifier.size(14.dp),
                     )
                 }
             }
@@ -1558,23 +1627,15 @@ private fun ContactRow(
                 .firstOrNull { it.isNotBlank() }
                 .orEmpty()
             if (subtitle.isNotBlank()) {
+                Spacer(Modifier.height(2.dp))
                 Text(
                     text = subtitle,
-                    color = colors.text_muted,
-                    fontSize = 13.sp,
+                    color = colors.text_secondary,
+                    fontSize = 14.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-        }
-        Spacer(Modifier.width(AsterSpacing.sm))
-        if (!is_selecting) {
-            Icon(
-                imageVector = TablerIcons.ChevronRight,
-                contentDescription = null,
-                tint = colors.text_muted,
-                modifier = Modifier.size(18.dp).mirror_in_rtl(),
-            )
         }
     }
 }

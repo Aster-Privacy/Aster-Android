@@ -48,7 +48,6 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.MaterialTheme
@@ -65,7 +64,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -74,9 +72,7 @@ import org.astermail.android.contacts.ContactsViewModel
 import org.astermail.android.contacts.encode_contact_photo
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
-import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
-import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterDivider
@@ -139,7 +135,6 @@ fun ContactEditScreen(
     var linkedin by rememberSaveable { mutableStateOf(source?.linkedin.orEmpty()) }
     var notes by rememberSaveable { mutableStateOf(source?.notes.orEmpty()) }
     var avatar_url by rememberSaveable { mutableStateOf(source?.avatar_url.orEmpty()) }
-    var active_tab by rememberSaveable { mutableStateOf(0) }
     var loaded_contact_id by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(source) {
@@ -327,108 +322,85 @@ fun ContactEditScreen(
                 )
             }
 
-            TabSegment(
-                tabs = listOf(
-                    stringResource(R.string.tab_basic),
-                    stringResource(R.string.tab_details),
-                    stringResource(R.string.tab_address),
-                    stringResource(R.string.tab_social),
-                ),
-                active = active_tab,
-                on_select = { active_tab = it },
-            )
-            Spacer(Modifier.height(AsterSpacing.md))
+            AsterDivider()
 
-            when (active_tab) {
-                0 -> FormSection(title = stringResource(R.string.tab_basic)) {
-                    FormField(stringResource(R.string.name), name) { name = it }
-                    FormField(stringResource(R.string.email), email) { email = it }
-                    FormField(stringResource(R.string.phone), phone) { phone = it }
-                }
-                1 -> FormSection(title = stringResource(R.string.tab_details)) {
-                    FormField(stringResource(R.string.company), company) { company = it }
-                    FormField(stringResource(R.string.title), title) { title = it }
-                    FormField(stringResource(R.string.work_email), work_email) { work_email = it }
-                    FormField(stringResource(R.string.work_phone), work_phone) { work_phone = it }
-                    FormField(stringResource(R.string.birthday), birthday) { birthday = it }
-                    FormField(stringResource(R.string.notes), notes) { notes = it }
-                }
-                2 -> FormSection(title = stringResource(R.string.tab_address)) {
-                    FormField(stringResource(R.string.street), address) { address = it }
-                    FormField(stringResource(R.string.city), city) { city = it }
-                    FormField(stringResource(R.string.region), region) { region = it }
-                    FormField(stringResource(R.string.postal_code), postal_code) { postal_code = it }
-                    FormField(stringResource(R.string.country), country) { country = it }
-                }
-                3 -> FormSection(title = stringResource(R.string.tab_social)) {
-                    FormField(stringResource(R.string.website), website) { website = it }
-                    FormField(stringResource(R.string.twitter), twitter) { twitter = it }
-                    FormField(stringResource(R.string.linkedin), linkedin) { linkedin = it }
-                }
+            FormGroup(icon = TablerIcons.User) {
+                FormField(stringResource(R.string.name), name) { name = it }
+            }
+            AsterDivider()
+
+            FormGroup(icon = TablerIcons.Mail) {
+                FormField(stringResource(R.string.email), email) { email = it }
+                FormField(stringResource(R.string.work_email), work_email) { work_email = it }
+            }
+            AsterDivider()
+
+            FormGroup(icon = TablerIcons.Phone) {
+                FormField(stringResource(R.string.phone), phone) { phone = it }
+                FormField(stringResource(R.string.work_phone), work_phone) { work_phone = it }
+            }
+            AsterDivider()
+
+            FormGroup(icon = TablerIcons.Briefcase) {
+                FormField(stringResource(R.string.company), company) { company = it }
+                FormField(stringResource(R.string.title), title) { title = it }
+            }
+            AsterDivider()
+
+            FormGroup(icon = TablerIcons.Calendar) {
+                FormField(stringResource(R.string.birthday), birthday) { birthday = it }
+            }
+            AsterDivider()
+
+            FormGroup(icon = TablerIcons.MapPin) {
+                FormField(stringResource(R.string.street), address) { address = it }
+                FormField(stringResource(R.string.city), city) { city = it }
+                FormField(stringResource(R.string.region), region) { region = it }
+                FormField(stringResource(R.string.postal_code), postal_code) { postal_code = it }
+                FormField(stringResource(R.string.country), country) { country = it }
+            }
+            AsterDivider()
+
+            FormGroup(icon = TablerIcons.Link) {
+                FormField(stringResource(R.string.website), website) { website = it }
+                FormField(stringResource(R.string.twitter), twitter) { twitter = it }
+                FormField(stringResource(R.string.linkedin), linkedin) { linkedin = it }
+            }
+            AsterDivider()
+
+            FormGroup(icon = TablerIcons.Notes) {
+                FormField(stringResource(R.string.notes), notes) { notes = it }
             }
         }
     }
 }
 
 @Composable
-private fun TabSegment(
-    tabs: List<String>,
-    active: Int,
-    on_select: (Int) -> Unit,
-) {
+private fun FormGroup(icon: androidx.compose.ui.graphics.vector.ImageVector, content: @Composable () -> Unit) {
     val colors = AsterMaterial.colors
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = AsterSpacing.lg)
-            .clip(SquircleShape(18.dp))
-            .background(colors.bg_tertiary)
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
     ) {
-        tabs.forEachIndexed { idx, label ->
-            val is_active = idx == active
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(SquircleShape(AsterRadius.sm))
-                    .background(if (is_active) colors.bg_card else Color.Transparent)
-                    .clickable { on_select(idx) }
-                    .padding(vertical = 8.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = label,
-                    color = if (is_active) colors.text_primary else colors.text_muted,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun FormSection(title: String, content: @Composable () -> Unit) {
-    val colors = AsterMaterial.colors
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = AsterSpacing.lg),
-    ) {
-        Text(
-            text = title,
-            color = colors.text_tertiary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(start = AsterSpacing.sm, bottom = 6.dp),
-        )
-        Column(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = AsterSpacing.md),
+                .padding(top = AsterSpacing.xs)
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(colors.bg_secondary),
+            contentAlignment = Alignment.Center,
+        ) {
+            androidx.compose.material3.Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = colors.text_secondary,
+                modifier = Modifier.size(18.dp),
+            )
+        }
+        Spacer(Modifier.width(AsterSpacing.lg))
+        Column(
+            modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
         ) {
             content()
