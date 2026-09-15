@@ -76,4 +76,12 @@
         <item quantity="one">%d contact exporté</item>
         <item quantity="other">%d contacts exportés</item>
     </plurals>
+    <plurals name="lockout_minutes">
+        <item quantity="one">%1$d minute</item>
+        <item quantity="other">%1$d minutes</item>
+    </plurals>
+    <plurals name="review_codes_left">
+        <item quantity="one">Il reste %1$d code de récupération.</item>
+        <item quantity="other">Il reste %1$d codes de récupération.</item>
+    </plurals>
 </resources>

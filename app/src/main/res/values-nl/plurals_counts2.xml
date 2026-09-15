@@ -76,4 +76,12 @@
         <item quantity="one">%d contactpersoon geëxporteerd</item>
         <item quantity="other">%d contactpersonen geëxporteerd</item>
     </plurals>
+    <plurals name="lockout_minutes">
+        <item quantity="one">%1$d minuut</item>
+        <item quantity="other">%1$d minuten</item>
+    </plurals>
+    <plurals name="review_codes_left">
+        <item quantity="one">Nog %1$d herstelcode over.</item>
+        <item quantity="other">Nog %1$d herstelcodes over.</item>
+    </plurals>
 </resources>

@@ -120,9 +120,9 @@
     <string name="recovery_email_sent_description">We hebben een link voor het opnieuw instellen van je wachtwoord naar je herstel-e-mailadres gestuurd. Controleer je inbox en klik op de link om door te gaan.</string>
     <string name="use_recovery_code_instead">Herstelcode gebruiken</string>
     <string name="enter_recovery_code">Herstelcode invoeren</string>
-    <string name="enter_recovery_code_description">Voer een van de herstelcodes in die je hebt opgeslagen bij het aanmaken van je account.</string>
+    <string name="enter_recovery_code_description">Voer een van de herstelcodes in die je hebt opgeslagen toen je je account aanmaakte. Elke code werkt één keer.</string>
     <string name="recovery_code">Herstelcode</string>
-    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX</string>
+    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX-XXXX</string>
     <string name="verify_code">Code verifiëren</string>
     <string name="create_new_password">Nieuw wachtwoord aanmaken</string>
     <string name="choose_strong_password">Kies een sterk wachtwoord voor je account</string>
@@ -136,7 +136,7 @@
     <string name="recovering_your_account">Je account herstellen</string>
     <string name="please_dont_close_app">Sluit de app niet</string>
     <string name="save_new_recovery_codes">Nieuwe herstelcodes opslaan</string>
-    <string name="old_codes_invalidated">Je oude herstelcodes zijn ongeldig gemaakt. Sla deze nieuwe codes op een veilige plek op.</string>
+    <string name="old_codes_invalidated">Je oude herstelcodes werken niet meer. Bewaar deze op een veilige plek, zoals een wachtwoordmanager of een afdruk. Elke code werkt één keer.</string>
     <string name="show_codes">Codes tonen</string>
     <string name="hide_codes">Codes verbergen</string>
     <string name="copy_codes">Codes kopiëren</string>
@@ -676,7 +676,6 @@
     <string name="two_factor_subtitle_add">Voeg een tweede laag toe</string>
     <string name="active_sessions">Actieve sessies</string>
     <string name="devices_signed_in">Ingelogde apparaten</string>
-    <string name="recovery_key">Herstelsleutel</string>
     <string name="backup_access">Back-uptoegang</string>
 
     <string name="update_your_password">Werk je wachtwoord bij</string>
@@ -715,7 +714,6 @@
     <string name="two_factor_other_devices_signed_out">Aster heeft je op je andere apparaten afgemeld. Meld je opnieuw aan en voer een code uit je authenticator-app in om ze weer te gebruiken.</string>
     <string name="new_backup_codes_title">Nieuwe back-upcodes</string>
     <string name="new_backup_codes_subtitle">Je oude back-upcodes werken niet meer. Sla deze op een veilige plek op.</string>
-    <string name="copy_all_codes">Alle codes kopiëren</string>
 
     <string name="sessions">Sessies</string>
     <string name="no_active_sessions">Geen actieve sessies</string>
@@ -757,12 +755,7 @@
     <string name="open_encryption_settings">Versleutelingsinstellingen openen</string>
 
     <string name="enter_your_password">Voer je wachtwoord in</string>
-    <string name="password_required_for_recovery">Je wachtwoord is vereist om je herstelsleutel te bekijken.</string>
-    <string name="please_enter_password">Voer je wachtwoord in</string>
-    <string name="view_recovery_key">Herstelsleutel bekijken</string>
     <string name="incorrect_password">Onjuist wachtwoord</string>
-    <string name="store_somewhere_safe">Bewaar dit op een veilige plek</string>
-    <string name="recovery_key_warning">Je herstelsleutel is de enige manier om weer toegang te krijgen als je je wachtwoord verliest. Aster kan het niet voor je herstellen.</string>
     <string name="no_recovery_key_found">Geen herstelsleutel gevonden. Herstelcodes worden ingesteld bij het aanmaken van je account en opgeslagen in je versleutelde kluis. Probeer uit te loggen en weer in te loggen om je kluis te vernieuwen.</string>
 
     <string name="aliases">Aliassen</string>
@@ -1439,8 +1432,6 @@
     <string name="badges">Badges</string>
     <string name="no_badges_yet">Nog geen badges</string>
 
-    <string name="no_recovery_codes_yet">Geen herstelcodes gevonden voor dit account. Genereer er nu een set zodat je weer toegang krijgt als je je wachtwoord kwijtraakt.</string>
-    <string name="generate_recovery_codes">Herstelcodes genereren</string>
 
     <!-- Pending account deletion -->
     <string name="pending_deletion_title">Account gepland voor verwijdering</string>
@@ -2023,19 +2014,13 @@
     <string name="upgrade_inline_card_description">Je zit aan de limiet van het gratis abonnement. Met een betaald abonnement kan er meer.</string>
     <string name="your_key">Jouw sleutel</string>
     <string name="recovery_codes">Herstelcodes</string>
-    <string name="recovery_codes_remaining">%1$d / %2$d codes over</string>
+    <string name="recovery_codes_remaining">Nog %1$d van %2$d codes over</string>
     <string name="low">Laag</string>
     <string name="ok">Oké</string>
-    <string name="recovery_codes_low_warning">Je hebt nog weinig herstelcodes. Maak binnenkort nieuwe aan.</string>
+    <string name="recovery_codes_low_warning">Je hebt nog maar weinig herstelcodes. Haal nieuwe codes op zodat je niet buitengesloten raakt.</string>
     <string name="loading_recovery_codes_status">Status van herstelcodes laden...</string>
-    <string name="view_backup_recovery_key">Herstelsleutel bekijken &amp; back-uppen</string>
-    <string name="regenerating">Opnieuw aanmaken...</string>
-    <string name="regenerate_recovery_codes">Herstelcodes opnieuw aanmaken</string>
-    <string name="regenerate_recovery_codes_title">Herstelcodes opnieuw aanmaken?</string>
-    <string name="regenerate_recovery_codes_message">Je huidige herstelcodes vervallen hiermee. Bewaar de nieuwe meteen.</string>
-    <string name="regenerate">Opnieuw aanmaken</string>
-    <string name="new_recovery_codes_title">Nieuwe herstelcodes</string>
-    <string name="new_recovery_codes_message">Bewaar deze codes op een veilige plek. Elke code werkt maar één keer.</string>
+    <string name="new_recovery_codes_title">Sla je herstelcodes op</string>
+    <string name="new_recovery_codes_message">Bewaar ze op een veilige plek, zoals een wachtwoordmanager of een afdruk. Elke code werkt één keer.</string>
     <string name="storage_format">Opslagformaat</string>
     <string name="storage_format_aster">Aster-server</string>
     <string name="storage_format_aster_sub">Standaard versleutelde opslag</string>
@@ -3375,4 +3360,37 @@
     <string name="enc_verification_code_info_title">Wat is deze code?</string>
     <string name="enc_verification_code_info_description">Een korte code die is gemaakt op basis van je versleutelingssleutel. Als iemand met wie je mailt deze code vergelijkt met die van hen en ze komen overeen, kunnen jullie er beiden zeker van zijn dat jullie berichten privé zijn en niet zijn gemanipuleerd.</string>
     <string name="enc_copy_verification_code">Verificatiecode kopiëren</string>
+    <string name="copy_all_codes">Alle codes kopiëren</string>
+    <string name="codes_copied">Codes gekopieerd.</string>
+    <string name="confirm_its_you">Bevestig dat jij het bent</string>
+    <string name="error_recovery_code_replaced">Deze code hoort bij een oudere set en werkt niet meer. Gebruik een code uit de meest recente lijst die je hebt opgeslagen.</string>
+    <string name="error_recovery_code_used">Deze code is al gebruikt. Elke code werkt één keer, dus voer een andere code uit je opgeslagen lijst in.</string>
+    <string name="error_recovery_locked_until">Deze account heeft te veel herstelpogingen gehad. Je kunt het over %1$s opnieuw proberen. Geen van je codes is gebruikt, dus je hebt ze nog allemaal.</string>
+    <string name="get_new_codes">Nieuwe codes ophalen</string>
+    <string name="get_new_codes_message">Je huidige codes werken niet meer zodra je nieuwe ophaalt.</string>
+    <string name="get_new_codes_title">Nieuwe herstelcodes ophalen?</string>
+    <string name="i_saved_these_codes">Ik heb deze codes opgeslagen</string>
+    <string name="other_way_code_desc">Voer een van de codes in die je hebt opgeslagen.</string>
+    <string name="other_way_code_title">Een herstelcode gebruiken</string>
+    <string name="other_way_email_desc">Aster Mail stuurt een link naar je herstel-e-mail. Je verliest toegang tot e-mail van voor het opnieuw instellen.</string>
+    <string name="other_way_email_title">Opnieuw instellen met je herstel-e-mail</string>
+    <string name="other_way_none_desc">Aster Mail kan je versleutelde gegevens niet lezen, dus niemand kan ze herstellen zonder een van deze opties. Je kunt nog steeds een account maken.</string>
+    <string name="other_way_none_title">Ik heb hier niets van</string>
+    <string name="other_ways_desc">Kies hoe je weer toegang tot je account wilt krijgen.</string>
+    <string name="print_codes">Afdrukken</string>
+    <string name="recovery_codes_print_created">Aangemaakt op %1$s</string>
+    <string name="recovery_codes_print_note">Elke code werkt één keer. Houd deze codes privé. Iedereen met een code en je e-mailadres kan je wachtwoord opnieuw instellen.</string>
+    <string name="recovery_codes_print_title">Aster Mail-herstelcodes</string>
+    <string name="recovery_codes_unavailable">Je codes staan niet op dit apparaat. Haal nieuwe codes op om ze te zien.</string>
+    <string name="recovery_codes_view_desc">Elke code werkt één keer. Gebruikte codes zijn doorgestreept.</string>
+    <string name="reset_account_desc">Je versleutelde e-mail, contacten en bestanden van voor het opnieuw instellen blijven vergrendeld tot je ze herstelt met je oude wachtwoord. Je krijgt een nieuwe, lege versleutelingssleutel.</string>
+    <string name="reset_account_title">Je account opnieuw instellen?</string>
+    <string name="review_devices_signed_out">Andere apparaten zijn afgemeld.</string>
+    <string name="review_no_recovery_email">Geen herstel-e-mail.</string>
+    <string name="review_recovery_email_kept">Je herstel-e-mail is nog ingesteld.</string>
+    <string name="review_security_desc">Je wachtwoord is gewijzigd en je account is hersteld.</string>
+    <string name="review_security_title">Controleer je beveiliging</string>
+    <string name="review_two_step_off">Verificatie in twee stappen staat uit.</string>
+    <string name="send_reset_link">Herstellink sturen</string>
+    <string name="try_another_way">Probeer het anders</string>
 </resources>

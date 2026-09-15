@@ -13,4 +13,10 @@
     <string name="plan_prompt_body">Upgrade voor meer opslag, eigen domeinen en onbeperkte aliassen.</string>
     <string name="plan_prompt_action">Abonnementen bekijken</string>
     <string name="plan_prompt_dismiss">Niet nu</string>
+    <string name="recovery_codes_reminder_title">Bewaar je herstelcodes</string>
+    <string name="recovery_codes_reminder_body">Aster versleutelt je mail met je wachtwoord, dus niemand kan het voor je herstellen. Herstelcodes zijn de enige weg terug naar je versleutelde mail.</string>
+    <string name="recovery_codes_reminder_action">Herstelcodes ophalen</string>
+    <string name="recovery_phrase_migrate_title">Overstappen op herstelcodes</string>
+    <string name="recovery_phrase_migrate_body">Herstelzinnen verdwijnen. Haal nu herstelcodes op zodat je je account nog kunt herstellen.</string>
+    <string name="recovery_phrase_migrate_action">Codes ophalen</string>
 </resources>

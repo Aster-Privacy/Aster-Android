@@ -20,6 +20,10 @@
         <item quantity="one">%d ghost alias</item>
         <item quantity="other">%d ghost aliases</item>
     </plurals>
+    <plurals name="lockout_minutes">
+        <item quantity="one">%1$d minute</item>
+        <item quantity="other">%1$d minutes</item>
+    </plurals>
     <plurals name="recovery_codes_count">
         <item quantity="one">%d recovery code</item>
         <item quantity="other">%d recovery codes</item>
@@ -75,5 +79,9 @@
     <plurals name="exported_contacts">
         <item quantity="one">Exported %d contact</item>
         <item quantity="other">Exported %d contacts</item>
+    </plurals>
+    <plurals name="review_codes_left">
+        <item quantity="one">%1$d recovery code left.</item>
+        <item quantity="other">%1$d recovery codes left.</item>
     </plurals>
 </resources>

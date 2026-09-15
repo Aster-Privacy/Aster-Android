@@ -13,4 +13,10 @@
     <string name="plan_prompt_body">Перейдите на платный тариф, чтобы получить больше места, свои домены и неограниченные псевдонимы.</string>
     <string name="plan_prompt_action">Посмотреть тарифы</string>
     <string name="plan_prompt_dismiss">Не сейчас</string>
+    <string name="recovery_codes_reminder_title">Сохраните коды восстановления</string>
+    <string name="recovery_codes_reminder_body">Aster шифрует вашу почту вашим паролем, поэтому никто не сможет сбросить его за вас. Коды восстановления остаются единственным способом вернуться к зашифрованной почте.</string>
+    <string name="recovery_codes_reminder_action">Получить коды восстановления</string>
+    <string name="recovery_phrase_migrate_title">Перейдите на коды восстановления</string>
+    <string name="recovery_phrase_migrate_body">Фразы восстановления скоро перестанут работать. Получите коды восстановления сейчас, чтобы сохранить возможность восстановить аккаунт.</string>
+    <string name="recovery_phrase_migrate_action">Получить коды</string>
 </resources>

@@ -120,9 +120,9 @@
     <string name="recovery_email_sent_description">비밀번호 재설정 링크를 복구 이메일로 보냈습니다. 받은 편지함을 확인하고 링크를 클릭하여 계속하세요.</string>
     <string name="use_recovery_code_instead">대신 복구 코드 사용</string>
     <string name="enter_recovery_code">복구 코드 입력</string>
-    <string name="enter_recovery_code_description">계정 생성 시 저장한 복구 코드 중 하나를 입력하세요.</string>
+    <string name="enter_recovery_code_description">계정을 만들 때 저장한 복구 코드 중 하나를 입력하세요. 각 코드는 한 번만 사용할 수 있습니다.</string>
     <string name="recovery_code">복구 코드</string>
-    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX</string>
+    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX-XXXX</string>
     <string name="verify_code">코드 확인</string>
     <string name="create_new_password">새 비밀번호 만들기</string>
     <string name="choose_strong_password">계정에 사용할 강력한 비밀번호를 선택하세요</string>
@@ -136,7 +136,7 @@
     <string name="recovering_your_account">계정 복구 중</string>
     <string name="please_dont_close_app">앱을 닫지 마세요</string>
     <string name="save_new_recovery_codes">새 복구 코드 저장</string>
-    <string name="old_codes_invalidated">이전 복구 코드가 무효화되었습니다. 이 새 코드를 안전한 곳에 저장하세요.</string>
+    <string name="old_codes_invalidated">이전 복구 코드는 더 이상 사용할 수 없습니다. 새 코드를 비밀번호 관리자나 인쇄물처럼 안전한 곳에 보관하세요. 각 코드는 한 번만 사용할 수 있습니다.</string>
     <string name="show_codes">코드 보기</string>
     <string name="hide_codes">코드 숨기기</string>
     <string name="copy_codes">코드 복사</string>
@@ -676,7 +676,6 @@
     <string name="two_factor_subtitle_add">두 번째 보안 계층 추가</string>
     <string name="active_sessions">활성 세션</string>
     <string name="devices_signed_in">로그인된 기기</string>
-    <string name="recovery_key">복구 키</string>
     <string name="backup_access">백업 접근</string>
 
     <string name="update_your_password">비밀번호 업데이트</string>
@@ -715,7 +714,6 @@
     <string name="two_factor_other_devices_signed_out">Aster가 다른 기기에서 로그아웃했습니다. 다시 사용하려면 로그인한 다음 인증 앱의 코드를 입력하십시오.</string>
     <string name="new_backup_codes_title">새 백업 코드</string>
     <string name="new_backup_codes_subtitle">이전 백업 코드는 더 이상 사용할 수 없습니다. 이 코드를 안전한 곳에 저장하세요.</string>
-    <string name="copy_all_codes">모든 코드 복사</string>
 
     <string name="sessions">세션</string>
     <string name="no_active_sessions">활성 세션이 없습니다</string>
@@ -757,12 +755,7 @@
     <string name="open_encryption_settings">암호화 설정 열기</string>
 
     <string name="enter_your_password">비밀번호 입력</string>
-    <string name="password_required_for_recovery">복구 키를 보려면 비밀번호가 필요합니다.</string>
-    <string name="please_enter_password">비밀번호를 입력하세요</string>
-    <string name="view_recovery_key">복구 키 보기</string>
     <string name="incorrect_password">비밀번호가 올바르지 않습니다</string>
-    <string name="store_somewhere_safe">안전한 곳에 보관하세요</string>
-    <string name="recovery_key_warning">복구 키는 비밀번호를 분실했을 때 접근을 회복하는 유일한 방법입니다. Aster는 이를 복구할 수 없습니다.</string>
     <string name="no_recovery_key_found">복구 키를 찾을 수 없습니다. 복구 코드는 계정 생성 시 설정되어 암호화된 볼트에 저장됩니다. 로그아웃 후 다시 로그인하여 볼트를 새로고침해 보세요.</string>
 
     <string name="aliases">별칭</string>
@@ -1437,8 +1430,6 @@
     <string name="badges">배지</string>
     <string name="no_badges_yet">아직 배지가 없습니다</string>
 
-    <string name="no_recovery_codes_yet">이 계정의 복구 코드를 찾을 수 없습니다. 비밀번호를 잃어버렸을 때 접근 권한을 되찾을 수 있도록 지금 생성하세요.</string>
-    <string name="generate_recovery_codes">복구 코드 생성</string>
 
     <!-- Pending account deletion -->
     <string name="pending_deletion_title">계정 삭제 예정</string>
@@ -2020,19 +2011,13 @@
     <string name="upgrade_inline_card_description">무료 요금제 한도에 도달했습니다. 유료 요금제로 더 쓰세요.</string>
     <string name="your_key">내 키</string>
     <string name="recovery_codes">복구 코드</string>
-    <string name="recovery_codes_remaining">%1$d / %2$d개 남음</string>
+    <string name="recovery_codes_remaining">%2$d개 중 %1$d개 남음</string>
     <string name="low">부족</string>
     <string name="ok">확인</string>
-    <string name="recovery_codes_low_warning">복구 코드가 얼마 남지 않았습니다. 곧 다시 만드세요.</string>
+    <string name="recovery_codes_low_warning">복구 코드가 얼마 남지 않았습니다. 계정이 잠기지 않도록 새 코드를 받으세요.</string>
     <string name="loading_recovery_codes_status">복구 코드 상태를 불러오는 중...</string>
-    <string name="view_backup_recovery_key">복구 키 보기 및 백업</string>
-    <string name="regenerating">다시 만드는 중...</string>
-    <string name="regenerate_recovery_codes">복구 코드 다시 만들기</string>
-    <string name="regenerate_recovery_codes_title">복구 코드를 다시 만들까요?</string>
-    <string name="regenerate_recovery_codes_message">지금 쓰는 복구 코드는 더 이상 쓸 수 없게 됩니다. 새 코드를 바로 저장하세요.</string>
-    <string name="regenerate">다시 만들기</string>
-    <string name="new_recovery_codes_title">새 복구 코드</string>
-    <string name="new_recovery_codes_message">안전한 곳에 보관하세요. 각 코드는 한 번만 쓸 수 있습니다.</string>
+    <string name="new_recovery_codes_title">복구 코드를 저장하세요</string>
+    <string name="new_recovery_codes_message">비밀번호 관리자나 인쇄물처럼 안전한 곳에 보관하세요. 각 코드는 한 번만 사용할 수 있습니다.</string>
     <string name="storage_format">저장 형식</string>
     <string name="storage_format_aster">Aster 서버</string>
     <string name="storage_format_aster_sub">기본 암호화 저장소</string>
@@ -3357,4 +3342,37 @@
     <string name="enc_verification_code_info_title">이 코드는 무엇인가요?</string>
     <string name="enc_verification_code_info_description">암호화 키로 만들어진 짧은 코드입니다. 메일을 주고받는 상대방이 이 코드를 자신의 코드와 비교했을 때 일치하면, 두 사람 모두 메시지가 비공개이며 조작되지 않았음을 확신할 수 있습니다.</string>
     <string name="enc_copy_verification_code">확인 코드 복사</string>
+    <string name="copy_all_codes">모든 코드 복사</string>
+    <string name="codes_copied">코드를 복사했습니다.</string>
+    <string name="confirm_its_you">본인 확인</string>
+    <string name="error_recovery_code_replaced">이 코드는 이전 세트에 속하며 더 이상 사용할 수 없습니다. 가장 최근에 저장한 목록의 코드를 사용하세요.</string>
+    <string name="error_recovery_code_used">이 코드는 이미 사용되었습니다. 각 코드는 한 번만 사용할 수 있으므로 저장한 목록에서 다른 코드를 입력하세요.</string>
+    <string name="error_recovery_locked_until">이 계정에서 복구 시도가 너무 많았습니다. %1$s 후에 다시 시도할 수 있습니다. 코드는 하나도 사용되지 않았으므로 모두 그대로 남아 있습니다.</string>
+    <string name="get_new_codes">새 코드 받기</string>
+    <string name="get_new_codes_message">새 코드를 받으면 현재 코드는 바로 사용할 수 없습니다.</string>
+    <string name="get_new_codes_title">새 복구 코드를 받으시겠습니까?</string>
+    <string name="i_saved_these_codes">이 코드를 저장했습니다</string>
+    <string name="other_way_code_desc">저장한 코드 중 하나를 입력하세요.</string>
+    <string name="other_way_code_title">복구 코드 사용</string>
+    <string name="other_way_email_desc">Aster Mail이 복구 이메일로 링크를 보냅니다. 재설정 전에 받은 메일에는 접근할 수 없습니다.</string>
+    <string name="other_way_email_title">복구 이메일로 재설정</string>
+    <string name="other_way_none_desc">Aster Mail은 암호화된 데이터를 읽을 수 없으므로 이 방법 중 하나가 없으면 누구도 복구할 수 없습니다. 새 계정은 만들 수 있습니다.</string>
+    <string name="other_way_none_title">해당하는 항목이 없음</string>
+    <string name="other_ways_desc">계정에 다시 로그인할 방법을 선택하세요.</string>
+    <string name="print_codes">인쇄</string>
+    <string name="recovery_codes_print_created">%1$s에 생성됨</string>
+    <string name="recovery_codes_print_note">각 코드는 한 번만 사용할 수 있습니다. 이 코드를 비공개로 보관하세요. 코드와 이메일 주소를 아는 사람은 누구나 비밀번호를 재설정할 수 있습니다.</string>
+    <string name="recovery_codes_print_title">Aster Mail 복구 코드</string>
+    <string name="recovery_codes_unavailable">이 기기에는 코드가 저장되어 있지 않습니다. 보려면 새 코드를 받으세요.</string>
+    <string name="recovery_codes_view_desc">각 코드는 한 번만 사용할 수 있습니다. 사용한 코드에는 취소선이 표시됩니다.</string>
+    <string name="reset_account_desc">재설정 전의 암호화된 메일, 연락처, 파일은 이전 비밀번호로 복구할 때까지 잠긴 상태로 유지됩니다. 새로운 빈 암호화 키가 발급됩니다.</string>
+    <string name="reset_account_title">계정을 재설정할까요?</string>
+    <string name="review_devices_signed_out">다른 기기에서 로그아웃되었습니다.</string>
+    <string name="review_no_recovery_email">복구 이메일이 없습니다.</string>
+    <string name="review_recovery_email_kept">복구 이메일이 그대로 설정되어 있습니다.</string>
+    <string name="review_security_desc">비밀번호가 변경되었고 계정이 복구되었습니다.</string>
+    <string name="review_security_title">보안 검토</string>
+    <string name="review_two_step_off">2단계 인증이 꺼져 있습니다.</string>
+    <string name="send_reset_link">재설정 링크 보내기</string>
+    <string name="try_another_way">다른 방법 사용</string>
 </resources>

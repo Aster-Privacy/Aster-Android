@@ -252,6 +252,7 @@ data class SettingsUiState(
     val vanguard_status_load_failed: Boolean = false,
     val security_loading: Boolean = false,
     val pgp_key_info: org.astermail.android.api.encryption.PgpKeyInfo? = null,
+    val recovery_methods: org.astermail.android.api.recovery.RecoveryMethodsResponse? = null,
     val recovery_codes_status: org.astermail.android.api.encryption.RecoveryCodesStatus? = null,
     val recovery_codes_status_load_failed: Boolean = false,
     val encryption_settings: org.astermail.android.api.encryption.EncryptionSettings? = null,
@@ -331,6 +332,7 @@ class SettingsViewModel @Inject constructor(
     private val recovery_email_api: RecoveryEmailApi,
     private val security_api: SecurityApi,
     private val encryption_api: org.astermail.android.api.encryption.EncryptionApi,
+    private val recovery_api: org.astermail.android.api.recovery.RecoveryApi,
     private val alias_detail_api: org.astermail.android.api.aliases.AliasDetailApi,
     private val mail_rules_api: org.astermail.android.api.mail_rules.MailRulesApi,
     private val auth_repository: AuthRepository,
@@ -3771,17 +3773,63 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    suspend fun regenerate_recovery_codes_now(): List<String> {
+    suspend fun verify_recovery_step_up(
+        password: String,
+        totp_code: String?,
+    ): Result<org.astermail.android.api.recovery.VerifyCodesStepUpResponse> {
         return try {
-            val result = encryption_api.regenerate_recovery_codes()
-            _state.update { it.copy(recovery_codes_status = result.info) }
-            if (result.codes.isNotEmpty()) {
-                session_key_store.put_recovery_codes(result.codes)
-            }
-            result.codes
+            val hash = auth_repository.derive_password_hash_b64(password)
+                ?: return Result.failure(
+                    org.astermail.android.api.ApiError.UnknownError(
+                        context.getString(R.string.session_unavailable_sign_in_again),
+                    ),
+                )
+            val response = recovery_api.verify_step_up(
+                org.astermail.android.api.recovery.VerifyCodesStepUpRequest(
+                    password_hash = hash,
+                    totp_code = totp_code?.takeIf { it.isNotBlank() },
+                ),
+            )
+            Result.success(response)
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
-            emptyList()
+            Result.failure(t)
+        }
+    }
+
+    suspend fun recovery_codes_status_now(): org.astermail.android.api.recovery.CodesStatusResponse? {
+        return try {
+            recovery_api.codes_status()
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            null
+        }
+    }
+
+    suspend fun rotate_recovery_codes_now(step_up_token: String): Result<List<String>> {
+        return try {
+            val codes = auth_repository.rotate_recovery_codes(step_up_token)
+            load_recovery_codes_status()
+            Result.success(codes)
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            Result.failure(t)
+        }
+    }
+
+    fun error_text(t: Throwable): String = user_facing_error(t)
+
+    fun refresh_recovery_methods() {
+        viewModelScope.launch {
+            try {
+                val methods = recovery_api.methods()
+                _state.update { it.copy(recovery_methods = methods) }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (org.astermail.android.BuildConfig.DEBUG) {
+                    android.util.Log.w("SettingsVM", "refresh_recovery_methods", t)
+                }
+            }
         }
     }
 

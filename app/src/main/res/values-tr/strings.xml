@@ -120,9 +120,9 @@
     <string name="recovery_email_sent_description">Kurtarma e-posta adresinize bir parola sıfırlama bağlantısı gönderdik. Gelen kutunuzu kontrol edin ve devam etmek için bağlantıya tıklayın.</string>
     <string name="use_recovery_code_instead">Bunun yerine kurtarma kodu kullan</string>
     <string name="enter_recovery_code">Kurtarma kodunu girin</string>
-    <string name="enter_recovery_code_description">Hesabınızı oluştururken kaydettiğiniz kurtarma kodlarından birini girin.</string>
+    <string name="enter_recovery_code_description">Hesabınızı oluştururken kaydettiğiniz kurtarma kodlarından birini girin. Her kod bir kez çalışır.</string>
     <string name="recovery_code">Kurtarma kodu</string>
-    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX</string>
+    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX-XXXX</string>
     <string name="verify_code">Kodu doğrula</string>
     <string name="create_new_password">Yeni parola oluştur</string>
     <string name="choose_strong_password">Hesabınız için güçlü bir parola seçin</string>
@@ -136,7 +136,7 @@
     <string name="recovering_your_account">Hesabınız kurtarılıyor</string>
     <string name="please_dont_close_app">Lütfen uygulamayı kapatmayın</string>
     <string name="save_new_recovery_codes">Yeni kurtarma kodlarını kaydedin</string>
-    <string name="old_codes_invalidated">Eski kurtarma kodlarınız geçersiz kılındı. Bu yeni kodları güvenli bir yerde saklayın.</string>
+    <string name="old_codes_invalidated">Eski kurtarma kodlarınız artık çalışmıyor. Bunları parola yöneticisi veya çıktı gibi güvenli bir yerde saklayın. Her kod bir kez çalışır.</string>
     <string name="show_codes">Kodları göster</string>
     <string name="hide_codes">Kodları gizle</string>
     <string name="copy_codes">Kodları kopyala</string>
@@ -676,7 +676,6 @@
     <string name="two_factor_subtitle_add">İkinci bir katman ekleyin</string>
     <string name="active_sessions">Aktif oturumlar</string>
     <string name="devices_signed_in">Giriş yapılmış cihazlar</string>
-    <string name="recovery_key">Kurtarma anahtarı</string>
     <string name="backup_access">Yedek erişim</string>
 
     <string name="update_your_password">Parolanızı güncelleyin</string>
@@ -715,7 +714,6 @@
     <string name="two_factor_other_devices_signed_out">Aster diğer cihazlarındaki oturumunu kapattı. Bunları yeniden kullanmak için oturum aç ve kimlik doğrulama uygulamandaki kodu gir.</string>
     <string name="new_backup_codes_title">Yeni yedek kodlar</string>
     <string name="new_backup_codes_subtitle">Eski yedek kodlarınız artık çalışmıyor. Bunları güvenli bir yerde saklayın.</string>
-    <string name="copy_all_codes">Tüm kodları kopyala</string>
 
     <string name="sessions">Oturumlar</string>
     <string name="no_active_sessions">Aktif oturum yok</string>
@@ -757,12 +755,7 @@
     <string name="open_encryption_settings">Şifreleme ayarlarını aç</string>
 
     <string name="enter_your_password">Parolanızı girin</string>
-    <string name="password_required_for_recovery">Kurtarma anahtarınızı görüntülemek için parolanız gereklidir.</string>
-    <string name="please_enter_password">Lütfen parolanızı girin</string>
-    <string name="view_recovery_key">Kurtarma anahtarını görüntüle</string>
     <string name="incorrect_password">Yanlış parola</string>
-    <string name="store_somewhere_safe">Bunu güvenli bir yerde saklayın</string>
-    <string name="recovery_key_warning">Kurtarma anahtarınız, parolanızı kaybederseniz erişiminizi yeniden kazanmanın tek yoludur. Aster sizin için kurtaramaz.</string>
     <string name="no_recovery_key_found">Kurtarma anahtarı bulunamadı. Kurtarma kodları hesap oluşturma sırasında ayarlanır ve şifrelenmiş kasanızda saklanır. Kasanızı yenilemek için çıkış yapıp tekrar giriş yapmayı deneyin.</string>
 
     <string name="aliases">Takma adlar</string>
@@ -1439,8 +1432,6 @@
     <string name="badges">Rozetler</string>
     <string name="no_badges_yet">Henuz rozet yok</string>
 
-    <string name="no_recovery_codes_yet">Bu hesap için kurtarma kodu bulunamadı. Parolanızı kaybederseniz erişimi geri kazanabilmek için şimdi bir set oluşturun.</string>
-    <string name="generate_recovery_codes">Kurtarma kodları oluştur</string>
 
     <!-- Pending account deletion -->
     <string name="pending_deletion_title">Hesap silinmek üzere planlandı</string>
@@ -2023,19 +2014,13 @@
     <string name="upgrade_inline_card_description">Ücretsiz planın sınırına ulaştın. Ücretli planla daha fazlasını aç.</string>
     <string name="your_key">Anahtarın</string>
     <string name="recovery_codes">Kurtarma kodları</string>
-    <string name="recovery_codes_remaining">%1$d / %2$d kod kaldı</string>
+    <string name="recovery_codes_remaining">%2$d kodun %1$d tanesi kaldı</string>
     <string name="low">Az</string>
     <string name="ok">Tamam</string>
-    <string name="recovery_codes_low_warning">Kurtarma kodların azalıyor. Yakında yenilerini oluştur.</string>
+    <string name="recovery_codes_low_warning">Kurtarma kodlarınız azalıyor. Hesabınızdan kilitlenmemek için yeni kod alın.</string>
     <string name="loading_recovery_codes_status">Kurtarma kodu durumu yükleniyor...</string>
-    <string name="view_backup_recovery_key">Kurtarma anahtarını görüntüle ve yedekle</string>
-    <string name="regenerating">Yeniden oluşturuluyor...</string>
-    <string name="regenerate_recovery_codes">Kurtarma kodlarını yenile</string>
-    <string name="regenerate_recovery_codes_title">Kurtarma kodları yenilensin mi?</string>
-    <string name="regenerate_recovery_codes_message">Mevcut kurtarma kodların geçersiz olacak. Yenilerini hemen kaydet.</string>
-    <string name="regenerate">Yenile</string>
-    <string name="new_recovery_codes_title">Yeni kurtarma kodları</string>
-    <string name="new_recovery_codes_message">Bu kodları güvenli bir yerde sakla. Her kod yalnızca bir kez kullanılabilir.</string>
+    <string name="new_recovery_codes_title">Kurtarma kodlarınızı kaydedin</string>
+    <string name="new_recovery_codes_message">Bunları parola yöneticisi veya çıktı gibi güvenli bir yerde saklayın. Her kod bir kez çalışır.</string>
     <string name="storage_format">Depolama biçimi</string>
     <string name="storage_format_aster">Aster sunucusu</string>
     <string name="storage_format_aster_sub">Varsayılan şifreli depolama</string>
@@ -3375,4 +3360,37 @@
     <string name="enc_verification_code_info_title">Bu kod ne işe yarar?</string>
     <string name="enc_verification_code_info_description">Şifreleme anahtarınızdan oluşturulan kısa bir kod. Yazıştığınız kişi bu kodu kendi tarafındaki kodla karşılaştırır ve eşleşirse, mesajlarınızın gizli olduğundan ve değiştirilmediğinden ikiniz de emin olabilirsiniz.</string>
     <string name="enc_copy_verification_code">Doğrulama kodunu kopyala</string>
+    <string name="copy_all_codes">Tüm kodları kopyala</string>
+    <string name="codes_copied">Kodlar kopyalandı.</string>
+    <string name="confirm_its_you">Kimliğinizi doğrulayın</string>
+    <string name="error_recovery_code_replaced">Bu kod eski bir gruba ait ve artık çalışmıyor. Kaydettiğiniz en son listedeki bir kodu kullanın.</string>
+    <string name="error_recovery_code_used">Bu kod zaten kullanıldı. Her kod bir kez çalışır, bu yüzden kayıtlı listenizden başka bir kod girin.</string>
+    <string name="error_recovery_locked_until">Bu hesapta çok fazla kurtarma denemesi yapıldı. %1$s sonra yeniden deneyebilirsiniz. Kodlarınızdan hiçbiri kullanılmadı, bu yüzden hepsi hâlâ sizde.</string>
+    <string name="get_new_codes">Yeni kod al</string>
+    <string name="get_new_codes_message">Yeni kod aldığınız anda mevcut kodlarınız çalışmaz.</string>
+    <string name="get_new_codes_title">Yeni kurtarma kodları alınsın mı?</string>
+    <string name="i_saved_these_codes">Bu kodları kaydettim</string>
+    <string name="other_way_code_desc">Kaydettiğiniz kodlardan birini girin.</string>
+    <string name="other_way_code_title">Kurtarma kodu kullanın</string>
+    <string name="other_way_email_desc">Aster Mail kurtarma e-postanıza bir bağlantı gönderir. Sıfırlamadan önceki postalara erişiminizi kaybedersiniz.</string>
+    <string name="other_way_email_title">Kurtarma e-postanızla sıfırlayın</string>
+    <string name="other_way_none_desc">Aster Mail şifrelenmiş verilerinizi okuyamaz, bu yüzden bunlardan biri olmadan kimse verilerinizi kurtaramaz. Yine de hesap oluşturabilirsiniz.</string>
+    <string name="other_way_none_title">Bunların hiçbiri bende yok</string>
+    <string name="other_ways_desc">Hesabınıza nasıl geri dönmek istediğinizi seçin.</string>
+    <string name="print_codes">Yazdır</string>
+    <string name="recovery_codes_print_created">%1$s tarihinde oluşturuldu</string>
+    <string name="recovery_codes_print_note">Her kod bir kez çalışır. Bu kodları kimseyle paylaşmayın. Bir koda ve e-posta adresinize sahip olan herkes parolanızı sıfırlayabilir.</string>
+    <string name="recovery_codes_print_title">Aster Mail kurtarma kodları</string>
+    <string name="recovery_codes_unavailable">Kodlarınız bu cihazda saklanmıyor. Görmek için yeni kod alın.</string>
+    <string name="recovery_codes_view_desc">Her kod bir kez çalışır. Kullanılan kodların üzeri çizilir.</string>
+    <string name="reset_account_desc">Sıfırlamadan önceki şifrelenmiş postanız, kişileriniz ve dosyalarınız, eski parolanızla kurtarana kadar kilitli kalır. Yeni ve boş bir şifreleme anahtarı alırsınız.</string>
+    <string name="reset_account_title">Hesabınız sıfırlansın mı?</string>
+    <string name="review_devices_signed_out">Diğer cihazların oturumu kapatıldı.</string>
+    <string name="review_no_recovery_email">Kurtarma e-postası yok.</string>
+    <string name="review_recovery_email_kept">Kurtarma e-postanız hâlâ ayarlı.</string>
+    <string name="review_security_desc">Parolanız değiştirildi ve hesabınız kurtarıldı.</string>
+    <string name="review_security_title">Güvenliğinizi gözden geçirin</string>
+    <string name="review_two_step_off">İki adımlı doğrulama kapalı.</string>
+    <string name="send_reset_link">Sıfırlama bağlantısı gönder</string>
+    <string name="try_another_way">Başka bir yol deneyin</string>
 </resources>

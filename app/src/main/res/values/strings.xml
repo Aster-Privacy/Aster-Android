@@ -176,9 +176,9 @@
     <string name="recovery_email_sent_description">We\'ve sent a password reset link to your recovery email. Check your inbox and click the link to continue.</string>
     <string name="use_recovery_code_instead">Use recovery code instead</string>
     <string name="enter_recovery_code">Enter recovery code</string>
-    <string name="enter_recovery_code_description">Enter one of the recovery codes you saved when you created your account.</string>
+    <string name="enter_recovery_code_description">Enter one of the recovery codes you saved when you created your account. Each code works once.</string>
     <string name="recovery_code">Recovery code</string>
-    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX</string>
+    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX-XXXX</string>
     <string name="verify_code">Verify code</string>
     <string name="create_new_password">Create new password</string>
     <string name="choose_strong_password">Choose a strong password for your account</string>
@@ -192,8 +192,37 @@
     <string name="recovering_your_account">Recovering your account</string>
     <string name="please_dont_close_app">Please don\'t close the app</string>
     <string name="save_new_recovery_codes">Save new recovery codes</string>
-    <string name="old_codes_invalidated">Your old recovery codes have been invalidated. Save these new codes in a safe place.</string>
+    <string name="old_codes_invalidated">Your old recovery codes no longer work. Store these somewhere safe, such as a password manager or a printed copy. Each code works once.</string>
+    <string name="try_another_way">Try another way</string>
+    <string name="other_ways_desc">Choose how you want to get back into your account.</string>
+    <string name="other_way_code_title">Use a recovery code</string>
+    <string name="other_way_code_desc">Enter one of the codes you saved.</string>
+    <string name="other_way_email_title">Reset with your recovery email</string>
+    <string name="other_way_email_desc">Aster Mail sends a link to your recovery email. You lose access to mail from before the reset.</string>
+    <string name="other_way_none_title">I do not have any of these</string>
+    <string name="other_way_none_desc">Aster Mail cannot read your encrypted data, so no one can recover it without one of these. You can still create an account.</string>
+    <string name="reset_account_title">Reset your account?</string>
+    <string name="reset_account_desc">Your encrypted mail, contacts, and files from before the reset stay locked until you recover them with your old password. You get a new, empty encryption key.</string>
+    <string name="send_reset_link">Send reset link</string>
+    <string name="print_codes">Print</string>
+    <string name="recovery_codes_print_title">Aster Mail recovery codes</string>
+    <string name="recovery_codes_print_created">Created %1$s</string>
+    <string name="recovery_codes_print_note">Each code works once. Keep these codes private. Anyone with a code and your email address can reset your password.</string>
+    <string name="codes_copied">Codes copied.</string>
+    <string name="i_saved_these_codes">I saved these codes</string>
+    <string name="review_security_title">Review your security</string>
+    <string name="review_security_desc">Your password was changed and your account was recovered.</string>
+    <string name="review_devices_signed_out">Other devices were signed out.</string>
+    <string name="review_two_step_off">2-step verification is off.</string>
+    <string name="review_recovery_email_kept">Your recovery email is still set.</string>
+    <string name="review_no_recovery_email">No recovery email.</string>
     <string name="show_codes">Show codes</string>
+    <string name="confirm_its_you">Confirm it\'s you</string>
+    <string name="get_new_codes">Get new codes</string>
+    <string name="get_new_codes_title">Get new recovery codes?</string>
+    <string name="get_new_codes_message">Your current codes stop working as soon as you get new ones.</string>
+    <string name="recovery_codes_view_desc">Each code works once. Used codes are crossed out.</string>
+    <string name="recovery_codes_unavailable">Your codes are not stored on this device. Get new codes to see them.</string>
     <string name="hide_codes">Hide codes</string>
     <string name="copy_codes">Copy codes</string>
     <string name="password_reset_successful">Password reset successful</string>
@@ -1095,7 +1124,6 @@
     <string name="two_factor_subtitle_add">Add a second layer</string>
     <string name="active_sessions">Active sessions</string>
     <string name="devices_signed_in">Devices signed in</string>
-    <string name="recovery_key">Recovery key</string>
     <string name="backup_access">Backup access</string>
 
     <!-- Change password -->
@@ -1136,7 +1164,6 @@
     <string name="two_factor_other_devices_signed_out">Aster signed you out on your other devices. To use them again, sign in and enter a code from your authenticator app.</string>
     <string name="new_backup_codes_title">New backup codes</string>
     <string name="new_backup_codes_subtitle">Your old backup codes no longer work. Save these somewhere safe.</string>
-    <string name="copy_all_codes">Copy all codes</string>
 
     <!-- TOTP login verification -->
     <string name="totp_verify_title">Two-factor verification</string>
@@ -1192,12 +1219,7 @@
 
     <!-- Recovery key view -->
     <string name="enter_your_password">Enter your password</string>
-    <string name="password_required_for_recovery">Your password is required to view your recovery key.</string>
-    <string name="please_enter_password">Please enter your password</string>
-    <string name="view_recovery_key">View recovery key</string>
     <string name="incorrect_password">Incorrect password</string>
-    <string name="store_somewhere_safe">Store this somewhere safe</string>
-    <string name="recovery_key_warning">Your recovery key is the only way to regain access if you lose your password. Aster cannot recover it for you.</string>
     <string name="no_recovery_key_found">No recovery key found. Recovery codes are set during account creation and stored in your encrypted vault. Try logging out and back in to refresh your vault.</string>
 
     <!-- Aliases settings -->
@@ -1844,6 +1866,9 @@
     <string name="error_invalid_recovery_code">A recovery code looks like ASTER-XXXX-XXXX-XXXX-XXXX. Check the code and enter it again.</string>
     <string name="error_invalid_code">That code does not match this account. Check it against your saved list and enter it again. Spacing and capital letters do not matter.</string>
     <string name="error_recovery_too_many_attempts">This account has had too many recovery attempts. You can try again in about 30 minutes. None of your codes were used, so you still have all of them.</string>
+    <string name="error_recovery_locked_until">This account has had too many recovery attempts. You can try again in %1$s. None of your codes were used, so you still have all of them.</string>
+    <string name="error_recovery_code_used">That code was already used. Each code works once, so enter a different one from your saved list.</string>
+    <string name="error_recovery_code_replaced">That code belongs to an older set and no longer works. Use a code from the most recent list you saved.</string>
     <string name="error_recovery_failed">Recovery failed</string>
     <string name="status_deriving_key">Deriving new password key</string>
     <string name="status_encrypting_vault">Encrypting vault with new password</string>
@@ -2145,21 +2170,13 @@
     <string name="upgrade_inline_card_description">You\'ve hit the free plan limit. Unlock more on a paid plan.</string>
     <string name="your_key">Your key</string>
     <string name="recovery_codes">Recovery codes</string>
-    <string name="recovery_codes_remaining">%1$d / %2$d codes remaining</string>
+    <string name="recovery_codes_remaining">%1$d of %2$d codes left</string>
     <string name="low">Low</string>
     <string name="ok">OK</string>
-    <string name="recovery_codes_low_warning">Running low on recovery codes. Regenerate soon.</string>
+    <string name="recovery_codes_low_warning">You\'re running low on recovery codes. Get new codes so you don\'t get locked out.</string>
     <string name="loading_recovery_codes_status">Loading recovery codes status...</string>
-    <string name="view_backup_recovery_key">View &amp; Backup Recovery Key</string>
-    <string name="regenerating">Regenerating...</string>
-    <string name="regenerate_recovery_codes">Regenerate Recovery Codes</string>
-    <string name="regenerate_recovery_codes_title">Regenerate Recovery Codes?</string>
-    <string name="regenerate_recovery_codes_message">This will invalidate your current recovery codes. Make sure to save the new ones immediately.</string>
-    <string name="regenerate">Regenerate</string>
-    <string name="new_recovery_codes_title">New Recovery Codes</string>
-    <string name="new_recovery_codes_message">Save these codes somewhere safe. Each code can only be used once.</string>
-    <string name="no_recovery_codes_yet">No recovery codes found for this account. Generate a set now so you can regain access if you ever lose your password.</string>
-    <string name="generate_recovery_codes">Generate Recovery Codes</string>
+    <string name="new_recovery_codes_title">Save your recovery codes</string>
+    <string name="new_recovery_codes_message">Store these somewhere safe, such as a password manager or a printed copy. Each code works once.</string>
     <string name="storage_format">Storage format</string>
     <string name="storage_format_aster">Aster Server</string>
     <string name="storage_format_aster_sub">Default encrypted storage</string>
@@ -3420,4 +3437,5 @@
     <string name="enc_verification_code_info_title">What\'s this code?</string>
     <string name="enc_verification_code_info_description">A short code created from your encryption key. If someone you email compares it with the code on their end and it matches, you can both be sure your messages are private and haven\'t been tampered with.</string>
     <string name="enc_copy_verification_code">Copy verification code</string>
+    <string name="copy_all_codes">Copy all codes</string>
 </resources>

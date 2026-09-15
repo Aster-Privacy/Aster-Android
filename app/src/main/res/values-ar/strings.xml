@@ -120,9 +120,9 @@
     <string name="recovery_email_sent_description">لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى بريد الاسترداد. تحقق من صندوق الوارد وانقر على الرابط للمتابعة.</string>
     <string name="use_recovery_code_instead">استخدام رمز الاسترداد بدلاً من ذلك</string>
     <string name="enter_recovery_code">أدخل رمز الاسترداد</string>
-    <string name="enter_recovery_code_description">أدخل أحد رموز الاسترداد التي حفظتها عند إنشاء حسابك.</string>
+    <string name="enter_recovery_code_description">أدخل أحد رموز الاسترداد التي حفظتها عند إنشاء حسابك. يعمل كل رمز مرة واحدة.</string>
     <string name="recovery_code">رمز الاسترداد</string>
-    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX</string>
+    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX-XXXX</string>
     <string name="verify_code">التحقق من الرمز</string>
     <string name="create_new_password">إنشاء كلمة مرور جديدة</string>
     <string name="choose_strong_password">اختر كلمة مرور قوية لحسابك</string>
@@ -136,7 +136,7 @@
     <string name="recovering_your_account">جارٍ استرداد حسابك</string>
     <string name="please_dont_close_app">يرجى عدم إغلاق التطبيق</string>
     <string name="save_new_recovery_codes">احفظ رموز الاسترداد الجديدة</string>
-    <string name="old_codes_invalidated">تم إبطال رموز الاسترداد القديمة. احفظ هذه الرموز الجديدة في مكان آمن.</string>
+    <string name="old_codes_invalidated">لم تعد رموز الاسترداد القديمة تعمل. احفظ هذه الرموز في مكان آمن، مثل مدير كلمات المرور أو نسخة مطبوعة. يعمل كل رمز مرة واحدة.</string>
     <string name="show_codes">إظهار الرموز</string>
     <string name="hide_codes">إخفاء الرموز</string>
     <string name="copy_codes">نسخ الرموز</string>
@@ -676,7 +676,6 @@
     <string name="two_factor_subtitle_add">إضافة طبقة ثانية</string>
     <string name="active_sessions">الجلسات النشطة</string>
     <string name="devices_signed_in">الأجهزة المسجلة</string>
-    <string name="recovery_key">مفتاح الاسترداد</string>
     <string name="backup_access">الوصول الاحتياطي</string>
 
     <string name="update_your_password">تحديث كلمة المرور</string>
@@ -715,7 +714,6 @@
     <string name="two_factor_other_devices_signed_out">قام Aster بتسجيل خروجك من أجهزتك الأخرى. لاستخدامها مرة أخرى، سجّل الدخول وأدخل رمزًا من تطبيق المصادقة.</string>
     <string name="new_backup_codes_title">رموز احتياطية جديدة</string>
     <string name="new_backup_codes_subtitle">لم تعد الرموز الاحتياطية القديمة تعمل. احفظ هذه في مكان آمن.</string>
-    <string name="copy_all_codes">نسخ جميع الرموز</string>
 
     <string name="sessions">الجلسات</string>
     <string name="no_active_sessions">لا جلسات نشطة</string>
@@ -757,12 +755,7 @@
     <string name="open_encryption_settings">فتح إعدادات التشفير</string>
 
     <string name="enter_your_password">أدخل كلمة المرور</string>
-    <string name="password_required_for_recovery">كلمة المرور مطلوبة لعرض مفتاح الاسترداد.</string>
-    <string name="please_enter_password">يرجى إدخال كلمة المرور</string>
-    <string name="view_recovery_key">عرض مفتاح الاسترداد</string>
     <string name="incorrect_password">كلمة المرور غير صحيحة</string>
-    <string name="store_somewhere_safe">احفظ هذا في مكان آمن</string>
-    <string name="recovery_key_warning">مفتاح الاسترداد هو الطريقة الوحيدة لاستعادة الوصول إذا فقدت كلمة المرور. لا يمكن لـ Aster استرداده لك.</string>
     <string name="no_recovery_key_found">لم يتم العثور على مفتاح استرداد. يتم تعيين رموز الاسترداد أثناء إنشاء الحساب وتخزينها في خزنتك المشفرة. حاول تسجيل الخروج وإعادة الدخول لتحديث خزنتك.</string>
 
     <string name="aliases">الأسماء المستعارة</string>
@@ -1447,8 +1440,6 @@
     <string name="badges">الشارات</string>
     <string name="no_badges_yet">لا توجد شارات بعد</string>
 
-    <string name="no_recovery_codes_yet">لم يتم العثور على رموز استرداد لهذا الحساب. أنشئ مجموعة الآن حتى تتمكن من استعادة الوصول إذا فقدت كلمة المرور.</string>
-    <string name="generate_recovery_codes">إنشاء رموز الاسترداد</string>
 
     <!-- Pending account deletion -->
     <string name="pending_deletion_title">الحساب مُجدول للحذف</string>
@@ -2035,19 +2026,13 @@
     <string name="upgrade_inline_card_description">بلغت حد الخطة المجانية. افتح المزيد بخطة مدفوعة.</string>
     <string name="your_key">مفتاحك</string>
     <string name="recovery_codes">رموز الاسترداد</string>
-    <string name="recovery_codes_remaining">%1$d / %2$d رمز متبقٍ</string>
+    <string name="recovery_codes_remaining">تبقّى %1$d من %2$d رمزًا</string>
     <string name="low">منخفض</string>
     <string name="ok">حسنًا</string>
-    <string name="recovery_codes_low_warning">رموز الاسترداد على وشك النفاد. أعد توليدها قريبًا.</string>
+    <string name="recovery_codes_low_warning">لم يتبقّ لديك سوى عدد قليل من رموز الاسترداد. احصل على رموز جديدة حتى لا تفقد الوصول إلى حسابك.</string>
     <string name="loading_recovery_codes_status">جارٍ تحميل حالة رموز الاسترداد...</string>
-    <string name="view_backup_recovery_key">عرض مفتاح الاسترداد ونسخه احتياطيًا</string>
-    <string name="regenerating">جارٍ إعادة التوليد...</string>
-    <string name="regenerate_recovery_codes">إعادة توليد رموز الاسترداد</string>
-    <string name="regenerate_recovery_codes_title">إعادة توليد رموز الاسترداد؟</string>
-    <string name="regenerate_recovery_codes_message">سيؤدي هذا إلى إبطال رموز الاسترداد الحالية. احفظ الرموز الجديدة فورًا.</string>
-    <string name="regenerate">إعادة التوليد</string>
-    <string name="new_recovery_codes_title">رموز استرداد جديدة</string>
-    <string name="new_recovery_codes_message">احفظ هذه الرموز في مكان آمن. يمكن استخدام كل رمز مرة واحدة فقط.</string>
+    <string name="new_recovery_codes_title">احفظ رموز الاسترداد</string>
+    <string name="new_recovery_codes_message">احفظ هذه الرموز في مكان آمن، مثل مدير كلمات المرور أو نسخة مطبوعة. يعمل كل رمز مرة واحدة.</string>
     <string name="storage_format">صيغة التخزين</string>
     <string name="storage_format_aster">خادم Aster</string>
     <string name="storage_format_aster_sub">التخزين المشفّر الافتراضي</string>
@@ -3455,4 +3440,37 @@
     <string name="enc_verification_code_info_title">ما هذا الرمز؟</string>
     <string name="enc_verification_code_info_description">رمز قصير يُنشأ من مفتاح التشفير الخاص بك. إذا قارن الشخص الذي تتراسل معه هذا الرمز برمزه وتطابقا، يمكن لكليكما التأكد من أن رسائلكما خاصة ولم يتم العبث بها.</string>
     <string name="enc_copy_verification_code">نسخ رمز التحقق</string>
+    <string name="copy_all_codes">نسخ جميع الرموز</string>
+    <string name="codes_copied">تم نسخ الرموز.</string>
+    <string name="confirm_its_you">أكّد هويتك</string>
+    <string name="error_recovery_code_replaced">ينتمي هذا الرمز إلى مجموعة أقدم ولم يعد يعمل. استخدم رمزًا من أحدث قائمة حفظتها.</string>
+    <string name="error_recovery_code_used">تم استخدام هذا الرمز من قبل. يعمل كل رمز مرة واحدة، لذا أدخل رمزًا آخر من قائمتك المحفوظة.</string>
+    <string name="error_recovery_locked_until">جرت محاولات استعادة كثيرة جدًا على هذا الحساب. يمكنك المحاولة مرة أخرى بعد %1$s. لم يُستخدم أي من رموزك، لذا ما زالت جميعها لديك.</string>
+    <string name="get_new_codes">احصل على رموز جديدة</string>
+    <string name="get_new_codes_message">تتوقف رموزك الحالية عن العمل بمجرد حصولك على رموز جديدة.</string>
+    <string name="get_new_codes_title">هل تريد الحصول على رموز استرداد جديدة؟</string>
+    <string name="i_saved_these_codes">لقد حفظت هذه الرموز</string>
+    <string name="other_way_code_desc">أدخل أحد الرموز التي حفظتها.</string>
+    <string name="other_way_code_title">استخدام رمز استرداد</string>
+    <string name="other_way_email_desc">يرسل Aster Mail رابطًا إلى بريد الاسترداد. تفقد إمكانية الوصول إلى الرسائل السابقة لإعادة التعيين.</string>
+    <string name="other_way_email_title">إعادة التعيين ببريد الاسترداد</string>
+    <string name="other_way_none_desc">لا يستطيع Aster Mail قراءة بياناتك المشفرة، لذا لا يمكن لأحد استردادها بدون إحدى هذه الطرق. ما زال بإمكانك إنشاء حساب.</string>
+    <string name="other_way_none_title">لا أملك أيًا من هذه</string>
+    <string name="other_ways_desc">اختر كيف تريد العودة إلى حسابك.</string>
+    <string name="print_codes">طباعة</string>
+    <string name="recovery_codes_print_created">أُنشئت في %1$s</string>
+    <string name="recovery_codes_print_note">يعمل كل رمز مرة واحدة. احتفظ بهذه الرموز لنفسك. يمكن لأي شخص لديه رمز وعنوان بريدك الإلكتروني إعادة تعيين كلمة المرور.</string>
+    <string name="recovery_codes_print_title">رموز استرداد Aster Mail</string>
+    <string name="recovery_codes_unavailable">رموزك غير محفوظة على هذا الجهاز. احصل على رموز جديدة لعرضها.</string>
+    <string name="recovery_codes_view_desc">يعمل كل رمز مرة واحدة. تظهر الرموز المستخدمة مشطوبة.</string>
+    <string name="reset_account_desc">تظل رسائلك وجهات اتصالك وملفاتك المشفرة السابقة لإعادة التعيين مقفلة حتى تستردها بكلمة المرور القديمة. تحصل على مفتاح تشفير جديد وفارغ.</string>
+    <string name="reset_account_title">هل تريد إعادة تعيين حسابك؟</string>
+    <string name="review_devices_signed_out">تم تسجيل الخروج من الأجهزة الأخرى.</string>
+    <string name="review_no_recovery_email">لا يوجد بريد استرداد.</string>
+    <string name="review_recovery_email_kept">بريد الاسترداد ما زال مضبوطًا.</string>
+    <string name="review_security_desc">تم تغيير كلمة المرور واسترداد حسابك.</string>
+    <string name="review_security_title">راجع أمان حسابك</string>
+    <string name="review_two_step_off">التحقق بخطوتين متوقف.</string>
+    <string name="send_reset_link">إرسال رابط إعادة التعيين</string>
+    <string name="try_another_way">جرب طريقة أخرى</string>
 </resources>

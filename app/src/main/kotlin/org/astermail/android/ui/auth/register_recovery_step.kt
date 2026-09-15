@@ -68,6 +68,7 @@ import org.astermail.android.design.components.AsterSecondaryButton
 @Composable
 fun RegisterRecoveryStep(
     codes: List<String>,
+    account_email: String = "",
     backup_failed: Boolean = false,
     is_retrying_backup: Boolean = false,
     on_retry_backup: () -> Unit = {},
@@ -80,6 +81,7 @@ fun RegisterRecoveryStep(
     val copied_message = stringResource(R.string.copied_to_clipboard)
     val saved_message = stringResource(R.string.saved_file, RECOVERY_CODES_FILE_NAME)
     val failed_message = stringResource(R.string.failed_to_save)
+    val print_failed_message = stringResource(R.string.print_not_available)
     var has_saved by remember { mutableStateOf(false) }
     var show_skip_confirm by remember { mutableStateOf(false) }
 
@@ -204,6 +206,22 @@ fun RegisterRecoveryStep(
                     if (saved) has_saved = true
                     Toast.makeText(context, if (saved) saved_message else failed_message, Toast.LENGTH_SHORT).show()
                 }
+            },
+        )
+
+        Spacer(Modifier.height(AsterSpacing.md))
+
+        AsterSecondaryButton(
+            label = stringResource(R.string.print_codes),
+            onClick = {
+                org.astermail.android.ui.common.print_recovery_codes(
+                    context = context,
+                    account_email = account_email,
+                    codes = codes,
+                    on_failure = {
+                        Toast.makeText(context, print_failed_message, Toast.LENGTH_SHORT).show()
+                    },
+                )
             },
         )
 

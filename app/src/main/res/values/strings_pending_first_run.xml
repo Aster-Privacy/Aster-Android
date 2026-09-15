@@ -13,4 +13,10 @@
     <string name="plan_prompt_body">Upgrade for more storage, custom domains, and unlimited aliases.</string>
     <string name="plan_prompt_action">See plans</string>
     <string name="plan_prompt_dismiss">Not now</string>
+    <string name="recovery_codes_reminder_title">Save your recovery codes</string>
+    <string name="recovery_codes_reminder_body">Aster encrypts your mail with your password, so no one can reset it for you. Recovery codes are the only way back into your encrypted mail.</string>
+    <string name="recovery_codes_reminder_action">Get recovery codes</string>
+    <string name="recovery_phrase_migrate_title">Switch to recovery codes</string>
+    <string name="recovery_phrase_migrate_body">Recovery phrases are going away. Get recovery codes now so you can still recover your account.</string>
+    <string name="recovery_phrase_migrate_action">Get codes</string>
 </resources>

@@ -121,9 +121,9 @@
     <string name="recovery_email_sent_description">Wir haben einen Link zum Zurücksetzen des Passworts an Ihre Wiederherstellungs-E-Mail gesendet. Überprüfen Sie Ihren Posteingang und klicken Sie auf den Link, um fortzufahren.</string>
     <string name="use_recovery_code_instead">Stattdessen Wiederherstellungscode verwenden</string>
     <string name="enter_recovery_code">Wiederherstellungscode eingeben</string>
-    <string name="enter_recovery_code_description">Geben Sie einen der Wiederherstellungscodes ein, die Sie bei der Kontoerstellung gespeichert haben.</string>
+    <string name="enter_recovery_code_description">Geben Sie einen der Wiederherstellungscodes ein, die Sie beim Erstellen Ihres Kontos gespeichert haben. Jeder Code funktioniert einmal.</string>
     <string name="recovery_code">Wiederherstellungscode</string>
-    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX</string>
+    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX-XXXX</string>
     <string name="verify_code">Code verifizieren</string>
     <string name="create_new_password">Neues Passwort erstellen</string>
     <string name="choose_strong_password">Wählen Sie ein starkes Passwort für Ihr Konto</string>
@@ -137,7 +137,7 @@
     <string name="recovering_your_account">Ihr Konto wird wiederhergestellt</string>
     <string name="please_dont_close_app">Bitte schließen Sie die App nicht</string>
     <string name="save_new_recovery_codes">Neue Wiederherstellungscodes speichern</string>
-    <string name="old_codes_invalidated">Ihre alten Wiederherstellungscodes wurden ungültig gemacht. Speichern Sie diese neuen Codes sicher.</string>
+    <string name="old_codes_invalidated">Ihre alten Wiederherstellungscodes funktionieren nicht mehr. Bewahren Sie diese an einem sicheren Ort auf, etwa in einem Passwort-Manager oder als Ausdruck. Jeder Code funktioniert einmal.</string>
     <string name="show_codes">Codes anzeigen</string>
     <string name="hide_codes">Codes verbergen</string>
     <string name="copy_codes">Codes kopieren</string>
@@ -677,7 +677,6 @@
     <string name="two_factor_subtitle_add">Zusätzliche Sicherheitsebene hinzufügen</string>
     <string name="active_sessions">Aktive Sitzungen</string>
     <string name="devices_signed_in">Angemeldete Geräte</string>
-    <string name="recovery_key">Wiederherstellungsschlüssel</string>
     <string name="backup_access">Sicherungszugang</string>
 
     <string name="update_your_password">Passwort aktualisieren</string>
@@ -716,7 +715,6 @@
     <string name="two_factor_other_devices_signed_out">Aster hat dich auf deinen anderen Geräten abgemeldet. Um sie wieder zu nutzen, melde dich an und gib einen Code aus deiner Authenticator-App ein.</string>
     <string name="new_backup_codes_title">Neue Sicherungscodes</string>
     <string name="new_backup_codes_subtitle">Ihre alten Sicherungscodes funktionieren nicht mehr. Speichern Sie diese an einem sicheren Ort.</string>
-    <string name="copy_all_codes">Alle Codes kopieren</string>
 
     <string name="sessions">Sitzungen</string>
     <string name="no_active_sessions">Keine aktiven Sitzungen</string>
@@ -758,12 +756,7 @@
     <string name="open_encryption_settings">Verschlüsselungseinstellungen öffnen</string>
 
     <string name="enter_your_password">Passwort eingeben</string>
-    <string name="password_required_for_recovery">Ihr Passwort wird benötigt, um Ihren Wiederherstellungsschlüssel anzuzeigen.</string>
-    <string name="please_enter_password">Bitte geben Sie Ihr Passwort ein</string>
-    <string name="view_recovery_key">Wiederherstellungsschlüssel anzeigen</string>
     <string name="incorrect_password">Falsches Passwort</string>
-    <string name="store_somewhere_safe">Bewahren Sie dies sicher auf</string>
-    <string name="recovery_key_warning">Ihr Wiederherstellungsschlüssel ist der einzige Weg, wieder Zugang zu erhalten, wenn Sie Ihr Passwort verlieren. Aster kann ihn nicht für Sie wiederherstellen.</string>
     <string name="no_recovery_key_found">Kein Wiederherstellungsschlüssel gefunden. Wiederherstellungscodes werden bei der Kontoerstellung festgelegt und in Ihrem verschlüsselten Tresor gespeichert. Versuchen Sie, sich ab- und wieder anzumelden, um Ihren Tresor zu aktualisieren.</string>
 
     <string name="aliases">Aliase</string>
@@ -1440,8 +1433,6 @@
     <string name="badges">Abzeichen</string>
     <string name="no_badges_yet">Noch keine Abzeichen</string>
 
-    <string name="no_recovery_codes_yet">Für dieses Konto wurden keine Wiederherstellungscodes gefunden. Erstellen Sie jetzt einen Satz, damit Sie wieder Zugriff erhalten, falls Sie Ihr Passwort verlieren.</string>
-    <string name="generate_recovery_codes">Wiederherstellungscodes erstellen</string>
 
     <!-- Pending account deletion -->
     <string name="pending_deletion_title">Konto zur Löschung vorgemerkt</string>
@@ -2024,19 +2015,13 @@
     <string name="upgrade_inline_card_description">Du hast das Limit des kostenlosen Tarifs erreicht. Mit einem bezahlten Tarif geht mehr.</string>
     <string name="your_key">Dein Schlüssel</string>
     <string name="recovery_codes">Wiederherstellungscodes</string>
-    <string name="recovery_codes_remaining">%1$d / %2$d Codes übrig</string>
+    <string name="recovery_codes_remaining">Noch %1$d von %2$d Codes</string>
     <string name="low">Niedrig</string>
     <string name="ok">OK</string>
-    <string name="recovery_codes_low_warning">Deine Wiederherstellungscodes gehen zur Neige. Erzeuge bald neue.</string>
+    <string name="recovery_codes_low_warning">Ihre Wiederherstellungscodes gehen zur Neige. Fordern Sie neue Codes an, damit Sie nicht ausgesperrt werden.</string>
     <string name="loading_recovery_codes_status">Status der Wiederherstellungscodes wird geladen...</string>
-    <string name="view_backup_recovery_key">Wiederherstellungsschlüssel ansehen &amp; sichern</string>
-    <string name="regenerating">Wird neu erzeugt...</string>
-    <string name="regenerate_recovery_codes">Wiederherstellungscodes neu erzeugen</string>
-    <string name="regenerate_recovery_codes_title">Codes neu erzeugen?</string>
-    <string name="regenerate_recovery_codes_message">Deine bisherigen Wiederherstellungscodes werden dadurch ungültig. Sichere die neuen sofort.</string>
-    <string name="regenerate">Neu erzeugen</string>
-    <string name="new_recovery_codes_title">Neue Wiederherstellungscodes</string>
-    <string name="new_recovery_codes_message">Bewahre diese Codes sicher auf. Jeder Code lässt sich nur einmal verwenden.</string>
+    <string name="new_recovery_codes_title">Speichern Sie Ihre Wiederherstellungscodes</string>
+    <string name="new_recovery_codes_message">Bewahren Sie diese an einem sicheren Ort auf, etwa in einem Passwort-Manager oder als Ausdruck. Jeder Code funktioniert einmal.</string>
     <string name="storage_format">Speicherformat</string>
     <string name="storage_format_aster">Aster-Server</string>
     <string name="storage_format_aster_sub">Standardmäßig verschlüsselter Speicher</string>
@@ -3376,4 +3361,37 @@
     <string name="enc_verification_code_info_title">Was ist dieser Code?</string>
     <string name="enc_verification_code_info_description">Ein kurzer Code, der aus deinem Verschlüsselungsschlüssel erstellt wird. Wenn die Person, mit der du schreibst, diesen Code mit ihrem eigenen vergleicht und er übereinstimmt, könnt ihr beide sicher sein, dass eure Nachrichten privat sind und nicht verändert wurden.</string>
     <string name="enc_copy_verification_code">Bestätigungscode kopieren</string>
+    <string name="copy_all_codes">Alle Codes kopieren</string>
+    <string name="codes_copied">Codes kopiert.</string>
+    <string name="confirm_its_you">Bestätigen Sie, dass Sie es sind</string>
+    <string name="error_recovery_code_replaced">Dieser Code gehört zu einem älteren Satz und funktioniert nicht mehr. Verwenden Sie einen Code aus der zuletzt gespeicherten Liste.</string>
+    <string name="error_recovery_code_used">Dieser Code wurde bereits verwendet. Jeder Code funktioniert einmal, geben Sie daher einen anderen aus Ihrer gespeicherten Liste ein.</string>
+    <string name="error_recovery_locked_until">Für dieses Konto gab es zu viele Wiederherstellungsversuche. Du kannst es in %1$s erneut versuchen. Keiner deiner Codes wurde verwendet, du hast also weiterhin alle.</string>
+    <string name="get_new_codes">Neue Codes anfordern</string>
+    <string name="get_new_codes_message">Ihre aktuellen Codes werden ungültig, sobald Sie neue anfordern.</string>
+    <string name="get_new_codes_title">Neue Wiederherstellungscodes anfordern?</string>
+    <string name="i_saved_these_codes">Ich habe diese Codes gespeichert</string>
+    <string name="other_way_code_desc">Geben Sie einen Ihrer gespeicherten Codes ein.</string>
+    <string name="other_way_code_title">Wiederherstellungscode verwenden</string>
+    <string name="other_way_email_desc">Aster Mail sendet einen Link an Ihre Wiederherstellungs-E-Mail. Sie verlieren den Zugriff auf E-Mails von vor dem Zurücksetzen.</string>
+    <string name="other_way_email_title">Mit Wiederherstellungs-E-Mail zurücksetzen</string>
+    <string name="other_way_none_desc">Aster Mail kann Ihre verschlüsselten Daten nicht lesen, daher kann sie niemand ohne eine dieser Optionen wiederherstellen. Sie können weiterhin ein Konto erstellen.</string>
+    <string name="other_way_none_title">Ich habe nichts davon</string>
+    <string name="other_ways_desc">Wählen Sie, wie Sie wieder Zugriff auf Ihr Konto erhalten.</string>
+    <string name="print_codes">Drucken</string>
+    <string name="recovery_codes_print_created">Erstellt am %1$s</string>
+    <string name="recovery_codes_print_note">Jeder Code funktioniert einmal. Halten Sie diese Codes geheim. Wer einen Code und Ihre E-Mail-Adresse hat, kann Ihr Passwort zurücksetzen.</string>
+    <string name="recovery_codes_print_title">Aster Mail Wiederherstellungscodes</string>
+    <string name="recovery_codes_unavailable">Ihre Codes sind auf diesem Gerät nicht gespeichert. Fordern Sie neue Codes an, um sie zu sehen.</string>
+    <string name="recovery_codes_view_desc">Jeder Code funktioniert einmal. Verwendete Codes sind durchgestrichen.</string>
+    <string name="reset_account_desc">Ihre verschlüsselten E-Mails, Kontakte und Dateien von vor dem Zurücksetzen bleiben gesperrt, bis Sie sie mit Ihrem alten Passwort wiederherstellen. Sie erhalten einen neuen, leeren Verschlüsselungsschlüssel.</string>
+    <string name="reset_account_title">Konto zurücksetzen?</string>
+    <string name="review_devices_signed_out">Andere Geräte wurden abgemeldet.</string>
+    <string name="review_no_recovery_email">Keine Wiederherstellungs-E-Mail.</string>
+    <string name="review_recovery_email_kept">Ihre Wiederherstellungs-E-Mail ist weiterhin festgelegt.</string>
+    <string name="review_security_desc">Ihr Passwort wurde geändert und Ihr Konto wurde wiederhergestellt.</string>
+    <string name="review_security_title">Sicherheit überprüfen</string>
+    <string name="review_two_step_off">Bestätigung in zwei Schritten ist deaktiviert.</string>
+    <string name="send_reset_link">Link zum Zurücksetzen senden</string>
+    <string name="try_another_way">Anders versuchen</string>
 </resources>

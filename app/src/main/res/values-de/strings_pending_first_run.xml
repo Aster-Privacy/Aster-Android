@@ -13,4 +13,10 @@
     <string name="plan_prompt_body">Führe ein Upgrade durch für mehr Speicher, eigene Domains und unbegrenzte Aliasse.</string>
     <string name="plan_prompt_action">Tarife ansehen</string>
     <string name="plan_prompt_dismiss">Jetzt nicht</string>
+    <string name="recovery_codes_reminder_title">Sichere deine Wiederherstellungscodes</string>
+    <string name="recovery_codes_reminder_body">Aster verschlüsselt deine Mail mit deinem Passwort, deshalb kann es niemand für dich zurücksetzen. Wiederherstellungscodes sind der einzige Weg zurück zu deiner verschlüsselten Mail.</string>
+    <string name="recovery_codes_reminder_action">Wiederherstellungscodes holen</string>
+    <string name="recovery_phrase_migrate_title">Zu Wiederherstellungscodes wechseln</string>
+    <string name="recovery_phrase_migrate_body">Wiederherstellungsphrasen werden abgeschafft. Hole dir jetzt Wiederherstellungscodes, damit du dein Konto weiterhin wiederherstellen kannst.</string>
+    <string name="recovery_phrase_migrate_action">Codes holen</string>
 </resources>

@@ -102,6 +102,7 @@ class SettingsViewModelTest {
     private lateinit var security_api: org.astermail.android.api.security.SecurityApi
     private lateinit var encryption_api: org.astermail.android.api.encryption.EncryptionApi
     private lateinit var alias_detail_api: org.astermail.android.api.aliases.AliasDetailApi
+    private lateinit var recovery_api: org.astermail.android.api.recovery.RecoveryApi
     private lateinit var mail_rules_api: org.astermail.android.api.mail_rules.MailRulesApi
     private lateinit var auth_repository: AuthRepository
     private lateinit var session_key_store: SessionKeyStore
@@ -192,6 +193,7 @@ class SettingsViewModelTest {
         security_api = mockk(relaxed = true)
         encryption_api = mockk(relaxed = true)
         alias_detail_api = mockk(relaxed = true)
+        recovery_api = mockk(relaxed = true)
         mail_rules_api = mockk(relaxed = true)
         auth_repository = mockk(relaxed = true)
         session_key_store = mockk(relaxed = true)
@@ -238,6 +240,7 @@ class SettingsViewModelTest {
             security_api = security_api,
             encryption_api = encryption_api,
             alias_detail_api = alias_detail_api,
+            recovery_api = recovery_api,
             mail_rules_api = mail_rules_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
@@ -1990,6 +1993,7 @@ class SettingsViewModelTest {
             security_api = security_api,
             encryption_api = encryption_api,
             alias_detail_api = alias_detail_api,
+            recovery_api = recovery_api,
             mail_rules_api = mail_rules_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
@@ -2031,6 +2035,7 @@ class SettingsViewModelTest {
             security_api = security_api,
             encryption_api = encryption_api,
             alias_detail_api = alias_detail_api,
+            recovery_api = recovery_api,
             mail_rules_api = mail_rules_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
@@ -2105,6 +2110,7 @@ class SettingsViewModelTest {
             security_api = security_api,
             encryption_api = encryption_api,
             alias_detail_api = alias_detail_api,
+            recovery_api = recovery_api,
             mail_rules_api = mail_rules_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
@@ -2175,6 +2181,7 @@ class SettingsViewModelTest {
             security_api = security_api,
             encryption_api = encryption_api,
             alias_detail_api = alias_detail_api,
+            recovery_api = recovery_api,
             mail_rules_api = mail_rules_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
@@ -2224,6 +2231,7 @@ class SettingsViewModelTest {
             security_api = security_api,
             encryption_api = encryption_api,
             alias_detail_api = alias_detail_api,
+            recovery_api = recovery_api,
             mail_rules_api = mail_rules_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
@@ -2282,6 +2290,7 @@ class SettingsViewModelTest {
             security_api = security_api,
             encryption_api = encryption_api,
             alias_detail_api = alias_detail_api,
+            recovery_api = recovery_api,
             mail_rules_api = mail_rules_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,

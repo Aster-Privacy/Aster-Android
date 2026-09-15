@@ -120,9 +120,9 @@
     <string name="recovery_email_sent_description">我们已将密码重置链接发送到您的恢复邮箱。请查看您的收件箱并点击链接继续。</string>
     <string name="use_recovery_code_instead">改用恢复代码</string>
     <string name="enter_recovery_code">输入恢复代码</string>
-    <string name="enter_recovery_code_description">输入您在创建账户时保存的恢复代码之一。</string>
+    <string name="enter_recovery_code_description">输入你创建账户时保存的其中一个恢复代码。每个代码只能使用一次。</string>
     <string name="recovery_code">恢复代码</string>
-    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX</string>
+    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX-XXXX</string>
     <string name="verify_code">验证代码</string>
     <string name="create_new_password">创建新密码</string>
     <string name="choose_strong_password">为您的账户选择一个强密码</string>
@@ -136,7 +136,7 @@
     <string name="recovering_your_account">正在恢复您的账户</string>
     <string name="please_dont_close_app">请不要关闭应用</string>
     <string name="save_new_recovery_codes">保存新的恢复代码</string>
-    <string name="old_codes_invalidated">您的旧恢复代码已失效。请将这些新代码保存在安全的地方。</string>
+    <string name="old_codes_invalidated">你以前的恢复代码已失效。请将新代码保存在安全的地方，例如密码管理器或打印副本。每个代码只能使用一次。</string>
     <string name="show_codes">显示代码</string>
     <string name="hide_codes">隐藏代码</string>
     <string name="copy_codes">复制代码</string>
@@ -676,7 +676,6 @@
     <string name="two_factor_subtitle_add">添加第二层保护</string>
     <string name="active_sessions">活跃会话</string>
     <string name="devices_signed_in">已登录的设备</string>
-    <string name="recovery_key">恢复密钥</string>
     <string name="backup_access">备份访问</string>
 
     <string name="update_your_password">更新您的密码</string>
@@ -715,7 +714,6 @@
     <string name="two_factor_other_devices_signed_out">Aster 已在你的其他设备上退出登录。若要继续使用这些设备，请重新登录并输入身份验证器 App 中的验证码。</string>
     <string name="new_backup_codes_title">新的备用代码</string>
     <string name="new_backup_codes_subtitle">您的旧备用代码已失效。请将这些代码保存在安全的地方。</string>
-    <string name="copy_all_codes">复制所有代码</string>
 
     <string name="sessions">会话</string>
     <string name="no_active_sessions">没有活跃会话</string>
@@ -757,12 +755,7 @@
     <string name="open_encryption_settings">打开加密设置</string>
 
     <string name="enter_your_password">输入密码</string>
-    <string name="password_required_for_recovery">查看恢复密钥需要您的密码。</string>
-    <string name="please_enter_password">请输入您的密码</string>
-    <string name="view_recovery_key">查看恢复密钥</string>
     <string name="incorrect_password">密码不正确</string>
-    <string name="store_somewhere_safe">请保存在安全的地方</string>
-    <string name="recovery_key_warning">恢复密钥是您忘记密码后重新获取访问权限的唯一方式。Aster 无法为您恢复。</string>
     <string name="no_recovery_key_found">未找到恢复密钥。恢复代码在创建账户时设置并存储在加密保险库中。请尝试退出登录后重新登录以刷新保险库。</string>
 
     <string name="aliases">别名</string>
@@ -1437,8 +1430,6 @@
     <string name="badges">徽章</string>
     <string name="no_badges_yet">暂无徽章</string>
 
-    <string name="no_recovery_codes_yet">未找到此账户的恢复代码。立即生成一组，以便在忘记密码时恢复访问。</string>
-    <string name="generate_recovery_codes">生成恢复代码</string>
 
     <!-- Pending account deletion -->
     <string name="pending_deletion_title">账户已计划删除</string>
@@ -2020,19 +2011,13 @@
     <string name="upgrade_inline_card_description">你已达到免费方案上限。升级付费方案可解锁更多。</string>
     <string name="your_key">你的密钥</string>
     <string name="recovery_codes">恢复码</string>
-    <string name="recovery_codes_remaining">剩余 %1$d / %2$d 个</string>
+    <string name="recovery_codes_remaining">剩余 %1$d/%2$d 个代码</string>
     <string name="low">偏少</string>
     <string name="ok">好</string>
-    <string name="recovery_codes_low_warning">恢复码快用完了，请尽快重新生成。</string>
+    <string name="recovery_codes_low_warning">恢复代码所剩不多。请获取新代码，以免被锁定在账户之外。</string>
     <string name="loading_recovery_codes_status">正在加载恢复码状态...</string>
-    <string name="view_backup_recovery_key">查看并备份恢复密钥</string>
-    <string name="regenerating">正在重新生成...</string>
-    <string name="regenerate_recovery_codes">重新生成恢复码</string>
-    <string name="regenerate_recovery_codes_title">重新生成恢复码？</string>
-    <string name="regenerate_recovery_codes_message">当前的恢复码将立即失效。请马上保存新的恢复码。</string>
-    <string name="regenerate">重新生成</string>
-    <string name="new_recovery_codes_title">新的恢复码</string>
-    <string name="new_recovery_codes_message">请把这些恢复码保存在安全的地方。每个码只能使用一次。</string>
+    <string name="new_recovery_codes_title">保存你的恢复代码</string>
+    <string name="new_recovery_codes_message">请将它们保存在安全的地方，例如密码管理器或打印副本。每个代码只能使用一次。</string>
     <string name="storage_format">存储格式</string>
     <string name="storage_format_aster">Aster 服务器</string>
     <string name="storage_format_aster_sub">默认加密存储</string>
@@ -3357,4 +3342,37 @@
     <string name="enc_verification_code_info_title">这是什么？</string>
     <string name="enc_verification_code_info_description">由您的加密密钥生成的一段简短验证码。如果对方将此验证码与他们那端的验证码进行比对且一致,双方就可以确信消息是私密的且未被篡改。</string>
     <string name="enc_copy_verification_code">复制验证码</string>
+    <string name="copy_all_codes">复制所有代码</string>
+    <string name="codes_copied">已复制代码。</string>
+    <string name="confirm_its_you">验证身份</string>
+    <string name="error_recovery_code_replaced">该代码属于旧的一组，已不再有效。请使用你保存的最新列表中的代码。</string>
+    <string name="error_recovery_code_used">该代码已使用。每个代码只能使用一次，请从保存的列表中输入其他代码。</string>
+    <string name="error_recovery_locked_until">这个账户的恢复尝试次数过多。请在 %1$s 后重试。你的验证码一个都没有被使用，因此它们都还在。</string>
+    <string name="get_new_codes">获取新代码</string>
+    <string name="get_new_codes_message">获取新代码后，当前代码会立即失效。</string>
+    <string name="get_new_codes_title">获取新的恢复代码？</string>
+    <string name="i_saved_these_codes">我已保存这些代码</string>
+    <string name="other_way_code_desc">输入你保存的其中一个代码。</string>
+    <string name="other_way_code_title">使用恢复代码</string>
+    <string name="other_way_email_desc">Aster Mail 会向你的恢复邮箱发送一个链接。你将无法访问重置前的邮件。</string>
+    <string name="other_way_email_title">使用恢复邮箱重置</string>
+    <string name="other_way_none_desc">Aster Mail 无法读取你的加密数据，因此没有这些方式，任何人都无法恢复。你仍然可以创建账户。</string>
+    <string name="other_way_none_title">这些我都没有</string>
+    <string name="other_ways_desc">选择你想要重新登录账户的方式。</string>
+    <string name="print_codes">打印</string>
+    <string name="recovery_codes_print_created">创建于 %1$s</string>
+    <string name="recovery_codes_print_note">每个代码只能使用一次。请妥善保管这些代码。任何掌握代码和你的电子邮件地址的人都可以重置你的密码。</string>
+    <string name="recovery_codes_print_title">Aster Mail 恢复代码</string>
+    <string name="recovery_codes_unavailable">此设备未存储你的代码。获取新代码即可查看。</string>
+    <string name="recovery_codes_view_desc">每个代码只能使用一次。已使用的代码会显示删除线。</string>
+    <string name="reset_account_desc">重置前的加密邮件、联系人和文件会保持锁定，直到你用旧密码恢复它们。你会获得一个新的空加密密钥。</string>
+    <string name="reset_account_title">要重置你的账户吗?</string>
+    <string name="review_devices_signed_out">其他设备已退出登录。</string>
+    <string name="review_no_recovery_email">没有恢复邮箱。</string>
+    <string name="review_recovery_email_kept">你的恢复邮箱仍已设置。</string>
+    <string name="review_security_desc">你的密码已更改，账户已恢复。</string>
+    <string name="review_security_title">检查你的安全设置</string>
+    <string name="review_two_step_off">两步验证已关闭。</string>
+    <string name="send_reset_link">发送重置链接</string>
+    <string name="try_another_way">尝试其他方式</string>
 </resources>

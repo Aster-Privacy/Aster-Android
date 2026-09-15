@@ -116,7 +116,6 @@ import org.astermail.android.R
 import org.astermail.android.storage.ThemeMode
 import org.astermail.android.ui.auth.ForgotPasswordScreen
 import org.astermail.android.ui.auth.OnboardingScreen
-import org.astermail.android.ui.auth.RecoveryKeyScreen
 import org.astermail.android.ui.auth.RegisterScreen
 import org.astermail.android.ui.auth.SignInScreen
 import org.astermail.android.ui.auth.WelcomeScreen
@@ -176,8 +175,8 @@ import org.astermail.android.ui.settings.detail.FeedbackScreen
 import org.astermail.android.ui.settings.detail.ImportScreen
 import org.astermail.android.ui.settings.detail.NotificationsScreen
 import org.astermail.android.ui.settings.detail.ProfileScreen
+import org.astermail.android.ui.settings.detail.RecoveryCodesScreen
 import org.astermail.android.ui.settings.detail.RecoveryEmailScreen
-import org.astermail.android.ui.settings.detail.RecoveryKeyViewScreen
 import org.astermail.android.ui.settings.detail.SecurityScreen
 import org.astermail.android.ui.settings.detail.SenderFiltersScreen
 import org.astermail.android.ui.settings.detail.SessionsScreen
@@ -409,13 +408,8 @@ private object routes {
         return "sign_in?email=$encoded"
     }
     const val forgot_password = "forgot_password"
-    const val recovery_key = "recovery_key/{mnemonic}"
     const val inbox = "inbox"
 
-    fun recovery_key_for(mnemonic: String): String {
-        val encoded = java.net.URLEncoder.encode(mnemonic, "UTF-8")
-        return "recovery_key/$encoded"
-    }
     const val mail_detail = "mail_detail/{email_id}"
     const val crypto_invoice = "crypto_invoice/{invoice_id}"
 
@@ -806,21 +800,6 @@ private fun AsterNavHost() {
                             context.getString(R.string.could_not_open_link),
                             android.widget.Toast.LENGTH_SHORT,
                         ).show()
-                    }
-                },
-            )
-        }
-        composable(
-            route = routes.recovery_key,
-            arguments = listOf(navArgument("mnemonic") { type = NavType.StringType }),
-        ) { entry ->
-            val encoded = entry.arguments?.getString("mnemonic").orEmpty()
-            val mnemonic = java.net.URLDecoder.decode(encoded, "UTF-8")
-            RecoveryKeyScreen(
-                mnemonic = mnemonic,
-                on_continue = {
-                    nav_controller.navigate(routes.inbox) {
-                        popUpTo(routes.welcome) { inclusive = true }
                     }
                 },
             )
@@ -1243,11 +1222,8 @@ private fun AsterNavHost() {
         composable(routes.settings_detail("sessions")) {
             SessionsScreen(on_back = { back(); Unit })
         }
-        composable(routes.settings_detail("recovery_key")) {
-            RecoveryKeyViewScreen(on_back = { back(); Unit })
-        }
-        composable(routes.settings_detail("recovery_key_view")) {
-            RecoveryKeyViewScreen(on_back = { back(); Unit })
+        composable(routes.settings_detail("recovery_codes")) {
+            RecoveryCodesScreen(on_back = { back(); Unit })
         }
         composable(routes.settings_detail("recovery_email")) {
             RecoveryEmailScreen(on_back = { back(); Unit })
@@ -2455,11 +2431,16 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     val first_run_plan_pending by theme_vm_inbox.first_run_plan_pending.collectAsStateWithLifecycle()
     val first_run_at by theme_vm_inbox.first_run_at.collectAsStateWithLifecycle()
     val recovery_snooze_until by theme_vm_inbox.recovery_snooze_until.collectAsStateWithLifecycle()
+    val phrase_prompt_snooze_until by theme_vm_inbox.phrase_prompt_snooze_until
+        .collectAsStateWithLifecycle()
 
     var recovery_prompt_dismissed by androidx.compose.runtime.saveable.rememberSaveable {
         mutableStateOf(false)
     }
     var plan_prompt_dismissed by androidx.compose.runtime.saveable.rememberSaveable {
+        mutableStateOf(false)
+    }
+    var phrase_prompt_dismissed by androidx.compose.runtime.saveable.rememberSaveable {
         mutableStateOf(false)
     }
 
@@ -2470,15 +2451,35 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     val plan_prompt_due = first_run_age_ms >=
         org.astermail.android.ui.onboarding.first_run_plan_delay_ms
 
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        settings_vm.refresh_recovery_methods()
+    }
+
     androidx.compose.runtime.LaunchedEffect(recovery_prompt_due) {
         if (recovery_prompt_due) settings_vm.refresh_recovery_email_presence()
     }
 
-    val show_recovery_prompt = recovery_prompt_due &&
+    val recovery_methods = settings_state.recovery_methods
+    val needs_codes = recovery_methods != null && !recovery_methods.has_codes
+    val codes_running_low = recovery_methods != null &&
+        recovery_methods.has_codes &&
+        recovery_methods.codes_remaining <= 3L
+
+    val show_phrase_prompt = recovery_methods != null &&
+        recovery_methods.has_phrase &&
+        !recovery_methods.has_codes &&
+        !first_run_setup_pending &&
+        !phrase_prompt_dismissed &&
+        now_ms >= phrase_prompt_snooze_until
+
+    val show_recovery_prompt = !show_phrase_prompt &&
+        recovery_prompt_due &&
         !first_run_setup_pending &&
         !recovery_prompt_dismissed &&
         now_ms >= recovery_snooze_until &&
-        !settings_state.recovery_email_set
+        (needs_codes || codes_running_low || !settings_state.recovery_email_set)
+
+    val recovery_prompt_wants_codes = needs_codes || codes_running_low
 
     val inbox_plan_code = plan_state_inbox.limits?.plan_code
     androidx.compose.runtime.LaunchedEffect(inbox_plan_code, first_run_plan_pending) {
@@ -2492,9 +2493,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         first_run_plan_pending &&
         !first_run_setup_pending &&
         !plan_prompt_dismissed &&
-        !show_recovery_prompt
+        !show_recovery_prompt &&
+        !show_phrase_prompt
 
-    if (show_recovery_prompt || show_plan_prompt) {
+    if (show_recovery_prompt || show_phrase_prompt || show_plan_prompt) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -2502,7 +2504,35 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xxl),
             contentAlignment = Alignment.BottomCenter,
         ) {
-            if (show_recovery_prompt) {
+            if (show_phrase_prompt) {
+                org.astermail.android.ui.onboarding.PhraseMigrationCard(
+                    visible = true,
+                    on_get_codes = {
+                        phrase_prompt_dismissed = true
+                        nav_controller.navigate(routes.settings_detail("recovery_codes"))
+                    },
+                    on_later = {
+                        phrase_prompt_dismissed = true
+                        theme_vm_inbox.snooze_phrase_prompt(
+                            org.astermail.android.ui.onboarding.phrase_prompt_snooze_ms,
+                        )
+                    },
+                )
+            } else if (show_recovery_prompt && recovery_prompt_wants_codes) {
+                org.astermail.android.ui.onboarding.RecoveryCodesReminderCard(
+                    visible = true,
+                    on_get_codes = {
+                        recovery_prompt_dismissed = true
+                        nav_controller.navigate(routes.settings_detail("recovery_codes"))
+                    },
+                    on_later = {
+                        recovery_prompt_dismissed = true
+                        theme_vm_inbox.snooze_recovery(
+                            org.astermail.android.ui.onboarding.first_run_recovery_snooze_ms,
+                        )
+                    },
+                )
+            } else if (show_recovery_prompt) {
                 org.astermail.android.ui.onboarding.RecoveryReminderCard(
                     visible = true,
                     on_add_recovery = {

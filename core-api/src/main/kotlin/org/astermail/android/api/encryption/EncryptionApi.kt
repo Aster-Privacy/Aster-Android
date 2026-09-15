@@ -57,12 +57,6 @@ data class RecoveryCodesStatus(
 )
 
 @Serializable
-data class RegenerateRecoveryCodesResponse(
-    val codes: List<String> = emptyList(),
-    val info: RecoveryCodesStatus = RecoveryCodesStatus(),
-)
-
-@Serializable
 data class EncryptionSettings(
     val auto_discover_keys: Boolean = false,
     val encrypt_by_default: Boolean = false,
@@ -146,7 +140,6 @@ interface EncryptionApi {
     suspend fun get_encryption_salt(): EncryptionSaltResponse
     suspend fun export_public_key(): ExportKeyResponse
     suspend fun export_private_key(request: ExportKeyRequest): ExportKeyResponse
-    suspend fun regenerate_recovery_codes(): RegenerateRecoveryCodesResponse
     suspend fun get_wkd_status(): WkdStatusResponse
     suspend fun get_keyserver_status(): KeyserverStatusResponse
     suspend fun publish_to_wkd(): PublishKeyResponse
@@ -196,15 +189,6 @@ class EncryptionApiImpl(private val client: ApiClient) : EncryptionApi {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
-        }
-        return decode_or_throw(response)
-    }
-
-    override suspend fun regenerate_recovery_codes(): RegenerateRecoveryCodesResponse {
-        val response = client.http.post("${client.base_url}$crypto_base/encryption/regenerate-recovery-codes") {
-            contentType(ContentType.Application.Json)
-            client.get_csrf()?.let { header("X-CSRF-Token", it) }
-            setBody(emptyMap<String, String>())
         }
         return decode_or_throw(response)
     }

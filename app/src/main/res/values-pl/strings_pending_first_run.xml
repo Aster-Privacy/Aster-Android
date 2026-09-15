@@ -13,4 +13,10 @@
     <string name="plan_prompt_body">Przejdź na wyższy plan, aby uzyskać więcej miejsca, własne domeny i nieograniczone aliasy.</string>
     <string name="plan_prompt_action">Zobacz plany</string>
     <string name="plan_prompt_dismiss">Nie teraz</string>
+    <string name="recovery_codes_reminder_title">Zapisz kody odzyskiwania</string>
+    <string name="recovery_codes_reminder_body">Aster szyfruje Twoją pocztę Twoim hasłem, więc nikt nie zresetuje go za Ciebie. Kody odzyskiwania to jedyna droga powrotu do zaszyfrowanej poczty.</string>
+    <string name="recovery_codes_reminder_action">Pobierz kody odzyskiwania</string>
+    <string name="recovery_phrase_migrate_title">Przejdź na kody odzyskiwania</string>
+    <string name="recovery_phrase_migrate_body">Frazy odzyskiwania zostaną wycofane. Pobierz teraz kody odzyskiwania, aby nadal móc odzyskać konto.</string>
+    <string name="recovery_phrase_migrate_action">Pobierz kody</string>
 </resources>

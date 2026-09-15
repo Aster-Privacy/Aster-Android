@@ -219,11 +219,6 @@ fun EncryptionScreen(
     val is_pgp_key = view?.is_pgp == true
     val prefs = state.preferences
 
-    var show_regen_confirm by remember { mutableStateOf(false) }
-    var show_new_codes_dialog by remember { mutableStateOf(false) }
-    var new_recovery_codes by remember { mutableStateOf(emptyList<String>()) }
-    var codes_acknowledged by remember { mutableStateOf(false) }
-    var regenerating by remember { mutableStateOf(false) }
     var show_export_private_dialog by remember { mutableStateOf(false) }
     var export_private_password by remember { mutableStateOf("") }
     var exporting_private_key by remember { mutableStateOf(false) }
@@ -567,26 +562,9 @@ fun EncryptionScreen(
             }
             AsterDivider()
             detail_row(
-                title = stringResource(R.string.view_backup_recovery_key),
+                title = stringResource(R.string.recovery_codes),
                 icon = TablerIcons.Key,
-                on_click = { on_open("recovery_key_view") },
-            )
-            AsterDivider()
-            detail_row(
-                title = if (regenerating) stringResource(R.string.regenerating) else stringResource(R.string.regenerate_recovery_codes),
-                icon = TablerIcons.Refresh,
-                on_click = { if (!regenerating) show_regen_confirm = true },
-                trailing = if (regenerating) {
-                    {
-                        CircularProgressIndicator(
-                            color = colors.accent_blue,
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                        )
-                    }
-                } else {
-                    null
-                },
+                on_click = { on_open("recovery_codes") },
             )
           }
         }
@@ -752,97 +730,6 @@ fun EncryptionScreen(
                                 }
                             }
                         }
-                    },
-                )
-            },
-        )
-    }
-
-    if (show_regen_confirm) {
-        org.astermail.android.design.components.AsterAlertDialog(
-            on_dismiss = { show_regen_confirm = false },
-            title = stringResource(R.string.regenerate_recovery_codes_title),
-            message = stringResource(R.string.regenerate_recovery_codes_message),
-            confirm_label = stringResource(R.string.regenerate),
-            cancel_label = stringResource(R.string.cancel),
-            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
-            on_confirm = {
-                show_regen_confirm = false
-                scope.launch {
-                    regenerating = true
-                    val codes = vm.regenerate_recovery_codes_now()
-                    regenerating = false
-                    if (codes.isNotEmpty()) {
-                        new_recovery_codes = codes
-                        codes_acknowledged = false
-                        show_new_codes_dialog = true
-                    } else {
-                        Toast.makeText(context, context.getString(R.string.something_went_wrong), Toast.LENGTH_SHORT).show()
-                    }
-                }
-            },
-        )
-    }
-
-    if (show_new_codes_dialog && new_recovery_codes.isNotEmpty()) {
-        val context_dialog = LocalContext.current
-        org.astermail.android.design.components.AsterDialog(
-            on_dismiss = {
-                show_new_codes_dialog = false
-                new_recovery_codes = emptyList()
-                codes_acknowledged = false
-            },
-            title = stringResource(R.string.new_recovery_codes_title),
-            body = {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = stringResource(R.string.new_recovery_codes_message),
-                        color = colors.warning,
-                        fontSize = 13.sp,
-                        lineHeight = 18.sp,
-                    )
-                    Spacer(Modifier.size(AsterSpacing.md))
-                    recovery_codes_block(codes = new_recovery_codes)
-                    Spacer(Modifier.size(AsterSpacing.md))
-                    AsterActionRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        spacing = AsterSpacing.sm,
-                    ) {
-                        AsterSecondaryButton(
-                            label = stringResource(R.string.copy_all_codes),
-                            modifier = Modifier.weight(1f),
-                            onClick = {
-                                val text = new_recovery_codes.joinToString("\n")
-                                if (copy_to_clipboard(context_dialog, context_dialog.getString(R.string.clipboard_label_recovery_key), text)) {
-                                    org.astermail.android.util.schedule_sensitive_clipboard_clear(context_dialog, text)
-                                    Toast.makeText(context_dialog, context_dialog.getString(R.string.copied), Toast.LENGTH_SHORT).show()
-                                } else {
-                                    show_copy_failed_toast(context_dialog)
-                                }
-                            },
-                        )
-                        AsterSecondaryButton(
-                            label = stringResource(R.string.fix_enc_save_codes),
-                            modifier = Modifier.weight(1f),
-                            onClick = { save_recovery_codes(context_dialog, new_recovery_codes) },
-                        )
-                    }
-                    Spacer(Modifier.size(AsterSpacing.md))
-                    acknowledge_row(
-                        checked = codes_acknowledged,
-                        label = stringResource(R.string.fix_enc_codes_confirm_saved),
-                        on_change = { codes_acknowledged = it },
-                    )
-                }
-            },
-            footer = {
-                org.astermail.android.design.components.AsterDialogPrimaryButton(
-                    label = stringResource(R.string.done),
-                    enabled = codes_acknowledged,
-                    onClick = {
-                        show_new_codes_dialog = false
-                        new_recovery_codes = emptyList()
-                        codes_acknowledged = false
                     },
                 )
             },

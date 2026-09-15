@@ -152,4 +152,20 @@
         <item quantity="many">تم تصدير %d جهة اتصال</item>
         <item quantity="other">تم تصدير %d جهة اتصال</item>
     </plurals>
+    <plurals name="lockout_minutes">
+        <item quantity="zero">%1$d دقيقة</item>
+        <item quantity="one">دقيقة واحدة</item>
+        <item quantity="two">دقيقتين</item>
+        <item quantity="few">%1$d دقائق</item>
+        <item quantity="many">%1$d دقيقة</item>
+        <item quantity="other">%1$d دقيقة</item>
+    </plurals>
+    <plurals name="review_codes_left">
+        <item quantity="zero">لم تتبقَّ أي رموز استرداد.</item>
+        <item quantity="one">تبقّى رمز استرداد واحد.</item>
+        <item quantity="two">تبقّى رمزا استرداد.</item>
+        <item quantity="few">تبقّت %1$d رموز استرداد.</item>
+        <item quantity="many">تبقّى %1$d رمز استرداد.</item>
+        <item quantity="other">تبقّى %1$d رمز استرداد.</item>
+    </plurals>
 </resources>
