@@ -205,6 +205,28 @@ fun build_thread_rows(
     return ThreadRowResult(sorted, resolved)
 }
 
+fun reconcile_email_rows(rows: MutableList<Email>, merged: List<Email>) {
+    if (rows == merged) return
+    val merged_ids = merged.mapTo(HashSet()) { it.id }
+    for (index in rows.indices.reversed()) {
+        if (rows[index].id !in merged_ids) rows.removeAt(index)
+    }
+    merged.forEachIndexed { target, item ->
+        if (target >= rows.size) {
+            rows.add(item)
+            return@forEachIndexed
+        }
+        if (rows[target].id == item.id) {
+            if (rows[target] != item) rows[target] = item
+            return@forEachIndexed
+        }
+        val current = rows.indexOfFirst { it.id == item.id }
+        if (current >= 0) rows.removeAt(current)
+        rows.add(target, item)
+    }
+    while (rows.size > merged.size) rows.removeAt(rows.size - 1)
+}
+
 private const val UNREAD_MISMATCH_GRACE_MS = 3000L
 
 private const val MIN_FILLED_ROWS = 15
@@ -634,23 +656,7 @@ fun InboxScreen(
         }
         previous_api_emails.clear()
         api_emails.forEach { previous_api_emails[it.id] = it }
-        if (merged != emails.toList()) {
-            if (merged.size == emails.size) {
-                merged.forEachIndexed { index, item ->
-                    if (emails[index] != item) emails[index] = item
-                }
-            } else {
-                val shared = minOf(merged.size, emails.size)
-                for (index in 0 until shared) {
-                    if (emails[index] != merged[index]) emails[index] = merged[index]
-                }
-                if (merged.size > emails.size) {
-                    emails.addAll(merged.subList(shared, merged.size))
-                } else {
-                    while (emails.size > merged.size) emails.removeAt(emails.size - 1)
-                }
-            }
-        }
+        reconcile_email_rows(emails, merged)
     }
     val is_refreshing = inbox_state.is_refreshing
     var sort_mode_user_set by remember { mutableStateOf(false) }
@@ -1465,10 +1471,9 @@ fun InboxScreen(
         if (drag_selecting) return@LaunchedEffect
         androidx.compose.runtime.withFrameNanos { }
         if (list_state.isScrollInProgress || drag_selecting) return@LaunchedEffect
-        if (list_state.firstVisibleItemScrollOffset > 0) {
-            list_state.scrollToItem(list_state.firstVisibleItemIndex)
-        }
-        if (list_state.firstVisibleItemIndex == 0) settle_clipped_top()
+        if (list_state.firstVisibleItemIndex != 0) return@LaunchedEffect
+        if (list_state.firstVisibleItemScrollOffset > 0) list_state.scrollToItem(0)
+        settle_clipped_top()
     }
 
     LaunchedEffect(select_mode, list_state) {

@@ -2157,4 +2157,70 @@ class MailViewModelTest {
         assertTrue("restored item must survive a stale page, got $ids", "id_3" in ids)
     }
 
+    @Test
+    fun `a stale next page cannot bring an archived item back`() = runTest {
+        val page = fake_inbox_page(3, has_more = true, next_cursor = "cursor_1")
+        coEvery { repository.fetch_inbox(any(), cursor = isNull(), any(), any()) } returns
+            Result.success(page)
+        coEvery { repository.archive(any(), any()) } returns Result.success(Unit)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.archive(listOf("id_2"))
+        advanceUntilIdle()
+        assertEquals(listOf("id_1", "id_3"), vm.inbox_state.value.items.map { it.id })
+
+        val stale_page = InboxPage(
+            page.items.filter { it.id == "id_2" },
+            has_more = false,
+            next_cursor = null,
+            total = 3,
+        )
+        coEvery { repository.fetch_inbox(any(), cursor = eq("cursor_1"), any(), any()) } returns
+            Result.success(stale_page)
+
+        vm.load_more()
+        advanceUntilIdle()
+
+        val ids = vm.inbox_state.value.items.map { it.id }
+        assertEquals("an archived item must not return on the next page, got $ids", listOf("id_1", "id_3"), ids)
+    }
+
+    @Test
+    fun `an undone archive still returns on the next page`() = runTest {
+        val page = fake_inbox_page(3, has_more = true, next_cursor = "cursor_1")
+        coEvery { repository.fetch_inbox(any(), cursor = isNull(), any(), any()) } returns
+            Result.success(page)
+        coEvery { repository.archive(any(), any()) } returns Result.success(Unit)
+        coEvery { repository.unarchive(any(), any()) } returns
+            Result.success(BulkScopeResponse(affected_count = 1))
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.archive(listOf("id_2"))
+        advanceUntilIdle()
+        vm.batch_action_state.value?.on_undo?.invoke()
+        advanceUntilIdle()
+
+        vm.inbox_state.value.items.filter { it.id != "id_2" }.let { remaining ->
+            assertEquals(2, remaining.size)
+        }
+
+        val next_page = InboxPage(
+            page.items.filter { it.id == "id_2" },
+            has_more = false,
+            next_cursor = null,
+            total = 3,
+        )
+        coEvery { repository.fetch_inbox(any(), cursor = eq("cursor_1"), any(), any()) } returns
+            Result.success(next_page)
+
+        vm.load_more()
+        advanceUntilIdle()
+
+        assertTrue("id_2" in vm.inbox_state.value.items.map { it.id })
+    }
+
 }
