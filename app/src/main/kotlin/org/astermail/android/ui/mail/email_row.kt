@@ -164,7 +164,7 @@ fun EmailRow(
     )
     val interaction_source = remember { MutableInteractionSource() }
     val yesterday_label = stringResource(R.string.yesterday)
-    val relative_time = remember(email.received_at, yesterday_label) {
+    val relative_time = remember(email.received_at, yesterday_label, AsterTimePreferences.generation) {
         email.received_at.format_relative_time(yesterday_label)
     }
     val group_shape = remember(is_first, is_last) { inbox_group_shape(is_first, is_last) }
@@ -435,7 +435,7 @@ fun ThreadInboxRow(
     )
     val interaction_source = remember { MutableInteractionSource() }
     val yesterday_label = stringResource(R.string.yesterday)
-    val relative_time = remember(email.received_at, yesterday_label) {
+    val relative_time = remember(email.received_at, yesterday_label, AsterTimePreferences.generation) {
         email.received_at.format_relative_time(yesterday_label)
     }
     val group_shape = remember(is_first, is_last) { inbox_group_shape(is_first, is_last) }

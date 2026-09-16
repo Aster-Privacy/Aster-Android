@@ -2114,6 +2114,10 @@
     <string name="inbox_categories_subtitle">Gelen postaları İndirimler, Sosyal ve Bildirimler gibi sekmelere ayırır</string>
     <string name="conversation_order_label">Sohbet sıralaması</string>
     <string name="show_message_size">İleti boyutunu göster</string>
+    <string name="relative_dates">Göreli tarihler</string>
+    <string name="relative_dates_subtitle">Son iletilerde tarih yerine Dün ve saati göster</string>
+    <string name="relative_dates_info_title">Göreli tarihler</string>
+    <string name="relative_dates_info_desc">Bu seçenek açıkken bugünkü iletiler saati, dünkü iletiler Dün ifadesini gösterir. İleti listesinde her zaman tarihi, iletinin kendisinde ise tarih ve saati görmek için kapatın.</string>
     <string name="show_alias_indicators">Takma ad göstergelerini göster</string>
     <string name="show_alias_indicators_subtitle">Takma adlarınızdan birine gelen iletileri işaretler</string>
     <string name="show_message_size_subtitle">Listede her e-postanın boyutunu gösterir</string>

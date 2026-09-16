@@ -2111,6 +2111,10 @@
     <string name="inbox_categories_subtitle">받은 메일을 할인, 소셜, 알림 같은 탭으로 나눕니다</string>
     <string name="conversation_order_label">대화 정렬 순서</string>
     <string name="show_message_size">메일 크기 표시</string>
+    <string name="relative_dates">상대 날짜</string>
+    <string name="relative_dates_subtitle">최근 메시지에 날짜 대신 어제와 시간을 표시합니다</string>
+    <string name="relative_dates_info_title">상대 날짜</string>
+    <string name="relative_dates_info_desc">켜면 오늘 받은 메시지는 시간이, 어제 받은 메시지는 어제가 표시됩니다. 끄면 메시지 목록에는 날짜가, 메시지 안에는 날짜와 시간이 항상 표시됩니다.</string>
     <string name="show_alias_indicators">별칭 표시 보기</string>
     <string name="show_alias_indicators_subtitle">별칭으로 도착한 메시지에 표시합니다</string>
     <string name="show_message_size_subtitle">목록에 각 메일의 크기를 표시합니다</string>

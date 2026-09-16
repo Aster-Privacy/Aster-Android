@@ -2288,8 +2288,8 @@ internal fun expanded_message(
             Spacer(Modifier.width(AsterSpacing.sm))
             Column(horizontalAlignment = Alignment.End) {
                 val header_yesterday_label = stringResource(R.string.yesterday)
-                val header_relative_time = remember(msg.timestamp, header_yesterday_label) {
-                    msg.timestamp.format_relative_time(header_yesterday_label)
+                val header_relative_time = remember(msg.timestamp, header_yesterday_label, AsterTimePreferences.generation) {
+                    msg.timestamp.format_message_time(header_yesterday_label)
                 }
                 Text(
                     text = header_relative_time,
@@ -4130,8 +4130,8 @@ private fun collapsed_message(
                     )
                     Spacer(Modifier.width(AsterSpacing.sm))
                     val row_yesterday_label = stringResource(R.string.yesterday)
-                    val row_relative_time = remember(msg.timestamp, row_yesterday_label) {
-                        msg.timestamp.format_relative_time(row_yesterday_label)
+                    val row_relative_time = remember(msg.timestamp, row_yesterday_label, AsterTimePreferences.generation) {
+                        msg.timestamp.format_message_time(row_yesterday_label)
                     }
                     Text(
                         text = row_relative_time,

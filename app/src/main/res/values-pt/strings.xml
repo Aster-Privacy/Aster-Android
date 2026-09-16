@@ -2114,6 +2114,10 @@
     <string name="inbox_categories_subtitle">Separa o correio recebido em abas como Promoções, Redes sociais e Notificações</string>
     <string name="conversation_order_label">Ordem da conversa</string>
     <string name="show_message_size">Mostrar o tamanho da mensagem</string>
+    <string name="relative_dates">Datas relativas</string>
+    <string name="relative_dates_subtitle">Mostrar Ontem e a hora nas mensagens recentes em vez da data</string>
+    <string name="relative_dates_info_title">Datas relativas</string>
+    <string name="relative_dates_info_desc">Quando esta opção está ativa, as mensagens de hoje mostram a hora e as de ontem mostram Ontem. Desative-a para mostrar sempre a data na lista de mensagens e a data e a hora na própria mensagem.</string>
     <string name="show_alias_indicators">Mostrar indicadores de alias</string>
     <string name="show_alias_indicators_subtitle">Marcar mensagens que chegaram através de um dos seus aliases</string>
     <string name="show_message_size_subtitle">Exibe o tamanho de cada e-mail na lista</string>

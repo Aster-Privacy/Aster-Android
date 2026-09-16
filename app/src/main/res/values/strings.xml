@@ -2236,6 +2236,10 @@
     <string name="inbox_categories_subtitle">Sort incoming mail into tabs like Deals, Social, and Notifications</string>
     <string name="conversation_order_label">Conversation order</string>
     <string name="show_message_size">Show message size</string>
+    <string name="relative_dates">Relative dates</string>
+    <string name="relative_dates_subtitle">Show Yesterday and the time of day on recent messages instead of the date</string>
+    <string name="relative_dates_info_title">Relative dates</string>
+    <string name="relative_dates_info_desc">When this is on, today’s messages show the time they arrived and yesterday’s messages show as Yesterday. Turn it off to always show the date in the message list and the date and time in the message itself.</string>
     <string name="show_alias_indicators">Show alias indicators</string>
     <string name="show_alias_indicators_subtitle">Mark messages that arrived through one of your aliases</string>
     <string name="show_sender_pictures">Sender pictures</string>

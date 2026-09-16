@@ -2120,6 +2120,10 @@
     <string name="inbox_categories_subtitle">Сортирует входящие письма по вкладкам, например Скидки, Соцсети и Уведомления</string>
     <string name="conversation_order_label">Порядок в переписке</string>
     <string name="show_message_size">Показывать размер письма</string>
+    <string name="relative_dates">Относительные даты</string>
+    <string name="relative_dates_subtitle">Показывать Вчера и время в новых письмах вместо даты</string>
+    <string name="relative_dates_info_title">Относительные даты</string>
+    <string name="relative_dates_info_desc">Когда эта настройка включена, сегодняшние письма показывают время, а вчерашние Вчера. Отключите ее, чтобы в списке писем всегда показывалась дата, а в самом письме дата и время.</string>
     <string name="show_alias_indicators">Показывать индикаторы псевдонимов</string>
     <string name="show_alias_indicators_subtitle">Отмечать письма, пришедшие на один из ваших псевдонимов</string>
     <string name="show_message_size_subtitle">Показывает размер каждого письма в списке</string>

@@ -1483,6 +1483,10 @@
     <string name="conversation_grouping_subtitle">Regrouper les e-mails d\'une même conversation</string>
     <string name="conversation_order_label">Ordre des conversations</string>
     <string name="show_message_size">Afficher la taille des messages</string>
+    <string name="relative_dates">Dates relatives</string>
+    <string name="relative_dates_subtitle">Afficher Hier et l’heure sur les messages récents au lieu de la date</string>
+    <string name="relative_dates_info_title">Dates relatives</string>
+    <string name="relative_dates_info_desc">Lorsque cette option est activée, les messages du jour affichent l’heure et ceux de la veille affichent Hier. Désactivez-la pour toujours afficher la date dans la liste des messages ainsi que la date et l’heure dans le message.</string>
     <string name="show_alias_indicators">Afficher les indicateurs d’alias</string>
     <string name="show_alias_indicators_subtitle">Marquer les messages reçus via l’un de vos alias</string>
     <string name="show_message_size_subtitle">Afficher la taille de chaque e-mail dans la liste de la boîte de réception</string>

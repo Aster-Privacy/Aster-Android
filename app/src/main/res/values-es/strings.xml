@@ -2115,6 +2115,10 @@
     <string name="inbox_categories_subtitle">Clasifica el correo entrante en pestañas como Descuentos, Social y Notificaciones</string>
     <string name="conversation_order_label">Orden de la conversación</string>
     <string name="show_message_size">Mostrar el tamaño del mensaje</string>
+    <string name="relative_dates">Fechas relativas</string>
+    <string name="relative_dates_subtitle">Muestra Ayer y la hora en los mensajes recientes en lugar de la fecha</string>
+    <string name="relative_dates_info_title">Fechas relativas</string>
+    <string name="relative_dates_info_desc">Cuando esta opción está activada, los mensajes de hoy muestran la hora y los de ayer muestran Ayer. Desactívala para mostrar siempre la fecha en la lista de mensajes y la fecha y la hora en el propio mensaje.</string>
     <string name="show_alias_indicators">Mostrar indicadores de alias</string>
     <string name="show_alias_indicators_subtitle">Marca los mensajes que llegaron a través de uno de tus alias</string>
     <string name="show_message_size_subtitle">Muestra el tamaño de cada correo en la lista</string>

@@ -2018,6 +2018,10 @@
     <string name="inbox_categories_subtitle">आने वाली मेल को ऑफ़र, सोशल और सूचनाएं जैसे टैब में बांटें</string>
     <string name="conversation_order_label">बातचीत का क्रम</string>
     <string name="show_message_size">संदेश का आकार दिखाएं</string>
+    <string name="relative_dates">सापेक्ष तारीखें</string>
+    <string name="relative_dates_subtitle">हालिया संदेशों पर तारीख के बजाय कल और समय दिखाएं</string>
+    <string name="relative_dates_info_title">सापेक्ष तारीखें</string>
+    <string name="relative_dates_info_desc">यह चालू होने पर आज के संदेश समय दिखाते हैं और कल के संदेश कल दिखाते हैं। संदेश सूची में हमेशा तारीख और संदेश में तारीख और समय दिखाने के लिए इसे बंद करें।</string>
     <string name="show_alias_indicators">एलियास के संकेत दिखाएं</string>
     <string name="show_alias_indicators_subtitle">आपके किसी एलियास से आए संदेशों को चिह्नित करें</string>
     <string name="show_sender_pictures">प्रेषक की तस्वीरें</string>

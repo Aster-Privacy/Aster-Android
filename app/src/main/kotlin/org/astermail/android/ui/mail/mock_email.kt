@@ -429,9 +429,13 @@ object AsterTimePreferences {
     var use_24h: Boolean = false
         private set
 
-    @Volatile
-    var generation: Int = 0
-        private set
+    private val generation_state = androidx.compose.runtime.mutableIntStateOf(0)
+
+    var generation: Int
+        get() = generation_state.intValue
+        private set(value) {
+            generation_state.intValue = value
+        }
 
     @Volatile
     var time_zone: TimeZone? = null
@@ -445,6 +449,10 @@ object AsterTimePreferences {
 
     @Volatile
     var account_date_format: String? = null
+        private set
+
+    @Volatile
+    var relative_dates: Boolean = true
         private set
 
     @Synchronized
@@ -472,6 +480,13 @@ object AsterTimePreferences {
         }
         if (normalized == account_date_format) return
         account_date_format = normalized
+        generation += 1
+    }
+
+    @Synchronized
+    fun set_account_relative_dates(value: Boolean) {
+        if (value == relative_dates) return
+        relative_dates = value
         generation += 1
     }
 
@@ -521,6 +536,7 @@ private val weekday_holder = ThreadLocal<cached_date_format>()
 private val short_date_holder = ThreadLocal<cached_date_format>()
 private val long_date_holder = ThreadLocal<cached_date_format>()
 private val full_datetime_holder = ThreadLocal<cached_date_format>()
+private val short_datetime_holder = ThreadLocal<cached_date_format>()
 
 private fun localized_format(
     holder: ThreadLocal<cached_date_format>,
@@ -567,6 +583,9 @@ private fun short_date_format() = localized_format(short_date_holder, "MMMd", "M
 
 private fun long_date_format() = localized_format(long_date_holder, "yMMMd", "yMMMd")
 
+private fun short_datetime_format() =
+    localized_format(short_datetime_holder, "MMMdhm", "MMMdHm")
+
 private fun full_datetime_format() =
     localized_format(full_datetime_holder, "yMMMdhm", "yMMMdHm")
 
@@ -590,6 +609,10 @@ fun Long.format_relative_time(yesterday_label: String = "Yesterday"): String {
         .apply { timeInMillis = this@format_relative_time }
     val same_year = now.get(Calendar.YEAR) == then.get(Calendar.YEAR)
     val same_day = same_year && now.get(Calendar.DAY_OF_YEAR) == then.get(Calendar.DAY_OF_YEAR)
+    if (!AsterTimePreferences.relative_dates) {
+        val absolute = if (same_year) short_date_format() else long_date_format()
+        return absolute.format(Date(this))
+    }
     if (same_day) {
         return time_of_day_format().format(Date(this))
     }
@@ -603,6 +626,15 @@ fun Long.format_relative_time(yesterday_label: String = "Yesterday"): String {
         return weekday_format().format(Date(this))
     }
     val formatter = if (same_year) short_date_format() else long_date_format()
+    return formatter.format(Date(this))
+}
+
+fun Long.format_message_time(yesterday_label: String = "Yesterday"): String {
+    if (AsterTimePreferences.relative_dates) return format_relative_time(yesterday_label)
+    val now = AsterTimePreferences.account_calendar()
+    val then = AsterTimePreferences.account_calendar().apply { timeInMillis = this@format_message_time }
+    val formatter = if (now.get(Calendar.YEAR) == then.get(Calendar.YEAR)) short_datetime_format()
+        else full_datetime_format()
     return formatter.format(Date(this))
 }
 

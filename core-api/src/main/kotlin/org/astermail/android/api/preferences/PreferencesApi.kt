@@ -59,6 +59,7 @@ data class UserPreferences(
     val time_zone: String = "auto",
     val date_format: String = "MM/DD/YYYY",
     val time_format: String = "auto",
+    val relative_dates: Boolean = true,
     val push_notifications: Boolean = true,
     val sound: Boolean = true,
     val vibrate: Boolean = true,
