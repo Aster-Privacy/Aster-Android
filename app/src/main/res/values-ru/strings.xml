@@ -1478,6 +1478,12 @@
     <string name="reply_from_mismatch_send_anyway">Всё равно отправить</string>
     <string name="post_quantum_unavailable_title">Отправить без постквантового шифрования?</string>
     <string name="post_quantum_unavailable_message">%1$s ещё не опубликовал постквантовые ключи, поэтому это сообщение может использовать только стандартное сквозное шифрование. Попросите открыть Aster или обновить приложение, чтобы снова включить постквантовую защиту.</string>
+    <string name="post_quantum_downgrade_title">Отправить без ожидаемых постквантовых ключей?</string>
+    <string name="post_quantum_downgrade_message">%1$s публикует постквантовые ключи, но в наборе ключей, полученном для этого сообщения, их нет. Причиной может быть сбой сервера или подмена при запросе ключей. Чтобы сохранить постквантовую защиту, отмените отправку и повторите попытку позже.</string>
+    <string name="key_trust_change_title">Ключ шифрования изменился</string>
+    <string name="key_trust_change_message">Ключ шифрования для %1$s изменился со времени последнего запроса. Перед отправкой сверьте новый отпечаток с получателем по другому каналу.</string>
+    <string name="key_trust_change_detail">%1$s: было %2$s, стало %3$s.</string>
+    <string name="key_trust_change_confirm">Доверять новому ключу</string>
     <string name="post_quantum_send_anyway">Всё равно отправить</string>
     <string name="expires_custom">Своя дата и время</string>
     <string name="expires_custom_at">Истекает %1$s</string>

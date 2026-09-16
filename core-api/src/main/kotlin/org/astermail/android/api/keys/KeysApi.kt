@@ -68,6 +68,14 @@ sealed class CurrentVaultResult {
 }
 
 @Serializable
+data class ExternalKeyFingerprintChange(
+    val prior_fingerprint: String,
+    val new_fingerprint: String,
+    val source: String = "",
+    val observed_at: String = "",
+)
+
+@Serializable
 data class ExternalKeyInfo(
     val email: String,
     val found: Boolean,
@@ -75,14 +83,37 @@ data class ExternalKeyInfo(
     val fingerprint: String? = null,
     val source: String? = null,
     val expires_at: String? = null,
+    val fingerprint_change: ExternalKeyFingerprintChange? = null,
 )
 
 @Serializable
 data class DiscoverKeyRequest(val email: String)
 
+@Serializable
+data class DiscoverKeysRequest(val emails: List<String>)
+
+@Serializable
+data class DiscoverKeysResponse(val keys: List<ExternalKeyInfo> = emptyList())
+
+@Serializable
+data class AcknowledgeFingerprintChangeRequest(
+    val email: String,
+    val prior_fingerprint: String,
+    val new_fingerprint: String,
+)
+
+@Serializable
+data class AcknowledgeFingerprintChangeResponse(val acknowledged: Boolean = false)
+
 interface KeysApi {
     suspend fun get_recipient_public_key(username: String, email: String? = null): PublicKeyResponse
     suspend fun discover_external_key(email: String): ExternalKeyInfo
+    suspend fun discover_external_keys_batch(emails: List<String>): List<ExternalKeyInfo>
+    suspend fun acknowledge_external_key_fingerprint_change(
+        email: String,
+        prior_fingerprint: String,
+        new_fingerprint: String,
+    ): Boolean
     suspend fun update_vault(
         encrypted_vault: String,
         vault_nonce: String,
@@ -115,6 +146,41 @@ class KeysApiImpl(private val client: ApiClient) : KeysApi {
             throw client.map_http_status(response.status.value, "")
         }
         return response.body()
+    }
+
+    override suspend fun discover_external_keys_batch(emails: List<String>): List<ExternalKeyInfo> {
+        if (emails.isEmpty()) return emptyList()
+        val response = client.http.post("${client.base_url}$base/external/discover/batch") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(DiscoverKeysRequest(emails))
+        }
+        if (response.status.value !in 200..299) {
+            throw client.map_http_status(response.status.value, "")
+        }
+        return response.body<DiscoverKeysResponse>().keys
+    }
+
+    override suspend fun acknowledge_external_key_fingerprint_change(
+        email: String,
+        prior_fingerprint: String,
+        new_fingerprint: String,
+    ): Boolean {
+        val response = client.http.post(
+            "${client.base_url}$base/external/fingerprint-change/acknowledge",
+        ) {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(
+                AcknowledgeFingerprintChangeRequest(
+                    email,
+                    prior_fingerprint,
+                    new_fingerprint,
+                ),
+            )
+        }
+        if (response.status.value !in 200..299) return false
+        return response.body<AcknowledgeFingerprintChangeResponse>().acknowledged
     }
 
     override suspend fun update_vault(

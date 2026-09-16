@@ -1472,6 +1472,12 @@
     <string name="reply_from_mismatch_send_anyway">그대로 보내기</string>
     <string name="post_quantum_unavailable_title">양자 내성 암호화 없이 보내시겠습니까?</string>
     <string name="post_quantum_unavailable_message">%1$s님이 아직 양자 내성 키를 게시하지 않아 이 메시지는 표준 종단간 암호화만 사용합니다. Aster를 열거나 앱을 업데이트해 양자 내성 보호를 다시 켜달라고 요청하세요.</string>
+    <string name="post_quantum_downgrade_title">예상된 양자 내성 키 없이 보낼까요?</string>
+    <string name="post_quantum_downgrade_message">%1$s 계정은 양자 내성 키를 게시하지만, 이 메시지에 전달된 키 번들에는 양자 내성 키가 없습니다. 서버 문제일 수도 있고 키 조회가 조작되었을 수도 있습니다. 양자 내성 보호를 유지하려면 취소하고 나중에 다시 시도하세요.</string>
+    <string name="key_trust_change_title">암호화 키가 변경됨</string>
+    <string name="key_trust_change_message">마지막 조회 이후 %1$s의 암호화 키가 바뀌었습니다. 보내기 전에 다른 경로로 수신자와 새 지문을 확인하세요.</string>
+    <string name="key_trust_change_detail">%1$s: 이전 %2$s, 현재 %3$s.</string>
+    <string name="key_trust_change_confirm">새 키 신뢰</string>
     <string name="post_quantum_send_anyway">그대로 보내기</string>
     <string name="expires_custom">사용자 지정 날짜 및 시간</string>
     <string name="expires_custom_at">%1$s에 만료</string>

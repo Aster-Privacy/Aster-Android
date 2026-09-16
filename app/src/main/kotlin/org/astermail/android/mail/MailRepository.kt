@@ -60,6 +60,7 @@ import org.astermail.android.api.mail.ThreadMessageItem
 import org.astermail.android.api.mail.ThreadWithMessages
 import org.astermail.android.api.labels.LabelsApi
 import org.astermail.android.crypto.ratchet.RatchetCrypto
+import org.astermail.android.mail.ratchet.PostQuantumCoverage
 import org.astermail.android.api.scheduled.CreateScheduledRequest
 import org.astermail.android.api.scheduled.ScheduledApi
 import org.astermail.android.api.scheduled.ScheduledDetailResponse
@@ -3704,18 +3705,38 @@ class MailRepository @Inject constructor(
         }
     }
 
+    suspend fun find_external_key_fingerprint_changes(
+        recipients: List<String>,
+    ): List<RecipientKeyChange> {
+        val external = external_key_trust_candidates(recipients)
+        if (external.isEmpty()) return emptyList()
+        return runCatching {
+            key_changes_from_discovery(keys_api.discover_external_keys_batch(external))
+        }.getOrDefault(emptyList())
+    }
+
+    suspend fun acknowledge_external_key_fingerprint_change(
+        change: RecipientKeyChange,
+    ): Boolean = runCatching {
+        keys_api.acknowledge_external_key_fingerprint_change(
+            change.email,
+            change.prior_fingerprint,
+            change.new_fingerprint,
+        )
+    }.getOrDefault(false)
+
     suspend fun check_post_quantum_coverage(
         recipients: List<String>,
         sender_email: String? = null,
-    ): List<String> {
-        val from_addr = sender_email ?: session_key_store.get_user_email() ?: return emptyList()
-        if (from_addr.isBlank()) return emptyList()
+    ): PostQuantumCoverage {
+        val from_addr = sender_email ?: session_key_store.get_user_email() ?: return PostQuantumCoverage()
+        if (from_addr.isBlank()) return PostQuantumCoverage()
         val internal_recipients = recipients.filter { is_internal_recipient(it) }
-        if (internal_recipients.isEmpty()) return emptyList()
-        if (!ensure_ratchet_keys_ready()) return emptyList()
+        if (internal_recipients.isEmpty()) return PostQuantumCoverage()
+        if (!ensure_ratchet_keys_ready()) return PostQuantumCoverage()
         return runCatching {
             ratchet_encryptor.check_post_quantum_coverage(from_addr, internal_recipients)
-        }.getOrDefault(emptyList())
+        }.getOrDefault(PostQuantumCoverage())
     }
 
     suspend fun send_email(

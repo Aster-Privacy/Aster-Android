@@ -48,6 +48,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.astermail.android.R
 import org.astermail.android.api.mail.MailUserStatsResponse
 import org.astermail.android.crypto.same_address_ignoring_dots
+import org.astermail.android.mail.ratchet.PostQuantumCoverage
 import org.astermail.android.notifications.MailPollingWorker
 import org.astermail.android.api.send.ExternalAttachmentPayload
 import org.astermail.android.ui.mail.MessageAttachment
@@ -3721,7 +3722,15 @@ class MailViewModel @Inject constructor(
     suspend fun check_post_quantum_coverage(
         recipients: List<String>,
         sender_email: String? = null,
-    ): List<String> = repository.check_post_quantum_coverage(recipients, sender_email)
+    ): PostQuantumCoverage = repository.check_post_quantum_coverage(recipients, sender_email)
+
+    suspend fun find_external_key_fingerprint_changes(
+        recipients: List<String>,
+    ): List<RecipientKeyChange> = repository.find_external_key_fingerprint_changes(recipients)
+
+    suspend fun acknowledge_external_key_fingerprint_change(
+        change: RecipientKeyChange,
+    ): Boolean = repository.acknowledge_external_key_fingerprint_change(change)
 
     suspend fun send_email(
         to: List<String>,

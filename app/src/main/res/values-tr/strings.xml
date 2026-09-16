@@ -1474,6 +1474,12 @@
     <string name="reply_from_mismatch_send_anyway">Yine de gönder</string>
     <string name="post_quantum_unavailable_title">Post-kuantum şifreleme olmadan gönderilsin mi?</string>
     <string name="post_quantum_unavailable_message">%1$s henüz post-kuantum anahtar yayınlamadı, bu nedenle bu ileti yalnızca standart uçtan uca şifreleme kullanabilir. Post-kuantum korumayı yeniden açmak için Aster’ı açmasını veya uygulamayı güncellemesini iste.</string>
+    <string name="post_quantum_downgrade_title">Beklenen post-kuantum anahtarları olmadan gönderilsin mi?</string>
+    <string name="post_quantum_downgrade_message">%1$s post-kuantum anahtarları yayımlıyor, ancak bu ileti için alınan anahtar paketinde hiç yok. Bunun nedeni bir sunucu sorunu olabileceği gibi anahtar sorgusunun değiştirilmesi de olabilir. Post-kuantum korumasını sürdürmek için işlemi iptal edin ve daha sonra yeniden deneyin.</string>
+    <string name="key_trust_change_title">Şifreleme anahtarı değişti</string>
+    <string name="key_trust_change_message">%1$s için şifreleme anahtarı son sorgudan bu yana değişti. Göndermeden önce yeni parmak izini alıcıyla başka bir kanaldan doğrulayın.</string>
+    <string name="key_trust_change_detail">%1$s: önce %2$s, şimdi %3$s.</string>
+    <string name="key_trust_change_confirm">Yeni anahtara güven</string>
     <string name="post_quantum_send_anyway">Yine de gönder</string>
     <string name="expires_custom">Özel tarih ve saat</string>
     <string name="expires_custom_at">%1$s tarihinde sona erer</string>
