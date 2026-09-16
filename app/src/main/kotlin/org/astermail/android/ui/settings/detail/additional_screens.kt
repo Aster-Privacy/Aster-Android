@@ -408,19 +408,21 @@ internal fun revoke_pill_button(
             .padding(horizontal = AsterSpacing.md),
         contentAlignment = Alignment.Center,
     ) {
-        if (in_flight) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(16.dp),
-                color = colors.text_secondary,
-                strokeWidth = 2.dp,
-            )
-        } else {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = label,
                 color = colors.text_primary,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
             )
+            if (in_flight) {
+                Spacer(Modifier.width(AsterSpacing.xs))
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    color = colors.text_secondary,
+                    strokeWidth = 2.dp,
+                )
+            }
         }
     }
 }
@@ -450,20 +452,12 @@ internal fun devices_list_action_row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) {
-            if (in_flight) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    color = resolved_tint,
-                    strokeWidth = 2.dp,
-                )
-            } else {
-                androidx.compose.material3.Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = resolved_tint,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
+            androidx.compose.material3.Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = resolved_tint,
+                modifier = Modifier.size(20.dp),
+            )
         }
         Spacer(Modifier.width(AsterSpacing.md))
         Text(
@@ -473,6 +467,14 @@ internal fun devices_list_action_row(
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.weight(1f),
         )
+        if (in_flight) {
+            Spacer(Modifier.width(AsterSpacing.sm))
+            CircularProgressIndicator(
+                modifier = Modifier.size(16.dp),
+                color = resolved_tint,
+                strokeWidth = 2.dp,
+            )
+        }
     }
 }
 

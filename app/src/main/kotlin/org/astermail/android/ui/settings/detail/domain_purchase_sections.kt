@@ -338,37 +338,40 @@ private fun purchased_domain_row(
         }
         if (order.status == "pending_payment") {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (state.cancelling_order_id == order.id) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
+                TextButton(
+                    onClick = { show_cancel_confirm = true },
+                    enabled = state.cancelling_order_id == null,
+                ) {
+                    Text(
+                        text = stringResource(R.string.cancel),
                         color = colors.danger,
+                        fontSize = 14.sp,
                     )
-                } else {
-                    TextButton(
-                        onClick = { show_cancel_confirm = true },
-                        enabled = state.cancelling_order_id == null,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.cancel),
+                    if (state.cancelling_order_id == order.id) {
+                        Spacer(Modifier.width(AsterSpacing.xs))
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
                             color = colors.danger,
-                            fontSize = 14.sp,
                         )
                     }
                 }
                 Spacer(Modifier.width(AsterSpacing.sm))
-                if (state.buying) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
+                TextButton(
+                    onClick = { on_complete_purchase(order) },
+                    enabled = !state.buying,
+                ) {
+                    Text(
+                        text = stringResource(R.string.domain_purchase_complete_purchase),
                         color = colors.accent_blue,
+                        fontSize = 14.sp,
                     )
-                } else {
-                    TextButton(onClick = { on_complete_purchase(order) }) {
-                        Text(
-                            text = stringResource(R.string.domain_purchase_complete_purchase),
+                    if (state.buying) {
+                        Spacer(Modifier.width(AsterSpacing.xs))
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
                             color = colors.accent_blue,
-                            fontSize = 14.sp,
                         )
                     }
                 }

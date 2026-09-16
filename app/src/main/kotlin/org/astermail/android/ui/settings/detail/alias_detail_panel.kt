@@ -600,14 +600,6 @@ internal fun alias_apply_existing_row(
                 .testTag("alias_apply_existing_button"),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (busy) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(14.dp),
-                    strokeWidth = 2.dp,
-                    color = colors.text_muted,
-                )
-                Spacer(Modifier.width(6.dp))
-            }
             Text(
                 text = stringResource(
                     if (active) {
@@ -621,6 +613,14 @@ internal fun alias_apply_existing_row(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+            if (busy) {
+                Spacer(Modifier.width(6.dp))
+                CircularProgressIndicator(
+                    modifier = Modifier.size(14.dp),
+                    strokeWidth = 2.dp,
+                    color = colors.text_muted,
+                )
+            }
         }
     }
     alias_apply_existing_status(run, unsupported)?.let { status ->

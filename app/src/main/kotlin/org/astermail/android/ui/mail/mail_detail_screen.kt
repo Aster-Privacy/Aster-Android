@@ -2601,20 +2601,12 @@ internal fun expanded_message(
                         .testTag("retry_decrypt"),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (retry_in_progress) {
-                        CircularProgressIndicator(
-                            color = Color.White,
-                            strokeWidth = 2.dp,
-                            modifier = Modifier.size(16.dp),
-                        )
-                    } else {
-                        Icon(
-                            imageVector = TablerIcons.Refresh,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp),
-                        )
-                    }
+                    Icon(
+                        imageVector = TablerIcons.Refresh,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp),
+                    )
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = stringResource(
@@ -2624,6 +2616,14 @@ internal fun expanded_message(
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
+                    if (retry_in_progress) {
+                        Spacer(Modifier.width(8.dp))
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
                 }
             }
         } else if (msg.body.isBlank()) {
