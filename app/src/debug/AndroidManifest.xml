@@ -15,6 +15,7 @@
         <receiver
             android:name="org.astermail.android.debugtools.DebugNotificationReceiver"
             android:exported="true"
+            android:permission="android.permission.DUMP"
             tools:ignore="ExportedReceiver">
             <intent-filter>
                 <action android:name="org.astermail.android.debug.SHOW_TEST_NOTIFICATION" />
