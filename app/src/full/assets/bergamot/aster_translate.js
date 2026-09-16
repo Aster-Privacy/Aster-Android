@@ -58,6 +58,14 @@ function post_detect(payload) {
   try { console.log("ASTER_TR_DETECT:" + JSON.stringify(payload)); } catch (e) { /* ignore */ }
 }
 
+function post_result(payload) {
+  const b = bridge();
+  if (b && typeof b.on_result === "function") {
+    try { b.on_result(JSON.stringify(payload)); return; } catch (e) { /* fall through */ }
+  }
+  try { console.log("ASTER_TR_RESULT:" + JSON.stringify(payload)); } catch (e) { /* ignore */ }
+}
+
 function normalize_language(value) {
   if (!value) return null;
   const base = String(value).trim().toLowerCase().split(/[-_]/)[0];
@@ -459,10 +467,74 @@ function detect(accepted_csv) {
   post_detect({ detected: true, language: result.language, confidence: result.confidence });
 }
 
+async function translate_texts(payload_json, from, to) {
+  const normalized_from = normalize_language(from);
+  const normalized_to = normalize_language(to);
+  if (!normalized_from || !normalized_to || normalized_from === normalized_to) {
+    post_status({ state: "error", reason: "unsupported_pair" });
+    return;
+  }
+  let originals;
+  try {
+    originals = JSON.parse(payload_json);
+  } catch (error) {
+    post_status({ state: "error", reason: "bad_payload" });
+    return;
+  }
+  if (!Array.isArray(originals) || originals.length === 0) {
+    post_status({ state: "empty", from: normalized_from, to: normalized_to });
+    return;
+  }
+  post_status({ state: "translating", from: normalized_from, to: normalized_to });
+  try {
+    const protections = originals.map((text) => protect_entities(String(text)));
+    const segmented = protections.map((entry) => segment_sentences(entry.masked, normalized_from));
+    const flat = [];
+    segmented.forEach((segments) => { segments.forEach((segment) => { flat.push(segment); }); });
+
+    const translator = await get_translator();
+    const translated_flat = await translate_segments(translator, flat, normalized_from, normalized_to);
+    if (translated_flat.length !== flat.length) { post_status({ state: "error", reason: "count_mismatch" }); return; }
+
+    const per_node_masked = segmented.map(() => "");
+    let cursor = 0;
+    segmented.forEach((segments, index) => {
+      const count = segments.length;
+      per_node_masked[index] = translated_flat.slice(cursor, cursor + count).join("");
+      cursor += count;
+    });
+
+    const per_node = per_node_masked.map((masked, index) => {
+      const restored = restore_entities(masked, protections[index].entities);
+      return restored.missing > 0 ? String(originals[index]) : restored.text;
+    });
+
+    post_result({ segments: per_node, from: normalized_from, to: normalized_to });
+    post_status({ state: "translated", from: normalized_from, to: normalized_to, swapped: per_node.length });
+  } catch (error) {
+    post_status({ state: "error", reason: String(error && error.message ? error.message : error) });
+  }
+}
+
+function detect_text(text, accepted_csv) {
+  const accepted = String(accepted_csv || "")
+    .split(",")
+    .map((code) => normalize_language(code))
+    .filter(Boolean);
+  const result = detect_language(String(text || ""));
+  if (!result || result.confidence < MIN_DETECTION_CONFIDENCE || accepted.indexOf(result.language) >= 0) {
+    post_detect({ detected: false });
+    return;
+  }
+  post_detect({ detected: true, language: result.language, confidence: result.confidence });
+}
+
 window.__aster_translate = {
   run: run,
   show_original: show_original,
   detect: detect,
+  translate_texts: translate_texts,
+  detect_text: detect_text,
   model_version: MODEL_VERSION,
   supported: SUPPORTED_LANGUAGES,
 };

@@ -63,6 +63,7 @@ class EmailBodyFitWidthTest {
         var web_view: WebView? = null
         val loaded = CountDownLatch(1)
         val reported_height = intArrayOf(0)
+        val page_scale = doubleArrayOf(1.0)
 
         instrumentation.runOnMainSync {
             val view = WebView(context)
@@ -73,18 +74,6 @@ class EmailBodyFitWidthTest {
             view.settings.builtInZoomControls = true
             view.settings.displayZoomControls = false
             view.settings.setSupportZoom(true)
-            view.webChromeClient = object : android.webkit.WebChromeClient() {
-                override fun onConsoleMessage(message: android.webkit.ConsoleMessage?): Boolean {
-                    val text = message?.message() ?: return false
-                    if (text.startsWith("ASTER_HEIGHT_EXACT:")) {
-                        text.substring("ASTER_HEIGHT_EXACT:".length).toIntOrNull()?.let {
-                            reported_height[0] = it
-                        }
-                        return true
-                    }
-                    return false
-                }
-            }
             view.webViewClient = object : android.webkit.WebViewClient() {
                 override fun onPageFinished(view: WebView?, url: String?) {
                     loaded.countDown()
@@ -124,7 +113,7 @@ class EmailBodyFitWidthTest {
                 window.innerWidth,
                 sideways,
                 Math.ceil(m.getBoundingClientRect().right),
-                (window.__aster_fit_scale||1),
+                window.screen.width,
                 layout_bottom
               ].join('|');
             })()
@@ -143,7 +132,25 @@ class EmailBodyFitWidthTest {
             if (raw.contains("|")) break
             Thread.sleep(250)
         }
-        instrumentation.runOnMainSync { web_view?.destroy() }
+        instrumentation.runOnMainSync {
+            val view = web_view ?: return@runOnMainSync
+            val probe_height_px = (24 * view.resources.displayMetrics.density).toInt()
+            view.measure(
+                android.view.View.MeasureSpec.makeMeasureSpec(phone_width_px, android.view.View.MeasureSpec.EXACTLY),
+                android.view.View.MeasureSpec.makeMeasureSpec(probe_height_px, android.view.View.MeasureSpec.EXACTLY),
+            )
+            view.layout(0, 0, phone_width_px, probe_height_px)
+        }
+        Thread.sleep(500)
+        instrumentation.runOnMainSync {
+            val view = web_view
+            if (view != null) {
+                reported_height[0] = view.contentHeight
+                @Suppress("DEPRECATION")
+                page_scale[0] = (view.scale / view.resources.displayMetrics.density).toDouble()
+            }
+            view?.destroy()
+        }
 
         val parts = raw.split("|")
         assertTrue("the fit probe returned nothing usable: $raw", parts.size >= 5)
@@ -152,7 +159,7 @@ class EmailBodyFitWidthTest {
             viewport_width = parts[0].toDouble().toInt(),
             sideways_scroll = parts[1].toDouble().toInt(),
             content_right = parts[2].toDouble().toInt(),
-            scale = parts[3].toDouble(),
+            scale = page_scale[0],
             reported_height = reported_height[0],
             layout_height = parts[4].toDouble().toInt(),
         )
@@ -229,9 +236,9 @@ class EmailBodyFitWidthTest {
         assertTrue("no height was ever reported", report.reported_height > 0)
         assertTrue("wide content must be scaled down, got scale ${report.scale}", report.scale < 0.95)
 
-        val expected = report.layout_height * report.scale
+        val expected = report.layout_height.toDouble()
         assertTrue(
-            "reported height ${report.reported_height} does not follow the scaled layout height $expected",
+            "reported height ${report.reported_height} does not follow the layout height $expected",
             report.reported_height >= expected * 0.75 && report.reported_height <= expected * 1.25,
         )
     }

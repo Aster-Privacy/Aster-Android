@@ -200,6 +200,13 @@ private const val thread_draft_remove_ms = 260L
 private val body_tag_regex = Regex("<[^>]{0,4000}>")
 private val body_image_tag_regex = Regex("<img", RegexOption.IGNORE_CASE)
 
+private val FITTED_VIEWPORT_WIDTH = Regex("name=\"viewport\" content=\"width=([0-9]{3,4})")
+
+internal fun fitted_viewport_width(document: String): Int? =
+    FITTED_VIEWPORT_WIDTH.find(document)?.groupValues?.get(1)?.toIntOrNull()
+
+private val MEASURE_PROBE_HEIGHT = 24.dp
+
 private fun estimated_body_height(html: String, width_dp: Int): androidx.compose.ui.unit.Dp {
     val sample = if (html.length > 200000) html.substring(0, 200000) else html
     val text_length = body_tag_regex.replace(sample, " ").trim().length
@@ -4914,13 +4921,40 @@ private fun is_safe_unsubscribe_url(url: String): Boolean {
     return scheme in safe_unsubscribe_schemes
 }
 
-private const val FALLBACK_MEASURE_JS =
-    "(function(){if(window.__aster_final_height){var f=window.__aster_final_height();if(f>0)return f;}" +
-        "var m=document.getElementById('m');if(!m)return 0;" +
-        "var sy=window.pageYOffset||document.documentElement.scrollTop||0;" +
-        "if(document.documentElement.getAttribute('data-nl'))return Math.ceil(m.getBoundingClientRect().bottom+sy);" +
-        "var pb=parseFloat(window.getComputedStyle(document.body).paddingBottom)||0;" +
-        "return Math.ceil(m.getBoundingClientRect().bottom+sy+pb)+4;})()"
+internal fun configure_mail_body_web_view(
+    web: android.webkit.WebView,
+    text_zoom: Int,
+    allow_external: Boolean,
+) {
+    web.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+    web.settings.javaScriptEnabled = false
+    web.settings.loadWithOverviewMode = true
+    web.settings.useWideViewPort = true
+    web.settings.textZoom = text_zoom
+    web.settings.builtInZoomControls = true
+    web.settings.displayZoomControls = false
+    web.settings.setSupportZoom(true)
+    web.settings.domStorageEnabled = false
+    web.settings.loadsImagesAutomatically = true
+    web.settings.blockNetworkImage = !allow_external
+    web.settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
+    web.settings.allowFileAccess = false
+    web.settings.allowContentAccess = false
+    @Suppress("DEPRECATION")
+    web.settings.allowFileAccessFromFileURLs = false
+    @Suppress("DEPRECATION")
+    web.settings.allowUniversalAccessFromFileURLs = false
+    web.settings.javaScriptCanOpenWindowsAutomatically = false
+    web.settings.setGeolocationEnabled(false)
+    @Suppress("DEPRECATION")
+    web.settings.saveFormData = false
+    @Suppress("DEPRECATION")
+    web.settings.savePassword = false
+    web.isVerticalScrollBarEnabled = false
+    web.isHorizontalScrollBarEnabled = true
+    web.overScrollMode = android.view.View.OVER_SCROLL_IF_CONTENT_SCROLLS
+    web.isNestedScrollingEnabled = false
+}
 
 private class height_channel(private val on_height: (Int, Boolean) -> Unit) {
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
@@ -5187,7 +5221,6 @@ private fun translation_banner(
 }
 
 @Composable
-@Suppress("JavascriptInterface")
 internal fun email_html_view(
     html: String,
     modifier: Modifier = Modifier,
@@ -5227,6 +5260,7 @@ internal fun email_html_view(
         block_remote_css = settings_state.preferences?.block_remote_css != false,
     )
     val dyslexia_font = settings_state.preferences?.dyslexia_font == true
+    val underline_links = settings_state.preferences?.underline_links == true
     val email_font_id = org.astermail.android.design.resolve_email_font_id(
         settings_state.preferences?.email_font_choice,
         settings_state.preferences?.font_choice,
@@ -5252,6 +5286,7 @@ internal fun email_html_view(
             .joinToString(",")
     }
     val translate_context = LocalContext.current
+    val translate_active_early = translate_mode != "off"
     val web_ref = remember { arrayOfNulls<android.webkit.WebView>(1) }
     var translation_state by remember(html) {
         mutableStateOf<TranslationBannerState>(TranslationBannerState.Hidden)
@@ -5264,80 +5299,94 @@ internal fun email_html_view(
     translate_target_ref[0] = translate_target
     set_translation_state[0] = { translation_state = it }
 
+    val translation_engine_ref = remember {
+        arrayOfNulls<org.astermail.android.translation.translation_engine>(1)
+    }
+    val source_body_ref = remember(html) { arrayOfNulls<String>(1) }
+    var translated_body by remember(html) { mutableStateOf<String?>(null) }
+
     fun run_translation(from: String) {
-        val web = web_ref[0] ?: return
+        val engine = translation_engine_ref[0] ?: return
+        val source = source_body_ref[0] ?: return
+        val segments = extract_translatable_segments(source)
+        if (segments.isEmpty()) {
+            set_translation_state[0]?.invoke(TranslationBannerState.Hidden)
+            return
+        }
         set_translation_state[0]?.invoke(TranslationBannerState.Translating)
-        web.evaluateJavascript(
-            "window.__aster_translate&&window.__aster_translate.run('$from','${translate_target_ref[0]}')",
-            null,
-        )
+        engine.translate(segments, from, translate_target_ref[0])
     }
 
     fun show_original() {
-        val web = web_ref[0] ?: return
-        web.evaluateJavascript(
-            "window.__aster_translate&&window.__aster_translate.show_original()",
-            null,
-        )
+        translated_body = null
+        set_translation_state[0]?.invoke(TranslationBannerState.Hidden)
     }
 
-    val translate_bridge = remember {
-        object {
-            @android.webkit.JavascriptInterface
-            fun on_detect(json: String) {
-                val language = Regex("\"language\"\\s*:\\s*\"([a-z]{2})\"").find(json)?.groupValues?.get(1)
-                val detected = json.contains("\"detected\":true") || json.contains("\"detected\": true")
-                if (!detected || language == null) return
-                if (language == translate_target_ref[0]) return
-                main_handler.post {
-                    val mode = translate_mode_ref[0]
-                    if (mode == "off") return@post
-                    val granted = TranslationDownloadPolicy.route_consent_granted(
-                        translate_context,
-                        language,
-                        translate_target_ref[0],
-                    )
-                    if (mode == "always" && granted) {
-                        run_translation(language)
-                    } else {
-                        set_translation_state[0]?.invoke(
-                            TranslationBannerState.Offer(language, !granted),
-                        )
-                    }
-                }
-            }
+    fun handle_translation_detect(json: String) {
+        val language = Regex("\"language\"\\s*:\\s*\"([a-z]{2})\"").find(json)?.groupValues?.get(1)
+        val detected = json.contains("\"detected\":true") || json.contains("\"detected\": true")
+        if (!detected || language == null) return
+        if (language == translate_target_ref[0]) return
+        val mode = translate_mode_ref[0]
+        if (mode == "off") return
+        val granted = TranslationDownloadPolicy.route_consent_granted(
+            translate_context,
+            language,
+            translate_target_ref[0],
+        )
+        if (mode == "always" && granted) {
+            run_translation(language)
+        } else {
+            set_translation_state[0]?.invoke(TranslationBannerState.Offer(language, !granted))
+        }
+    }
 
-            @android.webkit.JavascriptInterface
-            fun on_status(json: String) {
-                val state = Regex("\"state\"\\s*:\\s*\"([a-z_]+)\"").find(json)?.groupValues?.get(1)
-                val from = Regex("\"from\"\\s*:\\s*\"([a-z]{2})\"").find(json)?.groupValues?.get(1)
-                main_handler.post {
-                    val apply_state = set_translation_state[0]
-                    when (state) {
-                        "translating" -> apply_state?.invoke(TranslationBannerState.Translating)
-                        "translated" -> apply_state?.invoke(
-                            TranslationBannerState.Translated(from ?: ""),
-                        )
-                        "original" -> apply_state?.invoke(TranslationBannerState.Hidden)
-                        "error" -> apply_state?.invoke(TranslationBannerState.Failed)
-                        else -> Unit
-                    }
-                }
-            }
+    fun handle_translation_status(json: String) {
+        val state = Regex("\"state\"\\s*:\\s*\"([a-z_]+)\"").find(json)?.groupValues?.get(1)
+        val from = Regex("\"from\"\\s*:\\s*\"([a-z]{2})\"").find(json)?.groupValues?.get(1)
+        val apply_state = set_translation_state[0]
+        when (state) {
+            "translating" -> apply_state?.invoke(TranslationBannerState.Translating)
+            "translated" -> apply_state?.invoke(TranslationBannerState.Translated(from ?: ""))
+            "error" -> apply_state?.invoke(TranslationBannerState.Failed)
+            else -> Unit
+        }
+    }
+
+    fun handle_translation_result(json: String) {
+        val segments = org.astermail.android.translation.translated_segments_of(json) ?: return
+        val source = source_body_ref[0] ?: return
+        val applied = apply_translated_segments(source, segments)
+        if (applied != source) translated_body = applied
+    }
+
+    DisposableEffect(translate_active_early) {
+        if (translate_active_early && translation_engine_ref[0] == null) {
+            translation_engine_ref[0] = org.astermail.android.translation.translation_engine(
+                translate_context,
+                on_detect = { json -> handle_translation_detect(json) },
+                on_status = { json -> handle_translation_status(json) },
+                on_result = { json -> handle_translation_result(json) },
+            )
+        }
+        onDispose {
+            translation_engine_ref[0]?.destroy()
+            translation_engine_ref[0] = null
         }
     }
 
     val inline_sig = remember(inline_images) { inline_images.keys.sorted().joinToString(",").hashCode() }
     val html_hash = remember(html, inline_sig) { html.hashCode() * 31 + inline_sig }
-    val height_cache_key = remember(html_hash, allow_external, screen_width_dp, text_zoom, dyslexia_font, email_font_id) {
-        (html_cache.height_key(html_hash, allow_external, screen_width_dp, text_zoom) * 31L + (if (dyslexia_font) 1L else 0L)) *
-            31L + email_font_id.hashCode().toLong()
+    val height_cache_key = remember(html_hash, allow_external, screen_width_dp, text_zoom, dyslexia_font, email_font_id, underline_links) {
+        ((html_cache.height_key(html_hash, allow_external, screen_width_dp, text_zoom) * 31L + (if (dyslexia_font) 1L else 0L)) *
+            31L + email_font_id.hashCode().toLong()) * 31L + (if (underline_links) 1L else 0L)
     }
     val estimated_height = remember(html_hash, screen_width_dp) { estimated_body_height(html, screen_width_dp) }
     val cached_height = remember(height_cache_key) { body_height_cache.get(height_cache_key) }
     var content_height_dp by remember(height_cache_key) { mutableStateOf((cached_height ?: 0f).dp) }
     var has_measured by remember(height_cache_key) { mutableStateOf(cached_height != null) }
     val page_painted = remember(height_cache_key) { mutableStateOf(false) }
+    val measure_probe = remember(height_cache_key) { mutableStateOf(false) }
     val visual_ready = remember(height_cache_key) { mutableStateOf(false) }
     val renderer_gone = remember { mutableStateOf(false) }
     var web_generation by remember(height_cache_key) { mutableStateOf(0) }
@@ -5365,13 +5414,14 @@ internal fun email_html_view(
         translate_mode = translate_mode,
         email_font_id = email_font_id,
         text_zoom = text_zoom,
+        underline_links = underline_links,
     )
 
-    val translate_active = translate_mode != "off"
+    val translate_active = translate_active_early
     val translate_active_ref = remember { booleanArrayOf(false) }
     translate_active_ref[0] = translate_active
-    val cache_key = remember(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options) { (((html_cache.key(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) * 31L + (if (dyslexia_font) 1L else 0L)) * 31L + email_font_id.hashCode().toLong()) * 31L + text_zoom.toLong()) * 31L + sanitize_options.hashCode().toLong() }
-    var prebuilt_html by remember(html_hash, allow_external, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options) { mutableStateOf<String?>(html_cache.get(cache_key)) }
+    val cache_key = remember(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links) { ((((html_cache.key(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) * 31L + (if (dyslexia_font) 1L else 0L)) * 31L + email_font_id.hashCode().toLong()) * 31L + text_zoom.toLong()) * 31L + sanitize_options.hashCode().toLong()) * 31L + (if (underline_links) 1L else 0L) }
+    var prebuilt_html by remember(html_hash, allow_external, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links) { mutableStateOf<String?>(html_cache.get(cache_key)) }
     var loaded_built by remember { mutableStateOf("") }
     var loaded_external by remember { mutableStateOf(false) }
     val scale_ref = remember { floatArrayOf(1f) }
@@ -5434,22 +5484,37 @@ internal fun email_html_view(
         return proxy_external_urls(cid_normalized, proxy_base)
     }
 
-    LaunchedEffect(html, inline_sig, allow_external, bg_hex, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options) {
+    LaunchedEffect(html, inline_sig, allow_external, bg_hex, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links, translated_body) {
         scale_ref[0] = 1f
         zoom_scale_ref[0] = 1f
         measured_dp_ref[0] = 0f
         measured_scale_ref[0] = 1f
         zoom_base_ref[0] = 0f
         zoom_last_ref[0] = 0f
+        val override = translated_body
+        if (override != null) {
+            prebuilt_html = withContext(Dispatchers.Default) {
+                runCatching { build_html(override) }
+                    .getOrElse { plain_text_fallback_document(html, bg_hex, fg_hex) }
+            }
+            return@LaunchedEffect
+        }
         val cached = html_cache.get(cache_key)
         if (cached != null) {
             prebuilt_html = cached
+            if (source_body_ref[0] == null) {
+                source_body_ref[0] = withContext(Dispatchers.Default) {
+                    runCatching { proxy_html(EmailHtmlSanitizer.sanitize(html, sanitize_options)) }.getOrNull()
+                }
+            }
             return@LaunchedEffect
         }
         val result = withContext(Dispatchers.Default) {
             runCatching {
                 val sanitized = EmailHtmlSanitizer.sanitize(html, sanitize_options)
-                build_html(proxy_html(sanitized))
+                val source = proxy_html(sanitized)
+                source_body_ref[0] = source
+                build_html(source)
             }.getOrElse {
                 runCatching { build_html(plain_text_fallback_body(html)) }
                     .getOrElse { plain_text_fallback_document(html, bg_hex, fg_hex) }
@@ -5462,22 +5527,39 @@ internal fun email_html_view(
     LaunchedEffect(height_cache_key, prebuilt_html, web_generation) {
         if (prebuilt_html == null) return@LaunchedEffect
         var attempts = 0
-        while (!has_measured && attempts < 12) {
-            delay(if (attempts == 0) 2500L else 500L)
+        var last_reported = 0
+        var stable_rounds = 0
+        var probed = false
+        while (attempts < 60) {
+            delay(if (attempts == 0) 120L else 100L)
             attempts++
             val web = web_ref[0] ?: continue
-            web.evaluateJavascript(FALLBACK_MEASURE_JS) { result ->
-                val parsed = result?.trim()?.removeSurrounding("\"")?.toIntOrNull() ?: 0
-                if (!has_measured && parsed > 0) {
-                    content_height_dp = (parsed * scale_ref[0]).toInt().dp
-                    measured_dp_ref[0] = content_height_dp.value
-                    measured_scale_ref[0] = scale_ref[0]
-                    settled_height_ref[0] = content_height_dp.value
-                    has_measured = true
-                    on_ready()
-                }
+            val content = web.contentHeight
+            if (content <= 0) continue
+            @Suppress("DEPRECATION")
+            val viewport_floor = if (web.scale > 0f) (web.height / web.scale).toInt() else 0
+            if (!probed && !has_measured && content <= viewport_floor + 2) {
+                probed = true
+                measure_probe.value = true
+                last_reported = 0
+                stable_rounds = 0
+                delay(200L)
+                continue
+            }
+            if (content == last_reported) {
+                stable_rounds++
+            } else {
+                stable_rounds = 0
+                last_reported = content
+                height_sink.report(content, exact = false)
+            }
+            if (stable_rounds == 2) {
+                height_sink.report(content, exact = true)
+                measure_probe.value = false
+                if (has_measured) break
             }
         }
+        measure_probe.value = false
         if (!has_measured) {
             val web = web_ref[0]
             val native = if (web != null && web.contentHeight > 0) {
@@ -5542,13 +5624,15 @@ internal fun email_html_view(
 
     LaunchedEffect(has_measured, translate_mode, translate_accepted, prebuilt_html) {
         if (!has_measured || translate_mode == "off") return@LaunchedEffect
+        if (translated_body != null) return@LaunchedEffect
         delay(150)
-        val web = web_ref[0] ?: return@LaunchedEffect
-        val accepted = translate_accepted
-        val boot = "(function(){try{if(window.__aster_translate){window.__aster_translate.detect('$accepted');return;}" +
-            "import('/bergamot/aster_translate.js').then(function(){window.__aster_translate&&window.__aster_translate.detect('$accepted');}).catch(function(e){});" +
-            "}catch(e){}})()"
-        web.evaluateJavascript(boot, null)
+        val engine = translation_engine_ref[0] ?: return@LaunchedEffect
+        val source = source_body_ref[0] ?: return@LaunchedEffect
+        val text = withContext(Dispatchers.Default) {
+            runCatching { org.astermail.android.mail.html_to_plain_text(source) }.getOrDefault("")
+        }
+        if (text.isBlank()) return@LaunchedEffect
+        engine.detect(text, translate_accepted)
     }
 
     val webview_client = remember {
@@ -5613,53 +5697,9 @@ internal fun email_html_view(
             }
 
             override fun onPageFinished(view: android.webkit.WebView?, url: String?) {
-                val bg_detect_js = """(function(){
-  var m=document.getElementById('m');if(!m)return;
-  if(!m.style.backgroundColor||m.style.backgroundColor==='transparent'||m.style.backgroundColor==='rgba(0, 0, 0, 0)'){
-    var first=m.firstElementChild;
-    if(first){
-      var bg=first.getAttribute('bgcolor')||first.style.backgroundColor;
-      if(!bg||bg==='transparent'||bg==='rgba(0, 0, 0, 0)'){
-        var tag=first.tagName;
-        if(tag==='TABLE'||tag==='DIV'||tag==='CENTER'){bg=window.getComputedStyle(first).backgroundColor}
-      }
-      if(bg&&bg!=='transparent'&&bg!=='rgba(0, 0, 0, 0)'){
-        m.style.backgroundColor=bg;
-      }
-    }
-  }
-  var nl=document.documentElement.getAttribute('data-nl');
-  var cur=window.getComputedStyle(m).backgroundColor;
-  if(nl&&(!cur||cur==='transparent'||cur==='rgba(0, 0, 0, 0)')){
-    m.style.backgroundColor='#ffffff';
-  }
-  var fin=window.getComputedStyle(m).backgroundColor;
-  var fm=/rgba?\(([^)]+)\)/.exec(fin||'');
-  if(fm){
-    var fp=fm[1].split(',');
-    var fa=fp.length>3?parseFloat(fp[3]):1;
-    var fr=parseInt(fp[0],10),fg=parseInt(fp[1],10),fb=parseInt(fp[2],10);
-    if(!isNaN(fr)&&!isNaN(fg)&&!isNaN(fb)&&fa>0.5){
-      var fl=(0.2126*fr+0.7152*fg+0.0722*fb)/255;
-      if(fl>0.55){
-        document.documentElement.removeAttribute('data-dark');
-        document.documentElement.setAttribute('data-white','1');
-        document.body.style.setProperty('color','#111827','important');
-        m.style.setProperty('color','#111827','important');
-      }
-    }
-  }
-})()"""
-                val fit_and_measure_js = """(function(){window.__aster_collapse_images&&window.__aster_collapse_images();window.__aster_pad&&window.__aster_pad();window.__aster_relax&&window.__aster_relax();window.__aster_contrast&&window.__aster_contrast();window.__aster_fit&&window.__aster_fit();})()"""
-                val email_prefs = settings_vm.state.value.preferences
-                if (email_prefs?.underline_links == true) {
-                    view?.evaluateJavascript("""(function(){var s=document.createElement('style');s.textContent='a{text-decoration:underline!important}';document.head.appendChild(s);})()""", null)
-                }
-                view?.evaluateJavascript(bg_detect_js, null)
                 view?.setBackgroundColor(
                     if (white_page_ref[0]) android.graphics.Color.WHITE else android.graphics.Color.TRANSPARENT,
                 )
-                view?.evaluateJavascript(fit_and_measure_js, null)
                 page_painted.value = true
                 if (view != null && url != "about:blank") {
                     view.postVisualStateCallback(
@@ -5671,8 +5711,6 @@ internal fun email_html_view(
                         },
                     )
                 }
-                view?.postDelayed({ view.evaluateJavascript(fit_and_measure_js, null) }, 300)
-                view?.postDelayed({ view.evaluateJavascript(fit_and_measure_js, null) }, 1000)
             }
 
             override fun shouldInterceptRequest(
@@ -5825,34 +5863,7 @@ internal fun email_html_view(
         androidx.compose.ui.viewinterop.AndroidView(
             factory = { ctx ->
                 android.webkit.WebView(ctx).apply {
-                    setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                    settings.javaScriptEnabled = true
-                    settings.loadWithOverviewMode = true
-                    settings.useWideViewPort = true
-                    settings.textZoom = text_zoom
-                    settings.builtInZoomControls = true
-                    settings.displayZoomControls = false
-                    settings.setSupportZoom(true)
-                    settings.domStorageEnabled = false
-                    settings.loadsImagesAutomatically = true
-                    settings.blockNetworkImage = !allow_external
-                    settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
-                    settings.allowFileAccess = false
-                    settings.allowContentAccess = false
-                    @Suppress("DEPRECATION")
-                    settings.allowFileAccessFromFileURLs = false
-                    @Suppress("DEPRECATION")
-                    settings.allowUniversalAccessFromFileURLs = false
-                    settings.javaScriptCanOpenWindowsAutomatically = false
-                    settings.setGeolocationEnabled(false)
-                    @Suppress("DEPRECATION")
-                    settings.saveFormData = false
-                    @Suppress("DEPRECATION")
-                    settings.savePassword = false
-                    isVerticalScrollBarEnabled = false
-                    isHorizontalScrollBarEnabled = true
-                    overScrollMode = android.view.View.OVER_SCROLL_IF_CONTENT_SCROLLS
-                    isNestedScrollingEnabled = false
+                    configure_mail_body_web_view(this, text_zoom, allow_external)
                     var touch_down_x = 0f
                     var touch_down_y = 0f
                     setOnTouchListener { v, ev ->
@@ -5909,37 +5920,12 @@ internal fun email_html_view(
                             else -> false
                         }
                     }
-                    webChromeClient = object : android.webkit.WebChromeClient() {
-                        override fun onConsoleMessage(message: android.webkit.ConsoleMessage?): Boolean {
-                            val msg = message?.message() ?: return false
-                            if (msg.startsWith("ASTER_HEIGHT_FINAL:")) {
-                                val parsed = msg.substring("ASTER_HEIGHT_FINAL:".length).toIntOrNull()
-                                if (parsed != null) height_sink.report(parsed, exact = true)
-                                return true
-                            }
-                            if (msg.startsWith("ASTER_HEIGHT_EARLY:")) {
-                                val parsed = msg.substring("ASTER_HEIGHT_EARLY:".length).toIntOrNull()
-                                if (parsed != null) height_sink.report(parsed, exact = false)
-                                return true
-                            }
-                            if (msg.startsWith("ASTER_HEIGHT_EXACT:") || msg.startsWith("ASTER_HEIGHT:")) return true
-                            return false
-                        }
-                    }
                     webViewClient = webview_client
-                    if (translate_active_ref[0]) {
-                        addJavascriptInterface(translate_bridge, "AsterTranslateBridge")
-                    }
                     web_ref[0] = this
                 }
             },
             update = { web_view ->
                 web_ref[0] = web_view
-                if (translate_active_ref[0]) {
-                    web_view.addJavascriptInterface(translate_bridge, "AsterTranslateBridge")
-                } else {
-                    web_view.removeJavascriptInterface("AsterTranslateBridge")
-                }
                 val built = prebuilt_html ?: return@AndroidView
                 val is_newsletter = built.contains("data-nl=\"1\"")
                 val wants_white_page = built.contains("data-white=\"1\"")
@@ -5957,14 +5943,17 @@ internal fun email_html_view(
                     )
                     loaded_built = built
                     loaded_external = allow_external
-                    is_nl_ref[0] = is_newsletter
                     white_page_ref[0] = wants_white_page
-                    nl_scale_ref[0] = if (is_newsletter) {
-                        Regex("initial-scale=([0-9.]+)").find(built)
-                            ?.groupValues?.get(1)?.toFloatOrNull()?.coerceIn(0.1f, 1.0f) ?: 1f
-                    } else {
-                        1f
+                    val fitted_viewport = fitted_viewport_width(built)
+                    nl_scale_ref[0] = when {
+                        fitted_viewport != null ->
+                            (screen_width_dp.toFloat() / fitted_viewport).coerceIn(0.1f, 1.0f)
+                        is_newsletter ->
+                            Regex("initial-scale=([0-9.]+)").find(built)
+                                ?.groupValues?.get(1)?.toFloatOrNull()?.coerceIn(0.1f, 1.0f) ?: 1f
+                        else -> 1f
                     }
+                    is_nl_ref[0] = is_newsletter || fitted_viewport != null
                     scale_ref[0] = nl_scale_ref[0]
                     zoom_scale_ref[0] = nl_scale_ref[0]
                     measured_scale_ref[0] = nl_scale_ref[0]
@@ -5975,6 +5964,7 @@ internal fun email_html_view(
             modifier = run {
                 val target = when {
                     has_measured && content_height_dp > 0.dp -> content_height_dp
+                    measure_probe.value -> MEASURE_PROBE_HEIGHT
                     settled_height_ref[0] > 0f -> settled_height_ref[0].dp
                     else -> estimated_height
                 }

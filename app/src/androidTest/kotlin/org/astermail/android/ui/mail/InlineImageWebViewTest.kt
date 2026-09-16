@@ -137,6 +137,13 @@ class InlineImageWebViewTest {
     @Test
     fun an_unresolvable_inline_reference_still_falls_back_to_the_placeholder() {
         val document = document_for(InlineImageStore.url_for("missing_key"))
-        assertEquals("an unknown key must not render an image", -1, natural_width_of_first_image(document))
+        assertTrue(
+            "the failure placeholder label must be attached to the image",
+            document.contains("$FAILED_IMAGE_LABEL_ATTRIBUTE=\"Image could not be loaded\""),
+        )
+        assertTrue(
+            "an unknown key must not render an image",
+            natural_width_of_first_image(document) <= 0,
+        )
     }
 }
