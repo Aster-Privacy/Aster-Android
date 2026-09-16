@@ -1476,9 +1476,9 @@
     <string name="post_quantum_unavailable_title">Ohne Post-Quanten-Verschlüsselung senden?</string>
     <string name="post_quantum_unavailable_message">%1$s hat noch keine Post-Quanten-Schlüssel veröffentlicht, daher kann diese Nachricht nur die standardmäßige Ende-zu-Ende-Verschlüsselung verwenden. Bitte den Empfänger, Aster zu öffnen oder die App zu aktualisieren, um den Post-Quanten-Schutz wieder zu aktivieren.</string>
     <string name="post_quantum_downgrade_title">Ohne die erwarteten post-quantensicheren Schlüssel senden?</string>
-    <string name="post_quantum_downgrade_message">%1$s veröffentlicht post-quantensichere Schlüssel, aber das für diese Nachricht gelieferte Schlüsselpaket enthält keine. Das kann an einem Serverproblem liegen oder an einer Manipulation der Schlüsselabfrage. Um den post-quantensicheren Schutz zu behalten, brich ab und versuche es später erneut.</string>
+    <string name="post_quantum_downgrade_message">%1$s veröffentlicht post-quantensichere Schlüssel, aber das für diese Nachricht gelieferte Schlüsselpaket enthält keine. Das kann an einem Serverproblem liegen oder an einer Manipulation der Schlüsselabfrage. Um den post-quantensicheren Schutz zu behalten, brechen Sie ab und versuchen Sie es später erneut.</string>
     <string name="key_trust_change_title">Verschlüsselungsschlüssel geändert</string>
-    <string name="key_trust_change_message">Der Verschlüsselungsschlüssel von %1$s hat sich seit der letzten Abfrage geändert. Prüfe den neuen Fingerabdruck über einen anderen Kanal mit der Empfängerin oder dem Empfänger, bevor du sendest.</string>
+    <string name="key_trust_change_message">Der Verschlüsselungsschlüssel von %1$s hat sich seit der letzten Abfrage geändert. Prüfen Sie den neuen Fingerabdruck über einen anderen Kanal mit der Empfängerin oder dem Empfänger, bevor Sie senden.</string>
     <string name="key_trust_change_detail">%1$s: vorher %2$s, jetzt %3$s.</string>
     <string name="key_trust_change_confirm">Neuem Schlüssel vertrauen</string>
     <string name="post_quantum_send_anyway">Trotzdem senden</string>
