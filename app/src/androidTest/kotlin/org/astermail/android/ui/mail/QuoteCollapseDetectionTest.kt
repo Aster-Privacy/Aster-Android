@@ -46,8 +46,10 @@ private const val PROBE_JS = """(function(){
   var btn=document.querySelector('.aster-quote-toggle');
   var quoted=document.querySelector('.aster-quoted-content');
   var visible=document.getElementById('m')?document.getElementById('m').innerText:document.body.innerText;
-  if(quoted&&quoted.innerText)visible=visible.split(quoted.innerText).join('');
-  return [btn?'1':'0',quoted?quoted.style.display:'',visible.replace(/\s+/g,' ').trim()].join('~');
+  var qtext=quoted?(quoted.innerText||''):'';
+  if(qtext)visible=visible.split(qtext).join('');
+  var shown=quoted?(qtext.trim()?'shown':'none'):'';
+  return [btn?'1':'0',shown,visible.replace(/\s+/g,' ').trim()].join('~');
 })()"""
 
 @RunWith(AndroidJUnit4::class)

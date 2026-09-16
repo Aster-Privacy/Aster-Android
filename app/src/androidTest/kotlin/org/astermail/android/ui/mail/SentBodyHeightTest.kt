@@ -21,8 +21,6 @@
 
 package org.astermail.android.ui.mail
 
-import android.webkit.ConsoleMessage
-import android.webkit.WebChromeClient
 import android.webkit.WebView
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -45,12 +43,23 @@ private const val CONTENT_BOTTOM_JS = """(function(){
   var m=document.getElementById('m');
   if(!m)return 0;
   var sy=window.pageYOffset||document.documentElement.scrollTop||0;
+  function collapsed(el){
+    if(!el)return false;
+    var d=el.closest('details:not([open])');
+    while(d){
+      var s=d.querySelector(':scope>summary');
+      if(!(s&&s.contains(el)))return true;
+      d=d.parentElement?d.parentElement.closest('details:not([open])'):null;
+    }
+    return false;
+  }
   var max=0;
   var tw=document.createTreeWalker(m,NodeFilter.SHOW_TEXT,null);
   var rng=document.createRange();
   while(tw.nextNode()){
     var n=tw.currentNode;
     if(!n.nodeValue||!n.nodeValue.trim())continue;
+    if(collapsed(n.parentElement))continue;
     rng.selectNodeContents(n);
     var rs=rng.getClientRects();
     for(var i=0;i<rs.length;i++){
@@ -61,24 +70,26 @@ private const val CONTENT_BOTTOM_JS = """(function(){
   }
   var im=m.querySelectorAll('img,hr');
   for(var j=0;j<im.length;j++){
+    if(collapsed(im[j]))continue;
     var ir=im[j].getBoundingClientRect();
     if(ir.height>2&&ir.width>2&&ir.bottom+sy>max)max=ir.bottom+sy;
   }
   var caps=m.querySelectorAll('.aster-quote-toggle,details.aster-forwarded-collapse>summary');
   var deepest='';
   for(var q=0;q<caps.length;q++){
+    if(collapsed(caps[q]))continue;
     var cr=caps[q].getBoundingClientRect();
     if(cr.height>0&&cr.width>0&&cr.bottom+sy>max){max=cr.bottom+sy;deepest='toggle'}
   }
   var pb=parseFloat(window.getComputedStyle(document.body).paddingBottom)||0;
   var mb=parseFloat(window.getComputedStyle(m).marginBottom)||0;
   var top=m.getBoundingClientRect().top+sy;
-  var fs=window.__aster_fit_scale||1;
   var wid='';
   var wr=0;
   var all=m.querySelectorAll('*');
   for(var k=0;k<all.length;k++){
     var e2=all[k];
+    if(collapsed(e2))continue;
     var c2=window.getComputedStyle(e2);
     if(c2.position==='fixed')continue;
     if(c2.display==='none'||c2.visibility==='hidden')continue;
@@ -90,7 +101,7 @@ private const val CONTENT_BOTTOM_JS = """(function(){
     if(cand>wr){wr=cand;wid=e2.tagName+'.'+(e2.className||'')+'@'+Math.round(b2.left)+'w'+Math.round(b2.width)+'sw'+sw2;}
   }
   var pr=parseFloat(window.getComputedStyle(document.body).paddingRight)||0;
-  return Math.ceil(max*fs)+'|'+m.offsetHeight+'|'+top+'|'+pb+'|'+mb+'|'+deepest+'|'+fs+'|'+
+  return Math.ceil(max)+'|'+m.offsetHeight+'|'+top+'|'+pb+'|'+mb+'|'+deepest+'|'+window.screen.width+'|'+
     window.innerWidth+'|'+document.documentElement.scrollWidth+'|'+Math.round(wr)+'|'+wid+'|pr'+pr;
 })()"""
 
@@ -100,9 +111,15 @@ class SentBodyHeightTest {
     @get:Rule
     val compose_rule = createComposeRule()
 
-    private data class Measurement(val reported: Int, val content_bottom: Int, val diag: String) {
-        val fit_scale: Float get() = diag.split('|').getOrNull(6)?.toFloatOrNull() ?: 1f
+    private data class Measurement(
+        val reported: Int,
+        val content_bottom: Int,
+        val fit_scale: Float,
+        val diag: String,
+    ) {
+        val device_width: Int get() = diag.split('|').getOrNull(6)?.toFloatOrNull()?.toInt() ?: 0
         val viewport_width: Int get() = diag.split('|').getOrNull(7)?.toFloatOrNull()?.toInt() ?: 0
+        val content_right: Int get() = diag.split('|').getOrNull(9)?.toFloatOrNull()?.toInt() ?: 0
     }
 
     private fun measure(body: String): Measurement {
@@ -132,16 +149,6 @@ class SentBodyHeightTest {
                         settings.displayZoomControls = false
                         settings.setSupportZoom(true)
                         settings.loadsImagesAutomatically = true
-                        webChromeClient = object : WebChromeClient() {
-                            override fun onConsoleMessage(msg: ConsoleMessage): Boolean {
-                                val text = msg.message()
-                                val prefix = "ASTER_HEIGHT_EXACT:"
-                                if (text.startsWith(prefix)) {
-                                    text.substring(prefix.length).toIntOrNull()?.let { reported.set(it) }
-                                }
-                                return true
-                            }
-                        }
                         web_ref.set(this)
                         loadDataWithBaseURL(
                             "https://mail-content.invalid/",
@@ -162,8 +169,15 @@ class SentBodyHeightTest {
 
         val latch = CountDownLatch(1)
         val diag = AtomicReference("")
+        val page_scale = AtomicReference(1f)
         InstrumentationRegistry.getInstrumentation().runOnMainSync {
-            web_ref.get()?.evaluateJavascript(CONTENT_BOTTOM_JS) { value ->
+            val view = web_ref.get()
+            if (view != null) {
+                reported.set(view.contentHeight)
+                @Suppress("DEPRECATION")
+                page_scale.set(view.scale / view.resources.displayMetrics.density)
+            }
+            view?.evaluateJavascript(CONTENT_BOTTOM_JS) { value ->
                 diag.set(value?.trim()?.removeSurrounding("\"") ?: "")
                 latch.countDown()
             } ?: latch.countDown()
@@ -172,7 +186,7 @@ class SentBodyHeightTest {
 
         val raw = diag.get()
         val bottom = raw.substringBefore('|').toFloatOrNull()?.toInt() ?: 0
-        return Measurement(reported.get(), bottom, raw)
+        return Measurement(reported.get(), bottom, page_scale.get(), raw)
     }
 
     private fun assert_covers(label: String, m: Measurement) {
@@ -249,10 +263,14 @@ class SentBodyHeightTest {
         )
 
         val body_padding = 32
-        val needed = (m.viewport_width - body_padding).toFloat() / content_width
+        val needed = m.device_width.toFloat() / (content_width + body_padding)
         assertTrue(
             "wide sent email zoomed to ${m.fit_scale} instead of the needed $needed [${m.diag}]",
             m.fit_scale >= needed * 0.9f && m.fit_scale <= needed * 1.1f,
+        )
+        assertTrue(
+            "wide sent email still runs past the layout viewport [${m.diag}]",
+            m.content_right <= m.viewport_width + 2,
         )
     }
 }

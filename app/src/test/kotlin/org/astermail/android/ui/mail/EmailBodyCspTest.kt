@@ -22,7 +22,6 @@
 package org.astermail.android.ui.mail
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -49,11 +48,8 @@ class EmailBodyCspTest {
         return document.substring(from, document.indexOf('"', from))
     }
 
-    private fun script_nonces(document: String): List<String?> =
-        Regex("<script\\b([^>]*)>", RegexOption.IGNORE_CASE)
-            .findAll(document)
-            .map { Regex("nonce=\"([^\"]+)\"").find(it.groupValues[1])?.groupValues?.get(1) }
-            .toList()
+    private fun script_tags(document: String): List<String> =
+        Regex("<script[ >][^>]*>?", RegexOption.IGNORE_CASE).findAll(document).map { it.value }.toList()
 
     @Test
     fun denies_everything_the_body_does_not_need() {
@@ -67,52 +63,44 @@ class EmailBodyCspTest {
     }
 
     @Test
-    fun never_allows_inline_script_from_the_message() {
+    fun the_document_denies_script_outright() {
         val csp = csp_of(render("<p>hello</p>"))
 
-        assertTrue(csp.contains("script-src 'nonce-"))
-        assertTrue("script-src must not fall back to unsafe-inline", !csp.contains("'unsafe-inline'; script"))
+        assertTrue(csp.contains("script-src 'none'"))
+        assertTrue(csp.contains("worker-src 'none'"))
+        assertTrue(csp.contains("connect-src 'none'"))
+        assertTrue("no nonce may be issued", !csp.contains("nonce-"))
         assertTrue(
             "the policy must not allow inline script",
             !Regex("script-src[^;]*'unsafe-inline'").containsMatchIn(csp),
         )
         assertTrue(
             "the policy must not allow eval",
-            !Regex("script-src[^;]*'unsafe-eval'").containsMatchIn(csp),
+            !Regex("script-src[^;]*unsafe-eval").containsMatchIn(csp),
         )
     }
 
     @Test
-    fun an_injected_script_tag_carries_no_nonce() {
+    fun the_rendered_document_carries_no_script_of_its_own() {
+        assertEquals(emptyList<String>(), script_tags(render("<p>hello</p>")))
+    }
+
+    @Test
+    fun a_smuggled_script_tag_stays_inert() {
         val smuggled = "<p>hello</p><script>window.AsterTranslateBridge.translate('x')</script>"
         val document = render(smuggled)
-        val nonce = Regex("'nonce-([^']+)'").find(csp_of(document))!!.groupValues[1]
-        val nonces = script_nonces(document)
 
-        assertEquals(2, nonces.size)
-        assertEquals(1, nonces.count { it == nonce })
-        assertEquals(1, nonces.count { it == null })
+        assertTrue(csp_of(document).contains("script-src 'none'"))
+        assertEquals(1, script_tags(document).size)
     }
 
     @Test
-    fun every_render_gets_its_own_nonce() {
-        val first = Regex("'nonce-([^']+)'").find(csp_of(render("<p>a</p>")))!!.groupValues[1]
-        val second = Regex("'nonce-([^']+)'").find(csp_of(render("<p>a</p>")))!!.groupValues[1]
-
-        assertNotEquals(first, second)
-        assertTrue(first.length >= 16)
-    }
-
-    @Test
-    fun translation_widens_the_policy_only_for_the_local_translator() {
+    fun translation_never_widens_the_policy() {
         val csp = csp_of(render("<p>hello</p>", translate_mode = "auto"))
 
-        assertTrue(csp.contains("https://mail-content.invalid/bergamot/"))
-        assertTrue(csp.contains("default-src 'none'"))
-        assertTrue(
-            "translation must not open the policy to arbitrary origins",
-            !Regex("script-src[^;]*\\bhttps:(?![a-z/])").containsMatchIn(csp),
-        )
+        assertTrue(csp.contains("script-src 'none'"))
+        assertTrue(!csp.contains("bergamot"))
+        assertTrue(!csp.contains("wasm-unsafe-eval"))
     }
 
     @Test
@@ -121,6 +109,6 @@ class EmailBodyCspTest {
 
         assertTrue(document.contains("Content-Security-Policy"))
         assertTrue(csp_of(document).contains("script-src 'none'"))
-        assertTrue(script_nonces(document).isEmpty())
+        assertEquals(emptyList<String>(), script_tags(document))
     }
 }
