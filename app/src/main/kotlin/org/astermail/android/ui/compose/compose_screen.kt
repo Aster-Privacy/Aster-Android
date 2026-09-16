@@ -850,6 +850,9 @@ fun ComposeScreen(
     var show_from_mismatch_dialog by remember { mutableStateOf(false) }
     var post_quantum_missing by remember { mutableStateOf<List<String>>(emptyList()) }
     var post_quantum_downgraded by remember { mutableStateOf<List<String>>(emptyList()) }
+    var key_trust_changes by remember {
+        mutableStateOf<List<org.astermail.android.mail.RecipientKeyChange>>(emptyList())
+    }
     val seeded_quoted_source = remember {
         initial_state.quoted_html?.let { html ->
             html to Triple(
@@ -1668,7 +1671,11 @@ fun ComposeScreen(
         }
     }
 
-    fun do_send(skip_from_guard: Boolean = false, allow_non_post_quantum: Boolean = false) {
+    fun do_send(
+        skip_from_guard: Boolean = false,
+        allow_non_post_quantum: Boolean = false,
+        allow_key_change: Boolean = false,
+    ) {
         if (!skip_from_guard && reply_from_mismatch(mode, received_on_alias, from_alias)) {
             show_from_mismatch_dialog = true
             return
@@ -1822,6 +1829,20 @@ fun ComposeScreen(
                     },
                 )
                 return@launch
+            }
+
+            if (!allow_key_change) {
+                val changes = kotlinx.coroutines.withTimeoutOrNull(
+                    KEY_TRUST_LOOKUP_TIMEOUT_MS,
+                ) {
+                    mail_vm.find_external_key_fingerprint_changes(snap_to + snap_cc + snap_bcc)
+                }.orEmpty()
+                if (changes.isNotEmpty()) {
+                    is_sending = false
+                    send_lock.set(false)
+                    key_trust_changes = changes
+                    return@launch
+                }
             }
 
             if (!allow_non_post_quantum && !scheduled_send) {
@@ -2903,6 +2924,64 @@ fun ComposeScreen(
         )
     }
 
+    if (key_trust_changes.isNotEmpty()) {
+        val pending_changes = key_trust_changes
+        val changed_list = pending_changes.joinToString(", ") { it.email }
+        val key_trust_context = LocalContext.current
+        val detail_lines = pending_changes.joinToString("\n") { change ->
+            key_trust_context.getString(
+                R.string.key_trust_change_detail,
+                change.email,
+                change.prior_fingerprint,
+                change.new_fingerprint,
+            )
+        }
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { key_trust_changes = emptyList() },
+            title = stringResource(R.string.key_trust_change_title),
+            message = stringResource(R.string.key_trust_change_message, changed_list) +
+                "\n\n" + detail_lines,
+            footer = {
+                androidx.compose.foundation.layout.FlowRow(
+                    modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(
+                        4.dp,
+                        Alignment.End,
+                    ),
+                ) {
+                    androidx.compose.material3.TextButton(
+                        modifier = androidx.compose.ui.Modifier.testTag("key_trust_cancel"),
+                        onClick = { key_trust_changes = emptyList() },
+                    ) {
+                        Text(
+                            text = stringResource(R.string.cancel),
+                            color = colors.text_secondary,
+                            fontSize = 14.sp,
+                        )
+                    }
+                    androidx.compose.material3.TextButton(
+                        modifier = androidx.compose.ui.Modifier.testTag("key_trust_confirm"),
+                        onClick = {
+                            key_trust_changes = emptyList()
+                            scope.launch {
+                                for (change in pending_changes) {
+                                    mail_vm.acknowledge_external_key_fingerprint_change(change)
+                                }
+                                do_send(skip_from_guard = true, allow_key_change = true)
+                            }
+                        },
+                    ) {
+                        Text(
+                            text = stringResource(R.string.key_trust_change_confirm),
+                            color = colors.accent_blue,
+                            fontSize = 14.sp,
+                        )
+                    }
+                }
+            },
+        )
+    }
+
     if (post_quantum_missing.isNotEmpty()) {
         val is_downgrade = post_quantum_downgraded.isNotEmpty()
         val missing_list = (if (is_downgrade) post_quantum_downgraded else post_quantum_missing)
@@ -2945,7 +3024,11 @@ fun ComposeScreen(
                         onClick = {
                             post_quantum_downgraded = emptyList()
                             post_quantum_missing = emptyList()
-                            do_send(skip_from_guard = true, allow_non_post_quantum = true)
+                            do_send(
+                                skip_from_guard = true,
+                                allow_non_post_quantum = true,
+                                allow_key_change = true,
+                            )
                         },
                     ) {
                         Text(
@@ -4661,7 +4744,9 @@ private fun toggle_sheet_row(
 }
 
 private const val minimum_schedule_lead_ms = 60_000L
-private const val POST_QUANTUM_COVERAGE_TIMEOUT_MS = 15_000L
+private const val KEY_TRUST_LOOKUP_TIMEOUT_MS = 8_000L
+
+const val POST_QUANTUM_COVERAGE_TIMEOUT_MS = 15_000L
 private const val max_recipients_per_field = 50
 private const val max_recipients_per_send = 100
 

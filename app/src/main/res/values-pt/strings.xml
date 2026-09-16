@@ -1476,6 +1476,10 @@
     <string name="post_quantum_unavailable_message">%1$s ainda não publicou chaves pós-quânticas, então esta mensagem só pode usar a criptografia de ponta a ponta padrão. Peça para abrir o Aster ou atualizar o app para reativar a proteção pós-quântica.</string>
     <string name="post_quantum_downgrade_title">Enviar sem as chaves pós-quânticas esperadas?</string>
     <string name="post_quantum_downgrade_message">%1$s publica chaves pós-quânticas, mas o conjunto de chaves entregue para esta mensagem não tem nenhuma. Isso pode ser um problema do servidor ou uma adulteração da busca de chaves. Para manter a proteção pós-quântica, cancele e tente novamente mais tarde.</string>
+    <string name="key_trust_change_title">A chave de criptografia mudou</string>
+    <string name="key_trust_change_message">A chave de criptografia de %1$s mudou desde a última consulta. Confirme a nova impressão digital com o destinatário por outro canal antes de enviar.</string>
+    <string name="key_trust_change_detail">%1$s: antes %2$s, agora %3$s.</string>
+    <string name="key_trust_change_confirm">Confiar na nova chave</string>
     <string name="post_quantum_send_anyway">Enviar mesmo assim</string>
     <string name="expires_custom">Data e hora personalizadas</string>
     <string name="expires_custom_at">Expira em %1$s</string>

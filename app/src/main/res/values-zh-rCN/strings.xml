@@ -1474,6 +1474,10 @@
     <string name="post_quantum_unavailable_message">%1$s 尚未发布后量子密钥，因此此邮件只能使用标准端到端加密。请对方打开 Aster 或更新应用，以重新启用后量子保护。</string>
     <string name="post_quantum_downgrade_title">要在缺少预期的后量子密钥的情况下发送吗？</string>
     <string name="post_quantum_downgrade_message">%1$s 已发布后量子密钥，但本次发送获取到的密钥包中没有任何后量子密钥。这可能是服务器故障，也可能是密钥查询遭到篡改。若要保留后量子保护，请取消并稍后重试。</string>
+    <string name="key_trust_change_title">加密密钥已变更</string>
+    <string name="key_trust_change_message">自上次查询以来，%1$s 的加密密钥已变更。发送前请通过其他渠道与收件人核对新的指纹。</string>
+    <string name="key_trust_change_detail">%1$s：原为 %2$s，现为 %3$s。</string>
+    <string name="key_trust_change_confirm">信任新密钥</string>
     <string name="post_quantum_send_anyway">仍然发送</string>
     <string name="expires_custom">自定义日期和时间</string>
     <string name="expires_custom_at">%1$s 过期</string>

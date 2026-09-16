@@ -3705,6 +3705,26 @@ class MailRepository @Inject constructor(
         }
     }
 
+    suspend fun find_external_key_fingerprint_changes(
+        recipients: List<String>,
+    ): List<RecipientKeyChange> {
+        val external = external_key_trust_candidates(recipients)
+        if (external.isEmpty()) return emptyList()
+        return runCatching {
+            key_changes_from_discovery(keys_api.discover_external_keys_batch(external))
+        }.getOrDefault(emptyList())
+    }
+
+    suspend fun acknowledge_external_key_fingerprint_change(
+        change: RecipientKeyChange,
+    ): Boolean = runCatching {
+        keys_api.acknowledge_external_key_fingerprint_change(
+            change.email,
+            change.prior_fingerprint,
+            change.new_fingerprint,
+        )
+    }.getOrDefault(false)
+
     suspend fun check_post_quantum_coverage(
         recipients: List<String>,
         sender_email: String? = null,
