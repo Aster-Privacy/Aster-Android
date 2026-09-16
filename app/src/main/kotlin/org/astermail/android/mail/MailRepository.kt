@@ -60,6 +60,7 @@ import org.astermail.android.api.mail.ThreadMessageItem
 import org.astermail.android.api.mail.ThreadWithMessages
 import org.astermail.android.api.labels.LabelsApi
 import org.astermail.android.crypto.ratchet.RatchetCrypto
+import org.astermail.android.mail.ratchet.PostQuantumCoverage
 import org.astermail.android.api.scheduled.CreateScheduledRequest
 import org.astermail.android.api.scheduled.ScheduledApi
 import org.astermail.android.api.scheduled.ScheduledDetailResponse
@@ -3707,15 +3708,15 @@ class MailRepository @Inject constructor(
     suspend fun check_post_quantum_coverage(
         recipients: List<String>,
         sender_email: String? = null,
-    ): List<String> {
-        val from_addr = sender_email ?: session_key_store.get_user_email() ?: return emptyList()
-        if (from_addr.isBlank()) return emptyList()
+    ): PostQuantumCoverage {
+        val from_addr = sender_email ?: session_key_store.get_user_email() ?: return PostQuantumCoverage()
+        if (from_addr.isBlank()) return PostQuantumCoverage()
         val internal_recipients = recipients.filter { is_internal_recipient(it) }
-        if (internal_recipients.isEmpty()) return emptyList()
-        if (!ensure_ratchet_keys_ready()) return emptyList()
+        if (internal_recipients.isEmpty()) return PostQuantumCoverage()
+        if (!ensure_ratchet_keys_ready()) return PostQuantumCoverage()
         return runCatching {
             ratchet_encryptor.check_post_quantum_coverage(from_addr, internal_recipients)
-        }.getOrDefault(emptyList())
+        }.getOrDefault(PostQuantumCoverage())
     }
 
     suspend fun send_email(

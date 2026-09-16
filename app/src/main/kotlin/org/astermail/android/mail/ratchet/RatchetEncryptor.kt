@@ -49,6 +49,23 @@ class PostQuantumUnavailableException(
     val recipients: List<String>,
 ) : Exception("post-quantum key agreement unavailable for ${recipients.joinToString(", ")}")
 
+enum class PostQuantumRecipientStatus { SUPPORTED, UNSUPPORTED, DOWNGRADED }
+
+data class PostQuantumCoverage(
+    val missing: List<String> = emptyList(),
+    val downgraded: List<String> = emptyList(),
+)
+
+internal fun classify_post_quantum_bundle(
+    pq_capable: Boolean?,
+    pq_prekey_pair: Pair<Int, ByteArray>?,
+    pq_identity_raw: ByteArray?,
+): PostQuantumRecipientStatus = when {
+    X3dh.supports_pq(pq_prekey_pair, pq_identity_raw) -> PostQuantumRecipientStatus.SUPPORTED
+    pq_capable == true -> PostQuantumRecipientStatus.DOWNGRADED
+    else -> PostQuantumRecipientStatus.UNSUPPORTED
+}
+
 @Singleton
 class RatchetEncryptor @Inject constructor(
     private val state_store: RatchetStateStore,
@@ -69,33 +86,40 @@ class RatchetEncryptor @Inject constructor(
     suspend fun check_post_quantum_coverage(
         sender_email: String,
         recipients: List<String>,
-    ): List<String> {
-        if (sender_email.isBlank()) return emptyList()
+    ): PostQuantumCoverage {
+        if (sender_email.isBlank()) return PostQuantumCoverage()
 
         val missing = mutableListOf<String>()
+        val downgraded = mutableListOf<String>()
         for (recipient_email in recipients) {
-            val covered = runCatching {
+            val status = runCatching {
                 val conversation_id = X3dh.derive_conversation_id(sender_email, recipient_email)
                 val bootstrap = state_store.load(conversation_id)?.bootstrap
                 if (bootstrap != null) {
-                    bootstrap.pq_ciphertext != null
+                    if (bootstrap.pq_ciphertext != null) {
+                        PostQuantumRecipientStatus.SUPPORTED
+                    } else {
+                        PostQuantumRecipientStatus.UNSUPPORTED
+                    }
                 } else {
                     val bundle = ratchet_api.fetch_prekey_bundle(
                         recipient_email.substringBefore('@'),
                         recipient_email,
-                    ) ?: return@runCatching false
+                    ) ?: return@runCatching PostQuantumRecipientStatus.UNSUPPORTED
                     val pq_prekey_pair = bundle.pq_prekey?.let {
                         runCatching { it.key_id to RatchetCrypto.b64_decode(it.public_key) }.getOrNull()
                     }
                     val pq_identity_raw = bundle.pq_kem_public_key
                         ?.takeIf { it.isNotBlank() }
                         ?.let { runCatching { RatchetCrypto.b64_decode(it) }.getOrNull() }
-                    X3dh.supports_pq(pq_prekey_pair, pq_identity_raw)
+                    classify_post_quantum_bundle(bundle.pq_capable, pq_prekey_pair, pq_identity_raw)
                 }
             }.getOrNull() ?: continue
-            if (!covered) missing.add(recipient_email)
+            if (status == PostQuantumRecipientStatus.SUPPORTED) continue
+            missing.add(recipient_email)
+            if (status == PostQuantumRecipientStatus.DOWNGRADED) downgraded.add(recipient_email)
         }
-        return missing
+        return PostQuantumCoverage(missing = missing, downgraded = downgraded)
     }
 
     suspend fun encrypt_envelope(

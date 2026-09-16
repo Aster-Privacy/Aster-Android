@@ -2439,6 +2439,8 @@
     <string name="reply_from_mismatch_send_anyway">फिर भी भेजें</string>
     <string name="post_quantum_unavailable_title">पोस्ट-क्वांटम एन्क्रिप्शन के बिना भेजें?</string>
     <string name="post_quantum_unavailable_message">%1$s ने अभी तक पोस्ट-क्वांटम कुंजियां प्रकाशित नहीं की हैं, इसलिए यह संदेश सिर्फ़ सामान्य एंड-टू-एंड एन्क्रिप्शन इस्तेमाल कर सकता है। पोस्ट-क्वांटम सुरक्षा वापस चालू करने के लिए उनसे Aster खोलने या अपना ऐप अपडेट करने को कहें।</string>
+    <string name="post_quantum_downgrade_title">अपेक्षित पोस्ट-क्वांटम कुंजियों के बिना भेजें?</string>
+    <string name="post_quantum_downgrade_message">%1$s पोस्ट-क्वांटम कुंजियाँ प्रकाशित करता है, लेकिन इस संदेश के लिए मिले कुंजी बंडल में एक भी नहीं है। इसका कारण सर्वर की कोई समस्या हो सकती है या कुंजी खोज में छेड़छाड़ भी हो सकती है। पोस्ट-क्वांटम सुरक्षा बनाए रखने के लिए, रद्द करें और बाद में फिर कोशिश करें।</string>
     <string name="post_quantum_send_anyway">फिर भी भेजें</string>
     <string name="expires_custom">अपनी तारीख़ और समय</string>
     <string name="expires_custom_at">%1$s को खत्म</string>

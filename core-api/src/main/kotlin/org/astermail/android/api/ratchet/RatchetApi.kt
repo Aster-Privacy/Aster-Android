@@ -74,6 +74,7 @@ data class PrekeyBundleResponse(
     val one_time_prekey: String? = null,
     val pq_prekey: PqPrekeyInfo? = null,
     val pq_kem_public_key: String? = null,
+    val pq_capable: Boolean? = null,
 )
 
 @Serializable

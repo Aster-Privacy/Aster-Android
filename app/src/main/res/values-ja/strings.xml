@@ -1472,6 +1472,8 @@
     <string name="reply_from_mismatch_send_anyway">そのまま送信</string>
     <string name="post_quantum_unavailable_title">耐量子暗号化なしで送信しますか？</string>
     <string name="post_quantum_unavailable_message">%1$s はまだ耐量子鍵を公開していないため、このメッセージは標準のエンドツーエンド暗号化のみを使用します。Aster を開くかアプリを更新して、耐量子保護を再度有効にするよう依頼してください。</string>
+    <string name="post_quantum_downgrade_title">想定される耐量子鍵がない状態で送信しますか。</string>
+    <string name="post_quantum_downgrade_message">%1$s は耐量子鍵を公開していますが、このメッセージ用に取得した鍵バンドルには耐量子鍵が含まれていません。サーバーの問題のほか、鍵の取得が改ざんされた可能性もあります。耐量子保護を維持するには、キャンセルして後でもう一度お試しください。</string>
     <string name="post_quantum_send_anyway">そのまま送信</string>
     <string name="expires_custom">日時を指定</string>
     <string name="expires_custom_at">%1$s に期限切れ</string>

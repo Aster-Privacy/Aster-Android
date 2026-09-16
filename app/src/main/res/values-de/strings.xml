@@ -1475,6 +1475,8 @@
     <string name="reply_from_mismatch_send_anyway">Trotzdem senden</string>
     <string name="post_quantum_unavailable_title">Ohne Post-Quanten-Verschlüsselung senden?</string>
     <string name="post_quantum_unavailable_message">%1$s hat noch keine Post-Quanten-Schlüssel veröffentlicht, daher kann diese Nachricht nur die standardmäßige Ende-zu-Ende-Verschlüsselung verwenden. Bitte den Empfänger, Aster zu öffnen oder die App zu aktualisieren, um den Post-Quanten-Schutz wieder zu aktivieren.</string>
+    <string name="post_quantum_downgrade_title">Ohne die erwarteten post-quantensicheren Schlüssel senden?</string>
+    <string name="post_quantum_downgrade_message">%1$s veröffentlicht post-quantensichere Schlüssel, aber das für diese Nachricht gelieferte Schlüsselpaket enthält keine. Das kann an einem Serverproblem liegen oder an einer Manipulation der Schlüsselabfrage. Um den post-quantensicheren Schutz zu behalten, brich ab und versuche es später erneut.</string>
     <string name="post_quantum_send_anyway">Trotzdem senden</string>
     <string name="expires_custom">Benutzerdefiniertes Datum und Uhrzeit</string>
     <string name="expires_custom_at">Läuft ab: %1$s</string>

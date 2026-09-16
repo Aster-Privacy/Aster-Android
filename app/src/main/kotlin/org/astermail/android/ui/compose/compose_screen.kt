@@ -849,6 +849,7 @@ fun ComposeScreen(
     var show_discard_dialog by remember { mutableStateOf(false) }
     var show_from_mismatch_dialog by remember { mutableStateOf(false) }
     var post_quantum_missing by remember { mutableStateOf<List<String>>(emptyList()) }
+    var post_quantum_downgraded by remember { mutableStateOf<List<String>>(emptyList()) }
     val seeded_quoted_source = remember {
         initial_state.quoted_html?.let { html ->
             html to Triple(
@@ -1824,18 +1825,19 @@ fun ComposeScreen(
             }
 
             if (!allow_non_post_quantum && !scheduled_send) {
-                val missing = kotlinx.coroutines.withTimeoutOrNull(
+                val coverage = kotlinx.coroutines.withTimeoutOrNull(
                     POST_QUANTUM_COVERAGE_TIMEOUT_MS,
                 ) {
                     mail_vm.check_post_quantum_coverage(
                         recipients = snap_to + snap_cc + snap_bcc,
                         sender_email = snap_from,
                     )
-                }.orEmpty()
-                if (missing.isNotEmpty()) {
+                } ?: org.astermail.android.mail.ratchet.PostQuantumCoverage()
+                if (coverage.missing.isNotEmpty()) {
                     is_sending = false
                     send_lock.set(false)
-                    post_quantum_missing = missing
+                    post_quantum_downgraded = coverage.downgraded
+                    post_quantum_missing = coverage.missing
                     return@launch
                 }
             }
@@ -2902,11 +2904,21 @@ fun ComposeScreen(
     }
 
     if (post_quantum_missing.isNotEmpty()) {
-        val missing_list = post_quantum_missing.joinToString(", ")
+        val is_downgrade = post_quantum_downgraded.isNotEmpty()
+        val missing_list = (if (is_downgrade) post_quantum_downgraded else post_quantum_missing)
+            .joinToString(", ")
         org.astermail.android.design.components.AsterDialog(
-            on_dismiss = { post_quantum_missing = emptyList() },
-            title = stringResource(R.string.post_quantum_unavailable_title),
-            message = stringResource(R.string.post_quantum_unavailable_message, missing_list),
+            on_dismiss = {
+                post_quantum_downgraded = emptyList()
+                post_quantum_missing = emptyList()
+            },
+            title = stringResource(
+                if (is_downgrade) R.string.post_quantum_downgrade_title else R.string.post_quantum_unavailable_title,
+            ),
+            message = stringResource(
+                if (is_downgrade) R.string.post_quantum_downgrade_message else R.string.post_quantum_unavailable_message,
+                missing_list,
+            ),
             footer = {
                 androidx.compose.foundation.layout.FlowRow(
                     modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
@@ -2917,7 +2929,10 @@ fun ComposeScreen(
                 ) {
                     androidx.compose.material3.TextButton(
                         modifier = androidx.compose.ui.Modifier.testTag("post_quantum_cancel"),
-                        onClick = { post_quantum_missing = emptyList() },
+                        onClick = {
+                            post_quantum_downgraded = emptyList()
+                            post_quantum_missing = emptyList()
+                        },
                     ) {
                         Text(
                             text = stringResource(R.string.cancel),
@@ -2928,6 +2943,7 @@ fun ComposeScreen(
                     androidx.compose.material3.TextButton(
                         modifier = androidx.compose.ui.Modifier.testTag("post_quantum_send_anyway"),
                         onClick = {
+                            post_quantum_downgraded = emptyList()
                             post_quantum_missing = emptyList()
                             do_send(skip_from_guard = true, allow_non_post_quantum = true)
                         },
