@@ -236,8 +236,14 @@ private fun plain_text_fallback_body(raw: String): String {
         escape_body_text(text) + "</pre>"
 }
 
-private fun plain_text_fallback_document(raw: String, bg_hex: String, fg_hex: String): String =
-    "<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" +
+internal const val FALLBACK_BODY_CSP =
+    "default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src data:; " +
+        "base-uri 'none'; form-action 'none'; frame-src 'none'; object-src 'none'"
+
+internal fun plain_text_fallback_document(raw: String, bg_hex: String, fg_hex: String): String =
+    "<!DOCTYPE html><html><head>" +
+        "<meta http-equiv=\"Content-Security-Policy\" content=\"" + FALLBACK_BODY_CSP + "\">" +
+        "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" +
         "</head><body style=\"margin:0;padding:12px;background:" + bg_hex + ";color:" + fg_hex + ";" +
         "font-family:-apple-system,Roboto,sans-serif;font-size:15px;line-height:1.5\">" +
         "<div id=\"m\">" + plain_text_fallback_body(raw) + "</div></body></html>"

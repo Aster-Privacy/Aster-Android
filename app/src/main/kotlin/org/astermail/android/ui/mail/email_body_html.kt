@@ -43,6 +43,12 @@ internal fun fit_wide_width_attributes(body: String): String {
     }
 }
 
+internal fun generate_csp_nonce(): String {
+    val nonce_bytes = ByteArray(16)
+    java.security.SecureRandom().nextBytes(nonce_bytes)
+    return java.util.Base64.getEncoder().withoutPadding().encodeToString(nonce_bytes)
+}
+
 internal fun build_email_html(
     body: String,
     is_dark: Boolean,
@@ -146,11 +152,7 @@ html,body{background-color:#ffffff!important}
     val detail_border = if (simple_dark) "#374151" else "#e5e7eb"
     val detail_color = if (simple_dark) "#9ca3af" else "#6b7280"
 
-    val csp_nonce = run {
-        val nonce_bytes = ByteArray(16)
-        java.security.SecureRandom().nextBytes(nonce_bytes)
-        android.util.Base64.encodeToString(nonce_bytes, android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING)
-    }
+    val csp_nonce = generate_csp_nonce()
     val script_src = if (translate_mode != "off") {
         "script-src 'nonce-$csp_nonce' 'wasm-unsafe-eval' https://mail-content.invalid/bergamot/; " +
             "worker-src https://mail-content.invalid/bergamot/; " +
