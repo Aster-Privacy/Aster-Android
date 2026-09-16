@@ -42,6 +42,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -393,21 +394,24 @@ fun AsterAlertDialog(
 
 @Composable
 private fun dialog_button_label(label: String, color: Color, is_loading: Boolean) {
-    Box(contentAlignment = Alignment.Center) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = label,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = color,
+            maxLines = 1,
+            softWrap = false,
+        )
         if (is_loading) {
+            Spacer(modifier = Modifier.width(6.dp))
             CircularProgressIndicator(
                 modifier = Modifier.size(16.dp),
                 color = color,
                 strokeWidth = 2.dp,
-            )
-        } else {
-            Text(
-                text = label,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = color,
-                maxLines = 1,
-                softWrap = false,
             )
         }
     }

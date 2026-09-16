@@ -33,10 +33,12 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedButton
@@ -63,11 +65,52 @@ import org.astermail.android.design.darken
 private val aster_button_height = 54.dp
 private val aster_button_shape = SquircleShape(999.dp)
 private val aster_button_label_size = 16.sp
+private val aster_button_spinner_size = 20.dp
 
 private val depth_red = Color(0xFFDC2626)
 
 @Composable
+private fun aster_button_label(label: String, content_color: Color) {
+    Text(
+        text = label,
+        fontSize = aster_button_label_size,
+        fontWeight = FontWeight.SemiBold,
+        color = content_color,
+        maxLines = 1,
+        softWrap = false,
+    )
+}
+
+@Composable
+private fun aster_button_spinner(content_color: Color) {
+    CircularProgressIndicator(
+        modifier = Modifier.size(aster_button_spinner_size),
+        color = content_color,
+        strokeWidth = 2.dp,
+    )
+}
+
+@Composable
 private fun aster_button_content(
+    label: String,
+    is_loading: Boolean,
+    content_color: Color,
+) {
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center,
+    ) {
+        aster_button_label(label, content_color)
+        if (is_loading) {
+            Box(modifier = Modifier.align(Alignment.CenterEnd)) {
+                aster_button_spinner(content_color)
+            }
+        }
+    }
+}
+
+@Composable
+private fun aster_button_trailing_content(
     label: String,
     is_loading: Boolean,
     content_color: Color,
@@ -76,21 +119,10 @@ private fun aster_button_content(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
+        aster_button_label(label, content_color)
         if (is_loading) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                color = content_color,
-                strokeWidth = 2.dp,
-            )
-        } else {
-            Text(
-                text = label,
-                fontSize = aster_button_label_size,
-                fontWeight = FontWeight.SemiBold,
-                color = content_color,
-                maxLines = 1,
-                softWrap = false,
-            )
+            Spacer(modifier = Modifier.width(AsterSpacing.sm))
+            aster_button_spinner(content_color)
         }
     }
 }
@@ -238,7 +270,7 @@ fun AsterGhostButton(
         ),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = AsterSpacing.lg),
     ) {
-        aster_button_content(label, is_loading, colors.accent_blue)
+        aster_button_trailing_content(label, is_loading, colors.accent_blue)
     }
 }
 
