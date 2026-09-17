@@ -175,6 +175,8 @@ dependencies {
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.lifecycle.process)
+    implementation(libs.androidx.credentials)
+    "fullImplementation"(libs.androidx.credentials.play.services.auth)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

@@ -1384,6 +1384,10 @@
     <string name="billing_period_month">mês</string>
     <string name="charge">Cobrança</string>
     <string name="sender_draft">Rascunho</string>
+    <string name="totp_passkey_subtitle">Confirme com a chave de acesso ou chave de segurança que você salvou para esta conta</string>
+    <string name="totp_passkey_button">Continuar com uma chave de acesso</string>
+    <string name="totp_use_passkey">Usar uma chave de acesso</string>
+    <string name="totp_backup_code_hint">Um código de backup tem 8 caracteres e veio da configuração do seu app autenticador. Um código de recuperação que começa com ASTER restaura sua caixa de entrada e não funciona aqui.</string>
     <string name="totp_trust_device">Confiar neste dispositivo por 30 dias</string>
     <string name="failed_block_sender">Não foi possível bloquear o remetente</string>
     <string name="failed_unblock_sender">Não foi possível desbloquear o remetente</string>
@@ -2973,6 +2977,8 @@
     <string name="error_folder_password_not_set">Esta pasta não tem senha.</string>
     <string name="error_image_too_large">Essa imagem é muito grande. Escolha uma foto menor.</string>
     <string name="error_invalid_2fa_code">Esse código não está correto. Verifique o app autenticador e tente novamente.</string>
+    <string name="error_passkey_unavailable">Não há uma chave de acesso desta conta neste dispositivo. Use seu app autenticador ou adicione uma chave de acesso pelo navegador.</string>
+    <string name="error_passkey_failed">Não foi possível verificar sua chave de acesso. Tente de novo ou use outro método de login.</string>
     <string name="error_invalid_backup_code">Esse código de backup não corresponde. Cada código funciona apenas uma vez, então tente o próximo não usado da sua lista.</string>
     <string name="error_invalid_recovery_phrase">Essa frase de recuperação não corresponde. Verifique a ordem das palavras e a grafia e tente novamente.</string>
     <string name="error_plan_limit_reached">Você atingiu o limite do seu plano atual. Fazer upgrade, ou remover alguns itens para abrir espaço, vai deixar você seguir.</string>

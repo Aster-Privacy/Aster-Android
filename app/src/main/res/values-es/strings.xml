@@ -1385,6 +1385,10 @@
     <string name="billing_period_month">mes</string>
     <string name="charge">Cargo</string>
     <string name="sender_draft">Borrador</string>
+    <string name="totp_passkey_subtitle">Confirma con la clave de acceso o la llave de seguridad que guardaste para esta cuenta</string>
+    <string name="totp_passkey_button">Continuar con una clave de acceso</string>
+    <string name="totp_use_passkey">Usar una clave de acceso</string>
+    <string name="totp_backup_code_hint">Un código de respaldo tiene 8 caracteres y viene de la configuración de tu app de autenticación. Un código de recuperación que empieza por ASTER restaura tu buzón y no sirve aquí.</string>
     <string name="totp_trust_device">Confiar en este dispositivo durante 30 días</string>
     <string name="failed_block_sender">No se pudo bloquear al remitente</string>
     <string name="failed_unblock_sender">No se pudo desbloquear al remitente</string>
@@ -2974,6 +2978,8 @@
     <string name="error_folder_password_not_set">Esta carpeta no tiene contraseña.</string>
     <string name="error_image_too_large">Esa imagen es demasiado grande. Elige una foto más pequeña.</string>
     <string name="error_invalid_2fa_code">Ese código no es correcto. Comprueba tu app de autenticación e inténtalo de nuevo.</string>
+    <string name="error_passkey_unavailable">No hay una clave de acceso para esta cuenta en este dispositivo. Usa tu app de autenticación o añade una clave de acceso desde un navegador.</string>
+    <string name="error_passkey_failed">No se pudo verificar tu clave de acceso. Inténtalo de nuevo o usa otro método de inicio de sesión.</string>
     <string name="error_invalid_backup_code">Ese código de respaldo no coincide. Cada código sirve una sola vez, así que prueba el siguiente sin usar de tu lista.</string>
     <string name="error_invalid_recovery_phrase">Esa frase de recuperación no coincide. Revisa el orden de las palabras y la ortografía, y vuelve a intentarlo.</string>
     <string name="error_plan_limit_reached">Has llegado al límite de tu plan actual. Mejorar el plan, o quitar elementos para hacer hueco, te permitirá seguir.</string>

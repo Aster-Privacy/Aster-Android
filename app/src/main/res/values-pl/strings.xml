@@ -1388,6 +1388,10 @@
     <string name="billing_period_month">miesiąc</string>
     <string name="charge">Obciążenie</string>
     <string name="sender_draft">Wersja robocza</string>
+    <string name="totp_passkey_subtitle">Potwierdź kluczem dostępu lub kluczem bezpieczeństwa zapisanym dla tego konta</string>
+    <string name="totp_passkey_button">Kontynuuj kluczem dostępu</string>
+    <string name="totp_use_passkey">Użyj klucza dostępu</string>
+    <string name="totp_backup_code_hint">Kod zapasowy ma 8 znaków i pochodzi z konfiguracji aplikacji uwierzytelniającej. Kod odzyskiwania zaczynający się od ASTER przywraca skrzynkę i nie działa w tym miejscu.</string>
     <string name="totp_trust_device">Zaufaj temu urządzeniu przez 30 dni</string>
     <string name="failed_block_sender">Nie można zablokować nadawcy</string>
     <string name="failed_unblock_sender">Nie można odblokować nadawcy</string>
@@ -2999,6 +3003,8 @@
     <string name="error_folder_password_not_set">Ten folder nie ma hasła.</string>
     <string name="error_image_too_large">Ten obraz jest za duży. Wybierz mniejsze zdjęcie.</string>
     <string name="error_invalid_2fa_code">Ten kod jest nieprawidłowy. Sprawdź aplikację uwierzytelniającą i spróbuj ponownie.</string>
+    <string name="error_passkey_unavailable">Na tym urządzeniu nie ma klucza dostępu dla tego konta. Użyj aplikacji uwierzytelniającej albo najpierw dodaj klucz dostępu w przeglądarce.</string>
+    <string name="error_passkey_failed">Nie udało się zweryfikować klucza dostępu. Spróbuj ponownie lub użyj innej metody logowania.</string>
     <string name="error_invalid_backup_code">Ten kod zapasowy nie pasuje. Każdy kod działa tylko raz, więc wypróbuj kolejny nieużyty kod z listy.</string>
     <string name="error_invalid_recovery_phrase">Ta fraza odzyskiwania nie pasuje. Sprawdź kolejność słów i pisownię, a potem spróbuj ponownie.</string>
     <string name="error_plan_limit_reached">Osiągnięto limit obecnego planu. Ulepszenie lub usunięcie elementów, aby zrobić miejsce, pozwoli ruszyć dalej.</string>

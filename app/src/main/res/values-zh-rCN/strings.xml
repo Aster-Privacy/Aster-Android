@@ -1382,6 +1382,10 @@
     <string name="billing_period_month">月</string>
     <string name="charge">收费</string>
     <string name="sender_draft">草稿</string>
+    <string name="totp_passkey_subtitle">使用你为此账户保存的通行密钥或安全密钥进行确认</string>
+    <string name="totp_passkey_button">使用通行密钥继续</string>
+    <string name="totp_use_passkey">使用通行密钥</string>
+    <string name="totp_backup_code_hint">备用代码为 8 个字符，来自你设置验证器应用时获得的列表。以 ASTER 开头的恢复代码用于恢复邮箱，在这里无法使用。</string>
     <string name="totp_trust_device">信任此设备 30 天</string>
     <string name="failed_block_sender">无法屏蔽发件人</string>
     <string name="failed_unblock_sender">无法解除屏蔽发件人</string>
@@ -2962,6 +2966,8 @@
     <string name="error_folder_password_not_set">此文件夹未设置密码。</string>
     <string name="error_image_too_large">此图片太大。请选择较小的照片。</string>
     <string name="error_invalid_2fa_code">此验证码不正确。请检查身份验证器应用后重试。</string>
+    <string name="error_passkey_unavailable">此设备上没有该账户的通行密钥。请使用验证器应用，或先在浏览器中添加通行密钥。</string>
+    <string name="error_passkey_failed">无法验证你的通行密钥。请重试或使用其他登录方式。</string>
     <string name="error_invalid_backup_code">此备用码不匹配。每个备用码只能使用一次，请尝试列表中下一个未使用的备用码。</string>
     <string name="error_invalid_recovery_phrase">此恢复短语不匹配。请检查单词顺序和拼写，然后重试。</string>
     <string name="error_plan_limit_reached">您已达到当前方案的上限。升级方案，或移除一些条目腾出空间，就可以继续。</string>

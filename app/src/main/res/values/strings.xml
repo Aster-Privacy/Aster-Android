@@ -1147,6 +1147,10 @@
     <string name="totp_use_authenticator">Use authenticator app</string>
     <string name="totp_backup_code_label">Backup code</string>
     <string name="totp_backup_code_subtitle">Enter one of your saved backup codes</string>
+    <string name="totp_passkey_subtitle">Confirm with the passkey or security key you saved for this account</string>
+    <string name="totp_passkey_button">Continue with a passkey</string>
+    <string name="totp_use_passkey">Use a passkey</string>
+    <string name="totp_backup_code_hint">A backup code has 8 characters and came with your authenticator app setup. A recovery code that starts with ASTER restores your mailbox and does not work here.</string>
     <string name="totp_trust_device">Trust this device for 30 days</string>
 
     <!-- Sessions -->
@@ -3172,6 +3176,8 @@
     <string name="error_folder_password_not_set">This folder doesn\'t have a password.</string>
     <string name="error_image_too_large">That image is too large. Choose a smaller photo.</string>
     <string name="error_invalid_2fa_code">That code isn\'t correct. Check your authenticator app and try again.</string>
+    <string name="error_passkey_unavailable">No passkey for this account is available on this device. Use your authenticator app, or add a passkey from a browser first.</string>
+    <string name="error_passkey_failed">Couldn\'t verify your passkey. Try again, or use another way to sign in.</string>
     <string name="error_invalid_backup_code">That backup code didn\'t match. Each code works only once, so try the next unused one from your list.</string>
     <string name="error_invalid_recovery_phrase">That recovery phrase didn\'t match. Check the word order and the spelling, then try again.</string>
     <string name="error_plan_limit_reached">You have hit the limit on your current plan. Upgrading, or removing some items to make room, will get you moving again.</string>

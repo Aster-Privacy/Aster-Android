@@ -83,6 +83,47 @@ data class TotpLoginVerifyRequest(
     val device_label: String? = null,
 )
 
+@Serializable
+data class WebAuthnAssertionInitiateRequest(
+    val pending_login_token: String,
+)
+
+@Serializable
+data class WebAuthnAllowedCredential(
+    val type: String = "public-key",
+    val id: String,
+)
+
+@Serializable
+data class WebAuthnAssertionOptions(
+    val challenge: String,
+    val challenge_token: String,
+    val rpId: String,
+    val allowCredentials: List<WebAuthnAllowedCredential> = emptyList(),
+    val timeout: Long = 60000,
+    val userVerification: String = "required",
+)
+
+@Serializable
+data class WebAuthnAssertionData(
+    val authenticator_data: String,
+    val client_data_json: String,
+    val signature: String,
+)
+
+@Serializable
+data class WebAuthnAssertionVerifyRequest(
+    val id: String,
+    val raw_id: String,
+    val response: WebAuthnAssertionData,
+    val type: String = "public-key",
+    val challenge_token: String,
+    val pending_login_token: String,
+    val trust_device: Boolean = false,
+    val device_label: String? = null,
+    val remember_me: Boolean = false,
+)
+
 data class TotpVerifyOutcome(
     val response: LoginResponse,
     val trusted_device_token: String?,
@@ -217,6 +258,8 @@ interface AuthApi {
     suspend fun login(request: LoginRequest, trusted_device_token: String? = null): LoginResult
     suspend fun verify_totp_login(request: TotpLoginVerifyRequest): TotpVerifyOutcome
     suspend fun verify_backup_code_login(request: TotpLoginVerifyRequest): TotpVerifyOutcome
+    suspend fun initiate_webauthn_assertion(request: WebAuthnAssertionInitiateRequest): WebAuthnAssertionOptions
+    suspend fun verify_webauthn_assertion(request: WebAuthnAssertionVerifyRequest): TotpVerifyOutcome
     suspend fun register(request: RegisterRequest): RegisterResponse
     suspend fun refresh(refresh_token: String?): RefreshResponse
     suspend fun logout()
@@ -271,6 +314,30 @@ class AuthApiImpl(private val client: ApiClient) : AuthApi {
 
     override suspend fun verify_backup_code_login(request: TotpLoginVerifyRequest): TotpVerifyOutcome =
         post_second_factor("$base/totp/backup-code", request)
+
+    override suspend fun initiate_webauthn_assertion(
+        request: WebAuthnAssertionInitiateRequest,
+    ): WebAuthnAssertionOptions {
+        val response = client.http.post("${client.base_url}$base/hardware-keys/assert/initiate") {
+            contentType(ContentType.Application.Json)
+            header(HttpHeaders.Origin, webauthn_origin())
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun verify_webauthn_assertion(
+        request: WebAuthnAssertionVerifyRequest,
+    ): TotpVerifyOutcome {
+        val response = client.http.post("${client.base_url}$base/hardware-keys/assert/verify") {
+            contentType(ContentType.Application.Json)
+            header(HttpHeaders.Origin, webauthn_origin())
+            setBody(request)
+        }
+        return second_factor_outcome(response)
+    }
+
+    private fun webauthn_origin(): String = client.base_url.trimEnd('/')
 
     private suspend fun post_second_factor(path: String, request: TotpLoginVerifyRequest): TotpVerifyOutcome {
         val response = client.http.post("${client.base_url}$path") {

@@ -36,6 +36,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -61,6 +62,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -81,6 +83,8 @@ import org.astermail.android.R
 import org.astermail.android.auth.AuthUiState
 import org.astermail.android.debugtools.debug_build_banner
 import org.astermail.android.auth.AuthViewModel
+import org.astermail.android.auth.request_passkey_assertion
+import org.astermail.android.settings.host_activity
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
@@ -415,11 +419,23 @@ private fun TotpVerifyScreen(
     on_back: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
+    val context = LocalContext.current
     val state by view_model.ui_state.collectAsStateWithLifecycle()
     val totp_available = challenge.available_methods.isEmpty() ||
         challenge.available_methods.contains(second_factor_method_totp)
+    val passkey_available = challenge.available_methods.contains(second_factor_method_webauthn)
+    var method by rememberSaveable {
+        mutableStateOf(
+            when {
+                passkey_available -> second_factor_ui_method_passkey
+                totp_available -> second_factor_ui_method_totp
+                else -> second_factor_ui_method_backup
+            },
+        )
+    }
+    val use_backup = method == second_factor_ui_method_backup
+    val use_passkey = method == second_factor_ui_method_passkey
     var code by remember { mutableStateOf("") }
-    var use_backup by remember { mutableStateOf(!totp_available) }
     var trust_device by remember { mutableStateOf(false) }
     val is_loading = state is AuthUiState.Loading
     val error_message = (state as? AuthUiState.Error)?.message
@@ -434,11 +450,22 @@ private fun TotpVerifyScreen(
             view_model.submit_totp(code, challenge, trust_device, use_backup_code = use_backup)
         }
     }
-
-    LaunchedEffect(Unit) {
-        code_focus.requestFocus()
+    val submit_passkey: () -> Unit = {
+        if (!is_loading) {
+            view_model.submit_passkey(challenge, trust_device) { options ->
+                request_passkey_assertion(context.host_activity() ?: context, options)
+            }
+        }
     }
-    LaunchedEffect(use_backup) { code = "" }
+    val switch_method: (String) -> Unit = { next ->
+        if (state is AuthUiState.Error) view_model.reset_state()
+        method = next
+    }
+
+    LaunchedEffect(method) {
+        code = ""
+        if (method != second_factor_ui_method_passkey) code_focus.requestFocus()
+    }
 
     Box(
         modifier = Modifier
@@ -459,10 +486,10 @@ private fun TotpVerifyScreen(
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = if (use_backup) {
-                        stringResource(R.string.totp_backup_code_subtitle)
-                    } else {
-                        stringResource(R.string.totp_verify_subtitle)
+                    text = when {
+                        use_passkey -> stringResource(R.string.totp_passkey_subtitle)
+                        use_backup -> stringResource(R.string.totp_backup_code_subtitle)
+                        else -> stringResource(R.string.totp_verify_subtitle)
                     },
                     color = colors.text_tertiary,
                     fontSize = 14.sp,
@@ -475,6 +502,7 @@ private fun TotpVerifyScreen(
                     Spacer(Modifier.height(AsterSpacing.md))
                 }
 
+                if (!use_passkey) {
                 AsterTextField(
                     value = code,
                     onValueChange = { v ->
@@ -507,6 +535,16 @@ private fun TotpVerifyScreen(
                     modifier = Modifier.focusRequester(code_focus),
                 )
 
+                if (use_backup) {
+                    Spacer(Modifier.height(AsterSpacing.sm))
+                    Text(
+                        text = stringResource(R.string.totp_backup_code_hint),
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                    )
+                }
+                }
+
                 Spacer(Modifier.height(AsterSpacing.md))
 
                 Row(
@@ -533,39 +571,70 @@ private fun TotpVerifyScreen(
 
                 Spacer(Modifier.height(AsterSpacing.md))
 
-                AsterButton(
-                    label = stringResource(R.string.totp_verify_button),
-                    onClick = submit_code,
-                    enabled = code_ready && !is_loading,
-                    is_loading = is_loading,
-                )
-
-                if (totp_available) {
-                    Spacer(Modifier.height(AsterSpacing.md))
-
-                    Text(
-                        text = if (use_backup) {
-                            stringResource(R.string.totp_use_authenticator)
-                        } else {
-                            stringResource(R.string.totp_use_backup_code)
-                        },
-                        color = colors.accent_blue,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .clickable(enabled = !is_loading) {
-                                if (state is AuthUiState.Error) view_model.reset_state()
-                                use_backup = !use_backup
-                            },
+                if (use_passkey) {
+                    AsterButton(
+                        label = stringResource(R.string.totp_passkey_button),
+                        onClick = submit_passkey,
+                        enabled = !is_loading,
+                        is_loading = is_loading,
+                    )
+                } else {
+                    AsterButton(
+                        label = stringResource(R.string.totp_verify_button),
+                        onClick = submit_code,
+                        enabled = code_ready && !is_loading,
+                        is_loading = is_loading,
                     )
                 }
+
+                second_factor_method_switch(
+                    label = stringResource(R.string.totp_use_passkey),
+                    visible = passkey_available && !use_passkey,
+                    enabled = !is_loading,
+                    on_click = { switch_method(second_factor_ui_method_passkey) },
+                )
+                second_factor_method_switch(
+                    label = stringResource(R.string.totp_use_authenticator),
+                    visible = totp_available && method != second_factor_ui_method_totp,
+                    enabled = !is_loading,
+                    on_click = { switch_method(second_factor_ui_method_totp) },
+                )
+                second_factor_method_switch(
+                    label = stringResource(R.string.totp_use_backup_code),
+                    visible = totp_available && !use_backup,
+                    enabled = !is_loading,
+                    on_click = { switch_method(second_factor_ui_method_backup) },
+                )
             }
         }
     }
 }
 
+@Composable
+private fun ColumnScope.second_factor_method_switch(
+    label: String,
+    visible: Boolean,
+    enabled: Boolean,
+    on_click: () -> Unit,
+) {
+    if (!visible) return
+    Spacer(Modifier.height(AsterSpacing.md))
+    Text(
+        text = label,
+        color = AsterMaterial.colors.accent_blue,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Medium,
+        modifier = Modifier
+            .align(Alignment.CenterHorizontally)
+            .clickable(enabled = enabled, onClick = on_click),
+    )
+}
+
 private const val second_factor_method_totp = "totp"
+private const val second_factor_method_webauthn = "webauthn"
+private const val second_factor_ui_method_passkey = "passkey"
+private const val second_factor_ui_method_totp = "totp"
+private const val second_factor_ui_method_backup = "backup"
 
 private fun is_backup_code_length(length: Int): Boolean = length == 8 || length == 12
 

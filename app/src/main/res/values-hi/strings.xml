@@ -1047,6 +1047,10 @@
     <string name="totp_use_authenticator">प्रमाणक ऐप इस्तेमाल करें</string>
     <string name="totp_backup_code_label">बैकअप कोड</string>
     <string name="totp_backup_code_subtitle">अपना कोई सहेजा हुआ बैकअप कोड डालें</string>
+    <string name="totp_passkey_subtitle">इस खाते के लिए सहेजी गई पासकी या सुरक्षा कुंजी से पुष्टि करें</string>
+    <string name="totp_passkey_button">पासकी से जारी रखें</string>
+    <string name="totp_use_passkey">पासकी का उपयोग करें</string>
+    <string name="totp_backup_code_hint">बैकअप कोड में 8 वर्ण होते हैं और यह आपके प्रमाणक ऐप सेटअप से मिला था। ASTER से शुरू होने वाला रिकवरी कोड आपका मेलबॉक्स बहाल करता है और यहाँ काम नहीं करता।</string>
     <string name="totp_trust_device">इस डिवाइस पर 30 दिन तक भरोसा करें</string>
     <string name="sessions">सत्र</string>
     <string name="no_active_sessions">कोई सक्रिय सत्र नहीं</string>
@@ -2922,6 +2926,8 @@
     <string name="error_folder_password_not_set">इस फ़ोल्डर पर कोई पासवर्ड नहीं लगा है।</string>
     <string name="error_image_too_large">वह तस्वीर बहुत बड़ी है। कोई छोटी तस्वीर चुनें।</string>
     <string name="error_invalid_2fa_code">वह कोड सही नहीं है। अपना प्रमाणक ऐप देखें और फिर से कोशिश करें।</string>
+    <string name="error_passkey_unavailable">इस डिवाइस पर इस खाते के लिए कोई पासकी उपलब्ध नहीं है। अपने प्रमाणक ऐप का उपयोग करें या पहले ब्राउज़र से पासकी जोड़ें।</string>
+    <string name="error_passkey_failed">आपकी पासकी सत्यापित नहीं हो सकी। फिर से कोशिश करें या कोई और तरीका उपयोग करें।</string>
     <string name="error_invalid_backup_code">वह बैकअप कोड मेल नहीं खाया। हर कोड सिर्फ़ एक बार चलता है, इसलिए अपनी सूची से अगला बिना इस्तेमाल किया कोड आज़माएं।</string>
     <string name="error_invalid_recovery_phrase">वह रिकवरी वाक्यांश मेल नहीं खाया। शब्दों का क्रम और वर्तनी जांचें, फिर से कोशिश करें।</string>
     <string name="error_plan_limit_reached">आप अपने मौजूदा प्लान की सीमा तक पहुंच गए हैं। प्लान बढ़ाने, या कुछ चीज़ें हटाकर जगह बनाने से आप फिर से आगे बढ़ सकेंगे।</string>
