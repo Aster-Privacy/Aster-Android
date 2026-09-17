@@ -29,6 +29,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.astermail.android.BuildConfig
+import org.astermail.android.api.billing.BillingApi
 import org.astermail.android.auth.AuthRepository
 import org.astermail.android.storage.AccountStore
 import org.astermail.android.storage.StoredAccount
@@ -38,12 +40,15 @@ data class AccountsUiState(
     val current_account_id: String? = null,
     val can_add_more: Boolean = true,
     val max_accounts: Int = AccountStore.max_accounts_default,
-)
+) {
+    val is_unlimited: Boolean get() = max_accounts == AccountStore.unlimited_accounts
+}
 
 @HiltViewModel
 class AccountsViewModel @Inject constructor(
     private val account_store: AccountStore,
     private val auth_repository: AuthRepository,
+    private val billing_api: BillingApi,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AccountsUiState())
@@ -56,6 +61,7 @@ class AccountsViewModel @Inject constructor(
         viewModelScope.launch {
             auth_repository.refresh_profile()
             refresh()
+            sync_account_limit()
         }
     }
 
@@ -63,6 +69,38 @@ class AccountsViewModel @Inject constructor(
         viewModelScope.launch {
             auth_repository.refresh_profile()
             refresh()
+            sync_account_limit()
+        }
+    }
+
+    fun sync_account_limit() {
+        viewModelScope.launch { load_account_limit() }
+    }
+
+    private suspend fun load_account_limit() {
+        val limit = fetch_account_limit() ?: return
+        account_store.set_max_accounts(limit)
+        refresh()
+    }
+
+    private suspend fun fetch_account_limit(): Int? {
+        val from_endpoint = try {
+            billing_api.get_account_limit().max_accounts
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            if (BuildConfig.DEBUG) android.util.Log.w("AccountsVM", "get_account_limit failed", t)
+            null
+        }
+        if (from_endpoint != null && from_endpoint != 0) return from_endpoint
+        return try {
+            billing_api.get_plan_limits()
+                .limits[limit_key_max_multi_accounts]
+                ?.limit
+                ?.takeIf { it != 0 }
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            if (BuildConfig.DEBUG) android.util.Log.w("AccountsVM", "get_plan_limits failed", t)
+            null
         }
     }
 
@@ -72,7 +110,7 @@ class AccountsViewModel @Inject constructor(
             accounts = all,
             current_account_id = account_store.get_current_id(),
             can_add_more = account_store.can_add(),
-            max_accounts = AccountStore.max_accounts_default,
+            max_accounts = account_store.get_max_accounts(),
         )
     }
 
@@ -95,10 +133,17 @@ class AccountsViewModel @Inject constructor(
             } finally {
                 is_switching = false
             }
-            if (account_store.get_current_id() == account_id) on_result(restored)
+            if (account_store.get_current_id() == account_id) {
+                on_result(restored)
+                if (restored) load_account_limit()
+            }
         }
     }
 
     fun has_stored_session(account_id: String): Boolean =
         auth_repository.has_stored_session(account_id)
+
+    private companion object {
+        const val limit_key_max_multi_accounts = "max_multi_accounts"
+    }
 }

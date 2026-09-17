@@ -54,6 +54,9 @@ class AccountStore(context: Context? = null) {
     @Volatile
     private var data: AccountsData = AccountsData()
 
+    @Volatile
+    private var plan_max_accounts: Int = max_accounts_default
+
     private val _current_account = MutableStateFlow<StoredAccount?>(null)
     val current_account: StateFlow<StoredAccount?> = _current_account.asStateFlow()
 
@@ -66,6 +69,9 @@ class AccountStore(context: Context? = null) {
                 AccountsData()
             }
         }
+        plan_max_accounts = runCatching {
+            prefs?.getInt(key_plan_max_accounts, max_accounts_default) ?: max_accounts_default
+        }.getOrDefault(max_accounts_default)
         _current_account.value = compute_current()
     }
 
@@ -94,14 +100,31 @@ class AccountStore(context: Context? = null) {
 
     fun count(): Int = synchronized(lock) { data.accounts.size }
 
-    fun can_add(max_accounts: Int = max_accounts_default): Boolean =
-        synchronized(lock) { data.accounts.size < max_accounts }
+    fun get_max_accounts(): Int = synchronized(lock) { plan_max_accounts }
+
+    fun set_max_accounts(max_accounts: Int) {
+        synchronized(lock) {
+            val normalized = if (max_accounts == unlimited_accounts) {
+                unlimited_accounts
+            } else {
+                max_accounts.coerceAtLeast(1)
+            }
+            if (normalized == plan_max_accounts) return
+            plan_max_accounts = normalized
+            runCatching { prefs?.edit()?.putInt(key_plan_max_accounts, normalized)?.apply() }
+        }
+    }
+
+    fun can_add(max_accounts: Int = get_max_accounts()): Boolean =
+        synchronized(lock) {
+            max_accounts == unlimited_accounts || data.accounts.size < max_accounts
+        }
 
     fun account_exists(account_id: String): Boolean = synchronized(lock) {
         data.accounts.any { it.id == account_id }
     }
 
-    fun add_or_update(account: StoredAccount, max_accounts: Int = max_accounts_default): AddResult {
+    fun add_or_update(account: StoredAccount, max_accounts: Int = get_max_accounts()): AddResult {
         synchronized(lock) {
             val accounts = data.accounts.toMutableList()
             val existing_index = accounts.indexOfFirst { it.id == account.id }
@@ -112,7 +135,7 @@ class AccountStore(context: Context? = null) {
                 emit_current()
                 return AddResult.Success
             }
-            if (accounts.size >= max_accounts) {
+            if (max_accounts != unlimited_accounts && accounts.size >= max_accounts) {
                 return AddResult.LimitReached(max_accounts)
             }
             accounts.add(account)
@@ -184,7 +207,9 @@ class AccountStore(context: Context? = null) {
 
     companion object {
         const val max_accounts_default = 3
+        const val unlimited_accounts = -1
         private const val prefs_name = "aster_accounts_v1"
         private const val key_accounts = "accounts_data"
+        private const val key_plan_max_accounts = "plan_max_accounts"
     }
 }

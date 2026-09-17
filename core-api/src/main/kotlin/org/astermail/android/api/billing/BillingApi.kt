@@ -238,6 +238,15 @@ data class PlanLimitsResponse(
 )
 
 @Serializable
+data class AccountLimitResponse(
+    val max_accounts: Int = 0,
+    val plan_code: String = "free",
+    val plan_name: String = "Free",
+    val linked_count: Long? = null,
+    val is_linked: Boolean? = null,
+)
+
+@Serializable
 data class PaymentMethodItem(
     val id: String = "",
     val pm_type: String = "",
@@ -497,6 +506,7 @@ interface BillingApi {
     suspend fun purchase_storage_addon(request: PurchaseAddonRequest): PurchaseAddonResponse
     suspend fun create_crypto_checkout_session(request: CryptoCheckoutRequest): CheckoutSessionResponse
     suspend fun purchase_storage_addon_crypto(request: CryptoAddonCheckoutRequest): PurchaseAddonResponse
+    suspend fun get_account_limit(): AccountLimitResponse
     suspend fun get_crypto_native_coins(): CryptoNativeCoinsResponse
     suspend fun create_crypto_native_invoice(request: CreateCryptoNativeInvoiceRequest): CryptoNativeInvoiceResponse
     suspend fun get_crypto_native_invoice(invoice_id: String): CryptoNativeInvoiceStatus
@@ -534,6 +544,9 @@ class BillingApiImpl(private val client: ApiClient) : BillingApi {
 
     override suspend fun get_plan_limits(): PlanLimitsResponse =
         decode_or_throw(client.http.get("${client.base_url}$base/plans/limits"))
+
+    override suspend fun get_account_limit(): AccountLimitResponse =
+        decode_or_throw(client.http.get("${client.base_url}$base/plans/account-limit"))
 
     private suspend fun post_special_offer(path: String): SpecialOfferAckResponse {
         val response = client.http.post("${client.base_url}/api/core/v1/offers/special/$path") {
