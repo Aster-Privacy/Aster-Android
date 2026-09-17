@@ -188,6 +188,7 @@ import org.astermail.android.mail.DecryptedReaction
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.mail.can_move_to_inbox
 import org.astermail.android.mail.body_starts_with
+import org.astermail.android.mail.strip_non_rendered_blocks
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.translation.TranslationDownloadPolicy
 import org.astermail.android.settings.shared_settings_view_model
@@ -222,9 +223,10 @@ private fun escape_body_text(raw: String): String = raw
     .replace(">", "&gt;")
 
 private fun strip_markup(raw: String): String {
-    val out = StringBuilder(raw.length)
+    val without_hidden_blocks = strip_non_rendered_blocks(raw)
+    val out = StringBuilder(without_hidden_blocks.length)
     var in_tag = false
-    for (ch in raw) {
+    for (ch in without_hidden_blocks) {
         when {
             ch == '<' -> in_tag = true
             ch == '>' -> {
