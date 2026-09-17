@@ -226,7 +226,7 @@ fun pending_send_preview_screen(
                     icon = TablerIcons.ArrowBackUp,
                     label = stringResource(R.string.undo),
                     bg = colors.accent_blue,
-                    fg = Color.White,
+                    fg = colors.on_accent,
                     label_size = 14.sp,
                     on_label_overflow = {},
                     on_click = {

@@ -1114,7 +1114,7 @@ private fun search_chip(text: String, selected: Boolean, on_click: () -> Unit) {
     } else {
         colors.bg_secondary
     }
-    val text_color = if (selected) Color.White else colors.text_secondary
+    val text_color = if (selected) colors.on_accent else colors.text_secondary
     val animated_bg by animateColorAsState(
         targetValue = bg,
         animationSpec = tween(org.astermail.android.design.AsterDuration.menu_state_change),

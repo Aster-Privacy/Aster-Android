@@ -304,8 +304,8 @@ private fun format_card(title: String, subtitle: String, selected: Boolean, on_c
     val colors = AsterMaterial.colors
     val bg = if (selected) colors.accent_blue else colors.bg_card
     val border_color = if (selected) colors.accent_blue else colors.border_secondary
-    val title_color = if (selected) Color.White else colors.text_primary
-    val subtitle_color = if (selected) Color.White.copy(alpha = 0.8f) else colors.text_tertiary
+    val title_color = if (selected) colors.on_accent else colors.text_primary
+    val subtitle_color = if (selected) colors.on_accent.copy(alpha = 0.8f) else colors.text_tertiary
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -326,7 +326,7 @@ private fun format_card(title: String, subtitle: String, selected: Boolean, on_c
             Icon(
                 imageVector = TablerIcons.CircleCheck,
                 contentDescription = null,
-                tint = Color.White,
+                tint = colors.on_accent,
                 modifier = Modifier.size(22.dp),
             )
         }

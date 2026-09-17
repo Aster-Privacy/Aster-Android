@@ -69,6 +69,11 @@ fun AsterSwitch(
         animationSpec = tween(durationMillis = 160),
         label = "aster_switch_track",
     )
+    val thumb_color by animateColorAsState(
+        targetValue = if (checked) colors.on_accent else Color.White,
+        animationSpec = tween(durationMillis = 160),
+        label = "aster_switch_thumb_color",
+    )
     val border_color by animateColorAsState(
         targetValue = if (checked) Color.Transparent else colors.border_primary,
         animationSpec = tween(durationMillis = 160),
@@ -117,7 +122,7 @@ fun AsterSwitch(
                     .size(thumb_size)
                     .shadow(2.dp, CircleShape)
                     .clip(CircleShape)
-                    .background(Color.White),
+                    .background(thumb_color),
             )
         }
     }

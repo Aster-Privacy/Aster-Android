@@ -775,7 +775,7 @@ internal fun theme_swatch(
                     Icon(
                         imageVector = if (selected) TablerIcons.Check else TablerIcons.Lock,
                         contentDescription = null,
-                        tint = if (selected) Color.White else colors.text_secondary,
+                        tint = if (selected) colors.on_accent else colors.text_secondary,
                         modifier = Modifier.size(14.dp),
                     )
                 }

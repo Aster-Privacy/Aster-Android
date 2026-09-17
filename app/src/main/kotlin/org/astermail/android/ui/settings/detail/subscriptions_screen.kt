@@ -1622,7 +1622,7 @@ internal fun crypto_term_dialog(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 label,
-                                color = if (term_active) Color.White else colors.text_primary,
+                                color = if (term_active) colors.on_accent else colors.text_primary,
                                 fontSize = 14.sp,
                                 fontWeight = if (term_active) FontWeight.SemiBold else FontWeight.Normal,
                                 maxLines = 1,
@@ -1635,7 +1635,7 @@ internal fun crypto_term_dialog(
                         }
                         if (term_active) {
                             Spacer(Modifier.width(AsterSpacing.sm))
-                            Icon(TablerIcons.Check, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                            Icon(TablerIcons.Check, null, tint = colors.on_accent, modifier = Modifier.size(18.dp))
                         }
                     }
                 }
@@ -2471,7 +2471,7 @@ private fun plan_outline_button(
     ) {
         Text(
             text = label,
-            color = if (filled) Color.White else if (enabled) colors.text_primary else colors.text_muted,
+            color = if (filled) colors.on_accent else if (enabled) colors.text_primary else colors.text_muted,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,

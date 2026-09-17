@@ -640,7 +640,7 @@ fun ContactsScreen(
                     if (ui_state.tab == ContactsTab.GROUPS) show_new_group = true else on_create_contact()
                 },
                 containerColor = colors.accent_blue,
-                contentColor = Color.White,
+                contentColor = colors.on_accent,
                 shape = SquircleShape(AsterRadius.pill),
                 icon = {
                     Icon(
@@ -883,7 +883,7 @@ private fun FilterChip(
     } else {
         colors.bg_secondary
     }
-    val fg = if (active) Color.White else colors.text_secondary
+    val fg = if (active) colors.on_accent else colors.text_secondary
     Row(
         modifier = Modifier
             .clip(SquircleShape(AsterRadius.pill))
@@ -902,7 +902,7 @@ private fun FilterChip(
             Spacer(Modifier.width(AsterSpacing.xs))
             Text(
                 text = count.toString(),
-                color = if (active) Color.White.copy(alpha = 0.8f) else colors.text_muted,
+                color = if (active) colors.on_accent.copy(alpha = 0.8f) else colors.text_muted,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
             )
@@ -947,7 +947,7 @@ private fun duplicate_banner(count: Int, on_review: () -> Unit, on_dismiss: () -
         Spacer(Modifier.width(AsterSpacing.sm))
         Text(
             text = stringResource(R.string.review_duplicates),
-            color = Color.White,
+            color = colors.on_accent,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
@@ -1485,7 +1485,7 @@ private fun merge_radio_dot(selected: Boolean) {
                 modifier = Modifier
                     .size(7.dp)
                     .clip(CircleShape)
-                    .background(Color.White),
+                    .background(colors.on_accent),
             )
         }
     }
@@ -1587,7 +1587,7 @@ private fun ContactRow(
                     Icon(
                         imageVector = TablerIcons.Check,
                         contentDescription = stringResource(R.string.selected),
-                        tint = Color.White,
+                        tint = colors.on_accent,
                         modifier = Modifier.size(22.dp),
                     )
                 }

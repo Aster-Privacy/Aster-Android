@@ -2089,7 +2089,7 @@ fun ComposeScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         CircularProgressIndicator(
-                            color = Color.White,
+                            color = colors.on_accent,
                             modifier = Modifier.size(20.dp),
                             strokeWidth = 2.dp,
                         )
@@ -3188,7 +3188,7 @@ private fun format_file_size(bytes: Long): String {
 private fun send_fab(enabled: Boolean, on_click: () -> Unit) {
     val colors = AsterMaterial.colors
     val bg = if (enabled) colors.accent_blue else colors.bg_hover
-    val tint = if (enabled) Color.White else colors.text_muted
+    val tint = if (enabled) colors.on_accent else colors.text_muted
     Box(
         modifier = Modifier
             .size(40.dp)

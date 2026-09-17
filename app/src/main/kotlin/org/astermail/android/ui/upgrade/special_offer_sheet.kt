@@ -641,7 +641,7 @@ private fun SpecialOfferComparisonValue(value: String?, included: String, is_pai
                 Icon(
                     imageVector = TablerIcons.Check,
                     contentDescription = value,
-                    tint = Color.White,
+                    tint = colors.on_accent,
                     modifier = Modifier.size(13.dp),
                 )
             }

@@ -3606,7 +3606,7 @@ internal fun inbox_error_state(message: String, on_retry: () -> Unit) {
                 .clickable(onClick = on_retry)
                 .padding(horizontal = 20.dp, vertical = 10.dp),
         ) {
-            Text(text = stringResource(R.string.retry), color = androidx.compose.ui.graphics.Color.White, fontWeight = FontWeight.SemiBold)
+            Text(text = stringResource(R.string.retry), color = colors.on_accent, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -3791,7 +3791,7 @@ private fun compose_fab(expanded: Boolean, on_click: () -> Unit) {
         onClick = on_click,
         shape = SquircleShape(20.dp),
         color = colors.accent_blue,
-        contentColor = Color.White,
+        contentColor = colors.on_accent,
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
         modifier = Modifier

@@ -535,8 +535,8 @@ fun AppLockVerifySheet(
 private fun mode_option_row(label: String, desc: String?, selected: Boolean, on_click: () -> Unit) {
     val colors = AsterMaterial.colors
     val bg = if (selected) colors.accent_blue else colors.bg_secondary
-    val title_color = if (selected) Color.White else colors.text_primary
-    val desc_color = if (selected) Color.White.copy(alpha = 0.75f) else colors.text_muted
+    val title_color = if (selected) colors.on_accent else colors.text_primary
+    val desc_color = if (selected) colors.on_accent.copy(alpha = 0.75f) else colors.text_muted
     Column(
         modifier = Modifier
             .fillMaxWidth()

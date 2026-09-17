@@ -241,7 +241,7 @@ internal fun domain_toggle(
             options.forEach { opt ->
                 val active = selected == opt
                 val label_color by animateColorAsState(
-                    targetValue = if (active) Color.White else colors.text_muted,
+                    targetValue = if (active) colors.on_accent else colors.text_muted,
                     animationSpec = tween(durationMillis = AsterDuration.short_4, easing = AsterEasing.standard_enter),
                     label = "domain_label_color",
                 )

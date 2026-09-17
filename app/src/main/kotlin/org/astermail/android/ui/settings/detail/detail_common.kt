@@ -363,7 +363,7 @@ private fun choice_indicator(selected: Boolean, enabled: Boolean, multi_select: 
             Icon(
                 imageVector = TablerIcons.Check,
                 contentDescription = null,
-                tint = Color.White,
+                tint = colors.on_accent,
                 modifier = Modifier.size(14.dp),
             )
         } else if (selected) {

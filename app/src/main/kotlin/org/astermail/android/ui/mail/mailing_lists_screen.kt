@@ -680,7 +680,7 @@ private fun subscription_hero(
                         size.height - stroke / 2f - diameter / 2f,
                     )
                     drawArc(
-                        color = Color.White.copy(alpha = 0.24f),
+                        color = colors.on_accent.copy(alpha = 0.24f),
                         startAngle = 180f,
                         sweepAngle = 180f,
                         useCenter = false,
@@ -690,7 +690,7 @@ private fun subscription_hero(
                     )
                     if (fraction > 0f) {
                         drawArc(
-                            color = Color.White,
+                            color = colors.on_accent,
                             startAngle = 180f,
                             sweepAngle = 180f * fraction,
                             useCenter = false,
@@ -707,13 +707,13 @@ private fun subscription_hero(
             ) {
                 Text(
                     text = active_count.toString(),
-                    color = Color.White,
+                    color = colors.on_accent,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
                     text = stringResource(R.string.active_senders),
-                    color = Color.White.copy(alpha = 0.86f),
+                    color = colors.on_accent.copy(alpha = 0.86f),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                 )
@@ -739,7 +739,7 @@ private fun subscription_hero(
             Spacer(Modifier.height(AsterSpacing.md))
             Text(
                 text = stringResource(R.string.scanning),
-                color = Color.White.copy(alpha = 0.86f),
+                color = colors.on_accent.copy(alpha = 0.86f),
                 fontSize = 12.sp,
             )
         }
@@ -748,6 +748,7 @@ private fun subscription_hero(
 
 @Composable
 private fun hero_stat_pill(modifier: Modifier = Modifier, value: String, label: String) {
+    val colors = AsterMaterial.colors
     Column(
         modifier = modifier
             .clip(SquircleShape(14.dp))
@@ -757,7 +758,7 @@ private fun hero_stat_pill(modifier: Modifier = Modifier, value: String, label: 
     ) {
         Text(
             text = value,
-            color = Color.White,
+            color = colors.on_accent,
             fontSize = 17.sp,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
@@ -765,7 +766,7 @@ private fun hero_stat_pill(modifier: Modifier = Modifier, value: String, label: 
         )
         Text(
             text = label,
-            color = Color.White.copy(alpha = 0.8f),
+            color = colors.on_accent.copy(alpha = 0.8f),
             fontSize = 11.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -783,7 +784,7 @@ private fun subscription_chip(text: String, selected: Boolean, on_click: () -> U
     } else {
         colors.bg_secondary
     }
-    val text_color = if (selected) Color.White else colors.text_secondary
+    val text_color = if (selected) colors.on_accent else colors.text_secondary
     val animated_bg by animateColorAsState(
         targetValue = bg,
         animationSpec = tween(150),
@@ -919,7 +920,7 @@ private fun subscription_row(
                 Icon(
                     imageVector = TablerIcons.Check,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = colors.on_accent,
                     modifier = Modifier.size(20.dp),
                 )
             }

@@ -103,7 +103,7 @@ internal fun illustrated_option_card(
                     Icon(
                         imageVector = TablerIcons.Check,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = colors.on_accent,
                         modifier = Modifier.size(14.dp),
                     )
                 }
