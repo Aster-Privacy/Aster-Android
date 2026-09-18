@@ -219,7 +219,7 @@ internal fun domain_toggle(
             .background(colors.bg_secondary, domain_toggle_shape)
             .padding(3.dp),
     ) {
-        val pill_width = (maxWidth - 6.dp) / options.size
+        val pill_width = ((maxWidth - 6.dp) / options.size).coerceAtLeast(0.dp)
         val pill_offset by animateDpAsState(
             targetValue = pill_width * selected_index,
             animationSpec = spring(
