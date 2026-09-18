@@ -998,7 +998,7 @@ fun ComposeScreen(
         var inserted = false
         for (i in 0 until clip.itemCount) {
             val u = clip.getItemAt(i).uri ?: continue
-            val mime = context.contentResolver.getType(u) ?: continue
+            val mime = runCatching { context.contentResolver.getType(u) }.getOrNull() ?: continue
             if (!mime.startsWith("image/")) continue
             if (insert_image_inline(u)) inserted = true
         }
@@ -3770,16 +3770,18 @@ private fun build_attachment_from_uri(
     context: android.content.Context,
     uri: android.net.Uri,
 ): AttachmentItem? {
-    val mime = context.contentResolver.getType(uri) ?: "image/*"
+    val mime = runCatching { context.contentResolver.getType(uri) }.getOrNull() ?: "image/*"
     if (!mime.startsWith("image/")) return null
     var name = "pasted_image"
     var size = 0L
-    context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-        if (cursor.moveToFirst()) {
-            val ni = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-            val si = cursor.getColumnIndex(android.provider.OpenableColumns.SIZE)
-            if (ni >= 0) name = cursor.getString(ni) ?: name
-            if (si >= 0) size = cursor.getLong(si)
+    runCatching {
+        context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val ni = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                val si = cursor.getColumnIndex(android.provider.OpenableColumns.SIZE)
+                if (ni >= 0) name = cursor.getString(ni) ?: name
+                if (si >= 0) size = cursor.getLong(si)
+            }
         }
     }
     if (size == 0L) {
