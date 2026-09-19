@@ -66,8 +66,8 @@ import org.astermail.android.design.keep_visible_above_keyboard
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
 import org.astermail.android.settings.AliasDetailState
 import org.astermail.android.settings.SettingsViewModel
 
@@ -205,9 +205,9 @@ internal fun alias_sender_pinning_section(
                     modifier = Modifier.size(16.dp),
                 )
             }
-            aster_dropdown_menu(expanded = menu_open, on_dismiss = { menu_open = false }) {
+            aster_menu(expanded = menu_open, on_dismiss = { menu_open = false }) {
                 listOf(SENDER_PIN_MODE_OFF, SENDER_PIN_MODE_LOCK_FIRST, SENDER_PIN_MODE_ALLOWLIST).forEach { mode ->
-                    aster_dropdown_item(
+                    aster_menu_item(
                         label = stringResource(pin_mode_label(mode)),
                         selected = mode == detail.pin_mode,
                         on_click = {

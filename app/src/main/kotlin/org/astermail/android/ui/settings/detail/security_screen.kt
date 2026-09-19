@@ -98,8 +98,8 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSwitch
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
 import org.astermail.android.security.AppLockStore
 import org.astermail.android.security.AppLockViewModel
 import org.astermail.android.settings.SettingsViewModel
@@ -1692,12 +1692,12 @@ private fun recent_activity_section(
                         modifier = Modifier.size(14.dp),
                     )
                 }
-                aster_dropdown_menu(
+                aster_menu(
                     expanded = filter_menu_open,
                     on_dismiss = { filter_menu_open = false },
                 ) {
                     filter_options.forEach { (id, label_res) ->
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = stringResource(label_res),
                             selected = selected_filter == id,
                             test_tag = "security_activity_filter_${id.name}",
@@ -1903,12 +1903,12 @@ private fun remote_image_loading_row(
                         modifier = Modifier.size(16.dp),
                     )
                 }
-                aster_dropdown_menu(
+                aster_menu(
                     expanded = menu_open,
                     on_dismiss = { menu_open = false },
                 ) {
                     options.forEach { (id, label) ->
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = label,
                             selected = selected_id == id,
                             test_tag = "remote_image_loading_$id",

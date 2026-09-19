@@ -67,8 +67,8 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.design.components.AsterTextField
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
 import org.astermail.android.ui.common.picker_theme_res
 import org.astermail.android.ui.mail.SenderAvatar
 
@@ -342,7 +342,7 @@ internal fun search_chip_row(
                     show_caret = true,
                     on_click = { date_menu_open = true },
                 )
-                aster_dropdown_menu(
+                aster_menu(
                     expanded = date_menu_open,
                     on_dismiss = { date_menu_open = false },
                 ) {
@@ -354,7 +354,7 @@ internal fun search_chip_row(
                         DatePreset.YEAR to R.string.chip_older_than_year,
                     )
                     presets.forEach { (preset, label_res) ->
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = stringResource(label_res),
                             selected = date_preset == preset,
                             on_click = {
@@ -363,7 +363,7 @@ internal fun search_chip_row(
                             },
                         )
                     }
-                    aster_dropdown_item(
+                    aster_menu_item(
                         label = stringResource(R.string.chip_custom_range),
                         selected = date_preset == DatePreset.CUSTOM,
                         on_click = {

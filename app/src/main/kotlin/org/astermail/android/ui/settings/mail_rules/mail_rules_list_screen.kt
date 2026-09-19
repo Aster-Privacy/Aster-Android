@@ -89,8 +89,8 @@ import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTopBar
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
 import org.astermail.android.design.parse_hex_color_safe
 import org.astermail.android.folders.flatten_folder_tree
 import org.astermail.android.mail_rules.MailRulesViewModel
@@ -484,25 +484,25 @@ private fun rule_row(
                             tint = colors.text_secondary,
                         )
                     }
-                    aster_dropdown_menu(expanded = menu_open, on_dismiss = { menu_open = false }) {
-                        aster_dropdown_item(
+                    aster_menu(expanded = menu_open, on_dismiss = { menu_open = false }) {
+                        aster_menu_item(
                             label = stringResource(R.string.mail_rules_edit_rule),
                             icon = TablerIcons.Pencil,
                             on_click = { menu_open = false; on_open() },
                         )
                         if (!rule_is_advanced(rule)) {
-                            aster_dropdown_item(
+                            aster_menu_item(
                                 label = stringResource(R.string.mail_rules_duplicate),
                                 icon = TablerIcons.Copy,
                                 on_click = { menu_open = false; on_duplicate() },
                             )
                         }
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = stringResource(R.string.mail_rules_run_on_existing),
                             icon = TablerIcons.PlayerPlay,
                             on_click = { menu_open = false; confirm_run = true },
                         )
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = stringResource(R.string.mail_rules_delete),
                             icon = TablerIcons.Trash,
                             destructive = true,

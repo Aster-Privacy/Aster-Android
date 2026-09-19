@@ -31,7 +31,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -41,7 +40,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -60,6 +58,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -71,11 +70,9 @@ import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -99,22 +96,26 @@ import compose.icons.tablericons.Check
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.design.aster_ripple
 
 private val menu_surface_shape = SquircleShape(14.dp)
 private val menu_item_shape = SquircleShape(9.dp)
 private val menu_screen_margin = 12.dp
 private val menu_surface_padding = 5.dp
-private val menu_item_min_height = 42.dp
+private val menu_surface_elevation = 16.dp
+private val menu_item_min_height = 44.dp
 private val menu_item_padding_horizontal = 12.dp
 private val menu_icon_size = 18.dp
 private val menu_icon_gap = 12.dp
 private val menu_check_size = 16.dp
 private val menu_text_size = 15.sp
 private val menu_label_size = 12.sp
+private const val menu_surface_lift = 0.1f
+private const val menu_border_lift_dark = 0.09f
+private const val menu_border_lift_light = 0.07f
 private const val menu_reveal_from = 0.6f
 private const val menu_enter_scale = 0.94f
 private const val menu_exit_scale = 0.97f
-private const val menu_scrim_alpha = 0f
 
 private class menu_anchor_state {
     var bounds by mutableStateOf<IntRect?>(null)
@@ -148,6 +149,53 @@ private data class menu_reveal_shape(
     }
 }
 
+fun aster_menu_surface_color(dropdown_bg: Color, is_dark: Boolean): Color {
+    val base = dropdown_bg.copy(alpha = 1f)
+    return if (is_dark) lerp(base, Color.White, menu_surface_lift) else base
+}
+
+fun aster_menu_border_color(dropdown_bg: Color, is_dark: Boolean): Color {
+    val edge = if (is_dark) Color.White else Color.Black
+    val amount = if (is_dark) menu_border_lift_dark else menu_border_lift_light
+    return lerp(aster_menu_surface_color(dropdown_bg, is_dark), edge, amount)
+}
+
+@Composable
+fun aster_menu_surface_color(): Color {
+    val colors = AsterMaterial.colors
+    return aster_menu_surface_color(colors.dropdown_bg, colors.is_dark)
+}
+
+@Composable
+fun aster_menu_border_color(): Color {
+    val colors = AsterMaterial.colors
+    return aster_menu_border_color(colors.dropdown_bg, colors.is_dark)
+}
+
+@Composable
+fun aster_menu_surface(
+    modifier: Modifier = Modifier,
+    min_width: Dp = 200.dp,
+    max_width: Dp = 320.dp,
+    max_height: Dp = 520.dp,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .shadow(menu_surface_elevation, menu_surface_shape, clip = false)
+            .clip(menu_surface_shape)
+            .background(aster_menu_surface_color())
+            .border(1.dp, aster_menu_border_color(), menu_surface_shape)
+            .defaultMinSize(minWidth = min_width)
+            .widthIn(max = max_width)
+            .width(IntrinsicSize.Max)
+            .heightIn(max = max_height)
+            .verticalScroll(rememberScrollState())
+            .padding(menu_surface_padding),
+        content = content,
+    )
+}
+
 @Composable
 fun aster_menu(
     expanded: Boolean,
@@ -155,11 +203,10 @@ fun aster_menu(
     modifier: Modifier = Modifier,
     offset: DpOffset = DpOffset(0.dp, 6.dp),
     min_width: Dp = 200.dp,
-    max_width: Dp = 280.dp,
+    max_width: Dp = 320.dp,
     max_height: Dp = 520.dp,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val colors = AsterMaterial.colors
     val reduce_motion = aster_reduce_motion()
     val focus_manager = LocalFocusManager.current
     val parent_view = LocalView.current
@@ -216,12 +263,8 @@ fun aster_menu(
         label = "aster_menu_content_fade",
     ) { shown -> if (shown) 1f else 0f }
 
-    val surface_color = if (colors.is_dark) {
-        lerp(colors.dropdown_bg.copy(alpha = 1f), Color.White, 0.1f)
-    } else {
-        colors.dropdown_bg.copy(alpha = 1f)
-    }
-    val border_color = if (colors.is_dark) Color.White.copy(alpha = 0.09f) else Color.Black.copy(alpha = 0.07f)
+    val surface_color = aster_menu_surface_color()
+    val border_color = aster_menu_border_color()
     val surface_tap = remember { MutableInteractionSource() }
 
     Popup(
@@ -291,7 +334,7 @@ fun aster_menu(
                     placeable.placeWithLayer(x, y) {
                         shape = menu_reveal_shape(reveal, upward)
                         clip = true
-                        shadowElevation = 16.dp.toPx()
+                        shadowElevation = menu_surface_elevation.toPx()
                         ambientShadowColor = Color.Black
                         spotShadowColor = Color.Black
                         alpha = fade
@@ -314,6 +357,7 @@ fun aster_menu_item(
     selected: Boolean = false,
     destructive: Boolean = false,
     enabled: Boolean = true,
+    tint: Color? = null,
     icon_tint: Color? = null,
     test_tag: String? = null,
     count: Int = 0,
@@ -321,40 +365,30 @@ fun aster_menu_item(
     leading: (@Composable () -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
-    val haptics = LocalHapticFeedback.current
     val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
     val text_color = when {
         !enabled -> colors.text_muted
         destructive -> colors.danger
+        tint != null -> tint
         else -> colors.text_primary
     }
     val resolved_icon_tint = when {
         !enabled -> colors.text_muted
         destructive -> colors.danger
         icon_tint != null -> icon_tint
+        tint != null -> tint
         else -> colors.text_secondary
-    }
-    val shows_check = selected && icon == null && leading == null
-    val row_bg = when {
-        pressed && enabled -> colors.text_primary.copy(alpha = 0.1f)
-        selected && !shows_check -> colors.text_primary.copy(alpha = 0.07f)
-        else -> Color.Transparent
     }
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(menu_item_shape)
-            .background(row_bg)
             .clickable(
                 interactionSource = interaction,
-                indication = null,
+                indication = aster_ripple(color = colors.text_secondary),
                 enabled = enabled,
                 role = Role.Button,
-                onClick = {
-                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    on_click()
-                },
+                onClick = on_click,
             )
             .heightIn(min = menu_item_min_height)
             .padding(start = menu_item_padding_horizontal + indent, end = menu_item_padding_horizontal)
@@ -392,12 +426,12 @@ fun aster_menu_item(
                 fontSize = 13.sp,
             )
         }
-        if (shows_check) {
+        if (selected) {
             Spacer(Modifier.width(12.dp))
             Icon(
                 imageVector = TablerIcons.Check,
                 contentDescription = null,
-                tint = if (enabled) colors.text_primary else colors.text_muted,
+                tint = if (enabled) colors.accent_blue else colors.text_muted,
                 modifier = Modifier.size(menu_check_size),
             )
         }
@@ -412,16 +446,5 @@ fun aster_menu_section_label(label: String) {
         fontSize = menu_label_size,
         fontWeight = FontWeight.Medium,
         modifier = Modifier.padding(start = menu_item_padding_horizontal, end = menu_item_padding_horizontal, top = 8.dp, bottom = 4.dp),
-    )
-}
-
-@Composable
-fun aster_menu_divider() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 6.dp, vertical = 5.dp)
-            .height(1.dp)
-            .background(AsterMaterial.colors.text_primary.copy(alpha = 0.08f)),
     )
 }

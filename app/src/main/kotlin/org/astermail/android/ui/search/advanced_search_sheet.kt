@@ -72,8 +72,8 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterSwitch
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
 
 private val ROW_LABEL_WIDTH = 104.dp
 
@@ -413,12 +413,12 @@ internal fun advanced_search_sheet(
                         value = preset_label,
                         on_click = { date_menu_open = true },
                     ) {
-                        aster_dropdown_menu(
+                        aster_menu(
                             expanded = date_menu_open,
                             on_dismiss = { date_menu_open = false },
                         ) {
                             preset_labels.forEach { (option, label_res) ->
-                                aster_dropdown_item(
+                                aster_menu_item(
                                     label = stringResource(label_res),
                                     selected = preset == option,
                                     on_click = {
@@ -443,11 +443,11 @@ internal fun advanced_search_sheet(
                         ),
                         on_click = { scope_menu_open = true },
                     ) {
-                        aster_dropdown_menu(
+                        aster_menu(
                             expanded = scope_menu_open,
                             on_dismiss = { scope_menu_open = false },
                         ) {
-                            aster_dropdown_item(
+                            aster_menu_item(
                                 label = stringResource(R.string.folder_all_mail),
                                 selected = !include_spam_trash,
                                 on_click = {
@@ -455,7 +455,7 @@ internal fun advanced_search_sheet(
                                     scope_menu_open = false
                                 },
                             )
-                            aster_dropdown_item(
+                            aster_menu_item(
                                 label = stringResource(R.string.search_scope_anywhere),
                                 selected = include_spam_trash,
                                 on_click = {
