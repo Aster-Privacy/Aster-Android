@@ -1,0 +1,1 @@
+- The mail list search bar now shows your account avatar
