@@ -2856,13 +2856,22 @@ internal fun inbox_top_bar(
                     .testTag("account_avatar"),
                 contentAlignment = Alignment.Center,
             ) {
-                SenderAvatar(
-                    email = account_email,
-                    name = account_name,
-                    size = 32.dp,
-                    profile_picture_url = account_profile_picture,
-                    profile_color = account_profile_color,
-                )
+                if (account_email.isBlank()) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(search_field_bg_color(colors)),
+                    )
+                } else {
+                    SenderAvatar(
+                        email = account_email,
+                        name = account_name,
+                        size = 32.dp,
+                        profile_picture_url = account_profile_picture,
+                        profile_color = account_profile_color,
+                    )
+                }
             }
         }
         if (selection_content != null) {
