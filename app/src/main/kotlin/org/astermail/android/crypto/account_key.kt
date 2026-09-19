@@ -38,7 +38,10 @@ object AccountKey {
 
     const val LENGTH = 32
     const val TOKEN_TYPE = "aster-account-key"
-    const val TOKEN_VERSION = 1
+    const val TOKEN_VERSION = 2
+    private const val legacy_token_version = 1
+    private const val max_serial = 9_007_199_254_740_991L
+    private val fingerprint_pattern = Regex("^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 
     val DATA_CONTEXTS = listOf(
         "astermail-tags-v1",
@@ -76,14 +79,28 @@ object AccountKey {
             }
         }
 
-    fun parse_token_payload(plaintext: String): ByteArray? {
+    fun parse_token_payload(plaintext: String, owner_fingerprints: List<String>): ByteArray? {
         val payload = runCatching { Json.parseToJsonElement(plaintext) }.getOrNull() as? JsonObject
             ?: return null
         val type = payload["type"] as? JsonPrimitive ?: return null
         val version = payload["version"] as? JsonPrimitive ?: return null
         val key = payload["key"] as? JsonPrimitive ?: return null
         if (!type.isString || type.content != TOKEN_TYPE) return null
-        if (version.isString || version.content != TOKEN_VERSION.toString()) return null
+        if (version.isString) return null
+        when (version.content) {
+            TOKEN_VERSION.toString() -> {
+                val owner = payload["owner"] as? JsonPrimitive ?: return null
+                val serial = payload["serial"] as? JsonPrimitive ?: return null
+                if (!owner.isString || !fingerprint_pattern.matches(owner.content)) return null
+                val owners = owner_fingerprints.map { it.trim().lowercase() }
+                if (owner.content !in owners) return null
+                if (serial.isString) return null
+                val serial_value = serial.content.toLongOrNull() ?: return null
+                if (serial_value < 1 || serial_value > max_serial) return null
+            }
+            legacy_token_version.toString() -> Unit
+            else -> return null
+        }
         if (!key.isString) return null
         val decoded = runCatching { java.util.Base64.getDecoder().decode(key.content) }.getOrNull()
             ?: return null
@@ -94,10 +111,14 @@ object AccountKey {
         return decoded
     }
 
-    fun build_token_payload(account_key: ByteArray): String {
+    fun build_token_payload(account_key: ByteArray, owner: String, serial: Long): String {
         require(account_key.size == LENGTH) { "account key must be $LENGTH bytes" }
+        val normalized_owner = owner.trim().lowercase()
+        require(fingerprint_pattern.matches(normalized_owner)) { "owner must be a key fingerprint" }
+        require(serial in 1..max_serial) { "serial must be a positive integer" }
         val encoded = java.util.Base64.getEncoder().encodeToString(account_key)
-        return "{\"type\":\"$TOKEN_TYPE\",\"version\":$TOKEN_VERSION,\"key\":\"$encoded\"}"
+        return "{\"type\":\"$TOKEN_TYPE\",\"version\":$TOKEN_VERSION,\"key\":\"$encoded\"," +
+            "\"owner\":\"$normalized_owner\",\"serial\":$serial}"
     }
 
     fun primary_fingerprint(armored_private_key: String): String? = runCatching {
@@ -125,11 +146,14 @@ object AccountKey {
         account_key: ByteArray,
         identity_private_key: String,
         passphrase: CharArray,
+        serial: Long = 1,
     ): String? {
         if (account_key.size != LENGTH) return null
+        if (serial !in 1..max_serial) return null
         val public_key = public_key_armored(identity_private_key) ?: return null
+        val owner = primary_fingerprint(identity_private_key) ?: return null
         return PgpEncryptor.encrypt_and_sign(
-            build_token_payload(account_key),
+            build_token_payload(account_key, owner, serial),
             listOf(public_key),
             identity_private_key,
             passphrase,
@@ -145,7 +169,7 @@ object AccountKey {
         if (candidates.isEmpty()) return null
         val plaintext = PgpDecryptor.decrypt_signed_by_own_keys(armored_token, candidates, passphrase)
             ?: return null
-        return parse_token_payload(plaintext)
+        return parse_token_payload(plaintext, candidates.mapNotNull { primary_fingerprint(it) })
     }
 
     private fun hkdf_sha256(ikm: ByteArray, salt: ByteArray, info: ByteArray, length: Int): ByteArray {

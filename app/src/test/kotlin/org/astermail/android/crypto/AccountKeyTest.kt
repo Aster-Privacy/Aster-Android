@@ -25,6 +25,7 @@ import java.util.Base64
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class AccountKeyTest {
@@ -63,7 +64,7 @@ class AccountKeyTest {
 
     @Test
     fun parses_valid_payload() {
-        val parsed = AccountKey.parse_token_payload(payload())
+        val parsed = AccountKey.parse_token_payload(payload(), emptyList())
         assertArrayEquals(account_key, parsed)
     }
 
@@ -79,11 +80,18 @@ class AccountKeyTest {
             """{"type":"other","version":1,"key":"$key_b64"}""",
             """{"type":"aster-account-key","version":"1","key":"$key_b64"}""",
             """{"type":"aster-account-key","version":2,"key":"$key_b64"}""",
+            """{"type":"aster-account-key","version":2,"key":"$key_b64","owner":"$owner"}""",
+            """{"type":"aster-account-key","version":2,"key":"$key_b64","owner":"$owner","serial":0}""",
+            """{"type":"aster-account-key","version":2,"key":"$key_b64","owner":"$owner","serial":1.5}""",
+            """{"type":"aster-account-key","version":2,"key":"$key_b64","owner":"$owner","serial":"1"}""",
+            """{"type":"aster-account-key","version":2,"key":"$key_b64","owner":"${"cd".repeat(20)}","serial":1}""",
+            """{"type":"aster-account-key","version":2,"key":"$key_b64","owner":"${owner.uppercase()}","serial":1}""",
+            """{"type":"aster-account-key","version":3,"key":"$key_b64","owner":"$owner","serial":1}""",
             """{"type":"aster-account-key","version":1,"key":"$short_b64"}""",
             """{"type":"aster-account-key","version":1,"key":"***"}""",
             """{"type":"aster-account-key","version":1,"key":32}""",
         )
-        bad.forEach { assertNull(it, AccountKey.parse_token_payload(it)) }
+        bad.forEach { assertNull(it, AccountKey.parse_token_payload(it, listOf(owner))) }
     }
 
     @Test
@@ -147,6 +155,43 @@ class AccountKeyTest {
         val token = sign_and_encrypt(payload(), user_key.armored_private_key, user_key.armored_public_key)
         assertNull(AccountKey.open_token(token, emptyList(), passphrase))
         assertNull(AccountKey.open_token(token, listOf("not a key"), passphrase))
+    }
+
+    private val owner = "ab".repeat(20)
+
+    @Test
+    fun parses_version_two_payload_for_known_owner() {
+        val built = AccountKey.build_token_payload(account_key, owner.uppercase(), 4)
+        assertArrayEquals(account_key, AccountKey.parse_token_payload(built, listOf(owner.uppercase())))
+        assertNull(AccountKey.parse_token_payload(built, emptyList()))
+        assertThrows(IllegalArgumentException::class.java) { AccountKey.build_token_payload(account_key, "xyz", 1) }
+        assertThrows(IllegalArgumentException::class.java) { AccountKey.build_token_payload(account_key, owner, 0) }
+    }
+
+    @Test
+    fun sealed_token_names_its_owner_and_serial() {
+        val token = AccountKey.seal_token(account_key, user_key.armored_private_key, passphrase, 3)!!
+        val plaintext = PgpDecryptor.decrypt_signed_by_own_keys(
+            token,
+            listOf(user_key.armored_private_key),
+            passphrase,
+        )!!
+        val fingerprint = AccountKey.primary_fingerprint(user_key.armored_private_key)!!
+        assertEquals(true, plaintext.contains("\"owner\":\"$fingerprint\""))
+        assertEquals(true, plaintext.contains("\"serial\":3"))
+        assertEquals(true, plaintext.contains("\"version\":2"))
+        assertArrayEquals(account_key, AccountKey.open_token(token, listOf(user_key.armored_private_key), passphrase))
+    }
+
+    @Test
+    fun rejects_token_naming_another_owner() {
+        val attacker_fingerprint = AccountKey.primary_fingerprint(attacker_key.armored_private_key)!!
+        val token = sign_and_encrypt(
+            AccountKey.build_token_payload(account_key, attacker_fingerprint, 1),
+            user_key.armored_private_key,
+            user_key.armored_public_key,
+        )
+        assertNull(AccountKey.open_token(token, listOf(user_key.armored_private_key), passphrase))
     }
 
     private fun payload(): String =

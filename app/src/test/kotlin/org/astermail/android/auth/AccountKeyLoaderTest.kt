@@ -215,7 +215,7 @@ class AccountKeyLoaderTest {
 
     @Test
     fun built_payload_parses_back() {
-        val parsed = AccountKey.parse_token_payload(AccountKey.build_token_payload(current_key))
+        val parsed = AccountKey.parse_token_payload(AccountKey.build_token_payload(current_key, "ab".repeat(20), 1), listOf("ab".repeat(20)))
         assertArrayEquals(current_key, parsed)
     }
 
