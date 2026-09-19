@@ -86,7 +86,7 @@ import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogDestructiveButton
 import org.astermail.android.design.components.AsterDialogOutlineButton
-import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.ui.settings.detail.settings_row_gap
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.design.components.aster_dropdown_item
@@ -137,7 +137,7 @@ fun MailRulesListScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             AsterTopBar(title = stringResource(R.string.mail_rules_title), on_back = on_back)
-            AsterDivider()
+            settings_row_gap()
             val copy_suffix = stringResource(R.string.rules_copy_suffix)
             val rules_key = when {
                 state.is_loading -> 0
@@ -237,7 +237,7 @@ private fun mail_rules_skeleton() {
                         .shimmer(state, RoundedCornerShape(6.dp)),
                 )
             }
-            AsterDivider()
+            settings_row_gap()
         }
     }
 }

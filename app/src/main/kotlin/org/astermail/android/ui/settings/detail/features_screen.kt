@@ -53,7 +53,6 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.components.AsterDivider
 
 private sealed interface cell_value {
     object yes : cell_value
@@ -263,7 +262,7 @@ fun FeaturesScreen(on_back: () -> Unit) {
                                 }
                             }
                         }
-                        AsterDivider()
+                        settings_row_gap()
                     }
                 }
 

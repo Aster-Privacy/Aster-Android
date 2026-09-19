@@ -94,7 +94,7 @@ import org.astermail.android.ui.drawer.create_label_dialog
 import org.astermail.android.ui.drawer.folder_parent_option
 import org.astermail.android.ui.drawer.resolve_label_icon
 import org.astermail.android.design.components.AsterButton
-import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.ui.settings.detail.settings_row_gap
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.mail_rules.MailRulesViewModel
@@ -170,7 +170,7 @@ fun RuleEditorScreen(
                 title = stringResource(R.string.mail_rules_edit_rule),
                 on_back = on_back,
             )
-            AsterDivider()
+            settings_row_gap()
             Column(modifier = Modifier.fillMaxSize().padding(AsterSpacing.lg)) {
                 skeleton_hero_card(lines = 2)
                 Spacer(Modifier.height(AsterSpacing.lg))
@@ -196,7 +196,7 @@ fun RuleEditorScreen(
                 title = stringResource(R.string.mail_rules_edit_rule),
                 on_back = on_back,
             )
-            AsterDivider()
+            settings_row_gap()
             Column(
                 modifier = Modifier.fillMaxSize().padding(AsterSpacing.lg),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -339,7 +339,7 @@ fun RuleEditorScreen(
             title = if (existing == null) stringResource(R.string.mail_rules_new_rule) else stringResource(R.string.mail_rules_edit_rule),
             on_back = on_back,
         )
-        AsterDivider()
+        settings_row_gap()
 
         Column(
             modifier = Modifier

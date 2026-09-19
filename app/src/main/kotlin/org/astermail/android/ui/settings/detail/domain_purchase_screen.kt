@@ -75,7 +75,6 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.DomainPurchaseErrorKind
 import org.astermail.android.settings.DomainPurchaseUiState
@@ -234,7 +233,7 @@ private fun search_results_list(vm: DomainPurchaseViewModel, state: DomainPurcha
     if (state.results.isNotEmpty()) {
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             state.results.forEachIndexed { i, result ->
-                if (i > 0) AsterDivider()
+                if (i > 0) settings_row_gap()
                 domain_result_row(result = result, on_select = { vm.select_result(result) })
             }
         }
@@ -244,7 +243,7 @@ private fun search_results_list(vm: DomainPurchaseViewModel, state: DomainPurcha
         section_label(stringResource(R.string.domain_purchase_try_instead))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             state.suggestions.forEachIndexed { i, result ->
-                if (i > 0) AsterDivider()
+                if (i > 0) settings_row_gap()
                 domain_result_row(result = result, on_select = { vm.select_result(result) })
             }
         }
@@ -536,7 +535,7 @@ private fun purchase_summary_card(
                 value = stringResource(R.string.domain_purchase_summary_included),
             )
             v_gap(AsterSpacing.xs)
-            AsterDivider()
+            settings_row_gap()
             v_gap(AsterSpacing.xs)
             summary_row(
                 label = stringResource(R.string.domain_purchase_total_today),

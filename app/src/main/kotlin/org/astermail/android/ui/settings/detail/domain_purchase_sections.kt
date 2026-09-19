@@ -57,7 +57,6 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.settings.DomainPurchaseUiState
 import org.astermail.android.settings.is_domain_order_in_flight
@@ -217,7 +216,7 @@ private fun purchased_domains_section(
     v_gap(AsterSpacing.xs)
     AsterCard(modifier = Modifier.fillMaxWidth()) {
         state.orders.forEachIndexed { i, order ->
-            if (i > 0) AsterDivider()
+            if (i > 0) settings_row_gap()
             purchased_domain_row(
                 order = order,
                 state = state,

@@ -77,7 +77,6 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterAlertDialog
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.translation.TranslationAssets
 import org.astermail.android.translation.TranslationDownloadPolicy
@@ -349,7 +348,7 @@ fun BehaviorScreen(
                     "never" to stringResource(R.string.never_manual),
                 ).forEachIndexed { i, (id, label) ->
                     choice_option_row(label, mark_read == id) { mark_read = id; save_trigger++ }
-                    if (i < 3) AsterDivider(modifier = Modifier)
+                    if (i < 3) settings_row_gap(modifier = Modifier)
                 }
             }
             v_gap(AsterSpacing.md)
@@ -361,7 +360,7 @@ fun BehaviorScreen(
                     "Go back to message list" to stringResource(R.string.auto_advance_back),
                 ).forEachIndexed { i, (id, label) ->
                     choice_option_row(label, auto_advance == id) { auto_advance = id; save_trigger++ }
-                    if (i < 2) AsterDivider(modifier = Modifier)
+                    if (i < 2) settings_row_gap(modifier = Modifier)
                 }
             }
             v_gap(AsterSpacing.md)
@@ -372,14 +371,14 @@ fun BehaviorScreen(
                     checked = conversation_grouping,
                     on_change = { conversation_grouping = it; save_trigger++ },
                 )
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 behavior_toggle(
                     title = stringResource(R.string.inbox_categories),
                     subtitle = stringResource(R.string.inbox_categories_subtitle),
                     checked = inbox_categories,
                     on_change = { inbox_categories = it; save_trigger++ },
                 )
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 choice_group_title(stringResource(R.string.sort_by))
                 listOf(
                     false to stringResource(R.string.sort_newest),
@@ -389,16 +388,16 @@ fun BehaviorScreen(
                         inbox_sort_oldest_first = oldest_first
                         save_trigger++
                     }
-                    if (i == 0) AsterDivider(modifier = Modifier)
+                    if (i == 0) settings_row_gap(modifier = Modifier)
                 }
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 behavior_toggle(
                     title = stringResource(R.string.show_message_size),
                     subtitle = stringResource(R.string.show_message_size_subtitle),
                     checked = show_message_size,
                     on_change = { show_message_size = it; save_trigger++ },
                 )
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 behavior_toggle(
                     title = stringResource(R.string.relative_dates),
                     subtitle = stringResource(R.string.relative_dates_subtitle),
@@ -407,28 +406,28 @@ fun BehaviorScreen(
                     info_description = stringResource(R.string.relative_dates_info_desc),
                     on_change = { relative_dates = it; save_trigger++ },
                 )
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 behavior_toggle(
                     title = stringResource(R.string.show_alias_indicators),
                     subtitle = stringResource(R.string.show_alias_indicators_subtitle),
                     checked = show_alias_indicators,
                     on_change = { show_alias_indicators = it; save_trigger++ },
                 )
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 behavior_toggle(
                     title = stringResource(R.string.show_sender_pictures),
                     subtitle = stringResource(R.string.show_sender_pictures_subtitle),
                     checked = show_profile_pictures,
                     on_change = { show_profile_pictures = it; save_trigger++ },
                 )
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 behavior_toggle(
                     title = stringResource(R.string.show_email_preview),
                     subtitle = stringResource(R.string.show_email_preview_subtitle),
                     checked = show_email_preview,
                     on_change = { show_email_preview = it; save_trigger++ },
                 )
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 behavior_toggle(
                     title = stringResource(R.string.force_dark_emails),
                     subtitle = stringResource(R.string.force_dark_emails_subtitle),
@@ -441,7 +440,7 @@ fun BehaviorScreen(
                 choice_group_title(stringResource(R.string.emails_per_page), stringResource(R.string.emails_per_page_subtitle))
                 listOf(10, 20, 30, 50, 100).forEachIndexed { i, n ->
                     choice_option_row("$n", inbox_page_size == n) { inbox_page_size = n; save_trigger++ }
-                    if (i < 4) AsterDivider(modifier = Modifier)
+                    if (i < 4) settings_row_gap(modifier = Modifier)
                 }
             }
 
@@ -483,9 +482,9 @@ fun BehaviorScreen(
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 choice_group_title(stringResource(R.string.default_reply))
                 choice_option_row(stringResource(R.string.reply_to_sender), default_reply == "reply") { default_reply = "reply"; save_trigger++ }
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 choice_option_row(stringResource(R.string.reply_to_all), default_reply == "reply_all") { default_reply = "reply_all"; save_trigger++ }
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 behavior_toggle(
                     title = stringResource(R.string.auto_save_recipients),
                     subtitle = stringResource(R.string.auto_save_recipients_subtitle),
@@ -511,11 +510,11 @@ fun BehaviorScreen(
                     exit = shrinkVertically(tween(200, easing = FastOutLinearInEasing)) + fadeOut(tween(140)),
                 ) {
                     Column {
-                        AsterDivider(modifier = Modifier)
+                        settings_row_gap(modifier = Modifier)
                         choice_group_title(stringResource(R.string.cancellation_period))
                         listOf(3, 5, 10, 15, 20, 30).forEachIndexed { i, secs ->
                             choice_option_row(stringResource(R.string.undo_send_delay_seconds, secs), undo_send_secs == secs) { undo_send_secs = secs; save_trigger++ }
-                            if (i < 5) AsterDivider(modifier = Modifier)
+                            if (i < 5) settings_row_gap(modifier = Modifier)
                         }
                     }
                 }
@@ -527,9 +526,9 @@ fun BehaviorScreen(
             section_label(stringResource(R.string.confirmations))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 behavior_toggle(stringResource(R.string.confirm_before_delete), null, confirm_delete) { confirm_delete = it; save_trigger++ }
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 behavior_toggle(stringResource(R.string.confirm_before_archive), null, confirm_archive) { confirm_archive = it; save_trigger++ }
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 behavior_toggle(stringResource(R.string.confirm_before_spam), null, confirm_spam) { confirm_spam = it; save_trigger++ }
             }
 
@@ -550,7 +549,7 @@ fun BehaviorScreen(
                     exit = shrinkVertically(tween(200, easing = FastOutLinearInEasing)) + fadeOut(tween(140)),
                 ) {
                     Column {
-                        AsterDivider(modifier = Modifier)
+                        settings_row_gap(modifier = Modifier)
                         choice_group_title(stringResource(R.string.spam_sensitivity))
                         listOf(
                             "low" to stringResource(R.string.spam_sensitivity_low),
@@ -558,9 +557,9 @@ fun BehaviorScreen(
                             "high" to stringResource(R.string.spam_sensitivity_high),
                         ).forEachIndexed { i, (id, label) ->
                             choice_option_row(label, spam_sensitivity == id) { spam_sensitivity = id; push_spam_settings(); save_trigger++ }
-                            if (i < 2) AsterDivider(modifier = Modifier)
+                            if (i < 2) settings_row_gap(modifier = Modifier)
                         }
-                        AsterDivider(modifier = Modifier)
+                        settings_row_gap(modifier = Modifier)
                         choice_group_title(stringResource(R.string.auto_delete_spam))
                         listOf(
                             7 to stringResource(R.string.auto_delete_spam_7),
@@ -569,7 +568,7 @@ fun BehaviorScreen(
                             0 to stringResource(R.string.auto_delete_spam_never),
                         ).forEachIndexed { i, (days, label) ->
                             choice_option_row(label, auto_delete_spam_days == days) { auto_delete_spam_days = days; push_spam_settings(); save_trigger++ }
-                            if (i < 3) AsterDivider(modifier = Modifier)
+                            if (i < 3) settings_row_gap(modifier = Modifier)
                         }
                     }
                 }
@@ -585,12 +584,12 @@ fun BehaviorScreen(
                     label = stringResource(R.string.folder_lock_session),
                     selected = folder_lock_mode == "session",
                 ) { folder_lock_mode = "session"; save_trigger++ }
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 choice_option_row(
                     label = stringResource(R.string.folder_lock_on_leave),
                     selected = folder_lock_mode == "on_leave",
                 ) { folder_lock_mode = "on_leave"; save_trigger++ }
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 behavior_toggle(
                     title = stringResource(R.string.purge_locked_folder_on_delete),
                     subtitle = stringResource(R.string.purge_locked_folder_on_delete_subtitle),
@@ -673,7 +672,7 @@ internal fun ColumnScope.translation_settings_section(
                     on_mode_change(id)
                 }
             }
-            if (i < 2) AsterDivider(modifier = Modifier)
+            if (i < 2) settings_row_gap(modifier = Modifier)
         }
     }
     if (translate_incoming != "off") {
@@ -690,7 +689,7 @@ internal fun ColumnScope.translation_settings_section(
                         },
                     )
                 }
-                if (i < translation_language_codes.size - 1) AsterDivider(modifier = Modifier)
+                if (i < translation_language_codes.size - 1) settings_row_gap(modifier = Modifier)
             }
         }
         v_gap(AsterSpacing.md)
@@ -706,7 +705,7 @@ internal fun ColumnScope.translation_settings_section(
                         },
                     )
                 }
-                if (i < translation_language_codes.size - 1) AsterDivider(modifier = Modifier)
+                if (i < translation_language_codes.size - 1) settings_row_gap(modifier = Modifier)
             }
         }
         v_gap(AsterSpacing.md)
@@ -735,7 +734,7 @@ internal fun ColumnScope.translation_settings_section(
                 fontSize = 13.sp,
                 modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = AsterSpacing.md),
             )
-            AsterDivider(modifier = Modifier)
+            settings_row_gap(modifier = Modifier)
             if (pack_bytes <= 0L) {
                 Text(
                     text = stringResource(R.string.translation_storage_empty),

@@ -111,7 +111,6 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSecondaryButton
@@ -644,7 +643,7 @@ private fun aliases_tab(
                 )
             }
         }
-        AsterDivider(modifier = Modifier.fillMaxWidth())
+        settings_row_gap(modifier = Modifier.fillMaxWidth())
         LazyColumn(
             modifier = Modifier.fillMaxWidth().weight(1f),
             contentPadding = PaddingValues(
@@ -667,7 +666,7 @@ private fun aliases_tab(
                                 title = stringResource(R.string.failed_to_load),
                                 subtitle = load_error,
                             )
-                            AsterDivider()
+                            settings_row_gap()
                             detail_row(
                                 title = stringResource(R.string.retry),
                                 on_click = { vm.load_aliases(force = true) },
@@ -1955,7 +1954,7 @@ private fun directories_tab(
                         tint = colors.danger,
                     )
                 }
-                if (idx < state.directories.lastIndex) AsterDivider(modifier = Modifier)
+                if (idx < state.directories.lastIndex) settings_row_gap(modifier = Modifier)
             }
         }
     }
@@ -2133,7 +2132,7 @@ internal fun ghost_tab(
                         )
                     }
                 }
-                if (idx < state.ghost_aliases.lastIndex) AsterDivider(modifier = Modifier)
+                if (idx < state.ghost_aliases.lastIndex) settings_row_gap(modifier = Modifier)
             }
         }
     }
@@ -2297,7 +2296,7 @@ private fun preferences_tab(
                 on_select = { vm.update_alias_preference(UpdateAliasPreferencesRequest(alias_sender_format = it)) },
             )
         }
-        AsterDivider()
+        settings_row_gap()
         detail_row(
             title = stringResource(R.string.alias_unsubscribe_action),
             subtitle = when (prefs?.alias_unsubscribe_action) {
@@ -2331,7 +2330,7 @@ private fun preferences_tab(
                 on_select = { vm.update_alias_preference(UpdateAliasPreferencesRequest(alias_disabled_response = it)) },
             )
         }
-        AsterDivider()
+        settings_row_gap()
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.alias_delete_behavior), color = colors.text_primary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
@@ -2346,7 +2345,7 @@ private fun preferences_tab(
                 on_select = { vm.update_alias_preference(UpdateAliasPreferencesRequest(alias_delete_action = it)) },
             )
         }
-        AsterDivider()
+        settings_row_gap()
         detail_row(
             title = stringResource(R.string.alias_always_expand),
             subtitle = stringResource(R.string.alias_always_expand_subtitle),
@@ -2359,7 +2358,7 @@ private fun preferences_tab(
                 )
             },
         )
-        AsterDivider()
+        settings_row_gap()
         detail_row(
             title = stringResource(R.string.alias_readable_reverse),
             subtitle = stringResource(R.string.alias_readable_reverse_subtitle),
@@ -2730,7 +2729,7 @@ private fun domain_card(
 
             if (is_expanded) {
                 v_gap(AsterSpacing.md)
-                AsterDivider()
+                settings_row_gap()
                 v_gap(AsterSpacing.md)
 
                 if (domain.is_shared) {

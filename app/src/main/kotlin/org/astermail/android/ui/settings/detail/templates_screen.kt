@@ -68,7 +68,6 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterSecondaryButton
@@ -181,7 +180,7 @@ fun TemplatesScreen(
                         on_edit = { vm.start_edit(item.id) },
                         on_delete = { pending_delete = item },
                     )
-                    if (index < state.items.lastIndex) AsterDivider()
+                    if (index < state.items.lastIndex) settings_row_gap()
                 }
             }
         }

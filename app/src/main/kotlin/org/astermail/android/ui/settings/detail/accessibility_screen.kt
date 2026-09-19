@@ -67,7 +67,6 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
@@ -255,7 +254,7 @@ fun AccessibilityScreen(
                         theme_vm.set_text_size_from_key(id)
                         save_trigger++
                     }
-                    if (i < 3) AsterDivider(modifier = Modifier)
+                    if (i < 3) settings_row_gap(modifier = Modifier)
                 }
             }
 
@@ -271,7 +270,7 @@ fun AccessibilityScreen(
                     info_title = stringResource(R.string.high_contrast_info_title),
                     info_description = stringResource(R.string.high_contrast_info_desc),
                 ) { high_contrast = it; theme_vm.set_high_contrast(it); save_trigger++ }
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 access_toggle_row(
                     title = stringResource(R.string.reduce_transparency),
                     subtitle = stringResource(R.string.reduce_transparency_subtitle),
@@ -279,7 +278,7 @@ fun AccessibilityScreen(
                     info_title = stringResource(R.string.reduce_transparency_info_title),
                     info_description = stringResource(R.string.reduce_transparency_info_desc),
                 ) { reduce_transparency = it; theme_vm.set_reduce_transparency(it); save_trigger++ }
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 access_toggle_row(
                     title = stringResource(R.string.underline_links),
                     subtitle = stringResource(R.string.underline_links_subtitle),
@@ -301,7 +300,7 @@ fun AccessibilityScreen(
                     info_title = stringResource(R.string.dyslexia_font_info_title),
                     info_description = stringResource(R.string.dyslexia_font_info_desc),
                 ) { dyslexia = it; theme_vm.set_dyslexia_font(it); save_trigger++ }
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 access_toggle_row(
                     title = stringResource(R.string.text_spacing),
                     subtitle = stringResource(R.string.text_spacing_subtitle),
@@ -323,7 +322,7 @@ fun AccessibilityScreen(
                     info_title = stringResource(R.string.reduce_motion_info_title),
                     info_description = stringResource(R.string.reduce_motion_info_desc),
                 ) { reduce_motion = it; theme_vm.set_reduce_motion(it); save_trigger++ }
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 access_toggle_row(
                     title = stringResource(R.string.compact_mode),
                     subtitle = stringResource(R.string.compact_mode_subtitle),

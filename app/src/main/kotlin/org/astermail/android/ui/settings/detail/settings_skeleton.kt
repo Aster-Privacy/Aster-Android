@@ -142,7 +142,7 @@ internal fun skeleton_card_list(
                     subtitle_fraction = if (idx % 2 == 0) 0.33f else 0.4f,
                     trailing_width = trailing_width,
                 )
-                if (idx < rows - 1) AsterDivider()
+                if (idx < rows - 1) settings_row_gap()
             }
         }
     }

@@ -88,7 +88,6 @@ import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogDestructiveButton
 import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDialogPrimaryButton
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.mail.BUILTIN_CATEGORIES
@@ -276,7 +275,7 @@ fun category_settings_section(
                     Spacer(Modifier.width(AsterSpacing.sm))
                     AsterSwitch(checked = is_enabled, onCheckedChange = null)
                 }
-                if (index < removable.size - 1) AsterDivider(modifier = Modifier)
+                if (index < removable.size - 1) settings_row_gap(modifier = Modifier)
             }
         }
 
@@ -450,7 +449,7 @@ fun category_settings_section(
                             },
                         )
                     }
-                    if (index < custom_categories.size - 1) AsterDivider(modifier = Modifier)
+                    if (index < custom_categories.size - 1) settings_row_gap(modifier = Modifier)
                 }
             }
         }

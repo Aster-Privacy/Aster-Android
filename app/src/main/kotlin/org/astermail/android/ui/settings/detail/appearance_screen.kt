@@ -91,7 +91,6 @@ import org.astermail.android.api.preferences.theme_sync_enabled
 import org.astermail.android.api.preferences.with_theme_sync_enabled
 import org.astermail.android.api.preferences.with_theme_values
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.UpgradeGate
@@ -361,26 +360,26 @@ fun AppearanceScreen(
                 stringResource(R.string.theme_system_subtitle),
                 mode == ThemeMode.system && color_theme == ColorThemeId.default,
             ) { apply(ThemeMode.system, "system") }
-            AsterDivider(modifier = Modifier)
+            settings_row_gap(modifier = Modifier)
             theme_option_row(
                 stringResource(R.string.theme_light),
                 stringResource(R.string.theme_light_subtitle),
                 mode == ThemeMode.light && color_theme == ColorThemeId.default,
             ) { apply(ThemeMode.light, "light") }
-            AsterDivider(modifier = Modifier)
+            settings_row_gap(modifier = Modifier)
             theme_option_row(
                 stringResource(R.string.theme_dark),
                 stringResource(R.string.theme_dark_subtitle),
                 mode == ThemeMode.dark && color_theme == ColorThemeId.default,
             ) { apply(ThemeMode.dark, "dark") }
-            AsterDivider(modifier = Modifier)
+            settings_row_gap(modifier = Modifier)
             theme_option_row(
                 stringResource(R.string.color_theme_aster_blue),
                 stringResource(R.string.theme_aster_blue_subtitle),
                 color_theme == ColorThemeId.aster_blue,
             ) { apply_color_theme(ColorThemeId.aster_blue) }
             if (dynamic_color_supported) {
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 theme_option_row(
                     stringResource(R.string.theme_dynamic),
                     stringResource(R.string.theme_dynamic_subtitle),
@@ -540,7 +539,7 @@ fun AppearanceScreen(
                 "",
                 !effective_24h,
             ) { apply_time_format("12h") }
-            AsterDivider(modifier = Modifier)
+            settings_row_gap(modifier = Modifier)
             theme_option_row(
                 stringResource(R.string.time_format_24h),
                 "",
@@ -556,7 +555,7 @@ fun AppearanceScreen(
                 stringResource(R.string.density_compact_subtitle),
                 !is_comfortable_density(prefs?.mail_list_density),
             ) { apply_density("compact") }
-            AsterDivider(modifier = Modifier)
+            settings_row_gap(modifier = Modifier)
             theme_option_row(
                 stringResource(R.string.density_comfortable),
                 stringResource(R.string.density_comfortable_subtitle),
@@ -587,7 +586,7 @@ fun AppearanceScreen(
                     test_tag = "compose_size_$label",
                     on_click = { apply_compose_font_size(label) },
                 )
-                if (index < compose_font_size_labels.size - 1) AsterDivider(modifier = Modifier)
+                if (index < compose_font_size_labels.size - 1) settings_row_gap(modifier = Modifier)
             }
         }
 
@@ -663,7 +662,7 @@ fun AppearanceScreen(
                     }
                 }
             }
-            AsterDivider(modifier = Modifier)
+            settings_row_gap(modifier = Modifier)
             compose_choice_row(
                 label = stringResource(R.string.compose_text_color_theme_default),
                 selected = compose_font_color.isEmpty(),

@@ -57,7 +57,6 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDialogPrimaryButton
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.settings.DomainPurchaseErrorKind
 
@@ -166,7 +165,7 @@ internal fun domain_purchase_manage_dialog(
                 )
 
                 Spacer(Modifier.height(AsterSpacing.md))
-                AsterDivider()
+                settings_row_gap()
                 Spacer(Modifier.height(AsterSpacing.md))
                 Text(
                     text = stringResource(R.string.domain_manage_mail_setup),
@@ -196,7 +195,7 @@ internal fun domain_purchase_manage_dialog(
                 }
 
                 Spacer(Modifier.height(AsterSpacing.md))
-                AsterDivider()
+                settings_row_gap()
                 Spacer(Modifier.height(AsterSpacing.md))
                 Text(
                     text = stringResource(R.string.domain_purchase_manage_auto_renew_note),

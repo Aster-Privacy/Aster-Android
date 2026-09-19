@@ -189,7 +189,6 @@ fun SettingsScreen(
             on_back = on_back,
             trailing = { settings_search_action() },
         )
-        AsterDivider()
         val is_family = settings_state.subscription?.effective_plan_name
             ?.contains("family", ignoreCase = true) == true
         val sections = build_settings_sections(is_family)
@@ -222,32 +221,29 @@ fun SettingsScreen(
             Spacer(Modifier.size(AsterSpacing.lg))
             sections.forEach { section ->
                 section_header(stringResource(section.title_res))
-                Column(
+                org.astermail.android.design.components.AsterCard(
                     modifier = Modifier
-                        .padding(horizontal = AsterSpacing.md)
-                        .fillMaxWidth()
-                        .background(colors.bg_card, SquircleShape(18.dp))
-                        .border(1.dp, colors.border_secondary, SquircleShape(18.dp)),
+                        .padding(horizontal = AsterSpacing.lg)
+                        .fillMaxWidth(),
                 ) {
-                    section.rows.forEachIndexed { idx, row ->
-                        settings_row(row) {
-                            if (row.id == "contact_support") {
-                                context.startActivity(
-                                    org.astermail.android.ComposeActivity.intent_for(
-                                        context,
-                                        prefill_to = support_address,
-                                    ),
-                                )
-                            } else {
-                                on_open(row.id)
+                    Column(modifier = Modifier.padding(vertical = AsterSpacing.xs)) {
+                        section.rows.forEach { row ->
+                            settings_row(row) {
+                                if (row.id == "contact_support") {
+                                    context.startActivity(
+                                        org.astermail.android.ComposeActivity.intent_for(
+                                            context,
+                                            prefill_to = support_address,
+                                        ),
+                                    )
+                                } else {
+                                    on_open(row.id)
+                                }
                             }
-                        }
-                        if (idx < section.rows.lastIndex) {
-                            AsterDivider(modifier = Modifier.padding(start = 50.dp))
                         }
                     }
                 }
-                Spacer(Modifier.size(AsterSpacing.md))
+                Spacer(Modifier.size(AsterSpacing.sm))
             }
             Spacer(Modifier.size(AsterSpacing.xxl))
         }
@@ -371,9 +367,9 @@ private fun section_header(title: String) {
         letterSpacing = 0.8.sp,
         modifier = Modifier.padding(
             start = AsterSpacing.xl,
-            end = AsterSpacing.lg,
-            top = AsterSpacing.md,
-            bottom = AsterSpacing.md,
+            end = AsterSpacing.xl,
+            top = AsterSpacing.xl,
+            bottom = AsterSpacing.sm,
         ),
     )
 }
@@ -385,7 +381,7 @@ internal fun settings_row(row: settings_row_item, on_click: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = on_click)
-            .heightIn(min = 52.dp)
+            .heightIn(min = 56.dp)
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {

@@ -74,7 +74,6 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.settings.SaveStatus
@@ -204,7 +203,7 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
                         }
                     }
                     Spacer(Modifier.height(AsterSpacing.md))
-                    AsterDivider(modifier = Modifier.fillMaxWidth())
+                    settings_row_gap(modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(AsterSpacing.xs))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
