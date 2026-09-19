@@ -153,9 +153,11 @@ fun EmailRow(
     list_density: String? = null,
     show_sender_pictures: Boolean = true,
     show_email_preview: Boolean = true,
+    refresh_engaged: () -> Boolean = { false },
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
+    val tap_guard = remember { row_tap_guard() }
     val metrics = remember(list_density) { inbox_row_metrics(list_density) }
     val is_unread = !email.is_read
     val sender_color = if (is_unread) colors.text_primary else colors.text_secondary
@@ -205,13 +207,15 @@ fun EmailRow(
                 if (select_mode) {
                     Modifier
                 } else {
-                    Modifier.combinedClickable(
-                        interactionSource = interaction_source,
-                        indication = androidx.compose.material3.ripple(),
-                        onClick = on_click,
-                        onLongClick = on_long_click,
-                        hapticFeedbackEnabled = haptic_enabled,
-                    )
+                    Modifier
+                        .row_tap_guard(tap_guard, refresh_engaged)
+                        .combinedClickable(
+                            interactionSource = interaction_source,
+                            indication = androidx.compose.material3.ripple(),
+                            onClick = { if (!tap_guard.blocked) on_click() },
+                            onLongClick = on_long_click,
+                            hapticFeedbackEnabled = haptic_enabled,
+                        )
                 },
             )
             .defaultMinSize(minHeight = metrics.min_height)
@@ -445,10 +449,12 @@ fun ThreadInboxRow(
     is_first: Boolean = true,
     is_last: Boolean = true,
     user_prefs: UserPreferences? = null,
+    refresh_engaged: () -> Boolean = { false },
 ) {
     val email = thread.newest
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
+    val tap_guard = remember { row_tap_guard() }
     val metrics = remember(user_prefs?.mail_list_density) { inbox_row_metrics(user_prefs?.mail_list_density) }
     val is_unread = thread.has_unread
     val sender_color = if (is_unread) colors.text_primary else colors.text_secondary
@@ -502,13 +508,15 @@ fun ThreadInboxRow(
                 if (select_mode) {
                     Modifier
                 } else {
-                    Modifier.combinedClickable(
-                        interactionSource = interaction_source,
-                        indication = androidx.compose.material3.ripple(),
-                        onClick = on_click,
-                        onLongClick = on_long_click,
-                        hapticFeedbackEnabled = haptic_enabled,
-                    )
+                    Modifier
+                        .row_tap_guard(tap_guard, refresh_engaged)
+                        .combinedClickable(
+                            interactionSource = interaction_source,
+                            indication = androidx.compose.material3.ripple(),
+                            onClick = { if (!tap_guard.blocked) on_click() },
+                            onLongClick = on_long_click,
+                            hapticFeedbackEnabled = haptic_enabled,
+                        )
                 },
             )
             .defaultMinSize(minHeight = metrics.min_height)

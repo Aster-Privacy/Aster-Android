@@ -1959,6 +1959,7 @@ fun InboxScreen(
                                 swipeable_thread_row(
                                     modifier = Modifier.animateItem(fadeInSpec = row_fade_in_spec),
                                     list_scrolling = { list_state.isScrollInProgress },
+                                    refresh_engaged = { pull_state.distanceFraction > 0f },
                                     thread = thread,
                                     is_first = row_index == 0,
                                     is_last = row_index == visible_threads.lastIndex,
@@ -3547,6 +3548,7 @@ private fun swipeable_thread_row(
     user_prefs: org.astermail.android.api.preferences.UserPreferences? = null,
     list_scrolling: () -> Boolean = { false },
     swipe_reset_token: Int = 0,
+    refresh_engaged: () -> Boolean = { false },
 ) {
     swipe_action_row(
         start_action = swipe_start_action,
@@ -3580,6 +3582,7 @@ private fun swipeable_thread_row(
             is_first = is_first,
             is_last = is_last,
             user_prefs = user_prefs,
+            refresh_engaged = refresh_engaged,
         )
     }
 }
