@@ -124,6 +124,78 @@ class SentMailResealTest {
         coVerify(exactly = 1) { api.update_attachment_meta("att-1", any()) }
     }
 
+    @Test
+    fun recognizes_only_armored_pgp_messages() {
+        val encoder = Base64.getEncoder()
+        assertTrue(SentMailResealCrypto.is_pgp_armored_b64(encoder.encodeToString(PGP_META.toByteArray())))
+        assertTrue(SentMailResealCrypto.is_pgp_armored_b64(encoder.encodeToString("\r\n $PGP_META".toByteArray())))
+        assertFalse(SentMailResealCrypto.is_pgp_armored_b64(SentMailResealCrypto.seal("x".toByteArray(), old_pass)))
+        assertFalse(SentMailResealCrypto.is_pgp_armored_b64(encoder.encodeToString("-----BEGIN PGP SIGNATURE-----".toByteArray())))
+        assertFalse(SentMailResealCrypto.is_pgp_armored_b64(PGP_META))
+        assertFalse(SentMailResealCrypto.is_pgp_armored_b64(""))
+        assertFalse(SentMailResealCrypto.is_pgp_armored_b64(null))
+    }
+
+    @Test
+    fun leaves_pgp_and_already_resealed_attachment_meta_alone() = runTest {
+        val api = mockk<MailApi>()
+        coEvery { api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(
+                items = listOf(sent_item("a", SentMailResealCrypto.seal("a".toByteArray(), old_pass)).copy(has_attachments = true)),
+                has_more = false,
+            )
+        coEvery { api.update_envelope(any(), any()) } returns Unit
+        coEvery { api.list_attachments("a") } returns AttachmentListResponse(
+            attachments = listOf(
+                attachment("att-pgp", Base64.getEncoder().encodeToString(PGP_META.toByteArray())),
+                attachment("att-new", SentMailResealCrypto.seal("{\"filename\":\"n.txt\"}".toByteArray(), new_pass)),
+                attachment("att-old", SentMailResealCrypto.seal("{\"filename\":\"o.txt\"}".toByteArray(), old_pass)),
+            ),
+        )
+        val meta = slot<UpdateAttachmentMetaRequest>()
+        coEvery { api.update_attachment_meta("att-old", capture(meta)) } returns Unit
+
+        val summary = SentMailResealer(api).run(old_pass, new_pass)
+
+        assertEquals(SentMailResealSummary(checked = 1, rewritten = 1), summary)
+        assertArrayEquals("{\"filename\":\"o.txt\"}".toByteArray(), SentMailResealCrypto.open(meta.captured.encrypted_meta, new_pass))
+        coVerify(exactly = 0) { api.update_attachment_meta("att-pgp", any()) }
+        coVerify(exactly = 0) { api.update_attachment_meta("att-new", any()) }
+    }
+
+    @Test
+    fun still_fails_on_attachment_meta_it_cannot_open() = runTest {
+        val api = mockk<MailApi>()
+        coEvery { api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(
+                items = listOf(sent_item("a", SentMailResealCrypto.seal("a".toByteArray(), old_pass)).copy(has_attachments = true)),
+                has_more = false,
+            )
+        coEvery { api.update_envelope(any(), any()) } returns Unit
+        coEvery { api.list_attachments("a") } returns AttachmentListResponse(
+            attachments = listOf(attachment("att-x", SentMailResealCrypto.seal("x".toByteArray(), "someone else".toByteArray()))),
+        )
+
+        val summary = SentMailResealer(api).run(old_pass, new_pass)
+
+        assertEquals(SentMailResealSummary(checked = 1, failed = 1), summary)
+        coVerify(exactly = 0) { api.update_attachment_meta(any(), any()) }
+    }
+
+    private fun attachment(id: String, encrypted_meta: String) = AttachmentResponse(
+        id = id,
+        mail_item_id = "a",
+        encrypted_data = "",
+        data_nonce = "",
+        size_bytes = 0,
+        encrypted_meta = encrypted_meta,
+        meta_nonce = Base64.getEncoder().encodeToString(ByteArray(12)),
+    )
+
+    private companion object {
+        const val PGP_META = "-----BEGIN PGP MESSAGE-----\n\nwV4D\n-----END PGP MESSAGE-----\n"
+    }
+
     private fun sent_item(id: String, sealed: String) = MailItem(
         id = id,
         item_type = "sent",
