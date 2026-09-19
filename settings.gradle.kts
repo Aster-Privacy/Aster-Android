@@ -27,3 +27,10 @@ include(":core-crypto")
 include(":core-api")
 include(":core-design")
 include(":core-storage")
+
+val is_fdroid_build = startParameter.projectProperties.containsKey("fdroid") ||
+    startParameter.taskNames.any { it.contains("fdroid", ignoreCase = true) }
+
+if (!is_fdroid_build) {
+    include(":baselineprofile")
+}

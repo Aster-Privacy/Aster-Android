@@ -35,6 +35,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.lifecycle.Lifecycle
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import org.astermail.android.security.AppLockViewModel
 import org.astermail.android.ui.auth.mark_signed_up_now
 import org.astermail.android.ui.auth.within_sign_up_quiet_period
@@ -246,6 +248,7 @@ class MainActivity :
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .semantics { testTagsAsResourceId = true }
                         .graphicsLayer { alpha = if (insets_ready.value) 1f else 0f },
                 ) {
                     AsterRoot()
