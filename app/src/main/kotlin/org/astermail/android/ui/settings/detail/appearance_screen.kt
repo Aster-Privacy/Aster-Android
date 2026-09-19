@@ -56,6 +56,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.foundation.ScrollState
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -377,9 +379,17 @@ fun AppearanceScreen(
         )
     }
 
-    detail_scaffold(title = stringResource(R.string.settings_appearance), on_back = on_back) {
+    val page_scroll = rememberSaveable(saver = ScrollState.Saver) { ScrollState(0) }
+    var page_loaded_once by rememberSaveable { mutableStateOf(false) }
+    SideEffect { if (prefs_authoritative && !page_loaded_once) page_loaded_once = true }
+
+    detail_scaffold(
+        title = stringResource(R.string.settings_appearance),
+        on_back = on_back,
+        scroll_state = page_scroll,
+    ) {
         preferences_save_error_banner()
-        if (prefs == null || !settings_state.preferences_authoritative) {
+        if (prefs == null || (!settings_state.preferences_authoritative && !page_loaded_once)) {
             preferences_load_placeholder()
             return@detail_scaffold
         }
@@ -478,14 +488,6 @@ fun AppearanceScreen(
             active = theme_background_for(background_image),
             on_click = { library_open = true },
         )
-        if (library_open) {
-            image_theme_library(
-                active_id = background_image,
-                active_color = color_theme,
-                on_dismiss = { library_open = false },
-                on_apply = { chosen, color -> apply_image_theme(chosen, color) },
-            )
-        }
 
         if (color_theme == ColorThemeId.custom && !custom_theme_locked) {
             v_gap(AsterSpacing.xxl)
@@ -704,6 +706,15 @@ fun AppearanceScreen(
             )
         }
         v_gap(AsterSpacing.xxl)
+    }
+
+    if (library_open) {
+        image_theme_library(
+            active_id = background_image,
+            active_color = color_theme,
+            on_dismiss = { library_open = false },
+            on_apply = { chosen, color -> apply_image_theme(chosen, color) },
+        )
     }
 
     if (show_font_picker) {
