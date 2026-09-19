@@ -23,4 +23,12 @@
     <string name="image_theme_photo_too_large">Bu fotoğraf çok büyük. 40 MB’tan küçük bir fotoğraf seçin.</string>
     <string name="image_theme_photo_unsupported">Bu dosya türü desteklenmiyor. JPEG, PNG, WebP veya HEIC fotoğraf seçin.</string>
     <string name="image_theme_photo_unreadable">Bu fotoğraf açılamıyor. Başka bir fotoğraf deneyin.</string>
+    <string name="image_theme_category_calm">Sakin</string>
+    <string name="image_theme_credit_modified">Fotoğraf: %1$s. Kırpıldı ve yeniden boyutlandırıldı.</string>
+    <string name="image_theme_credit_generated">Aster tarafından oluşturuldu</string>
+    <string name="image_theme_adjust_photo">Ayarla</string>
+    <string name="image_theme_editor_title">Taşı ve ölçekle</string>
+    <string name="image_theme_editor_hint">Yakınlaştırmak için iki parmağınızı kullanın, fotoğrafı taşımak için sürükleyin. Yakınlaştırmak veya uzaklaştırmak için iki kez dokunun.</string>
+    <string name="image_theme_editor_set">Ayarla</string>
+    <string name="image_theme_applied">Tema uygulandı</string>
 </resources>

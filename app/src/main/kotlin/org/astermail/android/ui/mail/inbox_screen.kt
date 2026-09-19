@@ -56,7 +56,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
-import org.astermail.android.ui.theme.draw_theme_backdrop
+import org.astermail.android.ui.theme.draw_theme_background
+import org.astermail.android.ui.common.image_theme_panel
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
@@ -1603,15 +1604,21 @@ fun InboxScreen(
         }
     }
 
-    val background_bitmap = if (colors.is_glass) org.astermail.android.ui.theme.theme_background_bitmap() else null
-    var root_size by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
+    val background_bitmap = if (colors.is_glass) org.astermail.android.ui.theme.remember_active_theme_bitmap() else null
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .onSizeChanged { root_size = androidx.compose.ui.geometry.Size(it.width.toFloat(), it.height.toFloat()) }
             .background(colors.bg_primary)
             .nestedScroll(header_nested_scroll),
     ) {
+        if (background_bitmap != null) {
+            Spacer(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer()
+                    .drawBehind { draw_theme_background(background_bitmap) },
+            )
+        }
         Column(modifier = Modifier.fillMaxSize()) {
 
             Box(
@@ -2051,6 +2058,7 @@ fun InboxScreen(
                                         text = stringResource(R.string.alias_sent_indexing),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = colors.text_muted,
+                                        modifier = Modifier.image_theme_panel(colors, 14.dp, 8.dp, 12.dp),
                                     )
                                 }
                             }
@@ -2090,6 +2098,7 @@ fun InboxScreen(
                                         text = stringResource(R.string.no_more_messages),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = colors.text_muted,
+                                        modifier = Modifier.image_theme_panel(colors, 14.dp, 8.dp, 12.dp),
                                     )
                                     Spacer(Modifier.height(AsterSpacing.sm))
                                 }
@@ -2134,11 +2143,7 @@ fun InboxScreen(
                 .drawBehind {
                     val limit = header_height_px.toFloat()
                     val fraction = if (limit == 0f) 0f else (-header_offset_px.floatValue / limit).coerceIn(0f, 1f)
-                    if (background_bitmap != null) {
-                        draw_theme_backdrop(background_bitmap, root_size, header_offset_px.floatValue, 1f - fraction)
-                    } else {
-                        drawRect(color = header_bg, alpha = 1f - fraction)
-                    }
+                    drawRect(color = header_bg, alpha = 1f - fraction)
                 }
                 ,
         ) {
@@ -2213,13 +2218,7 @@ fun InboxScreen(
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .height(status_bar_top)
-                .then(
-                    if (background_bitmap != null) {
-                        Modifier.drawBehind { draw_theme_backdrop(background_bitmap, root_size, 0f) }
-                    } else {
-                        Modifier.background(colors.bg_primary)
-                    },
-                ),
+                .background(colors.bg_primary),
         )
 
         org.astermail.android.ui.common.top_toast_overlay(
@@ -3722,8 +3721,12 @@ private data class SwipeConfig(
 @Composable
 internal fun inbox_error_state(message: String, on_retry: () -> Unit) {
     val colors = AsterMaterial.colors
-    Column(
+    Box(
         modifier = Modifier.fillMaxSize().padding(AsterSpacing.lg),
+        contentAlignment = Alignment.Center,
+    ) {
+    Column(
+        modifier = Modifier.image_theme_panel(colors, 24.dp, 24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -3750,6 +3753,7 @@ internal fun inbox_error_state(message: String, on_retry: () -> Unit) {
         ) {
             Text(text = stringResource(R.string.retry), color = colors.on_accent, fontWeight = FontWeight.SemiBold)
         }
+    }
     }
 }
 
@@ -3795,6 +3799,7 @@ private fun empty_category_state(
         verticalArrangement = Arrangement.Center,
     ) {
         Column(
+            modifier = Modifier.padding(horizontal = AsterSpacing.lg).image_theme_panel(colors, 24.dp, 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
         ) {
@@ -3889,6 +3894,7 @@ private fun empty_inbox_state(folder: String = "inbox") {
         verticalArrangement = Arrangement.Center,
     ) {
         Column(
+            modifier = Modifier.padding(horizontal = AsterSpacing.lg).image_theme_panel(colors, 24.dp, 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
         ) {

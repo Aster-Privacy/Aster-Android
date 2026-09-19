@@ -23,4 +23,12 @@
     <string name="image_theme_photo_too_large">Cette photo est trop volumineuse. Choisissez-en une de moins de 40 Mo.</string>
     <string name="image_theme_photo_unsupported">Ce type de fichier n’est pas pris en charge. Choisissez une photo JPEG, PNG, WebP ou HEIC.</string>
     <string name="image_theme_photo_unreadable">Impossible d’ouvrir cette photo. Essayez-en une autre.</string>
+    <string name="image_theme_category_calm">Calme</string>
+    <string name="image_theme_credit_modified">Photo : %1$s. Recadrée et redimensionnée.</string>
+    <string name="image_theme_credit_generated">Créé par Aster</string>
+    <string name="image_theme_adjust_photo">Ajuster</string>
+    <string name="image_theme_editor_title">Déplacer et redimensionner</string>
+    <string name="image_theme_editor_hint">Pincez pour zoomer et faites glisser pour déplacer la photo. Touchez deux fois pour agrandir ou réduire.</string>
+    <string name="image_theme_editor_set">Définir</string>
+    <string name="image_theme_applied">Thème appliqué</string>
 </resources>

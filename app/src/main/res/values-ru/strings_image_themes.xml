@@ -23,4 +23,12 @@
     <string name="image_theme_photo_too_large">Это фото слишком большое. Выберите фото меньше 40 МБ.</string>
     <string name="image_theme_photo_unsupported">Этот тип файла не поддерживается. Выберите фото в формате JPEG, PNG, WebP или HEIC.</string>
     <string name="image_theme_photo_unreadable">Не удалось открыть это фото. Выберите другое.</string>
+    <string name="image_theme_category_calm">Спокойствие</string>
+    <string name="image_theme_credit_modified">Фото: %1$s. Обрезано и масштабировано.</string>
+    <string name="image_theme_credit_generated">Создано Aster</string>
+    <string name="image_theme_adjust_photo">Настроить</string>
+    <string name="image_theme_editor_title">Перемещение и масштаб</string>
+    <string name="image_theme_editor_hint">Сведите или разведите пальцы, чтобы изменить масштаб, и перетащите, чтобы сдвинуть фото. Коснитесь дважды, чтобы приблизить или отдалить.</string>
+    <string name="image_theme_editor_set">Установить</string>
+    <string name="image_theme_applied">Тема применена</string>
 </resources>

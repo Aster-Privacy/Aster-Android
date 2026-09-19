@@ -23,4 +23,12 @@
     <string name="image_theme_photo_too_large">This photo is too large. Choose one under 40 MB.</string>
     <string name="image_theme_photo_unsupported">This file type isn’t supported. Choose a JPEG, PNG, WebP, or HEIC photo.</string>
     <string name="image_theme_photo_unreadable">This photo can’t be opened. Try a different one.</string>
+    <string name="image_theme_category_calm">Calm</string>
+    <string name="image_theme_credit_modified">Photo: %1$s. Cropped and resized.</string>
+    <string name="image_theme_credit_generated">Created by Aster</string>
+    <string name="image_theme_adjust_photo">Adjust</string>
+    <string name="image_theme_editor_title">Move and scale</string>
+    <string name="image_theme_editor_hint">Pinch to zoom and drag to move the photo. Double-tap to zoom in or out.</string>
+    <string name="image_theme_editor_set">Set</string>
+    <string name="image_theme_applied">Theme applied</string>
 </resources>

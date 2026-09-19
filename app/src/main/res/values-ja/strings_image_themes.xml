@@ -23,4 +23,12 @@
     <string name="image_theme_photo_too_large">この写真は大きすぎます。40 MB 未満の写真を選択してください。</string>
     <string name="image_theme_photo_unsupported">このファイル形式には対応していません。JPEG、PNG、WebP、HEIC の写真を選択してください。</string>
     <string name="image_theme_photo_unreadable">この写真を開けません。別の写真をお試しください。</string>
+    <string name="image_theme_category_calm">穏やか</string>
+    <string name="image_theme_credit_modified">写真: %1$s。トリミングとサイズ変更を行っています。</string>
+    <string name="image_theme_credit_generated">Aster が作成</string>
+    <string name="image_theme_adjust_photo">調整</string>
+    <string name="image_theme_editor_title">移動と拡大縮小</string>
+    <string name="image_theme_editor_hint">ピンチで拡大縮小し、ドラッグで写真を移動します。ダブルタップで拡大または縮小します。</string>
+    <string name="image_theme_editor_set">設定</string>
+    <string name="image_theme_applied">テーマを適用しました</string>
 </resources>

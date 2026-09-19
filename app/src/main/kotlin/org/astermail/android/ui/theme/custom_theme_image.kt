@@ -27,6 +27,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.graphics.RectF
 import android.media.ExifInterface
 import android.net.Uri
 import android.os.Build
@@ -118,25 +119,68 @@ object custom_theme_image {
     private fun image_file(context: Context): File =
         File(File(context.noBackupFilesDir, "theme"), "custom_background.bin")
 
-    suspend fun import(context: Context, uri: Uri): Result<CustomThemeImageMeta> = withContext(Dispatchers.IO) {
+    private fun source_file(context: Context): File =
+        File(File(context.noBackupFilesDir, "theme"), "custom_source.bin")
+
+    val frame_aspect: Float get() = target_width.toFloat() / target_height
+
+    suspend fun import_source(context: Context, uri: Uri): Result<Bitmap> = withContext(Dispatchers.IO) {
         runCatching {
             val app = context.applicationContext
             val bytes = read_capped(app, uri)
-            val bitmap = decode_validated(bytes)
-            val framed = try {
-                frame(bitmap)
-            } finally {
-                bitmap.recycle()
+            cap_source(decode_validated(bytes))
+        }.recoverCatching { error ->
+            throw if (error is CustomThemeImageException) error else CustomThemeImageException(CustomThemeImageError.unreadable)
+        }
+    }
+
+    suspend fun load_source(context: Context): Bitmap? = withContext(Dispatchers.IO) {
+        val app = context.applicationContext
+        val file = source_file(app).takeIf { it.isFile } ?: image_file(app).takeIf { it.isFile } ?: return@withContext null
+        val plain = runCatching { decrypt(file.readBytes()) }.getOrNull() ?: return@withContext null
+        BitmapFactory.decodeByteArray(
+            plain,
+            0,
+            plain.size,
+            BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.ARGB_8888 },
+        ).also { plain.fill(0) }
+    }
+
+    fun stored_crop(context: Context): RectF? {
+        val prefs = context.applicationContext.getSharedPreferences(prefs_name, Context.MODE_PRIVATE)
+        if (!prefs.contains("crop_left") || !source_file(context.applicationContext).isFile) return null
+        val rect = RectF(
+            prefs.getFloat("crop_left", 0f),
+            prefs.getFloat("crop_top", 0f),
+            prefs.getFloat("crop_right", 1f),
+            prefs.getFloat("crop_bottom", 1f),
+        )
+        return rect.takeIf { it.width() > 0f && it.height() > 0f }
+    }
+
+    suspend fun commit(
+        context: Context,
+        source: Bitmap,
+        crop: RectF,
+        source_changed: Boolean,
+    ): Result<CustomThemeImageMeta> = withContext(Dispatchers.IO) {
+        runCatching {
+            val app = context.applicationContext
+            val safe = RectF(
+                crop.left.coerceIn(0f, 1f),
+                crop.top.coerceIn(0f, 1f),
+                crop.right.coerceIn(0f, 1f),
+                crop.bottom.coerceIn(0f, 1f),
+            )
+            if (safe.width() <= 0f || safe.height() <= 0f) throw CustomThemeImageException(CustomThemeImageError.unreadable)
+            if (source_changed || !source_file(app).isFile) {
+                write_encrypted(app, encode(source), source_file(app))
             }
+            val framed = render_crop(source, safe)
             val (tint, accent) = analyze(framed)
-            val encoded = ByteArrayOutputStream(512 * 1024).use { out ->
-                @Suppress("DEPRECATION")
-                val format = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) Bitmap.CompressFormat.WEBP_LOSSY else Bitmap.CompressFormat.WEBP
-                framed.compress(format, 90, out)
-                framed.recycle()
-                out.toByteArray()
-            }
-            write_encrypted(app, encoded)
+            val encoded = encode(framed)
+            framed.recycle()
+            write_encrypted(app, encoded, image_file(app))
             val next = CustomThemeImageMeta(
                 version = System.currentTimeMillis(),
                 tint = tint,
@@ -146,6 +190,10 @@ object custom_theme_image {
                 .putLong("version", next.version)
                 .putInt("tint", argb_of(tint))
                 .putString("accent", accent.name)
+                .putFloat("crop_left", safe.left)
+                .putFloat("crop_top", safe.top)
+                .putFloat("crop_right", safe.right)
+                .putFloat("crop_bottom", safe.bottom)
                 .commit()
             meta_state.value = next
             next
@@ -157,8 +205,48 @@ object custom_theme_image {
     fun delete(context: Context) {
         val app = context.applicationContext
         image_file(app).delete()
+        source_file(app).delete()
         app.getSharedPreferences(prefs_name, Context.MODE_PRIVATE).edit().clear().commit()
         meta_state.value = null
+    }
+
+    private fun encode(bitmap: Bitmap): ByteArray = ByteArrayOutputStream(512 * 1024).use { out ->
+        @Suppress("DEPRECATION")
+        val format = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) Bitmap.CompressFormat.WEBP_LOSSY else Bitmap.CompressFormat.WEBP
+        bitmap.compress(format, 90, out)
+        out.toByteArray()
+    }
+
+    private fun cap_source(source: Bitmap): Bitmap {
+        val cover = max(target_width.toFloat() / source.width, target_height.toFloat() / source.height)
+        val factor = min(1f, cover * 2f)
+        if (factor >= 1f) return source
+        val w = (source.width * factor).roundToInt().coerceAtLeast(1)
+        val h = (source.height * factor).roundToInt().coerceAtLeast(1)
+        val scaled = Bitmap.createScaledBitmap(source, w, h, true)
+        if (scaled !== source) source.recycle()
+        return scaled
+    }
+
+    private fun render_crop(source: Bitmap, crop: RectF): Bitmap {
+        val src_left = crop.left * source.width
+        val src_top = crop.top * source.height
+        val src_w = crop.width() * source.width
+        val src_h = crop.height() * source.height
+        val scale = max(target_width / src_w, target_height / src_h)
+        val dx = (target_width - src_w * scale) / 2f
+        val dy = (target_height - src_h * scale) / 2f
+        val out = Bitmap.createBitmap(target_width, target_height, Bitmap.Config.ARGB_8888)
+        Canvas(out).drawBitmap(
+            source,
+            Matrix().apply {
+                postTranslate(-src_left, -src_top)
+                postScale(scale, scale)
+                postTranslate(dx, dy)
+            },
+            Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG),
+        )
+        return out
     }
 
     fun load(context: Context, sample: Int): Bitmap? {
@@ -233,22 +321,6 @@ object custom_theme_image {
         return rotated
     }
 
-    private fun frame(source: Bitmap): Bitmap {
-        val scale = max(target_width.toFloat() / source.width, target_height.toFloat() / source.height)
-        val out = Bitmap.createBitmap(target_width, target_height, Bitmap.Config.ARGB_8888)
-        val dx = (target_width - source.width * scale) / 2f
-        val dy = (target_height - source.height * scale) / 2f
-        Canvas(out).drawBitmap(
-            source,
-            Matrix().apply {
-                postScale(scale, scale)
-                postTranslate(dx, dy)
-            },
-            Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG),
-        )
-        return out
-    }
-
     private fun analyze(bitmap: Bitmap): Pair<Color, ColorThemeId> {
         val small = Bitmap.createScaledBitmap(bitmap, 54, 120, true)
         val pixels = IntArray(small.width * small.height)
@@ -320,13 +392,12 @@ object custom_theme_image {
         return generator.generateKey()
     }
 
-    private fun write_encrypted(context: Context, plain: ByteArray) {
+    private fun write_encrypted(context: Context, plain: ByteArray, target: File) {
         val cipher = Cipher.getInstance(transformation).apply { init(Cipher.ENCRYPT_MODE, secret_key()) }
         val sealed = cipher.iv + cipher.doFinal(plain)
         plain.fill(0)
-        val target = image_file(context)
         target.parentFile?.mkdirs()
-        val temp = File(target.parentFile, "custom_background.tmp")
+        val temp = File(target.parentFile, "${target.nameWithoutExtension}.tmp")
         temp.writeBytes(sealed)
         if (!temp.renameTo(target)) {
             target.delete()

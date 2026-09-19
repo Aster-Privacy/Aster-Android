@@ -23,4 +23,12 @@
     <string name="image_theme_photo_too_large">Dieses Foto ist zu groß. Wähle eins unter 40 MB.</string>
     <string name="image_theme_photo_unsupported">Dieser Dateityp wird nicht unterstützt. Wähle ein JPEG-, PNG-, WebP- oder HEIC-Foto.</string>
     <string name="image_theme_photo_unreadable">Dieses Foto kann nicht geöffnet werden. Versuche ein anderes.</string>
+    <string name="image_theme_category_calm">Ruhig</string>
+    <string name="image_theme_credit_modified">Foto: %1$s. Zugeschnitten und skaliert.</string>
+    <string name="image_theme_credit_generated">Erstellt von Aster</string>
+    <string name="image_theme_adjust_photo">Anpassen</string>
+    <string name="image_theme_editor_title">Verschieben und skalieren</string>
+    <string name="image_theme_editor_hint">Zum Zoomen die Finger spreizen und zum Verschieben ziehen. Zum Vergrößern oder Verkleinern zweimal tippen.</string>
+    <string name="image_theme_editor_set">Festlegen</string>
+    <string name="image_theme_applied">Design angewendet</string>
 </resources>

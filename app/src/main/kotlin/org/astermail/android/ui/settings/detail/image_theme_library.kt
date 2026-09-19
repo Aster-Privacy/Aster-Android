@@ -22,6 +22,8 @@
 
 package org.astermail.android.ui.settings.detail
 
+import android.graphics.Bitmap
+import android.graphics.RectF
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -116,9 +118,12 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.runtime.mutableIntStateOf
+import compose.icons.tablericons.Crop
 import compose.icons.tablericons.Photo
 import compose.icons.tablericons.Plus
 import compose.icons.tablericons.Trash
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.astermail.android.ui.theme.CustomThemeImageError
 import org.astermail.android.ui.theme.CustomThemeImageException
@@ -133,7 +138,14 @@ import org.astermail.android.ui.theme.theme_categories
 
 private val page_bg = Color(0xFF0B0B0D)
 private val raised_bg = Color(0xFF17171B)
-private val hairline = Color.White.copy(alpha = 0.08f)
+private val hairline = Color(0xFF26262B)
+private val control_bg = Color(0xFF26262B)
+private val dash_line = Color(0xFF45454D)
+private val muted_text = Color(0xFFA1A1AA)
+private val faint_text = Color(0xFF8B8B94)
+private val disabled_icon = Color(0xFF55555C)
+private val error_text = Color(0xFFFF8A8A)
+private val toast_bg = Color(0xFF26262B)
 private val shelf_tile_shape = RoundedCornerShape(22.dp)
 
 private val default_accent = Color(0xFF3B82F6)
@@ -166,9 +178,18 @@ fun image_theme_library(
     val accent by animateColorAsState(accent_for(color), tween(260), label = "library_accent")
     val on_accent by animateColorAsState(on_accent_for(color), tween(260), label = "library_on_accent")
     val context = LocalContext.current
+    var applied_tick by remember { mutableIntStateOf(0) }
+    var show_applied by remember { mutableStateOf(false) }
 
     LaunchedEffect(pending?.cache_key) {
         pending?.let { preload_theme_bitmap(context, it) }
+    }
+
+    LaunchedEffect(applied_tick) {
+        if (applied_tick == 0) return@LaunchedEffect
+        show_applied = true
+        delay(1800)
+        show_applied = false
     }
 
     Dialog(
@@ -262,8 +283,28 @@ fun image_theme_library(
                     nav_bottom = nav_bottom.value,
                     on_apply = {
                         on_apply(pending, color)
-                        on_dismiss()
+                        applied_tick++
                     },
+                )
+            }
+            AnimatedVisibility(
+                visible = show_applied && !dirty,
+                enter = fadeIn(tween(160)),
+                exit = fadeOut(tween(200)),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 24.dp + nav_bottom),
+            ) {
+                Text(
+                    text = stringResource(R.string.image_theme_applied),
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(toast_bg)
+                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                        .testTag("image_theme_applied"),
                 )
             }
         }
@@ -272,7 +313,7 @@ fun image_theme_library(
 
 @Composable
 private fun library_top_bar(reset_enabled: Boolean, on_back: () -> Unit, on_reset: () -> Unit) {
-    val reset_alpha by animateFloatAsState(if (reset_enabled) 1f else 0.3f, tween(200), label = "reset_alpha")
+    val reset_tint by animateColorAsState(if (reset_enabled) Color.White else disabled_icon, tween(200), label = "reset_tint")
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -316,7 +357,7 @@ private fun library_top_bar(reset_enabled: Boolean, on_back: () -> Unit, on_rese
             Icon(
                 imageVector = TablerIcons.Refresh,
                 contentDescription = stringResource(R.string.image_theme_reset),
-                tint = Color.White.copy(alpha = reset_alpha),
+                tint = reset_tint,
                 modifier = Modifier.size(21.dp),
             )
         }
@@ -384,9 +425,12 @@ private fun colors_section(
             }
         }
         Text(
-            text = pending?.let { stringResource(R.string.image_theme_credit, it.credit) }
-                ?: stringResource(R.string.image_theme_page_subtitle),
-            color = Color.White.copy(alpha = 0.45f),
+            text = when {
+                pending == null || pending.is_custom -> stringResource(R.string.image_theme_page_subtitle)
+                pending.is_generated -> stringResource(R.string.image_theme_credit_generated)
+                else -> stringResource(R.string.image_theme_credit_modified, pending.credit)
+            },
+            color = muted_text,
             fontSize = 12.sp,
             lineHeight = 16.sp,
             maxLines = 2,
@@ -408,20 +452,68 @@ private fun your_photo_section(
     val scope = rememberCoroutineScope()
     val meta by custom_theme_image.meta.collectAsState()
     var importing by remember { mutableStateOf(false) }
+    var committing by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<CustomThemeImageError?>(null) }
+    var editor_source by remember { mutableStateOf<Bitmap?>(null) }
+    var editor_crop by remember { mutableStateOf<RectF?>(null) }
+    var editor_new_source by remember { mutableStateOf(false) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri == null || importing) return@rememberLauncherForActivityResult
         importing = true
         error = null
         scope.launch {
-            val result = custom_theme_image.import(context, uri)
+            val result = custom_theme_image.import_source(context, uri)
             importing = false
             result
-                .onSuccess(on_pick)
+                .onSuccess { bitmap ->
+                    editor_crop = null
+                    editor_new_source = true
+                    editor_source = bitmap
+                }
                 .onFailure { failure ->
                     error = (failure as? CustomThemeImageException)?.reason ?: CustomThemeImageError.unreadable
                 }
         }
+    }
+    val adjust = {
+        if (!importing) {
+            importing = true
+            error = null
+            scope.launch {
+                val bitmap = custom_theme_image.load_source(context)
+                importing = false
+                if (bitmap == null) {
+                    error = CustomThemeImageError.unreadable
+                } else {
+                    editor_crop = custom_theme_image.stored_crop(context)
+                    editor_new_source = false
+                    editor_source = bitmap
+                }
+            }
+        }
+    }
+    editor_source?.let { source ->
+        image_theme_photo_editor(
+            source = source,
+            initial_crop = editor_crop,
+            accent = accent,
+            on_accent = on_accent,
+            busy = committing,
+            on_cancel = { editor_source = null },
+            on_set = { crop ->
+                committing = true
+                scope.launch {
+                    val result = custom_theme_image.commit(context, source, crop, editor_new_source)
+                    committing = false
+                    editor_source = null
+                    result
+                        .onSuccess(on_pick)
+                        .onFailure { failure ->
+                            error = (failure as? CustomThemeImageException)?.reason ?: CustomThemeImageError.unreadable
+                        }
+                }
+            },
+        )
     }
     Column(
         modifier = Modifier
@@ -445,7 +537,7 @@ private fun your_photo_section(
                 null -> R.string.image_theme_photo_private
             },
         )
-        val message_color = if (error != null) Color(0xFFFF8A8A) else Color.White.copy(alpha = 0.5f)
+        val message_color = if (error != null) error_text else muted_text
         val choose = {
             if (!importing) {
                 launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
@@ -484,9 +576,17 @@ private fun your_photo_section(
                         modifier = Modifier.padding(bottom = 6.dp),
                     )
                     photo_action_button(
+                        icon = TablerIcons.Crop,
+                        label = stringResource(R.string.image_theme_adjust_photo),
+                        busy = importing,
+                        accent = accent,
+                        on_click = adjust,
+                        modifier = Modifier.testTag("image_theme_custom_adjust"),
+                    )
+                    photo_action_button(
                         icon = TablerIcons.Photo,
                         label = stringResource(R.string.image_theme_replace_photo),
-                        busy = importing,
+                        busy = false,
                         accent = accent,
                         on_click = choose,
                         modifier = Modifier.testTag("image_theme_custom_replace"),
@@ -519,7 +619,7 @@ private fun choose_photo_row(
     message_color: Color,
     on_click: () -> Unit,
 ) {
-    val dash = Color.White.copy(alpha = 0.22f)
+    val dash = dash_line
     Row(
         modifier = Modifier
             .padding(horizontal = 20.dp)
@@ -545,7 +645,7 @@ private fun choose_photo_row(
             modifier = Modifier
                 .size(44.dp)
                 .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.08f)),
+                .background(control_bg),
             contentAlignment = Alignment.Center,
         ) {
             if (importing) {
@@ -644,7 +744,7 @@ private fun category_shelf(
             )
             Text(
                 text = list.size.toString(),
-                color = Color.White.copy(alpha = 0.4f),
+                color = faint_text,
                 fontSize = 13.sp,
             )
         }
@@ -689,7 +789,7 @@ private fun shelf_tile(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .border(3.dp, accent.copy(alpha = progress), shelf_tile_shape),
+                    .border(3.dp, lerp(hairline, accent, progress), shelf_tile_shape),
             )
             Box(
                 modifier = Modifier
@@ -697,13 +797,13 @@ private fun shelf_tile(
                     .padding(8.dp)
                     .size(24.dp)
                     .clip(CircleShape)
-                    .background(accent.copy(alpha = progress)),
+                    .background(lerp(control_bg, accent, progress)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = TablerIcons.Check,
                     contentDescription = null,
-                    tint = on_accent.copy(alpha = progress),
+                    tint = lerp(control_bg, on_accent, progress),
                     modifier = Modifier.size(15.dp),
                 )
             }
