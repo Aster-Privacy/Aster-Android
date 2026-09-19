@@ -22,7 +22,10 @@
 package org.astermail.android.auth
 
 import java.util.Base64
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.astermail.android.api.keys.AccountKeyTokenHistoryEntry
 import org.astermail.android.api.keys.AccountKeyTokenResponse
 import org.astermail.android.api.keys.CurrentVaultResult
@@ -38,6 +41,7 @@ import org.astermail.android.crypto.PgpEncryptor
 import org.astermail.android.crypto.PgpSignatureStatus
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -53,6 +57,7 @@ class AccountKeyLoaderTest {
     private val attacker_key by lazy { PgpKeyGenerator.generate("Attacker", "attacker@example.com", passphrase_chars) }
 
     private val current_key = ByteArray(32) { it.toByte() }
+    private val preferences_context = "astermail-preferences-v1"
     private val old_key = ByteArray(32) { (it + 100).toByte() }
 
     @Test
@@ -256,6 +261,165 @@ class AccountKeyLoaderTest {
 
         assertNull(store.get_account_keks())
         assertEquals(emptyList<String>(), store.get_decrypt_keks())
+    }
+
+    @Test
+    fun write_keys_come_from_the_current_token_only() = runBlocking {
+        val store = signed_in_store(previous = listOf(previous_user_key.armored_private_key))
+        val api = FakeKeysApi(
+            current = token(current_key, user_key.armored_private_key, user_key.armored_public_key),
+            history = listOf(
+                token(old_key, previous_user_key.armored_private_key, previous_user_key.armored_public_key),
+            ),
+        )
+
+        AccountKeyLoader(api, store).load()
+
+        for (context in AccountKey.DATA_CONTEXTS) {
+            assertArrayEquals(AccountKey.derive_context_key(current_key, context), store.get_account_write_kek(context))
+            assertFalse(
+                AccountKey.derive_context_key(old_key, context).contentEquals(store.get_account_write_kek(context)),
+            )
+        }
+    }
+
+    @Test
+    fun no_write_keys_when_the_current_token_does_not_open() = runBlocking {
+        val store = signed_in_store(previous = listOf(previous_user_key.armored_private_key))
+        val api = FakeKeysApi(
+            current = token(current_key, attacker_key.armored_private_key, user_key.armored_public_key),
+            history = listOf(
+                token(old_key, previous_user_key.armored_private_key, previous_user_key.armored_public_key),
+            ),
+        )
+
+        assertEquals(1, AccountKeyLoader(api, store).load())
+        assertFalse(store.has_account_write_kek(preferences_context))
+    }
+
+    @Test
+    fun write_keys_are_dropped_when_previous_keys_change_during_fetch() = runBlocking {
+        val store = signed_in_store()
+        val api = FakeKeysApi(
+            current = token(current_key, user_key.armored_private_key, user_key.armored_public_key),
+            on_fetch = { store.put_previous_keys(listOf(previous_user_key.armored_private_key)) },
+        )
+
+        AccountKeyLoader(api, store).load()
+
+        assertFalse(store.has_account_write_kek(preferences_context))
+    }
+
+    @Test
+    fun write_keys_are_dropped_when_the_identity_key_changes_during_fetch() = runBlocking {
+        val store = signed_in_store()
+        val api = FakeKeysApi(
+            current = token(current_key, user_key.armored_private_key, user_key.armored_public_key),
+            on_fetch = { store.put_identity_key(previous_user_key.armored_private_key) },
+        )
+
+        AccountKeyLoader(api, store).load()
+
+        assertFalse(store.has_account_write_kek(preferences_context))
+    }
+
+    @Test
+    fun write_keys_are_dropped_when_the_identity_key_changes_later() = runBlocking {
+        val store = signed_in_store()
+        val api = FakeKeysApi(current = token(current_key, user_key.armored_private_key, user_key.armored_public_key))
+        AccountKeyLoader(api, store).load()
+        assertTrue(store.has_account_write_kek(preferences_context))
+
+        store.put_identity_key(user_key.armored_private_key)
+        assertTrue(store.has_account_write_kek(preferences_context))
+
+        store.put_identity_key(previous_user_key.armored_private_key)
+        assertFalse(store.has_account_write_kek(preferences_context))
+    }
+
+    @Test
+    fun a_stale_load_cannot_set_write_keys() {
+        val store = signed_in_store()
+        val stale = store.begin_account_key_load()
+        val fresh = store.begin_account_key_load()
+        val keys = mapOf(preferences_context to ByteArray(32) { 9 })
+
+        assertFalse(store.put_account_write_keks(keys, store.account_kek_generation(), stale))
+        assertFalse(store.has_account_write_kek(preferences_context))
+        assertTrue(store.put_account_write_keks(keys, store.account_kek_generation(), fresh))
+        assertArrayEquals(ByteArray(32) { 9 }, store.get_account_write_kek(preferences_context))
+    }
+
+    @Test
+    fun write_keys_are_copies() {
+        val store = signed_in_store()
+        val source = ByteArray(32) { 9 }
+        store.put_account_write_keks(
+            mapOf(preferences_context to source),
+            store.account_kek_generation(),
+            store.begin_account_key_load(),
+        )
+        source.fill(0)
+        store.get_account_write_kek(preferences_context)!!.fill(0)
+
+        assertArrayEquals(ByteArray(32) { 9 }, store.get_account_write_kek(preferences_context))
+    }
+
+    @Test
+    fun clear_removes_write_keys() = runBlocking {
+        val store = signed_in_store()
+        val api = FakeKeysApi(current = token(current_key, user_key.armored_private_key, user_key.armored_public_key))
+        AccountKeyLoader(api, store).load()
+
+        store.clear()
+
+        assertFalse(store.has_account_write_kek(preferences_context))
+        assertNull(store.get_account_write_kek(preferences_context))
+    }
+
+    @Test
+    fun await_returns_once_the_load_finishes() = runBlocking {
+        val store = signed_in_store()
+        val ticket = store.begin_account_key_load()
+        val waiter = async(Dispatchers.Default) { store.await_account_key_load(5_000L) }
+
+        store.finish_account_key_load(ticket)
+
+        withTimeout(2_000L) { waiter.await() }
+    }
+
+    @Test
+    fun await_gives_up_after_the_timeout() = runBlocking {
+        val store = signed_in_store()
+        store.begin_account_key_load()
+        val started = System.nanoTime()
+
+        store.await_account_key_load(50L)
+
+        assertTrue(System.nanoTime() - started < 2_000_000_000L)
+    }
+
+    @Test
+    fun an_older_load_finishing_does_not_end_a_newer_one() = runBlocking {
+        val store = signed_in_store()
+        val older = store.begin_account_key_load()
+        store.begin_account_key_load()
+
+        store.finish_account_key_load(older)
+
+        val started = System.nanoTime()
+        store.await_account_key_load(100L)
+        assertTrue(System.nanoTime() - started >= 90_000_000L)
+    }
+
+    @Test
+    fun await_returns_at_once_when_no_load_is_pending() = runBlocking {
+        val store = signed_in_store()
+        val started = System.nanoTime()
+
+        store.await_account_key_load(5_000L)
+
+        assertTrue(System.nanoTime() - started < 1_000_000_000L)
     }
 
     private fun signed_in_store(previous: List<String> = emptyList()): SessionKeyStore {

@@ -24,6 +24,11 @@ package org.astermail.android.storage
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
+
+data class AccountKeyLoadTicket(val seq: Long, val write_epoch: Long)
 
 class SessionKeyStore(context: Context? = null) {
 
@@ -68,6 +73,16 @@ class SessionKeyStore(context: Context? = null) {
 
     @Volatile
     private var account_kek_generation: Long = 0
+
+    private val account_write_keks = HashMap<String, ByteArray>()
+
+    @Volatile
+    private var account_write_epoch: Long = 0
+
+    @Volatile
+    private var account_load_seq: Long = 0
+
+    private val account_load_pending = MutableStateFlow(false)
 
     @Volatile
     private var data_kek: ByteArray? = null
@@ -280,6 +295,7 @@ class SessionKeyStore(context: Context? = null) {
 
     fun put_identity_key(key: String) {
         synchronized(lock) {
+            if (identity_key != key) drop_account_write_keks_locked()
             identity_key = key
             prefs?.edit()?.putString(key_identity, key)?.commit()
         }
@@ -329,6 +345,7 @@ class SessionKeyStore(context: Context? = null) {
 
     fun put_previous_keys(keys: List<String>) {
         synchronized(lock) {
+            if (previous_keys != keys) drop_account_write_keks_locked()
             previous_keys = keys.toList()
             val json_arr = org.json.JSONArray()
             keys.forEach { json_arr.put(it) }
@@ -380,6 +397,58 @@ class SessionKeyStore(context: Context? = null) {
         synchronized(lock) {
             return account_keks?.toList()
         }
+    }
+
+    fun begin_account_key_load(): AccountKeyLoadTicket {
+        synchronized(lock) {
+            drop_account_write_keks_locked()
+            account_load_seq += 1
+            account_load_pending.value = true
+            return AccountKeyLoadTicket(account_load_seq, account_write_epoch)
+        }
+    }
+
+    fun finish_account_key_load(ticket: AccountKeyLoadTicket) {
+        synchronized(lock) {
+            if (ticket.seq == account_load_seq) account_load_pending.value = false
+        }
+    }
+
+    suspend fun await_account_key_load(timeout_ms: Long) {
+        withTimeoutOrNull(timeout_ms) { account_load_pending.first { !it } }
+    }
+
+    fun put_account_write_keks(
+        keys: Map<String, ByteArray>,
+        generation: Long,
+        ticket: AccountKeyLoadTicket,
+    ): Boolean {
+        synchronized(lock) {
+            if (generation != account_kek_generation) return false
+            if (ticket.seq != account_load_seq || ticket.write_epoch != account_write_epoch) return false
+            account_write_keks.values.forEach { it.fill(0) }
+            account_write_keks.clear()
+            keys.forEach { (context, key) -> account_write_keks[context] = key.copyOf() }
+            return true
+        }
+    }
+
+    fun has_account_write_kek(context: String): Boolean {
+        synchronized(lock) {
+            return account_write_keks.containsKey(context)
+        }
+    }
+
+    fun get_account_write_kek(context: String): ByteArray? {
+        synchronized(lock) {
+            return account_write_keks[context]?.copyOf()
+        }
+    }
+
+    private fun drop_account_write_keks_locked() {
+        account_write_keks.values.forEach { it.fill(0) }
+        account_write_keks.clear()
+        account_write_epoch += 1
     }
 
     fun get_decrypt_keks(): List<String> {
@@ -476,6 +545,9 @@ class SessionKeyStore(context: Context? = null) {
             legacy_keks = null
             account_keks = null
             account_kek_generation += 1
+            drop_account_write_keks_locked()
+            account_load_seq += 1
+            account_load_pending.value = false
             data_kek?.fill(0)
             data_kek = null
             pending_reseal_passphrase?.fill(0)

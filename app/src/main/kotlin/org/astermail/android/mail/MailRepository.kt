@@ -538,6 +538,10 @@ class MailRepository @Inject constructor(
     private val account_key_capabilities = org.astermail.android.crypto.AccountKeyCapabilities(
         { keys_api.get_account_key_format_writes() },
     )
+    private val account_data_writer = org.astermail.android.crypto.AccountDataWriter(
+        session_key_store,
+        account_key_capabilities,
+    )
     private val ratchet_undecryptable_at = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val envelope_heal_mutex = kotlinx.coroutines.sync.Mutex()
     @Volatile private var last_envelope_heal_at = 0L
@@ -1777,12 +1781,14 @@ class MailRepository @Inject constructor(
             pages++
         }
         val found = draft ?: throw IllegalStateException("draft not found")
-        val envelope = try_decrypt_envelope(
-            found.encrypted_content,
-            found.content_nonce,
-            found.id,
-            include_draft_attachments = true,
-        )
+        val envelope = account_data_writer.retry_after_key_load {
+            try_decrypt_envelope(
+                found.encrypted_content,
+                found.content_nonce,
+                found.id,
+                include_draft_attachments = true,
+            )
+        }
         val item = decrypt_draft_item(found)
         Pair(item, envelope)
     }
@@ -2863,7 +2869,7 @@ class MailRepository @Inject constructor(
         }.getOrNull()
     }
 
-    private fun decrypt_envelope_identity_key(encrypted_b64: String, nonce: ByteArray): ByteArray {
+    internal fun decrypt_envelope_identity_key(encrypted_b64: String, nonce: ByteArray): ByteArray {
         val identity_key = session_key_store.get_identity_key()
             ?: throw IllegalStateException("no identity key")
         val ciphertext = android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
@@ -4472,7 +4478,7 @@ class MailRepository @Inject constructor(
         val sealed_with_attachments = if (attachments.isNotEmpty() && draft_attachments_may_fit(attachments)) {
             try {
                 val with_attachments = envelope_for(attachments)
-                if (draft_envelope_fits(with_attachments)) encrypt_envelope(with_attachments) else null
+                if (draft_envelope_fits(with_attachments)) encrypt_draft_envelope(with_attachments) else null
             } catch (oom: OutOfMemoryError) {
                 null
             }
@@ -4480,7 +4486,7 @@ class MailRepository @Inject constructor(
             null
         }
         val stored_attachment_count = if (sealed_with_attachments != null) attachments.size else 0
-        val (encrypted_envelope, envelope_nonce) = sealed_with_attachments ?: encrypt_envelope(envelope_for(emptyList()))
+        val (encrypted_envelope, envelope_nonce) = sealed_with_attachments ?: encrypt_draft_envelope(envelope_for(emptyList()))
         val content_hash = content_hash_of(encrypted_envelope)
 
         draft_save_mutex.withLock {
@@ -4771,6 +4777,21 @@ class MailRepository @Inject constructor(
         val chars = org.astermail.android.util.passphrase_chars(passphrase)
         passphrase.fill(0)
         return Pair(identity_key, chars)
+    }
+
+    internal suspend fun encrypt_draft_envelope(json: String): Pair<String, String> {
+        val key = account_data_writer.write_key(org.astermail.android.crypto.AccountDataWriter.DRAFT_CONTEXT)
+            ?: return encrypt_envelope(json)
+        try {
+            val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+            val ciphertext = AesGcm.encrypt(key, nonce, json.toByteArray(Charsets.UTF_8))
+            return Pair(
+                android.util.Base64.encodeToString(ciphertext, android.util.Base64.NO_WRAP),
+                android.util.Base64.encodeToString(nonce, android.util.Base64.NO_WRAP),
+            )
+        } finally {
+            key.fill(0)
+        }
     }
 
     private fun encrypt_envelope(json: String): Pair<String, String> {

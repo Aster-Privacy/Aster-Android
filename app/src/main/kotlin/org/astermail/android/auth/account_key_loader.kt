@@ -26,6 +26,7 @@ import java.security.SecureRandom
 import org.astermail.android.api.keys.AccountKeyTokenResponse
 import org.astermail.android.api.keys.KeysApi
 import org.astermail.android.crypto.AccountKey
+import org.astermail.android.storage.AccountKeyLoadTicket
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.util.passphrase_chars
 
@@ -35,6 +36,15 @@ class AccountKeyLoader(
 ) {
 
     suspend fun load(): Int {
+        val ticket = session_key_store.begin_account_key_load()
+        try {
+            return load_keys(ticket)
+        } finally {
+            session_key_store.finish_account_key_load(ticket)
+        }
+    }
+
+    private suspend fun load_keys(ticket: AccountKeyLoadTicket): Int {
         val generation = session_key_store.account_kek_generation()
         val identity_key = session_key_store.get_identity_key() ?: return 0
         val existing = keys_api.get_account_key_token()
@@ -50,12 +60,18 @@ class AccountKeyLoader(
         val passphrase = session_key_store.get_passphrase() ?: return 0
         val chars = passphrase_chars(passphrase)
         passphrase.fill(0)
+        var write_keks: Map<String, ByteArray>? = null
         try {
             val keks = LinkedHashSet<String>()
             val seen = HashSet<String>()
             for (token in tokens) {
                 val account_key = AccountKey.open_token(token, own_keys, chars) ?: continue
                 try {
+                    if (token == current.token && write_keks == null) {
+                        write_keks = AccountKey.DATA_CONTEXTS.associateWith {
+                            AccountKey.derive_context_key(account_key, it)
+                        }
+                    }
                     val id = java.security.MessageDigest.getInstance("SHA-256")
                         .digest(account_key)
                         .joinToString("") { "%02x".format(it) }
@@ -67,8 +83,10 @@ class AccountKeyLoader(
             }
             if (seen.isEmpty()) return 0
             if (!session_key_store.put_account_keks(keks.toList(), generation)) return 0
+            write_keks?.let { session_key_store.put_account_write_keks(it, generation, ticket) }
             return seen.size
         } finally {
+            write_keks?.values?.forEach { it.fill(0) }
             chars.fill(' ')
         }
     }
