@@ -4276,7 +4276,7 @@ class MailRepository @Inject constructor(
         return keys
     }
 
-    private suspend fun build_internal_attachments(
+    internal suspend fun build_internal_attachments(
         recipients: List<String>,
         attachments: List<ExternalAttachmentPayload>,
         sender_email: String? = null,
@@ -4286,6 +4286,19 @@ class MailRepository @Inject constructor(
         if (has_internal_recipients && recipient_keys.isEmpty()) {
             throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
         }
+        val own_seal = if (attachments.isEmpty()) null else own_seal_inputs()
+        try {
+            return build_attachment_payloads(attachments, recipient_keys, own_seal)
+        } finally {
+            own_seal?.second?.fill(' ')
+        }
+    }
+
+    private suspend fun build_attachment_payloads(
+        attachments: List<ExternalAttachmentPayload>,
+        recipient_keys: List<String>,
+        own_seal: Pair<String, CharArray>?,
+    ): List<SendAttachmentPayload> {
         return attachments.map { att ->
             try {
                 val raw = android.util.Base64.decode(att.data, android.util.Base64.DEFAULT)
@@ -4316,7 +4329,11 @@ class MailRepository @Inject constructor(
                     meta_json
                 }
 
-                val (sender_encrypted_meta, sender_meta_nonce) = encrypt_envelope(meta_json)
+                val (sender_encrypted_meta, sender_meta_nonce) = own_seal?.let { (key, chars) ->
+                    withContext(Dispatchers.Default) {
+                        org.astermail.android.crypto.SentCopySeal.seal(meta_json, key, chars)
+                    }
+                } ?: encrypt_envelope(meta_json)
 
                 SendAttachmentPayload(
                     encrypted_data = android.util.Base64.encodeToString(
@@ -4737,18 +4754,23 @@ class MailRepository @Inject constructor(
     }
 
     private suspend fun seal_sent_envelope_when_enabled(json: String): Pair<String, String>? {
-        val identity_key = session_key_store.get_identity_key() ?: return null
-        val passphrase = session_key_store.get_passphrase() ?: return null
-        val chars = org.astermail.android.util.passphrase_chars(passphrase)
-        passphrase.fill(0)
+        val (identity_key, chars) = own_seal_inputs() ?: return null
         return try {
-            if (!account_key_capabilities.format_writes()) return null
             withContext(Dispatchers.Default) {
                 org.astermail.android.crypto.SentCopySeal.seal(json, identity_key, chars)
             }
         } finally {
             chars.fill(' ')
         }
+    }
+
+    private suspend fun own_seal_inputs(): Pair<String, CharArray>? {
+        val identity_key = session_key_store.get_identity_key() ?: return null
+        if (!account_key_capabilities.format_writes()) return null
+        val passphrase = session_key_store.get_passphrase() ?: return null
+        val chars = org.astermail.android.util.passphrase_chars(passphrase)
+        passphrase.fill(0)
+        return Pair(identity_key, chars)
     }
 
     private fun encrypt_envelope(json: String): Pair<String, String> {
