@@ -1140,6 +1140,7 @@ class AuthRepository @Inject constructor(
             val recovered_keks = mutableListOf<String>()
             val recovered_ratchet = mutableListOf<org.json.JSONObject>()
             val unlocked = mutableListOf<String>()
+            val old_vaults = mutableListOf<org.json.JSONObject>()
 
             try {
                 for (set in sets) {
@@ -1171,12 +1172,24 @@ class AuthRepository @Inject constructor(
                     recovered_keks.addAll(harvest_storage_keks(old_vault, derived))
                     recovered_ratchet.addAll(retain_previous_ratchet_keys(old_vault))
                     unlocked.add(set.id)
+                    old_vaults.add(old_vault)
                 }
             } finally {
                 old_password_bytes.fill(0)
             }
 
             if (unlocked.isEmpty()) return 0
+
+            val old_password_chars = old_password.toCharArray()
+            val current_chars = passphrase_chars(passphrase)
+            val identity_keys = try {
+                merge_recovered_identity_keys(vault_obj, old_vaults, old_password_chars, current_chars)
+            } finally {
+                old_password_chars.fill(' ')
+                current_chars.fill(' ')
+            }
+            vault_obj.put("previous_keys", org.json.JSONArray(identity_keys.previous_keys))
+            vault_obj.put("legacy_identity_keys", org.json.JSONArray(identity_keys.legacy_identity_keys))
 
             vault_obj.put(
                 "legacy_keks",
@@ -1216,7 +1229,7 @@ class AuthRepository @Inject constructor(
             session_key_store.put_encrypted_vault(encrypted_vault, vault_nonce)
             absorb_previous_keys_and_keks(vault_obj)
 
-            for (id in unlocked) {
+            unlocked.filterIndexed { index, _ -> identity_keys.absorbed.getOrElse(index) { false } }.forEach { id ->
                 runCatching { recovery_api.consume_inactive_key_set(ConsumeInactiveKeySetRequest(id)) }
             }
 
