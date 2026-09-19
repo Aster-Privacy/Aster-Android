@@ -24,7 +24,9 @@ package org.astermail.android.storage
 import org.astermail.android.storage.outbox.PendingSendEntity
 import org.astermail.android.storage.search.AsterDatabase
 import org.astermail.android.storage.search.DecryptedMailEntity
+import org.astermail.android.storage.search.FolderRowEntity
 import org.astermail.android.storage.search.aster_database_version
+import org.astermail.android.storage.search.create_folder_row_cache
 import org.astermail.android.storage.search.migration_columns
 import org.astermail.android.storage.search.migration_statements
 import org.junit.Assert.assertEquals
@@ -35,6 +37,7 @@ class AsterDatabaseMigrationCoverageTest {
 
     private val decrypted_mail_table = "decrypted_mail_cache"
     private val pending_send_table = "pending_send_queue"
+    private val folder_row_table = "folder_row_cache"
 
     private val decrypted_mail_baseline = listOf(
         "id",
@@ -63,10 +66,10 @@ class AsterDatabaseMigrationCoverageTest {
         migration_columns.entries.sortedBy { it.key }
             .flatMap { entry -> entry.value.filter { it.table == table }.map { it.name } }
 
-    private fun created_columns(statement: String): List<String> =
+    private fun created_columns(statement: String, table: String = pending_send_table): List<String> =
         Regex("`([a-z_]+)`").findAll(statement)
             .map { it.groupValues[1] }
-            .filterNot { it == pending_send_table }
+            .filterNot { it == table }
             .distinct()
             .toList()
 
@@ -99,6 +102,22 @@ class AsterDatabaseMigrationCoverageTest {
         val added = migration_columns.getValue(5)
 
         assertTrue(added.any { it.table == pending_send_table && it.name == "sending_started_at_ms" })
+    }
+
+    @Test
+    fun every_folder_row_column_is_created_by_the_folder_cache_migration() {
+        val expected = entity_columns(FolderRowEntity::class.java).sorted()
+        val actual = created_columns(create_folder_row_cache, folder_row_table).sorted()
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun the_folder_cache_table_is_created_by_the_latest_migration_step() {
+        val statements = migration_statements.getValue(aster_database_version)
+
+        assertTrue(statements.contains(create_folder_row_cache))
+        assertTrue(create_folder_row_cache.contains("PRIMARY KEY(`folder`, `id`)"))
     }
 
     @Test

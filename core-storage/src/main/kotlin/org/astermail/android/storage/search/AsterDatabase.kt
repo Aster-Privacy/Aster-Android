@@ -28,12 +28,48 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.outbox.PendingSendEntity
 
-const val aster_database_version = 14
+const val aster_database_version = 15
 
 data class schema_column(val table: String, val name: String, val definition: String)
 
 private const val decrypted_mail_table = "decrypted_mail_cache"
 private const val pending_send_table = "pending_send_queue"
+
+const val create_folder_row_cache =
+    "CREATE TABLE IF NOT EXISTS `folder_row_cache` (" +
+        "`folder` TEXT NOT NULL, " +
+        "`id` TEXT NOT NULL, " +
+        "`position` INTEGER NOT NULL, " +
+        "`thread_token` TEXT, " +
+        "`thread_message_count` INTEGER NOT NULL, " +
+        "`sender_name` TEXT NOT NULL, " +
+        "`sender_email` TEXT NOT NULL, " +
+        "`subject` TEXT NOT NULL, " +
+        "`preview` TEXT NOT NULL, " +
+        "`timestamp` TEXT NOT NULL, " +
+        "`is_read` INTEGER NOT NULL, " +
+        "`is_starred` INTEGER NOT NULL, " +
+        "`is_encrypted` INTEGER NOT NULL, " +
+        "`has_attachments` INTEGER NOT NULL, " +
+        "`attachment_count` INTEGER NOT NULL, " +
+        "`is_trashed` INTEGER NOT NULL, " +
+        "`is_archived` INTEGER NOT NULL, " +
+        "`is_spam` INTEGER NOT NULL, " +
+        "`is_pinned` INTEGER NOT NULL, " +
+        "`labels` TEXT NOT NULL, " +
+        "`tag_tokens` TEXT, " +
+        "`category` TEXT NOT NULL, " +
+        "`received_on` TEXT, " +
+        "`display_sender_name` TEXT, " +
+        "`display_sender_email` TEXT, " +
+        "`to_addresses` TEXT, " +
+        "`routing_token` TEXT, " +
+        "`item_type` TEXT, " +
+        "`is_external` INTEGER NOT NULL, " +
+        "`system_origin` INTEGER NOT NULL, " +
+        "`has_recipient_key` INTEGER, " +
+        "`cached_at` INTEGER NOT NULL, " +
+        "PRIMARY KEY(`folder`, `id`))"
 
 private const val create_pending_send_queue =
     "CREATE TABLE IF NOT EXISTS `pending_send_queue` (" +
@@ -86,6 +122,7 @@ val migration_statements: Map<Int, List<String>> = mapOf(
     4 to listOf(create_pending_send_queue),
     8 to listOf("DELETE FROM decrypted_mail_cache"),
     10 to listOf("DELETE FROM decrypted_mail_cache"),
+    15 to listOf(create_folder_row_cache),
 )
 
 private fun has_table(db: SupportSQLiteDatabase, table: String): Boolean =
@@ -124,13 +161,14 @@ private fun step_migration(to_version: Int): Migration = object : Migration(to_v
 }
 
 @Database(
-    entities = [DecryptedMailEntity::class, PendingSendEntity::class],
+    entities = [DecryptedMailEntity::class, PendingSendEntity::class, FolderRowEntity::class],
     version = aster_database_version,
     exportSchema = false,
 )
 abstract class AsterDatabase : RoomDatabase() {
     abstract fun decrypted_mail_dao(): DecryptedMailDao
     abstract fun pending_send_dao(): PendingSendDao
+    abstract fun folder_row_dao(): FolderRowDao
 
     companion object {
         val migration_1_2 = step_migration(2)
@@ -146,6 +184,7 @@ abstract class AsterDatabase : RoomDatabase() {
         val migration_11_12 = step_migration(12)
         val migration_12_13 = step_migration(13)
         val migration_13_14 = step_migration(14)
+        val migration_14_15 = step_migration(15)
 
         val all_migrations: Array<Migration> = arrayOf(
             migration_1_2,
@@ -161,6 +200,7 @@ abstract class AsterDatabase : RoomDatabase() {
             migration_11_12,
             migration_12_13,
             migration_13_14,
+            migration_14_15,
         )
     }
 }
