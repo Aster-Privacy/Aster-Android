@@ -177,4 +177,11 @@ class EmailBodyNativeTest {
         assertEquals(640, declared_content_width("<table width=\"640\"><tr><td>Hello</td></tr></table>"))
     }
 
+    @Test
+    fun a_fixed_width_capped_by_a_fluid_max_width_is_already_responsive() {
+        val body = "<div style=\"width:100%\"><div style=\"width:640px;max-width:100%;margin:0 auto\"><p>Welcome</p></div></div>"
+
+        assertNull(declared_content_width(body))
+    }
+
 }

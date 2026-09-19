@@ -1509,7 +1509,7 @@ fun MailDetailScreen(
                     }
                 }
 
-                item { Spacer(Modifier.height(bottom_bar_height)) }
+                item { Spacer(Modifier.height(bottom_bar_height + 16.dp)) }
             }
             detail_skeleton_overlay(
                 visible = email == null,
