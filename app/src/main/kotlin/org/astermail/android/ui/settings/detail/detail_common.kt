@@ -83,6 +83,8 @@ import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.aster_haptic
+import org.astermail.android.design.aster_tap_feedback
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
@@ -307,10 +309,23 @@ internal fun settings_toggle_row(
     on_change: (Boolean) -> Unit,
 ) {
     val colors = AsterMaterial.colors
+    val view = androidx.compose.ui.platform.LocalView.current
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = on_change)
+            .toggleable(
+                value = checked,
+                enabled = enabled,
+                role = Role.Switch,
+                indication = androidx.compose.material3.ripple(),
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                onValueChange = { value ->
+                    view.aster_tap_feedback(
+                        if (value) aster_haptic.toggle_on else aster_haptic.toggle_off,
+                    )
+                    on_change(value)
+                },
+            )
             .then(if (test_tag != null) Modifier.testTag(test_tag) else Modifier)
             .heightIn(min = settings_row_min_height)
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
