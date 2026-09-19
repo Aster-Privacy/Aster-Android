@@ -101,6 +101,7 @@ sealed class CurrentVaultResult {
 data class AccountKeyCapabilityFlags(
     val format_writes: Boolean,
     val data_conversion: Boolean,
+    val device_recovery: Boolean = false,
 )
 
 data class AccountDataConversionStatus(
@@ -195,7 +196,11 @@ interface KeysApi {
     ): AccountKeyTokenResponse? = null
     suspend fun get_account_key_format_writes(): Boolean = false
     suspend fun get_account_key_capabilities(): AccountKeyCapabilityFlags =
-        AccountKeyCapabilityFlags(format_writes = get_account_key_format_writes(), data_conversion = false)
+        AccountKeyCapabilityFlags(
+            format_writes = get_account_key_format_writes(),
+            data_conversion = false,
+            device_recovery = false,
+        )
     suspend fun get_account_data_conversion(): AccountDataConversionStatus? = null
     suspend fun convert_sent_envelope(
         item_id: String,
@@ -348,7 +353,11 @@ class KeysApiImpl(private val client: ApiClient) : KeysApi {
     }
 
     override suspend fun get_account_key_capabilities(): AccountKeyCapabilityFlags {
-        val none = AccountKeyCapabilityFlags(format_writes = false, data_conversion = false)
+        val none = AccountKeyCapabilityFlags(
+            format_writes = false,
+            data_conversion = false,
+            device_recovery = false,
+        )
         val response = runCatching { client.http.get("${client.base_url}$base/account-key/capabilities") }
             .getOrNull() ?: return none
         if (response.status.value !in 200..299) return none
@@ -434,10 +443,15 @@ private fun json_string(value: JsonElement?): String? {
 
 fun parse_account_key_capabilities(body: String): AccountKeyCapabilityFlags {
     val element = runCatching { Json.parseToJsonElement(body) }.getOrNull() as? JsonObject
-        ?: return AccountKeyCapabilityFlags(format_writes = false, data_conversion = false)
+        ?: return AccountKeyCapabilityFlags(
+            format_writes = false,
+            data_conversion = false,
+            device_recovery = false,
+        )
     return AccountKeyCapabilityFlags(
         format_writes = json_boolean_true(element["format_writes"]),
         data_conversion = json_boolean_true(element["data_conversion"]),
+        device_recovery = json_boolean_true(element["device_recovery"]),
     )
 }
 

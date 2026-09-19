@@ -133,6 +133,7 @@ class MailViewModel @Inject constructor(
     private val identity_pins: org.astermail.android.mail.ratchet.RatchetIdentityPinStore,
     private val sent_mail_reseal_finisher: SentMailResealFinisher,
     private val account_data_conversion: AccountDataConversion,
+    private val device_recovery: org.astermail.android.auth.DeviceRecovery,
 ) : ViewModel() {
 
     val identity_changes: StateFlow<List<org.astermail.android.mail.ratchet.IdentityChange>> =
@@ -4523,6 +4524,7 @@ class MailViewModel @Inject constructor(
             runCatching { sent_mail_reseal_finisher.finish_pending() }
         }
         runCatching { account_data_conversion.schedule() }
+        runCatching { device_recovery.schedule() }
         viewModelScope.launch {
             org.astermail.android.api.network.low_network_state.is_active
                 .drop(1)

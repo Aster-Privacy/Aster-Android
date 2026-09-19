@@ -48,7 +48,7 @@ data class RecoveredIdentityKeys(
 fun vault_identity_key(vault: JSONObject): String =
     vault.optString("identity_key", "").ifBlank { vault.optString("identity_private_key", "") }
 
-private fun json_strings(array: JSONArray?): List<String> {
+fun json_strings(array: JSONArray?): List<String> {
     if (array == null) return emptyList()
     return (0 until array.length()).mapNotNull { array.optString(it, "").takeIf { value -> value.isNotEmpty() } }
 }
@@ -108,12 +108,45 @@ private fun unique_by_fingerprint(keys: List<String>): List<String> {
     return result
 }
 
+fun unlock_pgp_key(armored: String, passphrase: CharArray): String {
+    val ring = read_secret_ring(armored)
+    val decryptor = BcPBESecretKeyDecryptorBuilder(BcPGPDigestCalculatorProvider()).build(passphrase)
+    requireNotNull(ring.secretKey.extractPrivateKey(decryptor))
+    val unlocked = PGPSecretKeyRing.copyWithNewPassword(ring, decryptor, null)
+    val out = ByteArrayOutputStream()
+    ArmoredOutputStream(out).use { unlocked.encode(it) }
+    return out.toString(Charsets.UTF_8.name())
+}
+
+fun lock_unlocked_pgp_key(armored: String, passphrase: CharArray): String {
+    val ring = read_secret_ring(armored)
+    val digests = BcPGPDigestCalculatorProvider()
+    requireNotNull(ring.secretKey.extractPrivateKey(null))
+    val encryptor = BcPBESecretKeyEncryptorBuilder(
+        SymmetricKeyAlgorithmTags.AES_256,
+        digests.get(HashAlgorithmTags.SHA256),
+    ).build(passphrase)
+    val locked = PGPSecretKeyRing.copyWithNewPassword(ring, null, encryptor)
+    val out = ByteArrayOutputStream()
+    ArmoredOutputStream(out).use { locked.encode(it) }
+    return out.toString(Charsets.UTF_8.name())
+}
+
 fun merge_recovered_identity_keys(
     vault: JSONObject,
     old_vaults: List<JSONObject>,
     old_passphrase: CharArray,
     current_passphrase: CharArray,
     reprotect: (String, CharArray, CharArray) -> String = ::reprotect_pgp_key,
+): RecoveredIdentityKeys =
+    merge_identity_keys_with(vault, old_vaults) { armored ->
+        reprotect(armored, old_passphrase, current_passphrase)
+    }
+
+fun merge_identity_keys_with(
+    vault: JSONObject,
+    old_vaults: List<JSONObject>,
+    relock: (String) -> String,
 ): RecoveredIdentityKeys {
     val recovered_per_vault = mutableListOf<List<String>>()
     val identity_recovered = mutableListOf<Boolean>()
@@ -127,7 +160,7 @@ fun merge_recovered_identity_keys(
         old_materials.addAll(vault_identity_key_materials(old_vault))
 
         for (armored in unique_non_empty(listOf(identity) + json_strings(old_vault.optJSONArray("previous_keys")))) {
-            val next = runCatching { reprotect(armored, old_passphrase, current_passphrase) }.getOrNull() ?: continue
+            val next = runCatching { relock(armored) }.getOrNull() ?: continue
             reprotected.add(next)
             if (armored == identity) identity_ok = true
         }
