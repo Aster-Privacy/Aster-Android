@@ -2812,7 +2812,7 @@ internal fun inbox_top_bar(
                     .clip(SquircleShape(26.dp))
                     .background(search_field_bg_color(colors))
                     .clickable { on_open_search() }
-                    .padding(start = AsterSpacing.lg, end = AsterSpacing.sm)
+                    .padding(horizontal = AsterSpacing.lg)
                     .testTag("search"),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
@@ -2845,24 +2845,24 @@ internal fun inbox_top_bar(
                     },
                     modifier = Modifier.weight(1f),
                 )
-                val settings_description = stringResource(R.string.settings)
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .clickable(onClick = on_open_settings)
-                        .semantics { contentDescription = settings_description }
-                        .testTag("account_avatar"),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    SenderAvatar(
-                        email = account_email,
-                        name = account_name,
-                        size = 32.dp,
-                        profile_picture_url = account_profile_picture,
-                        profile_color = account_profile_color,
-                    )
-                }
+            }
+            val settings_description = stringResource(R.string.settings)
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .clickable(onClick = on_open_settings)
+                    .semantics { contentDescription = settings_description }
+                    .testTag("account_avatar"),
+                contentAlignment = Alignment.Center,
+            ) {
+                SenderAvatar(
+                    email = account_email,
+                    name = account_name,
+                    size = 32.dp,
+                    profile_picture_url = account_profile_picture,
+                    profile_color = account_profile_color,
+                )
             }
         }
         if (selection_content != null) {
