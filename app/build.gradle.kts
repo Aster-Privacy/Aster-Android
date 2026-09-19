@@ -34,7 +34,7 @@ android {
         applicationId = "org.astermail.android"
         minSdk = 26
         targetSdk = 36
-        versionCode = 188
+        versionCode = 189
         versionName = "0.6.178"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
