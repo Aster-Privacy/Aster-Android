@@ -844,26 +844,12 @@ internal fun theme_swatch(
 
 @Composable
 internal fun plan_pill(text: String, modifier: Modifier = Modifier) {
-    val accent = AsterMaterial.colors.accent_blue
-    val brush = remember(accent) {
-        Brush.verticalGradient(
-            listOf(
-                lerp(accent, Color.Black, 0.04f),
-                lerp(accent, Color(0xFF05070F), 0.26f),
-            ),
-        )
-    }
-    Text(
+    org.astermail.android.design.components.AsterPlanTag(
         text = text,
-        color = Color.White,
-        fontSize = 11.sp,
-        fontWeight = FontWeight.SemiBold,
-        maxLines = 1,
-        modifier = modifier
-            .border(2.dp, AsterMaterial.colors.bg_card.copy(alpha = 1f), RoundedCornerShape(999.dp))
-            .clip(RoundedCornerShape(999.dp))
-            .background(brush)
-            .padding(horizontal = 8.dp, vertical = 2.dp),
+        modifier = modifier,
+        font_size = 11.sp,
+        horizontal_padding = 7.dp,
+        vertical_padding = 2.dp,
     )
 }
 
