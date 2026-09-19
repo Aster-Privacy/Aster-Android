@@ -36,7 +36,9 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CancellationException
+import org.astermail.android.mail.MailReadEvents
 import org.astermail.android.mail.MailRepository
+import org.astermail.android.mail.SearchIndexManager
 import java.util.concurrent.TimeUnit
 
 enum class MailActionAttempt { Done, Retry, GiveUp }
@@ -50,25 +52,41 @@ class MailNotificationActionWorker(
         val item_id = inputData.getString(KEY_ITEM_ID)?.takeIf { it.isNotBlank() } ?: return Result.success()
         val action = inputData.getString(KEY_ACTION) ?: return Result.success()
         if (action !in supported_actions) return Result.success()
-        val repo = try {
+        val entry_point = try {
             EntryPointAccessors.fromApplication(
                 context.applicationContext,
                 MailNotificationActionEntryPoint::class.java,
-            ).mail_repository()
+            )
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Throwable) {
             null
+        }
+        val repo = entry_point?.mail_repository()
+        val search_index = entry_point?.search_index_manager()
+        val is_mark_read = action == ACTION_MARK_READ
+        if (is_mark_read && runAttemptCount == 0) {
+            runCatching { search_index?.update_read(item_id, true) }
+            MailReadEvents.emit(MailReadEvents.Event.Applied(item_id))
         }
         val succeeded = repo != null && when (action) {
             ACTION_ARCHIVE -> repo.archive(listOf(item_id))
             ACTION_TRASH -> repo.trash(listOf(item_id))
             else -> repo.mark_read(item_id, true)
         }.isSuccess
-        return when (attempt_result(succeeded, runAttemptCount)) {
+        val outcome = attempt_result(succeeded, runAttemptCount)
+        if (is_mark_read && outcome == MailActionAttempt.Done) {
+            runCatching { search_index?.update_read(item_id, true) }
+            MailReadEvents.emit(MailReadEvents.Event.Confirmed(item_id))
+        }
+        return when (outcome) {
             MailActionAttempt.Done -> Result.success()
             MailActionAttempt.Retry -> Result.retry()
             MailActionAttempt.GiveUp -> {
+                if (is_mark_read) {
+                    runCatching { search_index?.update_read(item_id, false) }
+                    MailReadEvents.emit(MailReadEvents.Event.Failed(item_id))
+                }
                 runCatching { MailPollingWorker.show_action_failed(context, item_id, action) }
                 Result.failure()
             }
@@ -79,6 +97,7 @@ class MailNotificationActionWorker(
     @InstallIn(SingletonComponent::class)
     interface MailNotificationActionEntryPoint {
         fun mail_repository(): MailRepository
+        fun search_index_manager(): SearchIndexManager
     }
 
     companion object {

@@ -10,4 +10,6 @@
     <string name="selection_scope_offer_categories">Tout sélectionner : %1$d dans %2$s, toutes catégories comprises</string>
     <string name="selection_scope_confirmed">Les %1$d de %2$s sont sélectionnés</string>
     <string name="inbox_search_in_category">Rechercher dans %1$s</string>
+    <string name="inbox_a11y_state_read">Lu</string>
+    <string name="inbox_a11y_state_unread">Non lu</string>
 </resources>

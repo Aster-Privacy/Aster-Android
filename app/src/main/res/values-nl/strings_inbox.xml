@@ -10,4 +10,6 @@
     <string name="selection_scope_offer_categories">Alle %1$d in %2$s selecteren, inclusief elke categorie</string>
     <string name="selection_scope_confirmed">Alle %1$d in %2$s zijn geselecteerd</string>
     <string name="inbox_search_in_category">Zoeken in %1$s</string>
+    <string name="inbox_a11y_state_read">Gelezen</string>
+    <string name="inbox_a11y_state_unread">Ongelezen</string>
 </resources>

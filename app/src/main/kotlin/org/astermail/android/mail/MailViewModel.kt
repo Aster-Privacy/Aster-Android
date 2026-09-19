@@ -66,6 +66,8 @@ private const val STATS_TTL_MS = 30_000L
 private const val STATS_DEBOUNCE_MS = 1_200L
 private const val STATS_DIRTY_MS = 3_000L
 private const val OVERRIDE_TTL_MS = 30_000L
+private const val READ_OVERRIDE_TTL_MS = 10 * 60_000L
+private const val READ_CONFIRM_GRACE_MS = 15_000L
 private const val DECRYPT_RETRY_TIMEOUT_MS = 20_000L
 private const val SEND_GUARD_WINDOW_MS = 30_000L
 private const val LOAD_MORE_FAILURE_LIMIT = 3
@@ -96,6 +98,8 @@ data class InboxUiState(
     val current_folder: String = "inbox",
     val stats: MailUserStatsResponse? = null,
     val is_refreshing: Boolean = false,
+    val list_loaded_at: Long = 0L,
+    val stats_loaded_at: Long = 0L,
 )
 
 data class ThreadUiState(
@@ -388,12 +392,37 @@ class MailViewModel @Inject constructor(
     private var account_generation = 0
     private val star_overrides = TimedOverrides(OVERRIDE_TTL_MS)
     private val pin_overrides = TimedOverrides(OVERRIDE_TTL_MS)
-    private val read_overrides = TimedOverrides(OVERRIDE_TTL_MS)
+    internal var override_clock_ms: () -> Long = { System.currentTimeMillis() }
+    private val read_overrides = TimedOverrides(READ_OVERRIDE_TTL_MS) { override_clock_ms() }
     private val star_sequence = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val read_sequence = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private var mutation_sequence = 0L
     @Volatile private var stats_dirty_until = 0L
     private val mark_read_jobs = java.util.concurrent.ConcurrentHashMap<String, Job>()
+
+    private data class ReadFlip(
+        val to_read: Boolean,
+        val inbox_counted: Boolean,
+        val folder_tokens: Set<String>,
+        val confirmed_at: Long? = null,
+        val stats_absorbed: Boolean = false,
+        val labels_absorbed: Boolean = false,
+    )
+
+    private val read_flips = java.util.concurrent.ConcurrentHashMap<String, ReadFlip>()
+    private val _label_unread_deltas = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val label_unread_deltas: StateFlow<Map<String, Int>> = _label_unread_deltas.asStateFlow()
+    private val opened_mail_ids = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+    private val opened_thread_ids = java.util.concurrent.ConcurrentHashMap<String, Set<String>>()
+    private val opened_synced_ids = java.util.concurrent.ConcurrentHashMap<String, Set<String>>()
+    private val notification_reads = java.util.concurrent.ConcurrentHashMap<String, LocalRead>()
+    private val opened_unread_at_open = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+    private val failed_open_ids = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+    private val index_read_overlay: (String) -> Boolean? = { id -> read_overrides[id] }
+
+    init {
+        search_index_manager.add_read_overlay(index_read_overlay)
+    }
 
     data class ToastEvent(
         val message: String,
@@ -462,6 +491,18 @@ class MailViewModel @Inject constructor(
         star_overrides.clear()
         pin_overrides.clear()
         read_overrides.clear()
+        read_flips.clear()
+        _label_unread_deltas.value = emptyMap()
+        mark_read_jobs.values.forEach { it.cancel() }
+        mark_read_jobs.clear()
+        opened_mail_ids.clear()
+        opened_thread_ids.clear()
+        opened_synced_ids.clear()
+        notification_reads.clear()
+        opened_unread_at_open.clear()
+        failed_open_ids.clear()
+        labels_token = null
+        replace_on_revalidate = false
         _inbox_state.value = InboxUiState()
         _thread_state.value = ThreadUiState()
         _search_state.value = SearchUiState()
@@ -475,6 +516,11 @@ class MailViewModel @Inject constructor(
         viewModelScope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
             runCatching { search_index_manager.clear() }
         }
+    }
+
+    override fun onCleared() {
+        search_index_manager.remove_read_overlay(index_read_overlay)
+        super.onCleared()
     }
 
     private fun apply_star_overrides(items: List<InboxItem>): List<InboxItem> {
@@ -601,20 +647,36 @@ class MailViewModel @Inject constructor(
     fun set_list_order(order: String?) {
         if (list_order == order) return
         list_order = order
-        val folder = _inbox_state.value.current_folder
-        inbox_load_job?.cancel()
-        silent_revalidate_job?.cancel()
         folder_cache.clear()
         folder_cache_time.clear()
-        _inbox_state.value = _inbox_state.value.copy(
-            items = emptyList(),
-            is_loading = true,
-            initial = true,
-            error = null,
-            has_more = false,
-            next_cursor = null,
-        )
-        load_inbox(folder, force = true)
+        reload_keeping_items(replace_items = true)
+    }
+
+    @Volatile private var replace_on_revalidate = false
+
+    private fun previous_for_merge(items: List<InboxItem>): List<InboxItem> {
+        if (!replace_on_revalidate) return items
+        replace_on_revalidate = false
+        return emptyList()
+    }
+
+    private fun reload_keeping_items(replace_items: Boolean) {
+        val current = _inbox_state.value
+        val folder = current.current_folder
+        if (current.items.isEmpty()) {
+            inbox_load_job?.cancel()
+            silent_revalidate_job?.cancel()
+            folder_cache.remove(folder)
+            folder_cache_time.remove(folder)
+            load_inbox(folder, force = true)
+            return
+        }
+        if (replace_items) replace_on_revalidate = true
+        inbox_load_job?.cancel()
+        if (current.is_loading || current.initial) {
+            _inbox_state.value = current.copy(is_loading = false, initial = false)
+        }
+        silent_revalidate(folder)
     }
 
     fun set_page_size(size: Int) {
@@ -625,20 +687,7 @@ class MailViewModel @Inject constructor(
         )
         if (page_size == clamped) return
         page_size = clamped
-        val folder = _inbox_state.value.current_folder
-        inbox_load_job?.cancel()
-        silent_revalidate_job?.cancel()
-        folder_cache.clear()
-        folder_cache_time.clear()
-        _inbox_state.value = _inbox_state.value.copy(
-            items = emptyList(),
-            is_loading = true,
-            initial = true,
-            error = null,
-            has_more = false,
-            next_cursor = null,
-        )
-        load_inbox(folder, force = true)
+        reload_keeping_items(replace_items = false)
     }
 
     fun load_inbox(folder: String = "inbox", force: Boolean = false) {
@@ -683,6 +732,7 @@ class MailViewModel @Inject constructor(
             initial = true,
             current_folder = folder,
             stats = current.stats,
+            stats_loaded_at = current.stats_loaded_at,
         )
         val load_gen = ++inbox_load_generation
         inbox_load_job = viewModelScope.launch {
@@ -741,7 +791,7 @@ class MailViewModel @Inject constructor(
                         )
                     }
                     val prior = _inbox_state.value
-                    val merge = merge_with_previous(page, prior.items, folder)
+                    val merge = merge_with_previous(page, previous_for_merge(prior.items), folder)
                     val merged_items = apply_demo_overlay(
                         apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items))),
                         folder,
@@ -750,13 +800,14 @@ class MailViewModel @Inject constructor(
                         items = merged_items,
                         is_loading = false,
                         initial = false,
+                        list_loaded_at = override_clock_ms(),
                         has_more = if (merge.carried_deeper && prior.next_cursor != null) prior.has_more else page.has_more,
                         next_cursor = if (merge.carried_deeper && prior.next_cursor != null) prior.next_cursor else page.next_cursor,
                         total = page.total ?: prior.total,
                     )
                     folder_cache[folder] = _inbox_state.value
                     folder_cache_time[folder] = System.currentTimeMillis()
-                    search_index_manager.on_items_loaded(page.items)
+                    search_index_manager.on_items_loaded(apply_read_overrides(page.items))
                     if (folder == "inbox" && list_order == null) search_index_manager.mark_inbox_synced()
                     reconcile_cache_window(folder, page)
                     search_index_manager.ensure_index_built()
@@ -813,7 +864,7 @@ class MailViewModel @Inject constructor(
             if (_inbox_state.value.is_refreshing) return@launch
             result.onSuccess { page ->
                 val prior = _inbox_state.value
-                val merge = merge_with_previous(page, prior.items, folder)
+                val merge = merge_with_previous(page, previous_for_merge(prior.items), folder)
                 val merged_items = apply_demo_overlay(
                     apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items))),
                     folder,
@@ -823,13 +874,14 @@ class MailViewModel @Inject constructor(
                     is_loading = false,
                     initial = false,
                     error = null,
+                    list_loaded_at = override_clock_ms(),
                     has_more = if (merge.carried_deeper && prior.next_cursor != null) prior.has_more else page.has_more,
                     next_cursor = if (merge.carried_deeper && prior.next_cursor != null) prior.next_cursor else page.next_cursor,
                     total = page.total ?: prior.total,
                 )
                 folder_cache[folder] = _inbox_state.value
                 folder_cache_time[folder] = System.currentTimeMillis()
-                search_index_manager.on_items_loaded(page.items)
+                search_index_manager.on_items_loaded(apply_read_overrides(page.items))
                 if (folder == "inbox" && list_order == null) search_index_manager.mark_inbox_synced()
                 reconcile_cache_window(folder, page)
                 search_index_manager.ensure_index_built()
@@ -935,7 +987,7 @@ class MailViewModel @Inject constructor(
                 )
                 folder_cache[started_folder] = _inbox_state.value
                 folder_cache_time[started_folder] = System.currentTimeMillis()
-                search_index_manager.on_items_loaded(page.items)
+                search_index_manager.on_items_loaded(apply_read_overrides(page.items))
                 return@launch
             }
         }
@@ -1006,8 +1058,28 @@ class MailViewModel @Inject constructor(
         stats_job = viewModelScope.launch {
             delay(maxOf(STATS_DEBOUNCE_MS, stats_dirty_until - System.currentTimeMillis()))
             last_stats_load_ms = System.currentTimeMillis()
+            val started = override_clock_ms()
             repository.get_stats().onSuccess { stats ->
-                _inbox_state.update { it.copy(stats = stats) }
+                val pending = read_flips.values.sumOf { flip ->
+                    val confirmed_at = flip.confirmed_at
+                    val step: Int = when {
+                        !flip.inbox_counted || (confirmed_at != null && confirmed_at <= started) -> 0
+                        flip.to_read -> -1
+                        else -> 1
+                    }
+                    step
+                }
+                read_flips.replaceAll { _, flip ->
+                    val confirmed_at = flip.confirmed_at
+                    if (confirmed_at != null && confirmed_at <= started) flip.copy(stats_absorbed = true) else flip
+                }
+                prune_read_flips()
+                _inbox_state.update {
+                    it.copy(
+                        stats = stats.copy(unread = (stats.unread + pending).coerceAtLeast(0)),
+                        stats_loaded_at = started,
+                    )
+                }
             }
         }
     }
@@ -1121,10 +1193,7 @@ class MailViewModel @Inject constructor(
         _thread_state.value = if (cur_thread.item?.id == item_id && cur_thread.messages.isNotEmpty()) {
             cur_thread.copy(is_loading = true, error = null)
         } else {
-            val seed = _inbox_state.value.items.find { it.id == item_id }
-                ?: folder_cache.values.firstNotNullOfOrNull { cached ->
-                    cached.items.find { it.id == item_id }
-                }
+            val seed = find_item(item_id)
             if (seed != null) {
                 ThreadUiState(
                     is_loading = true,
@@ -1144,6 +1213,7 @@ class MailViewModel @Inject constructor(
             } ?: Result.failure(Exception(context.getString(R.string.something_went_wrong)))
             if (thread_gen != thread_load_generation) return@launch
             val item = item_result.getOrNull()
+            if (item != null) resume_failed_open(item_id)
             val thread_token = item?.thread_token
             if (thread_token != null) {
                 val fallback = listOf(message_from_item_safe(item))
@@ -1196,7 +1266,11 @@ class MailViewModel @Inject constructor(
                 load_reactions(msgs)
             } else {
                 val keep = _thread_state.value
-                _thread_state.value = if (keep.item?.id == item_id && keep.messages.any { !it.is_body_pending }) {
+                val kept = keep.item?.id == item_id && keep.messages.any { !it.is_body_pending }
+                if (!kept && item_result.exceptionOrNull()?.let { is_cancellation(it) } != true) {
+                    undo_failed_open(item_id)
+                }
+                _thread_state.value = if (kept) {
                     keep.copy(is_loading = false, error = null)
                 } else {
                     ThreadUiState(
@@ -1343,178 +1417,236 @@ class MailViewModel @Inject constructor(
         _thread_state.value = thread.copy(item = item.copy(is_read = is_read))
     }
 
-    fun mark_read(item_id: String) {
-        if (item_id == DEMO_PHISH_ITEM_ID) return
-        MailPollingWorker.cancel_message_notification(context, item_id)
-        val item = _inbox_state.value.items.find { it.id == item_id }
-            ?: folder_cache.values.firstNotNullOfOrNull { c -> c.items.find { it.id == item_id } }
+    private data class LocalRead(val item: InboxItem?, val prior: Map<String, Boolean>, val sequence: Long)
+
+    private fun apply_local_read(item_id: String, is_read: Boolean): LocalRead {
+        if (is_read) MailPollingWorker.cancel_message_notification(context, item_id)
+        val item = find_item(item_id)
         val sequence = next_mutation_sequence()
         read_sequence[item_id] = sequence
-        adjust_stats_unread(inbox_unread_delta(prior_read_map(item_id, item), true))
-        read_overrides[item_id] = true
-        sync_thread_read_state(item_id, true)
-        patch_search_read(setOf(item_id), true)
+        val prior = prior_read_map(item_id, item)
+        adjust_stats_unread(inbox_unread_delta(prior, is_read))
+        note_read_flips(prior, is_read)
+        read_overrides[item_id] = is_read
+        sync_thread_read_state(item_id, is_read)
+        patch_search_read(setOf(item_id), is_read)
         _inbox_state.value = _inbox_state.value.copy(
             items = _inbox_state.value.items.map {
-                if (it.id == item_id) it.copy(is_read = true) else it
+                if (it.id == item_id) it.copy(is_read = is_read) else it
             },
         )
         folder_cache.replaceAll { _, cached ->
             cached.copy(items = cached.items.map {
-                if (it.id == item_id) it.copy(is_read = true) else it
+                if (it.id == item_id) it.copy(is_read = is_read) else it
             })
         }
         invalidate_caches(listOf("starred"))
+        return LocalRead(item, prior, sequence)
+    }
+
+    fun mark_read(item_id: String) {
+        if (item_id == DEMO_PHISH_ITEM_ID) return
+        sync_read(item_id, true, apply_local_read(item_id, true))
+    }
+
+    private fun sync_read(item_id: String, is_read: Boolean, local: LocalRead) {
+        val gen = account_generation
         viewModelScope.launch {
-            runCatching { search_index_manager.update_read(item_id, true) }
-            var result = repository.mark_read(item_id, true, item?.raw_item)
-            if (result.isFailure) {
+            runCatching { search_index_manager.update_read(item_id, is_read) }
+            var result = repository.mark_read(item_id, is_read, local.item?.raw_item)
+            if (result.isFailure && gen == account_generation) {
                 kotlinx.coroutines.delay(1500L)
-                result = repository.mark_read(item_id, true, item?.raw_item)
+                if (gen == account_generation) result = repository.mark_read(item_id, is_read, local.item?.raw_item)
             }
-            if (result.isFailure && read_sequence[item_id] == sequence) {
-                revert_read_state(item_id, item?.is_read ?: false)
+            if (gen != account_generation) return@launch
+            if (read_sequence[item_id] != local.sequence) return@launch
+            if (result.isSuccess) {
+                settle_read_flips(listOf(item_id), is_read)
+                runCatching { search_index_manager.update_read(item_id, is_read) }
+            } else {
+                val flipped = local.prior[item_id]?.let { it != is_read } ?: false
+                revert_read_state(item_id, local.item?.is_read ?: !is_read, flipped)
             }
         }
     }
 
-    fun mark_thread_read(item_id: String, message_ids: List<String>) {
-        val thread_token = _inbox_state.value.items.find { it.id == item_id }?.thread_token
-            ?: folder_cache.values.firstNotNullOfOrNull { c -> c.items.find { it.id == item_id } }?.thread_token
+    @Volatile private var last_mark_as_read: String? = null
+    @Volatile private var labels_token: Int? = null
+
+    fun on_user_opened_mail(item_id: String, mark_as_read: String?) {
+        if (item_id == DEMO_PHISH_ITEM_ID) return
+        if (mark_as_read != null) last_mark_as_read = mark_as_read
+        val delay_ms = when (mark_as_read ?: last_mark_as_read ?: return) {
+            "never" -> return
+            "immediate" -> 0L
+            "3_seconds" -> 3_000L
+            else -> 1_000L
+        }
+        mark_read_jobs.remove(item_id)?.cancel()
+        opened_mail_ids[item_id] = false
+        failed_open_ids.remove(item_id)
+        find_item(item_id)?.let { opened_unread_at_open[item_id] = !it.is_read }
+        if (delay_ms == 0L) {
+            mark_opened(item_id)
+            return
+        }
+        mark_read_jobs[item_id] = viewModelScope.launch {
+            kotlinx.coroutines.delay(delay_ms)
+            mark_read_jobs.remove(item_id)
+            mark_opened(item_id)
+        }
+    }
+
+    fun on_opened_thread_known(item_id: String, message_ids: List<String>) {
+        val ids = message_ids.toSet()
+        opened_thread_ids[item_id] = ids
+        if (opened_mail_ids[item_id] == true) mark_thread_siblings_read(item_id, ids)
+    }
+
+    fun cancel_opened_mail(item_id: String): Boolean {
+        val pending_job = mark_read_jobs.remove(item_id)
+        pending_job?.cancel()
+        opened_mail_ids.remove(item_id)
+        opened_thread_ids.remove(item_id)
+        opened_synced_ids.remove(item_id)
+        opened_unread_at_open.remove(item_id)
+        return pending_job != null
+    }
+
+    private fun undo_failed_open(item_id: String) {
+        val was_unread = opened_unread_at_open[item_id] ?: return
+        cancel_opened_mail(item_id)
+        if (!was_unread) return
+        failed_open_ids[item_id] = true
+        if (read_overrides[item_id] == true) mark_unread(item_id)
+    }
+
+    private fun resume_failed_open(item_id: String) {
+        opened_unread_at_open.remove(item_id)
+        if (failed_open_ids.remove(item_id) == null) return
+        on_user_opened_mail(item_id, null)
+    }
+
+    private fun mark_opened(item_id: String) {
+        if (!opened_mail_ids.containsKey(item_id)) return
         mark_read(item_id)
-        val siblings = if (thread_token.isNullOrBlank()) {
+        opened_mail_ids[item_id] = true
+        mark_thread_siblings_read(item_id, opened_thread_ids[item_id].orEmpty())
+    }
+
+    private fun mark_thread_siblings_read(item_id: String, message_ids: Set<String>) {
+        val synced = opened_synced_ids[item_id].orEmpty()
+        val thread_token = find_item(item_id)?.thread_token?.takeIf { it.isNotBlank() }
+        val thread_key = thread_token?.let { "thread:$it" }
+        val siblings = if (thread_token == null) {
             emptyList()
         } else {
-            (_inbox_state.value.items + folder_cache.values.flatMap { it.items })
+            (_inbox_state.value.items + folder_cache.values.flatMap { it.items } + _search_state.value.all_items)
                 .filter { it.thread_token == thread_token && !it.is_read }
                 .map { it.id }
         }
         val extra = (message_ids + siblings)
-            .filter { it != item_id && it != DEMO_PHISH_ITEM_ID }
+            .filter { it != item_id && it != DEMO_PHISH_ITEM_ID && it !in synced }
             .distinct()
         val thread = _thread_state.value
         val metadata_unread = thread.messages
-            .filter { !it.is_read && it.id != item_id && it.id != DEMO_PHISH_ITEM_ID }
+            .filter { !it.is_read && it.id != item_id && it.id != DEMO_PHISH_ITEM_ID && it.id !in synced }
             .map { it.raw_item }
+        val sync_thread = thread_key != null && thread_key !in synced
+        if (extra.isEmpty() && metadata_unread.isEmpty() && !sync_thread) return
+        opened_synced_ids[item_id] = synced + extra + metadata_unread.map { it.id } +
+            listOfNotNull(thread_key.takeIf { sync_thread })
         if (thread.messages.any { !it.is_read }) {
             _thread_state.value = thread.copy(
                 messages = thread.messages.map { if (it.is_read) it else it.copy(is_read = true) },
             )
         }
-        if (metadata_unread.isNotEmpty() || !thread_token.isNullOrBlank()) {
-            viewModelScope.launch {
-                val failed = mutableSetOf<String>()
-                metadata_unread.forEach { message ->
-                    if (repository.mark_thread_message_read(message, true).isFailure) {
-                        failed.add(message.id)
-                    }
-                }
-                if (!thread_token.isNullOrBlank()) {
-                    var result = repository.mark_thread_read_all(thread_token)
-                    if (result.isFailure) {
-                        kotlinx.coroutines.delay(1500L)
-                        result = repository.mark_thread_read_all(thread_token)
-                    }
-                    if (result.isFailure) {
-                        failed.addAll(metadata_unread.map { it.id })
-                    }
-                }
-                val revertable = failed.filter { it != item_id && it != DEMO_PHISH_ITEM_ID && it !in extra }
-                if (revertable.isNotEmpty()) {
-                    revert_read_overrides(revertable, false)
-                }
+        val prior = snapshot_read_states(extra)
+        val sequence = next_mutation_sequence()
+        val gen = account_generation
+        if (extra.isNotEmpty()) {
+            val extra_set = extra.toSet()
+            extra.forEach { read_sequence[it] = sequence }
+            MailPollingWorker.cancel_message_notifications(context, extra)
+            adjust_stats_unread(inbox_unread_delta(prior, true))
+            note_read_flips(prior, true)
+            extra.forEach { read_overrides[it] = true }
+            _inbox_state.value = _inbox_state.value.copy(
+                items = _inbox_state.value.items.map {
+                    if (it.id in extra_set) it.copy(is_read = true) else it
+                },
+            )
+            folder_cache.replaceAll { _, cached ->
+                cached.copy(items = cached.items.map {
+                    if (it.id in extra_set) it.copy(is_read = true) else it
+                })
             }
-        }
-        if (extra.isEmpty()) return
-        MailPollingWorker.cancel_message_notifications(context, extra)
-        extra.forEach { read_overrides[it] = true }
-        _inbox_state.value = _inbox_state.value.copy(
-            items = _inbox_state.value.items.map {
-                if (it.id in extra) it.copy(is_read = true) else it
-            },
-        )
-        folder_cache.replaceAll { _, cached ->
-            cached.copy(items = cached.items.map {
-                if (it.id in extra) it.copy(is_read = true) else it
-            })
+            patch_search_read(extra_set, true)
         }
         viewModelScope.launch {
-            runCatching { extra.forEach { search_index_manager.update_read(it, true) } }
-            var result = repository.mark_read_bulk(extra)
-            if (result.isFailure) {
-                kotlinx.coroutines.delay(1500L)
-                result = repository.mark_read_bulk(extra)
+            val failed = linkedSetOf<String>()
+            metadata_unread.forEach { message ->
+                if (repository.mark_thread_message_read(message, true).isFailure) failed.add(message.id)
             }
-            if (result.isFailure) {
-                val still_failing = extra.filter { repository.mark_read(it, true).isFailure }
-                if (still_failing.isNotEmpty()) {
-                    revert_read_overrides(still_failing, false)
+            if (sync_thread && thread_token != null) {
+                var result = repository.mark_thread_read_all(thread_token)
+                if (result.isFailure) {
+                    kotlinx.coroutines.delay(1500L)
+                    result = repository.mark_thread_read_all(thread_token)
                 }
+                if (result.isFailure) failed.addAll(metadata_unread.map { it.id })
             }
+            if (extra.isNotEmpty()) {
+                runCatching { extra.forEach { search_index_manager.update_read(it, true) } }
+                var result = repository.mark_read_bulk(extra)
+                if (result.isFailure) {
+                    kotlinx.coroutines.delay(1500L)
+                    result = repository.mark_read_bulk(extra)
+                }
+                val still_failing = if (result.isFailure) {
+                    extra.filter { repository.mark_read(it, true).isFailure }.toSet()
+                } else {
+                    emptySet()
+                }
+                if (gen != account_generation) return@launch
+                failed.removeAll(extra.toSet() - still_failing)
+                failed.addAll(still_failing)
+                val confirmed = extra.filter { it !in still_failing && read_sequence[it] == sequence }
+                settle_read_flips(confirmed, true)
+                runCatching { confirmed.forEach { search_index_manager.update_read(it, true) } }
+            }
+            if (gen != account_generation) return@launch
+            val revertable = failed.filter { it !in extra || read_sequence[it] == sequence }.toSet()
+            if (revertable.isEmpty()) return@launch
+            opened_synced_ids.computeIfPresent(item_id) { _, ids -> ids - revertable }
+            revert_sibling_reads(revertable, prior)
         }
     }
 
-    private suspend fun revert_read_overrides(item_ids: List<String>, previous_is_read: Boolean) {
-        val ids = item_ids.toSet()
-        ids.forEach { read_overrides.remove(it) }
-        _inbox_state.value = _inbox_state.value.copy(
-            items = _inbox_state.value.items.map {
-                if (it.id in ids) it.copy(is_read = previous_is_read) else it
-            },
-        )
-        folder_cache.replaceAll { _, cached ->
-            cached.copy(items = cached.items.map {
-                if (it.id in ids) it.copy(is_read = previous_is_read) else it
-            })
-        }
+    private fun revert_sibling_reads(ids: Set<String>, prior: Map<String, Boolean>) {
+        val list_prior = prior.filterKeys { it in ids }
+        if (list_prior.isNotEmpty()) revert_read_override_batch(list_prior, true)
+        (ids - list_prior.keys).forEach { read_overrides.remove(it) }
         val thread = _thread_state.value
         if (thread.messages.any { it.id in ids }) {
             _thread_state.value = thread.copy(
                 messages = thread.messages.map {
-                    if (it.id in ids) it.copy(is_read = previous_is_read) else it
+                    if (it.id in ids) it.copy(is_read = list_prior[it.id] ?: false) else it
                 },
             )
         }
-        runCatching { ids.forEach { search_index_manager.update_read(it, previous_is_read) } }
         emit_toast(context.getString(R.string.failed_mark_read))
     }
 
     fun mark_unread(item_id: String) {
         if (item_id == DEMO_PHISH_ITEM_ID) return
-        val item = _inbox_state.value.items.find { it.id == item_id }
-            ?: folder_cache.values.firstNotNullOfOrNull { c -> c.items.find { it.id == item_id } }
-        val sequence = next_mutation_sequence()
-        read_sequence[item_id] = sequence
-        adjust_stats_unread(inbox_unread_delta(prior_read_map(item_id, item), false))
-        read_overrides[item_id] = false
-        sync_thread_read_state(item_id, false)
-        patch_search_read(setOf(item_id), false)
-        _inbox_state.value = _inbox_state.value.copy(
-            items = _inbox_state.value.items.map {
-                if (it.id == item_id) it.copy(is_read = false) else it
-            },
-        )
-        folder_cache.replaceAll { _, cached ->
-            cached.copy(items = cached.items.map {
-                if (it.id == item_id) it.copy(is_read = false) else it
-            })
-        }
-        invalidate_caches(listOf("starred"))
-        viewModelScope.launch {
-            runCatching { search_index_manager.update_read(item_id, false) }
-            var result = repository.mark_read(item_id, false, item?.raw_item)
-            if (result.isFailure) {
-                kotlinx.coroutines.delay(1500L)
-                result = repository.mark_read(item_id, false, item?.raw_item)
-            }
-            if (result.isFailure && read_sequence[item_id] == sequence) {
-                revert_read_state(item_id, item?.is_read ?: true)
-            }
-        }
+        cancel_opened_mail(item_id)
+        sync_read(item_id, false, apply_local_read(item_id, false))
     }
 
-    private suspend fun revert_read_state(item_id: String, previous_is_read: Boolean) {
+    private suspend fun revert_read_state(item_id: String, previous_is_read: Boolean, flipped: Boolean) {
         read_overrides.remove(item_id)
+        drop_read_flips(setOf(item_id))
         sync_thread_read_state(item_id, previous_is_read)
         _inbox_state.value = _inbox_state.value.copy(
             items = _inbox_state.value.items.map {
@@ -1526,12 +1658,10 @@ class MailViewModel @Inject constructor(
                 if (it.id == item_id) it.copy(is_read = previous_is_read) else it
             })
         }
-        val thread = _thread_state.value
-        if (thread.item != null && thread.item.id == item_id) {
-            _thread_state.value = thread.copy(item = thread.item.copy(is_read = previous_is_read))
-        }
         patch_search_read(setOf(item_id), previous_is_read)
-        adjust_stats_unread(inbox_unread_delta(mapOf(item_id to !previous_is_read), previous_is_read))
+        if (flipped) {
+            adjust_stats_unread(inbox_unread_delta(mapOf(item_id to !previous_is_read), previous_is_read))
+        }
         runCatching { search_index_manager.update_read(item_id, previous_is_read) }
         emit_toast(context.getString(R.string.failed_mark_read))
     }
@@ -1556,11 +1686,119 @@ class MailViewModel @Inject constructor(
         return items.mapTo(HashSet()) { it.id }
     }
 
+    private fun item_index(ids: Set<String>): Map<String, InboxItem> {
+        if (ids.isEmpty()) return emptyMap()
+        val index = HashMap<String, InboxItem>()
+        val note = { item: InboxItem -> if (item.id in ids && item.id !in index) index[item.id] = item }
+        _inbox_state.value.items.forEach(note)
+        _thread_state.value.item?.let(note)
+        folder_cache.values.forEach { cached -> cached.items.forEach(note) }
+        _search_state.value.all_items.forEach(note)
+        return index
+    }
+
+    private fun counts_toward_inbox(id: String, item: InboxItem?, inbox_ids: Set<String>): Boolean {
+        if (id in inbox_ids) return true
+        if (item == null) return false
+        val item_type = item.raw_item.item_type
+        if (item_type == "sent" || item_type == "draft" || item_type == "scheduled" || item_type == "outbox") {
+            return false
+        }
+        return folder_matches_item("inbox", item)
+    }
+
     private fun inbox_unread_delta(prior: Map<String, Boolean>, to_read: Boolean): Int {
-        if (prior.isEmpty()) return 0
+        val changed = prior.filterValues { it != to_read }.keys
+        if (changed.isEmpty()) return 0
         val inbox_ids = inbox_member_ids()
-        val flipped = prior.count { (id, was_read) -> id in inbox_ids && was_read != to_read }
+        val index = item_index(changed)
+        val flipped = changed.count { id -> counts_toward_inbox(id, index[id], inbox_ids) }
         return if (to_read) -flipped else flipped
+    }
+
+    private fun note_read_flips(prior: Map<String, Boolean>, to_read: Boolean) {
+        val changed = prior.filterValues { it != to_read }.keys
+        if (changed.isEmpty()) return
+        val inbox_ids = inbox_member_ids()
+        val index = item_index(changed)
+        changed.forEach { id ->
+            val existing = read_flips[id]
+            if (existing != null && existing.to_read != to_read && existing.confirmed_at == null) {
+                read_flips.remove(id)
+            } else {
+                val item = index[id]
+                read_flips[id] = ReadFlip(
+                    to_read = to_read,
+                    inbox_counted = counts_toward_inbox(id, item, inbox_ids),
+                    folder_tokens = item?.let { org.astermail.android.folders.inbox_item_folder_tokens(it) }.orEmpty(),
+                )
+            }
+        }
+        publish_label_deltas()
+    }
+
+    private fun settle_read_flips(ids: Collection<String>, is_read: Boolean) {
+        if (ids.isEmpty()) return
+        val at = override_clock_ms()
+        ids.forEach { id ->
+            read_overrides.confirm(id, is_read, READ_CONFIRM_GRACE_MS)
+            read_flips.computeIfPresent(id) { _, flip ->
+                if (flip.to_read == is_read && flip.confirmed_at == null) flip.copy(confirmed_at = at) else flip
+            }
+        }
+    }
+
+    private fun drop_read_flips(ids: Collection<String>) {
+        if (ids.isEmpty()) return
+        var removed = false
+        ids.forEach { if (read_flips.remove(it) != null) removed = true }
+        if (removed) publish_label_deltas()
+    }
+
+    private fun prune_read_flips() {
+        read_flips.entries.removeIf { (_, flip) ->
+            flip.stats_absorbed && (flip.labels_absorbed || flip.folder_tokens.isEmpty())
+        }
+    }
+
+    private fun publish_label_deltas() {
+        val deltas = HashMap<String, Int>()
+        read_flips.values.forEach { flip ->
+            if (flip.labels_absorbed) return@forEach
+            val step = if (flip.to_read) -1 else 1
+            flip.folder_tokens.forEach { token -> deltas[token] = (deltas[token] ?: 0) + step }
+        }
+        _label_unread_deltas.value = deltas.filterValues { it != 0 }
+    }
+
+    fun on_labels_loaded(token: Int) {
+        val previous = labels_token
+        labels_token = token
+        if (previous == null || previous == token || read_flips.isEmpty()) return
+        read_flips.replaceAll { _, flip -> if (flip.confirmed_at != null) flip.copy(labels_absorbed = true) else flip }
+        prune_read_flips()
+        publish_label_deltas()
+    }
+
+    private fun apply_notification_read(event: MailReadEvents.Event) {
+        when (event) {
+            is MailReadEvents.Event.Applied -> {
+                val local = apply_local_read(event.item_id, true)
+                notification_reads[event.item_id] = local
+            }
+            is MailReadEvents.Event.Confirmed -> {
+                val local = notification_reads.remove(event.item_id) ?: return
+                if (read_sequence[event.item_id] == local.sequence) settle_read_flips(listOf(event.item_id), true)
+            }
+            is MailReadEvents.Event.Failed -> {
+                val local = notification_reads.remove(event.item_id) ?: return
+                if (read_sequence[event.item_id] != local.sequence) return
+                viewModelScope.launch {
+                    val flipped = local.prior[event.item_id] == false
+                    revert_read_state(event.item_id, local.item?.is_read ?: false, flipped)
+                }
+            }
+        }
     }
 
     private fun adjust_stats_unread(delta: Int) {
@@ -1572,7 +1810,7 @@ class MailViewModel @Inject constructor(
         }
     }
 
-    private fun find_star_target(item_id: String): InboxItem? =
+    private fun find_item(item_id: String): InboxItem? =
         _inbox_state.value.items.find { it.id == item_id }
             ?: _thread_state.value.item?.takeIf { it.id == item_id }
             ?: folder_cache.values.firstNotNullOfOrNull { cached ->
@@ -1582,7 +1820,7 @@ class MailViewModel @Inject constructor(
 
     fun toggle_star(item_id: String) {
         if (item_id == DEMO_PHISH_ITEM_ID) return
-        val current = find_star_target(item_id) ?: return
+        val current = find_item(item_id) ?: return
         set_star(item_id, !current.is_starred)
     }
 
@@ -1592,7 +1830,7 @@ class MailViewModel @Inject constructor(
 
     fun set_star(item_id: String, new_starred: Boolean) {
         if (item_id == DEMO_PHISH_ITEM_ID) return
-        val current = find_star_target(item_id) ?: return
+        val current = find_item(item_id) ?: return
         if (current.is_starred == new_starred) return
         val previous_override = star_overrides[item_id]
         val previous_starred_cache = folder_cache["starred"]
@@ -2316,6 +2554,7 @@ class MailViewModel @Inject constructor(
         if (item_ids.isEmpty()) return
         val prior_reads = snapshot_read_states(item_ids)
         adjust_stats_unread(inbox_unread_delta(prior_reads, false))
+        note_read_flips(prior_reads, false)
         item_ids.forEach { read_overrides[it] = false }
         _inbox_state.value = _inbox_state.value.copy(
             items = _inbox_state.value.items.map {
@@ -2337,14 +2576,19 @@ class MailViewModel @Inject constructor(
             _thread_state.value = thread.copy(item = thread.item.copy(is_read = false))
         }
         invalidate_caches(listOf("starred"))
+        val gen = account_generation
         viewModelScope.launch {
-            repository.mark_unread_bulk(item_ids).fold(
+            persist_read_state(item_ids, false)
+            val result = repository.mark_unread_bulk(item_ids)
+            if (gen != account_generation) return@launch
+            result.fold(
                 onSuccess = {
+                    settle_read_flips(item_ids, false)
                     persist_read_state(item_ids, false)
                     emit_toast(context.resources.getQuantityString(R.plurals.marked_unread_count, item_ids.size, item_ids.size))
                 },
                 onFailure = {
-                    revert_read_override_batch(prior_reads)
+                    revert_read_override_batch(prior_reads, false)
                     emit_toast(context.getString(R.string.failed_mark_read))
                 },
             )
@@ -3086,6 +3330,7 @@ class MailViewModel @Inject constructor(
         MailPollingWorker.cancel_message_notifications(context, item_ids)
         val prior_reads = snapshot_read_states(item_ids)
         adjust_stats_unread(inbox_unread_delta(prior_reads, true))
+        note_read_flips(prior_reads, true)
         item_ids.forEach { read_overrides[it] = true }
         _inbox_state.value = _inbox_state.value.copy(
             items = _inbox_state.value.items.map {
@@ -3107,14 +3352,19 @@ class MailViewModel @Inject constructor(
             _thread_state.value = thread.copy(item = thread.item.copy(is_read = true))
         }
         invalidate_caches(listOf("starred"))
+        val gen = account_generation
         viewModelScope.launch {
-            repository.mark_read_bulk(item_ids).fold(
+            persist_read_state(item_ids, true)
+            val result = repository.mark_read_bulk(item_ids)
+            if (gen != account_generation) return@launch
+            result.fold(
                 onSuccess = {
+                    settle_read_flips(item_ids, true)
                     persist_read_state(item_ids, true)
                     emit_toast(context.resources.getQuantityString(R.plurals.marked_read_count, item_ids.size, item_ids.size))
                 },
                 onFailure = {
-                    revert_read_override_batch(prior_reads)
+                    revert_read_override_batch(prior_reads, true)
                     emit_toast(context.getString(R.string.failed_mark_read))
                 },
             )
@@ -3129,14 +3379,14 @@ class MailViewModel @Inject constructor(
         }
     }
 
-    private fun revert_read_override_batch(prior: Map<String, Boolean>) {
+    private fun revert_read_override_batch(prior: Map<String, Boolean>, target_read: Boolean) {
         prior.keys.forEach { read_overrides.remove(it) }
-        val reverted_to_unread = prior.filterValues { !it }
-        val reverted_to_read = prior.filterValues { it }
-        adjust_stats_unread(
-            inbox_unread_delta(reverted_to_unread.mapValues { true }, false) +
-                inbox_unread_delta(reverted_to_read.mapValues { false }, true),
-        )
+        val flipped = prior.filterValues { it != target_read }
+        adjust_stats_unread(inbox_unread_delta(flipped.mapValues { target_read }, !target_read))
+        drop_read_flips(flipped.keys)
+        viewModelScope.launch {
+            prior.forEach { (id, was_read) -> runCatching { search_index_manager.update_read(id, was_read) } }
+        }
         _inbox_state.value = _inbox_state.value.copy(
             items = _inbox_state.value.items.map { item -> prior[item.id]?.let { item.copy(is_read = it) } ?: item },
         )
@@ -3157,8 +3407,10 @@ class MailViewModel @Inject constructor(
         MailPollingWorker.clear_all_mail_notifications(context)
         val prior_reads = collect_read_states(folder)
         adjust_stats_unread(inbox_unread_delta(prior_reads, true))
+        note_read_flips(prior_reads, true)
         prior_reads.keys.forEach { read_overrides[it] = true }
         apply_bulk_read(folder, true)
+        val gen = account_generation
         viewModelScope.launch {
             val result = if (repository.folder_supports_bulk_scope(folder)) {
                 repository.mark_all_read_scope(folder)
@@ -3166,14 +3418,16 @@ class MailViewModel @Inject constructor(
                 val ids = prior_reads.keys.toList()
                 if (ids.isEmpty()) return@launch else repository.mark_read_bulk(ids)
             }
+            if (gen != account_generation) return@launch
             result.fold(
                 onSuccess = {
+                    settle_read_flips(prior_reads.keys, true)
                     persist_read_state(prior_reads.keys.toList(), true)
                     invalidate_caches(listOf(folder))
                     emit_toast(context.getString(R.string.all_marked_read))
                 },
                 onFailure = {
-                    revert_bulk_read(folder, prior_reads)
+                    revert_bulk_read(folder, prior_reads, true)
                     emit_toast(context.getString(R.string.failed_mark_all_read))
                 },
             )
@@ -3183,8 +3437,10 @@ class MailViewModel @Inject constructor(
     fun mark_all_unread_scope(folder: String) {
         val prior_reads = collect_read_states(folder)
         adjust_stats_unread(inbox_unread_delta(prior_reads, false))
+        note_read_flips(prior_reads, false)
         prior_reads.keys.forEach { read_overrides[it] = false }
         apply_bulk_read(folder, false)
+        val gen = account_generation
         viewModelScope.launch {
             val result = if (repository.folder_supports_bulk_scope(folder)) {
                 repository.mark_all_unread_scope(folder)
@@ -3192,14 +3448,16 @@ class MailViewModel @Inject constructor(
                 val ids = prior_reads.keys.toList()
                 if (ids.isEmpty()) return@launch else repository.mark_unread_bulk(ids)
             }
+            if (gen != account_generation) return@launch
             result.fold(
                 onSuccess = {
+                    settle_read_flips(prior_reads.keys, false)
                     persist_read_state(prior_reads.keys.toList(), false)
                     invalidate_caches(listOf(folder))
                     emit_toast(context.getString(R.string.all_marked_unread))
                 },
                 onFailure = {
-                    revert_bulk_read(folder, prior_reads)
+                    revert_bulk_read(folder, prior_reads, false)
                     emit_toast(context.getString(R.string.failed_mark_all_unread))
                 },
             )
@@ -3213,46 +3471,36 @@ class MailViewModel @Inject constructor(
         repository.action_supports_bulk_scope(action)
 
     fun bulk_scope_action(folder: String, action: String, on_failure: (() -> Unit)? = null) {
+        if (action == "mark_read" || action == "mark_unread") {
+            bulk_scope_read(folder, action, action == "mark_read", on_failure)
+            return
+        }
         val prior = _inbox_state.value
         val snapshot = prior.items
-        val removes = action != "mark_read" && action != "mark_unread"
         val removed_ids = snapshot.map { it.id }
-        if (removes) {
-            _inbox_state.update { it.copy(items = emptyList(), has_more = false, next_cursor = null) }
-            adjust_stats_for_removed(snapshot)
-            pending_removed_ids.addAll(removed_ids)
-            protect_removed(removed_ids)
-        } else {
-            val read = action == "mark_read"
-            _inbox_state.update { s -> s.copy(items = s.items.map { it.copy(is_read = read) }) }
-            snapshot.forEach { read_overrides[it.id] = read }
-        }
+        _inbox_state.update { it.copy(items = emptyList(), has_more = false, next_cursor = null) }
+        adjust_stats_for_removed(snapshot)
+        pending_removed_ids.addAll(removed_ids)
+        protect_removed(removed_ids)
+        val gen = account_generation
         viewModelScope.launch {
-            repository.bulk_scope_action(folder, action).fold(
+            val result = repository.bulk_scope_action(folder, action)
+            if (gen != account_generation) return@launch
+            result.fold(
                 onSuccess = {
-                    if (!removes) {
-                        persist_read_state(removed_ids, action == "mark_read")
-                    }
                     try {
-                        if (removes) {
-                            runCatching { index_scope_removal(folder, action, removed_ids) }
-                        }
+                        runCatching { index_scope_removal(folder, action, removed_ids) }
                         invalidate_caches(listOf(folder))
                         load_stats(force = true)
                         refresh()
                         refresh_job?.join()
                     } finally {
-                        if (removes) pending_removed_ids.removeAll(removed_ids.toSet())
+                        pending_removed_ids.removeAll(removed_ids.toSet())
                     }
                 },
                 onFailure = {
-                    if (removes) {
-                        pending_removed_ids.removeAll(removed_ids.toSet())
-                        clear_removal_protection(removed_ids)
-                    }
-                    if (!removes) {
-                        snapshot.forEach { read_overrides.remove(it.id) }
-                    }
+                    pending_removed_ids.removeAll(removed_ids.toSet())
+                    clear_removal_protection(removed_ids)
                     _inbox_state.update {
                         it.copy(
                             items = snapshot,
@@ -3260,6 +3508,38 @@ class MailViewModel @Inject constructor(
                             next_cursor = prior.next_cursor,
                         )
                     }
+                    load_stats(force = true)
+                    if (on_failure != null) {
+                        on_failure()
+                    } else {
+                        emit_toast(context.getString(R.string.action_failed))
+                    }
+                },
+            )
+        }
+    }
+
+    private fun bulk_scope_read(folder: String, action: String, read: Boolean, on_failure: (() -> Unit)?) {
+        val prior_reads = collect_read_states(folder)
+        if (read) MailPollingWorker.cancel_message_notifications(context, prior_reads.keys.toList())
+        adjust_stats_unread(inbox_unread_delta(prior_reads, read))
+        note_read_flips(prior_reads, read)
+        prior_reads.keys.forEach { read_overrides[it] = read }
+        apply_bulk_read(folder, read)
+        val gen = account_generation
+        viewModelScope.launch {
+            val result = repository.bulk_scope_action(folder, action)
+            if (gen != account_generation) return@launch
+            result.fold(
+                onSuccess = {
+                    settle_read_flips(prior_reads.keys, read)
+                    persist_read_state(prior_reads.keys.toList(), read)
+                    invalidate_caches(listOf(folder))
+                    load_stats(force = true)
+                    refresh()
+                },
+                onFailure = {
+                    revert_bulk_read(folder, prior_reads, read)
                     load_stats(force = true)
                     if (on_failure != null) {
                         on_failure()
@@ -3360,8 +3640,11 @@ class MailViewModel @Inject constructor(
         }
     }
 
-    private fun revert_bulk_read(folder: String, prior: Map<String, Boolean>) {
+    private fun revert_bulk_read(folder: String, prior: Map<String, Boolean>, target_read: Boolean) {
         prior.keys.forEach { read_overrides.remove(it) }
+        val flipped = prior.filterValues { it != target_read }
+        adjust_stats_unread(inbox_unread_delta(flipped.mapValues { target_read }, !target_read))
+        drop_read_flips(flipped.keys)
         _inbox_state.value = _inbox_state.value.copy(
             items = _inbox_state.value.items.map { item -> prior[item.id]?.let { item.copy(is_read = it) } ?: item },
         )
@@ -3494,21 +3777,21 @@ class MailViewModel @Inject constructor(
                 val cached = search_index_manager.get_cached_items()
                 if (cached.isNotEmpty() && !force) {
                     _search_state.value = SearchUiState(
-                        all_items = cached.map { it.to_inbox_item() },
+                        all_items = apply_read_overrides(cached.map { it.to_inbox_item() }),
                         is_indexed = true,
                     )
                     search_index_manager.refresh_index_and_wait()
                     val refreshed = search_index_manager.get_cached_items()
                     if (refreshed.isNotEmpty()) {
                         _search_state.value = _search_state.value.copy(
-                            all_items = refreshed.map { it.to_inbox_item() },
+                            all_items = apply_read_overrides(refreshed.map { it.to_inbox_item() }),
                         )
                     }
                 } else {
                     search_index_manager.ensure_index_built()
                     repository.fetch_all_for_search().fold(
                         onSuccess = { items ->
-                            search_index_manager.on_items_loaded(items)
+                            search_index_manager.on_items_loaded(apply_read_overrides(items))
                             _search_state.value = SearchUiState(
                                 all_items = items,
                                 is_indexed = true,
@@ -3675,7 +3958,7 @@ class MailViewModel @Inject constructor(
             result.fold(
                 onSuccess = { page ->
                     val prior = _inbox_state.value
-                    val merge = merge_with_previous(page, prior.items, folder)
+                    val merge = merge_with_previous(page, previous_for_merge(prior.items), folder)
                     val merged_items = apply_demo_overlay(
                         apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items))),
                         folder,
@@ -3684,6 +3967,7 @@ class MailViewModel @Inject constructor(
                         items = merged_items,
                         is_loading = false,
                         is_refreshing = false,
+                        list_loaded_at = override_clock_ms(),
                         initial = false,
                         error = null,
                         has_more = if (merge.carried_deeper && prior.next_cursor != null) prior.has_more else page.has_more,
@@ -3692,7 +3976,7 @@ class MailViewModel @Inject constructor(
                     )
                     folder_cache[folder] = _inbox_state.value
                     folder_cache_time[folder] = System.currentTimeMillis()
-                    search_index_manager.on_items_loaded(page.items)
+                    search_index_manager.on_items_loaded(apply_read_overrides(page.items))
                     search_index_manager.ensure_index_built()
                 },
                 onFailure = { t ->
@@ -3803,6 +4087,9 @@ class MailViewModel @Inject constructor(
 
     init {
         seed_inbox_attachment_flags()
+        viewModelScope.launch {
+            MailReadEvents.events.collect { apply_notification_read(it) }
+        }
         viewModelScope.launch {
             runCatching { sent_mail_reseal_finisher.finish_pending() }
         }

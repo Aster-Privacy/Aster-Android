@@ -2157,4 +2157,308 @@ class MailViewModelTest {
         assertTrue("restored item must survive a stale page, got $ids", "id_3" in ids)
     }
 
+    private fun stub_thread_read_sync() {
+        coEvery { repository.mark_thread_read_all(any()) } returns Result.success(Unit)
+        coEvery { repository.mark_read_bulk(any()) } returns Result.success(BulkScopeResponse(affected_count = 0))
+    }
+
+    @Test
+    fun `immediate open marks read synchronously while the server call hangs`() = runTest {
+        stub_thread_read_sync()
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(3))
+        coEvery { repository.get_stats() } returns Result.success(MailUserStatsResponse(unread = 2))
+        coEvery { repository.mark_read(any(), any(), any()) } coAnswers { kotlinx.coroutines.awaitCancellation() }
+        vm.load_inbox()
+        vm.load_stats()
+        advanceUntilIdle()
+        assertEquals(2, vm.inbox_state.value.stats?.unread)
+
+        vm.on_user_opened_mail("id_1", "immediate")
+
+        assertTrue(vm.inbox_state.value.items.first { it.id == "id_1" }.is_read)
+        assertEquals(1, vm.inbox_state.value.stats?.unread)
+        assertNull(vm.thread_state.value.item)
+
+        advanceUntilIdle()
+        clear_dispatcher_records()
+        coVerify { search_index_manager.update_read("id_1", true) }
+        coVerify { repository.mark_read("id_1", true, any()) }
+    }
+
+    @Test
+    fun `timed open starts the timer at open and never does nothing`() = runTest {
+        stub_thread_read_sync()
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(3))
+        coEvery { repository.mark_read(any(), any(), any()) } returns Result.success(Unit)
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.on_user_opened_mail("id_1", "never")
+        vm.on_user_opened_mail("id_3", "1_second")
+        dispatcher.scheduler.advanceTimeBy(999L)
+        dispatcher.scheduler.runCurrent()
+        assertFalse(vm.inbox_state.value.items.first { it.id == "id_3" }.is_read)
+        dispatcher.scheduler.advanceTimeBy(2L)
+        dispatcher.scheduler.runCurrent()
+        assertTrue(vm.inbox_state.value.items.first { it.id == "id_3" }.is_read)
+
+        advanceUntilIdle()
+        assertFalse(vm.inbox_state.value.items.first { it.id == "id_1" }.is_read)
+    }
+
+    @Test
+    fun `open before the read preference loads does not mark read`() = runTest {
+        stub_thread_read_sync()
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(3))
+        var mark_read_calls = 0
+        coEvery { repository.mark_read(any(), any(), any()) } coAnswers {
+            mark_read_calls++
+            Result.success(Unit)
+        }
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.on_user_opened_mail("id_1", null)
+        advanceUntilIdle()
+
+        assertFalse(vm.inbox_state.value.items.first { it.id == "id_1" }.is_read)
+        assertEquals(0, mark_read_calls)
+    }
+
+    @Test
+    fun `a stale fetch after thirty seconds cannot restore unread and a server failure rolls back`() = runTest {
+        var now = 1_000_000L
+        vm.override_clock_ms = { now }
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(3))
+        val gate = kotlinx.coroutines.CompletableDeferred<Result<Unit>>()
+        coEvery { repository.mark_read("id_1", true, any()) } coAnswers { gate.await() }
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.mark_read("id_1")
+        now += 31_000L
+        vm.load_inbox(force = true)
+        advanceUntilIdle()
+        assertTrue(vm.inbox_state.value.items.first { it.id == "id_1" }.is_read)
+
+        gate.complete(Result.failure(RuntimeException("server down")))
+        advanceUntilIdle()
+
+        assertFalse(vm.inbox_state.value.items.first { it.id == "id_1" }.is_read)
+    }
+
+    @Test
+    fun `a stats refresh cannot bump the badge over a pending read`() = runTest {
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(3))
+        coEvery { repository.get_stats() } returns Result.success(MailUserStatsResponse(unread = 2))
+        coEvery { repository.mark_read(any(), any(), any()) } coAnswers { kotlinx.coroutines.awaitCancellation() }
+        vm.load_inbox()
+        vm.load_stats()
+        advanceUntilIdle()
+
+        vm.mark_read("id_1")
+        assertEquals(1, vm.inbox_state.value.stats?.unread)
+
+        vm.load_stats(force = true)
+        advanceUntilIdle()
+
+        assertEquals(1, vm.inbox_state.value.stats?.unread)
+    }
+
+    @Test
+    fun `set_page_size with items keeps them and sets no loading state`() = runTest {
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(3))
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.set_page_size(25)
+
+        val during = vm.inbox_state.value
+        assertEquals(3, during.items.size)
+        assertFalse(during.initial)
+        assertFalse(during.is_loading)
+
+        advanceUntilIdle()
+        val after = vm.inbox_state.value
+        assertEquals(3, after.items.size)
+        assertFalse(after.initial)
+        assertFalse(after.is_loading)
+        io.mockk.unmockkStatic(Dispatchers::class)
+        coVerify(atLeast = 2) { repository.fetch_inbox(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `opening a search result without a list seed decrements and marks read`() = runTest {
+        val search_item = fake_inbox_page(1).items.first().copy(id = "search_1", thread_token = "", is_read = false)
+        coEvery { repository.fetch_all_for_search(any()) } returns Result.success(listOf(search_item))
+        coEvery { repository.get_stats() } returns Result.success(MailUserStatsResponse(unread = 4))
+        coEvery { repository.mark_read("search_1", true, any()) } returns Result.success(Unit)
+        vm.build_search_index()
+        vm.load_stats()
+        advanceUntilIdle()
+        assertTrue(vm.inbox_state.value.items.isEmpty())
+
+        vm.on_user_opened_mail("search_1", "immediate")
+
+        assertTrue(vm.search_state.value.all_items.first { it.id == "search_1" }.is_read)
+        assertEquals(3, vm.inbox_state.value.stats?.unread)
+        advanceUntilIdle()
+        assertTrue(vm.search_state.value.all_items.first { it.id == "search_1" }.is_read)
+        clear_dispatcher_records()
+        coVerify { repository.mark_read("search_1", true, any()) }
+    }
+
+    private fun captured_index_overlay(): (String) -> Boolean? {
+        val overlay = io.mockk.slot<(String) -> Boolean?>()
+        io.mockk.verify { search_index_manager.add_read_overlay(capture(overlay)) }
+        return overlay.captured
+    }
+
+    @Test
+    fun `the search index sees a pending read and loses it after rollback`() = runTest {
+        val overlay = captured_index_overlay()
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(3))
+        val gate = kotlinx.coroutines.CompletableDeferred<Result<Unit>>()
+        coEvery { repository.mark_read("id_1", true, any()) } coAnswers { gate.await() }
+        vm.load_inbox()
+        advanceUntilIdle()
+        assertNull(overlay("id_1"))
+
+        vm.mark_read("id_1")
+        advanceUntilIdle()
+        assertEquals(true, overlay("id_1"))
+
+        gate.complete(Result.failure(RuntimeException("server down")))
+        advanceUntilIdle()
+
+        assertNull(overlay("id_1"))
+        clear_dispatcher_records()
+        coVerify { search_index_manager.update_read("id_1", false) }
+    }
+
+    @Test
+    fun `bulk scope mark read records pending reads and rolls back on failure`() = runTest {
+        val overlay = captured_index_overlay()
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(3))
+        coEvery { repository.get_stats() } returns Result.success(MailUserStatsResponse(unread = 2))
+        val gate = kotlinx.coroutines.CompletableDeferred<Result<BulkScopeResponse>>()
+        coEvery { repository.bulk_scope_action("inbox", "mark_read") } coAnswers { gate.await() }
+        vm.load_inbox()
+        vm.load_stats()
+        advanceUntilIdle()
+
+        vm.bulk_scope_action("inbox", "mark_read")
+
+        assertTrue(vm.inbox_state.value.items.all { it.is_read })
+        assertEquals(0, vm.inbox_state.value.stats?.unread)
+        assertEquals(true, overlay("id_1"))
+
+        vm.load_inbox(force = true)
+        vm.load_stats(force = true)
+        advanceUntilIdle()
+        assertTrue(vm.inbox_state.value.items.all { it.is_read })
+        assertEquals(0, vm.inbox_state.value.stats?.unread)
+
+        gate.complete(Result.failure(RuntimeException("server down")))
+        advanceUntilIdle()
+
+        assertFalse(vm.inbox_state.value.items.first { it.id == "id_1" }.is_read)
+        assertFalse(vm.inbox_state.value.items.first { it.id == "id_3" }.is_read)
+        assertEquals(2, vm.inbox_state.value.stats?.unread)
+        assertNull(overlay("id_1"))
+    }
+
+    @Test
+    fun `a read that settles after an account switch never touches the next account`() = runTest {
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(3))
+        coEvery { repository.get_stats() } returns Result.success(MailUserStatsResponse(unread = 2))
+        val gate = kotlinx.coroutines.CompletableDeferred<Result<Unit>>()
+        var mark_read_calls = 0
+        coEvery { repository.mark_read("id_1", true, any()) } coAnswers {
+            mark_read_calls++
+            gate.await()
+        }
+        vm.load_inbox()
+        vm.load_stats()
+        advanceUntilIdle()
+        vm.mark_read("id_1")
+        advanceUntilIdle()
+
+        vm.reset_for_account_switch()
+        coEvery { repository.get_stats() } returns Result.success(MailUserStatsResponse(unread = 5))
+        vm.load_inbox()
+        vm.load_stats()
+        advanceUntilIdle()
+        var index_writes = 0
+        coEvery { search_index_manager.update_read(any(), any()) } coAnswers { index_writes++ }
+
+        gate.complete(Result.failure(RuntimeException("server down")))
+        advanceUntilIdle()
+
+        assertEquals(5, vm.inbox_state.value.stats?.unread)
+        assertFalse(vm.inbox_state.value.items.first { it.id == "id_1" }.is_read)
+        assertEquals(0, index_writes)
+        assertEquals(1, mark_read_calls)
+    }
+
+    @Test
+    fun `mail that never opens goes back to unread and reads once it loads`() = runTest {
+        stub_thread_read_sync()
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(3))
+        coEvery { repository.get_stats() } returns Result.success(MailUserStatsResponse(unread = 2))
+        coEvery { repository.mark_read(any(), any(), any()) } returns Result.success(Unit)
+        coEvery { repository.fetch_single_message("id_1") } returns Result.failure(RuntimeException("offline"))
+        coEvery { repository.fetch_thread(any()) } returns Result.success(emptyList())
+        vm.load_inbox()
+        vm.load_stats()
+        advanceUntilIdle()
+
+        vm.on_user_opened_mail("id_1", "immediate")
+        assertTrue(vm.inbox_state.value.items.first { it.id == "id_1" }.is_read)
+        vm.load_thread("id_1")
+        advanceUntilIdle()
+
+        assertFalse(vm.inbox_state.value.items.first { it.id == "id_1" }.is_read)
+        assertEquals(2, vm.inbox_state.value.stats?.unread)
+
+        val loaded = fake_inbox_page(1).items.first()
+        coEvery { repository.fetch_single_message("id_1") } returns Result.success(loaded)
+        vm.load_thread("id_1")
+        advanceUntilIdle()
+
+        assertTrue(vm.inbox_state.value.items.first { it.id == "id_1" }.is_read)
+        assertEquals(1, vm.inbox_state.value.stats?.unread)
+    }
+
+    @Test
+    fun `archive failure calls the repository and restores the items`() = runTest {
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(3))
+        coEvery { repository.archive(any(), any()) } returns Result.failure(RuntimeException("offline"))
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.archive(listOf("id_2"))
+        assertTrue(vm.inbox_state.value.items.none { it.id == "id_2" })
+        advanceUntilIdle()
+
+        assertTrue(vm.inbox_state.value.items.any { it.id == "id_2" })
+        clear_dispatcher_records()
+        coVerify { repository.archive(eq(listOf("id_2")), any()) }
+    }
+
+    @Test
+    fun `star failure calls the repository and rolls back`() = runTest {
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(3))
+        coEvery { repository.toggle_star("id_1", true, any()) } returns Result.failure(RuntimeException("offline"))
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.toggle_star("id_1")
+        assertTrue(vm.inbox_state.value.items.first { it.id == "id_1" }.is_starred)
+        advanceUntilIdle()
+
+        assertFalse(vm.inbox_state.value.items.first { it.id == "id_1" }.is_starred)
+        clear_dispatcher_records()
+        coVerify { repository.toggle_star("id_1", true, any()) }
+    }
 }
