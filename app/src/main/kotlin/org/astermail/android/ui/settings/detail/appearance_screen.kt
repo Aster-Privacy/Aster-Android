@@ -145,7 +145,7 @@ private fun font_label_res(id: String): Int = when (id) {
     else -> R.string.font_option_default
 }
 
-internal fun color_theme_label_res(id: ColorThemeId): Int = when (id) {
+private fun color_theme_label_res(id: ColorThemeId): Int = when (id) {
     ColorThemeId.default -> R.string.color_theme_default
     ColorThemeId.custom -> R.string.color_theme_custom
     ColorThemeId.dynamic -> R.string.theme_dynamic
@@ -348,109 +348,103 @@ fun AppearanceScreen(
         )
     }
 
-    val dynamic_dark_preview = remember_dynamic_preview_colors()
-    val dynamic_light_preview = remember_dynamic_light_preview_colors()
-    val custom_is_dark = colors.is_dark
-    val custom_base_vars = remember(custom_preview_seed, custom_is_dark) {
-        MaterialThemeGenerator.compute_custom_theme_vars(custom_preview_seed, custom_is_dark, emptyMap())
-    }
-    var editing_role by remember { mutableStateOf<String?>(null) }
-
-    fun apply_overrides(next: Map<String, String>) {
-        val base = prefs ?: return
-        remote_prefs_adopted = true
-        vm.set_custom_theme_overrides(next)
-        if (base.custom_theme_overrides != next) {
-            settings_vm.save_preferences(base.copy(custom_theme_overrides = next))
-        }
-    }
-
     detail_scaffold(title = stringResource(R.string.settings_appearance), on_back = on_back) {
         preferences_save_error_banner()
         if (prefs == null || !settings_state.preferences_authoritative) {
             preferences_load_placeholder()
             return@detail_scaffold
         }
-
-        live_theme_preview(modifier = Modifier.testTag("appearance_live_preview"))
-
-        v_gap(AsterSpacing.xl)
-        section_label(stringResource(R.string.appearance_mode))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-        ) {
-            theme_preview_card(
-                label = stringResource(R.string.theme_system),
-                colors = light_preview_colors,
-                split_with = dark_preview_colors,
-                selected = mode == ThemeMode.system && color_theme == ColorThemeId.default,
-                on_click = { apply(ThemeMode.system, "system") },
-                modifier = Modifier.weight(1f).testTag("mode_system"),
-            )
-            theme_preview_card(
-                label = stringResource(R.string.theme_light),
-                colors = light_preview_colors,
-                selected = mode == ThemeMode.light && color_theme == ColorThemeId.default,
-                on_click = { apply(ThemeMode.light, "light") },
-                modifier = Modifier.weight(1f).testTag("mode_light"),
-            )
-            theme_preview_card(
-                label = stringResource(R.string.theme_dark),
-                colors = dark_preview_colors,
-                selected = mode == ThemeMode.dark && color_theme == ColorThemeId.default,
-                on_click = { apply(ThemeMode.dark, "dark") },
-                modifier = Modifier.weight(1f).testTag("mode_dark"),
-            )
+        section_label(stringResource(R.string.theme))
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            theme_option_row(
+                stringResource(R.string.theme_system),
+                stringResource(R.string.theme_system_subtitle),
+                mode == ThemeMode.system && color_theme == ColorThemeId.default,
+            ) { apply(ThemeMode.system, "system") }
+            AsterDivider(modifier = Modifier)
+            theme_option_row(
+                stringResource(R.string.theme_light),
+                stringResource(R.string.theme_light_subtitle),
+                mode == ThemeMode.light && color_theme == ColorThemeId.default,
+            ) { apply(ThemeMode.light, "light") }
+            AsterDivider(modifier = Modifier)
+            theme_option_row(
+                stringResource(R.string.theme_dark),
+                stringResource(R.string.theme_dark_subtitle),
+                mode == ThemeMode.dark && color_theme == ColorThemeId.default,
+            ) { apply(ThemeMode.dark, "dark") }
+            AsterDivider(modifier = Modifier)
+            theme_option_row(
+                stringResource(R.string.color_theme_aster_blue),
+                stringResource(R.string.theme_aster_blue_subtitle),
+                color_theme == ColorThemeId.aster_blue,
+            ) { apply_color_theme(ColorThemeId.aster_blue) }
+            if (dynamic_color_supported) {
+                AsterDivider(modifier = Modifier)
+                theme_option_row(
+                    stringResource(R.string.theme_dynamic),
+                    stringResource(R.string.theme_dynamic_subtitle),
+                    color_theme == ColorThemeId.dynamic,
+                ) { apply_color_theme(ColorThemeId.dynamic) }
+            }
         }
 
-        v_gap(AsterSpacing.xl)
-        section_label(stringResource(R.string.appearance_themes))
-        Text(
-            text = stringResource(R.string.appearance_themes_subtitle),
-            color = colors.text_tertiary,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(bottom = AsterSpacing.sm),
-        )
-        val gallery_ids = buildList {
-            add(ColorThemeId.aster_blue)
-            if (dynamic_color_supported && dynamic_dark_preview != null) add(ColorThemeId.dynamic)
-            addAll(preset_swatch_ids)
-            add(ColorThemeId.custom)
-        }
-        gallery_ids.chunked(3).forEachIndexed { row_index, row ->
-            if (row_index > 0) v_gap(AsterSpacing.sm)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-            ) {
-                row.forEach { id ->
-                    val is_locked = id == ColorThemeId.custom && custom_theme_locked
-                    val card_colors = when (id) {
-                        ColorThemeId.custom -> preview_colors_of(custom_preview_palette)
-                        ColorThemeId.dynamic -> dynamic_dark_preview ?: dark_preview_colors
-                        else -> AsterColorThemes.palette_for(id)?.let { preview_colors_of(it) } ?: dark_preview_colors
-                    }
-                    theme_preview_card(
-                        label = stringResource(
-                            if (id == ColorThemeId.custom) R.string.appearance_custom else color_theme_label_res(id),
-                        ),
-                        colors = if (id == ColorThemeId.dynamic) dynamic_light_preview ?: card_colors else card_colors,
-                        split_with = if (id == ColorThemeId.dynamic) card_colors else null,
-                        selected = color_theme == id,
-                        locked = is_locked,
-                        on_click = {
-                            if (is_locked) show_custom_theme_upgrade = true else apply_color_theme(id)
-                        },
-                        modifier = Modifier.weight(1f).testTag("swatch_${id.name}"),
+        v_gap(AsterSpacing.xxl)
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            val sync_enabled = prefs?.let { theme_sync_enabled(it) } ?: true
+            detail_row(
+                title = stringResource(R.string.theme_sync_across_devices),
+                subtitle = stringResource(R.string.theme_sync_across_devices_subtitle),
+                trailing = {
+                    AsterSwitch(
+                        checked = sync_enabled,
+                        onCheckedChange = { apply_theme_sync(it) },
+                        modifier = Modifier.testTag("theme_sync_switch"),
                     )
+                },
+            )
+        }
+
+        v_gap(AsterSpacing.xxl)
+        section_label(stringResource(R.string.color_theme))
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(AsterSpacing.lg)) {
+                (preset_swatch_ids + ColorThemeId.custom).chunked(3).forEachIndexed { row_index, row ->
+                    if (row_index > 0) v_gap(AsterSpacing.lg)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+                    ) {
+                        row.forEach { id ->
+                            val is_locked = id == ColorThemeId.custom && custom_theme_locked
+                            val palette = if (id == ColorThemeId.custom) {
+                                custom_preview_palette
+                            } else {
+                                AsterColorThemes.palette_for(id) ?: custom_preview_palette
+                            }
+                            theme_swatch(
+                                label = stringResource(color_theme_label_res(id)),
+                                palette = palette,
+                                selected = color_theme == id,
+                                locked = is_locked,
+                                on_click = {
+                                    if (is_locked) {
+                                        show_custom_theme_upgrade = true
+                                    } else {
+                                        apply_color_theme(id)
+                                    }
+                                },
+                                modifier = Modifier.weight(1f).testTag("swatch_${id.name}"),
+                            )
+                        }
+                        repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                    }
                 }
-                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
 
         if (show_custom_theme_upgrade && custom_theme_locked) {
-            v_gap(AsterSpacing.lg)
+            v_gap(AsterSpacing.xxl)
             UpgradeGate(
                 title = stringResource(R.string.custom_theme_upgrade_title),
                 description = stringResource(R.string.custom_theme_upgrade_description),
@@ -462,16 +456,16 @@ fun AppearanceScreen(
         }
 
         if (color_theme == ColorThemeId.custom && !custom_theme_locked) {
-            v_gap(AsterSpacing.xl)
+            v_gap(AsterSpacing.xxl)
             section_label(stringResource(R.string.custom_theme_base_color))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(AsterSpacing.lg)) {
                     Text(
-                        text = stringResource(R.string.appearance_base_color_subtitle),
+                        text = stringResource(R.string.custom_theme_base_color_subtitle),
                         color = colors.text_tertiary,
                         fontSize = 12.sp,
                     )
-                    v_gap(AsterSpacing.md)
+                    v_gap(AsterSpacing.sm)
                     var hex_input by remember(custom_theme_seed) { mutableStateOf(custom_theme_seed) }
                     val is_valid = MaterialThemeGenerator.is_valid_hex_color(hex_input)
                     LaunchedEffect(hex_input) {
@@ -480,23 +474,6 @@ fun AppearanceScreen(
                         delay(450)
                         apply_custom_seed(hex_input)
                     }
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        quick_seed_colors.forEach { hex ->
-                            color_dot(
-                                color = parse_hex_color(hex),
-                                selected = hex.equals(custom_theme_seed, ignoreCase = true),
-                                on_click = {
-                                    hex_input = hex
-                                    apply_custom_seed(hex)
-                                },
-                            )
-                        }
-                    }
-                    v_gap(AsterSpacing.md)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
@@ -520,196 +497,110 @@ fun AppearanceScreen(
                             fontSize = 12.sp,
                         )
                     }
-                }
-            }
-
-            v_gap(AsterSpacing.xl)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.weight(1f)) { section_label(stringResource(R.string.appearance_fine_tune)) }
-                if (MaterialThemeGenerator.OVERRIDE_ROLES.any { MaterialThemeGenerator.override_for(custom_theme_overrides, it) != null }) {
-                    Text(
-                        text = stringResource(R.string.appearance_reset_all),
-                        color = colors.accent_blue,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .clip(SquircleShape(8.dp))
-                            .clickable { apply_overrides(emptyMap()) }
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                            .testTag("overrides_reset_all"),
-                    )
-                }
-            }
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                MaterialThemeGenerator.OVERRIDE_ROLES.forEachIndexed { index, role ->
-                    val override = MaterialThemeGenerator.override_for(custom_theme_overrides, role)
-                    val hex = override ?: base_hex_for_role(custom_base_vars, role)
-                    role_row(
-                        label = stringResource(role_label_res(role)),
-                        value = if (override != null) hex.uppercase() else stringResource(R.string.appearance_role_auto),
-                        color = parse_hex_color(hex),
-                        on_click = { editing_role = role },
-                        modifier = Modifier.testTag("role_$role"),
-                    )
-                    if (index < MaterialThemeGenerator.OVERRIDE_ROLES.lastIndex) {
-                        AsterDivider(modifier = Modifier.padding(start = 62.dp))
+                    v_gap(AsterSpacing.md)
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        quick_seed_colors.forEach { hex ->
+                            val is_selected = hex.equals(custom_theme_seed, ignoreCase = true)
+                            Box(
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(CircleShape)
+                                    .background(parse_hex_color(hex), CircleShape)
+                                    .border(if (is_selected) 2.dp else 0.dp, colors.text_primary, CircleShape)
+                                    .clickable {
+                                        hex_input = hex
+                                        apply_custom_seed(hex)
+                                    },
+                            )
+                        }
                     }
                 }
             }
         }
 
-        v_gap(AsterSpacing.lg)
+        v_gap(AsterSpacing.xxl)
+        section_label(stringResource(R.string.font))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
-            val sync_enabled = prefs?.let { theme_sync_enabled(it) } ?: true
             detail_row(
-                title = stringResource(R.string.theme_sync_across_devices),
-                subtitle = stringResource(R.string.theme_sync_across_devices_subtitle),
-                trailing = {
-                    AsterSwitch(
-                        checked = sync_enabled,
-                        onCheckedChange = { apply_theme_sync(it) },
-                        modifier = Modifier.testTag("theme_sync_switch"),
-                    )
-                },
+                title = stringResource(R.string.font),
+                subtitle = stringResource(font_label_res(font_choice)),
+                on_click = { show_font_picker = true },
             )
         }
 
-        v_gap(AsterSpacing.xl)
-        section_label(stringResource(R.string.appearance_text))
+        v_gap(AsterSpacing.xxl)
+        section_label(stringResource(R.string.time_format))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { show_font_picker = true }
-                    .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md)
-                    .testTag("font_row"),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .background(colors.bg_secondary, SquircleShape(12.dp))
-                        .border(1.dp, colors.border_secondary, SquircleShape(12.dp)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = stringResource(R.string.appearance_font_sample),
-                        color = colors.text_primary,
-                        fontSize = 19.sp,
-                        fontFamily = preview_font_family_for(font_choice),
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-                Spacer(Modifier.width(AsterSpacing.md))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.font),
-                        color = colors.text_primary,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    Text(
-                        text = stringResource(font_label_res(font_choice)),
-                        color = colors.text_tertiary,
-                        fontSize = 13.sp,
-                    )
-                }
-                Icon(
-                    imageVector = TablerIcons.ChevronRight,
-                    contentDescription = null,
-                    tint = colors.text_tertiary,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-            AsterDivider(modifier = Modifier.padding(start = 72.dp))
-            detail_row(
-                title = stringResource(R.string.appearance_text_size),
-                subtitle = stringResource(R.string.appearance_text_size_subtitle),
-                on_click = { on_open("accessibility") },
-            )
+            theme_option_row(
+                stringResource(R.string.time_format_12h),
+                "",
+                !effective_24h,
+            ) { apply_time_format("12h") }
+            AsterDivider(modifier = Modifier)
+            theme_option_row(
+                stringResource(R.string.time_format_24h),
+                "",
+                effective_24h,
+            ) { apply_time_format("24h") }
         }
 
-        v_gap(AsterSpacing.xl)
-        section_label(stringResource(R.string.appearance_inbox))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-        ) {
-            density_preview_card(
-                label = stringResource(R.string.density_compact),
-                subtitle = stringResource(R.string.density_compact_subtitle),
-                comfortable = false,
-                selected = !is_comfortable_density(prefs?.mail_list_density),
-                on_click = { apply_density("compact") },
-                modifier = Modifier.weight(1f).testTag("density_compact"),
-            )
-            density_preview_card(
-                label = stringResource(R.string.density_comfortable),
-                subtitle = stringResource(R.string.density_comfortable_subtitle),
-                comfortable = true,
-                selected = is_comfortable_density(prefs?.mail_list_density),
-                on_click = { apply_density("comfortable") },
-                modifier = Modifier.weight(1f).testTag("density_comfortable"),
-            )
-        }
-        v_gap(AsterSpacing.md)
+        v_gap(AsterSpacing.xxl)
+        section_label(stringResource(R.string.mail_list_density))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md)) {
-                Text(
-                    text = stringResource(R.string.time_format),
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                )
-                v_gap(AsterSpacing.sm)
-                segmented_choice(
-                    options = listOf(
-                        "12h" to stringResource(R.string.time_format_12h),
-                        "24h" to stringResource(R.string.time_format_24h),
-                    ),
-                    selected = if (effective_24h) "24h" else "12h",
-                    on_select = { apply_time_format(it) },
-                )
-            }
+            theme_option_row(
+                stringResource(R.string.density_compact),
+                stringResource(R.string.density_compact_subtitle),
+                !is_comfortable_density(prefs?.mail_list_density),
+            ) { apply_density("compact") }
+            AsterDivider(modifier = Modifier)
+            theme_option_row(
+                stringResource(R.string.density_comfortable),
+                stringResource(R.string.density_comfortable_subtitle),
+                is_comfortable_density(prefs?.mail_list_density),
+            ) { apply_density("comfortable") }
         }
 
-        v_gap(AsterSpacing.xl)
+        v_gap(AsterSpacing.xxl)
         section_label(stringResource(R.string.section_compose_text))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md)) {
-                Text(
-                    text = stringResource(R.string.compose_text_size),
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
+            Text(
+                text = stringResource(R.string.compose_text_size),
+                color = colors.text_primary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(start = AsterSpacing.lg, top = AsterSpacing.md, bottom = 2.dp),
+            )
+            Text(
+                text = stringResource(R.string.compose_text_size_subtitle),
+                color = colors.text_tertiary,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = 4.dp),
+            )
+            compose_font_size_labels.forEachIndexed { index, label ->
+                compose_choice_row(
+                    label = stringResource(compose_font_size_label_res(label)),
+                    selected = compose_font_size == label,
+                    test_tag = "compose_size_$label",
+                    on_click = { apply_compose_font_size(label) },
                 )
-                Text(
-                    text = stringResource(R.string.compose_text_size_subtitle),
-                    color = colors.text_tertiary,
-                    fontSize = 12.sp,
-                )
-                v_gap(AsterSpacing.sm)
-                segmented_choice(
-                    options = compose_font_size_labels.map { it to stringResource(compose_font_size_label_res(it)) },
-                    selected = compose_font_size,
-                    on_select = { apply_compose_font_size(it) },
-                    tag_prefix = "compose_size_",
-                )
+                if (index < compose_font_size_labels.size - 1) AsterDivider(modifier = Modifier)
             }
-            AsterDivider(modifier = Modifier)
+        }
+
+        v_gap(AsterSpacing.xxl)
+        section_label(stringResource(R.string.compose_text_color))
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-                Text(
-                    text = stringResource(R.string.compose_text_color),
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                )
                 Text(
                     text = stringResource(R.string.compose_text_color_subtitle),
                     color = colors.text_tertiary,
                     fontSize = 12.sp,
                 )
-                v_gap(AsterSpacing.md)
+                v_gap(AsterSpacing.sm)
                 var compose_color_input by remember(compose_font_color) { mutableStateOf(compose_font_color) }
                 val compose_color_valid = normalize_compose_font_color(compose_color_input).isNotEmpty()
                 LaunchedEffect(compose_color_input) {
@@ -718,24 +609,6 @@ fun AppearanceScreen(
                     delay(450)
                     apply_compose_font_color(compose_color_input)
                 }
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    quick_compose_text_colors.forEach { hex ->
-                        color_dot(
-                            color = parse_hex_color(hex),
-                            selected = hex == compose_font_color,
-                            on_click = {
-                                compose_color_input = hex
-                                apply_compose_font_color(hex)
-                            },
-                            size = 30.dp,
-                        )
-                    }
-                }
-                v_gap(AsterSpacing.md)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
@@ -749,7 +622,9 @@ fun AppearanceScreen(
                     Spacer(Modifier.width(AsterSpacing.md))
                     AsterTextField(
                         value = compose_color_input,
-                        onValueChange = { value -> compose_color_input = value },
+                        onValueChange = { value ->
+                            compose_color_input = value
+                        },
                         placeholder = stringResource(R.string.compose_text_color_placeholder),
                         modifier = Modifier.weight(1f).testTag("compose_color_input"),
                     )
@@ -762,6 +637,31 @@ fun AppearanceScreen(
                         fontSize = 12.sp,
                     )
                 }
+                v_gap(AsterSpacing.md)
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    quick_compose_text_colors.forEach { hex ->
+                        val is_selected = hex == compose_font_color
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .border(
+                                    width = if (is_selected) 2.5.dp else 1.dp,
+                                    color = if (is_selected) colors.text_primary else colors.border_primary,
+                                    shape = CircleShape,
+                                )
+                                .padding(if (is_selected) 3.5.dp else 0.dp)
+                                .background(parse_hex_color(hex), CircleShape)
+                                .clickable {
+                                    compose_color_input = hex
+                                    apply_compose_font_color(hex)
+                                },
+                        )
+                    }
+                }
             }
             AsterDivider(modifier = Modifier)
             compose_choice_row(
@@ -772,81 +672,6 @@ fun AppearanceScreen(
             )
         }
         v_gap(AsterSpacing.xxl)
-    }
-
-    editing_role?.let { role ->
-        val current_override = MaterialThemeGenerator.override_for(custom_theme_overrides, role)
-        val current_hex = current_override ?: base_hex_for_role(custom_base_vars, role)
-        base_sheet(
-            on_dismiss = { editing_role = null },
-            title = stringResource(role_label_res(role)),
-        ) {
-            var role_input by remember(role, current_hex) { mutableStateOf(current_hex) }
-            val role_valid = MaterialThemeGenerator.is_valid_hex_color(role_input)
-            Column(Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm)) {
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    role_swatches(role, custom_is_dark).forEach { hex ->
-                        color_dot(
-                            color = parse_hex_color(hex),
-                            selected = hex.equals(role_input, ignoreCase = true),
-                            on_click = { role_input = hex },
-                        )
-                    }
-                }
-                v_gap(AsterSpacing.md)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .background(if (role_valid) parse_hex_color(role_input) else Color.Gray, CircleShape)
-                            .border(1.dp, colors.border_primary, CircleShape),
-                    )
-                    Spacer(Modifier.width(AsterSpacing.md))
-                    AsterTextField(
-                        value = role_input,
-                        onValueChange = { role_input = it },
-                        placeholder = stringResource(R.string.custom_theme_hex_placeholder),
-                        modifier = Modifier.weight(1f).testTag("role_hex_input"),
-                    )
-                }
-                if (!role_valid && role_input.isNotBlank()) {
-                    v_gap(AsterSpacing.xs)
-                    Text(
-                        text = stringResource(R.string.custom_theme_hex_invalid),
-                        color = colors.danger,
-                        fontSize = 12.sp,
-                    )
-                }
-                v_gap(AsterSpacing.lg)
-                Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-                    org.astermail.android.design.components.AsterSecondaryButton(
-                        label = stringResource(R.string.appearance_role_reset),
-                        onClick = {
-                            apply_overrides(MaterialThemeGenerator.with_override(custom_theme_overrides, role, null))
-                            editing_role = null
-                        },
-                        enabled = current_override != null,
-                        modifier = Modifier.weight(1f),
-                    )
-                    org.astermail.android.design.components.AsterButton(
-                        label = stringResource(R.string.save),
-                        onClick = {
-                            apply_overrides(
-                                MaterialThemeGenerator.with_override(custom_theme_overrides, role, role_input.lowercase()),
-                            )
-                            editing_role = null
-                        },
-                        enabled = role_valid,
-                        modifier = Modifier.weight(1f).testTag("role_save"),
-                    )
-                }
-                v_gap(AsterSpacing.md)
-            }
-        }
     }
 
     if (show_font_picker) {
@@ -1014,129 +839,44 @@ private fun compose_choice_row(
     }
 }
 
-private fun base_hex_for_role(vars: MaterialThemeGenerator.MaterialThemeVars, role: String): String = when (role) {
-    "accent_color" -> vars.accent_color
-    "accent_color_hover" -> vars.accent_color_hover
-    "bg_primary" -> vars.bg_primary
-    "bg_secondary" -> vars.bg_secondary
-    "text_primary" -> vars.text_primary
-    "text_secondary" -> vars.text_secondary
-    else -> vars.border_primary
-}
-
-private fun role_label_res(role: String): Int = when (role) {
-    "accent_color" -> R.string.appearance_role_accent
-    "accent_color_hover" -> R.string.appearance_role_accent_hover
-    "bg_primary" -> R.string.appearance_role_background
-    "bg_secondary" -> R.string.appearance_role_surface
-    "text_primary" -> R.string.appearance_role_text
-    "text_secondary" -> R.string.appearance_role_text_secondary
-    else -> R.string.appearance_role_border
-}
-
-private fun role_swatches(role: String, is_dark: Boolean): List<String> = when (role) {
-    "accent_color", "accent_color_hover" -> quick_seed_colors
-    "bg_primary", "bg_secondary" -> if (is_dark) {
-        listOf("#000000", "#0b0b0f", "#111318", "#16181d", "#1c1f26", "#202431", "#1a1625", "#10201a")
-    } else {
-        listOf("#ffffff", "#fafafa", "#f5f5f4", "#f1f5f9", "#eef2ff", "#fdf2f8", "#f0fdf4", "#fffbeb")
-    }
-    "text_primary", "text_secondary" -> if (is_dark) {
-        listOf("#ffffff", "#f4f4f5", "#e4e4e7", "#d4d4d8", "#a1a1aa", "#cbd5e1", "#e0e7ff", "#fde68a")
-    } else {
-        listOf("#000000", "#0f172a", "#18181b", "#27272a", "#3f3f46", "#52525b", "#1e293b", "#334155")
-    }
-    else -> if (is_dark) {
-        listOf("#27272a", "#2d2f36", "#3f3f46", "#334155", "#312e81", "#1f2937")
-    } else {
-        listOf("#e4e4e7", "#e5e7eb", "#d4d4d8", "#cbd5e1", "#c7d2fe", "#e7e5e4")
-    }
-}
-
 @Composable
-private fun role_row(
-    label: String,
-    value: String,
-    color: Color,
+private fun theme_option_row(
+    title: String,
+    subtitle: String,
+    selected: Boolean,
     on_click: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = on_click)
-            .padding(horizontal = AsterSpacing.lg, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(30.dp)
-                .clip(SquircleShape(9.dp))
-                .background(color)
-                .border(1.dp, colors.border_primary, SquircleShape(9.dp)),
-        )
-        Spacer(Modifier.width(16.dp))
-        Text(
-            text = label,
-            color = colors.text_primary,
-            fontSize = 15.sp,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            text = value,
-            color = colors.text_tertiary,
-            fontSize = 13.sp,
-            fontFamily = FontFamily.Monospace,
-        )
-        Spacer(Modifier.width(6.dp))
-        Icon(
-            imageVector = TablerIcons.ChevronRight,
-            contentDescription = null,
-            tint = colors.text_tertiary,
-            modifier = Modifier.size(16.dp),
-        )
-    }
-}
-
-@Composable
-private fun segmented_choice(
-    options: List<Pair<String, String>>,
-    selected: String,
-    on_select: (String) -> Unit,
-    tag_prefix: String = "",
 ) {
     val colors = AsterMaterial.colors
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(SquircleShape(12.dp))
-            .background(colors.bg_tertiary)
-            .padding(3.dp),
-        horizontalArrangement = Arrangement.spacedBy(3.dp),
+            .clickable(onClick = on_click)
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        options.forEach { (key, label) ->
-            val is_selected = key == selected
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(SquircleShape(9.dp))
-                    .background(if (is_selected) colors.bg_card else Color.Transparent)
-                    .then(
-                        if (is_selected) Modifier.border(1.dp, colors.border_primary, SquircleShape(9.dp)) else Modifier,
-                    )
-                    .clickable { on_select(key) }
-                    .padding(vertical = 9.dp)
-                    .testTag(tag_prefix + key),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = label,
-                    color = if (is_selected) colors.text_primary else colors.text_secondary,
-                    fontSize = 13.sp,
-                    fontWeight = if (is_selected) FontWeight.SemiBold else FontWeight.Medium,
-                    maxLines = 1,
+        Box(
+            modifier = Modifier
+                .size(20.dp)
+                .border(
+                    width = 2.dp,
+                    color = if (selected) colors.accent_blue else colors.border_primary,
+                    shape = CircleShape,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (selected) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .background(colors.accent_blue, CircleShape),
                 )
+            }
+        }
+        Spacer(Modifier.width(AsterSpacing.md))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = title, color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            if (subtitle.isNotBlank()) {
+                Text(text = subtitle, color = colors.text_tertiary, fontSize = 13.sp)
             }
         }
     }
