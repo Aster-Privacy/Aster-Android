@@ -56,6 +56,8 @@ class PrekeyBindingSignerTest {
     private val passphrase = "orbit-lantern-9-quartz"
     private val kem_b64 = "BASE64KEMIDENTITYKEYxxxxxxxxxxxxxxxxxxxxxxx="
     private val spk_b64 = "BASE64SIGNEDPREKEYyyyyyyyyyyyyyyyyyyyyyyyyy="
+    private val pq_b64 = java.util.Base64.getEncoder().encodeToString(ByteArray(1184) { 7 })
+    private val other_pq_b64 = java.util.Base64.getEncoder().encodeToString(ByteArray(1184) { 9 })
 
     @Test
     fun canonical_binding_matches_the_web_client_format() {
@@ -98,6 +100,53 @@ class PrekeyBindingSignerTest {
                 kem_b64,
                 spk_b64,
             ),
+        )
+    }
+
+    @Test
+    fun canonical_binding_covers_the_post_quantum_key_when_one_is_published() {
+        assertEquals(
+            "aster-ratchet-prekey-v2:$kem_b64.$spk_b64.$pq_b64",
+            PrekeyBindingSigner.canonical_binding_for(kem_b64, spk_b64, pq_b64),
+        )
+        assertEquals(
+            "aster-ratchet-prekey-v1:$kem_b64.$spk_b64",
+            PrekeyBindingSigner.canonical_binding_for(kem_b64, spk_b64, null),
+        )
+        assertEquals(
+            "aster-ratchet-prekey-v1:$kem_b64.$spk_b64",
+            PrekeyBindingSigner.canonical_binding_for(kem_b64, spk_b64, ""),
+        )
+    }
+
+    @Test
+    fun a_v2_signature_verifies_only_against_the_signed_post_quantum_key() {
+        val secret_key = generate_test_secret_key()
+        val armored_secret = armor_secret_key(secret_key)
+        val armored = PrekeyBindingSigner.sign_cleartext(
+            armored_secret_key = armored_secret,
+            passphrase = passphrase.toCharArray(),
+            text = PrekeyBindingSigner.canonical_binding_for(kem_b64, spk_b64, pq_b64),
+        )
+        val public_out = ByteArrayOutputStream()
+        ArmoredOutputStream(public_out).use { secret_key.publicKey.encode(it) }
+        val public_armored = public_out.toString(Charsets.UTF_8.name())
+        val wrapped = java.util.Base64.getEncoder().encodeToString(armored.toByteArray(Charsets.UTF_8))
+
+        write_interop_vector(
+            secret_key,
+            PrekeyBindingSigner.canonical_binding_for(kem_b64, spk_b64, pq_b64),
+            armored,
+            "prekey_binding_interop_v2",
+        )
+
+        assertEquals(
+            PrekeyBindingResult.VERIFIED,
+            PrekeyBindingVerifier.verify(wrapped, public_armored, kem_b64, spk_b64, pq_b64),
+        )
+        assertEquals(
+            PrekeyBindingResult.INVALID,
+            PrekeyBindingVerifier.verify(wrapped, public_armored, kem_b64, spk_b64, other_pq_b64),
         )
     }
 
@@ -213,8 +262,13 @@ class PrekeyBindingSignerTest {
         return signature.verify() to signed_text
     }
 
-    private fun write_interop_vector(secret_key: PGPSecretKey, text: String, armored: String) {
-        val dir = File("build/prekey_binding_interop")
+    private fun write_interop_vector(
+        secret_key: PGPSecretKey,
+        text: String,
+        armored: String,
+        dir_name: String = "prekey_binding_interop",
+    ) {
+        val dir = File("build/$dir_name")
         dir.mkdirs()
 
         val public_out = ByteArrayOutputStream()
