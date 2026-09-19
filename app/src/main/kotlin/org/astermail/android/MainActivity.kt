@@ -40,13 +40,9 @@ import org.astermail.android.ui.auth.mark_signed_up_now
 import org.astermail.android.ui.auth.within_sign_up_quiet_period
 import org.astermail.android.security.LockdownStore
 import org.astermail.android.ui.common.nav_anim_duration_ms
-import org.astermail.android.ui.common.nav_anim_collapse_ms
-import org.astermail.android.ui.common.nav_anim_expand_ms
 import org.astermail.android.ui.security.AppLockScreen
 import androidx.compose.foundation.layout.fillMaxWidth
 import org.astermail.android.ui.common.nav_backward_enter
-import org.astermail.android.ui.common.nav_expand_enter
-import org.astermail.android.ui.common.nav_expand_exit
 import org.astermail.android.ui.common.nav_backward_exit
 import org.astermail.android.ui.common.nav_forward_enter
 import org.astermail.android.ui.common.nav_forward_exit
@@ -664,7 +660,7 @@ private fun AsterNavHost() {
         },
         exitTransition = {
             val target = targetState.destination.route
-            if (target?.startsWith("compose") == true || target?.startsWith("search") == true) {
+            if (target?.startsWith("compose") == true) {
                 androidx.compose.animation.ExitTransition.None
             } else {
                 nav_forward_exit(nav_duration)
@@ -672,7 +668,7 @@ private fun AsterNavHost() {
         },
         popEnterTransition = {
             val initial = initialState.destination.route
-            if (initial?.startsWith("compose") == true || initial?.startsWith("search") == true) {
+            if (initial?.startsWith("compose") == true) {
                 androidx.compose.animation.EnterTransition.None
             } else {
                 nav_backward_enter(nav_duration)
@@ -1079,10 +1075,6 @@ private fun AsterNavHost() {
         }
         composable(
             route = routes.search,
-            enterTransition = { nav_expand_enter(if (nav_duration == 0) 0 else nav_anim_expand_ms) },
-            exitTransition = { nav_expand_exit(if (nav_duration == 0) 0 else nav_anim_collapse_ms) },
-            popEnterTransition = { nav_expand_enter(if (nav_duration == 0) 0 else nav_anim_expand_ms) },
-            popExitTransition = { nav_expand_exit(if (nav_duration == 0) 0 else nav_anim_collapse_ms) },
         ) { entry ->
             val inbox_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
@@ -1096,10 +1088,6 @@ private fun AsterNavHost() {
         composable(
             route = routes.search_with_query,
             arguments = listOf(androidx.navigation.navArgument("q") { defaultValue = "" }),
-            enterTransition = { nav_expand_enter(if (nav_duration == 0) 0 else nav_anim_expand_ms) },
-            exitTransition = { nav_expand_exit(if (nav_duration == 0) 0 else nav_anim_collapse_ms) },
-            popEnterTransition = { nav_expand_enter(if (nav_duration == 0) 0 else nav_anim_expand_ms) },
-            popExitTransition = { nav_expand_exit(if (nav_duration == 0) 0 else nav_anim_collapse_ms) },
         ) { entry ->
             val q = entry.arguments?.getString("q").orEmpty()
             val inbox_entry = remember(entry) {
