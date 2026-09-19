@@ -2846,33 +2846,12 @@ internal fun inbox_top_bar(
                     modifier = Modifier.weight(1f),
                 )
             }
-            val settings_description = stringResource(R.string.settings)
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = on_open_settings)
-                    .semantics { contentDescription = settings_description }
-                    .testTag("account_avatar"),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (account_email.isBlank()) {
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(CircleShape)
-                            .background(search_field_bg_color(colors)),
-                    )
-                } else {
-                    SenderAvatar(
-                        email = account_email,
-                        name = account_name,
-                        size = 32.dp,
-                        profile_picture_url = account_profile_picture,
-                        profile_color = account_profile_color,
-                    )
-                }
-            }
+            AsterIconButton(
+                icon = TablerIcons.Settings,
+                content_description = stringResource(R.string.settings),
+                onClick = on_open_settings,
+                modifier = Modifier.testTag("open_settings"),
+            )
         }
         if (selection_content != null) {
             selection_content()

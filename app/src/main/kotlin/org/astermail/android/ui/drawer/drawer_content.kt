@@ -1881,12 +1881,12 @@ private fun profile_menu_account_badge(text: String, muted: Boolean) {
     } else {
         androidx.compose.ui.graphics.lerp(colors.dropdown_bg, colors.accent_blue, 0.72f)
     }
-    val fg = if (muted) colors.text_muted else colors.on_accent
+    val fg = if (muted) colors.text_secondary else colors.on_accent
     val ring = if (muted) colors.text_primary.copy(alpha = 0.16f) else colors.accent_blue.copy(alpha = 0.45f)
     Text(
         text = text,
         color = fg,
-        fontSize = 11.sp,
+        fontSize = 12.sp,
         fontWeight = FontWeight.Medium,
         maxLines = 1,
         modifier = Modifier
@@ -1927,7 +1927,7 @@ private fun profile_menu_tile(
                 imageVector = icon,
                 contentDescription = content_description,
                 tint = tint,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(20.dp),
             )
         }
         if (label != null) {
@@ -1935,7 +1935,7 @@ private fun profile_menu_tile(
             Text(
                 text = label,
                 color = label_color,
-                fontSize = 13.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
@@ -1944,8 +1944,8 @@ private fun profile_menu_tile(
             if (meta != null) {
                 Text(
                     text = meta,
-                    color = colors.text_muted,
-                    fontSize = 11.sp,
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
                 )
             }
         }
@@ -2031,8 +2031,8 @@ private fun workspace_switcher_sheet(
                     ) {
                         Text(
                             text = greeting,
-                            color = colors.text_muted,
-                            fontSize = 12.sp,
+                            color = colors.text_secondary,
+                            fontSize = 13.sp,
                             maxLines = 1,
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -2052,8 +2052,8 @@ private fun workspace_switcher_sheet(
                         }
                         Text(
                             text = current_email,
-                            color = colors.text_muted,
-                            fontSize = 12.sp,
+                            color = colors.text_secondary,
+                            fontSize = 13.sp,
                             maxLines = 1,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                             modifier = Modifier.clickable(
@@ -2099,8 +2099,8 @@ private fun workspace_switcher_sheet(
                 ) {
                     Text(
                         text = stringResource(R.string.profile_menu_storage_used),
-                        color = colors.text_secondary,
-                        fontSize = 12.sp,
+                        color = colors.text_primary,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,
                     )
@@ -2108,8 +2108,8 @@ private fun workspace_switcher_sheet(
                     if (storage_used_label.isNotBlank()) {
                         Text(
                             text = storage_used_label,
-                            color = colors.text_muted,
-                            fontSize = 12.sp,
+                            color = colors.text_secondary,
+                            fontSize = 13.sp,
                             maxLines = 1,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         )
@@ -2177,8 +2177,8 @@ private fun workspace_switcher_sheet(
                         )
                         Text(
                             text = account.email,
-                            color = colors.text_muted,
-                            fontSize = 11.sp,
+                            color = colors.text_secondary,
+                            fontSize = 13.sp,
                             maxLines = 1,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         )
@@ -2197,10 +2197,10 @@ private fun workspace_switcher_sheet(
                 icon = TablerIcons.Plus,
                 label = stringResource(R.string.profile_menu_add_another_account),
                 content_description = null,
-                tint = colors.text_secondary,
+                tint = colors.text_primary,
                 label_color = colors.text_primary,
                 background = card,
-                enabled_alpha = if (can_add) 1f else 0.6f,
+                enabled_alpha = if (can_add) 1f else 0.85f,
                 meta = if (is_unlimited_accounts) null else "$personal_count/$display_max",
                 modifier = Modifier.fillMaxWidth().testTag("profile_menu_add_account"),
                 on_click = on_add,
