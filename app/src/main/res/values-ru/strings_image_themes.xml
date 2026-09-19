@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="image_themes">Темы с изображением</string>
-    <string name="image_themes_subtitle">Показывает изображение за папкой «Входящие».</string>
+    <string name="image_themes_subtitle">Показывает фото за приложением.</string>
     <string name="image_theme_none">Нет</string>
-    <string name="image_theme_starfield">Звёздное поле</string>
-    <string name="image_theme_nebula">Туманность</string>
-    <string name="image_theme_aurora">Северное сияние</string>
-    <string name="image_theme_milky_way">Млечный Путь</string>
-    <string name="image_theme_midnight">Полночь</string>
+    <string name="image_theme_pillars">Столпы</string>
+    <string name="image_theme_aurora">Полярное сияние</string>
+    <string name="image_theme_sunrise">Восход</string>
+    <string name="image_theme_city_lights">Огни городов</string>
+    <string name="image_theme_northern_lights">Северное сияние</string>
+    <string name="image_theme_apply">Использовать тему</string>
+    <string name="image_theme_in_use">Используется</string>
+    <string name="image_theme_credit">Фото: NASA</string>
 </resources>

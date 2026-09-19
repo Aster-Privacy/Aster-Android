@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="image_themes">이미지 테마</string>
-    <string name="image_themes_subtitle">받은편지함 뒤에 이미지를 표시합니다.</string>
+    <string name="image_themes_subtitle">앱 뒤에 사진을 표시합니다.</string>
     <string name="image_theme_none">없음</string>
-    <string name="image_theme_starfield">별밭</string>
-    <string name="image_theme_nebula">성운</string>
+    <string name="image_theme_pillars">기둥</string>
     <string name="image_theme_aurora">오로라</string>
-    <string name="image_theme_milky_way">은하수</string>
-    <string name="image_theme_midnight">한밤중</string>
+    <string name="image_theme_sunrise">일출</string>
+    <string name="image_theme_city_lights">도시의 불빛</string>
+    <string name="image_theme_northern_lights">북극광</string>
+    <string name="image_theme_apply">테마 사용</string>
+    <string name="image_theme_in_use">사용 중</string>
+    <string name="image_theme_credit">사진: NASA</string>
 </resources>

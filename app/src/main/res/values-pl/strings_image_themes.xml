@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="image_themes">Motywy z obrazem</string>
-    <string name="image_themes_subtitle">Wyświetla obraz za skrzynką odbiorczą.</string>
+    <string name="image_themes_subtitle">Wyświetla zdjęcie za aplikacją.</string>
     <string name="image_theme_none">Brak</string>
-    <string name="image_theme_starfield">Gwiezdne pole</string>
-    <string name="image_theme_nebula">Mgławica</string>
+    <string name="image_theme_pillars">Filary</string>
     <string name="image_theme_aurora">Zorza</string>
-    <string name="image_theme_milky_way">Droga Mleczna</string>
-    <string name="image_theme_midnight">Północ</string>
+    <string name="image_theme_sunrise">Wschód słońca</string>
+    <string name="image_theme_city_lights">Światła miast</string>
+    <string name="image_theme_northern_lights">Zorza polarna</string>
+    <string name="image_theme_apply">Użyj motywu</string>
+    <string name="image_theme_in_use">W użyciu</string>
+    <string name="image_theme_credit">Zdjęcie: NASA</string>
 </resources>

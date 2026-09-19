@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="image_themes">Image themes</string>
-    <string name="image_themes_subtitle">Shows a picture behind your inbox.</string>
+    <string name="image_themes_subtitle">Shows a photo behind the app.</string>
     <string name="image_theme_none">None</string>
-    <string name="image_theme_starfield">Starfield</string>
-    <string name="image_theme_nebula">Nebula</string>
+    <string name="image_theme_pillars">Pillars</string>
     <string name="image_theme_aurora">Aurora</string>
-    <string name="image_theme_milky_way">Milky Way</string>
-    <string name="image_theme_midnight">Midnight</string>
+    <string name="image_theme_sunrise">Sunrise</string>
+    <string name="image_theme_city_lights">City lights</string>
+    <string name="image_theme_northern_lights">Northern lights</string>
+    <string name="image_theme_apply">Use theme</string>
+    <string name="image_theme_in_use">In use</string>
+    <string name="image_theme_credit">Photo: NASA</string>
 </resources>

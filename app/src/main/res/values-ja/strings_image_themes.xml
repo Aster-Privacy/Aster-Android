@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="image_themes">画像テーマ</string>
-    <string name="image_themes_subtitle">受信トレイの背景に画像を表示します。</string>
+    <string name="image_themes_subtitle">アプリの背景に写真を表示します。</string>
     <string name="image_theme_none">なし</string>
-    <string name="image_theme_starfield">星空</string>
-    <string name="image_theme_nebula">星雲</string>
+    <string name="image_theme_pillars">創造の柱</string>
     <string name="image_theme_aurora">オーロラ</string>
-    <string name="image_theme_milky_way">天の川</string>
-    <string name="image_theme_midnight">真夜中</string>
+    <string name="image_theme_sunrise">日の出</string>
+    <string name="image_theme_city_lights">街の明かり</string>
+    <string name="image_theme_northern_lights">北極光</string>
+    <string name="image_theme_apply">テーマを使用</string>
+    <string name="image_theme_in_use">使用中</string>
+    <string name="image_theme_credit">写真: NASA</string>
 </resources>

@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="image_themes">Temas con imagen</string>
-    <string name="image_themes_subtitle">Muestra una imagen detrás de tu bandeja de entrada.</string>
+    <string name="image_themes_subtitle">Muestra una foto detrás de la app.</string>
     <string name="image_theme_none">Ninguno</string>
-    <string name="image_theme_starfield">Campo estelar</string>
-    <string name="image_theme_nebula">Nebulosa</string>
+    <string name="image_theme_pillars">Pilares</string>
     <string name="image_theme_aurora">Aurora</string>
-    <string name="image_theme_milky_way">Vía Láctea</string>
-    <string name="image_theme_midnight">Medianoche</string>
+    <string name="image_theme_sunrise">Amanecer</string>
+    <string name="image_theme_city_lights">Luces de ciudad</string>
+    <string name="image_theme_northern_lights">Aurora boreal</string>
+    <string name="image_theme_apply">Usar tema</string>
+    <string name="image_theme_in_use">En uso</string>
+    <string name="image_theme_credit">Foto: NASA</string>
 </resources>

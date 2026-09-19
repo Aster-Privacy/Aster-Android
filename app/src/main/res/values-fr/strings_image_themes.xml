@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="image_themes">Thèmes illustrés</string>
-    <string name="image_themes_subtitle">Affiche une image derrière votre boîte de réception.</string>
+    <string name="image_themes_subtitle">Affiche une photo derrière l’app.</string>
     <string name="image_theme_none">Aucun</string>
-    <string name="image_theme_starfield">Champ d\'étoiles</string>
-    <string name="image_theme_nebula">Nébuleuse</string>
+    <string name="image_theme_pillars">Piliers</string>
     <string name="image_theme_aurora">Aurore</string>
-    <string name="image_theme_milky_way">Voie lactée</string>
-    <string name="image_theme_midnight">Minuit</string>
+    <string name="image_theme_sunrise">Lever du soleil</string>
+    <string name="image_theme_city_lights">Lumières des villes</string>
+    <string name="image_theme_northern_lights">Aurore boréale</string>
+    <string name="image_theme_apply">Utiliser le thème</string>
+    <string name="image_theme_in_use">Utilisé</string>
+    <string name="image_theme_credit">Photo : NASA</string>
 </resources>

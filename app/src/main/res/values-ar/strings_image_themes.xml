@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="image_themes">سمات الصور</string>
-    <string name="image_themes_subtitle">تعرض صورة خلف البريد الوارد.</string>
+    <string name="image_themes_subtitle">تعرض صورة خلف التطبيق.</string>
     <string name="image_theme_none">بلا</string>
-    <string name="image_theme_starfield">حقل النجوم</string>
-    <string name="image_theme_nebula">سديم</string>
+    <string name="image_theme_pillars">الأعمدة</string>
     <string name="image_theme_aurora">الشفق القطبي</string>
-    <string name="image_theme_milky_way">درب التبانة</string>
-    <string name="image_theme_midnight">منتصف الليل</string>
+    <string name="image_theme_sunrise">شروق الشمس</string>
+    <string name="image_theme_city_lights">أضواء المدن</string>
+    <string name="image_theme_northern_lights">الشفق الشمالي</string>
+    <string name="image_theme_apply">استخدام السمة</string>
+    <string name="image_theme_in_use">قيد الاستخدام</string>
+    <string name="image_theme_credit">الصورة: NASA</string>
 </resources>

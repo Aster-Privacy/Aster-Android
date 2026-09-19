@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.Font
@@ -47,6 +48,7 @@ import org.astermail.android.storage.ThemeMode
 import org.astermail.android.ui.theme.AccessibilityState
 import org.astermail.android.ui.theme.ThemeViewModel
 import org.astermail.android.ui.theme.local_accessibility
+import org.astermail.android.ui.theme.draw_theme_backdrop
 import org.astermail.android.ui.theme.local_background_image
 import org.astermail.android.ui.theme.local_text_scale
 
@@ -114,6 +116,7 @@ fun aster_theme_root(content: @Composable () -> Unit) {
         custom_theme_seed = custom_theme_seed,
         custom_theme_overrides = custom_theme_overrides,
         font_choice = font_choice,
+        glass = org.astermail.android.ui.theme.theme_background_for(background_image) != null && !reduce_transparency,
     ) {
         val base_density = LocalDensity.current
         val compact_factor = if (compact_mode) 0.9f else 1f
@@ -131,10 +134,17 @@ fun aster_theme_root(content: @Composable () -> Unit) {
             org.astermail.android.design.local_reduce_motion provides a11y.reduce_motion,
         ) {
             val colors = AsterMaterial.colors
+            val backdrop = if (colors.is_glass) org.astermail.android.ui.theme.theme_background_bitmap() else null
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(colors.bg_primary),
+                    .then(
+                        if (backdrop != null) {
+                            Modifier.drawBehind { draw_theme_backdrop(backdrop, size) }
+                        } else {
+                            Modifier.background(colors.bg_primary)
+                        },
+                    ),
             ) {
                 content()
                 app_toast_host()

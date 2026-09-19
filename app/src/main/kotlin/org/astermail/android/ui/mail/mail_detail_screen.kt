@@ -5212,7 +5212,7 @@ internal fun email_html_view(
 ) {
     val colors = AsterMaterial.colors
     val is_dark = !force_light && colors.bg_primary.luminance() < colors.text_primary.luminance()
-    val bg_hex = if (force_light) "#FFFFFF" else String.format(java.util.Locale.US, "#%06X", colors.bg_primary.toArgb() and 0xFFFFFF)
+    val bg_hex = if (force_light) "#FFFFFF" else if (colors.is_glass) "transparent" else String.format(java.util.Locale.US, "#%06X", colors.bg_primary.toArgb() and 0xFFFFFF)
     val fg_hex = if (force_light) "#111827" else String.format(java.util.Locale.US, "#%06X", colors.text_primary.toArgb() and 0xFFFFFF)
     val link_hex = String.format(java.util.Locale.US, "#%06X", colors.accent_blue.toArgb() and 0xFFFFFF)
 

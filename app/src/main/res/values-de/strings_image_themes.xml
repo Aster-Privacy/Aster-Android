@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="image_themes">Bildthemen</string>
-    <string name="image_themes_subtitle">Zeigt ein Bild hinter deinem Posteingang.</string>
+    <string name="image_themes_subtitle">Zeigt ein Foto hinter der App.</string>
     <string name="image_theme_none">Keins</string>
-    <string name="image_theme_starfield">Sternenfeld</string>
-    <string name="image_theme_nebula">Nebel</string>
+    <string name="image_theme_pillars">Säulen</string>
     <string name="image_theme_aurora">Polarlicht</string>
-    <string name="image_theme_milky_way">Milchstraße</string>
-    <string name="image_theme_midnight">Mitternacht</string>
+    <string name="image_theme_sunrise">Sonnenaufgang</string>
+    <string name="image_theme_city_lights">Stadtlichter</string>
+    <string name="image_theme_northern_lights">Nordlichter</string>
+    <string name="image_theme_apply">Design verwenden</string>
+    <string name="image_theme_in_use">Aktiv</string>
+    <string name="image_theme_credit">Foto: NASA</string>
 </resources>

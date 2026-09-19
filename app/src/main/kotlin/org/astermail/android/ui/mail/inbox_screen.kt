@@ -56,7 +56,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
-import org.astermail.android.ui.theme.draw_theme_background_at
+import org.astermail.android.ui.theme.draw_theme_backdrop
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
@@ -1542,22 +1542,13 @@ fun InboxScreen(
         }
     }
 
-    val background_bitmap = org.astermail.android.ui.theme.theme_background_bitmap()
+    val background_bitmap = if (colors.is_glass) org.astermail.android.ui.theme.theme_background_bitmap() else null
     var root_size by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
     Box(
         modifier = Modifier
             .fillMaxSize()
             .onSizeChanged { root_size = androidx.compose.ui.geometry.Size(it.width.toFloat(), it.height.toFloat()) }
-            .then(
-                if (background_bitmap != null) {
-                    Modifier.drawBehind {
-                        drawRect(colors.bg_primary)
-                        draw_theme_background_at(background_bitmap, size, 0f)
-                    }
-                } else {
-                    Modifier.background(colors.bg_primary)
-                },
-            )
+            .background(colors.bg_primary)
             .nestedScroll(header_nested_scroll),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -2089,7 +2080,7 @@ fun InboxScreen(
                     val limit = header_height_px.toFloat()
                     val fraction = if (limit == 0f) 0f else (-header_offset_px.floatValue / limit).coerceIn(0f, 1f)
                     if (background_bitmap != null) {
-                        draw_theme_background_at(background_bitmap, root_size, header_offset_px.floatValue, 1f - fraction)
+                        draw_theme_backdrop(background_bitmap, root_size, header_offset_px.floatValue, 1f - fraction)
                     } else {
                         drawRect(color = header_bg, alpha = 1f - fraction)
                     }
@@ -2169,7 +2160,7 @@ fun InboxScreen(
                 .height(status_bar_top)
                 .then(
                     if (background_bitmap != null) {
-                        Modifier.drawBehind { draw_theme_background_at(background_bitmap, root_size, 0f) }
+                        Modifier.drawBehind { draw_theme_backdrop(background_bitmap, root_size, 0f) }
                     } else {
                         Modifier.background(colors.bg_primary)
                     },

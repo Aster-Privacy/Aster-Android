@@ -46,6 +46,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.ui.draw.clip
@@ -275,6 +276,8 @@ fun AppearanceScreen(
         if (next != base) settings_vm.save_preferences(next)
     }
 
+    var gallery_start by remember { mutableStateOf<ThemeBackground?>(null) }
+
     fun apply_image_theme(background: ThemeBackground?) {
         if (background == null) {
             vm.set_background_image(no_theme_background)
@@ -477,26 +480,35 @@ fun AppearanceScreen(
                 )
                 v_gap(AsterSpacing.md)
                 val active_background = theme_background_for(background_image)
-                (listOf<ThemeBackground?>(null) + theme_backgrounds).chunked(3).forEachIndexed { row_index, row ->
-                    if (row_index > 0) v_gap(AsterSpacing.lg)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
-                    ) {
-                        row.forEach { background ->
-                            image_theme_tile(
-                                background = background,
-                                selected = active_background?.id == background?.id,
-                                on_click = { apply_image_theme(background) },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .testTag("image_theme_${background?.id ?: no_theme_background}"),
-                            )
-                        }
-                        repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                androidx.compose.foundation.lazy.LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    items(listOf<ThemeBackground?>(null) + theme_backgrounds) { background ->
+                        image_theme_tile(
+                            background = background,
+                            selected = active_background?.id == background?.id,
+                            on_click = {
+                                if (background == null) apply_image_theme(null) else gallery_start = background
+                            },
+                            modifier = Modifier
+                                .width(92.dp)
+                                .testTag("image_theme_${background?.id ?: no_theme_background}"),
+                        )
                     }
                 }
             }
+        }
+        gallery_start?.let { start ->
+            image_theme_gallery(
+                initial = start,
+                active_id = background_image,
+                on_dismiss = { gallery_start = null },
+                on_apply = { chosen ->
+                    apply_image_theme(chosen)
+                    gallery_start = null
+                },
+            )
         }
 
         if (show_custom_theme_upgrade && custom_theme_locked) {

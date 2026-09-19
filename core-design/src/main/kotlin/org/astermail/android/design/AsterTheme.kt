@@ -121,6 +121,42 @@ private fun apply_reduce_transparency(base: AsterSemanticColors): AsterSemanticC
     )
 }
 
+private fun apply_glass(base: AsterSemanticColors): AsterSemanticColors {
+    fun glass(color: Color, alpha: Float): Color = color.copy(alpha = minOf(color.alpha, alpha))
+    return base.copy(
+        bg_primary = Color.Transparent,
+        bg_secondary = glass(base.bg_secondary, 0.52f),
+        bg_tertiary = glass(base.bg_tertiary, 0.6f),
+        bg_hover = glass(base.bg_hover, 0.6f),
+        bg_card = glass(base.bg_card, 0.5f),
+        sidebar_bg = glass(base.sidebar_bg, 0.86f),
+        sidebar_hover = glass(base.sidebar_hover, 0.6f),
+        modal_bg = glass(base.modal_bg, 0.9f),
+        dropdown_bg = glass(base.dropdown_bg, 0.94f),
+        input_bg = glass(base.input_bg, 0.5f),
+        indicator_bg = glass(base.indicator_bg, 0.6f),
+        thread_card_bg = glass(base.thread_card_bg, 0.5f),
+        thread_card_bg_hover = glass(base.thread_card_bg_hover, 0.6f),
+        thread_header_bg = glass(base.thread_header_bg, 0.5f),
+        thread_content_bg = glass(base.thread_content_bg, 0.5f),
+        secondary_control_bg = glass(base.secondary_control_bg, 0.52f),
+        border_primary = glass(base.border_primary, 0.5f),
+        border_secondary = glass(base.border_secondary, 0.4f),
+        is_glass = true,
+    )
+}
+
+private fun apply_glass_scheme(scheme: ColorScheme, semantic: AsterSemanticColors): ColorScheme = scheme.copy(
+    background = Color.Transparent,
+    surface = semantic.bg_card,
+    surfaceVariant = semantic.bg_secondary,
+    surfaceContainerLowest = semantic.bg_card,
+    surfaceContainerLow = semantic.modal_bg,
+    surfaceContainer = semantic.modal_bg,
+    surfaceContainerHigh = semantic.modal_bg,
+    surfaceContainerHighest = semantic.dropdown_bg,
+)
+
 @Composable
 fun AsterTheme(
     use_dark_theme: Boolean = isSystemInDarkTheme(),
@@ -133,6 +169,7 @@ fun AsterTheme(
     custom_theme_seed: String? = null,
     custom_theme_overrides: Map<String, String> = emptyMap(),
     font_choice: String = DEFAULT_FONT_ID,
+    glass: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val forced_dark = AsterColorThemes.is_dark_only(color_theme_id)
@@ -166,12 +203,16 @@ fun AsterTheme(
         }
     }
 
-    val color_scheme = remember(resolved_dark, palette) { color_scheme_for(resolved_dark, palette) }
-    val semantic = remember(resolved_dark, palette, high_contrast, reduce_transparency) {
+    val semantic = remember(resolved_dark, palette, high_contrast, reduce_transparency, glass) {
         var built = AsterColorThemes.semantic_colors_for(resolved_dark, palette)
         if (high_contrast) built = apply_high_contrast(built)
         if (reduce_transparency) built = apply_reduce_transparency(built)
+        if (glass) built = apply_glass(built)
         built
+    }
+    val color_scheme = remember(resolved_dark, palette, semantic) {
+        val scheme = color_scheme_for(resolved_dark, palette)
+        if (semantic.is_glass) apply_glass_scheme(scheme, semantic) else scheme
     }
 
     val chosen_font = remember(font_choice) { font_family_for(font_choice) }

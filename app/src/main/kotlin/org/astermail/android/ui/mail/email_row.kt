@@ -795,7 +795,9 @@ private fun lightness_of(color: Color): Float {
 }
 
 internal fun inbox_card_read_color(colors: AsterSemanticColors): Color =
-    if (colors.is_dark) {
+    if (colors.is_glass) {
+        colors.bg_card
+    } else if (colors.is_dark) {
         shift_lightness(colors.bg_primary, 0.045f, 1f)
     } else {
         shift_lightness(colors.bg_primary, -0.04f, 1f)

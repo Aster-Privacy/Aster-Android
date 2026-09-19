@@ -22,7 +22,10 @@
 package org.astermail.android.ui.theme
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
@@ -43,11 +46,11 @@ data class ThemeBackground(
 const val no_theme_background = "none"
 
 val theme_backgrounds = listOf(
-    ThemeBackground("starfield", R.drawable.theme_bg_starfield, R.string.image_theme_starfield, ColorThemeId.black),
-    ThemeBackground("nebula", R.drawable.theme_bg_nebula, R.string.image_theme_nebula, ColorThemeId.purple),
+    ThemeBackground("pillars", R.drawable.theme_bg_pillars, R.string.image_theme_pillars, ColorThemeId.amber),
     ThemeBackground("aurora", R.drawable.theme_bg_aurora, R.string.image_theme_aurora, ColorThemeId.emerald),
-    ThemeBackground("milky_way", R.drawable.theme_bg_milky_way, R.string.image_theme_milky_way, ColorThemeId.slate),
-    ThemeBackground("midnight", R.drawable.theme_bg_midnight, R.string.image_theme_midnight, ColorThemeId.indigo),
+    ThemeBackground("sunrise", R.drawable.theme_bg_sunrise, R.string.image_theme_sunrise, ColorThemeId.aster_blue),
+    ThemeBackground("city_lights", R.drawable.theme_bg_city_lights, R.string.image_theme_city_lights, ColorThemeId.slate),
+    ThemeBackground("northern_lights", R.drawable.theme_bg_northern_lights, R.string.image_theme_northern_lights, ColorThemeId.orange),
 )
 
 fun theme_background_for(id: String?): ThemeBackground? = theme_backgrounds.firstOrNull { it.id == id }
@@ -77,6 +80,35 @@ fun DrawScope.draw_theme_background_at(
             srcSize = IntSize(src_w, src_h),
             dstOffset = IntOffset(0, (-top_in_area).roundToInt()),
             dstSize = IntSize(area.width.roundToInt(), area.height.roundToInt()),
+            alpha = alpha,
+        )
+    }
+}
+
+private val theme_backdrop_scrim = listOf(
+    0f to Color.Black.copy(alpha = 0.5f),
+    0.22f to Color.Black.copy(alpha = 0.3f),
+    0.7f to Color.Black.copy(alpha = 0.34f),
+    1f to Color.Black.copy(alpha = 0.55f),
+)
+
+fun DrawScope.draw_theme_backdrop(
+    bitmap: ImageBitmap,
+    area: Size,
+    top_in_area: Float = 0f,
+    alpha: Float = 1f,
+) {
+    if (area.width <= 0f || area.height <= 0f) return
+    draw_theme_background_at(bitmap, area, top_in_area, alpha)
+    clipRect(0f, 0f, size.width, size.height) {
+        drawRect(
+            brush = Brush.verticalGradient(
+                colorStops = theme_backdrop_scrim.toTypedArray(),
+                startY = -top_in_area,
+                endY = area.height - top_in_area,
+            ),
+            topLeft = Offset.Zero,
+            size = size,
             alpha = alpha,
         )
     }
