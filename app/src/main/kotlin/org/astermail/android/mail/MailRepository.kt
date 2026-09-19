@@ -535,6 +535,9 @@ class MailRepository @Inject constructor(
 
     private val pbkdf2_key_cache = BoundedKeyCache(ENVELOPE_KEY_CACHE_MAX_ENTRIES)
     private val identity_key_cache = BoundedKeyCache(ENVELOPE_KEY_CACHE_MAX_ENTRIES)
+    private val account_key_capabilities = org.astermail.android.crypto.AccountKeyCapabilities(
+        { keys_api.get_account_key_format_writes() },
+    )
     private val ratchet_undecryptable_at = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val envelope_heal_mutex = kotlinx.coroutines.sync.Mutex()
     @Volatile private var last_envelope_heal_at = 0L
@@ -3985,7 +3988,7 @@ class MailRepository @Inject constructor(
             to = to,
             cc = cc,
         )
-        val (encrypted_envelope, envelope_nonce) = encrypt_envelope(envelope)
+        val (encrypted_envelope, envelope_nonce) = encrypt_sent_envelope(envelope)
 
         val sent_folder_token = resolve_sent_folder_token()
 
@@ -4152,7 +4155,7 @@ class MailRepository @Inject constructor(
             to = listOf(recipient),
             cc = emptyList(),
         )
-        val (encrypted_envelope, envelope_nonce) = encrypt_envelope(envelope)
+        val (encrypted_envelope, envelope_nonce) = encrypt_sent_envelope(envelope)
 
         val sent_folder_token = resolve_sent_folder_token()
 
@@ -4727,6 +4730,25 @@ class MailRepository @Inject constructor(
         ).apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }.format(java.util.Date()))
         if (attachments.isNotEmpty()) obj.put(DRAFT_ATTACHMENTS_KEY, draft_attachments_json(attachments))
         return obj.toString()
+    }
+
+    private suspend fun encrypt_sent_envelope(json: String): Pair<String, String> {
+        return seal_sent_envelope_when_enabled(json) ?: encrypt_envelope(json)
+    }
+
+    private suspend fun seal_sent_envelope_when_enabled(json: String): Pair<String, String>? {
+        val identity_key = session_key_store.get_identity_key() ?: return null
+        val passphrase = session_key_store.get_passphrase() ?: return null
+        val chars = org.astermail.android.util.passphrase_chars(passphrase)
+        passphrase.fill(0)
+        return try {
+            if (!account_key_capabilities.format_writes()) return null
+            withContext(Dispatchers.Default) {
+                org.astermail.android.crypto.SentCopySeal.seal(json, identity_key, chars)
+            }
+        } finally {
+            chars.fill(' ')
+        }
     }
 
     private fun encrypt_envelope(json: String): Pair<String, String> {

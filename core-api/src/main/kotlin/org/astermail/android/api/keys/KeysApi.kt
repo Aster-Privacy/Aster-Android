@@ -32,6 +32,9 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.encodeURLPathPart
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.astermail.android.api.ApiClient
 
 @Serializable
@@ -155,6 +158,7 @@ interface KeysApi {
         token: String,
         key_fingerprint: String,
     ): AccountKeyTokenResponse? = null
+    suspend fun get_account_key_format_writes(): Boolean = false
 }
 
 class KeysApiImpl(private val client: ApiClient) : KeysApi {
@@ -287,4 +291,18 @@ class KeysApiImpl(private val client: ApiClient) : KeysApi {
         if (response.status.value !in 200..299) return null
         return runCatching { response.body<AccountKeyTokenResponse>() }.getOrNull()
     }
+
+    override suspend fun get_account_key_format_writes(): Boolean {
+        val response = runCatching { client.http.get("${client.base_url}$base/account-key/capabilities") }
+            .getOrNull() ?: return false
+        if (response.status.value !in 200..299) return false
+        val body = runCatching { response.body<String>() }.getOrNull() ?: return false
+        return parse_format_writes(body)
+    }
+}
+
+fun parse_format_writes(body: String): Boolean {
+    val element = runCatching { Json.parseToJsonElement(body) }.getOrNull() as? JsonObject ?: return false
+    val value = element["format_writes"] as? JsonPrimitive ?: return false
+    return !value.isString && value.content == "true"
 }
