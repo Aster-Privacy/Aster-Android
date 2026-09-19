@@ -2043,7 +2043,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         scrimColor = Color.Black.copy(alpha = 0.32f),
         drawerContent = {
             ModalDrawerSheet(
-                drawerContainerColor = colors.bg_primary,
+                drawerContainerColor = if (colors.is_glass) colors.sidebar_bg.copy(alpha = 1f) else colors.bg_primary,
                 drawerTonalElevation = 0.dp,
                 windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
                 drawerShape = androidx.compose.foundation.shape.RoundedCornerShape(

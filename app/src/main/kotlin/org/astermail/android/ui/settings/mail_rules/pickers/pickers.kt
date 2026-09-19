@@ -123,7 +123,7 @@ fun base_sheet(
     ModalBottomSheet(
         onDismissRequest = on_dismiss,
         sheetState = sheet_state,
-        containerColor = colors.bg_primary,
+        containerColor = if (colors.is_glass) colors.modal_bg.copy(alpha = 1f) else colors.bg_primary,
         dragHandle = null,
         modifier = Modifier.testTag("mr_sheet"),
     ) {
