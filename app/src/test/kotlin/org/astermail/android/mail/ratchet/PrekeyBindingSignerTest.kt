@@ -56,12 +56,98 @@ class PrekeyBindingSignerTest {
     private val passphrase = "orbit-lantern-9-quartz"
     private val kem_b64 = "BASE64KEMIDENTITYKEYxxxxxxxxxxxxxxxxxxxxxxx="
     private val spk_b64 = "BASE64SIGNEDPREKEYyyyyyyyyyyyyyyyyyyyyyyyyy="
+    private val pq_b64 = "BASE64PQIDENTITYKEYzzzzzzzzzzzzzzzzzzzzzzzz="
 
     @Test
     fun canonical_binding_matches_the_web_client_format() {
         assertEquals(
             "aster-ratchet-prekey-v1:$kem_b64.$spk_b64",
             PrekeyBindingSigner.canonical_binding(kem_b64, spk_b64),
+        )
+    }
+
+    @Test
+    fun canonical_binding_v2_matches_the_web_client_format() {
+        assertEquals(
+            "aster-ratchet-prekey-v2:$kem_b64.$spk_b64.$pq_b64",
+            PrekeyBindingSigner.canonical_binding_v2(kem_b64, spk_b64, pq_b64),
+        )
+    }
+
+    @Test
+    fun bundle_binding_uses_v2_only_when_a_pq_key_is_present() {
+        assertEquals(
+            PrekeyBindingSigner.canonical_binding_v2(kem_b64, spk_b64, pq_b64),
+            PrekeyBindingSigner.binding_for_bundle(kem_b64, spk_b64, pq_b64),
+        )
+        assertEquals(
+            PrekeyBindingSigner.canonical_binding(kem_b64, spk_b64),
+            PrekeyBindingSigner.binding_for_bundle(kem_b64, spk_b64, null),
+        )
+        assertEquals(
+            PrekeyBindingSigner.canonical_binding(kem_b64, spk_b64),
+            PrekeyBindingSigner.binding_for_bundle(kem_b64, spk_b64, "  "),
+        )
+    }
+
+    @Test
+    fun signing_a_v2_binding_produces_a_signature_that_verifies() {
+        val secret_key = generate_test_secret_key()
+        val text = PrekeyBindingSigner.canonical_binding_v2(kem_b64, spk_b64, pq_b64)
+
+        val armored = PrekeyBindingSigner.sign_cleartext(
+            armored_secret_key = armor_secret_key(secret_key),
+            passphrase = passphrase.toCharArray(),
+            text = text,
+        )
+
+        val (valid, signed_text) = verify_cleartext(armored, secret_key.publicKey)
+        assertTrue(valid)
+        assertEquals(text, signed_text)
+    }
+
+    @Test
+    fun verifier_accepts_v2_bindings_and_falls_back_to_v1() {
+        val secret_key = generate_test_secret_key()
+        val armored_secret = armor_secret_key(secret_key)
+        val public_armored = armor_public_key(secret_key.publicKey)
+
+        val v2_block = PrekeyBindingSigner.sign_cleartext(
+            armored_secret,
+            passphrase.toCharArray(),
+            PrekeyBindingSigner.canonical_binding_v2(kem_b64, spk_b64, pq_b64),
+        )
+        val v1_block = PrekeyBindingSigner.sign_cleartext(
+            armored_secret,
+            passphrase.toCharArray(),
+            PrekeyBindingSigner.canonical_binding(kem_b64, spk_b64),
+        )
+
+        assertEquals(
+            PrekeyBindingResult.VERIFIED,
+            PrekeyBindingVerifier.verify(v2_block, public_armored, kem_b64, spk_b64, pq_b64),
+        )
+        assertEquals(
+            PrekeyBindingResult.VERIFIED,
+            PrekeyBindingVerifier.verify(v1_block, public_armored, kem_b64, spk_b64, pq_b64),
+        )
+        assertEquals(
+            PrekeyBindingResult.VERIFIED,
+            PrekeyBindingVerifier.verify(v1_block, public_armored, kem_b64, spk_b64, null),
+        )
+        assertEquals(
+            PrekeyBindingResult.INVALID,
+            PrekeyBindingVerifier.verify(v2_block, public_armored, kem_b64, spk_b64, null),
+        )
+        assertEquals(
+            PrekeyBindingResult.INVALID,
+            PrekeyBindingVerifier.verify(
+                v2_block,
+                public_armored,
+                kem_b64,
+                spk_b64,
+                "BASE64OTHERPQKEYwwwwwwwwwwwwwwwwwwwwwwwwwwww=",
+            ),
         )
     }
 
@@ -192,6 +278,12 @@ class PrekeyBindingSignerTest {
     private fun armor_secret_key(secret_key: PGPSecretKey): String {
         val out = ByteArrayOutputStream()
         ArmoredOutputStream(out).use { secret_key.encode(it) }
+        return out.toString(Charsets.UTF_8.name())
+    }
+
+    private fun armor_public_key(public_key: PGPPublicKey): String {
+        val out = ByteArrayOutputStream()
+        ArmoredOutputStream(out).use { public_key.encode(it) }
         return out.toString(Charsets.UTF_8.name())
     }
 

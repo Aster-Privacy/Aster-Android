@@ -1951,6 +1951,201 @@ class MailRepositoryTest {
         assertArrayEquals("sent-copy attachment bytes must round-trip", raw_bytes, decrypted)
     }
 
+    private fun attachment_payload(
+        name: String = "report.pdf",
+        bytes: ByteArray = ByteArray(1024) { (it % 97).toByte() },
+    ) = ExternalAttachmentPayload(
+        data = java.util.Base64.getEncoder().encodeToString(bytes),
+        filename = name,
+        content_type = "application/pdf",
+        size_bytes = bytes.size.toLong(),
+    )
+
+    private fun attachments_json(vararg payloads: ExternalAttachmentPayload): String =
+        kotlinx.serialization.json.Json.encodeToString(
+            kotlinx.serialization.builtins.ListSerializer(ExternalAttachmentPayload.serializer()),
+            payloads.toList(),
+        )
+
+    @Test
+    fun `save_draft stores attachments and fetch_draft_for_compose restores them`() = runTest {
+        val bytes = ByteArray(4096) { (it % 251).toByte() }
+        val captured = slot<org.astermail.android.api.mail.CreateDraftRequestBody>()
+        coEvery { mail_api.create_draft(capture(captured)) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = "draft_att", success = true)
+
+        val result = repo.save_draft(
+            subject = "With a file",
+            body_html = "<p>see attached</p>",
+            sender_email = "me@astermail.org",
+            to = listOf("friend@astermail.org"),
+            attachments = listOf(attachment_payload(bytes = bytes)),
+        )
+
+        assertEquals("draft_att", result.getOrThrow())
+        assertTrue(captured.captured.has_attachments)
+        assertEquals(1, captured.captured.attachment_count)
+
+        coEvery { mail_api.get_draft("draft_att") } returns org.astermail.android.api.mail.DraftItem(
+            id = "draft_att",
+            encrypted_content = captured.captured.encrypted_content,
+            content_nonce = captured.captured.content_nonce,
+            has_attachments = true,
+            attachment_count = 1,
+        )
+
+        val (item, envelope) = repo.fetch_draft_for_compose("draft_att").getOrThrow()
+
+        assertTrue(item.has_attachments)
+        assertNotNull(envelope)
+        val restored = envelope!!.draft_attachments
+        assertEquals(1, restored.size)
+        assertEquals("report.pdf", restored[0].filename)
+        assertEquals("application/pdf", restored[0].content_type)
+        assertArrayEquals(bytes, java.util.Base64.getDecoder().decode(restored[0].data))
+    }
+
+    @Test
+    fun `save_draft keeps the draft but drops attachments over the backend limit`() = runTest {
+        val captured = slot<org.astermail.android.api.mail.CreateDraftRequestBody>()
+        coEvery { mail_api.create_draft(capture(captured)) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = "draft_big", success = true)
+        val too_many = (0..DRAFT_MAX_ATTACHMENT_COUNT).map { attachment_payload("f$it.pdf", ByteArray(8)) }
+
+        val result = repo.save_draft(
+            subject = "Many files",
+            body_html = "<p>hi</p>",
+            sender_email = "me@astermail.org",
+            to = listOf("friend@astermail.org"),
+            attachments = too_many,
+        )
+
+        assertEquals("draft_big", result.getOrThrow())
+        assertFalse(captured.captured.has_attachments)
+        assertEquals(0, captured.captured.attachment_count)
+        assertTrue(captured.captured.encrypted_content.length < 100_000)
+    }
+
+    @Test
+    fun `the undo safety draft includes the staged attachments`() = runTest {
+        val files_dir = java.nio.file.Files.createTempDirectory("outbox_test").toFile()
+        every { context.filesDir } returns files_dir
+        val captured = slot<org.astermail.android.api.mail.CreateDraftRequestBody>()
+        coEvery { mail_api.create_draft(capture(captured)) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = "safety_att", success = true)
+
+        repo.persist_and_schedule_undo_send(
+            pending_id = "pend_att",
+            to = listOf("friend@astermail.org"),
+            cc = emptyList(),
+            bcc = emptyList(),
+            subject = "Hi",
+            body_html = "<p>hello</p>",
+            sender_email = "me@astermail.org",
+            sender_display_name = null,
+            thread_token = null,
+            expires_at = null,
+            expiry_password = null,
+            attachments = listOf(attachment_payload()),
+            sender_alias_hash = null,
+            suppress_branding = null,
+            delay_ms = 10_000L,
+            draft_id = null,
+        )
+
+        assertEquals("safety_att", pending_send_dao.get_by_id("pend_att")?.draft_id)
+        assertTrue(captured.captured.has_attachments)
+        assertEquals(1, captured.captured.attachment_count)
+        files_dir.deleteRecursively()
+    }
+
+    @Test
+    fun `a permanently failed send rewrites its draft with the attachments`() = runTest {
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } throws
+            RatchetEncryptionException("friend@astermail.org", "no prekey bundle available for recipient")
+        coEvery { mail_api.get_draft("5b0c7c3e-2a41-4f6e-9d7a-1c2b3d4e5f60") } returns
+            org.astermail.android.api.mail.DraftItem(id = "5b0c7c3e-2a41-4f6e-9d7a-1c2b3d4e5f60", version = 1)
+        coEvery { mail_api.update_draft(any(), any()) } returns
+            org.astermail.android.api.mail.UpdateDraftResponse(success = true, version = 2)
+        coEvery { mail_api.create_draft(any()) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = "draft_new", success = true)
+        pending_send_dao.upsert(
+            pending_row("pend_keep", draft_id = "5b0c7c3e-2a41-4f6e-9d7a-1c2b3d4e5f60").copy(attachments_json = attachments_json(attachment_payload())),
+        )
+
+        val outcome = repo.run_pending_send("pend_keep")
+
+        assertEquals(PendingSendOutcome.FAILED, outcome)
+        assertEquals("failed", pending_send_dao.get_by_id("pend_keep")?.status)
+        coVerify(exactly = 0) { mail_api.delete_draft(any()) }
+        coVerify {
+            mail_api.update_draft("5b0c7c3e-2a41-4f6e-9d7a-1c2b3d4e5f60", match { it.has_attachments && it.attachment_count == 1 })
+        }
+    }
+
+    @Test
+    fun `a self send with attachments uses the local key when the key lookup fails`() = runTest {
+        val keys = org.astermail.android.crypto.PgpKeyGenerator.generate("Me", "me@astermail.org", "pw".toCharArray())
+        every { session_key_store.get_identity_key() } returns keys.armored_private_key
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } throws
+            org.astermail.android.api.ApiError.NotFoundError
+        coEvery { send_api.send_simple(any()) } returns
+            SimpleSendResponse(success = true, message = "ok", mail_item_id = "sent_self")
+        pending_send_dao.upsert(
+            pending_row("pend_self", to = "me@astermail.org").copy(attachments_json = attachments_json(attachment_payload())),
+        )
+
+        val outcome = repo.run_pending_send("pend_self")
+
+        assertEquals(PendingSendOutcome.SENT, outcome)
+        coVerify { keys_api.get_recipient_public_key("me", "me@astermail.org") }
+        coVerify(exactly = 1) { send_api.send_simple(any()) }
+    }
+
+    @Test
+    fun `a send to a registered alias uses the local key when the key lookup fails`() = runTest {
+        val keys = org.astermail.android.crypto.PgpKeyGenerator.generate("Me", "me@astermail.org", "pw".toCharArray())
+        every { session_key_store.get_identity_key() } returns keys.armored_private_key
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
+            org.astermail.android.api.keys.PublicKeyResponse(username = "helper", public_key = "")
+        repo.set_own_addresses(listOf("Helper@AsterMail.org"))
+
+        val found = repo.fetch_internal_public_keys(listOf("helper@astermail.org", "helper@astermail.org"))
+
+        assertEquals(1, found.size)
+        assertTrue(found[0].contains("BEGIN PGP PUBLIC KEY"))
+    }
+
+    @Test
+    fun `a send to someone else with no key still fails permanently`() = runTest {
+        val keys = org.astermail.android.crypto.PgpKeyGenerator.generate("Me", "me@astermail.org", "pw".toCharArray())
+        every { session_key_store.get_identity_key() } returns keys.armored_private_key
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } throws
+            org.astermail.android.api.ApiError.NotFoundError
+        val captured = slot<org.astermail.android.api.mail.CreateDraftRequestBody>()
+        coEvery { mail_api.create_draft(capture(captured)) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = "draft_saved", success = true)
+        pending_send_dao.upsert(
+            pending_row("pend_other").copy(attachments_json = attachments_json(attachment_payload())),
+        )
+
+        val outcome = repo.run_pending_send("pend_other")
+
+        assertEquals(PendingSendOutcome.FAILED, outcome)
+        coVerify(exactly = 0) { send_api.send_simple(any()) }
+        assertEquals("draft_saved", pending_send_dao.get_by_id("pend_other")?.draft_id)
+        assertTrue(captured.captured.has_attachments)
+
+        val direct = runCatching { repo.fetch_internal_public_keys(listOf("friend@astermail.org"), "me@astermail.org") }
+        assertTrue(direct.exceptionOrNull() is E2eEncryptionException)
+        assertTrue(is_permanent_send_failure_cause(direct.exceptionOrNull()))
+    }
+
     @Test
     fun `reconcile_pending_sends counts failed rows and raises the send problem`() = runTest {
         pending_send_dao.rows["p_failed"] = pending_row("p_failed", status = "failed")

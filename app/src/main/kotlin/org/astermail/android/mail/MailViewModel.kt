@@ -1068,6 +1068,8 @@ class MailViewModel @Inject constructor(
 
     fun get_user_email(): String? = repository.get_user_email()
 
+    fun set_own_addresses(addresses: Collection<String>) = repository.set_own_addresses(addresses)
+
     fun load_stats(force: Boolean = true) {
         val now = System.currentTimeMillis()
         val stats_ttl = org.astermail.android.api.network.stats_ttl_ms(
@@ -1138,7 +1140,14 @@ class MailViewModel @Inject constructor(
                         to_addresses = addresses?.first ?: emptyList(),
                         cc_addresses = addresses?.second ?: emptyList(),
                         bcc_addresses = addresses?.third ?: emptyList(),
+                        draft_attachments = runCatching {
+                            materialize_draft_attachments(
+                                java.io.File(context.cacheDir, "draft_attachments/${safe_draft_file_name(0, item.id)}"),
+                                envelope?.draft_attachments.orEmpty(),
+                            )
+                        }.getOrDefault(emptyList()),
                     )
+                    if (thread_gen != thread_load_generation) return@launch
                     _thread_state.value = ThreadUiState(
                         messages = listOf(msg),
                         item = item,
@@ -4228,6 +4237,7 @@ class MailViewModel @Inject constructor(
         thread_token: String? = null,
         session_id: String? = null,
         on_id_assigned: ((String) -> Unit)? = null,
+        attachments: List<ExternalAttachmentPayload> = emptyList(),
     ): Result<String> {
         val result = repository.save_draft(
             subject = subject,
@@ -4242,6 +4252,7 @@ class MailViewModel @Inject constructor(
             thread_token = thread_token,
             session_id = session_id,
             on_id_assigned = on_id_assigned,
+            attachments = attachments,
         )
         if (result.isSuccess) invalidate_caches(listOf("drafts"))
         return result
@@ -4259,10 +4270,20 @@ class MailViewModel @Inject constructor(
         reply_to_id: String? = null,
         thread_token: String? = null,
         session_id: String? = null,
+        attachments_loader: (suspend () -> List<ExternalAttachmentPayload>)? = null,
         on_complete: (Boolean) -> Unit,
     ) {
         viewModelScope.launch {
             val result = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                val attachments = attachments_loader?.let { loader ->
+                    try {
+                        loader()
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        throw cancelled
+                    } catch (t: Throwable) {
+                        emptyList()
+                    }
+                }.orEmpty()
                 repository.save_draft(
                     subject = subject,
                     body_html = body_html,
@@ -4275,6 +4296,7 @@ class MailViewModel @Inject constructor(
                     reply_to_id = reply_to_id,
                     thread_token = thread_token,
                     session_id = session_id,
+                    attachments = attachments,
                 )
             }
             if (result.isSuccess) {

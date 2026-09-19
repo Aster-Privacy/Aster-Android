@@ -102,6 +102,54 @@ class SendFailureClassificationTest {
     }
 
     @Test
+    fun `a missing recipient key is a permanent failure`() {
+        assertTrue(is_permanent_send_failure_cause(E2eEncryptionException("encryption failed")))
+        assertTrue(
+            is_permanent_send_failure_cause(
+                E2eEncryptionException("encryption failed", ApiError.NotFoundError),
+            ),
+        )
+        assertTrue(
+            is_permanent_send_failure_cause(
+                IllegalStateException("send failed", E2eEncryptionException("encryption failed")),
+            ),
+        )
+    }
+
+    @Test
+    fun `an attachment that cannot be prepared is a permanent failure`() {
+        assertTrue(
+            is_permanent_send_failure_cause(
+                AttachmentPrepareException("could not prepare a.txt", IllegalArgumentException("bad")),
+            ),
+        )
+    }
+
+    @Test
+    fun `a key lookup that fails on the network is retried`() {
+        assertFalse(
+            is_permanent_send_failure_cause(
+                E2eEncryptionException("encryption failed", ApiError.NetworkError),
+            ),
+        )
+        assertFalse(
+            is_permanent_send_failure_cause(
+                E2eEncryptionException("encryption failed", ApiError.ServerError(503)),
+            ),
+        )
+        assertFalse(
+            is_permanent_send_failure_cause(
+                E2eEncryptionException("encryption failed", IOException("connection reset")),
+            ),
+        )
+        assertFalse(
+            is_permanent_send_failure_cause(
+                AttachmentPrepareException("could not prepare a.txt", IOException("timed out")),
+            ),
+        )
+    }
+
+    @Test
     fun `a permanent cause nested behind a wrapper is still permanent`() {
         val err = IllegalStateException(
             "send failed",
