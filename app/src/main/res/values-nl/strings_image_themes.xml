@@ -4,11 +4,12 @@
     <string name="image_themes_subtitle">Toont een foto achter de app.</string>
     <string name="image_theme_none">Geen</string>
     <string name="image_theme_pillars">Pilaren</string>
-    <string name="image_theme_aurora">Poollicht</string>
-    <string name="image_theme_sunrise">Zonsopgang</string>
-    <string name="image_theme_city_lights">Stadslichten</string>
-    <string name="image_theme_northern_lights">Noorderlicht</string>
+    <string name="image_theme_cosmic_cliffs">Kosmische kliffen</string>
+    <string name="image_theme_horsehead">Paardenkop</string>
+    <string name="image_theme_tarantula">Tarantula</string>
+    <string name="image_theme_rho_ophiuchi">Rho Ophiuchi</string>
+    <string name="image_theme_deep_field">Diep veld</string>
     <string name="image_theme_apply">Thema gebruiken</string>
     <string name="image_theme_in_use">In gebruik</string>
-    <string name="image_theme_credit">Foto: NASA</string>
+    <string name="image_theme_credit">Afbeelding: NASA, ESA, CSA, STScI</string>
 </resources>

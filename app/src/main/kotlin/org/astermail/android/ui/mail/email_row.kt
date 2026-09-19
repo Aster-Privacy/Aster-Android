@@ -807,7 +807,9 @@ internal fun inbox_card_unread_color(colors: AsterSemanticColors): Color =
     inbox_card_read_color(colors)
 
 internal fun search_field_bg_color(colors: AsterSemanticColors): Color =
-    if (colors.is_dark) {
+    if (colors.is_glass) {
+        colors.input_bg
+    } else if (colors.is_dark) {
         shift_lightness(colors.bg_primary, 0.09f, 1.15f)
     } else {
         shift_lightness(colors.bg_primary, -0.10f, 1.15f)

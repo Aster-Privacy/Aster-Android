@@ -37,6 +37,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -121,27 +122,32 @@ private fun apply_reduce_transparency(base: AsterSemanticColors): AsterSemanticC
     )
 }
 
-private fun apply_glass(base: AsterSemanticColors): AsterSemanticColors {
-    fun glass(color: Color, alpha: Float): Color = color.copy(alpha = minOf(color.alpha, alpha))
+private fun apply_glass(base: AsterSemanticColors, tint: Color): AsterSemanticColors {
+    fun deep(fallback: Color, alpha: Float, lift: Float): Color =
+        if (tint == Color.Unspecified) {
+            fallback.copy(alpha = minOf(fallback.alpha, alpha))
+        } else {
+            lerp(tint, Color.White, lift).copy(alpha = alpha)
+        }
     return base.copy(
         bg_primary = Color.Transparent,
-        bg_secondary = glass(base.bg_secondary, 0.52f),
-        bg_tertiary = glass(base.bg_tertiary, 0.6f),
-        bg_hover = glass(base.bg_hover, 0.6f),
-        bg_card = glass(base.bg_card, 0.5f),
-        sidebar_bg = glass(base.sidebar_bg, 0.86f),
-        sidebar_hover = glass(base.sidebar_hover, 0.6f),
-        modal_bg = glass(base.modal_bg, 0.9f),
-        dropdown_bg = glass(base.dropdown_bg, 0.94f),
-        input_bg = glass(base.input_bg, 0.5f),
-        indicator_bg = glass(base.indicator_bg, 0.6f),
-        thread_card_bg = glass(base.thread_card_bg, 0.5f),
-        thread_card_bg_hover = glass(base.thread_card_bg_hover, 0.6f),
-        thread_header_bg = glass(base.thread_header_bg, 0.5f),
-        thread_content_bg = glass(base.thread_content_bg, 0.5f),
-        secondary_control_bg = glass(base.secondary_control_bg, 0.52f),
-        border_primary = glass(base.border_primary, 0.5f),
-        border_secondary = glass(base.border_secondary, 0.4f),
+        bg_secondary = deep(base.bg_secondary, 0.72f, 0.05f),
+        bg_tertiary = deep(base.bg_tertiary, 0.8f, 0.09f),
+        bg_hover = deep(base.bg_hover, 0.82f, 0.11f),
+        bg_card = deep(base.bg_card, 0.68f, 0.03f),
+        sidebar_bg = deep(base.sidebar_bg, 0.95f, 0.02f),
+        sidebar_hover = deep(base.sidebar_hover, 0.92f, 0.1f),
+        modal_bg = deep(base.modal_bg, 0.97f, 0.05f),
+        dropdown_bg = deep(base.dropdown_bg, 0.98f, 0.07f),
+        input_bg = deep(base.input_bg, 0.7f, 0.08f),
+        indicator_bg = deep(base.indicator_bg, 0.85f, 0.14f),
+        thread_card_bg = deep(base.thread_card_bg, 0.74f, 0.04f),
+        thread_card_bg_hover = deep(base.thread_card_bg_hover, 0.82f, 0.09f),
+        thread_header_bg = deep(base.thread_header_bg, 0.74f, 0.04f),
+        thread_content_bg = deep(base.thread_content_bg, 0.78f, 0.03f),
+        secondary_control_bg = deep(base.secondary_control_bg, 0.74f, 0.1f),
+        border_primary = Color.White.copy(alpha = 0.1f),
+        border_secondary = Color.White.copy(alpha = 0.07f),
         is_glass = true,
     )
 }
@@ -170,6 +176,7 @@ fun AsterTheme(
     custom_theme_overrides: Map<String, String> = emptyMap(),
     font_choice: String = DEFAULT_FONT_ID,
     glass: Boolean = false,
+    glass_tint: Color = Color.Unspecified,
     content: @Composable () -> Unit,
 ) {
     val forced_dark = AsterColorThemes.is_dark_only(color_theme_id)
@@ -203,11 +210,11 @@ fun AsterTheme(
         }
     }
 
-    val semantic = remember(resolved_dark, palette, high_contrast, reduce_transparency, glass) {
+    val semantic = remember(resolved_dark, palette, high_contrast, reduce_transparency, glass, glass_tint) {
         var built = AsterColorThemes.semantic_colors_for(resolved_dark, palette)
         if (high_contrast) built = apply_high_contrast(built)
         if (reduce_transparency) built = apply_reduce_transparency(built)
-        if (glass) built = apply_glass(built)
+        if (glass) built = apply_glass(built, glass_tint)
         built
     }
     val color_scheme = remember(resolved_dark, palette, semantic) {

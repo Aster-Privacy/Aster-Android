@@ -21,7 +21,17 @@
 
 package org.astermail.android.ui.theme
 
+import android.content.res.Resources
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.LruCache
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -41,16 +51,18 @@ data class ThemeBackground(
     val drawable_res: Int,
     val label_res: Int,
     val color_theme: ColorThemeId,
+    val tint: Color,
 )
 
 const val no_theme_background = "none"
 
 val theme_backgrounds = listOf(
-    ThemeBackground("pillars", R.drawable.theme_bg_pillars, R.string.image_theme_pillars, ColorThemeId.amber),
-    ThemeBackground("aurora", R.drawable.theme_bg_aurora, R.string.image_theme_aurora, ColorThemeId.emerald),
-    ThemeBackground("sunrise", R.drawable.theme_bg_sunrise, R.string.image_theme_sunrise, ColorThemeId.aster_blue),
-    ThemeBackground("city_lights", R.drawable.theme_bg_city_lights, R.string.image_theme_city_lights, ColorThemeId.slate),
-    ThemeBackground("northern_lights", R.drawable.theme_bg_northern_lights, R.string.image_theme_northern_lights, ColorThemeId.orange),
+    ThemeBackground("pillars", R.drawable.theme_bg_pillars, R.string.image_theme_pillars, ColorThemeId.amber, Color(0xFF0C181B)),
+    ThemeBackground("cosmic_cliffs", R.drawable.theme_bg_cosmic_cliffs, R.string.image_theme_cosmic_cliffs, ColorThemeId.aster_blue, Color(0xFF0B1224)),
+    ThemeBackground("horsehead", R.drawable.theme_bg_horsehead, R.string.image_theme_horsehead, ColorThemeId.rose, Color(0xFF170C10)),
+    ThemeBackground("tarantula", R.drawable.theme_bg_tarantula, R.string.image_theme_tarantula, ColorThemeId.orange, Color(0xFF18100C)),
+    ThemeBackground("rho_ophiuchi", R.drawable.theme_bg_rho_ophiuchi, R.string.image_theme_rho_ophiuchi, ColorThemeId.purple, Color(0xFF120F24)),
+    ThemeBackground("deep_field", R.drawable.theme_bg_deep_field, R.string.image_theme_deep_field, ColorThemeId.slate, Color(0xFF0D0D12)),
 )
 
 fun theme_background_for(id: String?): ThemeBackground? = theme_backgrounds.firstOrNull { it.id == id }
@@ -59,6 +71,36 @@ fun theme_background_for(id: String?): ThemeBackground? = theme_backgrounds.firs
 fun theme_background_bitmap(): ImageBitmap? {
     val background = theme_background_for(local_background_image.current) ?: return null
     return ImageBitmap.imageResource(background.drawable_res)
+}
+
+private val theme_bitmap_cache = object : LruCache<String, ImageBitmap>(48 * 1024 * 1024) {
+    override fun sizeOf(key: String, value: ImageBitmap): Int = value.width * value.height * 4
+}
+
+private fun decode_theme_bitmap(resources: Resources, res: Int, sample: Int, soften: Boolean): ImageBitmap? {
+    val key = "$res:$sample:$soften"
+    theme_bitmap_cache.get(key)?.let { return it }
+    val options = BitmapFactory.Options().apply { inSampleSize = sample }
+    val decoded = BitmapFactory.decodeResource(resources, res, options) ?: return null
+    val result = if (soften) {
+        val up = Bitmap.createScaledBitmap(decoded, decoded.width * 4, decoded.height * 4, true)
+        Bitmap.createScaledBitmap(up, decoded.width * 2, decoded.height * 2, true).also {
+            if (up !== it) up.recycle()
+        }
+    } else {
+        decoded
+    }
+    return result.asImageBitmap().also { theme_bitmap_cache.put(key, it) }
+}
+
+@Composable
+fun remember_theme_bitmap(res: Int, sample: Int = 1, soften: Boolean = false): State<ImageBitmap?> {
+    val resources = LocalContext.current.resources
+    return produceState(initialValue = theme_bitmap_cache.get("$res:$sample:$soften"), res, sample, soften) {
+        if (value == null) {
+            value = withContext(Dispatchers.IO) { decode_theme_bitmap(resources, res, sample, soften) }
+        }
+    }
 }
 
 fun DrawScope.draw_theme_background_at(
@@ -86,10 +128,10 @@ fun DrawScope.draw_theme_background_at(
 }
 
 private val theme_backdrop_scrim = listOf(
-    0f to Color.Black.copy(alpha = 0.5f),
-    0.22f to Color.Black.copy(alpha = 0.3f),
-    0.7f to Color.Black.copy(alpha = 0.34f),
-    1f to Color.Black.copy(alpha = 0.55f),
+    0f to Color.Black.copy(alpha = 0.35f),
+    0.2f to Color.Black.copy(alpha = 0.12f),
+    0.65f to Color.Black.copy(alpha = 0.16f),
+    1f to Color.Black.copy(alpha = 0.4f),
 )
 
 fun DrawScope.draw_theme_backdrop(

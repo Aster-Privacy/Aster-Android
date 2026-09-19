@@ -4,11 +4,12 @@
     <string name="image_themes_subtitle">ऐप के पीछे एक फ़ोटो दिखाता है।</string>
     <string name="image_theme_none">कोई नहीं</string>
     <string name="image_theme_pillars">स्तंभ</string>
-    <string name="image_theme_aurora">ध्रुवीय ज्योति</string>
-    <string name="image_theme_sunrise">सूर्योदय</string>
-    <string name="image_theme_city_lights">शहर की रोशनी</string>
-    <string name="image_theme_northern_lights">उत्तरी ज्योति</string>
+    <string name="image_theme_cosmic_cliffs">कॉस्मिक क्लिफ़्स</string>
+    <string name="image_theme_horsehead">हॉर्सहेड</string>
+    <string name="image_theme_tarantula">टैरेंटुला</string>
+    <string name="image_theme_rho_ophiuchi">रो ओफ़िउकी</string>
+    <string name="image_theme_deep_field">डीप फ़ील्ड</string>
     <string name="image_theme_apply">थीम इस्तेमाल करें</string>
     <string name="image_theme_in_use">इस्तेमाल में</string>
-    <string name="image_theme_credit">फ़ोटो: NASA</string>
+    <string name="image_theme_credit">चित्र: NASA, ESA, CSA, STScI</string>
 </resources>

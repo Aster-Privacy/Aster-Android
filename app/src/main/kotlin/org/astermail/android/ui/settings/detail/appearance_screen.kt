@@ -492,7 +492,7 @@ fun AppearanceScreen(
                                 if (background == null) apply_image_theme(null) else gallery_start = background
                             },
                             modifier = Modifier
-                                .width(92.dp)
+                                .width(84.dp)
                                 .testTag("image_theme_${background?.id ?: no_theme_background}"),
                         )
                     }
@@ -890,12 +890,22 @@ private fun image_theme_tile(
             contentAlignment = Alignment.Center,
         ) {
             if (background != null) {
-                androidx.compose.foundation.Image(
-                    painter = androidx.compose.ui.res.painterResource(background.drawable_res),
-                    contentDescription = null,
-                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                val thumb by org.astermail.android.ui.theme.remember_theme_bitmap(background.drawable_res, sample = 4)
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = thumb != null,
+                    enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(160)),
+                    exit = androidx.compose.animation.ExitTransition.None,
                     modifier = Modifier.fillMaxSize(),
-                )
+                ) {
+                    thumb?.let { bitmap ->
+                        androidx.compose.foundation.Image(
+                            bitmap = bitmap,
+                            contentDescription = null,
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
             } else {
                 Icon(
                     imageVector = TablerIcons.Ban,

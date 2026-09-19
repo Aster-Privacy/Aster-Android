@@ -4,11 +4,12 @@
     <string name="image_themes_subtitle">Wyświetla zdjęcie za aplikacją.</string>
     <string name="image_theme_none">Brak</string>
     <string name="image_theme_pillars">Filary</string>
-    <string name="image_theme_aurora">Zorza</string>
-    <string name="image_theme_sunrise">Wschód słońca</string>
-    <string name="image_theme_city_lights">Światła miast</string>
-    <string name="image_theme_northern_lights">Zorza polarna</string>
+    <string name="image_theme_cosmic_cliffs">Kosmiczne klify</string>
+    <string name="image_theme_horsehead">Koński Łeb</string>
+    <string name="image_theme_tarantula">Tarantula</string>
+    <string name="image_theme_rho_ophiuchi">Rho Ophiuchi</string>
+    <string name="image_theme_deep_field">Głębokie pole</string>
     <string name="image_theme_apply">Użyj motywu</string>
     <string name="image_theme_in_use">W użyciu</string>
-    <string name="image_theme_credit">Zdjęcie: NASA</string>
+    <string name="image_theme_credit">Obraz: NASA, ESA, CSA, STScI</string>
 </resources>

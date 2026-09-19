@@ -106,6 +106,9 @@ fun aster_theme_root(content: @Composable () -> Unit) {
         } else null
     }
 
+    val active_backdrop = org.astermail.android.ui.theme.theme_background_for(background_image)
+        ?.takeIf { !reduce_transparency }
+    androidx.compose.runtime.SideEffect { nav_glass_mode = active_backdrop != null }
     AsterTheme(
         theme_mode = resolved_mode,
         high_contrast = high_contrast,
@@ -116,7 +119,8 @@ fun aster_theme_root(content: @Composable () -> Unit) {
         custom_theme_seed = custom_theme_seed,
         custom_theme_overrides = custom_theme_overrides,
         font_choice = font_choice,
-        glass = org.astermail.android.ui.theme.theme_background_for(background_image) != null && !reduce_transparency,
+        glass = active_backdrop != null,
+        glass_tint = active_backdrop?.tint ?: androidx.compose.ui.graphics.Color.Unspecified,
     ) {
         val base_density = LocalDensity.current
         val compact_factor = if (compact_mode) 0.9f else 1f

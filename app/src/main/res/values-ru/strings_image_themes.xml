@@ -4,11 +4,12 @@
     <string name="image_themes_subtitle">Показывает фото за приложением.</string>
     <string name="image_theme_none">Нет</string>
     <string name="image_theme_pillars">Столпы</string>
-    <string name="image_theme_aurora">Полярное сияние</string>
-    <string name="image_theme_sunrise">Восход</string>
-    <string name="image_theme_city_lights">Огни городов</string>
-    <string name="image_theme_northern_lights">Северное сияние</string>
+    <string name="image_theme_cosmic_cliffs">Космические скалы</string>
+    <string name="image_theme_horsehead">Конская Голова</string>
+    <string name="image_theme_tarantula">Тарантул</string>
+    <string name="image_theme_rho_ophiuchi">Ро Змееносца</string>
+    <string name="image_theme_deep_field">Глубокое поле</string>
     <string name="image_theme_apply">Использовать тему</string>
     <string name="image_theme_in_use">Используется</string>
-    <string name="image_theme_credit">Фото: NASA</string>
+    <string name="image_theme_credit">Изображение: NASA, ESA, CSA, STScI</string>
 </resources>

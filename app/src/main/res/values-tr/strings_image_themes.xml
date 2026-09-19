@@ -4,11 +4,12 @@
     <string name="image_themes_subtitle">Uygulamanın arkasında bir fotoğraf gösterir.</string>
     <string name="image_theme_none">Yok</string>
     <string name="image_theme_pillars">Sütunlar</string>
-    <string name="image_theme_aurora">Kutup ışıkları</string>
-    <string name="image_theme_sunrise">Gün doğumu</string>
-    <string name="image_theme_city_lights">Şehir ışıkları</string>
-    <string name="image_theme_northern_lights">Kuzey ışıkları</string>
+    <string name="image_theme_cosmic_cliffs">Kozmik Uçurumlar</string>
+    <string name="image_theme_horsehead">Atbaşı</string>
+    <string name="image_theme_tarantula">Tarantula</string>
+    <string name="image_theme_rho_ophiuchi">Rho Ophiuchi</string>
+    <string name="image_theme_deep_field">Derin alan</string>
     <string name="image_theme_apply">Temayı kullan</string>
     <string name="image_theme_in_use">Kullanımda</string>
-    <string name="image_theme_credit">Fotoğraf: NASA</string>
+    <string name="image_theme_credit">Görsel: NASA, ESA, CSA, STScI</string>
 </resources>

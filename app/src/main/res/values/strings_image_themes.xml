@@ -4,11 +4,12 @@
     <string name="image_themes_subtitle">Shows a photo behind the app.</string>
     <string name="image_theme_none">None</string>
     <string name="image_theme_pillars">Pillars</string>
-    <string name="image_theme_aurora">Aurora</string>
-    <string name="image_theme_sunrise">Sunrise</string>
-    <string name="image_theme_city_lights">City lights</string>
-    <string name="image_theme_northern_lights">Northern lights</string>
+    <string name="image_theme_cosmic_cliffs">Cosmic Cliffs</string>
+    <string name="image_theme_horsehead">Horsehead</string>
+    <string name="image_theme_tarantula">Tarantula</string>
+    <string name="image_theme_rho_ophiuchi">Rho Ophiuchi</string>
+    <string name="image_theme_deep_field">Deep field</string>
     <string name="image_theme_apply">Use theme</string>
     <string name="image_theme_in_use">In use</string>
-    <string name="image_theme_credit">Photo: NASA</string>
+    <string name="image_theme_credit">Image: NASA, ESA, CSA, STScI</string>
 </resources>

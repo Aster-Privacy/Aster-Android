@@ -4,11 +4,12 @@
     <string name="image_themes_subtitle">在应用后方显示一张照片。</string>
     <string name="image_theme_none">无</string>
     <string name="image_theme_pillars">创生之柱</string>
-    <string name="image_theme_aurora">极光</string>
-    <string name="image_theme_sunrise">日出</string>
-    <string name="image_theme_city_lights">城市灯光</string>
-    <string name="image_theme_northern_lights">北极光</string>
+    <string name="image_theme_cosmic_cliffs">宇宙悬崖</string>
+    <string name="image_theme_horsehead">马头星云</string>
+    <string name="image_theme_tarantula">蜘蛛星云</string>
+    <string name="image_theme_rho_ophiuchi">蛇夫座ρ</string>
+    <string name="image_theme_deep_field">深空场</string>
     <string name="image_theme_apply">使用主题</string>
     <string name="image_theme_in_use">使用中</string>
-    <string name="image_theme_credit">照片：NASA</string>
+    <string name="image_theme_credit">图片：NASA, ESA, CSA, STScI</string>
 </resources>

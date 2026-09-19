@@ -4,11 +4,12 @@
     <string name="image_themes_subtitle">アプリの背景に写真を表示します。</string>
     <string name="image_theme_none">なし</string>
     <string name="image_theme_pillars">創造の柱</string>
-    <string name="image_theme_aurora">オーロラ</string>
-    <string name="image_theme_sunrise">日の出</string>
-    <string name="image_theme_city_lights">街の明かり</string>
-    <string name="image_theme_northern_lights">北極光</string>
+    <string name="image_theme_cosmic_cliffs">宇宙の崖</string>
+    <string name="image_theme_horsehead">馬頭星雲</string>
+    <string name="image_theme_tarantula">タランチュラ星雲</string>
+    <string name="image_theme_rho_ophiuchi">へびつかい座ロー星</string>
+    <string name="image_theme_deep_field">ディープフィールド</string>
     <string name="image_theme_apply">テーマを使用</string>
     <string name="image_theme_in_use">使用中</string>
-    <string name="image_theme_credit">写真: NASA</string>
+    <string name="image_theme_credit">画像: NASA, ESA, CSA, STScI</string>
 </resources>
