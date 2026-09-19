@@ -1025,10 +1025,16 @@ class MailPollingWorker(
             if (protected_tokens.isEmpty()) return false
             return items.any {
                 !it.is_read &&
-                    is_newer_than_baseline(it.timestamp, floor_ms) &&
+                    is_item_newer_than_baseline(it, floor_ms) &&
                     !was_item_notified(context, it.id) &&
                     is_item_in_protected_folder(it, protected_tokens)
             }
+        }
+
+        fun is_item_newer_than_baseline(item: org.astermail.android.mail.InboxItem, floor_ms: Long): Boolean {
+            if (is_newer_than_baseline(item.timestamp, floor_ms)) return true
+            val arrived_at = item.raw_item.created_at?.takeIf { it.isNotBlank() } ?: return false
+            return is_newer_than_baseline(arrived_at, floor_ms)
         }
 
         fun is_newer_than_baseline(timestamp: String, floor_ms: Long, slack_ms: Long = BASELINE_SLACK_MS): Boolean {
@@ -1063,7 +1069,7 @@ class MailPollingWorker(
             val sign_in_marker = NotificationDedupe.sign_in_marker(context)
             return items.firstOrNull {
                 !it.is_read &&
-                    is_newer_than_baseline(it.timestamp, floor_ms) &&
+                    is_item_newer_than_baseline(it, floor_ms) &&
                     !was_item_notified(context, it.id) &&
                     !is_item_in_muted_folder(it, muted) &&
                     !is_item_in_protected_folder(it, protected_tokens) &&
