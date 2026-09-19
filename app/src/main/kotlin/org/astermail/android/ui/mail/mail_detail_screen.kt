@@ -781,10 +781,17 @@ fun MailDetailScreen(
     }
 
     val messages = remember(email_id, api_messages) { api_messages.distinctBy { it.id } }
-    val expected_message_count = remember(email_id, api_item?.thread_message_count, inbox_state_for_folder.items) {
-        api_item?.thread_message_count
-            ?: inbox_state_for_folder.items.firstOrNull { it.id == email_id }?.thread_message_count
-            ?: 1
+    val detail_count_corrections by mail_vm.thread_count_corrections.collectAsStateWithLifecycle()
+    val expected_message_count = remember(
+        email_id,
+        api_item?.thread_message_count,
+        inbox_state_for_folder.items,
+        detail_count_corrections,
+    ) {
+        val listed = inbox_state_for_folder.items.firstOrNull { it.id == email_id }
+        val claimed = api_item?.thread_message_count ?: listed?.thread_message_count ?: 1
+        val token = api_item?.thread_token ?: listed?.thread_token
+        corrected_thread_count(claimed.coerceAtLeast(1), token?.let { detail_count_corrections[it] })
     }
     var thread_settled by remember(email_id) { mutableStateOf(false) }
     LaunchedEffect(email_id, thread_state.is_loading, messages.size, thread_matches_email) {

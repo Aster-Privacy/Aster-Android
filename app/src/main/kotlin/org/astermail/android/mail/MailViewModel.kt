@@ -417,6 +417,22 @@ class MailViewModel @Inject constructor(
         _thread_participants.update { it + (thread_token to participants) }
     }
 
+    private val _thread_count_corrections =
+        MutableStateFlow<Map<String, org.astermail.android.ui.mail.ThreadCountCorrection>>(emptyMap())
+    val thread_count_corrections: StateFlow<Map<String, org.astermail.android.ui.mail.ThreadCountCorrection>> =
+        _thread_count_corrections.asStateFlow()
+
+    private fun record_thread_count(thread_token: String?, claimed: Int, loaded: List<ThreadMessageDecrypted>) {
+        if (thread_token.isNullOrBlank()) return
+        val limit = org.astermail.android.api.network.thread_message_load_limit(
+            org.astermail.android.api.network.low_network_state.active(),
+        )
+        val correction = org.astermail.android.ui.mail.thread_count_correction_for(claimed, loaded.map { it.id }, limit) ?: return
+        _thread_count_corrections.update {
+            if (it[thread_token] == correction) it else it + (thread_token to correction)
+        }
+    }
+
     private val folder_cache = java.util.concurrent.ConcurrentHashMap<String, InboxUiState>()
     private val folder_cache_time = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val item_last_confirmed = java.util.concurrent.ConcurrentHashMap<String, Long>()
@@ -564,6 +580,7 @@ class MailViewModel @Inject constructor(
         inbox_attachment_probed.clear()
         inbox_attachment_seeded.set(false)
         _thread_participants.value = emptyMap()
+        _thread_count_corrections.value = emptyMap()
         repository.clear_account_data()
         runCatching { AsterProfileResolverHolder.shared?.clear() }
         runCatching { OwnAddressAvatars.clear() }
@@ -1323,6 +1340,9 @@ class MailViewModel @Inject constructor(
                             attachments = if (cur_thread.item?.id == item_id) cur_thread.attachments else emptyMap(),
                         )
                         cache_thread_participants(thread_token, resolved)
+                        if (messages.isNotEmpty()) {
+                            record_thread_count(thread_token, item.thread_message_count, messages)
+                        }
                         load_attachments_for_thread(resolved)
                         load_reactions(resolved)
                     },

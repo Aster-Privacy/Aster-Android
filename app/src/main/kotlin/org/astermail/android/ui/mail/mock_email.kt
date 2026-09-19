@@ -89,16 +89,47 @@ data class ThreadRow(
 
 fun thread_open_target_id(thread: ThreadRow): String = thread.newest.id
 
-fun group_by_thread(emails: List<Email>): List<ThreadRow> {
-    val seen_threads = mutableMapOf<String, MutableList<Email>>()
+data class ThreadCountCorrection(val claimed: Int, val loaded: Int)
+
+fun thread_count_correction_for(
+    claimed: Int,
+    loaded_ids: List<String>,
+    load_limit: Int?,
+): ThreadCountCorrection? {
+    val loaded = loaded_ids.distinct().size
+    if (loaded < 1) return null
+    if (load_limit != null && loaded >= load_limit) return null
+    return ThreadCountCorrection(claimed = claimed.coerceAtLeast(1), loaded = loaded)
+}
+
+fun corrected_thread_count(api_count: Int, correction: ThreadCountCorrection?): Int =
+    if (correction != null && correction.claimed == api_count && correction.loaded >= 1) {
+        correction.loaded
+    } else {
+        api_count
+    }
+
+fun thread_row_count(
+    api_count: Int,
+    distinct_messages: Int,
+    correction: ThreadCountCorrection?,
+): Int = maxOf(corrected_thread_count(api_count, correction), distinct_messages, 1)
+
+fun group_by_thread(
+    emails: List<Email>,
+    count_corrections: Map<String, ThreadCountCorrection> = emptyMap(),
+): List<ThreadRow> {
+    val seen_threads = linkedMapOf<String, MutableList<Email>>()
+    val seen_ids = HashSet<String>(emails.size)
     for (e in emails) {
+        if (!seen_ids.add(e.id)) continue
         seen_threads.getOrPut(e.thread_id) { mutableListOf() }.add(e)
     }
     val combined = mutableListOf<ThreadRow>()
     for ((tid, msgs) in seen_threads) {
         val newest = msgs.maxByOrNull { it.received_at } ?: continue
         val api_count = msgs.maxOf { it.thread_message_count }
-        val count = maxOf(api_count, msgs.size)
+        val count = thread_row_count(api_count, msgs.size, count_corrections[tid])
         val any_unread = msgs.any { !it.is_read }
         val any_enc = msgs.any { it.is_encrypted }
         val trackers = msgs.sumOf { it.trackers_blocked }

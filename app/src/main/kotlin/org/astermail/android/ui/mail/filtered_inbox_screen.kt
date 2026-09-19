@@ -143,8 +143,13 @@ fun FilteredInboxScreen(
         inbox_state.items.map { inbox_item_to_email(it, settings_state.tags, context = email_label_context) }
     }
     val grouping_enabled = settings_state.preferences?.conversation_grouping != false
-    val threads = remember(filtered_emails, grouping_enabled) {
-        val rows = if (grouping_enabled) group_by_thread(filtered_emails) else flat_thread_rows(filtered_emails)
+    val filtered_count_corrections by mail_vm.thread_count_corrections.collectAsStateWithLifecycle()
+    val threads = remember(filtered_emails, grouping_enabled, filtered_count_corrections) {
+        val rows = if (grouping_enabled) {
+            group_by_thread(filtered_emails, filtered_count_corrections)
+        } else {
+            flat_thread_rows(filtered_emails.distinctBy { it.id })
+        }
         rows.sortedWith(compareByDescending<ThreadRow> { it.newest.received_at }.thenByDescending { it.thread_id })
     }
 

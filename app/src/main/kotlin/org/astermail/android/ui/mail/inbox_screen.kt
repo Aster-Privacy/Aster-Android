@@ -175,6 +175,7 @@ fun build_thread_rows(
     cached_participants: Map<String, List<Pair<String, String>>>,
     sticky_participants: Map<String, List<Pair<String, String>>>,
     grouping_enabled: Boolean = true,
+    count_corrections: Map<String, ThreadCountCorrection> = emptyMap(),
 ): ThreadRowResult {
     val source = if (categories_enabled) {
         emails.filter {
@@ -183,7 +184,11 @@ fun build_thread_rows(
     } else {
         emails
     }
-    val grouped_raw = if (grouping_enabled) group_by_thread(source) else flat_thread_rows(source)
+    val grouped_raw = if (grouping_enabled) {
+        group_by_thread(source, count_corrections)
+    } else {
+        flat_thread_rows(source.distinctBy { it.id })
+    }
     val resolved = HashMap<String, List<Pair<String, String>>>(grouped_raw.size)
     val grouped = grouped_raw.map { row ->
         val candidates = listOfNotNull(
@@ -776,6 +781,7 @@ fun InboxScreen(
 
     val sticky_participants = remember(current_folder) { mutableMapOf<String, List<Pair<String, String>>>() }
     val cached_participants by mail_vm.thread_participants.collectAsStateWithLifecycle()
+    val count_corrections by mail_vm.thread_count_corrections.collectAsStateWithLifecycle()
 
     val categories_enabled = current_folder == "inbox" &&
         (settings_state.preferences?.inbox_categories_enabled ?: true)
@@ -825,6 +831,7 @@ fun InboxScreen(
         active_tabs,
         sort_mode,
         cached_participants,
+        count_corrections,
         grouping_enabled,
     ) {
         thread_gate.observe(threads_folder == current_folder, active_category, emails_fingerprint)
@@ -845,6 +852,7 @@ fun InboxScreen(
                 cached_participants = cached_participants,
                 sticky_participants = sticky_snapshot,
                 grouping_enabled = grouping_enabled,
+                count_corrections = count_corrections,
             )
         }
         sticky_participants.keys.retainAll(computed.participants.keys)
