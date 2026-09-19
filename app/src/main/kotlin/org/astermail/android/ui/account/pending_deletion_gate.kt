@@ -70,7 +70,7 @@ fun PendingDeletionGate(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .background(colors.solid_bg)
             .clickable(enabled = false) {},
         contentAlignment = Alignment.Center,
     ) {

@@ -2,14 +2,25 @@
 <resources>
     <string name="image_themes">Görsel temaları</string>
     <string name="image_themes_subtitle">Uygulamanın arkasında bir fotoğraf gösterir.</string>
-    <string name="image_theme_none">Yok</string>
-    <string name="image_theme_fjord">Fiyort</string>
-    <string name="image_theme_aurora">Kutup ışıkları</string>
-    <string name="image_theme_desert">Çöl</string>
-    <string name="image_theme_clouds">Bulutlar</string>
-    <string name="image_theme_sunrise">Gün doğumu</string>
-    <string name="image_theme_above">Bulutların üstünde</string>
-    <string name="image_theme_apply">Temayı kullan</string>
-    <string name="image_theme_in_use">Kullanımda</string>
+    <string name="image_theme_browse">Fotoğraflara göz at</string>
     <string name="image_theme_credit">Fotoğraf: %1$s</string>
+    <string name="image_theme_category_space">Uzay</string>
+    <string name="image_theme_category_planets">Gezegenler</string>
+    <string name="image_theme_category_night_sky">Gece gökyüzü</string>
+    <string name="image_theme_category_cities">Şehirler</string>
+    <string name="image_theme_category_landscapes">Manzaralar</string>
+    <string name="image_theme_category_water">Su</string>
+    <string name="image_theme_apply_changes">Uygula</string>
+    <string name="image_theme_reset">Varsayılana sıfırla</string>
+    <string name="image_theme_colors">Renkler</string>
+    <string name="image_theme_wallpapers">Duvar kâğıtları</string>
+    <string name="image_theme_page_subtitle">Gelen kutunuz için bir fotoğraf ve renkler seçin</string>
+    <string name="image_theme_category_yours">Fotoğrafınız</string>
+    <string name="image_theme_choose_photo">Fotoğraf seç</string>
+    <string name="image_theme_replace_photo">Fotoğrafı değiştir</string>
+    <string name="image_theme_remove_photo">Fotoğrafı kaldır</string>
+    <string name="image_theme_photo_private">Fotoğrafınız şifrelenir ve bu cihazda kalır.</string>
+    <string name="image_theme_photo_too_large">Bu fotoğraf çok büyük. 40 MB’tan küçük bir fotoğraf seçin.</string>
+    <string name="image_theme_photo_unsupported">Bu dosya türü desteklenmiyor. JPEG, PNG, WebP veya HEIC fotoğraf seçin.</string>
+    <string name="image_theme_photo_unreadable">Bu fotoğraf açılamıyor. Başka bir fotoğraf deneyin.</string>
 </resources>

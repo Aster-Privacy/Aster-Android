@@ -273,7 +273,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .background(colors.solid_bg)
             .pointerInput(Unit) {},
         contentAlignment = Alignment.Center,
     ) {

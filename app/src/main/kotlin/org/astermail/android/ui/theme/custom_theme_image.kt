@@ -1,0 +1,346 @@
+//
+// Aster Communications Inc.
+//
+// Copyright (c) 2026 Aster Communications Inc.
+//
+// This file is part of this project.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+//
+
+package org.astermail.android.ui.theme
+
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Matrix
+import android.graphics.Paint
+import android.media.ExifInterface
+import android.net.Uri
+import android.os.Build
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
+import androidx.compose.ui.graphics.Color
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.security.KeyStore
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlin.math.sin
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
+import org.astermail.android.design.AsterColorThemes
+import org.astermail.android.design.ColorThemeId
+
+const val custom_theme_background = "custom"
+
+data class CustomThemeImageMeta(
+    val version: Long,
+    val tint: Color,
+    val accent: ColorThemeId,
+)
+
+enum class CustomThemeImageError { too_large, unsupported, unreadable }
+
+class CustomThemeImageException(val reason: CustomThemeImageError) : Exception(reason.name)
+
+object custom_theme_image {
+    private const val key_alias = "aster_theme_image_v1"
+    private const val keystore = "AndroidKeyStore"
+    private const val transformation = "AES/GCM/NoPadding"
+    private const val iv_bytes = 12
+    private const val tag_bits = 128
+    private const val max_input_bytes = 40 * 1024 * 1024
+    private const val max_source_pixels = 120_000_000L
+    private const val max_source_side = 20_000
+    private const val target_width = 1080
+    private const val target_height = 2400
+    private const val prefs_name = "theme_custom_image"
+    private val allowed_mime = setOf(
+        "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "image/avif",
+    )
+    private val accent_choices = listOf(
+        ColorThemeId.purple, ColorThemeId.green, ColorThemeId.rose, ColorThemeId.orange,
+        ColorThemeId.teal, ColorThemeId.indigo, ColorThemeId.amber, ColorThemeId.cyan,
+        ColorThemeId.aster_blue, ColorThemeId.lime, ColorThemeId.fuchsia, ColorThemeId.emerald,
+        ColorThemeId.pink,
+    )
+
+    private val meta_state = MutableStateFlow<CustomThemeImageMeta?>(null)
+    val meta: StateFlow<CustomThemeImageMeta?> = meta_state.asStateFlow()
+
+    @Volatile
+    private var initialized = false
+
+    fun init(context: Context) {
+        if (initialized) return
+        synchronized(this) {
+            if (initialized) return
+            val app = context.applicationContext
+            val prefs = app.getSharedPreferences(prefs_name, Context.MODE_PRIVATE)
+            val version = prefs.getLong("version", 0L)
+            meta_state.value = if (version > 0L && image_file(app).isFile) {
+                CustomThemeImageMeta(
+                    version = version,
+                    tint = Color(prefs.getInt("tint", 0xFF111111.toInt())),
+                    accent = ColorThemeId.from_key(prefs.getString("accent", null) ?: ColorThemeId.aster_blue.name),
+                )
+            } else {
+                null
+            }
+            initialized = true
+        }
+    }
+
+    private fun image_file(context: Context): File =
+        File(File(context.noBackupFilesDir, "theme"), "custom_background.bin")
+
+    suspend fun import(context: Context, uri: Uri): Result<CustomThemeImageMeta> = withContext(Dispatchers.IO) {
+        runCatching {
+            val app = context.applicationContext
+            val bytes = read_capped(app, uri)
+            val bitmap = decode_validated(bytes)
+            val framed = try {
+                frame(bitmap)
+            } finally {
+                bitmap.recycle()
+            }
+            val (tint, accent) = analyze(framed)
+            val encoded = ByteArrayOutputStream(512 * 1024).use { out ->
+                @Suppress("DEPRECATION")
+                val format = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) Bitmap.CompressFormat.WEBP_LOSSY else Bitmap.CompressFormat.WEBP
+                framed.compress(format, 90, out)
+                framed.recycle()
+                out.toByteArray()
+            }
+            write_encrypted(app, encoded)
+            val next = CustomThemeImageMeta(
+                version = System.currentTimeMillis(),
+                tint = tint,
+                accent = accent,
+            )
+            app.getSharedPreferences(prefs_name, Context.MODE_PRIVATE).edit()
+                .putLong("version", next.version)
+                .putInt("tint", argb_of(tint))
+                .putString("accent", accent.name)
+                .commit()
+            meta_state.value = next
+            next
+        }.recoverCatching { error ->
+            throw if (error is CustomThemeImageException) error else CustomThemeImageException(CustomThemeImageError.unreadable)
+        }
+    }
+
+    fun delete(context: Context) {
+        val app = context.applicationContext
+        image_file(app).delete()
+        app.getSharedPreferences(prefs_name, Context.MODE_PRIVATE).edit().clear().commit()
+        meta_state.value = null
+    }
+
+    fun load(context: Context, sample: Int): Bitmap? {
+        val app = context.applicationContext
+        val file = image_file(app)
+        if (!file.isFile) return null
+        val plain = runCatching { decrypt(file.readBytes()) }.getOrNull() ?: return null
+        val options = BitmapFactory.Options().apply {
+            inSampleSize = sample
+            if (sample > 1) inPreferredConfig = Bitmap.Config.RGB_565
+        }
+        return BitmapFactory.decodeByteArray(plain, 0, plain.size, options).also { plain.fill(0) }
+    }
+
+    private fun read_capped(context: Context, uri: Uri): ByteArray {
+        val resolver = context.contentResolver
+        val declared = resolver.getType(uri)?.lowercase()
+        if (declared != null && declared !in allowed_mime) throw CustomThemeImageException(CustomThemeImageError.unsupported)
+        val stream = resolver.openInputStream(uri) ?: throw CustomThemeImageException(CustomThemeImageError.unreadable)
+        return stream.use { input ->
+            val out = ByteArrayOutputStream()
+            val buffer = ByteArray(64 * 1024)
+            var total = 0
+            while (true) {
+                val read = input.read(buffer)
+                if (read < 0) break
+                total += read
+                if (total > max_input_bytes) throw CustomThemeImageException(CustomThemeImageError.too_large)
+                out.write(buffer, 0, read)
+            }
+            out.toByteArray()
+        }
+    }
+
+    private fun decode_validated(bytes: ByteArray): Bitmap {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        val mime = bounds.outMimeType?.lowercase()
+        if (mime == null || mime !in allowed_mime) throw CustomThemeImageException(CustomThemeImageError.unsupported)
+        val width = bounds.outWidth
+        val height = bounds.outHeight
+        if (width <= 0 || height <= 0) throw CustomThemeImageException(CustomThemeImageError.unreadable)
+        if (width > max_source_side || height > max_source_side || width.toLong() * height > max_source_pixels) {
+            throw CustomThemeImageException(CustomThemeImageError.too_large)
+        }
+        val rotation = runCatching {
+            when (ExifInterface(ByteArrayInputStream(bytes)).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+                ExifInterface.ORIENTATION_ROTATE_90 -> 90
+                ExifInterface.ORIENTATION_ROTATE_180 -> 180
+                ExifInterface.ORIENTATION_ROTATE_270 -> 270
+                else -> 0
+            }
+        }.getOrDefault(0)
+        val (upright_w, upright_h) = if (rotation % 180 == 0) width to height else height to width
+        var sample = 1
+        while (upright_w / (sample * 2) >= target_width && upright_h / (sample * 2) >= target_height) sample *= 2
+        val decoded = BitmapFactory.decodeByteArray(
+            bytes,
+            0,
+            bytes.size,
+            BitmapFactory.Options().apply {
+                inSampleSize = sample
+                inPreferredConfig = Bitmap.Config.ARGB_8888
+            },
+        ) ?: throw CustomThemeImageException(CustomThemeImageError.unreadable)
+        if (rotation == 0) return decoded
+        val rotated = Bitmap.createBitmap(
+            decoded, 0, 0, decoded.width, decoded.height,
+            Matrix().apply { postRotate(rotation.toFloat()) }, true,
+        )
+        if (rotated !== decoded) decoded.recycle()
+        return rotated
+    }
+
+    private fun frame(source: Bitmap): Bitmap {
+        val scale = max(target_width.toFloat() / source.width, target_height.toFloat() / source.height)
+        val out = Bitmap.createBitmap(target_width, target_height, Bitmap.Config.ARGB_8888)
+        val dx = (target_width - source.width * scale) / 2f
+        val dy = (target_height - source.height * scale) / 2f
+        Canvas(out).drawBitmap(
+            source,
+            Matrix().apply {
+                postScale(scale, scale)
+                postTranslate(dx, dy)
+            },
+            Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG),
+        )
+        return out
+    }
+
+    private fun analyze(bitmap: Bitmap): Pair<Color, ColorThemeId> {
+        val small = Bitmap.createScaledBitmap(bitmap, 54, 120, true)
+        val pixels = IntArray(small.width * small.height)
+        small.getPixels(pixels, 0, small.width, 0, 0, small.width, small.height)
+        if (small !== bitmap) small.recycle()
+        var r = 0L
+        var g = 0L
+        var b = 0L
+        var x = 0.0
+        var y = 0.0
+        var vivid = 0
+        val hsv = FloatArray(3)
+        for (p in pixels) {
+            val pr = (p shr 16) and 0xFF
+            val pg = (p shr 8) and 0xFF
+            val pb = p and 0xFF
+            r += pr
+            g += pg
+            b += pb
+            android.graphics.Color.RGBToHSV(pr, pg, pb, hsv)
+            if (hsv[1] > 0.3f && hsv[2] > 0.25f) {
+                val weight = (hsv[1] * hsv[2]).toDouble()
+                val angle = Math.toRadians(hsv[0].toDouble())
+                x += cos(angle) * weight
+                y += sin(angle) * weight
+                vivid++
+            }
+        }
+        val n = pixels.size.toFloat()
+        val peak = max(max(r, g), max(b, 1L)).toFloat()
+        val tint = Color(
+            red = min(1f, r / peak * 0x22 / 255f),
+            green = min(1f, g / peak * 0x22 / 255f),
+            blue = min(1f, b / peak * 0x22 / 255f),
+        )
+        if (vivid < n * 0.03f) return tint to ColorThemeId.aster_blue
+        val hue = ((Math.toDegrees(atan2(y, x)) + 360.0) % 360.0).toFloat()
+        val accent = accent_choices.minByOrNull { id ->
+            val color = AsterColorThemes.palette_for(id)?.accent_color ?: return@minByOrNull Float.MAX_VALUE
+            val c = FloatArray(3)
+            android.graphics.Color.RGBToHSV(
+                (color.red * 255).roundToInt(), (color.green * 255).roundToInt(), (color.blue * 255).roundToInt(), c,
+            )
+            val d = kotlin.math.abs(c[0] - hue)
+            min(d, 360f - d)
+        } ?: ColorThemeId.aster_blue
+        return tint to accent
+    }
+
+    private fun argb_of(color: Color): Int {
+        val a = (color.alpha * 255).roundToInt()
+        val r = (color.red * 255).roundToInt()
+        val g = (color.green * 255).roundToInt()
+        val b = (color.blue * 255).roundToInt()
+        return (a shl 24) or (r shl 16) or (g shl 8) or b
+    }
+
+    private fun secret_key(): SecretKey {
+        val store = KeyStore.getInstance(keystore).apply { load(null) }
+        (store.getKey(key_alias, null) as? SecretKey)?.let { return it }
+        val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, keystore)
+        generator.init(
+            KeyGenParameterSpec.Builder(key_alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .setKeySize(256)
+                .build(),
+        )
+        return generator.generateKey()
+    }
+
+    private fun write_encrypted(context: Context, plain: ByteArray) {
+        val cipher = Cipher.getInstance(transformation).apply { init(Cipher.ENCRYPT_MODE, secret_key()) }
+        val sealed = cipher.iv + cipher.doFinal(plain)
+        plain.fill(0)
+        val target = image_file(context)
+        target.parentFile?.mkdirs()
+        val temp = File(target.parentFile, "custom_background.tmp")
+        temp.writeBytes(sealed)
+        if (!temp.renameTo(target)) {
+            target.delete()
+            if (!temp.renameTo(target)) {
+                temp.delete()
+                throw CustomThemeImageException(CustomThemeImageError.unreadable)
+            }
+        }
+    }
+
+    private fun decrypt(sealed: ByteArray): ByteArray {
+        require(sealed.size > iv_bytes)
+        val cipher = Cipher.getInstance(transformation)
+        cipher.init(Cipher.DECRYPT_MODE, secret_key(), GCMParameterSpec(tag_bits, sealed, 0, iv_bytes))
+        return cipher.doFinal(sealed, iv_bytes, sealed.size - iv_bytes)
+    }
+}

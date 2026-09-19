@@ -122,30 +122,32 @@ private fun apply_reduce_transparency(base: AsterSemanticColors): AsterSemanticC
     )
 }
 
+private val GLASS_INK = Color(0xFF050507)
+
 private fun apply_glass(base: AsterSemanticColors, tint: Color): AsterSemanticColors {
-    fun deep(fallback: Color, alpha: Float, lift: Float): Color =
+    fun deep(fallback: Color, lift: Float): Color =
         if (tint == Color.Unspecified) {
-            fallback.copy(alpha = minOf(fallback.alpha, alpha))
+            fallback.copy(alpha = 1f)
         } else {
-            lerp(tint, Color.White, lift).copy(alpha = alpha)
+            lerp(lerp(GLASS_INK, tint, 0.28f), Color.White, lift * 0.55f).copy(alpha = 1f)
         }
     return base.copy(
         bg_primary = Color.Transparent,
-        bg_secondary = deep(base.bg_secondary, 0.72f, 0.05f),
-        bg_tertiary = deep(base.bg_tertiary, 0.8f, 0.09f),
-        bg_hover = deep(base.bg_hover, 0.82f, 0.11f),
-        bg_card = deep(base.bg_card, 0.68f, 0.03f),
-        sidebar_bg = deep(base.sidebar_bg, 0.95f, 0.02f),
-        sidebar_hover = deep(base.sidebar_hover, 0.92f, 0.1f),
-        modal_bg = deep(base.modal_bg, 0.97f, 0.05f),
-        dropdown_bg = deep(base.dropdown_bg, 0.98f, 0.07f),
-        input_bg = deep(base.input_bg, 0.7f, 0.08f),
-        indicator_bg = deep(base.indicator_bg, 0.85f, 0.14f),
-        thread_card_bg = deep(base.thread_card_bg, 0.74f, 0.04f),
-        thread_card_bg_hover = deep(base.thread_card_bg_hover, 0.82f, 0.09f),
-        thread_header_bg = deep(base.thread_header_bg, 0.74f, 0.04f),
-        thread_content_bg = deep(base.thread_content_bg, 0.78f, 0.03f),
-        secondary_control_bg = deep(base.secondary_control_bg, 0.74f, 0.1f),
+        bg_secondary = deep(base.bg_secondary, 0.07f),
+        bg_tertiary = deep(base.bg_tertiary, 0.1f),
+        bg_hover = deep(base.bg_hover, 0.13f),
+        bg_card = deep(base.bg_card, 0.06f),
+        sidebar_bg = deep(base.sidebar_bg, 0.02f),
+        sidebar_hover = deep(base.sidebar_hover, 0.1f),
+        modal_bg = deep(base.modal_bg, 0.05f),
+        dropdown_bg = deep(base.dropdown_bg, 0.07f),
+        input_bg = deep(base.input_bg, 0.1f),
+        indicator_bg = deep(base.indicator_bg, 0.15f),
+        thread_card_bg = deep(base.thread_card_bg, 0.07f),
+        thread_card_bg_hover = deep(base.thread_card_bg_hover, 0.11f),
+        thread_header_bg = deep(base.thread_header_bg, 0.07f),
+        thread_content_bg = deep(base.thread_content_bg, 0.05f),
+        secondary_control_bg = deep(base.secondary_control_bg, 0.12f),
         border_primary = Color.White.copy(alpha = 0.1f),
         border_secondary = Color.White.copy(alpha = 0.07f),
         is_glass = true,
@@ -214,7 +216,7 @@ fun AsterTheme(
         var built = AsterColorThemes.semantic_colors_for(resolved_dark, palette)
         if (high_contrast) built = apply_high_contrast(built)
         if (reduce_transparency) built = apply_reduce_transparency(built)
-        if (glass) built = apply_glass(built, glass_tint)
+        if (glass && resolved_dark) built = apply_glass(built, glass_tint)
         built
     }
     val color_scheme = remember(resolved_dark, palette, semantic) {

@@ -87,7 +87,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -137,10 +136,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import org.astermail.android.design.components.aster_dropdown_divider
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
-import org.astermail.android.design.components.aster_dropdown_section_label
+import org.astermail.android.design.components.aster_menu
+import org.astermail.android.design.components.aster_menu_divider
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu_section_label
 import org.astermail.android.R
 import org.astermail.android.debugtools.debug_build_pill_inline
 import org.astermail.android.design.SquircleShape
@@ -260,6 +259,57 @@ private const val DRAG_HAPTIC_MIN_GAP_MS = 55L
 private val pull_refresh_travel = 56.dp
 
 private val pull_refresh_threshold = 56.dp
+
+private const val PULL_DRAG_RATIO = 0.6f
+
+private class inbox_pull_connection(
+    private val scope: kotlinx.coroutines.CoroutineScope,
+    private val threshold_px: () -> Float,
+    private val can_pull: () -> Boolean,
+    private val on_refresh: () -> Unit,
+) : NestedScrollConnection {
+    private var distance by mutableFloatStateOf(0f)
+    private var settle: kotlinx.coroutines.Job? = null
+
+    val distanceFraction: Float
+        get() = threshold_px().let { if (it > 0f) distance / it else 0f }
+
+    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+        if (source != NestedScrollSource.UserInput || available.y >= 0f || distance <= 0f) return Offset.Zero
+        return Offset(0f, drag(available.y))
+    }
+
+    override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+        if (source != NestedScrollSource.UserInput || available.y <= 0f || !can_pull()) return Offset.Zero
+        return Offset(0f, drag(available.y))
+    }
+
+    override suspend fun onPreFling(available: androidx.compose.ui.unit.Velocity): androidx.compose.ui.unit.Velocity {
+        if (distance <= 0f) return androidx.compose.ui.unit.Velocity.Zero
+        if (distance >= threshold_px() && can_pull()) on_refresh()
+        val from = distance
+        settle?.cancel()
+        settle = scope.launch {
+            androidx.compose.animation.core.animate(
+                initialValue = from,
+                targetValue = 0f,
+                animationSpec = androidx.compose.animation.core.spring(
+                    stiffness = androidx.compose.animation.core.Spring.StiffnessMedium,
+                ),
+            ) { value, _ -> distance = value }
+        }
+        return if (available.y > 0f) available else androidx.compose.ui.unit.Velocity.Zero
+    }
+
+    private fun drag(dy: Float): Float {
+        settle?.cancel()
+        settle = null
+        val before = distance
+        val next = (before + dy * PULL_DRAG_RATIO).coerceIn(0f, threshold_px() * 2f)
+        distance = next
+        return (next - before) / PULL_DRAG_RATIO
+    }
+}
 
 
 private const val ONBOARDING_INSTALL_APP_DONE_KEY = "install_app_done"
@@ -1410,7 +1460,18 @@ fun InboxScreen(
     val header_offset_px = remember { mutableFloatStateOf(0f) }
     var header_hidden by remember { mutableStateOf(false) }
     val header_height_dp = with(density) { header_height_px.toDp() }
-    val pull_state = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState()
+    val pull_threshold_px = with(density) { pull_refresh_threshold.toPx() }
+    val pull_select_mode = rememberUpdatedState(select_mode)
+    val pull_refreshing = rememberUpdatedState(is_refreshing)
+    val pull_on_refresh = rememberUpdatedState<() -> Unit>({ do_refresh() })
+    val pull_state = remember(scope) {
+        inbox_pull_connection(
+            scope = scope,
+            threshold_px = { pull_threshold_px },
+            can_pull = { !pull_select_mode.value && !pull_refreshing.value },
+            on_refresh = { pull_on_refresh.value() },
+        )
+    }
     val header_nested_scroll = remember(header_offset_px, pull_state) {
         object : NestedScrollConnection {
             override fun onPostScroll(
@@ -1556,13 +1617,7 @@ fun InboxScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .pullToRefresh(
-                        isRefreshing = is_refreshing && !select_mode,
-                        state = pull_state,
-                        enabled = !select_mode,
-                        threshold = pull_refresh_threshold,
-                        onRefresh = { if (!select_mode) do_refresh() },
-                    ),
+                    .nestedScroll(pull_state),
             ) {
                 val pull_indicator: @Composable androidx.compose.foundation.layout.BoxScope.() -> Unit = {
                     val refreshing_now = is_refreshing && !select_mode
@@ -2516,7 +2571,7 @@ private fun folder_tree_dropdown_items(
     val has_nesting = visible.any { it.has_children }
     visible.forEach { node ->
         val is_expanded = node.id in expanded
-        aster_dropdown_item(
+        aster_menu_item(
             label = node.name,
             icon = TablerIcons.Folder,
             icon_tint = node.color
@@ -2677,7 +2732,7 @@ internal fun inbox_top_bar(
                         modifier = Modifier.size(18.dp),
                     )
                 }
-                aster_dropdown_menu(
+                aster_menu(
                     expanded = folder_menu_open,
                     on_dismiss = { folder_menu_open = false },
                 ) {
@@ -2687,7 +2742,7 @@ internal fun inbox_top_bar(
                         } else {
                             entry.id == current_folder
                         }
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = stringResource(entry.label_res),
                             icon = entry.icon,
                             selected = entry_selected,
@@ -2699,7 +2754,7 @@ internal fun inbox_top_bar(
                         )
                     }
                     if (custom_folders.isNotEmpty()) {
-                        aster_dropdown_divider()
+                        aster_menu_divider()
                         folder_tree_dropdown_items(
                             nodes = custom_folders,
                             current_folder = current_folder,
@@ -2722,12 +2777,12 @@ internal fun inbox_top_bar(
                     onClick = { overflow_menu_open = true },
                     modifier = Modifier.testTag("inbox_overflow"),
                 )
-                aster_dropdown_menu(
+                aster_menu(
                     expanded = overflow_menu_open,
                     on_dismiss = { overflow_menu_open = false },
                 ) {
                     if (alias_direction != null) {
-                        aster_dropdown_section_label(stringResource(R.string.alias_direction_label))
+                        aster_menu_section_label(stringResource(R.string.alias_direction_label))
                         listOf(
                             org.astermail.android.mail.alias_direction_all to R.string.alias_direction_all,
                             org.astermail.android.mail.alias_direction_received to R.string.alias_direction_received,
@@ -2738,7 +2793,7 @@ internal fun inbox_top_bar(
                                 if (alias_direction != id) on_alias_direction_change(id)
                             }
                         }
-                        aster_dropdown_divider()
+                        aster_menu_divider()
                     }
                     overflow_menu_item(
                         label = stringResource(if (has_unread) R.string.mark_all_read else R.string.mark_all_unread),
@@ -2755,7 +2810,7 @@ internal fun inbox_top_bar(
                         on_enter_select_mode()
                     }
                     if (show_unread_filter) {
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = stringResource(R.string.filter_unread_only),
                             icon = TablerIcons.MailOpened,
                             selected = unread_only,
@@ -2781,8 +2836,8 @@ internal fun inbox_top_bar(
                             on_empty_trash()
                         }
                     }
-                    aster_dropdown_divider()
-                    aster_dropdown_section_label(stringResource(R.string.sort_by))
+                    aster_menu_divider()
+                    aster_menu_section_label(stringResource(R.string.sort_by))
                     sort_menu_item(stringResource(R.string.sort_newest), sort_mode == InboxSortMode.newest) {
                         overflow_menu_open = false
                         on_sort_change(InboxSortMode.newest)
@@ -2918,7 +2973,7 @@ private fun overflow_menu_item(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     on_click: () -> Unit,
 ) {
-    aster_dropdown_item(
+    aster_menu_item(
         label = label,
         icon = icon,
         on_click = on_click,
@@ -2927,7 +2982,7 @@ private fun overflow_menu_item(
 
 @Composable
 private fun sort_menu_item(label: String, is_selected: Boolean, on_click: () -> Unit) {
-    aster_dropdown_item(
+    aster_menu_item(
         label = label,
         selected = is_selected,
         on_click = on_click,
@@ -3038,7 +3093,7 @@ internal fun select_mode_bottom_bar(
     val enabled = selected_count > 0
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = colors.bg_primary,
+        color = colors.solid_bg,
         shadowElevation = 0.dp,
         tonalElevation = 0.dp,
     ) {

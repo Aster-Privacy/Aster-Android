@@ -2,14 +2,25 @@
 <resources>
     <string name="image_themes">Temas com imagem</string>
     <string name="image_themes_subtitle">Mostra uma foto atrás do app.</string>
-    <string name="image_theme_none">Nenhum</string>
-    <string name="image_theme_fjord">Fiorde</string>
-    <string name="image_theme_aurora">Aurora</string>
-    <string name="image_theme_desert">Deserto</string>
-    <string name="image_theme_clouds">Nuvens</string>
-    <string name="image_theme_sunrise">Nascer do sol</string>
-    <string name="image_theme_above">Acima das nuvens</string>
-    <string name="image_theme_apply">Usar tema</string>
-    <string name="image_theme_in_use">Em uso</string>
+    <string name="image_theme_browse">Ver fotos</string>
     <string name="image_theme_credit">Foto: %1$s</string>
+    <string name="image_theme_category_space">Espaço</string>
+    <string name="image_theme_category_planets">Planetas</string>
+    <string name="image_theme_category_night_sky">Céu noturno</string>
+    <string name="image_theme_category_cities">Cidades</string>
+    <string name="image_theme_category_landscapes">Paisagens</string>
+    <string name="image_theme_category_water">Água</string>
+    <string name="image_theme_apply_changes">Aplicar</string>
+    <string name="image_theme_reset">Restaurar padrão</string>
+    <string name="image_theme_colors">Cores</string>
+    <string name="image_theme_wallpapers">Planos de fundo</string>
+    <string name="image_theme_page_subtitle">Escolha uma foto e cores para sua caixa de entrada</string>
+    <string name="image_theme_category_yours">Sua foto</string>
+    <string name="image_theme_choose_photo">Escolher foto</string>
+    <string name="image_theme_replace_photo">Substituir foto</string>
+    <string name="image_theme_remove_photo">Remover foto</string>
+    <string name="image_theme_photo_private">Sua foto é criptografada e fica neste dispositivo.</string>
+    <string name="image_theme_photo_too_large">Esta foto é grande demais. Escolha uma com menos de 40 MB.</string>
+    <string name="image_theme_photo_unsupported">Este tipo de arquivo não é compatível. Escolha uma foto JPEG, PNG, WebP ou HEIC.</string>
+    <string name="image_theme_photo_unreadable">Não foi possível abrir esta foto. Tente outra.</string>
 </resources>

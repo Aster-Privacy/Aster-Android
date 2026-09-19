@@ -71,7 +71,9 @@ data class AsterSemanticColors(
     val secondary_control_bg: Color = bg_secondary,
     val secondary_control_border: Color = Color.Transparent,
     val is_glass: Boolean = false,
-)
+) {
+    val solid_bg: Color get() = if (is_glass) modal_bg.copy(alpha = 1f) else bg_primary
+}
 
 val default_star_color = Color(0xFFFBBF24)
 

@@ -2,14 +2,25 @@
 <resources>
     <string name="image_themes">画像テーマ</string>
     <string name="image_themes_subtitle">アプリの背景に写真を表示します。</string>
-    <string name="image_theme_none">なし</string>
-    <string name="image_theme_fjord">フィヨルド</string>
-    <string name="image_theme_aurora">オーロラ</string>
-    <string name="image_theme_desert">砂漠</string>
-    <string name="image_theme_clouds">雲</string>
-    <string name="image_theme_sunrise">日の出</string>
-    <string name="image_theme_above">雲の上</string>
-    <string name="image_theme_apply">テーマを使用</string>
-    <string name="image_theme_in_use">使用中</string>
+    <string name="image_theme_browse">写真を見る</string>
     <string name="image_theme_credit">写真: %1$s</string>
+    <string name="image_theme_category_space">宇宙</string>
+    <string name="image_theme_category_planets">惑星</string>
+    <string name="image_theme_category_night_sky">夜空</string>
+    <string name="image_theme_category_cities">都市</string>
+    <string name="image_theme_category_landscapes">風景</string>
+    <string name="image_theme_category_water">水辺</string>
+    <string name="image_theme_apply_changes">適用</string>
+    <string name="image_theme_reset">デフォルトに戻す</string>
+    <string name="image_theme_colors">カラー</string>
+    <string name="image_theme_wallpapers">壁紙</string>
+    <string name="image_theme_page_subtitle">受信トレイの写真と色を選択</string>
+    <string name="image_theme_category_yours">あなたの写真</string>
+    <string name="image_theme_choose_photo">写真を選択</string>
+    <string name="image_theme_replace_photo">写真を置き換える</string>
+    <string name="image_theme_remove_photo">写真を削除</string>
+    <string name="image_theme_photo_private">写真は暗号化され、このデバイスにのみ保存されます。</string>
+    <string name="image_theme_photo_too_large">この写真は大きすぎます。40 MB 未満の写真を選択してください。</string>
+    <string name="image_theme_photo_unsupported">このファイル形式には対応していません。JPEG、PNG、WebP、HEIC の写真を選択してください。</string>
+    <string name="image_theme_photo_unreadable">この写真を開けません。別の写真をお試しください。</string>
 </resources>

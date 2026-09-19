@@ -77,6 +77,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CircularProgressIndicator
@@ -179,6 +180,7 @@ import org.astermail.android.design.AsterColors
 import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
@@ -779,6 +781,16 @@ fun MailDetailScreen(
     }
 
     val messages = remember(email_id, api_messages) { api_messages.distinctBy { it.id } }
+    val expected_message_count = remember(email_id, api_item?.thread_message_count, inbox_state_for_folder.items) {
+        api_item?.thread_message_count
+            ?: inbox_state_for_folder.items.firstOrNull { it.id == email_id }?.thread_message_count
+            ?: 1
+    }
+    var thread_settled by remember(email_id) { mutableStateOf(false) }
+    LaunchedEffect(email_id, thread_state.is_loading, messages.size, thread_matches_email) {
+        if (thread_matches_email && !thread_state.is_loading && messages.isNotEmpty()) thread_settled = true
+    }
+    val pending_message_count = if (thread_settled) 0 else (expected_message_count - messages.size).coerceIn(0, 3)
     val is_thread_encrypted = remember(messages) { thread_is_end_to_end_encrypted(messages) }
     val is_thread_pgp = remember(messages) { thread_is_pgp_encrypted(messages) }
     val thread_trackers_blocked = remember(messages) { messages.sumOf { it.trackers_blocked } }
@@ -812,8 +824,8 @@ fun MailDetailScreen(
     val seeded_last_id = remember(email_id) {
         mutableStateOf<String?>(null)
     }
-    LaunchedEffect(email_id, messages.size) {
-        if (messages.isEmpty()) return@LaunchedEffect
+    LaunchedEffect(email_id, messages.size, thread_settled) {
+        if (messages.isEmpty() || !thread_settled) return@LaunchedEffect
         val last_id = messages.last().id
         if (seeded_last_id.value == last_id) return@LaunchedEffect
         seeded_last_id.value = last_id
@@ -877,7 +889,7 @@ fun MailDetailScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.bg_primary)
-            .systemBarsPadding()
+            .statusBarsPadding()
             .clear_subject_selection_on_press_outside(subject_selection),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -920,7 +932,7 @@ fun MailDetailScreen(
                         )
                     }
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = !show_topbar_subject && email != null && show_encryption_indicators,
+                        visible = !show_topbar_subject && email != null && thread_settled && show_encryption_indicators,
                         enter = fadeIn(),
                         exit = fadeOut(),
                     ) {
@@ -1285,12 +1297,18 @@ fun MailDetailScreen(
                     }
                 }
 
+                if (email != null) {
+                    items(pending_message_count, key = { "pending_message_$it" }, contentType = { "pending_message" }) {
+                        collapsed_message_placeholder()
+                    }
+                }
                 items(messages.size, key = { messages[it].id }, contentType = { "thread_message" }) { idx ->
                     val msg = messages[idx]
                     val is_last = idx == messages.size - 1
                     val is_last_message = idx == messages.size - 1
                     val is_expanded = messages.size <= 1 ||
-                        expanded_ids.value.contains(msg.id)
+                        expanded_ids.value.contains(msg.id) ||
+                        (is_last_message && seeded_last_id.value != msg.id)
 
                     val is_hidden = msg.id in hidden_id_set
                     val is_after_indicator = hidden_id_set.isNotEmpty() &&
@@ -1493,7 +1511,10 @@ fun MailDetailScreen(
 
                 item { Spacer(Modifier.height(bottom_bar_height)) }
             }
-            detail_skeleton_overlay(visible = email == null)
+            detail_skeleton_overlay(
+                visible = email == null,
+                message_count = expected_message_count,
+            )
 
             }
         }
@@ -1515,7 +1536,7 @@ fun MailDetailScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .background(colors.bg_primary)
+                    .background(if (colors.is_glass) colors.modal_bg.copy(alpha = 1f) else colors.bg_primary)
                     .pointerInput(Unit) {}
                     .onGloballyPositioned { coords ->
                         val measured = with(density) { coords.size.height.toDp() }
@@ -1564,11 +1585,7 @@ fun MailDetailScreen(
                     reply_action_row(
                         on_reply = { on_reply(latest_msg.id, thread_ghost_email) },
                         on_forward = { on_forward(latest_msg.id, thread_ghost_email) },
-                        show_react = latest_restriction == null ||
-                            (
-                                latest_restriction != org.astermail.android.mail.ReactionRestriction.disabled &&
-                                    latest_restriction != org.astermail.android.mail.ReactionRestriction.own_message
-                                ),
+                        show_react = latest_restriction != org.astermail.android.mail.ReactionRestriction.disabled,
                         react_enabled = latest_restriction == null,
                         on_react = {
                             val blocked = reaction_restriction_for(latest_msg)
@@ -4140,6 +4157,33 @@ private fun collapsed_message(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun collapsed_message_placeholder() {
+    val colors = AsterMaterial.colors
+    val state = org.astermail.android.design.components.shimmer_state()
+    val line_shape = RoundedCornerShape(6.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = inbox_card_horizontal_margin, end = inbox_card_horizontal_margin, bottom = inbox_group_split)
+            .clip(inbox_group_shape(true, true))
+            .background(inbox_card_read_color(colors))
+            .padding(horizontal = inbox_card_content_padding, vertical = AsterSpacing.md),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Box(Modifier.size(40.dp).shimmer(state, CircleShape))
+        Spacer(Modifier.width(AsterSpacing.md))
+        Column(modifier = Modifier.weight(1f)) {
+            Box(Modifier.height(20.dp), contentAlignment = Alignment.CenterStart) {
+                Box(Modifier.width(120.dp).height(13.dp).shimmer(state, line_shape))
+            }
+            Box(Modifier.height(18.dp), contentAlignment = Alignment.CenterStart) {
+                Box(Modifier.fillMaxWidth(0.75f).height(11.dp).shimmer(state, line_shape))
             }
         }
     }

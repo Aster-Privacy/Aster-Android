@@ -455,7 +455,7 @@ fun MailingListsScreen(
             },
         )
 
-        val header_bg = colors.bg_primary
+        val header_bg = colors.solid_bg
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -1060,7 +1060,7 @@ private fun subscription_select_bar(
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
-    Surface(modifier = modifier.fillMaxWidth(), color = colors.bg_primary) {
+    Surface(modifier = modifier.fillMaxWidth(), color = colors.solid_bg) {
         Column(modifier = Modifier.fillMaxWidth()) {
             AsterDivider()
             Row(

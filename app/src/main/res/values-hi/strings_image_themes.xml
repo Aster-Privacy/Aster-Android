@@ -2,14 +2,25 @@
 <resources>
     <string name="image_themes">चित्र थीम</string>
     <string name="image_themes_subtitle">ऐप के पीछे एक फ़ोटो दिखाता है।</string>
-    <string name="image_theme_none">कोई नहीं</string>
-    <string name="image_theme_fjord">फ़्योर्ड</string>
-    <string name="image_theme_aurora">ध्रुवीय ज्योति</string>
-    <string name="image_theme_desert">रेगिस्तान</string>
-    <string name="image_theme_clouds">बादल</string>
-    <string name="image_theme_sunrise">सूर्योदय</string>
-    <string name="image_theme_above">बादलों के ऊपर</string>
-    <string name="image_theme_apply">थीम इस्तेमाल करें</string>
-    <string name="image_theme_in_use">इस्तेमाल में</string>
+    <string name="image_theme_browse">फ़ोटो देखें</string>
     <string name="image_theme_credit">फ़ोटो: %1$s</string>
+    <string name="image_theme_category_space">अंतरिक्ष</string>
+    <string name="image_theme_category_planets">ग्रह</string>
+    <string name="image_theme_category_night_sky">रात का आकाश</string>
+    <string name="image_theme_category_cities">शहर</string>
+    <string name="image_theme_category_landscapes">प्राकृतिक दृश्य</string>
+    <string name="image_theme_category_water">पानी</string>
+    <string name="image_theme_apply_changes">लागू करें</string>
+    <string name="image_theme_reset">डिफ़ॉल्ट पर रीसेट करें</string>
+    <string name="image_theme_colors">रंग</string>
+    <string name="image_theme_wallpapers">वॉलपेपर</string>
+    <string name="image_theme_page_subtitle">अपने इनबॉक्स के लिए फ़ोटो और रंग चुनें</string>
+    <string name="image_theme_category_yours">आपकी फ़ोटो</string>
+    <string name="image_theme_choose_photo">फ़ोटो चुनें</string>
+    <string name="image_theme_replace_photo">फ़ोटो बदलें</string>
+    <string name="image_theme_remove_photo">फ़ोटो हटाएं</string>
+    <string name="image_theme_photo_private">आपकी फ़ोटो एन्क्रिप्ट की जाती है और इसी डिवाइस पर रहती है।</string>
+    <string name="image_theme_photo_too_large">यह फ़ोटो बहुत बड़ी है। 40 MB से छोटी फ़ोटो चुनें।</string>
+    <string name="image_theme_photo_unsupported">यह फ़ाइल टाइप समर्थित नहीं है। JPEG, PNG, WebP या HEIC फ़ोटो चुनें।</string>
+    <string name="image_theme_photo_unreadable">यह फ़ोटो खोली नहीं जा सकती। कोई दूसरी फ़ोटो आज़माएं।</string>
 </resources>

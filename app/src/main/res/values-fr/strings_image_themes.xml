@@ -2,14 +2,25 @@
 <resources>
     <string name="image_themes">Thèmes illustrés</string>
     <string name="image_themes_subtitle">Affiche une photo derrière l’app.</string>
-    <string name="image_theme_none">Aucun</string>
-    <string name="image_theme_fjord">Fjord</string>
-    <string name="image_theme_aurora">Aurore</string>
-    <string name="image_theme_desert">Désert</string>
-    <string name="image_theme_clouds">Nuages</string>
-    <string name="image_theme_sunrise">Lever du soleil</string>
-    <string name="image_theme_above">Au-dessus des nuages</string>
-    <string name="image_theme_apply">Utiliser le thème</string>
-    <string name="image_theme_in_use">Utilisé</string>
+    <string name="image_theme_browse">Parcourir les photos</string>
     <string name="image_theme_credit">Photo : %1$s</string>
+    <string name="image_theme_category_space">Espace</string>
+    <string name="image_theme_category_planets">Planètes</string>
+    <string name="image_theme_category_night_sky">Ciel nocturne</string>
+    <string name="image_theme_category_cities">Villes</string>
+    <string name="image_theme_category_landscapes">Paysages</string>
+    <string name="image_theme_category_water">Eau</string>
+    <string name="image_theme_apply_changes">Appliquer</string>
+    <string name="image_theme_reset">Rétablir les valeurs par défaut</string>
+    <string name="image_theme_colors">Couleurs</string>
+    <string name="image_theme_wallpapers">Fonds d’écran</string>
+    <string name="image_theme_page_subtitle">Choisissez une photo et des couleurs pour votre boîte de réception</string>
+    <string name="image_theme_category_yours">Votre photo</string>
+    <string name="image_theme_choose_photo">Choisir une photo</string>
+    <string name="image_theme_replace_photo">Remplacer la photo</string>
+    <string name="image_theme_remove_photo">Supprimer la photo</string>
+    <string name="image_theme_photo_private">Votre photo est chiffrée et reste sur cet appareil.</string>
+    <string name="image_theme_photo_too_large">Cette photo est trop volumineuse. Choisissez-en une de moins de 40 Mo.</string>
+    <string name="image_theme_photo_unsupported">Ce type de fichier n’est pas pris en charge. Choisissez une photo JPEG, PNG, WebP ou HEIC.</string>
+    <string name="image_theme_photo_unreadable">Impossible d’ouvrir cette photo. Essayez-en une autre.</string>
 </resources>

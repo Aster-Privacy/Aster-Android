@@ -596,7 +596,7 @@ fun ContactsScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(colors.bg_primary)
+                                        .background(colors.solid_bg)
                                         .padding(
                                             horizontal = AsterSpacing.lg,
                                             vertical = AsterSpacing.xs,

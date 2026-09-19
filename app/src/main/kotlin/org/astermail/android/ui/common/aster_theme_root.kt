@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -106,8 +107,10 @@ fun aster_theme_root(content: @Composable () -> Unit) {
         } else null
     }
 
-    val active_backdrop = org.astermail.android.ui.theme.theme_background_for(background_image)
-        ?.takeIf { !reduce_transparency }
+    val custom_image_meta by org.astermail.android.ui.theme.custom_theme_image.meta.collectAsState()
+    val active_backdrop = remember(background_image, custom_image_meta) {
+        org.astermail.android.ui.theme.theme_background_for(background_image)
+    }?.takeIf { !reduce_transparency }
     androidx.compose.runtime.SideEffect { nav_glass_mode = active_backdrop != null }
     AsterTheme(
         theme_mode = resolved_mode,

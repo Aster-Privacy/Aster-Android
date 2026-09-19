@@ -208,7 +208,7 @@ private fun settings_search_overlay(on_dismiss: () -> Unit) {
                     scaleY = search_overlay_scale(overlay_progress),
                     alpha = overlay_progress,
                 )
-                .background(colors.bg_primary)
+                .background(colors.solid_bg)
                 .systemBarsPadding(),
         ) {
             Row(

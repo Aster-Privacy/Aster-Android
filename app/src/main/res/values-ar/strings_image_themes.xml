@@ -2,14 +2,25 @@
 <resources>
     <string name="image_themes">سمات الصور</string>
     <string name="image_themes_subtitle">تعرض صورة خلف التطبيق.</string>
-    <string name="image_theme_none">بلا</string>
-    <string name="image_theme_fjord">المضيق البحري</string>
-    <string name="image_theme_aurora">الشفق القطبي</string>
-    <string name="image_theme_desert">الصحراء</string>
-    <string name="image_theme_clouds">السحب</string>
-    <string name="image_theme_sunrise">الشروق</string>
-    <string name="image_theme_above">فوق السحاب</string>
-    <string name="image_theme_apply">استخدام السمة</string>
-    <string name="image_theme_in_use">قيد الاستخدام</string>
+    <string name="image_theme_browse">تصفح الصور</string>
     <string name="image_theme_credit">الصورة: %1$s</string>
+    <string name="image_theme_category_space">الفضاء</string>
+    <string name="image_theme_category_planets">الكواكب</string>
+    <string name="image_theme_category_night_sky">سماء الليل</string>
+    <string name="image_theme_category_cities">مدن</string>
+    <string name="image_theme_category_landscapes">المناظر الطبيعية</string>
+    <string name="image_theme_category_water">المياه</string>
+    <string name="image_theme_apply_changes">تطبيق</string>
+    <string name="image_theme_reset">إعادة التعيين إلى الافتراضي</string>
+    <string name="image_theme_colors">الألوان</string>
+    <string name="image_theme_wallpapers">الخلفيات</string>
+    <string name="image_theme_page_subtitle">اختر صورة وألوانًا لصندوق الوارد</string>
+    <string name="image_theme_category_yours">صورتك</string>
+    <string name="image_theme_choose_photo">اختيار صورة</string>
+    <string name="image_theme_replace_photo">استبدال الصورة</string>
+    <string name="image_theme_remove_photo">إزالة الصورة</string>
+    <string name="image_theme_photo_private">صورتك مشفّرة وتبقى على هذا الجهاز.</string>
+    <string name="image_theme_photo_too_large">هذه الصورة كبيرة جدًا. اختر صورة أصغر من 40 ميغابايت.</string>
+    <string name="image_theme_photo_unsupported">نوع الملف هذا غير مدعوم. اختر صورة بصيغة JPEG أو PNG أو WebP أو HEIC.</string>
+    <string name="image_theme_photo_unreadable">تعذّر فتح هذه الصورة. جرّب صورة أخرى.</string>
 </resources>

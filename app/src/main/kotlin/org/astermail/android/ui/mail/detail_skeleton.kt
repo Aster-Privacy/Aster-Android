@@ -57,7 +57,7 @@ import org.astermail.android.design.components.shimmer_state
 private const val detail_body_line_start_index = 2
 
 @Composable
-fun detail_skeleton(modifier: Modifier = Modifier) {
+fun detail_skeleton(modifier: Modifier = Modifier, message_count: Int = 1) {
     val colors = AsterMaterial.colors
     val state = shimmer_state()
     val shape = RoundedCornerShape(6.dp)
@@ -77,8 +77,48 @@ fun detail_skeleton(modifier: Modifier = Modifier) {
         )
         Spacer(Modifier.height(AsterSpacing.lg))
 
+        val collapsed = (message_count - 1).coerceIn(0, 3)
+        repeat(collapsed) { row ->
+            Row(
+                modifier = Modifier
+                    .skeleton_reveal(1 + row)
+                    .fillMaxWidth()
+                    .padding(vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .shimmer(state, CircleShape, row * skeleton_sweep_lag),
+                )
+                Spacer(Modifier.width(AsterSpacing.md))
+                Column(modifier = Modifier.weight(1f)) {
+                    Box(
+                        modifier = Modifier
+                            .width(120.dp)
+                            .height(13.dp)
+                            .shimmer(state, shape, row * skeleton_sweep_lag),
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .height(11.dp)
+                            .shimmer(state, shape, row * skeleton_sweep_lag),
+                    )
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(colors.border_secondary.copy(alpha = 0.5f)),
+            )
+        }
+        if (collapsed > 0) Spacer(Modifier.height(AsterSpacing.md))
+
         Row(
-            modifier = Modifier.skeleton_reveal(1),
+            modifier = Modifier.skeleton_reveal(1 + collapsed),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
@@ -106,7 +146,7 @@ fun detail_skeleton(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(AsterSpacing.xl))
 
         repeat(6) {
-            val index = detail_body_line_start_index + it
+            val index = detail_body_line_start_index + collapsed + it
             Box(
                 modifier = Modifier
                     .skeleton_reveal(index)
@@ -120,7 +160,7 @@ fun detail_skeleton(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun detail_skeleton_overlay(visible: Boolean, modifier: Modifier = Modifier) {
+fun detail_skeleton_overlay(visible: Boolean, modifier: Modifier = Modifier, message_count: Int = 1) {
     var shown by remember { mutableStateOf(false) }
     var shown_at by remember { mutableLongStateOf(0L) }
     LaunchedEffect(visible) {
@@ -141,7 +181,7 @@ fun detail_skeleton_overlay(visible: Boolean, modifier: Modifier = Modifier) {
         enter = EnterTransition.None,
         exit = fadeOut(tween(skeleton_fade_out_ms)),
     ) {
-        detail_skeleton()
+        detail_skeleton(message_count = message_count)
     }
 }
 
