@@ -2765,7 +2765,7 @@ class MailRepository @Inject constructor(
     }
 
     private fun kek_candidates(): List<ByteArray> {
-        val raw = session_key_store.get_legacy_keks().orEmpty()
+        val raw = session_key_store.get_decrypt_keks()
         val cached = cached_kek_candidates
         if (cached != null && cached_kek_source == raw) return cached
         val decoded = raw.mapNotNull { kek_b64 ->

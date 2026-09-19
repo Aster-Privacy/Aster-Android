@@ -64,6 +64,12 @@ class SessionKeyStore(context: Context? = null) {
     private var legacy_keks: List<String>? = null
 
     @Volatile
+    private var account_keks: List<String>? = null
+
+    @Volatile
+    private var account_kek_generation: Long = 0
+
+    @Volatile
     private var data_kek: ByteArray? = null
 
     @Volatile
@@ -118,6 +124,10 @@ class SessionKeyStore(context: Context? = null) {
                 val saved_keks = p.getString(key_legacy_keks, null)
                 if (saved_keks != null && saved_keks.isNotBlank()) {
                     legacy_keks = saved_keks.split("\n").filter { it.isNotBlank() }
+                }
+                val saved_account_keks = p.getString(key_account_keks, null)
+                if (!saved_account_keks.isNullOrBlank()) {
+                    account_keks = saved_account_keks.split("\n").filter { it.isNotBlank() }
                 }
                 data_kek = decode_b64_field(p, key_data_kek)
                 pending_reseal_passphrase = decode_b64_field(p, key_pending_reseal_pass)
@@ -349,6 +359,35 @@ class SessionKeyStore(context: Context? = null) {
         }
     }
 
+    fun account_kek_generation(): Long {
+        synchronized(lock) {
+            return account_kek_generation
+        }
+    }
+
+    fun put_account_keks(keys: List<String>, generation: Long): Boolean {
+        synchronized(lock) {
+            if (generation != account_kek_generation) return false
+            account_keks = keys.toList()
+            prefs?.edit()
+                ?.putString(key_account_keks, keys.joinToString("\n"))
+                ?.commit()
+            return true
+        }
+    }
+
+    fun get_account_keks(): List<String>? {
+        synchronized(lock) {
+            return account_keks?.toList()
+        }
+    }
+
+    fun get_decrypt_keks(): List<String> {
+        synchronized(lock) {
+            return (legacy_keks.orEmpty() + account_keks.orEmpty()).distinct()
+        }
+    }
+
     fun put_data_kek(kek: ByteArray) {
         synchronized(lock) {
             data_kek?.fill(0)
@@ -435,6 +474,8 @@ class SessionKeyStore(context: Context? = null) {
             recovery_codes = null
             previous_keys = null
             legacy_keks = null
+            account_keks = null
+            account_kek_generation += 1
             data_kek?.fill(0)
             data_kek = null
             pending_reseal_passphrase?.fill(0)
@@ -472,6 +513,7 @@ class SessionKeyStore(context: Context? = null) {
         private const val key_recovery_codes = "recovery_codes"
         private const val key_previous_keys = "previous_keys"
         private const val key_legacy_keks = "legacy_keks"
+        private const val key_account_keks = "account_keks"
         private const val key_data_kek = "data_kek"
         private const val key_pending_reseal_pass = "pending_reseal_pass"
         private const val key_ratchet_identity_jwk = "ratchet_identity_jwk"

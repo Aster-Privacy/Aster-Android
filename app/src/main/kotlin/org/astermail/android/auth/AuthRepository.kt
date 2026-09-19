@@ -179,8 +179,15 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    private val account_key_loader = AccountKeyLoader(keys_api, session_key_store)
+
+    private fun load_account_keks() {
+        background_scope.launch { runCatching { account_key_loader.load() } }
+    }
+
     fun trigger_ratchet_bootstrap() {
         if (!_is_signed_in.value) return
+        load_account_keks()
         if (BuildConfig.DEBUG) android.util.Log.w("RatchetBootstrap", "trigger_ratchet_bootstrap firing")
         background_scope.launch {
             runCatching { ratchet_bootstrap_service.bootstrap_if_needed() }
@@ -562,6 +569,7 @@ class AuthRepository @Inject constructor(
         background_scope.launch { runCatching { system_folder_bootstrap.ensure_system_folders() } }
         background_scope.launch { runCatching { backfill_server_recovery_email() } }
         background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
+        load_account_keks()
     }
 
     private val pending_recovery_backup = java.util.concurrent.atomic.AtomicReference<SaveRecoveryBackupRequest?>(null)
@@ -756,6 +764,7 @@ class AuthRepository @Inject constructor(
         runCatching { UnifiedPushState.sync_registration(context) }
         runCatching { org.astermail.android.notifications.PersistentPushService.start_if_enabled(context) }
         background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
+        load_account_keks()
         RegisterSuccess(recovery_codes = recovery_codes, recovery_backup_saved = recovery_backup_saved)
     }
 
@@ -816,6 +825,7 @@ class AuthRepository @Inject constructor(
         _session_expired.value = false
         background_scope.launch { runCatching { ensure_csrf_ready() } }
         background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
+        load_account_keks()
         background_scope.launch { runCatching { system_folder_bootstrap.ensure_system_folders() } }
         return true
     }

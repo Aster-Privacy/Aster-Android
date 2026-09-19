@@ -5989,7 +5989,7 @@ class SettingsViewModel @Inject constructor(
                 if (t is kotlinx.coroutines.CancellationException) throw t
             }
         }
-        val legacy_keks = session_key_store.get_legacy_keks().orEmpty()
+        val legacy_keks = session_key_store.get_decrypt_keks()
         for (kek_b64 in legacy_keks) {
             try {
                 val raw_key = android.util.Base64.decode(kek_b64, android.util.Base64.DEFAULT)
@@ -6030,7 +6030,7 @@ class SettingsViewModel @Inject constructor(
                 }
             }
         }
-        val legacy_keks = session_key_store.get_legacy_keks().orEmpty()
+        val legacy_keks = session_key_store.get_decrypt_keks()
         for (kek_b64 in legacy_keks) {
             try {
                 val raw_key = android.util.Base64.decode(kek_b64, android.util.Base64.DEFAULT)
@@ -6319,7 +6319,7 @@ class SettingsViewModel @Inject constructor(
             }
         }
 
-        val legacy_keks = session_key_store.get_legacy_keks().orEmpty()
+        val legacy_keks = session_key_store.get_decrypt_keks()
         for (kek_b64 in legacy_keks) {
             try {
                 val raw_key = android.util.Base64.decode(kek_b64, android.util.Base64.DEFAULT)

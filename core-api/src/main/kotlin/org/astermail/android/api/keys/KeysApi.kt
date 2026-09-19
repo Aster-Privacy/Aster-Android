@@ -61,6 +61,27 @@ data class CurrentVaultResponse(
     val updated_at: String? = null,
 )
 
+@Serializable
+data class AccountKeyTokenResponse(
+    val token: String,
+    val key_fingerprint: String,
+    val version: Long,
+    val updated_at: String? = null,
+)
+
+@Serializable
+data class AccountKeyTokenHistoryEntry(
+    val token: String,
+    val key_fingerprint: String,
+    val version: Long,
+    val archived_at: String? = null,
+)
+
+@Serializable
+data class AccountKeyTokenHistoryResponse(
+    val entries: List<AccountKeyTokenHistoryEntry> = emptyList(),
+)
+
 sealed class CurrentVaultResult {
     data class Available(val encrypted_vault: String, val vault_nonce: String) : CurrentVaultResult()
     object Missing : CurrentVaultResult()
@@ -121,6 +142,8 @@ interface KeysApi {
         vault_key_fingerprints: List<String>? = null,
     ): Boolean
     suspend fun fetch_current_vault(): CurrentVaultResult
+    suspend fun get_account_key_token(): AccountKeyTokenResponse? = null
+    suspend fun get_account_key_token_history(): List<AccountKeyTokenHistoryEntry> = emptyList()
 }
 
 class KeysApiImpl(private val client: ApiClient) : KeysApi {
@@ -215,5 +238,20 @@ class KeysApiImpl(private val client: ApiClient) : KeysApi {
             404, 405 -> CurrentVaultResult.Missing
             else -> CurrentVaultResult.Unavailable
         }
+    }
+
+    override suspend fun get_account_key_token(): AccountKeyTokenResponse? {
+        val response = runCatching { client.http.get("${client.base_url}$base/account-key") }
+            .getOrNull() ?: return null
+        if (response.status.value !in 200..299) return null
+        return runCatching { response.body<AccountKeyTokenResponse>() }.getOrNull()
+    }
+
+    override suspend fun get_account_key_token_history(): List<AccountKeyTokenHistoryEntry> {
+        val response = runCatching { client.http.get("${client.base_url}$base/account-key/history") }
+            .getOrNull() ?: return emptyList()
+        if (response.status.value !in 200..299) return emptyList()
+        return runCatching { response.body<AccountKeyTokenHistoryResponse>().entries }
+            .getOrDefault(emptyList())
     }
 }

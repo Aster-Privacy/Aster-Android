@@ -32,6 +32,7 @@ import org.bouncycastle.openpgp.PGPCompressedData
 import org.bouncycastle.openpgp.PGPOnePassSignature
 import org.bouncycastle.openpgp.PGPOnePassSignatureList
 import org.bouncycastle.openpgp.PGPPublicKeyEncryptedData
+import org.bouncycastle.openpgp.PGPPublicKeyRing
 import org.bouncycastle.openpgp.PGPPublicKeyRingCollection
 import org.bouncycastle.openpgp.PGPSecretKeyRingCollection
 import org.bouncycastle.openpgp.PGPSignatureList
@@ -74,6 +75,49 @@ object PgpDecryptor {
         val verifier = sender_public_key_armored
             ?.takeIf { it.isNotBlank() }
             ?.let { runCatching { load_public_keys(it) }.getOrNull() }
+        return decrypt_with_verifier(armored_ciphertext, armored_private_key, passphrase, verifier)
+    }
+
+    fun decrypt_signed_by_own_keys(
+        armored_ciphertext: String,
+        armored_private_keys: List<String>,
+        passphrase: CharArray,
+    ): String? {
+        val unique = armored_private_keys.filter { it.isNotBlank() }.distinct()
+        val verifier = own_public_keys(unique) ?: return null
+        for (key in unique) {
+            val result = runCatching {
+                decrypt_with_verifier(armored_ciphertext, key, passphrase, verifier)
+            }.getOrNull() ?: continue
+            if (result.plaintext == null) continue
+            return if (result.signature == PgpSignatureStatus.VALID) result.plaintext else null
+        }
+        return null
+    }
+
+    private fun own_public_keys(armored_private_keys: List<String>): PGPPublicKeyRingCollection? {
+        val rings = armored_private_keys.flatMap { armored ->
+            runCatching {
+                val secret_rings = PGPSecretKeyRingCollection(
+                    PGPUtil.getDecoderStream(ByteArrayInputStream(armored.toByteArray(Charsets.UTF_8))),
+                    JcaKeyFingerprintCalculator(),
+                )
+                secret_rings.keyRings.asSequence().map { ring ->
+                    PGPPublicKeyRing(ring.publicKeys.asSequence().toList())
+                }.toList()
+            }.getOrDefault(emptyList())
+        }
+        if (rings.isEmpty()) return null
+        val by_key_id = rings.associateBy { it.publicKey.keyID }
+        return runCatching { PGPPublicKeyRingCollection(by_key_id.values.toList()) }.getOrNull()
+    }
+
+    private fun decrypt_with_verifier(
+        armored_ciphertext: String,
+        armored_private_key: String,
+        passphrase: CharArray,
+        verifier: PGPPublicKeyRingCollection?,
+    ): PgpDecryptionResult {
         val status = SignatureTracker(verifier)
         val plaintext = decrypt_internal(armored_ciphertext, armored_private_key, passphrase, status)
         return PgpDecryptionResult(plaintext, if (plaintext == null) PgpSignatureStatus.NONE else status.result())
