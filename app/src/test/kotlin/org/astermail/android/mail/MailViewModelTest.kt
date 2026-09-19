@@ -56,6 +56,7 @@ class MailViewModelTest {
     private lateinit var context: android.content.Context
     private lateinit var repository: MailRepository
     private lateinit var search_index_manager: SearchIndexManager
+    private lateinit var folder_cache_store: FolderCacheStore
     private lateinit var identity_pins: org.astermail.android.mail.ratchet.RatchetIdentityPinStore
     private lateinit var vm: MailViewModel
 
@@ -77,6 +78,7 @@ class MailViewModelTest {
             "Something went wrong"
         repository = mockk(relaxed = true)
         search_index_manager = mockk(relaxed = true)
+        folder_cache_store = mockk(relaxed = true)
         every { repository.durable_async<Any?>(any()) } answers {
             kotlinx.coroutines.CompletableDeferred(
                 kotlinx.coroutines.runBlocking { firstArg<suspend () -> Any?>().invoke() },
@@ -96,7 +98,7 @@ class MailViewModelTest {
         identity_pins = mockk(relaxed = true)
         every { identity_pins.unacknowledged_changes } returns
             kotlinx.coroutines.flow.MutableStateFlow(emptyList())
-        vm = MailViewModel(context, repository, search_index_manager, identity_pins, mockk(relaxed = true))
+        vm = MailViewModel(context, repository, search_index_manager, folder_cache_store, identity_pins, mockk(relaxed = true))
     }
 
     @After
@@ -2067,7 +2069,7 @@ class MailViewModelTest {
         every { repository.new_mail_events } returns new_mail
         coEvery { repository.fetch_inbox(any(), any(), any(), any(), any(), any()) } returns
             Result.success(InboxPage(items = emptyList(), has_more = false, next_cursor = null, total = 0))
-        vm = MailViewModel(context, repository, search_index_manager, identity_pins, mockk(relaxed = true))
+        vm = MailViewModel(context, repository, search_index_manager, folder_cache_store, identity_pins, mockk(relaxed = true))
         vm.foreground_check = { true }
         advanceUntilIdle()
         io.mockk.clearMocks(repository, answers = false, recordedCalls = true, childMocks = false, verificationMarks = true, exclusionRules = false)

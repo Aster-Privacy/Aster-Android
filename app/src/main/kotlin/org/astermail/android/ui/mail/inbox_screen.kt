@@ -1709,11 +1709,15 @@ fun InboxScreen(
                         contradicts_unread = true
                     }
                 }
-                val skeleton_target = (inbox_state.initial && threads.isEmpty()) ||
+                val cache_pending = inbox_state.cache_pending
+                val skeleton_target = !cache_pending &&
                     (
-                        !thread_gate.category_only &&
-                            (inbox_state.is_loading || threads_pending) &&
-                            threads.isEmpty()
+                        (inbox_state.initial && threads.isEmpty()) ||
+                            (
+                                !thread_gate.category_only &&
+                                    (inbox_state.is_loading || threads_pending) &&
+                                    threads.isEmpty()
+                                )
                         )
                 val empty_target = threads.isEmpty() &&
                     !threads_pending &&
@@ -1738,8 +1742,11 @@ fun InboxScreen(
                     threads.isEmpty() &&
                     !empty_settled &&
                     !thread_gate.category_only
-                val skeleton_now = skeleton_target ||
-                    (!inbox_error_now && !contradicts_unread && (category_skeleton || empty_skeleton))
+                val skeleton_now = !cache_pending &&
+                    (
+                        skeleton_target ||
+                            (!inbox_error_now && !contradicts_unread && (category_skeleton || empty_skeleton))
+                        )
                 val rows_imminent = threads.isEmpty() && threads_pending && inbox_state.items.isNotEmpty()
                 val skeleton_phase by remember_skeleton_phase(
                     wanted = skeleton_now,

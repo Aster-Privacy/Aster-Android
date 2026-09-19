@@ -54,6 +54,7 @@ import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.hilt.navigation.compose.hiltViewModel
 import org.astermail.android.mail.MailViewModel
+import org.astermail.android.mail.folder_cache_skeleton_allowed
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -188,7 +189,9 @@ fun FilteredInboxScreen(
             AsterDivider(modifier = Modifier.fillMaxWidth())
             val showing_requested = inbox_state.current_folder == requested_folder
             val has_rows = showing_requested && threads.isNotEmpty()
-            val skeleton_now = !has_rows && (inbox_state.is_loading || !showing_requested)
+            val skeleton_now = folder_cache_skeleton_allowed(inbox_state.cache_pending, threads.size) &&
+                !has_rows &&
+                (inbox_state.is_loading || !showing_requested)
             val skeleton_phase by remember_skeleton_phase(
                 wanted = skeleton_now,
                 rows_imminent = false,
