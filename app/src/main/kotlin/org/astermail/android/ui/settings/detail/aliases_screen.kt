@@ -1638,7 +1638,7 @@ internal fun domains_tab(
 
     val domains_settled = remember_load_settled(state.domains_loading)
     if (state.domains.isEmpty() && (state.domains_loading || !domains_settled)) {
-        skeleton_card_list(rows = 2, leading_circle = true)
+        domain_cards_pulse_skeleton(rows = 2)
     } else if (state.domains.isEmpty()) {
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             detail_row(

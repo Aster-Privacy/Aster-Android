@@ -11,4 +11,14 @@
     <string name="domain_manage_recheck">DNS レコードを再確認</string>
     <string name="domain_manage_rechecking">DNS レコードを確認中</string>
     <string name="domain_purchase_search_rate_limited">検索回数が多すぎます。1分後にもう一度お試しください。</string>
+    <string name="domain_purchase_results_for">%1$s の検索結果</string>
+    <string name="domain_purchase_change_name">名前を変更</string>
+    <string name="domain_purchase_show_more">さらに結果を表示</string>
+    <string name="domain_purchase_empty_included">すべてのドメインに WHOIS 保護、設定済みの DNS、無制限のアドレスが付いています。</string>
+    <string name="domain_purchase_retry">再試行</string>
+    <string name="domain_purchase_progress_note">ドメインの登録とメールボックスの設定を行っています。通常は1分ほどで完了します。</string>
+    <string name="domain_purchase_awaiting_note">お支払いはまだ確認できていません。チェックアウトを完了して注文を確定するか、このウィンドウを閉じて後で「購入したドメイン」からお支払いください。</string>
+    <string name="domain_purchase_purchased_desc">Asterで購入したドメインはここに表示され、自動的にカスタムドメインとして機能します。名前を選んで支払えば、すぐに使い始められます。</string>
+    <string name="domain_purchase_buy_new">新しいドメインを購入</string>
+    <string name="domain_purchase_discount_tooltip">レジストラによる初年度セール価格です。以降は年 %1$s で更新されます。</string>
 </resources>

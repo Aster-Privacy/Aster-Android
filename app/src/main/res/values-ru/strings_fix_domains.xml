@@ -11,4 +11,14 @@
     <string name="domain_manage_recheck">Проверить записи DNS еще раз</string>
     <string name="domain_manage_rechecking">Проверка записей DNS</string>
     <string name="domain_purchase_search_rate_limited">Слишком много поисковых запросов. Повторите попытку через минуту.</string>
+    <string name="domain_purchase_results_for">Вот что мы нашли для %1$s</string>
+    <string name="domain_purchase_change_name">Изменить название</string>
+    <string name="domain_purchase_show_more">Показать больше результатов</string>
+    <string name="domain_purchase_empty_included">В каждый домен входят приватность WHOIS, настроенный за вас DNS и неограниченные адреса.</string>
+    <string name="domain_purchase_retry">Повторить</string>
+    <string name="domain_purchase_progress_note">Подождите, пока мы регистрируем ваш домен и настраиваем почтовые ящики. Обычно это занимает около минуты.</string>
+    <string name="domain_purchase_awaiting_note">Мы ещё не получили ваш платёж. Завершите оплату, чтобы оформить заказ, или закройте это окно и оплатите позже в разделе Купленные домены.</string>
+    <string name="domain_purchase_purchased_desc">Домены, купленные через Aster, появляются здесь и автоматически работают как собственные домены. Выберите имя, оплатите и пользуйтесь сразу.</string>
+    <string name="domain_purchase_buy_new">Купить новый домен</string>
+    <string name="domain_purchase_discount_tooltip">Акционная цена первого года от нашего регистратора. Далее продление по %1$s в год.</string>
 </resources>

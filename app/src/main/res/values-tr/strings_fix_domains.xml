@@ -11,4 +11,14 @@
     <string name="domain_manage_recheck">DNS kayıtlarını yeniden denetle</string>
     <string name="domain_manage_rechecking">DNS kayıtları denetleniyor</string>
     <string name="domain_purchase_search_rate_limited">Çok fazla arama yapıldı. Bir dakika sonra yeniden deneyin.</string>
+    <string name="domain_purchase_results_for">%1$s için bulduklarımız</string>
+    <string name="domain_purchase_change_name">Adı değiştir</string>
+    <string name="domain_purchase_show_more">Daha fazla sonuç göster</string>
+    <string name="domain_purchase_empty_included">Her alan adı WHOIS gizliliği, sizin için yapılan DNS kurulumu ve sınırsız adres içerir.</string>
+    <string name="domain_purchase_retry">Tekrar dene</string>
+    <string name="domain_purchase_progress_note">Alan adınızı kaydedip posta kutularınızı kurarken lütfen bekleyin. Bu genellikle yaklaşık bir dakika sürer.</string>
+    <string name="domain_purchase_awaiting_note">Ödemenizi henüz almadık. Siparişinizi tamamlamak için ödemeyi bitirin veya bu pencereyi kapatıp daha sonra Satın alınan alan adları bölümünden ödeyin.</string>
+    <string name="domain_purchase_purchased_desc">Aster üzerinden satın aldığınız alan adları burada görünür ve otomatik olarak özel alan adı gibi çalışır. Bir ad seçin, ödeyin ve hemen kullanmaya başlayın.</string>
+    <string name="domain_purchase_buy_new">Yeni alan adı satın al</string>
+    <string name="domain_purchase_discount_tooltip">Kayıt şirketimizin ilk yıl indirimli fiyatı. Sonrasında yılda %1$s ile yenilenir.</string>
 </resources>

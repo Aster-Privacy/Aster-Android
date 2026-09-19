@@ -11,4 +11,14 @@
     <string name="domain_manage_recheck">DNS रिकॉर्ड दोबारा जांचें</string>
     <string name="domain_manage_rechecking">DNS रिकॉर्ड जांचे जा रहे हैं</string>
     <string name="domain_purchase_search_rate_limited">बहुत ज़्यादा खोजें की गई हैं। एक मिनट बाद फिर से कोशिश करें।</string>
+    <string name="domain_purchase_results_for">%1$s के लिए हमें यह मिला</string>
+    <string name="domain_purchase_change_name">नाम बदलें</string>
+    <string name="domain_purchase_show_more">और नतीजे दिखाएं</string>
+    <string name="domain_purchase_empty_included">हर डोमेन के साथ WHOIS निजता, आपके लिए सेट किया गया DNS और असीमित पते मिलते हैं।</string>
+    <string name="domain_purchase_retry">फिर से कोशिश करें</string>
+    <string name="domain_purchase_progress_note">जब तक हम आपका डोमेन पंजीकृत करके आपके मेलबॉक्स सेट करते हैं, थोड़ा इंतज़ार करें। इसमें आमतौर पर करीब एक मिनट लगता है।</string>
+    <string name="domain_purchase_awaiting_note">हमें आपका भुगतान अभी तक नहीं मिला। अपना ऑर्डर पूरा करने के लिए चेकआउट पूरा करें, या यह विंडो बंद करके बाद में खरीदे गए डोमेन से भुगतान करें।</string>
+    <string name="domain_purchase_purchased_desc">Aster से खरीदे गए डोमेन यहां दिखते हैं और अपने आप कस्टम डोमेन की तरह काम करते हैं। नाम चुनें, भुगतान करें और तुरंत इस्तेमाल शुरू करें।</string>
+    <string name="domain_purchase_buy_new">नया डोमेन खरीदें</string>
+    <string name="domain_purchase_discount_tooltip">हमारे रजिस्ट्रार की ओर से पहले साल की छूट वाली कीमत। उसके बाद %1$s प्रति वर्ष पर नवीनीकृत होता है।</string>
 </resources>

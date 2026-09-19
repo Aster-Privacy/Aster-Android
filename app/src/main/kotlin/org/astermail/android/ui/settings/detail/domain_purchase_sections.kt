@@ -22,10 +22,11 @@
 package org.astermail.android.ui.settings.detail
 
 import compose.icons.TablerIcons
-import compose.icons.tablericons.ChevronRight
-import compose.icons.tablericons.World
+import compose.icons.tablericons.ShoppingCart
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,10 +34,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,8 +43,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,12 +60,12 @@ import org.astermail.android.api.settings.DnsRecord
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterAlertDialog
+import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.settings.DomainPurchaseUiState
 import org.astermail.android.settings.is_domain_order_in_flight
-import org.astermail.android.design.mirror_in_rtl
 
 private fun format_expiry_date(iso: String): String {
     return try {
@@ -94,25 +98,17 @@ internal fun domain_purchase_area(
     on_verify_domain: (String) -> Unit = {},
     on_toggle_catch_all: (String) -> Unit = {},
 ) {
-    val has_complete = state.orders.any { it.status == "complete" }
     var manage_order_id by remember { mutableStateOf<String?>(null) }
     val manage_order = state.orders.firstOrNull { it.id == manage_order_id }
-    if (!has_complete) {
-        domain_purchase_promo(on_buy = on_buy)
-        v_gap(AsterSpacing.md)
-    }
-    if (state.orders.isNotEmpty()) {
-        purchased_domains_section(
-            state = state,
-            show_buy_action = has_complete,
-            on_buy = on_buy,
-            on_open_order = on_open_order,
-            on_cancel = on_cancel,
-            on_complete_purchase = on_complete_purchase,
-            on_manage = { manage_order_id = it },
-        )
-        v_gap(AsterSpacing.md)
-    }
+    purchased_domains_section(
+        state = state,
+        on_buy = on_buy,
+        on_open_order = on_open_order,
+        on_cancel = on_cancel,
+        on_complete_purchase = on_complete_purchase,
+        on_manage = { manage_order_id = it },
+    )
+    v_gap(AsterSpacing.md)
     if (manage_order != null) {
         val linked_domain = custom_domains.firstOrNull {
             it.domain_name.equals(manage_order.domain, ignoreCase = true)
@@ -136,56 +132,38 @@ internal fun domain_purchase_area(
 }
 
 @Composable
-private fun domain_purchase_promo(on_buy: () -> Unit) {
+private fun purchased_empty_box() {
     val colors = AsterMaterial.colors
-    AsterCard(modifier = Modifier.fillMaxWidth(), onClick = on_buy) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(AsterSpacing.md),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = TablerIcons.World,
-                contentDescription = null,
-                tint = colors.accent_blue,
-                modifier = Modifier.size(24.dp),
-            )
-            Spacer(Modifier.width(AsterSpacing.md))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.domain_purchase_banner_title),
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = stringResource(R.string.domain_purchase_banner_subtitle),
-                    color = colors.text_tertiary,
-                    fontSize = 13.sp,
-                )
-                v_gap(AsterSpacing.xs)
-                Text(
-                    text = stringResource(R.string.domain_purchase_banner_cta),
-                    color = colors.accent_blue,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
+    val dash_color = colors.border_secondary
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .drawBehind {
+                val stroke_px = 1.dp.toPx()
+                drawRoundRect(
+                    color = dash_color,
+                    cornerRadius = CornerRadius(12.dp.toPx()),
+                    style = Stroke(
+                        width = stroke_px,
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx())),
+                    ),
                 )
             }
-            Icon(
-                imageVector = TablerIcons.ChevronRight,
-                contentDescription = null,
-                tint = colors.text_tertiary,
-                modifier = Modifier.size(20.dp).mirror_in_rtl(),
-            )
-        }
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xl),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = stringResource(R.string.domain_purchase_purchased_empty),
+            color = colors.text_muted,
+            fontSize = 14.sp,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
 @Composable
 private fun purchased_domains_section(
     state: DomainPurchaseUiState,
-    show_buy_action: Boolean,
     on_buy: () -> Unit,
     on_open_order: (DomainOrder) -> Unit,
     on_cancel: (String) -> Unit,
@@ -197,35 +175,58 @@ private fun purchased_domains_section(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = stringResource(R.string.domain_purchase_purchased_label).uppercase(),
-            color = colors.text_tertiary,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.weight(1f),
+        Icon(
+            imageVector = TablerIcons.ShoppingCart,
+            contentDescription = null,
+            tint = colors.text_primary,
+            modifier = Modifier.size(20.dp),
         )
-        if (show_buy_action) {
-            TextButton(onClick = on_buy) {
-                Text(
-                    text = stringResource(R.string.domain_purchase_banner_cta),
-                    color = colors.accent_blue,
-                    fontSize = 13.sp,
-                )
-            }
+        Spacer(Modifier.width(AsterSpacing.sm))
+        Text(
+            text = stringResource(R.string.domain_purchase_purchased_label),
+            color = colors.text_primary,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f, fill = false),
+        )
+        if (state.orders.isNotEmpty()) {
+            Spacer(Modifier.width(AsterSpacing.sm))
+            Text(
+                text = java.text.NumberFormat.getIntegerInstance().format(state.orders.size),
+                color = colors.text_muted,
+                fontSize = 14.sp,
+            )
         }
     }
     v_gap(AsterSpacing.xs)
-    AsterCard(modifier = Modifier.fillMaxWidth()) {
-        state.orders.forEachIndexed { i, order ->
-            if (i > 0) AsterDivider()
-            purchased_domain_row(
-                order = order,
-                state = state,
-                on_open_order = on_open_order,
-                on_cancel = on_cancel,
-                on_complete_purchase = on_complete_purchase,
-                on_manage = on_manage,
-            )
+    Text(
+        text = stringResource(R.string.domain_purchase_purchased_desc),
+        color = colors.text_muted,
+        fontSize = 14.sp,
+        lineHeight = 21.sp,
+    )
+    v_gap(AsterSpacing.md)
+    AsterButton(
+        label = stringResource(R.string.domain_purchase_buy_new),
+        onClick = on_buy,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    v_gap(AsterSpacing.md)
+    if (state.orders.isEmpty()) {
+        purchased_empty_box()
+    } else {
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            state.orders.forEachIndexed { i, order ->
+                if (i > 0) AsterDivider()
+                purchased_domain_row(
+                    order = order,
+                    state = state,
+                    on_open_order = on_open_order,
+                    on_cancel = on_cancel,
+                    on_complete_purchase = on_complete_purchase,
+                    on_manage = on_manage,
+                )
+            }
         }
     }
     state.order_action_error?.let {
@@ -245,6 +246,7 @@ private fun purchased_domain_row(
 ) {
     val colors = AsterMaterial.colors
     val in_flight = is_domain_order_in_flight(order.status)
+    val pending = order.status == "pending_payment"
     var show_cancel_confirm by remember { mutableStateOf(false) }
     if (show_cancel_confirm) {
         AsterAlertDialog(
@@ -270,111 +272,65 @@ private fun purchased_domain_row(
                     else -> Modifier
                 },
             )
-            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+            .padding(horizontal = AsterSpacing.md, vertical = 14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = order.domain,
                     color = colors.text_primary,
-                    fontSize = 15.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                when {
-                    order.status == "pending_payment" -> Text(
-                        text = stringResource(R.string.domain_purchase_awaiting_payment),
-                        color = colors.text_tertiary,
-                        fontSize = 13.sp,
-                    )
-                    in_flight -> Text(
-                        text = stringResource(R.string.domain_purchase_purchased_in_progress),
-                        color = colors.text_tertiary,
-                        fontSize = 13.sp,
-                    )
-                    order.status == "complete" -> Text(
-                        text = order.expires_at?.let {
-                            stringResource(R.string.domain_purchase_purchased_expires, format_expiry_date(it))
-                        } ?: "",
-                        color = colors.text_tertiary,
-                        fontSize = 13.sp,
-                    )
-                    order.status == "lapsed" -> Text(
-                        text = stringResource(R.string.domain_purchase_purchased_lapsed),
-                        color = colors.danger,
+                val status_text = when {
+                    pending -> stringResource(R.string.domain_purchase_awaiting_payment)
+                    in_flight -> stringResource(R.string.domain_purchase_purchased_in_progress)
+                    order.status == "complete" -> order.expires_at?.let {
+                        stringResource(R.string.domain_purchase_purchased_expires, format_expiry_date(it))
+                    }
+                    order.status == "lapsed" -> stringResource(R.string.domain_purchase_purchased_lapsed)
+                    else -> null
+                }
+                if (!status_text.isNullOrEmpty()) {
+                    Text(
+                        text = status_text,
+                        color = if (order.status == "lapsed") colors.danger else colors.text_muted,
                         fontSize = 13.sp,
                     )
                 }
             }
-            when {
-                in_flight -> Icon(
-                    imageVector = TablerIcons.ChevronRight,
-                    contentDescription = null,
-                    tint = colors.text_tertiary,
-                    modifier = Modifier.size(20.dp).mirror_in_rtl(),
+            if (order.status == "complete") {
+                Spacer(Modifier.width(AsterSpacing.sm))
+                domain_pill_button(
+                    label = stringResource(R.string.domain_purchase_manage),
+                    on_click = { on_manage(order.id) },
+                    enabled = state.renewing_order_id == null || state.renewing_order_id == order.id,
+                    is_loading = state.renewing_order_id == order.id,
                 )
-                order.status == "complete" -> {
-                    if (state.renewing_order_id == order.id) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                            color = colors.accent_blue,
-                        )
-                    } else {
-                        TextButton(
-                            onClick = { on_manage(order.id) },
-                            enabled = state.renewing_order_id == null,
-                        ) {
-                            Text(
-                                text = stringResource(R.string.domain_purchase_manage),
-                                color = colors.accent_blue,
-                                fontSize = 14.sp,
-                            )
-                        }
-                    }
-                }
             }
         }
-        if (order.status == "pending_payment") {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                TextButton(
-                    onClick = { show_cancel_confirm = true },
-                    enabled = state.cancelling_order_id == null,
-                ) {
-                    Text(
-                        text = stringResource(R.string.cancel),
-                        color = colors.danger,
-                        fontSize = 14.sp,
-                    )
-                    if (state.cancelling_order_id == order.id) {
-                        Spacer(Modifier.width(AsterSpacing.xs))
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                            color = colors.danger,
-                        )
-                    }
-                }
-                Spacer(Modifier.width(AsterSpacing.sm))
-                TextButton(
-                    onClick = { on_complete_purchase(order) },
+        if (pending) {
+            v_gap(AsterSpacing.sm)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                domain_pill_button(
+                    label = stringResource(R.string.domain_purchase_complete_purchase),
+                    on_click = { on_complete_purchase(order) },
+                    filled = true,
                     enabled = !state.buying,
-                ) {
-                    Text(
-                        text = stringResource(R.string.domain_purchase_complete_purchase),
-                        color = colors.accent_blue,
-                        fontSize = 14.sp,
-                    )
-                    if (state.buying) {
-                        Spacer(Modifier.width(AsterSpacing.xs))
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                            color = colors.accent_blue,
-                        )
-                    }
-                }
+                    is_loading = state.buying,
+                )
+                domain_pill_button(
+                    label = stringResource(R.string.cancel),
+                    on_click = { show_cancel_confirm = true },
+                    tint = colors.danger,
+                    enabled = state.cancelling_order_id == null,
+                    is_loading = state.cancelling_order_id == order.id,
+                )
             }
         }
     }

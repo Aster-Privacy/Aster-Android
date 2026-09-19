@@ -11,4 +11,14 @@
     <string name="domain_manage_recheck">DNS-Einträge erneut prüfen</string>
     <string name="domain_manage_rechecking">DNS-Einträge werden geprüft</string>
     <string name="domain_purchase_search_rate_limited">Zu viele Suchanfragen. Versuche es in einer Minute erneut.</string>
+    <string name="domain_purchase_results_for">Das haben wir für %1$s gefunden</string>
+    <string name="domain_purchase_change_name">Namen ändern</string>
+    <string name="domain_purchase_show_more">Weitere Ergebnisse anzeigen</string>
+    <string name="domain_purchase_empty_included">Jede Domain enthält WHOIS-Datenschutz, eingerichtetes DNS und unbegrenzte Adressen.</string>
+    <string name="domain_purchase_retry">Erneut versuchen</string>
+    <string name="domain_purchase_progress_note">Bitte warte, während wir deine Domain registrieren und deine Postfächer einrichten. Das dauert in der Regel etwa eine Minute.</string>
+    <string name="domain_purchase_awaiting_note">Wir haben Ihre Zahlung noch nicht erhalten. Schließen Sie den Bezahlvorgang ab, um Ihre Bestellung abzuschließen, oder schließen Sie dieses Fenster und zahlen Sie später unter Gekaufte Domains.</string>
+    <string name="domain_purchase_purchased_desc">Domains, die Sie über Aster kaufen, erscheinen hier und funktionieren automatisch als eigene Domains. Namen wählen, bezahlen und sofort loslegen.</string>
+    <string name="domain_purchase_buy_new">Neue Domain kaufen</string>
+    <string name="domain_purchase_discount_tooltip">Aktionspreis für das erste Jahr von unserem Registrar. Danach Verlängerung für %1$s pro Jahr.</string>
 </resources>

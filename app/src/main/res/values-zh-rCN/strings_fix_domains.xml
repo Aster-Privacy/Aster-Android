@@ -11,4 +11,14 @@
     <string name="domain_manage_recheck">重新检查 DNS 记录</string>
     <string name="domain_manage_rechecking">正在检查 DNS 记录</string>
     <string name="domain_purchase_search_rate_limited">搜索次数过多。请一分钟后重试。</string>
+    <string name="domain_purchase_results_for">这是我们为 %1$s 找到的结果</string>
+    <string name="domain_purchase_change_name">更改名称</string>
+    <string name="domain_purchase_show_more">显示更多结果</string>
+    <string name="domain_purchase_empty_included">每个域名都包含 WHOIS 隐私保护、已配置好的 DNS 和无限地址。</string>
+    <string name="domain_purchase_retry">重试</string>
+    <string name="domain_purchase_progress_note">请稍候，我们正在注册您的域名并设置邮箱。通常需要大约一分钟。</string>
+    <string name="domain_purchase_awaiting_note">我们尚未收到您的付款。完成结账即可完成订单，或者关闭此窗口，稍后在已购域名中付款。</string>
+    <string name="domain_purchase_purchased_desc">通过 Aster 购买的域名会显示在这里,并自动作为自定义域名使用。选个名字,付款,立即开始使用。</string>
+    <string name="domain_purchase_buy_new">购买新域名</string>
+    <string name="domain_purchase_discount_tooltip">注册商提供的首年优惠价。此后每年以 %1$s 续费。</string>
 </resources>

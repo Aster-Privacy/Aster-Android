@@ -11,4 +11,14 @@
     <string name="domain_manage_recheck">Verificar novamente os registos DNS</string>
     <string name="domain_manage_rechecking">A verificar os registos DNS</string>
     <string name="domain_purchase_search_rate_limited">Demasiadas pesquisas. Tente novamente dentro de um minuto.</string>
+    <string name="domain_purchase_results_for">Veja o que encontramos para %1$s</string>
+    <string name="domain_purchase_change_name">Alterar nome</string>
+    <string name="domain_purchase_show_more">Mostrar mais resultados</string>
+    <string name="domain_purchase_empty_included">Todo domínio inclui privacidade WHOIS, DNS configurado para você e endereços ilimitados.</string>
+    <string name="domain_purchase_retry">Tentar novamente</string>
+    <string name="domain_purchase_progress_note">Aguarde enquanto registramos seu domínio e configuramos suas caixas de correio. Isso geralmente leva cerca de um minuto.</string>
+    <string name="domain_purchase_awaiting_note">Ainda não recebemos seu pagamento. Conclua o checkout para finalizar seu pedido, ou feche esta janela e pague mais tarde em Domínios comprados.</string>
+    <string name="domain_purchase_purchased_desc">Os domínios comprados pela Aster aparecem aqui e funcionam automaticamente como domínios personalizados. Escolha um nome, pague e comece a usar na hora.</string>
+    <string name="domain_purchase_buy_new">Comprar um novo domínio</string>
+    <string name="domain_purchase_discount_tooltip">Preço promocional do primeiro ano do nosso registrador. Depois renova por %1$s ao ano.</string>
 </resources>
