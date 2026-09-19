@@ -820,7 +820,7 @@ private fun lightness_of(color: Color): Float {
 
 internal fun inbox_card_read_color(colors: AsterSemanticColors): Color =
     if (colors.is_glass) {
-        colors.bg_card
+        colors.bg_card.copy(alpha = 0.66f)
     } else if (colors.is_dark) {
         shift_lightness(colors.bg_primary, 0.045f, 1f)
     } else {
@@ -832,7 +832,7 @@ internal fun inbox_card_unread_color(colors: AsterSemanticColors): Color =
 
 internal fun search_field_bg_color(colors: AsterSemanticColors): Color =
     if (colors.is_glass) {
-        colors.input_bg
+        colors.input_bg.copy(alpha = 0.72f)
     } else if (colors.is_dark) {
         shift_lightness(colors.bg_primary, 0.09f, 1.15f)
     } else {

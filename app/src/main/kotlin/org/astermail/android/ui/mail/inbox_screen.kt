@@ -57,6 +57,8 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import org.astermail.android.ui.theme.draw_theme_background
+import org.astermail.android.ui.theme.draw_chrome_scrim
+import org.astermail.android.ui.theme.draw_theme_veil
 import org.astermail.android.ui.common.image_theme_panel
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
@@ -1639,7 +1641,10 @@ fun InboxScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer()
-                    .drawBehind { draw_theme_background(background_bitmap) },
+                    .drawBehind {
+                        draw_theme_background(background_bitmap)
+                        draw_theme_veil(colors.bg_primary)
+                    },
             )
         }
         Column(modifier = Modifier.fillMaxSize()) {
@@ -2149,6 +2154,11 @@ fun InboxScreen(
         }
 
         val header_bg = colors.bg_primary
+        val chrome_fill by animateFloatAsState(
+            targetValue = if (scrolled_elevation) 1f else 0f,
+            animationSpec = tween(durationMillis = 180),
+            label = "chrome_fill",
+        )
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -2170,7 +2180,12 @@ fun InboxScreen(
                 .drawBehind {
                     val limit = header_height_px.toFloat()
                     val fraction = if (limit == 0f) 0f else (-header_offset_px.floatValue / limit).coerceIn(0f, 1f)
-                    drawRect(color = header_bg, alpha = 1f - fraction)
+                    if (background_bitmap != null) {
+                        draw_chrome_scrim(header_bg, 1f - fraction)
+                        drawRect(color = colors.bg_card, alpha = chrome_fill * 0.82f * (1f - fraction))
+                    } else {
+                        drawRect(color = header_bg, alpha = 1f - fraction)
+                    }
                 }
                 ,
         ) {
@@ -2245,7 +2260,9 @@ fun InboxScreen(
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .height(status_bar_top)
-                .background(colors.bg_primary),
+                .then(
+                    if (background_bitmap != null) Modifier else Modifier.background(colors.bg_primary),
+                ),
         )
 
         org.astermail.android.ui.common.top_toast_overlay(
@@ -2904,6 +2921,13 @@ internal fun inbox_top_bar(
                     .padding(horizontal = AsterSpacing.sm)
                     .clip(SquircleShape(26.dp))
                     .background(search_field_bg_color(colors))
+                    .then(
+                        if (colors.is_glass) {
+                            Modifier.border(1.dp, colors.border_secondary, SquircleShape(26.dp))
+                        } else {
+                            Modifier
+                        },
+                    )
                     .clickable { on_open_search() }
                     .padding(horizontal = AsterSpacing.lg)
                     .testTag("search"),

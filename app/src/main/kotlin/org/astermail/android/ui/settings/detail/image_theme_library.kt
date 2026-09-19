@@ -65,7 +65,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -136,16 +138,44 @@ import org.astermail.android.ui.theme.remember_theme_thumbnail
 import org.astermail.android.ui.theme.theme_background_for
 import org.astermail.android.ui.theme.theme_categories
 
-private val page_bg = Color(0xFF0B0B0D)
-private val raised_bg = Color(0xFF17171B)
-private val hairline = Color(0xFF26262B)
-private val control_bg = Color(0xFF26262B)
-private val dash_line = Color(0xFF45454D)
-private val muted_text = Color(0xFFA1A1AA)
-private val faint_text = Color(0xFF8B8B94)
+private data class LibraryPalette(
+    val page_bg: Color,
+    val raised_bg: Color,
+    val hairline: Color,
+    val control_bg: Color,
+    val dash_line: Color,
+    val muted_text: Color,
+    val faint_text: Color,
+)
+
+private fun mix(from: Color, to: Color, amount: Float): Color = Color(
+    red = from.red + (to.red - from.red) * amount,
+    green = from.green + (to.green - from.green) * amount,
+    blue = from.blue + (to.blue - from.blue) * amount,
+    alpha = 1f,
+)
+
+private fun library_palette_for(tint: Color, accent: Color): LibraryPalette {
+    val base = if (tint == Color.Unspecified) Color(0xFF1C1C20) else tint
+    val canvas = mix(mix(Color(0xFF0A0A0C), base, 0.55f), accent, 0.06f)
+    fun lift(amount: Float): Color = mix(canvas, Color.White, amount * 0.55f)
+    return LibraryPalette(
+        page_bg = canvas,
+        raised_bg = lift(0.08f),
+        hairline = lift(0.17f),
+        control_bg = lift(0.17f),
+        dash_line = lift(0.32f),
+        muted_text = lift(0.68f),
+        faint_text = lift(0.56f),
+    )
+}
+
+private val default_library_palette = library_palette_for(Color(0xFF0B0B0D), Color(0xFF3B82F6))
+
+private val local_library_palette = staticCompositionLocalOf { default_library_palette }
 private val disabled_icon = Color(0xFF55555C)
 private val error_text = Color(0xFFFF8A8A)
-private val toast_bg = Color(0xFF26262B)
+
 private val shelf_tile_shape = RoundedCornerShape(22.dp)
 
 private val default_accent = Color(0xFF3B82F6)
@@ -171,7 +201,7 @@ fun image_theme_library(
     val active = theme_background_for(active_id)
     var pending_id by rememberSaveable { mutableStateOf(active?.id ?: no_theme_background) }
     var pending_color by rememberSaveable { mutableStateOf(active_color.name) }
-    var color_chosen by rememberSaveable { mutableStateOf(false) }
+    var color_chosen by rememberSaveable { mutableStateOf(active_color != ColorThemeId.default) }
     val pending = theme_background_for(pending_id)
     val color = ColorThemeId.from_key(pending_color)
     val dirty = pending_id != (active?.id ?: no_theme_background) || color != active_color
@@ -210,102 +240,107 @@ fun image_theme_library(
             }
         }
         val nav_bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(page_bg)
-                .testTag("image_theme_library"),
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                library_top_bar(
-                    reset_enabled = pending != null || color != ColorThemeId.default,
-                    on_back = on_dismiss,
-                    on_reset = {
-                        pending_id = no_theme_background
-                        pending_color = ColorThemeId.default.name
-                        color_chosen = false
-                    },
-                )
-                LazyColumn(
-                    state = rememberLazyListState(),
-                    modifier = Modifier.fillMaxWidth().weight(1f),
-                    contentPadding = PaddingValues(bottom = 104.dp + nav_bottom),
-                ) {
-                    item(key = "colors") {
-                        colors_section(
-                            pending = pending,
-                            selected = color,
-                            on_color = {
-                                pending_color = it.name
-                                color_chosen = true
-                            },
-                        )
-                    }
-                    item(key = "yours") {
-                        your_photo_section(
-                            selected = pending_id == custom_theme_background,
-                            accent = accent,
-                            on_accent = on_accent,
-                            on_pick = { meta ->
-                                pending_id = custom_theme_background
-                                if (!color_chosen) pending_color = meta.accent.name
-                            },
-                            on_removed = {
-                                if (pending_id == custom_theme_background) pending_id = no_theme_background
-                            },
-                        )
-                    }
-                    items(theme_categories, key = { it.first.name }) { (category, list) ->
-                        category_shelf(
-                            category = category,
-                            list = list,
-                            selected_id = pending?.id,
-                            accent = accent,
-                            on_accent = on_accent,
-                            on_pick = { chosen ->
-                                if (chosen.id == pending_id) return@category_shelf
-                                pending_id = chosen.id
-                                if (!color_chosen) pending_color = chosen.color_theme.name
-                            },
-                        )
+        val palette = remember(pending?.tint, accent) {
+            library_palette_for(pending?.tint ?: Color.Unspecified, accent)
+        }
+        CompositionLocalProvider(local_library_palette provides palette) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(local_library_palette.current.page_bg)
+                    .testTag("image_theme_library"),
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    library_top_bar(
+                        reset_enabled = pending != null || color != ColorThemeId.default,
+                        on_back = on_dismiss,
+                        on_reset = {
+                            pending_id = no_theme_background
+                            pending_color = ColorThemeId.default.name
+                            color_chosen = false
+                        },
+                    )
+                    LazyColumn(
+                        state = rememberLazyListState(),
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        contentPadding = PaddingValues(bottom = 104.dp + nav_bottom),
+                    ) {
+                        item(key = "colors") {
+                            colors_section(
+                                pending = pending,
+                                selected = color,
+                                on_color = {
+                                    pending_color = it.name
+                                    color_chosen = true
+                                },
+                            )
+                        }
+                        item(key = "yours") {
+                            your_photo_section(
+                                selected = pending_id == custom_theme_background,
+                                accent = accent,
+                                on_accent = on_accent,
+                                on_pick = { meta ->
+                                    pending_id = custom_theme_background
+                                    if (!color_chosen) pending_color = meta.accent.name
+                                },
+                                on_removed = {
+                                    if (pending_id == custom_theme_background) pending_id = no_theme_background
+                                },
+                            )
+                        }
+                        items(theme_categories, key = { it.first.name }) { (category, list) ->
+                            category_shelf(
+                                category = category,
+                                list = list,
+                                selected_id = pending?.id,
+                                accent = accent,
+                                on_accent = on_accent,
+                                on_pick = { chosen ->
+                                    if (chosen.id == pending_id) return@category_shelf
+                                    pending_id = chosen.id
+                                    if (!color_chosen) pending_color = chosen.color_theme.name
+                                },
+                            )
+                        }
                     }
                 }
-            }
-            AnimatedVisibility(
-                visible = dirty,
-                enter = fadeIn(tween(180)) + slideInVertically(tween(240)) { it / 2 },
-                exit = fadeOut(tween(160)) + slideOutVertically(tween(200)) { it / 2 },
-                modifier = Modifier.align(Alignment.BottomCenter),
-            ) {
-                apply_bar(
-                    accent = accent,
-                    on_accent = on_accent,
-                    nav_bottom = nav_bottom.value,
-                    on_apply = {
-                        on_apply(pending, color)
-                        applied_tick++
-                    },
-                )
-            }
-            AnimatedVisibility(
-                visible = show_applied && !dirty,
-                enter = fadeIn(tween(160)),
-                exit = fadeOut(tween(200)),
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 24.dp + nav_bottom),
-            ) {
-                Text(
-                    text = stringResource(R.string.image_theme_applied),
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
+                AnimatedVisibility(
+                    visible = dirty,
+                    enter = fadeIn(tween(180)) + slideInVertically(tween(240)) { it / 2 },
+                    exit = fadeOut(tween(160)) + slideOutVertically(tween(200)) { it / 2 },
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                ) {
+                    apply_bar(
+                        accent = accent,
+                        on_accent = on_accent,
+                        nav_bottom = nav_bottom.value,
+                        on_apply = {
+                            on_apply(pending, color)
+                            applied_tick++
+                        },
+                    )
+                }
+                AnimatedVisibility(
+                    visible = show_applied && !dirty,
+                    enter = fadeIn(tween(160)),
+                    exit = fadeOut(tween(200)),
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(toast_bg)
-                        .padding(horizontal = 16.dp, vertical = 10.dp)
-                        .testTag("image_theme_applied"),
-                )
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 24.dp + nav_bottom),
+                ) {
+                    Text(
+                        text = stringResource(R.string.image_theme_applied),
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(local_library_palette.current.control_bg)
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                            .testTag("image_theme_applied"),
+                    )
+                }
             }
         }
     }
@@ -430,7 +465,7 @@ private fun colors_section(
                 pending.is_generated -> stringResource(R.string.image_theme_credit_generated)
                 else -> stringResource(R.string.image_theme_credit_modified, pending.credit)
             },
-            color = muted_text,
+            color = local_library_palette.current.muted_text,
             fontSize = 12.sp,
             lineHeight = 16.sp,
             maxLines = 2,
@@ -537,7 +572,7 @@ private fun your_photo_section(
                 null -> R.string.image_theme_photo_private
             },
         )
-        val message_color = if (error != null) error_text else muted_text
+        val message_color = if (error != null) error_text else local_library_palette.current.muted_text
         val choose = {
             if (!importing) {
                 launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
@@ -619,13 +654,13 @@ private fun choose_photo_row(
     message_color: Color,
     on_click: () -> Unit,
 ) {
-    val dash = dash_line
+    val dash = local_library_palette.current.dash_line
     Row(
         modifier = Modifier
             .padding(horizontal = 20.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(18.dp))
-            .background(raised_bg)
+            .background(local_library_palette.current.raised_bg)
             .drawBehind {
                 val stroke = 1.5.dp.toPx()
                 drawRoundRect(
@@ -645,7 +680,7 @@ private fun choose_photo_row(
             modifier = Modifier
                 .size(44.dp)
                 .clip(CircleShape)
-                .background(control_bg),
+                .background(local_library_palette.current.control_bg),
             contentAlignment = Alignment.Center,
         ) {
             if (importing) {
@@ -691,8 +726,8 @@ private fun photo_action_button(
             .fillMaxWidth()
             .height(46.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(raised_bg)
-            .border(1.dp, hairline, RoundedCornerShape(14.dp))
+            .background(local_library_palette.current.raised_bg)
+            .border(1.dp, local_library_palette.current.hairline, RoundedCornerShape(14.dp))
             .clickable(enabled = !busy, onClick = on_click)
             .padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -744,7 +779,7 @@ private fun category_shelf(
             )
             Text(
                 text = list.size.toString(),
-                color = faint_text,
+                color = local_library_palette.current.faint_text,
                 fontSize = 13.sp,
             )
         }
@@ -780,7 +815,7 @@ private fun shelf_tile(
             .width(144.dp)
             .height(304.dp)
             .clip(shelf_tile_shape)
-            .border(1.dp, hairline, shelf_tile_shape)
+            .border(1.dp, local_library_palette.current.hairline, shelf_tile_shape)
             .clickable(onClick = on_click)
             .testTag("image_theme_${background.id}"),
     ) {
@@ -789,7 +824,7 @@ private fun shelf_tile(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .border(3.dp, lerp(hairline, accent, progress), shelf_tile_shape),
+                    .border(3.dp, lerp(local_library_palette.current.hairline, accent, progress), shelf_tile_shape),
             )
             Box(
                 modifier = Modifier
@@ -797,13 +832,13 @@ private fun shelf_tile(
                     .padding(8.dp)
                     .size(24.dp)
                     .clip(CircleShape)
-                    .background(lerp(control_bg, accent, progress)),
+                    .background(lerp(local_library_palette.current.control_bg, accent, progress)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = TablerIcons.Check,
                     contentDescription = null,
-                    tint = lerp(control_bg, on_accent, progress),
+                    tint = lerp(local_library_palette.current.control_bg, on_accent, progress),
                     modifier = Modifier.size(15.dp),
                 )
             }
@@ -816,8 +851,8 @@ private fun apply_bar(accent: Color, on_accent: Color, nav_bottom: Float, on_app
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(raised_bg)
-            .border(1.dp, hairline)
+            .background(local_library_palette.current.raised_bg)
+            .border(1.dp, local_library_palette.current.hairline)
             .padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 14.dp + nav_bottom.dp),
     ) {
         Box(

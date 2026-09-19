@@ -265,10 +265,10 @@ fun AppearanceScreen(
         if (next != base) settings_vm.save_preferences(next)
     }
 
-    fun apply_color_theme(id: ColorThemeId) {
+    fun apply_color_theme(id: ColorThemeId, clear_background: Boolean = false) {
         val base = prefs ?: return
         remote_prefs_adopted = true
-        vm.set_background_image(no_theme_background)
+        if (clear_background) vm.set_background_image(no_theme_background)
         vm.set_color_theme(id.name)
         val forced_dark = AsterColorThemes.is_dark_only(id)
         if (forced_dark) vm.set_mode(ThemeMode.dark)
@@ -284,7 +284,7 @@ fun AppearanceScreen(
 
     fun apply_image_theme(background: ThemeBackground?, color: ColorThemeId) {
         if (background == null) {
-            apply_color_theme(color)
+            apply_color_theme(color, clear_background = true)
             return
         }
         val base = prefs ?: return

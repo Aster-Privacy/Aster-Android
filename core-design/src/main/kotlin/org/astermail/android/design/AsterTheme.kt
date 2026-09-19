@@ -122,20 +122,23 @@ private fun apply_reduce_transparency(base: AsterSemanticColors): AsterSemanticC
     )
 }
 
-private val GLASS_INK = Color(0xFF050507)
+private val GLASS_INK = Color(0xFF0A0A0C)
 private val GLASS_NEUTRAL_TINT = Color(0xFF1C1C20)
+private const val GLASS_TINT_PRESENCE = 0.55f
+private const val GLASS_ACCENT_BLEED = 0.06f
 
 internal fun image_theme_colors(base: AsterSemanticColors, tint: Color): AsterSemanticColors {
     val resolved_tint = if (tint == Color.Unspecified) GLASS_NEUTRAL_TINT else tint.copy(alpha = 1f)
-    val canvas = mix_rgb(GLASS_INK, resolved_tint, 0.28f)
-    fun lift(amount: Float): Color = mix_rgb(canvas, Color.White, amount * 0.55f)
+    val canvas = mix_rgb(GLASS_INK, resolved_tint, GLASS_TINT_PRESENCE)
+    val harmonized = mix_rgb(canvas, base.accent_blue.copy(alpha = 1f), GLASS_ACCENT_BLEED)
+    fun lift(amount: Float): Color = mix_rgb(harmonized, Color.White, amount * 0.55f)
     val card = lift(0.07f)
     val border_strong = lift(0.26f)
     val border_soft = lift(0.17f)
     val surfaces = listOf(
         canvas, lift(0.05f), card, lift(0.08f), lift(0.10f), lift(0.11f), lift(0.12f), lift(0.13f), lift(0.14f), lift(0.15f),
     )
-    val selected = mix_rgb(card, base.accent_blue.copy(alpha = 1f), 0.22f)
+    val selected = lift(0.16f)
     val all_surfaces = surfaces + selected
     val accent = ensure_contrast(base.accent_blue, all_surfaces, contrast_body_text)
     val accent_hover = ensure_contrast(base.accent_blue_hover, all_surfaces, contrast_body_text)
@@ -145,7 +148,7 @@ internal fun image_theme_colors(base: AsterSemanticColors, tint: Color): AsterSe
     } ?: readable_on(accent).takeIf { contrast_ratio(it, accent_hover) >= contrast_body_text } ?: readable_on(accent_hover)
     val avatar_bg = lift(0.2f)
     return base.copy(
-        bg_primary = canvas,
+        bg_primary = harmonized,
         bg_secondary = lift(0.05f),
         bg_tertiary = lift(0.10f),
         bg_hover = lift(0.13f),
@@ -164,9 +167,9 @@ internal fun image_theme_colors(base: AsterSemanticColors, tint: Color): AsterSe
         avatar_text = ensure_contrast(base.avatar_text, listOf(avatar_bg), contrast_body_text),
         indicator_bg = lift(0.15f),
         indicator_border = border_strong,
-        sidebar_bg = canvas,
+        sidebar_bg = harmonized,
         sidebar_hover = lift(0.10f),
-        modal_bg = canvas,
+        modal_bg = harmonized,
         dropdown_bg = lift(0.08f),
         dropdown_hover = lift(0.14f),
         input_bg = lift(0.10f),
@@ -179,7 +182,7 @@ internal fun image_theme_colors(base: AsterSemanticColors, tint: Color): AsterSe
         thread_card_bg_hover = lift(0.11f),
         thread_card_border = border_soft,
         thread_header_bg = card,
-        thread_content_bg = canvas,
+        thread_content_bg = harmonized,
         star = ensure_contrast(base.star, all_surfaces, contrast_large_text),
         on_accent = on_accent,
         secondary_control_bg = lift(0.12f),
