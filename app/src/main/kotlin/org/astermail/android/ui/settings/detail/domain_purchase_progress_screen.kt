@@ -22,10 +22,9 @@
 package org.astermail.android.ui.settings.detail
 
 import compose.icons.TablerIcons
-import compose.icons.tablericons.Check
-import compose.icons.tablericons.CircleCheck
+import compose.icons.tablericons.AlertTriangle
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -120,6 +119,7 @@ fun DomainPurchaseProgressScreen(
             on_retry = { retry_key += 1 },
             on_create_address = on_create_address,
             on_done = on_done,
+            on_close = on_back,
         )
     }
 }
@@ -132,23 +132,23 @@ private fun progress_body(
     on_retry: () -> Unit,
     on_create_address: () -> Unit,
     on_done: () -> Unit,
+    on_close: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     if (order == null) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = AsterSpacing.xl),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            if (order_load_failed) {
-                error_banner(stringResource(R.string.domain_purchase_error))
-                v_gap(AsterSpacing.md)
-                AsterSecondaryButton(
-                    label = stringResource(R.string.retry),
-                    onClick = on_retry,
-                )
-            } else {
+        if (order_load_failed) {
+            progress_notice(
+                message = stringResource(R.string.domain_purchase_error),
+                button_label = stringResource(R.string.retry),
+                on_click = on_retry,
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 48.dp),
+                contentAlignment = Alignment.Center,
+            ) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(28.dp),
                     strokeWidth = 3.dp,
@@ -160,19 +160,43 @@ private fun progress_body(
     }
     when (order.status) {
         "complete" -> progress_success(order = order, on_create_address = on_create_address, on_done = on_done)
-        "refund_pending", "refunded", "failed" -> progress_closed(
+        "refund_pending", "refunded", "failed" -> progress_notice(
             message = stringResource(R.string.domain_purchase_refunded),
-            on_done = on_done,
+            button_label = stringResource(R.string.close),
+            on_click = on_done,
         )
-        "expired" -> progress_closed(
+        "expired" -> progress_notice(
             message = stringResource(R.string.domain_purchase_order_expired),
-            on_done = on_done,
+            button_label = stringResource(R.string.close),
+            on_click = on_done,
         )
-        "lapsed" -> progress_closed(
+        "lapsed" -> progress_notice(
             message = stringResource(R.string.domain_purchase_order_lapsed),
-            on_done = on_done,
+            button_label = stringResource(R.string.close),
+            on_click = on_done,
         )
+        "pending_payment" -> progress_awaiting(order = order, on_close = on_close)
         else -> progress_steps(order = order, show_slow_note = show_slow_note)
+    }
+}
+
+@Composable
+private fun progress_step_marker(done: Boolean, active: Boolean) {
+    val colors = AsterMaterial.colors
+    Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+        when {
+            done -> domain_status_disc(available = true, size = 24.dp)
+            active -> CircularProgressIndicator(
+                modifier = Modifier.size(22.dp),
+                strokeWidth = 2.dp,
+                color = colors.accent_blue,
+            )
+            else -> Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .border(2.dp, colors.border_secondary, CircleShape),
+            )
+        }
     }
 }
 
@@ -189,34 +213,32 @@ private fun progress_steps(order: org.astermail.android.api.domains.DomainOrder,
             .padding(top = AsterSpacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(modifier = Modifier.widthIn(max = 340.dp)) {
+        Text(
+            text = order.domain,
+            color = colors.text_primary,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+        )
+        v_gap(AsterSpacing.sm)
+        Text(
+            text = stringResource(R.string.domain_purchase_progress_note),
+            color = colors.text_secondary,
+            fontSize = 13.sp,
+            lineHeight = 20.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(max = 320.dp),
+        )
+        v_gap(AsterSpacing.xl)
+        Column(modifier = Modifier.widthIn(max = 320.dp)) {
             labels.forEachIndexed { i, label ->
                 val done = i < step_index
                 val active = i == step_index
                 Row(
-                    modifier = Modifier.padding(vertical = AsterSpacing.sm),
+                    modifier = Modifier.padding(vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Box(modifier = Modifier.size(22.dp), contentAlignment = Alignment.Center) {
-                        when {
-                            done -> Icon(
-                                imageVector = TablerIcons.Check,
-                                contentDescription = null,
-                                tint = colors.success,
-                                modifier = Modifier.size(18.dp),
-                            )
-                            active -> CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp,
-                                color = colors.accent_blue,
-                            )
-                            else -> Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .background(colors.border_secondary, CircleShape),
-                            )
-                        }
-                    }
+                    progress_step_marker(done = done, active = active)
                     Spacer(Modifier.width(AsterSpacing.md))
                     Text(
                         text = label,
@@ -225,28 +247,64 @@ private fun progress_steps(order: org.astermail.android.api.domains.DomainOrder,
                             active -> colors.text_primary
                             else -> colors.text_muted
                         },
-                        fontSize = 15.sp,
+                        fontSize = 14.sp,
                         fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
                     )
                 }
             }
         }
-        v_gap(AsterSpacing.lg)
-        Text(
-            text = stringResource(R.string.domain_purchase_please_wait),
-            color = colors.text_tertiary,
-            fontSize = 13.sp,
-            textAlign = TextAlign.Center,
-        )
         if (show_slow_note) {
-            v_gap(AsterSpacing.md)
+            v_gap(AsterSpacing.lg)
             Text(
                 text = stringResource(R.string.domain_purchase_slow_note),
-                color = colors.text_tertiary,
-                fontSize = 13.sp,
+                color = colors.text_muted,
+                fontSize = 12.sp,
                 textAlign = TextAlign.Center,
+                modifier = Modifier.widthIn(max = 320.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun progress_awaiting(order: org.astermail.android.api.domains.DomainOrder, on_close: () -> Unit) {
+    val colors = AsterMaterial.colors
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = AsterSpacing.xl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = order.domain,
+            color = colors.text_primary,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+        )
+        v_gap(AsterSpacing.sm)
+        Text(
+            text = stringResource(R.string.domain_purchase_awaiting_payment),
+            color = colors.text_primary,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center,
+        )
+        v_gap(AsterSpacing.sm)
+        Text(
+            text = stringResource(R.string.domain_purchase_awaiting_note),
+            color = colors.text_secondary,
+            fontSize = 13.sp,
+            lineHeight = 20.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(max = 320.dp),
+        )
+        v_gap(AsterSpacing.lg)
+        AsterGhostButton(
+            label = stringResource(R.string.close),
+            onClick = on_close,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
@@ -263,18 +321,13 @@ private fun progress_success(
             .padding(top = AsterSpacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(
-            imageVector = TablerIcons.CircleCheck,
-            contentDescription = null,
-            tint = colors.success,
-            modifier = Modifier.size(48.dp),
-        )
-        v_gap(AsterSpacing.md)
+        domain_status_disc(available = true, size = 48.dp)
+        v_gap(AsterSpacing.lg)
         Text(
             text = order.domain,
             color = colors.text_primary,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center,
         )
         v_gap(AsterSpacing.sm)
@@ -282,16 +335,20 @@ private fun progress_success(
             text = stringResource(R.string.domain_purchase_done_note),
             color = colors.text_secondary,
             fontSize = 14.sp,
+            lineHeight = 21.sp,
             textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(max = 320.dp),
         )
         v_gap(AsterSpacing.sm)
         Text(
             text = stringResource(R.string.domain_purchase_warmup_note),
-            color = colors.text_tertiary,
-            fontSize = 13.sp,
+            color = colors.text_muted,
+            fontSize = 12.sp,
+            lineHeight = 18.sp,
             textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(max = 320.dp),
         )
-        v_gap(AsterSpacing.lg)
+        v_gap(AsterSpacing.xl)
         AsterButton(
             label = stringResource(R.string.domain_purchase_create_first_address),
             onClick = on_create_address,
@@ -307,18 +364,33 @@ private fun progress_success(
 }
 
 @Composable
-private fun progress_closed(message: String, on_done: () -> Unit) {
+private fun progress_notice(message: String, button_label: String, on_click: () -> Unit) {
+    val colors = AsterMaterial.colors
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = AsterSpacing.xl),
+            .padding(top = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        error_banner(message)
+        Icon(
+            imageVector = TablerIcons.AlertTriangle,
+            contentDescription = null,
+            tint = colors.warning,
+            modifier = Modifier.size(36.dp),
+        )
         v_gap(AsterSpacing.md)
+        Text(
+            text = message,
+            color = colors.text_primary,
+            fontSize = 14.sp,
+            lineHeight = 21.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(max = 320.dp),
+        )
+        v_gap(AsterSpacing.lg)
         AsterSecondaryButton(
-            label = stringResource(R.string.done),
-            onClick = on_done,
+            label = button_label,
+            onClick = on_click,
         )
     }
 }

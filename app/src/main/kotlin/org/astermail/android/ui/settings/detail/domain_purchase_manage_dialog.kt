@@ -26,6 +26,8 @@ import compose.icons.tablericons.Check
 import compose.icons.tablericons.Clock
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -141,37 +143,53 @@ internal fun domain_purchase_manage_dialog(
         message = stringResource(R.string.domain_purchase_manage_description),
         body = {
             Column(modifier = Modifier.fillMaxWidth()) {
-                manage_row(
-                    label = stringResource(R.string.domain_purchase_manage_status),
-                    value = status_text,
-                    value_color = status_color,
-                )
-                manage_row(
-                    label = stringResource(R.string.domain_purchase_manage_registered),
-                    value = format_day(order.created_at),
-                )
-                order.expires_at?.let {
+                val details_shape = SquircleShape(12.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(details_shape)
+                        .background(colors.bg_secondary, details_shape)
+                        .border(1.dp, colors.border_secondary, details_shape),
+                ) {
                     manage_row(
-                        label = stringResource(R.string.domain_purchase_manage_expires),
-                        value = format_day(it),
+                        label = stringResource(R.string.domain_purchase_manage_status),
+                        value = status_text,
+                        value_color = status_color,
+                        padded = true,
+                    )
+                    AsterDivider()
+                    manage_row(
+                        label = stringResource(R.string.domain_purchase_manage_registered),
+                        value = format_day(order.created_at),
+                        padded = true,
+                    )
+                    order.expires_at?.let {
+                        AsterDivider()
+                        manage_row(
+                            label = stringResource(R.string.domain_purchase_manage_expires),
+                            value = format_day(it),
+                            padded = true,
+                        )
+                    }
+                    AsterDivider()
+                    manage_row(
+                        label = stringResource(R.string.domain_purchase_manage_term),
+                        value = term_text,
+                        padded = true,
+                    )
+                    AsterDivider()
+                    manage_row(
+                        label = stringResource(R.string.domain_purchase_manage_paid),
+                        value = format_order_price(order.price_cents, order.currency),
+                        padded = true,
                     )
                 }
-                manage_row(
-                    label = stringResource(R.string.domain_purchase_manage_term),
-                    value = term_text,
-                )
-                manage_row(
-                    label = stringResource(R.string.domain_purchase_manage_paid),
-                    value = format_order_price(order.price_cents, order.currency),
-                )
 
-                Spacer(Modifier.height(AsterSpacing.md))
-                AsterDivider()
-                Spacer(Modifier.height(AsterSpacing.md))
+                Spacer(Modifier.height(AsterSpacing.lg))
                 Text(
                     text = stringResource(R.string.domain_manage_mail_setup),
-                    color = colors.text_secondary,
-                    fontSize = 13.sp,
+                    color = colors.text_primary,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
 
@@ -474,18 +492,22 @@ private fun manage_row(
     label: String,
     value: String,
     value_color: androidx.compose.ui.graphics.Color = AsterMaterial.colors.text_primary,
+    padded: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
+            .padding(
+                horizontal = if (padded) AsterSpacing.md else 0.dp,
+                vertical = if (padded) 12.dp else 6.dp,
+            ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = label,
-            color = colors.text_tertiary,
-            fontSize = 14.sp,
+            color = colors.text_muted,
+            fontSize = 13.sp,
             modifier = Modifier.weight(1f),
         )
         Text(

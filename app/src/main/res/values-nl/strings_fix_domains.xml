@@ -11,4 +11,14 @@
     <string name="domain_manage_recheck">DNS-records opnieuw controleren</string>
     <string name="domain_manage_rechecking">DNS-records worden gecontroleerd</string>
     <string name="domain_purchase_search_rate_limited">Te veel zoekopdrachten. Probeer het over een minuut opnieuw.</string>
+    <string name="domain_purchase_results_for">Dit hebben we gevonden voor %1$s</string>
+    <string name="domain_purchase_change_name">Naam wijzigen</string>
+    <string name="domain_purchase_show_more">Meer resultaten tonen</string>
+    <string name="domain_purchase_empty_included">Elk domein bevat WHOIS-privacy, DNS die voor je is ingesteld en onbeperkte adressen.</string>
+    <string name="domain_purchase_retry">Opnieuw proberen</string>
+    <string name="domain_purchase_progress_note">Even geduld terwijl we je domein registreren en je mailboxen instellen. Dit duurt meestal ongeveer een minuut.</string>
+    <string name="domain_purchase_awaiting_note">We hebben je betaling nog niet ontvangen. Rond het afrekenen af om je bestelling te voltooien, of sluit dit venster en betaal later via Gekochte domeinen.</string>
+    <string name="domain_purchase_purchased_desc">Domeinen die je via Aster koopt verschijnen hier en werken automatisch als eigen domeinen. Kies een naam, betaal en gebruik hem meteen.</string>
+    <string name="domain_purchase_buy_new">Een nieuw domein kopen</string>
+    <string name="domain_purchase_discount_tooltip">Aanbiedingsprijs voor het eerste jaar van onze registrar. Daarna verlenging voor %1$s per jaar.</string>
 </resources>

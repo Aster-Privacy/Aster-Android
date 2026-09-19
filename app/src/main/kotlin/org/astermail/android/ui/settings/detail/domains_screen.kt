@@ -21,11 +21,8 @@
 package org.astermail.android.ui.settings.detail
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -42,7 +39,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -57,10 +53,7 @@ import org.astermail.android.api.settings.DnsRecord
 import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.shimmer
-import org.astermail.android.design.components.shimmer_state
 import org.astermail.android.settings.DomainPurchaseViewModel
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
@@ -204,7 +197,7 @@ fun DomainsScreen(
             )
             domains_phase == domains_load_phase.loading -> {
                 domains_list_header(count = null, on_show_add = { show_add_domain = true })
-                skeleton_card_list(rows = 2, leading_circle = true)
+                domain_cards_pulse_skeleton(rows = 2)
             }
             domains_phase == domains_load_phase.failed -> {
                 domains_list_header(count = null, on_show_add = { show_add_domain = true })
@@ -272,12 +265,7 @@ private fun domains_list_header(count: Int?, on_show_add: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (count == null) {
-            Box(
-                modifier = Modifier
-                    .width(84.dp)
-                    .height(13.dp)
-                    .shimmer(shimmer_state(), SquircleShape(6.dp)),
-            )
+            domain_count_pulse_bone()
         } else {
             Text(
                 text = pluralStringResource(R.plurals.domains_count_plural, count, count),

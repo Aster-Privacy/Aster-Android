@@ -11,4 +11,14 @@
     <string name="domain_manage_recheck">Recheck DNS records</string>
     <string name="domain_manage_rechecking">Checking DNS records</string>
     <string name="domain_purchase_search_rate_limited">Too many searches. Try again in a minute.</string>
+    <string name="domain_purchase_results_for">Here\'s what we found for %1$s</string>
+    <string name="domain_purchase_change_name">Change name</string>
+    <string name="domain_purchase_show_more">Show more results</string>
+    <string name="domain_purchase_empty_included">Every domain comes with WHOIS privacy, DNS set up for you, and unlimited addresses.</string>
+    <string name="domain_purchase_retry">Try again</string>
+    <string name="domain_purchase_progress_note">Please wait while we register your domain and set up your mailboxes. This usually takes about a minute.</string>
+    <string name="domain_purchase_awaiting_note">We haven\'t received your payment yet. Finish checkout to complete your order, or close this window and pay later from Purchased domains.</string>
+    <string name="domain_purchase_purchased_desc">Domains you buy through Aster appear here and work as custom domains automatically. Pick a name, pay, and start using it right away.</string>
+    <string name="domain_purchase_buy_new">Buy a new domain</string>
+    <string name="domain_purchase_discount_tooltip">First year sale price from our registrar. Renews at %1$s per year afterwards.</string>
 </resources>
