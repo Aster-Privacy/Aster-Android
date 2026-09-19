@@ -711,21 +711,41 @@ class SettingsViewModel @Inject constructor(
     }
 
     suspend fun update_profile_picture(data_uri: String): Boolean {
+        val previous_user = _state.value.user
+        val previous_account = account_store.get_current()
+        apply_profile_picture_locally(data_uri)
         return try {
             val response = user_api.update_profile_picture(data_uri)
-            val updated_user = _state.value.user?.copy(profile_picture = response.profile_picture)
-            _state.value = _state.value.copy(user = updated_user)
-            val current = account_store.get_current()
-            if (current != null) {
-                account_store.add_or_update(current.copy(profile_picture = response.profile_picture))
-            }
+            apply_profile_picture_locally(response.profile_picture)
             auth_repository.refresh_profile()
             true
         } catch (t: Throwable) {
+            _state.value = _state.value.copy(user = previous_user)
+            if (previous_account != null) {
+                account_store.add_or_update(previous_account)
+                org.astermail.android.mail.AsterProfileResolverHolder.shared?.prime(
+                    email = previous_account.email,
+                    display_name = null,
+                    profile_picture = previous_account.profile_picture,
+                    profile_color = previous_account.profile_color,
+                )
+            }
             if (t is kotlinx.coroutines.CancellationException) throw t
             _state.value = _state.value.copy(action_result = user_facing_error(t))
             false
         }
+    }
+
+    private suspend fun apply_profile_picture_locally(picture: String?) {
+        _state.value = _state.value.copy(user = _state.value.user?.copy(profile_picture = picture))
+        val current = account_store.get_current() ?: return
+        account_store.add_or_update(current.copy(profile_picture = picture))
+        org.astermail.android.mail.AsterProfileResolverHolder.shared?.prime(
+            email = current.email,
+            display_name = null,
+            profile_picture = picture,
+            profile_color = current.profile_color,
+        )
     }
 
     fun load_sessions() {
