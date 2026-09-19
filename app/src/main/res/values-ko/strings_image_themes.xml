@@ -23,4 +23,12 @@
     <string name="image_theme_photo_too_large">사진이 너무 큽니다. 40MB 미만의 사진을 선택하세요.</string>
     <string name="image_theme_photo_unsupported">지원되지 않는 파일 형식입니다. JPEG, PNG, WebP 또는 HEIC 사진을 선택하세요.</string>
     <string name="image_theme_photo_unreadable">이 사진을 열 수 없습니다. 다른 사진을 선택하세요.</string>
+    <string name="image_theme_category_calm">차분함</string>
+    <string name="image_theme_credit_modified">사진: %1$s. 자르고 크기를 조정했습니다.</string>
+    <string name="image_theme_credit_generated">Aster에서 제작</string>
+    <string name="image_theme_adjust_photo">조정</string>
+    <string name="image_theme_editor_title">이동 및 크기 조절</string>
+    <string name="image_theme_editor_hint">핀치하여 확대/축소하고 드래그하여 사진을 이동합니다. 두 번 탭하면 확대하거나 축소합니다.</string>
+    <string name="image_theme_editor_set">설정</string>
+    <string name="image_theme_applied">테마가 적용되었습니다</string>
 </resources>

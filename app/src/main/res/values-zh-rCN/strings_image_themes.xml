@@ -23,4 +23,12 @@
     <string name="image_theme_photo_too_large">此照片过大。请选择小于 40 MB 的照片。</string>
     <string name="image_theme_photo_unsupported">不支持此文件类型。请选择 JPEG、PNG、WebP 或 HEIC 照片。</string>
     <string name="image_theme_photo_unreadable">无法打开此照片。请换一张试试。</string>
+    <string name="image_theme_category_calm">宁静</string>
+    <string name="image_theme_credit_modified">照片：%1$s。已裁剪并调整大小。</string>
+    <string name="image_theme_credit_generated">由 Aster 制作</string>
+    <string name="image_theme_adjust_photo">调整</string>
+    <string name="image_theme_editor_title">移动和缩放</string>
+    <string name="image_theme_editor_hint">双指缩放，拖动以移动照片。轻点两下可放大或缩小。</string>
+    <string name="image_theme_editor_set">设置</string>
+    <string name="image_theme_applied">已应用主题</string>
 </resources>
