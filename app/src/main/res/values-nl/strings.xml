@@ -1707,7 +1707,9 @@
     <string name="cannot_react_bcc">Je kunt niet reageren op een bericht waarin je in BCC stond.</string>
     <string name="cannot_react_too_many_emojis">Dit bericht heeft al het maximale aantal reacties.</string>
     <string name="cannot_react_no_recipient">Dit bericht heeft geen afzender om de reactie naar te sturen.</string>
+    <string name="cannot_react_limit">Je kunt maximaal twee reacties aan een bericht toevoegen. Verwijder een van je reacties om een andere toe te voegen.</string>
     <string name="reaction_failed">Reactie kon niet worden verzonden</string>
+    <string name="reaction_remove_failed">Reactie kon niet worden verwijderd</string>
     <string name="copy_address">Adres kopiëren</string>
     <string name="sender_on_aster">Aster-account</string>
     <string name="messages_from_sender">Mail van deze afzender zoeken</string>
@@ -2528,7 +2530,6 @@
     <string name="reaction_info_title">Reactie</string>
     <string name="reaction_info_you">Je hebt gereageerd met %1$s</string>
     <string name="reaction_info_other">%1$s reageerde met %2$s</string>
-    <string name="reaction_cannot_be_removed">Reacties kunnen na verzending niet worden verwijderd.</string>
     <string name="folder_locked_title">Vergrendelde map</string>
     <string name="folder_locked_description">Voer het wachtwoord van \"%1$s\" in om de e-mail te bekijken.</string>
     <string name="folder_unlock_password_placeholder">Mapwachtwoord</string>
@@ -3281,13 +3282,15 @@
     <string name="emoji_search_placeholder">Emoji zoeken</string>
     <string name="emoji_search_no_results">Geen emoji gevonden</string>
     <string name="emoji_group_recent">Onlangs gebruikt</string>
-    <string name="emoji_group_smileys">Smileys en mensen</string>
+    <string name="emoji_group_emotion">Smileys en emoties</string>
+    <string name="emoji_group_people">Mensen en lichaam</string>
     <string name="emoji_group_nature">Dieren en natuur</string>
     <string name="emoji_group_food">Eten en drinken</string>
     <string name="emoji_group_activity">Activiteiten</string>
     <string name="emoji_group_travel">Reizen en plaatsen</string>
     <string name="emoji_group_objects">Objecten</string>
     <string name="emoji_group_symbols">Symbolen</string>
+    <string name="emoji_group_flags">Vlaggen</string>
     <string name="domain_catch_all_hint">Ontvang e-mail die naar elk adres op dit domein wordt gestuurd.</string>
     <string name="special_offer_title">Privé-e-mail voor de helft van de prijs</string>
     <string name="special_offer_price_period">per maand</string>

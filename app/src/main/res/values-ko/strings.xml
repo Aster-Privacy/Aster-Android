@@ -1704,7 +1704,9 @@
     <string name="cannot_react_bcc">숨은참조로 받은 메일에는 반응할 수 없습니다.</string>
     <string name="cannot_react_too_many_emojis">이 메일은 이미 최대 개수의 반응이 있습니다.</string>
     <string name="cannot_react_no_recipient">이 메일에는 반응을 보낼 발신자가 없습니다.</string>
+    <string name="cannot_react_limit">메시지 하나에 반응을 최대 2개까지 추가할 수 있습니다. 다른 반응을 추가하려면 내 반응 중 하나를 삭제하세요.</string>
     <string name="reaction_failed">반응을 보내지 못했습니다</string>
+    <string name="reaction_remove_failed">반응을 삭제하지 못했습니다</string>
     <string name="copy_address">주소 복사</string>
     <string name="sender_on_aster">Aster 계정</string>
     <string name="messages_from_sender">이 발신자의 메일 찾기</string>
@@ -2520,7 +2522,6 @@
     <string name="reaction_info_title">반응</string>
     <string name="reaction_info_you">%1$s(으)로 반응했습니다</string>
     <string name="reaction_info_other">%1$s님이 %2$s(으)로 반응했습니다</string>
-    <string name="reaction_cannot_be_removed">보낸 반응은 취소할 수 없습니다.</string>
     <string name="folder_locked_title">잠긴 폴더</string>
     <string name="folder_locked_description">\"%1$s\"의 메일을 보려면 비밀번호를 입력하세요.</string>
     <string name="folder_unlock_password_placeholder">폴더 비밀번호</string>
@@ -3263,13 +3264,15 @@
     <string name="emoji_search_placeholder">이모티콘 검색</string>
     <string name="emoji_search_no_results">이모티콘을 찾을 수 없음</string>
     <string name="emoji_group_recent">최근 사용</string>
-    <string name="emoji_group_smileys">스마일리 및 사람</string>
+    <string name="emoji_group_emotion">스마일리 및 감정</string>
+    <string name="emoji_group_people">사람 및 신체</string>
     <string name="emoji_group_nature">동물 및 자연</string>
     <string name="emoji_group_food">음식 및 음료</string>
     <string name="emoji_group_activity">활동</string>
     <string name="emoji_group_travel">여행 및 장소</string>
     <string name="emoji_group_objects">사물</string>
     <string name="emoji_group_symbols">기호</string>
+    <string name="emoji_group_flags">깃발</string>
     <string name="domain_catch_all_hint">이 도메인의 모든 주소로 보낸 메일을 받습니다.</string>
     <string name="special_offer_title">프라이빗 메일을 반값에</string>
     <string name="special_offer_price_period">월</string>

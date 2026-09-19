@@ -1719,7 +1719,9 @@
     <string name="cannot_react_bcc">لا يمكنك التفاعل مع رسالة كنت فيها ضمن نسخة مخفية.</string>
     <string name="cannot_react_too_many_emojis">هذه الرسالة تحتوي بالفعل على الحد الأقصى من التفاعلات.</string>
     <string name="cannot_react_no_recipient">لا يوجد مرسل لهذه الرسالة لإرسال التفاعل إليه.</string>
+    <string name="cannot_react_limit">يمكنك إضافة تفاعلين كحد أقصى إلى الرسالة. لإضافة تفاعل آخر، أزل أحد تفاعلاتك.</string>
     <string name="reaction_failed">تعذّر إرسال التفاعل</string>
+    <string name="reaction_remove_failed">تعذّرت إزالة التفاعل</string>
     <string name="copy_address">نسخ العنوان</string>
     <string name="sender_on_aster">حساب Aster</string>
     <string name="messages_from_sender">البحث عن بريد من هذا المرسل</string>
@@ -2560,7 +2562,6 @@
     <string name="reaction_info_title">تفاعل</string>
     <string name="reaction_info_you">لقد تفاعلت بـ %1$s</string>
     <string name="reaction_info_other">تفاعل %1$s بـ %2$s</string>
-    <string name="reaction_cannot_be_removed">لا يمكن إزالة التفاعلات بعد إرسالها.</string>
     <string name="folder_locked_title">مجلد مقفل</string>
     <string name="folder_locked_description">أدخل كلمة مرور \"%1$s\" لعرض بريده.</string>
     <string name="folder_unlock_password_placeholder">كلمة مرور المجلد</string>
@@ -3361,13 +3362,15 @@
     <string name="emoji_search_placeholder">البحث عن رمز تعبيري</string>
     <string name="emoji_search_no_results">لم يتم العثور على رموز تعبيرية</string>
     <string name="emoji_group_recent">المستخدمة مؤخرًا</string>
-    <string name="emoji_group_smileys">الوجوه والأشخاص</string>
+    <string name="emoji_group_emotion">الوجوه والمشاعر</string>
+    <string name="emoji_group_people">الأشخاص والجسم</string>
     <string name="emoji_group_nature">الحيوانات والطبيعة</string>
     <string name="emoji_group_food">الطعام والشراب</string>
     <string name="emoji_group_activity">الأنشطة</string>
     <string name="emoji_group_travel">السفر والأماكن</string>
     <string name="emoji_group_objects">الأشياء</string>
     <string name="emoji_group_symbols">الرموز</string>
+    <string name="emoji_group_flags">الأعلام</string>
     <string name="domain_catch_all_hint">استقبل الرسائل المرسلة إلى أي عنوان على هذا النطاق.</string>
     <string name="special_offer_title">بريد خاص بنصف السعر</string>
     <string name="special_offer_price_period">شهريًا</string>

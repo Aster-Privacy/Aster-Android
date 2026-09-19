@@ -1708,7 +1708,9 @@
     <string name="cannot_react_bcc">Du kannst nicht auf eine Nachricht reagieren, bei der du im BCC standest.</string>
     <string name="cannot_react_too_many_emojis">Diese Nachricht hat bereits die maximale Anzahl an Reaktionen.</string>
     <string name="cannot_react_no_recipient">Diese Nachricht hat keinen Absender, an den die Reaktion gesendet werden kann.</string>
+    <string name="cannot_react_limit">Du kannst einer Nachricht höchstens zwei Reaktionen hinzufügen. Um eine weitere hinzuzufügen, entferne eine deiner Reaktionen.</string>
     <string name="reaction_failed">Reaktion konnte nicht gesendet werden</string>
+    <string name="reaction_remove_failed">Reaktion konnte nicht entfernt werden</string>
     <string name="copy_address">Adresse kopieren</string>
     <string name="sender_on_aster">Aster-Konto</string>
     <string name="messages_from_sender">Mails dieses Absenders finden</string>
@@ -2529,7 +2531,6 @@
     <string name="reaction_info_title">Reaktion</string>
     <string name="reaction_info_you">Du hast mit %1$s reagiert</string>
     <string name="reaction_info_other">%1$s hat mit %2$s reagiert</string>
-    <string name="reaction_cannot_be_removed">Reaktionen können nach dem Senden nicht entfernt werden.</string>
     <string name="folder_locked_title">Gesperrter Ordner</string>
     <string name="folder_locked_description">Gib das Passwort für \"%1$s\" ein, um die E-Mails zu sehen.</string>
     <string name="folder_unlock_password_placeholder">Ordnerpasswort</string>
@@ -3282,13 +3283,15 @@
     <string name="emoji_search_placeholder">Emoji suchen</string>
     <string name="emoji_search_no_results">Keine Emojis gefunden</string>
     <string name="emoji_group_recent">Zuletzt verwendet</string>
-    <string name="emoji_group_smileys">Smileys und Personen</string>
+    <string name="emoji_group_emotion">Smileys und Emotionen</string>
+    <string name="emoji_group_people">Personen und Körper</string>
     <string name="emoji_group_nature">Tiere und Natur</string>
     <string name="emoji_group_food">Essen und Trinken</string>
     <string name="emoji_group_activity">Aktivitäten</string>
     <string name="emoji_group_travel">Reisen und Orte</string>
     <string name="emoji_group_objects">Objekte</string>
     <string name="emoji_group_symbols">Symbole</string>
+    <string name="emoji_group_flags">Flaggen</string>
     <string name="domain_catch_all_hint">Empfange E-Mails an jede Adresse dieser Domain.</string>
     <string name="special_offer_title">Private E-Mails zum halben Preis</string>
     <string name="special_offer_price_period">pro Monat</string>

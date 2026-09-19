@@ -1713,7 +1713,9 @@
     <string name="cannot_react_bcc">Нельзя реагировать на письмо, где вы были в скрытой копии.</string>
     <string name="cannot_react_too_many_emojis">У этого письма уже максимальное число реакций.</string>
     <string name="cannot_react_no_recipient">У этого письма нет отправителя, которому можно отправить реакцию.</string>
+    <string name="cannot_react_limit">К сообщению можно добавить не больше двух реакций. Чтобы добавить другую, удалите одну из своих.</string>
     <string name="reaction_failed">Не удалось отправить реакцию</string>
+    <string name="reaction_remove_failed">Не удалось удалить реакцию</string>
     <string name="copy_address">Копировать адрес</string>
     <string name="sender_on_aster">Аккаунт Aster</string>
     <string name="messages_from_sender">Найти письма от этого отправителя</string>
@@ -2544,7 +2546,6 @@
     <string name="reaction_info_title">Реакция</string>
     <string name="reaction_info_you">Вы отреагировали: %1$s</string>
     <string name="reaction_info_other">%1$s отреагировал(а): %2$s</string>
-    <string name="reaction_cannot_be_removed">Реакции нельзя удалить после отправки.</string>
     <string name="folder_locked_title">Заблокированная папка</string>
     <string name="folder_locked_description">Введите пароль от \"%1$s\", чтобы увидеть письма.</string>
     <string name="folder_unlock_password_placeholder">Пароль папки</string>
@@ -3321,13 +3322,15 @@
     <string name="emoji_search_placeholder">Поиск эмодзи</string>
     <string name="emoji_search_no_results">Эмодзи не найдены</string>
     <string name="emoji_group_recent">Недавние</string>
-    <string name="emoji_group_smileys">Смайлики и люди</string>
+    <string name="emoji_group_emotion">Смайлики и эмоции</string>
+    <string name="emoji_group_people">Люди и тело</string>
     <string name="emoji_group_nature">Животные и природа</string>
     <string name="emoji_group_food">Еда и напитки</string>
     <string name="emoji_group_activity">Активности</string>
     <string name="emoji_group_travel">Путешествия и места</string>
     <string name="emoji_group_objects">Объекты</string>
     <string name="emoji_group_symbols">Символы</string>
+    <string name="emoji_group_flags">Флаги</string>
     <string name="domain_catch_all_hint">Получайте письма, отправленные на любой адрес в этом домене.</string>
     <string name="special_offer_title">Приватная почта за полцены</string>
     <string name="special_offer_price_period">в месяц</string>

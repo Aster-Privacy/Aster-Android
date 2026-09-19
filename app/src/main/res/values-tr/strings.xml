@@ -1707,7 +1707,9 @@
     <string name="cannot_react_bcc">Gizli kopyada olduğunuz bir mesaja tepki veremezsiniz.</string>
     <string name="cannot_react_too_many_emojis">Bu mesaj zaten en fazla sayıda tepkiye sahip.</string>
     <string name="cannot_react_no_recipient">Bu mesajın tepki gönderilecek bir göndereni yok.</string>
+    <string name="cannot_react_limit">Bir mesaja en fazla iki tepki ekleyebilirsiniz. Başka bir tepki eklemek için tepkilerinizden birini kaldırın.</string>
     <string name="reaction_failed">Tepki gönderilemedi</string>
+    <string name="reaction_remove_failed">Tepki kaldırılamadı</string>
     <string name="copy_address">Adresi kopyala</string>
     <string name="sender_on_aster">Aster hesabı</string>
     <string name="messages_from_sender">Bu gönderenin postalarını bul</string>
@@ -2528,7 +2530,6 @@
     <string name="reaction_info_title">Tepki</string>
     <string name="reaction_info_you">%1$s ile tepki verdin</string>
     <string name="reaction_info_other">%1$s, %2$s ile tepki verdi</string>
-    <string name="reaction_cannot_be_removed">Tepkiler gönderildikten sonra kaldırılamaz.</string>
     <string name="folder_locked_title">Kilitli klasör</string>
     <string name="folder_locked_description">E-postaları görmek için \"%1$s\" klasörünün parolasını girin.</string>
     <string name="folder_unlock_password_placeholder">Klasör parolası</string>
@@ -3281,13 +3282,15 @@
     <string name="emoji_search_placeholder">Emoji ara</string>
     <string name="emoji_search_no_results">Emoji bulunamadı</string>
     <string name="emoji_group_recent">Son kullanılanlar</string>
-    <string name="emoji_group_smileys">İfadeler ve insanlar</string>
+    <string name="emoji_group_emotion">İfadeler ve duygular</string>
+    <string name="emoji_group_people">İnsanlar ve vücut</string>
     <string name="emoji_group_nature">Hayvanlar ve doğa</string>
     <string name="emoji_group_food">Yiyecek ve içecek</string>
     <string name="emoji_group_activity">Etkinlikler</string>
     <string name="emoji_group_travel">Seyahat ve yerler</string>
     <string name="emoji_group_objects">Nesneler</string>
     <string name="emoji_group_symbols">Semboller</string>
+    <string name="emoji_group_flags">Bayraklar</string>
     <string name="domain_catch_all_hint">Bu alan adındaki herhangi bir adrese gönderilen postaları alın.</string>
     <string name="special_offer_title">Gizli e-posta, yarı fiyatına</string>
     <string name="special_offer_price_period">aylık</string>

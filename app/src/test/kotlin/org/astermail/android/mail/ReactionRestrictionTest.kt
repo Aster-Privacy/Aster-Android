@@ -156,6 +156,52 @@ class ReactionRestrictionTest {
         assertNull(restriction(reactions = reactions))
     }
 
+    private fun reaction(index: Int, is_own: Boolean) = DecryptedReaction(
+        reaction_mail_item_id = "reaction_$index",
+        emoji = String(Character.toChars(0x1F600 + index)),
+        reactor_email = if (is_own) me else "person$index@example.com",
+        is_own = is_own,
+    )
+
+    @Test
+    fun allows_a_first_own_reaction() {
+        assertNull(restriction(reactions = emptyList()))
+    }
+
+    @Test
+    fun allows_a_second_own_reaction() {
+        assertNull(restriction(reactions = listOf(reaction(0, is_own = true))))
+    }
+
+    @Test
+    fun blocks_a_third_own_reaction() {
+        val reactions = listOf(reaction(0, is_own = true), reaction(1, is_own = true))
+        assertEquals(ReactionRestriction.reaction_limit, restriction(reactions = reactions))
+    }
+
+    @Test
+    fun reactions_from_other_people_do_not_count_toward_the_own_limit() {
+        val reactions = (0 until 5).map { reaction(it, is_own = false) } + reaction(5, is_own = true)
+        assertNull(restriction(reactions = reactions))
+    }
+
+    @Test
+    fun own_limit_is_two() {
+        assertEquals(2, MAX_OWN_REACTIONS)
+    }
+
+    @Test
+    fun recognizes_the_server_reaction_limit_error() {
+        assert(
+            is_reaction_limit_error(
+                org.astermail.android.api.ApiError.Conflict("limit", REACTION_LIMIT_REACHED_CODE),
+            ),
+        )
+        assert(!is_reaction_limit_error(org.astermail.android.api.ApiError.Conflict("conflict", "OTHER")))
+        assert(!is_reaction_limit_error(org.astermail.android.api.ApiError.RateLimited(code = "RATE_LIMIT_EXCEEDED")))
+        assert(!is_reaction_limit_error(null))
+    }
+
     @Test
     fun blocks_when_there_is_no_sender_to_reply_to() {
         assertEquals(ReactionRestriction.no_recipient, restriction(sender_email = "  "))

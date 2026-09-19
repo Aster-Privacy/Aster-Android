@@ -146,12 +146,25 @@ data class ReactResponse(
     val success: Boolean = false,
     val message: String = "",
     val mail_item_ids: List<String> = emptyList(),
+    val own_reaction_mail_item_id: String? = null,
+)
+
+@Serializable
+data class UnreactRequest(
+    val reaction_mail_item_id: String,
+)
+
+@Serializable
+data class UnreactResponse(
+    val success: Boolean = false,
+    val message: String = "",
 )
 
 interface SendApi {
     suspend fun send_simple(request: SimpleSendRequest): SimpleSendResponse
     suspend fun send_external(request: ExternalSendRequest): ExternalSendResponse
     suspend fun react(request: ReactRequest): ReactResponse
+    suspend fun unreact(request: UnreactRequest): UnreactResponse
 }
 
 private class StreamedJsonContent(private val file: java.io.File) : OutgoingContent.WriteChannelContent() {
@@ -222,6 +235,15 @@ class SendApiImpl(private val client: ApiClient) : SendApi {
                 requestTimeoutMillis = send_socket_timeout_ms
                 socketTimeoutMillis = send_socket_timeout_ms
             }
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun unreact(request: UnreactRequest): UnreactResponse {
+        val response = client.http.post("${client.base_url}/api/mail/v1/react/remove") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
