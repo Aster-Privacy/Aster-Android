@@ -357,7 +357,7 @@ private fun selector_chip(
                 shape = shape,
             )
             .background(
-                if (selected) colors.accent_blue.copy(alpha = 0.08f) else colors.bg_card,
+                if (selected) colors.bg_selected else colors.bg_card,
                 shape,
             )
             .clickable(onClick = on_click)

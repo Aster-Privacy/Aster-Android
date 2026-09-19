@@ -119,22 +119,12 @@ import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
 private fun toggle_row(title: String, subtitle: String?, checked: Boolean, on_change: (Boolean) -> Unit) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-            if (subtitle != null) {
-                Text(text = subtitle, color = colors.text_tertiary, fontSize = 13.sp)
-            }
-        }
-        AsterSwitch(
-            checked = checked,
-            onCheckedChange = on_change,
-        )
-    }
+    settings_toggle_row(
+        title = title,
+        subtitle = subtitle,
+        checked = checked,
+        on_change = on_change,
+    )
 }
 
 @Composable
@@ -402,7 +392,7 @@ internal fun revoke_pill_button(
             .height(36.dp)
             .widthIn(min = 72.dp)
             .clip(shape)
-            .border(1.dp, colors.text_secondary.copy(alpha = 0.3f), shape)
+            .border(1.dp, colors.border_secondary, shape)
             .clickable(enabled = !in_flight, onClick = on_click)
             .padding(horizontal = AsterSpacing.md),
         contentAlignment = Alignment.Center,

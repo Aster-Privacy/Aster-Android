@@ -94,29 +94,14 @@ private fun behavior_toggle(
     info_description: String? = null,
     on_change: (Boolean) -> Unit,
 ) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .toggleable(value = checked, onValueChange = on_change, role = Role.Switch)
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(title, color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f, fill = false))
-                if (info_title != null && info_description != null) {
-                    androidx.compose.foundation.layout.Spacer(Modifier.size(5.dp))
-                    info_dialog_button(info_title, info_description)
-                }
-            }
-            if (subtitle != null) Text(subtitle, color = colors.text_tertiary, fontSize = 13.sp)
-        }
-        AsterSwitch(
-            checked = checked,
-            onCheckedChange = null,
-        )
-    }
+    settings_toggle_row(
+        title = title,
+        subtitle = subtitle,
+        checked = checked,
+        info_title = info_title,
+        info_description = info_description,
+        on_change = on_change,
+    )
 }
 
 @Composable
