@@ -138,7 +138,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.astermail.android.design.components.aster_menu
-import org.astermail.android.design.components.aster_menu_divider
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu_section_label
 import org.astermail.android.R
@@ -2775,7 +2774,6 @@ internal fun inbox_top_bar(
                         )
                     }
                     if (custom_folders.isNotEmpty()) {
-                        aster_menu_divider()
                         folder_tree_dropdown_items(
                             nodes = custom_folders,
                             current_folder = current_folder,
@@ -2814,7 +2812,6 @@ internal fun inbox_top_bar(
                                 if (alias_direction != id) on_alias_direction_change(id)
                             }
                         }
-                        aster_menu_divider()
                     }
                     overflow_menu_item(
                         label = stringResource(if (has_unread) R.string.mark_all_read else R.string.mark_all_unread),
@@ -2857,7 +2854,6 @@ internal fun inbox_top_bar(
                             on_empty_trash()
                         }
                     }
-                    aster_menu_divider()
                     aster_menu_section_label(stringResource(R.string.sort_by))
                     sort_menu_item(stringResource(R.string.sort_newest), sort_mode == InboxSortMode.newest) {
                         overflow_menu_open = false

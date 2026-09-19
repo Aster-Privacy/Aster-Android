@@ -32,9 +32,9 @@ import compose.icons.tablericons.Plus
 
 import org.astermail.android.ui.icons.pin_icon
 import org.astermail.android.ui.icons.pin_icon_filled
-import org.astermail.android.design.components.aster_dropdown_divider
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
+import org.astermail.android.design.components.aster_menu_surface
 import org.astermail.android.BuildConfig
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.basicMarquee
@@ -1001,7 +1001,7 @@ fun MailDetailScreen(
                         onClick = { show_topbar_menu = true },
                         modifier = Modifier.testTag("more"),
                     )
-                    aster_dropdown_menu(
+                    aster_menu(
                         expanded = show_topbar_menu,
                         on_dismiss = { show_topbar_menu = false },
                         offset = DpOffset(0.dp, 8.dp),
@@ -4289,7 +4289,6 @@ private object action_menu_position_provider : PopupPositionProvider {
     ): IntOffset = IntOffset.Zero
 }
 
-private val action_menu_elevation = 12.dp
 private val action_menu_shadow_gutter = 22.dp
 
 @Composable
@@ -4316,7 +4315,6 @@ internal fun action_menu_sheet(
     visible_state.targetState = expanded
     if (!visible_state.currentState && !visible_state.targetState) return
 
-    val shape = SquircleShape(20.dp)
     val scrim_interaction = remember { MutableInteractionSource() }
     val menu_reduce_motion = aster_reduce_motion()
     val menu_pop_fade_enter = if (menu_reduce_motion) AsterDuration.instant else AsterDuration.menu_fade_enter
@@ -4368,58 +4366,50 @@ internal fun action_menu_sheet(
                         transformOrigin = TransformOrigin(1f, 1f),
                     ),
             ) {
-                Column(
-                    modifier = Modifier
-                        .testTag("action_menu")
-                        .shadow(action_menu_elevation, shape, clip = false)
-                        .clip(shape)
-                        .background(colors.dropdown_bg)
-                        .widthIn(min = 240.dp, max = 320.dp)
-                        .heightIn(max = 460.dp)
-                        .verticalScroll(rememberScrollState())
-                        .padding(vertical = 7.dp),
+                aster_menu_surface(
+                    modifier = Modifier.testTag("action_menu"),
+                    min_width = 240.dp,
+                    max_width = 320.dp,
+                    max_height = 460.dp,
                 ) {
-                    aster_dropdown_item(stringResource(R.string.reply), on_reply, icon = TablerIcons.ArrowBackUp)
-                    aster_dropdown_item(stringResource(R.string.reply_all), on_reply_all, icon = TablerIcons.ArrowsLeft)
-                    aster_dropdown_item(stringResource(R.string.forward), on_forward, icon = TablerIcons.MailForward)
-                    aster_dropdown_divider()
-                    aster_dropdown_item(
+                    aster_menu_item(stringResource(R.string.reply), on_reply, icon = TablerIcons.ArrowBackUp)
+                    aster_menu_item(stringResource(R.string.reply_all), on_reply_all, icon = TablerIcons.ArrowsLeft)
+                    aster_menu_item(stringResource(R.string.forward), on_forward, icon = TablerIcons.MailForward)
+                    aster_menu_item(
                         if (is_starred) stringResource(R.string.unstar) else stringResource(R.string.star),
                         on_star,
                         icon = TablerIcons.Star,
                     )
-                    aster_dropdown_item(stringResource(R.string.mark_as_unread), on_mark_unread, icon = TablerIcons.Mail)
-                    aster_dropdown_item(stringResource(R.string.label), on_label, icon = TablerIcons.Tag)
-                    aster_dropdown_item(stringResource(R.string.snooze), on_snooze, icon = TablerIcons.Moon)
-                    aster_dropdown_divider()
-                    aster_dropdown_item(
+                    aster_menu_item(stringResource(R.string.mark_as_unread), on_mark_unread, icon = TablerIcons.Mail)
+                    aster_menu_item(stringResource(R.string.label), on_label, icon = TablerIcons.Tag)
+                    aster_menu_item(stringResource(R.string.snooze), on_snooze, icon = TablerIcons.Moon)
+                    aster_menu_item(
                         if (is_archived) stringResource(R.string.swipe_move_to_inbox) else stringResource(R.string.swipe_archive),
                         on_archive,
                         icon = if (is_archived) TablerIcons.Inbox else TablerIcons.Archive,
                     )
                     if (is_spam) {
-                        aster_dropdown_item(
+                        aster_menu_item(
                             stringResource(R.string.swipe_not_spam),
                             on_spam,
                             icon = TablerIcons.ShieldCheck,
                             tint = colors.accent_blue,
                         )
                     } else {
-                        aster_dropdown_item(
+                        aster_menu_item(
                             stringResource(R.string.report_spam),
                             on_spam,
                             icon = TablerIcons.AlertTriangle,
                             destructive = true,
                         )
                     }
-                    aster_dropdown_item(
+                    aster_menu_item(
                         stringResource(R.string.move_to_trash),
                         on_trash,
                         icon = TablerIcons.Trash,
                         destructive = true,
                     )
-                    aster_dropdown_divider()
-                    aster_dropdown_item(
+                    aster_menu_item(
                         stringResource(R.string.customize_toolbar),
                         on_customize_toolbar,
                         icon = TablerIcons.Adjustments,
@@ -6843,7 +6833,7 @@ private fun detail_menu_action(
     test_tag: String? = null,
     onClick: () -> Unit,
 ) {
-    aster_dropdown_item(
+    aster_menu_item(
         label = text,
         icon = icon,
         tint = tint,

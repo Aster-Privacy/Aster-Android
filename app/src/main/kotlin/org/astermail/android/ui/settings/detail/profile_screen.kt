@@ -86,8 +86,8 @@ import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
 import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.common.resolve_primary_sender_email
@@ -446,8 +446,8 @@ private fun active_badge_row(
                     modifier = Modifier.size(15.dp),
                 )
             }
-            aster_dropdown_menu(expanded = expanded, on_dismiss = { expanded = false }) {
-                aster_dropdown_item(
+            aster_menu(expanded = expanded, on_dismiss = { expanded = false }) {
+                aster_menu_item(
                     label = none_label,
                     selected = active_slug == null,
                     on_click = {
@@ -458,7 +458,7 @@ private fun active_badge_row(
                 badges.forEach { badge ->
                     val visual = badge_visual_for(badge.slug)
                     val order = badge.find_order
-                    aster_dropdown_item(
+                    aster_menu_item(
                         label = if (order != null && order >= 1) {
                             badge.display_name + "  " + format_find_order(order)
                         } else {

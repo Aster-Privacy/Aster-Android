@@ -104,8 +104,8 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
 import org.astermail.android.mail.InboxItem
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.ui.mail.EmailRow
@@ -1243,13 +1243,13 @@ private fun search_input_bar(
                     modifier = Modifier.size(22.dp),
                 )
             }
-            aster_dropdown_menu(
+            aster_menu(
                 expanded = filter_menu_open,
                 on_dismiss = { filter_menu_open = false },
             ) {
                 FILTER_CHIPS.forEach { chip ->
                     val selected = active_filter == chip.key
-                    aster_dropdown_item(
+                    aster_menu_item(
                         label = stringResource(chip.label_res),
                         selected = selected,
                         on_click = {

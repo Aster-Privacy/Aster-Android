@@ -24,9 +24,8 @@ package org.astermail.android.ui.drawer
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
-import org.astermail.android.design.components.aster_dropdown_divider
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
 import org.astermail.android.BuildConfig
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
@@ -1042,13 +1041,13 @@ private fun folder_actions_menu(
     on_move_down: () -> Unit,
     on_delete: () -> Unit,
 ) {
-    aster_dropdown_menu(
+    aster_menu(
         expanded = expanded,
         on_dismiss = on_dismiss,
         modifier = Modifier.testTag("folder_actions_menu"),
     ) {
         if (item.can_have_children) {
-            aster_dropdown_item(
+            aster_menu_item(
                 label = stringResource(R.string.create_subfolder),
                 icon = TablerIcons.FolderPlus,
                 test_tag = "folder_action_create_subfolder",
@@ -1058,7 +1057,7 @@ private fun folder_actions_menu(
                 },
             )
         }
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(
                 if (item.password_set) R.string.remove_folder_lock else R.string.lock_folder
             ),
@@ -1070,7 +1069,7 @@ private fun folder_actions_menu(
             },
         )
         if (on_lock_now != null) {
-            aster_dropdown_item(
+            aster_menu_item(
                 label = stringResource(R.string.lock_folder_now),
                 icon = TablerIcons.Lock,
                 test_tag = "folder_action_lock_now",
@@ -1080,7 +1079,7 @@ private fun folder_actions_menu(
                 },
             )
         }
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.rename),
             icon = TablerIcons.Pencil,
             test_tag = "folder_action_rename",
@@ -1089,7 +1088,7 @@ private fun folder_actions_menu(
                 on_rename()
             },
         )
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.change_folder_color),
             icon = TablerIcons.Palette,
             test_tag = "folder_action_color",
@@ -1098,7 +1097,7 @@ private fun folder_actions_menu(
                 on_recolor()
             },
         )
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(
                 if (item.muted) R.string.unmute_folder_notifications else R.string.mute_folder_notifications
             ),
@@ -1109,7 +1108,7 @@ private fun folder_actions_menu(
                 on_toggle_mute()
             },
         )
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.move_folder_to),
             icon = TablerIcons.Folder,
             test_tag = "folder_action_move_to",
@@ -1118,7 +1117,7 @@ private fun folder_actions_menu(
                 on_move_to()
             },
         )
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.move_folder_up),
             icon = TablerIcons.ArrowUp,
             enabled = item.can_move_up,
@@ -1128,7 +1127,7 @@ private fun folder_actions_menu(
                 on_move_up()
             },
         )
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.move_folder_down),
             icon = TablerIcons.ArrowDown,
             enabled = item.can_move_down,
@@ -1138,8 +1137,7 @@ private fun folder_actions_menu(
                 on_move_down()
             },
         )
-        aster_dropdown_divider()
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.delete),
             icon = TablerIcons.Trash,
             destructive = true,
@@ -1164,12 +1162,12 @@ private fun label_actions_menu(
     on_move_down: () -> Unit,
     on_delete: () -> Unit,
 ) {
-    aster_dropdown_menu(
+    aster_menu(
         expanded = expanded,
         on_dismiss = on_dismiss,
         modifier = Modifier.testTag("label_actions_menu"),
     ) {
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.rename),
             icon = TablerIcons.Pencil,
             test_tag = "label_action_rename",
@@ -1178,7 +1176,7 @@ private fun label_actions_menu(
                 on_rename()
             },
         )
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.change_label_color),
             icon = TablerIcons.Palette,
             test_tag = "label_action_color",
@@ -1187,7 +1185,7 @@ private fun label_actions_menu(
                 on_recolor()
             },
         )
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.change_label_icon),
             icon = TablerIcons.Wand,
             test_tag = "label_action_icon",
@@ -1196,7 +1194,7 @@ private fun label_actions_menu(
                 on_change_icon()
             },
         )
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.move_folder_up),
             icon = TablerIcons.ArrowUp,
             enabled = item.can_move_up,
@@ -1206,7 +1204,7 @@ private fun label_actions_menu(
                 on_move_up()
             },
         )
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.move_folder_down),
             icon = TablerIcons.ArrowDown,
             enabled = item.can_move_down,
@@ -1216,8 +1214,7 @@ private fun label_actions_menu(
                 on_move_down()
             },
         )
-        aster_dropdown_divider()
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.delete),
             icon = TablerIcons.Trash,
             destructive = true,
@@ -1394,11 +1391,11 @@ private fun folder_move_dialog(
                         modifier = Modifier.size(20.dp),
                     )
                 }
-                aster_dropdown_menu(
+                aster_menu(
                     expanded = menu_open,
                     on_dismiss = { menu_open = false },
                 ) {
-                    aster_dropdown_item(
+                    aster_menu_item(
                         label = none_label,
                         selected = selected_parent == null,
                         on_click = {
@@ -1407,7 +1404,7 @@ private fun folder_move_dialog(
                         },
                     )
                     options.forEach { option ->
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = " ".repeat(option.depth) + option.label,
                             icon = TablerIcons.Folder,
                             icon_tint = option.color?.let { parse_hex_color_safe(it) },
@@ -1657,11 +1654,11 @@ internal fun create_folder_dialog(
                             modifier = Modifier.size(20.dp),
                         )
                     }
-                    aster_dropdown_menu(
+                    aster_menu(
                         expanded = parent_menu_open,
                         on_dismiss = { parent_menu_open = false },
                     ) {
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = none_label,
                             selected = selected_parent == null,
                             on_click = {
@@ -1670,7 +1667,7 @@ internal fun create_folder_dialog(
                             },
                         )
                         parent_options.forEach { option ->
-                            aster_dropdown_item(
+                            aster_menu_item(
                                 label = " ".repeat(option.depth) + option.label,
                                 icon = TablerIcons.Folder,
                                 icon_tint = option.color?.let { parse_hex_color_safe(it) },

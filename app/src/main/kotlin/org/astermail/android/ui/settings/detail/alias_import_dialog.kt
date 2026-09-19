@@ -81,8 +81,8 @@ import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDialogPrimaryButton
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterSecondaryButton
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
 import org.astermail.android.settings.ImportPreviewRow
 import org.astermail.android.settings.ImportRowStatus
 import org.astermail.android.settings.ParsedImportRow
@@ -412,12 +412,12 @@ fun alias_import_dialog(
                                     )
                                 }
                             }
-                            aster_dropdown_menu(
+                            aster_menu(
                                 expanded = domain_menu_open,
                                 on_dismiss = { domain_menu_open = false },
                             ) {
                                 available_domains.forEach { domain ->
-                                    aster_dropdown_item(
+                                    aster_menu_item(
                                         label = "@$domain",
                                         selected = domain == target_domain,
                                         on_click = {

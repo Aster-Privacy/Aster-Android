@@ -27,8 +27,8 @@ import org.astermail.android.ui.common.show_copy_result_toast
 import org.astermail.android.ui.common.write_to_clipboard
 import compose.icons.tablericons.*
 
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
 import org.astermail.android.BuildConfig
 import android.net.Uri
 import android.widget.Toast
@@ -2093,12 +2093,12 @@ fun ComposeScreen(
                             )
                         }
                     }
-                    aster_dropdown_menu(
+                    aster_menu(
                         expanded = mode_menu_open,
                         on_dismiss = { mode_menu_open = false },
                     ) {
                         compose_mode_options.forEach { option ->
-                            aster_dropdown_item(
+                            aster_menu_item(
                                 label = stringResource(option.second.second),
                                 icon = option.second.first,
                                 selected = option.first == effective_mode,
@@ -3674,7 +3674,7 @@ private fun recipient_chip(text: String, show_encryption_indicator: Boolean = tr
             }
         }
         val copied_label = stringResource(R.string.copied_value, normalized)
-        aster_dropdown_menu(
+        aster_menu(
             expanded = menu_open,
             on_dismiss = { menu_open = false },
         ) {
@@ -3694,8 +3694,7 @@ private fun recipient_chip(text: String, show_encryption_indicator: Boolean = tr
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            org.astermail.android.design.components.aster_dropdown_divider()
-            aster_dropdown_item(
+            aster_menu_item(
                 label = stringResource(R.string.copy),
                 icon = TablerIcons.Copy,
                 on_click = {
@@ -3704,7 +3703,7 @@ private fun recipient_chip(text: String, show_encryption_indicator: Boolean = tr
                 },
             )
             if (saved_contact == null) {
-                aster_dropdown_item(
+                aster_menu_item(
                     label = stringResource(R.string.add_to_contacts),
                     icon = TablerIcons.UserPlus,
                     on_click = {
@@ -3729,7 +3728,7 @@ private fun recipient_chip(text: String, show_encryption_indicator: Boolean = tr
                     },
                 )
             }
-            aster_dropdown_item(
+            aster_menu_item(
                 label = stringResource(R.string.remove),
                 icon = TablerIcons.Trash,
                 destructive = true,

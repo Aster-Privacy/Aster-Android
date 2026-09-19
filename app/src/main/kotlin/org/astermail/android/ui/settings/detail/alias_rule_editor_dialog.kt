@@ -59,8 +59,8 @@ import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDialogPrimaryButton
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
 
 private val rule_fields = listOf("from", "to", "subject", "all")
 private val rule_operators = listOf("contains", "equals", "starts_with", "ends_with", "matches_regex")
@@ -196,9 +196,9 @@ private fun rule_dropdown(
                 modifier = Modifier.size(16.dp),
             )
         }
-        aster_dropdown_menu(expanded = open, on_dismiss = { open = false }) {
+        aster_menu(expanded = open, on_dismiss = { open = false }) {
             options.forEach { option ->
-                aster_dropdown_item(
+                aster_menu_item(
                     label = stringResource(label_for(option)),
                     selected = option == selected,
                     on_click = {

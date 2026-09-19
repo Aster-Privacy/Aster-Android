@@ -63,8 +63,8 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
 import org.astermail.android.api.settings.AliasRun
 import org.astermail.android.settings.AliasDetailState
 import org.astermail.android.settings.SettingsViewModel
@@ -439,8 +439,8 @@ internal fun alias_delivery_picker(
                         modifier = Modifier.size(16.dp),
                     )
                 }
-                aster_dropdown_menu(expanded = menu_open, on_dismiss = { menu_open = false }) {
-                    aster_dropdown_item(
+                aster_menu(expanded = menu_open, on_dismiss = { menu_open = false }) {
+                    aster_menu_item(
                         label = stringResource(R.string.folder_inbox),
                         selected = selected_label == stringResource(R.string.folder_inbox),
                         on_click = {
@@ -448,7 +448,7 @@ internal fun alias_delivery_picker(
                             on_select_inbox()
                         },
                     )
-                    aster_dropdown_item(
+                    aster_menu_item(
                         label = stringResource(R.string.folder_archive),
                         selected = selected_label == stringResource(R.string.folder_archive),
                         on_click = {
@@ -458,7 +458,7 @@ internal fun alias_delivery_picker(
                     )
                     folders.forEach { folder ->
                         val folder_name = folder.encrypted_name.orEmpty()
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = folder_name,
                             selected = folder_name.isNotBlank() && folder_name == selected_label,
                             on_click = {
@@ -508,11 +508,11 @@ internal fun alias_delivery_picker(
                         modifier = Modifier.size(16.dp),
                     )
                 }
-                aster_dropdown_menu(
+                aster_menu(
                     expanded = label_menu_open,
                     on_dismiss = { label_menu_open = false },
                 ) {
-                    aster_dropdown_item(
+                    aster_menu_item(
                         label = stringResource(R.string.alias_delivery_label_none),
                         selected = selected_label_name == stringResource(R.string.alias_delivery_label_none),
                         on_click = {
@@ -521,7 +521,7 @@ internal fun alias_delivery_picker(
                         },
                     )
                     tags.forEach { tag ->
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = tag.encrypted_name,
                             selected = tag.encrypted_name == selected_label_name,
                             on_click = {
