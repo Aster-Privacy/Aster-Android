@@ -1533,6 +1533,31 @@ class AuthRepository @Inject constructor(
         null
     }
 
+    fun exportable_private_key(
+        fingerprint: String,
+        password: String,
+        encrypted_blob_b64: String?,
+        nonce_b64: String?,
+    ): String? {
+        val password_chars = password.toCharArray()
+        try {
+            val candidates = buildList {
+                session_key_store.get_identity_key()?.let { add(it) }
+                session_key_store.get_previous_keys()?.let { addAll(it) }
+            }
+            return PrivateKeyExport.select(
+                candidates = candidates,
+                fingerprint = fingerprint,
+                password = password_chars,
+                encrypted_blob_b64 = encrypted_blob_b64,
+                nonce_b64 = nonce_b64,
+                pbkdf2_iterations = pgp_private_key_pbkdf2_iterations,
+            )
+        } finally {
+            password_chars.fill(' ')
+        }
+    }
+
     private suspend fun republish_pgp_key_with_password(identity_key: String, password: String) {
         val password_chars = password.toCharArray()
         try {

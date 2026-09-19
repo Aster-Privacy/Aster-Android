@@ -3926,8 +3926,15 @@ class SettingsViewModel @Inject constructor(
                     format = "armored",
                 )
             )
-            result.private_key_encrypted?.ifBlank { null }
-                ?: result.encrypted_private_key_blob?.ifBlank { null }
+            withContext(Dispatchers.Default) {
+                auth_repository.exportable_private_key(
+                    fingerprint = result.fingerprint,
+                    password = password,
+                    encrypted_blob_b64 = result.encrypted_private_key_blob,
+                    nonce_b64 = result.private_key_nonce,
+                )
+            } ?: result.private_key_encrypted?.ifBlank { null }
+                ?.takeIf { it.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY") }
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
             null
