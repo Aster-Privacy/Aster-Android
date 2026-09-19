@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="image_themes">चित्र थीम</string>
+    <string name="image_themes_subtitle">आपके इनबॉक्स के पीछे एक चित्र दिखाता है।</string>
+    <string name="image_theme_none">कोई नहीं</string>
+    <string name="image_theme_starfield">तारामंडल</string>
+    <string name="image_theme_nebula">नीहारिका</string>
+    <string name="image_theme_aurora">ध्रुवीय ज्योति</string>
+    <string name="image_theme_milky_way">आकाशगंगा</string>
+    <string name="image_theme_midnight">आधी रात</string>
+</resources>

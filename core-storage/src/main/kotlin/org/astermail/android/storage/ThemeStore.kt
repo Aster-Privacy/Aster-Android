@@ -133,6 +133,7 @@ class ThemeStore(context: Context) {
     private val key_custom_theme_seed = stringPreferencesKey("custom_theme_seed")
     private val key_custom_theme_overrides = stringPreferencesKey("custom_theme_overrides")
     private val key_font_choice = stringPreferencesKey("font_choice")
+    private val key_background_image = stringPreferencesKey("background_image")
 
     val theme_mode: StateFlow<ThemeMode> = app_context.theme_data_store.data
         .map { prefs -> parse_mode(prefs[key_theme_mode]) }
@@ -232,6 +233,11 @@ class ThemeStore(context: Context) {
         .map { prefs -> parse_overrides(prefs[key_custom_theme_overrides]) }
         .onEach { cache_string("custom_theme_overrides", Json.encodeToString(it)) }
         .stateIn(scope, SharingStarted.Eagerly, parse_overrides(cached_string("custom_theme_overrides", "")))
+
+    val background_image: StateFlow<String> = app_context.theme_data_store.data
+        .map { prefs -> prefs[key_background_image] ?: "none" }
+        .onEach { cache_string("background_image", it) }
+        .stateIn(scope, SharingStarted.Eagerly, cached_string("background_image", "none"))
 
     val font_choice: StateFlow<String> = app_context.theme_data_store.data
         .map { prefs -> prefs[key_font_choice] ?: "default" }
@@ -335,6 +341,10 @@ class ThemeStore(context: Context) {
                 it[key_custom_theme_overrides] = Json.encodeToString(overrides)
             }
         }
+    }
+
+    fun set_background_image(id: String) {
+        scope.launch { app_context.theme_data_store.edit { it[key_background_image] = id } }
     }
 
     fun set_font_choice(id: String) {

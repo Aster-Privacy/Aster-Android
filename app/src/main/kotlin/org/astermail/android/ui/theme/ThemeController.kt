@@ -65,6 +65,7 @@ class ThemeViewModel @Inject constructor(
     val custom_theme_seed: StateFlow<String> = theme_store.custom_theme_seed
     val custom_theme_overrides: StateFlow<Map<String, String>> = theme_store.custom_theme_overrides
     val font_choice: StateFlow<String> = theme_store.font_choice
+    val background_image: StateFlow<String> = theme_store.background_image
     val haptic_enabled: StateFlow<Boolean> = theme_store.haptic_enabled
 
     fun set_mode(mode: ThemeMode) = theme_store.set_theme_mode(mode)
@@ -91,7 +92,9 @@ class ThemeViewModel @Inject constructor(
     fun set_custom_theme_seed(hex: String) = theme_store.set_custom_theme_seed(hex)
     fun set_custom_theme_overrides(overrides: Map<String, String>) = theme_store.set_custom_theme_overrides(overrides)
     fun set_font_choice(id: String) = theme_store.set_font_choice(id)
+    fun set_background_image(id: String) = theme_store.set_background_image(id)
 }
 
 val local_text_scale = compositionLocalOf { 1.0f }
 val local_accessibility = compositionLocalOf { AccessibilityState() }
+val local_background_image = compositionLocalOf { "none" }

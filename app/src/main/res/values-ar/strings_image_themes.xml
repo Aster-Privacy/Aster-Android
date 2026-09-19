@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="image_themes">سمات الصور</string>
+    <string name="image_themes_subtitle">تعرض صورة خلف البريد الوارد.</string>
+    <string name="image_theme_none">بلا</string>
+    <string name="image_theme_starfield">حقل النجوم</string>
+    <string name="image_theme_nebula">سديم</string>
+    <string name="image_theme_aurora">الشفق القطبي</string>
+    <string name="image_theme_milky_way">درب التبانة</string>
+    <string name="image_theme_midnight">منتصف الليل</string>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="image_themes">Afbeeldingsthema\'s</string>
+    <string name="image_themes_subtitle">Toont een afbeelding achter je inbox.</string>
+    <string name="image_theme_none">Geen</string>
+    <string name="image_theme_starfield">Sterrenveld</string>
+    <string name="image_theme_nebula">Nevel</string>
+    <string name="image_theme_aurora">Poollicht</string>
+    <string name="image_theme_milky_way">Melkweg</string>
+    <string name="image_theme_midnight">Middernacht</string>
+</resources>

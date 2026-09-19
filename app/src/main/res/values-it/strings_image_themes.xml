@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="image_themes">Temi con immagine</string>
+    <string name="image_themes_subtitle">Mostra un\'immagine dietro la posta in arrivo.</string>
+    <string name="image_theme_none">Nessuno</string>
+    <string name="image_theme_starfield">Campo stellare</string>
+    <string name="image_theme_nebula">Nebulosa</string>
+    <string name="image_theme_aurora">Aurora</string>
+    <string name="image_theme_milky_way">Via Lattea</string>
+    <string name="image_theme_midnight">Mezzanotte</string>
+</resources>

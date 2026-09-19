@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="image_themes">Temas com imagem</string>
+    <string name="image_themes_subtitle">Mostra uma imagem atrás da sua caixa de entrada.</string>
+    <string name="image_theme_none">Nenhum</string>
+    <string name="image_theme_starfield">Campo estelar</string>
+    <string name="image_theme_nebula">Nebulosa</string>
+    <string name="image_theme_aurora">Aurora</string>
+    <string name="image_theme_milky_way">Via Láctea</string>
+    <string name="image_theme_midnight">Meia-noite</string>
+</resources>

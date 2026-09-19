@@ -47,6 +47,7 @@ import org.astermail.android.storage.ThemeMode
 import org.astermail.android.ui.theme.AccessibilityState
 import org.astermail.android.ui.theme.ThemeViewModel
 import org.astermail.android.ui.theme.local_accessibility
+import org.astermail.android.ui.theme.local_background_image
 import org.astermail.android.ui.theme.local_text_scale
 
 @Composable
@@ -66,6 +67,7 @@ fun aster_theme_root(content: @Composable () -> Unit) {
     val custom_theme_seed by theme_vm.custom_theme_seed.collectAsStateWithLifecycle()
     val custom_theme_overrides by theme_vm.custom_theme_overrides.collectAsStateWithLifecycle()
     val font_choice by theme_vm.font_choice.collectAsStateWithLifecycle()
+    val background_image by theme_vm.background_image.collectAsStateWithLifecycle()
     val app_context = LocalContext.current.applicationContext
     LaunchedEffect(mode_state, color_theme) {
         apply_app_night_mode(app_context, mode_state, color_theme)
@@ -125,6 +127,7 @@ fun aster_theme_root(content: @Composable () -> Unit) {
             LocalDensity provides scaled_density,
             local_text_scale provides text_size_state.scale,
             local_accessibility provides a11y,
+            local_background_image provides background_image,
             org.astermail.android.design.local_reduce_motion provides a11y.reduce_motion,
         ) {
             val colors = AsterMaterial.colors

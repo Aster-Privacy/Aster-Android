@@ -45,6 +45,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.ui.draw.clip
@@ -78,6 +79,10 @@ import org.astermail.android.design.ColorThemePalette
 import org.astermail.android.design.AsterColorThemes
 import org.astermail.android.design.MaterialThemeGenerator
 import org.astermail.android.design.FONT_OPTIONS
+import org.astermail.android.ui.theme.ThemeBackground
+import org.astermail.android.ui.theme.no_theme_background
+import org.astermail.android.ui.theme.theme_background_for
+import org.astermail.android.ui.theme.theme_backgrounds
 import org.astermail.android.design.preview_font_family_for
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.ui.mail.is_comfortable_density
@@ -187,6 +192,7 @@ fun AppearanceScreen(
     val custom_theme_seed by vm.custom_theme_seed.collectAsStateWithLifecycle()
     val custom_theme_overrides by vm.custom_theme_overrides.collectAsStateWithLifecycle()
     val font_choice by vm.font_choice.collectAsStateWithLifecycle()
+    val background_image by vm.background_image.collectAsStateWithLifecycle()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val plan_state by plan_vm.state.collectAsStateWithLifecycle()
     val prefs = settings_state.preferences
@@ -195,7 +201,8 @@ fun AppearanceScreen(
     val plan_limits = plan_state.limits
     val plan_loaded = plan_limits != null
     val is_paid_plan = plan_limits != null && plan_limits.plan_code != "free"
-    val custom_theme_locked = plan_loaded && !is_paid_plan
+    val custom_theme_unlocked = is_paid_plan || org.astermail.android.BuildConfig.DEBUG
+    val custom_theme_locked = plan_loaded && !custom_theme_unlocked
 
     var show_font_picker by remember { mutableStateOf(false) }
     var show_custom_theme_upgrade by remember { mutableStateOf(false) }
@@ -232,7 +239,7 @@ fun AppearanceScreen(
     }
 
     LaunchedEffect(plan_limits, color_theme) {
-        if (plan_limits == null || is_paid_plan) return@LaunchedEffect
+        if (plan_limits == null || custom_theme_unlocked) return@LaunchedEffect
         if (color_theme != ColorThemeId.custom) return@LaunchedEffect
         vm.set_color_theme(ColorThemeId.default.name)
         vm.set_custom_theme_overrides(emptyMap())
@@ -246,6 +253,7 @@ fun AppearanceScreen(
     fun apply(theme_mode: ThemeMode, theme_key: String) {
         val base = prefs ?: return
         remote_prefs_adopted = true
+        vm.set_background_image(no_theme_background)
         vm.set_mode(theme_mode)
         vm.set_color_theme(ColorThemeId.default.name)
         val next = with_theme_values(base, theme = theme_key, color_theme = ColorThemeId.default.name)
@@ -255,6 +263,7 @@ fun AppearanceScreen(
     fun apply_color_theme(id: ColorThemeId) {
         val base = prefs ?: return
         remote_prefs_adopted = true
+        vm.set_background_image(no_theme_background)
         vm.set_color_theme(id.name)
         val forced_dark = AsterColorThemes.is_dark_only(id)
         if (forced_dark) vm.set_mode(ThemeMode.dark)
@@ -263,6 +272,20 @@ fun AppearanceScreen(
             theme = if (forced_dark) "dark" else null,
             color_theme = id.name,
         )
+        if (next != base) settings_vm.save_preferences(next)
+    }
+
+    fun apply_image_theme(background: ThemeBackground?) {
+        if (background == null) {
+            vm.set_background_image(no_theme_background)
+            return
+        }
+        val base = prefs ?: return
+        remote_prefs_adopted = true
+        vm.set_color_theme(background.color_theme.name)
+        vm.set_mode(ThemeMode.dark)
+        vm.set_background_image(background.id)
+        val next = with_theme_values(base, theme = "dark", color_theme = background.color_theme.name)
         if (next != base) settings_vm.save_preferences(next)
     }
 
@@ -435,6 +458,39 @@ fun AppearanceScreen(
                                     }
                                 },
                                 modifier = Modifier.weight(1f).testTag("swatch_${id.name}"),
+                            )
+                        }
+                        repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                    }
+                }
+            }
+        }
+
+        v_gap(AsterSpacing.xxl)
+        section_label(stringResource(R.string.image_themes))
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(AsterSpacing.lg)) {
+                Text(
+                    text = stringResource(R.string.image_themes_subtitle),
+                    color = colors.text_tertiary,
+                    fontSize = 12.sp,
+                )
+                v_gap(AsterSpacing.md)
+                val active_background = theme_background_for(background_image)
+                (listOf<ThemeBackground?>(null) + theme_backgrounds).chunked(3).forEachIndexed { row_index, row ->
+                    if (row_index > 0) v_gap(AsterSpacing.lg)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+                    ) {
+                        row.forEach { background ->
+                            image_theme_tile(
+                                background = background,
+                                selected = active_background?.id == background?.id,
+                                on_click = { apply_image_theme(background) },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag("image_theme_${background?.id ?: no_theme_background}"),
                             )
                         }
                         repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
@@ -784,6 +840,79 @@ internal fun theme_swatch(
         Spacer(Modifier.height(8.dp))
         Text(
             text = label,
+            color = if (selected) colors.text_primary else colors.text_secondary,
+            fontSize = 12.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun image_theme_tile(
+    background: ThemeBackground?,
+    selected: Boolean,
+    on_click: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AsterMaterial.colors
+    val shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp)
+    Column(
+        modifier = modifier.clickable(onClick = on_click),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(0.62f)
+                .border(
+                    width = if (selected) 2.dp else 1.dp,
+                    color = if (selected) colors.accent_blue else colors.border_primary,
+                    shape = shape,
+                )
+                .padding(if (selected) 4.dp else 0.dp)
+                .clip(if (selected) androidx.compose.foundation.shape.RoundedCornerShape(10.dp) else shape)
+                .background(colors.bg_secondary),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (background != null) {
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(background.drawable_res),
+                    contentDescription = null,
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                Icon(
+                    imageVector = TablerIcons.Ban,
+                    contentDescription = null,
+                    tint = colors.text_tertiary,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+            if (selected) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(6.dp)
+                        .size(22.dp)
+                        .background(colors.accent_blue, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = TablerIcons.Check,
+                        contentDescription = null,
+                        tint = colors.on_accent,
+                        modifier = Modifier.size(13.dp),
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(background?.label_res ?: R.string.image_theme_none),
             color = if (selected) colors.text_primary else colors.text_secondary,
             fontSize = 12.sp,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,

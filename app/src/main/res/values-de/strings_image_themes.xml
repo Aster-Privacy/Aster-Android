@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="image_themes">Bildthemen</string>
+    <string name="image_themes_subtitle">Zeigt ein Bild hinter deinem Posteingang.</string>
+    <string name="image_theme_none">Keins</string>
+    <string name="image_theme_starfield">Sternenfeld</string>
+    <string name="image_theme_nebula">Nebel</string>
+    <string name="image_theme_aurora">Polarlicht</string>
+    <string name="image_theme_milky_way">Milchstraße</string>
+    <string name="image_theme_midnight">Mitternacht</string>
+</resources>

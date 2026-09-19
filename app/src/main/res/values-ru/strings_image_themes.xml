@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="image_themes">Темы с изображением</string>
+    <string name="image_themes_subtitle">Показывает изображение за папкой «Входящие».</string>
+    <string name="image_theme_none">Нет</string>
+    <string name="image_theme_starfield">Звёздное поле</string>
+    <string name="image_theme_nebula">Туманность</string>
+    <string name="image_theme_aurora">Северное сияние</string>
+    <string name="image_theme_milky_way">Млечный Путь</string>
+    <string name="image_theme_midnight">Полночь</string>
+</resources>
