@@ -71,7 +71,6 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_state

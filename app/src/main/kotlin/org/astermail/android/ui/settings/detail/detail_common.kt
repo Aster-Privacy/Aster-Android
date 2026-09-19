@@ -86,7 +86,6 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.design.mirror_in_rtl
 

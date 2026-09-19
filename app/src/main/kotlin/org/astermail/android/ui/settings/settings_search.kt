@@ -101,7 +101,6 @@ import org.astermail.android.design.AsterScale
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.aster_reduce_motion
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.ui.mail.search_field_bg_color
 
