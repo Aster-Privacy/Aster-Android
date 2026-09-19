@@ -93,18 +93,7 @@ fun UpgradeGate(
             modifier = Modifier.padding(horizontal = AsterSpacing.md),
         )
         Spacer(Modifier.height(AsterSpacing.md))
-        Box(
-            modifier = Modifier
-                .background(colors.accent_blue.copy(alpha = 0.12f), SquircleShape(8.dp))
-                .padding(horizontal = AsterSpacing.sm, vertical = 4.dp),
-        ) {
-            Text(
-                text = requires_label,
-                color = colors.accent_blue,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
+        AsterPlanTag(text = requires_label, icon = TablerIcons.Lock)
         Spacer(Modifier.height(AsterSpacing.lg))
         AsterButton(
             label = button_label,

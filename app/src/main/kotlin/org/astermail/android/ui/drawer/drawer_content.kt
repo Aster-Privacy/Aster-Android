@@ -1851,25 +1851,11 @@ private fun plan_badge_res(plan_code: String?): Int? = when (plan_code?.trim()?.
 @Composable
 private fun profile_menu_plan_badge(plan_code: String?) {
     val res = plan_badge_res(plan_code) ?: return
-    val accent = AsterMaterial.colors.accent_blue
-    val brush = remember(accent) {
-        androidx.compose.ui.graphics.Brush.verticalGradient(
-            listOf(
-                androidx.compose.ui.graphics.lerp(accent, Color.Black, 0.04f),
-                androidx.compose.ui.graphics.lerp(accent, Color(0xFF05070F), 0.26f),
-            ),
-        )
-    }
-    Text(
+    org.astermail.android.design.components.AsterPlanTag(
         text = stringResource(res),
-        color = Color.White,
-        fontSize = 11.sp,
-        fontWeight = FontWeight.SemiBold,
-        maxLines = 1,
-        modifier = Modifier
-            .clip(RoundedCornerShape(999.dp))
-            .background(brush)
-            .padding(horizontal = 8.dp, vertical = 2.dp),
+        font_size = 11.sp,
+        horizontal_padding = 7.dp,
+        vertical_padding = 2.dp,
     )
 }
 

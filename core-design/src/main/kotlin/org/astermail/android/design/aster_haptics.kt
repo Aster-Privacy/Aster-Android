@@ -18,6 +18,7 @@ package org.astermail.android.design
 
 import android.os.Build
 import android.view.HapticFeedbackConstants
+import android.view.SoundEffectConstants
 import android.view.View
 import androidx.compose.foundation.IndicationNodeFactory
 import androidx.compose.foundation.interaction.InteractionSource
@@ -64,6 +65,11 @@ fun View.aster_perform_haptic(kind: aster_haptic) {
     performHapticFeedback(aster_haptic_constant(kind))
 }
 
+fun View.aster_tap_feedback(kind: aster_haptic = aster_haptic.tap) {
+    playSoundEffect(SoundEffectConstants.CLICK)
+    aster_perform_haptic(kind)
+}
+
 @Stable
 private class aster_haptic_indication(
     private val inner: IndicationNodeFactory,
@@ -89,7 +95,7 @@ private class aster_haptic_indication_node(
         coroutineScope.launch {
             interaction_source.interactions.collect { interaction ->
                 if (interaction is PressInteraction.Release) {
-                    currentValueOf(LocalView).aster_perform_haptic(aster_haptic.tap)
+                    currentValueOf(LocalView).aster_tap_feedback()
                 }
             }
         }
@@ -110,7 +116,7 @@ fun aster_tap_haptics(interaction_source: InteractionSource, kind: aster_haptic 
     val view = LocalView.current
     LaunchedEffect(interaction_source, kind) {
         interaction_source.interactions.collect { interaction ->
-            if (interaction is PressInteraction.Release) view.aster_perform_haptic(kind)
+            if (interaction is PressInteraction.Release) view.aster_tap_feedback(kind)
         }
     }
 }
