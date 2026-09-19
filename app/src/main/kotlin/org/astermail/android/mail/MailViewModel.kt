@@ -708,7 +708,9 @@ class MailViewModel @Inject constructor(
             silent_revalidate_job?.cancel()
             val warm = cached.copy(
                 items = apply_demo_overlay(
-                    apply_pin_overrides(apply_star_overrides(apply_read_overrides(cached.items))),
+                    apply_pin_overrides(
+                        apply_star_overrides(apply_read_overrides(strip_removed(cached.items, folder))),
+                    ),
                     folder,
                 ),
                 is_loading = false,
@@ -749,8 +751,10 @@ class MailViewModel @Inject constructor(
                 }
                 if (persisted.size >= WARM_CACHE_MIN_ITEMS && _inbox_state.value.current_folder == folder) {
                     run {
-                        val items = persisted.map { it.to_inbox_item() }
-                            .filter { folder_matches(folder, it) }
+                        val items = strip_removed(
+                            persisted.map { it.to_inbox_item() }.filter { folder_matches(folder, it) },
+                            folder,
+                        )
                         if (items.size >= WARM_CACHE_MIN_ITEMS) {
                             val warmed_at = System.currentTimeMillis()
                             items.forEach { item_last_confirmed.putIfAbsent(it.id, warmed_at) }
@@ -982,7 +986,10 @@ class MailViewModel @Inject constructor(
                 page.items.forEach { item_last_confirmed[it.id] = confirmed_at }
                 val existing = _inbox_state.value.items
                 val existing_ids = existing.map { it.id }.toHashSet()
-                val new_items = page.items.filter { it.id !in existing_ids }
+                val new_items = strip_removed(
+                    page.items.filter { it.id !in existing_ids },
+                    started_folder,
+                )
                 val cursor_advanced = page.next_cursor != null && page.next_cursor != cursor
                 pages_scanned++
                 if (new_items.isEmpty() && page.has_more && cursor_advanced && pages_scanned < 20) {
@@ -3106,6 +3113,12 @@ class MailViewModel @Inject constructor(
         return true
     }
 
+    private fun strip_removed(items: List<InboxItem>, folder: String): List<InboxItem> {
+        if (pending_removed_ids.isEmpty() && removed_protected_until.isEmpty()) return items
+        val now = System.currentTimeMillis()
+        return items.filter { !removal_suppressed(it.id, folder, now) }
+    }
+
     private fun restore_protected(item_id: String, now: Long): Boolean {
         val until = restore_protected_until[item_id] ?: return false
         if (now > until) {
@@ -3271,6 +3284,7 @@ class MailViewModel @Inject constructor(
         )
         val search_removed = remove_search_items(listOf(item_id))
         pending_removed_ids.add(item_id)
+        protect_removed(listOf(item_id))
         viewModelScope.launch {
             try {
                 repository.delete_permanent(item_id).fold(
