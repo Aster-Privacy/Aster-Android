@@ -33,6 +33,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.astermail.android.R
 import org.astermail.android.auth.AuthRepository
+import org.astermail.android.mail.LockedSentMailStore
+import org.astermail.android.storage.SessionKeyStore
 
 data class ChangePasswordUiState(
     val current_password: String = "",
@@ -50,6 +52,8 @@ data class ChangePasswordUiState(
 @HiltViewModel
 class ChangePasswordViewModel @Inject constructor(
     private val auth_repository: AuthRepository,
+    private val session_key_store: SessionKeyStore,
+    private val locked_sent_mail_store: LockedSentMailStore,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -109,6 +113,7 @@ class ChangePasswordViewModel @Inject constructor(
         viewModelScope.launch {
             val result = auth_repository.change_password(s.current_password, s.new_password)
             result.onSuccess { summary ->
+                session_key_store.get_user_id()?.let { locked_sent_mail_store.write(it, summary.unreadable) }
                 val notice = when {
                     summary.failed > 0 -> context.getString(R.string.password_change_background_reencrypt_failed)
                     summary.unreadable > 0 -> context.resources.getQuantityString(

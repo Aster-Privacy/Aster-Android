@@ -165,6 +165,7 @@ data class UserPreferences(
     val mail_list_density: String = "compact",
     val compose_font_size: String = "normal",
     val compose_font_color: String = "",
+    val locked_data_banner_dismissed: String = "",
 )
 
 @Serializable

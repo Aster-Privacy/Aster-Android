@@ -38,6 +38,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
 import kotlinx.serialization.json.Json
@@ -106,10 +107,12 @@ class ConversionKeys(
     val previous_keys: List<String>,
     val passphrase_bytes: ByteArray,
     val passphrase: CharArray,
+    val fallback_passphrases: List<ByteArray> = emptyList(),
 ) {
     fun zero() {
         passphrase_bytes.fill(0)
         passphrase.fill('\u0000')
+        fallback_passphrases.forEach { it.fill(0) }
     }
 }
 
@@ -120,6 +123,7 @@ class AccountDataConversion internal constructor(
     private val preferences_api: PreferencesApi,
     private val session_key_store: SessionKeyStore,
     private val scan_store: AccountDataConversionScanStore,
+    private val locked_counts: LockedSentMailCounts = NoLockedSentMailCounts,
     private val now_ms: () -> Long,
 ) {
     @Inject
@@ -128,6 +132,7 @@ class AccountDataConversion internal constructor(
         keys_api: KeysApi,
         preferences_api: PreferencesApi,
         session_key_store: SessionKeyStore,
+        locked_sent_mail_store: LockedSentMailStore,
         @ApplicationContext context: Context,
     ) : this(
         mail_api,
@@ -135,6 +140,7 @@ class AccountDataConversion internal constructor(
         preferences_api,
         session_key_store,
         SharedPreferencesConversionScanStore(context),
+        locked_sent_mail_store,
         System::currentTimeMillis,
     )
 
@@ -181,6 +187,7 @@ class AccountDataConversion internal constructor(
         try {
             if (status.preferences_done_at == null) convert_preferences(keys, capabilities.format_writes)
             if (status.remaining_sent == 0L && status.remaining_attachments == 0L) {
+                locked_counts.write(account_id, 0)
                 if (status.sent_mail_done_at == null) {
                     keys_api.report_account_data_conversion(ConversionProgressRequest(sent_mail_done = true))
                 }
@@ -190,6 +197,45 @@ class AccountDataConversion internal constructor(
             val (summary, complete) = convert_sent_mail(status, keys)
             if (!complete) return summary
             scan_store.write_last_scan(account_id, now_ms())
+            locked_counts.write(account_id, summary.unreadable)
+            if (summary.failed == 0 && summary.unreadable == 0) {
+                keys_api.report_account_data_conversion(ConversionProgressRequest(sent_mail_done = true))
+            }
+            return summary
+        } finally {
+            keys.zero()
+        }
+    }
+
+    suspend fun recover_sent_mail_with_password(
+        account_id: String,
+        password: String,
+    ): AccountDataConversionSummary? {
+        if (account_id.isEmpty() || password.isEmpty()) return null
+        return lock.withLock { recover_locked(account_id, password) }
+    }
+
+    private suspend fun recover_locked(account_id: String, password: String): AccountDataConversionSummary? {
+        val capabilities = keys_api.get_account_key_capabilities()
+        if (!capabilities.data_conversion) return null
+        val status = keys_api.get_account_data_conversion() ?: return null
+        if (!has_remaining(status)) {
+            locked_counts.write(account_id, 0)
+            return AccountDataConversionSummary()
+        }
+        val captured = capture_keys(account_id) ?: return null
+        val keys = ConversionKeys(
+            account_id = captured.account_id,
+            identity_key = captured.identity_key,
+            previous_keys = captured.previous_keys,
+            passphrase_bytes = captured.passphrase_bytes,
+            passphrase = captured.passphrase,
+            fallback_passphrases = listOf(password.toByteArray(Charsets.UTF_8)),
+        )
+        try {
+            val (summary, complete) = convert_sent_mail(status, keys)
+            if (!complete) return summary
+            locked_counts.write(account_id, summary.unreadable)
             if (summary.failed == 0 && summary.unreadable == 0) {
                 keys_api.report_account_data_conversion(ConversionProgressRequest(sent_mail_done = true))
             }
@@ -511,18 +557,33 @@ class AccountDataConversion internal constructor(
         val salt = data.copyOfRange(0, SALT_LENGTH)
         val nonce = data.copyOfRange(SALT_LENGTH, SALT_LENGTH + NONCE_LENGTH)
         val ciphertext = data.copyOfRange(SALT_LENGTH + NONCE_LENGTH, data.size)
-        val key = PasswordKdf.derive_aes_key(keys.passphrase_bytes, salt, PBKDF2_ITERATIONS)
-        val primary = try {
-            runCatching { AesGcm.decrypt(key, nonce, ciphertext) }.getOrNull()
-        } finally {
-            key.fill(0)
-        }
-        val opened = primary ?: decrypt_with_keks(nonce, ciphertext) ?: return null
+        val opened = open_with_passphrases(salt, nonce, ciphertext, keys)
+            ?: decrypt_with_keks(nonce, ciphertext)
+            ?: return null
         return try {
             strict_utf8(opened)
         } finally {
             opened.fill(0)
         }
+    }
+
+    private fun open_with_passphrases(
+        salt: ByteArray,
+        nonce: ByteArray,
+        ciphertext: ByteArray,
+        keys: ConversionKeys,
+    ): ByteArray? {
+        for (passphrase in listOf(keys.passphrase_bytes) + keys.fallback_passphrases) {
+            if (passphrase.isEmpty()) continue
+            val key = PasswordKdf.derive_aes_key(passphrase, salt, PBKDF2_ITERATIONS)
+            try {
+                val opened = runCatching { AesGcm.decrypt(key, nonce, ciphertext) }.getOrNull()
+                if (opened != null) return opened
+            } finally {
+                key.fill(0)
+            }
+        }
+        return null
     }
 
     private fun decrypt_with_keks(nonce: ByteArray, ciphertext: ByteArray): ByteArray? {
