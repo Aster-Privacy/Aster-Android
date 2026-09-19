@@ -104,9 +104,8 @@ internal fun inbox_preview_or_order_line(
     if (hint == null) {
         Text(
             text = preview_text,
-            style = MaterialTheme.typography.bodySmall,
+            style = inbox_preview_text_style(),
             color = preview_color,
-            fontSize = 14.sp,
             fontWeight = FontWeight.Normal,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

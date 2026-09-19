@@ -88,6 +88,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -385,7 +386,7 @@ private fun star_button(
         val star_interaction = remember { MutableInteractionSource() }
         Box(
             modifier = modifier
-                .size(32.dp)
+                .size(inbox_star_slot_size)
                 .wrapContentSize(unbounded = true),
             contentAlignment = Alignment.Center,
         ) {
@@ -569,9 +570,8 @@ fun ThreadInboxRow(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = participants_text,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = inbox_sender_text_style(),
                     color = sender_color,
-                    fontSize = 16.sp,
                     fontWeight = if (is_unread) FontWeight.Bold else FontWeight.Normal,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -600,9 +600,8 @@ fun ThreadInboxRow(
                 }
                 Text(
                     text = relative_time,
-                    style = MaterialTheme.typography.labelSmall,
+                    style = inbox_time_text_style(),
                     color = if (is_unread) colors.text_primary else colors.text_muted,
-                    fontSize = 13.sp,
                     fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
                     modifier = Modifier.padding(start = if (thread.has_attachment) 4.dp else AsterSpacing.sm),
                 )
@@ -652,9 +651,8 @@ fun ThreadInboxRow(
                 ) {
                     Text(
                         text = subject_text,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = inbox_subject_text_style(),
                         color = subject_color,
-                        fontSize = 15.sp,
                         fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -737,6 +735,24 @@ fun ThreadInboxRow(
     }
     }
 }
+
+@Composable
+internal fun inbox_sender_text_style(): TextStyle =
+    MaterialTheme.typography.bodyLarge.merge(TextStyle(fontSize = 16.sp))
+
+@Composable
+internal fun inbox_time_text_style(): TextStyle =
+    MaterialTheme.typography.labelSmall.merge(TextStyle(fontSize = 13.sp))
+
+@Composable
+internal fun inbox_subject_text_style(): TextStyle =
+    MaterialTheme.typography.bodyMedium.merge(TextStyle(fontSize = 15.sp))
+
+@Composable
+internal fun inbox_preview_text_style(): TextStyle =
+    MaterialTheme.typography.bodySmall.merge(TextStyle(fontSize = 14.sp))
+
+internal val inbox_star_slot_size = 32.dp
 
 internal data class InboxRowMetrics(
     val min_height: androidx.compose.ui.unit.Dp,
