@@ -3933,8 +3933,7 @@ class SettingsViewModel @Inject constructor(
                     encrypted_blob_b64 = result.encrypted_private_key_blob,
                     nonce_b64 = result.private_key_nonce,
                 )
-            } ?: result.private_key_encrypted?.ifBlank { null }
-                ?.takeIf { it.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY") }
+            }
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
             null
