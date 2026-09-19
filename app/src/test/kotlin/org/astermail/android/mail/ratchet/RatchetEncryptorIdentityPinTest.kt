@@ -30,6 +30,21 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.test.runTest
 import org.astermail.android.api.keys.KeysApi
+import org.astermail.android.api.keys.PublicKeyResponse
+import org.bouncycastle.bcpg.ArmoredOutputStream
+import org.bouncycastle.bcpg.HashAlgorithmTags
+import org.bouncycastle.bcpg.PublicKeyAlgorithmTags
+import org.bouncycastle.bcpg.SymmetricKeyAlgorithmTags
+import org.bouncycastle.bcpg.sig.KeyFlags
+import org.bouncycastle.crypto.generators.Ed25519KeyPairGenerator
+import org.bouncycastle.crypto.params.Ed25519KeyGenerationParameters
+import org.bouncycastle.openpgp.PGPSecretKey
+import org.bouncycastle.openpgp.PGPSignature
+import org.bouncycastle.openpgp.PGPSignatureSubpacketGenerator
+import org.bouncycastle.openpgp.operator.bc.BcPBESecretKeyEncryptorBuilder
+import org.bouncycastle.openpgp.operator.bc.BcPGPContentSignerBuilder
+import org.bouncycastle.openpgp.operator.bc.BcPGPDigestCalculatorProvider
+import org.bouncycastle.openpgp.operator.bc.BcPGPKeyPair
 import org.astermail.android.api.ratchet.PrekeyBundleResponse
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.crypto.ratchet.RatchetCrypto
@@ -188,5 +203,116 @@ class RatchetEncryptorIdentityPinTest {
 
         assertNotNull(envelope)
         coVerify(exactly = 0) { identity_pins.flag_identity_change(any(), any(), any(), any()) }
+    }
+
+    private val pgp_passphrase = "prekey-binding-fixture"
+
+    private fun generate_pgp_key(): PGPSecretKey {
+        val generator = Ed25519KeyPairGenerator()
+        generator.init(Ed25519KeyGenerationParameters(java.security.SecureRandom()))
+        val key_pair = BcPGPKeyPair(
+            PublicKeyAlgorithmTags.EDDSA_LEGACY,
+            generator.generateKeyPair(),
+            java.util.Date(),
+        )
+        val digests = BcPGPDigestCalculatorProvider()
+        val subpackets = PGPSignatureSubpacketGenerator()
+        subpackets.setKeyFlags(false, KeyFlags.CERTIFY_OTHER or KeyFlags.SIGN_DATA)
+        return PGPSecretKey(
+            PGPSignature.DEFAULT_CERTIFICATION,
+            key_pair,
+            "Fixture <fixture@astermail.org>",
+            digests.get(HashAlgorithmTags.SHA1),
+            subpackets.generate(),
+            null,
+            BcPGPContentSignerBuilder(key_pair.publicKey.algorithm, HashAlgorithmTags.SHA256),
+            BcPBESecretKeyEncryptorBuilder(SymmetricKeyAlgorithmTags.AES_256, digests.get(HashAlgorithmTags.SHA256))
+                .build(pgp_passphrase.toCharArray()),
+        )
+    }
+
+    private fun armor(write: (ArmoredOutputStream) -> Unit): String {
+        val out = java.io.ByteArrayOutputStream()
+        ArmoredOutputStream(out).use(write)
+        return out.toString(Charsets.UTF_8.name())
+    }
+
+    private fun sign_binding(key: PGPSecretKey, ik: String, spk: String): String {
+        val armored = PrekeyBindingSigner.sign_cleartext(
+            armored_secret_key = armor { key.encode(it) },
+            passphrase = pgp_passphrase.toCharArray(),
+            text = PrekeyBindingSigner.canonical_binding(ik, spk),
+        )
+        return java.util.Base64.getEncoder().encodeToString(armored.toByteArray(Charsets.UTF_8))
+    }
+
+    private fun public_armor(key: PGPSecretKey): String = armor { key.publicKey.encode(it) }
+
+    private fun serve_bundle(signature: String) {
+        bundle = bundle.copy(signed_prekey_signature = signature)
+        coEvery { ratchet_api.fetch_prekey_bundle(any(), any()) } returns bundle
+        every { identity_pins.evaluate(conversation_id, recipient_identity_b64) } returns
+            IdentityPinOutcome.UNCHANGED
+    }
+
+    private suspend fun send(): Result<String?> = runCatching {
+        new_encryptor().encrypt_envelope(
+            sender_email,
+            listOf(recipient_email),
+            "hello",
+            allow_non_post_quantum = true,
+        )
+    }
+
+    @Test
+    fun `valid prekey signature is verified and sent`() = runTest {
+        val key = generate_pgp_key()
+        serve_bundle(sign_binding(key, bundle.kem_identity_key, bundle.signed_prekey))
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
+            PublicKeyResponse("kchaos", public_armor(key))
+
+        assertNotNull(send().getOrThrow())
+        coVerify(exactly = 1) { identity_pins.record_prekey_binding_verified(recipient_email) }
+    }
+
+    @Test
+    fun `prekey signature over a different signed prekey blocks the send`() = runTest {
+        val key = generate_pgp_key()
+        val other_spk = RatchetCrypto.b64_encode(RatchetCrypto.generate_p256_keypair().public_raw)
+        serve_bundle(sign_binding(key, bundle.kem_identity_key, other_spk))
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
+            PublicKeyResponse("kchaos", public_armor(key))
+
+        val thrown = send().exceptionOrNull()
+        assertTrue(thrown is RatchetEncryptionException)
+        coVerify(exactly = 0) { state_store.save(any()) }
+    }
+
+    @Test
+    fun `signed bundle is still sent when the owner key cannot be fetched`() = runTest {
+        val key = generate_pgp_key()
+        serve_bundle(sign_binding(key, bundle.kem_identity_key, bundle.signed_prekey))
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } throws RuntimeException("offline")
+
+        assertNotNull(send().getOrThrow())
+    }
+
+    @Test
+    fun `signature from a key the recipient does not publish is still sent`() = runTest {
+        val signer = generate_pgp_key()
+        val published = generate_pgp_key()
+        serve_bundle(sign_binding(signer, bundle.kem_identity_key, bundle.signed_prekey))
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
+            PublicKeyResponse("kchaos", public_armor(published))
+
+        assertNotNull(send().getOrThrow())
+    }
+
+    @Test
+    fun `unsigned bundle is still sent after a verified one was seen`() = runTest {
+        serve_bundle("")
+        every { identity_pins.is_prekey_binding_verified(any()) } returns true
+
+        assertNotNull(send().getOrThrow())
     }
 }

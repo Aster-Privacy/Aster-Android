@@ -172,41 +172,37 @@ class RatchetEncryptor @Inject constructor(
         bundle: PrekeyBundleResponse,
     ) {
         val signature = bundle.signed_prekey_signature
-        val signed = signature.isNotBlank() && PrekeyBindingVerifier.is_pgp_signature(signature)
-        if (!signed) {
-            if (identity_pins.is_prekey_binding_verified(recipient_email)) {
-                throw RatchetEncryptionException(
-                    recipient_email,
-                    "recipient prekey bundle lost its signature after a verified one was seen",
-                )
-            }
+        if (!PrekeyBindingVerifier.is_pgp_signature(signature)) {
             if (BuildConfig.DEBUG) {
                 android.util.Log.w("AsterRatchet", "prekey bundle carries a legacy unsigned binding")
             }
             return
         }
 
-        val verifying_key = fetch_verifying_key(username, recipient_email)
-            ?: throw RatchetEncryptionException(
-                recipient_email,
-                "cannot verify the recipient prekey signature without their public key",
-            )
+        val verifying_key = fetch_verifying_key(username, recipient_email) ?: return
 
         val result = PrekeyBindingVerifier.verify(
             signature_block = signature,
             recipient_public_key_armored = verifying_key,
             kem_identity_key_b64 = bundle.kem_identity_key,
             signed_prekey_b64 = bundle.signed_prekey,
+            pq_identity_key_b64 = bundle.pq_kem_public_key,
         )
-        if (result == PrekeyBindingResult.INVALID) {
-            verifying_key_cache.remove(recipient_email.lowercase(java.util.Locale.ROOT))
-            throw RatchetEncryptionException(
-                recipient_email,
-                "recipient prekey signature did not verify",
-            )
-        }
-        if (result == PrekeyBindingResult.VERIFIED) {
-            runCatching { identity_pins.record_prekey_binding_verified(recipient_email) }
+        when (result) {
+            PrekeyBindingResult.INVALID -> {
+                verifying_key_cache.remove(recipient_email.lowercase(java.util.Locale.ROOT))
+                throw RatchetEncryptionException(
+                    recipient_email,
+                    "recipient prekey signature did not verify",
+                )
+            }
+            PrekeyBindingResult.VERIFIED ->
+                runCatching { identity_pins.record_prekey_binding_verified(recipient_email) }
+            PrekeyBindingResult.UNSIGNED_LEGACY, PrekeyBindingResult.UNVERIFIABLE -> {
+                if (BuildConfig.DEBUG) {
+                    android.util.Log.w("AsterRatchet", "prekey bundle signature could not be checked: $result")
+                }
+            }
         }
     }
 

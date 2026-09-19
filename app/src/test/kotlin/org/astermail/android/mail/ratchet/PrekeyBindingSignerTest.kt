@@ -86,6 +86,19 @@ class PrekeyBindingSignerTest {
         assertEquals(text, signed_text)
 
         write_interop_vector(secret_key, text, armored)
+
+        val public_out = ByteArrayOutputStream()
+        ArmoredOutputStream(public_out).use { secret_key.publicKey.encode(it) }
+        val wrapped = java.util.Base64.getEncoder().encodeToString(armored.toByteArray(Charsets.UTF_8))
+        assertEquals(
+            PrekeyBindingResult.VERIFIED,
+            PrekeyBindingVerifier.verify(
+                wrapped,
+                public_out.toString(Charsets.UTF_8.name()),
+                kem_b64,
+                spk_b64,
+            ),
+        )
     }
 
     @Test
