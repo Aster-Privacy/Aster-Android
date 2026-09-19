@@ -3,13 +3,13 @@
     <string name="image_themes">Temas con imagen</string>
     <string name="image_themes_subtitle">Muestra una foto detrás de la app.</string>
     <string name="image_theme_none">Ninguno</string>
-    <string name="image_theme_pillars">Pilares</string>
-    <string name="image_theme_cosmic_cliffs">Acantilados cósmicos</string>
-    <string name="image_theme_horsehead">Cabeza de Caballo</string>
-    <string name="image_theme_tarantula">Tarántula</string>
-    <string name="image_theme_rho_ophiuchi">Rho Ophiuchi</string>
-    <string name="image_theme_deep_field">Campo profundo</string>
+    <string name="image_theme_matterhorn">Cervino</string>
+    <string name="image_theme_aurora">Aurora</string>
+    <string name="image_theme_fjord">Fiordo</string>
+    <string name="image_theme_desert">Desierto</string>
+    <string name="image_theme_milky_way">Vía Láctea</string>
+    <string name="image_theme_forest">Bosque</string>
     <string name="image_theme_apply">Usar tema</string>
     <string name="image_theme_in_use">En uso</string>
-    <string name="image_theme_credit">Imagen: NASA, ESA, CSA, STScI</string>
+    <string name="image_theme_credit">Foto: %1$s</string>
 </resources>

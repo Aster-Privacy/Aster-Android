@@ -3,13 +3,13 @@
     <string name="image_themes">Thèmes illustrés</string>
     <string name="image_themes_subtitle">Affiche une photo derrière l’app.</string>
     <string name="image_theme_none">Aucun</string>
-    <string name="image_theme_pillars">Piliers</string>
-    <string name="image_theme_cosmic_cliffs">Falaises cosmiques</string>
-    <string name="image_theme_horsehead">Tête de Cheval</string>
-    <string name="image_theme_tarantula">Tarentule</string>
-    <string name="image_theme_rho_ophiuchi">Rho Ophiuchi</string>
-    <string name="image_theme_deep_field">Champ profond</string>
+    <string name="image_theme_matterhorn">Cervin</string>
+    <string name="image_theme_aurora">Aurore</string>
+    <string name="image_theme_fjord">Fjord</string>
+    <string name="image_theme_desert">Désert</string>
+    <string name="image_theme_milky_way">Voie lactée</string>
+    <string name="image_theme_forest">Forêt</string>
     <string name="image_theme_apply">Utiliser le thème</string>
     <string name="image_theme_in_use">Utilisé</string>
-    <string name="image_theme_credit">Image : NASA, ESA, CSA, STScI</string>
+    <string name="image_theme_credit">Photo : %1$s</string>
 </resources>

@@ -3,13 +3,13 @@
     <string name="image_themes">سمات الصور</string>
     <string name="image_themes_subtitle">تعرض صورة خلف التطبيق.</string>
     <string name="image_theme_none">بلا</string>
-    <string name="image_theme_pillars">الأعمدة</string>
-    <string name="image_theme_cosmic_cliffs">المنحدرات الكونية</string>
-    <string name="image_theme_horsehead">رأس الحصان</string>
-    <string name="image_theme_tarantula">الرتيلاء</string>
-    <string name="image_theme_rho_ophiuchi">رو الحواء</string>
-    <string name="image_theme_deep_field">الحقل العميق</string>
+    <string name="image_theme_matterhorn">ماترهورن</string>
+    <string name="image_theme_aurora">الشفق القطبي</string>
+    <string name="image_theme_fjord">المضيق البحري</string>
+    <string name="image_theme_desert">الصحراء</string>
+    <string name="image_theme_milky_way">درب التبانة</string>
+    <string name="image_theme_forest">الغابة</string>
     <string name="image_theme_apply">استخدام السمة</string>
     <string name="image_theme_in_use">قيد الاستخدام</string>
-    <string name="image_theme_credit">الصورة: NASA, ESA, CSA, STScI</string>
+    <string name="image_theme_credit">الصورة: %1$s</string>
 </resources>

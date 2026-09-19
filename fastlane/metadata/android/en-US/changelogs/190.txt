@@ -1,7 +1,7 @@
 What's new and fixed:
 
 - Recovery codes replace the recovery key
-- Free dark space image themes
+- Free night photo themes
 - A redesigned domain purchase flow
 - A new account menu with your storage and a Sign out of all accounts option
 - A Settings button at the top of the inbox

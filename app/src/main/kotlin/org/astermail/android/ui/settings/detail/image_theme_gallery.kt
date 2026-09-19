@@ -191,7 +191,7 @@ fun image_theme_gallery(
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = stringResource(R.string.image_theme_credit),
+                            text = stringResource(R.string.image_theme_credit, shown.credit),
                             color = Color.White.copy(alpha = 0.55f),
                             fontSize = 12.sp,
                         )

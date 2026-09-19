@@ -52,17 +52,18 @@ data class ThemeBackground(
     val label_res: Int,
     val color_theme: ColorThemeId,
     val tint: Color,
+    val credit: String,
 )
 
 const val no_theme_background = "none"
 
 val theme_backgrounds = listOf(
-    ThemeBackground("pillars", R.drawable.theme_bg_pillars, R.string.image_theme_pillars, ColorThemeId.amber, Color(0xFF0C181B)),
-    ThemeBackground("cosmic_cliffs", R.drawable.theme_bg_cosmic_cliffs, R.string.image_theme_cosmic_cliffs, ColorThemeId.aster_blue, Color(0xFF0B1224)),
-    ThemeBackground("horsehead", R.drawable.theme_bg_horsehead, R.string.image_theme_horsehead, ColorThemeId.rose, Color(0xFF170C10)),
-    ThemeBackground("tarantula", R.drawable.theme_bg_tarantula, R.string.image_theme_tarantula, ColorThemeId.orange, Color(0xFF18100C)),
-    ThemeBackground("rho_ophiuchi", R.drawable.theme_bg_rho_ophiuchi, R.string.image_theme_rho_ophiuchi, ColorThemeId.purple, Color(0xFF120F24)),
-    ThemeBackground("deep_field", R.drawable.theme_bg_deep_field, R.string.image_theme_deep_field, ColorThemeId.slate, Color(0xFF0D0D12)),
+    ThemeBackground("matterhorn", R.drawable.theme_bg_matterhorn, R.string.image_theme_matterhorn, ColorThemeId.teal, Color(0xFF081A20), "Giles Laurent, CC BY-SA 4.0"),
+    ThemeBackground("aurora", R.drawable.theme_bg_aurora, R.string.image_theme_aurora, ColorThemeId.emerald, Color(0xFF081A18), "Giles Laurent, CC BY-SA 4.0"),
+    ThemeBackground("fjord", R.drawable.theme_bg_fjord, R.string.image_theme_fjord, ColorThemeId.aster_blue, Color(0xFF0A1428), "W.carter, CC0"),
+    ThemeBackground("desert", R.drawable.theme_bg_desert, R.string.image_theme_desert, ColorThemeId.amber, Color(0xFF120F1C), "Sergey Pesterev, CC BY-SA 4.0"),
+    ThemeBackground("milky_way", R.drawable.theme_bg_milky_way, R.string.image_theme_milky_way, ColorThemeId.indigo, Color(0xFF10121E), "Anil Öztas, CC BY 4.0"),
+    ThemeBackground("forest", R.drawable.theme_bg_forest, R.string.image_theme_forest, ColorThemeId.green, Color(0xFF0C1414), "Giles Laurent, CC BY-SA 4.0"),
 )
 
 fun theme_background_for(id: String?): ThemeBackground? = theme_backgrounds.firstOrNull { it.id == id }

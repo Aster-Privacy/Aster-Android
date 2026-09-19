@@ -3,13 +3,13 @@
     <string name="image_themes">이미지 테마</string>
     <string name="image_themes_subtitle">앱 뒤에 사진을 표시합니다.</string>
     <string name="image_theme_none">없음</string>
-    <string name="image_theme_pillars">기둥</string>
-    <string name="image_theme_cosmic_cliffs">우주 절벽</string>
-    <string name="image_theme_horsehead">말머리 성운</string>
-    <string name="image_theme_tarantula">타란툴라 성운</string>
-    <string name="image_theme_rho_ophiuchi">로 오피우치</string>
-    <string name="image_theme_deep_field">딥 필드</string>
+    <string name="image_theme_matterhorn">마터호른</string>
+    <string name="image_theme_aurora">오로라</string>
+    <string name="image_theme_fjord">피오르</string>
+    <string name="image_theme_desert">사막</string>
+    <string name="image_theme_milky_way">은하수</string>
+    <string name="image_theme_forest">숲</string>
     <string name="image_theme_apply">테마 사용</string>
     <string name="image_theme_in_use">사용 중</string>
-    <string name="image_theme_credit">이미지: NASA, ESA, CSA, STScI</string>
+    <string name="image_theme_credit">사진: %1$s</string>
 </resources>
