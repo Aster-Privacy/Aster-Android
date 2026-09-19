@@ -178,7 +178,7 @@ internal fun security_choice_row(
                 Icon(
                     imageVector = TablerIcons.Check,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = colors.on_accent,
                     modifier = Modifier.size(13.dp),
                 )
             }
@@ -1129,7 +1129,7 @@ private fun vanguard_section(
                     ) {
                         Text(
                             text = stringResource(R.string.vanguard_upgrade_cta),
-                            color = Color.White,
+                            color = colors.on_accent,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
                         )

@@ -633,7 +633,7 @@ private fun crypto_progress_stepper(status: String, confirmations: Int, min_conf
                                 "${index + 1}",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = if (is_current) Color.White else colors.text_muted,
+                                color = if (is_current) colors.on_accent else colors.text_muted,
                             )
                         }
                     }

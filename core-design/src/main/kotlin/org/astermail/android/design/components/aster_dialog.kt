@@ -436,6 +436,7 @@ fun AsterDialogPrimaryButton(
         modifier = modifier,
         enabled = enabled,
         is_loading = is_loading,
+        label_color = AsterMaterial.colors.on_accent,
         fill_top = shade_toward(accent, Color.White, 0.14f),
         fill_mid = accent,
         fill_bot = shade_toward(accent, Color.Black, 0.14f),
@@ -458,6 +459,7 @@ fun AsterDialogDestructiveButton(
         modifier = modifier,
         enabled = enabled,
         is_loading = is_loading,
+        label_color = Color.White,
         fill_top = dlg_red_top,
         fill_mid = dlg_red_mid,
         fill_bot = dlg_red_bot,
@@ -473,6 +475,7 @@ private fun dialog_depth_button(
     modifier: Modifier,
     enabled: Boolean,
     is_loading: Boolean,
+    label_color: Color,
     fill_top: Color,
     fill_mid: Color,
     fill_bot: Color,
@@ -508,13 +511,13 @@ private fun dialog_depth_button(
             .clickable(
                 enabled = interactive,
                 interactionSource = interaction,
-                indication = ripple(color = Color.White),
+                indication = ripple(color = label_color),
                 onClick = onClick,
             )
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        dialog_button_label(label, Color.White.copy(alpha = if (interactive) 1f else 0.8f), is_loading)
+        dialog_button_label(label, label_color.copy(alpha = if (interactive) 1f else 0.8f), is_loading)
     }
 }
 

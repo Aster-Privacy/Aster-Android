@@ -533,7 +533,7 @@ fun ImportScreen(
                     ) {
                         Text(
                             text = stringResource(R.string.import_pick_file),
-                            color = androidx.compose.ui.graphics.Color.White,
+                            color = colors.on_accent,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                         )

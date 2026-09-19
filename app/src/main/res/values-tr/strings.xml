@@ -1384,6 +1384,10 @@
     <string name="billing_period_month">ay</string>
     <string name="charge">Ücret</string>
     <string name="sender_draft">Taslak</string>
+    <string name="totp_passkey_subtitle">Bu hesap için kaydettiğin geçiş anahtarı veya güvenlik anahtarıyla onayla</string>
+    <string name="totp_passkey_button">Geçiş anahtarıyla devam et</string>
+    <string name="totp_use_passkey">Geçiş anahtarı kullan</string>
+    <string name="totp_backup_code_hint">Yedek kod 8 karakterlidir ve kimlik doğrulama uygulaması kurulumundan gelir. ASTER ile başlayan kurtarma kodu posta kutunu geri yükler, burada çalışmaz.</string>
     <string name="totp_trust_device">Bu cihaza 30 gün boyunca güven</string>
     <string name="failed_block_sender">Gönderici engellenemedi</string>
     <string name="failed_unblock_sender">Göndericinin engeli kaldırılamadı</string>
@@ -2977,6 +2981,8 @@
     <string name="error_folder_password_not_set">Bu klasörün parolası yok.</string>
     <string name="error_image_too_large">Bu görüntü çok büyük. Daha küçük bir fotoğraf seçin.</string>
     <string name="error_invalid_2fa_code">Bu kod doğru değil. Kimlik doğrulama uygulamanızı kontrol edip tekrar deneyin.</string>
+    <string name="error_passkey_unavailable">Bu cihazda bu hesap için geçiş anahtarı yok. Kimlik doğrulama uygulamanı kullan ya da önce tarayıcıdan bir geçiş anahtarı ekle.</string>
+    <string name="error_passkey_failed">Geçiş anahtarın doğrulanamadı. Yeniden dene ya da başka bir oturum açma yöntemi kullan.</string>
     <string name="error_invalid_backup_code">Bu yedek kod eşleşmedi. Her kod yalnızca bir kez çalışır, bu yüzden listenizdeki bir sonraki kullanılmamış kodu deneyin.</string>
     <string name="error_invalid_recovery_phrase">Bu kurtarma ifadesi eşleşmedi. Kelime sırasını ve yazımı kontrol edip tekrar deneyin.</string>
     <string name="error_plan_limit_reached">Mevcut planınızdaki sınıra ulaştınız. Yükseltmek ya da yer açmak için bazı öğeleri kaldırmak ilerlemenizi sağlar.</string>

@@ -199,7 +199,7 @@ fun AutoForwardScreen(
                     contentAlignment = Alignment.Center,
                 ) {
                     if (keep_copy) {
-                        Text("\u2713", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Text("\u2713", color = colors.on_accent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     }
                 }
                 Spacer(Modifier.size(AsterSpacing.md))

@@ -1392,6 +1392,10 @@
     <string name="billing_period_month">شهر</string>
     <string name="charge">رسم</string>
     <string name="sender_draft">مسودة</string>
+    <string name="totp_passkey_subtitle">أكد باستخدام مفتاح المرور أو مفتاح الأمان المحفوظ لهذا الحساب</string>
+    <string name="totp_passkey_button">المتابعة بمفتاح مرور</string>
+    <string name="totp_use_passkey">استخدام مفتاح مرور</string>
+    <string name="totp_backup_code_hint">يتكون رمز النسخ الاحتياطي من 8 أحرف وتم إنشاؤه عند إعداد تطبيق المصادقة. أما رمز الاسترداد الذي يبدأ بـ ASTER فيستعيد صندوق بريدك ولا يصلح هنا.</string>
     <string name="totp_trust_device">الوثوق بهذا الجهاز لمدة 30 يومًا</string>
     <string name="failed_block_sender">تعذر حظر المرسل</string>
     <string name="failed_unblock_sender">تعذر إلغاء حظر المرسل</string>
@@ -3029,6 +3033,8 @@
     <string name="error_folder_password_not_set">هذا المجلد ليس لديه كلمة سر.</string>
     <string name="error_image_too_large">هذه الصورة كبيرة جدًا. اختر صورة أصغر.</string>
     <string name="error_invalid_2fa_code">هذا الرمز غير صحيح. تحقق من تطبيق المصادقة وحاول مرة أخرى.</string>
+    <string name="error_passkey_unavailable">لا يوجد مفتاح مرور لهذا الحساب على هذا الجهاز. استخدم تطبيق المصادقة أو أضف مفتاح مرور من المتصفح أولاً.</string>
+    <string name="error_passkey_failed">تعذر التحقق من مفتاح المرور. حاول مرة أخرى أو استخدم طريقة تسجيل دخول أخرى.</string>
     <string name="error_invalid_backup_code">رمز النسخ الاحتياطي هذا غير مطابق. يعمل كل رمز مرة واحدة فقط، لذا جرّب الرمز التالي غير المستخدم من قائمتك.</string>
     <string name="error_invalid_recovery_phrase">عبارة الاسترداد هذه غير مطابقة. تحقق من ترتيب الكلمات والإملاء ثم حاول مرة أخرى.</string>
     <string name="error_plan_limit_reached">بلغت حد خطتك الحالية. الترقية أو إزالة بعض العناصر لإفساح المجال سيعيدك إلى التقدم.</string>

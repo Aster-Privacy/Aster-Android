@@ -1384,6 +1384,10 @@
     <string name="billing_period_month">mese</string>
     <string name="charge">Addebito</string>
     <string name="sender_draft">Bozza</string>
+    <string name="totp_passkey_subtitle">Conferma con la passkey o la chiave di sicurezza salvata per questo account</string>
+    <string name="totp_passkey_button">Continua con una passkey</string>
+    <string name="totp_use_passkey">Usa una passkey</string>
+    <string name="totp_backup_code_hint">Un codice di backup ha 8 caratteri e proviene dalla configurazione della tua app di autenticazione. Un codice di recupero che inizia con ASTER ripristina la casella e non funziona qui.</string>
     <string name="totp_trust_device">Considera attendibile questo dispositivo per 30 giorni</string>
     <string name="failed_block_sender">Impossibile bloccare il mittente</string>
     <string name="failed_unblock_sender">Impossibile sbloccare il mittente</string>
@@ -2977,6 +2981,8 @@
     <string name="error_folder_password_not_set">Questa cartella non ha una password.</string>
     <string name="error_image_too_large">Questa immagine è troppo grande. Scegli una foto più piccola.</string>
     <string name="error_invalid_2fa_code">Questo codice non è corretto. Controlla l\'app di autenticazione e riprova.</string>
+    <string name="error_passkey_unavailable">Su questo dispositivo non c’è una passkey per questo account. Usa la tua app di autenticazione o aggiungi prima una passkey da un browser.</string>
+    <string name="error_passkey_failed">Non è stato possibile verificare la passkey. Riprova o usa un altro metodo di accesso.</string>
     <string name="error_invalid_backup_code">Questo codice di backup non corrisponde. Ogni codice vale una sola volta, quindi prova il successivo non utilizzato del tuo elenco.</string>
     <string name="error_invalid_recovery_phrase">Questa frase di recupero non corrisponde. Controlla l\'ordine delle parole e l\'ortografia, poi riprova.</string>
     <string name="error_plan_limit_reached">Ha raggiunto il limite del suo piano attuale. Passare a un piano superiore, o rimuovere alcuni elementi per fare spazio, la farà ripartire.</string>

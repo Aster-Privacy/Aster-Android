@@ -568,7 +568,7 @@ private fun custom_category_editor(
                                 imageVector = category_setting_icon(choice),
                                 contentDescription = null,
                                 tint = if (selected) {
-                                    androidx.compose.ui.graphics.Color.White
+                                    colors.on_accent
                                 } else {
                                     colors.text_secondary
                                 },

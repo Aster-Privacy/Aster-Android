@@ -2477,7 +2477,7 @@ private fun pref_segment_toggle(
             ) {
                 Text(
                     text = label,
-                    color = if (active) Color.White else colors.text_muted,
+                    color = if (active) colors.on_accent else colors.text_muted,
                     fontSize = 13.sp,
                     fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
                 )
@@ -2555,7 +2555,7 @@ private fun preference_option(
                 Icon(
                     imageVector = TablerIcons.Check,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = colors.on_accent,
                     modifier = Modifier.size(13.dp),
                 )
             }

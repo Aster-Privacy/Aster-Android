@@ -216,7 +216,7 @@ internal fun aster_segmented(
             ) {
                 Text(
                     text = option.label,
-                    color = if (active) Color.White else colors.text_muted,
+                    color = if (active) colors.on_accent else colors.text_muted,
                     fontSize = 13.sp,
                     fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
                 )
@@ -226,7 +226,7 @@ internal fun aster_segmented(
                             .clip(CircleShape)
                             .background(
                                 if (active) {
-                                    Color.White
+                                    colors.on_accent
                                 } else {
                                     colors.accent_blue
                                 },
@@ -235,7 +235,7 @@ internal fun aster_segmented(
                     ) {
                         Text(
                             text = option.badge,
-                            color = if (active) colors.accent_blue else Color.White,
+                            color = if (active) colors.accent_blue else colors.on_accent,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                         )

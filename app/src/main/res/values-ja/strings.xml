@@ -1382,6 +1382,10 @@
     <string name="billing_period_month">月</string>
     <string name="charge">請求</string>
     <string name="sender_draft">下書き</string>
+    <string name="totp_passkey_subtitle">このアカウント用に保存したパスキーまたはセキュリティキーで確認します</string>
+    <string name="totp_passkey_button">パスキーで続ける</string>
+    <string name="totp_use_passkey">パスキーを使う</string>
+    <string name="totp_backup_code_hint">バックアップコードは8文字で、認証アプリの設定時に発行されます。ASTER で始まる復旧コードはメールボックスを復元するためのもので、ここでは使えません。</string>
     <string name="totp_trust_device">このデバイスを30日間信頼する</string>
     <string name="failed_block_sender">送信者をブロックできませんでした</string>
     <string name="failed_unblock_sender">送信者のブロック解除に失敗しました</string>
@@ -2966,6 +2970,8 @@
     <string name="error_folder_password_not_set">このフォルダにはパスワードが設定されていません。</string>
     <string name="error_image_too_large">この画像はサイズが大きすぎます。もっと小さい写真を選んでください。</string>
     <string name="error_invalid_2fa_code">このコードは正しくありません。認証アプリを確認して、もう一度お試しください。</string>
+    <string name="error_passkey_unavailable">この端末にこのアカウントのパスキーがありません。認証アプリを使うか、先にブラウザからパスキーを追加してください。</string>
+    <string name="error_passkey_failed">パスキーを確認できませんでした。もう一度試すか、別の方法でサインインしてください。</string>
     <string name="error_invalid_backup_code">このバックアップコードは一致しません。各コードは1回だけ使えるため、リストの次の未使用コードをお試しください。</string>
     <string name="error_invalid_recovery_phrase">この復元フレーズは一致しません。単語の順序とつづりを確認して、もう一度お試しください。</string>
     <string name="error_plan_limit_reached">現在のプランの上限に達しました。アップグレードするか、不要なものを削除して空きを作ると、再び操作できるようになります。</string>

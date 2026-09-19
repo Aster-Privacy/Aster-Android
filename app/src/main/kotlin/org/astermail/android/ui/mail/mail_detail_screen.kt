@@ -2608,7 +2608,7 @@ internal fun expanded_message(
                     Icon(
                         imageVector = TablerIcons.Refresh,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = colors.on_accent,
                         modifier = Modifier.size(16.dp),
                     )
                     Spacer(Modifier.width(8.dp))
@@ -2616,14 +2616,14 @@ internal fun expanded_message(
                         text = stringResource(
                             if (retry_in_progress) R.string.decrypt_retrying else R.string.retry,
                         ),
-                        color = Color.White,
+                        color = colors.on_accent,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
                     if (retry_in_progress) {
                         Spacer(Modifier.width(8.dp))
                         CircularProgressIndicator(
-                            color = Color.White,
+                            color = colors.on_accent,
                             strokeWidth = 2.dp,
                             modifier = Modifier.size(16.dp),
                         )
@@ -2737,7 +2737,7 @@ private fun reply_action_row(
             icon = TablerIcons.ArrowBackUp,
             label = stringResource(R.string.reply),
             bg = colors.accent_blue,
-            fg = androidx.compose.ui.graphics.Color.White,
+            fg = colors.on_accent,
             label_size = label_size,
             on_label_overflow = on_label_overflow,
             on_click = on_reply,
@@ -4232,8 +4232,8 @@ private fun action_chip(
 ) {
     val colors = AsterMaterial.colors
     val bg = if (is_primary) colors.accent_blue else colors.bg_secondary
-    val text_color = if (is_primary) Color.White else colors.text_primary
-    val icon_color = if (is_primary) Color.White else colors.text_secondary
+    val text_color = if (is_primary) colors.on_accent else colors.text_primary
+    val icon_color = if (is_primary) colors.on_accent else colors.text_secondary
 
     Row(
         modifier = modifier

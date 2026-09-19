@@ -1384,6 +1384,10 @@
     <string name="billing_period_month">maand</string>
     <string name="charge">Afschrijving</string>
     <string name="sender_draft">Concept</string>
+    <string name="totp_passkey_subtitle">Bevestig met de passkey of beveiligingssleutel die je voor dit account hebt opgeslagen</string>
+    <string name="totp_passkey_button">Doorgaan met een passkey</string>
+    <string name="totp_use_passkey">Een passkey gebruiken</string>
+    <string name="totp_backup_code_hint">Een back-upcode heeft 8 tekens en komt uit de installatie van je authenticator-app. Een herstelcode die met ASTER begint, herstelt je mailbox en werkt hier niet.</string>
     <string name="totp_trust_device">Dit apparaat 30 dagen vertrouwen</string>
     <string name="failed_block_sender">Kan afzender niet blokkeren</string>
     <string name="failed_unblock_sender">Kan afzender niet deblokkeren</string>
@@ -2977,6 +2981,8 @@
     <string name="error_folder_password_not_set">Deze map heeft geen wachtwoord.</string>
     <string name="error_image_too_large">Deze afbeelding is te groot. Kies een kleinere foto.</string>
     <string name="error_invalid_2fa_code">Deze code klopt niet. Controleer je authenticator-app en probeer het opnieuw.</string>
+    <string name="error_passkey_unavailable">Op dit apparaat is geen passkey voor dit account beschikbaar. Gebruik je authenticator-app of voeg eerst een passkey toe via een browser.</string>
+    <string name="error_passkey_failed">Je passkey kon niet worden geverifieerd. Probeer het opnieuw of gebruik een andere aanmeldmethode.</string>
     <string name="error_invalid_backup_code">Deze back-upcode komt niet overeen. Elke code werkt maar één keer, dus probeer de volgende ongebruikte code uit je lijst.</string>
     <string name="error_invalid_recovery_phrase">Deze herstelzin komt niet overeen. Controleer de volgorde van de woorden en de spelling en probeer het opnieuw.</string>
     <string name="error_plan_limit_reached">U hebt de limiet van uw huidige abonnement bereikt. Upgraden of wat items verwijderen om ruimte te maken brengt u weer op gang.</string>

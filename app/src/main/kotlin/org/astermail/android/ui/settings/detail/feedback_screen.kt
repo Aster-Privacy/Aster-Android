@@ -79,7 +79,7 @@ import org.astermail.android.settings.shared_settings_view_model
 private fun category_chip(label: String, icon: ImageVector, selected: Boolean, on_click: () -> Unit) {
     val colors = AsterMaterial.colors
     val bg = if (selected) colors.accent_blue else colors.bg_secondary
-    val content_color = if (selected) Color.White else colors.text_secondary
+    val content_color = if (selected) colors.on_accent else colors.text_secondary
     Row(
         modifier = Modifier
             .clickable(onClick = on_click)

@@ -1388,6 +1388,10 @@
     <string name="billing_period_month">месяц</string>
     <string name="charge">Списание</string>
     <string name="sender_draft">Черновик</string>
+    <string name="totp_passkey_subtitle">Подтвердите ключом доступа или аппаратным ключом, сохранённым для этого аккаунта</string>
+    <string name="totp_passkey_button">Продолжить с ключом доступа</string>
+    <string name="totp_use_passkey">Использовать ключ доступа</string>
+    <string name="totp_backup_code_hint">Резервный код состоит из 8 символов и выдаётся при настройке приложения-аутентификатора. Код восстановления, начинающийся с ASTER, восстанавливает почтовый ящик и здесь не работает.</string>
     <string name="totp_trust_device">Доверять этому устройству 30 дней</string>
     <string name="failed_block_sender">Не удалось заблокировать отправителя</string>
     <string name="failed_unblock_sender">Не удалось разблокировать отправителя</string>
@@ -3003,6 +3007,8 @@
     <string name="error_folder_password_not_set">У этой папки нет пароля.</string>
     <string name="error_image_too_large">Это изображение слишком большое. Выберите фото поменьше.</string>
     <string name="error_invalid_2fa_code">Этот код неверный. Проверьте приложение для аутентификации и повторите попытку.</string>
+    <string name="error_passkey_unavailable">На этом устройстве нет ключа доступа для этого аккаунта. Используйте приложение-аутентификатор или сначала добавьте ключ доступа в браузере.</string>
+    <string name="error_passkey_failed">Не удалось проверить ключ доступа. Попробуйте ещё раз или выберите другой способ входа.</string>
     <string name="error_invalid_backup_code">Этот резервный код не подошел. Каждый код действует один раз, поэтому попробуйте следующий неиспользованный из списка.</string>
     <string name="error_invalid_recovery_phrase">Эта фраза восстановления не подошла. Проверьте порядок слов и написание, затем повторите попытку.</string>
     <string name="error_plan_limit_reached">Достигнут лимит текущего тарифа. Повышение тарифа или удаление части элементов для освобождения места обычно решает вопрос.</string>

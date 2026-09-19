@@ -1440,6 +1440,10 @@
     <string name="billing_period_month">mois</string>
     <string name="charge">Facturation</string>
     <string name="sender_draft">Brouillon</string>
+    <string name="totp_passkey_subtitle">Confirmez avec la clé d’accès ou la clé de sécurité enregistrée pour ce compte</string>
+    <string name="totp_passkey_button">Continuer avec une clé d’accès</string>
+    <string name="totp_use_passkey">Utiliser une clé d’accès</string>
+    <string name="totp_backup_code_hint">Un code de secours comporte 8 caractères et provient de la configuration de votre application d’authentification. Un code de récupération commençant par ASTER restaure votre boîte mail et ne fonctionne pas ici.</string>
     <string name="totp_trust_device">Faire confiance à cet appareil pendant 30 jours</string>
     <string name="failed_block_sender">Impossible de bloquer l\'expéditeur</string>
     <string name="failed_unblock_sender">Impossible de débloquer l\'expéditeur</string>
@@ -3004,6 +3008,8 @@
     <string name="error_folder_password_not_set">Ce dossier n\'a pas de mot de passe.</string>
     <string name="error_image_too_large">Cette image est trop volumineuse. Choisissez une photo plus petite.</string>
     <string name="error_invalid_2fa_code">Ce code n\'est pas correct. Vérifiez votre application d\'authentification, puis réessayez.</string>
+    <string name="error_passkey_unavailable">Aucune clé d’accès pour ce compte n’est disponible sur cet appareil. Utilisez votre application d’authentification ou ajoutez d’abord une clé d’accès depuis un navigateur.</string>
+    <string name="error_passkey_failed">Impossible de vérifier votre clé d’accès. Réessayez ou utilisez une autre méthode de connexion.</string>
     <string name="error_invalid_backup_code">Ce code de secours ne correspond pas. Chaque code ne sert qu\'une fois, essayez donc le suivant non utilisé de votre liste.</string>
     <string name="error_invalid_recovery_phrase">Cette phrase de récupération ne correspond pas. Vérifiez l\'ordre des mots et l\'orthographe, puis réessayez.</string>
     <string name="error_plan_limit_reached">Vous avez atteint la limite de votre plan actuel. Mettre à niveau, ou retirer quelques éléments pour faire de la place, vous remettra en route.</string>

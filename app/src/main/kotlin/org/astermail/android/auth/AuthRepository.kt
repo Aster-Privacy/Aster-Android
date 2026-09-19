@@ -351,6 +351,25 @@ class AuthRepository @Inject constructor(
         finish_second_factor_login(outcome, challenge, trust_device)
     }
 
+    suspend fun begin_webauthn(
+        challenge: TotpChallenge,
+    ): Result<org.astermail.android.api.auth.WebAuthnAssertionOptions> = runCatching {
+        auth_api.initiate_webauthn_assertion(
+            org.astermail.android.api.auth.WebAuthnAssertionInitiateRequest(
+                pending_login_token = challenge.pending_login_token,
+            ),
+        )
+    }
+
+    suspend fun verify_webauthn(
+        request: org.astermail.android.api.auth.WebAuthnAssertionVerifyRequest,
+        challenge: TotpChallenge,
+        trust_device: Boolean,
+    ): Result<Unit> = runCatching {
+        val outcome = auth_api.verify_webauthn_assertion(request)
+        finish_second_factor_login(outcome, challenge, trust_device)
+    }
+
     fun login_device_label(): String? {
         val manufacturer = android.os.Build.MANUFACTURER.orEmpty().trim()
         val model = android.os.Build.MODEL.orEmpty().trim()

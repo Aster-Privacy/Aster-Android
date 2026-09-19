@@ -313,7 +313,7 @@ private fun review_method_tile(
                     Icon(
                         imageVector = TablerIcons.Check,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = colors.on_accent,
                         modifier = Modifier.size(12.dp),
                     )
                 }

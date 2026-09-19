@@ -1385,6 +1385,10 @@
     <string name="billing_period_month">Monat</string>
     <string name="charge">Abbuchung</string>
     <string name="sender_draft">Entwurf</string>
+    <string name="totp_passkey_subtitle">Bestätige mit dem Passkey oder Sicherheitsschlüssel, den du für dieses Konto gespeichert hast</string>
+    <string name="totp_passkey_button">Mit Passkey fortfahren</string>
+    <string name="totp_use_passkey">Passkey verwenden</string>
+    <string name="totp_backup_code_hint">Ein Backup-Code hat 8 Zeichen und stammt aus der Einrichtung deiner Authenticator-App. Ein Wiederherstellungscode, der mit ASTER beginnt, stellt dein Postfach wieder her und funktioniert hier nicht.</string>
     <string name="totp_trust_device">Diesem Gerät 30 Tage vertrauen</string>
     <string name="failed_block_sender">Absender konnte nicht blockiert werden</string>
     <string name="failed_unblock_sender">Absender konnte nicht entsperrt werden</string>
@@ -2978,6 +2982,8 @@
     <string name="error_folder_password_not_set">Dieser Ordner hat kein Passwort.</string>
     <string name="error_image_too_large">Dieses Bild ist zu groß. Wähle ein kleineres Foto.</string>
     <string name="error_invalid_2fa_code">Dieser Code ist nicht korrekt. Sieh in deiner Authenticator-App nach und versuche es erneut.</string>
+    <string name="error_passkey_unavailable">Auf diesem Gerät ist kein Passkey für dieses Konto verfügbar. Nutze deine Authenticator-App oder lege zuerst im Browser einen Passkey an.</string>
+    <string name="error_passkey_failed">Dein Passkey konnte nicht geprüft werden. Versuch es erneut oder nutze eine andere Anmeldemethode.</string>
     <string name="error_invalid_backup_code">Dieser Backup-Code stimmt nicht. Jeder Code funktioniert nur einmal, probiere daher den nächsten unbenutzten Code aus deiner Liste.</string>
     <string name="error_invalid_recovery_phrase">Diese Wiederherstellungsphrase stimmt nicht. Prüfe die Reihenfolge der Wörter und die Schreibweise und versuche es erneut.</string>
     <string name="error_plan_limit_reached">Sie haben das Limit Ihres aktuellen Tarifs erreicht. Eine Erweiterung oder das Entfernen einiger Einträge schafft wieder Raum.</string>

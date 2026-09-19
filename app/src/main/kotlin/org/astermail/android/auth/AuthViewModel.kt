@@ -121,6 +121,42 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun submit_passkey(
+        challenge: org.astermail.android.auth.TotpChallenge,
+        trust_device: Boolean = false,
+        get_assertion: suspend (org.astermail.android.api.auth.WebAuthnAssertionOptions) -> String,
+    ) {
+        if (_ui_state.value == AuthUiState.Loading) return
+        _ui_state.value = AuthUiState.Loading
+        viewModelScope.launch {
+            val result = runCatching {
+                val options = repository.begin_webauthn(challenge).getOrThrow()
+                val response_json = get_assertion(options)
+                val request = assertion_verify_request(
+                    response_json = response_json,
+                    options = options,
+                    challenge = challenge,
+                    trust_device = trust_device,
+                    device_label = repository.login_device_label(),
+                )
+                repository.verify_webauthn(request, challenge, trust_device).getOrThrow()
+            }
+            _ui_state.value = result.fold(
+                onSuccess = { AuthUiState.Success },
+                onFailure = { cause ->
+                    when (cause) {
+                        is PasskeyCancelledException -> AuthUiState.Idle
+                        is PasskeyUnavailableException ->
+                            AuthUiState.Error(ctx.getString(R.string.error_passkey_unavailable))
+                        is PasskeyFailedException ->
+                            AuthUiState.Error(ctx.getString(R.string.error_passkey_failed))
+                        else -> second_factor_failure_state(cause, challenge)
+                    }
+                },
+            )
+        }
+    }
+
     private fun second_factor_failure_state(
         cause: Throwable,
         challenge: org.astermail.android.auth.TotpChallenge,

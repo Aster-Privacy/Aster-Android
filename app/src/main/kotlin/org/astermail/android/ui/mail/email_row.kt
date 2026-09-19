@@ -123,7 +123,7 @@ private fun inbox_leading_slot(
             Icon(
                 imageVector = TablerIcons.Check,
                 contentDescription = stringResource(R.string.selected),
-                tint = Color.White,
+                tint = colors.on_accent,
                 modifier = Modifier.size(if (show_pictures) 20.dp else 16.dp),
             )
         }

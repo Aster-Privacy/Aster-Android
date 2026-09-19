@@ -350,7 +350,7 @@ private fun profile_header(
             ) {
                 Text(
                     text = stringResource(R.string.settings_upgrade_cta),
-                    color = Color.White,
+                    color = colors.on_accent,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
