@@ -33,6 +33,7 @@ import io.ktor.http.contentType
 import io.ktor.http.encodeURLPathPart
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.astermail.android.api.ApiClient
@@ -97,6 +98,40 @@ sealed class CurrentVaultResult {
     object Unavailable : CurrentVaultResult()
 }
 
+data class AccountKeyCapabilityFlags(
+    val format_writes: Boolean,
+    val data_conversion: Boolean,
+)
+
+data class AccountDataConversionStatus(
+    val sent_mail_done_at: String?,
+    val preferences_done_at: String?,
+    val remaining_sent: Long,
+    val remaining_attachments: Long,
+)
+
+enum class ConversionWriteResult { CONVERTED, ALREADY_CONVERTED, SOURCE_CHANGED, FAILED }
+
+@Serializable
+data class ConvertSentEnvelopeRequest(
+    val encrypted_envelope: String,
+    val expected_envelope_sha256: String,
+)
+
+@Serializable
+data class ConvertAttachmentMetaRequest(
+    val encrypted_meta: String,
+    val expected_meta_sha256: String,
+)
+
+@Serializable
+data class ConversionProgressRequest(
+    val sent_mail_done: Boolean? = null,
+    val preferences_done: Boolean? = null,
+    val converted: Long? = null,
+    val skipped: Long? = null,
+)
+
 @Serializable
 data class ExternalKeyFingerprintChange(
     val prior_fingerprint: String,
@@ -159,6 +194,18 @@ interface KeysApi {
         key_fingerprint: String,
     ): AccountKeyTokenResponse? = null
     suspend fun get_account_key_format_writes(): Boolean = false
+    suspend fun get_account_key_capabilities(): AccountKeyCapabilityFlags =
+        AccountKeyCapabilityFlags(format_writes = get_account_key_format_writes(), data_conversion = false)
+    suspend fun get_account_data_conversion(): AccountDataConversionStatus? = null
+    suspend fun convert_sent_envelope(
+        item_id: String,
+        request: ConvertSentEnvelopeRequest,
+    ): ConversionWriteResult = ConversionWriteResult.FAILED
+    suspend fun convert_attachment_meta(
+        attachment_id: String,
+        request: ConvertAttachmentMetaRequest,
+    ): ConversionWriteResult = ConversionWriteResult.FAILED
+    suspend fun report_account_data_conversion(request: ConversionProgressRequest): Boolean = false
 }
 
 class KeysApiImpl(private val client: ApiClient) : KeysApi {
@@ -299,10 +346,126 @@ class KeysApiImpl(private val client: ApiClient) : KeysApi {
         val body = runCatching { response.body<String>() }.getOrNull() ?: return false
         return parse_format_writes(body)
     }
+
+    override suspend fun get_account_key_capabilities(): AccountKeyCapabilityFlags {
+        val none = AccountKeyCapabilityFlags(format_writes = false, data_conversion = false)
+        val response = runCatching { client.http.get("${client.base_url}$base/account-key/capabilities") }
+            .getOrNull() ?: return none
+        if (response.status.value !in 200..299) return none
+        val body = runCatching { response.body<String>() }.getOrNull() ?: return none
+        return parse_account_key_capabilities(body)
+    }
+
+    override suspend fun get_account_data_conversion(): AccountDataConversionStatus? {
+        val response = runCatching { client.http.get("${client.base_url}$base/account-key/conversion") }
+            .getOrNull() ?: return null
+        if (response.status.value !in 200..299) return null
+        val body = runCatching { response.body<String>() }.getOrNull() ?: return null
+        return parse_account_data_conversion(body)
+    }
+
+    override suspend fun convert_sent_envelope(
+        item_id: String,
+        request: ConvertSentEnvelopeRequest,
+    ): ConversionWriteResult {
+        val response = runCatching {
+            client.http.put(
+                "${client.base_url}$base/account-key/conversion/sent/${item_id.encodeURLPathPart()}",
+            ) {
+                contentType(ContentType.Application.Json)
+                client.get_csrf()?.let { header("X-CSRF-Token", it) }
+                setBody(request)
+            }
+        }.getOrNull() ?: return ConversionWriteResult.FAILED
+        val body = runCatching { response.body<String>() }.getOrDefault("")
+        return parse_conversion_write_result(response.status.value, body)
+    }
+
+    override suspend fun convert_attachment_meta(
+        attachment_id: String,
+        request: ConvertAttachmentMetaRequest,
+    ): ConversionWriteResult {
+        val response = runCatching {
+            client.http.put(
+                "${client.base_url}$base/account-key/conversion/attachment/${attachment_id.encodeURLPathPart()}",
+            ) {
+                contentType(ContentType.Application.Json)
+                client.get_csrf()?.let { header("X-CSRF-Token", it) }
+                setBody(request)
+            }
+        }.getOrNull() ?: return ConversionWriteResult.FAILED
+        val body = runCatching { response.body<String>() }.getOrDefault("")
+        return parse_conversion_write_result(response.status.value, body)
+    }
+
+    override suspend fun report_account_data_conversion(request: ConversionProgressRequest): Boolean {
+        val response = runCatching {
+            client.http.post("${client.base_url}$base/account-key/conversion/progress") {
+                contentType(ContentType.Application.Json)
+                client.get_csrf()?.let { header("X-CSRF-Token", it) }
+                setBody(request)
+            }
+        }.getOrNull() ?: return false
+        return response.status.value in 200..299
+    }
 }
 
 fun parse_format_writes(body: String): Boolean {
     val element = runCatching { Json.parseToJsonElement(body) }.getOrNull() as? JsonObject ?: return false
     val value = element["format_writes"] as? JsonPrimitive ?: return false
     return !value.isString && value.content == "true"
+}
+
+private fun json_boolean_true(value: JsonElement?): Boolean {
+    val primitive = value as? JsonPrimitive ?: return false
+    return !primitive.isString && primitive.content == "true"
+}
+
+private fun json_non_negative_long(value: JsonElement?): Long? {
+    val primitive = value as? JsonPrimitive ?: return null
+    if (primitive.isString) return null
+    return primitive.content.toLongOrNull()?.takeIf { it >= 0 }
+}
+
+private fun json_string(value: JsonElement?): String? {
+    val primitive = value as? JsonPrimitive ?: return null
+    return if (primitive.isString) primitive.content else null
+}
+
+fun parse_account_key_capabilities(body: String): AccountKeyCapabilityFlags {
+    val element = runCatching { Json.parseToJsonElement(body) }.getOrNull() as? JsonObject
+        ?: return AccountKeyCapabilityFlags(format_writes = false, data_conversion = false)
+    return AccountKeyCapabilityFlags(
+        format_writes = json_boolean_true(element["format_writes"]),
+        data_conversion = json_boolean_true(element["data_conversion"]),
+    )
+}
+
+fun parse_account_data_conversion(body: String): AccountDataConversionStatus? {
+    val element = runCatching { Json.parseToJsonElement(body) }.getOrNull() as? JsonObject ?: return null
+    if (!json_boolean_true(element["enabled"])) return null
+    val remaining_sent = json_non_negative_long(element["remaining_sent"]) ?: return null
+    val remaining_attachments = json_non_negative_long(element["remaining_attachments"]) ?: return null
+    return AccountDataConversionStatus(
+        sent_mail_done_at = json_string(element["sent_mail_done_at"]),
+        preferences_done_at = json_string(element["preferences_done_at"]),
+        remaining_sent = remaining_sent,
+        remaining_attachments = remaining_attachments,
+    )
+}
+
+fun parse_conversion_write_result(status: Int, body: String): ConversionWriteResult {
+    val element = runCatching { Json.parseToJsonElement(body) }.getOrNull() as? JsonObject
+    if (status in 200..299) {
+        return if (json_string(element?.get("status")) == "converted") {
+            ConversionWriteResult.CONVERTED
+        } else {
+            ConversionWriteResult.FAILED
+        }
+    }
+    return when (json_string(element?.get("code"))) {
+        "ALREADY_CONVERTED" -> ConversionWriteResult.ALREADY_CONVERTED
+        "CONVERSION_SOURCE_CHANGED" -> ConversionWriteResult.SOURCE_CHANGED
+        else -> ConversionWriteResult.FAILED
+    }
 }

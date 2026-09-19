@@ -30,6 +30,9 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
 
@@ -183,6 +186,21 @@ data class SaveEncryptedPreferencesRequest(
     val preferences_nonce: String,
 )
 
+data class VersionedEncryptedPreferences(
+    val encrypted_preferences: String?,
+    val preferences_nonce: String?,
+    val preferences_version: Int?,
+)
+
+@Serializable
+data class SaveVersionedPreferencesRequest(
+    val encrypted_preferences: String,
+    val preferences_nonce: String,
+    val expected_version: Int,
+)
+
+enum class PreferencesSaveResult { SAVED, CONFLICT, FAILED }
+
 @Serializable
 data class DefaultSenderResponse(
     val sender_id: String? = null,
@@ -216,6 +234,10 @@ interface PreferencesApi {
     suspend fun set_product_updates(request: SetProductUpdatesRequest)
     suspend fun get_spam_settings(): SpamSettings
     suspend fun save_spam_settings(request: SpamSettings): Boolean
+    suspend fun get_versioned_encrypted_preferences(): VersionedEncryptedPreferences? = null
+    suspend fun save_encrypted_preferences_if_version(
+        request: SaveVersionedPreferencesRequest,
+    ): PreferencesSaveResult = PreferencesSaveResult.FAILED
 }
 
 class PreferencesApiImpl(private val client: ApiClient) : PreferencesApi {
@@ -318,6 +340,27 @@ class PreferencesApiImpl(private val client: ApiClient) : PreferencesApi {
         return response.status.value in 200..299
     }
 
+    override suspend fun get_versioned_encrypted_preferences(): VersionedEncryptedPreferences? {
+        val response = runCatching { client.http.get("${client.base_url}$base") }.getOrNull() ?: return null
+        if (response.status.value !in 200..299) return null
+        val body = runCatching { response.body<String>() }.getOrNull() ?: return null
+        return parse_versioned_preferences(body)
+    }
+
+    override suspend fun save_encrypted_preferences_if_version(
+        request: SaveVersionedPreferencesRequest,
+    ): PreferencesSaveResult {
+        val response = runCatching {
+            client.http.put("${client.base_url}$base") {
+                contentType(ContentType.Application.Json)
+                client.get_csrf()?.let { header("X-CSRF-Token", it) }
+                setBody(request)
+            }
+        }.getOrNull() ?: return PreferencesSaveResult.FAILED
+        val body = runCatching { response.body<String>() }.getOrDefault("")
+        return parse_preferences_save_result(response.status.value, body)
+    }
+
     private suspend inline fun <reified T> decode_or_throw(response: HttpResponse): T {
         if (response.status.value !in 200..299) {
             val body = try { response.body<String>() } catch (_: Throwable) { "" }
@@ -330,5 +373,37 @@ class PreferencesApiImpl(private val client: ApiClient) : PreferencesApi {
         } catch (t: Throwable) {
             throw ApiError.UnknownError(t.message ?: "decode failed")
         }
+    }
+}
+
+fun parse_versioned_preferences(body: String): VersionedEncryptedPreferences? {
+    val element = runCatching { Json.parseToJsonElement(body) }.getOrNull() as? JsonObject ?: return null
+    fun string_field(name: String): String? {
+        val value = element[name] as? JsonPrimitive ?: return null
+        return if (value.isString) value.content else null
+    }
+    val version_field = element["preferences_version"] as? JsonPrimitive
+    val version = version_field
+        ?.takeIf { !it.isString }
+        ?.content
+        ?.toIntOrNull()
+        ?.takeIf { it >= 0 }
+    return VersionedEncryptedPreferences(
+        encrypted_preferences = string_field("encrypted_preferences"),
+        preferences_nonce = string_field("preferences_nonce"),
+        preferences_version = version,
+    )
+}
+
+fun parse_preferences_save_result(status: Int, body: String): PreferencesSaveResult {
+    val element = runCatching { Json.parseToJsonElement(body) }.getOrNull() as? JsonObject
+    val code = (element?.get("code") as? JsonPrimitive)?.takeIf { it.isString }?.content
+    if (code == "PREFERENCES_VERSION_CONFLICT") return PreferencesSaveResult.CONFLICT
+    if (status !in 200..299) return PreferencesSaveResult.FAILED
+    val success = element?.get("success") as? JsonPrimitive ?: return PreferencesSaveResult.FAILED
+    return if (!success.isString && success.content == "true") {
+        PreferencesSaveResult.SAVED
+    } else {
+        PreferencesSaveResult.FAILED
     }
 }
