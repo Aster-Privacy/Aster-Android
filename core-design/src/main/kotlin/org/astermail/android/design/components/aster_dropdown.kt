@@ -52,7 +52,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
+import org.astermail.android.design.aster_ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -335,7 +335,7 @@ fun aster_dropdown_item(
             .background(container_color)
             .clickable(
                 interactionSource = interaction,
-                indication = ripple(color = colors.text_secondary),
+                indication = aster_ripple(color = colors.text_secondary),
                 enabled = enabled,
                 role = Role.Button,
                 onClick = on_click,

@@ -60,7 +60,7 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ripple
+import org.astermail.android.design.aster_ripple
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -511,7 +511,7 @@ private fun QuickAction(
                 .background(container)
                 .clickable(
                     interactionSource = interaction_source,
-                    indication = ripple(color = colors.accent_blue, bounded = false),
+                    indication = aster_ripple(color = colors.accent_blue, bounded = false),
                     onClick = on_click,
                 ),
             contentAlignment = Alignment.Center,

@@ -25,6 +25,7 @@ import org.astermail.android.design.SquircleShape
 
 import android.app.Activity
 import android.os.Build
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
@@ -262,8 +263,9 @@ fun AsterTheme(
             colorScheme = color_scheme,
             typography = typography,
             shapes = aster_shapes,
-            content = content,
-        )
+        ) {
+            CompositionLocalProvider(LocalIndication provides aster_ripple(), content = content)
+        }
     }
 }
 

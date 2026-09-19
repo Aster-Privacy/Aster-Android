@@ -65,7 +65,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
+import org.astermail.android.design.aster_ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -891,7 +891,7 @@ private fun subscription_row(
             .combinedClickable(
                 hapticFeedbackEnabled = false,
                 interactionSource = interaction_source,
-                indication = ripple(),
+                indication = aster_ripple(),
                 onClick = { if (selection_active) on_toggle_select() else on_open() },
                 onLongClick = {
                     if (haptic_enabled) {
@@ -1028,7 +1028,7 @@ private fun row_action_button(
             .clickable(
                 enabled = !is_loading,
                 interactionSource = interaction_source,
-                indication = ripple(bounded = true, color = intent),
+                indication = aster_ripple(bounded = true, color = intent),
                 onClick = on_click,
             ),
         contentAlignment = Alignment.Center,
