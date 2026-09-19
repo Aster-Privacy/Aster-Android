@@ -55,6 +55,7 @@ import org.astermail.android.ui.mail.MessageAttachment
 
 private const val INBOX_FETCH_BACKSTOP_MS = 50_000L
 private const val PULL_REFRESH_BACKSTOP_MS = 20_000L
+private const val LIVE_SYNC_DEBOUNCE_MS = 600L
 private const val WARM_CACHE_MIN_ITEMS = 8
 private const val WARM_CACHE_WINDOW = 200
 private const val WARM_CACHE_MAX_AGE_MS = 300_000L
@@ -844,6 +845,19 @@ class MailViewModel @Inject constructor(
         val s = _inbox_state.value
         if (s.is_loading || s.is_loading_more || s.is_refreshing) return
         silent_revalidate(s.current_folder)
+    }
+
+    private var live_sync_job: Job? = null
+
+    fun on_live_sync_event(event: LiveSyncEvent) {
+        live_sync_job?.cancel()
+        live_sync_job = viewModelScope.launch {
+            kotlinx.coroutines.delay(LIVE_SYNC_DEBOUNCE_MS)
+            load_stats(force = true)
+            val s = _inbox_state.value
+            if (s.initial || s.is_loading || s.is_loading_more || s.is_refreshing) return@launch
+            silent_revalidate(s.current_folder)
+        }
     }
 
     private fun silent_revalidate(folder: String) {

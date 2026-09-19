@@ -118,9 +118,12 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import androidx.compose.ui.platform.LocalContext
 import coil.imageLoader
 import coil.request.ImageRequest
@@ -128,8 +131,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.astermail.android.design.components.aster_dropdown_divider
 import org.astermail.android.design.components.aster_dropdown_item
@@ -218,6 +223,14 @@ private const val LOCAL_READ_MUTATION_TTL_MS = 15_000L
 private const val MIN_SKELETON_MS = 350L
 
 private const val EMPTY_STATE_SETTLE_MS = 700L
+
+private const val REFRESH_SCROLL_SETTLE_MS = 1500L
+
+@dagger.hilt.EntryPoint
+@dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
+internal interface InboxLiveSyncDeps {
+    fun live_sync_socket(): org.astermail.android.mail.LiveSyncSocket
+}
 
 private const val DRAG_HAPTIC_MIN_GAP_MS = 55L
 
@@ -486,6 +499,16 @@ fun InboxScreen(
     undo_send_toast(on_view = on_view_pending_send)
 
     val lifecycle_owner = LocalLifecycleOwner.current
+    val live_sync_socket = remember(prefetch_context) {
+        dagger.hilt.android.EntryPointAccessors
+            .fromApplication(prefetch_context.applicationContext, InboxLiveSyncDeps::class.java)
+            .live_sync_socket()
+    }
+    LaunchedEffect(mail_vm, lifecycle_owner, live_sync_socket) {
+        lifecycle_owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            live_sync_socket.run { event -> mail_vm.on_live_sync_event(event) }
+        }
+    }
     DisposableEffect(lifecycle_owner) {
         var was_backgrounded = false
         val observer = LifecycleEventObserver { _, event ->
@@ -940,8 +963,13 @@ fun InboxScreen(
         }
     }
 
+    val refresh_top_key_before = remember { arrayOfNulls<String>(1) }
+    var refresh_scroll_pending by remember { mutableStateOf(false) }
+
     fun do_refresh() {
         if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        refresh_top_key_before[0] = top_thread_key
+        refresh_scroll_pending = true
         mail_vm.refresh()
     }
 
@@ -1457,6 +1485,32 @@ fun InboxScreen(
                 settle_clipped_top()
             }
         }
+    }
+
+    val top_anchor_key = remember { arrayOfNulls<String>(1) }
+    SideEffect {
+        val previous_top = top_anchor_key[0]
+        top_anchor_key[0] = top_thread_key
+        if (previous_top == null || top_thread_key == null || previous_top == top_thread_key) return@SideEffect
+        if (drag_selecting || list_state.isScrollInProgress) return@SideEffect
+        val info = list_state.layoutInfo
+        val anchor = info.visibleItemsInfo.firstOrNull { it.key == previous_top } ?: return@SideEffect
+        if (anchor.offset < info.viewportStartOffset - anchor.size / 2) return@SideEffect
+        list_state.requestScrollToItem(0)
+    }
+
+    val latest_top_thread_key by rememberUpdatedState(top_thread_key)
+    LaunchedEffect(refresh_scroll_pending, is_refreshing) {
+        if (!refresh_scroll_pending || is_refreshing) return@LaunchedEffect
+        val before = refresh_top_key_before[0]
+        val changed = withTimeoutOrNull(REFRESH_SCROLL_SETTLE_MS) {
+            snapshotFlow { latest_top_thread_key }.first { it != null && it != before }
+        }
+        refresh_scroll_pending = false
+        if (changed == null || drag_selecting || list_state.isScrollInProgress) return@LaunchedEffect
+        if (list_state.firstVisibleItemIndex == 0 && list_state.firstVisibleItemScrollOffset == 0) return@LaunchedEffect
+        list_state.scrollToItem(0)
+        settle_clipped_top()
     }
 
     val last_visible_thread_count = remember { intArrayOf(-1) }
