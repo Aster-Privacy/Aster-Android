@@ -2608,9 +2608,7 @@ fun ComposeScreen(
                             .fillMaxWidth()
                             .height(72.dp)
                             .clickable(
-                                interactionSource = remember {
-                                    androidx.compose.foundation.interaction.MutableInteractionSource()
-                                },
+                                interactionSource = org.astermail.android.design.remember_haptic_interaction(),
                                 indication = null,
                             ) {
                                 body_editor_ref.value?.let { et ->

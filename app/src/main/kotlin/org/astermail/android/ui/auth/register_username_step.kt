@@ -251,7 +251,7 @@ internal fun domain_toggle(
                         .fillMaxHeight()
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
+                            indication = androidx.compose.foundation.LocalIndication.current,
                             onClick = { on_select(opt) },
                         ),
                     contentAlignment = Alignment.Center,
