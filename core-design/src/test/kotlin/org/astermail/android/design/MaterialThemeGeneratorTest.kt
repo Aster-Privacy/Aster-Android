@@ -71,4 +71,44 @@ class MaterialThemeGeneratorTest {
         assertFalse(MaterialThemeGenerator.is_valid_hex_color("#zzzzzz"))
         assertFalse(MaterialThemeGenerator.is_valid_hex_color(""))
     }
+
+    @Test
+    fun web_override_keys_apply() {
+        val vars = MaterialThemeGenerator.compute_custom_theme_vars(
+            "#3b82f6",
+            true,
+            mapOf("--accent-color" to "#ff0000", "--bg-primary" to "#101010"),
+        )
+        assertEquals("#ff0000", vars.accent_color)
+        assertEquals("#101010", vars.bg_primary)
+    }
+
+    @Test
+    fun legacy_override_keys_still_apply() {
+        val vars = MaterialThemeGenerator.compute_custom_theme_vars(
+            "#3b82f6",
+            true,
+            mapOf("accent_color" to "#00ff00"),
+        )
+        assertEquals("#00ff00", vars.accent_color)
+    }
+
+    @Test
+    fun web_key_wins_over_legacy_key() {
+        val overrides = mapOf("accent_color" to "#00ff00", "--accent-color" to "#0000ff")
+        assertEquals("#0000ff", MaterialThemeGenerator.override_for(overrides, "accent_color"))
+    }
+
+    @Test
+    fun invalid_override_is_ignored() {
+        assertEquals(null, MaterialThemeGenerator.override_for(mapOf("--accent-color" to "red"), "accent_color"))
+    }
+
+    @Test
+    fun with_override_writes_web_key_and_drops_legacy_key() {
+        val next = MaterialThemeGenerator.with_override(mapOf("accent_color" to "#00ff00"), "accent_color", "#123456")
+        assertEquals(mapOf("--accent-color" to "#123456"), next)
+        val cleared = MaterialThemeGenerator.with_override(next, "accent_color", null)
+        assertTrue(cleared.isEmpty())
+    }
 }

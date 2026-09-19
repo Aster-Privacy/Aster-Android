@@ -225,10 +225,30 @@ object MaterialThemeGenerator {
         )
     }
 
-    private fun apply_override(current: String, overrides: Map<String, String>, key: String): String {
-        val value = overrides[key]
-        return if (value != null && is_valid_hex_color(value)) value else current
+    val OVERRIDE_ROLES = listOf(
+        "accent_color",
+        "accent_color_hover",
+        "bg_primary",
+        "bg_secondary",
+        "text_primary",
+        "text_secondary",
+        "border_primary",
+    )
+
+    fun web_override_key(role: String): String = "--" + role.replace('_', '-')
+
+    fun override_for(overrides: Map<String, String>, role: String): String? =
+        (overrides[web_override_key(role)] ?: overrides[role])?.takeIf { is_valid_hex_color(it) }
+
+    fun with_override(overrides: Map<String, String>, role: String, hex: String?): Map<String, String> {
+        val next = overrides.toMutableMap()
+        next.remove(role)
+        if (hex == null) next.remove(web_override_key(role)) else next[web_override_key(role)] = hex
+        return next
     }
+
+    private fun apply_override(current: String, overrides: Map<String, String>, key: String): String =
+        override_for(overrides, key) ?: current
 
     fun compute_custom_theme_vars(
         seed_hex: String,

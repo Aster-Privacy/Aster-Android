@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="appearance_mode">Modalità</string>
+    <string name="appearance_themes">Temi</string>
+    <string name="appearance_themes_subtitle">I temi a colori usano un aspetto scuro.</string>
+    <string name="appearance_custom">Personalizzato</string>
+    <string name="appearance_base_color_subtitle">Scegli un colore di base e il resto del tema viene generato da questo.</string>
+    <string name="appearance_fine_tune">Regolazione fine</string>
+    <string name="appearance_reset_all">Ripristina tutto</string>
+    <string name="appearance_role_auto">Auto</string>
+    <string name="appearance_role_reset">Ripristina</string>
+    <string name="appearance_role_accent">Accento</string>
+    <string name="appearance_role_accent_hover">Accento premuto</string>
+    <string name="appearance_role_background">Sfondo</string>
+    <string name="appearance_role_surface">Superficie</string>
+    <string name="appearance_role_text">Testo</string>
+    <string name="appearance_role_text_secondary">Testo secondario</string>
+    <string name="appearance_role_border">Bordo</string>
+    <string name="appearance_text">Testo</string>
+    <string name="appearance_text_size">Dimensione del testo</string>
+    <string name="appearance_text_size_subtitle">Modifica la dimensione del testo in Accessibilità.</string>
+    <string name="appearance_inbox">Posta in arrivo</string>
+    <string name="settings_section_writing">Scrittura</string>
+    <string name="settings_section_organization">Organizzazione</string>
+    <string name="settings_appearance_summary">Temi, colori, caratteri e layout della posta</string>
+    <string name="appearance_font_sample">Aa</string>
+</resources>
