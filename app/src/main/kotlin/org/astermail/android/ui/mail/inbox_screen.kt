@@ -242,7 +242,6 @@ private const val CATEGORY_DRAIN_MAX_ITEMS = 200
 
 private const val LOCAL_READ_MUTATION_TTL_MS = 15_000L
 
-private const val MIN_SKELETON_MS = 350L
 
 private const val EMPTY_STATE_SETTLE_MS = 700L
 
@@ -678,7 +677,9 @@ fun InboxScreen(
                 }
             }
         }
-    val api_emails = remember(inbox_state.items, settings_state.tags, attachment_ids, settings_state.labels, current_folder) {
+    val state_matches_folder = inbox_state.current_folder == current_folder
+    val api_emails = remember(inbox_state.items, settings_state.tags, attachment_ids, settings_state.labels, current_folder, state_matches_folder) {
+        if (!state_matches_folder) return@remember null
         inbox_state.items.map {
             inbox_item_to_email(
                 if (!it.has_attachments && it.id in attachment_ids) it.copy(has_attachments = true) else it,
@@ -709,6 +710,7 @@ fun InboxScreen(
         }
     }
     LaunchedEffect(api_emails) {
+        if (api_emails == null) return@LaunchedEffect
         val current = emails.toList()
         val now_ms = android.os.SystemClock.uptimeMillis()
         local_read_mutations.entries.removeAll { now_ms - it.value > LOCAL_READ_MUTATION_TTL_MS }
@@ -1685,22 +1687,6 @@ fun InboxScreen(
                             (inbox_state.is_loading || threads_pending) &&
                             threads.isEmpty()
                         )
-                var show_skeleton by remember { mutableStateOf(skeleton_target) }
-                var skeleton_shown_at by remember { mutableStateOf(0L) }
-                LaunchedEffect(skeleton_target) {
-                    if (skeleton_target) {
-                        if (!show_skeleton) {
-                            show_skeleton = true
-                            skeleton_shown_at = android.os.SystemClock.uptimeMillis()
-                        }
-                    } else if (show_skeleton) {
-                        val shown_for = android.os.SystemClock.uptimeMillis() - skeleton_shown_at
-                        if (shown_for < MIN_SKELETON_MS) {
-                            kotlinx.coroutines.delay(MIN_SKELETON_MS - shown_for)
-                        }
-                        show_skeleton = false
-                    }
-                }
                 val empty_target = threads.isEmpty() &&
                     !threads_pending &&
                     !inbox_state.is_loading &&
@@ -1725,25 +1711,30 @@ fun InboxScreen(
                     !empty_settled &&
                     !thread_gate.category_only
                 val skeleton_now = skeleton_target ||
-                    (show_skeleton && threads.isEmpty()) ||
                     (!inbox_error_now && !contradicts_unread && (category_skeleton || empty_skeleton))
-                if (skeleton_now) {
+                val rows_imminent = threads.isEmpty() && threads_pending && inbox_state.items.isNotEmpty()
+                val skeleton_phase by remember_skeleton_phase(
+                    wanted = skeleton_now,
+                    rows_imminent = rows_imminent,
+                )
+                val handoff = Modifier.skeleton_handoff(skeleton_phase)
+                if (skeleton_now || skeleton_phase != SkeletonPhase.content) {
                     Box(Modifier.padding(top = header_height_dp))
                 } else if (inbox_error_now) {
-                    Box(Modifier.padding(top = header_height_dp)) {
+                    Box(Modifier.padding(top = header_height_dp).then(handoff)) {
                         inbox_error_state(inbox_state.error.orEmpty()) {
                             mail_vm.load_inbox(current_folder, force = true)
                         }
                     }
                 } else if (contradicts_unread) {
-                    Box(Modifier.padding(top = header_height_dp)) {
+                    Box(Modifier.padding(top = header_height_dp).then(handoff)) {
                         inbox_error_state(stringResource(R.string.error_generic)) {
                             mail_vm.load_inbox(current_folder, force = true)
                         }
                     }
                 } else if (hidden_by_category) {
                     org.astermail.android.ui.common.overscroll_stretch(
-                        modifier = Modifier.padding(top = header_height_dp),
+                        modifier = Modifier.padding(top = header_height_dp).then(handoff),
                     ) {
                         empty_category_state(
                             category_label = active_category_label,
@@ -1756,7 +1747,7 @@ fun InboxScreen(
                     }
                 } else if (threads.isEmpty()) {
                     org.astermail.android.ui.common.overscroll_stretch(
-                        modifier = Modifier.padding(top = header_height_dp),
+                        modifier = Modifier.padding(top = header_height_dp).then(handoff),
                     ) { empty_inbox_state(current_folder) }
                 } else {
                     val user_prefs_outer = settings_state.preferences
@@ -1814,6 +1805,7 @@ fun InboxScreen(
                         state = list_state,
                         modifier = Modifier
                             .fillMaxSize()
+                            .then(handoff)
                             .pointerInput(Unit) {
                                 val press_slop = viewConfiguration.touchSlop
                                 val long_press_ms = viewConfiguration.longPressTimeoutMillis
@@ -2071,6 +2063,8 @@ fun InboxScreen(
                                         list_density = settings_state.preferences?.mail_list_density,
                                         is_first = false,
                                         is_last = skeleton_index == 2,
+                                        show_avatar = settings_state.preferences?.show_profile_pictures != false,
+                                        show_preview = settings_state.preferences?.show_email_preview != false,
                                     )
                                 }
                             }
@@ -2103,10 +2097,12 @@ fun InboxScreen(
                         bottom_padding = list_bottom_pad,
                     )
                 }
-                inbox_skeleton_overlay(
-                    visible = skeleton_now,
+                inbox_skeleton_layer(
+                    phase = skeleton_phase,
                     modifier = Modifier.padding(top = header_height_dp),
                     list_density = settings_state.preferences?.mail_list_density,
+                    show_avatar = settings_state.preferences?.show_profile_pictures != false,
+                    show_preview = settings_state.preferences?.show_email_preview != false,
                 )
                 pull_indicator()
             }

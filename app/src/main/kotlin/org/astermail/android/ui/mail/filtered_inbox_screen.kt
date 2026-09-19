@@ -184,16 +184,23 @@ fun FilteredInboxScreen(
             val showing_requested = inbox_state.current_folder == requested_folder
             val has_rows = showing_requested && threads.isNotEmpty()
             val skeleton_now = !has_rows && (inbox_state.is_loading || !showing_requested)
+            val skeleton_phase by remember_skeleton_phase(
+                wanted = skeleton_now,
+                rows_imminent = false,
+            )
+            val handoff = Modifier.skeleton_handoff(skeleton_phase)
             Box(modifier = Modifier.fillMaxSize()) {
-            if (skeleton_now) {
+            if (skeleton_now || skeleton_phase != SkeletonPhase.content) {
                 Box(Modifier.fillMaxSize())
             } else if (threads.isEmpty() && inbox_state.error != null) {
-                inbox_error_state(inbox_state.error.orEmpty()) {
-                    mail_vm.load_inbox(requested_folder, force = true)
+                Box(modifier = Modifier.fillMaxSize().then(handoff)) {
+                    inbox_error_state(inbox_state.error.orEmpty()) {
+                        mail_vm.load_inbox(requested_folder, force = true)
+                    }
                 }
             } else if (threads.isEmpty()) {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().then(handoff),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -203,7 +210,7 @@ fun FilteredInboxScreen(
                     )
                 }
             } else {
-                Box(modifier = Modifier.fillMaxSize()) {
+                Box(modifier = Modifier.fillMaxSize().then(handoff)) {
                     LazyColumn(
                         state = list_state,
                         modifier = Modifier.fillMaxSize(),
@@ -246,10 +253,12 @@ fun FilteredInboxScreen(
                     )
                 }
             }
-            inbox_skeleton_overlay(
-                visible = skeleton_now,
+            inbox_skeleton_layer(
+                phase = skeleton_phase,
                 modifier = Modifier.padding(top = inbox_group_split),
                 list_density = settings_state.preferences?.mail_list_density,
+                show_avatar = settings_state.preferences?.show_profile_pictures != false,
+                show_preview = settings_state.preferences?.show_email_preview != false,
             )
             }
         }

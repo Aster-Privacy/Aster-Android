@@ -2536,9 +2536,6 @@ internal fun expanded_message(
             html_rendering_mode = body_settings_state.preferences?.html_rendering_mode,
             low_network = org.astermail.android.network.low_network_active(),
         )
-        val body_skeleton_seen = remember(msg.id) { booleanArrayOf(false) }
-        val body_skeleton_reveal = !body_skeleton_seen[0]
-        if (msg.is_body_pending) body_skeleton_seen[0] = true
         if (msg.is_body_pending) {
             var body_wait_expired by remember(msg.id, retry_in_progress) { mutableStateOf(false) }
             LaunchedEffect(msg.id, retry_in_progress) {
@@ -2583,7 +2580,6 @@ internal fun expanded_message(
                 on_ready = on_body_ready,
                 on_link_click = on_link_click,
                 on_image_click = on_image_click,
-                skeleton_reveal = body_skeleton_reveal,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = AsterSpacing.xs, bottom = if (is_last) 0.dp else AsterSpacing.sm)
@@ -2695,7 +2691,6 @@ internal fun expanded_message(
                 on_ready = on_body_ready,
                 on_link_click = on_link_click,
                 on_image_click = on_image_click,
-                skeleton_reveal = body_skeleton_reveal,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = AsterSpacing.xs, bottom = if (is_last) 0.dp else AsterSpacing.sm)
@@ -5259,7 +5254,6 @@ internal fun email_html_view(
     on_ready: () -> Unit = {},
     on_link_click: (String) -> Unit = {},
     on_image_click: (String) -> Unit = {},
-    skeleton_reveal: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
     val is_dark = !force_light && if (colors.is_glass) colors.is_dark else colors.bg_primary.luminance() < colors.text_primary.luminance()
@@ -6045,7 +6039,6 @@ internal fun email_html_view(
         }
         if (!renderer_exhausted.value && !body_shown) {
             email_body_skeleton(
-                reveal = skeleton_reveal,
                 modifier = Modifier
                     .matchParentSize()
                     .background(inbox_card_read_color(colors))
