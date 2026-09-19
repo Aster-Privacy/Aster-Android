@@ -2120,6 +2120,10 @@
     <string name="inbox_categories_subtitle">Dzieli przychodzącą pocztę na karty, takie jak Promocje, Społecznościowe i Powiadomienia</string>
     <string name="conversation_order_label">Kolejność w rozmowie</string>
     <string name="show_message_size">Pokaż rozmiar wiadomości</string>
+    <string name="relative_dates">Daty względne</string>
+    <string name="relative_dates_subtitle">Pokazuj Wczoraj i godzinę w najnowszych wiadomościach zamiast daty</string>
+    <string name="relative_dates_info_title">Daty względne</string>
+    <string name="relative_dates_info_desc">Gdy ta opcja jest włączona, dzisiejsze wiadomości pokazują godzinę, a wczorajsze Wczoraj. Wyłącz ją, aby na liście wiadomości zawsze wyświetlała się data, a w samej wiadomości data i godzina.</string>
     <string name="show_alias_indicators">Pokaż wskaźniki aliasów</string>
     <string name="show_alias_indicators_subtitle">Oznaczaj wiadomości, które dotarły przez jeden z Twoich aliasów</string>
     <string name="show_message_size_subtitle">Pokazuje rozmiar każdej wiadomości na liście</string>

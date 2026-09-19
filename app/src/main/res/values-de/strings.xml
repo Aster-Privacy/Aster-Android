@@ -2115,6 +2115,10 @@
     <string name="inbox_categories_subtitle">Eingehende Mail in Tabs wie Angebote, Soziale Netzwerke und Benachrichtigungen sortieren</string>
     <string name="conversation_order_label">Reihenfolge der Unterhaltung</string>
     <string name="show_message_size">Nachrichtengröße anzeigen</string>
+    <string name="relative_dates">Relative Datumsangaben</string>
+    <string name="relative_dates_subtitle">Bei neuen Nachrichten Gestern und die Uhrzeit statt des Datums anzeigen</string>
+    <string name="relative_dates_info_title">Relative Datumsangaben</string>
+    <string name="relative_dates_info_desc">Wenn diese Option aktiviert ist, zeigen heutige Nachrichten die Uhrzeit und gestrige Nachrichten Gestern an. Deaktivieren Sie sie, um in der Nachrichtenliste immer das Datum und in der Nachricht selbst Datum und Uhrzeit anzuzeigen.</string>
     <string name="show_alias_indicators">Alias-Kennzeichnung anzeigen</string>
     <string name="show_alias_indicators_subtitle">Nachrichten kennzeichnen, die über einen Ihrer Aliasse eingegangen sind</string>
     <string name="show_message_size_subtitle">Zeigt die Größe jeder E-Mail in der Liste an</string>

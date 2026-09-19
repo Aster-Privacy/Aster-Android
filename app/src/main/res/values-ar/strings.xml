@@ -2126,6 +2126,10 @@
     <string name="inbox_categories_subtitle">فرز البريد الوارد في علامات تبويب مثل الصفقات والتواصل والإشعارات</string>
     <string name="conversation_order_label">ترتيب المحادثة</string>
     <string name="show_message_size">إظهار حجم الرسالة</string>
+    <string name="relative_dates">التواريخ النسبية</string>
+    <string name="relative_dates_subtitle">إظهار أمس والوقت في الرسائل الحديثة بدلاً من التاريخ</string>
+    <string name="relative_dates_info_title">التواريخ النسبية</string>
+    <string name="relative_dates_info_desc">عند تفعيل هذا الخيار، تظهر رسائل اليوم بالوقت ورسائل أمس بكلمة أمس. أوقفه لإظهار التاريخ دائماً في قائمة الرسائل والتاريخ والوقت داخل الرسالة نفسها.</string>
     <string name="show_alias_indicators">إظهار مؤشرات الأسماء المستعارة</string>
     <string name="show_alias_indicators_subtitle">وضع علامة على الرسائل التي وصلت عبر أحد أسمائك المستعارة</string>
     <string name="show_message_size_subtitle">عرض حجم كل رسالة في قائمة البريد الوارد</string>

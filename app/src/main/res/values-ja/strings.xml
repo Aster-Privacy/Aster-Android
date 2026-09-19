@@ -2111,6 +2111,10 @@
     <string name="inbox_categories_subtitle">受信メールをセール、ソーシャル、通知などのタブに振り分けます</string>
     <string name="conversation_order_label">スレッドの並び順</string>
     <string name="show_message_size">メールのサイズを表示</string>
+    <string name="relative_dates">相対的な日付</string>
+    <string name="relative_dates_subtitle">最近のメッセージに日付の代わりに「昨日」や時刻を表示します</string>
+    <string name="relative_dates_info_title">相対的な日付</string>
+    <string name="relative_dates_info_desc">オンにすると、今日のメッセージには時刻が、昨日のメッセージには「昨日」が表示されます。オフにすると、メッセージ一覧には常に日付が、メッセージ内には日付と時刻が表示されます。</string>
     <string name="show_alias_indicators">エイリアスインジケーターを表示</string>
     <string name="show_alias_indicators_subtitle">エイリアス宛てに届いたメッセージに印を付けます</string>
     <string name="show_message_size_subtitle">一覧に各メールのサイズを表示します</string>

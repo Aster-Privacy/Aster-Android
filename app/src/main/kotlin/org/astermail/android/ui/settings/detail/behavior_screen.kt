@@ -154,6 +154,7 @@ fun BehaviorScreen(
     }
     var inbox_page_size by remember(prefs_loaded) { mutableIntStateOf(prefs?.inbox_page_size ?: 50) }
     var show_message_size by remember(prefs_loaded) { mutableStateOf(prefs?.show_message_size ?: false) }
+    var relative_dates by remember(prefs_loaded) { mutableStateOf(prefs?.relative_dates != false) }
     var show_alias_indicators by remember(prefs_loaded) { mutableStateOf(prefs?.show_alias_indicators ?: true) }
     var show_profile_pictures by remember(prefs_loaded) { mutableStateOf(prefs?.show_profile_pictures ?: true) }
     var show_email_preview by remember(prefs_loaded) { mutableStateOf(prefs?.show_email_preview != false) }
@@ -221,6 +222,7 @@ fun BehaviorScreen(
                     org.astermail.android.api.preferences.resolve_inbox_sort_oldest_first(prefs)
                 inbox_page_size = prefs.inbox_page_size
                 show_message_size = prefs.show_message_size
+                relative_dates = prefs.relative_dates
                 show_alias_indicators = prefs.show_alias_indicators
                 show_profile_pictures = prefs.show_profile_pictures
                 show_email_preview = prefs.show_email_preview
@@ -287,6 +289,7 @@ fun BehaviorScreen(
                     org.astermail.android.api.preferences.inbox_sort_order_value(inbox_sort_oldest_first),
                 inbox_page_size = inbox_page_size.coerceIn(10, 100),
                 show_message_size = show_message_size,
+                relative_dates = relative_dates,
                 show_alias_indicators = show_alias_indicators,
                 show_profile_pictures = show_profile_pictures,
                 show_email_preview = show_email_preview,
@@ -394,6 +397,15 @@ fun BehaviorScreen(
                     subtitle = stringResource(R.string.show_message_size_subtitle),
                     checked = show_message_size,
                     on_change = { show_message_size = it; save_trigger++ },
+                )
+                AsterDivider(modifier = Modifier)
+                behavior_toggle(
+                    title = stringResource(R.string.relative_dates),
+                    subtitle = stringResource(R.string.relative_dates_subtitle),
+                    checked = relative_dates,
+                    info_title = stringResource(R.string.relative_dates_info_title),
+                    info_description = stringResource(R.string.relative_dates_info_desc),
+                    on_change = { relative_dates = it; save_trigger++ },
                 )
                 AsterDivider(modifier = Modifier)
                 behavior_toggle(

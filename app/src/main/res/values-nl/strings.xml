@@ -2114,6 +2114,10 @@
     <string name="inbox_categories_subtitle">Sorteert inkomende mail in tabbladen zoals Aanbiedingen, Sociaal en Meldingen</string>
     <string name="conversation_order_label">Volgorde van het gesprek</string>
     <string name="show_message_size">Berichtgrootte tonen</string>
+    <string name="relative_dates">Relatieve datums</string>
+    <string name="relative_dates_subtitle">Toon Gisteren en het tijdstip bij recente berichten in plaats van de datum</string>
+    <string name="relative_dates_info_title">Relatieve datums</string>
+    <string name="relative_dates_info_desc">Als dit aanstaat, tonen berichten van vandaag het tijdstip en berichten van gisteren Gisteren. Zet het uit om in de berichtenlijst altijd de datum te tonen en in het bericht zelf de datum en het tijdstip.</string>
     <string name="show_alias_indicators">Aliasindicatoren tonen</string>
     <string name="show_alias_indicators_subtitle">Berichten markeren die via een van je aliassen zijn binnengekomen</string>
     <string name="show_message_size_subtitle">Toont de grootte van elke e-mail in de lijst</string>

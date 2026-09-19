@@ -2114,6 +2114,10 @@
     <string name="inbox_categories_subtitle">Ordina la posta in arrivo in schede come Promozioni, Social e Notifiche</string>
     <string name="conversation_order_label">Ordine della conversazione</string>
     <string name="show_message_size">Mostra la dimensione del messaggio</string>
+    <string name="relative_dates">Date relative</string>
+    <string name="relative_dates_subtitle">Mostra Ieri e l’ora sui messaggi recenti invece della data</string>
+    <string name="relative_dates_info_title">Date relative</string>
+    <string name="relative_dates_info_desc">Quando questa opzione è attiva, i messaggi di oggi mostrano l’ora e quelli di ieri mostrano Ieri. Disattivala per mostrare sempre la data nell’elenco dei messaggi e la data e l’ora nel messaggio stesso.</string>
     <string name="show_alias_indicators">Mostra indicatori alias</string>
     <string name="show_alias_indicators_subtitle">Contrassegna i messaggi arrivati tramite uno dei tuoi alias</string>
     <string name="show_message_size_subtitle">Mostra la dimensione di ogni email nell\'elenco</string>
