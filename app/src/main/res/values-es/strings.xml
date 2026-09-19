@@ -3444,4 +3444,7 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
+    <string name="connection_relay_connected">Conectado</string>
+    <string name="connection_relay_restored">Todo ha vuelto a la normalidad</string>
+    <string name="connection_relay_disconnected">Desconectado</string>
 </resources>

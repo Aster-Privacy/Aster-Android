@@ -3483,4 +3483,7 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
+    <string name="connection_relay_connected">Połączono</string>
+    <string name="connection_relay_restored">Wszystko wróciło do normy</string>
+    <string name="connection_relay_disconnected">Rozłączono</string>
 </resources>

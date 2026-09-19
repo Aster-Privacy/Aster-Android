@@ -3425,4 +3425,7 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
+    <string name="connection_relay_connected">接続しました</string>
+    <string name="connection_relay_restored">通常の状態に戻りました</string>
+    <string name="connection_relay_disconnected">切断しました</string>
 </resources>

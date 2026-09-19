@@ -1,4 +1,4 @@
-﻿//
+//
 // Aster Communications Inc.
 //
 // Copyright (c) 2026 Aster Communications Inc.
@@ -22,6 +22,11 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.fadeIn
@@ -55,6 +60,8 @@ import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -88,16 +95,16 @@ private fun toast_action(
     val shape = SquircleShape(999.dp)
     Text(
         text = label,
-        color = colors.accent_blue,
+        color = colors.on_accent,
         fontSize = 13.sp,
         fontWeight = FontWeight.SemiBold,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
         modifier = Modifier
             .clip(shape)
-            .background(colors.accent_blue.copy(alpha = 0.12f))
+            .background(colors.accent_blue)
             .clickable(enabled = enabled, onClick = on_click)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .padding(horizontal = 14.dp, vertical = 7.dp),
     )
 }
 
@@ -109,17 +116,28 @@ private fun toast_icon_action(
     enabled: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
-    Icon(
-        imageVector = icon,
-        contentDescription = label,
-        tint = colors.accent_blue,
+    Box(
         modifier = Modifier
+            .size(32.dp)
             .clip(SquircleShape(999.dp))
-            .clickable(enabled = enabled, onClick = on_click)
-            .padding(6.dp)
-            .size(22.dp),
-    )
+            .background(toast_control_fill(colors))
+            .clickable(enabled = enabled, onClick = on_click),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = colors.text_primary,
+            modifier = Modifier.size(17.dp),
+        )
+    }
 }
+
+private fun toast_surface_fill(colors: org.astermail.android.design.AsterSemanticColors) =
+    if (colors.is_dark) colors.bg_card.lighten(0.14f) else colors.bg_card
+
+private fun toast_control_fill(colors: org.astermail.android.design.AsterSemanticColors) =
+    if (colors.is_dark) colors.bg_card.lighten(0.28f) else colors.bg_hover
 
 @Composable
 fun top_toast_overlay(
@@ -140,15 +158,28 @@ fun top_toast_overlay(
     Box(modifier = Modifier.fillMaxWidth().statusBarsPadding(), contentAlignment = Alignment.TopCenter) {
         AnimatedVisibility(
             visible = state != null,
-            enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
-            exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
+            enter = slideInVertically(
+                animationSpec = spring(
+                    dampingRatio = 0.78f,
+                    stiffness = Spring.StiffnessMediumLow,
+                    visibilityThreshold = IntOffset(1, 1),
+                ),
+                initialOffsetY = { -it },
+            ) + fadeIn(animationSpec = tween(140)) + scaleIn(
+                animationSpec = spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow),
+                initialScale = 0.92f,
+                transformOrigin = TransformOrigin(0.5f, 0f),
+            ),
+            exit = slideOutVertically(animationSpec = tween(180), targetOffsetY = { -it }) +
+                fadeOut(animationSpec = tween(140)) +
+                scaleOut(animationSpec = tween(180), targetScale = 0.94f, transformOrigin = TransformOrigin(0.5f, 0f)),
         ) {
             val s = last_state ?: return@AnimatedVisibility
-            val shape = SquircleShape(999.dp)
-            val fill = if (colors.is_dark) colors.bg_card.lighten(0.12f) else colors.bg_card
+            val shape = SquircleShape(26.dp)
+            val fill = toast_surface_fill(colors)
             val row_modifier = Modifier
                 .padding(horizontal = 12.dp, vertical = 10.dp)
-                .shadow(14.dp, shape, clip = false)
+                .shadow(18.dp, shape, clip = false)
                 .clip(shape)
                 .background(fill)
                 .clickable(
@@ -168,7 +199,7 @@ fun top_toast_overlay(
                         }
                     }
                 }
-                .padding(start = 16.dp, end = 8.dp, top = 11.dp, bottom = 11.dp)
+                .padding(start = 18.dp, end = 10.dp, top = 12.dp, bottom = 12.dp)
             Row(
                 modifier = row_modifier,
                 verticalAlignment = Alignment.CenterVertically,
@@ -213,20 +244,25 @@ fun top_toast_overlay(
                         )
                     }
                 }
-                Spacer(Modifier.width(4.dp))
-                Icon(
-                    imageVector = TablerIcons.X,
-                    contentDescription = null,
-                    tint = colors.text_muted,
+                Spacer(Modifier.width(8.dp))
+                Box(
                     modifier = Modifier
-                        .clip(SquircleShape(8.dp))
+                        .size(32.dp)
+                        .clip(SquircleShape(999.dp))
+                        .background(toast_control_fill(colors))
                         .clickable {
                             s.on_close?.invoke()
                             on_dismiss()
-                        }
-                        .padding(6.dp)
-                        .size(18.dp),
-                )
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = TablerIcons.X,
+                        contentDescription = null,
+                        tint = colors.text_secondary,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
             }
         }
     }
