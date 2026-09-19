@@ -2798,23 +2798,12 @@ internal fun inbox_top_bar(
                 .height(52.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val open_drawer_description = stringResource(R.string.open_drawer)
-            Box(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .clickable(onClick = on_open_drawer)
-                    .semantics { contentDescription = open_drawer_description }
-                    .testTag("account_avatar"),
-                contentAlignment = Alignment.Center,
-            ) {
-                SenderAvatar(
-                    email = account_email,
-                    name = account_name,
-                    size = 32.dp,
-                    profile_picture_url = account_profile_picture,
-                    profile_color = account_profile_color,
-                )
-            }
+            AsterIconButton(
+                icon = TablerIcons.Menu2,
+                content_description = stringResource(R.string.open_drawer),
+                onClick = on_open_drawer,
+                modifier = Modifier.testTag("open_drawer"),
+            )
             Row(
                 modifier = Modifier
                     .weight(1f)
@@ -2823,7 +2812,7 @@ internal fun inbox_top_bar(
                     .clip(SquircleShape(26.dp))
                     .background(search_field_bg_color(colors))
                     .clickable { on_open_search() }
-                    .padding(horizontal = AsterSpacing.lg)
+                    .padding(start = AsterSpacing.lg, end = AsterSpacing.sm)
                     .testTag("search"),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
@@ -2850,18 +2839,31 @@ internal fun inbox_top_bar(
                     fontSize = 16.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     onTextLayout = { layout ->
                         if (layout.hasVisualOverflow && candidate_index < candidates.lastIndex) candidate_index++
                     },
-                    modifier = Modifier.weight(1f, fill = false),
+                    modifier = Modifier.weight(1f),
                 )
+                val settings_description = stringResource(R.string.settings)
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .clickable(onClick = on_open_settings)
+                        .semantics { contentDescription = settings_description }
+                        .testTag("account_avatar"),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    SenderAvatar(
+                        email = account_email,
+                        name = account_name,
+                        size = 32.dp,
+                        profile_picture_url = account_profile_picture,
+                        profile_color = account_profile_color,
+                    )
+                }
             }
-            AsterIconButton(
-                icon = TablerIcons.Settings,
-                content_description = stringResource(R.string.settings),
-                onClick = on_open_settings,
-                modifier = Modifier.testTag("settings"),
-            )
         }
         if (selection_content != null) {
             selection_content()
