@@ -62,9 +62,40 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.astermail.android.design.AsterSpacing
 
-const val swipe_claim_slop_multiplier = 3f
-const val swipe_dominance_ratio = 2f
+const val swipe_claim_slop_multiplier = 1f
+const val swipe_dominance_ratio = 1.2f
 const val swipe_commit_fraction = 0.4f
+const val swipe_fling_velocity = 900f
+const val swipe_fling_min_fraction = 0.08f
+
+enum class SwipeAxis { undecided, horizontal, vertical }
+
+fun swipe_axis_for(
+    dx: Float,
+    dy: Float,
+    slop: Float,
+    dominance: Float = swipe_dominance_ratio,
+): SwipeAxis {
+    val ax = abs(dx)
+    val ay = abs(dy)
+    if (ay > slop && ay >= ax) return SwipeAxis.vertical
+    if (ax > slop && ax > ay * dominance) return SwipeAxis.horizontal
+    if (ay > slop) return SwipeAxis.vertical
+    return SwipeAxis.undecided
+}
+
+fun swipe_commits(
+    travelled: Float,
+    velocity: Float,
+    limit: Float,
+    commit_fraction: Float = swipe_commit_fraction,
+    fling_velocity: Float = swipe_fling_velocity,
+): Boolean {
+    if (travelled == 0f || limit <= 0f) return false
+    if (abs(travelled) >= limit * commit_fraction) return true
+    if (abs(travelled) < limit * swipe_fling_min_fraction) return false
+    return abs(velocity) >= fling_velocity && sign(velocity) == sign(travelled)
+}
 
 fun is_removing_swipe_action(action: String): Boolean = action in setOf(
     "archive", "trash", "delete", "spam", "move_to_inbox", "unarchive",
@@ -121,6 +152,8 @@ fun swipe_action_row(
                             var dy = 0f
                             var claimed = false
                             var passed_commit = false
+                            val velocity_tracker = androidx.compose.ui.input.pointer.util.VelocityTracker()
+                            velocity_tracker.addPosition(down.uptimeMillis, down.position)
                             while (true) {
                                 val event = awaitPointerEvent()
                                 val change = event.changes.firstOrNull { it.id == down.id } ?: break
@@ -128,10 +161,11 @@ fun swipe_action_row(
                                 val delta = change.positionChange()
                                 dx += delta.x
                                 dy += delta.y
+                                velocity_tracker.addPosition(change.uptimeMillis, change.position)
                                 if (!claimed) {
-                                    if (abs(dy) > slop && abs(dy) >= abs(dx)) break
-                                    if (abs(dx) < claim_distance) continue
-                                    if (abs(dx) <= abs(dy) * swipe_dominance_ratio) break
+                                    val axis = swipe_axis_for(dx, dy, slop)
+                                    if (axis == SwipeAxis.vertical) break
+                                    if (axis == SwipeAxis.undecided) continue
                                     if (if (dx > 0f) !start_enabled else !end_enabled) break
                                     claimed = true
                                     change.consume()
@@ -153,7 +187,8 @@ fun swipe_action_row(
                             }
                             if (!claimed) continue
                             val travelled = offset_x.value
-                            if (abs(travelled) < commit_distance) {
+                            val velocity_x = velocity_tracker.calculateVelocity().x
+                            if (!swipe_commits(travelled, velocity_x, limit)) {
                                 launch { offset_x.animateTo(0f, tween(220)) }
                                 continue
                             }

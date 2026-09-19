@@ -23,6 +23,7 @@ package org.astermail.android.ui.mail
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
@@ -38,27 +39,25 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.astermail.android.R
@@ -67,37 +66,82 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_appearance
+import org.astermail.android.design.components.shimmer_line
 import org.astermail.android.design.components.shimmer_state
 
 const val inbox_skeleton_tag = "inbox_skeleton"
 const val inbox_skeleton_row_tag = "inbox_skeleton_row"
 
-internal const val skeleton_reveal_step_ms = 35
-internal const val skeleton_reveal_duration_ms = 200
-internal const val skeleton_reveal_cap = 12
 internal const val skeleton_sweep_lag = 0.06f
 internal const val skeleton_defer_ms = 150L
-internal const val skeleton_min_visible_ms = 450L
-internal const val skeleton_fade_out_ms = 200
+internal const val skeleton_min_visible_ms = 300L
+internal const val skeleton_fade_out_ms = 150
+internal const val skeleton_handoff_ms = 150
+internal const val skeleton_await_rows_ms = 120L
 
 internal fun skeleton_visible_after(has_data: Boolean, pending: Boolean, pending_for_ms: Long): Boolean =
     !has_data && pending && pending_for_ms >= skeleton_defer_ms
-internal val skeleton_reveal_rise = 6.dp
+
+enum class SkeletonPhase { blank, skeleton, content }
+
+data class SkeletonStep(val target: SkeletonPhase, val after_ms: Long)
+
+internal fun initial_skeleton_phase(wanted: Boolean, rows_imminent: Boolean): SkeletonPhase = when {
+    !wanted -> SkeletonPhase.content
+    rows_imminent -> SkeletonPhase.blank
+    else -> SkeletonPhase.skeleton
+}
+
+internal fun plan_skeleton_step(
+    current: SkeletonPhase,
+    wanted: Boolean,
+    rows_imminent: Boolean,
+    skeleton_shown_for_ms: Long,
+): SkeletonStep = when {
+    wanted && current == SkeletonPhase.skeleton -> SkeletonStep(SkeletonPhase.skeleton, 0L)
+    wanted && (rows_imminent || current == SkeletonPhase.content) ->
+        SkeletonStep(SkeletonPhase.skeleton, skeleton_await_rows_ms)
+    wanted -> SkeletonStep(SkeletonPhase.skeleton, 0L)
+    current == SkeletonPhase.skeleton ->
+        SkeletonStep(SkeletonPhase.content, (skeleton_min_visible_ms - skeleton_shown_for_ms).coerceAtLeast(0L))
+    else -> SkeletonStep(SkeletonPhase.content, 0L)
+}
 
 @Composable
-internal fun Modifier.skeleton_reveal(index: Int, enabled: Boolean = true): Modifier {
+fun remember_skeleton_phase(wanted: Boolean, rows_imminent: Boolean): State<SkeletonPhase> {
+    val phase = remember { mutableStateOf(initial_skeleton_phase(wanted, rows_imminent)) }
+    val shown_at = remember {
+        longArrayOf(if (phase.value == SkeletonPhase.skeleton) android.os.SystemClock.uptimeMillis() else 0L)
+    }
+    LaunchedEffect(wanted, rows_imminent) {
+        val shown_for = if (phase.value == SkeletonPhase.skeleton) {
+            android.os.SystemClock.uptimeMillis() - shown_at[0]
+        } else {
+            0L
+        }
+        val step = plan_skeleton_step(phase.value, wanted, rows_imminent, shown_for)
+        if (step.after_ms > 0L) delay(step.after_ms)
+        if (phase.value == step.target) return@LaunchedEffect
+        if (step.target == SkeletonPhase.skeleton) shown_at[0] = android.os.SystemClock.uptimeMillis()
+        phase.value = step.target
+    }
+    return phase
+}
+
+@Composable
+fun Modifier.skeleton_handoff(phase: SkeletonPhase): Modifier {
     val reduce_motion = aster_reduce_motion()
-    if (!enabled || reduce_motion) return this
-    val progress = remember { Animatable(0f) }
-    LaunchedEffect(Unit) {
-        delay((index.coerceAtMost(skeleton_reveal_cap) * skeleton_reveal_step_ms).toLong())
-        progress.animateTo(1f, tween(skeleton_reveal_duration_ms))
+    val alpha = remember { Animatable(if (phase == SkeletonPhase.skeleton) 0f else 1f) }
+    LaunchedEffect(phase, reduce_motion) {
+        when (phase) {
+            SkeletonPhase.skeleton -> alpha.snapTo(0f)
+            SkeletonPhase.blank -> Unit
+            SkeletonPhase.content -> if (alpha.value < 1f) {
+                if (reduce_motion) alpha.snapTo(1f) else alpha.animateTo(1f, tween(skeleton_handoff_ms))
+            }
+        }
     }
-    val rise_px = with(LocalDensity.current) { skeleton_reveal_rise.toPx() }
-    return this.graphicsLayer {
-        alpha = progress.value
-        translationY = (1f - progress.value) * rise_px
-    }
+    return this.graphicsLayer { this.alpha = alpha.value }
 }
 
 @Composable
@@ -105,63 +149,51 @@ fun inbox_skeleton(
     modifier: Modifier = Modifier,
     list_density: String? = null,
     row_count: Int = 10,
-    reveal: Boolean = true,
+    show_avatar: Boolean = true,
+    show_preview: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
     val state = shimmer_state()
-    LazyColumn(
+    Column(
         modifier = modifier
             .fillMaxSize()
+            .graphicsLayer()
             .background(colors.bg_primary)
             .testTag(inbox_skeleton_tag),
-        userScrollEnabled = false,
     ) {
-        items(row_count) { index ->
+        repeat(row_count) { index ->
             inbox_skeleton_row(
                 state = state,
                 list_density = list_density,
                 is_first = index == 0,
                 is_last = index == row_count - 1,
-                reveal_index = if (reveal) index else null,
+                show_avatar = show_avatar,
+                show_preview = show_preview,
             )
         }
     }
 }
 
 @Composable
-fun inbox_skeleton_overlay(
-    visible: Boolean,
+fun inbox_skeleton_layer(
+    phase: SkeletonPhase,
     modifier: Modifier = Modifier,
     list_density: String? = null,
+    show_avatar: Boolean = true,
+    show_preview: Boolean = true,
 ) {
-    var shown by remember { mutableStateOf(false) }
-    var shown_at by remember { mutableLongStateOf(0L) }
-    LaunchedEffect(visible) {
-        if (visible) {
-            if (shown) return@LaunchedEffect
-            val pending_since = android.os.SystemClock.uptimeMillis()
-            delay(skeleton_defer_ms)
-            val pending_for = android.os.SystemClock.uptimeMillis() - pending_since
-            if (!skeleton_visible_after(has_data = false, pending = visible, pending_for_ms = pending_for)) {
-                return@LaunchedEffect
-            }
-            shown_at = android.os.SystemClock.uptimeMillis()
-            shown = true
-        } else if (shown) {
-            val elapsed = android.os.SystemClock.uptimeMillis() - shown_at
-            if (elapsed < skeleton_min_visible_ms) delay(skeleton_min_visible_ms - elapsed)
-            shown = false
-        }
-    }
+    val reduce_motion = aster_reduce_motion()
     AnimatedVisibility(
-        visible = shown,
+        visible = phase == SkeletonPhase.skeleton,
         modifier = modifier,
         enter = EnterTransition.None,
-        exit = fadeOut(tween(skeleton_fade_out_ms)),
+        exit = if (reduce_motion) ExitTransition.None else fadeOut(tween(skeleton_fade_out_ms)),
     ) {
         val loading_label = stringResource(R.string.loading)
         inbox_skeleton(
             list_density = list_density,
+            show_avatar = show_avatar,
+            show_preview = show_preview,
             modifier = Modifier.semantics {
                 liveRegion = LiveRegionMode.Polite
                 contentDescription = loading_label
@@ -171,79 +203,99 @@ fun inbox_skeleton_overlay(
 }
 
 @Composable
+private fun skeleton_text_line(
+    style: TextStyle,
+    state: shimmer_appearance,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = " ",
+        style = style,
+        maxLines = 1,
+        modifier = modifier.shimmer_line(state),
+    )
+}
+
+@Composable
 fun inbox_skeleton_row(
     state: shimmer_appearance = shimmer_state(),
     list_density: String? = null,
     is_first: Boolean = false,
     is_last: Boolean = true,
-    reveal_index: Int? = null,
+    show_avatar: Boolean = true,
+    show_preview: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
     val metrics = remember(list_density) { inbox_row_metrics(list_density) }
     val shape = remember(is_first, is_last) { inbox_group_shape(is_first, is_last) }
     val card_color = remember(colors) { inbox_card_read_color(colors) }
-    val phase_shift = (reveal_index ?: 0) * skeleton_sweep_lag
-    val line_shape = RoundedCornerShape(4.dp)
-    Row(
+    val sender_style = inbox_sender_text_style()
+    val time_style = inbox_time_text_style()
+    val subject_style = inbox_subject_text_style()
+    val preview_style = inbox_preview_text_style()
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .testTag(inbox_skeleton_row_tag)
-            .skeleton_reveal(index = reveal_index ?: 0, enabled = reveal_index != null)
             .padding(
                 start = inbox_card_horizontal_margin,
                 end = inbox_card_horizontal_margin,
                 bottom = if (is_last) 0.dp else inbox_group_split,
             )
             .clip(shape)
-            .background(card_color)
-            .defaultMinSize(minHeight = metrics.min_height)
-            .padding(
-                start = inbox_card_content_padding,
-                end = inbox_card_content_padding,
-                top = metrics.vertical_padding,
-                bottom = metrics.vertical_padding,
-            ),
-        verticalAlignment = Alignment.CenterVertically,
+            .background(card_color),
     ) {
-        Box(
+        Row(
             modifier = Modifier
-                .size(metrics.avatar_size)
-                .shimmer(state, CircleShape, phase_shift),
-        )
-        Spacer(Modifier.width(AsterSpacing.md))
-        Column(modifier = Modifier.weight(1f)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+                .fillMaxWidth()
+                .clearAndSetSemantics { }
+                .defaultMinSize(minHeight = metrics.min_height)
+                .padding(
+                    start = inbox_card_content_padding,
+                    end = inbox_card_content_padding,
+                    top = metrics.vertical_padding,
+                    bottom = metrics.vertical_padding,
+                ),
+            verticalAlignment = Alignment.Top,
+        ) {
+            if (show_avatar) {
                 Box(
                     modifier = Modifier
-                        .width(120.dp)
-                        .height(14.dp)
-                        .shimmer(state, line_shape, phase_shift),
+                        .size(metrics.avatar_size)
+                        .shimmer(state, CircleShape),
                 )
-                Spacer(Modifier.weight(1f))
-                Box(
-                    modifier = Modifier
-                        .width(40.dp)
-                        .height(12.dp)
-                        .shimmer(state, line_shape, phase_shift),
-                )
+                Spacer(Modifier.width(AsterSpacing.md))
             }
-            Spacer(Modifier.height(metrics.line_gap + 4.dp))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(0.7f)
-                    .height(13.dp)
-                    .shimmer(state, line_shape, phase_shift),
-            )
-            Spacer(Modifier.height(metrics.line_gap + 3.dp))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .height(12.dp)
-                    .shimmer(state, line_shape, phase_shift),
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        skeleton_text_line(sender_style, state, Modifier.fillMaxWidth(0.42f))
+                    }
+                    skeleton_text_line(
+                        time_style,
+                        state,
+                        Modifier
+                            .padding(start = AsterSpacing.sm)
+                            .width(36.dp),
+                    )
+                }
+                Spacer(Modifier.height(metrics.line_gap))
+                if (show_preview) {
+                    skeleton_text_line(subject_style, state, Modifier.fillMaxWidth(0.68f))
+                    Spacer(Modifier.height(metrics.line_gap))
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        if (show_preview) {
+                            skeleton_text_line(preview_style, state, Modifier.fillMaxWidth(0.9f))
+                        } else {
+                            skeleton_text_line(subject_style, state, Modifier.fillMaxWidth(0.68f))
+                        }
+                    }
+                    Spacer(Modifier.width(AsterSpacing.sm))
+                    Box(modifier = Modifier.size(inbox_star_slot_size))
+                }
+            }
         }
     }
 }

@@ -139,6 +139,11 @@ private fun decode_base64_payload(payload: String): ByteArray? {
         ?: runCatching { Base64.decode(cleaned, Base64.URL_SAFE) }.getOrNull()
 }
 
+internal fun avatar_already_cached(context: android.content.Context, key: String): Boolean =
+    runCatching {
+        coil.Coil.imageLoader(context).memoryCache?.get(coil.memory.MemoryCache.Key(key)) != null
+    }.getOrDefault(false)
+
 @Composable
 fun SenderAvatar(
     email: String,
@@ -158,7 +163,9 @@ fun SenderAvatar(
     val resolved_profile_picture = profile_picture_url?.takeIf { it.isNotBlank() } ?: own_picture
     if (!resolved_profile_picture.isNullOrBlank() && remote_avatars_allowed) {
         val (bg_fb, fg_fb) = avatar_colors_for(avatar_key_for(email, name), profile_color)
-        var loaded_pp by remember(resolved_profile_picture) { mutableStateOf(false) }
+        var loaded_pp by remember(resolved_profile_picture) {
+            mutableStateOf(avatar_already_cached(context, resolved_profile_picture))
+        }
         Box(
             modifier = modifier.size(size).clip(CircleShape).background(if (loaded_pp) Color.Transparent else bg_fb),
             contentAlignment = Alignment.Center,
@@ -229,7 +236,7 @@ fun SenderAvatar(
     }
 
     val url = remember(root_domain) { "$FAVICON_BASE$root_domain" }
-    var loaded by remember(url) { mutableStateOf(false) }
+    var loaded by remember(url) { mutableStateOf(avatar_already_cached(context, url)) }
     var attempt by remember(url) { mutableStateOf(0) }
     var pending_attempt by remember(url) { mutableStateOf(0) }
 
@@ -370,7 +377,9 @@ private fun AsterDomainAvatar(
         ?: profile?.profile_color?.takeIf { use_peer_profile_color }
     val (aster_bg, aster_fg) = avatar_colors_for(avatar_key_for(email, name), chosen_profile_color)
     if (resolved_pic != null) {
-        var loaded by remember(resolved_pic) { mutableStateOf(false) }
+        var loaded by remember(resolved_pic) {
+            mutableStateOf(avatar_already_cached(context, resolved_pic))
+        }
         Box(
             modifier = modifier.size(size).clip(CircleShape).background(if (loaded) Color.Transparent else aster_bg),
             contentAlignment = Alignment.Center,

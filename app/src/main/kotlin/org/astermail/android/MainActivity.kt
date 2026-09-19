@@ -2316,9 +2316,24 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             },
             label = "folder_switch",
         ) { active_key ->
+            val slot_frozen = remember(active_key) {
+                folder_slot_values(
+                    filter_kind = effective_filter_kind,
+                    filter_value = filter_value,
+                    filter_name = filter_name,
+                    selected_folder = effective_selected_folder,
+                    mail_folder = effective_mail_folder,
+                )
+            }
+            val slot_live = active_key == folder_key
+            val slot_filter_kind = if (slot_live) effective_filter_kind else slot_frozen.filter_kind
+            val slot_filter_value = if (slot_live) filter_value else slot_frozen.filter_value
+            val slot_filter_name = if (slot_live) filter_name else slot_frozen.filter_name
+            val slot_selected_folder = if (slot_live) effective_selected_folder else slot_frozen.selected_folder
+            val slot_mail_folder = if (slot_live) effective_mail_folder else slot_frozen.mail_folder
             saveable_state_holder.SaveableStateProvider(active_key) {
                 when {
-                    effective_filter_kind != null -> {
+                    slot_filter_kind != null -> {
                         BackHandler(enabled = !drawer_state.isOpen) {
                             saveable_state_holder.removeState("inbox:inbox")
                             inbox_scroll_top_token += 1
@@ -2328,8 +2343,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             selected_folder = "inbox"
                         }
                         val effective_folder = org.astermail.android.mail.mail_folder_for_filter(
-                            effective_filter_kind,
-                            filter_value,
+                            slot_filter_kind,
+                            slot_filter_value,
                             alias_direction,
                         )
                         InboxScreen(
@@ -2347,8 +2362,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_open_recovery_email = { nav_controller.navigate(routes.settings_detail("recovery_email")) },
                             on_open_import = { nav_controller.navigate(routes.settings_detail("import")) },
                             current_folder = effective_folder,
-                            display_title = filter_name,
-                            alias_direction = if (effective_filter_kind == org.astermail.android.mail.filter_kind_alias) alias_direction else null,
+                            display_title = slot_filter_name,
+                            alias_direction = if (slot_filter_kind == org.astermail.android.mail.filter_kind_alias) alias_direction else null,
                             on_alias_direction_change = { alias_direction = it },
                             on_folder_change = { id ->
                                 filter_kind = null
@@ -2360,7 +2375,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_customize_toolbar = { nav_controller.navigate(routes.settings_detail("customize_toolbar")) },
                         )
                     }
-                    effective_selected_folder == "subscriptions" -> {
+                    slot_selected_folder == "subscriptions" -> {
                         BackHandler(enabled = !drawer_state.isOpen) {
                             saveable_state_holder.removeState("inbox:inbox")
                             inbox_scroll_top_token += 1
@@ -2376,7 +2391,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             },
                         )
                     }
-                    effective_selected_folder == "contacts" -> {
+                    slot_selected_folder == "contacts" -> {
                         BackHandler(enabled = !drawer_state.isOpen) {
                             saveable_state_holder.removeState("inbox:inbox")
                             inbox_scroll_top_token += 1
@@ -2399,7 +2414,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     else -> {
                         BackHandler(
                             enabled = !drawer_state.isOpen &&
-                                (effective_selected_folder != "inbox" || inbox_category != "primary"),
+                                (slot_selected_folder != "inbox" || inbox_category != "primary"),
                         ) {
                             saveable_state_holder.removeState("inbox:inbox")
                             inbox_scroll_top_token += 1
@@ -2408,12 +2423,12 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         }
                         InboxScreen(
                             on_open_drawer = { scope.launch { drawer_state.open() } },
-                            on_open_search = { nav_controller.navigate(routes.search_for_folder(effective_selected_folder)) },
+                            on_open_search = { nav_controller.navigate(routes.search_for_folder(slot_selected_folder)) },
                             on_compose = { drawer_context.startActivity(ComposeActivity.intent_for(drawer_context)) },
                             on_compose_draft = { id -> drawer_context.startActivity(ComposeActivity.intent_for(drawer_context, mode = "draft", draft_id = id)) },
                             on_view_pending_send = { nav_controller.navigate(routes.pending_send_preview) },
                             on_open_email = { id ->
-                                if (effective_selected_folder == "drafts") {
+                                if (slot_selected_folder == "drafts") {
                                     drawer_context.startActivity(ComposeActivity.intent_for(drawer_context, mode = "draft", draft_id = id))
                                 } else {
                                     open_mail_detail(nav_controller, id)
@@ -2426,7 +2441,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_open_upgrade = { nav_controller.navigate(routes.settings_detail("billing")) },
                             on_open_recovery_email = { nav_controller.navigate(routes.settings_detail("recovery_email")) },
                             on_open_import = { nav_controller.navigate(routes.settings_detail("import")) },
-                            current_folder = effective_mail_folder,
+                            current_folder = slot_mail_folder,
                             inbox_category = inbox_category,
                             display_title = null,
                             on_folder_change = { selected_folder = it },
@@ -2434,7 +2449,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_custom_folder_change = { id, name -> request_custom_folder(id, name) },
                             folder_unread_counts = quick_folder_counts,
                             on_customize_toolbar = { nav_controller.navigate(routes.settings_detail("customize_toolbar")) },
-                            scroll_top_token = if (effective_selected_folder == "inbox") inbox_scroll_top_token else 0,
+                            scroll_top_token = if (slot_selected_folder == "inbox") inbox_scroll_top_token else 0,
                             all_mail_include_spam = all_mail_include_spam,
                             all_mail_include_trash = all_mail_include_trash,
                             on_all_mail_scope_change = { spam, trash ->
@@ -2693,3 +2708,11 @@ private fun window_inset_probe(on_applied: () -> Unit) {
         .calculateTopPadding()
     if (top > androidx.compose.ui.unit.Dp(0f)) on_applied()
 }
+
+private data class folder_slot_values(
+    val filter_kind: String?,
+    val filter_value: String,
+    val filter_name: String,
+    val selected_folder: String,
+    val mail_folder: String,
+)

@@ -719,7 +719,6 @@ fun MailDetailScreen(
     var show_label_sheet by remember { mutableStateOf(false) }
     var action_target_id by remember { mutableStateOf<String?>(null) }
 
-    var body_ready by remember(email_id) { mutableStateOf(false) }
     var show_encryption_dropdown by remember { mutableStateOf(false) }
     var hidden_group_revealed by remember(email_id) { mutableStateOf(false) }
     var allow_external_ids by remember(email_id) { mutableStateOf(emptySet<String>()) }
@@ -781,55 +780,81 @@ fun MailDetailScreen(
     }
 
     val messages = remember(email_id, api_messages) { api_messages.distinctBy { it.id } }
-    val expected_message_count = remember(email_id, api_item?.thread_message_count, inbox_state_for_folder.items) {
-        api_item?.thread_message_count
-            ?: inbox_state_for_folder.items.firstOrNull { it.id == email_id }?.thread_message_count
-            ?: 1
+    val detail_count_corrections by mail_vm.thread_count_corrections.collectAsStateWithLifecycle()
+    val expected_message_count = remember(
+        email_id,
+        api_item?.thread_message_count,
+        inbox_state_for_folder.items,
+        detail_count_corrections,
+    ) {
+        val listed = inbox_state_for_folder.items.firstOrNull { it.id == email_id }
+        val claimed = api_item?.thread_message_count ?: listed?.thread_message_count ?: 1
+        val token = api_item?.thread_token ?: listed?.thread_token
+        corrected_thread_count(claimed.coerceAtLeast(1), token?.let { detail_count_corrections[it] })
     }
     var thread_settled by remember(email_id) { mutableStateOf(false) }
-    LaunchedEffect(email_id, thread_state.is_loading, messages.size, thread_matches_email) {
+    LaunchedEffect(email_id, thread_matches_email, thread_state.is_loading, messages.size) {
         if (thread_matches_email && !thread_state.is_loading && messages.isNotEmpty()) thread_settled = true
     }
-    val pending_message_count = if (thread_settled) 0 else (expected_message_count - messages.size).coerceIn(0, 3)
+    val thread_complete = email != null && thread_is_complete(
+        loaded_count = messages.size,
+        expected_count = expected_message_count,
+        settled = thread_settled,
+        any_body_pending = messages.any { it.is_body_pending },
+    )
+    var open_layout by remember(email_id) { mutableStateOf<ThreadOpenLayout?>(null) }
+    LaunchedEffect(email_id, thread_complete, messages) {
+        if (open_layout == null && thread_complete) {
+            open_layout = initial_thread_layout(messages.map { it.id }, email_id)
+        }
+    }
     val is_thread_encrypted = remember(messages) { thread_is_end_to_end_encrypted(messages) }
     val is_thread_pgp = remember(messages) { thread_is_pgp_encrypted(messages) }
     val thread_trackers_blocked = remember(messages) { messages.sumOf { it.trackers_blocked } }
 
     var bottom_bar_height by remember { mutableStateOf(132.dp) }
 
-    val visible_tail_count = 2
-    val hidden_seed_ids = remember(email_id) { mutableStateOf<Set<String>?>(null) }
-    LaunchedEffect(email_id, messages.size) {
-        if (hidden_seed_ids.value != null || messages.size <= 1) return@LaunchedEffect
-        hidden_seed_ids.value = if (messages.size <= visible_tail_count + 2) {
-            emptySet()
-        } else {
-            messages.subList(1, messages.size - visible_tail_count).map { it.id }.toSet()
-        }
-    }
-    val hidden_id_set = remember(messages, hidden_group_revealed, hidden_seed_ids.value) {
+    val hidden_seed_ids = open_layout?.hidden_ids.orEmpty()
+    val hidden_id_set = remember(messages, hidden_group_revealed, hidden_seed_ids) {
         if (hidden_group_revealed) emptySet()
-        else {
-            val seed = hidden_seed_ids.value ?: emptySet()
-            messages.asSequence().map { it.id }.filter { it in seed }.toSet()
-        }
+        else messages.asSequence().map { it.id }.filter { it in hidden_seed_ids }.toSet()
     }
     val first_hidden_idx = remember(messages, hidden_id_set) {
         messages.indexOfFirst { it.id in hidden_id_set }
     }
 
-    val expanded_ids = remember(email_id) {
-        mutableStateOf(emptySet<String>())
+    val user_expanded_ids = remember(email_id) {
+        mutableStateOf<Set<String>?>(null)
     }
-    val seeded_last_id = remember(email_id) {
-        mutableStateOf<String?>(null)
+    val current_expanded_ids = user_expanded_ids.value ?: open_layout?.expanded_ids.orEmpty()
+    val ready_body_ids = remember(email_id) { mutableStateOf(emptySet<String>()) }
+    var body_wait_expired by remember(email_id) { mutableStateOf(false) }
+    LaunchedEffect(email_id, open_layout != null) {
+        if (open_layout == null) return@LaunchedEffect
+        kotlinx.coroutines.delay(thread_body_wait_ms)
+        body_wait_expired = true
     }
-    LaunchedEffect(email_id, messages.size, thread_settled) {
-        if (messages.isEmpty() || !thread_settled) return@LaunchedEffect
-        val last_id = messages.last().id
-        if (seeded_last_id.value == last_id) return@LaunchedEffect
-        seeded_last_id.value = last_id
-        expanded_ids.value = expanded_ids.value + last_id
+    var thread_revealed by remember(email_id) { mutableStateOf(false) }
+    LaunchedEffect(
+        email_id,
+        thread_complete,
+        open_layout,
+        hidden_id_set,
+        ready_body_ids.value,
+        body_wait_expired,
+    ) {
+        val layout = open_layout ?: return@LaunchedEffect
+        if (thread_revealed) return@LaunchedEffect
+        if (thread_reveal_ready(
+                complete = thread_complete,
+                expanded_ids = layout.expanded_ids,
+                hidden_ids = hidden_id_set,
+                ready_body_ids = ready_body_ids.value,
+                body_wait_expired = body_wait_expired,
+            )
+        ) {
+            thread_revealed = true
+        }
     }
 
     fun show_toast(msg: String) {
@@ -1297,22 +1322,21 @@ fun MailDetailScreen(
                     }
                 }
 
-                if (email != null) {
-                    items(pending_message_count, key = { "pending_message_$it" }, contentType = { "pending_message" }) {
-                        collapsed_message_placeholder()
-                    }
-                }
-                items(messages.size, key = { messages[it].id }, contentType = { "thread_message" }) { idx ->
-                    val msg = messages[idx]
-                    val is_last = idx == messages.size - 1
-                    val is_last_message = idx == messages.size - 1
-                    val is_expanded = messages.size <= 1 ||
-                        expanded_ids.value.contains(msg.id) ||
-                        (is_last_message && seeded_last_id.value != msg.id)
+                val thread_items = if (open_layout == null) emptyList() else messages
+                items(thread_items.size, key = { thread_items[it].id }, contentType = { "thread_message" }) { idx ->
+                    val msg = thread_items[idx]
+                    val is_last = idx == thread_items.size - 1
+                    val is_expanded = thread_message_is_expanded(
+                        message_id = msg.id,
+                        is_last = is_last,
+                        total_messages = thread_items.size,
+                        expanded_ids = current_expanded_ids,
+                        known_ids = open_layout?.known_ids.orEmpty(),
+                    )
 
                     val is_hidden = msg.id in hidden_id_set
                     val is_after_indicator = hidden_id_set.isNotEmpty() &&
-                        idx > 0 && messages[idx - 1].id in hidden_id_set
+                        idx > 0 && thread_items[idx - 1].id in hidden_id_set
 
                     if (is_hidden) {
                         if (idx == first_hidden_idx) {
@@ -1379,7 +1403,7 @@ fun MailDetailScreen(
                             on_dismiss_unsub = {
                                 dismissed_unsub_ids = dismissed_unsub_ids + msg.id
                             },
-                            on_body_ready = { body_ready = true },
+                            on_body_ready = { ready_body_ids.value = ready_body_ids.value + msg.id },
                             on_track = { _, _, _ -> },
                             access_token = settings_vm.get_access_token(),
                             on_link_click = { url ->
@@ -1424,7 +1448,7 @@ fun MailDetailScreen(
                             },
                             on_collapse = {
                                 anchor_toggle(msg.id)
-                                expanded_ids.value = expanded_ids.value - msg.id
+                                user_expanded_ids.value = current_expanded_ids - msg.id
                             },
                             on_sender_tap = { email, name ->
                                 profile_sender = email to name
@@ -1503,7 +1527,7 @@ fun MailDetailScreen(
                             message_index = idx,
                             on_expand = {
                                 anchor_toggle(msg.id)
-                                expanded_ids.value = expanded_ids.value + msg.id
+                                user_expanded_ids.value = current_expanded_ids + msg.id
                             },
                         )
                     }
@@ -1512,7 +1536,7 @@ fun MailDetailScreen(
                 item { Spacer(Modifier.height(bottom_bar_height + 16.dp)) }
             }
             detail_skeleton_overlay(
-                visible = email == null,
+                visible = !thread_revealed,
                 message_count = expected_message_count,
             )
 
@@ -2536,9 +2560,6 @@ internal fun expanded_message(
             html_rendering_mode = body_settings_state.preferences?.html_rendering_mode,
             low_network = org.astermail.android.network.low_network_active(),
         )
-        val body_skeleton_seen = remember(msg.id) { booleanArrayOf(false) }
-        val body_skeleton_reveal = !body_skeleton_seen[0]
-        if (msg.is_body_pending) body_skeleton_seen[0] = true
         if (msg.is_body_pending) {
             var body_wait_expired by remember(msg.id, retry_in_progress) { mutableStateOf(false) }
             LaunchedEffect(msg.id, retry_in_progress) {
@@ -2583,7 +2604,6 @@ internal fun expanded_message(
                 on_ready = on_body_ready,
                 on_link_click = on_link_click,
                 on_image_click = on_image_click,
-                skeleton_reveal = body_skeleton_reveal,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = AsterSpacing.xs, bottom = if (is_last) 0.dp else AsterSpacing.sm)
@@ -2695,7 +2715,6 @@ internal fun expanded_message(
                 on_ready = on_body_ready,
                 on_link_click = on_link_click,
                 on_image_click = on_image_click,
-                skeleton_reveal = body_skeleton_reveal,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = AsterSpacing.xs, bottom = if (is_last) 0.dp else AsterSpacing.sm)
@@ -4162,33 +4181,6 @@ private fun collapsed_message(
     }
 }
 
-@Composable
-private fun collapsed_message_placeholder() {
-    val colors = AsterMaterial.colors
-    val state = org.astermail.android.design.components.shimmer_state()
-    val line_shape = RoundedCornerShape(6.dp)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = inbox_card_horizontal_margin, end = inbox_card_horizontal_margin, bottom = inbox_group_split)
-            .clip(inbox_group_shape(true, true))
-            .background(inbox_card_read_color(colors))
-            .padding(horizontal = inbox_card_content_padding, vertical = AsterSpacing.md),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Box(Modifier.size(40.dp).shimmer(state, CircleShape))
-        Spacer(Modifier.width(AsterSpacing.md))
-        Column(modifier = Modifier.weight(1f)) {
-            Box(Modifier.height(20.dp), contentAlignment = Alignment.CenterStart) {
-                Box(Modifier.width(120.dp).height(13.dp).shimmer(state, line_shape))
-            }
-            Box(Modifier.height(18.dp), contentAlignment = Alignment.CenterStart) {
-                Box(Modifier.fillMaxWidth(0.75f).height(11.dp).shimmer(state, line_shape))
-            }
-        }
-    }
-}
-
 private fun clean_preview_text(preview: String, body: String): String {
     val source = preview.ifBlank {
         body.lineSequence().map { it.trim() }.firstOrNull { line ->
@@ -5259,7 +5251,6 @@ internal fun email_html_view(
     on_ready: () -> Unit = {},
     on_link_click: (String) -> Unit = {},
     on_image_click: (String) -> Unit = {},
-    skeleton_reveal: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
     val is_dark = !force_light && if (colors.is_glass) colors.is_dark else colors.bg_primary.luminance() < colors.text_primary.luminance()
@@ -6045,7 +6036,6 @@ internal fun email_html_view(
         }
         if (!renderer_exhausted.value && !body_shown) {
             email_body_skeleton(
-                reveal = skeleton_reveal,
                 modifier = Modifier
                     .matchParentSize()
                     .background(inbox_card_read_color(colors))

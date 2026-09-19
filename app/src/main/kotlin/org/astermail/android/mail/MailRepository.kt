@@ -1716,10 +1716,11 @@ class MailRepository @Inject constructor(
         val thread_limit = org.astermail.android.api.network.thread_message_load_limit(
             org.astermail.android.api.network.low_network_state.active(),
         )
-        val capped = if (thread_limit != null && response.messages.size > thread_limit) {
-            response.messages.takeLast(thread_limit)
+        val unique = response.messages.distinctBy { it.id }
+        val capped = if (thread_limit != null && unique.size > thread_limit) {
+            unique.takeLast(thread_limit)
         } else {
-            response.messages
+            unique
         }
         coroutineScope {
             val decrypted = capped.map { msg ->
