@@ -3,12 +3,12 @@
     <string name="image_themes">Afbeeldingsthema’s</string>
     <string name="image_themes_subtitle">Toont een foto achter de app.</string>
     <string name="image_theme_none">Geen</string>
-    <string name="image_theme_matterhorn">Matterhorn</string>
-    <string name="image_theme_aurora">Poollicht</string>
     <string name="image_theme_fjord">Fjord</string>
+    <string name="image_theme_aurora">Poollicht</string>
     <string name="image_theme_desert">Woestijn</string>
-    <string name="image_theme_milky_way">Melkweg</string>
-    <string name="image_theme_forest">Bos</string>
+    <string name="image_theme_clouds">Wolken</string>
+    <string name="image_theme_sunrise">Zonsopgang</string>
+    <string name="image_theme_above">Boven de wolken</string>
     <string name="image_theme_apply">Thema gebruiken</string>
     <string name="image_theme_in_use">In gebruik</string>
     <string name="image_theme_credit">Foto: %1$s</string>

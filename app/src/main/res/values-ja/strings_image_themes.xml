@@ -3,12 +3,12 @@
     <string name="image_themes">画像テーマ</string>
     <string name="image_themes_subtitle">アプリの背景に写真を表示します。</string>
     <string name="image_theme_none">なし</string>
-    <string name="image_theme_matterhorn">マッターホルン</string>
-    <string name="image_theme_aurora">オーロラ</string>
     <string name="image_theme_fjord">フィヨルド</string>
+    <string name="image_theme_aurora">オーロラ</string>
     <string name="image_theme_desert">砂漠</string>
-    <string name="image_theme_milky_way">天の川</string>
-    <string name="image_theme_forest">森</string>
+    <string name="image_theme_clouds">雲</string>
+    <string name="image_theme_sunrise">日の出</string>
+    <string name="image_theme_above">雲の上</string>
     <string name="image_theme_apply">テーマを使用</string>
     <string name="image_theme_in_use">使用中</string>
     <string name="image_theme_credit">写真: %1$s</string>

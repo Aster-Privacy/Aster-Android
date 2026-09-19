@@ -277,7 +277,7 @@ private fun emoji_search_field(query: String, on_query: (String) -> Unit) {
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm)
             .height(44.dp)
             .clip(CircleShape)
-            .background(reaction_chip_palette(is_dark = colors.bg_primary.luminance() < 0.5f).other_fill)
+            .background(reaction_chip_palette(is_dark = colors.is_dark).other_fill)
             .padding(start = 14.dp, end = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),

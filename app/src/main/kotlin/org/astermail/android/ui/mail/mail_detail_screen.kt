@@ -3030,7 +3030,7 @@ private fun reaction_chip_row(
     val colors = AsterMaterial.colors
     val reduce_motion = aster_reduce_motion()
     var info_emoji by remember { mutableStateOf<String?>(null) }
-    val chip_palette = reaction_chip_palette(is_dark = colors.bg_primary.luminance() < 0.5f)
+    val chip_palette = reaction_chip_palette(is_dark = colors.is_dark)
     val groups = remember(reactions, my_email) {
         reactions.groupBy { it.emoji }
             .map { (emoji, list) ->
@@ -5218,7 +5218,7 @@ internal fun email_html_view(
     skeleton_reveal: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
-    val is_dark = !force_light && colors.bg_primary.luminance() < colors.text_primary.luminance()
+    val is_dark = !force_light && if (colors.is_glass) colors.is_dark else colors.bg_primary.luminance() < colors.text_primary.luminance()
     val bg_hex = if (force_light) "#FFFFFF" else if (colors.is_glass) "transparent" else String.format(java.util.Locale.US, "#%06X", colors.bg_primary.toArgb() and 0xFFFFFF)
     val fg_hex = if (force_light) "#111827" else String.format(java.util.Locale.US, "#%06X", colors.text_primary.toArgb() and 0xFFFFFF)
     val link_hex = String.format(java.util.Locale.US, "#%06X", colors.accent_blue.toArgb() and 0xFFFFFF)

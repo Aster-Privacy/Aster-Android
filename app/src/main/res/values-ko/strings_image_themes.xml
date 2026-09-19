@@ -3,12 +3,12 @@
     <string name="image_themes">이미지 테마</string>
     <string name="image_themes_subtitle">앱 뒤에 사진을 표시합니다.</string>
     <string name="image_theme_none">없음</string>
-    <string name="image_theme_matterhorn">마터호른</string>
-    <string name="image_theme_aurora">오로라</string>
     <string name="image_theme_fjord">피오르</string>
+    <string name="image_theme_aurora">오로라</string>
     <string name="image_theme_desert">사막</string>
-    <string name="image_theme_milky_way">은하수</string>
-    <string name="image_theme_forest">숲</string>
+    <string name="image_theme_clouds">구름</string>
+    <string name="image_theme_sunrise">일출</string>
+    <string name="image_theme_above">구름 위</string>
     <string name="image_theme_apply">테마 사용</string>
     <string name="image_theme_in_use">사용 중</string>
     <string name="image_theme_credit">사진: %1$s</string>

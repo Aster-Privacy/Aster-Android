@@ -58,12 +58,12 @@ data class ThemeBackground(
 const val no_theme_background = "none"
 
 val theme_backgrounds = listOf(
-    ThemeBackground("matterhorn", R.drawable.theme_bg_matterhorn, R.string.image_theme_matterhorn, ColorThemeId.teal, Color(0xFF081A20), "Giles Laurent, CC BY-SA 4.0"),
-    ThemeBackground("aurora", R.drawable.theme_bg_aurora, R.string.image_theme_aurora, ColorThemeId.emerald, Color(0xFF081A18), "Giles Laurent, CC BY-SA 4.0"),
     ThemeBackground("fjord", R.drawable.theme_bg_fjord, R.string.image_theme_fjord, ColorThemeId.aster_blue, Color(0xFF0A1428), "W.carter, CC0"),
+    ThemeBackground("aurora", R.drawable.theme_bg_aurora, R.string.image_theme_aurora, ColorThemeId.emerald, Color(0xFF081A18), "Giles Laurent, CC BY-SA 4.0"),
     ThemeBackground("desert", R.drawable.theme_bg_desert, R.string.image_theme_desert, ColorThemeId.amber, Color(0xFF120F1C), "Sergey Pesterev, CC BY-SA 4.0"),
-    ThemeBackground("milky_way", R.drawable.theme_bg_milky_way, R.string.image_theme_milky_way, ColorThemeId.indigo, Color(0xFF10121E), "Anil Öztas, CC BY 4.0"),
-    ThemeBackground("forest", R.drawable.theme_bg_forest, R.string.image_theme_forest, ColorThemeId.green, Color(0xFF0C1414), "Giles Laurent, CC BY-SA 4.0"),
+    ThemeBackground("clouds", R.drawable.theme_bg_clouds, R.string.image_theme_clouds, ColorThemeId.indigo, Color(0xFF0B1424), "W.carter, CC BY-SA 4.0"),
+    ThemeBackground("sunrise", R.drawable.theme_bg_sunrise, R.string.image_theme_sunrise, ColorThemeId.orange, Color(0xFF16121A), "Sri Chakra Pranav, UnpetitproleX, CC BY-SA 4.0"),
+    ThemeBackground("above", R.drawable.theme_bg_above, R.string.image_theme_above, ColorThemeId.slate, Color(0xFF12151A), "Jörg Braukmann, CC BY-SA 4.0"),
 )
 
 fun theme_background_for(id: String?): ThemeBackground? = theme_backgrounds.firstOrNull { it.id == id }

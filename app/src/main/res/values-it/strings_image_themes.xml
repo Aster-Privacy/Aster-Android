@@ -3,12 +3,12 @@
     <string name="image_themes">Temi con immagine</string>
     <string name="image_themes_subtitle">Mostra una foto dietro l’app.</string>
     <string name="image_theme_none">Nessuno</string>
-    <string name="image_theme_matterhorn">Cervino</string>
-    <string name="image_theme_aurora">Aurora</string>
     <string name="image_theme_fjord">Fiordo</string>
+    <string name="image_theme_aurora">Aurora</string>
     <string name="image_theme_desert">Deserto</string>
-    <string name="image_theme_milky_way">Via Lattea</string>
-    <string name="image_theme_forest">Foresta</string>
+    <string name="image_theme_clouds">Nuvole</string>
+    <string name="image_theme_sunrise">Alba</string>
+    <string name="image_theme_above">Sopra le nuvole</string>
     <string name="image_theme_apply">Usa tema</string>
     <string name="image_theme_in_use">In uso</string>
     <string name="image_theme_credit">Foto: %1$s</string>

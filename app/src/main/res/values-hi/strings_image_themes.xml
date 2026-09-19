@@ -3,12 +3,12 @@
     <string name="image_themes">चित्र थीम</string>
     <string name="image_themes_subtitle">ऐप के पीछे एक फ़ोटो दिखाता है।</string>
     <string name="image_theme_none">कोई नहीं</string>
-    <string name="image_theme_matterhorn">मैटरहॉर्न</string>
-    <string name="image_theme_aurora">ध्रुवीय ज्योति</string>
     <string name="image_theme_fjord">फ़्योर्ड</string>
+    <string name="image_theme_aurora">ध्रुवीय ज्योति</string>
     <string name="image_theme_desert">रेगिस्तान</string>
-    <string name="image_theme_milky_way">आकाशगंगा</string>
-    <string name="image_theme_forest">जंगल</string>
+    <string name="image_theme_clouds">बादल</string>
+    <string name="image_theme_sunrise">सूर्योदय</string>
+    <string name="image_theme_above">बादलों के ऊपर</string>
     <string name="image_theme_apply">थीम इस्तेमाल करें</string>
     <string name="image_theme_in_use">इस्तेमाल में</string>
     <string name="image_theme_credit">फ़ोटो: %1$s</string>

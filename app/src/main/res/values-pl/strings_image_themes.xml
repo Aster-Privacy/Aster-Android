@@ -3,12 +3,12 @@
     <string name="image_themes">Motywy z obrazem</string>
     <string name="image_themes_subtitle">Wyświetla zdjęcie za aplikacją.</string>
     <string name="image_theme_none">Brak</string>
-    <string name="image_theme_matterhorn">Matterhorn</string>
-    <string name="image_theme_aurora">Zorza</string>
     <string name="image_theme_fjord">Fiord</string>
+    <string name="image_theme_aurora">Zorza</string>
     <string name="image_theme_desert">Pustynia</string>
-    <string name="image_theme_milky_way">Droga Mleczna</string>
-    <string name="image_theme_forest">Las</string>
+    <string name="image_theme_clouds">Chmury</string>
+    <string name="image_theme_sunrise">Wschód słońca</string>
+    <string name="image_theme_above">Nad chmurami</string>
     <string name="image_theme_apply">Użyj motywu</string>
     <string name="image_theme_in_use">W użyciu</string>
     <string name="image_theme_credit">Zdjęcie: %1$s</string>

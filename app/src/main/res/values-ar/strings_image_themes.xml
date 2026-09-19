@@ -3,12 +3,12 @@
     <string name="image_themes">سمات الصور</string>
     <string name="image_themes_subtitle">تعرض صورة خلف التطبيق.</string>
     <string name="image_theme_none">بلا</string>
-    <string name="image_theme_matterhorn">ماترهورن</string>
-    <string name="image_theme_aurora">الشفق القطبي</string>
     <string name="image_theme_fjord">المضيق البحري</string>
+    <string name="image_theme_aurora">الشفق القطبي</string>
     <string name="image_theme_desert">الصحراء</string>
-    <string name="image_theme_milky_way">درب التبانة</string>
-    <string name="image_theme_forest">الغابة</string>
+    <string name="image_theme_clouds">السحب</string>
+    <string name="image_theme_sunrise">الشروق</string>
+    <string name="image_theme_above">فوق السحاب</string>
     <string name="image_theme_apply">استخدام السمة</string>
     <string name="image_theme_in_use">قيد الاستخدام</string>
     <string name="image_theme_credit">الصورة: %1$s</string>

@@ -3,12 +3,12 @@
     <string name="image_themes">Image themes</string>
     <string name="image_themes_subtitle">Shows a photo behind the app.</string>
     <string name="image_theme_none">None</string>
-    <string name="image_theme_matterhorn">Matterhorn</string>
-    <string name="image_theme_aurora">Aurora</string>
     <string name="image_theme_fjord">Fjord</string>
+    <string name="image_theme_aurora">Aurora</string>
     <string name="image_theme_desert">Desert</string>
-    <string name="image_theme_milky_way">Milky Way</string>
-    <string name="image_theme_forest">Forest</string>
+    <string name="image_theme_clouds">Clouds</string>
+    <string name="image_theme_sunrise">Sunrise</string>
+    <string name="image_theme_above">Above the clouds</string>
     <string name="image_theme_apply">Use theme</string>
     <string name="image_theme_in_use">In use</string>
     <string name="image_theme_credit">Photo: %1$s</string>
