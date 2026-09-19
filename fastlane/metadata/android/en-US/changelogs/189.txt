@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- Recovery codes replace the recovery key for account recovery
+- New designs for the Contacts screen and the emoji panel
+- When you refresh and new mail arrives, the inbox scrolls to the top
+- Messages you read on another device show as read right away
+- Attachments stay with your drafts
