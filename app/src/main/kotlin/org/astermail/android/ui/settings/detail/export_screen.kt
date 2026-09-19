@@ -65,7 +65,6 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.export.ExportViewModel
@@ -171,7 +170,7 @@ private fun warning_step(
                 }
             }
             v_gap(AsterSpacing.md)
-            AsterDivider()
+            settings_row_gap()
             v_gap(AsterSpacing.md)
             Text(
                 text = stringResource(R.string.export_warning_message),
@@ -240,7 +239,7 @@ private fun scope_step(
                 onCheckedChange = on_mail,
             )
         }
-        AsterDivider(modifier = Modifier)
+        settings_row_gap(modifier = Modifier)
         Row(
             modifier = Modifier
                 .fillMaxWidth()

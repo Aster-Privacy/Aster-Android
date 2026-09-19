@@ -53,7 +53,6 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.components.AsterDivider
 
 private sealed interface cell_value {
     object yes : cell_value
@@ -227,7 +226,13 @@ fun FeaturesScreen(on_back: () -> Unit) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(colors.accent_blue.copy(alpha = 0.08f))
+                                .background(
+                                    org.astermail.android.ui.mail.chip_subtle_background(
+                                        colors.accent_blue,
+                                        colors.bg_card,
+                                        colors.is_dark,
+                                    ),
+                                )
                                 .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
                         ) {
                             Text(
@@ -263,7 +268,7 @@ fun FeaturesScreen(on_back: () -> Unit) {
                                 }
                             }
                         }
-                        AsterDivider()
+                        settings_row_gap()
                     }
                 }
 

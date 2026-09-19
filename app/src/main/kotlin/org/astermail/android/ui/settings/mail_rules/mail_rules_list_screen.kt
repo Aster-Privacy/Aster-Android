@@ -25,16 +25,15 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -61,7 +60,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -80,13 +78,13 @@ import org.astermail.android.api.mail_rules.MatchMode
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.shimmer
-import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
-import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogDestructiveButton
 import org.astermail.android.design.components.AsterDialogOutlineButton
-import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.ui.settings.detail.detail_row
+import org.astermail.android.ui.settings.detail.settings_group
+import org.astermail.android.ui.settings.detail.settings_row_gap
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.design.components.aster_menu_item
@@ -96,8 +94,6 @@ import org.astermail.android.folders.flatten_folder_tree
 import org.astermail.android.mail_rules.MailRulesViewModel
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
-
-private const val summary_chip_limit = 2
 
 @Composable
 fun MailRulesListScreen(
@@ -137,7 +133,6 @@ fun MailRulesListScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             AsterTopBar(title = stringResource(R.string.mail_rules_title), on_back = on_back)
-            AsterDivider()
             val copy_suffix = stringResource(R.string.rules_copy_suffix)
             val rules_key = when {
                 state.is_loading -> 0
@@ -164,32 +159,30 @@ fun MailRulesListScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
-                            .padding(horizontal = AsterSpacing.md),
+                            .padding(horizontal = AsterSpacing.lg),
                     ) {
-                        Spacer(Modifier.height(AsterSpacing.md))
-                        Text(
-                            text = stringResource(R.string.mail_rules_subtitle),
-                            color = colors.text_tertiary,
-                            fontSize = 13.sp,
-                        )
-                        Spacer(Modifier.height(AsterSpacing.md))
-                        AsterButton(
-                            label = stringResource(R.string.mail_rules_new_rule),
-                            onClick = on_new,
-                            modifier = Modifier.fillMaxWidth().testTag("add_rule"),
-                        )
-                        Spacer(Modifier.height(AsterSpacing.md))
-                        state.rules.forEach { rule ->
-                            rule_row(
-                                rule = rule,
-                                folder_names = folder_names,
-                                on_open = { on_edit(rule.id) },
-                                on_toggle = { vm.toggle_enabled(rule.id) },
-                                on_duplicate = { vm.duplicate_rule(rule.id, copy_suffix) },
-                                on_delete = { vm.delete_rule(rule.id) },
-                                on_run = { vm.run_on_existing(rule.id) },
+                        settings_group {
+                            sort_rules_for_display(state.rules).forEachIndexed { index, rule ->
+                                if (index > 0) settings_row_gap()
+                                rule_row(
+                                    rule = rule,
+                                    folder_names = folder_names,
+                                    on_open = { on_edit(rule.id) },
+                                    on_toggle = { vm.toggle_enabled(rule.id) },
+                                    on_duplicate = { vm.duplicate_rule(rule.id, copy_suffix) },
+                                    on_delete = { vm.delete_rule(rule.id) },
+                                    on_run = { vm.run_on_existing(rule.id) },
+                                )
+                            }
+                        }
+                        caption(stringResource(R.string.mail_rules_subtitle))
+                        settings_group {
+                            detail_row(
+                                title = stringResource(R.string.mail_rules_new_rule),
+                                icon = TablerIcons.Plus,
+                                icon_tint = colors.accent_blue,
+                                on_click = on_new,
                             )
-                            Spacer(Modifier.height(AsterSpacing.sm))
                         }
                         Spacer(Modifier.height(AsterSpacing.xxl))
                     }
@@ -200,44 +193,65 @@ fun MailRulesListScreen(
 }
 
 @Composable
+private fun caption(text: String) {
+    Text(
+        text = text,
+        color = AsterMaterial.colors.text_tertiary,
+        fontSize = 13.sp,
+        modifier = Modifier.padding(
+            start = AsterSpacing.xs,
+            end = AsterSpacing.xs,
+            top = AsterSpacing.sm,
+        ),
+    )
+}
+
+@Composable
 private fun mail_rules_skeleton() {
-    val state = org.astermail.android.design.components.shimmer_state()
-    Column(modifier = Modifier.fillMaxSize()) {
-        repeat(6) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.md, vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
+    val shimmer_state = org.astermail.android.design.components.shimmer_state()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = AsterSpacing.lg),
+    ) {
+        settings_group {
+            repeat(6) { index ->
+                if (index > 0) settings_row_gap()
+                Row(
                     modifier = Modifier
-                        .size(10.dp)
-                        .shimmer(state, CircleShape),
-                )
-                Spacer(Modifier.width(AsterSpacing.md))
-                Column(modifier = Modifier.weight(1f)) {
+                        .fillMaxWidth()
+                        .heightIn(min = 56.dp)
+                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Box(
                         modifier = Modifier
-                            .width(140.dp)
-                            .height(14.dp)
-                            .shimmer(state, RoundedCornerShape(4.dp)),
+                            .size(10.dp)
+                            .shimmer(shimmer_state, CircleShape),
                     )
-                    Spacer(Modifier.height(5.dp))
+                    Spacer(Modifier.width(AsterSpacing.md))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Box(
+                            modifier = Modifier
+                                .width(140.dp)
+                                .height(14.dp)
+                                .shimmer(shimmer_state, RoundedCornerShape(4.dp)),
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .width(80.dp)
+                                .height(11.dp)
+                                .shimmer(shimmer_state, RoundedCornerShape(4.dp)),
+                        )
+                    }
                     Box(
                         modifier = Modifier
-                            .width(80.dp)
-                            .height(11.dp)
-                            .shimmer(state, RoundedCornerShape(4.dp)),
+                            .size(28.dp)
+                            .shimmer(shimmer_state, RoundedCornerShape(6.dp)),
                     )
                 }
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .shimmer(state, RoundedCornerShape(6.dp)),
-                )
             }
-            AsterDivider()
         }
     }
 }
@@ -307,38 +321,6 @@ private fun error_state(message: String, on_retry: () -> Unit) {
 }
 
 @Composable
-private fun summary_chip(text: String) {
-    val colors = AsterMaterial.colors
-    Box(
-        modifier = Modifier
-            .clip(SquircleShape(9.dp))
-            .background(colors.bg_tertiary)
-            .border(1.dp, colors.border_secondary, SquircleShape(9.dp))
-            .padding(horizontal = 8.dp, vertical = 3.dp),
-    ) {
-        Text(
-            text = text,
-            color = colors.text_secondary,
-            fontSize = 11.5.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
-
-@Composable
-private fun summary_label(text: String) {
-    Text(
-        text = text,
-        color = AsterMaterial.colors.text_tertiary,
-        fontSize = 11.sp,
-        fontWeight = FontWeight.SemiBold,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-    )
-}
-
-@Composable
 private fun rule_condition_summaries(rule: MailRule): List<String> =
     rule.conditions.map { condition ->
         listOfNotNull(
@@ -358,9 +340,8 @@ private fun rule_action_summaries(rule: MailRule, folder_names: Map<String, Stri
         ).joinToString(" ")
     }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun rule_summary(rule: MailRule, folder_names: Map<String, String>) {
+private fun rule_summary_text(rule: MailRule, folder_names: Map<String, String>): String {
     val advanced_label = stringResource(R.string.mail_rules_field_advanced)
     val is_advanced = rule_is_advanced(rule)
     val conditions = if (is_advanced) listOf(advanced_label) else rule_condition_summaries(rule)
@@ -368,30 +349,13 @@ private fun rule_summary(rule: MailRule, folder_names: Map<String, String>) {
     val joiner = stringResource(
         if (rule.match_mode == MatchMode.ANY) R.string.mail_rules_or else R.string.mail_rules_and,
     )
-    if (conditions.isEmpty() && actions.isEmpty()) return
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
-        verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
-    ) {
-        if (conditions.isNotEmpty()) {
-            summary_label(stringResource(R.string.mail_rules_when_section))
-            conditions.take(summary_chip_limit).forEachIndexed { index, text ->
-                if (index > 0) summary_label(joiner)
-                summary_chip(text)
-            }
-            if (conditions.size > summary_chip_limit) {
-                summary_chip("+" + (conditions.size - summary_chip_limit))
-            }
-        }
-        if (actions.isNotEmpty()) {
-            summary_label(stringResource(R.string.mail_rules_then_section))
-            actions.take(summary_chip_limit).forEach { text -> summary_chip(text) }
-            if (actions.size > summary_chip_limit) {
-                summary_chip("+" + (actions.size - summary_chip_limit))
-            }
-        }
-    }
+    return rule_summary_line(
+        when_label = stringResource(R.string.mail_rules_when_section),
+        then_label = stringResource(R.string.mail_rules_then_section),
+        joiner = joiner,
+        conditions = conditions,
+        actions = actions,
+    )
 }
 
 @Composable
@@ -442,78 +406,46 @@ private fun rule_row(
             },
         )
     }
-    AsterCard(modifier = Modifier.fillMaxWidth(), onClick = on_open) {
-        Column(
+    val summary = rule_summary_text(rule = rule, folder_names = folder_names)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = on_open)
+            .heightIn(min = 56.dp)
+            .padding(
+                start = AsterSpacing.lg,
+                end = AsterSpacing.xs,
+                top = AsterSpacing.sm,
+                bottom = AsterSpacing.sm,
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .alpha(if (rule.enabled) 1f else 0.55f)
-                .padding(
-                    start = AsterSpacing.md,
-                    end = AsterSpacing.xs,
-                    top = AsterSpacing.sm,
-                    bottom = AsterSpacing.md,
-                ),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .clip(CircleShape)
-                        .background(parse_color(rule.color)),
-                )
-                Spacer(Modifier.width(AsterSpacing.sm))
+                .size(10.dp)
+                .clip(CircleShape)
+                .background(parse_color(rule.color)),
+        )
+        Spacer(Modifier.width(AsterSpacing.md))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = rule.name,
+                color = if (rule.enabled) colors.text_primary else colors.text_secondary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (summary.isNotEmpty()) {
+                Spacer(Modifier.height(2.dp))
                 Text(
-                    text = rule.name,
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
+                    text = summary,
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
                 )
-                Spacer(Modifier.width(AsterSpacing.sm))
-                AsterSwitch(
-                    checked = rule.enabled,
-                    onCheckedChange = { on_toggle() },
-                )
-                Box {
-                    IconButton(onClick = { menu_open = true }) {
-                        Icon(
-                            imageVector = TablerIcons.DotsVertical,
-                            contentDescription = stringResource(R.string.more_options),
-                            tint = colors.text_secondary,
-                        )
-                    }
-                    aster_menu(expanded = menu_open, on_dismiss = { menu_open = false }) {
-                        aster_menu_item(
-                            label = stringResource(R.string.mail_rules_edit_rule),
-                            icon = TablerIcons.Pencil,
-                            on_click = { menu_open = false; on_open() },
-                        )
-                        if (!rule_is_advanced(rule)) {
-                            aster_menu_item(
-                                label = stringResource(R.string.mail_rules_duplicate),
-                                icon = TablerIcons.Copy,
-                                on_click = { menu_open = false; on_duplicate() },
-                            )
-                        }
-                        aster_menu_item(
-                            label = stringResource(R.string.mail_rules_run_on_existing),
-                            icon = TablerIcons.PlayerPlay,
-                            on_click = { menu_open = false; confirm_run = true },
-                        )
-                        aster_menu_item(
-                            label = stringResource(R.string.mail_rules_delete),
-                            icon = TablerIcons.Trash,
-                            destructive = true,
-                            on_click = { menu_open = false; confirm_delete = true },
-                        )
-                    }
-                }
             }
-            Spacer(Modifier.height(AsterSpacing.xs))
-            rule_summary(rule = rule, folder_names = folder_names)
-            Spacer(Modifier.height(AsterSpacing.xs))
             Text(
                 text =
                     pluralStringResource(
@@ -526,6 +458,45 @@ private fun rule_row(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+        }
+        Spacer(Modifier.width(AsterSpacing.sm))
+        AsterSwitch(
+            checked = rule.enabled,
+            onCheckedChange = { on_toggle() },
+        )
+        Box {
+            IconButton(onClick = { menu_open = true }) {
+                Icon(
+                    imageVector = TablerIcons.DotsVertical,
+                    contentDescription = stringResource(R.string.more_options),
+                    tint = colors.text_secondary,
+                )
+            }
+            aster_menu(expanded = menu_open, on_dismiss = { menu_open = false }) {
+                aster_menu_item(
+                    label = stringResource(R.string.mail_rules_edit_rule),
+                    icon = TablerIcons.Pencil,
+                    on_click = { menu_open = false; on_open() },
+                )
+                if (!rule_is_advanced(rule)) {
+                    aster_menu_item(
+                        label = stringResource(R.string.mail_rules_duplicate),
+                        icon = TablerIcons.Copy,
+                        on_click = { menu_open = false; on_duplicate() },
+                    )
+                }
+                aster_menu_item(
+                    label = stringResource(R.string.mail_rules_run_on_existing),
+                    icon = TablerIcons.PlayerPlay,
+                    on_click = { menu_open = false; confirm_run = true },
+                )
+                aster_menu_item(
+                    label = stringResource(R.string.mail_rules_delete),
+                    icon = TablerIcons.Trash,
+                    destructive = true,
+                    on_click = { menu_open = false; confirm_delete = true },
+                )
+            }
         }
     }
 }

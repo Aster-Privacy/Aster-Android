@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -80,6 +81,7 @@ import org.astermail.android.api.mail_rules.ReadState
 import org.astermail.android.api.mail_rules.TextOp
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.parse_hex_color_safe
 import org.astermail.android.folders.flatten_folder_tree
 import org.astermail.android.mail_rules.AliasDeliverySetting
@@ -94,7 +96,7 @@ import org.astermail.android.ui.drawer.create_label_dialog
 import org.astermail.android.ui.drawer.folder_parent_option
 import org.astermail.android.ui.drawer.resolve_label_icon
 import org.astermail.android.design.components.AsterButton
-import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.ui.settings.detail.settings_row_gap
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.mail_rules.MailRulesViewModel
@@ -170,7 +172,7 @@ fun RuleEditorScreen(
                 title = stringResource(R.string.mail_rules_edit_rule),
                 on_back = on_back,
             )
-            AsterDivider()
+            settings_row_gap()
             Column(modifier = Modifier.fillMaxSize().padding(AsterSpacing.lg)) {
                 skeleton_hero_card(lines = 2)
                 Spacer(Modifier.height(AsterSpacing.lg))
@@ -196,7 +198,7 @@ fun RuleEditorScreen(
                 title = stringResource(R.string.mail_rules_edit_rule),
                 on_back = on_back,
             )
-            AsterDivider()
+            settings_row_gap()
             Column(
                 modifier = Modifier.fillMaxSize().padding(AsterSpacing.lg),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -339,7 +341,7 @@ fun RuleEditorScreen(
             title = if (existing == null) stringResource(R.string.mail_rules_new_rule) else stringResource(R.string.mail_rules_edit_rule),
             on_back = on_back,
         )
-        AsterDivider()
+        settings_row_gap()
 
         Column(
             modifier = Modifier
@@ -354,10 +356,10 @@ fun RuleEditorScreen(
                     fontSize = 13.sp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(colors.bg_tertiary)
-                        .border(1.dp, colors.border_secondary, RoundedCornerShape(10.dp))
-                        .padding(AsterSpacing.md)
+                        .clip(SquircleShape(16.dp))
+                        .background(colors.bg_card)
+                        .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
+                        .padding(AsterSpacing.lg)
                         .testTag("rule_advanced_notice"),
                 )
                 Spacer(Modifier.height(AsterSpacing.md))
@@ -376,32 +378,30 @@ fun RuleEditorScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(SquircleShape(16.dp))
                     .clickable(enabled = !is_read_only) { sheet = active_sheet.pick_color }
-                    .padding(vertical = AsterSpacing.sm),
+                    .heightIn(min = 56.dp)
+                    .padding(horizontal = AsterSpacing.xs, vertical = AsterSpacing.sm),
             ) {
                 Text(
                     text = stringResource(R.string.mail_rules_color),
-                    color = colors.text_secondary,
-                    fontSize = 13.sp,
+                    color = colors.text_primary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
                     modifier = Modifier.weight(1f),
                 )
                 Box(
                     modifier = Modifier
-                        .size(28.dp)
+                        .size(24.dp)
                         .clip(CircleShape)
                         .background(parse_hex(color_hex), CircleShape),
                 )
             }
 
             Spacer(Modifier.height(AsterSpacing.xl))
-            Text(
-                text = stringResource(R.string.mail_rules_when_section),
-                color = colors.text_tertiary,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
+            org.astermail.android.ui.settings.detail.section_label(
+                stringResource(R.string.mail_rules_when_section),
             )
-            Spacer(Modifier.height(AsterSpacing.sm))
 
             conditions.forEachIndexed { index, condition ->
                 condition_chip(
@@ -468,10 +468,10 @@ fun RuleEditorScreen(
                     fontSize = 13.sp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(colors.bg_tertiary)
-                        .border(1.dp, colors.border_secondary, RoundedCornerShape(10.dp))
-                        .padding(AsterSpacing.md)
+                        .clip(SquircleShape(16.dp))
+                        .background(colors.bg_card)
+                        .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
+                        .padding(AsterSpacing.lg)
                         .testTag("rule_duplicate_warning"),
                 )
             }
@@ -488,10 +488,10 @@ fun RuleEditorScreen(
                     fontSize = 13.sp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(colors.bg_tertiary)
-                        .border(1.dp, colors.border_secondary, RoundedCornerShape(10.dp))
-                        .padding(AsterSpacing.md)
+                        .clip(SquircleShape(16.dp))
+                        .background(colors.bg_card)
+                        .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
+                        .padding(AsterSpacing.lg)
                         .testTag("rule_skipped_warning"),
                 )
             }
@@ -504,10 +504,10 @@ fun RuleEditorScreen(
                     fontSize = 13.sp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(colors.bg_tertiary)
-                        .border(1.dp, colors.border_secondary, RoundedCornerShape(10.dp))
-                        .padding(AsterSpacing.md)
+                        .clip(SquircleShape(16.dp))
+                        .background(colors.bg_card)
+                        .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
+                        .padding(AsterSpacing.lg)
                         .testTag("rule_switched_to_any"),
                 )
             }
@@ -517,10 +517,10 @@ fun RuleEditorScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(colors.bg_tertiary)
-                        .border(1.dp, colors.border_secondary, RoundedCornerShape(10.dp))
-                        .padding(AsterSpacing.md)
+                        .clip(SquircleShape(16.dp))
+                        .background(colors.bg_card)
+                        .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
+                        .padding(AsterSpacing.lg)
                         .testTag("rule_conflict_warning"),
                 ) {
                     Text(
@@ -544,13 +544,9 @@ fun RuleEditorScreen(
             }
 
             Spacer(Modifier.height(AsterSpacing.xl))
-            Text(
-                text = stringResource(R.string.mail_rules_then_section),
-                color = colors.text_tertiary,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
+            org.astermail.android.ui.settings.detail.section_label(
+                stringResource(R.string.mail_rules_then_section),
             )
-            Spacer(Modifier.height(AsterSpacing.sm))
 
             actions.forEachIndexed { index, action ->
                 action_chip(
@@ -616,10 +612,10 @@ fun RuleEditorScreen(
                     fontSize = 13.sp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(colors.bg_tertiary)
-                        .border(1.dp, colors.border_secondary, RoundedCornerShape(10.dp))
-                        .padding(AsterSpacing.md)
+                        .clip(SquircleShape(16.dp))
+                        .background(colors.bg_card)
+                        .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
+                        .padding(AsterSpacing.lg)
                         .testTag("rule_alias_delivery_warning"),
                 )
             }
@@ -650,10 +646,10 @@ fun RuleEditorScreen(
                     fontSize = 13.sp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(colors.bg_tertiary)
-                        .border(1.dp, colors.border_secondary, RoundedCornerShape(10.dp))
-                        .padding(AsterSpacing.md)
+                        .clip(SquircleShape(16.dp))
+                        .background(colors.bg_card)
+                        .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
+                        .padding(AsterSpacing.lg)
                         .testTag("rule_alias_label_warning"),
                 )
             }

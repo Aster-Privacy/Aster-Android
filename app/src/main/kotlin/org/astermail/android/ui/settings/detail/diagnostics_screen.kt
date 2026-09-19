@@ -38,7 +38,6 @@ import org.astermail.android.BuildConfig
 import org.astermail.android.R
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterSecondaryButton
 
 @Composable
@@ -68,13 +67,13 @@ fun DiagnosticsScreen(
     detail_scaffold(title = stringResource(R.string.diagnostics), on_back = on_back) {
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             detail_row(title = stringResource(R.string.app_version), subtitle = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
-            AsterDivider()
+            settings_row_gap()
             detail_row(title = stringResource(R.string.package_name), subtitle = BuildConfig.APPLICATION_ID)
-            AsterDivider()
+            settings_row_gap()
             detail_row(title = stringResource(R.string.device), subtitle = "${Build.MANUFACTURER} ${Build.MODEL}")
-            AsterDivider()
+            settings_row_gap()
             detail_row(title = stringResource(R.string.android), subtitle = "${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
-            AsterDivider()
+            settings_row_gap()
             detail_row(title = stringResource(R.string.settings_diagnostics_secure_storage), subtitle = storage_status)
         }
         v_gap(AsterSpacing.lg)

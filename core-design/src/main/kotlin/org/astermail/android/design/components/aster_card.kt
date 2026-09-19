@@ -48,7 +48,7 @@ fun AsterCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(14.dp)
+    val shape = SquircleShape(16.dp)
     val card_colors = CardDefaults.cardColors(
         containerColor = colors.bg_card,
         contentColor = colors.text_primary,

@@ -107,7 +107,6 @@ import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterSwitch
@@ -120,22 +119,12 @@ import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
 private fun toggle_row(title: String, subtitle: String?, checked: Boolean, on_change: (Boolean) -> Unit) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-            if (subtitle != null) {
-                Text(text = subtitle, color = colors.text_tertiary, fontSize = 13.sp)
-            }
-        }
-        AsterSwitch(
-            checked = checked,
-            onCheckedChange = on_change,
-        )
-    }
+    settings_toggle_row(
+        title = title,
+        subtitle = subtitle,
+        checked = checked,
+        on_change = on_change,
+    )
 }
 
 @Composable
@@ -268,7 +257,7 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
                                     }
                                 },
                             )
-                            if (show_divider) AsterDivider(modifier = Modifier)
+                            if (show_divider) settings_row_gap(modifier = Modifier)
                         }
                     }
                 }
@@ -307,7 +296,7 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
                             test_tag = "devices_show_more",
                             on_click = { visible_limit += devices_page_size },
                         )
-                        AsterDivider(modifier = Modifier)
+                        settings_row_gap(modifier = Modifier)
                     } else if (visible_limit > devices_page_size) {
                         devices_list_action_row(
                             label = stringResource(R.string.show_less),
@@ -316,7 +305,7 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
                             test_tag = "devices_show_less",
                             on_click = { visible_limit = devices_page_size },
                         )
-                        AsterDivider(modifier = Modifier)
+                        settings_row_gap(modifier = Modifier)
                     }
                     devices_list_action_row(
                         label = stringResource(R.string.revoke_all_other),
@@ -403,7 +392,7 @@ internal fun revoke_pill_button(
             .height(36.dp)
             .widthIn(min = 72.dp)
             .clip(shape)
-            .border(1.dp, colors.text_secondary.copy(alpha = 0.3f), shape)
+            .border(1.dp, colors.border_secondary, shape)
             .clickable(enabled = !in_flight, onClick = on_click)
             .padding(horizontal = AsterSpacing.md),
         contentAlignment = Alignment.Center,
@@ -576,7 +565,7 @@ fun ReferralScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
             } else {
                 AsterCard(modifier = Modifier.fillMaxWidth()) {
                     history.forEachIndexed { index, item ->
-                        if (index > 0) AsterDivider()
+                        if (index > 0) settings_row_gap()
                         referral_history_row(item)
                     }
                 }
@@ -713,7 +702,7 @@ private fun referral_stats_card(
                 label = stringResource(R.string.completed),
             )
         }
-        AsterDivider()
+        settings_row_gap()
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1228,7 +1217,7 @@ fun LabelsScreen(
                         on_delete = { pending_label_delete = row },
                         on_rename = if (row.can_delete) ({ pending_label_rename = row }) else null,
                     )
-                    if (idx < rows.lastIndex) AsterDivider(modifier = Modifier)
+                    if (idx < rows.lastIndex) settings_row_gap(modifier = Modifier)
                 }
             }
         }
@@ -1524,7 +1513,7 @@ fun FoldersScreen(
                             )
                         }
                     }
-                    if (idx < folder_nodes.lastIndex) AsterDivider(modifier = Modifier)
+                    if (idx < folder_nodes.lastIndex) settings_row_gap(modifier = Modifier)
                 }
             }
         }
@@ -1670,14 +1659,14 @@ fun PrivacyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
             section_label(stringResource(R.string.tracking))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 toggle_row(stringResource(R.string.block_tracking_pixels_privacy), stringResource(R.string.block_tracking_pixels_subtitle), block_trackers) { block_trackers = it; save_trigger++ }
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 toggle_row(stringResource(R.string.load_remote_images), stringResource(R.string.load_remote_images_subtitle), remote_images) { remote_images = it; save_trigger++ }
             }
             v_gap(AsterSpacing.lg)
             section_label(stringResource(R.string.protection))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 toggle_row(stringResource(R.string.warn_suspicious_links), null, link_warnings) { link_warnings = it; save_trigger++ }
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 toggle_row(stringResource(R.string.strip_exif), stringResource(R.string.strip_exif_subtitle), strip_exif) { strip_exif = it; save_trigger++ }
             }
             v_gap(AsterSpacing.lg)
@@ -1737,7 +1726,7 @@ fun ApiKeysScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                             AsterGhostButton(label = stringResource(R.string.revoke), onClick = { pending_revoke = k.id })
                         },
                     )
-                    if (idx < state.api_keys.lastIndex) AsterDivider(modifier = Modifier)
+                    if (idx < state.api_keys.lastIndex) settings_row_gap(modifier = Modifier)
                 }
             }
         }
@@ -1799,7 +1788,7 @@ fun IntegrationsScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) 
                     org.astermail.android.ui.common.open_external_url(context, "https://app.astermail.org/settings/integrations")
                 },
             )
-            AsterDivider(modifier = Modifier)
+            settings_row_gap(modifier = Modifier)
             detail_row(
                 title = stringResource(R.string.calendar),
                 subtitle = stringResource(R.string.calendar_subtitle),
@@ -1808,7 +1797,7 @@ fun IntegrationsScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) 
                     org.astermail.android.ui.common.open_external_url(context, "https://app.astermail.org/settings/integrations")
                 },
             )
-            AsterDivider(modifier = Modifier)
+            settings_row_gap(modifier = Modifier)
             detail_row(
                 title = stringResource(R.string.zapier),
                 subtitle = stringResource(R.string.zapier_subtitle),
@@ -1868,7 +1857,7 @@ fun FamilyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                         org.astermail.android.ui.common.open_external_url(context, "https://app.astermail.org/settings/family")
                     },
                 )
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 detail_row(
                     title = stringResource(R.string.kids_reserved_addresses),
                     subtitle = stringResource(R.string.kids_reserved_subtitle),
@@ -2045,7 +2034,7 @@ fun KidsReservedScreen(on_back: () -> Unit) {
                             }
                         }
                     }
-                    if (idx < state.reserved_addresses.lastIndex) AsterDivider(modifier = androidx.compose.ui.Modifier)
+                    if (idx < state.reserved_addresses.lastIndex) settings_row_gap(modifier = androidx.compose.ui.Modifier)
                 }
             }
         }
@@ -2127,14 +2116,14 @@ fun LanguageScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                     selected = selected == null,
                     on_click = { save(null) },
                 )
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 languages.forEachIndexed { idx, (code, name) ->
                     choice_option_row(
                         label = name,
                         selected = selected == code,
                         on_click = { save(code) },
                     )
-                    if (idx < languages.lastIndex) AsterDivider(modifier = Modifier)
+                    if (idx < languages.lastIndex) settings_row_gap(modifier = Modifier)
                 }
             }
             v_gap(AsterSpacing.md)

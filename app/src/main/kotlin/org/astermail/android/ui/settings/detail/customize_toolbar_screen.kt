@@ -62,7 +62,6 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.mail.ToolbarAction
@@ -242,7 +241,7 @@ fun CustomizeToolbarScreen(
                             )
                         },
                     )
-                    if (i < catalog.lastIndex) AsterDivider(modifier = Modifier)
+                    if (i < catalog.lastIndex) settings_row_gap(modifier = Modifier)
                 }
             }
         }
@@ -274,7 +273,7 @@ private fun toolbar_section(
                 test_tag = "${kind}_slot_${i + 1}",
                 enabled = enabled,
             )
-            if (i < slot_count - 1) AsterDivider(modifier = Modifier)
+            if (i < slot_count - 1) settings_row_gap(modifier = Modifier)
         }
     }
     v_gap(AsterSpacing.sm)

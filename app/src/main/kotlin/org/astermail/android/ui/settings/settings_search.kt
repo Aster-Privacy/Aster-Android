@@ -101,7 +101,6 @@ import org.astermail.android.design.AsterScale
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.aster_reduce_motion
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.ui.mail.search_field_bg_color
 
@@ -230,7 +229,7 @@ private fun settings_search_overlay(on_dismiss: () -> Unit) {
                     modifier = Modifier.weight(1f),
                 )
             }
-            AsterDivider()
+
             settings_search_results(
                 query = query.trim(),
                 on_open = { id ->
@@ -351,7 +350,7 @@ private fun settings_search_results(query: String, on_open: (String) -> Unit) {
             matched.forEachIndexed { idx, hit ->
                 settings_search_result_row(hit) { on_open(hit.screen_id) }
                 if (idx < matched.lastIndex) {
-                    AsterDivider(modifier = Modifier.padding(start = 50.dp))
+                    org.astermail.android.ui.settings.detail.settings_row_gap()
                 }
             }
         }

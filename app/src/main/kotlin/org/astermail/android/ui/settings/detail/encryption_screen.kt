@@ -98,7 +98,6 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterSwitch
@@ -313,7 +312,7 @@ fun EncryptionScreen(
                         verified_badge(text = stringResource(R.string.active))
                     }
 
-                    AsterDivider()
+                    settings_row_gap()
 
                     Column(
                         modifier = Modifier
@@ -370,7 +369,7 @@ fun EncryptionScreen(
                         }
                     }
 
-                    AsterDivider()
+                    settings_row_gap()
 
                     Row(
                         modifier = Modifier
@@ -560,7 +559,7 @@ fun EncryptionScreen(
                     )
                 }
             }
-            AsterDivider()
+            settings_row_gap()
             detail_row(
                 title = stringResource(R.string.recovery_codes),
                 icon = TablerIcons.Key,
@@ -600,7 +599,7 @@ fun EncryptionScreen(
                         )
                     },
                 )
-                AsterDivider()
+                settings_row_gap()
                 detail_row(
                     title = stringResource(R.string.encrypt_by_default),
                     subtitle = stringResource(R.string.encrypt_by_default_sub),
@@ -613,7 +612,7 @@ fun EncryptionScreen(
                         )
                     },
                 )
-                AsterDivider()
+                settings_row_gap()
                 detail_row(
                     title = stringResource(R.string.require_encryption),
                     subtitle = stringResource(R.string.require_encryption_sub),
@@ -626,7 +625,7 @@ fun EncryptionScreen(
                         )
                     },
                 )
-                AsterDivider()
+                settings_row_gap()
                 detail_row(
                     title = stringResource(R.string.show_encryption_indicators),
                     subtitle = stringResource(R.string.show_encryption_indicators_sub),
@@ -639,7 +638,7 @@ fun EncryptionScreen(
                         )
                     },
                 )
-                AsterDivider()
+                settings_row_gap()
                 detail_row(
                     title = stringResource(R.string.publish_to_wkd),
                     subtitle = if (wkd == null && state.wkd_status_load_failed) {
@@ -662,7 +661,7 @@ fun EncryptionScreen(
                         )
                     },
                 )
-                AsterDivider()
+                settings_row_gap()
                 detail_row(
                     title = stringResource(R.string.publish_to_keyservers),
                     subtitle = stringResource(R.string.publish_to_keyservers_sub),

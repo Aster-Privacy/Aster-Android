@@ -96,7 +96,6 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.DomainPurchaseErrorKind
 import org.astermail.android.settings.DomainPurchaseUiState
@@ -489,7 +488,7 @@ private fun search_results_list(vm: DomainPurchaseViewModel, state: DomainPurcha
                 )
             }
         }
-        AsterDivider()
+        settings_row_gap()
         v_gap(AsterSpacing.xs)
 
         if (best_match != null) {
@@ -509,7 +508,7 @@ private fun search_results_list(vm: DomainPurchaseViewModel, state: DomainPurcha
 
         if (state.suggestions.isNotEmpty() || state.has_more_suggestions) {
             v_gap(AsterSpacing.xs)
-            AsterDivider()
+            settings_row_gap()
             v_gap(AsterSpacing.sm)
             if (state.suggestions.isNotEmpty()) {
                 Text(
@@ -776,7 +775,7 @@ private fun purchase_confirm_content(vm: DomainPurchaseViewModel, state: DomainP
     included_grid()
     v_gap(AsterSpacing.xl)
 
-    AsterDivider()
+    settings_row_gap()
     v_gap(AsterSpacing.lg)
     purchase_terms_notice(on_open = { url -> open_url(context, url) })
     v_gap(AsterSpacing.lg)
@@ -918,7 +917,7 @@ private fun purchase_summary_card(
                 fontWeight = FontWeight.SemiBold,
             )
         }
-        AsterDivider()
+        settings_row_gap()
         Column(
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(AsterSpacing.lg),
@@ -939,7 +938,7 @@ private fun purchase_summary_card(
                 value_emphasized = false,
             )
         }
-        AsterDivider()
+        settings_row_gap()
         Column(modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 24.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

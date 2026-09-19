@@ -1127,7 +1127,7 @@ private fun oauth_provider_row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .border(1.dp, colors.text_tertiary.copy(alpha = 0.18f), shape)
+            .border(1.dp, colors.border_secondary, shape)
             .clickable(enabled = enabled && !is_loading, onClick = on_click)
             .padding(horizontal = 14.dp, vertical = 12.dp)
             .alpha(if (enabled) 1f else 0.5f),

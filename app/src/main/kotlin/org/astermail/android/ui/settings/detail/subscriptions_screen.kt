@@ -86,7 +86,6 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.ui.common.open_external_url
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTextField
@@ -965,7 +964,7 @@ fun SubscriptionsScreen(
                     )
                 }
                 Spacer(Modifier.height(AsterSpacing.md))
-                AsterDivider()
+                settings_row_gap()
                 Spacer(Modifier.height(AsterSpacing.md))
                 Row(
                     modifier = Modifier
@@ -1948,7 +1947,7 @@ private fun current_plan_card(
             }
         }
         if (show_crypto_notice) {
-            AsterDivider()
+            settings_row_gap()
             plan_note_row(
                 icon = TablerIcons.AlertTriangle,
                 icon_tint = colors.warning,
@@ -1959,7 +1958,7 @@ private fun current_plan_card(
             val storage_fraction = storage_used_bytes.toFloat() / storage_limit_bytes.toFloat()
             if (storage_over_limit || storage_fraction >= 0.7f) {
                 val storage_percent = (storage_fraction * 100f).roundToInt().coerceIn(0, if (storage_over_limit) 999 else 100)
-                AsterDivider()
+                settings_row_gap()
                 plan_note_row(
                     icon = TablerIcons.AlertTriangle,
                     icon_tint = if (storage_over_limit) colors.danger else colors.warning,
@@ -1968,7 +1967,7 @@ private fun current_plan_card(
             }
         }
         if (is_paid && is_crypto) {
-            AsterDivider()
+            settings_row_gap()
             plan_action_row(
                 label = stringResource(R.string.billing_crypto_renew_link),
                 color = colors.accent_blue,
@@ -1979,7 +1978,7 @@ private fun current_plan_card(
             )
         }
         if (show_yearly_switch) {
-            AsterDivider()
+            settings_row_gap()
             plan_action_row(
                 label = stringResource(R.string.switch_yearly_save, yearly_savings),
                 color = colors.accent_blue,
@@ -1990,7 +1989,7 @@ private fun current_plan_card(
             )
         }
         if (show_family_link) {
-            AsterDivider()
+            settings_row_gap()
             plan_action_row(
                 label = stringResource(R.string.family_manage_web),
                 color = colors.accent_blue,
@@ -2001,7 +2000,7 @@ private fun current_plan_card(
             )
         }
         if (free_teaser != null) {
-            AsterDivider()
+            settings_row_gap()
             Column(modifier = Modifier.padding(AsterSpacing.lg)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -2047,7 +2046,7 @@ private fun current_plan_card(
             }
         } else if (show_action_rows) {
             if (show_manage_payment) {
-                AsterDivider()
+                settings_row_gap()
                 plan_action_row(
                     label = stringResource(R.string.billing_manage_payment),
                     color = colors.text_primary,
@@ -2059,7 +2058,7 @@ private fun current_plan_card(
                 )
             }
             if (ends_at_period_end) {
-                AsterDivider()
+                settings_row_gap()
                 plan_action_row(
                     label = stringResource(R.string.reactivate),
                     color = colors.accent_blue,
@@ -2068,7 +2067,7 @@ private fun current_plan_card(
                     on_click = on_reactivate,
                 )
             } else if (show_cancel) {
-                AsterDivider()
+                settings_row_gap()
                 plan_action_row(
                     label = stringResource(R.string.billing_cancel_plan),
                     color = colors.danger,
@@ -2384,7 +2383,7 @@ private fun billing_history_card(
         } else {
             Column(modifier = Modifier.padding(vertical = AsterSpacing.xs)) {
                 history.forEachIndexed { idx, item ->
-                    if (idx > 0) AsterDivider(modifier = Modifier.padding(horizontal = AsterSpacing.lg))
+                    if (idx > 0) settings_row_gap(modifier = Modifier.padding(horizontal = AsterSpacing.lg))
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

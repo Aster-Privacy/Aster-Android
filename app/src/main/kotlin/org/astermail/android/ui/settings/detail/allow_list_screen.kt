@@ -58,7 +58,6 @@ import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDialogPrimaryButton
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
@@ -178,7 +177,7 @@ fun AllowListScreen(on_back: () -> Unit) {
                                 on_action = { vm.remove_allowed_sender(sender.sender_token) },
                                 action_test_tag = "allowlist_remove",
                             )
-                            if (idx < filtered.lastIndex) AsterDivider(modifier = Modifier)
+                            if (idx < filtered.lastIndex) settings_row_gap(modifier = Modifier)
                         }
                     }
                 }

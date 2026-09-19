@@ -64,7 +64,6 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
@@ -184,7 +183,7 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
                     AsterCard(modifier = Modifier.fillMaxWidth()) {
                         state.smtp_tokens.forEachIndexed { i, token ->
                             smtp_token_row(token = token, on_revoke = { pending_revoke = token })
-                            if (i < state.smtp_tokens.lastIndex) AsterDivider(modifier = Modifier)
+                            if (i < state.smtp_tokens.lastIndex) settings_row_gap(modifier = Modifier)
                         }
                     }
                 }
@@ -403,7 +402,7 @@ private fun smtp_token_create_dialog(
                                 )
                             }
                         }
-                        if (i < addresses.lastIndex) AsterDivider(modifier = Modifier)
+                        if (i < addresses.lastIndex) settings_row_gap(modifier = Modifier)
                     }
                 }
             }

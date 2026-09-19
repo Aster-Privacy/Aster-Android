@@ -473,6 +473,38 @@ fun is_advanced_action(a: Action): Boolean = a == Action.Unsupported
 fun rule_is_advanced(rule: MailRule): Boolean =
     rule.conditions.any { is_advanced_condition(it) } || rule.actions.any { is_advanced_action(it) }
 
+const val rule_summary_segment_limit = 2
+
+fun rule_summary_line(
+    when_label: String,
+    then_label: String,
+    joiner: String,
+    conditions: List<String>,
+    actions: List<String>,
+    limit: Int = rule_summary_segment_limit,
+): String {
+    val parts = mutableListOf<String>()
+    summary_part(when_label, conditions, " $joiner ", limit)?.let { parts.add(it) }
+    summary_part(then_label, actions, ", ", limit)?.let { parts.add(it) }
+    return parts.joinToString(" · ")
+}
+
+private fun summary_part(label: String, values: List<String>, separator: String, limit: Int): String? {
+    val capped = limit.coerceAtLeast(1)
+    val cleaned = values.map { it.trim() }.filter { it.isNotEmpty() }
+    if (cleaned.isEmpty()) return null
+    val shown = cleaned.take(capped).joinToString(separator)
+    val hidden = cleaned.size - capped
+    val body = if (hidden > 0) "$shown +$hidden" else shown
+    return "$label $body"
+}
+
+fun sort_rules_for_display(rules: List<MailRule>): List<MailRule> =
+    rules.sortedWith(
+        compareByDescending<MailRule> { it.enabled }
+            .thenBy { it.name.trim().lowercase() },
+    )
+
 val palette_colors = listOf(
     "#6366F1", "#3B82F6", "#22C55E", "#F59E0B",
     "#EF4444", "#EC4899", "#A855F7", "#14B8A6",

@@ -54,7 +54,6 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.mirror_in_rtl
 
 @Composable
@@ -121,14 +120,14 @@ fun SenderFiltersScreen(
                 icon = TablerIcons.Ban,
                 on_click = { on_open("blocked") },
             )
-            AsterDivider(modifier = Modifier)
+            settings_row_gap(modifier = Modifier)
             filters_nav_row(
                 title = stringResource(R.string.allowlist),
                 subtitle = stringResource(R.string.always_allow),
                 icon = TablerIcons.CircleCheck,
                 on_click = { on_open("allowlist") },
             )
-            AsterDivider(modifier = Modifier)
+            settings_row_gap(modifier = Modifier)
             filters_nav_row(
                 title = stringResource(R.string.subscriptions_label),
                 subtitle = stringResource(R.string.mailing_lists_on),
@@ -145,7 +144,7 @@ fun SenderFiltersScreen(
                 icon = TablerIcons.MailForward,
                 on_click = { on_open("auto_forward") },
             )
-            AsterDivider(modifier = Modifier)
+            settings_row_gap(modifier = Modifier)
             filters_nav_row(
                 title = stringResource(R.string.settings_vacation_reply),
                 subtitle = stringResource(R.string.vacation_reply_short),
