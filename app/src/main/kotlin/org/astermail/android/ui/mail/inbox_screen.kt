@@ -111,6 +111,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.CircularProgressIndicator
@@ -2065,6 +2067,10 @@ fun InboxScreen(
                         },
                         alias_direction = alias_direction,
                         on_alias_direction_change = on_alias_direction_change,
+                        account_email = settings_state.user?.email.orEmpty(),
+                        account_name = settings_state.user?.display_name.orEmpty(),
+                        account_profile_picture = settings_state.user?.profile_picture,
+                        account_profile_color = settings_state.user?.profile_color,
                     )
             scope_selection_banner(
                 offered = can_offer_scope_selection,
@@ -2547,6 +2553,10 @@ internal fun inbox_top_bar(
     selection_content: (@Composable () -> Unit)? = null,
     alias_direction: String? = null,
     on_alias_direction_change: (String) -> Unit = {},
+    account_email: String = "",
+    account_name: String = "",
+    account_profile_picture: String? = null,
+    account_profile_color: String? = null,
 ) {
     val colors = AsterMaterial.colors
     val divider_alpha by animateFloatAsState(
@@ -2726,12 +2736,23 @@ internal fun inbox_top_bar(
                 .height(52.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            AsterIconButton(
-                icon = TablerIcons.Menu2,
-                content_description = stringResource(R.string.open_drawer),
-                onClick = on_open_drawer,
-                modifier = Modifier.testTag("account_avatar"),
-            )
+            val open_drawer_description = stringResource(R.string.open_drawer)
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .clickable(onClick = on_open_drawer)
+                    .semantics { contentDescription = open_drawer_description }
+                    .testTag("account_avatar"),
+                contentAlignment = Alignment.Center,
+            ) {
+                SenderAvatar(
+                    email = account_email,
+                    name = account_name,
+                    size = 32.dp,
+                    profile_picture_url = account_profile_picture,
+                    profile_color = account_profile_color,
+                )
+            }
             Row(
                 modifier = Modifier
                     .weight(1f)
