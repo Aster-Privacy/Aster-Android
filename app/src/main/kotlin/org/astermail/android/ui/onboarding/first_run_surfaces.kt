@@ -51,6 +51,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import compose.icons.TablerIcons
+import compose.icons.tablericons.Key
 import compose.icons.tablericons.Lock
 import compose.icons.tablericons.MailOpened
 import compose.icons.tablericons.Star
@@ -65,6 +66,7 @@ import org.astermail.android.design.components.AsterSecondaryButton
 const val first_run_recovery_delay_ms = 24L * 60L * 60L * 1000L
 const val first_run_plan_delay_ms = 72L * 60L * 60L * 1000L
 const val first_run_recovery_snooze_ms = 3L * 24L * 60L * 60L * 1000L
+const val phrase_prompt_snooze_ms = 7L * 24L * 60L * 60L * 1000L
 
 @Composable
 fun FirstRunSetupSheet(
@@ -250,6 +252,46 @@ fun RecoveryReminderCard(
         dismiss_label = stringResource(R.string.recovery_reminder_later),
         icon = TablerIcons.Lock,
         on_action = on_add_recovery,
+        on_dismiss = on_later,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun RecoveryCodesReminderCard(
+    visible: Boolean,
+    on_get_codes: () -> Unit,
+    on_later: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    FirstRunPromptCard(
+        visible = visible,
+        title = stringResource(R.string.recovery_codes_reminder_title),
+        body = stringResource(R.string.recovery_codes_reminder_body),
+        action_label = stringResource(R.string.recovery_codes_reminder_action),
+        dismiss_label = stringResource(R.string.recovery_reminder_later),
+        icon = TablerIcons.Key,
+        on_action = on_get_codes,
+        on_dismiss = on_later,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun PhraseMigrationCard(
+    visible: Boolean,
+    on_get_codes: () -> Unit,
+    on_later: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    FirstRunPromptCard(
+        visible = visible,
+        title = stringResource(R.string.recovery_phrase_migrate_title),
+        body = stringResource(R.string.recovery_phrase_migrate_body),
+        action_label = stringResource(R.string.recovery_phrase_migrate_action),
+        dismiss_label = stringResource(R.string.plan_prompt_dismiss),
+        icon = TablerIcons.Key,
+        on_action = on_get_codes,
         on_dismiss = on_later,
         modifier = modifier,
     )

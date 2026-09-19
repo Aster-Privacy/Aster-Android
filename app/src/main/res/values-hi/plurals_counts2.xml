@@ -76,4 +76,12 @@
         <item quantity="one">%d संपर्क निर्यात किया गया</item>
         <item quantity="other">%d संपर्क निर्यात किए गए</item>
     </plurals>
+    <plurals name="lockout_minutes">
+        <item quantity="one">%1$d मिनट</item>
+        <item quantity="other">%1$d मिनट</item>
+    </plurals>
+    <plurals name="review_codes_left">
+        <item quantity="one">%1$d रिकवरी कोड बचा है।</item>
+        <item quantity="other">%1$d रिकवरी कोड बचे हैं।</item>
+    </plurals>
 </resources>

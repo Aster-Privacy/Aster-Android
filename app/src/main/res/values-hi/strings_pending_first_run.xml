@@ -13,4 +13,10 @@
     <string name="plan_prompt_body">ज़्यादा स्टोरेज, कस्टम डोमेन और बिना सीमा एलियास के लिए अपग्रेड करें।</string>
     <string name="plan_prompt_action">प्लान देखें</string>
     <string name="plan_prompt_dismiss">अभी नहीं</string>
+    <string name="recovery_codes_reminder_title">अपने रिकवरी कोड सहेजें</string>
+    <string name="recovery_codes_reminder_body">Aster आपका मेल आपके पासवर्ड से एन्क्रिप्ट करता है, इसलिए कोई भी इसे आपके लिए रीसेट नहीं कर सकता। एन्क्रिप्टेड मेल तक वापस पहुंचने का एकमात्र रास्ता रिकवरी कोड हैं।</string>
+    <string name="recovery_codes_reminder_action">रिकवरी कोड पाएं</string>
+    <string name="recovery_phrase_migrate_title">रिकवरी कोड पर जाएं</string>
+    <string name="recovery_phrase_migrate_body">रिकवरी फ़्रेज़ हटाए जा रहे हैं। अभी रिकवरी कोड पाएं ताकि आप आगे भी अपना खाता रिकवर कर सकें।</string>
+    <string name="recovery_phrase_migrate_action">कोड पाएं</string>
 </resources>

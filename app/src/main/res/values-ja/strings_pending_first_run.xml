@@ -13,4 +13,10 @@
     <string name="plan_prompt_body">アップグレードすると、容量が増え、独自ドメインと無制限のエイリアスを利用できます。</string>
     <string name="plan_prompt_action">プランを見る</string>
     <string name="plan_prompt_dismiss">後で</string>
+    <string name="recovery_codes_reminder_title">リカバリーコードを保存</string>
+    <string name="recovery_codes_reminder_body">Aster はパスワードでメールを暗号化するため、誰もパスワードを再設定できません。暗号化されたメールに戻る手段はリカバリーコードだけです。</string>
+    <string name="recovery_codes_reminder_action">リカバリーコードを取得</string>
+    <string name="recovery_phrase_migrate_title">リカバリーコードに切り替え</string>
+    <string name="recovery_phrase_migrate_body">リカバリーフレーズは廃止されます。今のうちにリカバリーコードを取得して、アカウントを復旧できるようにしてください。</string>
+    <string name="recovery_phrase_migrate_action">コードを取得</string>
 </resources>

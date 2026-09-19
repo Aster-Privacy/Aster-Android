@@ -114,4 +114,16 @@
         <item quantity="many">Wyeksportowano %d kontaktów</item>
         <item quantity="other">Wyeksportowano %d kontaktów</item>
     </plurals>
+    <plurals name="lockout_minutes">
+        <item quantity="one">%1$d minutę</item>
+        <item quantity="few">%1$d minuty</item>
+        <item quantity="many">%1$d minut</item>
+        <item quantity="other">%1$d minuty</item>
+    </plurals>
+    <plurals name="review_codes_left">
+        <item quantity="one">Pozostał %1$d kod odzyskiwania.</item>
+        <item quantity="few">Pozostały %1$d kody odzyskiwania.</item>
+        <item quantity="many">Pozostało %1$d kodów odzyskiwania.</item>
+        <item quantity="other">Pozostało %1$d kodu odzyskiwania.</item>
+    </plurals>
 </resources>

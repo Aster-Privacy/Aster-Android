@@ -84,10 +84,7 @@
     <string name="recovery_email_hidden">このアカウントに保存済み</string>
     <string name="recovery_email_status_unverified">確認待ち</string>
     <string name="skip_for_now">今はスキップ</string>
-    <string name="save_recovery_phrase">リカバリフレーズを保存</string>
-    <string name="recovery_phrase_description">これらの単語を順番に書き留めて、安全な場所に保管してください。パスワードを忘れた場合にアカウントを復旧する唯一の方法です。</string>
     <string name="tap_to_copy">タップしてコピー</string>
-    <string name="tap_phrase_to_copy">フレーズをタップしてコピー</string>
     <string name="copy_to_clipboard">クリップボードにコピー</string>
     <string name="choose_your_plan">プランを選択</string>
     <string name="plan_subtitle">無料で始めるか、有料プランでさらに多くの機能を。いつでも変更できます。</string>
@@ -120,9 +117,9 @@
     <string name="recovery_email_sent_description">パスワードリセットリンクを復旧メールに送信しました。受信トレイを確認し、リンクをクリックして続行してください。</string>
     <string name="use_recovery_code_instead">代わりにリカバリコードを使用</string>
     <string name="enter_recovery_code">リカバリコードを入力</string>
-    <string name="enter_recovery_code_description">アカウント作成時に保存したリカバリコードの1つを入力してください。</string>
+    <string name="enter_recovery_code_description">アカウント作成時に保存したリカバリーコードのいずれかを入力してください。各コードは一度だけ使用できます。</string>
     <string name="recovery_code">リカバリコード</string>
-    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX</string>
+    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX-XXXX</string>
     <string name="verify_code">コードを確認</string>
     <string name="create_new_password">新しいパスワードを作成</string>
     <string name="choose_strong_password">アカウント用の強力なパスワードを選択してください</string>
@@ -136,7 +133,7 @@
     <string name="recovering_your_account">アカウントを復旧中</string>
     <string name="please_dont_close_app">アプリを閉じないでください</string>
     <string name="save_new_recovery_codes">新しいリカバリコードを保存</string>
-    <string name="old_codes_invalidated">以前のリカバリコードは無効になりました。この新しいコードを安全な場所に保存してください。</string>
+    <string name="old_codes_invalidated">以前のリカバリーコードは使用できなくなりました。パスワードマネージャーや印刷したコピーなど、安全な場所に保管してください。各コードは一度だけ使用できます。</string>
     <string name="show_codes">コードを表示</string>
     <string name="hide_codes">コードを非表示</string>
     <string name="copy_codes">コードをコピー</string>
@@ -676,7 +673,6 @@
     <string name="two_factor_subtitle_add">第2のセキュリティレイヤーを追加</string>
     <string name="active_sessions">アクティブなセッション</string>
     <string name="devices_signed_in">サインイン中のデバイス</string>
-    <string name="recovery_key">リカバリキー</string>
     <string name="backup_access">バックアップアクセス</string>
 
     <string name="update_your_password">パスワードを更新</string>
@@ -715,7 +711,6 @@
     <string name="two_factor_other_devices_signed_out">Aster はほかのデバイスからサインアウトしました。再び使うには、サインインして認証 App のコードを入力してください。</string>
     <string name="new_backup_codes_title">新しいバックアップコード</string>
     <string name="new_backup_codes_subtitle">以前のバックアップコードは使用できなくなりました。これらを安全な場所に保存してください。</string>
-    <string name="copy_all_codes">すべてのコードをコピー</string>
 
     <string name="sessions">セッション</string>
     <string name="no_active_sessions">アクティブなセッションはありません</string>
@@ -757,12 +752,7 @@
     <string name="open_encryption_settings">暗号化設定を開く</string>
 
     <string name="enter_your_password">パスワードを入力</string>
-    <string name="password_required_for_recovery">リカバリキーを表示するにはパスワードが必要です。</string>
-    <string name="please_enter_password">パスワードを入力してください</string>
-    <string name="view_recovery_key">リカバリキーを表示</string>
     <string name="incorrect_password">パスワードが正しくありません</string>
-    <string name="store_somewhere_safe">安全な場所に保管してください</string>
-    <string name="recovery_key_warning">リカバリキーは、パスワードを紛失した場合にアクセスを回復する唯一の方法です。Asterはそれを復旧できません。</string>
     <string name="no_recovery_key_found">リカバリキーが見つかりません。リカバリコードはアカウント作成時に設定され、暗号化されたボルトに保存されます。ログアウトして再度ログインし、ボルトを更新してみてください。</string>
 
     <string name="aliases">エイリアス</string>
@@ -1448,8 +1438,6 @@
     <string name="badges">バッジ</string>
     <string name="no_badges_yet">まだバッジはありません</string>
 
-    <string name="no_recovery_codes_yet">このアカウントの復元コードが見つかりません。パスワードを忘れた場合にアクセスを回復できるよう、今すぐ生成してください。</string>
-    <string name="generate_recovery_codes">復元コードを生成</string>
 
     <!-- Pending account deletion -->
     <string name="pending_deletion_title">アカウントは削除予定です</string>
@@ -2039,19 +2027,13 @@
     <string name="upgrade_inline_card_description">無料プランの上限に達しました。有料プランでさらに使えます。</string>
     <string name="your_key">あなたの鍵</string>
     <string name="recovery_codes">リカバリーコード</string>
-    <string name="recovery_codes_remaining">残り %1$d / %2$d 個</string>
+    <string name="recovery_codes_remaining">%2$d 個中 %1$d 個が残っています</string>
     <string name="low">残りわずか</string>
     <string name="ok">OK</string>
-    <string name="recovery_codes_low_warning">リカバリーコードが残りわずかです。早めに再発行してください。</string>
+    <string name="recovery_codes_low_warning">リカバリーコードが残りわずかです。ロックアウトされないよう新しいコードを取得してください。</string>
     <string name="loading_recovery_codes_status">リカバリーコードの状態を読み込み中...</string>
-    <string name="view_backup_recovery_key">復旧キーの表示とバックアップ</string>
-    <string name="regenerating">再発行中...</string>
-    <string name="regenerate_recovery_codes">リカバリーコードを再発行</string>
-    <string name="regenerate_recovery_codes_title">リカバリーコードを再発行しますか？</string>
-    <string name="regenerate_recovery_codes_message">現在のリカバリーコードは使えなくなります。新しいコードをすぐに保存してください。</string>
-    <string name="regenerate">再発行</string>
-    <string name="new_recovery_codes_title">新しいリカバリーコード</string>
-    <string name="new_recovery_codes_message">安全な場所に保管してください。各コードは 1 回だけ使えます。</string>
+    <string name="new_recovery_codes_title">リカバリーコードを保存してください</string>
+    <string name="new_recovery_codes_message">パスワードマネージャーや印刷したコピーなど、安全な場所に保管してください。各コードは一度だけ使用できます。</string>
     <string name="storage_format">保存形式</string>
     <string name="storage_format_aster">Aster サーバー</string>
     <string name="storage_format_aster_sub">既定の暗号化ストレージ</string>
@@ -3389,4 +3371,43 @@
     <string name="enc_verification_code_info_title">このコードは何ですか?</string>
     <string name="enc_verification_code_info_description">暗号化キーから作成された短いコードです。メールをやり取りする相手がこのコードを自分側のコードと照合して一致すれば、お互いのメッセージが非公開で改ざんされていないことを確認できます。</string>
     <string name="enc_copy_verification_code">確認コードをコピー</string>
+    <string name="copy_all_codes">すべてのコードをコピー</string>
+    <string name="codes_copied">コードをコピーしました。</string>
+    <string name="confirm_its_you">本人確認</string>
+    <string name="error_recovery_code_replaced">このコードは以前のセットのもので、現在は使用できません。最後に保存したリストのコードを使用してください。</string>
+    <string name="error_recovery_code_used">このコードはすでに使用されています。各コードは1回だけ使えるため、保存したリストから別のコードを入力してください。</string>
+    <string name="error_recovery_locked_until">このアカウントでは復元の試行が多すぎました。%1$s後に再度お試しください。コードはどれも使用されていないため、すべて残っています。</string>
+    <string name="get_new_codes">新しいコードを取得</string>
+    <string name="get_new_codes_message">新しいコードを取得すると、現在のコードは使えなくなります。</string>
+    <string name="get_new_codes_title">新しいリカバリーコードを取得しますか？</string>
+    <string name="i_saved_these_codes">これらのコードを保存しました</string>
+    <string name="other_way_code_desc">保存したコードのいずれかを入力します。</string>
+    <string name="other_way_code_title">リカバリーコードを使う</string>
+    <string name="other_way_email_desc">Aster Mail がリカバリーメールにリンクを送信します。リセット前のメールにはアクセスできなくなります。</string>
+    <string name="other_way_email_title">リカバリーメールでリセットする</string>
+    <string name="other_way_none_desc">サポートにお問い合わせください。次の手順をご案内します。</string>
+    <string name="change_account">別のアドレスを使う</string>
+    <string name="change_account_desc">別の Aster Mail アカウントを復元します。</string>
+    <string name="support_step_title">サポートに問い合わせる</string>
+    <string name="support_step_desc">Aster Mail は暗号化されたデータを読み取れないため、リカバリーコードまたは復旧用メールなしで解除できる人はいません。サポートがアカウントを確認し、次の手順を案内します。</string>
+    <string name="support_email_action">サポートにメールする</string>
+    <string name="support_help_center">ヘルプセンターを開く</string>
+    <string name="other_way_none_title">どれも持っていない</string>
+    <string name="other_ways_desc">アカウントに戻る方法を選択してください。</string>
+    <string name="print_codes">印刷</string>
+    <string name="recovery_codes_print_created">%1$s に作成</string>
+    <string name="recovery_codes_print_note">各コードは一度だけ使用できます。これらのコードは他人に見せないでください。コードとメールアドレスを知っている人は、パスワードをリセットできます。</string>
+    <string name="recovery_codes_print_title">Aster Mail のリカバリーコード</string>
+    <string name="recovery_codes_unavailable">このデバイスにはコードが保存されていません。表示するには新しいコードを取得してください。</string>
+    <string name="recovery_codes_view_desc">各コードは一度だけ使用できます。使用済みのコードには取り消し線が付きます。</string>
+    <string name="reset_account_desc">リセット前の暗号化されたメール、連絡先、ファイルは、以前のパスワードで復元するまでロックされたままです。新しい空の暗号鍵が発行されます。</string>
+    <string name="reset_account_title">アカウントをリセットしますか?</string>
+    <string name="review_devices_signed_out">他のデバイスからログアウトしました。</string>
+    <string name="review_no_recovery_email">リカバリーメールはありません。</string>
+    <string name="review_recovery_email_kept">リカバリーメールは設定されたままです。</string>
+    <string name="review_security_desc">パスワードが変更され、アカウントが復元されました。</string>
+    <string name="review_security_title">セキュリティを確認する</string>
+    <string name="review_two_step_off">2 段階認証はオフです。</string>
+    <string name="send_reset_link">リセットリンクを送信</string>
+    <string name="try_another_way">別の方法を試す</string>
 </resources>

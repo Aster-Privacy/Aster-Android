@@ -166,6 +166,7 @@ fun RegisterScreen(
                     RegisterStep.generating -> RegisterGeneratingStep()
                     RegisterStep.recovery_key -> RegisterRecoveryStep(
                         codes = recovery_codes.orEmpty(),
+                        account_email = "${state.username.value.trim().trim('.')}@${state.email_domain.value}",
                         backup_failed = recovery_backup_failed,
                         is_retrying_backup = is_retrying_recovery_backup,
                         on_retry_backup = { view_model.retry_recovery_backup() },

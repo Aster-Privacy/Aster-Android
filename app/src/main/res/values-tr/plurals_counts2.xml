@@ -76,4 +76,10 @@
         <item quantity="one">%d kişi dışa aktarıldı</item>
         <item quantity="other">%d kişi dışa aktarıldı</item>
     </plurals>
+    <plurals name="lockout_minutes">
+        <item quantity="other">%1$d dakika</item>
+    </plurals>
+    <plurals name="review_codes_left">
+        <item quantity="other">%1$d kurtarma kodu kaldı.</item>
+    </plurals>
 </resources>

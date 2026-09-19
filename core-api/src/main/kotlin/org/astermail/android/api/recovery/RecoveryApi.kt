@@ -47,6 +47,8 @@ data class InitiateRecoveryResponse(
     val recovery_key_nonce: String,
     val code_salt: String,
     val recovery_token: String,
+    val encrypted_recovery_email: String? = null,
+    val recovery_email_nonce: String? = null,
 )
 
 @Serializable
@@ -102,6 +104,13 @@ data class CompleteRecoveryRequest(
     val new_vault_backup_nonce: String,
     val new_recovery_key_salt: String,
     val new_email_recovery_backup: NewEmailRecoveryBackup? = null,
+    val new_recovery_email: RecoveryEmailReencryption? = null,
+)
+
+@Serializable
+data class RecoveryEmailReencryption(
+    val encrypted_email: String,
+    val email_nonce: String,
 )
 
 @Serializable
@@ -115,6 +124,56 @@ data class SaveRecoveryBackupRequest(
     val encrypted_vault_backup: String,
     val vault_backup_nonce: String,
     val recovery_key_salt: String,
+    val step_up_token: String? = null,
+    val password_hash: String? = null,
+    val totp_code: String? = null,
+    val encrypted_vault: String? = null,
+    val vault_nonce: String? = null,
+    val vault_format: Int? = null,
+)
+
+@Serializable
+data class RecoveryMethodsResponse(
+    val has_phrase: Boolean = false,
+    val has_codes: Boolean = false,
+    val codes_remaining: Long = 0,
+    val recovery_email_set: Boolean = false,
+    val recovery_email_verified: Boolean = false,
+    val inactive_key_sets: Long = 0,
+)
+
+@Serializable
+data class UsedCode(
+    val code_hash: String,
+    val used_at: String,
+)
+
+@Serializable
+data class CodesStatusResponse(
+    val created_at: String? = null,
+    val total: Long = 0,
+    val remaining: Long = 0,
+    val used: List<UsedCode> = emptyList(),
+)
+
+@Serializable
+data class VerifyCodesStepUpRequest(
+    val password_hash: String,
+    val totp_code: String? = null,
+)
+
+@Serializable
+data class CodeState(
+    val code_hash: String,
+    val status: String,
+    val used_at: String? = null,
+)
+
+@Serializable
+data class VerifyCodesStepUpResponse(
+    val step_up_token: String,
+    val expires_at: String,
+    val codes: List<CodeState> = emptyList(),
 )
 
 @Serializable
@@ -163,6 +222,9 @@ interface RecoveryApi {
     suspend fun validate_email(request: ValidateEmailRecoveryRequest): ValidateEmailRecoveryResponse
     suspend fun complete(request: CompleteRecoveryRequest): CompleteRecoveryResponse
     suspend fun backup(request: SaveRecoveryBackupRequest): SaveRecoveryBackupResponse
+    suspend fun methods(): RecoveryMethodsResponse
+    suspend fun codes_status(): CodesStatusResponse
+    suspend fun verify_step_up(request: VerifyCodesStepUpRequest): VerifyCodesStepUpResponse
     suspend fun list_inactive_key_sets(): ListInactiveKeySetsResponse
     suspend fun fetch_inactive_key_set(request: FetchInactiveKeySetRequest): FetchInactiveKeySetResponse
     suspend fun consume_inactive_key_set(request: ConsumeInactiveKeySetRequest): ConsumeInactiveKeySetResponse
@@ -205,6 +267,26 @@ class RecoveryApiImpl(private val client: ApiClient) : RecoveryApi {
 
     override suspend fun backup(request: SaveRecoveryBackupRequest): SaveRecoveryBackupResponse {
         val response = client.http.post("${client.base_url}$base/backup") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun methods(): RecoveryMethodsResponse {
+        val response = client.http.get("${client.base_url}$base/methods")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun codes_status(): CodesStatusResponse {
+        val response = client.http.get("${client.base_url}$base/codes/status")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun verify_step_up(
+        request: VerifyCodesStepUpRequest,
+    ): VerifyCodesStepUpResponse {
+        val response = client.http.post("${client.base_url}$base/codes/verify-step-up") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }

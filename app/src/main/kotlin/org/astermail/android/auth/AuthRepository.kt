@@ -1562,22 +1562,70 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    private fun generate_recovery_codes(): List<String> {
-        val chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-        val random = java.security.SecureRandom()
-        return (1..6).map {
-            val segments = (1..4).map {
-                (1..4).map { chars[random.nextInt(chars.length)] }.joinToString("")
-            }
-            "ASTER-" + segments.joinToString("-")
-        }
-    }
+    suspend fun rotate_recovery_codes(step_up_token: String): List<String> {
+        val stored_vault = session_key_store.get_encrypted_vault()
+            ?: throw ApiError.UnknownError("vault unavailable")
+        val passphrase = session_key_store.get_passphrase()
+            ?: throw ApiError.UnknownError("vault unavailable")
 
-    private fun hash_recovery_code(code: String): String {
-        val cleaned = canonicalize_recovery_code(code)
-        val digest = java.security.MessageDigest.getInstance("SHA-256")
-        val hash = digest.digest(cleaned.toByteArray(Charsets.UTF_8))
-        return base64_encode(hash)
+        try {
+            val vault_plain = CryptoNative.decrypt_vault_with_password(
+                base64_decode(stored_vault.first),
+                base64_decode(stored_vault.second),
+                passphrase,
+            )
+            val vault_obj = try {
+                org.json.JSONObject(String(vault_plain, Charsets.UTF_8))
+            } finally {
+                vault_plain.fill(0)
+            }
+
+            val codes = generate_recovery_codes()
+            val codes_array = org.json.JSONArray()
+            codes.forEach { codes_array.put(it) }
+            vault_obj.put("recovery_codes", codes_array)
+
+            val vault_format = maxOf(
+                vault_obj.optInt("vault_format", 1),
+                if (vault_obj.optString("data_kek", "").isNotBlank()) MASTER_KEY_VAULT_FORMAT else 1,
+            )
+
+            val updated_plain = vault_obj.toString().toByteArray(Charsets.UTF_8)
+            val sealed = CryptoNative.encrypt_vault_with_password(updated_plain, passphrase)
+            updated_plain.fill(0)
+            val encrypted_vault = base64_encode(sealed.encrypted_vault)
+            val vault_nonce = base64_encode(sealed.vault_nonce)
+
+            val recovery_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
+            val backup_plain = vault_obj.toString().toByteArray(Charsets.UTF_8)
+            val vault_backup = encrypt_vault_backup(backup_plain, recovery_key)
+            backup_plain.fill(0)
+            val shares = codes.map { generate_recovery_share(it, recovery_key) }
+            recovery_key.fill(0)
+
+            withContext(NonCancellable) {
+                recovery_api.backup(
+                    SaveRecoveryBackupRequest(
+                        recovery_shares = shares,
+                        encrypted_vault_backup = vault_backup.encrypted_data,
+                        vault_backup_nonce = vault_backup.nonce,
+                        recovery_key_salt = vault_backup.salt,
+                        step_up_token = step_up_token,
+                        encrypted_vault = encrypted_vault,
+                        vault_nonce = vault_nonce,
+                        vault_format = vault_format,
+                    ),
+                )
+
+                session_key_store.put_encrypted_vault(encrypted_vault, vault_nonce)
+                session_key_store.put_recovery_codes(codes)
+                runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
+            }
+
+            return codes
+        } finally {
+            passphrase.fill(0)
+        }
     }
 
     private fun generate_recovery_share(code: String, recovery_key: ByteArray): RecoveryShareData {

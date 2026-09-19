@@ -84,10 +84,7 @@
     <string name="recovery_email_hidden">Salvo nesta conta</string>
     <string name="recovery_email_status_unverified">Verificação pendente</string>
     <string name="skip_for_now">Pular por enquanto</string>
-    <string name="save_recovery_phrase">Salve sua frase de recuperação</string>
-    <string name="recovery_phrase_description">Anote estas palavras em ordem e guarde em um lugar seguro. Esta é a ÚNICA maneira de recuperar sua conta se você esquecer sua senha.</string>
     <string name="tap_to_copy">Toque para copiar</string>
-    <string name="tap_phrase_to_copy">Toque na frase para copiar</string>
     <string name="copy_to_clipboard">Copiar para a área de transferência</string>
     <string name="choose_your_plan">Escolha seu plano</string>
     <string name="plan_subtitle">Comece grátis ou desbloqueie mais com um plano pago. Você pode mudar a qualquer momento.</string>
@@ -120,9 +117,9 @@
     <string name="recovery_email_sent_description">Enviamos um link de redefinição de senha para seu e-mail de recuperação. Verifique sua caixa de entrada e clique no link para continuar.</string>
     <string name="use_recovery_code_instead">Usar código de recuperação</string>
     <string name="enter_recovery_code">Digite o código de recuperação</string>
-    <string name="enter_recovery_code_description">Digite um dos códigos de recuperação que você salvou ao criar sua conta.</string>
+    <string name="enter_recovery_code_description">Introduza um dos códigos de recuperação que guardou ao criar a conta. Cada código funciona uma vez.</string>
     <string name="recovery_code">Código de recuperação</string>
-    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX</string>
+    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX-XXXX</string>
     <string name="verify_code">Verificar código</string>
     <string name="create_new_password">Criar nova senha</string>
     <string name="choose_strong_password">Escolha uma senha forte para sua conta</string>
@@ -136,7 +133,7 @@
     <string name="recovering_your_account">Recuperando sua conta</string>
     <string name="please_dont_close_app">Por favor, não feche o aplicativo</string>
     <string name="save_new_recovery_codes">Salvar novos códigos de recuperação</string>
-    <string name="old_codes_invalidated">Seus códigos de recuperação antigos foram invalidados. Salve estes novos códigos em um lugar seguro.</string>
+    <string name="old_codes_invalidated">Os seus códigos de recuperação antigos já não funcionam. Guarde estes num local seguro, como um gestor de palavras-passe ou uma cópia impressa. Cada código funciona uma vez.</string>
     <string name="show_codes">Mostrar códigos</string>
     <string name="hide_codes">Ocultar códigos</string>
     <string name="copy_codes">Copiar códigos</string>
@@ -676,7 +673,6 @@
     <string name="two_factor_subtitle_add">Adicionar uma segunda camada</string>
     <string name="active_sessions">Sessões ativas</string>
     <string name="devices_signed_in">Dispositivos conectados</string>
-    <string name="recovery_key">Chave de recuperação</string>
     <string name="backup_access">Acesso de backup</string>
 
     <string name="update_your_password">Atualize sua senha</string>
@@ -715,7 +711,6 @@
     <string name="two_factor_other_devices_signed_out">O Aster terminou a sessão nos seus outros dispositivos. Para voltar a usá-los, inicie sessão e introduza um código da sua app de autenticação.</string>
     <string name="new_backup_codes_title">Novos códigos de backup</string>
     <string name="new_backup_codes_subtitle">Seus códigos de backup antigos não funcionam mais. Salve estes em um lugar seguro.</string>
-    <string name="copy_all_codes">Copiar todos os códigos</string>
 
     <string name="sessions">Sessões</string>
     <string name="no_active_sessions">Nenhuma sessão ativa</string>
@@ -757,12 +752,7 @@
     <string name="open_encryption_settings">Abrir configurações de criptografia</string>
 
     <string name="enter_your_password">Digite sua senha</string>
-    <string name="password_required_for_recovery">Sua senha é necessária para ver sua chave de recuperação.</string>
-    <string name="please_enter_password">Por favor, digite sua senha</string>
-    <string name="view_recovery_key">Ver chave de recuperação</string>
     <string name="incorrect_password">Senha incorreta</string>
-    <string name="store_somewhere_safe">Guarde isso em um lugar seguro</string>
-    <string name="recovery_key_warning">Sua chave de recuperação é a única maneira de recuperar o acesso se você perder sua senha. O Aster não pode recuperá-la para você.</string>
     <string name="no_recovery_key_found">Nenhuma chave de recuperação encontrada. Os códigos de recuperação são definidos durante a criação da conta e armazenados no seu cofre criptografado. Tente sair e entrar novamente para atualizar seu cofre.</string>
 
     <string name="aliases">Aliases</string>
@@ -1450,8 +1440,6 @@
     <string name="badges">Selos</string>
     <string name="no_badges_yet">Nenhum selo ainda</string>
 
-    <string name="no_recovery_codes_yet">Nenhum código de recuperação encontrado para esta conta. Gere um conjunto agora para recuperar o acesso caso perca sua senha.</string>
-    <string name="generate_recovery_codes">Gerar códigos de recuperação</string>
 
     <!-- Pending account deletion -->
     <string name="pending_deletion_title">Conta agendada para exclusão</string>
@@ -2042,19 +2030,13 @@
     <string name="upgrade_inline_card_description">Você atingiu o limite do plano gratuito. Um plano pago libera mais.</string>
     <string name="your_key">Sua chave</string>
     <string name="recovery_codes">Códigos de recuperação</string>
-    <string name="recovery_codes_remaining">Restam %1$d / %2$d códigos</string>
+    <string name="recovery_codes_remaining">Restam %1$d de %2$d códigos</string>
     <string name="low">Baixo</string>
     <string name="ok">OK</string>
-    <string name="recovery_codes_low_warning">Seus códigos de recuperação estão acabando. Gere novos em breve.</string>
+    <string name="recovery_codes_low_warning">Seus códigos de recuperação estão acabando. Obtenha novos códigos para não perder o acesso.</string>
     <string name="loading_recovery_codes_status">Carregando o estado dos códigos de recuperação...</string>
-    <string name="view_backup_recovery_key">Ver e fazer backup da chave de recuperação</string>
-    <string name="regenerating">Gerando novamente...</string>
-    <string name="regenerate_recovery_codes">Gerar novos códigos de recuperação</string>
-    <string name="regenerate_recovery_codes_title">Gerar novos códigos?</string>
-    <string name="regenerate_recovery_codes_message">Isso invalida seus códigos de recuperação atuais. Salve os novos imediatamente.</string>
-    <string name="regenerate">Gerar novos</string>
-    <string name="new_recovery_codes_title">Novos códigos de recuperação</string>
-    <string name="new_recovery_codes_message">Guarde estes códigos em local seguro. Cada código só pode ser usado uma vez.</string>
+    <string name="new_recovery_codes_title">Guarde os seus códigos de recuperação</string>
+    <string name="new_recovery_codes_message">Guarde-os num local seguro, como um gestor de palavras-passe ou uma cópia impressa. Cada código funciona uma vez.</string>
     <string name="storage_format">Formato de armazenamento</string>
     <string name="storage_format_aster">Servidor Aster</string>
     <string name="storage_format_aster_sub">Armazenamento criptografado padrão</string>
@@ -3407,4 +3389,43 @@
     <string name="enc_verification_code_info_title">O que é este código?</string>
     <string name="enc_verification_code_info_description">Um código curto gerado a partir da sua chave de criptografia. Se a pessoa com quem você troca e-mails comparar este código com o dela e eles coincidirem, ambos podem ter certeza de que as mensagens são privadas e não foram alteradas.</string>
     <string name="enc_copy_verification_code">Copiar código de verificação</string>
+    <string name="copy_all_codes">Copiar todos os códigos</string>
+    <string name="codes_copied">Códigos copiados.</string>
+    <string name="confirm_its_you">Confirme que é você</string>
+    <string name="error_recovery_code_replaced">Esse código pertence a um conjunto anterior e já não funciona. Use um código da lista mais recente que guardou.</string>
+    <string name="error_recovery_code_used">Este código já foi usado. Cada código funciona uma vez, por isso introduza outro da sua lista guardada.</string>
+    <string name="error_recovery_locked_until">Esta conta teve tentativas de recuperação demais. Você pode tentar de novo em %1$s. Nenhum dos seus códigos foi usado, então você ainda tem todos eles.</string>
+    <string name="get_new_codes">Obter novos códigos</string>
+    <string name="get_new_codes_message">Seus códigos atuais param de funcionar assim que você obtém novos.</string>
+    <string name="get_new_codes_title">Obter novos códigos de recuperação?</string>
+    <string name="i_saved_these_codes">Guardei estes códigos</string>
+    <string name="other_way_code_desc">Introduza um dos códigos que guardou.</string>
+    <string name="other_way_code_title">Usar um código de recuperação</string>
+    <string name="other_way_email_desc">O Aster Mail envia uma ligação para o seu e-mail de recuperação. Perde o acesso ao correio anterior à reposição.</string>
+    <string name="other_way_email_title">Repor com o seu e-mail de recuperação</string>
+    <string name="other_way_none_desc">Fale com o suporte e ajudamos com os próximos passos.</string>
+    <string name="change_account">Usar outro endereço</string>
+    <string name="change_account_desc">Recupere outra conta do Aster Mail.</string>
+    <string name="support_step_title">Falar com o suporte</string>
+    <string name="support_step_desc">O Aster Mail não consegue ler os seus dados encriptados, por isso ninguém os desbloqueia sem um código de recuperação ou o seu email de recuperação. O suporte pode verificar a sua conta e ajudar com os próximos passos.</string>
+    <string name="support_email_action">Enviar email ao suporte</string>
+    <string name="support_help_center">Abrir o centro de ajuda</string>
+    <string name="other_way_none_title">Não tenho nenhuma destas opções</string>
+    <string name="other_ways_desc">Escolha como quer voltar a aceder à sua conta.</string>
+    <string name="print_codes">Imprimir</string>
+    <string name="recovery_codes_print_created">Criados em %1$s</string>
+    <string name="recovery_codes_print_note">Cada código funciona uma vez. Mantenha estes códigos privados. Qualquer pessoa com um código e o seu endereço de e-mail pode repor a sua palavra-passe.</string>
+    <string name="recovery_codes_print_title">Códigos de recuperação do Aster Mail</string>
+    <string name="recovery_codes_unavailable">Seus códigos não estão salvos neste dispositivo. Obtenha novos códigos para vê-los.</string>
+    <string name="recovery_codes_view_desc">Cada código funciona uma vez. Os códigos usados aparecem riscados.</string>
+    <string name="reset_account_desc">O seu correio, contactos e ficheiros cifrados anteriores à reposição ficam bloqueados até os recuperar com a sua palavra-passe antiga. Recebe uma nova chave de cifra vazia.</string>
+    <string name="reset_account_title">Repor a sua conta?</string>
+    <string name="review_devices_signed_out">Os outros dispositivos terminaram sessão.</string>
+    <string name="review_no_recovery_email">Sem e-mail de recuperação.</string>
+    <string name="review_recovery_email_kept">O seu e-mail de recuperação continua definido.</string>
+    <string name="review_security_desc">A sua palavra-passe foi alterada e a sua conta foi recuperada.</string>
+    <string name="review_security_title">Reveja a sua segurança</string>
+    <string name="review_two_step_off">A verificação em dois passos está desativada.</string>
+    <string name="send_reset_link">Enviar ligação de reposição</string>
+    <string name="try_another_way">Tentar de outra forma</string>
 </resources>

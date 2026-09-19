@@ -21,11 +21,19 @@
 
 package org.astermail.android.auth
 
+import android.util.Base64
+import java.security.MessageDigest
+import java.security.SecureRandom
+
+const val RECOVERY_CODE_SET_SIZE = 10
+
+private const val recovery_code_alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 private const val recovery_code_segment_length = 4
 private val recovery_code_segment_counts = listOf(4, 3)
 
 fun canonicalize_recovery_code(code: String): String {
-    val stripped = code.uppercase(java.util.Locale.ROOT).filter { it.isLetterOrDigit() }
+    val upper = code.uppercase(java.util.Locale.ROOT)
+    val stripped = upper.filter { it in 'A'..'Z' || it in '0'..'9' }
 
     if (stripped.startsWith("ASTER")) {
         val body = stripped.substring(5)
@@ -44,7 +52,7 @@ fun canonicalize_recovery_code(code: String): String {
         }
     }
 
-    return code.uppercase(java.util.Locale.ROOT).trim()
+    return upper.filter { it in 'A'..'Z' || it in '0'..'9' || it == '-' }
 }
 
 fun is_valid_recovery_code(code: String): Boolean {
@@ -54,6 +62,28 @@ fun is_valid_recovery_code(code: String): Boolean {
     if (!recovery_code_segment_counts.contains(segments.size - 1)) return false
 
     return segments.drop(1).all { segment ->
-        segment.length == recovery_code_segment_length && segment.all { it.isLetterOrDigit() }
+        segment.length == recovery_code_segment_length &&
+            segment.all { it in 'A'..'Z' || it in '0'..'9' }
     }
+}
+
+fun generate_recovery_codes(count: Int = RECOVERY_CODE_SET_SIZE): List<String> {
+    val random = SecureRandom()
+
+    return (1..count).map {
+        val segments = (1..4).map {
+            (1..recovery_code_segment_length)
+                .map { recovery_code_alphabet[random.nextInt(recovery_code_alphabet.length)] }
+                .joinToString("")
+        }
+
+        "ASTER-" + segments.joinToString("-")
+    }
+}
+
+fun hash_recovery_code(code: String): String {
+    val canonical = canonicalize_recovery_code(code)
+    val digest = MessageDigest.getInstance("SHA-256").digest(canonical.toByteArray(Charsets.UTF_8))
+
+    return Base64.encodeToString(digest, Base64.NO_WRAP)
 }

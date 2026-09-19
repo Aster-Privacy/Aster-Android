@@ -13,4 +13,10 @@
     <string name="plan_prompt_body">升级即可获得更多存储空间、自定义域名和无限别名。</string>
     <string name="plan_prompt_action">查看方案</string>
     <string name="plan_prompt_dismiss">暂不</string>
+    <string name="recovery_codes_reminder_title">保存你的恢复代码</string>
+    <string name="recovery_codes_reminder_body">Aster 用你的密码加密邮件，因此没有人能替你重置密码。恢复代码是回到加密邮件的唯一方式。</string>
+    <string name="recovery_codes_reminder_action">获取恢复代码</string>
+    <string name="recovery_phrase_migrate_title">改用恢复代码</string>
+    <string name="recovery_phrase_migrate_body">恢复短语即将停用。请立即获取恢复代码，以便日后仍能找回账户。</string>
+    <string name="recovery_phrase_migrate_action">获取代码</string>
 </resources>

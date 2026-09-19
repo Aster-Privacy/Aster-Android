@@ -208,6 +208,7 @@ fun SecurityScreen(
         vm.load_vanguard_status()
         vm.load_subscription(force = false)
         vm.load_inactive_key_sets()
+        vm.load_recovery_codes_status()
     }
 
     var show_recover_dialog by remember { mutableStateOf(false) }
@@ -343,6 +344,16 @@ fun SecurityScreen(
         sec == null -> stringResource(R.string.two_factor_subtitle_add)
         sec.totp_enabled -> stringResource(R.string.enabled)
         else -> stringResource(R.string.disabled)
+    }
+    val codes_status = state.recovery_codes_status
+    val recovery_codes_sub = if (codes_status != null && codes_status.total_codes > 0) {
+        stringResource(
+            R.string.recovery_codes_remaining,
+            codes_status.available_codes,
+            codes_status.total_codes,
+        )
+    } else {
+        stringResource(R.string.backup_access)
     }
     val recovery_email_sub = when {
         sec == null -> stringResource(R.string.backup_email_short)
@@ -918,10 +929,10 @@ fun SecurityScreen(
         section_label(stringResource(R.string.section_recovery_security))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             detail_row(
-                title = stringResource(R.string.recovery_key),
-                subtitle = stringResource(R.string.backup_access),
+                title = stringResource(R.string.recovery_codes),
+                subtitle = recovery_codes_sub,
                 icon = TablerIcons.Key,
-                on_click = { on_open("recovery_key_view") },
+                on_click = { on_open("recovery_codes") },
             )
             AsterDivider()
             detail_row(

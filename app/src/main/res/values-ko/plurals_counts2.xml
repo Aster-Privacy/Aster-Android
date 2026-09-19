@@ -57,4 +57,10 @@
     <plurals name="exported_contacts">
         <item quantity="other">연락처 %d개를 내보냈습니다</item>
     </plurals>
+    <plurals name="lockout_minutes">
+        <item quantity="other">%1$d분</item>
+    </plurals>
+    <plurals name="review_codes_left">
+        <item quantity="other">복구 코드가 %1$d개 남았습니다.</item>
+    </plurals>
 </resources>

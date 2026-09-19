@@ -13,4 +13,10 @@
     <string name="plan_prompt_body">Faça upgrade para ter mais armazenamento, domínios personalizados e apelidos ilimitados.</string>
     <string name="plan_prompt_action">Ver planos</string>
     <string name="plan_prompt_dismiss">Agora não</string>
+    <string name="recovery_codes_reminder_title">Guarda os teus códigos de recuperação</string>
+    <string name="recovery_codes_reminder_body">A Aster cifra o teu correio com a tua palavra-passe, por isso ninguém a pode repor por ti. Os códigos de recuperação são a única forma de voltares ao teu correio cifrado.</string>
+    <string name="recovery_codes_reminder_action">Obter códigos de recuperação</string>
+    <string name="recovery_phrase_migrate_title">Muda para códigos de recuperação</string>
+    <string name="recovery_phrase_migrate_body">As frases de recuperação vão desaparecer. Obtém códigos de recuperação agora para ainda poderes recuperar a tua conta.</string>
+    <string name="recovery_phrase_migrate_action">Obter códigos</string>
 </resources>

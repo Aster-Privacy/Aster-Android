@@ -57,4 +57,10 @@
     <plurals name="exported_contacts">
         <item quantity="other">%d 件の連絡先を書き出しました</item>
     </plurals>
+    <plurals name="lockout_minutes">
+        <item quantity="other">%1$d 分</item>
+    </plurals>
+    <plurals name="review_codes_left">
+        <item quantity="other">リカバリーコードが %1$d 個残っています。</item>
+    </plurals>
 </resources>

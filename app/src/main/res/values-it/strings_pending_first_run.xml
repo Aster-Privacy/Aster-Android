@@ -13,4 +13,10 @@
     <string name="plan_prompt_body">Passa a un piano superiore per più spazio, domini personalizzati e alias illimitati.</string>
     <string name="plan_prompt_action">Vedi i piani</string>
     <string name="plan_prompt_dismiss">Non ora</string>
+    <string name="recovery_codes_reminder_title">Salva i tuoi codici di recupero</string>
+    <string name="recovery_codes_reminder_body">Aster cifra la tua posta con la tua password, quindi nessuno può reimpostarla per te. I codici di recupero sono l\'unico modo per tornare alla tua posta cifrata.</string>
+    <string name="recovery_codes_reminder_action">Ottieni codici di recupero</string>
+    <string name="recovery_phrase_migrate_title">Passa ai codici di recupero</string>
+    <string name="recovery_phrase_migrate_body">Le frasi di recupero stanno per essere rimosse. Ottieni ora i codici di recupero per poter ancora recuperare il tuo account.</string>
+    <string name="recovery_phrase_migrate_action">Ottieni codici</string>
 </resources>

@@ -13,4 +13,10 @@
     <string name="plan_prompt_body">قم بالترقية للحصول على مساحة أكبر ونطاقات مخصصة وأسماء مستعارة غير محدودة.</string>
     <string name="plan_prompt_action">عرض الخطط</string>
     <string name="plan_prompt_dismiss">ليس الآن</string>
+    <string name="recovery_codes_reminder_title">احفظ رموز الاسترداد</string>
+    <string name="recovery_codes_reminder_body">تُشفّر Aster بريدك بكلمة سرك، لذا لا يستطيع أحد إعادة تعيينها نيابة عنك. رموز الاسترداد هي الطريقة الوحيدة للعودة إلى بريدك المشفّر.</string>
+    <string name="recovery_codes_reminder_action">الحصول على رموز الاسترداد</string>
+    <string name="recovery_phrase_migrate_title">انتقل إلى رموز الاسترداد</string>
+    <string name="recovery_phrase_migrate_body">سيتوقف العمل بعبارات الاسترداد. احصل على رموز الاسترداد الآن حتى تظل قادرًا على استرداد حسابك.</string>
+    <string name="recovery_phrase_migrate_action">الحصول على الرموز</string>
 </resources>

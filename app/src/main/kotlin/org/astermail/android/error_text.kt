@@ -45,6 +45,8 @@ private val validation_code_strings = mapOf(
     PENDING_LOGIN_EXPIRED_CODE to R.string.session_expired_sign_in,
     "TOTP_REQUIRED" to R.string.error_2fa_code_required,
     "INVALID_RECOVERY_CODE" to R.string.error_invalid_code,
+    "RECOVERY_CODE_USED" to R.string.error_recovery_code_used,
+    "RECOVERY_CODE_REPLACED" to R.string.error_recovery_code_replaced,
     "INVALID_RECOVERY_PHRASE" to R.string.error_invalid_recovery_phrase,
     "INVALID_OR_EXPIRED_CODE" to R.string.error_sign_in_code_invalid,
     "FOLDER_PASSWORD_ALREADY_SET" to R.string.error_folder_password_already_set,

@@ -57,4 +57,10 @@
     <plurals name="exported_contacts">
         <item quantity="other">已导出 %d 位联系人</item>
     </plurals>
+    <plurals name="lockout_minutes">
+        <item quantity="other">%1$d 分钟</item>
+    </plurals>
+    <plurals name="review_codes_left">
+        <item quantity="other">还剩 %1$d 个恢复代码。</item>
+    </plurals>
 </resources>

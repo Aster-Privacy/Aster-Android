@@ -60,6 +60,7 @@ class ThemeViewModel @Inject constructor(
     val first_run_plan_pending: StateFlow<Boolean> = theme_store.first_run_plan_pending
     val first_run_at: StateFlow<Long> = theme_store.first_run_at
     val recovery_snooze_until: StateFlow<Long> = theme_store.recovery_snooze_until
+    val phrase_prompt_snooze_until: StateFlow<Long> = theme_store.phrase_prompt_snooze_until
     val color_theme: StateFlow<String> = theme_store.color_theme
     val custom_theme_seed: StateFlow<String> = theme_store.custom_theme_seed
     val custom_theme_overrides: StateFlow<Map<String, String>> = theme_store.custom_theme_overrides
@@ -84,6 +85,8 @@ class ThemeViewModel @Inject constructor(
     fun clear_first_run_plan() = theme_store.clear_first_run_plan()
     fun snooze_recovery(duration_ms: Long) =
         theme_store.snooze_recovery(System.currentTimeMillis() + duration_ms)
+    fun snooze_phrase_prompt(duration_ms: Long) =
+        theme_store.snooze_phrase_prompt(System.currentTimeMillis() + duration_ms)
     fun set_color_theme(id: String) = theme_store.set_color_theme(id)
     fun set_custom_theme_seed(hex: String) = theme_store.set_custom_theme_seed(hex)
     fun set_custom_theme_overrides(overrides: Map<String, String>) = theme_store.set_custom_theme_overrides(overrides)

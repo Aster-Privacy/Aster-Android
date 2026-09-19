@@ -84,10 +84,7 @@
     <string name="recovery_email_hidden">Сохранено в этом аккаунте</string>
     <string name="recovery_email_status_unverified">Ожидает подтверждения</string>
     <string name="skip_for_now">Пропустить пока</string>
-    <string name="save_recovery_phrase">Сохраните фразу восстановления</string>
-    <string name="recovery_phrase_description">Запишите эти слова по порядку и храните их в безопасном месте. Это ЕДИНСТВЕННЫЙ способ восстановить аккаунт, если вы забудете пароль.</string>
     <string name="tap_to_copy">Нажмите, чтобы скопировать</string>
-    <string name="tap_phrase_to_copy">Нажмите на фразу, чтобы скопировать</string>
     <string name="copy_to_clipboard">Копировать в буфер обмена</string>
     <string name="choose_your_plan">Выберите ваш тариф</string>
     <string name="plan_subtitle">Начните бесплатно или получите больше с платным планом. Изменить можно в любое время.</string>
@@ -120,9 +117,9 @@
     <string name="recovery_email_sent_description">Мы отправили ссылку для сброса пароля на ваш адрес восстановления. Проверьте входящие и нажмите на ссылку, чтобы продолжить.</string>
     <string name="use_recovery_code_instead">Использовать код восстановления</string>
     <string name="enter_recovery_code">Введите код восстановления</string>
-    <string name="enter_recovery_code_description">Введите один из кодов восстановления, которые вы сохранили при создании аккаунта.</string>
+    <string name="enter_recovery_code_description">Введите один из кодов восстановления, сохраненных при создании аккаунта. Каждый код работает один раз.</string>
     <string name="recovery_code">Код восстановления</string>
-    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX</string>
+    <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX-XXXX</string>
     <string name="verify_code">Проверить код</string>
     <string name="create_new_password">Создать новый пароль</string>
     <string name="choose_strong_password">Выберите надёжный пароль для вашего аккаунта</string>
@@ -136,7 +133,7 @@
     <string name="recovering_your_account">Восстановление аккаунта</string>
     <string name="please_dont_close_app">Пожалуйста, не закрывайте приложение</string>
     <string name="save_new_recovery_codes">Сохраните новые коды восстановления</string>
-    <string name="old_codes_invalidated">Ваши старые коды восстановления недействительны. Сохраните эти новые коды в безопасном месте.</string>
+    <string name="old_codes_invalidated">Прежние коды восстановления больше не работают. Храните новые в надежном месте, например в менеджере паролей или в распечатанном виде. Каждый код работает один раз.</string>
     <string name="show_codes">Показать коды</string>
     <string name="hide_codes">Скрыть коды</string>
     <string name="copy_codes">Копировать коды</string>
@@ -676,7 +673,6 @@
     <string name="two_factor_subtitle_add">Добавить второй фактор</string>
     <string name="active_sessions">Активные сессии</string>
     <string name="devices_signed_in">Устройства с активным входом</string>
-    <string name="recovery_key">Ключ восстановления</string>
     <string name="backup_access">Резервный доступ</string>
 
     <string name="update_your_password">Обновите пароль</string>
@@ -715,7 +711,6 @@
     <string name="two_factor_other_devices_signed_out">Aster завершил сеансы на других ваших устройствах. Чтобы снова ими пользоваться, войдите и введите код из приложения-аутентификатора.</string>
     <string name="new_backup_codes_title">Новые резервные коды</string>
     <string name="new_backup_codes_subtitle">Ваши старые резервные коды больше не работают. Сохраните эти в безопасном месте.</string>
-    <string name="copy_all_codes">Копировать все коды</string>
 
     <string name="sessions">Сессии</string>
     <string name="no_active_sessions">Нет активных сессий</string>
@@ -757,12 +752,7 @@
     <string name="open_encryption_settings">Открыть настройки шифрования</string>
 
     <string name="enter_your_password">Введите пароль</string>
-    <string name="password_required_for_recovery">Для просмотра ключа восстановления необходим пароль.</string>
-    <string name="please_enter_password">Пожалуйста, введите пароль</string>
-    <string name="view_recovery_key">Просмотреть ключ восстановления</string>
     <string name="incorrect_password">Неверный пароль</string>
-    <string name="store_somewhere_safe">Храните это в безопасном месте</string>
-    <string name="recovery_key_warning">Ваш ключ восстановления - единственный способ восстановить доступ при потере пароля. Aster не может восстановить его за вас.</string>
     <string name="no_recovery_key_found">Ключ восстановления не найден. Коды восстановления создаются при регистрации и хранятся в зашифрованном хранилище. Попробуйте выйти и войти снова для обновления хранилища.</string>
 
     <string name="aliases">Псевдонимы</string>
@@ -1454,8 +1444,6 @@
     <string name="badges">Значки</string>
     <string name="no_badges_yet">Пока нет значков</string>
 
-    <string name="no_recovery_codes_yet">Коды восстановления для этого аккаунта не найдены. Создайте их сейчас, чтобы восстановить доступ, если вы потеряете пароль.</string>
-    <string name="generate_recovery_codes">Создать коды восстановления</string>
 
     <!-- Pending account deletion -->
     <string name="pending_deletion_title">Аккаунт запланирован к удалению</string>
@@ -2048,19 +2036,13 @@
     <string name="upgrade_inline_card_description">Достигнут предел бесплатного тарифа. Платный тариф снимает ограничения.</string>
     <string name="your_key">Ваш ключ</string>
     <string name="recovery_codes">Коды восстановления</string>
-    <string name="recovery_codes_remaining">Осталось %1$d / %2$d кодов</string>
+    <string name="recovery_codes_remaining">Осталось %1$d из %2$d кодов</string>
     <string name="low">Мало</string>
     <string name="ok">ОК</string>
-    <string name="recovery_codes_low_warning">Коды восстановления заканчиваются. Создайте новые.</string>
+    <string name="recovery_codes_low_warning">У вас заканчиваются коды восстановления. Получите новые коды, чтобы не потерять доступ.</string>
     <string name="loading_recovery_codes_status">Загрузка состояния кодов восстановления...</string>
-    <string name="view_backup_recovery_key">Посмотреть и сохранить ключ восстановления</string>
-    <string name="regenerating">Создание заново...</string>
-    <string name="regenerate_recovery_codes">Создать новые коды восстановления</string>
-    <string name="regenerate_recovery_codes_title">Создать новые коды?</string>
-    <string name="regenerate_recovery_codes_message">Текущие коды восстановления перестанут работать. Сразу сохраните новые.</string>
-    <string name="regenerate">Создать</string>
-    <string name="new_recovery_codes_title">Новые коды восстановления</string>
-    <string name="new_recovery_codes_message">Сохраните коды в надёжном месте. Каждый код можно использовать только один раз.</string>
+    <string name="new_recovery_codes_title">Сохраните коды восстановления</string>
+    <string name="new_recovery_codes_message">Храните их в надежном месте, например в менеджере паролей или в распечатанном виде. Каждый код работает один раз.</string>
     <string name="storage_format">Формат хранения</string>
     <string name="storage_format_aster">Сервер Aster</string>
     <string name="storage_format_aster_sub">Зашифрованное хранилище по умолчанию</string>
@@ -3447,4 +3429,43 @@
     <string name="enc_verification_code_info_title">Что это за код?</string>
     <string name="enc_verification_code_info_description">Короткий код, созданный на основе вашего ключа шифрования. Если собеседник сверит этот код со своим и они совпадут, вы оба можете быть уверены, что переписка приватна и не была подменена.</string>
     <string name="enc_copy_verification_code">Копировать код подтверждения</string>
+    <string name="copy_all_codes">Копировать все коды</string>
+    <string name="codes_copied">Коды скопированы.</string>
+    <string name="confirm_its_you">Подтвердите, что это вы</string>
+    <string name="error_recovery_code_replaced">Этот код относится к прежнему набору и больше не работает. Используйте код из последнего сохраненного списка.</string>
+    <string name="error_recovery_code_used">Этот код уже использован. Каждый код работает один раз, поэтому введите другой код из сохраненного списка.</string>
+    <string name="error_recovery_locked_until">С этим аккаунтом было слишком много попыток восстановления. Вы сможете повторить попытку через %1$s. Ни один из ваших кодов не был использован, поэтому все они у вас остались.</string>
+    <string name="get_new_codes">Получить новые коды</string>
+    <string name="get_new_codes_message">Текущие коды перестают работать, как только вы получите новые.</string>
+    <string name="get_new_codes_title">Получить новые коды восстановления?</string>
+    <string name="i_saved_these_codes">Я сохранил эти коды</string>
+    <string name="other_way_code_desc">Введите один из сохраненных кодов.</string>
+    <string name="other_way_code_title">Использовать код восстановления</string>
+    <string name="other_way_email_desc">Aster Mail отправляет ссылку на ваш резервный адрес. Вы теряете доступ к письмам, полученным до сброса.</string>
+    <string name="other_way_email_title">Сбросить через резервный адрес</string>
+    <string name="other_way_none_desc">Свяжитесь с поддержкой, и мы подскажем, что делать дальше.</string>
+    <string name="change_account">Указать другой адрес</string>
+    <string name="change_account_desc">Восстановите другой аккаунт Aster Mail.</string>
+    <string name="support_step_title">Связаться с поддержкой</string>
+    <string name="support_step_desc">Aster Mail не может прочитать ваши зашифрованные данные, поэтому никто не откроет их без кода восстановления или резервного адреса. Поддержка проверит аккаунт и подскажет, что делать дальше.</string>
+    <string name="support_email_action">Написать в поддержку</string>
+    <string name="support_help_center">Открыть центр помощи</string>
+    <string name="other_way_none_title">У меня нет ничего из этого</string>
+    <string name="other_ways_desc">Выберите, как вернуть доступ к аккаунту.</string>
+    <string name="print_codes">Печать</string>
+    <string name="recovery_codes_print_created">Созданы %1$s</string>
+    <string name="recovery_codes_print_note">Каждый код работает один раз. Держите эти коды в секрете. Любой, у кого есть код и ваш адрес электронной почты, может сбросить пароль.</string>
+    <string name="recovery_codes_print_title">Коды восстановления Aster Mail</string>
+    <string name="recovery_codes_unavailable">Ваши коды не сохранены на этом устройстве. Получите новые коды, чтобы увидеть их.</string>
+    <string name="recovery_codes_view_desc">Каждый код работает один раз. Использованные коды зачеркнуты.</string>
+    <string name="reset_account_desc">Зашифрованные письма, контакты и файлы, созданные до сброса, останутся заблокированными, пока вы не восстановите их старым паролем. Вы получите новый пустой ключ шифрования.</string>
+    <string name="reset_account_title">Сбросить аккаунт?</string>
+    <string name="review_devices_signed_out">Другие устройства вышли из аккаунта.</string>
+    <string name="review_no_recovery_email">Резервный адрес не указан.</string>
+    <string name="review_recovery_email_kept">Резервный адрес по-прежнему указан.</string>
+    <string name="review_security_desc">Пароль изменен, аккаунт восстановлен.</string>
+    <string name="review_security_title">Проверьте безопасность</string>
+    <string name="review_two_step_off">Двухэтапная аутентификация отключена.</string>
+    <string name="send_reset_link">Отправить ссылку для сброса</string>
+    <string name="try_another_way">Другой способ</string>
 </resources>

@@ -288,11 +288,11 @@ class RecoveryViewModelTest {
     }
 
     @Test
-    fun `go_to_success transitions to success and clears codes`() {
-        vm.go_to_success()
+    fun `go_to_review_security transitions to review_security and clears codes`() {
+        vm.go_to_review_security()
 
         val state = vm.state.value
-        assertEquals(RecoveryStep.success, state.step)
+        assertEquals(RecoveryStep.review_security, state.step)
         assertTrue(state.new_codes.isEmpty())
     }
 
@@ -341,10 +341,30 @@ class RecoveryViewModelTest {
     }
 
     @Test
-    fun `go_back from success does nothing`() {
-        vm.go_to_success()
+    fun `go_back from review_security does nothing`() {
+        vm.go_to_review_security()
         vm.go_back()
-        assertEquals(RecoveryStep.success, vm.state.value.step)
+        assertEquals(RecoveryStep.review_security, vm.state.value.step)
+    }
+
+    @Test
+    fun `go_back from other_ways returns to code`() {
+        vm.go_to_code_step()
+        vm.go_to_other_ways()
+        assertEquals(RecoveryStep.other_ways, vm.state.value.step)
+
+        vm.go_back()
+        assertEquals(RecoveryStep.code, vm.state.value.step)
+    }
+
+    @Test
+    fun `go_back from reset_email_confirm returns to other_ways`() {
+        vm.go_to_other_ways()
+        vm.go_to_reset_email_confirm()
+        assertEquals(RecoveryStep.reset_email_confirm, vm.state.value.step)
+
+        vm.go_back()
+        assertEquals(RecoveryStep.other_ways, vm.state.value.step)
     }
 
     @Test
@@ -396,13 +416,16 @@ class RecoveryViewModelTest {
     @Test
     fun `recovery_step enum has all expected values`() {
         val steps = RecoveryStep.entries
-        assertEquals(7, steps.size)
+        assertEquals(10, steps.size)
         assertTrue(steps.contains(RecoveryStep.email))
         assertTrue(steps.contains(RecoveryStep.email_sent))
         assertTrue(steps.contains(RecoveryStep.code))
+        assertTrue(steps.contains(RecoveryStep.other_ways))
+        assertTrue(steps.contains(RecoveryStep.reset_email_confirm))
+        assertTrue(steps.contains(RecoveryStep.support))
         assertTrue(steps.contains(RecoveryStep.password))
         assertTrue(steps.contains(RecoveryStep.processing))
         assertTrue(steps.contains(RecoveryStep.new_codes))
-        assertTrue(steps.contains(RecoveryStep.success))
+        assertTrue(steps.contains(RecoveryStep.review_security))
     }
 }

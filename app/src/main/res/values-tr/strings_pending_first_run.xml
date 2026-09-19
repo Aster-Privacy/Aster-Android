@@ -13,4 +13,10 @@
     <string name="plan_prompt_body">Daha fazla depolama, özel alan adları ve sınırsız takma ad için yükseltin.</string>
     <string name="plan_prompt_action">Planları görün</string>
     <string name="plan_prompt_dismiss">Şimdi değil</string>
+    <string name="recovery_codes_reminder_title">Kurtarma kodlarınızı kaydedin</string>
+    <string name="recovery_codes_reminder_body">Aster postanızı parolanızla şifreler, bu yüzden kimse onu sizin için sıfırlayamaz. Şifreli postanıza dönmenin tek yolu kurtarma kodlarıdır.</string>
+    <string name="recovery_codes_reminder_action">Kurtarma kodu al</string>
+    <string name="recovery_phrase_migrate_title">Kurtarma kodlarına geçin</string>
+    <string name="recovery_phrase_migrate_body">Kurtarma ifadeleri kaldırılıyor. Hesabınızı hâlâ kurtarabilmek için şimdi kurtarma kodu alın.</string>
+    <string name="recovery_phrase_migrate_action">Kod al</string>
 </resources>
