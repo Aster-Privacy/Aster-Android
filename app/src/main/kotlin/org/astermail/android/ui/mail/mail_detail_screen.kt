@@ -128,6 +128,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
@@ -2518,6 +2519,9 @@ internal fun expanded_message(
             html_rendering_mode = body_settings_state.preferences?.html_rendering_mode,
             low_network = org.astermail.android.network.low_network_active(),
         )
+        val body_skeleton_seen = remember(msg.id) { booleanArrayOf(false) }
+        val body_skeleton_reveal = !body_skeleton_seen[0]
+        if (msg.is_body_pending) body_skeleton_seen[0] = true
         if (msg.is_body_pending) {
             var body_wait_expired by remember(msg.id, retry_in_progress) { mutableStateOf(false) }
             LaunchedEffect(msg.id, retry_in_progress) {
@@ -2562,6 +2566,7 @@ internal fun expanded_message(
                 on_ready = on_body_ready,
                 on_link_click = on_link_click,
                 on_image_click = on_image_click,
+                skeleton_reveal = body_skeleton_reveal,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = AsterSpacing.xs, bottom = if (is_last) 0.dp else AsterSpacing.sm)
@@ -2673,6 +2678,7 @@ internal fun expanded_message(
                 on_ready = on_body_ready,
                 on_link_click = on_link_click,
                 on_image_click = on_image_click,
+                skeleton_reveal = body_skeleton_reveal,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = AsterSpacing.xs, bottom = if (is_last) 0.dp else AsterSpacing.sm)
@@ -5209,6 +5215,7 @@ internal fun email_html_view(
     on_ready: () -> Unit = {},
     on_link_click: (String) -> Unit = {},
     on_image_click: (String) -> Unit = {},
+    skeleton_reveal: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
     val is_dark = !force_light && colors.bg_primary.luminance() < colors.text_primary.luminance()
@@ -5363,6 +5370,10 @@ internal fun email_html_view(
     val cached_height = remember(height_cache_key) { body_height_cache.get(height_cache_key) }
     var content_height_dp by remember(height_cache_key) { mutableStateOf((cached_height ?: 0f).dp) }
     var has_measured by remember(height_cache_key) { mutableStateOf(cached_height != null) }
+    var height_settled by remember(height_cache_key) { mutableStateOf(cached_height != null) }
+    var body_shown by remember { mutableStateOf(false) }
+    val loading_height = remember { cached_height?.dp ?: placeholder_body_height }
+    val shown_height_ref = remember { floatArrayOf(0f) }
     val page_painted = remember(height_cache_key) { mutableStateOf(false) }
     val measure_probe = remember(height_cache_key) { mutableStateOf(false) }
     val visual_ready = remember(height_cache_key) { mutableStateOf(false) }
@@ -5399,7 +5410,7 @@ internal fun email_html_view(
     val translate_active_ref = remember { booleanArrayOf(false) }
     translate_active_ref[0] = translate_active
     val cache_key = remember(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links) { ((((html_cache.key(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) * 31L + (if (dyslexia_font) 1L else 0L)) * 31L + email_font_id.hashCode().toLong()) * 31L + text_zoom.toLong()) * 31L + sanitize_options.hashCode().toLong()) * 31L + (if (underline_links) 1L else 0L) }
-    var prebuilt_html by remember(html_hash, allow_external, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links) { mutableStateOf<String?>(html_cache.get(cache_key)) }
+    var prebuilt_html by remember(html_hash, allow_external, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links) { mutableStateOf<String?>(if (html.isEmpty()) null else html_cache.get(cache_key)) }
     var loaded_built by remember { mutableStateOf("") }
     var loaded_external by remember { mutableStateOf(false) }
     val scale_ref = remember { floatArrayOf(1f) }
@@ -5430,8 +5441,10 @@ internal fun email_html_view(
                     body_height_cache.put(height_cache_key, new_dp.value)
                     settled_height_ref[0] = new_dp.value
                 }
+                if (exact) height_settled = true
                 on_ready()
             } else if (exact) {
+                height_settled = true
                 val delta = kotlin.math.abs((new_dp - content_height_dp).value)
                 if (delta >= 8f) {
                     content_height_dp = new_dp
@@ -5463,6 +5476,10 @@ internal fun email_html_view(
     }
 
     LaunchedEffect(html, inline_sig, allow_external, bg_hex, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links, translated_body) {
+        if (html.isEmpty()) {
+            prebuilt_html = null
+            return@LaunchedEffect
+        }
         scale_ref[0] = 1f
         zoom_scale_ref[0] = 1f
         measured_dp_ref[0] = 0f
@@ -5516,7 +5533,7 @@ internal fun email_html_view(
             if (content <= 0) continue
             @Suppress("DEPRECATION")
             val viewport_floor = if (web.scale > 0f) (web.height / web.scale).toInt() else 0
-            if (!probed && !has_measured && content <= viewport_floor + 2) {
+            if (!probed && !has_measured && !body_shown && content <= viewport_floor + 2) {
                 probed = true
                 measure_probe.value = true
                 last_reported = 0
@@ -5538,6 +5555,7 @@ internal fun email_html_view(
             }
         }
         measure_probe.value = false
+        height_settled = true
         if (!has_measured) {
             val web = web_ref[0]
             val native = if (web != null && web.contentHeight > 0) {
@@ -5562,6 +5580,7 @@ internal fun email_html_view(
                 white_page_ref[0] = false
                 renderer_exhausted.value = true
                 has_measured = true
+                height_settled = true
                 page_painted.value = true
                 on_ready()
                 return@LaunchedEffect
@@ -5573,6 +5592,7 @@ internal fun email_html_view(
             renderer_gone_action.regenerate -> Unit
         }
         has_measured = false
+        height_settled = false
         page_painted.value = false
         visual_ready.value = false
         loaded_built = ""
@@ -5593,6 +5613,7 @@ internal fun email_html_view(
         val regen_web = web_ref[0] ?: return@LaunchedEffect
         if (reload_policy.should_regenerate(page_painted.value, visual_ready.value, regen_web.contentHeight)) {
             has_measured = false
+            height_settled = false
             page_painted.value = false
             visual_ready.value = false
             loaded_built = ""
@@ -5801,14 +5822,19 @@ internal fun email_html_view(
         on_show_original = { show_original() },
         on_dismiss = { translation_state = TranslationBannerState.Hidden },
       )
+      val body_ready_now = html.isNotEmpty() && has_measured && height_settled && page_painted.value
+      LaunchedEffect(body_ready_now) {
+          if (body_ready_now) body_shown = true
+      }
       val body_reveal by animateFloatAsState(
-          targetValue = if (has_measured && page_painted.value) 1f else 0f,
+          targetValue = if (body_shown) 1f else 0f,
           animationSpec = androidx.compose.animation.core.tween(durationMillis = 140),
           label = "web_reveal",
       )
       Box(
           modifier = Modifier
               .fillMaxWidth()
+              .then(if (body_shown || renderer_exhausted.value) Modifier else Modifier.height(loading_height))
               .clipToBounds(),
           contentAlignment = Alignment.Center,
       ) {
@@ -5913,7 +5939,10 @@ internal fun email_html_view(
                 web_view.settings.mixedContentMode =
                     android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
                 if (loaded_built != built || loaded_external != allow_external) {
-                    if (loaded_built != built && body_height_cache.get(height_cache_key) == null) has_measured = false
+                    if (loaded_built != built && body_height_cache.get(height_cache_key) == null) {
+                        has_measured = false
+                        height_settled = false
+                    }
                     if (body_height_cache.get(height_cache_key) == null) page_painted.value = false
                     visual_ready.value = false
                     web_view.setBackgroundColor(
@@ -5943,16 +5972,19 @@ internal fun email_html_view(
                 val target = when {
                     has_measured && content_height_dp > 0.dp -> content_height_dp
                     measure_probe.value -> MEASURE_PROBE_HEIGHT
+                    body_shown && shown_height_ref[0] > 0f -> shown_height_ref[0].dp
                     settled_height_ref[0] > 0f -> settled_height_ref[0].dp
                     else -> estimated_height
                 }
+                if (has_measured && content_height_dp > 0.dp) shown_height_ref[0] = content_height_dp.value
                 val animated_target by animateDpAsState(
                     targetValue = target,
-                    animationSpec = if (zoom_active) snap() else tween(durationMillis = 220),
+                    animationSpec = if (zoom_active || !body_shown) snap() else tween(durationMillis = 220),
                     label = "body_height",
                 )
                 Modifier
                     .fillMaxWidth()
+                    .wrapContentHeight(align = Alignment.Top, unbounded = true)
                     .height(animated_target)
                     .clipToBounds()
                     .then(if (body_reveal < 1f) Modifier.alpha(body_reveal) else Modifier)
@@ -5967,8 +5999,9 @@ internal fun email_html_view(
             },
         )
         }
-        if (!renderer_exhausted.value && (!has_measured || !page_painted.value)) {
+        if (!renderer_exhausted.value && !body_shown) {
             email_body_skeleton(
+                reveal = skeleton_reveal,
                 modifier = Modifier
                     .matchParentSize()
                     .background(inbox_card_read_color(colors))

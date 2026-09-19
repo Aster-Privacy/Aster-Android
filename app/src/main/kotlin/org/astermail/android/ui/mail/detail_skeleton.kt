@@ -146,7 +146,7 @@ fun detail_skeleton_overlay(visible: Boolean, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun email_body_skeleton(modifier: Modifier = Modifier) {
+fun email_body_skeleton(modifier: Modifier = Modifier, reveal: Boolean = true) {
     val state = shimmer_state()
     val shape = RoundedCornerShape(6.dp)
 
@@ -155,7 +155,7 @@ fun email_body_skeleton(modifier: Modifier = Modifier) {
         widths.forEachIndexed { index, fraction ->
             Box(
                 modifier = Modifier
-                    .skeleton_reveal(index)
+                    .skeleton_reveal(index, enabled = reveal)
                     .fillMaxWidth(fraction)
                     .height(13.dp)
                     .shimmer(state, shape, index * skeleton_sweep_lag),
