@@ -21,11 +21,18 @@
 
 package org.astermail.android.crypto
 
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import org.bouncycastle.bcpg.ArmoredOutputStream
+import org.bouncycastle.openpgp.PGPPublicKeyRing
+import org.bouncycastle.openpgp.PGPSecretKeyRingCollection
+import org.bouncycastle.openpgp.PGPUtil
+import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator
 
 object AccountKey {
 
@@ -85,6 +92,48 @@ object AccountKey {
             return null
         }
         return decoded
+    }
+
+    fun build_token_payload(account_key: ByteArray): String {
+        require(account_key.size == LENGTH) { "account key must be $LENGTH bytes" }
+        val encoded = java.util.Base64.getEncoder().encodeToString(account_key)
+        return "{\"type\":\"$TOKEN_TYPE\",\"version\":$TOKEN_VERSION,\"key\":\"$encoded\"}"
+    }
+
+    fun primary_fingerprint(armored_private_key: String): String? = runCatching {
+        val rings = PGPSecretKeyRingCollection(
+            PGPUtil.getDecoderStream(ByteArrayInputStream(armored_private_key.toByteArray(Charsets.UTF_8))),
+            JcaKeyFingerprintCalculator(),
+        )
+        val ring = rings.keyRings.asSequence().singleOrNull() ?: return null
+        ring.publicKey.fingerprint.joinToString("") { "%02x".format(it) }
+    }.getOrNull()
+
+    fun public_key_armored(armored_private_key: String): String? = runCatching {
+        val rings = PGPSecretKeyRingCollection(
+            PGPUtil.getDecoderStream(ByteArrayInputStream(armored_private_key.toByteArray(Charsets.UTF_8))),
+            JcaKeyFingerprintCalculator(),
+        )
+        val ring = rings.keyRings.asSequence().singleOrNull() ?: return null
+        val public_ring = PGPPublicKeyRing(ring.publicKeys.asSequence().toList())
+        val out = ByteArrayOutputStream()
+        ArmoredOutputStream(out).use { public_ring.encode(it) }
+        out.toString(Charsets.UTF_8.name())
+    }.getOrNull()
+
+    fun seal_token(
+        account_key: ByteArray,
+        identity_private_key: String,
+        passphrase: CharArray,
+    ): String? {
+        if (account_key.size != LENGTH) return null
+        val public_key = public_key_armored(identity_private_key) ?: return null
+        return PgpEncryptor.encrypt_and_sign(
+            build_token_payload(account_key),
+            listOf(public_key),
+            identity_private_key,
+            passphrase,
+        )
     }
 
     fun open_token(

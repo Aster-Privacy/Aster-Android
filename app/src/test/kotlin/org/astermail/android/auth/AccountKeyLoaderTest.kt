@@ -33,7 +33,12 @@ import org.astermail.android.crypto.AccountKey
 import org.astermail.android.crypto.AccountKeyTestTokens
 import org.astermail.android.crypto.PgpKeyGenerator
 import org.astermail.android.storage.SessionKeyStore
+import org.astermail.android.crypto.PgpDecryptor
+import org.astermail.android.crypto.PgpEncryptor
+import org.astermail.android.crypto.PgpSignatureStatus
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -103,6 +108,115 @@ class AccountKeyLoaderTest {
 
         assertEquals(0, AccountKeyLoader(api, store).load())
         assertEquals(existing, store.get_account_keks())
+        assertTrue(api.puts.isEmpty())
+    }
+
+    @Test
+    fun creates_signed_token_when_account_has_none() = runBlocking {
+        val store = signed_in_store()
+        val api = FakeKeysApi(current = null, history_route = true)
+
+        assertEquals(1, AccountKeyLoader(api, store).load())
+        assertEquals(1, api.puts.size)
+
+        val (token, fingerprint) = api.puts.single()
+        assertEquals(AccountKey.primary_fingerprint(user_key.armored_private_key), fingerprint)
+        assertTrue(fingerprint.matches(Regex("^[0-9a-f]{40}([0-9a-f]{24})?$")))
+        val opened = AccountKey.open_token(token, listOf(user_key.armored_private_key), passphrase_chars)
+        assertNotNull(opened)
+        assertEquals(AccountKey.LENGTH, opened!!.size)
+        assertTrue(opened.any { it != 0.toByte() })
+        assertEquals(AccountKey.derive_context_keks(opened), store.get_account_keks())
+    }
+
+    @Test
+    fun loads_stored_token_when_another_device_created_one_first() = runBlocking {
+        val store = signed_in_store()
+        val winner = token(old_key, user_key.armored_private_key, user_key.armored_public_key)
+        val api = FakeKeysApi(
+            current = null,
+            history_route = true,
+            put_result = { _, _ -> AccountKeyTokenResponse(winner, "fp", 1L, null) },
+        )
+
+        assertEquals(1, AccountKeyLoader(api, store).load())
+        assertEquals(AccountKey.derive_context_keks(old_key), store.get_account_keks())
+    }
+
+    @Test
+    fun creates_nothing_when_server_lacks_the_routes() = runBlocking {
+        val store = signed_in_store()
+        val api = FakeKeysApi(current = null, history_route = false)
+
+        assertEquals(0, AccountKeyLoader(api, store).load())
+        assertTrue(api.puts.isEmpty())
+    }
+
+    @Test
+    fun creates_nothing_when_older_tokens_exist() = runBlocking {
+        val store = signed_in_store()
+        val api = FakeKeysApi(
+            current = null,
+            history = listOf(token(old_key, user_key.armored_private_key, user_key.armored_public_key)),
+            history_route = true,
+        )
+
+        assertEquals(0, AccountKeyLoader(api, store).load())
+        assertTrue(api.puts.isEmpty())
+    }
+
+    @Test
+    fun uploads_nothing_when_passphrase_is_wrong() = runBlocking {
+        val store = SessionKeyStore(null)
+        store.put_identity_key(user_key.armored_private_key)
+        store.put_passphrase("wrong".toByteArray(Charsets.UTF_8))
+        val api = FakeKeysApi(current = null, history_route = true)
+
+        assertEquals(0, AccountKeyLoader(api, store).load())
+        assertTrue(api.puts.isEmpty())
+    }
+
+    @Test
+    fun stays_quiet_when_server_refuses_the_token() = runBlocking {
+        val store = signed_in_store()
+        val api = FakeKeysApi(current = null, history_route = true, put_result = { _, _ -> null })
+
+        assertEquals(0, AccountKeyLoader(api, store).load())
+        assertEquals(1, api.puts.size)
+        assertNull(store.get_account_keks())
+    }
+
+    @Test
+    fun encrypt_and_sign_verifies_as_own_signature() {
+        val sealed = PgpEncryptor.encrypt_and_sign(
+            "hello",
+            listOf(user_key.armored_public_key),
+            user_key.armored_private_key,
+            passphrase_chars,
+        )
+        assertNotNull(sealed)
+        val result = PgpDecryptor.decrypt_with_status(
+            sealed!!,
+            user_key.armored_private_key,
+            passphrase_chars,
+            user_key.armored_public_key,
+        )
+        assertEquals("hello", result.plaintext)
+        assertEquals(PgpSignatureStatus.VALID, result.signature)
+        assertNull(
+            PgpEncryptor.encrypt_and_sign(
+                "hello",
+                listOf(user_key.armored_public_key),
+                user_key.armored_private_key,
+                "wrong".toCharArray(),
+            ),
+        )
+    }
+
+    @Test
+    fun built_payload_parses_back() {
+        val parsed = AccountKey.parse_token_payload(AccountKey.build_token_payload(current_key))
+        assertArrayEquals(current_key, parsed)
     }
 
     @Test
@@ -162,7 +276,24 @@ class AccountKeyLoaderTest {
         private val current: String?,
         private val history: List<String> = emptyList(),
         private val on_fetch: () -> Unit = {},
+        private val history_route: Boolean = false,
+        private val put_result: (String, String) -> AccountKeyTokenResponse? = { token, fingerprint ->
+            AccountKeyTokenResponse(token, fingerprint, 1L, null)
+        },
     ) : KeysApi {
+        val puts = mutableListOf<Pair<String, String>>()
+
+        override suspend fun get_account_key_token_history_or_null(): List<AccountKeyTokenHistoryEntry>? =
+            if (history_route) get_account_key_token_history() else null
+
+        override suspend fun put_account_key_token_if_absent(
+            token: String,
+            key_fingerprint: String,
+        ): AccountKeyTokenResponse? {
+            puts.add(token to key_fingerprint)
+            return put_result(token, key_fingerprint)
+        }
+
         override suspend fun get_account_key_token(): AccountKeyTokenResponse? {
             on_fetch()
             return current?.let { AccountKeyTokenResponse(it, "fp", 1L, null) }

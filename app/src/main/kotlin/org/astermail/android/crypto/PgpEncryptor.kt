@@ -27,6 +27,7 @@ import java.security.SecureRandom
 import java.util.Date
 import org.bouncycastle.bcpg.ArmoredOutputStream
 import org.bouncycastle.bcpg.CompressionAlgorithmTags
+import org.bouncycastle.bcpg.HashAlgorithmTags
 import org.bouncycastle.bcpg.SymmetricKeyAlgorithmTags
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.openpgp.PGPCompressedDataGenerator
@@ -37,9 +38,12 @@ import org.bouncycastle.openpgp.PGPPublicKey
 import org.bouncycastle.openpgp.PGPPublicKeyRing
 import org.bouncycastle.openpgp.PGPPublicKeyRingCollection
 import org.bouncycastle.openpgp.PGPSignature
+import org.bouncycastle.openpgp.PGPSignatureGenerator
 import org.bouncycastle.openpgp.PGPUtil
 import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator
+import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentSignerBuilder
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentVerifierBuilderProvider
+import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder
 import org.bouncycastle.openpgp.operator.jcajce.JcePGPDataEncryptorBuilder
 import org.bouncycastle.openpgp.operator.jcajce.JcePublicKeyKeyEncryptionMethodGenerator
 
@@ -86,6 +90,71 @@ object PgpEncryptor {
             val armored_output = ByteArrayOutputStream()
             ArmoredOutputStream(armored_output).use { armored ->
                 encrypted_generator.open(armored, payload.size.toLong()).use { it.write(payload) }
+            }
+            armored_output.toString(Charsets.UTF_8.name())
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    fun encrypt_and_sign(
+        plaintext: String,
+        armored_public_keys: List<String>,
+        armored_signing_key: String,
+        passphrase: CharArray,
+    ): String? {
+        val recipients = armored_public_keys.mapNotNull { select_encryption_key(it) }
+        if (recipients.isEmpty()) return null
+
+        return try {
+            val secret_key = PgpSigner.select_signing_key(armored_signing_key) ?: return null
+            val private_key = secret_key.extractPrivateKey(
+                JcePBESecretKeyDecryptorBuilder()
+                    .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                    .build(passphrase),
+            ) ?: return null
+            val signer = PGPSignatureGenerator(
+                JcaPGPContentSignerBuilder(secret_key.publicKey.algorithm, HashAlgorithmTags.SHA512)
+                    .setProvider(BouncyCastleProvider.PROVIDER_NAME),
+            )
+            signer.init(PGPSignature.BINARY_DOCUMENT, private_key)
+
+            val plaintext_bytes = plaintext.toByteArray(Charsets.UTF_8)
+            val literal = ByteArrayOutputStream()
+            signer.generateOnePassVersion(false).encode(literal)
+            val literal_generator = PGPLiteralDataGenerator()
+            literal_generator.open(
+                literal,
+                PGPLiteralData.UTF8,
+                PGPLiteralData.CONSOLE,
+                plaintext_bytes.size.toLong(),
+                Date(),
+            ).use { it.write(plaintext_bytes) }
+            literal_generator.close()
+            signer.update(plaintext_bytes)
+            signer.generate().encode(literal)
+            plaintext_bytes.fill(0)
+
+            val encryptor_builder = JcePGPDataEncryptorBuilder(SymmetricKeyAlgorithmTags.AES_256)
+                .setWithIntegrityPacket(true)
+                .setSecureRandom(SecureRandom())
+                .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+            val encrypted_generator = PGPEncryptedDataGenerator(encryptor_builder)
+            for (key in recipients) {
+                encrypted_generator.addMethod(
+                    JcePublicKeyKeyEncryptionMethodGenerator(key)
+                        .setProvider(BouncyCastleProvider.PROVIDER_NAME),
+                )
+            }
+
+            val payload = literal.toByteArray()
+            val armored_output = ByteArrayOutputStream()
+            try {
+                ArmoredOutputStream(armored_output).use { armored ->
+                    encrypted_generator.open(armored, payload.size.toLong()).use { it.write(payload) }
+                }
+            } finally {
+                payload.fill(0)
             }
             armored_output.toString(Charsets.UTF_8.name())
         } catch (_: Throwable) {

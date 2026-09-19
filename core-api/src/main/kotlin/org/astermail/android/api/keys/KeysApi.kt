@@ -78,6 +78,12 @@ data class AccountKeyTokenHistoryEntry(
 )
 
 @Serializable
+data class PutAccountKeyTokenRequest(
+    val token: String,
+    val key_fingerprint: String,
+)
+
+@Serializable
 data class AccountKeyTokenHistoryResponse(
     val entries: List<AccountKeyTokenHistoryEntry> = emptyList(),
 )
@@ -144,6 +150,11 @@ interface KeysApi {
     suspend fun fetch_current_vault(): CurrentVaultResult
     suspend fun get_account_key_token(): AccountKeyTokenResponse? = null
     suspend fun get_account_key_token_history(): List<AccountKeyTokenHistoryEntry> = emptyList()
+    suspend fun get_account_key_token_history_or_null(): List<AccountKeyTokenHistoryEntry>? = null
+    suspend fun put_account_key_token_if_absent(
+        token: String,
+        key_fingerprint: String,
+    ): AccountKeyTokenResponse? = null
 }
 
 class KeysApiImpl(private val client: ApiClient) : KeysApi {
@@ -253,5 +264,27 @@ class KeysApiImpl(private val client: ApiClient) : KeysApi {
         if (response.status.value !in 200..299) return emptyList()
         return runCatching { response.body<AccountKeyTokenHistoryResponse>().entries }
             .getOrDefault(emptyList())
+    }
+
+    override suspend fun get_account_key_token_history_or_null(): List<AccountKeyTokenHistoryEntry>? {
+        val response = runCatching { client.http.get("${client.base_url}$base/account-key/history") }
+            .getOrNull() ?: return null
+        if (response.status.value !in 200..299) return null
+        return runCatching { response.body<AccountKeyTokenHistoryResponse>().entries }.getOrNull()
+    }
+
+    override suspend fun put_account_key_token_if_absent(
+        token: String,
+        key_fingerprint: String,
+    ): AccountKeyTokenResponse? {
+        val response = runCatching {
+            client.http.put("${client.base_url}$base/account-key") {
+                contentType(ContentType.Application.Json)
+                client.get_csrf()?.let { header("X-CSRF-Token", it) }
+                setBody(PutAccountKeyTokenRequest(token, key_fingerprint))
+            }
+        }.getOrNull() ?: return null
+        if (response.status.value !in 200..299) return null
+        return runCatching { response.body<AccountKeyTokenResponse>() }.getOrNull()
     }
 }

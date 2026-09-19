@@ -21,6 +21,9 @@
 
 package org.astermail.android.auth
 
+import java.security.MessageDigest
+import java.security.SecureRandom
+import org.astermail.android.api.keys.AccountKeyTokenResponse
 import org.astermail.android.api.keys.KeysApi
 import org.astermail.android.crypto.AccountKey
 import org.astermail.android.storage.SessionKeyStore
@@ -34,7 +37,9 @@ class AccountKeyLoader(
     suspend fun load(): Int {
         val generation = session_key_store.account_kek_generation()
         val identity_key = session_key_store.get_identity_key() ?: return 0
-        val current = keys_api.get_account_key_token() ?: return 0
+        val existing = keys_api.get_account_key_token()
+        if (session_key_store.account_kek_generation() != generation) return 0
+        val current = existing ?: create_if_absent(identity_key, generation) ?: return 0
         if (session_key_store.account_kek_generation() != generation) return 0
         val history = keys_api.get_account_key_token_history()
         val own_keys = buildList {
@@ -64,6 +69,28 @@ class AccountKeyLoader(
             if (!session_key_store.put_account_keks(keks.toList(), generation)) return 0
             return seen.size
         } finally {
+            chars.fill(' ')
+        }
+    }
+
+    private suspend fun create_if_absent(identity_key: String, generation: Long): AccountKeyTokenResponse? {
+        val history = keys_api.get_account_key_token_history_or_null() ?: return null
+        if (history.isNotEmpty()) return null
+        val passphrase = session_key_store.get_passphrase() ?: return null
+        val chars = passphrase_chars(passphrase)
+        passphrase.fill(0)
+        val account_key = ByteArray(AccountKey.LENGTH).also { SecureRandom().nextBytes(it) }
+        try {
+            val token = AccountKey.seal_token(account_key, identity_key, chars) ?: return null
+            val reopened = AccountKey.open_token(token, listOf(identity_key), chars) ?: return null
+            val matches = MessageDigest.isEqual(reopened, account_key)
+            reopened.fill(0)
+            if (!matches) return null
+            val fingerprint = AccountKey.primary_fingerprint(identity_key) ?: return null
+            if (session_key_store.account_kek_generation() != generation) return null
+            return keys_api.put_account_key_token_if_absent(token, fingerprint)
+        } finally {
+            account_key.fill(0)
             chars.fill(' ')
         }
     }
