@@ -209,7 +209,15 @@ private fun DrawScope.draw_mail_mock(c: preview_colors, rows: Int, row_gap_scale
         Size(fab, fab),
         CornerRadius(5f * unit, 5f * unit),
     )
-    pill(c.on_accent, w - fab / 2f - 5f * unit - 3.6f * unit, h - fab / 2f - 5f * unit - 0.9f * unit, 7.2f * unit, 1.8f * unit)
+    val fab_cx = w - fab / 2f - 5f * unit
+    val fab_cy = h - fab / 2f - 5f * unit
+    pill(c.on_accent, fab_cx - 3.6f * unit, fab_cy - 0.9f * unit, 7.2f * unit, 1.8f * unit)
+    drawRoundRect(
+        c.on_accent,
+        Offset(fab_cx - 0.9f * unit, fab_cy - 3.6f * unit),
+        Size(1.8f * unit, 7.2f * unit),
+        CornerRadius(0.9f * unit, 0.9f * unit),
+    )
 }
 
 @Composable
@@ -240,18 +248,18 @@ internal fun live_theme_preview(modifier: Modifier = Modifier) {
             .clip(shape)
             .background(colors.bg_secondary)
             .border(1.dp, colors.border_secondary, shape)
-            .padding(horizontal = 36.dp, vertical = 18.dp),
+            .padding(horizontal = 36.dp, vertical = 16.dp),
         contentAlignment = Alignment.Center,
     ) {
-        val phone_shape = SquircleShape(18.dp)
+        val phone_shape = SquircleShape(16.dp)
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.62f)
-                .aspectRatio(0.78f)
+                .aspectRatio(1.35f)
                 .clip(phone_shape)
                 .border(1.dp, colors.border_primary, phone_shape),
         ) {
-            mail_mock(preview_colors_of(colors), Modifier.fillMaxSize(), rows = 7)
+            mail_mock(preview_colors_of(colors), Modifier.fillMaxSize(), rows = 4)
         }
     }
 }
@@ -320,7 +328,11 @@ internal fun theme_preview_card(
             selection_badge(
                 selected = selected,
                 locked = locked,
-                modifier = Modifier.align(Alignment.TopEnd).offset(x = 4.dp, y = (-4).dp),
+                modifier = if (selected) {
+                    Modifier.align(Alignment.TopEnd).offset(x = 4.dp, y = (-4).dp)
+                } else {
+                    Modifier.align(Alignment.TopEnd).padding(top = 12.dp, end = 12.dp)
+                },
             )
         }
         Spacer(Modifier.height(8.dp))

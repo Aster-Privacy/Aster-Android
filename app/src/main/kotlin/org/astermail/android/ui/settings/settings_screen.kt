@@ -368,7 +368,7 @@ private fun profile_header(
                             modifier = Modifier
                                 .clip(SquircleShape(999.dp))
                                 .background(
-                                    if (is_free) colors.bg_tertiary else colors.accent_blue.copy(alpha = 0.14f),
+                                    if (is_free) colors.text_primary.copy(alpha = 0.08f) else colors.accent_blue.copy(alpha = 0.14f),
                                 )
                                 .padding(horizontal = 8.dp, vertical = 3.dp),
                         )
