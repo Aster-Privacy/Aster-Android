@@ -3429,4 +3429,19 @@
     <string name="review_two_step_off">La verificación en dos pasos está desactivada.</string>
     <string name="send_reset_link">Enviar enlace de restablecimiento</string>
     <string name="try_another_way">Probar de otra forma</string>
+    <string name="profile_menu_storage_used">Almacenamiento usado</string>
+    <string name="profile_menu_greeting_morning">Buenos días</string>
+    <string name="profile_menu_greeting_afternoon">Buenas tardes</string>
+    <string name="profile_menu_greeting_evening">Buenas noches</string>
+    <string name="profile_menu_greeting_night">De madrugada</string>
+    <string name="profile_menu_greeting_comma">,</string>
+    <string name="profile_menu_manage_account">Ajustes de la cuenta</string>
+    <string name="profile_menu_add_another_account">Añadir otra cuenta</string>
+    <string name="profile_menu_sign_out_all">Cerrar sesión en todas las cuentas</string>
+    <string name="profile_menu_session_expired">Sesión caducada</string>
+    <string name="profile_menu_default_account">Predeterminada</string>
+    <string name="profile_menu_storage_of_used">%1$s de %2$s usados</string>
+    <string name="plan_badge_star">Star</string>
+    <string name="plan_badge_nova">Nova</string>
+    <string name="plan_badge_supernova">Supernova</string>
 </resources>

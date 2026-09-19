@@ -3410,4 +3410,19 @@
     <string name="review_two_step_off">2 段階認証はオフです。</string>
     <string name="send_reset_link">リセットリンクを送信</string>
     <string name="try_another_way">別の方法を試す</string>
+    <string name="profile_menu_storage_used">使用済みストレージ</string>
+    <string name="profile_menu_greeting_morning">おはようございます</string>
+    <string name="profile_menu_greeting_afternoon">こんにちは</string>
+    <string name="profile_menu_greeting_evening">こんばんは</string>
+    <string name="profile_menu_greeting_night">夜更けに</string>
+    <string name="profile_menu_greeting_comma">、</string>
+    <string name="profile_menu_manage_account">アカウント設定</string>
+    <string name="profile_menu_add_another_account">別のアカウントを追加</string>
+    <string name="profile_menu_sign_out_all">すべてのアカウントからログアウト</string>
+    <string name="profile_menu_session_expired">セッション期限切れ</string>
+    <string name="profile_menu_default_account">既定</string>
+    <string name="profile_menu_storage_of_used">%2$s 中 %1$s を使用</string>
+    <string name="plan_badge_star">Star</string>
+    <string name="plan_badge_nova">Nova</string>
+    <string name="plan_badge_supernova">Supernova</string>
 </resources>

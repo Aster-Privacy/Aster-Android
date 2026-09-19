@@ -3428,4 +3428,19 @@
     <string name="review_two_step_off">La verifica in due passaggi è disattivata.</string>
     <string name="send_reset_link">Invia link di reimpostazione</string>
     <string name="try_another_way">Prova in un altro modo</string>
+    <string name="profile_menu_storage_used">Spazio utilizzato</string>
+    <string name="profile_menu_greeting_morning">Buongiorno</string>
+    <string name="profile_menu_greeting_afternoon">Buon pomeriggio</string>
+    <string name="profile_menu_greeting_evening">Buonasera</string>
+    <string name="profile_menu_greeting_night">A tarda notte</string>
+    <string name="profile_menu_greeting_comma">,</string>
+    <string name="profile_menu_manage_account">Impostazioni account</string>
+    <string name="profile_menu_add_another_account">Aggiungi un altro account</string>
+    <string name="profile_menu_sign_out_all">Esci da tutti gli account</string>
+    <string name="profile_menu_session_expired">Sessione scaduta</string>
+    <string name="profile_menu_default_account">Predefinito</string>
+    <string name="profile_menu_storage_of_used">%1$s di %2$s usati</string>
+    <string name="plan_badge_star">Star</string>
+    <string name="plan_badge_nova">Nova</string>
+    <string name="plan_badge_supernova">Supernova</string>
 </resources>

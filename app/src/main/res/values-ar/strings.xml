@@ -3508,4 +3508,19 @@
     <string name="review_two_step_off">التحقق بخطوتين متوقف.</string>
     <string name="send_reset_link">إرسال رابط إعادة التعيين</string>
     <string name="try_another_way">جرب طريقة أخرى</string>
+    <string name="profile_menu_storage_used">التخزين المستخدم</string>
+    <string name="profile_menu_greeting_morning">صباح الخير</string>
+    <string name="profile_menu_greeting_afternoon">طاب مساؤك</string>
+    <string name="profile_menu_greeting_evening">مساء الخير</string>
+    <string name="profile_menu_greeting_night">ليلة متأخرة</string>
+    <string name="profile_menu_greeting_comma">،</string>
+    <string name="profile_menu_manage_account">إعدادات الحساب</string>
+    <string name="profile_menu_add_another_account">إضافة حساب آخر</string>
+    <string name="profile_menu_sign_out_all">تسجيل الخروج من كل الحسابات</string>
+    <string name="profile_menu_session_expired">انتهت الجلسة</string>
+    <string name="profile_menu_default_account">افتراضي</string>
+    <string name="profile_menu_storage_of_used">تم استخدام %1$s من %2$s</string>
+    <string name="plan_badge_star">Star</string>
+    <string name="plan_badge_nova">Nova</string>
+    <string name="plan_badge_supernova">Supernova</string>
 </resources>

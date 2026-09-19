@@ -848,6 +848,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun logout_all(on_done: () -> Unit = {}) {
+        viewModelScope.launch {
+            auth_repository.logout_all()
+            on_done()
+        }
+    }
+
     fun reset_save_status() {
         _state.value = _state.value.copy(save_status = SaveStatus.IDLE)
     }

@@ -3429,4 +3429,19 @@
     <string name="review_two_step_off">Bestätigung in zwei Schritten ist deaktiviert.</string>
     <string name="send_reset_link">Link zum Zurücksetzen senden</string>
     <string name="try_another_way">Anders versuchen</string>
+    <string name="profile_menu_storage_used">Speicher belegt</string>
+    <string name="profile_menu_greeting_morning">Guten Morgen</string>
+    <string name="profile_menu_greeting_afternoon">Guten Tag</string>
+    <string name="profile_menu_greeting_evening">Guten Abend</string>
+    <string name="profile_menu_greeting_night">Noch wach</string>
+    <string name="profile_menu_greeting_comma">,</string>
+    <string name="profile_menu_manage_account">Kontoeinstellungen</string>
+    <string name="profile_menu_add_another_account">Weiteres Konto hinzufügen</string>
+    <string name="profile_menu_sign_out_all">Von allen Konten abmelden</string>
+    <string name="profile_menu_session_expired">Sitzung abgelaufen</string>
+    <string name="profile_menu_default_account">Standard</string>
+    <string name="profile_menu_storage_of_used">%1$s von %2$s belegt</string>
+    <string name="plan_badge_star">Star</string>
+    <string name="plan_badge_nova">Nova</string>
+    <string name="plan_badge_supernova">Supernova</string>
 </resources>

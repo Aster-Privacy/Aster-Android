@@ -255,6 +255,13 @@ fun DrawerContent(
     folder_actions: folder_menu_actions = folder_menu_actions(),
     label_actions: label_menu_actions = label_menu_actions(),
     on_logout: () -> Unit = {},
+    on_logout_all: () -> Unit = {},
+    on_manage_account: () -> Unit = {},
+    plan_code: String? = null,
+    profile_storage_label: String = "",
+    max_accounts: Int = 0,
+    is_unlimited_accounts: Boolean = false,
+    needs_sign_in: (StoredAccount) -> Boolean = { false },
     initial_more_collapsed: Boolean = false,
     initial_folders_collapsed: Boolean = false,
     initial_labels_collapsed: Boolean = false,
@@ -792,11 +799,21 @@ fun DrawerContent(
     }
 
     if (show_workspace_sheet) {
+        val sheet_account = accounts.firstOrNull { it.id == current_account_id }
         workspace_switcher_sheet(
             accounts = accounts,
             current_account_id = current_account_id,
-            current_email = current_workspace,
+            current_email = current_workspace.ifBlank { sheet_account?.email.orEmpty() },
+            current_name = sheet_account?.display_name.orEmpty(),
+            current_picture = sheet_account?.profile_picture,
+            current_color = sheet_account?.profile_color,
+            plan_code = plan_code,
+            storage_used_fraction = storage_used_fraction,
+            storage_used_label = profile_storage_label,
+            max_accounts = max_accounts,
+            is_unlimited_accounts = is_unlimited_accounts,
             can_add = can_add_account,
+            needs_sign_in = needs_sign_in,
             on_dismiss = { show_workspace_sheet = false },
             on_switch = { account ->
                 show_workspace_sheet = false
@@ -806,9 +823,17 @@ fun DrawerContent(
                 show_workspace_sheet = false
                 on_add_account()
             },
+            on_manage_account = {
+                show_workspace_sheet = false
+                on_manage_account()
+            },
             on_logout = {
                 show_workspace_sheet = false
                 on_logout()
+            },
+            on_logout_all = {
+                show_workspace_sheet = false
+                on_logout_all()
             },
         )
     }
@@ -1809,207 +1834,404 @@ internal fun create_label_dialog(
     )
 }
 
+private fun profile_menu_greeting_res(hour: Int): Int = when {
+    hour < 5 -> R.string.profile_menu_greeting_night
+    hour < 12 -> R.string.profile_menu_greeting_morning
+    hour < 18 -> R.string.profile_menu_greeting_afternoon
+    else -> R.string.profile_menu_greeting_evening
+}
+
+private fun plan_badge_res(plan_code: String?): Int? = when (plan_code?.trim()?.lowercase()) {
+    "star" -> R.string.plan_badge_star
+    "nova" -> R.string.plan_badge_nova
+    "supernova" -> R.string.plan_badge_supernova
+    else -> null
+}
+
+@Composable
+private fun profile_menu_plan_badge(plan_code: String?) {
+    val res = plan_badge_res(plan_code) ?: return
+    val accent = AsterMaterial.colors.accent_blue
+    val brush = remember(accent) {
+        androidx.compose.ui.graphics.Brush.verticalGradient(
+            listOf(
+                androidx.compose.ui.graphics.lerp(accent, Color.Black, 0.04f),
+                androidx.compose.ui.graphics.lerp(accent, Color(0xFF05070F), 0.26f),
+            ),
+        )
+    }
+    Text(
+        text = stringResource(res),
+        color = Color.White,
+        fontSize = 11.sp,
+        fontWeight = FontWeight.SemiBold,
+        maxLines = 1,
+        modifier = Modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(brush)
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+    )
+}
+
+@Composable
+private fun profile_menu_account_badge(text: String, muted: Boolean) {
+    val colors = AsterMaterial.colors
+    val bg = if (muted) {
+        colors.text_primary.copy(alpha = 0.10f)
+    } else {
+        androidx.compose.ui.graphics.lerp(colors.dropdown_bg, colors.accent_blue, 0.72f)
+    }
+    val fg = if (muted) colors.text_muted else colors.on_accent
+    val ring = if (muted) colors.text_primary.copy(alpha = 0.16f) else colors.accent_blue.copy(alpha = 0.45f)
+    Text(
+        text = text,
+        color = fg,
+        fontSize = 11.sp,
+        fontWeight = FontWeight.Medium,
+        maxLines = 1,
+        modifier = Modifier
+            .clip(RoundedCornerShape(5.dp))
+            .background(bg)
+            .border(1.dp, ring, RoundedCornerShape(5.dp))
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+    )
+}
+
+@Composable
+private fun profile_menu_tile(
+    icon: ImageVector,
+    label: String?,
+    content_description: String?,
+    tint: Color,
+    label_color: Color,
+    background: Color,
+    modifier: Modifier = Modifier,
+    enabled_alpha: Float = 1f,
+    meta: String? = null,
+    on_click: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = modifier
+            .heightIn(min = 54.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(background)
+            .clickable(onClick = on_click)
+            .alpha(enabled_alpha)
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = if (label == null) Arrangement.Center else Arrangement.Start,
+    ) {
+        Box(modifier = Modifier.size(30.dp), contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = icon,
+                contentDescription = content_description,
+                tint = tint,
+                modifier = Modifier.size(18.dp),
+            )
+        }
+        if (label != null) {
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = label,
+                color = label_color,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            if (meta != null) {
+                Text(
+                    text = meta,
+                    color = colors.text_muted,
+                    fontSize = 11.sp,
+                )
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun workspace_switcher_sheet(
     accounts: List<StoredAccount>,
     current_account_id: String?,
     current_email: String,
+    current_name: String,
+    current_picture: String?,
+    current_color: String?,
+    plan_code: String?,
+    storage_used_fraction: Float,
+    storage_used_label: String,
+    max_accounts: Int,
+    is_unlimited_accounts: Boolean,
     can_add: Boolean,
+    needs_sign_in: (StoredAccount) -> Boolean,
     on_dismiss: () -> Unit,
     on_switch: (StoredAccount) -> Unit,
     on_add: () -> Unit,
+    on_manage_account: () -> Unit,
     on_logout: () -> Unit,
+    on_logout_all: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val sheet_state = rememberModalBottomSheetState()
+    val sheet_state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val copy_action = org.astermail.android.ui.common.remember_copy_action()
-    val name_copied = stringResource(R.string.name_copied)
-    val copy_toast_context = androidx.compose.ui.platform.LocalContext.current
-    val name_clip_label = stringResource(R.string.display_name)
+    val copy_toast_context = LocalContext.current
     val email_clip_label = stringResource(R.string.email)
+    val surface = androidx.compose.ui.graphics.lerp(colors.dropdown_bg, colors.text_primary, 0.04f)
+    val card = androidx.compose.ui.graphics.lerp(colors.dropdown_bg, colors.text_primary, 0.09f)
 
-    val ordered = if (accounts.isNotEmpty()) {
-        val current = accounts.firstOrNull { it.id == current_account_id }
-        val rest = accounts.filter { it.id != current_account_id }
-        listOfNotNull(current) + rest
-    } else {
-        emptyList()
-    }
+    val other_accounts = accounts.filter { it.id != current_account_id }
+    val personal_count = accounts.size.coerceAtLeast(1)
+    val display_max = if (max_accounts > 0) maxOf(max_accounts, personal_count) else personal_count
+    val default_account_id = accounts.minByOrNull { it.added_at }?.id
+    val display_name = current_name.ifBlank { current_email.substringBefore('@') }
+    val greeting = stringResource(
+        profile_menu_greeting_res(java.time.LocalTime.now().hour),
+    ) + stringResource(R.string.profile_menu_greeting_comma)
 
     ModalBottomSheet(
         onDismissRequest = on_dismiss,
         sheetState = sheet_state,
-        containerColor = colors.bg_card,
+        containerColor = surface,
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = AsterSpacing.md)
-                .heightIn(min = 120.dp),
+                .padding(horizontal = 8.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                text = stringResource(R.string.accounts),
-                color = colors.text_muted,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.xs),
-            )
-            if (ordered.isEmpty()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = AsterSpacing.sm, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    val (av_bg, av_fg) = avatar_colors_for(avatar_key_for(current_email, ""))
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .background(av_bg, SquircleShape(8.dp)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = initial_for("", current_email),
-                            color = av_fg,
-                            style = avatar_initial_style(13.sp),
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(card)
+                    .padding(16.dp)
+                    .testTag("profile_menu_card"),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    plan_ring(size = 48.dp, enabled = remember_has_paid_plan()) {
+                        SenderAvatar(
+                            email = current_email,
+                            name = current_name,
+                            size = 48.dp,
+                            profile_picture_url = current_picture,
+                            profile_color = current_color,
                         )
                     }
-                    Spacer(Modifier.width(AsterSpacing.md))
-                    Text(
-                        text = current_email,
-                        color = colors.text_primary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    Spacer(Modifier.width(14.dp))
+                    Column(
                         modifier = Modifier.weight(1f),
-                    )
-                    Icon(
-                        imageVector = TablerIcons.Check,
-                        contentDescription = stringResource(R.string.current),
-                        tint = colors.accent_blue,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
-            ordered.forEach { account ->
-                val is_current = account.id == current_account_id
-                val display = account.display_name?.takeIf { it.isNotBlank() } ?: ""
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = !is_current) { on_switch(account) }
-                        .padding(horizontal = AsterSpacing.sm, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    SenderAvatar(
-                        email = account.email,
-                        name = display,
-                        size = 32.dp,
-                        profile_picture_url = account.profile_picture,
-                        profile_color = account.profile_color,
-                    )
-                    Spacer(Modifier.width(AsterSpacing.md))
-                    Column(modifier = Modifier.weight(1f)) {
-                        if (display.isNotBlank()) {
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        Text(
+                            text = greeting,
+                            color = colors.text_muted,
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = display,
+                                text = display_name,
                                 color = colors.text_primary,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
                                 maxLines = 1,
                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                modifier = Modifier
-                                    .combinedClickable(
-                                        hapticFeedbackEnabled = false,
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null,
-                                        onClick = { if (!is_current) on_switch(account) },
-                                        onLongClick = { copy_action(name_clip_label, display, name_copied) },
-                                    )
-                                    .padding(vertical = 2.dp),
+                                modifier = Modifier.weight(1f, fill = false),
                             )
+                            if (plan_badge_res(plan_code) != null) {
+                                Spacer(Modifier.width(6.dp))
+                                profile_menu_plan_badge(plan_code)
+                            }
                         }
                         Text(
-                            text = account.email,
+                            text = current_email,
                             color = colors.text_muted,
                             fontSize = 12.sp,
                             maxLines = 1,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                            modifier = Modifier
-                                .combinedClickable(
-                                    hapticFeedbackEnabled = false,
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null,
-                                    onClick = { if (!is_current) on_switch(account) },
-                                    onLongClick = {
-                                        copy_action(
-                                            email_clip_label,
-                                            account.email,
-                                            org.astermail.android.ui.common.copied_toast_text(
-                                                copy_toast_context,
-                                                account.email,
-                                            ),
-                                        )
-                                    },
-                                )
-                                .padding(vertical = 2.dp),
+                            modifier = Modifier.clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) {
+                                if (current_email.isNotBlank()) {
+                                    copy_action(
+                                        email_clip_label,
+                                        current_email,
+                                        org.astermail.android.ui.common.copied_toast_text(
+                                            copy_toast_context,
+                                            current_email,
+                                        ),
+                                    )
+                                }
+                            },
                         )
                     }
-                    if (is_current) {
-                        Icon(
-                            imageVector = TablerIcons.Check,
-                            contentDescription = stringResource(R.string.current),
-                            tint = colors.accent_blue,
-                            modifier = Modifier.size(18.dp),
+                }
+                Spacer(Modifier.height(14.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(36.dp)
+                        .clip(RoundedCornerShape(999.dp))
+                        .border(1.dp, colors.text_primary.copy(alpha = 0.22f), RoundedCornerShape(999.dp))
+                        .clickable(onClick = on_manage_account)
+                        .testTag("profile_menu_manage"),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = stringResource(R.string.profile_menu_manage_account),
+                        color = colors.text_primary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.profile_menu_storage_used),
+                        color = colors.text_secondary,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                    )
+                    Spacer(Modifier.weight(1f))
+                    if (storage_used_label.isNotBlank()) {
+                        Text(
+                            text = storage_used_label,
+                            color = colors.text_muted,
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                val bar_fraction by animateFloatAsState(
+                    targetValue = storage_used_fraction.coerceIn(0f, 1f),
+                    animationSpec = tween(durationMillis = 420),
+                    label = "profile_menu_storage",
+                )
+                androidx.compose.foundation.layout.BoxWithConstraints(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(colors.text_primary.copy(alpha = 0.18f)),
+                ) {
+                    if (storage_used_label.isNotBlank()) {
+                        val fill_width = maxOf(maxWidth * bar_fraction, 10.dp)
+                        Box(
+                            modifier = Modifier
+                                .width(fill_width)
+                                .height(6.dp)
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(if (storage_used_fraction >= 0.9f) colors.danger else colors.accent_blue),
                         )
                     }
                 }
             }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(enabled = can_add, onClick = on_add)
-                    .padding(horizontal = AsterSpacing.sm, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.Plus,
-                    contentDescription = null,
-                    tint = if (can_add) colors.text_muted else colors.text_muted.copy(alpha = 0.4f),
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(Modifier.width(AsterSpacing.md))
-                Text(
-                    text = if (can_add) stringResource(R.string.add_account) else stringResource(R.string.account_limit_reached),
-                    color = if (can_add) colors.text_primary else colors.text_muted,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                )
+
+            other_accounts.forEach { account ->
+                val name = account.display_name?.takeIf { it.isNotBlank() }
+                    ?: account.email.substringBefore('@')
+                val expired = needs_sign_in(account)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(card)
+                        .clickable { on_switch(account) }
+                        .padding(horizontal = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    SenderAvatar(
+                        email = account.email,
+                        name = name,
+                        size = 32.dp,
+                        profile_picture_url = account.profile_picture,
+                        profile_color = account.profile_color,
+                    )
+                    Spacer(Modifier.width(14.dp))
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        Text(
+                            text = name,
+                            color = colors.text_primary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = account.email,
+                            color = colors.text_muted,
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        )
+                    }
+                    if (expired) {
+                        Spacer(Modifier.width(8.dp))
+                        profile_menu_account_badge(stringResource(R.string.profile_menu_session_expired), muted = true)
+                    } else if (account.id == default_account_id) {
+                        Spacer(Modifier.width(8.dp))
+                        profile_menu_account_badge(stringResource(R.string.profile_menu_default_account), muted = false)
+                    }
+                }
             }
+
+            profile_menu_tile(
+                icon = TablerIcons.Plus,
+                label = stringResource(R.string.profile_menu_add_another_account),
+                content_description = null,
+                tint = colors.text_secondary,
+                label_color = colors.text_primary,
+                background = card,
+                enabled_alpha = if (can_add) 1f else 0.6f,
+                meta = if (is_unlimited_accounts) null else "$personal_count/$display_max",
+                modifier = Modifier.fillMaxWidth().testTag("profile_menu_add_account"),
+                on_click = on_add,
+            )
+
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = on_logout)
-                    .padding(horizontal = AsterSpacing.sm, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Icon(
-                    imageVector = TablerIcons.Logout,
-                    contentDescription = null,
+                profile_menu_tile(
+                    icon = TablerIcons.Logout,
+                    label = stringResource(R.string.sign_out),
+                    content_description = null,
                     tint = colors.danger,
-                    modifier = Modifier.size(18.dp),
+                    label_color = colors.danger,
+                    background = card,
+                    modifier = Modifier.weight(1f).testTag("profile_menu_sign_out"),
+                    on_click = on_logout,
                 )
-                Spacer(Modifier.width(AsterSpacing.md))
-                Text(
-                    text = stringResource(R.string.log_out),
-                    color = colors.danger,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                )
+                if (other_accounts.isNotEmpty()) {
+                    profile_menu_tile(
+                        icon = TablerIcons.Power,
+                        label = null,
+                        content_description = stringResource(R.string.profile_menu_sign_out_all),
+                        tint = colors.danger,
+                        label_color = colors.danger,
+                        background = card,
+                        modifier = Modifier.width(54.dp).testTag("profile_menu_sign_out_all"),
+                        on_click = on_logout_all,
+                    )
+                }
             }
             Spacer(Modifier.height(AsterSpacing.md))
         }

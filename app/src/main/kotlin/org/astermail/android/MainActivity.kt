@@ -2152,7 +2152,12 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     }
                 },
                 on_add_account = {
-                    nav_controller.navigate(routes.sign_in_for(""))
+                    if (accounts_state.can_add_more) {
+                        nav_controller.navigate(routes.sign_in_for(""))
+                    } else {
+                        scope.launch { drawer_state.close() }
+                        nav_controller.navigate(routes.settings_detail("billing"))
+                    }
                 },
                 on_open_workspace_sheet = {
                     accounts_vm.refresh_with_profile()
@@ -2212,6 +2217,34 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         else settings_vm.delete_label(item.api_id)
                     },
                 ),
+                on_manage_account = {
+                    scope.launch { drawer_state.close() }
+                    nav_controller.navigate(routes.settings_detail("profile"))
+                },
+                on_logout_all = {
+                    settings_vm.logout_all {
+                        accounts_vm.refresh()
+                        nav_controller.navigate(routes.welcome) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                },
+                plan_code = settings_state.subscription?.plan?.code,
+                profile_storage_label = if (total_bytes > 0) {
+                    stringResource(
+                        R.string.profile_menu_storage_of_used,
+                        format_storage_bytes(used_bytes),
+                        format_storage_bytes(total_bytes),
+                    )
+                } else {
+                    ""
+                },
+                max_accounts = accounts_state.max_accounts,
+                is_unlimited_accounts = accounts_state.is_unlimited,
+                needs_sign_in = { account ->
+                    account.id != accounts_state.current_account_id &&
+                        !accounts_vm.has_stored_session(account.id)
+                },
                 on_logout = {
                     settings_vm.logout { switched_account ->
                         accounts_vm.refresh()

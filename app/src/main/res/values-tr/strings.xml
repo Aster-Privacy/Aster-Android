@@ -3428,4 +3428,19 @@
     <string name="review_two_step_off">İki adımlı doğrulama kapalı.</string>
     <string name="send_reset_link">Sıfırlama bağlantısı gönder</string>
     <string name="try_another_way">Başka bir yol deneyin</string>
+    <string name="profile_menu_storage_used">Kullanılan depolama</string>
+    <string name="profile_menu_greeting_morning">Günaydın</string>
+    <string name="profile_menu_greeting_afternoon">İyi öğleden sonralar</string>
+    <string name="profile_menu_greeting_evening">İyi akşamlar</string>
+    <string name="profile_menu_greeting_night">Geç saatler</string>
+    <string name="profile_menu_greeting_comma">,</string>
+    <string name="profile_menu_manage_account">Hesap ayarları</string>
+    <string name="profile_menu_add_another_account">Başka bir hesap ekle</string>
+    <string name="profile_menu_sign_out_all">Tüm hesaplardan çıkış yap</string>
+    <string name="profile_menu_session_expired">Oturum sona erdi</string>
+    <string name="profile_menu_default_account">Varsayılan</string>
+    <string name="profile_menu_storage_of_used">%2$s alanın %1$s kadarı kullanıldı</string>
+    <string name="plan_badge_star">Star</string>
+    <string name="plan_badge_nova">Nova</string>
+    <string name="plan_badge_supernova">Supernova</string>
 </resources>

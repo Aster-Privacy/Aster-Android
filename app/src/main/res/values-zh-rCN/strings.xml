@@ -3410,4 +3410,19 @@
     <string name="review_two_step_off">两步验证已关闭。</string>
     <string name="send_reset_link">发送重置链接</string>
     <string name="try_another_way">尝试其他方式</string>
+    <string name="profile_menu_storage_used">已用存储空间</string>
+    <string name="profile_menu_greeting_morning">早上好</string>
+    <string name="profile_menu_greeting_afternoon">下午好</string>
+    <string name="profile_menu_greeting_evening">晚上好</string>
+    <string name="profile_menu_greeting_night">夜深了</string>
+    <string name="profile_menu_greeting_comma">，</string>
+    <string name="profile_menu_manage_account">账户设置</string>
+    <string name="profile_menu_add_another_account">添加另一个账户</string>
+    <string name="profile_menu_sign_out_all">退出所有账户</string>
+    <string name="profile_menu_session_expired">会话已过期</string>
+    <string name="profile_menu_default_account">默认</string>
+    <string name="profile_menu_storage_of_used">已使用 %1$s／共 %2$s</string>
+    <string name="plan_badge_star">Star</string>
+    <string name="plan_badge_nova">Nova</string>
+    <string name="plan_badge_supernova">Supernova</string>
 </resources>

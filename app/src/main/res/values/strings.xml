@@ -3473,4 +3473,19 @@
     <string name="enc_verification_code_info_description">A short code created from your encryption key. If someone you email compares it with the code on their end and it matches, you can both be sure your messages are private and haven\'t been tampered with.</string>
     <string name="enc_copy_verification_code">Copy verification code</string>
     <string name="copy_all_codes">Copy all codes</string>
+    <string name="profile_menu_storage_used">Storage used</string>
+    <string name="profile_menu_greeting_morning">Good morning</string>
+    <string name="profile_menu_greeting_afternoon">Good afternoon</string>
+    <string name="profile_menu_greeting_evening">Good evening</string>
+    <string name="profile_menu_greeting_night">Late night</string>
+    <string name="profile_menu_greeting_comma">,</string>
+    <string name="profile_menu_manage_account">Account settings</string>
+    <string name="profile_menu_add_another_account">Add another account</string>
+    <string name="profile_menu_sign_out_all">Sign out of all accounts</string>
+    <string name="profile_menu_session_expired">Session expired</string>
+    <string name="profile_menu_default_account">Default</string>
+    <string name="profile_menu_storage_of_used">%1$s of %2$s used</string>
+    <string name="plan_badge_star">Star</string>
+    <string name="plan_badge_nova">Nova</string>
+    <string name="plan_badge_supernova">Supernova</string>
 </resources>

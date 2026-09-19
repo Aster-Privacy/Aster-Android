@@ -3468,4 +3468,19 @@
     <string name="review_two_step_off">Двухэтапная аутентификация отключена.</string>
     <string name="send_reset_link">Отправить ссылку для сброса</string>
     <string name="try_another_way">Другой способ</string>
+    <string name="profile_menu_storage_used">Использовано хранилища</string>
+    <string name="profile_menu_greeting_morning">Доброе утро</string>
+    <string name="profile_menu_greeting_afternoon">Добрый день</string>
+    <string name="profile_menu_greeting_evening">Добрый вечер</string>
+    <string name="profile_menu_greeting_night">Поздняя ночь</string>
+    <string name="profile_menu_greeting_comma">,</string>
+    <string name="profile_menu_manage_account">Настройки аккаунта</string>
+    <string name="profile_menu_add_another_account">Добавить другой аккаунт</string>
+    <string name="profile_menu_sign_out_all">Выйти из всех аккаунтов</string>
+    <string name="profile_menu_session_expired">Сессия истекла</string>
+    <string name="profile_menu_default_account">По умолчанию</string>
+    <string name="profile_menu_storage_of_used">%1$s из %2$s использовано</string>
+    <string name="plan_badge_star">Star</string>
+    <string name="plan_badge_nova">Nova</string>
+    <string name="plan_badge_supernova">Supernova</string>
 </resources>

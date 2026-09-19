@@ -3410,4 +3410,19 @@
     <string name="review_two_step_off">2단계 인증이 꺼져 있습니다.</string>
     <string name="send_reset_link">재설정 링크 보내기</string>
     <string name="try_another_way">다른 방법 사용</string>
+    <string name="profile_menu_storage_used">사용된 저장 공간</string>
+    <string name="profile_menu_greeting_morning">좋은 아침이에요</string>
+    <string name="profile_menu_greeting_afternoon">좋은 오후예요</string>
+    <string name="profile_menu_greeting_evening">좋은 저녁이에요</string>
+    <string name="profile_menu_greeting_night">늦은 밤이에요</string>
+    <string name="profile_menu_greeting_comma">,</string>
+    <string name="profile_menu_manage_account">계정 설정</string>
+    <string name="profile_menu_add_another_account">다른 계정 추가</string>
+    <string name="profile_menu_sign_out_all">모든 계정에서 로그아웃</string>
+    <string name="profile_menu_session_expired">세션 만료됨</string>
+    <string name="profile_menu_default_account">기본</string>
+    <string name="profile_menu_storage_of_used">%2$s 중 %1$s 사용</string>
+    <string name="plan_badge_star">Star</string>
+    <string name="plan_badge_nova">Nova</string>
+    <string name="plan_badge_supernova">Supernova</string>
 </resources>
