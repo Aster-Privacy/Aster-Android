@@ -763,15 +763,7 @@ fun DrawerContent(
                 }
             }
 
-            Spacer(Modifier.height(AsterSpacing.md))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.lg)
-                    .height(1.dp)
-                    .background(colors.border_secondary.copy(alpha = 0.5f)),
-            )
-            Spacer(Modifier.height(AsterSpacing.xs))
+            Spacer(Modifier.height(AsterSpacing.lg))
             drawer_row(
                 icon = TablerIcons.Settings,
                 label = stringResource(R.string.settings),
@@ -2000,7 +1992,34 @@ private fun workspace_switcher_sheet(
                     .padding(16.dp)
                     .testTag("profile_menu_card"),
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                val identity_text = remember(current_name, current_email) {
+                    val name = current_name.trim()
+                    if (name.isBlank() || name.equals(current_email, ignoreCase = true)) {
+                        current_email
+                    } else {
+                        "$name <$current_email>"
+                    }
+                }
+                Row(
+                    modifier = Modifier.combinedClickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {},
+                        onLongClick = {
+                            if (current_email.isNotBlank()) {
+                                copy_action(
+                                    email_clip_label,
+                                    identity_text,
+                                    org.astermail.android.ui.common.copied_toast_text(
+                                        copy_toast_context,
+                                        identity_text,
+                                    ),
+                                )
+                            }
+                        },
+                    ),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     plan_ring(size = 48.dp, enabled = remember_has_paid_plan()) {
                         SenderAvatar(
                             email = current_email,
@@ -2690,22 +2709,12 @@ private fun drawer_footer(
             .fillMaxWidth()
             .background(colors.bg_primary),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(colors.border_secondary),
-        )
+        Spacer(Modifier.height(AsterSpacing.sm))
         storage_meter(
             used_percent = used_fraction,
             label = storage_label,
         )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(colors.border_secondary),
-        )
+        Spacer(Modifier.height(AsterSpacing.xs))
         val copy_action = org.astermail.android.ui.common.remember_copy_action()
         val version_copied = stringResource(R.string.version_copied)
         val clip_label = stringResource(R.string.app_name)
