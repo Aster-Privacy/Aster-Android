@@ -95,6 +95,22 @@ object PgpDecryptor {
         return null
     }
 
+    fun decrypt_with_own_keys_status(
+        armored_ciphertext: String,
+        armored_private_keys: List<String>,
+        passphrase: CharArray,
+    ): PgpDecryptionResult? {
+        val unique = armored_private_keys.filter { it.isNotBlank() }.distinct()
+        val verifier = own_public_keys(unique)
+        for (key in unique) {
+            val result = runCatching {
+                decrypt_with_verifier(armored_ciphertext, key, passphrase, verifier)
+            }.getOrNull() ?: continue
+            if (result.plaintext != null) return result
+        }
+        return null
+    }
+
     private fun own_public_keys(armored_private_keys: List<String>): PGPPublicKeyRingCollection? {
         val rings = armored_private_keys.flatMap { armored ->
             runCatching {

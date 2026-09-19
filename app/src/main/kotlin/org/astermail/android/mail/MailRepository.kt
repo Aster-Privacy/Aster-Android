@@ -2690,7 +2690,7 @@ class MailRepository @Inject constructor(
                     if (body_starts_with(text, "-----BEGIN PGP")) {
                         val armored_is_encrypted =
                             body_starts_with(text, PGP_ENCRYPTED_MESSAGE_HEADER)
-                        val pgp_result = try_pgp_decrypt_result(text)
+                        val pgp_result = try_pgp_decrypt_own_result(text)
                         val pgp_plaintext = pgp_result?.plaintext
                         if (pgp_plaintext != null) {
                             envelope_pgp_encrypted = armored_is_encrypted
@@ -3640,6 +3640,29 @@ class MailRepository @Inject constructor(
                 if (result != null) break
             }
             result
+        } catch (_: Throwable) {
+            null
+        } finally {
+            passphrase.fill(0)
+            chars?.fill(' ')
+        }
+    }
+
+    private fun try_pgp_decrypt_own_result(
+        ciphertext: String,
+    ): org.astermail.android.crypto.PgpDecryptionResult? {
+        val identity_key = session_key_store.get_identity_key() ?: return null
+        if (!identity_key.contains("-----BEGIN PGP")) return null
+        val passphrase = session_key_store.get_passphrase() ?: return null
+        var chars: CharArray? = null
+        return try {
+            val decoded = org.astermail.android.util.passphrase_chars(passphrase)
+            chars = decoded
+            val keys_to_try = buildList {
+                add(identity_key)
+                session_key_store.get_previous_keys()?.let { addAll(it) }
+            }.filter { it.contains("-----BEGIN PGP") }
+            PgpDecryptor.decrypt_with_own_keys_status(ciphertext, keys_to_try, decoded)
         } catch (_: Throwable) {
             null
         } finally {
