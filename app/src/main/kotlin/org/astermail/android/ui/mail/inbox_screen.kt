@@ -389,6 +389,20 @@ fun InboxScreen(
         }
     }
     val haptic_enabled = settings_state.preferences?.haptic_enabled ?: true
+    val tactile = org.astermail.android.design.remember_haptic()
+    val action_feedback: (String) -> Unit = remember(tactile, haptic_enabled) {
+        { action ->
+            if (haptic_enabled) {
+                tactile(
+                    if (is_removing_swipe_action(action)) {
+                        org.astermail.android.design.aster_haptic.confirm
+                    } else {
+                        org.astermail.android.design.aster_haptic.tick
+                    },
+                )
+            }
+        }
+    }
     val context_for_prefs = LocalContext.current
     val plan_prefs = remember { context_for_prefs.getSharedPreferences("aster_plan", android.content.Context.MODE_PRIVATE) }
     val initial_paid = remember { plan_prefs.getBoolean("has_paid", false) }
@@ -2006,6 +2020,7 @@ fun InboxScreen(
                                             confirm_item_ids_pending = ids
                                             confirm_thread_id_pending = thread.thread_id
                                         } else {
+                                            action_feedback(swipe_config.start_action)
                                             execute_swipe_action(
                                                 swipe_config.start_action, ids, mail_vm, emails, thread.thread_id, current_folder,
                                                 on_read_mutation = { mutated -> mutated.forEach { note_read_mutation(it) } },
@@ -2027,6 +2042,7 @@ fun InboxScreen(
                                             confirm_item_ids_pending = ids
                                             confirm_thread_id_pending = thread.thread_id
                                         } else {
+                                            action_feedback(swipe_config.end_action)
                                             execute_swipe_action(
                                                 swipe_config.end_action, ids, mail_vm, emails, thread.thread_id, current_folder,
                                                 on_read_mutation = { mutated -> mutated.forEach { note_read_mutation(it) } },
@@ -2496,6 +2512,7 @@ fun InboxScreen(
                 confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
                 on_confirm = {
                     if (pending_thread != null) {
+                        action_feedback(pending_action)
                         execute_swipe_action(
                             pending_action, pending_ids, mail_vm, emails, pending_thread, current_folder,
                             on_read_mutation = { mutated -> mutated.forEach { note_read_mutation(it) } },

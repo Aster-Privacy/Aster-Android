@@ -48,10 +48,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -122,7 +120,7 @@ fun swipe_action_row(
     reset_token: Int = 0,
     content: @Composable () -> Unit,
 ) {
-    val haptics = LocalHapticFeedback.current
+    val haptics = org.astermail.android.design.remember_haptic()
     var is_dismissed by remember { mutableStateOf(false) }
     val offset_x = remember { Animatable(0f) }
     val start_enabled = start_action != "none"
@@ -177,10 +175,17 @@ fun swipe_action_row(
                                         if (start_enabled) limit else 0f,
                                     )
                                     launch { offset_x.snapTo(next) }
-                                    if (!passed_commit && abs(next) >= commit_distance) {
-                                        passed_commit = true
+                                    val past = abs(next) >= commit_distance
+                                    if (past != passed_commit) {
+                                        passed_commit = past
                                         if (haptic_enabled) {
-                                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            haptics(
+                                                if (past) {
+                                                    org.astermail.android.design.aster_haptic.gesture_threshold
+                                                } else {
+                                                    org.astermail.android.design.aster_haptic.tick
+                                                },
+                                            )
                                         }
                                     }
                                 }
