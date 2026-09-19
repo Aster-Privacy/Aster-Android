@@ -121,8 +121,7 @@ class AuthRepository @Inject constructor(
     private val theme_store: ThemeStore,
     private val ratchet_bootstrap_service: org.astermail.android.mail.ratchet.RatchetBootstrapService,
     private val system_folder_bootstrap: org.astermail.android.mail.SystemFolderBootstrap,
-    private val sent_mail_resealer: org.astermail.android.mail.SentMailResealer,
-    private val sent_mail_reseal_finisher: org.astermail.android.mail.SentMailResealFinisher,
+    private val password_change_sent_mail: org.astermail.android.mail.PasswordChangeSentMail,
     private val identity_pins: dagger.Lazy<org.astermail.android.mail.ratchet.RatchetIdentityPinStore>,
     @ApplicationContext private val context: Context,
 ) {
@@ -889,6 +888,11 @@ class AuthRepository @Inject constructor(
         val vault_obj = org.json.JSONObject(String(vault_plain, Charsets.UTF_8))
         vault_plain.fill(0)
 
+        val sent_mail_conversion = password_change_sent_mail.convert_before_change(
+            vault_obj.optString("identity_key", "").ifBlank { vault_obj.optString("identity_private_key", "") },
+            current_password_bytes,
+        )
+
         val current_identity = vault_obj.optString("identity_private_key", "")
         if (current_identity.isNotBlank()) {
             val previous = vault_obj.optJSONArray("previous_keys") ?: org.json.JSONArray()
@@ -950,14 +954,12 @@ class AuthRepository @Inject constructor(
 
             runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
 
-            sent_mail_reseal_finisher.mark_pending(current_password_bytes)
-
-            val reseal = runCatching {
-                sent_mail_resealer.run(current_password_bytes, new_password_bytes)
-            }.getOrElse { org.astermail.android.mail.SentMailResealSummary(failed = 1) }
-                .let { if (pgp_rewrapped) it else it.copy(failed = it.failed + 1) }
-
-            if (reseal.failed == 0) sent_mail_reseal_finisher.mark_done()
+            val reseal = password_change_sent_mail.reseal_after_change(
+                sent_mail_conversion,
+                current_password_bytes,
+                new_password_bytes,
+                pgp_rewrapped,
+            )
 
             mail_repository.clear_caches()
             database.decrypted_mail_dao().clear_all()

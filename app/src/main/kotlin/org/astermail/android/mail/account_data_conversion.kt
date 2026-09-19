@@ -38,6 +38,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -73,6 +74,8 @@ data class AccountDataConversionSummary(
 )
 
 enum class ConversionItemOutcome { CONVERTED, SKIPPED, UNREADABLE, FAILED }
+
+enum class PasswordChangeConversion { COMPLETE, INCOMPLETE, UNAVAILABLE }
 
 enum class PreferencesConversionResult { CONVERTED, ALREADY_CONVERTED, NOT_FOUND, CONFLICT, UNAVAILABLE, FAILED }
 
@@ -196,6 +199,98 @@ class AccountDataConversion internal constructor(
         }
     }
 
+    suspend fun convert_before_password_change(
+        identity_key: String,
+        passphrase: ByteArray,
+        budget_ms: Long = PASSWORD_CHANGE_BUDGET_MS,
+    ): PasswordChangeConversion {
+        if (identity_key.isEmpty() || passphrase.isEmpty()) return PasswordChangeConversion.UNAVAILABLE
+        return try {
+            val deadline = now_ms() + budget_ms
+            withTimeoutOrNull(budget_ms + PASSWORD_CHANGE_GRACE_MS) {
+                convert_with_password_change_lock(identity_key, passphrase, deadline)
+            } ?: PasswordChangeConversion.INCOMPLETE
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            PasswordChangeConversion.INCOMPLETE
+        }
+    }
+
+    suspend fun sent_mail_needs_password_reseal(before: PasswordChangeConversion): Boolean {
+        if (before != PasswordChangeConversion.COMPLETE) return true
+        return try {
+            withTimeoutOrNull(RESEAL_CHECK_TIMEOUT_MS) {
+                val status = keys_api.get_account_data_conversion()
+                status == null || has_remaining(status)
+            } ?: true
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            true
+        }
+    }
+
+    private suspend fun convert_with_password_change_lock(
+        identity_key: String,
+        passphrase: ByteArray,
+        deadline: Long,
+    ): PasswordChangeConversion {
+        var acquired = lock.tryLock()
+        if (!acquired) {
+            val wait_ms = deadline - now_ms()
+            if (wait_ms > 0) {
+                withTimeoutOrNull(wait_ms) {
+                    lock.lock()
+                    acquired = true
+                }
+            }
+        }
+        if (!acquired) return PasswordChangeConversion.INCOMPLETE
+        return try {
+            convert_for_password_change(identity_key, passphrase, deadline)
+        } finally {
+            lock.unlock()
+        }
+    }
+
+    private suspend fun convert_for_password_change(
+        identity_key: String,
+        passphrase: ByteArray,
+        deadline: Long,
+    ): PasswordChangeConversion {
+        val capabilities = keys_api.get_account_key_capabilities()
+        if (!capabilities.data_conversion) return PasswordChangeConversion.UNAVAILABLE
+        val vault_identity = session_key_store.get_identity_key()
+        if (vault_identity.isNullOrEmpty() || vault_identity != identity_key) {
+            return PasswordChangeConversion.UNAVAILABLE
+        }
+        val account_id = session_key_store.get_user_id()
+        if (account_id.isNullOrEmpty()) return PasswordChangeConversion.UNAVAILABLE
+        val status = keys_api.get_account_data_conversion() ?: return PasswordChangeConversion.UNAVAILABLE
+        if (!has_remaining(status)) return PasswordChangeConversion.COMPLETE
+        val passphrase_bytes = passphrase.copyOf()
+        val keys = ConversionKeys(
+            account_id = account_id,
+            identity_key = identity_key,
+            previous_keys = session_key_store.get_previous_keys().orEmpty().filter { it.isNotEmpty() },
+            passphrase_bytes = passphrase_bytes,
+            passphrase = passphrase_chars(passphrase_bytes),
+        )
+        try {
+            val (_, complete) = convert_sent_mail(status, keys, deadline)
+            if (!complete) return PasswordChangeConversion.INCOMPLETE
+            val after = keys_api.get_account_data_conversion()
+            if (after == null || has_remaining(after)) return PasswordChangeConversion.INCOMPLETE
+            if (after.sent_mail_done_at == null) {
+                keys_api.report_account_data_conversion(ConversionProgressRequest(sent_mail_done = true))
+            }
+            return PasswordChangeConversion.COMPLETE
+        } finally {
+            keys.zero()
+        }
+    }
+
     private fun capture_keys(account_id: String): ConversionKeys? {
         val identity_key = session_key_store.get_identity_key()
         val passphrase_bytes = session_key_store.get_passphrase()
@@ -242,6 +337,7 @@ class AccountDataConversion internal constructor(
     private suspend fun convert_sent_mail(
         status: AccountDataConversionStatus,
         keys: ConversionKeys,
+        deadline: Long? = null,
     ): Pair<AccountDataConversionSummary, Boolean> {
         val counts = Counts()
         var reported = AccountDataConversionSummary()
@@ -270,7 +366,7 @@ class AccountDataConversion internal constructor(
             val page = list_sent_page(cursor)
             val items = page.items
             for (item in items) {
-                if (!keys_still_current(keys)) {
+                if (!keys_still_current(keys) || (deadline != null && now_ms() >= deadline)) {
                     report()
                     return counts.snapshot() to false
                 }
@@ -540,12 +636,18 @@ class AccountDataConversion internal constructor(
         const val LISTING_ATTEMPTS = 3
         const val RESCAN_INTERVAL_MS = 6 * 60 * 60 * 1000L
         const val START_DELAY_MS = 30_000L
+        const val PASSWORD_CHANGE_BUDGET_MS = 30_000L
+        const val PASSWORD_CHANGE_GRACE_MS = 15_000L
+        const val RESEAL_CHECK_TIMEOUT_MS = 15_000L
         private const val SALT_LENGTH = 16
         private const val NONCE_LENGTH = 12
         private const val META_NONCE_LENGTH = 12
         private const val KEK_LENGTH = 32
         private const val PBKDF2_ITERATIONS = 310000
         private const val PGP_MESSAGE_HEADER = "-----BEGIN PGP MESSAGE-----"
+
+        fun has_remaining(status: AccountDataConversionStatus): Boolean =
+            status.remaining_sent > 0 || status.remaining_attachments > 0
 
         fun is_legacy_meta_nonce(nonce_b64: String?): Boolean {
             if (nonce_b64.isNullOrEmpty()) return false
