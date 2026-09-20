@@ -21,7 +21,7 @@
 
 package org.astermail.android.design.components
 
-import org.astermail.android.design.remember_haptic_interaction
+import org.astermail.android.design.remember_click_interaction
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,7 +50,7 @@ fun AsterIconButton(
     IconButton(
         onClick = onClick,
         enabled = enabled,
-        interactionSource = remember_haptic_interaction(),
+        interactionSource = remember_click_interaction(),
         modifier = modifier.size(48.dp),
         colors = IconButtonDefaults.iconButtonColors(
             contentColor = resolved_tint,

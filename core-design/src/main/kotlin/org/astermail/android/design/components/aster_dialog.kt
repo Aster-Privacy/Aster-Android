@@ -21,7 +21,7 @@
 
 package org.astermail.android.design.components
 
-import org.astermail.android.design.remember_haptic_interaction
+import org.astermail.android.design.remember_click_interaction
 import org.astermail.android.design.SquircleShape
 
 import androidx.compose.foundation.background
@@ -538,7 +538,7 @@ fun AsterDialogOutlineButton(
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
-        interactionSource = remember_haptic_interaction(),
+        interactionSource = remember_click_interaction(),
         modifier = modifier.height(dialog_button_height),
         shape = dialog_button_shape,
         colors = ButtonDefaults.outlinedButtonColors(

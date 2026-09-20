@@ -21,7 +21,7 @@
 
 package org.astermail.android.design.components
 
-import org.astermail.android.design.remember_haptic_interaction
+import org.astermail.android.design.remember_click_interaction
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -158,7 +158,7 @@ private fun depth_button(
     content_color: Color = Color.White,
 ) {
     val interactive = enabled && !is_loading
-    val interaction = remember_haptic_interaction()
+    val interaction = remember_click_interaction()
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (pressed && interactive) 0.965f else 1f,
@@ -207,7 +207,7 @@ fun AsterSecondaryButton(
     is_loading: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
-    val interaction = remember_haptic_interaction()
+    val interaction = remember_click_interaction()
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (pressed && enabled && !is_loading) 0.965f else 1f,
@@ -247,7 +247,7 @@ fun AsterGhostButton(
     is_loading: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
-    val interaction = remember_haptic_interaction()
+    val interaction = remember_click_interaction()
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (pressed && enabled && !is_loading) 0.965f else 1f,
