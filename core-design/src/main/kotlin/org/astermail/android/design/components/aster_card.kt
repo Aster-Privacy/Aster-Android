@@ -52,9 +52,8 @@ fun AsterCard(
 ) {
     val colors = AsterMaterial.colors
     val shape = SquircleShape(16.dp)
-    val acrylic_on = colors.is_glass && org.astermail.android.design.local_acrylic.current != null
     val card_colors = CardDefaults.cardColors(
-        containerColor = if (acrylic_on) Color.Transparent else island_surface_color(colors),
+        containerColor = Color.Transparent,
         contentColor = colors.text_primary,
     )
     val border: BorderStroke? = null
@@ -72,7 +71,7 @@ fun AsterCard(
             interactionSource = interaction,
             modifier = modifier
                 .graphicsLayer { scaleX = scale; scaleY = scale }
-                .then(if (acrylic_on) Modifier.acrylic(colors, shape) else Modifier),
+                .acrylic(colors, shape, island_surface_color(colors)),
             shape = shape,
             colors = card_colors,
             border = border,
@@ -81,7 +80,7 @@ fun AsterCard(
         )
     } else {
         Card(
-            modifier = modifier.then(if (acrylic_on) Modifier.acrylic(colors, shape) else Modifier),
+            modifier = modifier.acrylic(colors, shape, island_surface_color(colors)),
             shape = shape,
             colors = card_colors,
             border = border,

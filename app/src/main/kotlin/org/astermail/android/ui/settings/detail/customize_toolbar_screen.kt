@@ -64,6 +64,7 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.ui.common.sheet_container_color
 import org.astermail.android.ui.mail.ToolbarAction
 import org.astermail.android.ui.mail.cache_selection_toolbar_actions
 import org.astermail.android.ui.mail.cache_toolbar_actions
@@ -200,7 +201,7 @@ fun CustomizeToolbarScreen(
         ModalBottomSheet(
             onDismissRequest = { editing = null },
             sheetState = sheet_state,
-            containerColor = colors.bg_secondary,
+            containerColor = sheet_container_color(colors),
             dragHandle = { AsterDragHandle() },
         ) {
             Column(

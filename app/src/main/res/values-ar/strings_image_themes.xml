@@ -10,6 +10,11 @@
     <string name="image_theme_category_cities">مدن</string>
     <string name="image_theme_category_landscapes">المناظر الطبيعية</string>
     <string name="image_theme_category_water">المياه</string>
+    <string name="image_theme_category_aurora">الشفق القطبي</string>
+    <string name="image_theme_category_mountains">الجبال</string>
+    <string name="image_theme_category_forest">الغابات</string>
+    <string name="image_theme_category_desert">الصحراء</string>
+    <string name="image_theme_category_ocean">المحيط</string>
     <string name="image_theme_apply_changes">تطبيق</string>
     <string name="image_theme_reset">إعادة التعيين إلى الافتراضي</string>
     <string name="image_theme_colors">الألوان</string>
@@ -23,7 +28,6 @@
     <string name="image_theme_photo_too_large">هذه الصورة كبيرة جدًا. اختر صورة أصغر من 40 ميغابايت.</string>
     <string name="image_theme_photo_unsupported">نوع الملف هذا غير مدعوم. اختر صورة بصيغة JPEG أو PNG أو GIF أو WebP أو HEIC.</string>
     <string name="image_theme_photo_unreadable">تعذّر فتح هذه الصورة. جرّب صورة أخرى.</string>
-    <string name="image_theme_category_calm">هادئ</string>
     <string name="image_theme_credit_modified">الصورة: %1$s. تم اقتصاصها وتغيير حجمها.</string>
     <string name="image_theme_credit_generated">من إنشاء Aster</string>
     <string name="image_theme_adjust_photo">ضبط</string>
@@ -51,4 +55,5 @@
     <string name="image_theme_animation">تحريك الخلفية</string>
     <string name="image_theme_animation_subtitle">يشغّل خلفيتك المتحركة. يتوقف في وضع توفير البطارية وعند إيقاف الحركات على جهازك.</string>
     <string name="image_theme_animation_too_large">هذه الصورة المتحركة كبيرة جدًا. اختر صورة أصغر من 12 ميغابايت.</string>
+    <string name="image_theme_retry_download">إعادة محاولة التنزيل</string>
 </resources>

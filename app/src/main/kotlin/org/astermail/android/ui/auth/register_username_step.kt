@@ -72,6 +72,7 @@ import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterTextField
 
@@ -216,7 +217,7 @@ internal fun domain_toggle(
         modifier = Modifier
             .fillMaxWidth()
             .height(domain_toggle_height)
-            .background(colors.bg_secondary, domain_toggle_shape)
+            .acrylic(colors, domain_toggle_shape, colors.bg_secondary)
             .padding(3.dp),
     ) {
         val pill_width = ((maxWidth - 6.dp) / options.size).coerceAtLeast(0.dp)

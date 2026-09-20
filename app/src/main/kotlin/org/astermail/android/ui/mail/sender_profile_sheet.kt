@@ -74,6 +74,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
+import org.astermail.android.ui.common.sheet_container_color
 import org.astermail.android.ui.contacts.Contact
 
 private val internal_sender_domains =
@@ -121,7 +122,7 @@ fun sender_profile_sheet(
     ModalBottomSheet(
         onDismissRequest = on_close,
         sheetState = state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
     ) {

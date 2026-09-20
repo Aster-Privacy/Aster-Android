@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.sp
 import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.acrylic
 
 @Composable
 fun chip_segment(
@@ -98,7 +99,7 @@ fun chip_pill_row(
         modifier = modifier
             .height(32.dp)
             .clip(SquircleShape(999.dp))
-            .background(colors.bg_tertiary, SquircleShape(999.dp))
+            .acrylic(colors, SquircleShape(999.dp), colors.bg_tertiary)
             .border(1.dp, colors.border_secondary, SquircleShape(999.dp)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -151,7 +152,7 @@ fun add_chip_pill(label: String, on_click: () -> Unit, modifier: Modifier = Modi
         modifier = modifier
             .height(32.dp)
             .clip(SquircleShape(999.dp))
-            .background(colors.bg_card, SquircleShape(999.dp))
+            .acrylic(colors, SquircleShape(999.dp), colors.bg_card)
             .border(
                 1.dp,
                 org.astermail.android.ui.mail.chip_subtle_border(colors.accent_blue, colors.bg_card, colors.is_dark),
@@ -177,7 +178,7 @@ fun and_or_pill(label: String, on_click: () -> Unit, modifier: Modifier = Modifi
         modifier = modifier
             .height(24.dp)
             .clip(SquircleShape(999.dp))
-            .background(colors.bg_tertiary)
+            .acrylic(colors, SquircleShape(999.dp), colors.bg_tertiary)
             .clickable(onClick = on_click)
             .padding(horizontal = 10.dp),
         contentAlignment = Alignment.Center,

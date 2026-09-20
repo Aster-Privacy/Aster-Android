@@ -61,6 +61,7 @@ import org.astermail.android.api.settings.SmtpTokenRow
 import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
@@ -161,7 +162,7 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
                             modifier = Modifier
                                 .size(56.dp)
                                 .clip(CircleShape)
-                                .background(colors.bg_secondary),
+                                .acrylic(colors, CircleShape, colors.bg_secondary),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(

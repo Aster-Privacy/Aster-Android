@@ -23,6 +23,7 @@ package org.astermail.android.ui.mail
 
 import compose.icons.TablerIcons
 import kotlinx.coroutines.CancellationException
+import org.astermail.android.ui.common.sheet_container_color
 import org.astermail.android.ui.common.show_copy_result_toast
 import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
@@ -4133,7 +4134,7 @@ private fun collapsed_message(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(colors.bg_card),
+                        .acrylic(colors, CircleShape, colors.bg_card),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -4461,7 +4462,7 @@ internal fun snooze_sheet(
     ModalBottomSheet(
         onDismissRequest = on_close,
         sheetState = state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
     ) {
@@ -4549,7 +4550,7 @@ internal fun label_picker_sheet(
     ModalBottomSheet(
         onDismissRequest = on_close,
         sheetState = state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
     ) {
@@ -4648,7 +4649,7 @@ internal fun tag_picker_sheet(
     ModalBottomSheet(
         onDismissRequest = on_close,
         sheetState = state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
     ) {
@@ -6068,7 +6069,7 @@ private fun link_options_sheet(
     ModalBottomSheet(
         onDismissRequest = on_close,
         sheetState = state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
     ) {
@@ -6502,7 +6503,7 @@ private fun attachment_options_sheet(
     ModalBottomSheet(
         onDismissRequest = on_close,
         sheetState = state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
     ) {
@@ -6937,9 +6938,9 @@ private fun detail_menu_divider() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 4.dp)
-            .height(1.dp)
-            .background(colors.border_secondary.copy(alpha = 0.5f)),
+            .padding(horizontal = 14.dp, vertical = 6.dp)
+            .height(Dp.Hairline)
+            .background(colors.border_secondary.copy(alpha = 0.16f)),
     )
 }
 

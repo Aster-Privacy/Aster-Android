@@ -10,6 +10,11 @@
     <string name="image_theme_category_cities">도시</string>
     <string name="image_theme_category_landscapes">풍경</string>
     <string name="image_theme_category_water">물</string>
+    <string name="image_theme_category_aurora">오로라</string>
+    <string name="image_theme_category_mountains">산</string>
+    <string name="image_theme_category_forest">숲</string>
+    <string name="image_theme_category_desert">사막</string>
+    <string name="image_theme_category_ocean">바다</string>
     <string name="image_theme_apply_changes">적용</string>
     <string name="image_theme_reset">기본값으로 재설정</string>
     <string name="image_theme_colors">색상</string>
@@ -23,7 +28,6 @@
     <string name="image_theme_photo_too_large">사진이 너무 큽니다. 40MB 미만의 사진을 선택하세요.</string>
     <string name="image_theme_photo_unsupported">지원되지 않는 파일 형식입니다. JPEG, PNG, GIF, WebP 또는 HEIC 사진을 선택하세요.</string>
     <string name="image_theme_photo_unreadable">이 사진을 열 수 없습니다. 다른 사진을 선택하세요.</string>
-    <string name="image_theme_category_calm">차분함</string>
     <string name="image_theme_credit_modified">사진: %1$s. 자르고 크기를 조정했습니다.</string>
     <string name="image_theme_credit_generated">Aster에서 제작</string>
     <string name="image_theme_adjust_photo">조정</string>
@@ -51,4 +55,5 @@
     <string name="image_theme_animation">배경 애니메이션</string>
     <string name="image_theme_animation_subtitle">애니메이션 배경을 재생합니다. 배터리 절약 모드이거나 기기에서 애니메이션을 꺼두었을 때 멈춥니다.</string>
     <string name="image_theme_animation_too_large">애니메이션 이미지가 너무 큽니다. 12MB 미만의 이미지를 선택하세요.</string>
+    <string name="image_theme_retry_download">다운로드 다시 시도</string>
 </resources>

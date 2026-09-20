@@ -28,7 +28,7 @@
     <string name="search_chip_before">قبل</string>
     <string name="search_chip_after">بعد</string>
     <string name="search_chip_date">التاريخ</string>
-    <string name="search_chip_label">التسمية</string>
+    <string name="search_chip_label">التصنيف</string>
     <string name="search_chip_not_prefix">ليس</string>
     <string name="search_chip_format">%1$s: %2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>

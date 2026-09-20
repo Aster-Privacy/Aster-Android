@@ -22,6 +22,8 @@
 package org.astermail.android.ui.settings.detail
 
 import compose.icons.TablerIcons
+import org.astermail.android.design.acrylic
+import org.astermail.android.design.readable_on
 import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
 import compose.icons.tablericons.*
@@ -337,7 +339,7 @@ fun EncryptionScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(SquircleShape(AsterRadius.md))
-                                .background(colors.bg_secondary)
+                                .acrylic(colors, SquircleShape(AsterRadius.md), colors.bg_secondary)
                                 .border(1.dp, colors.border_primary, SquircleShape(AsterRadius.md))
                                 .padding(start = AsterSpacing.md, end = AsterSpacing.xs, top = AsterSpacing.xs, bottom = AsterSpacing.xs),
                             verticalAlignment = Alignment.CenterVertically,
@@ -426,7 +428,7 @@ fun EncryptionScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(SquircleShape(AsterRadius.xl))
-                    .background(colors.bg_secondary)
+                    .acrylic(colors, SquircleShape(AsterRadius.xl), colors.bg_secondary)
                     .drawBehind {
                         val stroke_width = 1.dp.toPx()
                         val radius_px = 14.dp.toPx()
@@ -497,15 +499,16 @@ fun EncryptionScreen(
                             fontWeight = FontWeight.SemiBold,
                         )
                         if (used > 0) {
+                            val used_pill = if (is_low) colors.danger else colors.warning
                             Box(
                                 modifier = Modifier
                                     .clip(CircleShape)
-                                    .background(if (is_low) colors.danger else colors.warning)
+                                    .background(used_pill)
                                     .padding(horizontal = 10.dp, vertical = 3.dp),
                             ) {
                                 Text(
                                     text = stringResource(R.string.fix_enc_codes_used, used),
-                                    color = Color.White,
+                                    color = readable_on(used_pill),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Medium,
                                 )
@@ -784,7 +787,7 @@ private fun key_detail_field(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(SquircleShape(AsterRadius.md))
-                .background(colors.bg_secondary)
+                .acrylic(colors, SquircleShape(AsterRadius.md), colors.bg_secondary)
                 .border(1.dp, colors.border_primary, SquircleShape(AsterRadius.md))
                 .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
         )
@@ -807,7 +810,7 @@ internal fun recovery_codes_block(codes: List<String>) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(SquircleShape(AsterRadius.lg))
-            .background(colors.bg_secondary)
+            .acrylic(colors, SquircleShape(AsterRadius.lg), colors.bg_secondary)
             .border(1.dp, colors.border_primary, SquircleShape(AsterRadius.lg))
             .padding(AsterSpacing.md),
         verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),

@@ -67,8 +67,8 @@
     <string name="requirement_lowercase">小文字1つ</string>
     <string name="requirement_number">数字1つ</string>
     <string name="add_backup_email">バックアップメールを追加</string>
-    <string name="backup_email_description">他のプロバイダーのリカバリメールを追加してください。任意ですが、アカウント復旧のために推奨されます。</string>
-    <string name="recovery_email">復旧用メールアドレス</string>
+    <string name="backup_email_description">他のプロバイダーのリカバリーメールを追加してください。任意ですが、アカウント復旧のために推奨されます。</string>
+    <string name="recovery_email">リカバリーメールアドレス</string>
     <string name="recovery_email_placeholder">backup@email.com</string>
     <string name="backup_email_short">バックアップメールを追加</string>
     <string name="save_recovery_email">リカバリーメールを保存</string>
@@ -104,21 +104,21 @@
     <string name="creating_encryption_keys">暗号化キーを作成中...</string>
     <string name="encryption_keys_local_only">暗号化キーはこのデバイスにローカルに保存され、サーバーに送信されることはありません。</string>
 
-    <string name="save_recovery_key">リカバリキーを保存</string>
+    <string name="save_recovery_key">リカバリーキーを保存</string>
     <string name="recovery_key_description">このキーを安全に保管してください。パスワードを忘れた場合にアカウントを復旧する唯一の方法です。</string>
-    <string name="saved_recovery_key_checkbox">リカバリキーを安全な場所に保存しました</string>
+    <string name="saved_recovery_key_checkbox">リカバリーキーを安全な場所に保存しました</string>
 
     <string name="recover_your_account">アカウントを復旧</string>
     <string name="enter_email_for_recovery">アカウントに関連付けられたメールアドレスを入力してください</string>
     <string name="email_address">メールアドレス</string>
     <string name="back_to_sign_in">サインインに戻る</string>
-    <string name="use_recovery_code">リカバリコードを使用</string>
-    <string name="recovery_email_sent">復旧メールを送信しました</string>
-    <string name="recovery_email_sent_description">パスワードリセットリンクを復旧メールに送信しました。受信トレイを確認し、リンクをクリックして続行してください。</string>
-    <string name="use_recovery_code_instead">代わりにリカバリコードを使用</string>
-    <string name="enter_recovery_code">リカバリコードを入力</string>
+    <string name="use_recovery_code">リカバリーコードを使用</string>
+    <string name="recovery_email_sent">リカバリーメールを送信しました</string>
+    <string name="recovery_email_sent_description">パスワードリセットリンクをリカバリーメールに送信しました。受信トレイを確認し、リンクをクリックして続行してください。</string>
+    <string name="use_recovery_code_instead">代わりにリカバリーコードを使用</string>
+    <string name="enter_recovery_code">リカバリーコードを入力</string>
     <string name="enter_recovery_code_description">アカウント作成時に保存したリカバリーコードのいずれかを入力してください。各コードは一度だけ使用できます。</string>
-    <string name="recovery_code">リカバリコード</string>
+    <string name="recovery_code">リカバリーコード</string>
     <string name="recovery_code_placeholder">ASTER-XXXX-XXXX-XXXX-XXXX</string>
     <string name="verify_code">コードを確認</string>
     <string name="create_new_password">新しいパスワードを作成</string>
@@ -132,7 +132,7 @@
     <string name="strength_strong">強い</string>
     <string name="recovering_your_account">アカウントを復旧中</string>
     <string name="please_dont_close_app">アプリを閉じないでください</string>
-    <string name="save_new_recovery_codes">新しいリカバリコードを保存</string>
+    <string name="save_new_recovery_codes">新しいリカバリーコードを保存</string>
     <string name="old_codes_invalidated">以前のリカバリーコードは使用できなくなりました。パスワードマネージャーや印刷したコピーなど、安全な場所に保管してください。各コードは一度だけ使用できます。</string>
     <string name="show_codes">コードを表示</string>
     <string name="hide_codes">コードを非表示</string>
@@ -479,7 +479,7 @@
     <string name="settings_security">セキュリティ</string>
     <string name="settings_security_subtitle">パスワード、2FA、セッション</string>
     <string name="settings_encryption">暗号化</string>
-    <string name="settings_encryption_subtitle">PGPキーとリカバリ</string>
+    <string name="settings_encryption_subtitle">PGPキーとリカバリー</string>
     <string name="settings_aliases">エイリアス</string>
     <string name="settings_domains">ドメイン</string>
     <string name="settings_aliases_and_domains">エイリアスとドメイン</string>
@@ -747,8 +747,8 @@
     <string name="hide_public_key">公開鍵を非表示</string>
     <string name="copy_public_key">公開鍵をコピー</string>
     <string name="identity_key_unavailable">このデバイスではIDキーを利用できません。再度サインインしてローカルの鍵素材を更新してください。</string>
-    <string name="recovery">リカバリ</string>
-    <string name="view_recovery_codes">リカバリコードを表示</string>
+    <string name="recovery">リカバリー</string>
+    <string name="view_recovery_codes">リカバリーコードを表示</string>
     <string name="key_rotation">キーローテーション</string>
     <string name="key_rotation_description">パスワードを変更するたびにIDキーがローテーションされます。古いメッセージが復号できるよう過去のキーはローカルに保持されます。</string>
     <string name="key_management">キー管理</string>
@@ -757,7 +757,7 @@
 
     <string name="enter_your_password">パスワードを入力</string>
     <string name="incorrect_password">パスワードが正しくありません</string>
-    <string name="no_recovery_key_found">リカバリキーが見つかりません。リカバリコードはアカウント作成時に設定され、暗号化されたボルトに保存されます。ログアウトして再度ログインし、ボルトを更新してみてください。</string>
+    <string name="no_recovery_key_found">リカバリーキーが見つかりません。リカバリーコードはアカウント作成時に設定され、暗号化されたボルトに保存されます。ログアウトして再度ログインし、ボルトを更新してみてください。</string>
 
     <string name="aliases">エイリアス</string>
     <string name="no_aliases">エイリアスはありません</string>
@@ -1192,18 +1192,6 @@
 
     <string name="language">言語</string>
     <string name="display_language">表示言語</string>
-    <string name="lang_english">English</string>
-    <string name="lang_spanish">Espanol</string>
-    <string name="lang_french">Francais</string>
-    <string name="lang_german">Deutsch</string>
-    <string name="lang_italian">Italiano</string>
-    <string name="lang_portuguese">Portugues</string>
-    <string name="lang_japanese">Japanese</string>
-    <string name="lang_korean">Korean</string>
-    <string name="lang_chinese">Chinese (simplified)</string>
-    <string name="lang_russian">Russian</string>
-    <string name="lang_arabic">Arabic</string>
-    <string name="lang_hindi">Hindi</string>
     <string name="set_from_system">システムから設定（English）</string>
     <string name="language_system_default">システム設定</string>
     <string name="language_system_default_hint">ここで言語を選ぶまで、Aster Mail はデバイスの言語に従います。</string>
@@ -1241,15 +1229,15 @@
     <string name="error_generic">問題が発生しました。もう一度お試しください。</string>
     <string name="error_too_many_attempts">試行回数が多すぎます。しばらく待ってからもう一度お試しください。</string>
 
-    <string name="error_send_recovery">復旧メールの送信に失敗しました</string>
-    <string name="error_invalid_recovery_code">リカバリコードの形式が無効です</string>
-    <string name="error_invalid_code">リカバリコードが無効です</string>
+    <string name="error_send_recovery">リカバリーメールの送信に失敗しました</string>
+    <string name="error_invalid_recovery_code">リカバリーコードの形式が無効です</string>
+    <string name="error_invalid_code">リカバリーコードが無効です</string>
     <string name="error_recovery_failed">復旧に失敗しました</string>
     <string name="error_recovery_too_many_attempts">このアカウントで復旧の試行回数が多すぎます。約30分後にもう一度お試しください。コードは1つも使用されていないため、すべてそのまま残っています。</string>
     <string name="status_deriving_key">新しいパスワードキーを導出中</string>
     <string name="status_encrypting_vault">新しいパスワードでボルトを暗号化中</string>
-    <string name="status_generating_codes">新しいリカバリコードを生成中</string>
-    <string name="status_creating_backup">リカバリバックアップを作成中</string>
+    <string name="status_generating_codes">新しいリカバリーコードを生成中</string>
+    <string name="status_creating_backup">リカバリーバックアップを作成中</string>
     <string name="status_saving_credentials">新しい認証情報を保存中</string>
     <string name="added_to_label">%sに追加しました</string>
     <string name="all_marked_read">すべて既読にしました</string>
@@ -1379,7 +1367,7 @@
     <string name="totp_passkey_subtitle">このアカウント用に保存したパスキーまたはセキュリティキーで確認します</string>
     <string name="totp_passkey_button">パスキーで続ける</string>
     <string name="totp_use_passkey">パスキーを使う</string>
-    <string name="totp_backup_code_hint">バックアップコードは8文字で、認証アプリの設定時に発行されます。ASTER で始まる復旧コードはメールボックスを復元するためのもので、ここでは使えません。</string>
+    <string name="totp_backup_code_hint">バックアップコードは8文字で、認証アプリの設定時に発行されます。ASTER で始まるリカバリーコードはメールボックスを復元するためのもので、ここでは使えません。</string>
     <string name="totp_trust_device">このデバイスを30日間信頼する</string>
     <string name="failed_block_sender">送信者をブロックできませんでした</string>
     <string name="failed_unblock_sender">送信者のブロック解除に失敗しました</string>
@@ -1603,6 +1591,7 @@
     <string name="name_copied">名前をコピーしました</string>
     <string name="email_copied">メールアドレスをコピーしました</string>
     <string name="show_less">折りたたむ</string>
+    <string name="color_theme_show_all">すべての色を表示</string>
     <string name="expand_folder">%1$s を展開</string>
     <string name="collapse_folder">%1$s を折りたたむ</string>
     <string name="badge_active">アクティブなバッジ</string>
@@ -1632,7 +1621,7 @@
     <string name="score_complete">設定完了</string>
     <string name="score_steps_left">残り %1$d</string>
     <string name="check_passkey_registered">パスキー登録済み</string>
-    <string name="check_verified_recovery_email">確認済みの復旧用メール</string>
+    <string name="check_verified_recovery_email">確認済みのリカバリーメール</string>
     <string name="check_read_receipts_off">開封確認オフ</string>
     <plurals name="passkeys_registered_count">
         <item quantity="other">パスキー %d 件登録済み</item>
@@ -1867,7 +1856,7 @@
     <string name="import_provider_eml">EML ファイル</string>
     <string name="theme_dynamic">壁紙の色</string>
     <string name="theme_dynamic_subtitle">端末の配色に合わせる</string>
-    <string name="delete_alias_confirm_message">%1$s を完全に削除しますか? このエイリアス宛のメールは差し戻されます。</string>
+    <string name="delete_alias_confirm_message">%1$s を完全に削除しますか？ このエイリアス宛のメールは差し戻されます。</string>
     <string name="backup_codes_clipboard_label">バックアップコード</string>
     <string name="forwarded_message_label">転送されたメッセージ</string>
     <string name="failed_create_tag">タグを作成できませんでした</string>
@@ -1880,7 +1869,7 @@
     <string name="default_signature_name">既定</string>
     <string name="quiet_hours_start">開始</string>
     <string name="quiet_hours_end">終了</string>
-    <string name="revoke_api_key_title">API キーを失効しますか?</string>
+    <string name="revoke_api_key_title">API キーを失効しますか？</string>
     <string name="revoke_api_key_confirm_message">このキーを使っているアプリはすぐに使えなくなります。元に戻せません。</string>
     <string name="signature_name">名前</string>
     <string name="signature_apply_to">適用先</string>
@@ -1991,8 +1980,8 @@
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Supernova</string>
     <string name="ghost_alias_limit_reached">今月のゴーストエイリアスの上限に達しました</string>
-    <string name="ghost_extend_confirm_message">%s をさらに 30 日延長しますか?</string>
-    <string name="ghost_expire_confirm_message">%s を今すぐ失効しますか? 宛てて送られたメールは受信箱に届かなくなります。</string>
+    <string name="ghost_extend_confirm_message">%s をさらに 30 日延長しますか？</string>
+    <string name="ghost_expire_confirm_message">%s を今すぐ失効しますか？ 宛てて送られたメールは受信箱に届かなくなります。</string>
     <string name="ghost_extended">ゴーストエイリアスを延長しました</string>
     <string name="ghost_expired_toast">ゴーストエイリアスを失効しました</string>
     <string name="ghost_action_failed">ゴーストエイリアスを更新できませんでした</string>
@@ -2989,7 +2978,7 @@
     <string name="are_you_sure">よろしいですか？</string>
     <string name="go_back">戻る</string>
     <string name="continue_anyway">続行する</string>
-    <string name="recovery_codes_skip_warning">リカバリーコードがないと、パスワードを忘れた場合に誰もこのアカウントを取り戻すことはできず、暗号化されたデータも永久に失われます。保存せずに続行しますか?</string>
+    <string name="recovery_codes_skip_warning">リカバリーコードがないと、パスワードを忘れた場合に誰もこのアカウントを取り戻すことはできず、暗号化されたデータも永久に失われます。保存せずに続行しますか？</string>
     <string name="revoke_session_confirm">この端末はすぐにサインアウトされ、再度サインインが必要になります。</string>
     <string name="scheduled_action_failed">予約送信メールを更新できませんでした</string>
     <string name="scheduled_cancelled">予約送信を取り消しました</string>
@@ -3045,7 +3034,7 @@
     <string name="audit_event_login">サインインしました</string>
     <string name="audit_event_logout">サインアウトしました</string>
     <string name="audit_event_password_change">パスワードを変更しました</string>
-    <string name="audit_event_recovery_codes_regenerated">リカバリコードを再生成しました</string>
+    <string name="audit_event_recovery_codes_regenerated">リカバリーコードを再生成しました</string>
     <string name="audit_event_session_revoked">セッションを取り消しました</string>
     <string name="audit_event_settings_changed">設定を変更しました</string>
     <string name="audit_event_suspicious_activity">不審なアクティビティ</string>
@@ -3055,14 +3044,14 @@
     <string name="connection_direct">直接</string>
     <string name="connection_direct_description">Aster のサーバに直接接続して、最速の動作を得られます。</string>
     <string name="connection_method_header">接続方法</string>
-    <string name="couldnt_move_to_inbox">受信ボックスに移動できませんでした</string>
+    <string name="couldnt_move_to_inbox">受信トレイに移動できませんでした</string>
     <string name="domain_record_pending">まだ見つかりません</string>
     <string name="domain_status_dns_pending">DNS を待機中</string>
     <string name="domain_status_failed">確認に失敗しました</string>
     <string name="domain_status_suspended">停止中</string>
     <string name="domain_status_verifying">確認中</string>
     <string name="failed_save_connection_preference">接続設定を保存できませんでした</string>
-    <string name="generate_ghost_alias_message">Aster が受信ボックスに転送されるランダムなアドレスを作成します。ほかのアドレスに影響を与えずに、いつでも削除できます。</string>
+    <string name="generate_ghost_alias_message">Aster が受信トレイに転送されるランダムなアドレスを作成します。ほかのアドレスに影響を与えずに、いつでも削除できます。</string>
     <string name="identity_changed_description">%1$s の暗号化キーが、以前に表示されたものと異なります。これは相手が新しいデバイスでサインインしたときやアカウントをリセットしたときに起こりますが、誰かがメッセージを傍受している可能性もあります。この会話を信頼する前に、別の手段で相手に確認してください。</string>
     <string name="identity_changed_dismiss">確認しました</string>
     <string name="identity_changed_title">暗号化キーが変更されました</string>
@@ -3087,7 +3076,7 @@
     <string name="reply_to_label">返信先</string>
     <string name="security_details_title">セキュリティの詳細</string>
     <string name="show_sender_pictures">差出人の画像</string>
-    <string name="show_sender_pictures_subtitle">受信ボックスで各差出人の写真またはイニシャルを表示します</string>
+    <string name="show_sender_pictures_subtitle">受信トレイで各差出人の写真またはイニシャルを表示します</string>
     <string name="theme_sync_across_devices">デバイス間でテーマを同期</string>
     <string name="theme_sync_across_devices_subtitle">このデバイスで別のテーマを使うには、これをオフにします。</string>
     <string name="view_encryption_details">暗号化の詳細を表示</string>
@@ -3150,7 +3139,7 @@
     <string name="error_account_suspended">利用規約違反のため、アカウントが停止されています。</string>
     <string name="error_alias_reencryption_incomplete">一部のエイリアスの再暗号化が完了しなかったため、変更は適用されていません。やり直してください。</string>
     <string name="error_client_upgrade_required">このバージョンのアプリではこの変更を行えません。最新バージョンにアップデートしてからやり直してください。</string>
-    <string name="error_verification_required">このアカウントを引き続き使用するには、復旧用メールアドレスを確認してください。</string>
+    <string name="error_verification_required">このアカウントを引き続き使用するには、リカバリーメールアドレスを確認してください。</string>
     <string name="no_recipients">宛先なし</string>
     <string name="scheduled_already_sending">このメールは送信中のため、変更できません。</string>
     <string name="scheduled_cancel_send">送信を取り消す</string>
@@ -3174,7 +3163,7 @@
     <string name="merge_keep_this">これを残す</string>
     <string name="contacts_merged">連絡先を統合しました</string>
     <string name="review_duplicates">確認</string>
-    <string name="delete_contacts_message">選択した連絡先は、アカウントにログインしているすべてのデバイスから削除されます。</string>
+    <string name="delete_contacts_message">選択した連絡先は、アカウントにサインインしているすべてのデバイスから削除されます。</string>
     <string name="clear_selection">選択を解除</string>
     <string name="select_contacts_hint">プロフィール写真をタップして連絡先を選択します。</string>
     <plurals name="groups_count_plural">
@@ -3187,7 +3176,7 @@
         <item quantity="other">%d 件の連絡先が重複しているようです</item>
     </plurals>
     <plurals name="delete_contacts_title">
-        <item quantity="other">%d 件の連絡先を削除しますか?</item>
+        <item quantity="other">%d 件の連絡先を削除しますか？</item>
     </plurals>
     <plurals name="contacts_deleted_plural">
         <item quantity="other">%d 件の連絡先を削除しました</item>
@@ -3310,7 +3299,7 @@
     <string name="sender_verified_badge">認証済みの送信者</string>
     <string name="sender_verified_title">認証済みの送信者</string>
     <string name="sender_verified_message">このメールの送信者は %1$s を所有していることを確認済みです。</string>
-    <string name="password_recovery_email_title">パスワード復旧用メール</string>
+    <string name="password_recovery_email_title">パスワードリカバリーメール</string>
     <string name="recovery_email_step_desc">リカバリーコードを紛失してもアカウントに戻れるよう、メールアドレスを追加してください。</string>
     <string name="notifications_step_title">通知をオンにする</string>
     <string name="notifications_step_desc">アプリがバックグラウンドにあっても、新着メールを通知で受け取れます。</string>
@@ -3374,7 +3363,7 @@
     <string name="enc_keys_section_title">暗号化キー</string>
     <string name="enc_openpgp_key_title">あなたのOpenPGPキー</string>
     <string name="enc_verification_code_label">確認コード</string>
-    <string name="enc_verification_code_info_title">このコードは何ですか?</string>
+    <string name="enc_verification_code_info_title">このコードは何ですか？</string>
     <string name="enc_verification_code_info_description">暗号化キーから作成された短いコードです。メールをやり取りする相手がこのコードを自分側のコードと照合して一致すれば、お互いのメッセージが非公開で改ざんされていないことを確認できます。</string>
     <string name="enc_copy_verification_code">確認コードをコピー</string>
     <string name="copy_all_codes">すべてのコードをコピー</string>
@@ -3395,7 +3384,7 @@
     <string name="change_account">別のアドレスを使う</string>
     <string name="change_account_desc">別の Aster Mail アカウントを復元します。</string>
     <string name="support_step_title">サポートに問い合わせる</string>
-    <string name="support_step_desc">Aster Mail は暗号化されたデータを読み取れないため、リカバリーコードまたは復旧用メールなしで解除できる人はいません。サポートがアカウントを確認し、次の手順を案内します。</string>
+    <string name="support_step_desc">Aster Mail は暗号化されたデータを読み取れないため、リカバリーコードまたはリカバリーメールなしで解除できる人はいません。サポートがアカウントを確認し、次の手順を案内します。</string>
     <string name="support_email_action">サポートにメールする</string>
     <string name="support_help_center">ヘルプセンターを開く</string>
     <string name="other_way_none_title">どれも持っていない</string>
@@ -3407,8 +3396,8 @@
     <string name="recovery_codes_unavailable">このデバイスにはコードが保存されていません。表示するには新しいコードを取得してください。</string>
     <string name="recovery_codes_view_desc">各コードは一度だけ使用できます。使用済みのコードには取り消し線が付きます。</string>
     <string name="reset_account_desc">リセット前の暗号化されたメール、連絡先、ファイルは、以前のパスワードで復元するまでロックされたままです。新しい空の暗号鍵が発行されます。</string>
-    <string name="reset_account_title">アカウントをリセットしますか?</string>
-    <string name="review_devices_signed_out">他のデバイスからログアウトしました。</string>
+    <string name="reset_account_title">アカウントをリセットしますか？</string>
+    <string name="review_devices_signed_out">他のデバイスからサインアウトしました。</string>
     <string name="review_no_recovery_email">リカバリーメールはありません。</string>
     <string name="review_recovery_email_kept">リカバリーメールは設定されたままです。</string>
     <string name="review_security_desc">パスワードが変更され、アカウントが復元されました。</string>
@@ -3424,7 +3413,7 @@
     <string name="profile_menu_greeting_comma">、</string>
     <string name="profile_menu_manage_account">アカウント設定</string>
     <string name="profile_menu_add_another_account">別のアカウントを追加</string>
-    <string name="profile_menu_sign_out_all">すべてのアカウントからログアウト</string>
+    <string name="profile_menu_sign_out_all">すべてのアカウントからサインアウト</string>
     <string name="profile_menu_session_expired">セッション期限切れ</string>
     <string name="profile_menu_default_account">既定</string>
     <string name="profile_menu_storage_of_used">%2$s 中 %1$s を使用</string>

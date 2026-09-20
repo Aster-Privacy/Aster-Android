@@ -22,6 +22,7 @@
 package org.astermail.android.ui.settings.detail
 
 import android.content.ClipData
+import org.astermail.android.design.readable_on
 import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
 import android.content.ClipboardManager
@@ -605,17 +606,16 @@ private fun crypto_progress_stepper(status: String, confirmations: Int, min_conf
                     modifier = Modifier.fillMaxHeight(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
+                    val marker_fill = when {
+                        is_done -> colors.success
+                        is_current -> colors.accent_blue
+                        else -> Color.Transparent
+                    }
                     Box(
                         modifier = Modifier
                             .size(marker_size)
                             .clip(CircleShape)
-                            .background(
-                                when {
-                                    is_done -> colors.success
-                                    is_current -> colors.accent_blue
-                                    else -> Color.Transparent
-                                },
-                            )
+                            .background(marker_fill)
                             .then(
                                 if (is_done || is_current) Modifier else Modifier.border(1.5.dp, colors.border_secondary, CircleShape),
                             ),
@@ -625,7 +625,7 @@ private fun crypto_progress_stepper(status: String, confirmations: Int, min_conf
                             Icon(
                                 TablerIcons.Check,
                                 contentDescription = null,
-                                tint = Color.White,
+                                tint = readable_on(marker_fill),
                                 modifier = Modifier.size(15.dp),
                             )
                         } else {

@@ -53,6 +53,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.acrylic
 
 private sealed interface cell_value {
     object yes : cell_value
@@ -190,7 +191,7 @@ fun FeaturesScreen(on_back: () -> Unit) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(colors.bg_secondary, RoundedCornerShape(topStart = AsterRadius.lg, topEnd = AsterRadius.lg))
+                        .acrylic(colors, RoundedCornerShape(topStart = AsterRadius.lg, topEnd = AsterRadius.lg), colors.bg_secondary)
                         .padding(vertical = AsterSpacing.md),
                 ) {
                     Box(

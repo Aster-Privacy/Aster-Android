@@ -83,6 +83,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
@@ -1363,7 +1364,7 @@ private fun cancel_subscription_flow(
                                 .fillMaxWidth()
                                 .heightIn(min = 48.dp)
                                 .clip(SquircleShape(10.dp))
-                                .background(colors.bg_secondary)
+                                .acrylic(colors, SquircleShape(10.dp), colors.bg_secondary)
                                 .border(1.dp, colors.border_primary, SquircleShape(10.dp))
                                 .clickable(role = Role.Button, onClick = on_switch_plan)
                                 .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
@@ -1391,7 +1392,7 @@ private fun cancel_subscription_flow(
                                 .fillMaxWidth()
                                 .heightIn(min = 48.dp)
                                 .clip(SquircleShape(10.dp))
-                                .background(colors.bg_secondary)
+                                .acrylic(colors, SquircleShape(10.dp), colors.bg_secondary)
                                 .border(1.dp, colors.border_primary, SquircleShape(10.dp))
                                 .clickable(role = Role.Button, onClick = on_switch_yearly)
                                 .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
@@ -1672,7 +1673,7 @@ private fun crypto_coin_dialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(SquircleShape(14.dp))
-                            .background(colors.bg_secondary)
+                            .acrylic(colors, SquircleShape(14.dp), colors.bg_secondary)
                             .border(1.dp, colors.border_secondary, SquircleShape(14.dp))
                             .clickable { on_select(coin) }
                             .padding(AsterSpacing.md),
@@ -2191,7 +2192,7 @@ private fun storage_addons_card(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(SquircleShape(14.dp))
-                                .background(colors.bg_secondary)
+                                .acrylic(colors, SquircleShape(14.dp), colors.bg_secondary)
                                 .padding(AsterSpacing.md),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,

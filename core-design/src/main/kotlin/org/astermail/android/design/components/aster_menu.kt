@@ -87,6 +87,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Check
 import org.astermail.android.design.AsterMaterial
@@ -188,6 +190,13 @@ fun aster_menu(
     val reduce_motion = aster_reduce_motion()
     val focus_manager = LocalFocusManager.current
     val parent_view = LocalView.current
+    if (expanded) {
+        remember(parent_view) {
+            ViewCompat.getWindowInsetsController(parent_view)
+                ?.hide(WindowInsetsCompat.Type.ime())
+            true
+        }
+    }
     LaunchedEffect(expanded) {
         if (expanded) focus_manager.clearFocus(force = true)
     }

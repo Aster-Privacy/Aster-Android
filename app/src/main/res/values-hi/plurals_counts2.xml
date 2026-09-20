@@ -25,8 +25,8 @@
         <item quantity="other">%d रिकवरी कोड</item>
     </plurals>
     <plurals name="imported_contacts">
-        <item quantity="one">%d संपर्क आयात किया गया</item>
-        <item quantity="other">%d संपर्क आयात किए गए</item>
+        <item quantity="one">%d संपर्क इंपोर्ट किया गया</item>
+        <item quantity="other">%d संपर्क इंपोर्ट किए गए</item>
     </plurals>
     <plurals name="n_images">
         <item quantity="one">%1$d छवि</item>
@@ -73,8 +73,8 @@
         <item quantity="other">%2$s में %1$d संदेश</item>
     </plurals>
     <plurals name="exported_contacts">
-        <item quantity="one">%d संपर्क निर्यात किया गया</item>
-        <item quantity="other">%d संपर्क निर्यात किए गए</item>
+        <item quantity="one">%d संपर्क एक्सपोर्ट किया गया</item>
+        <item quantity="other">%d संपर्क एक्सपोर्ट किए गए</item>
     </plurals>
     <plurals name="lockout_minutes">
         <item quantity="one">%1$d मिनट</item>

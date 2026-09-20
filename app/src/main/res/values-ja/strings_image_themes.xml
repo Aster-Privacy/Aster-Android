@@ -10,6 +10,11 @@
     <string name="image_theme_category_cities">都市</string>
     <string name="image_theme_category_landscapes">風景</string>
     <string name="image_theme_category_water">水辺</string>
+    <string name="image_theme_category_aurora">オーロラ</string>
+    <string name="image_theme_category_mountains">山</string>
+    <string name="image_theme_category_forest">森</string>
+    <string name="image_theme_category_desert">砂漠</string>
+    <string name="image_theme_category_ocean">海</string>
     <string name="image_theme_apply_changes">適用</string>
     <string name="image_theme_reset">デフォルトに戻す</string>
     <string name="image_theme_colors">カラー</string>
@@ -23,7 +28,6 @@
     <string name="image_theme_photo_too_large">この写真は大きすぎます。40 MB 未満の写真を選択してください。</string>
     <string name="image_theme_photo_unsupported">このファイル形式には対応していません。JPEG、PNG、GIF、WebP、HEIC の写真を選択してください。</string>
     <string name="image_theme_photo_unreadable">この写真を開けません。別の写真をお試しください。</string>
-    <string name="image_theme_category_calm">穏やか</string>
     <string name="image_theme_credit_modified">写真: %1$s。トリミングとサイズ変更を行っています。</string>
     <string name="image_theme_credit_generated">Aster が作成</string>
     <string name="image_theme_adjust_photo">調整</string>
@@ -51,4 +55,5 @@
     <string name="image_theme_animation">背景をアニメーションさせる</string>
     <string name="image_theme_animation_subtitle">アニメーション背景を再生します。バッテリーセーバー中や、デバイスでアニメーションをオフにしているときは停止します。</string>
     <string name="image_theme_animation_too_large">このアニメーション画像は大きすぎます。12 MB 未満の画像を選択してください。</string>
+    <string name="image_theme_retry_download">ダウンロードを再試行</string>
 </resources>

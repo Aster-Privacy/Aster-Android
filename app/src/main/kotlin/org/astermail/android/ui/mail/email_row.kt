@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.stateDescription
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.ui.icons.pin_icon_filled
 
@@ -1030,7 +1031,7 @@ private fun thread_count_pill(count: Int) {
     Box(
         modifier = Modifier
             .clip(androidx.compose.foundation.shape.RoundedCornerShape(999.dp))
-            .background(colors.bg_secondary)
+            .acrylic(colors, androidx.compose.foundation.shape.RoundedCornerShape(999.dp), colors.bg_secondary)
             .padding(horizontal = 6.dp, vertical = 1.dp),
     ) {
         Text(

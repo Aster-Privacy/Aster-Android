@@ -17,7 +17,7 @@
     <string name="signature_select">İmza seç</string>
     <string name="compose_metadata_strip_failed">Şu dosyadan gizli üstveri kaldırılamadı: %1$s</string>
     <string name="compose_inline_image_failed">Bu görseller eklenemedi: %1$s</string>
-    <string name="compose_attachment_read_failed">\"%1$s\" eklenemedi. E-postan gönderilmedi. Dosyayı çıkar ya da yeniden ekleyip tekrar dene.</string>
+    <string name="compose_attachment_read_failed">\"%1$s\" eklenemedi. E-postanız gönderilmedi. Dosyayı çıkarın ya da yeniden ekleyip tekrar deneyin.</string>
     <string name="schedule_in_one_hour">Bir saat sonra</string>
     <string name="schedule_tonight">Bu akşam</string>
     <string name="schedule_tomorrow_morning">Yarın sabah</string>

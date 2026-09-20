@@ -78,6 +78,7 @@ import org.astermail.android.design.acrylic
 import org.astermail.android.design.local_acrylic
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.shape.RoundedCornerShape
+import org.astermail.android.ui.common.sheet_container_color
 
 private val ROW_LABEL_WIDTH = 104.dp
 
@@ -320,15 +321,13 @@ internal fun advanced_search_sheet(
     }
 
     val sheet_shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-    val sheet_acrylic = colors.is_glass && local_acrylic.current != null
     ModalBottomSheet(
         onDismissRequest = on_dismiss,
         sheetState = sheet_state,
         shape = sheet_shape,
-        containerColor = if (sheet_acrylic) Color.Transparent else colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
-        modifier = if (sheet_acrylic) Modifier.acrylic(colors, sheet_shape) else Modifier,
     ) {
         Column(
             modifier = Modifier

@@ -33,7 +33,7 @@
     <string name="interval_month">월</string>
     <string name="interval_year">년</string>
     <string name="notif_channel_billing_description">결제와 요금제에 대한 알림입니다.</string>
-    <string name="notif_channel_billing_name">결제</string>
+    <string name="notif_channel_billing_name">청구</string>
     <string name="onboarding_checklist_title">Aster 설정 (%2$d개 중 %1$d개)</string>
     <string name="onboarding_task_first_email">첫 메일 보내기</string>
     <string name="onboarding_task_import">기존 메일 가져오기</string>

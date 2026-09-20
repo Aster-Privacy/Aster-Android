@@ -75,6 +75,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
@@ -148,7 +149,7 @@ private fun import_drop_area(on_choose: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(SquircleShape(14.dp))
-            .background(colors.bg_secondary, SquircleShape(14.dp))
+            .acrylic(colors, SquircleShape(14.dp), colors.bg_secondary)
             .border(1.dp, colors.input_border, SquircleShape(14.dp))
             .clickable(onClick = on_choose)
             .padding(vertical = AsterSpacing.lg, horizontal = AsterSpacing.md),
@@ -186,7 +187,7 @@ private fun import_file_card(
         modifier = Modifier
             .fillMaxWidth()
             .clip(SquircleShape(14.dp))
-            .background(colors.bg_secondary, SquircleShape(14.dp))
+            .acrylic(colors, SquircleShape(14.dp), colors.bg_secondary)
             .border(1.dp, colors.input_border, SquircleShape(14.dp))
             .padding(AsterSpacing.md),
         verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
@@ -511,7 +512,7 @@ fun alias_import_dialog(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(SquircleShape(12.dp))
-                                    .background(colors.bg_secondary)
+                                    .acrylic(colors, SquircleShape(12.dp), colors.bg_secondary)
                                     .clickable {
                                         update_existing = !update_existing
                                         if (update_existing) {

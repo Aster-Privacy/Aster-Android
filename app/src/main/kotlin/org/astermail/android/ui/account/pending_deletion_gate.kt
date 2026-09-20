@@ -51,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
 import org.astermail.android.account.PendingDeletionViewModel
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterButton
 
 @Composable
@@ -79,7 +80,7 @@ fun PendingDeletionGate(
                 .fillMaxWidth()
                 .padding(horizontal = 28.dp)
                 .clip(RoundedCornerShape(18.dp))
-                .background(colors.bg_secondary)
+                .acrylic(colors, RoundedCornerShape(18.dp), colors.bg_secondary)
                 .border(1.dp, colors.border_primary, RoundedCornerShape(18.dp))
                 .padding(24.dp),
             horizontalAlignment = Alignment.Start,

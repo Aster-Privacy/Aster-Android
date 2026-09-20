@@ -1192,18 +1192,6 @@
 
     <string name="language">Język</string>
     <string name="display_language">Język wyświetlania</string>
-    <string name="lang_english">English</string>
-    <string name="lang_spanish">Espanol</string>
-    <string name="lang_french">Francais</string>
-    <string name="lang_german">Deutsch</string>
-    <string name="lang_italian">Italiano</string>
-    <string name="lang_portuguese">Portugues</string>
-    <string name="lang_japanese">Japanese</string>
-    <string name="lang_korean">Korean</string>
-    <string name="lang_chinese">Chinese (simplified)</string>
-    <string name="lang_russian">Russian</string>
-    <string name="lang_arabic">Arabic</string>
-    <string name="lang_hindi">Hindi</string>
     <string name="set_from_system">Systemowy (English)</string>
     <string name="language_system_default">Domyślny systemu</string>
     <string name="language_system_default_hint">Aster Mail używa języka urządzenia, dopóki nie wybierzesz języka tutaj.</string>
@@ -1339,7 +1327,9 @@
     <string name="current_password_incorrect">Aktualne hasło jest nieprawidłowe</string>
     <string name="password_change_background_reencrypt_failed">Hasło zostało zmienione. Aster Mail nadal ponownie szyfruje część wysłanych wiadomości i kończy to w tle.</string>
     <plurals name="password_change_sent_mail_locked">
-        <item quantity="one">Hasło zostało zmienione. %1$d wysłanych wiadomości zaszyfrowano starszym hasłem i pozostają zablokowane.</item>
+        <item quantity="one">Hasło zostało zmienione. %1$d wysłaną wiadomość zaszyfrowano starszym hasłem i pozostaje zablokowana.</item>
+        <item quantity="few">Hasło zostało zmienione. %1$d wysłane wiadomości zaszyfrowano starszym hasłem i pozostają zablokowane.</item>
+        <item quantity="many">Hasło zostało zmienione. %1$d wysłanych wiadomości zaszyfrowano starszym hasłem i pozostają zablokowane.</item>
         <item quantity="other">Hasło zostało zmienione. %1$d wysłanych wiadomości zaszyfrowano starszym hasłem i pozostają zablokowane.</item>
     </plurals>
     <string name="compose_email_hint">Napisz wiadomość</string>
@@ -1609,6 +1599,7 @@
     <string name="name_copied">Skopiowano nazwę</string>
     <string name="email_copied">Skopiowano adres e-mail</string>
     <string name="show_less">Pokaż mniej</string>
+    <string name="color_theme_show_all">Pokaż wszystkie kolory</string>
     <string name="expand_folder">Rozwiń %1$s</string>
     <string name="collapse_folder">Zwiń %1$s</string>
     <string name="badge_active">Aktywna odznaka</string>

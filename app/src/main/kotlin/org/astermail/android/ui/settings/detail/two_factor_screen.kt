@@ -23,6 +23,7 @@ package org.astermail.android.ui.settings.detail
 
 import compose.icons.TablerIcons
 import android.widget.Toast
+import org.astermail.android.design.acrylic
 import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
 import compose.icons.tablericons.*
@@ -199,7 +200,7 @@ private fun two_factor_status_pill(enabled: Boolean) {
     val shape = SquircleShape(8.dp)
     Box(
         modifier = Modifier
-            .background(colors.bg_secondary, shape)
+            .acrylic(colors, shape, colors.bg_secondary)
             .border(1.dp, colors.border_primary, shape)
             .padding(horizontal = AsterSpacing.sm, vertical = 3.dp),
     ) {

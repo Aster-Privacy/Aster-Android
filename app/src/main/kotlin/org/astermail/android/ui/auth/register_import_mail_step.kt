@@ -58,6 +58,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterGhostButton
 
 private data class import_source(
@@ -112,7 +113,7 @@ fun RegisterImportMailStep(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(SquircleShape(16.dp))
-                .background(colors.bg_secondary),
+                .acrylic(colors, SquircleShape(16.dp), colors.bg_secondary),
         ) {
             import_sources.forEachIndexed { index, source ->
                 if (index > 0) {
@@ -175,7 +176,7 @@ private fun import_source_row(
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .background(colors.bg_card, SquircleShape(12.dp))
+                .acrylic(colors, SquircleShape(12.dp), colors.bg_card)
                 .border(1.dp, colors.border_primary, SquircleShape(12.dp)),
             contentAlignment = Alignment.Center,
         ) {

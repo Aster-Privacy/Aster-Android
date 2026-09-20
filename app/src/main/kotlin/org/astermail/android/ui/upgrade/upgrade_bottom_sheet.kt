@@ -80,9 +80,11 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterSecondaryButton
+import org.astermail.android.ui.common.sheet_container_color
 import org.astermail.android.ui.settings.detail.aster_segmented
 import org.astermail.android.ui.settings.detail.galaxy_badge
 import org.astermail.android.ui.settings.detail.galaxy_surface
@@ -180,7 +182,7 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
     ModalBottomSheet(
         onDismissRequest = { UpgradeStore.close() },
         sheetState = sheet_state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
     ) {
         Column(
@@ -608,7 +610,7 @@ internal fun UpgradePlanCard(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(colors.bg_card, SquircleShape(18.dp))
+                .acrylic(colors, SquircleShape(18.dp), colors.bg_card)
                 .border(
                     if (is_selected) 2.dp else 1.dp,
                     if (is_selected) colors.accent_blue else colors.border_secondary,

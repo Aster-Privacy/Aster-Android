@@ -25,6 +25,7 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -55,6 +56,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
+import org.astermail.android.ui.common.sheet_container_color
 import org.astermail.android.ui.theme.draw_theme_background
 import org.astermail.android.ui.theme.draw_theme_veil
 import org.astermail.android.ui.common.image_theme_panel
@@ -142,6 +144,7 @@ import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu_section_label
 import org.astermail.android.R
 import org.astermail.android.ui.common.glass_bar
+import org.astermail.android.ui.common.glass_chrome
 import org.astermail.android.debugtools.debug_build_pill_inline
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic
@@ -271,7 +274,9 @@ private const val DRAG_HAPTIC_MIN_GAP_MS = 55L
 
 private val pull_refresh_travel = 56.dp
 
-private val pull_refresh_threshold = 56.dp
+private val chrome_reveal_distance = 24.dp
+
+val pull_refresh_threshold = 56.dp
 
 private const val PULL_DRAG_RATIO = 0.6f
 
@@ -1709,10 +1714,8 @@ fun InboxScreen(
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
                                 .padding(top = header_height_dp)
-                                .graphicsLayer {
-                                    translationY = travel
-                                    alpha = indicator_alpha
-                                }
+                                .offset { IntOffset(0, travel.roundToInt()) }
+                                .graphicsLayer { alpha = indicator_alpha }
                                 .size(44.dp)
                                 .shadow(10.dp, CircleShape)
                                 .acrylic(colors, CircleShape),
@@ -1759,14 +1762,11 @@ fun InboxScreen(
                     }
                 }
                 val cache_pending = inbox_state.cache_pending
-                val skeleton_target = !cache_pending &&
+                val skeleton_target = (inbox_state.initial && threads.isEmpty()) ||
                     (
-                        (inbox_state.initial && threads.isEmpty()) ||
-                            (
-                                !thread_gate.category_only &&
-                                    (inbox_state.is_loading || threads_pending) &&
-                                    threads.isEmpty()
-                                )
+                        !thread_gate.category_only &&
+                            (inbox_state.is_loading || threads_pending) &&
+                            threads.isEmpty()
                         )
                 val empty_target = threads.isEmpty() &&
                     !threads_pending &&
@@ -1781,7 +1781,10 @@ fun InboxScreen(
                         empty_settled = true
                     }
                 }
-                val inbox_error_now = threads.isEmpty() && inbox_state.error != null
+                val inbox_error_now = threads.isEmpty() &&
+                    inbox_state.error != null &&
+                    !cache_pending &&
+                    !inbox_state.is_loading
                 val category_skeleton = hidden_by_category &&
                     (
                         (category_drain_active && inbox_state.is_loading_more) ||
@@ -1791,11 +1794,9 @@ fun InboxScreen(
                     threads.isEmpty() &&
                     !empty_settled &&
                     !thread_gate.category_only
-                val skeleton_now = !cache_pending &&
-                    (
-                        skeleton_target ||
-                            (!inbox_error_now && !contradicts_unread && (category_skeleton || empty_skeleton))
-                        )
+                val skeleton_now = cache_pending ||
+                    skeleton_target ||
+                    (!inbox_error_now && !contradicts_unread && (category_skeleton || empty_skeleton))
                 val rows_imminent = threads.isEmpty() && threads_pending && inbox_state.items.isNotEmpty()
                 val skeleton_phase by remember_skeleton_phase(
                     wanted = skeleton_now,
@@ -1960,7 +1961,10 @@ fun InboxScreen(
                                     }
                                 }
                             },
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(top = header_height_dp, bottom = list_bottom_pad),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                            top = header_height_dp + AsterSpacing.sm,
+                            bottom = list_bottom_pad,
+                        ),
                     ) {
                         if (show_onboarding_checklist && !select_mode) {
                             item(key = "_onboarding_checklist", contentType = "onboarding_checklist") {
@@ -2212,6 +2216,17 @@ fun InboxScreen(
         }
 
         val header_bg = colors.bg_primary
+        val chrome_ramp_px = with(density) { chrome_reveal_distance.toPx() }
+        val chrome_reveal by remember(list_state, chrome_ramp_px) {
+            derivedStateOf {
+                if (list_state.firstVisibleItemIndex > 0) {
+                    1f
+                } else {
+                    (list_state.firstVisibleItemScrollOffset / chrome_ramp_px).coerceIn(0f, 1f)
+                }
+            }
+        }
+        val chrome_alpha = { if (colors.is_translucent) chrome_reveal else 1f }
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -2230,13 +2245,19 @@ fun InboxScreen(
                         )
                     }
                 }
-                .drawBehind {
-                    if (has_backdrop) return@drawBehind
-                    val limit = header_height_px.toFloat()
-                    val fraction = if (limit == 0f) 0f else (-header_offset_px.floatValue / limit).coerceIn(0f, 1f)
-                    drawRect(color = header_bg, alpha = 1f - fraction)
-                }
-                ,
+                .glass_chrome(
+                    colors = colors,
+                    alpha = {
+                        val limit = header_height_px.toFloat()
+                        val slide = if (limit == 0f) {
+                            1f
+                        } else {
+                            1f - (-header_offset_px.floatValue / limit).coerceIn(0f, 1f)
+                        }
+                        slide * chrome_alpha()
+                    },
+                    solid = header_bg,
+                ),
         ) {
           Column(modifier = Modifier.fillMaxWidth()) {
             Spacer(Modifier.height(status_bar_top))
@@ -2309,8 +2330,10 @@ fun InboxScreen(
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .height(status_bar_top)
-                .then(
-                    if (has_backdrop) Modifier else Modifier.background(colors.bg_primary),
+                .glass_chrome(
+                    colors = colors,
+                    alpha = chrome_alpha,
+                    solid = colors.bg_primary,
                 ),
         )
 
@@ -3018,7 +3041,7 @@ internal fun inbox_top_bar(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = AsterSpacing.lg, end = AsterSpacing.sm)
-                .padding(top = AsterSpacing.sm, bottom = AsterSpacing.xs),
+                .padding(top = AsterSpacing.sm, bottom = AsterSpacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             folder_switcher()
@@ -3091,7 +3114,6 @@ private fun select_mode_top_bar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .glass_bar(colors)
             .padding(start = AsterSpacing.xs, end = AsterSpacing.sm)
             .padding(top = AsterSpacing.xs, bottom = AsterSpacing.xs)
             .height(48.dp)
@@ -3397,7 +3419,7 @@ internal fun selection_overflow_sheet(
     androidx.compose.material3.ModalBottomSheet(
         onDismissRequest = on_close,
         sheetState = state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
         dragHandle = { org.astermail.android.design.components.AsterDragHandle() },
     ) {
@@ -3502,7 +3524,7 @@ internal fun scheduled_actions_sheet(
     androidx.compose.material3.ModalBottomSheet(
         onDismissRequest = on_close,
         sheetState = state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
         dragHandle = { org.astermail.android.design.components.AsterDragHandle() },
     ) {

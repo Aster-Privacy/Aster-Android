@@ -73,7 +73,7 @@
     <string name="billing_free_upgrade_price_note">प्लान %1$s प्रति माह से शुरू होते हैं।</string>
     <string name="billing_cancel_plan">प्लान रद्द करें</string>
     <string name="billing_save_amount">%1$s बचाएं</string>
-    <string name="billing_plan_show_features">सुविधाएँ दिखाएं</string>
-    <string name="billing_plan_hide_features">सुविधाएँ छिपाएँ</string>
+    <string name="billing_plan_show_features">सुविधाएं दिखाएं</string>
+    <string name="billing_plan_hide_features">सुविधाएं छिपाएं</string>
     <string name="billing_billed_yearly_total">%1$s सालाना बिल किया जाता है</string>
 </resources>

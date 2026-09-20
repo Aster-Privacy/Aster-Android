@@ -104,6 +104,7 @@ import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.ui.mail.search_field_bg_color
 import org.astermail.android.design.acrylic
+import org.astermail.android.ui.common.theme_page_fill
 
 val local_settings_navigator = staticCompositionLocalOf<(String) -> Unit> { {} }
 
@@ -208,7 +209,7 @@ private fun settings_search_overlay(on_dismiss: () -> Unit) {
                     scaleY = search_overlay_scale(overlay_progress),
                     alpha = overlay_progress,
                 )
-                .background(colors.solid_bg)
+                .theme_page_fill(colors)
                 .systemBarsPadding(),
         ) {
             Row(

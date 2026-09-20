@@ -82,6 +82,7 @@ import org.astermail.android.api.mail_rules.TextOp
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.parse_hex_color_safe
 import org.astermail.android.folders.flatten_folder_tree
 import org.astermail.android.mail_rules.AliasDeliverySetting
@@ -358,7 +359,7 @@ fun RuleEditorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(SquircleShape(16.dp))
-                        .background(colors.bg_card)
+                        .acrylic(colors, SquircleShape(16.dp), colors.bg_card)
                         .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
                         .padding(AsterSpacing.lg)
                         .testTag("rule_advanced_notice"),
@@ -470,7 +471,7 @@ fun RuleEditorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(SquircleShape(16.dp))
-                        .background(colors.bg_card)
+                        .acrylic(colors, SquircleShape(16.dp), colors.bg_card)
                         .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
                         .padding(AsterSpacing.lg)
                         .testTag("rule_duplicate_warning"),
@@ -490,7 +491,7 @@ fun RuleEditorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(SquircleShape(16.dp))
-                        .background(colors.bg_card)
+                        .acrylic(colors, SquircleShape(16.dp), colors.bg_card)
                         .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
                         .padding(AsterSpacing.lg)
                         .testTag("rule_skipped_warning"),
@@ -506,7 +507,7 @@ fun RuleEditorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(SquircleShape(16.dp))
-                        .background(colors.bg_card)
+                        .acrylic(colors, SquircleShape(16.dp), colors.bg_card)
                         .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
                         .padding(AsterSpacing.lg)
                         .testTag("rule_switched_to_any"),
@@ -519,7 +520,7 @@ fun RuleEditorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(SquircleShape(16.dp))
-                        .background(colors.bg_card)
+                        .acrylic(colors, SquircleShape(16.dp), colors.bg_card)
                         .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
                         .padding(AsterSpacing.lg)
                         .testTag("rule_conflict_warning"),
@@ -614,7 +615,7 @@ fun RuleEditorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(SquircleShape(16.dp))
-                        .background(colors.bg_card)
+                        .acrylic(colors, SquircleShape(16.dp), colors.bg_card)
                         .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
                         .padding(AsterSpacing.lg)
                         .testTag("rule_alias_delivery_warning"),
@@ -648,7 +649,7 @@ fun RuleEditorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(SquircleShape(16.dp))
-                        .background(colors.bg_card)
+                        .acrylic(colors, SquircleShape(16.dp), colors.bg_card)
                         .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
                         .padding(AsterSpacing.lg)
                         .testTag("rule_alias_label_warning"),

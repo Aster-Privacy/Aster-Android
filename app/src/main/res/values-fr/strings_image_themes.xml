@@ -10,6 +10,11 @@
     <string name="image_theme_category_cities">Villes</string>
     <string name="image_theme_category_landscapes">Paysages</string>
     <string name="image_theme_category_water">Eau</string>
+    <string name="image_theme_category_aurora">Aurore</string>
+    <string name="image_theme_category_mountains">Montagnes</string>
+    <string name="image_theme_category_forest">Forêt</string>
+    <string name="image_theme_category_desert">Désert</string>
+    <string name="image_theme_category_ocean">Océan</string>
     <string name="image_theme_apply_changes">Appliquer</string>
     <string name="image_theme_reset">Rétablir les valeurs par défaut</string>
     <string name="image_theme_colors">Couleurs</string>
@@ -23,7 +28,6 @@
     <string name="image_theme_photo_too_large">Cette photo est trop volumineuse. Choisissez-en une de moins de 40 Mo.</string>
     <string name="image_theme_photo_unsupported">Ce type de fichier n’est pas pris en charge. Choisissez une photo JPEG, PNG, GIF, WebP ou HEIC.</string>
     <string name="image_theme_photo_unreadable">Impossible d’ouvrir cette photo. Essayez-en une autre.</string>
-    <string name="image_theme_category_calm">Calme</string>
     <string name="image_theme_credit_modified">Photo : %1$s. Recadrée et redimensionnée.</string>
     <string name="image_theme_credit_generated">Créé par Aster</string>
     <string name="image_theme_adjust_photo">Ajuster</string>
@@ -51,4 +55,5 @@
     <string name="image_theme_animation">Animer l’arrière-plan</string>
     <string name="image_theme_animation_subtitle">Lit votre arrière-plan animé. Il s’arrête en mode Économiseur de batterie et lorsque les animations sont désactivées sur votre appareil.</string>
     <string name="image_theme_animation_too_large">Cette image animée est trop volumineuse. Choisissez-en une de moins de 12 Mo.</string>
+    <string name="image_theme_retry_download">Réessayer le téléchargement</string>
 </resources>

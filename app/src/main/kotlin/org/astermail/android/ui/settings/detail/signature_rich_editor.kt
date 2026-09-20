@@ -70,6 +70,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDialogPrimaryButton
@@ -306,7 +307,7 @@ fun signature_format_toolbar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(colors.bg_secondary, SquircleShape(18.dp))
+            .acrylic(colors, SquircleShape(18.dp), colors.bg_secondary)
             .padding(horizontal = AsterSpacing.xs, vertical = 4.dp)
             .horizontalScroll(rememberScrollState()),
         verticalAlignment = Alignment.CenterVertically,

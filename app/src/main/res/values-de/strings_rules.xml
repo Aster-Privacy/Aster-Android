@@ -102,11 +102,11 @@
     <string name="muted_categories">Stummgeschaltete Kategorien</string>
     <string name="muted_categories_description">Aktiviere eine Kategorie, um ihre Benachrichtigungen stummzuschalten. Stummgeschaltete Kategorien empfangen weiterhin E-Mails und erscheinen in deinem Posteingang.</string>
     <string name="muted_categories_empty">Aktiviere Posteingangskategorien, um zu wählen, welche du stummschaltest.</string>
-    <string name="rules_hint_name">Geben Sie einen Namen für diese Regel ein.</string>
-    <string name="rules_hint_add_condition">Fügen Sie mindestens eine Bedingung hinzu.</string>
-    <string name="rules_hint_finish_condition">Geben Sie für jede Bedingung einen Wert an.</string>
-    <string name="rules_hint_add_action">Fügen Sie mindestens eine Aktion hinzu.</string>
-    <string name="rules_hint_finish_action">Geben Sie für jede Aktion einen Wert an.</string>
+    <string name="rules_hint_name">Gib einen Namen für diese Regel ein.</string>
+    <string name="rules_hint_add_condition">Füge mindestens eine Bedingung hinzu.</string>
+    <string name="rules_hint_finish_condition">Gib für jede Bedingung einen Wert an.</string>
+    <string name="rules_hint_add_action">Füge mindestens eine Aktion hinzu.</string>
+    <string name="rules_hint_finish_action">Gib für jede Aktion einen Wert an.</string>
     <string name="mute_category_notifications">Mitteilungen für %1$s stummschalten</string>
     <string name="unmute_category_notifications">Stummschaltung für %1$s aufheben</string>
 </resources>

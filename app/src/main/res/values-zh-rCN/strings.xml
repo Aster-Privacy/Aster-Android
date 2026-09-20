@@ -1192,18 +1192,6 @@
 
     <string name="language">语言</string>
     <string name="display_language">显示语言</string>
-    <string name="lang_english">English</string>
-    <string name="lang_spanish">Espanol</string>
-    <string name="lang_french">Francais</string>
-    <string name="lang_german">Deutsch</string>
-    <string name="lang_italian">Italiano</string>
-    <string name="lang_portuguese">Portugues</string>
-    <string name="lang_japanese">Japanese</string>
-    <string name="lang_korean">Korean</string>
-    <string name="lang_chinese">Chinese (simplified)</string>
-    <string name="lang_russian">Russian</string>
-    <string name="lang_arabic">Arabic</string>
-    <string name="lang_hindi">Hindi</string>
     <string name="set_from_system">跟随系统 (English)</string>
     <string name="language_system_default">跟随系统</string>
     <string name="language_system_default_hint">在这里选择语言之前，Aster Mail 将跟随设备语言。</string>
@@ -1603,6 +1591,7 @@
     <string name="name_copied">已复制名称</string>
     <string name="email_copied">已复制邮箱地址</string>
     <string name="show_less">收起</string>
+    <string name="color_theme_show_all">显示所有颜色</string>
     <string name="expand_folder">展开 %1$s</string>
     <string name="collapse_folder">折叠 %1$s</string>
     <string name="badge_active">当前徽章</string>

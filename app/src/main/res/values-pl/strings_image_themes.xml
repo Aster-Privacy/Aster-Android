@@ -10,6 +10,11 @@
     <string name="image_theme_category_cities">Miasta</string>
     <string name="image_theme_category_landscapes">Krajobrazy</string>
     <string name="image_theme_category_water">Woda</string>
+    <string name="image_theme_category_aurora">Zorza polarna</string>
+    <string name="image_theme_category_mountains">Góry</string>
+    <string name="image_theme_category_forest">Las</string>
+    <string name="image_theme_category_desert">Pustynia</string>
+    <string name="image_theme_category_ocean">Ocean</string>
     <string name="image_theme_apply_changes">Zastosuj</string>
     <string name="image_theme_reset">Przywróć domyślne</string>
     <string name="image_theme_colors">Kolory</string>
@@ -23,7 +28,6 @@
     <string name="image_theme_photo_too_large">To zdjęcie jest za duże. Wybierz mniejsze niż 40 MB.</string>
     <string name="image_theme_photo_unsupported">Ten typ pliku nie jest obsługiwany. Wybierz zdjęcie JPEG, PNG, GIF, WebP lub HEIC.</string>
     <string name="image_theme_photo_unreadable">Nie można otworzyć tego zdjęcia. Wybierz inne.</string>
-    <string name="image_theme_category_calm">Spokój</string>
     <string name="image_theme_credit_modified">Zdjęcie: %1$s. Przycięte i przeskalowane.</string>
     <string name="image_theme_credit_generated">Utworzone przez Aster</string>
     <string name="image_theme_adjust_photo">Dostosuj</string>
@@ -51,4 +55,5 @@
     <string name="image_theme_animation">Animuj tło</string>
     <string name="image_theme_animation_subtitle">Odtwarza animowane tło. Zatrzymuje się w trybie oszczędzania baterii i gdy animacje na urządzeniu są wyłączone.</string>
     <string name="image_theme_animation_too_large">Ten animowany obraz jest za duży. Wybierz mniejszy niż 12 MB.</string>
+    <string name="image_theme_retry_download">Ponów pobieranie</string>
 </resources>

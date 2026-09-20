@@ -21,8 +21,10 @@
 
 package org.astermail.android.ui.compose
 
+import androidx.compose.ui.graphics.RectangleShape
 import compose.icons.TablerIcons
 import kotlinx.coroutines.CancellationException
+import org.astermail.android.ui.common.sheet_container_color
 import org.astermail.android.ui.common.app_toast
 import org.astermail.android.ui.common.show_copy_result_toast
 import org.astermail.android.ui.common.write_to_clipboard
@@ -2710,7 +2712,7 @@ fun ComposeScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(colors.bg_secondary, SquircleShape(18.dp))
+                                .acrylic(colors, SquircleShape(18.dp), colors.bg_secondary)
                                 .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm)
                                 .semantics(mergeDescendants = true) { contentDescription = att_desc }
                                 .testTag(if (idx == 0) "attachment_chip" else "attachment_chip_$idx"),
@@ -3261,8 +3263,8 @@ fun ComposeScreen(
                         draft_save_job?.cancel()
                         mail_vm.discard_sent_draft(current_draft_id, draft_session_id)
                         current_draft_id = ""
-                        app_toast.show(context.getString(R.string.draft_discarded))
                         on_back()
+                        app_toast.show_after_transition(context.getString(R.string.draft_discarded))
                     },
                 )
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
@@ -3406,35 +3408,34 @@ private fun chip_input(
 ) {
     val colors = AsterMaterial.colors
     val query = input.trim().lowercase()
+    var suggestions_dismissed by remember { mutableStateOf(false) }
+    LaunchedEffect(chips.size) { suggestions_dismissed = false }
     val filtered_suggestions = remember(query, suggestions, chips) {
-        if (!meets_min_search_length(query) || suggestions.isEmpty()) emptyList()
-        else suggestions
-            .filter { contact ->
-                val email = contact.email.lowercase()
-                val name = contact.name.lowercase()
-                (email.contains(query) || name.contains(query)) && email !in chips.map { it.lowercase() }
-            }
-            .take(5)
+        if (query.isEmpty() || suggestions.isEmpty() || is_valid_email_chip(query)) {
+            emptyList()
+        } else {
+            suggestions
+                .filter { contact ->
+                    val email = contact.email.lowercase()
+                    val name = contact.name.lowercase()
+                    (email.contains(query) || name.contains(query)) && email !in chips.map { it.lowercase() }
+                }
+                .take(3)
+        }
     }
     val internal_focus_requester = remember { androidx.compose.ui.focus.FocusRequester() }
     val active_focus_requester = focus_requester ?: internal_focus_requester
     var field_focused by remember { mutableStateOf(false) }
-    val field_shape = SquircleShape(AsterRadius.lg)
     val field_interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-    val field_tint = if (field_focused) colors.bg_hover else colors.bg_secondary
-    val field_border = if (field_focused) colors.accent_blue else colors.border_secondary
     Box(modifier = Modifier.fillMaxWidth()) {
         androidx.compose.foundation.layout.FlowRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .animateContentSize()
-                .acrylic(colors, field_shape, field_tint)
-                .border(width = 1.dp, color = field_border, shape = field_shape)
                 .clickable(
                     indication = null,
                     interactionSource = field_interaction,
                 ) { active_focus_requester.requestFocus() }
-                .padding(horizontal = AsterSpacing.sm, vertical = 6.dp)
                 .heightIn(min = 36.dp),
             horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
             verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
@@ -3485,12 +3486,14 @@ private fun chip_input(
                 },
             )
         }
-        val suggestions_visible = filtered_suggestions.isNotEmpty() && on_suggestion_pick != null
+        val suggestions_visible = filtered_suggestions.isNotEmpty() &&
+            !suggestions_dismissed &&
+            field_focused &&
+            on_suggestion_pick != null
         val suggestions_state = remember { MutableTransitionState(false) }
         suggestions_state.targetState = suggestions_visible
-        var rendered_suggestions by remember { mutableStateOf(filtered_suggestions) }
-        if (filtered_suggestions.isNotEmpty() && rendered_suggestions !== filtered_suggestions) {
-            rendered_suggestions = filtered_suggestions
+        val rendered_suggestions by remember(filtered_suggestions) {
+            mutableStateOf(filtered_suggestions)
         }
         if (suggestions_state.currentState || suggestions_state.targetState) {
             val suggestions_reduce_motion = aster_reduce_motion()
@@ -3568,22 +3571,23 @@ private fun chip_input(
                             .fillMaxWidth()
                             .shadow(16.dp, suggestions_shape, clip = false)
                             .acrylic(colors, suggestions_shape, aster_menu_surface_color())
-                            .heightIn(max = 240.dp)
-                            .verticalScroll(rememberScrollState())
-                            .padding(vertical = 6.dp),
+                            .padding(vertical = 4.dp),
                     ) {
                         rendered_suggestions.forEach { contact ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { on_suggestion_pick?.invoke(contact.email) }
-                                    .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+                                    .clickable {
+                                        suggestions_dismissed = true
+                                        on_suggestion_pick?.invoke(contact.email)
+                                    }
+                                    .padding(horizontal = AsterSpacing.md, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 org.astermail.android.ui.mail.SenderAvatar(
                                     email = contact.email,
                                     name = contact.name,
-                                    size = 28.dp,
+                                    size = 24.dp,
                                 )
                                 Spacer(Modifier.width(AsterSpacing.sm))
                                 Column(modifier = Modifier.weight(1f)) {
@@ -3713,7 +3717,7 @@ private fun recipient_chip(text: String, show_encryption_indicator: Boolean = tr
         Row(
             modifier = Modifier
                 .clip(SquircleShape(AsterRadius.pill))
-                .background(colors.bg_card)
+                .acrylic(colors, SquircleShape(AsterRadius.pill), colors.bg_card)
                 .border(1.dp, colors.border_secondary, SquircleShape(AsterRadius.pill))
                 .clickable { menu_open = true }
                 .padding(start = 6.dp, end = 2.dp, top = 2.dp, bottom = 2.dp),
@@ -3871,7 +3875,7 @@ private fun compose_format_row(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(colors.bg_secondary)
+            .acrylic(colors, RectangleShape, colors.bg_secondary)
             .padding(horizontal = AsterSpacing.xs, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -3990,7 +3994,7 @@ private fun ScheduleSheet(
     ModalBottomSheet(
         onDismissRequest = on_close,
         sheetState = state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
     ) {
@@ -4038,7 +4042,7 @@ private fun AttachSheet(
     ModalBottomSheet(
         onDismissRequest = on_close,
         sheetState = state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
     ) {
@@ -4096,7 +4100,7 @@ private fun FromAliasSheet(
     ModalBottomSheet(
         onDismissRequest = on_close,
         sheetState = state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
     ) {
@@ -4265,7 +4269,7 @@ private fun OverflowSheet(
     ModalBottomSheet(
         onDismissRequest = on_close,
         sheetState = state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
     ) {
@@ -4327,7 +4331,7 @@ private fun TemplatePickerSheet(
     ModalBottomSheet(
         onDismissRequest = on_close,
         sheetState = state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
     ) {
@@ -4517,7 +4521,7 @@ private fun SignaturePickerSheet(
     ModalBottomSheet(
         onDismissRequest = on_close,
         sheetState = state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
     ) {
@@ -4628,7 +4632,7 @@ private fun GhostAliasSheet(
     ModalBottomSheet(
         onDismissRequest = on_close,
         sheetState = state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
     ) {
@@ -4749,7 +4753,7 @@ internal fun ExpiringSheet(
     ModalBottomSheet(
         onDismissRequest = commit_or_close,
         sheetState = state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
     ) {
@@ -4810,7 +4814,7 @@ internal fun ExpiringSheet(
                     .padding(horizontal = AsterSpacing.sm)
                     .clip(SquircleShape(10.dp))
                     .border(1.dp, colors.border_secondary, SquircleShape(10.dp))
-                    .background(colors.bg_secondary)
+                    .acrylic(colors, RectangleShape, colors.bg_secondary)
                     .padding(start = AsterSpacing.md, end = AsterSpacing.xs, top = 6.dp, bottom = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

@@ -7,5 +7,5 @@
     <string name="alias_import_file_hint">İçe aktarmak için bir CSV veya JSON dosyası seçin</string>
     <string name="alias_import_change_file">Dosyayı değiştir</string>
     <string name="alias_import_remove_file">Dosyayı kaldır</string>
-    <string name="alias_note_placeholder_short">Nerede kullandığın</string>
+    <string name="alias_note_placeholder_short">Nerede kullandığınız</string>
 </resources>

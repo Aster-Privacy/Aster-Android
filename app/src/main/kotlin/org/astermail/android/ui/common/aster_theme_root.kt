@@ -160,21 +160,25 @@ fun aster_theme_root(content: @Composable () -> Unit) {
             val animation = if (backdrop != null) {
                 remember_theme_animation(animate_background && !a11y.reduce_motion)
             } else null
-            val root_view = androidx.compose.ui.platform.LocalView.current
+            val container = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize
             val veil_ink = colors.bg_primary
-            val acrylic_source = remember(blur, root_view, veil_ink) {
+            val acrylic_source = remember(blur, container, veil_ink) {
                 blur?.let { bitmap ->
                     org.astermail.android.design.AcrylicSource { origin ->
                         val window = androidx.compose.ui.geometry.Size(
-                            root_view.rootView.width.toFloat(),
-                            root_view.rootView.height.toFloat(),
+                            container.width.toFloat(),
+                            container.height.toFloat(),
                         )
                         draw_theme_window_slice(bitmap, window, origin)
                         drawRect(color = veil_ink.copy(alpha = org.astermail.android.ui.theme.theme_veil_alpha))
                     }
                 }
             }
-            CompositionLocalProvider(org.astermail.android.design.local_acrylic provides acrylic_source) {
+            CompositionLocalProvider(
+                org.astermail.android.design.local_acrylic provides acrylic_source,
+                androidx.compose.foundation.LocalOverscrollFactory provides
+                    if (colors.is_translucent) null else androidx.compose.foundation.LocalOverscrollFactory.current,
+            ) {
                 Box(modifier = Modifier.fillMaxSize().background(colors.bg_primary)) {
                     if (backdrop != null) {
                         Spacer(

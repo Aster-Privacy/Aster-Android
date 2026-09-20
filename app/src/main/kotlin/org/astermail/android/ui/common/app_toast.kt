@@ -19,20 +19,41 @@ package org.astermail.android.ui.common
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+
+private const val toast_transition_delay_ms = 280L
 
 object app_toast {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private var pending: Job? = null
+
     val state = MutableStateFlow<TopToastState?>(null)
 
     fun show(message: String) {
-        state.value = TopToastState(message = message)
+        show(TopToastState(message = message))
     }
 
     fun show(toast: TopToastState) {
+        pending?.cancel()
         state.value = toast
     }
 
+    fun show_after_transition(message: String) {
+        pending?.cancel()
+        pending = scope.launch {
+            delay(toast_transition_delay_ms)
+            state.value = TopToastState(message = message)
+        }
+    }
+
     fun dismiss() {
+        pending?.cancel()
         state.value = null
     }
 }

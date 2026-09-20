@@ -27,7 +27,7 @@
     <string name="alias_too_new_title">هذا الاسم المستعار جديد جدًا ولا يمكن حذفه</string>
     <string name="alias_too_new_message">الأسماء المستعارة الجديدة تبقى نشطة 30 يومًا قبل أن يمكن حذفها. يمكن إزالة هذا اعتبارًا من %1$s. قم بالترقية إلى Supernova لحذف الأسماء المستعارة فورًا.</string>
     <string name="settings_feat_folders">المجلدات</string>
-    <string name="settings_feat_labels">التسميات</string>
+    <string name="settings_feat_labels">التصنيفات</string>
     <string name="settings_feat_smart_folders">المجلدات الذكية</string>
     <string name="settings_feat_advanced_search">بحث متقدم</string>
     <string name="settings_feat_search_history">سجل البحث</string>

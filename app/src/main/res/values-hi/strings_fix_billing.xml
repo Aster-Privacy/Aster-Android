@@ -21,7 +21,7 @@
     <string name="fix_billing_set_as_default">डिफ़ॉल्ट के रूप में सेट करें</string>
     <string name="fix_billing_invoice_status_paid">भुगतान हो गया</string>
     <string name="fix_billing_invoice_status_failed">विफल</string>
-    <string name="fix_billing_invoice_status_open">खोलें</string>
+    <string name="fix_billing_invoice_status_open">खुला</string>
     <string name="fix_billing_invoice_status_pending">बाकी</string>
     <string name="fix_billing_invoice_status_draft">ड्राफ़्ट</string>
     <string name="fix_billing_invoice_status_void">रद्द</string>

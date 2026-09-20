@@ -56,6 +56,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterGhostButton
 
 @Composable
@@ -133,7 +134,7 @@ private fun custom_domain_option_card(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(colors.bg_card, shape)
+            .acrylic(colors, shape, colors.bg_card)
             .border(1.dp, colors.border_primary, shape)
             .clickable(onClick = onClick)
             .padding(AsterSpacing.lg),
@@ -142,7 +143,7 @@ private fun custom_domain_option_card(
         Box(
             modifier = Modifier
                 .size(44.dp)
-                .background(colors.bg_secondary, SquircleShape(12.dp))
+                .acrylic(colors, SquircleShape(12.dp), colors.bg_secondary)
                 .border(1.dp, colors.border_secondary, SquircleShape(12.dp)),
             contentAlignment = Alignment.Center,
         ) {

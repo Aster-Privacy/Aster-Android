@@ -17,7 +17,7 @@
     <string name="detail_raw_source_headers">헤더</string>
     <string name="detail_raw_source_body">본문</string>
     <string name="detail_raw_source_copy">복사</string>
-    <string name="detail_raw_source_copied">클립보드에 복사했습니다</string>
+    <string name="detail_raw_source_copied">클립보드에 복사됨</string>
     <string name="detail_raw_source_close">닫기</string>
     <string name="detail_raw_source_unavailable">이 메시지의 원본 소스는 볼 수 없습니다.</string>
     <string name="detail_star_action">메일에 별표 표시</string>

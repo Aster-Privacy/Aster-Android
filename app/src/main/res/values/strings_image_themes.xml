@@ -10,6 +10,11 @@
     <string name="image_theme_category_cities">Cities</string>
     <string name="image_theme_category_landscapes">Landscapes</string>
     <string name="image_theme_category_water">Water</string>
+    <string name="image_theme_category_aurora">Aurora</string>
+    <string name="image_theme_category_mountains">Mountains</string>
+    <string name="image_theme_category_forest">Forest</string>
+    <string name="image_theme_category_desert">Desert</string>
+    <string name="image_theme_category_ocean">Ocean</string>
     <string name="image_theme_apply_changes">Apply</string>
     <string name="image_theme_reset">Reset to default</string>
     <string name="image_theme_colors">Colors</string>
@@ -23,7 +28,6 @@
     <string name="image_theme_photo_too_large">This photo is too large. Choose one under 40 MB.</string>
     <string name="image_theme_photo_unsupported">This file type isn’t supported. Choose a JPEG, PNG, GIF, WebP, or HEIC photo.</string>
     <string name="image_theme_photo_unreadable">This photo can’t be opened. Try a different one.</string>
-    <string name="image_theme_category_calm">Calm</string>
     <string name="image_theme_credit_modified">Photo: %1$s. Cropped and resized.</string>
     <string name="image_theme_credit_generated">Created by Aster</string>
     <string name="image_theme_adjust_photo">Adjust</string>
@@ -51,4 +55,5 @@
     <string name="image_theme_animation">Animate background</string>
     <string name="image_theme_animation_subtitle">Plays your animated background. It stops in Battery Saver and when your device has animations turned off.</string>
     <string name="image_theme_animation_too_large">This animated image is too large. Choose one under 12 MB.</string>
+    <string name="image_theme_retry_download">Retry download</string>
 </resources>

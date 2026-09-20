@@ -49,7 +49,7 @@ val local_acrylic = staticCompositionLocalOf<AcrylicSource?> { null }
 private const val acrylic_tint_strength = 0.82f
 
 @Composable
-private fun in_overlay_window(): Boolean {
+fun in_overlay_window(): Boolean {
     val view = LocalView.current
     return remember(view) {
         val params = view.rootView.layoutParams as? WindowManager.LayoutParams

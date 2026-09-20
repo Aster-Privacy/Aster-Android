@@ -50,6 +50,8 @@
     </plurals>
     <plurals name="trash_auto_delete_notice">
         <item quantity="one">Elementy w koszu są usuwane automatycznie po %1$d dniu.</item>
+        <item quantity="few">Elementy w koszu są usuwane automatycznie po %1$d dniach.</item>
+        <item quantity="many">Elementy w koszu są usuwane automatycznie po %1$d dniach.</item>
         <item quantity="other">Elementy w koszu są usuwane automatycznie po %1$d dniach.</item>
     </plurals>
     <plurals name="pending_deletion_body_days">

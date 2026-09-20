@@ -1192,18 +1192,6 @@
 
     <string name="language">Lingua</string>
     <string name="display_language">Lingua di visualizzazione</string>
-    <string name="lang_english">English</string>
-    <string name="lang_spanish">Espanol</string>
-    <string name="lang_french">Francais</string>
-    <string name="lang_german">Deutsch</string>
-    <string name="lang_italian">Italiano</string>
-    <string name="lang_portuguese">Portugues</string>
-    <string name="lang_japanese">Japanese</string>
-    <string name="lang_korean">Korean</string>
-    <string name="lang_chinese">Chinese (simplified)</string>
-    <string name="lang_russian">Russian</string>
-    <string name="lang_arabic">Arabic</string>
-    <string name="lang_hindi">Hindi</string>
     <string name="set_from_system">Imposta dal sistema (English)</string>
     <string name="language_system_default">Predefinito di sistema</string>
     <string name="language_system_default_hint">Aster Mail segue la lingua del dispositivo finché non ne scegli una qui.</string>
@@ -1605,6 +1593,7 @@
     <string name="name_copied">Nome copiato</string>
     <string name="email_copied">Indirizzo email copiato</string>
     <string name="show_less">Mostra meno</string>
+    <string name="color_theme_show_all">Mostra tutti i colori</string>
     <string name="expand_folder">Espandi %1$s</string>
     <string name="collapse_folder">Comprimi %1$s</string>
     <string name="badge_active">Badge attivo</string>
@@ -1946,7 +1935,7 @@
     <string name="storage_mailbox_section">Statistiche della casella</string>
     <string name="storage_total_messages">Messaggi totali</string>
     <string name="storage_unread_messages">Non letti</string>
-    <string name="storage_starred_messages">Con stella</string>
+    <string name="storage_starred_messages">Preferiti</string>
     <string name="storage_scheduled_messages">Programmati</string>
     <string name="storage_average_size">Dimensione media dei messaggi</string>
     <string name="storage_free_up_section">Libera spazio</string>

@@ -17,8 +17,8 @@
         <item quantity="other">%d अमान्य</item>
     </plurals>
     <plurals name="alias_import_to_import">
-        <item quantity="one">%d आयात करने के लिए</item>
-        <item quantity="other">%d आयात करने के लिए</item>
+        <item quantity="one">%d इंपोर्ट करने के लिए</item>
+        <item quantity="other">%d इंपोर्ट करने के लिए</item>
     </plurals>
     <plurals name="kids_seats_invitations">
         <item quantity="one">%d निमंत्रण</item>

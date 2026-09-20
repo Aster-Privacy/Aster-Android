@@ -1193,18 +1193,6 @@
 
     <string name="language">Sprache</string>
     <string name="display_language">Anzeigesprache</string>
-    <string name="lang_english">English</string>
-    <string name="lang_spanish">Espanol</string>
-    <string name="lang_french">Francais</string>
-    <string name="lang_german">Deutsch</string>
-    <string name="lang_italian">Italiano</string>
-    <string name="lang_portuguese">Portugues</string>
-    <string name="lang_japanese">Japanese</string>
-    <string name="lang_korean">Korean</string>
-    <string name="lang_chinese">Chinese (simplified)</string>
-    <string name="lang_russian">Russian</string>
-    <string name="lang_arabic">Arabic</string>
-    <string name="lang_hindi">Hindi</string>
     <string name="set_from_system">Vom System festgelegt (English)</string>
     <string name="language_system_default">Systemstandard</string>
     <string name="language_system_default_hint">Aster Mail folgt der Sprache deines Geräts, bis du hier eine Sprache auswählst.</string>
@@ -1606,6 +1594,7 @@
     <string name="name_copied">Name kopiert</string>
     <string name="email_copied">E-Mail-Adresse kopiert</string>
     <string name="show_less">Weniger anzeigen</string>
+    <string name="color_theme_show_all">Alle Farben anzeigen</string>
     <string name="expand_folder">%1$s erweitern</string>
     <string name="collapse_folder">%1$s reduzieren</string>
     <string name="badge_active">Aktives Abzeichen</string>

@@ -16,7 +16,7 @@
         <item quantity="other">%d個のゴースト</item>
     </plurals>
     <plurals name="recovery_codes_count">
-        <item quantity="other">%d個のリカバリコード</item>
+        <item quantity="other">%d個のリカバリーコード</item>
     </plurals>
     <plurals name="imported_contacts">
         <item quantity="other">%d件の連絡先をインポートしました</item>

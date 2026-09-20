@@ -1192,18 +1192,6 @@
 
     <string name="language">Idioma</string>
     <string name="display_language">Idioma de exibição</string>
-    <string name="lang_english">English</string>
-    <string name="lang_spanish">Espanol</string>
-    <string name="lang_french">Francais</string>
-    <string name="lang_german">Deutsch</string>
-    <string name="lang_italian">Italiano</string>
-    <string name="lang_portuguese">Portugues</string>
-    <string name="lang_japanese">Japanese</string>
-    <string name="lang_korean">Korean</string>
-    <string name="lang_chinese">Chinese (simplified)</string>
-    <string name="lang_russian">Russian</string>
-    <string name="lang_arabic">Arabic</string>
-    <string name="lang_hindi">Hindi</string>
     <string name="set_from_system">Definir pelo sistema (English)</string>
     <string name="language_system_default">Padrão do sistema</string>
     <string name="language_system_default_hint">O Aster Mail segue o idioma do seu dispositivo até você escolher um aqui.</string>
@@ -1605,6 +1593,7 @@
     <string name="name_copied">Nome copiado</string>
     <string name="email_copied">Endereço de email copiado</string>
     <string name="show_less">Mostrar menos</string>
+    <string name="color_theme_show_all">Mostrar todas as cores</string>
     <string name="expand_folder">Expandir %1$s</string>
     <string name="collapse_folder">Recolher %1$s</string>
     <string name="badge_active">Distintivo ativo</string>
@@ -1723,7 +1712,7 @@
     <string name="decrypt_retry_failed">Ainda não foi possível descriptografar esta mensagem</string>
     <string name="trash">Lixeira</string>
     <string name="unarchive">Desarquivar</string>
-    <string name="label">Marcador</string>
+    <string name="label">Etiqueta</string>
     <string name="encryption">Criptografia</string>
     <string name="tracker_protection">Proteção contra rastreadores</string>
     <string name="encrypted_e2e">Criptografia de ponta a ponta</string>

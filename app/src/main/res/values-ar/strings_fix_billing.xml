@@ -30,7 +30,7 @@
     <string name="fix_billing_invoice_pdf">PDF</string>
     <string name="fix_billing_invoice_payment">الدفع</string>
     <string name="fix_billing_storage_limit_exceeded">التخزين لديك ممتلئ.</string>
-    <string name="fix_billing_payment_failed_warning">آخر عملية تحصيل من طريقة الدفع لم تتم. تحديثها في الإعدادات، الفوترة يبقي خطتك مستمرة. بريدك غير متأثر.</string>
+    <string name="fix_billing_payment_failed_warning">آخر عملية تحصيل من طريقة الدفع لم تتم. حدّثها من الإعدادات، الفوترة لإبقاء خطتك مستمرة. بريدك غير متأثر.</string>
     <string name="fix_billing_update_payment_method">تحديث طريقة الدفع</string>
     <string name="fix_billing_card_expires">تنتهي %1$s</string>
     <string name="fix_billing_status_trialing">تجريبي</string>

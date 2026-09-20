@@ -106,6 +106,7 @@ import org.astermail.android.billing.billing_interval_per_label
 import org.astermail.android.billing.format_money
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
 import org.astermail.android.ui.security.lock_dialog_window_effect
 import org.astermail.android.ui.settings.detail.crypto_term_dialog
 import org.astermail.android.ui.settings.detail.payment_method_crypto
@@ -290,7 +291,7 @@ fun SpecialOfferHost() {
                     .fillMaxWidth()
                     .shadow(elevation = 28.dp, shape = CARD_SHAPE)
                     .clip(CARD_SHAPE)
-                    .background(colors.bg_card)
+                    .acrylic(colors, CARD_SHAPE, colors.bg_card)
                     .border(1.dp, colors.border_secondary, CARD_SHAPE),
             ) {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {

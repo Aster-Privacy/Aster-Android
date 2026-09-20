@@ -48,19 +48,22 @@ import org.astermail.android.R
 import org.astermail.android.design.ColorThemeId
 
 enum class ThemeCategory(val label_res: Int) {
-    calm(R.string.image_theme_category_calm),
     space(R.string.image_theme_category_space),
     planets(R.string.image_theme_category_planets),
     night_sky(R.string.image_theme_category_night_sky),
+    aurora(R.string.image_theme_category_aurora),
     cities(R.string.image_theme_category_cities),
     landscapes(R.string.image_theme_category_landscapes),
+    mountains(R.string.image_theme_category_mountains),
+    forest(R.string.image_theme_category_forest),
+    desert(R.string.image_theme_category_desert),
     water(R.string.image_theme_category_water),
+    ocean(R.string.image_theme_category_ocean),
     yours(R.string.image_theme_category_yours),
 }
 
 data class ThemeBackground(
     val id: String,
-    val drawable_res: Int,
     val category: ThemeCategory,
     val color_theme: ColorThemeId,
     val tint: Color,
@@ -68,20 +71,16 @@ data class ThemeBackground(
     val custom_version: Long = 0L,
 ) {
     val is_custom: Boolean get() = custom_version > 0L
-    val cache_key: String get() = if (is_custom) "custom:$custom_version" else drawable_res.toString()
-    val is_generated: Boolean get() = category == ThemeCategory.calm
+    val cache_key: String get() = if (is_custom) "custom:$custom_version" else id
+    val is_generated: Boolean get() = credit == "Aster"
 }
 
 const val no_theme_background = "none"
 
-val theme_categories: List<Pair<ThemeCategory, List<ThemeBackground>>> by lazy {
-    ThemeCategory.entries.map { category -> category to theme_backgrounds.filter { it.category == category } }
-        .filter { it.second.isNotEmpty() }
-}
+
 
 fun custom_theme_background_entry(meta: CustomThemeImageMeta): ThemeBackground = ThemeBackground(
     id = custom_theme_background,
-    drawable_res = 0,
     category = ThemeCategory.yours,
     color_theme = meta.accent,
     tint = meta.tint,
@@ -91,11 +90,11 @@ fun custom_theme_background_entry(meta: CustomThemeImageMeta): ThemeBackground =
 
 fun theme_background_for(id: String?): ThemeBackground? {
     if (id == custom_theme_background) return custom_theme_image.meta.value?.let(::custom_theme_background_entry)
-    return theme_backgrounds.firstOrNull { it.id == id }
+    return theme_manifest.catalog.value.firstOrNull { it.id == id }
 }
 
 private const val theme_source_width = 1080
-private const val theme_source_height = 2400
+private const val theme_source_height = 2340
 
 private val theme_bitmap_cache = object : LruCache<String, ImageBitmap>(24 * 1024 * 1024) {
     override fun sizeOf(key: String, value: ImageBitmap): Int = value.width * value.height * 4
@@ -118,11 +117,17 @@ private fun screen_sample(context: Context): Int {
 
 private fun screen_key(background: ThemeBackground, sample: Int): String = "${background.cache_key}:$sample"
 
-private fun decode_source(context: Context, background: ThemeBackground, options: BitmapFactory.Options): Bitmap? =
+private fun decode_source(
+    context: Context,
+    background: ThemeBackground,
+    options: BitmapFactory.Options,
+    kind: RemoteThemeKind,
+): Bitmap? =
     if (background.is_custom) {
         custom_theme_image.load(context, options.inSampleSize)
     } else {
-        BitmapFactory.decodeResource(context.resources, background.drawable_res, options)
+        remote_theme_store.ensure(context, background.id, kind)
+            ?.let { BitmapFactory.decodeFile(it.absolutePath, options) }
     }
 
 private fun decode_screen_bitmap(context: Context, background: ThemeBackground): ImageBitmap? {
@@ -133,7 +138,7 @@ private fun decode_screen_bitmap(context: Context, background: ThemeBackground):
         inSampleSize = sample
         inPreferredConfig = Bitmap.Config.ARGB_8888
     }
-    val decoded = decode_source(context, background, options) ?: return null
+    val decoded = decode_source(context, background, options, RemoteThemeKind.full) ?: return null
     decoded.prepareToDraw()
     return decoded.asImageBitmap().also { theme_bitmap_cache.put(key, it) }
 }
@@ -141,10 +146,10 @@ private fun decode_screen_bitmap(context: Context, background: ThemeBackground):
 private fun decode_theme_thumbnail(context: Context, background: ThemeBackground): ImageBitmap? {
     theme_thumbnail_cache.get(background.cache_key)?.let { return it }
     val options = BitmapFactory.Options().apply {
-        inSampleSize = 2
+        inSampleSize = if (background.is_custom) 2 else 1
         inPreferredConfig = Bitmap.Config.ARGB_8888
     }
-    val decoded = decode_source(context, background, options) ?: return null
+    val decoded = decode_source(context, background, options, RemoteThemeKind.thumb) ?: return null
     decoded.prepareToDraw()
     return decoded.asImageBitmap().also { theme_thumbnail_cache.put(background.cache_key, it) }
 }
@@ -179,10 +184,10 @@ private fun upscale_smooth(source: Bitmap, target_short_side: Int): Bitmap {
 private fun decode_theme_blur(context: Context, background: ThemeBackground): ImageBitmap? {
     theme_blur_cache.get(background.cache_key)?.let { return it }
     val options = BitmapFactory.Options().apply {
-        inSampleSize = 4
+        inSampleSize = if (background.is_custom) 4 else 2
         inPreferredConfig = Bitmap.Config.ARGB_8888
     }
-    val decoded = decode_source(context, background, options) ?: return null
+    val decoded = decode_source(context, background, options, RemoteThemeKind.thumb) ?: return null
     val short_side = minOf(decoded.width, decoded.height).coerceAtLeast(1)
     val down = theme_blur_sample_short_side.toFloat() / short_side
     val small = Bitmap.createScaledBitmap(
@@ -282,10 +287,10 @@ fun remember_theme_bitmap(background: ThemeBackground?): ImageBitmap? {
 }
 
 @Composable
-fun remember_theme_thumbnail(background: ThemeBackground): State<ImageBitmap?> {
+fun remember_theme_thumbnail(background: ThemeBackground, retry_token: Int = 0): State<ImageBitmap?> {
     val context = LocalContext.current.applicationContext
     val key = background.cache_key
-    return produceState(initialValue = theme_thumbnail_cache.get(key), key) {
+    return produceState(initialValue = theme_thumbnail_cache.get(key), key, retry_token) {
         value = theme_thumbnail_cache.get(key)
             ?: withContext(Dispatchers.IO) { decode_theme_thumbnail(context, background) }
     }

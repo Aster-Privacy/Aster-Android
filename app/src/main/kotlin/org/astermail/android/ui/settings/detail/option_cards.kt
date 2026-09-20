@@ -83,7 +83,7 @@ internal fun illustrated_option_card(
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
                 .clip(SquircleShape(12.dp))
-                .background(colors.bg_secondary),
+                .acrylic(colors, SquircleShape(12.dp), colors.bg_secondary),
         ) {
             Image(
                 painter = painterResource(image),

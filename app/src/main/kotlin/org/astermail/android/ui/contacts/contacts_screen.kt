@@ -91,6 +91,7 @@ import org.astermail.android.contacts.ContactsViewModel
 import org.astermail.android.contacts.DuplicateCluster
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.acrylic_backdrop
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
@@ -937,7 +938,7 @@ private fun duplicate_banner(count: Int, on_review: () -> Unit, on_dismiss: () -
             .fillMaxWidth()
             .padding(horizontal = inbox_card_horizontal_margin, vertical = AsterSpacing.sm)
             .clip(SquircleShape(AsterRadius.xl))
-            .background(colors.bg_card)
+            .acrylic(colors, SquircleShape(AsterRadius.xl), colors.bg_card)
             .border(1.dp, colors.border_secondary, SquircleShape(AsterRadius.xl))
             .padding(AsterSpacing.md),
         verticalAlignment = Alignment.CenterVertically,

@@ -10,6 +10,11 @@
     <string name="image_theme_category_cities">Ciudades</string>
     <string name="image_theme_category_landscapes">Paisajes</string>
     <string name="image_theme_category_water">Agua</string>
+    <string name="image_theme_category_aurora">Aurora</string>
+    <string name="image_theme_category_mountains">Montañas</string>
+    <string name="image_theme_category_forest">Bosque</string>
+    <string name="image_theme_category_desert">Desierto</string>
+    <string name="image_theme_category_ocean">Océano</string>
     <string name="image_theme_apply_changes">Aplicar</string>
     <string name="image_theme_reset">Restablecer valores predeterminados</string>
     <string name="image_theme_colors">Colores</string>
@@ -23,7 +28,6 @@
     <string name="image_theme_photo_too_large">Esta foto es demasiado grande. Elige una de menos de 40 MB.</string>
     <string name="image_theme_photo_unsupported">Este tipo de archivo no es compatible. Elige una foto JPEG, PNG, GIF, WebP o HEIC.</string>
     <string name="image_theme_photo_unreadable">No se puede abrir esta foto. Prueba con otra.</string>
-    <string name="image_theme_category_calm">Sereno</string>
     <string name="image_theme_credit_modified">Foto: %1$s. Recortada y redimensionada.</string>
     <string name="image_theme_credit_generated">Creado por Aster</string>
     <string name="image_theme_adjust_photo">Ajustar</string>
@@ -51,4 +55,5 @@
     <string name="image_theme_animation">Animar el fondo</string>
     <string name="image_theme_animation_subtitle">Reproduce tu fondo animado. Se detiene en el modo de ahorro de batería y cuando las animaciones están desactivadas en tu dispositivo.</string>
     <string name="image_theme_animation_too_large">Esta imagen animada es demasiado grande. Elige una de menos de 12 MB.</string>
+    <string name="image_theme_retry_download">Reintentar la descarga</string>
 </resources>

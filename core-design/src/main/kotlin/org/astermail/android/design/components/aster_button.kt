@@ -148,6 +148,27 @@ fun AsterButton(
 }
 
 @Composable
+fun AsterAccentButton(
+    label: String,
+    onClick: () -> Unit,
+    fill: Color,
+    content_color: Color,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    is_loading: Boolean = false,
+) {
+    depth_button(
+        label = label,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        is_loading = is_loading,
+        fill = fill,
+        content_color = content_color,
+    )
+}
+
+@Composable
 private fun depth_button(
     label: String,
     onClick: () -> Unit,

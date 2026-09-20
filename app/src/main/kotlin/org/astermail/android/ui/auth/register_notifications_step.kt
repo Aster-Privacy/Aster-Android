@@ -56,6 +56,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.notifications.MailPollingWorker
@@ -169,7 +170,7 @@ private fun notification_preview_card() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(colors.bg_card, SquircleShape(16.dp))
+            .acrylic(colors, SquircleShape(16.dp), colors.bg_card)
             .border(1.dp, colors.border_primary, SquircleShape(16.dp))
             .padding(AsterSpacing.lg),
         verticalAlignment = Alignment.CenterVertically,

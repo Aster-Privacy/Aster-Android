@@ -12,7 +12,7 @@
     <string name="retry">Tekrar dene</string>
     <string name="copy">Kopyala</string>
     <string name="all_mail">Tüm postalar</string>
-    <string name="send_sent_folder_unavailable">Aster Mail şu anda Gönderilenler klasörüne ulaşamıyor. Bağlantını denetle ve yeniden göndermeyi dene.</string>
+    <string name="send_sent_folder_unavailable">Aster Mail şu anda Gönderilenler klasörüne ulaşamıyor. Bağlantınızı denetle ve yeniden göndermeyi dene.</string>
     <string name="sent_copy_attachments_missing">İletin gönderildi ancak Aster Mail eklerin %1$d tanesini Gönderilenler klasörüne kaydedemedi.</string>
     <string name="close">Kapat</string>
     <string name="confirm">Onayla</string>
@@ -391,7 +391,7 @@
     <string name="search_contacts">Kişilerde ara</string>
     <string name="alias_note_title">Rumuz notu</string>
     <string name="alias_note_hint">Bu notu yalnızca siz görebilirsiniz</string>
-    <string name="alias_note_placeholder">Bu rumuzu nerede kullandığınız, kayıt tarihi, işinize yarayacak her şey</string>
+    <string name="alias_note_placeholder">Bu takma adı nerede kullandığınız, kayıt tarihi, işinize yarayacak her şey</string>
     <string name="alias_note_add">Not ekle</string>
     <string name="alias_note_updated">Not güncellendi</string>
     <string name="tab_all">Tümü</string>
@@ -1192,18 +1192,6 @@
 
     <string name="language">Dil</string>
     <string name="display_language">Görüntüleme dili</string>
-    <string name="lang_english">English</string>
-    <string name="lang_spanish">Espanol</string>
-    <string name="lang_french">Francais</string>
-    <string name="lang_german">Deutsch</string>
-    <string name="lang_italian">Italiano</string>
-    <string name="lang_portuguese">Portugues</string>
-    <string name="lang_japanese">Japanese</string>
-    <string name="lang_korean">Korean</string>
-    <string name="lang_chinese">Chinese (simplified)</string>
-    <string name="lang_russian">Russian</string>
-    <string name="lang_arabic">Arabic</string>
-    <string name="lang_hindi">Hindi</string>
     <string name="set_from_system">Sistem dili (English)</string>
     <string name="language_system_default">Sistem varsayılanı</string>
     <string name="language_system_default_hint">Burada bir dil seçene kadar Aster Mail cihazınızın dilini kullanır.</string>
@@ -1319,13 +1307,13 @@
         <item quantity="one">%d yeni mesaj</item>
         <item quantity="other">%d yeni mesaj</item>
     </plurals>
-    <string name="enter_current_password">Mevcut parolanı gir</string>
+    <string name="enter_current_password">Mevcut parolanızı gir</string>
     <string name="new_password_min_length">Yeni parola en az 8 karakter olmalı</string>
     <string name="new_password_max_length">Yeni parola en fazla 128 karakter olmalı</string>
     <string name="new_password_mismatch">Yeni parola ve onay eşleşmiyor</string>
     <string name="new_password_must_differ">Yeni parola mevcut paroladan farklı olmalı</string>
     <string name="failed_change_password">Parola değiştirilemedi</string>
-    <string name="enter_account_password">Hesap parolanı gir</string>
+    <string name="enter_account_password">Hesap parolanızı gir</string>
     <string name="something_went_wrong">Bir şeyler ters gitti</string>
     <string name="name_cannot_be_empty">Ad boş olamaz</string>
     <string name="session_revoked">Oturum iptal edildi</string>
@@ -1506,7 +1494,7 @@
     <string name="change">Değiştir</string>
     <string name="unset">Ayarlanmadı</string>
     <string name="more_actions">Daha fazla</string>
-    <string name="failed_to_update_selection">Bazı konuşmalar güncellenemedi</string>
+    <string name="failed_to_update_selection">Bazı yazışmalar güncellenemedi</string>
     <string name="mail_rules_title">Posta kuralları</string>
     <string name="mail_rules_subtitle">Gelen postaya ne olacağını otomatikleştirin</string>
     <string name="mail_rules_empty_title">Henüz kural yok</string>
@@ -1599,12 +1587,13 @@
     <string name="mail_rules_regex_lookaround">Lookahead ve lookbehind desteklenmiyor. Kalıbı bunlar olmadan yazın.</string>
     <string name="tap_again_to_exit">Uygulamadan çıkmak için tekrar dokunun</string>
     <string name="search_action">Ara</string>
-    <string name="action_failed">Islem basarisiz oldu. Lutfen tekrar deneyin.</string>
+    <string name="action_failed">İşlem başarısız oldu. Lütfen tekrar deneyin.</string>
     <string name="version_copied">Surum kopyalandi</string>
-    <string name="hold_to_copy_version">Kopyalamak icin basili tutun</string>
+    <string name="hold_to_copy_version">Kopyalamak için basılı tutun</string>
     <string name="name_copied">Ad kopyalandı</string>
     <string name="email_copied">E-posta adresi kopyalandı</string>
     <string name="show_less">Daha az göster</string>
+    <string name="color_theme_show_all">Tüm renkleri göster</string>
     <string name="expand_folder">%1$s klasörünü genişlet</string>
     <string name="collapse_folder">%1$s klasörünü daralt</string>
     <string name="badge_active">Aktif rozet</string>
@@ -1878,7 +1867,7 @@
     <string name="failed_delete_tag">Etiket silinemedi</string>
     <string name="failed_delete_alias">Takma ad silinemedi</string>
     <string name="failed_revoke_api_key">API anahtarı iptal edilemedi</string>
-    <string name="block_sender_confirm_message">Bu adresten gelen yeni postalar doğrudan spam’e düşer. Ayarlar’daki Engellenen gönderenler bölümünden geri alabilirsin.</string>
+    <string name="block_sender_confirm_message">Bu adresten gelen yeni postalar doğrudan spam’e düşer. Ayarlar’daki Engellenen gönderenler bölümünden geri alabilirsiniz.</string>
     <string name="sender_blocked_named">%1$s engellendi</string>
     <string name="default_signature_name">Varsayılan</string>
     <string name="quiet_hours_start">Başlangıç</string>
@@ -1909,7 +1898,7 @@
     <string name="ext_label_yahoo_account">Yahoo hesabı</string>
     <string name="ext_label_imap_account">IMAP hesabı</string>
     <string name="ext_label_linked_account">Bağlı hesap</string>
-    <string name="ext_error_delete_failed">Hesap kaldırılamadı. Bağlantını kontrol edip tekrar dene.</string>
+    <string name="ext_error_delete_failed">Hesap kaldırılamadı. Bağlantınızı kontrol edip tekrar dene.</string>
     <string name="import_section_connect">Bir posta kutusu bağla</string>
     <string name="import_section_file">Dosya yükle</string>
     <string name="import_section_sync">Dış senkronizasyon</string>
@@ -1977,7 +1966,7 @@
     <string name="delete_account">Hesabı sil</string>
     <string name="delete_account_subtitle">Hesabını ve verilerini kalıcı olarak sil</string>
     <string name="delete_account_warning_title">Bu geri alınamaz</string>
-    <string name="delete_account_warning_body">Hesabın, posta kutuların, kişilerin ve şifreli kasan 30 günlük süre sonunda kalıcı olarak silinir. Bu süre içinde tekrar giriş yaparak iptal edebilirsin.</string>
+    <string name="delete_account_warning_body">Hesabınız, posta kutularınız, kişileriniz ve şifreli kasanız 30 günlük süre sonunda kalıcı olarak silinir. Bu süre içinde tekrar giriş yaparak iptal edebilirsiniz.</string>
     <string name="delete_account_confirm_phrase">Onaylamak için DELETE yaz</string>
     <string name="delete_account_confirm_word">DELETE</string>
     <string name="delete_account_confirm_mismatch">Onaylamak için tam olarak DELETE yaz</string>
@@ -2032,7 +2021,7 @@
     <string name="usage_storage">Depolama</string>
     <string name="upgrade_inline_card_title">Daha fazlası için yükselt</string>
     <string name="upgrade_inline_card_description">Ücretsiz planın sınırına ulaştın. Ücretli planla daha fazlasını aç.</string>
-    <string name="your_key">Anahtarın</string>
+    <string name="your_key">Anahtarınız</string>
     <string name="recovery_codes">Kurtarma kodları</string>
     <string name="recovery_codes_remaining">%2$d kodun %1$d tanesi kaldı</string>
     <string name="low">Az</string>
@@ -2059,7 +2048,7 @@
     <string name="publish_to_wkd_sub">Açık anahtarını Web Key Directory\'de yayımlar</string>
     <string name="publish_to_keyservers">Anahtar sunucularına yayımla</string>
     <string name="publish_to_keyservers_sub">Anahtarını herkese açık anahtar sunucularında yayımlar</string>
-    <string name="keyserver_publish_failed">Genel anahtarın anahtar sunucusuna yayımlanmadı. Bir kez daha denemek genellikle yeterli olur.</string>
+    <string name="keyserver_publish_failed">Genel anahtarınız anahtar sunucusuna yayımlanmadı. Bir kez daha denemek genellikle yeterli olur.</string>
     <string name="public_key_copied">Açık anahtar kopyalandı</string>
     <string name="created_at_format">%1$s tarihinde oluşturuldu</string>
     <string name="identity_key_unavailable_hint">Anahtar bilgilerini geri getirmek için yeniden oturum aç.</string>
@@ -2068,7 +2057,7 @@
     <string name="copy_fingerprint_action">Parmak izini kopyala</string>
     <string name="copy_public_key_action">Açık anahtarı kopyala</string>
     <string name="encryption_feature_client_side">Cihazda şifreleme</string>
-    <string name="encryption_feature_client_side_sub">İletilerini yalnızca sen okuyabilirsin</string>
+    <string name="encryption_feature_client_side_sub">İletilerinizi yalnızca siz okuyabilirsiniz</string>
     <string name="encryption_feature_zero_knowledge">Erişimsiz depolama</string>
     <string name="encryption_feature_zero_knowledge_sub">Sunucular düz metnini asla görmez</string>
     <string name="encryption_feature_openpgp">OpenPGP uyumlu</string>
@@ -2100,11 +2089,11 @@
     <string name="low_network_mode_subtitle">Yavaş bağlantılarda veri kullanımını azaltır</string>
     <string name="low_network_mode_info_title">Düşük bağlantı modu</string>
     <string name="low_network_mode_info_desc">Aster\'ı yavaş ya da kotalı bağlantılarda kullanılabilir tutmak için zorunlu olmayan tüm ağ isteklerini engeller. Profil resimlerini, gönderen logolarını, e-postalardaki dış görselleri, ek önizlemelerini ve özel yazı tiplerini kapatır. Tüm e-postalar düz metin olarak gösterilir.</string>
-    <string name="section_reading_conversations">Okuma ve sohbetler</string>
-    <string name="conversation_grouping_subtitle">Aynı sohbetteki e-postaları bir arada göster</string>
+    <string name="section_reading_conversations">Okuma ve yazışmalar</string>
+    <string name="conversation_grouping_subtitle">Aynı yazışmadaki e-postaları bir arada göster</string>
     <string name="inbox_categories">Gelen kutusu kategorileri</string>
     <string name="inbox_categories_subtitle">Gelen postaları İndirimler, Sosyal ve Bildirimler gibi sekmelere ayırır</string>
-    <string name="conversation_order_label">Sohbet sıralaması</string>
+    <string name="conversation_order_label">Yazışma sıralaması</string>
     <string name="show_message_size">İleti boyutunu göster</string>
     <string name="relative_dates">Göreli tarihler</string>
     <string name="relative_dates_subtitle">Son iletilerde tarih yerine Dün ve saati göster</string>
@@ -2117,7 +2106,7 @@
     <string name="force_dark_emails_subtitle">E-posta içeriğini her zaman koyu modda göster</string>
     <string name="section_composing_replies">Yazma ve yanıtlar</string>
     <string name="enable_undo_send">Göndermeyi geri almayı aç</string>
-    <string name="enable_undo_send_subtitle">Gönderimi geciktirir, böylece vazgeçebilirsin</string>
+    <string name="enable_undo_send_subtitle">Gönderimi geciktirir, böylece vazgeçebilirsiniz</string>
     <string name="cancellation_period">Vazgeçme süresi</string>
     <string name="section_spam_filtering">İstenmeyen posta filtresi</string>
     <string name="enable_spam_filtering">İstenmeyen posta filtresini aç</string>
@@ -2155,7 +2144,7 @@
     <string name="login_alerts">Oturum açma uyarıları</string>
     <string name="login_alerts_subtitle">Hesabına yeni bir cihaz girdiğinde haber verir</string>
     <string name="login_alerts_info_title">Oturum açma uyarıları</string>
-    <string name="login_alerts_info_desc">Hesabına yeni bir cihazdan ya da yeni bir konumdan her giriş yapıldığında sana e-posta gönderiyoruz. İzinsiz erişimi erken fark etmeni sağlar.</string>
+    <string name="login_alerts_info_desc">Hesabınıza yeni bir cihazdan ya da yeni bir konumdan her giriş yapıldığında size e-posta gönderiyoruz. İzinsiz erişimi erken fark etmenizi sağlar.</string>
     <string name="passkeys_security_keys">Geçiş anahtarları ve güvenlik anahtarları</string>
     <string name="passkeys_none_subtitle">Kayıtlı anahtar yok. Masaüstünden kaydet.</string>
     <string name="section_trusted_devices">Güvenilen cihazlar</string>
@@ -2205,7 +2194,7 @@
     <string name="trusted_device_revoke">Cihazı kaldır</string>
     <string name="info">Bilgi</string>
     <string name="got_it">Anladım</string>
-    <string name="conversation_grouping">Sohbetleri grupla</string>
+    <string name="conversation_grouping">Yazışmaları grupla</string>
     <string name="undo_send_cancel_window">Vazgeçme süresi: %1$d sn</string>
     <string name="no_custom_domains">Kendi alan adın yok</string>
     <string name="no_custom_domains_subtitle">Kendi adresinle gönderip almak için bir alan adı ekle</string>
@@ -2214,8 +2203,8 @@
     <string name="alias_behavior">Davranış</string>
     <string name="alias_domains_section">Alan adları</string>
     <string name="alias_default_domain">Varsayılan alan adı</string>
-    <string name="alias_default_domain_subtitle">Yeni rumuzlar oluşturulurken kullanılan alan adı</string>
-    <string name="alias_default_domain_info_desc">Yeni rumuzlar bu alan adıyla başlar. Her rumuz için farklı bir alan adı seçebilirsiniz.</string>
+    <string name="alias_default_domain_subtitle">Yeni takma adlar oluşturulurken kullanılan alan adı</string>
+    <string name="alias_default_domain_info_desc">Yeni takma adlar bu alan adıyla başlar. Her takma ad için farklı bir alan adı seçebilirsiniz.</string>
     <string name="alias_default_domain_platform">Aster alan adı</string>
     <string name="alias_default_domain_custom">Kendi alan adınız</string>
     <string name="alias_disabled_response">Kapalı takma adın yanıtı</string>
@@ -2345,14 +2334,14 @@
     <string name="export_file_size">Dosya boyutu</string>
     <string name="export_share_save">Paylaş / Kaydet</string>
     <string name="export_private_key_dialog_title">Özel anahtarı dışa aktar</string>
-    <string name="export_private_key_message">Özel anahtarın armored PGP biçiminde dışa aktarılacak. İşlemi onaylamak için hesap parolanı gir.</string>
+    <string name="export_private_key_message">Özel anahtarınız armored PGP biçiminde dışa aktarılacak. İşlemi onaylamak için hesap parolanızı girin.</string>
     <string name="export_private_key_password_label">Hesap parolası</string>
     <string name="export_private_key_exporting">Aktarılıyor...</string>
     <string name="export_private_key_button">Dışa aktar</string>
     <string name="toast_private_key_copied">Özel anahtar panoya kopyalandı</string>
     <string name="error_private_key_export">Parola yanlış ya da dışa aktarma başarısız oldu</string>
     <string name="storage_addons_title">Ek depolama</string>
-    <string name="storage_addons_description">Her plana ek depolama katabilirsin. Bu ekler üst üste birikir.</string>
+    <string name="storage_addons_description">Her plana ek depolama katabilirsiniz. Bu ekler üst üste birikir.</string>
     <string name="storage_addon_add">%1$s ekle</string>
     <string name="payment_method_card">Kredi / banka kartı</string>
     <string name="payment_method_card_subtitle">Stripe ile öde</string>
@@ -2437,7 +2426,7 @@
     <string name="app_lock_mode_numeric">Sayısal PIN</string>
     <string name="app_lock_mode_numeric_desc">Uygulamayı 4, 6 veya 8 haneli bir PIN ile kilitle.</string>
     <string name="app_lock_mode_text">Metin parola</string>
-    <string name="app_lock_mode_text_desc">Daha güçlü koruma için kendi parolanı kullan.</string>
+    <string name="app_lock_mode_text_desc">Daha güçlü koruma için kendi parolanızı kullan.</string>
     <string name="app_lock_choose_digits">PIN uzunluğunu seç</string>
     <string name="app_lock_digits_4">4 haneli PIN</string>
     <string name="app_lock_digits_6">6 haneli PIN</string>
@@ -2463,7 +2452,7 @@
     <string name="app_lock_enter_to_disable">Uygulama kilidini kapatmak için PIN\'ini gir.</string>
     <string name="settings_alias_directories">Takma ad dizinleri</string>
     <string name="alias_directories">Takma ad dizinleri</string>
-    <string name="alias_directories_description">Takma ad dizinleri, ortak bir anahtarla başlayan her adreste posta almanı sağlar. Dizinini paylaş, gerçek adresini göstermeden sana ulaşılsın.</string>
+    <string name="alias_directories_description">Takma ad dizinleri, ortak bir anahtarla başlayan her adreste posta almanızı sağlar. Dizininizi paylaşın, gerçek adresinizi göstermeden size ulaşılsın.</string>
     <string name="no_alias_directories">Takma ad dizini yok</string>
     <string name="no_alias_directories_subtitle">Burada kullanmak için astermail.org üzerinde takma ad dizini oluştur</string>
     <string name="directories_count">%1$d dizin</string>
@@ -2585,7 +2574,7 @@
     <string name="alias_pin_mode_off">Kapalı</string>
     <string name="alias_pin_mode_lock_first">İlk göndericiye sabitle</string>
     <string name="alias_pin_mode_allowlist">Yalnızca izin listesi</string>
-    <string name="alias_pin_placeholder">gonderen@ornek.com</string>
+    <string name="alias_pin_placeholder">gönderen@ornek.com</string>
     <string name="alias_pin_add">Gönderen ekle</string>
     <string name="alias_pins_empty">Henüz sabitlenmiş gönderen yok</string>
     <string name="alias_pin_added">Gönderen eklendi</string>
@@ -2623,7 +2612,7 @@
     <string name="alias_contacts_title">Ters kişiler</string>
     <string name="alias_contacts_description">Gerçek adresinizi göstermeden bu takma addan yanıt verin.</string>
     <string name="alias_contacts_empty">Henüz kişi yok</string>
-    <string name="alias_contact_placeholder">kisi@ornek.com</string>
+    <string name="alias_contact_placeholder">kişi@ornek.com</string>
     <string name="alias_contact_add">Kişi ekle</string>
     <string name="alias_contact_added">Kişi eklendi</string>
     <string name="alias_contact_removed">Kişi kaldırıldı</string>
@@ -2643,12 +2632,12 @@
     <string name="alias_import_target_domain">Şuraya aktar</string>
     <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">Devre dışıysa yeniden etkinleştir</string>
-    <string name="alias_import_confirm">%1$d rumuzu içe aktar</string>
-    <string name="alias_import_progress">%2$d rumuzdan %1$d içe aktarılıyor...</string>
+    <string name="alias_import_confirm">%1$d takma adı içe aktar</string>
+    <string name="alias_import_progress">%2$d takma addan %1$d içe aktarılıyor...</string>
     <string name="alias_import_summary_created">%1$d içe aktarıldı</string>
     <string name="alias_import_summary_skipped">%1$d zaten mevcuttu</string>
     <string name="alias_import_summary_failed">%1$d başarısız</string>
-    <string name="alias_import_error_no_aliases">Bu dosyada içe aktarılabilir rumuz bulunamadı.</string>
+    <string name="alias_import_error_no_aliases">Bu dosyada içe aktarılabilir takma ad bulunamadı.</string>
     <string name="alias_import_error_encrypted">Bu dışa aktarma şifreli. Şifrelemeden yeniden dışa aktarın, sonra içe aktarın.</string>
     <string name="alias_export_title">Takma adları dışa aktar</string>
     <string name="alias_export_description">Nelerin dahil edileceğini seçin. Dosya cihazınızda oluşturulur ve sunucularımıza asla gönderilmez.</string>
@@ -2795,7 +2784,7 @@
     <string name="sender_added_to_allowlist">İzin listesine eklendi</string>
     <string name="failed_allow_sender">İzin listesine eklenemedi</string>
     <string name="failed_remove_allowed_sender">İzin listesinden kaldırılamadı</string>
-    <string name="alias_websites_limit_reached">En fazla 10 web sitesi ekleyebilirsin</string>
+    <string name="alias_websites_limit_reached">En fazla 10 web sitesi ekleyebilirsiniz</string>
     <string name="alias_website_add">Web sitesi ekle</string>
     <string name="alias_website_remove">Web sitesini kaldır</string>
     <string name="alias_website_input_placeholder">ornek.com</string>
@@ -2854,7 +2843,7 @@
     <string name="link_device_continue">Devam</string>
     <string name="link_device_confirm_description">Bunun önündeki cihazla eşleştiğini denetle.</string>
     <string name="link_device_unnamed">Adsız cihaz</string>
-    <string name="link_device_confirm_warning">Bağladıktan sonra bu cihaz, sen kaldırana kadar postanı okuyabilir ve gönderebilir.</string>
+    <string name="link_device_confirm_warning">Bağladıktan sonra bu cihaz, siz kaldırana kadar postanızı okuyabilir ve gönderebilir.</string>
     <string name="link_device_confirm_action">Cihazı bağla</string>
     <string name="link_device_success_title">Cihaz bağlandı</string>
     <string name="link_device_success_description">%1$s artık kurulumu tamamlayıp posta kutunu açabilir.</string>
@@ -2945,8 +2934,8 @@
         <item quantity="other">%1$d kayıt</item>
     </plurals>
     <plurals name="alias_import_confirm">
-        <item quantity="one">%1$d rumuzu içe aktar</item>
-        <item quantity="other">%1$d rumuzu içe aktar</item>
+        <item quantity="one">%1$d takma adı içe aktar</item>
+        <item quantity="other">%1$d takma adı içe aktar</item>
     </plurals>
     <plurals name="mail_rules_applied_count">
         <item quantity="one">%1$d kez uygulandı</item>
@@ -2971,7 +2960,7 @@
     <string name="error_image_too_large">Bu görüntü çok büyük. Daha küçük bir fotoğraf seçin.</string>
     <string name="error_invalid_2fa_code">Bu kod doğru değil. Kimlik doğrulama uygulamanızı kontrol edip tekrar deneyin.</string>
     <string name="error_passkey_unavailable">Bu cihazda bu hesap için geçiş anahtarı yok. Kimlik doğrulama uygulamanı kullan ya da önce tarayıcıdan bir geçiş anahtarı ekle.</string>
-    <string name="error_passkey_failed">Geçiş anahtarın doğrulanamadı. Yeniden dene ya da başka bir oturum açma yöntemi kullan.</string>
+    <string name="error_passkey_failed">Geçiş anahtarınız doğrulanamadı. Yeniden deneyin ya da başka bir oturum açma yöntemi kullanın.</string>
     <string name="error_invalid_backup_code">Bu yedek kod eşleşmedi. Her kod yalnızca bir kez çalışır, bu yüzden listenizdeki bir sonraki kullanılmamış kodu deneyin.</string>
     <string name="error_invalid_recovery_phrase">Bu kurtarma ifadesi eşleşmedi. Kelime sırasını ve yazımı kontrol edip tekrar deneyin.</string>
     <string name="error_plan_limit_reached">Mevcut planınızdaki sınıra ulaştınız. Yükseltmek ya da yer açmak için bazı öğeleri kaldırmak ilerlemenizi sağlar.</string>
@@ -2980,13 +2969,13 @@
     <string name="error_storage_full">Depolama alanınız dolu. Yer açmak için planınızı yükseltin ya da bir miktar e-postayı kaldırın.</string>
     <string name="error_unsupported_email_domain">astermail.org veya aster.cx ile biten bir adres girin.</string>
     <string name="error_upload_too_large">Yükleme çok büyük. Devam etmek için bir dosyayı kaldırın veya küçültün, sonra yeniden deneyin.</string>
-    <string name="expiring_not_with_schedule">Bir iletiyi zamanlayabilir ya da süresi dolacak şekilde ayarlayabilirsin, ama ikisini birden yapamazsın. Devam etmek için birini kapat.</string>
+    <string name="expiring_not_with_schedule">Bir iletiyi zamanlayabilir ya da süresi dolacak şekilde ayarlayabilirsiniz, ama ikisini birden yapamazsınız. Devam etmek için birini kapatın.</string>
     <string name="failed_load_dns_records">DNS kayıtları yüklenemedi</string>
     <string name="failed_to_move_items">Taşınamadı</string>
     <string name="folder_name_taken">Bu adda bir klasör zaten var.</string>
     <string name="hardware_key_remove_confirm">Bu güvenlik anahtarıyla artık oturum açamazsınız.</string>
-    <string name="hardware_key_remove_last_title">Son güvenlik anahtarın kaldırılsın mı?</string>
-    <string name="hardware_key_remove_last_description">Bu, hesabındaki son ikinci doğrulama adımı. Kaldırmak için parolanı gir.</string>
+    <string name="hardware_key_remove_last_title">Son güvenlik anahtarınız kaldırılsın mı?</string>
+    <string name="hardware_key_remove_last_description">Bu, hesabındaki son ikinci doğrulama adımı. Kaldırmak için parolanızı gir.</string>
     <string name="image_insert_failed">Bu görsel eklenemedi. Çok büyük olabilir veya desteklenmeyen bir biçimde olabilir.</string>
     <string name="invalid_recipient_address">“%1$s” geçerli bir e-posta adresi değil</string>
     <string name="label_name_taken">Bu adda bir etiket zaten var.</string>
@@ -3015,11 +3004,11 @@
     <string name="scheduled_send_time">%1$s için planlandı</string>
     <string name="scheduled_sending_now">Şimdi gönderiliyor</string>
     <string name="scheduled_to">Kime: %1$s</string>
-    <string name="send_refusal_attachments_too_large">Bu ekler toplamda %1$s boyutunu aşıyor ve bu, planında tek bir iletinin taşıyabileceği en fazla boyut. Bir dosyayı kaldırdığında veya küçülttüğünde gönderim çalışır. Taslağın kaydedildi.</string>
-    <string name="send_refusal_recipient_concentration">%1$s üzerindeki adreslere bir saat içinde izin verdiğimiz kadar ileti gönderdin. Tek bir sağlayıcıya bir anda bu kadar çok göndermek posta sunucularımızın engellenmesine yol açar. Daha sonra tekrar dene. Taslağın kaydedildi.</string>
+    <string name="send_refusal_attachments_too_large">Bu ekler toplamda %1$s boyutunu aşıyor ve bu, planınızda tek bir iletinin taşıyabileceği en fazla boyut. Bir dosyayı kaldırdığınızda veya küçülttüğünüzde gönderim çalışır. Taslağınız kaydedildi.</string>
+    <string name="send_refusal_recipient_concentration">%1$s üzerindeki adreslere bir saat içinde izin verdiğimiz kadar ileti gönderdiniz. Tek bir sağlayıcıya bir anda bu kadar çok göndermek posta sunucularımızın engellenmesine yol açar. Daha sonra tekrar deneyin. Taslağınız kaydedildi.</string>
     <string name="send_refusal_that_provider">bu sağlayıcı</string>
-    <string name="send_refusal_too_many_attachments">Bu iletide %1$d ekten fazlası var ve bu, tek bir iletinin taşıyabileceği en fazla sayı. Birkaçını kaldırdığında gönderim çalışır. Taslağın kaydedildi.</string>
-    <string name="send_refusal_too_many_recipients">Bu iletide tek bir iletinin ulaşabileceğinden fazla alıcı var. Hesabın bir seferde %1$d alıcıya gönderebilir ve bu sınır ilk haftan boyunca yükselir. İletiyi daha küçük gruplar halinde gönder. Taslağın kaydedildi.</string>
+    <string name="send_refusal_too_many_attachments">Bu iletide %1$d ekten fazlası var ve bu, tek bir iletinin taşıyabileceği en fazla sayı. Birkaçını kaldırdığınızda gönderim çalışır. Taslağınız kaydedildi.</string>
+    <string name="send_refusal_too_many_recipients">Bu iletide tek bir iletinin ulaşabileceğinden fazla alıcı var. Hesabınız bir seferde %1$d alıcıya gönderebilir ve bu sınır ilk haftanız boyunca yükselir. İletiyi daha küçük gruplar halinde gönderin. Taslağınız kaydedildi.</string>
     <string name="settings_save_failed_banner">Değişiklikleriniz kaydedilmedi. Bağlantınızı kontrol edip tekrar deneyin.</string>
     <string name="show_email_preview">Önizleme metni</string>
     <string name="show_email_preview_subtitle">Gelen kutusu listesinde iletinin bir satırını göster</string>
@@ -3036,8 +3025,8 @@
     <string name="vacation_date_not_set">Ayarlanmadı</string>
     <string name="vacation_end_date">Bitiş tarihi</string>
     <string name="vacation_start_date">Başlangıç tarihi</string>
-    <string name="wkd_publish_failed">Genel anahtarın Web Key Directory üzerinde yayımlanmadı. Bir kez daha denemek genellikle yeterli olur.</string>
-    <string name="wkd_unpublish_failed">Genel anahtarın hâlâ Web Key Directory üzerinde. Bir kez daha denemek genellikle yeterli olur.</string>
+    <string name="wkd_publish_failed">Genel anahtarınız Web Key Directory üzerinde yayımlanmadı. Bir kez daha denemek genellikle yeterli olur.</string>
+    <string name="wkd_unpublish_failed">Genel anahtarınız hâlâ Web Key Directory üzerinde. Bir kez daha denemek genellikle yeterli olur.</string>
     <string name="text_color">Metin rengi</string>
     <string name="highlight_color">Vurgu rengi</string>
     <string name="clear_formatting">Biçimlendirmeyi temizle</string>
@@ -3074,7 +3063,7 @@
     <string name="domain_status_verifying">Doğrulanıyor</string>
     <string name="failed_save_connection_preference">Bağlantı tercihi kaydedilemedi</string>
     <string name="generate_ghost_alias_message">Aster, gelen kutunuza yönlendiren rastgele bir adres oluşturur. Diğer adreslerinizi etkilemeden istediğiniz zaman silebilirsiniz.</string>
-    <string name="identity_changed_description">%1$s için şifreleme anahtarı, daha önce gördüğünüzden farklı. Bu, biri yeni bir cihazda oturum açtığında veya hesabını sıfırladığında olur, ancak birinin iletilerinizi ele geçirdiği anlamına da gelebilir. Bu sohbete güvenmeden önce başka bir kanaldan doğrulayın.</string>
+    <string name="identity_changed_description">%1$s için şifreleme anahtarı, daha önce gördüğünüzden farklı. Bu, biri yeni bir cihazda oturum açtığında veya hesabını sıfırladığında olur, ancak birinin iletilerinizi ele geçirdiği anlamına da gelebilir. Bu yazışmaya güvenmeden önce başka bir kanaldan doğrulayın.</string>
     <string name="identity_changed_dismiss">Bunu doğruladım</string>
     <string name="identity_changed_title">Şifreleme anahtarı değişti</string>
     <string name="mail_rules_aliases_loading">Takma adlarınız yükleniyor…</string>
@@ -3350,11 +3339,11 @@
     <string name="custom_domain_own_desc">Herhangi bir kayıt şirketinden bir alan adını birkaç dakikada bağla.</string>
     <string name="custom_domain_new">Yeni bir alan adı al</string>
     <string name="custom_domain_new_desc">Aster\'den ayrılmadan bir alan adı ara ve satın al.</string>
-    <string name="import_mail_step_title">Postanı yanında getir</string>
+    <string name="import_mail_step_title">Postanızı yanında getir</string>
     <string name="import_mail_step_desc">Başka bir hesaptaki iletileri Aster\'a taşı. Her şey kaydedilmeden önce cihazında şifrelenir.</string>
     <string name="import_mail_action">Postayı içe aktar</string>
     <string name="import_mail_skip">Boş gelen kutusuyla başla</string>
-    <string name="import_mail_privacy_note">Daha sonra Ayarlar\'dan da içe aktarabilirsin.</string>
+    <string name="import_mail_privacy_note">Daha sonra Ayarlar\'dan da içe aktarabilirsiniz.</string>
     <string name="import_provider_gmail_desc">Google Takeout\'tan MBOX</string>
     <string name="import_provider_outlook_desc">PST, MBOX veya EML dosyaları</string>
     <string name="import_provider_yahoo_desc">MBOX veya EML dışa aktarımı</string>

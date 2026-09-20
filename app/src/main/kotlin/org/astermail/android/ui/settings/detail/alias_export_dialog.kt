@@ -61,6 +61,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDialogPrimaryButton
@@ -216,7 +217,7 @@ fun alias_export_dialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(SquircleShape(12.dp))
-                                .background(colors.bg_secondary)
+                                .acrylic(colors, SquircleShape(12.dp), colors.bg_secondary)
                                 .clickable(enabled = enabled) {
                                     selected = if (selected.contains(source)) {
                                         selected - source
@@ -260,7 +261,7 @@ fun alias_export_dialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(SquircleShape(12.dp))
-                            .background(colors.bg_secondary)
+                            .acrylic(colors, SquircleShape(12.dp), colors.bg_secondary)
                             .padding(AsterSpacing.md),
                         verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
                     ) {

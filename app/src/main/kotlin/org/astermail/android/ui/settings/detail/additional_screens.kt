@@ -23,6 +23,7 @@ package org.astermail.android.ui.settings.detail
 
 import compose.icons.TablerIcons
 import kotlinx.coroutines.CancellationException
+import org.astermail.android.design.acrylic
 import org.astermail.android.ui.common.show_copy_result_toast
 import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
@@ -618,7 +619,7 @@ private fun referral_link_card(
                     .fillMaxWidth()
                     .height(44.dp)
                     .clip(SquircleShape(AsterRadius.md))
-                    .background(colors.bg_secondary)
+                    .acrylic(colors, SquircleShape(AsterRadius.md), colors.bg_secondary)
                     .padding(start = AsterSpacing.md, end = AsterSpacing.xs),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -904,7 +905,7 @@ private fun referral_empty_history() {
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(colors.bg_secondary),
+                    .acrylic(colors, CircleShape, colors.bg_secondary),
                 contentAlignment = Alignment.Center,
             ) {
                 androidx.compose.material3.Icon(

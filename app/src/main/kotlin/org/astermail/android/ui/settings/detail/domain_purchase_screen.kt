@@ -95,8 +95,10 @@ import org.astermail.android.api.domains.DomainSearchResult
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterTextField
+import org.astermail.android.design.readable_on
 import org.astermail.android.settings.DomainPurchaseErrorKind
 import org.astermail.android.settings.DomainPurchaseUiState
 import org.astermail.android.settings.DomainPurchaseViewModel
@@ -177,16 +179,17 @@ fun DomainPurchaseScreen(
 @Composable
 internal fun domain_status_disc(available: Boolean, size: Dp = 18.dp) {
     val colors = AsterMaterial.colors
+    val disc = if (available) colors.success else colors.danger
     Box(
         modifier = Modifier
             .size(size)
-            .background(if (available) colors.success else colors.danger, CircleShape),
+            .background(disc, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = if (available) TablerIcons.Check else TablerIcons.X,
             contentDescription = null,
-            tint = Color.White,
+            tint = readable_on(disc),
             modifier = Modifier.size(size * 0.62f),
         )
     }
@@ -898,7 +901,7 @@ private fun purchase_summary_card(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(colors.bg_secondary, shape)
+            .acrylic(colors, shape, colors.bg_secondary)
             .border(1.dp, colors.border_secondary, shape),
     ) {
         Column(modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = AsterSpacing.lg)) {

@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import compose.icons.tablericons.ChevronDown
+import compose.icons.tablericons.ChevronUp
+import androidx.compose.animation.animateContentSize
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -92,6 +95,7 @@ import org.astermail.android.ui.theme.ThemeBackground
 import org.astermail.android.ui.theme.no_theme_background
 import org.astermail.android.ui.theme.theme_background_for
 import org.astermail.android.design.preview_font_family_for
+import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.ui.mail.is_comfortable_density
 import org.astermail.android.api.preferences.compose_font_size_labels
@@ -479,9 +483,17 @@ fun AppearanceScreen(
 
         v_gap(AsterSpacing.xxl)
         section_label(stringResource(R.string.color_theme))
+        val swatch_order = remember { listOf(ColorThemeId.custom) + preset_swatch_ids }
+        var colors_expanded by rememberSaveable { mutableStateOf(false) }
+        val collapsed_swatches = remember(swatch_order) { swatch_order.take(6) }
+        val shown_swatches = if (colors_expanded || color_theme !in collapsed_swatches) {
+            swatch_order
+        } else {
+            collapsed_swatches
+        }
         AsterCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-                (preset_swatch_ids + ColorThemeId.custom).chunked(3).forEachIndexed { row_index, row ->
+            Column(modifier = Modifier.padding(AsterSpacing.lg).animateContentSize()) {
+                shown_swatches.chunked(3).forEachIndexed { row_index, row ->
                     if (row_index > 0) v_gap(AsterSpacing.lg)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -510,6 +522,34 @@ fun AppearanceScreen(
                             )
                         }
                         repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                    }
+                }
+                if (shown_swatches.size < swatch_order.size || colors_expanded) {
+                    v_gap(AsterSpacing.lg)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(SquircleShape(AsterRadius.md))
+                            .clickable { colors_expanded = !colors_expanded }
+                            .padding(vertical = AsterSpacing.xs),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(
+                                if (colors_expanded) R.string.show_less else R.string.color_theme_show_all,
+                            ),
+                            color = colors.accent_blue,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                        Spacer(Modifier.width(AsterSpacing.xs))
+                        Icon(
+                            imageVector = if (colors_expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
+                            contentDescription = null,
+                            tint = colors.accent_blue,
+                            modifier = Modifier.size(16.dp),
+                        )
                     }
                 }
             }
@@ -961,8 +1001,9 @@ private fun image_theme_entry_card(
     on_click: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val featured = remember(active?.id) {
-        listOfNotNull(active) + org.astermail.android.ui.theme.theme_categories
+    val catalog_categories by org.astermail.android.ui.theme.theme_manifest.categories.collectAsState()
+    val featured = remember(active?.id, catalog_categories) {
+        listOfNotNull(active) + catalog_categories
             .mapNotNull { it.second.firstOrNull() }
             .filter { it.id != active?.id }
     }.take(3)

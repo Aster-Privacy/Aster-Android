@@ -87,6 +87,7 @@ import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
+import org.astermail.android.ui.common.sheet_container_color
 import org.astermail.android.ui.settings.mail_rules.action_id
 import org.astermail.android.ui.settings.mail_rules.field_id
 import org.astermail.android.ui.settings.mail_rules.regex_error_res
@@ -123,7 +124,7 @@ fun base_sheet(
     ModalBottomSheet(
         onDismissRequest = on_dismiss,
         sheetState = sheet_state,
-        containerColor = if (colors.is_glass) colors.modal_bg.copy(alpha = 1f) else colors.bg_primary,
+        containerColor = sheet_container_color(colors),
         dragHandle = null,
         modifier = Modifier.testTag("mr_sheet"),
     ) {

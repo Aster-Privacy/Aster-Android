@@ -74,6 +74,7 @@ import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
@@ -389,7 +390,7 @@ private fun FormGroup(icon: androidx.compose.ui.graphics.vector.ImageVector, con
                 .padding(top = AsterSpacing.xs)
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(colors.bg_secondary),
+                .acrylic(colors, CircleShape, colors.bg_secondary),
             contentAlignment = Alignment.Center,
         ) {
             androidx.compose.material3.Icon(

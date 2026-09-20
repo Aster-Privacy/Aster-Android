@@ -89,6 +89,7 @@ import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.security.AppLockStore
 import kotlin.math.roundToInt
 import org.astermail.android.design.mirror_in_rtl
+import org.astermail.android.ui.common.sheet_container_color
 
 private enum class SetupStep {
     choose_mode, choose_digits, set_pin, confirm_pin, set_text, confirm_text,
@@ -229,7 +230,7 @@ fun AppLockSetupSheet(
     ModalBottomSheet(
         onDismissRequest = on_dismiss,
         sheetState = sheet_state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
     ) {
         Column(
             modifier = Modifier
@@ -459,7 +460,7 @@ fun AppLockVerifySheet(
     ModalBottomSheet(
         onDismissRequest = on_dismiss,
         sheetState = sheet_state,
-        containerColor = colors.bg_card,
+        containerColor = sheet_container_color(colors),
     ) {
         Column(
             modifier = Modifier

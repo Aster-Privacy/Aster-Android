@@ -69,6 +69,7 @@ import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu
+import org.astermail.android.ui.common.sheet_container_color
 import org.astermail.android.ui.common.picker_theme_res
 import org.astermail.android.ui.mail.SenderAvatar
 import org.astermail.android.design.acrylic
@@ -148,15 +149,13 @@ internal fun person_picker_sheet(
     }
 
     val sheet_shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-    val sheet_acrylic = colors.is_glass && local_acrylic.current != null
     ModalBottomSheet(
         onDismissRequest = on_dismiss,
         sheetState = sheet_state,
         shape = sheet_shape,
-        containerColor = if (sheet_acrylic) Color.Transparent else colors.bg_card,
+        containerColor = sheet_container_color(colors),
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
-        modifier = if (sheet_acrylic) Modifier.acrylic(colors, sheet_shape) else Modifier,
     ) {
         Column(
             modifier = Modifier

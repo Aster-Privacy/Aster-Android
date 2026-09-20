@@ -29,6 +29,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -114,6 +115,8 @@ import org.astermail.android.ui.common.nav_backward_exit
 import org.astermail.android.ui.common.nav_forward_enter
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.ColorThemeId
+import org.astermail.android.ui.theme.RemoteThemeKind
+import org.astermail.android.ui.theme.remote_theme_store
 import org.astermail.android.ui.theme.ThemeBackground
 import org.astermail.android.ui.theme.ThemeCategory
 import org.astermail.android.ui.theme.no_theme_background
@@ -155,8 +158,9 @@ import org.astermail.android.ui.theme.remember_theme_thumbnail
 import org.astermail.android.ui.theme.draw_theme_background
 import org.astermail.android.ui.theme.draw_theme_veil
 import org.astermail.android.ui.theme.theme_background_for
-import org.astermail.android.ui.theme.theme_categories
+import org.astermail.android.ui.theme.theme_manifest
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.components.AsterAccentButton
 
 private data class LibraryPalette(
     val page_bg: Color,
@@ -228,11 +232,12 @@ fun image_theme_library(
     on_apply: (ThemeBackground?, ColorThemeId) -> Unit,
 ) {
     val library_custom_meta by custom_theme_image.meta.collectAsState()
-    val active = remember(active_id, library_custom_meta) { theme_background_for(active_id) }
+    val shelf_categories by theme_manifest.categories.collectAsState()
+    val active = remember(active_id, library_custom_meta, shelf_categories) { theme_background_for(active_id) }
     var pending_id by rememberSaveable { mutableStateOf(active?.id ?: no_theme_background) }
     var pending_color by rememberSaveable { mutableStateOf(active_color.name) }
     var color_chosen by rememberSaveable { mutableStateOf(active_color != ColorThemeId.default) }
-    val pending = remember(pending_id, library_custom_meta) { theme_background_for(pending_id) }
+    val pending = remember(pending_id, library_custom_meta, shelf_categories) { theme_background_for(pending_id) }
     val color = ColorThemeId.from_key(pending_color)
     val dirty = pending_id != (active?.id ?: no_theme_background) || color != active_color
     val accent by animateColorAsState(accent_for(color), tween(260), label = "library_accent")
@@ -241,6 +246,10 @@ fun image_theme_library(
     var applied_tick by remember { mutableIntStateOf(0) }
     var show_applied by remember { mutableStateOf(false) }
     var confirm_reset by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        theme_manifest.load(context)
+    }
 
     LaunchedEffect(pending?.cache_key) {
         pending?.let { preload_theme_bitmap(context, it) }
@@ -372,7 +381,7 @@ fun image_theme_library(
                                 },
                             )
                         }
-                        items(theme_categories, key = { it.first.name }) { (category, list) ->
+                        items(shelf_categories, key = { it.first.name }) { (category, list) ->
                             category_shelf(
                                 category = category,
                                 list = list,
@@ -842,13 +851,11 @@ private fun photo_action_group(
     on_replace: () -> Unit,
     on_remove: () -> Unit,
 ) {
-    val palette = local_library_palette.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .clip(SquircleShape(22.dp))
-            .background(palette.raised_bg),
+            .padding(horizontal = 20.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (allow_adjust) {
@@ -860,7 +867,6 @@ private fun photo_action_group(
                 on_click = on_adjust,
                 modifier = Modifier.weight(1f).testTag("image_theme_custom_adjust"),
             )
-            photo_action_divider(palette.hairline)
         }
         photo_action_button(
             icon = TablerIcons.Photo,
@@ -870,7 +876,6 @@ private fun photo_action_group(
             on_click = on_replace,
             modifier = Modifier.weight(1f).testTag("image_theme_custom_replace"),
         )
-        photo_action_divider(palette.hairline)
         photo_action_button(
             icon = TablerIcons.Trash,
             label = stringResource(R.string.image_theme_remove_photo),
@@ -884,27 +889,22 @@ private fun photo_action_group(
 }
 
 @Composable
-private fun photo_action_divider(color: Color) {
-    Box(
-        modifier = Modifier
-            .width(1.dp)
-            .height(30.dp)
-            .background(color),
-    )
-}
-
-@Composable
 private fun photo_privacy_note(message: String, message_color: Color, is_error: Boolean) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .clip(SquircleShape(16.dp))
+            .background(local_library_palette.current.raised_bg)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Icon(
             imageVector = if (is_error) TablerIcons.AlertCircle else TablerIcons.Lock,
             contentDescription = null,
             tint = message_color,
-            modifier = Modifier.size(15.dp).padding(top = 1.dp),
+            modifier = Modifier.size(16.dp),
         )
         Text(
             text = message,
@@ -930,6 +930,8 @@ private fun photo_action_button(
     Column(
         modifier = modifier
             .height(72.dp)
+            .clip(SquircleShape(20.dp))
+            .background(local_library_palette.current.raised_bg)
             .clickable(enabled = !busy, onClick = on_click)
             .padding(horizontal = 6.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -1132,42 +1134,72 @@ private fun shelf_tile(
 
 @Composable
 private fun apply_bar(accent: Color, on_accent: Color, nav_bottom: Float, on_apply: () -> Unit) {
+    val hairline = local_library_palette.current.hairline
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(local_library_palette.current.raised_bg)
-            .border(1.dp, local_library_palette.current.hairline)
+            .drawBehind {
+                drawRect(color = hairline, size = Size(size.width, 1.dp.toPx()))
+            }
             .padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 14.dp + nav_bottom.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(accent)
-                .clickable(onClick = on_apply)
-                .testTag("image_theme_apply"),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = stringResource(R.string.image_theme_apply_changes),
-                color = on_accent,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
+        AsterAccentButton(
+            label = stringResource(R.string.image_theme_apply_changes),
+            onClick = on_apply,
+            fill = accent,
+            content_color = on_accent,
+            modifier = Modifier.testTag("image_theme_apply"),
+        )
     }
 }
 
 @Composable
 fun image_theme_thumbnail(background: ThemeBackground, modifier: Modifier = Modifier) {
-    val thumb by remember_theme_thumbnail(background)
-    Canvas(modifier = modifier.background(background.tint)) {
-        thumb?.let { draw_cover(it) }
+    var retry_token by remember(background.id) { mutableStateOf(0) }
+    val thumb by remember_theme_thumbnail(background, retry_token)
+    val failed_keys by remote_theme_store.failed.collectAsState()
+    val remote_key = remember(background.id) { remote_theme_store.key_of(background.id, RemoteThemeKind.thumb) }
+    val unavailable = !background.is_custom && thumb == null && remote_key in failed_keys
+    val reveal by animateFloatAsState(
+        targetValue = if (thumb == null) 0f else 1f,
+        animationSpec = tween(durationMillis = 260, easing = LinearOutSlowInEasing),
+        label = "thumb_reveal",
+    )
+    Box(modifier = modifier.background(background.tint), contentAlignment = Alignment.Center) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            thumb?.let { draw_cover(it, reveal) }
+        }
+        if (unavailable) {
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(local_library_palette.current.control_bg)
+                    .clickable {
+                        remote_theme_store.clear_failure(background.id, RemoteThemeKind.thumb)
+                        retry_token += 1
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = TablerIcons.Refresh,
+                    contentDescription = stringResource(R.string.image_theme_retry_download),
+                    tint = Color.White,
+                    modifier = Modifier.size(17.dp),
+                )
+            }
+        } else if (thumb == null) {
+            CircularProgressIndicator(
+                color = Color.White.copy(alpha = 0.55f),
+                strokeWidth = 2.dp,
+                modifier = Modifier.size(20.dp),
+            )
+        }
     }
 }
 
-private fun DrawScope.draw_cover(bitmap: ImageBitmap) {
+private fun DrawScope.draw_cover(bitmap: ImageBitmap, alpha: Float = 1f) {
     val scale = maxOf(size.width / bitmap.width, size.height / bitmap.height)
     val w = bitmap.width * scale
     val h = bitmap.height * scale
@@ -1178,5 +1210,6 @@ private fun DrawScope.draw_cover(bitmap: ImageBitmap) {
         dstOffset = IntOffset(((size.width - w) / 2f).roundToInt(), ((size.height - h) / 2f).roundToInt()),
         dstSize = IntSize(w.roundToInt(), h.roundToInt()),
         filterQuality = FilterQuality.Medium,
+        alpha = alpha,
     )
 }

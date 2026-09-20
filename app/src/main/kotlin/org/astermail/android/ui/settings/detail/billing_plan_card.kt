@@ -74,6 +74,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSemanticColors
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
 
 internal val billing_plan_shape: Shape = SquircleShape(16.dp)
 
@@ -112,19 +113,16 @@ internal fun billing_cta_button(
 ) {
     val colors = AsterMaterial.colors
     val shape = SquircleShape(14.dp)
+    val outlined_surface = Modifier
+        .acrylic(colors, shape, colors.bg_card)
+        .border(BorderStroke(1.dp, colors.border_primary), shape)
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(44.dp)
             .clip(shape)
             .then(
-                if (filled) {
-                    Modifier.background(accent_depth_brush(colors))
-                } else {
-                    Modifier
-                        .background(colors.bg_card)
-                        .border(BorderStroke(1.dp, colors.border_primary), shape)
-                },
+                if (filled) Modifier.background(accent_depth_brush(colors)) else outlined_surface,
             )
             .clickable(enabled = enabled, role = Role.Button, onClick = on_click),
         contentAlignment = Alignment.Center,
@@ -249,7 +247,7 @@ internal fun billing_plan_card(
                 .padding(top = if (badge_label != null) 11.dp else 0.dp)
                 .border(border, billing_plan_shape)
                 .clip(billing_plan_shape)
-                .background(colors.bg_secondary)
+                .acrylic(colors, billing_plan_shape, colors.bg_secondary)
                 .then(if (galaxy) Modifier.background(galaxy_wash_brush(colors)) else Modifier),
         ) {
             Column(

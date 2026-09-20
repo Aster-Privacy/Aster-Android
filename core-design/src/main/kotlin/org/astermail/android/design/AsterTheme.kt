@@ -127,6 +127,8 @@ private val GLASS_NEUTRAL_TINT = Color(0xFF1C1C20)
 private const val GLASS_TINT_PRESENCE = 0.55f
 private const val GLASS_ACCENT_BLEED = 0.20f
 private const val glass_backdrop_lift = 0.35f
+private const val glass_ink_secondary_lift = 0.38f
+private const val glass_ink_tertiary_lift = 0.18f
 
 internal fun image_theme_colors(
     base: AsterSemanticColors,
@@ -154,6 +156,10 @@ internal fun image_theme_colors(
     val accent = ensure_contrast(base.accent_blue, all_surfaces, contrast_body_text)
     val accent_hover = ensure_contrast(base.accent_blue_hover, all_surfaces, contrast_body_text)
     fun text(color: Color): Color = ensure_contrast(color, all_surfaces, contrast_body_text)
+    val ink_primary = text(base.text_primary)
+    val ink_secondary = mix_rgb(text(base.text_secondary), ink_primary, glass_ink_secondary_lift)
+    val ink_tertiary = mix_rgb(text(base.text_tertiary), ink_primary, glass_ink_tertiary_lift)
+    val ink_muted = text(base.text_muted)
     val on_accent = base.on_accent.copy(alpha = 1f).takeIf {
         contrast_ratio(it, accent) >= contrast_body_text && contrast_ratio(it, accent_hover) >= contrast_body_text
     } ?: readable_on(accent).takeIf { contrast_ratio(it, accent_hover) >= contrast_body_text } ?: readable_on(accent_hover)
@@ -168,10 +174,10 @@ internal fun image_theme_colors(
         border_primary = border_strong,
         border_secondary = border_soft,
         border_thread_divider = border_soft,
-        text_primary = text(base.text_primary),
-        text_secondary = text(base.text_secondary),
-        text_tertiary = text(base.text_tertiary),
-        text_muted = text(base.text_muted),
+        text_primary = ink_primary,
+        text_secondary = ink_secondary,
+        text_tertiary = ink_tertiary,
+        text_muted = ink_muted,
         accent_blue = accent,
         accent_blue_hover = accent_hover,
         avatar_bg = avatar_bg,

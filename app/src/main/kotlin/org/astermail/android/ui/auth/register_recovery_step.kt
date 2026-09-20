@@ -22,6 +22,7 @@
 package org.astermail.android.ui.auth
 
 import android.content.ClipData
+import org.astermail.android.design.acrylic
 import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
 import android.content.ClipboardManager
@@ -131,7 +132,7 @@ fun RegisterRecoveryStep(
             modifier = Modifier
                 .fillMaxWidth()
                 .border(1.dp, colors.border_primary, SquircleShape(18.dp))
-                .background(colors.bg_secondary, SquircleShape(18.dp))
+                .acrylic(colors, SquircleShape(18.dp), colors.bg_secondary)
                 .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
@@ -165,7 +166,7 @@ fun RegisterRecoveryStep(
                 modifier = Modifier
                     .fillMaxWidth()
                     .border(1.dp, colors.danger, SquircleShape(18.dp))
-                    .background(colors.bg_secondary, SquircleShape(18.dp))
+                    .acrylic(colors, SquircleShape(18.dp), colors.bg_secondary)
                     .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
                 verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
             ) {
@@ -238,7 +239,7 @@ private const val RECOVERY_CODES_FILE_NAME = "aster-recovery-codes.txt"
 
 private fun copy_recovery_codes(context: Context, codes: List<String>): Boolean {
     val text = codes.joinToString("\n")
-    val clip = ClipData.newPlainText("recovery codes", text)
+    val clip = ClipData.newPlainText(context.getString(R.string.recovery_codes), text)
     clip.description.extras = android.os.PersistableBundle().apply {
         putBoolean("android.content.extra.IS_SENSITIVE", true)
     }

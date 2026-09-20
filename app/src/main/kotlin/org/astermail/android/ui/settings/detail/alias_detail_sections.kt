@@ -62,6 +62,7 @@ import org.astermail.android.api.aliases.SENDER_PIN_MODE_OFF
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.keep_visible_above_keyboard
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSwitch
@@ -256,8 +257,8 @@ internal fun alias_entry_row(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(colors.bg_secondary)
+            .clip(RoundedCornerShape(12.dp))
+            .acrylic(colors, RoundedCornerShape(12.dp), colors.bg_secondary)
             .padding(start = 12.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -299,8 +300,8 @@ internal fun alias_blocked_log_section(detail: AliasDetailState) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(colors.bg_secondary)
+                        .clip(RoundedCornerShape(12.dp))
+                        .acrylic(colors, RoundedCornerShape(12.dp), colors.bg_secondary)
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -429,8 +430,8 @@ private fun alias_rule_row(alias_id: String, rule: AliasRule, vm: SettingsViewMo
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(colors.bg_secondary)
+            .clip(RoundedCornerShape(12.dp))
+            .acrylic(colors, RoundedCornerShape(12.dp), colors.bg_secondary)
             .padding(start = 12.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

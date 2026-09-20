@@ -296,7 +296,7 @@ private fun alias_details_section(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(colors.bg_secondary)
+                    .acrylic(colors, RoundedCornerShape(12.dp), colors.bg_secondary)
                     .clickable(onClick = on_view_sent)
                     .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm)
                     .testTag("alias_view_sent"),
@@ -690,7 +690,7 @@ internal fun alias_apply_existing_row(
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(12.dp))
-                .background(colors.bg_secondary)
+                .acrylic(colors, RoundedCornerShape(12.dp), colors.bg_secondary)
                 .then(
                     if (enabled) {
                         Modifier.clickable { if (active) on_cancel() else on_apply() }
@@ -771,8 +771,8 @@ private fun alias_stat_cell(label: String, value: Long, modifier: Modifier = Mod
     val colors = AsterMaterial.colors
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(colors.bg_secondary)
+            .clip(RoundedCornerShape(12.dp))
+            .acrylic(colors, RoundedCornerShape(12.dp), colors.bg_secondary)
             .padding(vertical = AsterSpacing.sm),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

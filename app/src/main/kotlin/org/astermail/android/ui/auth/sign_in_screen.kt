@@ -84,6 +84,7 @@ import org.astermail.android.auth.AuthUiState
 import org.astermail.android.debugtools.debug_build_banner
 import org.astermail.android.auth.AuthViewModel
 import org.astermail.android.auth.request_passkey_assertion
+import org.astermail.android.design.readable_on
 import org.astermail.android.settings.host_activity
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
@@ -641,18 +642,19 @@ private fun is_backup_code_length(length: Int): Boolean = length == 8 || length 
 
 @Composable
 internal fun error_banner(message: String) {
+    val colors = AsterMaterial.colors
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                color = Color(0xFFDC2626),
+                color = colors.danger,
                 shape = SquircleShape(18.dp),
             )
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
     ) {
         Text(
             text = message,
-            color = Color.White,
+            color = readable_on(colors.danger),
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
         )

@@ -50,6 +50,8 @@
     </plurals>
     <plurals name="trash_auto_delete_notice">
         <item quantity="one">Элементы в корзине удаляются автоматически через %1$d день.</item>
+        <item quantity="few">Элементы в корзине удаляются автоматически через %1$d дня.</item>
+        <item quantity="many">Элементы в корзине удаляются автоматически через %1$d дней.</item>
         <item quantity="other">Элементы в корзине удаляются автоматически через %1$d дней.</item>
     </plurals>
     <plurals name="pending_deletion_body_days">

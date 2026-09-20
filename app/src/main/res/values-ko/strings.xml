@@ -12,8 +12,8 @@
     <string name="retry">재시도</string>
     <string name="copy">복사</string>
     <string name="all_mail">전체 메일</string>
-    <string name="send_sent_folder_unavailable">지금은 보낸 편지함에 연결할 수 없습니다. 연결을 확인한 후 다시 보내세요.</string>
-    <string name="sent_copy_attachments_missing">메시지는 발송되었지만 첨부 파일 %1$d개를 보낸 편지함에 저장하지 못했습니다.</string>
+    <string name="send_sent_folder_unavailable">지금은 보낸편지함에 연결할 수 없습니다. 연결을 확인한 후 다시 보내세요.</string>
+    <string name="sent_copy_attachments_missing">메시지는 발송되었지만 첨부 파일 %1$d개를 보낸편지함에 저장하지 못했습니다.</string>
     <string name="close">닫기</string>
     <string name="confirm">확인</string>
     <string name="search">검색</string>
@@ -114,7 +114,7 @@
     <string name="back_to_sign_in">로그인으로 돌아가기</string>
     <string name="use_recovery_code">복구 코드 사용</string>
     <string name="recovery_email_sent">복구 이메일 발송됨</string>
-    <string name="recovery_email_sent_description">비밀번호 재설정 링크를 복구 이메일로 보냈습니다. 받은 편지함을 확인하고 링크를 클릭하여 계속하세요.</string>
+    <string name="recovery_email_sent_description">비밀번호 재설정 링크를 복구 이메일로 보냈습니다. 받은편지함을 확인하고 링크를 클릭하여 계속하세요.</string>
     <string name="use_recovery_code_instead">대신 복구 코드 사용</string>
     <string name="enter_recovery_code">복구 코드 입력</string>
     <string name="enter_recovery_code_description">계정을 만들 때 저장한 복구 코드 중 하나를 입력하세요. 각 코드는 한 번만 사용할 수 있습니다.</string>
@@ -140,9 +140,9 @@
     <string name="password_reset_successful">비밀번호 재설정 완료</string>
     <string name="password_reset_success_description">계정이 복구되었습니다. 새 비밀번호로 로그인하세요.</string>
 
-    <string name="folder_inbox">받은 편지함</string>
-    <string name="folder_sent">보낸 편지함</string>
-    <string name="folder_drafts">임시 보관함</string>
+    <string name="folder_inbox">받은편지함</string>
+    <string name="folder_sent">보낸편지함</string>
+    <string name="folder_drafts">임시보관함</string>
     <string name="folder_archive">보관함</string>
     <string name="folder_starred">별표 표시</string>
     <string name="folder_scheduled">예약됨</string>
@@ -159,7 +159,7 @@
     <string name="new_messages_here">새 메시지가 여기에 표시됩니다</string>
     <string name="nothing_sent_yet">아직 보낸 것이 없습니다</string>
     <string name="sent_messages_here">보낸 메시지가 여기에 표시됩니다</string>
-    <string name="no_drafts">임시 보관함이 비어 있습니다</string>
+    <string name="no_drafts">임시보관함이 비어 있습니다</string>
     <string name="drafts_working_here">작성 중인 임시 보관 메일이 여기에 표시됩니다</string>
     <string name="nothing_starred">아직 별표 표시한 것이 없습니다</string>
     <string name="star_important">중요한 이메일에 별표를 표시하여 빠르게 찾으세요</string>
@@ -168,7 +168,7 @@
     <string name="no_spam">스팸 없음, 깨끗합니다</string>
     <string name="suspicious_caught_here">의심스러운 이메일이 여기에 걸립니다</string>
     <string name="nothing_archived">아직 보관한 것이 없습니다</string>
-    <string name="archive_to_clean">이메일을 보관하여 받은 편지함을 깔끔하게 유지하세요</string>
+    <string name="archive_to_clean">이메일을 보관하여 받은편지함을 깔끔하게 유지하세요</string>
     <string name="no_scheduled">예약된 메시지가 없습니다</string>
     <string name="scheduled_messages_here">예약한 메시지가 여기에 표시됩니다</string>
     <string name="nothing_snoozed">지금 다시 알림 중인 것이 없습니다</string>
@@ -205,11 +205,11 @@
     <string name="swipe_unread">읽지 않음</string>
     <string name="swipe_star">별표</string>
     <string name="swipe_spam">스팸</string>
-    <string name="swipe_inbox">받은 편지함</string>
+    <string name="swipe_inbox">받은편지함</string>
     <string name="swipe_mark_as_read">읽음으로 표시</string>
     <string name="swipe_mark_as_unread">읽지 않음으로 표시</string>
     <string name="swipe_report_spam">스팸 신고</string>
-    <string name="swipe_move_to_inbox">받은 편지함으로 이동</string>
+    <string name="swipe_move_to_inbox">받은편지함으로 이동</string>
     <string name="swipe_none">없음</string>
 
     <string name="has_attachment">첨부 파일 있음</string>
@@ -290,12 +290,12 @@
 
     <string name="subscriptions">구독 관리</string>
     <string name="senders_tracked">추적 중인 발신자</string>
-    <string name="unsubscribed">구독 취소됨</string>
+    <string name="unsubscribed">수신 거부됨</string>
     <string name="scanning">스캔 중...</string>
     <string name="no_mailing_lists">아직 메일링 리스트가 없습니다</string>
-    <string name="scan_inbox_hint">"받은 편지함 스캔"을 탭하여 뉴스레터와 마케팅 발신자를 찾으세요.</string>
+    <string name="scan_inbox_hint">"받은편지함 스캔"을 탭하여 뉴스레터와 마케팅 발신자를 찾으세요.</string>
     <string name="active_tab">활성</string>
-    <string name="unsubscribed_tab">구독 취소됨</string>
+    <string name="unsubscribed_tab">수신 거부됨</string>
     <string name="reactivate">재활성화</string>
     <string name="emails">이메일</string>
     <string name="risky">위험</string>
@@ -310,11 +310,11 @@
     <string name="bcc">Bcc</string>
     <string name="subject">제목</string>
     <string name="compose_email">이메일 작성</string>
-    <string name="secured_by">보안 제공:</string>
+    <string name="secured_by">보호:</string>
     <string name="sending_in_countdown">%d초 후 전송</string>
     <string name="view_message">메시지 보기</string>
     <string name="undo">실행 취소</string>
-    <string name="discard_draft">임시 보관함을 삭제하시겠습니까?</string>
+    <string name="discard_draft">이 초안을 삭제하시겠습니까?</string>
     <string name="discard_draft_description">뒤로 가면 임시 보관됩니다. 또는 영구적으로 삭제됩니다.</string>
     <string name="save_draft">임시 저장</string>
     <string name="discard">삭제</string>
@@ -370,7 +370,7 @@
     <string name="op_is_starred">is:starred</string>
     <string name="op_is_starred_desc">별표 표시된 이메일</string>
     <string name="op_in_inbox">in:inbox</string>
-    <string name="op_in_inbox_desc">받은 편지함, 보낸 편지함, 휴지통, 보관함, 스팸</string>
+    <string name="op_in_inbox_desc">받은편지함, 보낸편지함, 휴지통, 보관함, 스팸</string>
     <string name="op_before">before:</string>
     <string name="op_before_desc">날짜 이전</string>
     <string name="op_after">after:</string>
@@ -565,7 +565,7 @@
     <string name="custom_theme_base_color_subtitle">색상을 선택하면 이를 기반으로 전체 팔레트를 만들어 드립니다</string>
     <string name="custom_theme_hex_placeholder">#3b82f6</string>
     <string name="custom_theme_hex_invalid">#3b82f6 처럼 올바른 16진수 색상 코드를 입력하세요</string>
-    <string name="custom_theme_upgrade_title">커스텀 테마</string>
+    <string name="custom_theme_upgrade_title">사용자 지정 테마</string>
     <string name="custom_theme_upgrade_description">원하는 기본 색상으로 나만의 컬러 테마를 만들어보세요. 업그레이드하여 잠금을 해제하세요.</string>
     <string name="font">글꼴</string>
     <string name="font_subtitle">앱 전체에서 사용할 글꼴을 선택하세요</string>
@@ -762,7 +762,7 @@
     <string name="aliases">별칭</string>
     <string name="no_aliases">별칭 없음</string>
     <string name="no_aliases_subtitle">아직 별칭을 만들지 않았습니다</string>
-    <string name="forwards_to_inbox">받은 편지함으로 전달</string>
+    <string name="forwards_to_inbox">받은편지함으로 전달</string>
     <string name="delete_alias">별칭 삭제</string>
     <string name="custom_domains">커스텀 도메인</string>
     <string name="alias_view_custom">커스텀 별칭</string>
@@ -772,7 +772,7 @@
 
     <string name="ghost_aliases">고스트 별칭</string>
     <string name="ghost_aliases_about">소개</string>
-    <string name="ghost_aliases_description">받은 편지함으로 전달되는 일회용 주소. 나머지에 영향을 주지 않고 언제든 폐기할 수 있습니다.</string>
+    <string name="ghost_aliases_description">받은편지함으로 전달되는 일회용 주소. 나머지에 영향을 주지 않고 언제든 폐기할 수 있습니다.</string>
     <string name="no_ghost_aliases">고스트 별칭 없음</string>
     <string name="no_ghost_aliases_subtitle">메시지를 작성하고 고스트 별칭을 발신자로 선택하면 생성됩니다</string>
     <string name="forwarded_count">%d개 전달됨</string>
@@ -890,12 +890,12 @@
     <string name="export_your_mail">메일 내보내기</string>
 
     <string name="auto_forward_title">자동 전달</string>
-    <string name="auto_forward_description">수신 메일을 다른 주소로 전달하고 받은 편지함에 사본을 보관합니다.</string>
+    <string name="auto_forward_description">수신 메일을 다른 주소로 전달하고 받은편지함에 사본을 보관합니다.</string>
     <string name="enable_auto_forward">자동 전달 활성화</string>
     <string name="all_mail_forwarded">모든 수신 메일이 전달됩니다</string>
     <string name="forward_to">전달 대상</string>
     <string name="forward_to_placeholder">destination@example.com</string>
-    <string name="keep_copy_in_inbox">받은 편지함에 사본 유지</string>
+    <string name="keep_copy_in_inbox">받은편지함에 사본 유지</string>
     <string name="create_rule">규칙 만들기</string>
     <string name="auto_forward_saved">자동 전달 설정이 저장되었습니다</string>
     <string name="forwarding_pending_verification">확인 대기 중</string>
@@ -936,21 +936,21 @@
     <string name="unnamed_folder">(이름 없음)</string>
     <string name="new_label">새로 만들기</string>
 
-    <string name="vacation_reply">부재 중 답장</string>
-    <string name="vacation_reply_description">수신 발신자에게 자동 부재 중 답장을 보냅니다.</string>
+    <string name="vacation_reply">부재중 답장</string>
+    <string name="vacation_reply_description">수신 발신자에게 자동 부재중 답장을 보냅니다.</string>
     <string name="vacation_active">활성</string>
     <string name="vacation_off">끄기</string>
     <string name="vacation_active_subtitle">발신자에게 자동 답장이 전송됩니다.</string>
     <string name="vacation_off_subtitle">자동 답장이 전송되지 않습니다.</string>
     <string name="vacation_subject">제목</string>
-    <string name="vacation_subject_placeholder">부재 중</string>
+    <string name="vacation_subject_placeholder">부재중</string>
     <string name="vacation_reply_body">답장 본문</string>
-    <string name="vacation_reply_placeholder">현재 부재 중입니다...</string>
+    <string name="vacation_reply_placeholder">현재 부재중입니다...</string>
     <string name="external_senders_only">외부 발신자만</string>
     <string name="external_senders_subtitle">도메인 내 사용자에게는 자동 답장을 건너뜁니다.</string>
     <string name="reply_singular">답장</string>
     <string name="replies_plural">답장</string>
-    <string name="delete_vacation_reply">부재 중 답장 삭제</string>
+    <string name="delete_vacation_reply">부재중 답장 삭제</string>
 
     <string name="diagnostics">진단</string>
     <string name="app_version">앱 버전</string>
@@ -1008,8 +1008,8 @@
     <string name="ext_smtp_username">SMTP 사용자 이름</string>
     <string name="ext_smtp_password">SMTP 비밀번호</string>
     <string name="ext_field_email">이메일 주소</string>
-    <string name="ext_field_password">암호</string>
-    <string name="ext_app_password_required">이 제공업체는 평소 계정 암호가 아니라 앱 암호를 요구합니다.</string>
+    <string name="ext_field_password">비밀번호</string>
+    <string name="ext_app_password_required">이 제공업체는 평소 계정 비밀번호가 아니라 앱 비밀번호를 요구합니다.</string>
     <string name="ext_app_password_create">앱 암호 만들기</string>
     <string name="ext_server_settings">서버 설정</string>
     <string name="ext_server_settings_hint">알려진 제공업체는 Aster가 대신 입력합니다. 제공업체가 다른 서버를 쓸 때만 변경하세요.</string>
@@ -1023,10 +1023,10 @@
     <string name="ext_not_synced">동기화 안 됨</string>
     <string name="ext_sync_ok">마지막 동기화 성공</string>
     <string name="ext_sync_error_short">마지막 동기화 실패</string>
-    <string name="ext_password_reauth">로그인하지 못했습니다. 계정을 편집해 암호를 업데이트하세요.</string>
+    <string name="ext_password_reauth">로그인하지 못했습니다. 계정을 편집해 비밀번호를 업데이트하세요.</string>
     <string name="ext_edit_title">계정 편집</string>
     <string name="ext_save_changes">변경 사항 저장</string>
-    <string name="ext_password_keep">현재 암호를 유지하려면 비워 두세요.</string>
+    <string name="ext_password_keep">현재 비밀번호를 유지하려면 비워 두세요.</string>
     <string name="ext_account_updated">계정을 업데이트했습니다</string>
     <string name="ext_error_update_failed">변경 사항이 저장되지 않았습니다. 다시 시도해 보세요.</string>
     <string name="ext_error_toggle_failed">이 설정을 변경하지 못했습니다. 다시 시도해 보세요.</string>
@@ -1080,7 +1080,7 @@
     <string name="import_task_done">완료: %1$d</string>
     <string name="import_task_failed">실패: %1$d</string>
     <string name="import_task_dead">폐기: %1$d</string>
-    <string name="import_pause">일시 중지</string>
+    <string name="import_pause">일시중지</string>
     <string name="import_retry_failed">실패 재시도</string>
     <string name="import_recent_failures">최근 실패</string>
     <string name="import_failure_reason">%1$s (%2$d)</string>
@@ -1124,7 +1124,7 @@
     <string name="no_device_contacts">기기에서 연락처를 찾을 수 없습니다</string>
     <string name="no_new_contacts">가져올 새 연락처가 없습니다</string>
 
-    <string name="privacy">프라이버시</string>
+    <string name="privacy">개인정보</string>
     <string name="tracking">추적</string>
     <string name="block_tracking_pixels_privacy">추적 픽셀 차단</string>
     <string name="block_tracking_pixels_subtitle">수신 메일에서 원격 추적기 제거</string>
@@ -1192,18 +1192,6 @@
 
     <string name="language">언어</string>
     <string name="display_language">표시 언어</string>
-    <string name="lang_english">English</string>
-    <string name="lang_spanish">Espanol</string>
-    <string name="lang_french">Francais</string>
-    <string name="lang_german">Deutsch</string>
-    <string name="lang_italian">Italiano</string>
-    <string name="lang_portuguese">Portugues</string>
-    <string name="lang_japanese">Japanese</string>
-    <string name="lang_korean">Korean</string>
-    <string name="lang_chinese">Chinese (simplified)</string>
-    <string name="lang_russian">Russian</string>
-    <string name="lang_arabic">Arabic</string>
-    <string name="lang_hindi">Hindi</string>
     <string name="set_from_system">시스템 설정 (English)</string>
     <string name="language_system_default">시스템 기본값</string>
     <string name="language_system_default_hint">여기에서 언어를 선택하기 전까지 Aster Mail은 기기 언어를 따릅니다.</string>
@@ -1327,7 +1315,7 @@
     <string name="enter_account_password">계정 비밀번호를 입력하세요</string>
     <string name="something_went_wrong">문제가 발생했습니다</string>
     <string name="name_cannot_be_empty">이름은 비울 수 없습니다</string>
-    <string name="session_revoked">세션이 해제되었습니다</string>
+    <string name="session_revoked">세션이 로그아웃되었습니다</string>
     <string name="failed_revoke_session">세션 해제에 실패했습니다</string>
     <string name="all_other_sessions_signed_out">다른 모든 세션에서 로그아웃되었습니다</string>
     <string name="failed_sign_out_other_sessions">다른 세션 로그아웃에 실패했습니다</string>
@@ -1356,7 +1344,7 @@
     <string name="clipboard_label_recovery_key">복구 키</string>
     <string name="failed_to_load">불러오지 못했습니다</string>
     <string name="scan_failed">스캔에 실패했습니다</string>
-    <string name="toast_unsubscribed">구독이 취소되었습니다</string>
+    <string name="toast_unsubscribed">수신을 거부했습니다</string>
     <string name="unsubscribe_failed">구독 취소에 실패했습니다</string>
     <string name="unsubscribe_manual_required">이 발신자는 자동 수신 거부를 지원하지 않습니다. 메일에 있는 링크에서 직접 해지할 수 있습니다.</string>
     <string name="bulk_unsubscribe_failed">일괄 구독 취소에 실패했습니다</string>
@@ -1390,15 +1378,15 @@
     <string name="settings_plan_lead_star">Star의 모든 것, 추가로:</string>
     <string name="settings_plan_lead_nova">Nova의 모든 것, 추가로:</string>
     <string name="settings_plan_bullet_e2ee">종단간 암호화</string>
-    <string name="settings_plan_bullet_zero_knowledge">제로 지식 아키텍처</string>
+    <string name="settings_plan_bullet_zero_knowledge">서버가 내용을 볼 수 없는 구조</string>
     <string name="settings_plan_bullet_star_storage">50 GB 암호화 저장 공간</string>
     <string name="settings_plan_bullet_star_attachments">최대 50 MB 첨부 파일</string>
     <string name="settings_plan_bullet_star_aliases">이메일 별칭 15개</string>
     <string name="settings_plan_bullet_star_domains">커스텀 도메인 5개</string>
     <string name="settings_plan_bullet_daily_send_limits">더 높은 일일 발송 한도</string>
     <string name="settings_plan_bullet_star_templates">이메일 템플릿 10개</string>
-    <string name="settings_plan_bullet_tracker_protection">추적기 차단</string>
-    <string name="settings_plan_bullet_vacation_reply">부재 중 자동 답장</string>
+    <string name="settings_plan_bullet_tracker_protection">트래커 차단</string>
+    <string name="settings_plan_bullet_vacation_reply">부재중 자동 답장</string>
     <string name="settings_plan_bullet_catch_all">수신 전체 이메일 주소</string>
     <string name="settings_plan_bullet_auto_forwarding">자동 전달</string>
     <string name="settings_plan_bullet_quiet_hours">방해 금지 시간</string>
@@ -1415,7 +1403,7 @@
     <string name="settings_plan_bullet_carddav_import">CardDAV 연락처 가져오기</string>
     <string name="settings_plan_bullet_contact_merge">연락처 병합 마법사</string>
     <string name="settings_plan_bullet_encrypted_export">암호화 내보내기</string>
-    <string name="settings_plan_bullet_protected_folders">비밀번호 보호 폴더</string>
+    <string name="settings_plan_bullet_protected_folders">비밀번호로 잠근 폴더</string>
     <string name="settings_plan_bullet_key_rotation">커스텀 키 교체 주기</string>
     <string name="settings_plan_bullet_supernova_storage">5 TB 암호화 저장 공간</string>
     <string name="settings_plan_bullet_supernova_attachments">최대 250 MB 첨부 파일</string>
@@ -1550,9 +1538,9 @@
     <string name="mail_rules_run_on_existing">기존 메일에 적용</string>
     <string name="mail_rules_applied_count">%1$d회 적용됨</string>
     <string name="mail_rules_more">더보기</string>
-    <string name="mail_rules_field_from">보낸사람</string>
+    <string name="mail_rules_field_from">보낸 사람</string>
     <string name="mail_rules_field_reply_to">회신 주소</string>
-    <string name="mail_rules_field_to">받는사람</string>
+    <string name="mail_rules_field_to">받는 사람</string>
     <string name="mail_rules_field_cc">참조</string>
     <string name="mail_rules_field_bcc">숨은참조</string>
     <string name="mail_rules_field_any_recipient">모든 수신자</string>
@@ -1561,7 +1549,7 @@
     <string name="mail_rules_field_header">헤더</string>
     <string name="mail_rules_field_list_id">List-ID</string>
     <string name="mail_rules_field_attachment_name">첨부파일 이름</string>
-    <string name="mail_rules_field_has_attachment">첨부파일 있음</string>
+    <string name="mail_rules_field_has_attachment">첨부 파일 있음</string>
     <string name="mail_rules_field_is_reply">답장임</string>
     <string name="mail_rules_field_is_forward">전달임</string>
     <string name="mail_rules_field_is_auto_submitted">자동 발송임</string>
@@ -1603,6 +1591,7 @@
     <string name="name_copied">이름이 복사되었습니다</string>
     <string name="email_copied">이메일 주소가 복사되었습니다</string>
     <string name="show_less">간략히 보기</string>
+    <string name="color_theme_show_all">모든 색상 보기</string>
     <string name="expand_folder">%1$s 펼치기</string>
     <string name="collapse_folder">%1$s 접기</string>
     <string name="badge_active">활성 배지</string>
@@ -1612,8 +1601,8 @@
     <string name="badge_show_in_signature">서명에 표시</string>
     <string name="badge_show_in_signature_description">발신 이메일 서명에 활성 배지를 포함합니다.</string>
     <string name="badges_description">획득한 배지를 보여주세요.</string>
-    <string name="vacation_reply_short">부재 중 자동 회신</string>
-    <string name="info_auto_discover_title">키 자동 검색</string>
+    <string name="vacation_reply_short">부재중 자동 회신</string>
+    <string name="info_auto_discover_title">키 자동 찾기</string>
     <string name="info_auto_discover_desc">연락처의 암호화 키를 자동으로 가져오므로 별도 설정 없이 암호화된 메일을 보낼 수 있습니다.</string>
     <string name="info_encrypt_default_title">기본으로 암호화</string>
     <string name="info_encrypt_default_desc">받는 사람의 공개 키가 있으면 보내는 메일을 자동으로 암호화합니다. 메일마다 켤 필요가 없습니다.</string>
@@ -1665,9 +1654,9 @@
     <string name="popular">인기</string>
     <string name="feature_storage">암호화 저장용량 %1$s</string>
     <string name="feature_e2e_encryption">종단 간 암호화</string>
-    <string name="feature_zero_knowledge">제로 액세스 구조</string>
+    <string name="feature_zero_knowledge">서버가 내용을 볼 수 없는 구조</string>
     <string name="feature_priority_support">우선 지원</string>
-    <string name="feature_custom_domain_signing">맞춤 도메인 DKIM 서명</string>
+    <string name="feature_custom_domain_signing">커스텀 도메인 DKIM 서명</string>
     <string name="message_info">메시지 정보</string>
     <string name="add_recipients">수신자 추가</string>
     <string name="aster_free">Aster Free</string>
@@ -1722,7 +1711,7 @@
     <string name="unarchive">보관 취소</string>
     <string name="label">라벨</string>
     <string name="encryption">암호화</string>
-    <string name="tracker_protection">트래커 보호</string>
+    <string name="tracker_protection">트래커 차단</string>
     <string name="encrypted_e2e">종단 간 암호화</string>
     <string name="encrypted_in_transit">전송 중 암호화</string>
     <string name="no_trackers">트래커 없음</string>
@@ -1809,11 +1798,11 @@
     <string name="settings_storage">저장용량</string>
     <string name="settings_filters">필터</string>
     <string name="settings_auto_forward">자동 전달</string>
-    <string name="settings_vacation_reply">부재중 자동응답</string>
+    <string name="settings_vacation_reply">부재중 답장</string>
     <string name="settings_export">내보내기</string>
     <string name="settings_section_security">개인정보 보호 및 보안</string>
     <string name="settings_section_mail">메일</string>
-    <string name="settings_section_appearance">화면</string>
+    <string name="settings_section_appearance">외관</string>
     <string name="settings_section_data">데이터</string>
     <string name="settings_section_other">기타</string>
     <string name="phishing_warning_title">이 메시지는 수상해 보입니다</string>
@@ -2011,8 +2000,8 @@
     <string name="upgrade_reassurance">언제든지 해지 가능</string>
     <string name="upgrade_trust_line">광고 없음, 추적 없음</string>
     <string name="upgrade_perk_storage">메일과 첨부파일을 위한 더 넉넉한 용량</string>
-    <string name="upgrade_perk_aliases">무제한 별칭과 사용자 도메인</string>
-    <string name="upgrade_perk_domains">사용자 도메인과 프로 기능</string>
+    <string name="upgrade_perk_aliases">무제한 별칭과 커스텀 도메인</string>
+    <string name="upgrade_perk_domains">커스텀 도메인과 프로 기능</string>
     <string name="upgrade_perk_features">필터, 템플릿, 서명 등</string>
     <string name="upgrade_resource_aliases">별칭</string>
     <string name="upgrade_resource_domains">도메인</string>
@@ -2204,8 +2193,8 @@
     <string name="got_it">확인했어요</string>
     <string name="conversation_grouping">대화 묶기</string>
     <string name="undo_send_cancel_window">취소 가능 시간: %1$d초</string>
-    <string name="no_custom_domains">사용자 도메인 없음</string>
-    <string name="no_custom_domains_subtitle">사용자 도메인을 추가하면 내 주소로 주고받을 수 있습니다</string>
+    <string name="no_custom_domains">커스텀 도메인 없음</string>
+    <string name="no_custom_domains_subtitle">커스텀 도메인을 추가하면 내 주소로 주고받을 수 있습니다</string>
     <string name="alias_sender_format">발신자 표시 형식</string>
     <string name="alias_forwarding">전달</string>
     <string name="alias_behavior">동작</string>
@@ -2239,7 +2228,7 @@
     <string name="note_optional">메모 (선택)</string>
     <string name="ghost_alias_note_placeholder">예: 뉴스레터 구독</string>
     <string name="create_alias_placeholder">예: shopping</string>
-    <string name="add_custom_domain">사용자 도메인 추가</string>
+    <string name="add_custom_domain">커스텀 도메인 추가</string>
     <string name="domain_placeholder">예: example.com</string>
     <string name="alias_status_active">사용 중</string>
     <string name="alias_status_disabled_badge">중지됨</string>
@@ -2304,7 +2293,7 @@
     <string name="create_alias_dialog_title">별칭 만들기</string>
     <string name="create_alias_username_label">사용자 이름</string>
     <string name="create_alias_generate_random">무작위로 만들기</string>
-    <string name="add_custom_domain_dialog_title">내 도메인 추가</string>
+    <string name="add_custom_domain_dialog_title">커스텀 도메인 추가</string>
     <string name="domain_name_label">도메인 이름</string>
     <string name="ghost_alias_creating">만드는 중...</string>
     <string name="ghost_alias_note_label">메모(선택)</string>
@@ -2374,7 +2363,7 @@
     <string name="crypto_native_usd_value_label">결제 금액</string>
     <string name="crypto_native_expires_in">%1$s 후 만료</string>
     <string name="crypto_native_view_billing">청구 보기</string>
-    <string name="crypto_native_go_to_inbox">받은 편지함으로</string>
+    <string name="crypto_native_go_to_inbox">받은편지함으로</string>
     <string name="crypto_native_copied">클립보드에 복사됨</string>
     <string name="crypto_native_copy_action">복사</string>
     <string name="crypto_native_cancel_invoice">이 청구서 취소</string>
@@ -2953,10 +2942,10 @@
     <string name="delete_signature_message">“%1$s”이(가) 영구적으로 삭제되며 되돌릴 수 없습니다.</string>
     <string name="delete_vacation_reply_confirm">부재중 메시지와 기간이 삭제됩니다. 되돌릴 수 없습니다.</string>
     <string name="error_2fa_code_required">인증 앱의 코드를 입력하세요.</string>
-    <string name="error_account_password_required">계정 암호를 입력하세요.</string>
+    <string name="error_account_password_required">계정 비밀번호를 입력하세요.</string>
     <string name="error_enter_full_email_address">골뱅이 뒤의 부분까지 포함해 전체 이메일 주소를 입력하세요.</string>
-    <string name="error_folder_password_already_set">이 폴더에는 이미 암호가 있습니다.</string>
-    <string name="error_folder_password_not_set">이 폴더에는 암호가 없습니다.</string>
+    <string name="error_folder_password_already_set">이 폴더에는 이미 비밀번호가 있습니다.</string>
+    <string name="error_folder_password_not_set">이 폴더에는 비밀번호가 없습니다.</string>
     <string name="error_image_too_large">이미지가 너무 큽니다. 더 작은 사진을 선택하세요.</string>
     <string name="error_invalid_2fa_code">코드가 올바르지 않습니다. 인증 앱을 확인한 후 다시 시도하세요.</string>
     <string name="error_passkey_unavailable">이 기기에는 이 계정의 패스키가 없습니다. 인증 앱을 사용하거나 본저에서 먼저 패스키를 추가하세요.</string>
@@ -3046,7 +3035,7 @@
     <string name="audit_event_logout">로그아웃함</string>
     <string name="audit_event_password_change">암호 변경됨</string>
     <string name="audit_event_recovery_codes_regenerated">복구 코드 재생성됨</string>
-    <string name="audit_event_session_revoked">세션 해지됨</string>
+    <string name="audit_event_session_revoked">세션 로그아웃됨</string>
     <string name="audit_event_settings_changed">설정 변경됨</string>
     <string name="audit_event_suspicious_activity">의심스러운 활동</string>
     <string name="connection_cdn_relay">CDN 릴레이</string>
@@ -3055,14 +3044,14 @@
     <string name="connection_direct">직접</string>
     <string name="connection_direct_description">가장 빠르게 사용하려면 Aster 서버에 직접 연결하세요.</string>
     <string name="connection_method_header">연결 방식</string>
-    <string name="couldnt_move_to_inbox">받은 편지함으로 이동하지 못했습니다</string>
+    <string name="couldnt_move_to_inbox">받은편지함으로 이동하지 못했습니다</string>
     <string name="domain_record_pending">아직 찾지 못함</string>
     <string name="domain_status_dns_pending">DNS 대기 중</string>
     <string name="domain_status_failed">확인 실패</string>
     <string name="domain_status_suspended">정지됨</string>
     <string name="domain_status_verifying">확인 중</string>
     <string name="failed_save_connection_preference">연결 환경설정을 저장하지 못했습니다</string>
-    <string name="generate_ghost_alias_message">Aster가 받은 편지함으로 전달되는 임의의 주소를 만듭니다. 다른 주소에 영향을 주지 않고 언제든지 삭제할 수 있습니다.</string>
+    <string name="generate_ghost_alias_message">Aster가 받은편지함으로 전달되는 임의의 주소를 만듭니다. 다른 주소에 영향을 주지 않고 언제든지 삭제할 수 있습니다.</string>
     <string name="identity_changed_description">%1$s의 암호화 키가 이전에 본 것과 다릅니다. 상대방이 새 기기에서 로그인하거나 계정을 재설정할 때 이런 일이 생기지만, 누군가 메시지를 가로채고 있다는 뜻일 수도 있습니다. 이 대화를 신뢰하기 전에 다른 경로로 확인하세요.</string>
     <string name="identity_changed_dismiss">확인했습니다</string>
     <string name="identity_changed_title">암호화 키가 변경됨</string>
@@ -3087,7 +3076,7 @@
     <string name="reply_to_label">회신 주소</string>
     <string name="security_details_title">보안 세부 정보</string>
     <string name="show_sender_pictures">보낸 사람 사진</string>
-    <string name="show_sender_pictures_subtitle">받은 편지함에서 보낸 사람마다 사진이나 이니셜을 표시합니다</string>
+    <string name="show_sender_pictures_subtitle">받은편지함에서 보낸 사람마다 사진이나 이니셜을 표시합니다</string>
     <string name="theme_sync_across_devices">기기 간 테마 동기화</string>
     <string name="theme_sync_across_devices_subtitle">이 기기에서 별도의 테마를 사용하려면 끄세요.</string>
     <string name="view_encryption_details">암호화 세부 정보 보기</string>
@@ -3326,7 +3315,7 @@
     <string name="address_must_begin_end_alphanumeric">이메일 주소는 문자 또는 숫자로 시작하고 끝나야 합니다.</string>
     <string name="address_create_failed">이 주소를 만들 수 없습니다.</string>
     <string name="switch_domain">도메인 전환</string>
-    <string name="custom_domain_step_title">사용자 지정 도메인으로 주소 개인화</string>
+    <string name="custom_domain_step_title">커스텀 도메인으로 주소 개인화</string>
     <string name="custom_domain_step_desc">내 소유 도메인의 주소로 메일을 주고받으세요.</string>
     <string name="custom_domain_own">이미 소유한 도메인 설정</string>
     <string name="custom_domain_own_desc">어떤 등록기관의 도메인이든 몇 분 안에 연결할 수 있습니다.</string>

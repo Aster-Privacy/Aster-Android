@@ -194,6 +194,7 @@ fun top_toast_overlay(
             val fill = toast_surface_fill(colors)
             val drag_offset = remember(s.key) { Animatable(0f) }
             var toast_height by remember(s.key) { mutableStateOf(0f) }
+            LaunchedEffect(s.key) { drag_offset.snapTo(0f) }
             val row_modifier = Modifier
                 .padding(horizontal = 12.dp, vertical = 10.dp)
                 .onSizeChanged { toast_height = it.height.toFloat() }
@@ -251,7 +252,6 @@ fun top_toast_overlay(
                                     )
                                     s.on_close?.invoke()
                                     on_dismiss()
-                                    drag_offset.snapTo(0f)
                                 }
                             } else {
                                 toast_scope.launch {

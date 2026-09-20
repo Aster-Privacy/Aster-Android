@@ -60,6 +60,7 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.Icon
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.aster_ripple
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -555,7 +556,7 @@ private fun DetailCard(icon: ImageVector, content: @Composable ColumnScope.() ->
                 .padding(top = 2.dp)
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(colors.bg_secondary),
+                .acrylic(colors, CircleShape, colors.bg_secondary),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

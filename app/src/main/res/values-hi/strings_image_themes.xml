@@ -10,6 +10,11 @@
     <string name="image_theme_category_cities">शहर</string>
     <string name="image_theme_category_landscapes">प्राकृतिक दृश्य</string>
     <string name="image_theme_category_water">पानी</string>
+    <string name="image_theme_category_aurora">ध्रुवीय ज्योति</string>
+    <string name="image_theme_category_mountains">पर्वत</string>
+    <string name="image_theme_category_forest">वन</string>
+    <string name="image_theme_category_desert">रेगिस्तान</string>
+    <string name="image_theme_category_ocean">महासागर</string>
     <string name="image_theme_apply_changes">लागू करें</string>
     <string name="image_theme_reset">डिफ़ॉल्ट पर रीसेट करें</string>
     <string name="image_theme_colors">रंग</string>
@@ -23,7 +28,6 @@
     <string name="image_theme_photo_too_large">यह फ़ोटो बहुत बड़ी है। 40 MB से छोटी फ़ोटो चुनें।</string>
     <string name="image_theme_photo_unsupported">यह फ़ाइल टाइप समर्थित नहीं है। JPEG, PNG, GIF, WebP या HEIC फ़ोटो चुनें।</string>
     <string name="image_theme_photo_unreadable">यह फ़ोटो खोली नहीं जा सकती। कोई दूसरी फ़ोटो आज़माएं।</string>
-    <string name="image_theme_category_calm">शांत</string>
     <string name="image_theme_credit_modified">फ़ोटो: %1$s. क्रॉप और रीसाइज़ की गई।</string>
     <string name="image_theme_credit_generated">Aster द्वारा बनाया गया</string>
     <string name="image_theme_adjust_photo">एडजस्ट करें</string>
@@ -51,4 +55,5 @@
     <string name="image_theme_animation">बैकग्राउंड एनिमेट करें</string>
     <string name="image_theme_animation_subtitle">आपका एनिमेटेड बैकग्राउंड चलाता है। यह बैटरी सेवर में और डिवाइस पर एनिमेशन बंद होने पर रुक जाता है।</string>
     <string name="image_theme_animation_too_large">यह एनिमेटेड इमेज बहुत बड़ी है। 12 MB से छोटी इमेज चुनें।</string>
+    <string name="image_theme_retry_download">डाउनलोड फिर से आज़माएं</string>
 </resources>

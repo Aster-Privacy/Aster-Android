@@ -1250,18 +1250,6 @@
     <!-- Language -->
     <string name="language">Langue</string>
     <string name="display_language">Langue d\'affichage</string>
-    <string name="lang_english">English</string>
-    <string name="lang_spanish">Espanol</string>
-    <string name="lang_french">Francais</string>
-    <string name="lang_german">Deutsch</string>
-    <string name="lang_italian">Italiano</string>
-    <string name="lang_portuguese">Portugues</string>
-    <string name="lang_japanese">Japanese</string>
-    <string name="lang_korean">Korean</string>
-    <string name="lang_chinese">Chinese (simplified)</string>
-    <string name="lang_russian">Russian</string>
-    <string name="lang_arabic">Arabic</string>
-    <string name="lang_hindi">Hindi</string>
     <string name="set_from_system">Défini par le système (English)</string>
     <string name="language_system_default">Réglage du système</string>
     <string name="language_system_default_hint">Aster Mail suit la langue de votre appareil jusqu’à ce que vous en choisissiez une ici.</string>
@@ -2109,6 +2097,7 @@
     <string name="show_encryption_indicators">Afficher les indicateurs de chiffrement</string>
     <string name="show_encryption_indicators_sub">Afficher les icônes de cadenas sur les e-mails chiffrés</string>
     <string name="show_less">Afficher moins</string>
+    <string name="color_theme_show_all">Afficher toutes les couleurs</string>
     <string name="expand_folder">Développer %1$s</string>
     <string name="collapse_folder">Réduire %1$s</string>
     <string name="signature_alias_conflict">Cet alias a déjà une signature.</string>
@@ -2879,12 +2868,12 @@
     <string name="link_device_code_label">Code de l\'appareil</string>
     <string name="link_device_code_placeholder">XXXX-XXXX</string>
     <string name="link_device_continue">Continuer</string>
-    <string name="link_device_confirm_description">Vérifie que cela correspond à l\'appareil devant toi.</string>
+    <string name="link_device_confirm_description">Vérifiez que cela correspond à l\'appareil devant vous.</string>
     <string name="link_device_unnamed">Appareil sans nom</string>
-    <string name="link_device_confirm_warning">Une fois associé, cet appareil peut lire et envoyer tes e-mails jusqu\'à ce que tu le supprimes.</string>
+    <string name="link_device_confirm_warning">Une fois associé, cet appareil peut lire et envoyer vos e-mails jusqu\'à ce que vous le supprimiez.</string>
     <string name="link_device_confirm_action">Associer l\'appareil</string>
     <string name="link_device_success_title">Appareil associé</string>
-    <string name="link_device_success_description">%1$s peut maintenant terminer la configuration et ouvrir ta boîte mail.</string>
+    <string name="link_device_success_description">%1$s peut maintenant terminer la configuration et ouvrir votre boîte mail.</string>
     <string name="link_device_link_another">Associer un autre appareil</string>
     <string name="link_device_type_desktop">App de bureau</string>
     <string name="link_device_type_bridge">Aster Bridge</string>
@@ -2894,7 +2883,7 @@
     <string name="link_device_error_already_linked">Cet appareil est déjà associé à un autre compte.</string>
     <string name="link_device_error_upgrade_required">Aster Bridge nécessite au moins la formule Star. Change de formule pour associer Bridge.</string>
     <string name="link_device_error_rate_limited">Trop de tentatives. Patiente un instant, puis réessaie.</string>
-    <string name="link_device_error_session">Ta session est verrouillée. Reconnecte-toi, puis associe l\'appareil.</string>
+    <string name="link_device_error_session">Votre session est verrouillée. Reconnectez-vous, puis associez l\'appareil.</string>
     <string name="link_device_error_unavailable">L\'association d\'appareils est indisponible pour le moment. Réessaie plus tard.</string>
     <string name="link_device_error_failed">L\'appareil n\'a pas pu être associé. Réessaie.</string>
     <string name="alias_locked_title">Verrouillé par un changement de mot de passe</string>

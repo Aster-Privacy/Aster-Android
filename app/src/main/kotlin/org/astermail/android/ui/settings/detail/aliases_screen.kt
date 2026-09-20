@@ -22,6 +22,7 @@
 package org.astermail.android.ui.settings.detail
 
 import kotlinx.coroutines.CancellationException
+import org.astermail.android.design.acrylic
 import org.astermail.android.ui.mail.format_long_date
 import org.astermail.android.ui.common.show_copy_result_toast
 import org.astermail.android.ui.common.show_copy_failed_toast
@@ -1059,7 +1060,7 @@ internal fun alias_list_row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(colors.bg_card)
+            .acrylic(colors, shape, colors.bg_card)
             .border(1.dp, colors.border_secondary, shape)
             .testTag("alias_row_${alias.id}")
             .combinedClickable(
@@ -1407,7 +1408,7 @@ private fun custom_domain_address_row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(colors.bg_card)
+            .acrylic(colors, shape, colors.bg_card)
             .border(1.dp, colors.border_secondary, shape)
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
     ) {
@@ -2574,7 +2575,7 @@ private fun preference_chip(label: String) {
     Box(
         modifier = Modifier
             .clip(SquircleShape(999.dp))
-            .background(colors.bg_secondary)
+            .acrylic(colors, SquircleShape(999.dp), colors.bg_secondary)
             .border(1.dp, colors.border_primary, SquircleShape(999.dp))
             .padding(horizontal = 10.dp, vertical = 4.dp),
     ) {
@@ -2929,7 +2930,7 @@ private fun dns_record_detail(record: DnsRecord, on_copy: (String, String) -> Un
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(colors.bg_secondary, SquircleShape(14.dp))
+            .acrylic(colors, SquircleShape(14.dp), colors.bg_secondary)
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -3063,7 +3064,7 @@ private fun twin_address_card(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(colors.bg_secondary)
+            .acrylic(colors, shape, colors.bg_secondary)
             .border(1.dp, colors.border_secondary, shape)
             .padding(AsterSpacing.md)
             .testTag("twin_address_card"),

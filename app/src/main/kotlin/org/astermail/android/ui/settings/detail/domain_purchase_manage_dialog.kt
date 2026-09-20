@@ -56,6 +56,7 @@ import org.astermail.android.api.settings.DnsRecord
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDialogPrimaryButton
@@ -147,7 +148,7 @@ internal fun domain_purchase_manage_dialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(details_shape)
-                        .background(colors.bg_secondary, details_shape)
+                        .acrylic(colors, details_shape, colors.bg_secondary)
                         .border(1.dp, colors.border_secondary, details_shape),
                 ) {
                     manage_row(

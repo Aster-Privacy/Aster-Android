@@ -10,6 +10,11 @@
     <string name="image_theme_category_cities">Städte</string>
     <string name="image_theme_category_landscapes">Landschaften</string>
     <string name="image_theme_category_water">Wasser</string>
+    <string name="image_theme_category_aurora">Polarlicht</string>
+    <string name="image_theme_category_mountains">Berge</string>
+    <string name="image_theme_category_forest">Wald</string>
+    <string name="image_theme_category_desert">Wüste</string>
+    <string name="image_theme_category_ocean">Ozean</string>
     <string name="image_theme_apply_changes">Anwenden</string>
     <string name="image_theme_reset">Auf Standard zurücksetzen</string>
     <string name="image_theme_colors">Farben</string>
@@ -23,7 +28,6 @@
     <string name="image_theme_photo_too_large">Dieses Foto ist zu groß. Wähle eins unter 40 MB.</string>
     <string name="image_theme_photo_unsupported">Dieser Dateityp wird nicht unterstützt. Wähle ein JPEG-, PNG-, GIF-, WebP- oder HEIC-Foto.</string>
     <string name="image_theme_photo_unreadable">Dieses Foto kann nicht geöffnet werden. Versuche ein anderes.</string>
-    <string name="image_theme_category_calm">Ruhig</string>
     <string name="image_theme_credit_modified">Foto: %1$s. Zugeschnitten und skaliert.</string>
     <string name="image_theme_credit_generated">Erstellt von Aster</string>
     <string name="image_theme_adjust_photo">Anpassen</string>
@@ -51,4 +55,5 @@
     <string name="image_theme_animation">Hintergrund animieren</string>
     <string name="image_theme_animation_subtitle">Spielt deinen animierten Hintergrund ab. Er stoppt im Energiesparmodus und wenn Animationen auf deinem Gerät deaktiviert sind.</string>
     <string name="image_theme_animation_too_large">Dieses animierte Bild ist zu groß. Wähle eins unter 12 MB.</string>
+    <string name="image_theme_retry_download">Download wiederholen</string>
 </resources>

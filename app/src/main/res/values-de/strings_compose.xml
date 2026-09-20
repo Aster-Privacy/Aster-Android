@@ -24,6 +24,6 @@
     <string name="schedule_tomorrow_afternoon">Morgen Nachmittag</string>
     <string name="schedule_monday_morning">Montag früh</string>
     <string name="schedule_pick_date_time">Datum &amp; Uhrzeit wählen</string>
-    <string name="too_many_recipients_in_field">Jedes Feld An, Cc und Bcc fasst höchstens %1$d Adressen. Verschieben Sie einen Teil in eine zweite Nachricht, um diese zu senden.</string>
+    <string name="too_many_recipients_in_field">Jedes Feld An, Cc und Bcc fasst höchstens %1$d Adressen. Verschiebe einen Teil in eine zweite Nachricht, um diese zu senden.</string>
     <string name="too_many_recipients_in_message">Eine Nachricht erreicht höchstens %1$d Adressen über An, Cc und Bcc hinweg. Die Liste auf kleinere Nachrichten aufzuteilen funktioniert.</string>
 </resources>

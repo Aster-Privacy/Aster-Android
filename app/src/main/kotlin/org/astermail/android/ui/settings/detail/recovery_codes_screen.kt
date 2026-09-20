@@ -76,6 +76,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
@@ -421,7 +422,7 @@ private fun recovery_codes_status_grid(codes: List<String>, used_hashes: Set<Str
         modifier = Modifier
             .fillMaxWidth()
             .clip(SquircleShape(AsterRadius.lg))
-            .background(colors.bg_secondary)
+            .acrylic(colors, SquircleShape(AsterRadius.lg), colors.bg_secondary)
             .border(1.dp, colors.border_primary, SquircleShape(AsterRadius.lg))
             .padding(AsterSpacing.md),
         verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),

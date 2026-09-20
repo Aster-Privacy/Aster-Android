@@ -28,7 +28,7 @@
     <string name="search_chip_before">Antes de</string>
     <string name="search_chip_after">Depois de</string>
     <string name="search_chip_date">Data</string>
-    <string name="search_chip_label">Marcador</string>
+    <string name="search_chip_label">Etiqueta</string>
     <string name="search_chip_not_prefix">Não</string>
     <string name="search_chip_format">%1$s: %2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
