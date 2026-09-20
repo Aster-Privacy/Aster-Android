@@ -56,7 +56,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import org.astermail.android.ui.theme.draw_theme_background
-import org.astermail.android.ui.common.chrome_fill
 import org.astermail.android.ui.theme.draw_theme_veil
 import org.astermail.android.ui.common.image_theme_panel
 import androidx.compose.ui.platform.LocalDensity
@@ -2175,7 +2174,7 @@ fun InboxScreen(
             }
         }
 
-        val header_bg = chrome_fill(colors)
+        val header_bg = colors.bg_primary
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -2195,6 +2194,7 @@ fun InboxScreen(
                     }
                 }
                 .drawBehind {
+                    if (has_backdrop) return@drawBehind
                     val limit = header_height_px.toFloat()
                     val fraction = if (limit == 0f) 0f else (-header_offset_px.floatValue / limit).coerceIn(0f, 1f)
                     drawRect(color = header_bg, alpha = 1f - fraction)
