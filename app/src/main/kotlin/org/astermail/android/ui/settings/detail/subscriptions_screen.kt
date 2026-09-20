@@ -1750,9 +1750,8 @@ private fun storage_limit_notice() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(SquircleShape(12.dp))
-            .background(colors.bg_card)
-            .border(1.dp, colors.border_primary, SquircleShape(12.dp))
+            .billing_surface(billing_control_shape)
+            .border(1.dp, colors.border_primary, billing_control_shape)
             .padding(AsterSpacing.md),
         verticalAlignment = Alignment.Top,
     ) {
@@ -1820,14 +1819,26 @@ private fun current_plan_card(
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
             Row(verticalAlignment = Alignment.Top) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = plan_name,
-                        color = colors.text_primary,
-                        fontSize = 19.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                    ) {
+                        Text(
+                            text = plan_name,
+                            color = colors.text_primary,
+                            fontSize = 19.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        if (is_paid && !ends_at_period_end) {
+                            billing_pill(
+                                text = stringResource(R.string.active),
+                                foreground = colors.accent_blue,
+                            )
+                        }
+                    }
                     if (description != null) {
                         Spacer(Modifier.height(2.dp))
                         Text(
@@ -1895,55 +1906,33 @@ private fun current_plan_card(
                 val storage_fraction = storage_used_bytes.toFloat() / storage_limit_bytes.toFloat()
                 val storage_percent = (storage_fraction * 100f).roundToInt().coerceIn(0, if (storage_over_limit) 999 else 100)
                 Spacer(Modifier.height(AsterSpacing.lg))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(R.string.storage),
-                        color = colors.text_primary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    Text(
-                        text = java.text.NumberFormat.getPercentInstance().format(storage_percent / 100.0),
-                        color = if (storage_over_limit) colors.danger else colors.text_secondary,
-                        fontSize = 13.sp,
-                        fontWeight = if (storage_over_limit) FontWeight.SemiBold else FontWeight.Normal,
-                    )
-                }
-                Spacer(Modifier.height(AsterSpacing.sm))
-                solid_progress_bar(
+                billing_meter(
+                    label = stringResource(R.string.storage),
+                    value_text = stringResource(
+                        R.string.storage_used_format,
+                        format_bytes(storage_used_bytes),
+                        format_bytes(storage_limit_bytes),
+                    ),
+                    trailing_text = java.text.NumberFormat.getPercentInstance().format(storage_percent / 100.0),
                     fraction = storage_fraction,
                     is_over = storage_over_limit,
+                    trailing_action = if (free_teaser == null) {
+                        null
+                    } else {
+                        {
+                            Text(
+                                text = stringResource(R.string.billing_add_storage_link),
+                                color = colors.accent_blue,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier
+                                    .clip(SquircleShape(6.dp))
+                                    .clickable(role = Role.Button) { on_add_storage() }
+                                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                            )
+                        }
+                    },
                 )
-                Spacer(Modifier.height(AsterSpacing.sm))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(R.string.storage_used_format, format_bytes(storage_used_bytes), format_bytes(storage_limit_bytes)),
-                        color = if (storage_over_limit) colors.danger else colors.text_secondary,
-                        fontSize = 13.sp,
-                        fontWeight = if (storage_over_limit) FontWeight.SemiBold else FontWeight.Normal,
-                        modifier = Modifier.weight(1f),
-                    )
-                    if (free_teaser != null) {
-                        Text(
-                            text = stringResource(R.string.billing_add_storage_link),
-                            color = colors.accent_blue,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier
-                                .clip(SquircleShape(6.dp))
-                                .clickable(role = Role.Button) { on_add_storage() }
-                                .padding(horizontal = 4.dp, vertical = 2.dp),
-                        )
-                    }
-                }
             }
         }
         if (show_crypto_notice) {
@@ -2295,15 +2284,19 @@ private fun addon_tile(
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(14.dp)
+    val shape = billing_tile_shape
     val outline by animateColorAsState(
         targetValue = if (selected) colors.accent_blue else colors.border_primary,
         label = "addon_border",
     )
+    val fill by animateColorAsState(
+        targetValue = if (selected) colors.accent_blue.copy(alpha = 0.08f) else colors.bg_secondary,
+        label = "addon_fill",
+    )
     Column(
         modifier = modifier
             .clip(shape)
-            .background(colors.bg_secondary)
+            .background(fill)
             .border(width = if (selected) 2.dp else 1.dp, color = outline, shape = shape)
             .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = on_click)
             .padding(AsterSpacing.md),
@@ -2426,6 +2419,11 @@ private fun billing_history_card(
                         }
                         Spacer(Modifier.width(AsterSpacing.md))
                         Column(horizontalAlignment = Alignment.End) {
+                            billing_pill(
+                                text = invoice_status_label(item.status),
+                                foreground = invoice_status_accent(item.status, colors),
+                            )
+                            Spacer(Modifier.height(AsterSpacing.xs))
                             Text(
                                 text = org.astermail.android.billing.format_money(item.amount_cents.toLong(), item.currency),
                                 color = colors.text_primary,
@@ -2433,48 +2431,11 @@ private fun billing_history_card(
                                 fontWeight = FontWeight.SemiBold,
                                 maxLines = 1,
                             )
-                            Spacer(Modifier.height(2.dp))
-                            Text(
-                                text = invoice_status_label(item.status),
-                                color = invoice_status_accent(item.status, colors),
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium,
-                                maxLines = 1,
-                            )
                         }
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun plan_outline_button(
-    label: String,
-    enabled: Boolean,
-    on_click: () -> Unit,
-    filled: Boolean = false,
-) {
-    val colors = AsterMaterial.colors
-    val shape = SquircleShape(12.dp)
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(42.dp)
-            .clip(shape)
-            .background(if (filled) colors.accent_blue else colors.bg_card)
-            .border(1.dp, if (filled) Color.Transparent else colors.border_primary, shape)
-            .clickable(enabled = enabled, role = Role.Button, onClick = on_click),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = label,
-            color = if (filled) colors.on_accent else if (enabled) colors.text_primary else colors.text_muted,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-        )
     }
 }
 
@@ -2494,157 +2455,70 @@ private fun plan_tier_card(
     on_see_pricing: () -> Unit = {},
     on_choose: () -> Unit,
 ) {
-    val colors = AsterMaterial.colors
     val is_yearly = billing_interval == "year"
     val shown_cents = if (is_yearly) yearly_cents else monthly_cents
     val price_known = shown_cents != null
-    val savings_cents = if (monthly_cents != null && yearly_cents != null) monthly_cents * 12 - yearly_cents else null
-    val shape = SquircleShape(16.dp)
+    val per_month_cents = if (is_yearly) yearly_cents?.let { it / 12 } else monthly_cents
+    val savings_percent = if (monthly_cents != null && monthly_cents > 0 && yearly_cents != null) {
+        (((monthly_cents * 12 - yearly_cents).toFloat() / (monthly_cents * 12).toFloat()) * 100f).toInt()
+    } else {
+        0
+    }
+    val show_savings = is_yearly && price_known && savings_percent > 0
     val show_recommended = is_recommended && !is_current && !is_interval_switch && !is_downgrade
-    val border_modifier = when {
-        is_current -> Modifier.border(2.dp, colors.accent_blue, shape)
-        show_recommended -> Modifier.border(1.5.dp, colors.accent_blue, shape)
-        else -> Modifier.border(1.dp, colors.border_primary, shape)
-    }
-    val badge_text = when {
-        is_current -> stringResource(R.string.current_plan)
-        show_recommended -> stringResource(R.string.fix_billing_plan_recommended)
-        else -> null
-    }
-    Box(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = if (badge_text != null) 10.dp else 0.dp)
-                .then(border_modifier)
-                .clip(shape)
-                .background(colors.bg_secondary),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.lg)
-                    .padding(top = if (badge_text != null) AsterSpacing.xxl else AsterSpacing.lg, bottom = AsterSpacing.md),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = stringResource(tier.name_res),
-                    color = colors.text_primary,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(6.dp))
-                if (price_known) {
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        Text(
-                            text = format_price(shown_cents ?: 0, currency),
-                            color = colors.text_primary,
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            lineHeight = 32.sp,
-                            maxLines = 1,
-                        )
-                        Text(
-                            text = stringResource(if (is_yearly) R.string.fix_billing_per_year_short else R.string.fix_billing_per_month_short),
-                            color = colors.text_tertiary,
-                            fontSize = 13.sp,
-                            modifier = Modifier.padding(bottom = 4.dp),
-                        )
-                    }
-                    Spacer(Modifier.height(AsterSpacing.xs))
-                    if (savings_cents != null && savings_cents > 0) {
-                        if (is_yearly) {
-                            solid_badge(text = stringResource(R.string.billing_save_amount, format_price(savings_cents, currency)))
-                        } else {
-                            Text(
-                                text = format_price(yearly_cents ?: 0, currency) +
-                                    stringResource(R.string.fix_billing_per_year_short) +
-                                    " · " +
-                                    stringResource(R.string.billing_save_amount, format_price(savings_cents, currency)),
-                                color = colors.text_tertiary,
-                                fontSize = 11.sp,
-                            )
-                        }
-                    } else {
-                        Text(
-                            text = stringResource(tier.tagline_res),
-                            color = colors.text_tertiary,
-                            fontSize = 11.sp,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                } else {
-                    Text(
-                        text = stringResource(tier.tagline_res),
-                        color = colors.text_tertiary,
-                        fontSize = 12.sp,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-                Spacer(Modifier.height(AsterSpacing.md))
-                when {
-                    is_current -> plan_outline_button(
-                        label = stringResource(R.string.current_plan),
-                        enabled = false,
-                        on_click = {},
-                    )
-                    !price_known -> plan_outline_button(
-                        label = stringResource(R.string.see_pricing),
-                        enabled = plans_failed,
-                        on_click = on_see_pricing,
-                    )
-                    is_recommended && !is_interval_switch && !is_downgrade -> plan_outline_button(
-                        label = stringResource(R.string.fix_billing_get_plan, stringResource(tier.name_res)),
-                        enabled = true,
-                        on_click = on_choose,
-                        filled = true,
-                    )
-                    else -> plan_outline_button(
-                        label = when {
-                            is_interval_switch -> stringResource(R.string.switch_to_yearly)
-                            is_downgrade -> stringResource(R.string.downgrade)
-                            else -> stringResource(R.string.billing_subscribe)
-                        },
-                        enabled = true,
-                        on_click = on_choose,
-                    )
-                }
-                if (show_recommended) {
-                    Spacer(Modifier.height(AsterSpacing.sm))
-                    Text(
-                        text = stringResource(R.string.billing_money_back_guarantee) + " · " + stringResource(R.string.billing_cancel_anytime),
-                        color = colors.text_tertiary,
-                        fontSize = 11.sp,
-                        lineHeight = 14.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            }
-            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.border_primary))
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.lg)
-                    .padding(top = AsterSpacing.md, bottom = AsterSpacing.lg),
-                verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-            ) {
-                if (tier.lead_res != null) {
-                    Text(
-                        text = stringResource(tier.lead_res),
-                        color = colors.accent_blue,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
-                tier.features.forEach { feature_res ->
-                    feature_row(feature_res)
-                }
-            }
-        }
-        if (badge_text != null) {
-            solid_badge(text = badge_text, modifier = Modifier.align(Alignment.TopCenter))
+    val plan_name = stringResource(tier.name_res)
+    billing_plan_card(
+        name = plan_name,
+        tagline = stringResource(tier.tagline_res),
+        price_label = if (price_known) format_price(per_month_cents ?: 0, currency) else null,
+        period_label = stringResource(R.string.fix_billing_per_month_short),
+        anchor_label = if (show_savings && monthly_cents != null) format_price(monthly_cents, currency) else null,
+        save_label = if (show_savings) stringResource(R.string.save_percent, savings_percent) else null,
+        billed_note = if (is_yearly && yearly_cents != null) {
+            stringResource(R.string.billing_billed_yearly_total, format_price(yearly_cents, currency))
+        } else {
+            null
+        },
+        badge_label = when {
+            is_current -> stringResource(R.string.current_plan)
+            show_recommended -> stringResource(R.string.fix_billing_plan_recommended)
+            else -> null
+        },
+        is_current = is_current,
+        is_featured = show_recommended,
+        lead_in = tier.lead_res?.let { stringResource(it) },
+        features = tier.features,
+        show_trust_note = show_recommended,
+    ) {
+        when {
+            is_current -> billing_cta_button(
+                label = stringResource(R.string.current_plan),
+                enabled = false,
+                filled = false,
+                on_click = {},
+            )
+            !price_known -> billing_cta_button(
+                label = stringResource(R.string.see_pricing),
+                enabled = plans_failed,
+                filled = false,
+                on_click = on_see_pricing,
+            )
+            show_recommended -> billing_cta_button(
+                label = stringResource(R.string.fix_billing_get_plan, plan_name),
+                enabled = true,
+                filled = true,
+                on_click = on_choose,
+            )
+            else -> billing_cta_button(
+                label = when {
+                    is_interval_switch -> stringResource(R.string.switch_to_yearly)
+                    is_downgrade -> stringResource(R.string.downgrade)
+                    else -> stringResource(R.string.billing_subscribe)
+                },
+                enabled = true,
+                filled = false,
+                on_click = on_choose,
+            )
         }
     }
 }
@@ -2737,9 +2611,8 @@ private fun notice_row(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(SquircleShape(14.dp))
-            .background(colors.bg_card)
-            .border(1.dp, colors.border_primary, SquircleShape(14.dp))
+            .billing_surface(billing_tile_shape)
+            .border(1.dp, colors.border_primary, billing_tile_shape)
             .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),

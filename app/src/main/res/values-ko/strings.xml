@@ -320,6 +320,10 @@
     <string name="discard">삭제</string>
     <string name="toggle_cc_bcc">Cc/Bcc 전환</string>
     <string name="add_recipient">수신자 추가</string>
+    <string name="add_another_recipient">수신자 추가</string>
+    <string name="compose_attachments">첨부 파일</string>
+    <string name="draft_discarded">임시 보관 메일을 삭제했습니다</string>
+    <string name="draft_saved">임시 저장했습니다</string>
     <string name="e2e_recipient_description">이 수신자에게 보내는 메시지는 상대방의 ID 키로 암호화됩니다. 상대방만 읽을 수 있습니다.</string>
     <string name="transit_recipient_description">이 수신자에게 보내는 메시지는 TLS로 전송 중 암호화됩니다. 수신자의 서버에서 읽을 수 있습니다.</string>
     <string name="format">서식</string>
@@ -2545,6 +2549,8 @@
     <string name="alias_delivery_title">배송</string>
     <string name="copied_value">%1$s 복사됨</string>
     <string name="alias_expand_settings">별칭 설정 표시</string>
+    <string name="alias_open_settings">별칭 설정</string>
+    <string name="alias_detail_unavailable">이 별칭은 더 이상 사용할 수 없습니다.</string>
     <string name="alias_collapse_settings">별칭 설정 숨기기</string>
     <string name="alias_panel_details_title">세부정보</string>
     <string name="alias_panel_display_name">표시 이름</string>
@@ -3428,4 +3434,7 @@
     <string name="connection_relay_connected">연결됨</string>
     <string name="connection_relay_restored">정상으로 돌아왔습니다</string>
     <string name="connection_relay_disconnected">연결이 끊어졌습니다</string>
+    <string name="search_groups">그룹 검색</string>
+    <string name="search_trash">휴지통 검색</string>
+    <string name="no_groups_match">\"%1$s\"과(와) 일치하는 그룹이 없습니다</string>
 </resources>

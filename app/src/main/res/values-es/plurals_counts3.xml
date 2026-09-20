@@ -32,6 +32,10 @@
         <item quantity="one">Los elementos de spam se eliminan automáticamente después de %1$d día.</item>
         <item quantity="other">Los elementos de spam se eliminan automáticamente después de %1$d días.</item>
     </plurals>
+    <plurals name="trash_auto_delete_notice">
+        <item quantity="one">Los elementos de la papelera se eliminan automáticamente después de %1$d día.</item>
+        <item quantity="other">Los elementos de la papelera se eliminan automáticamente después de %1$d días.</item>
+    </plurals>
     <plurals name="pending_deletion_body_days">
         <item quantity="one">Tu cuenta se eliminará en %1$d día. Cancela la eliminación para conservar tu cuenta y restaurar el acceso a tu correo y suscripción.</item>
         <item quantity="other">Tu cuenta se eliminará en %1$d días. Cancela la eliminación para conservar tu cuenta y restaurar el acceso a tu correo y suscripción.</item>

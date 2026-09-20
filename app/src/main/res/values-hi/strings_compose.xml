@@ -6,6 +6,7 @@
     <string name="compose_quote_forwarded_message">फ़ॉरवर्ड किया गया संदेश</string>
     <string name="compose_quote_original_message">मूल संदेश</string>
     <string name="compose_quote_show_label">%1$s दिखाएं</string>
+    <string name="compose_quote_hide_label">%1$s छिपाएं</string>
     <string name="compose_quote_header_from">प्रेषक:</string>
     <string name="compose_quote_header_date">तारीख:</string>
     <string name="compose_quote_header_subject">विषय:</string>

@@ -6,6 +6,7 @@
     <string name="compose_quote_forwarded_message">İletilen ileti</string>
     <string name="compose_quote_original_message">Özgün ileti</string>
     <string name="compose_quote_show_label">%1$s göster</string>
+    <string name="compose_quote_hide_label">%1$s gizle</string>
     <string name="compose_quote_header_from">Kimden:</string>
     <string name="compose_quote_header_date">Tarih:</string>
     <string name="compose_quote_header_subject">Konu:</string>

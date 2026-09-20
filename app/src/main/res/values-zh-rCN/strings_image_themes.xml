@@ -21,7 +21,7 @@
     <string name="image_theme_remove_photo">移除照片</string>
     <string name="image_theme_photo_private">你的照片已加密，仅保存在此设备上。</string>
     <string name="image_theme_photo_too_large">此照片过大。请选择小于 40 MB 的照片。</string>
-    <string name="image_theme_photo_unsupported">不支持此文件类型。请选择 JPEG、PNG、WebP 或 HEIC 照片。</string>
+    <string name="image_theme_photo_unsupported">不支持此文件类型。请选择 JPEG、PNG、GIF、WebP 或 HEIC 照片。</string>
     <string name="image_theme_photo_unreadable">无法打开此照片。请换一张试试。</string>
     <string name="image_theme_category_calm">宁静</string>
     <string name="image_theme_credit_modified">照片：%1$s。已裁剪并调整大小。</string>
@@ -48,4 +48,7 @@
     <string name="glass_mode">玻璃</string>
     <string name="glass_mode_subtitle">照片会从表面后面透出。关闭后表面为不透明。</string>
     <string name="theme_transparency">透明度</string>
+    <string name="image_theme_animation">动画背景</string>
+    <string name="image_theme_animation_subtitle">播放你的动画背景。开启省电模式或设备已关闭动画时，它会停止。</string>
+    <string name="image_theme_animation_too_large">此动画图片过大。请选择小于 12 MB 的图片。</string>
 </resources>

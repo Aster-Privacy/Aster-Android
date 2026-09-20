@@ -197,7 +197,9 @@ import org.astermail.android.translation.TranslationDownloadPolicy
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
 import org.astermail.android.util.clip_with_ellipsis
-import org.astermail.android.ui.common.glass_chrome
+import org.astermail.android.design.acrylic
+import org.astermail.android.design.acrylic_backdrop
+import org.astermail.android.ui.common.glass_bar
 import org.astermail.android.ui.common.chrome_surface
 import org.astermail.android.ui.common.page_surface
 
@@ -1569,8 +1571,7 @@ fun MailDetailScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .glass_chrome(colors, fade_top = 18.dp)
-                    .chrome_surface(colors)
+                    .glass_bar(colors)
                     .pointerInput(Unit) {}
                     .onGloballyPositioned { coords ->
                         val measured = with(density) { coords.size.height.toDp() }
@@ -2247,6 +2248,7 @@ internal fun expanded_message(
                 bottom = if (is_last_card) 0.dp else inbox_group_split,
             )
             .clip(card_shape)
+            .acrylic_backdrop(colors)
             .background(card_color),
     ) {
         Row(
@@ -2625,8 +2627,7 @@ internal fun expanded_message(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = AsterSpacing.md)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(colors.bg_secondary)
+                    .acrylic(colors, RoundedCornerShape(20.dp), colors.bg_secondary)
                     .border(1.dp, colors.border_secondary, RoundedCornerShape(20.dp))
                     .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xl),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -2877,6 +2878,7 @@ private fun thread_draft_slot(
     val draft = thread_draft ?: return
     val no_subject = stringResource(R.string.no_subject)
     val summary = draft.subject.takeIf { it.isNotBlank() && it != no_subject } ?: draft.preview
+    if (summary.isBlank()) return
     thread_draft_chip(
         summary = summary,
         on_edit = {
@@ -2929,8 +2931,7 @@ private fun thread_draft_chip(
                 .fillMaxWidth()
                 .padding(horizontal = AsterSpacing.md)
                 .padding(bottom = AsterSpacing.sm)
-                .clip(SquircleShape(14.dp))
-                .background(colors.bg_secondary)
+                .acrylic(colors, SquircleShape(14.dp), colors.bg_secondary)
                 .clickable(onClick = on_edit)
                 .padding(horizontal = AsterSpacing.sm, vertical = 8.dp)
                 .testTag("thread_draft_chip"),
@@ -3277,8 +3278,7 @@ internal fun compact_banner(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = AsterSpacing.md, vertical = 3.dp)
-            .clip(SquircleShape(10.dp))
-            .background(colors.bg_secondary)
+            .acrylic(colors, SquircleShape(10.dp), colors.bg_secondary)
             .padding(start = AsterSpacing.md, end = AsterSpacing.sm, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -3835,8 +3835,7 @@ internal fun message_details_panel(
             .fillMaxWidth()
             .padding(horizontal = AsterSpacing.md)
             .padding(bottom = AsterSpacing.sm)
-            .clip(SquircleShape(14.dp))
-            .background(colors.bg_secondary)
+            .acrylic(colors, SquircleShape(14.dp), colors.bg_secondary)
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
     ) {
         detail_meta_row(
@@ -4115,6 +4114,7 @@ private fun collapsed_message(
                 bottom = if (is_last_card) 0.dp else inbox_group_split,
             )
             .clip(card_shape)
+            .acrylic_backdrop(colors)
             .background(card_color),
     ) {
         Row(
@@ -4224,8 +4224,7 @@ private fun hidden_group_indicator(
             modifier = Modifier
                 .padding(start = AsterSpacing.md)
                 .height(40.dp)
-                .clip(CircleShape)
-                .background(colors.bg_secondary)
+                .acrylic(colors, CircleShape, colors.bg_secondary)
                 .border(1.dp, colors.border_secondary, CircleShape)
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -6183,9 +6182,8 @@ private fun attachment_chip(
 
     Row(
         modifier = modifier
-            .clip(SquircleShape(18.dp))
+            .acrylic(colors, SquircleShape(18.dp), colors.bg_secondary)
             .border(1.dp, colors.border_secondary, SquircleShape(18.dp))
-            .background(colors.bg_secondary)
             .padding(start = 10.dp, end = 6.dp, top = 10.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

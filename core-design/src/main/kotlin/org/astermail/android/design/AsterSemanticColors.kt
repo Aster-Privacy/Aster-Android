@@ -75,6 +75,8 @@ data class AsterSemanticColors(
 ) {
     val solid_bg: Color get() = if (is_glass) modal_bg.copy(alpha = 1f) else bg_primary
 
+    val is_translucent: Boolean get() = is_glass && glass_opacity < 0.995f
+
     fun glass_surface(color: Color): Color =
         if (is_glass) color.copy(alpha = glass_opacity) else color
 }

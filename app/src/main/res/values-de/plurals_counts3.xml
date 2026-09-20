@@ -32,6 +32,10 @@
         <item quantity="one">Elemente im Spam werden nach %1$d Tag automatisch gelöscht.</item>
         <item quantity="other">Elemente im Spam werden nach %1$d Tagen automatisch gelöscht.</item>
     </plurals>
+    <plurals name="trash_auto_delete_notice">
+        <item quantity="one">Elemente im Papierkorb werden nach %1$d Tag automatisch gelöscht.</item>
+        <item quantity="other">Elemente im Papierkorb werden nach %1$d Tagen automatisch gelöscht.</item>
+    </plurals>
     <plurals name="pending_deletion_body_days">
         <item quantity="one">Ihr Konto wird in %1$d Tag gelöscht. Brechen Sie die Löschung ab, um Ihr Konto zu behalten und den Zugriff auf Ihre E-Mails und Ihr Abonnement wiederherzustellen.</item>
         <item quantity="other">Ihr Konto wird in %1$d Tagen gelöscht. Brechen Sie die Löschung ab, um Ihr Konto zu behalten und den Zugriff auf Ihre E-Mails und Ihr Abonnement wiederherzustellen.</item>

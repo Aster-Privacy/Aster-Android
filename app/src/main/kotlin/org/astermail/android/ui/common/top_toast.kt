@@ -56,7 +56,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.input.pointer.util.VelocityTracker
+import kotlinx.coroutines.launch
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
@@ -133,6 +139,12 @@ private fun toast_icon_action(
     }
 }
 
+private val toast_dismiss_distance = 44.dp
+
+private val toast_dismiss_velocity = 420.dp
+
+private const val toast_pull_resistance = 0.32f
+
 private fun toast_surface_fill(colors: org.astermail.android.design.AsterSemanticColors) =
     if (colors.is_dark) colors.bg_card.lighten(0.14f) else colors.bg_card
 
@@ -145,13 +157,16 @@ fun top_toast_overlay(
     on_dismiss: () -> Unit,
     duration_ms: Long = 4500,
 ) {
-    LaunchedEffect(state?.key) {
-        if (state != null) {
+    var toast_dragging by remember { mutableStateOf(false) }
+    LaunchedEffect(state?.key) { toast_dragging = false }
+    LaunchedEffect(state?.key, toast_dragging) {
+        if (state != null && !toast_dragging) {
             delay(state.duration_ms ?: duration_ms)
             state.on_timeout?.invoke()
             on_dismiss()
         }
     }
+    val toast_scope = rememberCoroutineScope()
     var last_state by remember { mutableStateOf<TopToastState?>(null) }
     if (state != null) last_state = state
     val colors = AsterMaterial.colors
@@ -177,8 +192,20 @@ fun top_toast_overlay(
             val s = last_state ?: return@AnimatedVisibility
             val shape = SquircleShape(26.dp)
             val fill = toast_surface_fill(colors)
+            val drag_offset = remember(s.key) { Animatable(0f) }
+            var toast_height by remember(s.key) { mutableStateOf(0f) }
             val row_modifier = Modifier
                 .padding(horizontal = 12.dp, vertical = 10.dp)
+                .onSizeChanged { toast_height = it.height.toFloat() }
+                .graphicsLayer {
+                    val raw = drag_offset.value
+                    translationY = if (raw > 0f) raw * toast_pull_resistance else raw
+                    alpha = if (raw < 0f) {
+                        (1f + raw / (toast_height.coerceAtLeast(1f) * 1.6f)).coerceIn(0.15f, 1f)
+                    } else {
+                        1f
+                    }
+                }
                 .shadow(18.dp, shape, clip = false)
                 .clip(shape)
                 .background(fill)
@@ -192,11 +219,56 @@ fun top_toast_overlay(
                     }
                 }
                 .pointerInput(s.key) {
-                    detectVerticalDragGestures { _, drag ->
-                        if (drag < -4f) {
-                            s.on_close?.invoke()
-                            on_dismiss()
-                        }
+                    val tracker = VelocityTracker()
+                    detectVerticalDragGestures(
+                        onDragStart = {
+                            tracker.resetTracking()
+                            toast_dragging = true
+                        },
+                        onDragCancel = {
+                            toast_dragging = false
+                            toast_scope.launch {
+                                drag_offset.animateTo(
+                                    targetValue = 0f,
+                                    animationSpec = spring(
+                                        dampingRatio = 0.68f,
+                                        stiffness = Spring.StiffnessMediumLow,
+                                    ),
+                                )
+                            }
+                        },
+                        onDragEnd = {
+                            toast_dragging = false
+                            val velocity = tracker.calculateVelocity().y
+                            val travelled = drag_offset.value
+                            val far_enough = travelled < -toast_dismiss_distance.toPx()
+                            val fast_enough = velocity < -toast_dismiss_velocity.toPx()
+                            if (far_enough || fast_enough) {
+                                toast_scope.launch {
+                                    drag_offset.animateTo(
+                                        targetValue = -(toast_height + 120f),
+                                        animationSpec = tween(durationMillis = 150),
+                                    )
+                                    s.on_close?.invoke()
+                                    on_dismiss()
+                                    drag_offset.snapTo(0f)
+                                }
+                            } else {
+                                toast_scope.launch {
+                                    drag_offset.animateTo(
+                                        targetValue = 0f,
+                                        animationSpec = spring(
+                                            dampingRatio = 0.62f,
+                                            stiffness = Spring.StiffnessMediumLow,
+                                        ),
+                                    )
+                                }
+                            }
+                        },
+                    ) { change, drag ->
+                        tracker.addPosition(change.uptimeMillis, change.position)
+                        change.consume()
+                        toast_scope.launch { drag_offset.snapTo(drag_offset.value + drag) }
                     }
                 }
                 .padding(start = 18.dp, end = 10.dp, top = 12.dp, bottom = 12.dp)

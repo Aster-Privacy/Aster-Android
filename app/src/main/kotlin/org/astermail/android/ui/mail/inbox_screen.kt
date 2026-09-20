@@ -141,8 +141,10 @@ import org.astermail.android.design.components.aster_menu
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu_section_label
 import org.astermail.android.R
+import org.astermail.android.ui.common.glass_bar
 import org.astermail.android.debugtools.debug_build_pill_inline
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
@@ -217,6 +219,12 @@ fun build_thread_rows(
     }
     return ThreadRowResult(sorted, resolved)
 }
+
+fun thread_row_covers(email: Email, thread_id: String, grouping_enabled: Boolean): Boolean =
+    if (grouping_enabled) email.thread_id == thread_id || email.id == thread_id else email.id == thread_id
+
+fun thread_row_covers(email: Email, thread_ids: Set<String>, grouping_enabled: Boolean): Boolean =
+    if (grouping_enabled) email.thread_id in thread_ids || email.id in thread_ids else email.id in thread_ids
 
 fun reconcile_email_rows(rows: MutableList<Email>, merged: List<Email>) {
     if (rows == merged) return
@@ -709,7 +717,9 @@ fun InboxScreen(
             )
         }
     }
-    val emails = remember { mutableStateListOf<Email>() }
+    val emails = remember {
+        mutableStateListOf<Email>().apply { api_emails?.let { cached -> addAll(cached) } }
+    }
     val previous_api_emails = remember { mutableMapOf<String, Email>() }
     val local_read_mutations = remember { mutableMapOf<String, Long>() }
     val local_star_mutations = remember { mutableMapOf<String, Long>() }
@@ -833,11 +843,28 @@ fun InboxScreen(
         null
     }
     var unread_only by rememberSaveable { mutableStateOf(false) }
-    var threads by remember { mutableStateOf<List<ThreadRow>>(emptyList()) }
-    var threads_pending by remember { mutableStateOf(true) }
+    val grouping_enabled = settings_state.preferences?.conversation_grouping != false
+    val initial_threads = remember {
+        if (emails.isEmpty()) {
+            emptyList()
+        } else {
+            build_thread_rows(
+                emails = emails.toList(),
+                categories_enabled = categories_enabled,
+                active_category = active_category,
+                active_tabs = active_tabs,
+                sort_mode = sort_mode,
+                cached_participants = cached_participants,
+                sticky_participants = HashMap(sticky_participants),
+                grouping_enabled = grouping_enabled,
+                count_corrections = count_corrections,
+            ).rows
+        }
+    }
+    var threads by remember { mutableStateOf(initial_threads) }
+    var threads_pending by remember { mutableStateOf(initial_threads.isEmpty()) }
     var threads_folder by remember { mutableStateOf(current_folder) }
     val thread_gate = remember { InboxThreadGate() }
-    val grouping_enabled = settings_state.preferences?.conversation_grouping != false
     LaunchedEffect(
         current_folder,
         emails_fingerprint,
@@ -1220,7 +1247,7 @@ fun InboxScreen(
 
     fun selected_email_ids(): List<String> {
         val thread_ids = selected_ids.toSet()
-        return emails.filter { (it.thread_id in thread_ids || it.id in thread_ids) }.map { it.id }
+        return emails.filter { (thread_row_covers(it, thread_ids, grouping_enabled)) }.map { it.id }
     }
 
     fun notify_if_scope_incomplete(applied: Int) {
@@ -1235,7 +1262,7 @@ fun InboxScreen(
         val thread_count = selected_ids.size
         val to_remove = selected_ids.toSet()
         mail_vm.archive(ids, thread_count)
-        emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
+        emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
         exit_select_mode()
         notify_if_scope_incomplete(ids.size)
     }
@@ -1246,12 +1273,12 @@ fun InboxScreen(
         val to_remove = selected_ids.toSet()
         if (current_folder == "scheduled") {
             ids.forEach { mail_vm.cancel_scheduled(it) }
-            emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
+            emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
             exit_select_mode()
             return
         }
         mail_vm.trash(ids, thread_count)
-        emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
+        emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
         exit_select_mode()
         notify_if_scope_incomplete(ids.size)
     }
@@ -1260,7 +1287,7 @@ fun InboxScreen(
         val ids = selected_email_ids()
         val to_remove = selected_ids.toSet()
         mail_vm.restore_trash(ids)
-        emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
+        emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
         exit_select_mode()
     }
 
@@ -1268,7 +1295,7 @@ fun InboxScreen(
         val ids = selected_email_ids()
         val to_remove = selected_ids.toSet()
         mail_vm.unarchive(ids)
-        emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
+        emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
         exit_select_mode()
     }
 
@@ -1276,7 +1303,7 @@ fun InboxScreen(
         val ids = selected_email_ids()
         val to_remove = selected_ids.toSet()
         mail_vm.unmark_spam(ids)
-        emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
+        emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
         exit_select_mode()
     }
 
@@ -1285,7 +1312,7 @@ fun InboxScreen(
         val thread_count = selected_ids.size
         val to_remove = selected_ids.toSet()
         mail_vm.mark_spam(ids, thread_count)
-        emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
+        emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
         exit_select_mode()
     }
 
@@ -1293,20 +1320,20 @@ fun InboxScreen(
         val ids = selected_email_ids()
         val to_remove = selected_ids.toSet()
         mail_vm.delete_permanent_bulk(ids)
-        emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
+        emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
         exit_select_mode()
     }
 
     fun mark_read_selected() {
         val thread_ids = selected_ids.toSet()
         val email_ids = emails
-            .filter { (it.thread_id in thread_ids || it.id in thread_ids) && !it.is_read }
+            .filter { (thread_row_covers(it, thread_ids, grouping_enabled)) && !it.is_read }
             .map { it.id }
         if (email_ids.isNotEmpty()) {
             mail_vm.mark_read_bulk(email_ids)
         }
         for (i in emails.indices) {
-            if ((emails[i].thread_id in thread_ids || emails[i].id in thread_ids) && !emails[i].is_read) {
+            if ((thread_row_covers(emails[i], thread_ids, grouping_enabled)) && !emails[i].is_read) {
                 note_read_mutation(emails[i].id)
                 emails[i] = emails[i].copy(is_read = true)
             }
@@ -1317,13 +1344,13 @@ fun InboxScreen(
     fun mark_unread_selected() {
         val thread_ids = selected_ids.toSet()
         val email_ids = emails
-            .filter { (it.thread_id in thread_ids || it.id in thread_ids) && it.is_read }
+            .filter { (thread_row_covers(it, thread_ids, grouping_enabled)) && it.is_read }
             .map { it.id }
         if (email_ids.isNotEmpty()) {
             mail_vm.mark_unread_bulk(email_ids)
         }
         for (i in emails.indices) {
-            if ((emails[i].thread_id in thread_ids || emails[i].id in thread_ids) && emails[i].is_read) {
+            if ((thread_row_covers(emails[i], thread_ids, grouping_enabled)) && emails[i].is_read) {
                 note_read_mutation(emails[i].id)
                 emails[i] = emails[i].copy(is_read = false)
             }
@@ -1333,10 +1360,10 @@ fun InboxScreen(
 
     fun star_selected() {
         val thread_ids = selected_ids.toSet()
-        val new_starred = emails.any { (it.thread_id in thread_ids || it.id in thread_ids) && !it.is_starred }
+        val new_starred = emails.any { (thread_row_covers(it, thread_ids, grouping_enabled)) && !it.is_starred }
         mail_vm.star_bulk(selected_email_ids())
         for (i in emails.indices) {
-            if ((emails[i].thread_id in thread_ids || emails[i].id in thread_ids) && emails[i].is_starred != new_starred) {
+            if ((thread_row_covers(emails[i], thread_ids, grouping_enabled)) && emails[i].is_starred != new_starred) {
                 emails[i] = emails[i].copy(is_starred = new_starred)
                 note_star_mutation(emails[i].id)
             }
@@ -1346,10 +1373,10 @@ fun InboxScreen(
 
     fun apply_thread_star(thread: ThreadRow) {
         val target = !thread.is_starred
-        val ids = emails.filter { it.thread_id == thread.thread_id || it.id == thread.thread_id }.map { it.id }
+        val ids = emails.filter { thread_row_covers(it, thread.thread_id, grouping_enabled) }.map { it.id }
         mail_vm.toggle_thread_star(ids.ifEmpty { listOf(thread.newest.id) }, target)
         for (i in emails.indices) {
-            if ((emails[i].thread_id == thread.thread_id || emails[i].id == thread.thread_id) && emails[i].is_starred != target) {
+            if ((thread_row_covers(emails[i], thread.thread_id, grouping_enabled)) && emails[i].is_starred != target) {
                 emails[i] = emails[i].copy(is_starred = target)
                 note_star_mutation(emails[i].id)
             }
@@ -1361,7 +1388,7 @@ fun InboxScreen(
         val ids = selected_email_ids()
         notify_if_scope_incomplete(ids.size)
         mail_vm.snooze_bulk(ids, iso, label)
-        emails.removeAll { (it.thread_id in to_remove || it.id in to_remove) }
+        emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
         exit_select_mode()
     }
 
@@ -1442,7 +1469,7 @@ fun InboxScreen(
         }
         if (scope_selection && action_id == "star") {
             val thread_ids = selected_ids.toSet()
-            mail_vm.star_scope(current_folder, emails.any { (it.thread_id in thread_ids || it.id in thread_ids) && !it.is_starred })
+            mail_vm.star_scope(current_folder, emails.any { (thread_row_covers(it, thread_ids, grouping_enabled)) && !it.is_starred })
             exit_select_mode()
             return
         }
@@ -1502,13 +1529,14 @@ fun InboxScreen(
             on_refresh = { pull_on_refresh.value() },
         )
     }
-    val header_nested_scroll = remember(header_offset_px, pull_state) {
+    val header_nested_scroll = remember(header_offset_px, pull_state, pull_select_mode) {
         object : NestedScrollConnection {
             override fun onPostScroll(
                 consumed: Offset,
                 available: Offset,
                 source: NestedScrollSource,
             ): Offset {
+                if (pull_select_mode.value) return Offset.Zero
                 val limit = header_height_px.toFloat()
                 if (limit == 0f) return Offset.Zero
                 if (pull_state.distanceFraction > 0f) return Offset.Zero
@@ -1547,7 +1575,7 @@ fun InboxScreen(
         snapshotFlow {
             !list_state.canScrollForward && !list_state.canScrollBackward
         }.distinctUntilChanged().collect { not_scrollable ->
-            if (not_scrollable) {
+            if (not_scrollable && !list_state.isScrollInProgress) {
                 header_offset_px.floatValue = 0f
                 header_hidden = false
             }
@@ -1578,7 +1606,7 @@ fun InboxScreen(
                 !list_state.canScrollForward &&
                 !list_state.isScrollInProgress
         }.distinctUntilChanged().collect { stranded_top ->
-            if (stranded_top && !drag_selecting) {
+            if (stranded_top && !drag_selecting && !select_mode && header_offset_px.floatValue != 0f) {
                 list_state.scrollToItem(0)
                 settle_clipped_top()
             }
@@ -1633,7 +1661,7 @@ fun InboxScreen(
         }
     }
 
-    val has_backdrop = colors.is_glass
+    val has_backdrop = colors.is_translucent
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -1687,7 +1715,7 @@ fun InboxScreen(
                                 }
                                 .size(44.dp)
                                 .shadow(10.dp, CircleShape)
-                                .background(colors.bg_card, CircleShape),
+                                .acrylic(colors, CircleShape),
                             contentAlignment = Alignment.Center,
                         ) {
                             if (refreshing_now) {
@@ -1970,10 +1998,19 @@ fun InboxScreen(
                                 low_network_banner(on_open_settings = on_open_low_network)
                             }
                         }
-                        val spam_retention_days = settings_state.preferences?.auto_delete_spam_days ?: 0
-                        if (current_folder == "spam" && !select_mode && spam_retention_days > 0) {
-                            item(key = "_spam_retention_notice", contentType = "spam_notice") {
-                                spam_retention_banner(days = spam_retention_days)
+                        val spam_retention_days = settings_state.preferences?.auto_delete_spam_days
+                            ?: default_trash_retention_days
+                        val retention_notice_days = when {
+                            current_folder == "trash" -> default_trash_retention_days
+                            current_folder == "spam" -> spam_retention_days
+                            else -> 0
+                        }
+                        if (!select_mode && retention_notice_days > 0) {
+                            item(key = "_retention_notice", contentType = "retention_notice") {
+                                folder_retention_banner(
+                                    days = retention_notice_days,
+                                    trash = current_folder == "trash",
+                                )
                             }
                         }
                         itemsIndexed(
@@ -2042,7 +2079,7 @@ fun InboxScreen(
                                     swipe_start_color = swipe_action_color(swipe_config.start_action, colors),
                                     swipe_end_color = swipe_action_color(swipe_config.end_action, colors),
                                     on_swipe_start = {
-                                        val ids = emails.filter { (it.thread_id == thread.thread_id || it.id == thread.thread_id) }.map { it.id }
+                                        val ids = emails.filter { (thread_row_covers(it, thread.thread_id, grouping_enabled)) }.map { it.id }
                                         val prefs = settings_state.preferences
                                         val needs_confirm = (swipe_config.start_action == "archive" && prefs?.confirm_archive == true) ||
                                             (swipe_config.start_action == "delete" && prefs?.confirm_delete == true) ||
@@ -2055,7 +2092,7 @@ fun InboxScreen(
                                         } else {
                                             action_feedback(swipe_config.start_action)
                                             execute_swipe_action(
-                                                swipe_config.start_action, ids, mail_vm, emails, thread.thread_id, current_folder,
+                                                swipe_config.start_action, ids, mail_vm, emails, thread.thread_id, current_folder, grouping_enabled,
                                                 on_read_mutation = { mutated -> mutated.forEach { note_read_mutation(it) } },
                                                 on_star_mutation = { mutated -> mutated.forEach { note_star_mutation(it) } },
                                             ) { snooze_ids ->
@@ -2064,7 +2101,7 @@ fun InboxScreen(
                                         }
                                     },
                                     on_swipe_end = {
-                                        val ids = emails.filter { (it.thread_id == thread.thread_id || it.id == thread.thread_id) }.map { it.id }
+                                        val ids = emails.filter { (thread_row_covers(it, thread.thread_id, grouping_enabled)) }.map { it.id }
                                         val prefs = settings_state.preferences
                                         val needs_confirm = (swipe_config.end_action == "archive" && prefs?.confirm_archive == true) ||
                                             (swipe_config.end_action == "delete" && prefs?.confirm_delete == true) ||
@@ -2077,7 +2114,7 @@ fun InboxScreen(
                                         } else {
                                             action_feedback(swipe_config.end_action)
                                             execute_swipe_action(
-                                                swipe_config.end_action, ids, mail_vm, emails, thread.thread_id, current_folder,
+                                                swipe_config.end_action, ids, mail_vm, emails, thread.thread_id, current_folder, grouping_enabled,
                                                 on_read_mutation = { mutated -> mutated.forEach { note_read_mutation(it) } },
                                                 on_star_mutation = { mutated -> mutated.forEach { note_star_mutation(it) } },
                                             ) { snooze_ids ->
@@ -2550,7 +2587,7 @@ fun InboxScreen(
                     if (pending_thread != null) {
                         action_feedback(pending_action)
                         execute_swipe_action(
-                            pending_action, pending_ids, mail_vm, emails, pending_thread, current_folder,
+                            pending_action, pending_ids, mail_vm, emails, pending_thread, current_folder, grouping_enabled,
                             on_read_mutation = { mutated -> mutated.forEach { note_read_mutation(it) } },
                             on_star_mutation = { mutated -> mutated.forEach { note_star_mutation(it) } },
                         )
@@ -2932,8 +2969,7 @@ internal fun inbox_top_bar(
                     .weight(1f)
                     .height(52.dp)
                     .padding(horizontal = AsterSpacing.sm)
-                    .clip(SquircleShape(26.dp))
-                    .background(search_field_bg_color(colors))
+                    .acrylic(colors, SquircleShape(26.dp), search_field_bg_color(colors))
                     .clickable { on_open_search() }
                     .padding(horizontal = AsterSpacing.lg)
                     .testTag("search"),
@@ -3055,8 +3091,9 @@ private fun select_mode_top_bar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .glass_bar(colors)
             .padding(start = AsterSpacing.xs, end = AsterSpacing.sm)
-            .padding(top = AsterSpacing.xs)
+            .padding(top = AsterSpacing.xs, bottom = AsterSpacing.xs)
             .height(48.dp)
             .testTag("select_mode_bar"),
         verticalAlignment = Alignment.CenterVertically,
@@ -3105,12 +3142,15 @@ internal fun scope_selection_banner(
 ) {
     if (!offered && !confirmed) return
     val colors = AsterMaterial.colors
-    Column(modifier = modifier.fillMaxWidth().background(colors.bg_secondary)) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .then(if (offered) Modifier.clickable(onClick = on_confirm) else Modifier)
-                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm)
+                .padding(horizontal = AsterSpacing.md)
+                .padding(top = AsterSpacing.sm, bottom = AsterSpacing.md)
                 .testTag(if (confirmed) "scope_selection_confirmed" else "scope_selection_offer"),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
@@ -3129,7 +3169,6 @@ internal fun scope_selection_banner(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        AsterDivider(modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -3694,6 +3733,7 @@ private fun execute_swipe_action(
     emails: MutableList<Email>,
     thread_id: String,
     current_folder: String,
+    grouping_enabled: Boolean,
     on_read_mutation: (List<String>) -> Unit = {},
     on_star_mutation: (List<String>) -> Unit = {},
     on_snooze: (List<String>) -> Unit = {},
@@ -3701,7 +3741,7 @@ private fun execute_swipe_action(
     if (current_folder == "scheduled") {
         if (action == "delete" || action == "trash" || action == "delete_permanent") {
             ids.forEach { mail_vm.cancel_scheduled(it) }
-            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
+            emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
         }
         return
     }
@@ -3709,15 +3749,15 @@ private fun execute_swipe_action(
         "archive" -> {
             if (current_folder == "archive") return
             mail_vm.archive(ids, 1)
-            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
+            emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
         }
         "delete", "trash" -> {
             if (current_folder == "trash") return
             mail_vm.trash(ids, 1)
-            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
+            emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
         }
         "toggle_read" -> {
-            val was_read = emails.filter { (it.thread_id == thread_id || it.id == thread_id) }.all { it.is_read }
+            val was_read = emails.filter { (thread_row_covers(it, thread_id, grouping_enabled)) }.all { it.is_read }
             if (was_read) {
                 mail_vm.mark_unread_bulk(ids)
             } else {
@@ -3725,7 +3765,7 @@ private fun execute_swipe_action(
             }
             val mutated = ArrayList<String>()
             for (i in emails.indices) {
-                if ((emails[i].thread_id == thread_id || emails[i].id == thread_id)) {
+                if ((thread_row_covers(emails[i], thread_id, grouping_enabled))) {
                     mutated.add(emails[i].id)
                     emails[i] = emails[i].copy(is_read = !was_read)
                 }
@@ -3734,11 +3774,11 @@ private fun execute_swipe_action(
         }
         "snooze" -> on_snooze(ids)
         "star" -> {
-            val target = !emails.filter { (it.thread_id == thread_id || it.id == thread_id) }.all { it.is_starred }
+            val target = !emails.filter { (thread_row_covers(it, thread_id, grouping_enabled)) }.all { it.is_starred }
             mail_vm.toggle_thread_star(ids, target)
             val mutated = ArrayList<String>()
             for (i in emails.indices) {
-                if ((emails[i].thread_id == thread_id || emails[i].id == thread_id) && emails[i].is_starred != target) {
+                if ((thread_row_covers(emails[i], thread_id, grouping_enabled)) && emails[i].is_starred != target) {
                     emails[i] = emails[i].copy(is_starred = target)
                     mutated.add(emails[i].id)
                 }
@@ -3748,28 +3788,28 @@ private fun execute_swipe_action(
         "spam" -> {
             if (current_folder == "spam") return
             mail_vm.mark_spam(ids, 1)
-            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
+            emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
         }
         "move_to_inbox" -> {
             if (current_folder == "inbox") return
             mail_vm.unarchive(ids)
-            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
+            emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
         }
         "unarchive" -> {
             mail_vm.unarchive(ids)
-            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
+            emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
         }
         "restore_trash" -> {
             mail_vm.restore_trash(ids)
-            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
+            emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
         }
         "unmark_spam" -> {
             mail_vm.unmark_spam(ids)
-            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
+            emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
         }
         "delete_permanent" -> {
             mail_vm.delete_permanent_bulk(ids)
-            emails.removeAll { (it.thread_id == thread_id || it.id == thread_id) }
+            emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
         }
     }
 }
@@ -3824,16 +3864,18 @@ internal fun inbox_error_state(message: String, on_retry: () -> Unit) {
     }
 }
 
+private const val default_trash_retention_days = 30
+
 @Composable
-private fun spam_retention_banner(days: Int) {
+private fun folder_retention_banner(days: Int, trash: Boolean) {
     val colors = AsterMaterial.colors
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs)
-            .clip(SquircleShape(12.dp))
-            .background(colors.bg_card)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .acrylic(colors, SquircleShape(14.dp), colors.bg_secondary)
+            .padding(horizontal = 14.dp, vertical = 11.dp)
+            .testTag(if (trash) "trash_retention_notice" else "spam_retention_notice"),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -3844,7 +3886,11 @@ private fun spam_retention_banner(days: Int) {
             modifier = Modifier.size(18.dp),
         )
         Text(
-            text = pluralStringResource(R.plurals.spam_auto_delete_notice, days, days),
+            text = pluralStringResource(
+                if (trash) R.plurals.trash_auto_delete_notice else R.plurals.spam_auto_delete_notice,
+                days,
+                days,
+            ),
             color = colors.text_muted,
             fontSize = 12.sp,
             lineHeight = 16.sp,
@@ -4077,8 +4123,7 @@ private fun low_network_banner(on_open_settings: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs)
-            .clip(SquircleShape(12.dp))
-            .background(colors.bg_card)
+            .acrylic(colors, SquircleShape(12.dp))
             .clickable(onClick = on_open_settings)
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,

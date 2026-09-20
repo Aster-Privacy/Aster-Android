@@ -6,6 +6,7 @@
     <string name="compose_quote_forwarded_message">Weitergeleitete Nachricht</string>
     <string name="compose_quote_original_message">Ursprüngliche Nachricht</string>
     <string name="compose_quote_show_label">%1$s anzeigen</string>
+    <string name="compose_quote_hide_label">%1$s ausblenden</string>
     <string name="compose_quote_header_from">Von:</string>
     <string name="compose_quote_header_date">Datum:</string>
     <string name="compose_quote_header_subject">Betreff:</string>

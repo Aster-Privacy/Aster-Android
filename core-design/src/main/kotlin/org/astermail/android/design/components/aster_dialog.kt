@@ -148,6 +148,9 @@ private val dialog_properties = DialogProperties(
     decorFitsSystemWindows = false,
 )
 
+private fun dialog_fill(colors: org.astermail.android.design.AsterSemanticColors): Color =
+    if (colors.is_glass) colors.solid_bg else colors.bg_card
+
 @Composable
 private fun prepare_dialog_window() {
     val view = androidx.compose.ui.platform.LocalView.current
@@ -235,7 +238,7 @@ fun AsterDialog(
                     onClick = {},
                 ),
             shape = dialog_shape,
-            color = colors.bg_card,
+            color = dialog_fill(colors),
             tonalElevation = 0.dp,
             shadowElevation = 18.dp,
         ) {
@@ -332,7 +335,7 @@ fun AsterAlertDialog(
                     onClick = {},
                 ),
             shape = dialog_shape,
-            color = colors.bg_card,
+            color = dialog_fill(colors),
             tonalElevation = 0.dp,
             shadowElevation = 18.dp,
         ) {

@@ -6,6 +6,7 @@
     <string name="compose_quote_forwarded_message">Message transféré</string>
     <string name="compose_quote_original_message">Message original</string>
     <string name="compose_quote_show_label">Afficher %1$s</string>
+    <string name="compose_quote_hide_label">Masquer %1$s</string>
     <string name="compose_quote_header_from">De :</string>
     <string name="compose_quote_header_date">Date :</string>
     <string name="compose_quote_header_subject">Objet :</string>

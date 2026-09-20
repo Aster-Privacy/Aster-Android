@@ -218,6 +218,7 @@ fun AppearanceScreen(
     val font_choice by vm.font_choice.collectAsStateWithLifecycle()
     val background_image by vm.background_image.collectAsStateWithLifecycle()
     val background_opacity by vm.background_opacity.collectAsStateWithLifecycle()
+    val animate_background by vm.animate_background.collectAsStateWithLifecycle()
     val appearance_custom_meta by org.astermail.android.ui.theme.custom_theme_image.meta.collectAsState()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val plan_state by plan_vm.state.collectAsStateWithLifecycle()
@@ -586,6 +587,23 @@ fun AppearanceScreen(
             active = remember(background_image, appearance_custom_meta) { theme_background_for(background_image) },
             on_click = { library_open = true },
         )
+
+        if (
+            background_image == org.astermail.android.ui.theme.custom_theme_background &&
+            appearance_custom_meta?.animated == true
+        ) {
+            v_gap(AsterSpacing.xxl)
+            section_label(stringResource(R.string.image_theme_animation))
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                settings_toggle_row(
+                    title = stringResource(R.string.image_theme_animation),
+                    subtitle = stringResource(R.string.image_theme_animation_subtitle),
+                    checked = animate_background,
+                    test_tag = "animate_background_toggle",
+                    on_change = { on -> vm.set_animate_background(on) },
+                )
+            }
+        }
 
         if (background_image != no_theme_background) {
             v_gap(AsterSpacing.xxl)

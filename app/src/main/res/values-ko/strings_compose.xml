@@ -6,6 +6,7 @@
     <string name="compose_quote_forwarded_message">전달된 메시지</string>
     <string name="compose_quote_original_message">원본 메시지</string>
     <string name="compose_quote_show_label">%1$s 보기</string>
+    <string name="compose_quote_hide_label">%1$s 숨기기</string>
     <string name="compose_quote_header_from">보낸 사람:</string>
     <string name="compose_quote_header_date">날짜:</string>
     <string name="compose_quote_header_subject">제목:</string>

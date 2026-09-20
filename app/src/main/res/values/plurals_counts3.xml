@@ -32,6 +32,10 @@
         <item quantity="one">Items in spam will be automatically deleted after %1$d day.</item>
         <item quantity="other">Items in spam will be automatically deleted after %1$d days.</item>
     </plurals>
+    <plurals name="trash_auto_delete_notice">
+        <item quantity="one">Items in trash will be automatically deleted after %1$d day.</item>
+        <item quantity="other">Items in trash will be automatically deleted after %1$d days.</item>
+    </plurals>
     <plurals name="pending_deletion_body_days">
         <item quantity="one">Your account is scheduled to be deleted in %1$d day. Cancel the deletion to keep your account and restore access to your mail and subscription.</item>
         <item quantity="other">Your account is scheduled to be deleted in %1$d days. Cancel the deletion to keep your account and restore access to your mail and subscription.</item>

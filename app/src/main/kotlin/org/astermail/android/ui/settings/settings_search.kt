@@ -103,6 +103,7 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.ui.mail.search_field_bg_color
+import org.astermail.android.design.acrylic
 
 val local_settings_navigator = staticCompositionLocalOf<(String) -> Unit> { {} }
 
@@ -255,8 +256,7 @@ private fun settings_search_field(
         modifier = modifier
             .padding(end = AsterSpacing.sm)
             .height(48.dp)
-            .clip(SquircleShape(24.dp))
-            .background(search_field_bg_color(colors))
+            .acrylic(colors, SquircleShape(24.dp), search_field_bg_color(colors))
             .padding(horizontal = AsterSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -344,7 +344,7 @@ private fun settings_search_results(query: String, on_open: (String) -> Unit) {
             modifier = Modifier
                 .padding(horizontal = AsterSpacing.md)
                 .fillMaxWidth()
-                .background(colors.bg_card, SquircleShape(18.dp))
+                .acrylic(colors, SquircleShape(18.dp))
                 .border(1.dp, colors.border_secondary, SquircleShape(18.dp)),
         ) {
             matched.forEachIndexed { idx, hit ->

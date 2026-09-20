@@ -320,6 +320,10 @@
     <string name="discard">تجاهل</string>
     <string name="toggle_cc_bcc">تبديل نسخة/نسخة مخفية</string>
     <string name="add_recipient">إضافة مستلم</string>
+    <string name="add_another_recipient">إضافة مستلم آخر</string>
+    <string name="compose_attachments">المرفقات</string>
+    <string name="draft_discarded">تم تجاهل المسودة</string>
+    <string name="draft_saved">تم حفظ المسودة</string>
     <string name="e2e_recipient_description">الرسائل إلى هذا المستلم مشفرة بمفتاح هويته. هو فقط يمكنه قراءتها.</string>
     <string name="transit_recipient_description">الرسائل إلى هذا المستلم مشفرة أثناء النقل باستخدام TLS. قد يتمكن خادم المستلم من قراءتها.</string>
     <string name="format">تنسيق</string>
@@ -2585,6 +2589,8 @@
     <string name="alias_delivery_title">التسليم</string>
     <string name="copied_value">تم نسخ %1$s</string>
     <string name="alias_expand_settings">إظهار إعدادات الاسم المستعار</string>
+    <string name="alias_open_settings">إعدادات الاسم المستعار</string>
+    <string name="alias_detail_unavailable">لم يعد هذا الاسم المستعار متاحًا.</string>
     <string name="alias_collapse_settings">إخفاء إعدادات الاسم المستعار</string>
     <string name="alias_panel_details_title">التفاصيل</string>
     <string name="alias_panel_display_name">الاسم المعروض</string>
@@ -3526,4 +3532,7 @@
     <string name="connection_relay_connected">متصل</string>
     <string name="connection_relay_restored">عاد كل شيء إلى طبيعته</string>
     <string name="connection_relay_disconnected">غير متصل</string>
+    <string name="search_groups">البحث في المجموعات</string>
+    <string name="search_trash">البحث في المهملات</string>
+    <string name="no_groups_match">لا توجد مجموعات تطابق \"%1$s\"</string>
 </resources>

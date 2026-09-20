@@ -21,7 +21,6 @@
 
 package org.astermail.android.ui.common
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -55,6 +54,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
 import org.astermail.android.ui.mail.search_field_bg_color
 import androidx.compose.ui.res.stringResource
 
@@ -72,8 +72,7 @@ fun list_search_bar(
         modifier = modifier
             .fillMaxWidth()
             .height(48.dp)
-            .clip(SquircleShape(24.dp))
-            .background(search_field_bg_color(colors))
+            .acrylic(colors, SquircleShape(24.dp), search_field_bg_color(colors))
             .padding(horizontal = AsterSpacing.md)
             .testTag(test_tag),
         verticalAlignment = Alignment.CenterVertically,

@@ -135,6 +135,7 @@ class ThemeStore(context: Context) {
     private val key_font_choice = stringPreferencesKey("font_choice")
     private val key_background_image = stringPreferencesKey("background_image")
     private val key_background_opacity = floatPreferencesKey("background_opacity")
+    private val key_animate_background = booleanPreferencesKey("animate_background")
 
     val theme_mode: StateFlow<ThemeMode> = app_context.theme_data_store.data
         .map { prefs -> parse_mode(prefs[key_theme_mode]) }
@@ -249,6 +250,11 @@ class ThemeStore(context: Context) {
             clamp_opacity(cached_float("background_opacity", default_background_opacity)),
         )
 
+    val animate_background: StateFlow<Boolean> = app_context.theme_data_store.data
+        .map { prefs -> prefs[key_animate_background] ?: true }
+        .onEach { cache_bool("animate_background", it) }
+        .stateIn(scope, SharingStarted.Eagerly, cached_bool("animate_background", true))
+
     val font_choice: StateFlow<String> = app_context.theme_data_store.data
         .map { prefs -> prefs[key_font_choice] ?: "default" }
         .onEach { cache_string("font_choice", it) }
@@ -361,6 +367,10 @@ class ThemeStore(context: Context) {
         scope.launch {
             app_context.theme_data_store.edit { it[key_background_opacity] = clamp_opacity(value) }
         }
+    }
+
+    fun set_animate_background(enabled: Boolean) {
+        scope.launch { app_context.theme_data_store.edit { it[key_animate_background] = enabled } }
     }
 
     fun set_font_choice(id: String) {

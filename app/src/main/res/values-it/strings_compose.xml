@@ -6,6 +6,7 @@
     <string name="compose_quote_forwarded_message">Messaggio inoltrato</string>
     <string name="compose_quote_original_message">Messaggio originale</string>
     <string name="compose_quote_show_label">Mostra %1$s</string>
+    <string name="compose_quote_hide_label">Nascondi %1$s</string>
     <string name="compose_quote_header_from">Da:</string>
     <string name="compose_quote_header_date">Data:</string>
     <string name="compose_quote_header_subject">Oggetto:</string>

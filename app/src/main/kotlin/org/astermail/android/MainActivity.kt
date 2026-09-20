@@ -462,6 +462,10 @@ private object routes {
         val encoded_ghost = if (!thread_ghost.isNullOrBlank()) java.net.URLEncoder.encode(thread_ghost, "UTF-8") else ""
         return "compose?reply_to=$encoded_msg&mode=$encoded_mode&draft_id=&to=&thread_ghost=$encoded_ghost"
     }
+    fun compose_from(address: String): String {
+        val encoded = java.net.URLEncoder.encode(address, "UTF-8")
+        return "compose?reply_to=&mode=&draft_id=&to=&thread_ghost=$encoded"
+    }
     fun compose_share(token: String): String {
         return "compose?reply_to=&mode=&draft_id=&to=&thread_ghost=&share=$token"
     }
@@ -481,6 +485,12 @@ private object routes {
 
     fun mail_detail_for(email_id: String) = "mail_detail/" + java.net.URLEncoder.encode(email_id, "UTF-8")
     fun settings_detail(id: String) = "settings_$id"
+
+    const val alias_detail = "settings_alias_detail/{alias_id}"
+    fun alias_detail_for(alias_id: String): String {
+        val encoded = java.net.URLEncoder.encode(alias_id, "UTF-8")
+        return "settings_alias_detail/$encoded"
+    }
 
     val settings_low_network =
         "settings_accessibility?focus=" +
@@ -1281,6 +1291,32 @@ private fun AsterNavHost() {
                         nav_controller.navigate(routes.inbox)
                     }
                 },
+                on_open_alias_detail = { id -> nav_controller.navigate(routes.alias_detail_for(id)) },
+                on_compose_from = { address -> nav_controller.navigate(routes.compose_from(address)) },
+            )
+        }
+        composable(
+            route = routes.alias_detail,
+            arguments = listOf(navArgument("alias_id") { type = NavType.StringType }),
+        ) { entry ->
+            org.astermail.android.ui.settings.detail.alias_detail_screen(
+                alias_id = entry.arguments?.getString("alias_id").orEmpty(),
+                on_back = { back(); Unit },
+                on_open = open_detail,
+                on_open_alias_mail = { id, address, routing_token ->
+                    org.astermail.android.mail.alias_inbox_requests.submit(
+                        org.astermail.android.mail.alias_inbox_request(
+                            id = id,
+                            address = address,
+                            routing_token = routing_token,
+                            direction = org.astermail.android.mail.alias_direction_sent,
+                        ),
+                    )
+                    if (!nav_controller.popBackStack(routes.inbox, false)) {
+                        nav_controller.navigate(routes.inbox)
+                    }
+                },
+                on_compose_from = { address -> nav_controller.navigate(routes.compose_from(address)) },
             )
         }
         composable(routes.settings_detail("domains")) {

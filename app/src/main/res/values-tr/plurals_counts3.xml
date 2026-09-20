@@ -32,6 +32,10 @@
         <item quantity="one">Spamdaki öğeler %1$d gün sonra otomatik olarak silinir.</item>
         <item quantity="other">Spamdaki öğeler %1$d gün sonra otomatik olarak silinir.</item>
     </plurals>
+    <plurals name="trash_auto_delete_notice">
+        <item quantity="one">Çöp kutusundaki öğeler %1$d gün sonra otomatik olarak silinir.</item>
+        <item quantity="other">Çöp kutusundaki öğeler %1$d gün sonra otomatik olarak silinir.</item>
+    </plurals>
     <plurals name="pending_deletion_body_days">
         <item quantity="one">Hesabınız %1$d gün içinde silinecek. Hesabınızı korumak ve e-postanıza ve aboneliğinize erişimi geri yüklemek için silmeyi iptal edin.</item>
         <item quantity="other">Hesabınız %1$d gün içinde silinecek. Hesabınızı korumak ve e-postanıza ve aboneliğinize erişimi geri yüklemek için silmeyi iptal edin.</item>

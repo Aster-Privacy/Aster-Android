@@ -47,6 +47,8 @@ import org.astermail.android.ui.theme.remember_active_theme_bitmap
 import org.astermail.android.ui.theme.remember_active_theme_blur
 import org.astermail.android.ui.theme.theme_veil_alpha
 
+private const val glass_bar_tint_strength = 0.86f
+
 @Composable
 fun Modifier.glass_chrome(
     colors: AsterSemanticColors,
@@ -55,6 +57,7 @@ fun Modifier.glass_chrome(
     fade_top: Dp = 0.dp,
 ): Modifier {
     if (!colors.is_glass) return this
+    if (!colors.is_translucent) return this.background(colors.glass_surface(colors.bg_card))
     val blur = remember_active_theme_blur() ?: return this
     val view = LocalView.current
     var origin by remember { mutableStateOf(Offset.Zero) }
@@ -89,6 +92,26 @@ fun Modifier.glass_chrome(
                 )
                 drawContext.canvas.restore()
             }
+        }
+}
+
+@Composable
+fun Modifier.glass_bar(colors: AsterSemanticColors): Modifier {
+    if (!colors.is_glass) return this.background(colors.bg_primary)
+    if (!colors.is_translucent) return this.background(colors.glass_surface(colors.bg_card))
+    val blur = remember_active_theme_blur() ?: return this.background(colors.glass_surface(colors.bg_card))
+    val view = LocalView.current
+    var origin by remember { mutableStateOf(Offset.Zero) }
+    val veil = colors.bg_primary
+    val tint = colors.glass_surface(colors.bg_card)
+    return this
+        .onGloballyPositioned { origin = it.positionInWindow() }
+        .clipToBounds()
+        .drawBehind {
+            val window = Size(view.rootView.width.toFloat(), view.rootView.height.toFloat())
+            draw_theme_window_slice(blur, window, origin)
+            drawRect(color = veil.copy(alpha = theme_veil_alpha))
+            drawRect(color = tint.copy(alpha = tint.alpha * glass_bar_tint_strength))
         }
 }
 

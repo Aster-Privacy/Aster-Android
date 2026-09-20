@@ -133,6 +133,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.runtime.mutableIntStateOf
+import compose.icons.tablericons.AlertCircle
+import compose.icons.tablericons.Lock
 import compose.icons.tablericons.Crop
 import compose.icons.tablericons.Photo
 import compose.icons.tablericons.PhotoOff
@@ -141,6 +143,7 @@ import compose.icons.tablericons.Trash
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.astermail.android.ui.theme.CustomThemeImageError
+import org.astermail.android.ui.theme.PickedThemeImage
 import org.astermail.android.ui.theme.CustomThemeImageException
 import org.astermail.android.ui.theme.CustomThemeImageMeta
 import org.astermail.android.ui.theme.custom_theme_background
@@ -163,6 +166,8 @@ private data class LibraryPalette(
     val dash_line: Color,
     val muted_text: Color,
     val faint_text: Color,
+    val ink: Color,
+    val accent: Color,
 )
 
 private fun mix(from: Color, to: Color, amount: Float): Color = Color(
@@ -186,8 +191,10 @@ private fun library_palette_for(
         hairline = lift(0.17f),
         control_bg = lift(0.17f),
         dash_line = lift(0.32f),
-        muted_text = lift(0.68f),
-        faint_text = lift(0.56f),
+        muted_text = mix(lift(0.82f), accent, 0.10f),
+        faint_text = mix(lift(0.68f), accent, 0.08f),
+        ink = mix(Color.White, accent, 0.16f),
+        accent = accent,
     )
 }
 
@@ -407,7 +414,7 @@ fun image_theme_library(
                 ) {
                     Text(
                         text = stringResource(R.string.image_theme_applied),
-                        color = Color.White,
+                        color = local_library_palette.current.ink,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier
@@ -425,7 +432,7 @@ fun image_theme_library(
 
 @Composable
 private fun library_top_bar(reset_enabled: Boolean, on_back: () -> Unit, on_reset: () -> Unit) {
-    val reset_tint by animateColorAsState(if (reset_enabled) Color.White else disabled_icon, tween(200), label = "reset_tint")
+    val reset_tint by animateColorAsState(if (reset_enabled) local_library_palette.current.accent else disabled_icon, tween(200), label = "reset_tint")
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -445,13 +452,13 @@ private fun library_top_bar(reset_enabled: Boolean, on_back: () -> Unit, on_rese
             Icon(
                 imageVector = TablerIcons.ArrowLeft,
                 contentDescription = stringResource(R.string.close),
-                tint = Color.White,
+                tint = local_library_palette.current.ink,
                 modifier = Modifier.size(24.dp),
             )
         }
         Text(
             text = stringResource(R.string.image_themes),
-            color = Color.White,
+            color = local_library_palette.current.ink,
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
@@ -505,7 +512,7 @@ private fun no_photo_row(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = stringResource(R.string.image_theme_no_photo),
-                color = Color.White,
+                color = local_library_palette.current.ink,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -555,7 +562,7 @@ private fun colors_section(
         ) {
             Text(
                 text = stringResource(R.string.image_theme_colors),
-                color = Color.White,
+                color = local_library_palette.current.ink,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.weight(1f),
@@ -625,13 +632,18 @@ private fun your_photo_section(
         importing = true
         error = null
         scope.launch {
-            val result = custom_theme_image.import_source(context, uri)
+            val result = custom_theme_image.import_picked(context, uri)
             importing = false
             result
-                .onSuccess { bitmap ->
-                    editor_crop = null
-                    editor_new_source = true
-                    editor_source = bitmap
+                .onSuccess { picked ->
+                    when (picked) {
+                        is PickedThemeImage.Animated -> on_pick(picked.meta)
+                        is PickedThemeImage.Still -> {
+                            editor_crop = null
+                            editor_new_source = true
+                            editor_source = picked.bitmap
+                        }
+                    }
                 }
                 .onFailure { failure ->
                     error = (failure as? CustomThemeImageException)?.reason ?: CustomThemeImageError.unreadable
@@ -690,7 +702,7 @@ private fun your_photo_section(
     ) {
         Text(
             text = stringResource(R.string.image_theme_category_yours),
-            color = Color.White,
+            color = local_library_palette.current.ink,
             fontSize = 17.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(horizontal = 20.dp),
@@ -699,6 +711,7 @@ private fun your_photo_section(
         val message = stringResource(
             when (error) {
                 CustomThemeImageError.too_large -> R.string.image_theme_photo_too_large
+                CustomThemeImageError.animation_too_large -> R.string.image_theme_animation_too_large
                 CustomThemeImageError.unsupported -> R.string.image_theme_photo_unsupported
                 CustomThemeImageError.unreadable -> R.string.image_theme_photo_unreadable
                 null -> R.string.image_theme_photo_private
@@ -728,55 +741,27 @@ private fun your_photo_section(
                     accent = accent,
                     on_accent = on_accent,
                     on_click = { on_pick(current) },
-                    max_height = screen_height * 0.52f,
+                    max_height = screen_height * 0.46f,
+                )
+                Spacer(Modifier.height(16.dp))
+                photo_action_group(
+                    busy = importing || committing,
+                    accent = accent,
+                    allow_adjust = !current.animated,
+                    on_adjust = adjust,
+                    on_replace = choose,
+                    on_remove = {
+                        if (!importing && !committing) {
+                            error = null
+                            scope.launch {
+                                withContext(Dispatchers.IO) { custom_theme_image.delete(context) }
+                                on_removed()
+                            }
+                        }
+                    },
                 )
                 Spacer(Modifier.height(14.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    photo_action_button(
-                        icon = TablerIcons.Crop,
-                        label = stringResource(R.string.image_theme_adjust_photo),
-                        busy = importing || committing,
-                        accent = accent,
-                        on_click = adjust,
-                        modifier = Modifier.weight(1f).testTag("image_theme_custom_adjust"),
-                    )
-                    photo_action_button(
-                        icon = TablerIcons.Photo,
-                        label = stringResource(R.string.image_theme_replace_photo),
-                        busy = false,
-                        accent = accent,
-                        on_click = choose,
-                        modifier = Modifier.weight(1f).testTag("image_theme_custom_replace"),
-                    )
-                    photo_action_button(
-                        icon = TablerIcons.Trash,
-                        label = stringResource(R.string.image_theme_remove_photo),
-                        busy = false,
-                        accent = accent,
-                        destructive = true,
-                        on_click = {
-                            if (!importing && !committing) {
-                                error = null
-                                scope.launch {
-                                    withContext(Dispatchers.IO) { custom_theme_image.delete(context) }
-                                    on_removed()
-                                }
-                            }
-                        },
-                        modifier = Modifier.weight(1f).testTag("image_theme_custom_remove"),
-                    )
-                }
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    text = message,
-                    color = message_color,
-                    fontSize = 13.sp,
-                    lineHeight = 18.sp,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-                )
+                photo_privacy_note(message = message, message_color = message_color, is_error = error != null)
             }
         }
     }
@@ -825,7 +810,7 @@ private fun choose_photo_row(
                 Icon(
                     imageVector = TablerIcons.Plus,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = local_library_palette.current.ink,
                     modifier = Modifier.size(20.dp),
                 )
             }
@@ -833,7 +818,7 @@ private fun choose_photo_row(
         Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
             Text(
                 text = stringResource(R.string.image_theme_choose_photo),
-                color = Color.White,
+                color = local_library_palette.current.ink,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
             )
@@ -849,6 +834,89 @@ private fun choose_photo_row(
 }
 
 @Composable
+private fun photo_action_group(
+    busy: Boolean,
+    accent: Color,
+    allow_adjust: Boolean,
+    on_adjust: () -> Unit,
+    on_replace: () -> Unit,
+    on_remove: () -> Unit,
+) {
+    val palette = local_library_palette.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .clip(SquircleShape(22.dp))
+            .background(palette.raised_bg),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (allow_adjust) {
+            photo_action_button(
+                icon = TablerIcons.Crop,
+                label = stringResource(R.string.image_theme_adjust_photo),
+                busy = busy,
+                accent = accent,
+                on_click = on_adjust,
+                modifier = Modifier.weight(1f).testTag("image_theme_custom_adjust"),
+            )
+            photo_action_divider(palette.hairline)
+        }
+        photo_action_button(
+            icon = TablerIcons.Photo,
+            label = stringResource(R.string.image_theme_replace_photo),
+            busy = false,
+            accent = accent,
+            on_click = on_replace,
+            modifier = Modifier.weight(1f).testTag("image_theme_custom_replace"),
+        )
+        photo_action_divider(palette.hairline)
+        photo_action_button(
+            icon = TablerIcons.Trash,
+            label = stringResource(R.string.image_theme_remove_photo),
+            busy = false,
+            accent = accent,
+            destructive = true,
+            on_click = on_remove,
+            modifier = Modifier.weight(1f).testTag("image_theme_custom_remove"),
+        )
+    }
+}
+
+@Composable
+private fun photo_action_divider(color: Color) {
+    Box(
+        modifier = Modifier
+            .width(1.dp)
+            .height(30.dp)
+            .background(color),
+    )
+}
+
+@Composable
+private fun photo_privacy_note(message: String, message_color: Color, is_error: Boolean) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Icon(
+            imageVector = if (is_error) TablerIcons.AlertCircle else TablerIcons.Lock,
+            contentDescription = null,
+            tint = message_color,
+            modifier = Modifier.size(15.dp).padding(top = 1.dp),
+        )
+        Text(
+            text = message,
+            color = message_color,
+            fontSize = 12.sp,
+            lineHeight = 17.sp,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
 private fun photo_action_button(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
@@ -858,12 +926,10 @@ private fun photo_action_button(
     modifier: Modifier = Modifier,
     destructive: Boolean = false,
 ) {
-    val tint = if (destructive) error_text else Color.White
+    val tint = if (destructive) error_text else local_library_palette.current.ink
     Column(
         modifier = modifier
-            .height(74.dp)
-            .clip(SquircleShape(20.dp))
-            .background(local_library_palette.current.raised_bg)
+            .height(72.dp)
             .clickable(enabled = !busy, onClick = on_click)
             .padding(horizontal = 6.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -910,7 +976,7 @@ private fun category_shelf(
         ) {
             Text(
                 text = stringResource(category.label_res),
-                color = Color.White,
+                color = local_library_palette.current.ink,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.weight(1f),
@@ -939,6 +1005,8 @@ private fun category_shelf(
     }
 }
 
+private val preview_side_inset = 20.dp
+
 @Composable
 private fun custom_photo_preview(
     background: ThemeBackground,
@@ -951,13 +1019,16 @@ private fun custom_photo_preview(
     val progress by animateFloatAsState(if (selected) 1f else 0f, tween(200), label = "photo_select")
     val shape = SquircleShape(24.dp)
     val photo = remember_theme_bitmap(background)
-    val ratio = photo?.let { it.width.toFloat() / it.height.toFloat() } ?: (3f / 4f)
+    val ratio = (photo?.let { it.width.toFloat() / it.height.toFloat() } ?: (3f / 4f))
+        .coerceIn(0.4f, 2.2f)
+    val screen_width = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp.dp
+    val natural_height = (screen_width - preview_side_inset * 2) / ratio
+    val preview_height = if (natural_height > max_height) max_height else natural_height
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .heightIn(max = max_height)
-            .aspectRatio(ratio.coerceIn(0.4f, 2.2f))
+            .padding(horizontal = preview_side_inset)
+            .height(preview_height)
             .clip(shape)
             .background(background.tint)
             .clickable(onClick = on_click)
@@ -970,7 +1041,7 @@ private fun custom_photo_preview(
             modifier = Modifier
                 .fillMaxSize()
                 .border(
-                    if (progress > 0f) 3.dp else 1.dp,
+                    if (progress > 0f) 2.dp else 1.dp,
                     lerp(local_library_palette.current.hairline, accent, progress),
                     shape,
                 ),

@@ -21,7 +21,7 @@
     <string name="image_theme_remove_photo">사진 삭제</string>
     <string name="image_theme_photo_private">사진은 암호화되어 이 기기에만 저장됩니다.</string>
     <string name="image_theme_photo_too_large">사진이 너무 큽니다. 40MB 미만의 사진을 선택하세요.</string>
-    <string name="image_theme_photo_unsupported">지원되지 않는 파일 형식입니다. JPEG, PNG, WebP 또는 HEIC 사진을 선택하세요.</string>
+    <string name="image_theme_photo_unsupported">지원되지 않는 파일 형식입니다. JPEG, PNG, GIF, WebP 또는 HEIC 사진을 선택하세요.</string>
     <string name="image_theme_photo_unreadable">이 사진을 열 수 없습니다. 다른 사진을 선택하세요.</string>
     <string name="image_theme_category_calm">차분함</string>
     <string name="image_theme_credit_modified">사진: %1$s. 자르고 크기를 조정했습니다.</string>
@@ -48,4 +48,7 @@
     <string name="glass_mode">글래스</string>
     <string name="glass_mode_subtitle">사진이 표면 뒤로 비칩니다. 불투명하게 하려면 끄세요.</string>
     <string name="theme_transparency">투명도</string>
+    <string name="image_theme_animation">배경 애니메이션</string>
+    <string name="image_theme_animation_subtitle">애니메이션 배경을 재생합니다. 배터리 절약 모드이거나 기기에서 애니메이션을 꺼두었을 때 멈춥니다.</string>
+    <string name="image_theme_animation_too_large">애니메이션 이미지가 너무 큽니다. 12MB 미만의 이미지를 선택하세요.</string>
 </resources>

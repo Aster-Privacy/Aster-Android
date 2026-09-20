@@ -46,6 +46,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterSemanticColors
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -99,6 +103,20 @@ fun is_removing_swipe_action(action: String): Boolean = action in setOf(
     "archive", "trash", "delete", "spam", "move_to_inbox", "unarchive",
     "restore_trash", "unmark_spam", "delete_permanent",
 )
+
+fun swipe_tone(color: Color, colors: AsterSemanticColors): Color {
+    val target = if (colors.is_dark) 0.30f else 0.46f
+    val level = color.luminance()
+    val toned = if (level > target) {
+        lerp(color, Color.Black, (((level - target) / (1f - target)) * 0.7f).coerceIn(0f, 0.62f))
+    } else {
+        lerp(color, Color.White, (((target - level) / target) * 0.5f).coerceIn(0f, 0.34f))
+    }
+    return toned.copy(alpha = 1f)
+}
+
+fun swipe_ink(surface: Color): Color =
+    if (surface.luminance() > 0.5f) Color(0xFF14181F) else Color.White
 
 @Composable
 fun swipe_action_row(
@@ -213,12 +231,14 @@ fun swipe_action_row(
         val travelled = offset_x.value
         if (travelled != 0f) {
             val towards_start = travelled > 0f
+            val surface = swipe_tone(if (towards_start) start_color else end_color, AsterMaterial.colors)
+            val ink = swipe_ink(surface)
             Box(
                 modifier = Modifier
                     .matchParentSize()
                     .padding(background_padding)
                     .let { if (background_shape != null) it.clip(background_shape) else it }
-                    .background(if (towards_start) start_color else end_color)
+                    .background(surface)
                     .padding(horizontal = AsterSpacing.xl),
                 contentAlignment = if (towards_start) Alignment.CenterStart else Alignment.CenterEnd,
             ) {
@@ -226,13 +246,13 @@ fun swipe_action_row(
                     Icon(
                         imageVector = if (towards_start) start_icon else end_icon,
                         contentDescription = if (towards_start) start_label else end_label,
-                        tint = Color.White,
+                        tint = ink,
                         modifier = Modifier.size(22.dp),
                     )
                     Spacer(Modifier.width(AsterSpacing.sm))
                     Text(
                         text = if (towards_start) start_label else end_label,
-                        color = Color.White,
+                        color = ink,
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
                     )

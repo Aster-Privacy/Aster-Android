@@ -32,6 +32,10 @@
         <item quantity="one">Itens no spam são excluídos automaticamente após %1$d dia.</item>
         <item quantity="other">Itens no spam são excluídos automaticamente após %1$d dias.</item>
     </plurals>
+    <plurals name="trash_auto_delete_notice">
+        <item quantity="one">Itens na lixeira são excluídos automaticamente após %1$d dia.</item>
+        <item quantity="other">Itens na lixeira são excluídos automaticamente após %1$d dias.</item>
+    </plurals>
     <plurals name="pending_deletion_body_days">
         <item quantity="one">Sua conta será excluída em %1$d dia. Cancele a exclusão para manter sua conta e restaurar o acesso ao seu e-mail e assinatura.</item>
         <item quantity="other">Sua conta será excluída em %1$d dias. Cancele a exclusão para manter sua conta e restaurar o acesso ao seu e-mail e assinatura.</item>

@@ -21,7 +21,7 @@
     <string name="image_theme_remove_photo">Foto verwijderen</string>
     <string name="image_theme_photo_private">Je foto is versleuteld en blijft op dit apparaat.</string>
     <string name="image_theme_photo_too_large">Deze foto is te groot. Kies er een kleiner dan 40 MB.</string>
-    <string name="image_theme_photo_unsupported">Dit bestandstype wordt niet ondersteund. Kies een JPEG-, PNG-, WebP- of HEIC-foto.</string>
+    <string name="image_theme_photo_unsupported">Dit bestandstype wordt niet ondersteund. Kies een JPEG-, PNG-, GIF-, WebP- of HEIC-foto.</string>
     <string name="image_theme_photo_unreadable">Deze foto kan niet worden geopend. Probeer een andere.</string>
     <string name="image_theme_category_calm">Rustig</string>
     <string name="image_theme_credit_modified">Foto: %1$s. Bijgesneden en geschaald.</string>
@@ -48,4 +48,7 @@
     <string name="glass_mode">Glas</string>
     <string name="glass_mode_subtitle">Je foto schijnt door de oppervlakken heen. Zet dit uit voor dichte oppervlakken.</string>
     <string name="theme_transparency">Transparantie</string>
+    <string name="image_theme_animation">Achtergrond animeren</string>
+    <string name="image_theme_animation_subtitle">Speelt je geanimeerde achtergrond af. Hij stopt in de batterijbesparing en wanneer animaties op je apparaat uitstaan.</string>
+    <string name="image_theme_animation_too_large">Deze geanimeerde afbeelding is te groot. Kies er een kleiner dan 12 MB.</string>
 </resources>

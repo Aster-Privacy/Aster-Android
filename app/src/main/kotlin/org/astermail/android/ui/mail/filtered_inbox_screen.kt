@@ -248,7 +248,7 @@ fun FilteredInboxScreen(
                                     on_toggle_star = {
                                         val star_target = !thread.is_starred
                                         val star_ids = filtered_emails
-                                            .filter { it.thread_id == thread.thread_id || it.id == thread.thread_id }
+                                            .filter { thread_row_covers(it, thread.thread_id, grouping_enabled) }
                                             .map { it.id }
                                         mail_vm.toggle_thread_star(
                                             star_ids.ifEmpty { listOf(thread.newest.id) },

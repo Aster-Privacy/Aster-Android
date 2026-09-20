@@ -612,6 +612,10 @@
     <string name="discard">Discard</string>
     <string name="toggle_cc_bcc">Toggle cc/bcc</string>
     <string name="add_recipient">Add recipient</string>
+    <string name="add_another_recipient">Add another</string>
+    <string name="compose_attachments">Attachments</string>
+    <string name="draft_discarded">Draft discarded</string>
+    <string name="draft_saved">Draft saved</string>
     <string name="recipients_required">Add at least one recipient</string>
     <string name="e2e_recipient_description">Messages to this recipient are encrypted with their identity key. Only they can read them.</string>
     <string name="transit_recipient_description">Messages to this recipient are encrypted in transit using TLS. The recipient\'s server may be able to read them.</string>
@@ -2794,6 +2798,8 @@
     <!-- Alias detail panel -->
     <string name="copied_value">Copied %1$s</string>
     <string name="alias_expand_settings">Show alias settings</string>
+    <string name="alias_open_settings">Alias settings</string>
+    <string name="alias_detail_unavailable">This alias is no longer available.</string>
     <string name="alias_collapse_settings">Hide alias settings</string>
     <string name="alias_panel_details_title">Details</string>
     <string name="alias_panel_display_name">Display name</string>
@@ -3491,4 +3497,7 @@
     <string name="connection_relay_connected">Connected</string>
     <string name="connection_relay_restored">Back to normal</string>
     <string name="connection_relay_disconnected">Disconnected</string>
+    <string name="search_groups">Search groups</string>
+    <string name="search_trash">Search trash</string>
+    <string name="no_groups_match">No groups match \"%1$s\"</string>
 </resources>

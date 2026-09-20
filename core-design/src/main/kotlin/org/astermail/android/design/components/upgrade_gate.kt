@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.sp
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.acrylic
 
 @Composable
 fun UpgradeGate(
@@ -66,7 +67,7 @@ fun UpgradeGate(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(colors.bg_card, SquircleShape(AsterRadius.xl))
+            .acrylic(colors, SquircleShape(AsterRadius.xl))
             .padding(AsterSpacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

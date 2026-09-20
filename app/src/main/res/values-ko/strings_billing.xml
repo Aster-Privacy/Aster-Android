@@ -73,4 +73,7 @@
     <string name="billing_free_upgrade_price_note">요금제는 월 %1$s부터 시작합니다.</string>
     <string name="billing_cancel_plan">플랜 취소</string>
     <string name="billing_save_amount">%1$s 절약</string>
+    <string name="billing_plan_show_features">기능 보기</string>
+    <string name="billing_plan_hide_features">기능 숨기기</string>
+    <string name="billing_billed_yearly_total">연 %1$s 청구</string>
 </resources>

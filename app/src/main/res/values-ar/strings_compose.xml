@@ -6,6 +6,7 @@
     <string name="compose_quote_forwarded_message">رسالة مُعاد توجيهها</string>
     <string name="compose_quote_original_message">الرسالة الأصلية</string>
     <string name="compose_quote_show_label">إظهار %1$s</string>
+    <string name="compose_quote_hide_label">إخفاء %1$s</string>
     <string name="compose_quote_header_from">من:</string>
     <string name="compose_quote_header_date">التاريخ:</string>
     <string name="compose_quote_header_subject">الموضوع:</string>

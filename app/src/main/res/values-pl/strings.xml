@@ -320,6 +320,10 @@
     <string name="discard">Odrzuć</string>
     <string name="toggle_cc_bcc">Pokaż DW/UDW</string>
     <string name="add_recipient">Dodaj odbiorcę</string>
+    <string name="add_another_recipient">Dodaj kolejnego</string>
+    <string name="compose_attachments">Załączniki</string>
+    <string name="draft_discarded">Szkic odrzucony</string>
+    <string name="draft_saved">Szkic zapisany</string>
     <string name="e2e_recipient_description">Wiadomości do tego odbiorcy są szyfrowane jego kluczem tożsamości. Tylko on może je przeczytać.</string>
     <string name="transit_recipient_description">Wiadomości do tego odbiorcy są szyfrowane w tranzycie za pomocą TLS. Serwer odbiorcy może je przeczytać.</string>
     <string name="format">Formatowanie</string>
@@ -2569,6 +2573,8 @@
     <string name="alias_delivery_title">Dostarczanie</string>
     <string name="copied_value">Skopiowano %1$s</string>
     <string name="alias_expand_settings">Pokaż ustawienia aliasu</string>
+    <string name="alias_open_settings">Ustawienia aliasu</string>
+    <string name="alias_detail_unavailable">Ten alias nie jest już dostępny.</string>
     <string name="alias_collapse_settings">Ukryj ustawienia aliasu</string>
     <string name="alias_panel_details_title">Szczegóły</string>
     <string name="alias_panel_display_name">Nazwa wyświetlana</string>
@@ -3486,4 +3492,7 @@
     <string name="connection_relay_connected">Połączono</string>
     <string name="connection_relay_restored">Wszystko wróciło do normy</string>
     <string name="connection_relay_disconnected">Rozłączono</string>
+    <string name="search_groups">Szukaj grup</string>
+    <string name="search_trash">Szukaj w koszu</string>
+    <string name="no_groups_match">Brak grup pasujących do „%1$s”</string>
 </resources>

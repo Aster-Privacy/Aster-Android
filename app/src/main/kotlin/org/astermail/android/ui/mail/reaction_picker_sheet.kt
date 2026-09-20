@@ -46,6 +46,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
+import org.astermail.android.design.local_acrylic
+import org.astermail.android.design.acrylic
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -59,6 +61,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.luminance
@@ -172,12 +175,16 @@ fun reaction_picker_sheet(
         }
     }
 
+    val sheet_shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+    val sheet_acrylic = colors.is_glass && local_acrylic.current != null
     ModalBottomSheet(
         onDismissRequest = on_close,
         sheetState = sheet_state,
-        containerColor = colors.bg_card,
+        shape = sheet_shape,
+        containerColor = if (sheet_acrylic) Color.Transparent else colors.bg_card,
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
+        modifier = if (sheet_acrylic) Modifier.acrylic(colors, sheet_shape) else Modifier,
     ) {
         Column(
             modifier = Modifier
@@ -276,8 +283,7 @@ private fun emoji_search_field(query: String, on_query: (String) -> Unit) {
             .fillMaxWidth()
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm)
             .height(44.dp)
-            .clip(CircleShape)
-            .background(reaction_chip_palette(is_dark = colors.is_dark).other_fill)
+            .acrylic(colors, CircleShape, search_field_bg_color(colors))
             .padding(start = 14.dp, end = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),

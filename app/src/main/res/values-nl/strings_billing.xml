@@ -73,4 +73,7 @@
     <string name="billing_free_upgrade_price_note">Abonnementen beginnen bij %1$s per maand.</string>
     <string name="billing_cancel_plan">Abonnement annuleren</string>
     <string name="billing_save_amount">Bespaar %1$s</string>
+    <string name="billing_plan_show_features">Functies tonen</string>
+    <string name="billing_plan_hide_features">Functies verbergen</string>
+    <string name="billing_billed_yearly_total">%1$s jaarlijks gefactureerd</string>
 </resources>

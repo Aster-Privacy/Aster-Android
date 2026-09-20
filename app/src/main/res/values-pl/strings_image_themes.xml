@@ -21,7 +21,7 @@
     <string name="image_theme_remove_photo">Usuń zdjęcie</string>
     <string name="image_theme_photo_private">Twoje zdjęcie jest zaszyfrowane i pozostaje na tym urządzeniu.</string>
     <string name="image_theme_photo_too_large">To zdjęcie jest za duże. Wybierz mniejsze niż 40 MB.</string>
-    <string name="image_theme_photo_unsupported">Ten typ pliku nie jest obsługiwany. Wybierz zdjęcie JPEG, PNG, WebP lub HEIC.</string>
+    <string name="image_theme_photo_unsupported">Ten typ pliku nie jest obsługiwany. Wybierz zdjęcie JPEG, PNG, GIF, WebP lub HEIC.</string>
     <string name="image_theme_photo_unreadable">Nie można otworzyć tego zdjęcia. Wybierz inne.</string>
     <string name="image_theme_category_calm">Spokój</string>
     <string name="image_theme_credit_modified">Zdjęcie: %1$s. Przycięte i przeskalowane.</string>
@@ -48,4 +48,7 @@
     <string name="glass_mode">Szkło</string>
     <string name="glass_mode_subtitle">Twoje zdjęcie prześwituje przez powierzchnie. Wyłącz tę opcję, aby były pełne.</string>
     <string name="theme_transparency">Przezroczystość</string>
+    <string name="image_theme_animation">Animuj tło</string>
+    <string name="image_theme_animation_subtitle">Odtwarza animowane tło. Zatrzymuje się w trybie oszczędzania baterii i gdy animacje na urządzeniu są wyłączone.</string>
+    <string name="image_theme_animation_too_large">Ten animowany obraz jest za duży. Wybierz mniejszy niż 12 MB.</string>
 </resources>

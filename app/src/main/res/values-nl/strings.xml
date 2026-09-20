@@ -320,6 +320,10 @@
     <string name="discard">Verwijderen</string>
     <string name="toggle_cc_bcc">Cc/bcc in-/uitschakelen</string>
     <string name="add_recipient">Ontvanger toevoegen</string>
+    <string name="add_another_recipient">Nog een toevoegen</string>
+    <string name="compose_attachments">Bijlagen</string>
+    <string name="draft_discarded">Concept verwijderd</string>
+    <string name="draft_saved">Concept opgeslagen</string>
     <string name="e2e_recipient_description">Berichten aan deze ontvanger worden versleuteld met hun identiteitssleutel. Alleen zij kunnen ze lezen.</string>
     <string name="transit_recipient_description">Berichten aan deze ontvanger worden versleuteld tijdens verzending via TLS. De server van de ontvanger kan ze mogelijk lezen.</string>
     <string name="format">Opmaak</string>
@@ -2553,6 +2557,8 @@
     <string name="alias_delivery_title">Bezorging</string>
     <string name="copied_value">%1$s gekopieerd</string>
     <string name="alias_expand_settings">Aliasinstellingen tonen</string>
+    <string name="alias_open_settings">Aliasinstellingen</string>
+    <string name="alias_detail_unavailable">Dit alias is niet meer beschikbaar.</string>
     <string name="alias_collapse_settings">Aliasinstellingen verbergen</string>
     <string name="alias_panel_details_title">Details</string>
     <string name="alias_panel_display_name">Weergavenaam</string>
@@ -3446,4 +3452,7 @@
     <string name="connection_relay_connected">Verbonden</string>
     <string name="connection_relay_restored">Weer normaal</string>
     <string name="connection_relay_disconnected">Verbinding verbroken</string>
+    <string name="search_groups">Groepen zoeken</string>
+    <string name="search_trash">Prullenbak doorzoeken</string>
+    <string name="no_groups_match">Geen groepen komen overeen met \"%1$s\"</string>
 </resources>

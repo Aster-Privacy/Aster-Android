@@ -25,18 +25,22 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.ImageDecoder
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.RectF
+import android.graphics.drawable.AnimatedImageDrawable
 import android.media.ExifInterface
 import android.net.Uri
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.Color
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.nio.ByteBuffer
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -62,11 +66,18 @@ data class CustomThemeImageMeta(
     val version: Long,
     val tint: Color,
     val accent: ColorThemeId,
+    val animated: Boolean = false,
 )
 
-enum class CustomThemeImageError { too_large, unsupported, unreadable }
+enum class CustomThemeImageError { too_large, unsupported, unreadable, animation_too_large }
 
 class CustomThemeImageException(val reason: CustomThemeImageError) : Exception(reason.name)
+
+sealed interface PickedThemeImage {
+    data class Still(val bitmap: Bitmap) : PickedThemeImage
+
+    data class Animated(val meta: CustomThemeImageMeta) : PickedThemeImage
+}
 
 internal fun theme_image_sample_size(width: Int, height: Int, target_w: Int, target_h: Int, max_pixels: Long): Int {
     if (width <= 0 || height <= 0 || target_w <= 0 || target_h <= 0) return 1
@@ -83,6 +94,69 @@ internal fun theme_image_cap_factor(width: Int, height: Int, target_w: Int, targ
     return min(min(1f, cover * 2f), budget).coerceAtLeast(0f)
 }
 
+internal const val theme_animation_max_bytes = 12 * 1024 * 1024
+internal const val theme_animation_max_source_pixels = 8_000_000L
+internal const val theme_animation_max_frame_pixels = 3_000_000L
+internal const val theme_animation_target_width = 1080
+internal const val theme_animation_target_height = 2400
+
+internal enum class ThemeAnimationContainer { none, gif, animated_webp }
+
+internal fun theme_animation_supported(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
+
+private fun matches_ascii(bytes: ByteArray, offset: Int, marker: String): Boolean {
+    if (offset < 0 || offset + marker.length > bytes.size) return false
+    for (index in marker.indices) {
+        if (bytes[offset + index] != marker[index].code.toByte()) return false
+    }
+    return true
+}
+
+internal fun theme_animation_container(bytes: ByteArray): ThemeAnimationContainer {
+    if (matches_ascii(bytes, 0, "GIF8")) return ThemeAnimationContainer.gif
+    if (!matches_ascii(bytes, 0, "RIFF") || !matches_ascii(bytes, 8, "WEBP")) return ThemeAnimationContainer.none
+    if (!matches_ascii(bytes, 12, "VP8X") || bytes.size < 21) return ThemeAnimationContainer.none
+    val animation_flag = (bytes[20].toInt() and 0x02) != 0
+    return if (animation_flag) ThemeAnimationContainer.animated_webp else ThemeAnimationContainer.none
+}
+
+private fun theme_animation_target(decoder: ImageDecoder, width: Int, height: Int) {
+    if (width <= 0 || height <= 0) throw CustomThemeImageException(CustomThemeImageError.unreadable)
+    if (width.toLong() * height > theme_animation_max_source_pixels) {
+        throw CustomThemeImageException(CustomThemeImageError.animation_too_large)
+    }
+    val factor = theme_image_cap_factor(
+        width,
+        height,
+        theme_animation_target_width,
+        theme_animation_target_height,
+        theme_animation_max_frame_pixels,
+    )
+    if (factor <= 0f || factor >= 1f) return
+    decoder.setTargetSize(
+        (width * factor).roundToInt().coerceAtLeast(1),
+        (height * factor).roundToInt().coerceAtLeast(1),
+    )
+}
+
+@RequiresApi(Build.VERSION_CODES.P)
+internal fun decode_theme_animation(bytes: ByteArray): AnimatedImageDrawable? {
+    val source = ImageDecoder.createSource(ByteBuffer.wrap(bytes))
+    val drawable = ImageDecoder.decodeDrawable(source) { decoder, info, _ ->
+        decoder.isMutableRequired = false
+        theme_animation_target(decoder, info.size.width, info.size.height)
+    }
+    return drawable as? AnimatedImageDrawable
+}
+
+@RequiresApi(Build.VERSION_CODES.P)
+internal fun decode_theme_animation_frame(bytes: ByteArray): Bitmap =
+    ImageDecoder.decodeBitmap(ImageDecoder.createSource(ByteBuffer.wrap(bytes))) { decoder, info, _ ->
+        decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+        decoder.isMutableRequired = false
+        theme_animation_target(decoder, info.size.width, info.size.height)
+    }
+
 object custom_theme_image {
     private const val key_alias = "aster_theme_image_v1"
     private const val keystore = "AndroidKeyStore"
@@ -98,7 +172,7 @@ object custom_theme_image {
     private const val max_working_pixels = 8_000_000L
     private const val prefs_name = "theme_custom_image"
     private val allowed_mime = setOf(
-        "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "image/avif",
+        "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "image/avif", "image/gif",
     )
     private val accent_choices = listOf(
         ColorThemeId.purple, ColorThemeId.green, ColorThemeId.rose, ColorThemeId.orange,
@@ -126,6 +200,7 @@ object custom_theme_image {
                     version = version,
                     tint = Color(prefs.getInt("tint", 0xFF111111.toInt())),
                     accent = ColorThemeId.from_key(prefs.getString("accent", null) ?: ColorThemeId.aster_blue.name),
+                    animated = prefs.getBoolean("animated", false) && animation_file(app).isFile,
                 )
             } else {
                 if (version > 0L || stored.exists() || source_file(app).exists()) runCatching { discard(app) }
@@ -141,16 +216,73 @@ object custom_theme_image {
     private fun source_file(context: Context): File =
         File(File(context.noBackupFilesDir, "theme"), "custom_source.bin")
 
+    private fun animation_file(context: Context): File =
+        File(File(context.noBackupFilesDir, "theme"), "custom_animation.bin")
+
     val frame_aspect: Float get() = target_width.toFloat() / target_height
 
-    suspend fun import_source(context: Context, uri: Uri): Result<Bitmap> = withContext(Dispatchers.IO) {
+    suspend fun import_picked(context: Context, uri: Uri): Result<PickedThemeImage> = withContext(Dispatchers.IO) {
         runCatching {
             val app = context.applicationContext
             val bytes = read_capped(app, uri)
-            cap_source(decode_validated(bytes))
+            val animated = import_animation(app, bytes)
+            if (animated != null) {
+                PickedThemeImage.Animated(animated)
+            } else {
+                PickedThemeImage.Still(cap_source(decode_validated(bytes)))
+            }
         }.recoverCatching { error ->
             throw if (error is CustomThemeImageException) error else CustomThemeImageException(CustomThemeImageError.unreadable)
         }
+    }
+
+    internal fun load_animation(context: Context): ByteArray? {
+        val app = context.applicationContext
+        val file = animation_file(app).takeIf { it.isFile } ?: return null
+        return runCatching { decrypt(file.readBytes()) }.getOrNull()
+    }
+
+    private fun import_animation(app: Context, bytes: ByteArray): CustomThemeImageMeta? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return null
+        val container = theme_animation_container(bytes)
+        if (container == ThemeAnimationContainer.none) return null
+        if (bytes.size > theme_animation_max_bytes) {
+            throw CustomThemeImageException(CustomThemeImageError.animation_too_large)
+        }
+        val drawable = try {
+            decode_theme_animation(bytes)
+        } catch (error: CustomThemeImageException) {
+            throw error
+        } catch (_: Throwable) {
+            null
+        } ?: return null
+        drawable.stop()
+        val frame = runCatching { decode_theme_animation_frame(bytes) }.getOrNull() ?: return null
+        val (tint, accent) = analyze(frame)
+        val encoded = encode(frame)
+        frame.recycle()
+        write_encrypted(app, bytes.copyOf(), animation_file(app))
+        write_encrypted(app, encoded, image_file(app))
+        source_file(app).delete()
+        evict_custom_theme_bitmaps()
+        val next = CustomThemeImageMeta(
+            version = max(System.currentTimeMillis(), (meta_state.value?.version ?: 0L) + 1L),
+            tint = tint,
+            accent = accent,
+            animated = true,
+        )
+        app.getSharedPreferences(prefs_name, Context.MODE_PRIVATE).edit()
+            .putLong("version", next.version)
+            .putInt("tint", argb_of(tint))
+            .putString("accent", accent.name)
+            .putBoolean("animated", true)
+            .remove("crop_left")
+            .remove("crop_top")
+            .remove("crop_right")
+            .remove("crop_bottom")
+            .commit()
+        meta_state.value = next
+        return next
     }
 
     suspend fun load_source(context: Context): Bitmap? = withContext(Dispatchers.IO) {
@@ -200,6 +332,7 @@ object custom_theme_image {
             val encoded = encode(framed)
             framed.recycle()
             write_encrypted(app, encoded, image_file(app))
+            animation_file(app).delete()
             evict_custom_theme_bitmaps()
             val next = CustomThemeImageMeta(
                 version = max(System.currentTimeMillis(), (meta_state.value?.version ?: 0L) + 1L),
@@ -210,6 +343,7 @@ object custom_theme_image {
                 .putLong("version", next.version)
                 .putInt("tint", argb_of(tint))
                 .putString("accent", accent.name)
+                .putBoolean("animated", false)
                 .putFloat("crop_left", safe.left)
                 .putFloat("crop_top", safe.top)
                 .putFloat("crop_right", safe.right)
@@ -230,6 +364,7 @@ object custom_theme_image {
     private fun discard(app: Context) {
         image_file(app).delete()
         source_file(app).delete()
+        animation_file(app).delete()
         File(app.noBackupFilesDir, "theme").listFiles()?.forEach { it.delete() }
         app.getSharedPreferences(prefs_name, Context.MODE_PRIVATE).edit().clear().commit()
         runCatching { KeyStore.getInstance(keystore).apply { load(null) }.deleteEntry(key_alias) }

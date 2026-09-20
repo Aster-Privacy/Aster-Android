@@ -28,6 +28,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -58,11 +59,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import compose.icons.TablerIcons
 import compose.icons.tablericons.ChevronDown
+import compose.icons.tablericons.Copy
+import compose.icons.tablericons.Pencil
 import compose.icons.tablericons.Send
+import compose.icons.tablericons.Settings
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
+import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu
 import org.astermail.android.api.settings.AliasRun
@@ -84,9 +90,79 @@ internal fun alias_detail_panel(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = AsterSpacing.md)
             .testTag("alias_detail_panel"),
-        verticalArrangement = Arrangement.spacedBy(AsterSpacing.lg),
+        verticalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+    ) {
+        panel_card { alias_details_section(alias, vm, on_view_sent, avatars_locked) }
+        panel_card { alias_delivery_section(alias, vm, detail, rule_delivery, rule_label) }
+        if (detail.loading) {
+            panel_card {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = colors.accent_blue,
+                    )
+                }
+            }
+        } else if (detail.load_failed) {
+            panel_card {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    panel_hint_text(stringResource(R.string.failed_to_load))
+                    Text(
+                        text = stringResource(R.string.retry),
+                        color = colors.accent_blue,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.clickable { vm.load_alias_detail(alias.id, force = true) },
+                    )
+                }
+            }
+        } else {
+            if (detail.stats_locked || detail.stats != null) {
+                panel_card { alias_stats_section(detail) }
+            }
+            panel_card { alias_sender_pinning_section(alias.id, detail, vm) }
+            panel_card { alias_rules_section(alias.id, detail, vm) }
+            panel_card { alias_blocked_log_section(detail) }
+            panel_card { alias_contacts_section(alias.id, detail, vm) }
+        }
+    }
+}
+
+@Composable
+private fun panel_card(content: @Composable ColumnScope.() -> Unit) {
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AsterSpacing.lg),
+            content = content,
+        )
+    }
+}
+
+@Composable
+internal fun alias_compact_panel(
+    delivery_summary: String,
+    on_compose_from: (() -> Unit)?,
+    on_copy: () -> Unit,
+    on_open_settings: (() -> Unit)?,
+) {
+    val colors = AsterMaterial.colors
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = AsterSpacing.md)
+            .testTag("alias_compact_panel"),
+        verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
     ) {
         Spacer(
             Modifier
@@ -94,41 +170,71 @@ internal fun alias_detail_panel(
                 .height(1.dp)
                 .background(colors.border_secondary),
         )
-        alias_details_section(alias, vm, on_view_sent, avatars_locked)
-        alias_delivery_section(alias, vm, detail, rule_delivery, rule_label)
-        if (detail.loading) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    strokeWidth = 2.dp,
-                    color = colors.accent_blue,
+        if (delivery_summary.isNotBlank()) panel_hint_text(delivery_summary)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+        ) {
+            if (on_compose_from != null) {
+                alias_quick_action(
+                    icon = TablerIcons.Pencil,
+                    label = stringResource(R.string.new_message),
+                    modifier = Modifier.weight(1f),
+                    test_tag = "alias_quick_compose",
+                    on_click = on_compose_from,
                 )
             }
-        } else if (detail.load_failed) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                panel_hint_text(stringResource(R.string.failed_to_load))
-                Text(
-                    text = stringResource(R.string.retry),
-                    color = colors.accent_blue,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable { vm.load_alias_detail(alias.id, force = true) },
+            alias_quick_action(
+                icon = TablerIcons.Copy,
+                label = stringResource(R.string.copy_address),
+                modifier = Modifier.weight(1f),
+                test_tag = "alias_quick_copy",
+                on_click = on_copy,
+            )
+            if (on_open_settings != null) {
+                alias_quick_action(
+                    icon = TablerIcons.Settings,
+                    label = stringResource(R.string.alias_open_settings),
+                    modifier = Modifier.weight(1f),
+                    test_tag = "alias_quick_settings",
+                    on_click = on_open_settings,
                 )
             }
-        } else {
-            alias_stats_section(detail)
-            alias_sender_pinning_section(alias.id, detail, vm)
-            alias_rules_section(alias.id, detail, vm)
-            alias_blocked_log_section(detail)
-            alias_contacts_section(alias.id, detail, vm)
         }
+    }
+}
+
+@Composable
+private fun alias_quick_action(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    modifier: Modifier,
+    test_tag: String,
+    on_click: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Column(
+        modifier = modifier
+            .acrylic(colors, RoundedCornerShape(12.dp), colors.bg_secondary)
+            .clickable(onClick = on_click)
+            .padding(vertical = AsterSpacing.sm)
+            .testTag(test_tag),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = colors.text_secondary,
+            modifier = Modifier.size(18.dp),
+        )
+        Text(
+            text = label,
+            color = colors.text_secondary,
+            fontSize = 11.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

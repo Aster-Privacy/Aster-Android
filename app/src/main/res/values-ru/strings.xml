@@ -320,6 +320,10 @@
     <string name="discard">Удалить</string>
     <string name="toggle_cc_bcc">Показать копию/скрытую копию</string>
     <string name="add_recipient">Добавить получателя</string>
+    <string name="add_another_recipient">Добавить ещё</string>
+    <string name="compose_attachments">Вложения</string>
+    <string name="draft_discarded">Черновик удалён</string>
+    <string name="draft_saved">Черновик сохранён</string>
     <string name="e2e_recipient_description">Сообщения этому получателю зашифрованы его ключом. Только он может их прочитать.</string>
     <string name="transit_recipient_description">Сообщения этому получателю шифруются при передаче через TLS. Сервер получателя может их прочитать.</string>
     <string name="format">Формат</string>
@@ -2569,6 +2573,8 @@
     <string name="alias_delivery_title">Доставка</string>
     <string name="copied_value">Скопировано: %1$s</string>
     <string name="alias_expand_settings">Показать настройки псевдонима</string>
+    <string name="alias_open_settings">Настройки псевдонима</string>
+    <string name="alias_detail_unavailable">Этот псевдоним больше недоступен.</string>
     <string name="alias_collapse_settings">Скрыть настройки псевдонима</string>
     <string name="alias_panel_details_title">Сведения</string>
     <string name="alias_panel_display_name">Отображаемое имя</string>
@@ -3486,4 +3492,7 @@
     <string name="connection_relay_connected">Подключено</string>
     <string name="connection_relay_restored">Всё снова работает как обычно</string>
     <string name="connection_relay_disconnected">Отключено</string>
+    <string name="search_groups">Поиск групп</string>
+    <string name="search_trash">Поиск в корзине</string>
+    <string name="no_groups_match">Нет групп, соответствующих «%1$s»</string>
 </resources>

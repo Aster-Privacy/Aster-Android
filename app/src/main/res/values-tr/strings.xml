@@ -320,6 +320,10 @@
     <string name="discard">Sil</string>
     <string name="toggle_cc_bcc">Bilgi/Gizli alanını aç</string>
     <string name="add_recipient">Alıcı ekle</string>
+    <string name="add_another_recipient">Başka ekle</string>
+    <string name="compose_attachments">Ekler</string>
+    <string name="draft_discarded">Taslak silindi</string>
+    <string name="draft_saved">Taslak kaydedildi</string>
     <string name="e2e_recipient_description">Bu alıcıya gönderilen mesajlar kimlik anahtarıyla şifrelenir. Yalnızca alıcı okuyabilir.</string>
     <string name="transit_recipient_description">Bu alıcıya gönderilen mesajlar TLS ile aktarımda şifrelenir. Alıcının sunucusu bunları okuyabilir.</string>
     <string name="format">Biçim</string>
@@ -2553,6 +2557,8 @@
     <string name="alias_delivery_title">Teslimat</string>
     <string name="copied_value">%1$s kopyalandı</string>
     <string name="alias_expand_settings">Takma ad ayarlarını göster</string>
+    <string name="alias_open_settings">Takma ad ayarları</string>
+    <string name="alias_detail_unavailable">Bu takma ad artık kullanılamıyor.</string>
     <string name="alias_collapse_settings">Takma ad ayarlarını gizle</string>
     <string name="alias_panel_details_title">Ayrıntılar</string>
     <string name="alias_panel_display_name">Görünen ad</string>
@@ -3446,4 +3452,7 @@
     <string name="connection_relay_connected">Bağlandı</string>
     <string name="connection_relay_restored">Her şey normale döndü</string>
     <string name="connection_relay_disconnected">Bağlantı kesildi</string>
+    <string name="search_groups">Gruplarda ara</string>
+    <string name="search_trash">Çöp kutusunda ara</string>
+    <string name="no_groups_match">\"%1$s\" ile eşleşen grup yok</string>
 </resources>

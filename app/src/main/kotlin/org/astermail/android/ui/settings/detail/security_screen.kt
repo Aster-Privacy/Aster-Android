@@ -1474,7 +1474,7 @@ private fun trusted_device_row(
             .testTag("trusted_device_row"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        list_icon_tile(icon = TablerIcons.DeviceLaptop, tint = colors.text_secondary, colors = colors)
+        list_icon_tile(icon = TablerIcons.DeviceLaptop, tint = colors.text_secondary)
         Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -1520,14 +1520,9 @@ private fun trusted_device_row(
 private fun list_icon_tile(
     icon: ImageVector,
     tint: Color,
-    colors: org.astermail.android.design.AsterSemanticColors,
 ) {
     Box(
-        modifier = Modifier
-            .size(40.dp)
-            .clip(CircleShape)
-            .background(colors.bg_secondary)
-            .border(1.dp, colors.border_secondary, CircleShape),
+        modifier = Modifier.size(24.dp),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -1816,7 +1811,6 @@ private fun audit_event_row(
         list_icon_tile(
             icon = audit_icon(event.event_type),
             tint = if (is_failure) colors.danger else colors.text_secondary,
-            colors = colors,
         )
         Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {

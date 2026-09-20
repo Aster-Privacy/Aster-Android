@@ -24,6 +24,10 @@
     <plurals name="spam_auto_delete_notice">
         <item quantity="other">垃圾邮件中的内容将在 %1$d 天后自动删除。</item>
     </plurals>
+    <plurals name="trash_auto_delete_notice">
+        <item quantity="one">废纸篓中的邮件将在 %1$d 天后自动删除。</item>
+        <item quantity="other">废纸篓中的邮件将在 %1$d 天后自动删除。</item>
+    </plurals>
     <plurals name="pending_deletion_body_days">
         <item quantity="other">您的账户将在 %1$d 天后被删除。取消删除即可保留账户并恢复对邮件和订阅的访问。</item>
     </plurals>

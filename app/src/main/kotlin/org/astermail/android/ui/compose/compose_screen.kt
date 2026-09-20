@@ -23,19 +23,23 @@ package org.astermail.android.ui.compose
 
 import compose.icons.TablerIcons
 import kotlinx.coroutines.CancellationException
+import org.astermail.android.ui.common.app_toast
 import org.astermail.android.ui.common.show_copy_result_toast
 import org.astermail.android.ui.common.write_to_clipboard
 import compose.icons.tablericons.*
 
+import org.astermail.android.design.acrylic
+import org.astermail.android.design.components.aster_menu_border_color
 import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu_surface_color
 import org.astermail.android.design.components.aster_menu
 import org.astermail.android.BuildConfig
 import android.net.Uri
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.animateFloatAsState
@@ -436,6 +440,34 @@ fun ComposeScreen(
             settings_state.user?.display_name?.trim()?.takeIf { it.isNotBlank() }
         } else {
             alias_display_name_map[from]
+        }
+    }
+
+    val alias_picture_map = remember(
+        settings_state.aliases,
+        settings_state.custom_domain_addresses,
+    ) {
+        val map = mutableMapOf<String, String>()
+        settings_state.aliases.forEach { alias ->
+            val picture = alias.profile_picture?.trim().orEmpty()
+            if (alias.address.isNotBlank() && picture.isNotBlank()) {
+                map[alias.address] = picture
+            }
+        }
+        settings_state.custom_domain_addresses.forEach { addr ->
+            val picture = addr.profile_picture?.trim().orEmpty()
+            if (addr.address.isNotBlank() && picture.isNotBlank()) {
+                map[addr.address] = picture
+            }
+        }
+        map.toMap()
+    }
+
+    val resolve_sender_picture: (String) -> String? = { from ->
+        if (from == user_email) {
+            settings_state.user?.profile_picture?.trim()?.takeIf { it.isNotBlank() }
+        } else {
+            alias_picture_map[from]
         }
     }
 
@@ -925,7 +957,7 @@ fun ComposeScreen(
             }
         }
     }
-    val quoted_html = quoted_source?.first
+    val quoted_html = quoted_source?.first?.takeIf { it.isNotBlank() }
     val quoted_meta = quoted_source?.second
     var quoted_expanded by remember { mutableStateOf(false) }
     var is_sending by remember { mutableStateOf(false) }
@@ -1503,6 +1535,7 @@ fun ComposeScreen(
     val quote_forwarded_label = stringResource(R.string.compose_quote_forwarded_message)
     val quote_original_label = stringResource(R.string.compose_quote_original_message)
     val quote_show_template = stringResource(R.string.compose_quote_show_label)
+    val quote_hide_template = stringResource(R.string.compose_quote_hide_label)
     val quote_header_from = stringResource(R.string.compose_quote_header_from)
     val quote_header_date = stringResource(R.string.compose_quote_header_date)
     val quote_header_subject = stringResource(R.string.compose_quote_header_subject)
@@ -1607,25 +1640,21 @@ fun ComposeScreen(
         }
 
         if (unstripped_names.isNotEmpty()) {
-            Toast.makeText(
-                context,
+            app_toast.show(
                 context.getString(
                     R.string.compose_metadata_strip_failed,
                     unstripped_names.joinToString(", "),
                 ),
-                Toast.LENGTH_LONG,
-            ).show()
+            )
         }
 
         if (dropped_image_names.isNotEmpty()) {
-            Toast.makeText(
-                context,
+            app_toast.show(
                 context.getString(
                     R.string.compose_inline_image_failed,
                     dropped_image_names.joinToString(", "),
                 ),
-                Toast.LENGTH_LONG,
-            ).show()
+            )
         }
 
         val quote_block = quoted_html?.let { qh ->
@@ -2183,6 +2212,35 @@ fun ComposeScreen(
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
         ) {
+            val scheduled_label = iso_to_epoch_ms(scheduled_at_iso)?.format_full_datetime()
+            if (scheduled_send && scheduled_label != null) {
+                compose_status_banner(
+                    icon = TablerIcons.Clock,
+                    text = stringResource(R.string.scheduled_for, scheduled_label),
+                    change_label = stringResource(R.string.change),
+                    on_change = { show_schedule_sheet = true },
+                    on_cancel = {
+                        scheduled_send = false
+                        scheduled_at_iso = null
+                    },
+                    test_tag = "schedule_banner",
+                )
+            }
+            val expires_label = iso_to_epoch_ms(expires_at_iso)?.format_full_datetime()
+            if (expiring && expires_label != null) {
+                compose_status_banner(
+                    icon = TablerIcons.Lock,
+                    text = stringResource(R.string.expires_format, expires_label),
+                    change_label = stringResource(R.string.change),
+                    on_change = { show_expiring_sheet = true },
+                    on_cancel = {
+                        expiring = false
+                        expires_at_iso = null
+                        expiry_password = null
+                    },
+                    test_tag = "expiring_banner",
+                )
+            }
             compose_from_row(
                 address = from_alias,
                 on_open = { open_from_sheet() },
@@ -2190,9 +2248,9 @@ fun ComposeScreen(
                 avatar = {
                     org.astermail.android.ui.mail.SenderAvatar(
                         email = from_alias,
-                        name = settings_state.user?.display_name.orEmpty(),
+                        name = resolve_sender_display_name(from_alias).orEmpty(),
                         size = 24.dp,
-                        profile_picture_url = settings_state.user?.profile_picture,
+                        profile_picture_url = resolve_sender_picture(from_alias),
                     )
                 },
             )
@@ -2241,7 +2299,6 @@ fun ComposeScreen(
                     },
                 )
             }
-            AsterDivider()
 
             AnimatedVisibility(
                 visible = cc_expanded,
@@ -2284,7 +2341,6 @@ fun ComposeScreen(
                         },
                     )
                 }
-                AsterDivider()
                 compose_field_row(label = stringResource(R.string.bcc)) {
                     chip_input(
                         chips = bcc_chips,
@@ -2316,9 +2372,9 @@ fun ComposeScreen(
                         },
                     )
                 }
-                AsterDivider()
             }
             }
+            AsterDivider()
 
             Box(
                 modifier = Modifier
@@ -2519,10 +2575,33 @@ fun ComposeScreen(
             }
 
             if (quoted_html != null) {
-                val quote_toggle_label = quote_show_template.format(
-                    if (mode == "forward") quote_forwarded_label else quote_original_label,
+                val quote_target_label = if (mode == "forward") {
+                    quote_forwarded_label
+                } else {
+                    quote_original_label
+                }
+                val quote_toggle_label = if (quoted_expanded) {
+                    quote_hide_template.format(quote_target_label)
+                } else {
+                    quote_show_template.format(quote_target_label)
+                }
+                val quote_reduce_motion = aster_reduce_motion()
+                val quote_expand_spec = tween<IntSize>(
+                    durationMillis = if (quote_reduce_motion) 0 else AsterDuration.medium_1,
+                    easing = AsterEasing.standard_enter,
                 )
-                val quote_text_argb = colors.text_muted.toArgb()
+                val quote_shrink_spec = tween<IntSize>(
+                    durationMillis = if (quote_reduce_motion) 0 else AsterDuration.short_4,
+                    easing = AsterEasing.standard_exit,
+                )
+                val quote_fade_in_spec = tween<Float>(
+                    durationMillis = if (quote_reduce_motion) 0 else AsterDuration.medium_1,
+                    easing = AsterEasing.standard_enter,
+                )
+                val quote_fade_out_spec = tween<Float>(
+                    durationMillis = if (quote_reduce_motion) 0 else AsterDuration.short_2,
+                    easing = AsterEasing.standard_exit,
+                )
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -2530,9 +2609,8 @@ fun ComposeScreen(
                 ) {
                     Box(
                         modifier = Modifier
-                            .clip(SquircleShape(16.dp))
-                            .background(colors.bg_secondary)
-                            .clickable { quoted_expanded = !quoted_expanded }
+                            .acrylic(colors, SquircleShape(16.dp), colors.bg_secondary)
+                            .clickable(role = Role.Button) { quoted_expanded = !quoted_expanded }
                             .semantics { contentDescription = quote_toggle_label }
                             .padding(horizontal = 16.dp, vertical = 7.dp)
                             .testTag("compose_quote_toggle"),
@@ -2546,15 +2624,20 @@ fun ComposeScreen(
                     }
                     AnimatedVisibility(
                         visible = quoted_expanded,
-                        enter = androidx.compose.animation.expandVertically() + fadeIn(),
-                        exit = androidx.compose.animation.shrinkVertically() + fadeOut(),
+                        enter = androidx.compose.animation.expandVertically(animationSpec = quote_expand_spec) +
+                            fadeIn(animationSpec = quote_fade_in_spec),
+                        exit = androidx.compose.animation.shrinkVertically(animationSpec = quote_shrink_spec) +
+                            fadeOut(animationSpec = quote_fade_out_spec),
                     ) {
                         val (quoted_from, quoted_ts, quoted_subject) = quoted_meta
                             ?: Triple("", "", "")
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = AsterSpacing.sm, bottom = AsterSpacing.sm),
+                                .padding(top = AsterSpacing.sm, bottom = AsterSpacing.sm)
+                                .acrylic(colors, SquircleShape(16.dp), colors.bg_secondary)
+                                .padding(AsterSpacing.md)
+                                .testTag("compose_quote_body"),
                         ) {
                             Text(
                                 text = "$quote_header_from $quoted_from",
@@ -2574,32 +2657,7 @@ fun ComposeScreen(
                                 )
                             }
                             Spacer(Modifier.height(AsterSpacing.sm))
-                            androidx.compose.ui.viewinterop.AndroidView(
-                                factory = { ctx ->
-                                    android.widget.TextView(ctx).apply {
-                                        setTextColor(quote_text_argb)
-                                        textSize = 14f
-                                        setPadding(
-                                            (12 * resources.displayMetrics.density).toInt(),
-                                            0,
-                                            0,
-                                            0,
-                                        )
-                                        setTextIsSelectable(true)
-                                    }
-                                },
-                                update = { tv ->
-                                    tv.text = android.text.Html.fromHtml(
-                                        STYLE_SCRIPT_TAG_RE.replace(
-                                            org.astermail.android.ui.mail.EmailHtmlSanitizer
-                                                .repair_comment_markup(quoted_html),
-                                            "",
-                                        ),
-                                        android.text.Html.FROM_HTML_MODE_COMPACT,
-                                    ).toString().trim()
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                            )
+                            quoted_html_preview(html = quoted_html)
                         }
                     }
                 }
@@ -2630,6 +2688,17 @@ fun ComposeScreen(
             ) {
                 Column {
                 AsterDivider()
+                Text(
+                    text = stringResource(R.string.compose_attachments),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.text_tertiary,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(
+                        start = AsterSpacing.lg,
+                        end = AsterSpacing.lg,
+                        top = AsterSpacing.md,
+                    ),
+                )
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -2769,6 +2838,8 @@ fun ComposeScreen(
                 show_from_sheet = false
                 show_ghost_alias_sheet = true
             },
+            resolve_display_name = resolve_sender_display_name,
+            resolve_picture = resolve_sender_picture,
         )
     }
     if (show_overflow_sheet) {
@@ -2781,7 +2852,7 @@ fun ComposeScreen(
                     scheduled_send = false
                     scheduled_at_iso = null
                 } else if (expiring) {
-                    Toast.makeText(context, context.getString(R.string.expiring_not_with_schedule), Toast.LENGTH_LONG).show()
+                    app_toast.show(context.getString(R.string.expiring_not_with_schedule))
                 } else {
                     show_overflow_sheet = false
                     show_schedule_sheet = true
@@ -2793,7 +2864,7 @@ fun ComposeScreen(
                     expires_at_iso = null
                     expiry_password = null
                 } else if (scheduled_send) {
-                    Toast.makeText(context, context.getString(R.string.expiring_not_with_schedule), Toast.LENGTH_LONG).show()
+                    app_toast.show(context.getString(R.string.expiring_not_with_schedule))
                 } else {
                     show_overflow_sheet = false
                     show_expiring_sheet = true
@@ -2824,7 +2895,7 @@ fun ComposeScreen(
                     signature = applied_signature,
                     watermark = context.getString(R.string.compose_footer_secured_by_plain),
                 )
-                Toast.makeText(context, context.getString(R.string.template_inserted), Toast.LENGTH_SHORT).show()
+                app_toast.show(context.getString(R.string.template_inserted))
             },
         )
     }
@@ -2875,7 +2946,7 @@ fun ComposeScreen(
                             from_alias = result.address
                             from_manually_selected = true
                             settings_vm.load_aliases()
-                            Toast.makeText(context, context.getString(R.string.ghost_alias_created, result.address), Toast.LENGTH_LONG).show()
+                            app_toast.show(context.getString(R.string.ghost_alias_created, result.address))
                         }
                         is SettingsViewModel.GhostAliasResult.Failure -> {
                             send_error = result.message
@@ -2894,7 +2965,7 @@ fun ComposeScreen(
                 expires_at_iso = java.time.Instant.ofEpochMilli(expires_epoch_ms).toString()
                 expiry_password = password
                 expiring = true
-                Toast.makeText(context, context.getString(R.string.message_expires_in, label), Toast.LENGTH_SHORT).show()
+                app_toast.show(context.getString(R.string.message_expires_in, label))
             },
         )
     }
@@ -3190,6 +3261,7 @@ fun ComposeScreen(
                         draft_save_job?.cancel()
                         mail_vm.discard_sent_draft(current_draft_id, draft_session_id)
                         current_draft_id = ""
+                        app_toast.show(context.getString(R.string.draft_discarded))
                         on_back()
                     },
                 )
@@ -3216,14 +3288,11 @@ fun ComposeScreen(
                             },
                         ) { ok ->
                             if (ok) {
+                                app_toast.show(context.getString(R.string.draft_saved))
                                 on_back()
                             } else {
                                 draft_status = context.getString(R.string.save_failed)
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.save_failed),
-                                    Toast.LENGTH_LONG,
-                                ).show()
+                                app_toast.show(context.getString(R.string.save_failed))
                             }
                         }
                     },
@@ -3350,100 +3419,71 @@ private fun chip_input(
     val internal_focus_requester = remember { androidx.compose.ui.focus.FocusRequester() }
     val active_focus_requester = focus_requester ?: internal_focus_requester
     var field_focused by remember { mutableStateOf(false) }
-    var expand_requested by remember { mutableStateOf(false) }
-    val collapsed = !field_focused && !expand_requested && chips.isNotEmpty() && input.isEmpty()
-    LaunchedEffect(expand_requested, collapsed) {
-        if (expand_requested && !collapsed) active_focus_requester.requestFocus()
-    }
+    val field_shape = SquircleShape(AsterRadius.lg)
+    val field_interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val field_tint = if (field_focused) colors.bg_hover else colors.bg_secondary
+    val field_border = if (field_focused) colors.accent_blue else colors.border_secondary
     Box(modifier = Modifier.fillMaxWidth()) {
-        if (collapsed) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 44.dp)
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                    ) { expand_requested = true },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(modifier = Modifier.weight(1f, fill = false)) {
-                    recipient_chip(chips.first(), show_encryption_indicator) { on_remove(0) }
-                }
-                if (chips.size > 1) {
-                    Spacer(Modifier.width(AsterSpacing.xs))
-                    Text(
-                        text = "+" + (chips.size - 1),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colors.text_tertiary,
-                    )
-                }
-                Spacer(Modifier.weight(1f))
-                Text(
-                    text = stringResource(R.string.add_recipient),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.text_muted,
-                    maxLines = 1,
-                )
-            }
-        }
-        Row(
+        androidx.compose.foundation.layout.FlowRow(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(if (collapsed) Modifier.size(0.dp) else Modifier.heightIn(min = 44.dp))
+                .animateContentSize()
+                .acrylic(colors, field_shape, field_tint)
+                .border(width = 1.dp, color = field_border, shape = field_shape)
                 .clickable(
                     indication = null,
-                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                ) { active_focus_requester.requestFocus() },
-            verticalAlignment = Alignment.CenterVertically,
+                    interactionSource = field_interaction,
+                ) { active_focus_requester.requestFocus() }
+                .padding(horizontal = AsterSpacing.sm, vertical = 6.dp)
+                .heightIn(min = 36.dp),
+            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
+            verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
         ) {
-            androidx.compose.foundation.layout.FlowRow(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
-                verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
-            ) {
-                chips.forEachIndexed { idx, chip ->
-                    recipient_chip(chip, show_encryption_indicator) { on_remove(idx) }
-                }
-                BasicTextField(
-                    value = input,
-                    onValueChange = on_input_change,
-                    singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.text_primary),
-                    cursorBrush = SolidColor(colors.accent_blue),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Email,
-                        imeAction = ImeAction.Next,
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onNext = { on_commit() },
-                        onDone = { on_commit() },
-                        onSend = { on_commit() },
-                    ),
-                    modifier = Modifier
-                        .widthIn(min = 120.dp)
-                        .heightIn(min = 40.dp)
-                        .focusRequester(active_focus_requester)
-                        .onFocusChanged { focus ->
-                            field_focused = focus.isFocused
-                            if (focus.isFocused) {
-                                expand_requested = false
-                            } else {
-                                on_commit()
-                            }
-                        },
-                    decorationBox = { inner ->
-                        if (chips.isEmpty() && input.isEmpty()) {
+            chips.forEachIndexed { idx, chip ->
+                recipient_chip(chip, show_encryption_indicator) { on_remove(idx) }
+            }
+            BasicTextField(
+                value = input,
+                onValueChange = on_input_change,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.text_primary),
+                cursorBrush = SolidColor(colors.accent_blue),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next,
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { on_commit() },
+                    onDone = { on_commit() },
+                    onSend = { on_commit() },
+                ),
+                modifier = Modifier
+                    .widthIn(min = 140.dp)
+                    .heightIn(min = 32.dp)
+                    .focusRequester(active_focus_requester)
+                    .onFocusChanged { focus ->
+                        field_focused = focus.isFocused
+                        if (!focus.isFocused) on_commit()
+                    },
+                decorationBox = { inner ->
+                    Box(
+                        modifier = Modifier.heightIn(min = 32.dp),
+                        contentAlignment = Alignment.CenterStart,
+                    ) {
+                        if (input.isEmpty()) {
                             Text(
-                                text = stringResource(R.string.add_recipient),
+                                text = stringResource(
+                                    if (chips.isEmpty()) R.string.add_recipient else R.string.add_another_recipient,
+                                ),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = colors.text_muted,
+                                maxLines = 1,
                             )
                         }
                         inner()
-                    },
-                )
-            }
+                    }
+                },
+            )
         }
         val suggestions_visible = filtered_suggestions.isNotEmpty() && on_suggestion_pick != null
         val suggestions_state = remember { MutableTransitionState(false) }
@@ -3522,15 +3562,15 @@ private fun chip_input(
                         )
                     },
                 ) {
+                    val suggestions_shape = SquircleShape(18.dp)
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .shadow(12.dp, SquircleShape(18.dp), clip = false)
-                            .clip(SquircleShape(18.dp))
-                            .background(colors.bg_card)
-                            .heightIn(max = 200.dp)
+                            .shadow(16.dp, suggestions_shape, clip = false)
+                            .acrylic(colors, suggestions_shape, aster_menu_surface_color())
+                            .heightIn(max = 240.dp)
                             .verticalScroll(rememberScrollState())
-                            .padding(vertical = 4.dp),
+                            .padding(vertical = 6.dp),
                     ) {
                         rendered_suggestions.forEach { contact ->
                             Row(
@@ -3540,6 +3580,12 @@ private fun chip_input(
                                     .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
+                                org.astermail.android.ui.mail.SenderAvatar(
+                                    email = contact.email,
+                                    name = contact.name,
+                                    size = 28.dp,
+                                )
+                                Spacer(Modifier.width(AsterSpacing.sm))
                                 Column(modifier = Modifier.weight(1f)) {
                                     if (contact.name.isNotBlank() && contact.name != contact.email) {
                                         Text(
@@ -3667,7 +3713,8 @@ private fun recipient_chip(text: String, show_encryption_indicator: Boolean = tr
         Row(
             modifier = Modifier
                 .clip(SquircleShape(AsterRadius.pill))
-                .background(colors.bg_hover)
+                .background(colors.bg_card)
+                .border(1.dp, colors.border_secondary, SquircleShape(AsterRadius.pill))
                 .clickable { menu_open = true }
                 .padding(start = 6.dp, end = 2.dp, top = 2.dp, bottom = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -3761,15 +3808,13 @@ private fun recipient_chip(text: String, show_encryption_indicator: Boolean = tr
                                 email = normalized,
                             ),
                         ) { saved ->
-                            Toast.makeText(
-                                context,
+                            app_toast.show(
                                 if (saved) {
                                     context.getString(R.string.contact_added_named, normalized)
                                 } else {
                                     context.getString(R.string.contact_add_failed, normalized)
                                 },
-                                Toast.LENGTH_SHORT,
-                            ).show()
+                            )
                         }
                     },
                 )
@@ -4031,6 +4076,8 @@ private fun FromAliasSheet(
     on_select: (String) -> Unit,
     on_set_primary: (String) -> Unit,
     on_create_ghost_alias: () -> Unit,
+    resolve_display_name: (String) -> String? = { null },
+    resolve_picture: (String) -> String? = { null },
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
@@ -4119,6 +4166,13 @@ private fun FromAliasSheet(
                             .padding(horizontal = AsterSpacing.sm, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        org.astermail.android.ui.mail.SenderAvatar(
+                            email = opt,
+                            name = resolve_display_name(opt).orEmpty(),
+                            size = 32.dp,
+                            profile_picture_url = resolve_picture(opt),
+                        )
+                        Spacer(Modifier.width(AsterSpacing.md))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = opt,
@@ -4621,6 +4675,7 @@ internal fun ExpiringSheet(
     val sheet_context = LocalContext.current
     val sheet_picker_theme = picker_theme_res()
     var password by remember { mutableStateOf("") }
+    var password_visible by remember { mutableStateOf(false) }
     var selected_hours by remember { mutableStateOf<Int?>(null) }
     var custom_epoch_ms by remember { mutableStateOf<Long?>(null) }
     val password_arg = password.trim().ifBlank { null }
@@ -4647,7 +4702,7 @@ internal fun ExpiringSheet(
                         cal.set(year, month, day, hour, minute, 0)
                         cal.set(java.util.Calendar.MILLISECOND, 0)
                         if (cal.timeInMillis <= System.currentTimeMillis()) {
-                            Toast.makeText(sheet_context, sheet_context.getString(R.string.expiry_time_in_past), Toast.LENGTH_SHORT).show()
+                            app_toast.show(sheet_context.getString(R.string.expiry_time_in_past))
                         } else {
                             custom_epoch_ms = cal.timeInMillis
                             selected_hours = null
@@ -4685,7 +4740,7 @@ internal fun ExpiringSheet(
         }
         if (custom != null) {
             if (custom <= System.currentTimeMillis()) {
-                Toast.makeText(sheet_context, sheet_context.getString(R.string.expiry_time_in_past), Toast.LENGTH_SHORT).show()
+                app_toast.show(sheet_context.getString(R.string.expiry_time_in_past))
                 return@commit
             }
             on_pick(custom, format_custom_label(custom), password_arg)
@@ -4701,6 +4756,8 @@ internal fun ExpiringSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .imePadding()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = AsterSpacing.md),
         ) {
             Text(
@@ -4747,20 +4804,25 @@ internal fun ExpiringSheet(
                 fontSize = 12.sp,
                 modifier = Modifier.padding(start = AsterSpacing.sm, end = AsterSpacing.sm, top = 2.dp, bottom = AsterSpacing.xs),
             )
-            Box(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = AsterSpacing.sm)
                     .clip(SquircleShape(10.dp))
                     .border(1.dp, colors.border_secondary, SquircleShape(10.dp))
                     .background(colors.bg_secondary)
-                    .padding(horizontal = AsterSpacing.md, vertical = 12.dp),
+                    .padding(start = AsterSpacing.md, end = AsterSpacing.xs, top = 6.dp, bottom = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 BasicTextField(
                     value = password,
                     onValueChange = { password = it },
                     singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (password_visible) {
+                        VisualTransformation.None
+                    } else {
+                        PasswordVisualTransformation()
+                    },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
                         autoCorrectEnabled = false,
@@ -4769,7 +4831,8 @@ internal fun ExpiringSheet(
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.text_primary),
                     cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.accent_blue),
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(vertical = 6.dp)
                         .testTag("expiry_password_field"),
                     decorationBox = { inner ->
                         if (password.isEmpty()) {
@@ -4781,6 +4844,18 @@ internal fun ExpiringSheet(
                         }
                         inner()
                     },
+                )
+                Icon(
+                    imageVector = if (password_visible) TablerIcons.EyeOff else TablerIcons.Eye,
+                    contentDescription = stringResource(
+                        if (password_visible) R.string.hide_password else R.string.show_password,
+                    ),
+                    tint = colors.text_muted,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(SquircleShape(AsterRadius.sm))
+                        .clickable { password_visible = !password_visible }
+                        .padding(9.dp),
                 )
             }
             Spacer(Modifier.height(AsterSpacing.md))
@@ -5268,5 +5343,74 @@ private class RichBodyEditText(context: android.content.Context) : android.widge
             }
         }
         return super.onTouchEvent(event)
+    }
+}
+
+private fun iso_to_epoch_ms(raw: String?): Long? {
+    val trimmed = raw?.trim().orEmpty()
+    if (trimmed.isEmpty()) return null
+    return runCatching { java.time.OffsetDateTime.parse(trimmed).toInstant() }
+        .recoverCatching { java.time.Instant.parse(trimmed) }
+        .getOrNull()
+        ?.toEpochMilli()
+}
+
+@Composable
+private fun compose_status_banner(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    text: String,
+    change_label: String,
+    on_change: () -> Unit,
+    on_cancel: () -> Unit,
+    test_tag: String,
+) {
+    val colors = AsterMaterial.colors
+    val shape = SquircleShape(AsterRadius.lg)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm)
+            .acrylic(colors, shape, colors.bg_secondary)
+            .border(width = 1.dp, color = colors.border_secondary, shape = shape)
+            .clickable { on_change() }
+            .padding(start = AsterSpacing.md, end = AsterSpacing.xs, top = 6.dp, bottom = 6.dp)
+            .testTag(test_tag),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = colors.accent_blue,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(AsterSpacing.sm))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.text_primary,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = change_label,
+            style = MaterialTheme.typography.labelLarge,
+            color = colors.accent_blue,
+            maxLines = 1,
+            modifier = Modifier
+                .clip(SquircleShape(AsterRadius.sm))
+                .clickable { on_change() }
+                .padding(horizontal = AsterSpacing.sm, vertical = 6.dp),
+        )
+        Icon(
+            imageVector = TablerIcons.X,
+            contentDescription = stringResource(R.string.cancel),
+            tint = colors.text_muted,
+            modifier = Modifier
+                .size(32.dp)
+                .clip(SquircleShape(AsterRadius.sm))
+                .clickable { on_cancel() }
+                .padding(7.dp),
+        )
     }
 }

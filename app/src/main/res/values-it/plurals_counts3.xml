@@ -32,6 +32,10 @@
         <item quantity="one">Gli elementi nello spam vengono eliminati automaticamente dopo %1$d giorno.</item>
         <item quantity="other">Gli elementi nello spam vengono eliminati automaticamente dopo %1$d giorni.</item>
     </plurals>
+    <plurals name="trash_auto_delete_notice">
+        <item quantity="one">Gli elementi nel cestino vengono eliminati automaticamente dopo %1$d giorno.</item>
+        <item quantity="other">Gli elementi nel cestino vengono eliminati automaticamente dopo %1$d giorni.</item>
+    </plurals>
     <plurals name="pending_deletion_body_days">
         <item quantity="one">Il tuo account verrà eliminato tra %1$d giorno. Annulla l\'eliminazione per mantenere il tuo account e ripristinare l\'accesso alla posta e all\'abbonamento.</item>
         <item quantity="other">Il tuo account verrà eliminato tra %1$d giorni. Annulla l\'eliminazione per mantenere il tuo account e ripristinare l\'accesso alla posta e all\'abbonamento.</item>

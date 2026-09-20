@@ -340,6 +340,10 @@
     <string name="discard">Supprimer</string>
     <string name="toggle_cc_bcc">Afficher/masquer Cc/Cci</string>
     <string name="add_recipient">Ajouter un destinataire</string>
+    <string name="add_another_recipient">Ajouter un autre</string>
+    <string name="compose_attachments">Pièces jointes</string>
+    <string name="draft_discarded">Brouillon supprimé</string>
+    <string name="draft_saved">Brouillon enregistré</string>
     <string name="e2e_recipient_description">Les messages à ce destinataire sont chiffrés avec sa clé d\'identité. Seul lui peut les lire.</string>
     <string name="transit_recipient_description">Les messages à ce destinataire sont chiffrés en transit via TLS. Le serveur du destinataire peut éventuellement les lire.</string>
     <string name="format">Format</string>
@@ -2580,6 +2584,8 @@
     <string name="alias_delivery_title">Remise</string>
     <string name="copied_value">%1$s copié</string>
     <string name="alias_expand_settings">Afficher les réglages de l\'alias</string>
+    <string name="alias_open_settings">Réglages de l\'alias</string>
+    <string name="alias_detail_unavailable">Cet alias n\'est plus disponible.</string>
     <string name="alias_collapse_settings">Masquer les réglages de l\'alias</string>
     <string name="alias_panel_details_title">Détails</string>
     <string name="alias_panel_display_name">Nom affiché</string>
@@ -3473,4 +3479,7 @@
     <string name="connection_relay_connected">Connecté</string>
     <string name="connection_relay_restored">Retour à la normale</string>
     <string name="connection_relay_disconnected">Déconnecté</string>
+    <string name="search_groups">Rechercher des groupes</string>
+    <string name="search_trash">Rechercher dans la corbeille</string>
+    <string name="no_groups_match">Aucun groupe ne correspond à « %1$s »</string>
 </resources>

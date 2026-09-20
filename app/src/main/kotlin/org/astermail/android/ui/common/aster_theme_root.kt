@@ -53,10 +53,12 @@ import org.astermail.android.ui.theme.ThemeViewModel
 import org.astermail.android.ui.theme.local_accessibility
 import org.astermail.android.ui.theme.local_background_image
 import org.astermail.android.ui.theme.local_text_scale
+import org.astermail.android.ui.theme.draw_theme_animation
 import org.astermail.android.ui.theme.draw_theme_background
 import org.astermail.android.ui.theme.draw_theme_veil
 import org.astermail.android.ui.theme.draw_theme_window_slice
 import org.astermail.android.ui.theme.remember_active_theme_bitmap
+import org.astermail.android.ui.theme.remember_theme_animation
 
 @Composable
 fun aster_theme_root(content: @Composable () -> Unit) {
@@ -77,6 +79,7 @@ fun aster_theme_root(content: @Composable () -> Unit) {
     val font_choice by theme_vm.font_choice.collectAsStateWithLifecycle()
     val background_image by theme_vm.background_image.collectAsStateWithLifecycle()
     val background_opacity by theme_vm.background_opacity.collectAsStateWithLifecycle()
+    val animate_background by theme_vm.animate_background.collectAsStateWithLifecycle()
     val app_context = LocalContext.current.applicationContext
     LaunchedEffect(mode_state, color_theme) {
         apply_app_night_mode(app_context, mode_state, color_theme)
@@ -154,6 +157,9 @@ fun aster_theme_root(content: @Composable () -> Unit) {
             val blur = if (colors.is_glass) {
                 org.astermail.android.ui.theme.remember_active_theme_blur()
             } else null
+            val animation = if (backdrop != null) {
+                remember_theme_animation(animate_background && !a11y.reduce_motion)
+            } else null
             val root_view = androidx.compose.ui.platform.LocalView.current
             val veil_ink = colors.bg_primary
             val acrylic_source = remember(blur, root_view, veil_ink) {
@@ -176,7 +182,11 @@ fun aster_theme_root(content: @Composable () -> Unit) {
                                 .fillMaxSize()
                                 .graphicsLayer()
                                 .drawBehind {
-                                    draw_theme_background(backdrop)
+                                    if (animation != null) {
+                                        draw_theme_animation(animation)
+                                    } else {
+                                        draw_theme_background(backdrop)
+                                    }
                                     draw_theme_veil(colors.bg_primary)
                                 },
                         )

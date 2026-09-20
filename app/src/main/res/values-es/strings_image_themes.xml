@@ -21,7 +21,7 @@
     <string name="image_theme_remove_photo">Quitar foto</string>
     <string name="image_theme_photo_private">Tu foto está cifrada y se queda en este dispositivo.</string>
     <string name="image_theme_photo_too_large">Esta foto es demasiado grande. Elige una de menos de 40 MB.</string>
-    <string name="image_theme_photo_unsupported">Este tipo de archivo no es compatible. Elige una foto JPEG, PNG, WebP o HEIC.</string>
+    <string name="image_theme_photo_unsupported">Este tipo de archivo no es compatible. Elige una foto JPEG, PNG, GIF, WebP o HEIC.</string>
     <string name="image_theme_photo_unreadable">No se puede abrir esta foto. Prueba con otra.</string>
     <string name="image_theme_category_calm">Sereno</string>
     <string name="image_theme_credit_modified">Foto: %1$s. Recortada y redimensionada.</string>
@@ -48,4 +48,7 @@
     <string name="glass_mode">Cristal</string>
     <string name="glass_mode_subtitle">Tu foto se ve a través de las superficies. Desactiva esta opción para superficies sólidas.</string>
     <string name="theme_transparency">Transparencia</string>
+    <string name="image_theme_animation">Animar el fondo</string>
+    <string name="image_theme_animation_subtitle">Reproduce tu fondo animado. Se detiene en el modo de ahorro de batería y cuando las animaciones están desactivadas en tu dispositivo.</string>
+    <string name="image_theme_animation_too_large">Esta imagen animada es demasiado grande. Elige una de menos de 12 MB.</string>
 </resources>

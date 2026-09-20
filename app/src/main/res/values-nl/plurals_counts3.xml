@@ -32,6 +32,10 @@
         <item quantity="one">Items in spam worden na %1$d dag automatisch verwijderd.</item>
         <item quantity="other">Items in spam worden na %1$d dagen automatisch verwijderd.</item>
     </plurals>
+    <plurals name="trash_auto_delete_notice">
+        <item quantity="one">Items in de prullenbak worden na %1$d dag automatisch verwijderd.</item>
+        <item quantity="other">Items in de prullenbak worden na %1$d dagen automatisch verwijderd.</item>
+    </plurals>
     <plurals name="pending_deletion_body_days">
         <item quantity="one">Je account wordt over %1$d dag verwijderd. Annuleer de verwijdering om je account te behouden en de toegang tot je e-mail en abonnement te herstellen.</item>
         <item quantity="other">Je account wordt over %1$d dagen verwijderd. Annuleer de verwijdering om je account te behouden en de toegang tot je e-mail en abonnement te herstellen.</item>

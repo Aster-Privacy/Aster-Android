@@ -6,6 +6,7 @@
     <string name="compose_quote_forwarded_message">转发的邮件</string>
     <string name="compose_quote_original_message">原始邮件</string>
     <string name="compose_quote_show_label">显示%1$s</string>
+    <string name="compose_quote_hide_label">隐藏%1$s</string>
     <string name="compose_quote_header_from">发件人：</string>
     <string name="compose_quote_header_date">日期：</string>
     <string name="compose_quote_header_subject">主题：</string>

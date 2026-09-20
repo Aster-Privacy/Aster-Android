@@ -29,6 +29,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -59,14 +61,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Outline
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -79,7 +76,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
@@ -94,6 +90,7 @@ import androidx.compose.ui.window.PopupProperties
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Check
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.aster_ripple
@@ -113,9 +110,8 @@ private val menu_label_size = 12.sp
 private const val menu_surface_lift = 0.14f
 private const val menu_border_lift_dark = 0.09f
 private const val menu_border_lift_light = 0.07f
-private const val menu_reveal_from = 0.6f
-private const val menu_enter_scale = 0.94f
-private const val menu_exit_scale = 0.97f
+private const val menu_enter_scale = 0.85f
+private const val menu_exit_scale = 0.88f
 
 private class menu_anchor_state {
     var bounds by mutableStateOf<IntRect?>(null)
@@ -130,22 +126,6 @@ private class menu_full_window_provider(private val state: menu_anchor_state) : 
     ): IntOffset {
         if (state.bounds != anchorBounds) state.bounds = anchorBounds
         return IntOffset.Zero
-    }
-}
-
-private data class menu_reveal_shape(
-    val fraction: Float,
-    val from_bottom: Boolean,
-) : Shape {
-    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
-        val height = size.height * fraction.coerceIn(0f, 1f)
-        val top = if (from_bottom) size.height - height else 0f
-        val outline = menu_surface_shape.createOutline(Size(size.width, height), layoutDirection, density)
-        val path = Path().apply {
-            addOutline(outline)
-            translate(Offset(0f, top))
-        }
-        return Outline.Generic(path)
     }
 }
 
@@ -183,9 +163,7 @@ fun aster_menu_surface(
     Column(
         modifier = modifier
             .shadow(menu_surface_elevation, menu_surface_shape, clip = false)
-            .clip(menu_surface_shape)
-            .background(aster_menu_surface_color())
-            .border(1.dp, aster_menu_border_color(), menu_surface_shape)
+            .acrylic(AsterMaterial.colors, menu_surface_shape, aster_menu_surface_color())
             .defaultMinSize(minWidth = min_width)
             .widthIn(max = max_width)
             .width(IntrinsicSize.Max)
@@ -220,18 +198,12 @@ fun aster_menu(
     val anchor = remember { menu_anchor_state() }
     val provider = remember(anchor) { menu_full_window_provider(anchor) }
     val transition = rememberTransition(visible_state, label = "aster_menu")
-    val reveal by transition.animateFloat(
-        transitionSpec = {
-            if (reduce_motion || !targetState) snap() else spring(dampingRatio = 1f, stiffness = 650f)
-        },
-        label = "aster_menu_reveal",
-    ) { shown -> if (shown || reduce_motion) 1f else menu_reveal_from }
     val scale by transition.animateFloat(
         transitionSpec = {
             when {
                 reduce_motion -> snap()
-                targetState -> spring(dampingRatio = 0.9f, stiffness = 900f)
-                else -> tween(110, easing = FastOutLinearInEasing)
+                targetState -> spring(dampingRatio = 0.86f, stiffness = 700f)
+                else -> tween(120, easing = FastOutLinearInEasing)
             }
         },
         label = "aster_menu_scale",
@@ -263,8 +235,8 @@ fun aster_menu(
         label = "aster_menu_content_fade",
     ) { shown -> if (shown) 1f else 0f }
 
+    val menu_colors = AsterMaterial.colors
     val surface_color = aster_menu_surface_color()
-    val border_color = aster_menu_border_color()
     val surface_tap = remember { MutableInteractionSource() }
 
     Popup(
@@ -278,14 +250,18 @@ fun aster_menu(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer { alpha = fade }
-                    .pointerInput(on_dismiss) { detectTapGestures { on_dismiss() } },
+                    .pointerInput(on_dismiss) {
+                        awaitEachGesture {
+                            awaitFirstDown(requireUnconsumed = false)
+                            on_dismiss()
+                        }
+                    },
             )
             Layout(
                 content = {
                     Column(
                         modifier = modifier
-                            .background(surface_color)
-                            .border(1.dp, border_color, menu_surface_shape)
+                            .acrylic(menu_colors, menu_surface_shape, surface_color)
                             .clickable(interactionSource = surface_tap, indication = null) {}
                             .defaultMinSize(minWidth = min_width)
                             .widthIn(max = max_width)
@@ -331,8 +307,10 @@ fun aster_menu(
                     } else {
                         below.coerceAtMost((height - placeable.height - margin).coerceAtLeast(margin))
                     }
+                    val anchor_x = ((left + right) / 2f - x) / placeable.width.coerceAtLeast(1)
+                    val anchor_y = ((top + bottom) / 2f - y) / placeable.height.coerceAtLeast(1)
                     placeable.placeWithLayer(x, y) {
-                        shape = menu_reveal_shape(reveal, upward)
+                        shape = menu_surface_shape
                         clip = true
                         shadowElevation = menu_surface_elevation.toPx()
                         ambientShadowColor = Color.Black
@@ -340,7 +318,10 @@ fun aster_menu(
                         alpha = fade
                         scaleX = scale
                         scaleY = scale
-                        transformOrigin = TransformOrigin(if (leftward) 1f else 0f, if (upward) 1f else 0f)
+                        transformOrigin = TransformOrigin(
+                            anchor_x.coerceIn(0f, 1f),
+                            anchor_y.coerceIn(0f, 1f),
+                        )
                     }
                 }
             }

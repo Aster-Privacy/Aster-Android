@@ -6,6 +6,7 @@
     <string name="compose_quote_forwarded_message">Doorgestuurd bericht</string>
     <string name="compose_quote_original_message">Oorspronkelijk bericht</string>
     <string name="compose_quote_show_label">%1$s tonen</string>
+    <string name="compose_quote_hide_label">%1$s verbergen</string>
     <string name="compose_quote_header_from">Van:</string>
     <string name="compose_quote_header_date">Datum:</string>
     <string name="compose_quote_header_subject">Onderwerp:</string>

@@ -321,6 +321,10 @@
     <string name="discard">Verwerfen</string>
     <string name="toggle_cc_bcc">Cc/Bcc umschalten</string>
     <string name="add_recipient">Empfänger hinzufügen</string>
+    <string name="add_another_recipient">Weitere hinzufügen</string>
+    <string name="compose_attachments">Anhänge</string>
+    <string name="draft_discarded">Entwurf verworfen</string>
+    <string name="draft_saved">Entwurf gespeichert</string>
     <string name="e2e_recipient_description">Nachrichten an diesen Empfänger werden mit dessen Identitätsschlüssel verschlüsselt. Nur er kann sie lesen.</string>
     <string name="transit_recipient_description">Nachrichten an diesen Empfänger werden per TLS während der Übertragung verschlüsselt. Der Server des Empfängers kann sie möglicherweise lesen.</string>
     <string name="format">Formatieren</string>
@@ -2554,6 +2558,8 @@
     <string name="alias_delivery_title">Zustellung</string>
     <string name="copied_value">%1$s kopiert</string>
     <string name="alias_expand_settings">Alias-Einstellungen anzeigen</string>
+    <string name="alias_open_settings">Alias-Einstellungen</string>
+    <string name="alias_detail_unavailable">Dieser Alias ist nicht mehr verfügbar.</string>
     <string name="alias_collapse_settings">Alias-Einstellungen ausblenden</string>
     <string name="alias_panel_details_title">Details</string>
     <string name="alias_panel_display_name">Anzeigename</string>
@@ -3447,4 +3453,7 @@
     <string name="connection_relay_connected">Verbunden</string>
     <string name="connection_relay_restored">Wieder normal</string>
     <string name="connection_relay_disconnected">Getrennt</string>
+    <string name="search_groups">Gruppen suchen</string>
+    <string name="search_trash">Papierkorb durchsuchen</string>
+    <string name="no_groups_match">Keine Gruppen stimmen mit „%1$s“ überein</string>
 </resources>

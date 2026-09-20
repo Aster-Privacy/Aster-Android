@@ -32,6 +32,13 @@ import compose.icons.tablericons.*
 
 import android.content.ClipData
 import android.content.Context
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -77,6 +84,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.layout.onSizeChanged
@@ -86,7 +94,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
-import org.astermail.android.settings.AliasDetailState
 import org.astermail.android.ui.common.show_copied_toast
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -106,6 +113,8 @@ import org.astermail.android.api.settings.AliasDirectory
 import org.astermail.android.api.settings.CustomDomain
 import org.astermail.android.api.settings.DnsRecord
 import org.astermail.android.api.settings.UpdateAliasPreferencesRequest
+import org.astermail.android.design.AsterDuration
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
@@ -142,6 +151,8 @@ fun AliasesScreen(
     on_open: (id: String) -> Unit,
     open_create: Boolean = false,
     on_open_alias_mail: (id: String, address: String, routing_token: String) -> Unit = { _, _, _ -> },
+    on_open_alias_detail: (id: String) -> Unit = {},
+    on_compose_from: (address: String) -> Unit = {},
 ) {
     val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
@@ -293,6 +304,8 @@ fun AliasesScreen(
                     state = state,
                     context = context,
                     scope = scope,
+                    on_open_alias_detail = on_open_alias_detail,
+                    on_compose_from = on_compose_from,
                     on_view_sent = { alias -> on_open_alias_mail(alias.id, alias.address, alias.alias_address_hash) },
                     show_import = show_alias_import,
                     show_export = show_alias_export,
@@ -339,6 +352,7 @@ fun AliasesScreen(
                             context = context,
                             scope = scope,
                             scroll_state = ghost_scroll,
+                            on_compose_from = on_compose_from,
                         )
                     }
                 }
@@ -428,6 +442,8 @@ private fun aliases_tab(
     context: Context,
     scope: kotlinx.coroutines.CoroutineScope,
     on_show_create: () -> Unit,
+    on_open_alias_detail: (String) -> Unit = {},
+    on_compose_from: (String) -> Unit = {},
     on_view_sent: (org.astermail.android.api.settings.AliasInfo) -> Unit = {},
     show_import: Boolean = false,
     show_export: Boolean = false,
@@ -717,21 +733,8 @@ private fun aliases_tab(
                         on_restore = { claimed -> vm.restore_orphaned_alias(alias.id, claimed) },
                         expanded = expanded,
                         on_toggle_expanded = { vm.toggle_alias_expanded(alias.id) },
-                        panel_content = {
-                            alias_detail_panel(
-                                alias = alias,
-                                detail = state.alias_details[alias.id] ?: AliasDetailState(),
-                                vm = vm,
-                                rule_delivery = alias_rule_delivery_note(alias, state.mail_rules, state.labels),
-                                rule_label = alias_rule_label_note(alias, state.mail_rules, state.tags),
-                                on_view_sent = if (alias.alias_address_hash.isNotBlank()) {
-                                    { on_view_sent(alias) }
-                                } else {
-                                    null
-                                },
-                                avatars_locked = avatars_locked,
-                            )
-                        },
+                        on_open_detail = { on_open_alias_detail(alias.id) },
+                        on_compose_from = { on_compose_from(alias.address) },
                     )
                 }
             }
@@ -935,7 +938,7 @@ private fun alias_filter_chip(
     }
 }
 
-private fun copy_address(context: Context, address: String) {
+internal fun copy_address(context: Context, address: String) {
     val copied = write_to_clipboard(context, ClipData.newPlainText("alias", address))
     show_copy_result_toast(context, address, copied)
 }
@@ -1044,7 +1047,8 @@ internal fun alias_list_row(
     delivery_folder_name: String? = null,
     expanded: Boolean = false,
     on_toggle_expanded: (() -> Unit)? = null,
-    panel_content: (@Composable () -> Unit)? = null,
+    on_open_detail: (() -> Unit)? = null,
+    on_compose_from: (() -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
@@ -1062,7 +1066,11 @@ internal fun alias_list_row(
                 hapticFeedbackEnabled = false,
                 onClick = {
                     if (alias.decryption_failed) return@combinedClickable
-                    if (on_toggle_expanded != null) on_toggle_expanded() else on_edit_note?.invoke()
+                    when {
+                        on_open_detail != null -> on_open_detail()
+                        on_toggle_expanded != null -> on_toggle_expanded()
+                        else -> on_edit_note?.invoke()
+                    }
                 },
                 onLongClick = {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -1153,6 +1161,26 @@ internal fun alias_list_row(
                 }
             }
             Spacer(Modifier.width(AsterSpacing.sm))
+            if (on_toggle_expanded != null && !alias.decryption_failed) {
+                val chevron_turn by animateFloatAsState(
+                    targetValue = if (expanded) 180f else 0f,
+                    animationSpec = tween(
+                        durationMillis = AsterDuration.short_4,
+                        easing = AsterEasing.standard_in_out,
+                    ),
+                    label = "alias_chevron",
+                )
+                AsterIconButton(
+                    icon = TablerIcons.ChevronDown,
+                    content_description = stringResource(
+                        if (expanded) R.string.collapse else R.string.expand,
+                    ),
+                    onClick = on_toggle_expanded,
+                    modifier = Modifier
+                        .graphicsLayer { rotationZ = chevron_turn }
+                        .testTag("alias_expand_" + alias.id),
+                )
+            }
             AsterSwitch(
                 checked = alias.is_enabled,
                 enabled = grace_ends == null,
@@ -1169,18 +1197,25 @@ internal fun alias_list_row(
                     expanded = row_menu_open,
                     on_dismiss = { row_menu_open = false },
                 ) {
-                    if (on_toggle_expanded != null && !alias.decryption_failed) {
+                    if (on_open_detail != null && !alias.decryption_failed) {
                         aster_menu_item(
-                            label = if (expanded) {
-                                stringResource(R.string.alias_collapse_settings)
-                            } else {
-                                stringResource(R.string.alias_expand_settings)
-                            },
-                            icon = if (expanded) TablerIcons.ChevronUp else TablerIcons.Settings,
-                            test_tag = "alias_expand_${alias.id}",
+                            label = stringResource(R.string.alias_open_settings),
+                            icon = TablerIcons.Settings,
+                            test_tag = "alias_settings_${alias.id}",
                             on_click = {
                                 row_menu_open = false
-                                on_toggle_expanded()
+                                on_open_detail()
+                            },
+                        )
+                    }
+                    if (on_compose_from != null && !alias.decryption_failed) {
+                        aster_menu_item(
+                            label = stringResource(R.string.new_message),
+                            icon = TablerIcons.Pencil,
+                            test_tag = "alias_compose_${alias.id}",
+                            on_click = {
+                                row_menu_open = false
+                                on_compose_from()
                             },
                         )
                     }
@@ -1223,18 +1258,54 @@ internal fun alias_list_row(
                 }
             }
         }
-        if (expanded && panel_content != null) {
+        if (on_toggle_expanded != null && !alias.decryption_failed) {
             val panel_interaction = remember { MutableInteractionSource() }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        interactionSource = panel_interaction,
-                        indication = null,
-                        onClick = {},
+            val delivery_summary = if (delivery_folder_name != null) {
+                stringResource(R.string.forwards_to_folder, delivery_folder_name)
+            } else {
+                stringResource(R.string.forwards_to_inbox)
+            }
+            AnimatedVisibility(
+                visible = expanded,
+                enter = expandVertically(
+                    animationSpec = tween(
+                        durationMillis = AsterDuration.short_4,
+                        easing = AsterEasing.standard_in_out,
                     ),
+                ) + fadeIn(
+                    animationSpec = tween(
+                        durationMillis = AsterDuration.short_4,
+                        easing = AsterEasing.standard_in_out,
+                    ),
+                ),
+                exit = shrinkVertically(
+                    animationSpec = tween(
+                        durationMillis = AsterDuration.short_3,
+                        easing = AsterEasing.standard_in_out,
+                    ),
+                ) + fadeOut(
+                    animationSpec = tween(
+                        durationMillis = AsterDuration.short_3,
+                        easing = AsterEasing.standard_in_out,
+                    ),
+                ),
             ) {
-                panel_content()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(
+                            interactionSource = panel_interaction,
+                            indication = null,
+                            onClick = {},
+                        ),
+                ) {
+                    alias_compact_panel(
+                        delivery_summary = delivery_summary,
+                        on_compose_from = on_compose_from,
+                        on_copy = { copy_address(context, alias.address) },
+                        on_open_settings = on_open_detail,
+                    )
+                }
             }
         }
     }
@@ -2007,6 +2078,7 @@ internal fun ghost_tab(
     context: Context,
     scope: kotlinx.coroutines.CoroutineScope,
     scroll_state: androidx.compose.foundation.ScrollState,
+    on_compose_from: (String) -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
@@ -2020,6 +2092,7 @@ internal fun ghost_tab(
     var pending_expire by remember { mutableStateOf<Pair<String, String>?>(null) }
     var list_top_px by remember { mutableStateOf(0) }
     var scroll_to_new_ghost by remember { mutableStateOf(false) }
+    var expanded_ghost_id by remember { mutableStateOf<String?>(null) }
 
     val report_action = { ok: Boolean, success_message: Int ->
         android.widget.Toast.makeText(
@@ -2083,14 +2156,14 @@ internal fun ghost_tab(
             state.ghost_aliases.forEachIndexed { idx, g ->
                 val ghost_address = g.address.ifBlank { stringResource(R.string.ghost_unnamed, g.id.take(8)) }
                 val expiry_label = ghost_expiry_label(g.expires_at, g.enabled)
+                val name_expanded = expanded_ghost_id == g.id
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .combinedClickable(
                             hapticFeedbackEnabled = false,
                             onClick = {
-                                val copied = write_to_clipboard(context, ClipData.newPlainText("ghost", ghost_address))
-                                show_copy_result_toast(context, ghost_address, copied)
+                                expanded_ghost_id = if (name_expanded) null else g.id
                             },
                             onLongClick = {
                                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -2098,7 +2171,8 @@ internal fun ghost_tab(
                                 show_copy_result_toast(context, ghost_address, copied)
                             },
                         )
-                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md)
+                        .testTag("ghost_row_${g.id}"),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
@@ -2107,8 +2181,9 @@ internal fun ghost_tab(
                             color = if (g.enabled) colors.text_primary else colors.text_muted,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
-                            maxLines = 1,
+                            maxLines = if (name_expanded) 4 else 1,
                             overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.testTag("ghost_address_${g.id}"),
                         )
                         if (expiry_label != null) {
                             Spacer(Modifier.height(4.dp))
@@ -2120,6 +2195,12 @@ internal fun ghost_tab(
                         }
                     }
                     if (g.enabled) {
+                        AsterIconButton(
+                            icon = TablerIcons.Pencil,
+                            content_description = stringResource(R.string.new_message),
+                            onClick = { on_compose_from(ghost_address) },
+                            modifier = Modifier.testTag("ghost_compose_${g.id}"),
+                        )
                         AsterIconButton(
                             icon = TablerIcons.Refresh,
                             content_description = stringResource(R.string.ghost_extend),
@@ -2215,6 +2296,7 @@ internal fun ghost_tab(
                                         context.getString(R.string.ghost_alias_created, result.address),
                                         android.widget.Toast.LENGTH_LONG,
                                     ).show()
+                                    if (result.address.isNotBlank()) on_compose_from(result.address)
                                 }
                                 is SettingsViewModel.GhostAliasResult.Failure ->
                                     android.widget.Toast.makeText(context, result.message, android.widget.Toast.LENGTH_SHORT).show()

@@ -73,4 +73,7 @@
     <string name="billing_free_upgrade_price_note">Tarife beginnen bei %1$s pro Monat.</string>
     <string name="billing_cancel_plan">Plan kündigen</string>
     <string name="billing_save_amount">%1$s sparen</string>
+    <string name="billing_plan_show_features">Funktionen anzeigen</string>
+    <string name="billing_plan_hide_features">Funktionen ausblenden</string>
+    <string name="billing_billed_yearly_total">%1$s jährlich abgerechnet</string>
 </resources>

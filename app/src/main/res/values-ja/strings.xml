@@ -320,6 +320,10 @@
     <string name="discard">破棄</string>
     <string name="toggle_cc_bcc">Cc/Bccを切り替え</string>
     <string name="add_recipient">宛先を追加</string>
+    <string name="add_another_recipient">追加</string>
+    <string name="compose_attachments">添付ファイル</string>
+    <string name="draft_discarded">下書きを破棄しました</string>
+    <string name="draft_saved">下書きを保存しました</string>
     <string name="e2e_recipient_description">この受信者へのメッセージは相手のIDキーで暗号化されます。相手だけが読めます。</string>
     <string name="transit_recipient_description">この受信者へのメッセージはTLSで転送中に暗号化されます。受信者のサーバーが読める可能性があります。</string>
     <string name="format">書式</string>
@@ -2545,6 +2549,8 @@
     <string name="alias_delivery_title">配送</string>
     <string name="copied_value">%1$s をコピーしました</string>
     <string name="alias_expand_settings">エイリアス設定を表示</string>
+    <string name="alias_open_settings">エイリアス設定</string>
+    <string name="alias_detail_unavailable">このエイリアスは利用できません。</string>
     <string name="alias_collapse_settings">エイリアス設定を隠す</string>
     <string name="alias_panel_details_title">詳細</string>
     <string name="alias_panel_display_name">表示名</string>
@@ -3428,4 +3434,7 @@
     <string name="connection_relay_connected">接続しました</string>
     <string name="connection_relay_restored">通常の状態に戻りました</string>
     <string name="connection_relay_disconnected">切断しました</string>
+    <string name="search_groups">グループを検索</string>
+    <string name="search_trash">ゴミ箱を検索</string>
+    <string name="no_groups_match">「%1$s」に一致するグループはありません</string>
 </resources>

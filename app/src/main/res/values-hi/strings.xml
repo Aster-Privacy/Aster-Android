@@ -524,6 +524,10 @@
     <string name="discard">छोड़ दें</string>
     <string name="toggle_cc_bcc">cc/bcc चालू या बंद करें</string>
     <string name="add_recipient">प्राप्तकर्ता जोड़ें</string>
+    <string name="add_another_recipient">एक और जोड़ें</string>
+    <string name="compose_attachments">अटैचमेंट</string>
+    <string name="draft_discarded">ड्राफ़्ट हटा दिया गया</string>
+    <string name="draft_saved">ड्राफ़्ट सहेज लिया गया</string>
     <string name="recipients_required">कम से कम एक प्राप्तकर्ता जोड़ें</string>
     <string name="e2e_recipient_description">इस प्राप्तकर्ता को भेजे संदेश उनकी पहचान कुंजी से एन्क्रिप्ट होते हैं। उन्हें सिर्फ़ वही पढ़ सकते हैं।</string>
     <string name="transit_recipient_description">इस प्राप्तकर्ता को भेजे संदेश रास्ते में TLS से एन्क्रिप्ट होते हैं। हो सकता है प्राप्तकर्ता का सर्वर उन्हें पढ़ सके।</string>
@@ -2504,6 +2508,8 @@
     </plurals>
     <string name="copied_value">%1$s कॉपी हुआ</string>
     <string name="alias_expand_settings">एलियास सेटिंग दिखाएं</string>
+    <string name="alias_open_settings">एलियास सेटिंग</string>
+    <string name="alias_detail_unavailable">यह एलियास अब उपलब्ध नहीं है।</string>
     <string name="alias_collapse_settings">एलियास सेटिंग छिपाएं</string>
     <string name="alias_panel_details_title">विवरण</string>
     <string name="alias_panel_display_name">दिखने वाला नाम</string>
@@ -3336,4 +3342,7 @@
     <string name="connection_relay_connected">कनेक्ट हो गया</string>
     <string name="connection_relay_restored">सब कुछ फिर से सामान्य है</string>
     <string name="connection_relay_disconnected">डिसकनेक्ट हो गया</string>
+    <string name="search_groups">समूह खोजें</string>
+    <string name="search_trash">ट्रैश में खोजें</string>
+    <string name="no_groups_match">\"%1$s\" से मेल खाने वाला कोई समूह नहीं</string>
 </resources>

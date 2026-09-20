@@ -116,7 +116,9 @@ import org.astermail.android.ui.mail.group_by_thread
 import org.astermail.android.ui.mail.inbox_card_read_color
 import org.astermail.android.ui.mail.inbox_item_to_email
 import org.astermail.android.ui.mail.search_field_bg_color
+import org.astermail.android.ui.common.glass_bar
 import org.astermail.android.ui.common.page_surface
+import org.astermail.android.design.acrylic
 
 private data class FilterChip(val key: String, val label_res: Int)
 
@@ -1194,8 +1196,7 @@ private fun search_input_bar(
                 .weight(1f)
                 .height(52.dp)
                 .padding(horizontal = AsterSpacing.sm)
-                .clip(SquircleShape(26.dp))
-                .background(search_field_bg_color(colors))
+                .acrylic(colors, SquircleShape(26.dp), search_field_bg_color(colors))
                 .padding(horizontal = AsterSpacing.lg),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -1458,6 +1459,7 @@ internal fun search_select_top_bar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .glass_bar(colors)
             .height(56.dp)
             .padding(horizontal = AsterSpacing.xs)
             .testTag("search_select_bar"),

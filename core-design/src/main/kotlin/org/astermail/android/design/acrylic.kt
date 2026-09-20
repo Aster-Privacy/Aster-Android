@@ -37,6 +37,8 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalView
+import android.view.WindowManager
 
 fun interface AcrylicSource {
     fun DrawScope.paint(origin: Offset)
@@ -47,12 +49,22 @@ val local_acrylic = staticCompositionLocalOf<AcrylicSource?> { null }
 private const val acrylic_tint_strength = 0.82f
 
 @Composable
+private fun in_overlay_window(): Boolean {
+    val view = LocalView.current
+    return remember(view) {
+        val params = view.rootView.layoutParams as? WindowManager.LayoutParams
+        params != null && params.type != WindowManager.LayoutParams.TYPE_BASE_APPLICATION
+    }
+}
+
+@Composable
 fun Modifier.acrylic(
     colors: AsterSemanticColors,
     shape: Shape,
     tint: Color = colors.bg_card,
 ): Modifier {
-    if (!colors.is_glass) return this.clip(shape).background(tint)
+    if (in_overlay_window()) return this.clip(shape).background(tint.copy(alpha = 1f))
+    if (!colors.is_translucent) return this.clip(shape).background(colors.glass_surface(tint))
     val source = local_acrylic.current ?: return this.clip(shape).background(colors.glass_surface(tint))
     var origin by remember { mutableStateOf(Offset.Zero) }
     val veil = colors.glass_surface(tint).copy(alpha = colors.glass_opacity * acrylic_tint_strength)
@@ -67,7 +79,8 @@ fun Modifier.acrylic(
 
 @Composable
 fun Modifier.acrylic_backdrop(colors: AsterSemanticColors): Modifier {
-    if (!colors.is_glass) return this
+    if (in_overlay_window()) return this
+    if (!colors.is_translucent) return this
     val source = local_acrylic.current ?: return this
     var origin by remember { mutableStateOf(Offset.Zero) }
     return this

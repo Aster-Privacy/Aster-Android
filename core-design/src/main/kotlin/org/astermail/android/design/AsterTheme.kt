@@ -126,6 +126,7 @@ private val GLASS_INK = Color(0xFF0A0A0C)
 private val GLASS_NEUTRAL_TINT = Color(0xFF1C1C20)
 private const val GLASS_TINT_PRESENCE = 0.55f
 private const val GLASS_ACCENT_BLEED = 0.20f
+private const val glass_backdrop_lift = 0.35f
 
 internal fun image_theme_colors(
     base: AsterSemanticColors,
@@ -148,7 +149,7 @@ internal fun image_theme_colors(
     val all_surfaces = if (resolved_opacity >= 0.999f) {
         opaque_surfaces
     } else {
-        opaque_surfaces + opaque_surfaces.map { mix_rgb(Color.White, it, resolved_opacity) }
+        opaque_surfaces + opaque_surfaces.map { mix_rgb(it, Color.White, (1f - resolved_opacity) * glass_backdrop_lift) }
     }
     val accent = ensure_contrast(base.accent_blue, all_surfaces, contrast_body_text)
     val accent_hover = ensure_contrast(base.accent_blue_hover, all_surfaces, contrast_body_text)

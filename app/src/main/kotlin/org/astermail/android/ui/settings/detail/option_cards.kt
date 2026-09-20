@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
 
 @Composable
 internal fun illustrated_option_card(
@@ -68,8 +69,7 @@ internal fun illustrated_option_card(
     val shape = SquircleShape(16.dp)
     Column(
         modifier = modifier
-            .clip(shape)
-            .background(colors.bg_card, shape)
+            .acrylic(colors, shape)
             .border(
                 width = if (selected) 2.dp else 1.dp,
                 color = if (selected) colors.accent_blue else colors.border_primary,

@@ -32,6 +32,10 @@
         <item quantity="one">Les éléments du spam sont supprimés automatiquement après %1$d jour.</item>
         <item quantity="other">Les éléments du spam sont supprimés automatiquement après %1$d jours.</item>
     </plurals>
+    <plurals name="trash_auto_delete_notice">
+        <item quantity="one">Les éléments de la corbeille sont supprimés automatiquement après %1$d jour.</item>
+        <item quantity="other">Les éléments de la corbeille sont supprimés automatiquement après %1$d jours.</item>
+    </plurals>
     <plurals name="pending_deletion_body_days">
         <item quantity="one">Votre compte sera supprimé dans %1$d jour. Annulez la suppression pour conserver votre compte et restaurer l\'accès à vos e-mails et à votre abonnement.</item>
         <item quantity="other">Votre compte sera supprimé dans %1$d jours. Annulez la suppression pour conserver votre compte et restaurer l\'accès à vos e-mails et à votre abonnement.</item>

@@ -116,11 +116,13 @@ import org.astermail.android.api.subscriptions.MailingListSubscription
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic_backdrop
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.subscriptions.MailingListsViewModel
+import org.astermail.android.ui.common.chrome_surface
 import org.astermail.android.ui.common.page_surface
 
 @Composable
@@ -194,6 +196,10 @@ fun MailingListsScreen(
     }
     LaunchedEffect(selected_ids.isNotEmpty()) {
         if (selected_ids.isNotEmpty()) header_offset_px.floatValue = 0f
+    }
+    LaunchedEffect(show_unsubscribed) {
+        list_state.scrollToItem(0)
+        header_offset_px.floatValue = 0f
     }
 
     fun subscription_id_at_offset(y: Float): String? {
@@ -381,7 +387,7 @@ fun MailingListsScreen(
                 Spacer(Modifier.height(AsterSpacing.md))
             }
             when {
-                state.is_loading && !state.is_scanning && state.items.isEmpty() -> item(key = "loading") {
+                (state.is_loading || state.is_scanning) && state.items.isEmpty() -> item(key = "loading") {
                     Box(
                         modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                         contentAlignment = Alignment.Center,
@@ -410,7 +416,7 @@ fun MailingListsScreen(
                         } else {
                             stringResource(R.string.no_mailing_lists)
                         },
-                        hint = stringResource(R.string.scan_inbox_hint),
+                        hint = if (show_unsubscribed) null else stringResource(R.string.scan_inbox_hint),
                     )
                 }
                 else -> itemsIndexed(visible, key = { _, item -> item.id }) { idx, item ->
@@ -456,7 +462,8 @@ fun MailingListsScreen(
             },
         )
 
-        val header_bg = colors.solid_bg
+        val has_backdrop = colors.is_translucent
+        val header_bg = colors.bg_primary
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -464,6 +471,7 @@ fun MailingListsScreen(
                 .offset { IntOffset(0, header_offset_px.floatValue.roundToInt()) }
                 .onSizeChanged { if (it.height > 0) header_height_px = it.height }
                 .drawBehind {
+                    if (has_backdrop) return@drawBehind
                     val limit = header_height_px.toFloat()
                     val fraction = if (limit == 0f) {
                         0f
@@ -753,7 +761,7 @@ private fun hero_stat_pill(modifier: Modifier = Modifier, value: String, label: 
     Column(
         modifier = modifier
             .clip(SquircleShape(14.dp))
-            .background(Color.Black.copy(alpha = 0.22f))
+            .background(colors.on_accent.copy(alpha = 0.18f))
             .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -778,13 +786,7 @@ private fun hero_stat_pill(modifier: Modifier = Modifier, value: String, label: 
 @Composable
 private fun subscription_chip(text: String, selected: Boolean, on_click: () -> Unit) {
     val colors = AsterMaterial.colors
-    val bg = if (selected) {
-        colors.accent_blue
-    } else if (colors.is_dark) {
-        colors.input_bg
-    } else {
-        colors.bg_secondary
-    }
+    val bg = if (selected) colors.accent_blue else search_field_bg_color(colors)
     val text_color = if (selected) colors.on_accent else colors.text_secondary
     val animated_bg by animateColorAsState(
         targetValue = bg,
@@ -1008,23 +1010,19 @@ private fun row_action_button(
     val pressed by interaction_source.collectIsPressedAsState()
     val intent = if (is_destructive) colors.danger else colors.accent_blue
     val tint by animateColorAsState(
-        targetValue = when {
-            is_loading -> intent
-            pressed -> intent
-            else -> colors.text_tertiary
-        },
+        targetValue = if (is_loading || pressed) intent else colors.text_secondary,
         animationSpec = tween(durationMillis = 140),
         label = "subscription_action_tint",
     )
     val container by animateColorAsState(
-        targetValue = if (pressed) intent.copy(alpha = 0.12f) else Color.Transparent,
+        targetValue = intent.copy(alpha = if (pressed) 0.2f else 0.1f),
         animationSpec = tween(durationMillis = 140),
         label = "subscription_action_container",
     )
     Box(
         modifier = Modifier
             .size(40.dp)
-            .clip(SquircleShape(12.dp))
+            .clip(SquircleShape(14.dp))
             .background(container)
             .clickable(
                 enabled = !is_loading,
@@ -1061,7 +1059,15 @@ private fun subscription_select_bar(
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
-    Surface(modifier = modifier.fillMaxWidth(), color = colors.solid_bg) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .acrylic_backdrop(colors)
+            .chrome_surface(colors),
+        color = Color.Transparent,
+        shadowElevation = 0.dp,
+        tonalElevation = 0.dp,
+    ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             AsterDivider()
             Row(

@@ -320,6 +320,10 @@
     <string name="discard">丢弃</string>
     <string name="toggle_cc_bcc">切换 Cc/Bcc</string>
     <string name="add_recipient">添加收件人</string>
+    <string name="add_another_recipient">添加其他收件人</string>
+    <string name="compose_attachments">附件</string>
+    <string name="draft_discarded">草稿已丢弃</string>
+    <string name="draft_saved">草稿已保存</string>
     <string name="e2e_recipient_description">发送给此收件人的消息将使用其身份密钥加密。只有对方可以阅读。</string>
     <string name="transit_recipient_description">发送给此收件人的消息将通过 TLS 在传输中加密。收件人的服务器可能可以阅读。</string>
     <string name="format">格式</string>
@@ -2545,6 +2549,8 @@
     <string name="alias_delivery_title">投递</string>
     <string name="copied_value">已复制 %1$s</string>
     <string name="alias_expand_settings">显示别名设置</string>
+    <string name="alias_open_settings">别名设置</string>
+    <string name="alias_detail_unavailable">该别名已不可用。</string>
     <string name="alias_collapse_settings">隐藏别名设置</string>
     <string name="alias_panel_details_title">详情</string>
     <string name="alias_panel_display_name">显示名称</string>
@@ -3428,4 +3434,7 @@
     <string name="connection_relay_connected">已连接</string>
     <string name="connection_relay_restored">已恢复正常</string>
     <string name="connection_relay_disconnected">已断开连接</string>
+    <string name="search_groups">搜索群组</string>
+    <string name="search_trash">搜索回收站</string>
+    <string name="no_groups_match">没有与“%1$s”匹配的群组</string>
 </resources>

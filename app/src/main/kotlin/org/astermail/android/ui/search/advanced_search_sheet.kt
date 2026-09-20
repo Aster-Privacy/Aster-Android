@@ -74,6 +74,10 @@ import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu
+import org.astermail.android.design.acrylic
+import org.astermail.android.design.local_acrylic
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 private val ROW_LABEL_WIDTH = 104.dp
 
@@ -92,8 +96,7 @@ private fun advanced_section(title: String, content: @Composable () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(SquircleShape(18.dp))
-                .background(colors.bg_secondary),
+                .acrylic(colors, SquircleShape(18.dp), colors.bg_secondary),
         ) {
             content()
         }
@@ -316,12 +319,16 @@ internal fun advanced_search_sheet(
         include_spam_trash = false
     }
 
+    val sheet_shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+    val sheet_acrylic = colors.is_glass && local_acrylic.current != null
     ModalBottomSheet(
         onDismissRequest = on_dismiss,
         sheetState = sheet_state,
-        containerColor = colors.bg_card,
+        shape = sheet_shape,
+        containerColor = if (sheet_acrylic) Color.Transparent else colors.bg_card,
         tonalElevation = 0.dp,
         dragHandle = { AsterDragHandle() },
+        modifier = if (sheet_acrylic) Modifier.acrylic(colors, sheet_shape) else Modifier,
     ) {
         Column(
             modifier = Modifier

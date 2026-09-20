@@ -48,6 +48,10 @@
         <item quantity="many">Elementy w spamie są automatycznie usuwane po %1$d dniach.</item>
         <item quantity="other">Elementy w spamie są automatycznie usuwane po %1$d dniach.</item>
     </plurals>
+    <plurals name="trash_auto_delete_notice">
+        <item quantity="one">Elementy w koszu są usuwane automatycznie po %1$d dniu.</item>
+        <item quantity="other">Elementy w koszu są usuwane automatycznie po %1$d dniach.</item>
+    </plurals>
     <plurals name="pending_deletion_body_days">
         <item quantity="one">Twoje konto zostanie usunięte za %1$d dzień. Anuluj usuwanie, aby zachować konto i przywrócić dostęp do poczty i subskrypcji.</item>
         <item quantity="few">Twoje konto zostanie usunięte za %1$d dni. Anuluj usuwanie, aby zachować konto i przywrócić dostęp do poczty i subskrypcji.</item>

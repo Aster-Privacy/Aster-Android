@@ -6,6 +6,7 @@
     <string name="compose_quote_forwarded_message">Wiadomość przekazana</string>
     <string name="compose_quote_original_message">Wiadomość oryginalna</string>
     <string name="compose_quote_show_label">Pokaż %1$s</string>
+    <string name="compose_quote_hide_label">Ukryj %1$s</string>
     <string name="compose_quote_header_from">Od:</string>
     <string name="compose_quote_header_date">Data:</string>
     <string name="compose_quote_header_subject">Temat:</string>

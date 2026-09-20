@@ -21,7 +21,7 @@
     <string name="image_theme_remove_photo">Удалить фото</string>
     <string name="image_theme_photo_private">Ваше фото зашифровано и хранится только на этом устройстве.</string>
     <string name="image_theme_photo_too_large">Это фото слишком большое. Выберите фото меньше 40 МБ.</string>
-    <string name="image_theme_photo_unsupported">Этот тип файла не поддерживается. Выберите фото в формате JPEG, PNG, WebP или HEIC.</string>
+    <string name="image_theme_photo_unsupported">Этот тип файла не поддерживается. Выберите фото в формате JPEG, PNG, GIF, WebP или HEIC.</string>
     <string name="image_theme_photo_unreadable">Не удалось открыть это фото. Выберите другое.</string>
     <string name="image_theme_category_calm">Спокойствие</string>
     <string name="image_theme_credit_modified">Фото: %1$s. Обрезано и масштабировано.</string>
@@ -48,4 +48,7 @@
     <string name="glass_mode">Стекло</string>
     <string name="glass_mode_subtitle">Фото просвечивает сквозь поверхности. Отключите, чтобы сделать их непрозрачными.</string>
     <string name="theme_transparency">Прозрачность</string>
+    <string name="image_theme_animation">Анимация фона</string>
+    <string name="image_theme_animation_subtitle">Воспроизводит анимированный фон. Она останавливается в режиме экономии заряда и когда анимации на устройстве отключены.</string>
+    <string name="image_theme_animation_too_large">Это анимированное изображение слишком большое. Выберите меньше 12 МБ.</string>
 </resources>

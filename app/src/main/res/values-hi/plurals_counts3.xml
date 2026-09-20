@@ -32,6 +32,10 @@
         <item quantity="one">स्पैम में रखी चीज़ें %1$d दिन बाद अपने आप हटा दी जाएंगी।</item>
         <item quantity="other">स्पैम में रखी चीज़ें %1$d दिन बाद अपने आप हटा दी जाएंगी।</item>
     </plurals>
+    <plurals name="trash_auto_delete_notice">
+        <item quantity="one">ट्रैश की आइटम एक दिन बाद अपने आप मिट जाती हैं।</item>
+        <item quantity="other">ट्रैश की आइटम %1$d दिन बाद अपने आप मिट जाती हैं।</item>
+    </plurals>
     <plurals name="pending_deletion_body_days">
         <item quantity="one">आपका खाता %1$d दिन में हटाया जाना तय है। खाता बनाए रखने और अपनी मेल तथा सदस्यता तक पहुंच वापस पाने के लिए हटाना रद्द करें।</item>
         <item quantity="other">आपका खाता %1$d दिन में हटाया जाना तय है। खाता बनाए रखने और अपनी मेल तथा सदस्यता तक पहुंच वापस पाने के लिए हटाना रद्द करें।</item>

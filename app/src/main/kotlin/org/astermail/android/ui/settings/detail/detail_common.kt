@@ -67,6 +67,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import org.astermail.android.design.AsterSemanticColors
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
@@ -93,6 +94,7 @@ import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.design.mirror_in_rtl
 import org.astermail.android.ui.common.page_punch
 import org.astermail.android.ui.common.page_surface
+import org.astermail.android.design.acrylic
 
 internal val settings_row_min_height = 56.dp
 internal val settings_group_inset = 4.dp
@@ -235,8 +237,7 @@ internal fun preferences_save_error_banner() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm)
-            .clip(RoundedCornerShape(12.dp))
-            .background(colors.bg_secondary)
+            .acrylic(colors, RoundedCornerShape(12.dp), colors.bg_secondary)
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -403,6 +404,12 @@ internal fun choice_group_title(text: String, subtitle: String? = null) {
     }
 }
 
+private fun choice_row_fill(colors: AsterSemanticColors, selected: Boolean): Color = when {
+    !colors.is_glass -> if (selected) colors.bg_selected else colors.bg_card
+    selected -> colors.bg_selected.copy(alpha = 0.34f)
+    else -> Color.Transparent
+}
+
 @Composable
 internal fun choice_option_row(
     label: String,
@@ -426,7 +433,7 @@ internal fun choice_option_row(
             .fillMaxWidth()
             .clip(androidx.compose.ui.graphics.RectangleShape)
             .then(interaction)
-            .background(if (selected) colors.bg_selected else colors.bg_card)
+            .background(choice_row_fill(colors, selected))
             .then(if (test_tag != null) Modifier.testTag(test_tag) else Modifier)
             .heightIn(min = 54.dp)
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),

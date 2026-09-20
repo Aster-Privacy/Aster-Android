@@ -320,6 +320,10 @@
     <string name="discard">Descartar</string>
     <string name="toggle_cc_bcc">Alternar cc/cco</string>
     <string name="add_recipient">Adicionar destinatário</string>
+    <string name="add_another_recipient">Adicionar outro</string>
+    <string name="compose_attachments">Anexos</string>
+    <string name="draft_discarded">Rascunho descartado</string>
+    <string name="draft_saved">Rascunho salvo</string>
     <string name="e2e_recipient_description">Mensagens para este destinatário são criptografadas com a chave de identidade dele. Somente ele pode lê-las.</string>
     <string name="transit_recipient_description">Mensagens para este destinatário são criptografadas em trânsito usando TLS. O servidor do destinatário pode conseguir lê-las.</string>
     <string name="format">Formatar</string>
@@ -2553,6 +2557,8 @@
     <string name="alias_delivery_title">Entrega</string>
     <string name="copied_value">%1$s copiado</string>
     <string name="alias_expand_settings">Mostrar definições do alias</string>
+    <string name="alias_open_settings">Definições do alias</string>
+    <string name="alias_detail_unavailable">Este alias já não está disponível.</string>
     <string name="alias_collapse_settings">Ocultar definições do alias</string>
     <string name="alias_panel_details_title">Detalhes</string>
     <string name="alias_panel_display_name">Nome de exibição</string>
@@ -3446,4 +3452,7 @@
     <string name="connection_relay_connected">Conectado</string>
     <string name="connection_relay_restored">Tudo voltou ao normal</string>
     <string name="connection_relay_disconnected">Desconectado</string>
+    <string name="search_groups">Pesquisar grupos</string>
+    <string name="search_trash">Pesquisar na lixeira</string>
+    <string name="no_groups_match">Nenhum grupo corresponde a \"%1$s\"</string>
 </resources>

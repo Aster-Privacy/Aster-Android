@@ -58,6 +58,7 @@ internal fun build_email_html(
     email_font_id: String? = null,
     text_zoom: Int = 100,
     underline_links: Boolean = false,
+    scrollable: Boolean = false,
 ): String {
     val chip_scale = maxOf(1f, text_zoom.coerceIn(50, 300) / 100f)
     fun scaled_px(value: Float): String = String.format(java.util.Locale.US, "%.1fpx", value * chip_scale)
@@ -174,7 +175,7 @@ $viewport_meta
 $color_scheme_meta
 <style>
 html{height:auto!important;min-height:0!important;background-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{height:auto!important;min-height:0!important;margin:0;overflow-x:hidden;overflow-y:hidden}
+body{height:auto!important;min-height:0!important;margin:0;overflow-x:hidden;overflow-y:${if (scrollable) "auto" else "hidden"}}
 *{box-sizing:border-box}
 img{max-width:100%!important;height:auto!important}
 img:not([data-blocked='true']):not(.blocked-image){cursor:zoom-in;-webkit-tap-highlight-color:rgba(128,128,128,0.22)}

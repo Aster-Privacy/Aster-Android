@@ -6,6 +6,7 @@
     <string name="compose_quote_forwarded_message">Пересланное сообщение</string>
     <string name="compose_quote_original_message">Исходное сообщение</string>
     <string name="compose_quote_show_label">Показать %1$s</string>
+    <string name="compose_quote_hide_label">Скрыть %1$s</string>
     <string name="compose_quote_header_from">От:</string>
     <string name="compose_quote_header_date">Дата:</string>
     <string name="compose_quote_header_subject">Тема:</string>

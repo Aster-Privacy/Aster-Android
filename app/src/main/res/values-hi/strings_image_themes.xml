@@ -21,7 +21,7 @@
     <string name="image_theme_remove_photo">फ़ोटो हटाएं</string>
     <string name="image_theme_photo_private">आपकी फ़ोटो एन्क्रिप्ट की जाती है और इसी डिवाइस पर रहती है।</string>
     <string name="image_theme_photo_too_large">यह फ़ोटो बहुत बड़ी है। 40 MB से छोटी फ़ोटो चुनें।</string>
-    <string name="image_theme_photo_unsupported">यह फ़ाइल टाइप समर्थित नहीं है। JPEG, PNG, WebP या HEIC फ़ोटो चुनें।</string>
+    <string name="image_theme_photo_unsupported">यह फ़ाइल टाइप समर्थित नहीं है। JPEG, PNG, GIF, WebP या HEIC फ़ोटो चुनें।</string>
     <string name="image_theme_photo_unreadable">यह फ़ोटो खोली नहीं जा सकती। कोई दूसरी फ़ोटो आज़माएं।</string>
     <string name="image_theme_category_calm">शांत</string>
     <string name="image_theme_credit_modified">फ़ोटो: %1$s. क्रॉप और रीसाइज़ की गई।</string>
@@ -48,4 +48,7 @@
     <string name="glass_mode">ग्लास</string>
     <string name="glass_mode_subtitle">आपकी फ़ोटो सतहों के पीछे दिखती है। ठोस सतहों के लिए इसे बंद करें।</string>
     <string name="theme_transparency">पारदर्शिता</string>
+    <string name="image_theme_animation">बैकग्राउंड एनिमेट करें</string>
+    <string name="image_theme_animation_subtitle">आपका एनिमेटेड बैकग्राउंड चलाता है। यह बैटरी सेवर में और डिवाइस पर एनिमेशन बंद होने पर रुक जाता है।</string>
+    <string name="image_theme_animation_too_large">यह एनिमेटेड इमेज बहुत बड़ी है। 12 MB से छोटी इमेज चुनें।</string>
 </resources>
