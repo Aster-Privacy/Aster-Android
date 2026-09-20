@@ -226,14 +226,14 @@ fun ContactDetailScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = AsterSpacing.xxl),
+                    .padding(top = AsterSpacing.xl, bottom = AsterSpacing.xxl),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 ContactAvatar(
                     avatar_url = contact.avatar_url,
                     email = contact.email,
                     name = contact.name,
-                    size = 112.dp,
+                    size = 96.dp,
                     content_description = stringResource(R.string.contact_photo),
                     profile_color = contact.profile_color,
                 )
@@ -329,42 +329,45 @@ fun ContactDetailScreen(
             Spacer(Modifier.height(AsterSpacing.xl))
 
             if (contact.email.isNotBlank() || contact.work_email.isNotBlank()) {
-                DetailCard(icon = TablerIcons.Mail) {
+                detail_section(stringResource(R.string.email)) {
                     if (contact.email.isNotBlank()) {
                         DetailRow(stringResource(R.string.personal), contact.email)
+                    }
+                    if (contact.email.isNotBlank() && contact.work_email.isNotBlank()) {
+                        detail_row_divider()
                     }
                     if (contact.work_email.isNotBlank()) {
                         DetailRow(stringResource(R.string.work), contact.work_email)
                     }
                 }
-                AsterDivider()
             }
 
             if (contact.phone.isNotBlank() || contact.work_phone.isNotBlank()) {
-                DetailCard(icon = TablerIcons.Phone) {
+                detail_section(stringResource(R.string.phone)) {
                     if (contact.phone.isNotBlank()) {
                         DetailRow(stringResource(R.string.mobile), contact.phone)
+                    }
+                    if (contact.phone.isNotBlank() && contact.work_phone.isNotBlank()) {
+                        detail_row_divider()
                     }
                     if (contact.work_phone.isNotBlank()) {
                         DetailRow(stringResource(R.string.work), contact.work_phone)
                     }
                 }
-                AsterDivider()
             }
 
             if (contact.company.isNotBlank() || contact.title.isNotBlank()) {
-                DetailCard(icon = TablerIcons.Briefcase) {
+                detail_section(stringResource(R.string.company)) {
                     if (contact.company.isNotBlank()) DetailRow(stringResource(R.string.company), contact.company)
+                    if (contact.company.isNotBlank() && contact.title.isNotBlank()) detail_row_divider()
                     if (contact.title.isNotBlank()) DetailRow(stringResource(R.string.title), contact.title)
                 }
-                AsterDivider()
             }
 
             if (contact.birthday.isNotBlank()) {
-                DetailCard(icon = TablerIcons.Calendar) {
+                detail_section(stringResource(R.string.birthday)) {
                     DetailRow(stringResource(R.string.date), format_contact_date(contact.birthday))
                 }
-                AsterDivider()
             }
 
             val has_address = listOf(
@@ -375,7 +378,7 @@ fun ContactDetailScreen(
                 contact.country,
             ).any { it.isNotBlank() }
             if (has_address) {
-                DetailCard(icon = TablerIcons.MapPin) {
+                detail_section(stringResource(R.string.address)) {
                     val lines = listOf(
                         contact.address,
                         listOf(contact.city, contact.region, contact.postal_code)
@@ -385,7 +388,6 @@ fun ContactDetailScreen(
                     ).filter { it.isNotBlank() }
                     DetailRow(stringResource(R.string.location), lines.joinToString("\n"))
                 }
-                AsterDivider()
             }
 
             val has_social = contact.website.isNotBlank() ||
@@ -407,7 +409,7 @@ fun ContactDetailScreen(
                         ).show()
                     }
                 }
-                DetailCard(icon = TablerIcons.Link) {
+                detail_section(stringResource(R.string.social)) {
                     if (contact.website.isNotBlank()) {
                         val url = build_contact_social_url("website", contact.website)
                         DetailRow(
@@ -416,6 +418,9 @@ fun ContactDetailScreen(
                             on_open = url?.let { { open_contact_url(it) } },
                         )
                     }
+                    if (contact.website.isNotBlank() && contact.twitter.isNotBlank()) {
+                        detail_row_divider()
+                    }
                     if (contact.twitter.isNotBlank()) {
                         val url = build_contact_social_url("twitter", contact.twitter)
                         DetailRow(
@@ -423,6 +428,9 @@ fun ContactDetailScreen(
                             contact.twitter,
                             on_open = url?.let { { open_contact_url(it) } },
                         )
+                    }
+                    if ((contact.website.isNotBlank() || contact.twitter.isNotBlank()) && contact.linkedin.isNotBlank()) {
+                        detail_row_divider()
                     }
                     if (contact.linkedin.isNotBlank()) {
                         val url = build_contact_social_url("linkedin", contact.linkedin)
@@ -433,18 +441,20 @@ fun ContactDetailScreen(
                         )
                     }
                 }
-                AsterDivider()
             }
 
             if (contact.notes.isNotBlank()) {
-                DetailCard(icon = TablerIcons.Notes) {
+                detail_section(stringResource(R.string.notes)) {
                     Text(
                         text = contact.notes,
                         color = colors.text_primary,
                         style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(
+                            horizontal = AsterSpacing.lg,
+                            vertical = AsterSpacing.md,
+                        ),
                     )
                 }
-                AsterDivider()
             }
 
             Spacer(Modifier.height(AsterSpacing.xl))
@@ -544,36 +554,41 @@ private fun format_contact_date(value: String): String = runCatching {
 }.getOrDefault(value)
 
 @Composable
-private fun DetailCard(icon: ImageVector, content: @Composable ColumnScope.() -> Unit) {
+private fun detail_section(label: String, content: @Composable ColumnScope.() -> Unit) {
     val colors = AsterMaterial.colors
-    Row(
+    val shape = SquircleShape(AsterRadius.xl)
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
     ) {
-        Box(
-            modifier = Modifier
-                .padding(top = 2.dp)
-                .size(40.dp)
-                .clip(CircleShape)
-                .acrylic(colors, CircleShape, colors.bg_secondary),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = colors.text_secondary,
-                modifier = Modifier.size(18.dp),
-            )
-        }
-        Spacer(Modifier.width(AsterSpacing.lg))
+        Text(
+            text = label,
+            color = colors.text_tertiary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(start = AsterSpacing.md, bottom = 6.dp),
+        )
         Column(
             modifier = Modifier
-                .weight(1f)
-                .padding(top = 6.dp),
+                .fillMaxWidth()
+                .clip(shape)
+                .acrylic(colors, shape, colors.bg_secondary),
             content = content,
         )
     }
+}
+
+@Composable
+private fun detail_row_divider() {
+    val colors = AsterMaterial.colors
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = AsterSpacing.lg)
+            .height(1.dp)
+            .background(colors.border_secondary),
+    )
 }
 
 @Composable
@@ -583,17 +598,18 @@ private fun DetailRow(label: String, value: String, on_open: (() -> Unit)? = nul
         modifier = Modifier
             .fillMaxWidth()
             .then(if (on_open != null) Modifier.clickable(onClick = on_open) else Modifier)
-            .padding(vertical = AsterSpacing.xs),
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
     ) {
-        Text(
-            text = value,
-            color = if (on_open != null) colors.accent_blue else colors.text_primary,
-            fontSize = 15.sp,
-        )
         Text(
             text = label,
             color = colors.text_tertiary,
             fontSize = 12.sp,
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = value,
+            color = if (on_open != null) colors.accent_blue else colors.text_primary,
+            fontSize = 15.sp,
         )
     }
 }

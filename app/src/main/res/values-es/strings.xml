@@ -3439,10 +3439,22 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">Conectado</string>
+    <string name="connection_relay_connected">Aviso: tu conexión puede ser más lenta porque pasa por Cloudflare.</string>
     <string name="connection_relay_restored">Todo ha vuelto a la normalidad</string>
     <string name="connection_relay_disconnected">Desconectado</string>
     <string name="search_groups">Buscar grupos</string>
     <string name="search_trash">Buscar en la papelera</string>
     <string name="no_groups_match">Ningún grupo coincide con \"%1$s\"</string>
+    <string name="captcha_verifying">Verificando que eres una persona</string>
+    <string name="captcha_unavailable">La verificación no se cargó. Revisa tu conexión y vuelve a intentarlo.</string>
+    <string name="captcha_retry">Volver a intentar</string>
+    <string name="connection_relay_failed">No se pudo cambiar el método de conexión. Vuelve a intentarlo.</string>
+    <string name="all_emails">Todos los correos</string>
+    <string name="read_only">Solo leídos</string>
+    <string name="with_attachments">Con archivos adjuntos</string>
+    <string name="quick_actions">Acciones rápidas</string>
+    <string name="archive_all_read_emails">Archivar correos leídos</string>
+    <string name="delete_emails_older_than_30_days">Eliminar correos de más de 30 días</string>
+    <string name="inbox_tools">Filtros y acciones rápidas</string>
+    <string name="inbox_tools_subtitle">Muestra los botones de filtro y acciones rápidas en la cabecera de la bandeja de entrada</string>
 </resources>

@@ -3438,10 +3438,22 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">Verbonden</string>
+    <string name="connection_relay_connected">Let op: je verbinding kan trager zijn omdat die via Cloudflare loopt.</string>
     <string name="connection_relay_restored">Weer normaal</string>
     <string name="connection_relay_disconnected">Verbinding verbroken</string>
     <string name="search_groups">Groepen zoeken</string>
     <string name="search_trash">Prullenbak doorzoeken</string>
     <string name="no_groups_match">Geen groepen komen overeen met \"%1$s\"</string>
+    <string name="captcha_verifying">Controleren of je een mens bent</string>
+    <string name="captcha_unavailable">De controle is niet geladen. Controleer je verbinding en probeer het opnieuw.</string>
+    <string name="captcha_retry">Opnieuw proberen</string>
+    <string name="connection_relay_failed">De verbindingsmethode is niet gewijzigd. Probeer het opnieuw.</string>
+    <string name="all_emails">Alle e-mails</string>
+    <string name="read_only">Alleen gelezen</string>
+    <string name="with_attachments">Met bijlagen</string>
+    <string name="quick_actions">Snelle acties</string>
+    <string name="archive_all_read_emails">Gelezen e-mails archiveren</string>
+    <string name="delete_emails_older_than_30_days">E-mails ouder dan 30 dagen verwijderen</string>
+    <string name="inbox_tools">Filters en snelle acties</string>
+    <string name="inbox_tools_subtitle">Toont de knoppen voor filters en snelle acties in de koptekst van het Postvak IN</string>
 </resources>

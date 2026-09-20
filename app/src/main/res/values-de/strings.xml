@@ -3439,10 +3439,22 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">Verbunden</string>
+    <string name="connection_relay_connected">Hinweis: Deine Verbindung kann langsamer sein, da sie über Cloudflare läuft.</string>
     <string name="connection_relay_restored">Wieder normal</string>
     <string name="connection_relay_disconnected">Getrennt</string>
     <string name="search_groups">Gruppen suchen</string>
     <string name="search_trash">Papierkorb durchsuchen</string>
     <string name="no_groups_match">Keine Gruppen stimmen mit „%1$s“ überein</string>
+    <string name="captcha_verifying">Bestätigung, dass du ein Mensch bist</string>
+    <string name="captcha_unavailable">Die Bestätigung wurde nicht geladen. Prüfe deine Verbindung und versuche es erneut.</string>
+    <string name="captcha_retry">Erneut versuchen</string>
+    <string name="connection_relay_failed">Die Verbindungsmethode wurde nicht geändert. Versuche es erneut.</string>
+    <string name="all_emails">Alle E-Mails</string>
+    <string name="read_only">Nur gelesene</string>
+    <string name="with_attachments">Mit Anhängen</string>
+    <string name="quick_actions">Schnellaktionen</string>
+    <string name="archive_all_read_emails">Gelesene E-Mails archivieren</string>
+    <string name="delete_emails_older_than_30_days">E-Mails löschen, die älter als 30 Tage sind</string>
+    <string name="inbox_tools">Filter und Schnellaktionen</string>
+    <string name="inbox_tools_subtitle">Zeigt die Schaltflächen für Filter und Schnellaktionen in der Posteingangsleiste an</string>
 </resources>

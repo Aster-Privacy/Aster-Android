@@ -56,6 +56,7 @@ private val thumb_width = 6.dp
 private val thumb_width_active = 10.dp
 private val thumb_min_height = 44.dp
 private const val min_items_for_thumb = 12
+private const val end_overscroll_px = 100000
 
 @Composable
 fun fast_scroll_bar(
@@ -227,7 +228,13 @@ private suspend fun scroll_to_fraction(
     metrics: scroll_metrics,
 ) {
     if (metrics.span <= 0f || metrics.total <= 0) return
-    val target = fraction.coerceIn(0f, 1f) * metrics.span
-    val index = target.roundToInt().coerceIn(0, max(metrics.total - 1, 0))
+    val clamped = fraction.coerceIn(0f, 1f)
+    val last_index = max(metrics.total - 1, 0)
+    if (clamped >= 0.995f) {
+        state.scrollToItem(last_index, end_overscroll_px)
+        return
+    }
+    val target = clamped * metrics.span
+    val index = target.roundToInt().coerceIn(0, last_index)
     state.scrollToItem(index)
 }

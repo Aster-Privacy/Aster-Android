@@ -4,15 +4,26 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   html, body { margin:0; padding:0; background:transparent; display:flex;
-    align-items:center; justify-content:center; min-height:65px; overflow:hidden;
-    color-scheme:dark; }
+    align-items:center; justify-content:center; min-height:65px; overflow:hidden; }
   .cf-wrap { overflow:hidden; border-radius:4px; line-height:0; transform-origin:center center;
     width:294px; min-width:294px; flex:none; }
   #cf { margin:-3px; line-height:0; }
 </style>
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=_onLoad" async defer></script>
+<script>
+var _params = new URLSearchParams(window.location.search);
+var _theme = _params.get('theme') === 'light' ? 'light' : 'dark';
+document.documentElement.style.colorScheme = _theme;
+</script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=_onLoad" async defer onerror="_fail('script_blocked')"></script>
 <script>
 var _wid;
+var _ready = false;
+var _reported = false;
+function _fail(reason) {
+  if (_ready || _reported) return;
+  _reported = true;
+  if (window.AsterBridge) AsterBridge.onError(reason);
+}
 function _fit() {
   var wrap = document.querySelector('.cf-wrap');
   if (!wrap) return;
@@ -22,18 +33,23 @@ function _fit() {
 window.addEventListener('resize', _fit);
 window.addEventListener('load', _fit);
 function _onLoad() {
+  _ready = true;
   _fit();
-  var params = new URLSearchParams(window.location.search);
-  var sitekey = params.get('sitekey') || '';
+  var sitekey = _params.get('sitekey') || '';
   _wid = turnstile.render('#cf', {
     sitekey: sitekey,
-    theme: 'dark',
-    callback: function(token) { AsterBridge.onToken(token); },
-    'error-callback': function() { AsterBridge.onError('captcha_failed'); },
+    theme: _theme,
+    callback: function(token) { _reported = false; AsterBridge.onToken(token); },
+    'error-callback': function() { _reported = true; AsterBridge.onError('captcha_failed'); },
+    'timeout-callback': function() { _reported = true; AsterBridge.onError('captcha_timeout'); },
     'expired-callback': function() { AsterBridge.onExpired(); }
   });
 }
-function _reset() { if (_wid !== undefined) turnstile.reset(_wid); }
+setTimeout(function() { _fail('script_timeout'); }, 15000);
+function _reset() {
+  _reported = false;
+  if (_wid !== undefined) { turnstile.reset(_wid); } else { _fail('script_blocked'); }
+}
 </script>
 </head>
 <body><div class="cf-wrap"><div id="cf"></div></div></body>

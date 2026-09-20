@@ -107,6 +107,7 @@ fun TurnstileWidget(
     reset_trigger: Int = 0,
     modifier: Modifier = Modifier,
 ) {
+    val theme = if (org.astermail.android.design.AsterMaterial.colors.is_dark) "dark" else "light"
     val current_on_token = rememberUpdatedState(on_token)
     val current_on_error = rememberUpdatedState(on_error)
     val current_on_expired = rememberUpdatedState(on_expired)
@@ -154,7 +155,7 @@ fun TurnstileWidget(
                         "AsterBridge",
                     )
                     loadUrl(
-                        "https://$TURNSTILE_DOMAIN/assets/turnstile.html?sitekey=$TURNSTILE_SITE_KEY",
+                        "https://$TURNSTILE_DOMAIN/assets/turnstile.html?sitekey=$TURNSTILE_SITE_KEY&theme=$theme",
                     )
                 }.also { web_view_ref.value = it }
             }.getOrElse { error ->

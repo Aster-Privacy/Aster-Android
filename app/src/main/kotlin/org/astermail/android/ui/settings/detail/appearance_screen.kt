@@ -725,6 +725,21 @@ fun AppearanceScreen(
         }
 
         v_gap(AsterSpacing.xxl)
+        section_label(stringResource(R.string.inbox_tools))
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            val tools_context = androidx.compose.ui.platform.LocalContext.current
+            settings_toggle_row(
+                title = stringResource(R.string.inbox_tools),
+                subtitle = stringResource(R.string.inbox_tools_subtitle),
+                checked = org.astermail.android.ui.mail.show_inbox_tools(),
+                test_tag = "inbox_tools_toggle",
+                on_change = { on ->
+                    org.astermail.android.ui.mail.inbox_tools_pref.set(tools_context, on)
+                },
+            )
+        }
+
+        v_gap(AsterSpacing.xxl)
         section_label(stringResource(R.string.section_compose_text))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             Text(

@@ -23,7 +23,6 @@ package org.astermail.android.ui.search
 
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Adjustments
-import compose.icons.tablericons.Check
 import compose.icons.tablericons.ChevronDown
 
 import androidx.compose.foundation.background
@@ -36,7 +35,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -75,7 +73,11 @@ import org.astermail.android.ui.mail.SenderAvatar
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.local_acrylic
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.height
+
+private val chip_height = 34.dp
 
 @Composable
 internal fun quick_chip(
@@ -85,33 +87,30 @@ internal fun quick_chip(
     on_click: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val bg = if (active) colors.accent_blue.copy(alpha = 0.16f) else colors.bg_secondary
-    val border = if (active) colors.accent_blue.copy(alpha = 0.35f) else colors.border_secondary
-    val text_color = if (active) colors.accent_blue else colors.text_secondary
+    val text_color = if (active) colors.on_accent else colors.text_primary
+    val shape = CircleShape
 
     Row(
         modifier = Modifier
-            .clip(SquircleShape(999.dp))
-            .background(bg)
-            .border(1.dp, border, SquircleShape(999.dp))
-            .clickable(onClick = on_click)
-            .heightIn(min = 38.dp)
-            .padding(horizontal = 14.dp, vertical = 9.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
-    ) {
-        if (active) {
-            Icon(
-                imageVector = TablerIcons.Check,
-                contentDescription = null,
-                tint = text_color,
-                modifier = Modifier.size(15.dp),
+            .height(chip_height)
+            .clip(shape)
+            .then(
+                if (active) {
+                    Modifier.background(colors.accent_blue)
+                } else {
+                    Modifier.acrylic(colors, shape, colors.bg_card)
+                },
             )
-        }
+            .border(1.dp, if (active) colors.accent_blue else colors.border_primary, shape)
+            .clickable(onClick = on_click)
+            .padding(start = 14.dp, end = if (show_caret) 10.dp else 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
         Text(
             text = label,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
+            fontSize = 13.sp,
+            fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
             color = text_color,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -121,7 +120,7 @@ internal fun quick_chip(
                 imageVector = TablerIcons.ChevronDown,
                 contentDescription = null,
                 tint = text_color,
-                modifier = Modifier.size(15.dp),
+                modifier = Modifier.size(16.dp),
             )
         }
     }
@@ -448,23 +447,24 @@ internal fun search_chip_row(
         ordered.forEach { it.second() }
         Row(
             modifier = Modifier
-                .clip(SquircleShape(999.dp))
-                .background(colors.accent_blue.copy(alpha = 0.12f))
+                .height(chip_height)
+                .clip(CircleShape)
+                .acrylic(colors, CircleShape, colors.bg_card)
+                .border(1.dp, colors.border_primary, CircleShape)
                 .clickable(onClick = on_advanced_click)
-                .heightIn(min = 38.dp)
-                .padding(horizontal = 14.dp, vertical = 9.dp),
+                .padding(start = 12.dp, end = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Icon(
                 imageVector = TablerIcons.Adjustments,
                 contentDescription = null,
                 tint = colors.accent_blue,
-                modifier = Modifier.size(15.dp),
+                modifier = Modifier.size(16.dp),
             )
             Text(
                 text = stringResource(R.string.chip_advanced_search),
-                fontSize = 14.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 color = colors.accent_blue,
                 maxLines = 1,

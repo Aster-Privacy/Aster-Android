@@ -3420,10 +3420,22 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">연결됨</string>
+    <string name="connection_relay_connected">참고: Cloudflare를 거쳐 연결되므로 속도가 느려질 수 있습니다.</string>
     <string name="connection_relay_restored">정상으로 돌아왔습니다</string>
     <string name="connection_relay_disconnected">연결이 끊어졌습니다</string>
     <string name="search_groups">그룹 검색</string>
     <string name="search_trash">휴지통 검색</string>
     <string name="no_groups_match">\"%1$s\"과(와) 일치하는 그룹이 없습니다</string>
+    <string name="captcha_verifying">사람인지 확인하는 중</string>
+    <string name="captcha_unavailable">확인을 불러오지 못했습니다. 연결을 확인한 다음 다시 시도하세요.</string>
+    <string name="captcha_retry">다시 시도</string>
+    <string name="connection_relay_failed">연결 방식을 바꿀 수 없었습니다. 다시 시도하세요.</string>
+    <string name="all_emails">모든 메일</string>
+    <string name="read_only">읽은 메일만</string>
+    <string name="with_attachments">첨부파일 있음</string>
+    <string name="quick_actions">빠른 작업</string>
+    <string name="archive_all_read_emails">읽은 메일 보관</string>
+    <string name="delete_emails_older_than_30_days">30일이 지난 메일 삭제</string>
+    <string name="inbox_tools">필터 및 빠른 작업</string>
+    <string name="inbox_tools_subtitle">받은편지함 헤더에 필터 및 빠른 작업 버튼을 표시합니다</string>
 </resources>

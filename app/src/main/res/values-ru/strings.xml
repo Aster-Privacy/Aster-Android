@@ -3480,10 +3480,22 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">Подключено</string>
+    <string name="connection_relay_connected">Учтите: соединение может стать медленнее, так как идёт через Cloudflare.</string>
     <string name="connection_relay_restored">Всё снова работает как обычно</string>
     <string name="connection_relay_disconnected">Отключено</string>
     <string name="search_groups">Поиск групп</string>
     <string name="search_trash">Поиск в корзине</string>
     <string name="no_groups_match">Нет групп, соответствующих «%1$s»</string>
+    <string name="captcha_verifying">Проверяем, что вы человек</string>
+    <string name="captcha_unavailable">Проверка не загрузилась. Проверьте подключение и повторите попытку.</string>
+    <string name="captcha_retry">Повторить</string>
+    <string name="connection_relay_failed">Не удалось изменить способ подключения. Повторите попытку.</string>
+    <string name="all_emails">Все письма</string>
+    <string name="read_only">Только прочитанные</string>
+    <string name="with_attachments">С вложениями</string>
+    <string name="quick_actions">Быстрые действия</string>
+    <string name="archive_all_read_emails">Архивировать прочитанные письма</string>
+    <string name="delete_emails_older_than_30_days">Удалить письма старше 30 дней</string>
+    <string name="inbox_tools">Фильтры и быстрые действия</string>
+    <string name="inbox_tools_subtitle">Показывает кнопки фильтров и быстрых действий в заголовке входящих</string>
 </resources>

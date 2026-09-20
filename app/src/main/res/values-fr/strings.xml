@@ -3465,10 +3465,22 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">Connecté</string>
+    <string name="connection_relay_connected">À noter : votre connexion peut être plus lente, car elle passe par Cloudflare.</string>
     <string name="connection_relay_restored">Retour à la normale</string>
     <string name="connection_relay_disconnected">Déconnecté</string>
     <string name="search_groups">Rechercher des groupes</string>
     <string name="search_trash">Rechercher dans la corbeille</string>
     <string name="no_groups_match">Aucun groupe ne correspond à « %1$s »</string>
+    <string name="captcha_verifying">Vérification que vous êtes humain</string>
+    <string name="captcha_unavailable">La vérification ne s’est pas chargée. Vérifiez votre connexion, puis réessayez.</string>
+    <string name="captcha_retry">Réessayer</string>
+    <string name="connection_relay_failed">Impossible de changer la méthode de connexion. Réessayez.</string>
+    <string name="all_emails">Tous les e-mails</string>
+    <string name="read_only">Lus uniquement</string>
+    <string name="with_attachments">Avec pièces jointes</string>
+    <string name="quick_actions">Actions rapides</string>
+    <string name="archive_all_read_emails">Archiver les e-mails lus</string>
+    <string name="delete_emails_older_than_30_days">Supprimer les e-mails de plus de 30 jours</string>
+    <string name="inbox_tools">Filtres et actions rapides</string>
+    <string name="inbox_tools_subtitle">Affiche les boutons de filtre et d\'actions rapides dans l\'en-tête de la boîte de réception</string>
 </resources>

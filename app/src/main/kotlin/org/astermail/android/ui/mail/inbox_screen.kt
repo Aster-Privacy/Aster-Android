@@ -847,7 +847,9 @@ fun InboxScreen(
     } else {
         null
     }
-    var unread_only by rememberSaveable { mutableStateOf(false) }
+    var active_filter by rememberSaveable { mutableStateOf(inbox_filter_all) }
+    val unread_only = active_filter != inbox_filter_all
+    val tools_visible = show_inbox_tools()
     val grouping_enabled = settings_state.preferences?.conversation_grouping != false
     val initial_threads = remember {
         if (emails.isEmpty()) {
@@ -980,8 +982,8 @@ fun InboxScreen(
             0
         }
     }
-    val visible_threads = if (unread_only && categories_enabled) {
-        threads.filter { it.has_unread }
+    val visible_threads = if (unread_only) {
+        threads.filter { thread_matches_inbox_filter(it, active_filter) }
     } else {
         threads
     }
@@ -1038,6 +1040,7 @@ fun InboxScreen(
             val near_end = total > 0 && (total - last_visible) <= 3
             val s = inbox_state
             near_end &&
+                !unread_only &&
                 s.has_more &&
                 !s.is_loading &&
                 !s.is_loading_more &&
@@ -1062,7 +1065,8 @@ fun InboxScreen(
         inbox_state.initial,
     ) {
         val s = inbox_state
-        if (s.has_more &&
+        if (!unread_only &&
+            s.has_more &&
             !s.is_loading &&
             !s.is_loading_more &&
             !s.initial &&
@@ -1106,6 +1110,35 @@ fun InboxScreen(
             for (i in emails.indices) {
                 note_read_mutation(emails[i].id)
                 emails[i] = emails[i].copy(is_read = false)
+            }
+        }
+    }
+
+    fun run_quick_action(action: String) {
+        when (action) {
+            inbox_quick_action_mark_all_read -> mark_all_read(true)
+            inbox_quick_action_archive_read -> {
+                if (current_folder == "scheduled" || current_folder == "drafts") return
+                val read_threads = threads.filter { !it.has_unread }.map { it.thread_id }.toSet()
+                if (read_threads.isEmpty()) return
+                val ids = emails.filter { thread_row_covers(it, read_threads, grouping_enabled) }.map { it.id }
+                if (ids.isEmpty()) return
+                mail_vm.archive(ids, read_threads.size)
+                emails.removeAll { thread_row_covers(it, read_threads, grouping_enabled) }
+            }
+            inbox_quick_action_delete_old -> {
+                if (current_folder == "scheduled" || current_folder == "trash") return
+                val cutoff = System.currentTimeMillis() -
+                    inbox_quick_action_age_days.toLong() * 24L * 60L * 60L * 1000L
+                val old_threads = threads
+                    .filter { it.newest.received_at < cutoff }
+                    .map { it.thread_id }
+                    .toSet()
+                if (old_threads.isEmpty()) return
+                val ids = emails.filter { thread_row_covers(it, old_threads, grouping_enabled) }.map { it.id }
+                if (ids.isEmpty()) return
+                mail_vm.trash(ids, old_threads.size)
+                emails.removeAll { thread_row_covers(it, old_threads, grouping_enabled) }
             }
         }
     }
@@ -1805,6 +1838,8 @@ fun InboxScreen(
                 val handoff = Modifier.skeleton_handoff(skeleton_phase)
                 val row_geometry = remember_row_geometry(skeleton_geometry_of(settings_state.preferences))
                 val record_row_height = remember_row_height_recorder()
+                val record_row_preview = remember_row_preview_recorder(current_folder)
+                val skeleton_yesterday_label = stringResource(R.string.yesterday)
                 if (skeleton_now || skeleton_phase != SkeletonPhase.content) {
                     Box(Modifier.padding(top = header_height_dp))
                 } else if (inbox_error_now) {
@@ -2025,6 +2060,22 @@ fun InboxScreen(
                             val is_selected by remember(thread.thread_id) {
                                 derivedStateOf { select_mode && selected_ids.contains(thread.thread_id) }
                             }
+                            LaunchedEffect(thread.thread_id, row_index, thread.newest.is_read) {
+                                record_row_preview(
+                                    row_index,
+                                    SkeletonRowPreview(
+                                        sender = displayed_sender_name(
+                                            thread.newest.display_sender_name,
+                                            thread.newest.sender_name,
+                                        ),
+                                        subject = thread.newest.subject,
+                                        preview = thread.newest.preview,
+                                        time = thread.newest.received_at
+                                            .format_relative_time(skeleton_yesterday_label),
+                                        unread = !thread.newest.is_read,
+                                    ),
+                                )
+                            }
                             if (select_mode) {
                                 Box(
                                     modifier = Modifier
@@ -2155,7 +2206,7 @@ fun InboxScreen(
                                 }
                             }
                         }
-                        if (inbox_state.is_loading_more) {
+                        if (inbox_state.is_loading_more && !unread_only) {
                             items(
                                 count = 3,
                                 key = { "_loading_more_$it" },
@@ -2177,7 +2228,7 @@ fun InboxScreen(
                                 }
                             }
                         } else if (
-                            !inbox_state.has_more &&
+                            (!inbox_state.has_more || unread_only) &&
                             !inbox_state.is_loading &&
                             !inbox_state.initial &&
                             visible_threads.isNotEmpty()
@@ -2210,6 +2261,7 @@ fun InboxScreen(
                     phase = skeleton_phase,
                     modifier = Modifier.padding(top = header_height_dp),
                     live_geometry = skeleton_geometry_of(settings_state.preferences),
+                    folder = current_folder,
                 )
                 pull_indicator()
             }
@@ -2291,8 +2343,18 @@ fun InboxScreen(
                         all_mail_include_trash = all_mail_include_trash,
                         on_all_mail_scope_change = on_all_mail_scope_change,
                         show_unread_filter = categories_enabled,
-                        unread_only = unread_only,
-                        on_toggle_unread_only = { unread_only = !unread_only },
+                        unread_only = active_filter == inbox_filter_unread,
+                        on_toggle_unread_only = {
+                            active_filter = if (active_filter == inbox_filter_unread) {
+                                inbox_filter_all
+                            } else {
+                                inbox_filter_unread
+                            }
+                        },
+                        show_tools = tools_visible,
+                        active_filter = active_filter,
+                        on_filter_change = { active_filter = it },
+                        on_quick_action = ::run_quick_action,
                         selection_content = if (select_mode) {
                             {
                                 select_mode_top_bar(
@@ -2798,6 +2860,10 @@ internal fun inbox_top_bar(
     show_unread_filter: Boolean = false,
     unread_only: Boolean = false,
     on_toggle_unread_only: () -> Unit = {},
+    show_tools: Boolean = true,
+    active_filter: String = inbox_filter_all,
+    on_filter_change: (String) -> Unit = {},
+    on_quick_action: (String) -> Unit = {},
     selection_content: (@Composable () -> Unit)? = null,
     alias_direction: String? = null,
     on_alias_direction_change: (String) -> Unit = {},
@@ -2885,6 +2951,101 @@ internal fun inbox_top_bar(
             }
     }
 
+    var filter_menu_open by remember { mutableStateOf(false) }
+    var quick_menu_open by remember { mutableStateOf(false) }
+
+    val filter_button: @Composable () -> Unit = {
+        Box {
+            AsterIconButton(
+                icon = TablerIcons.Filter,
+                content_description = stringResource(R.string.filters),
+                onClick = { filter_menu_open = true },
+                tint = if (active_filter != inbox_filter_all) colors.accent_blue else Color.Unspecified,
+                modifier = Modifier.testTag("inbox_filters"),
+            )
+            aster_menu(
+                expanded = filter_menu_open,
+                on_dismiss = { filter_menu_open = false },
+            ) {
+                if (alias_direction != null) {
+                    aster_menu_section_label(stringResource(R.string.alias_direction_label))
+                    listOf(
+                        org.astermail.android.mail.alias_direction_all to R.string.alias_direction_all,
+                        org.astermail.android.mail.alias_direction_received to R.string.alias_direction_received,
+                        org.astermail.android.mail.alias_direction_sent to R.string.alias_direction_sent,
+                    ).forEach { (id, label) ->
+                        sort_menu_item(stringResource(label), alias_direction == id) {
+                            filter_menu_open = false
+                            if (alias_direction != id) on_alias_direction_change(id)
+                        }
+                    }
+                }
+                aster_menu_section_label(stringResource(R.string.filters))
+                listOf(
+                    inbox_filter_all to R.string.all_emails,
+                    inbox_filter_unread to R.string.filter_unread_only,
+                    inbox_filter_read to R.string.read_only,
+                    inbox_filter_attachments to R.string.with_attachments,
+                ).forEach { (id, label) ->
+                    sort_menu_item(stringResource(label), active_filter == id) {
+                        filter_menu_open = false
+                        if (active_filter != id) on_filter_change(id)
+                    }
+                }
+                aster_menu_section_label(stringResource(R.string.sort_by))
+                listOf(
+                    InboxSortMode.newest to R.string.sort_newest,
+                    InboxSortMode.oldest to R.string.sort_oldest,
+                    InboxSortMode.unread_first to R.string.sort_unread,
+                    InboxSortMode.starred_first to R.string.sort_starred,
+                ).forEach { (mode, label) ->
+                    sort_menu_item(stringResource(label), sort_mode == mode) {
+                        filter_menu_open = false
+                        on_sort_change(mode)
+                    }
+                }
+            }
+        }
+    }
+
+    val quick_actions_button: @Composable () -> Unit = {
+        Box {
+            AsterIconButton(
+                icon = TablerIcons.Bolt,
+                content_description = stringResource(R.string.quick_actions),
+                onClick = { quick_menu_open = true },
+                modifier = Modifier.testTag("inbox_quick_actions"),
+            )
+            aster_menu(
+                expanded = quick_menu_open,
+                on_dismiss = { quick_menu_open = false },
+            ) {
+                aster_menu_section_label(stringResource(R.string.quick_actions))
+                overflow_menu_item(
+                    label = stringResource(R.string.mark_all_read),
+                    icon = TablerIcons.MailOpened,
+                ) {
+                    quick_menu_open = false
+                    on_quick_action(inbox_quick_action_mark_all_read)
+                }
+                overflow_menu_item(
+                    label = stringResource(R.string.archive_all_read_emails),
+                    icon = TablerIcons.Archive,
+                ) {
+                    quick_menu_open = false
+                    on_quick_action(inbox_quick_action_archive_read)
+                }
+                overflow_menu_item(
+                    label = stringResource(R.string.delete_emails_older_than_30_days),
+                    icon = TablerIcons.Trash,
+                ) {
+                    quick_menu_open = false
+                    on_quick_action(inbox_quick_action_delete_old)
+                }
+            }
+        }
+    }
+
     val overflow_button: @Composable () -> Unit = {
             Box {
                 AsterIconButton(
@@ -2897,7 +3058,7 @@ internal fun inbox_top_bar(
                     expanded = overflow_menu_open,
                     on_dismiss = { overflow_menu_open = false },
                 ) {
-                    if (alias_direction != null) {
+                    if (alias_direction != null && !show_tools) {
                         aster_menu_section_label(stringResource(R.string.alias_direction_label))
                         listOf(
                             org.astermail.android.mail.alias_direction_all to R.string.alias_direction_all,
@@ -2951,22 +3112,24 @@ internal fun inbox_top_bar(
                             on_empty_trash()
                         }
                     }
-                    aster_menu_section_label(stringResource(R.string.sort_by))
-                    sort_menu_item(stringResource(R.string.sort_newest), sort_mode == InboxSortMode.newest) {
-                        overflow_menu_open = false
-                        on_sort_change(InboxSortMode.newest)
-                    }
-                    sort_menu_item(stringResource(R.string.sort_oldest), sort_mode == InboxSortMode.oldest) {
-                        overflow_menu_open = false
-                        on_sort_change(InboxSortMode.oldest)
-                    }
-                    sort_menu_item(stringResource(R.string.sort_unread), sort_mode == InboxSortMode.unread_first) {
-                        overflow_menu_open = false
-                        on_sort_change(InboxSortMode.unread_first)
-                    }
-                    sort_menu_item(stringResource(R.string.sort_starred), sort_mode == InboxSortMode.starred_first) {
-                        overflow_menu_open = false
-                        on_sort_change(InboxSortMode.starred_first)
+                    if (!show_tools) {
+                        aster_menu_section_label(stringResource(R.string.sort_by))
+                        sort_menu_item(stringResource(R.string.sort_newest), sort_mode == InboxSortMode.newest) {
+                            overflow_menu_open = false
+                            on_sort_change(InboxSortMode.newest)
+                        }
+                        sort_menu_item(stringResource(R.string.sort_oldest), sort_mode == InboxSortMode.oldest) {
+                            overflow_menu_open = false
+                            on_sort_change(InboxSortMode.oldest)
+                        }
+                        sort_menu_item(stringResource(R.string.sort_unread), sort_mode == InboxSortMode.unread_first) {
+                            overflow_menu_open = false
+                            on_sort_change(InboxSortMode.unread_first)
+                        }
+                        sort_menu_item(stringResource(R.string.sort_starred), sort_mode == InboxSortMode.starred_first) {
+                            overflow_menu_open = false
+                            on_sort_change(InboxSortMode.starred_first)
+                        }
                     }
                 }
             }
@@ -3066,6 +3229,10 @@ internal fun inbox_top_bar(
                 }
             }
             debug_build_pill_inline()
+            if (show_tools) {
+                filter_button()
+                quick_actions_button()
+            }
             overflow_button()
         }
         if (divider_alpha > 0f) {

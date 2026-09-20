@@ -2369,6 +2369,7 @@ internal fun expanded_message(
                     fontSize = 12.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(end = inbox_card_content_padding - AsterSpacing.sm),
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (show_header_reply) {
@@ -3126,7 +3127,7 @@ private fun reaction_chip_row(
                             .clip(shape)
                             .background(bg)
                             .combinedClickable(
-                                onClick = { if (mine) on_unreact(emoji) else on_react(emoji) },
+                                onClick = { if (mine) info_emoji = emoji else on_react(emoji) },
                                 onLongClick = { info_emoji = emoji },
                             )
                             .padding(start = 8.dp, end = 11.dp)
@@ -5419,6 +5420,7 @@ internal fun email_html_view(
     val visual_ready = remember(height_cache_key) { mutableStateOf(false) }
     val renderer_gone = remember { mutableStateOf(false) }
     var web_generation by remember(height_cache_key) { mutableStateOf(0) }
+    val remeasure_trigger = remember(height_cache_key) { mutableStateOf(0) }
     val reload_policy = remember(height_cache_key) { body_reload_policy() }
     val renderer_exhausted = remember(height_cache_key) { mutableStateOf(false) }
 
@@ -5608,6 +5610,30 @@ internal fun email_html_view(
             }
             has_measured = true
             on_ready()
+        }
+    }
+
+    LaunchedEffect(remeasure_trigger.value) {
+        if (remeasure_trigger.value == 0) return@LaunchedEffect
+        if (zoom_active) return@LaunchedEffect
+        var rounds = 0
+        var last = web_ref[0]?.contentHeight ?: 0
+        var settled = 0
+        while (rounds < 24) {
+            delay(60L)
+            rounds++
+            if (zoom_active) return@LaunchedEffect
+            val web = web_ref[0] ?: continue
+            val content = web.contentHeight
+            if (content <= 0) continue
+            if (content == last) {
+                settled++
+                if (settled >= 3 && rounds > 3) break
+            } else {
+                settled = 0
+                last = content
+                height_sink.report(content, exact = true)
+            }
         }
     }
 
@@ -5919,6 +5945,11 @@ internal fun email_html_view(
                             }
                             android.view.MotionEvent.ACTION_POINTER_DOWN -> {
                                 v.parent?.requestDisallowInterceptTouchEvent(true)
+                            }
+                            android.view.MotionEvent.ACTION_UP -> {
+                                val dx = Math.abs(ev.x - touch_down_x)
+                                val dy = Math.abs(ev.y - touch_down_y)
+                                if (dx < 16f && dy < 16f) remeasure_trigger.value += 1
                             }
                             android.view.MotionEvent.ACTION_MOVE -> {
                                 if (ev.pointerCount > 1) {

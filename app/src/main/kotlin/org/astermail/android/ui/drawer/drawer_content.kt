@@ -257,6 +257,7 @@ fun DrawerContent(
     on_logout: () -> Unit = {},
     on_logout_all: () -> Unit = {},
     on_manage_account: () -> Unit = {},
+    on_open_storage: () -> Unit = {},
     plan_code: String? = null,
     profile_storage_label: String = "",
     max_accounts: Int = 0,
@@ -818,6 +819,10 @@ fun DrawerContent(
             on_manage_account = {
                 show_workspace_sheet = false
                 on_manage_account()
+            },
+            on_open_storage = {
+                show_workspace_sheet = false
+                on_open_storage()
             },
             on_logout = {
                 show_workspace_sheet = false
@@ -1948,6 +1953,7 @@ private fun workspace_switcher_sheet(
     on_switch: (StoredAccount) -> Unit,
     on_add: () -> Unit,
     on_manage_account: () -> Unit,
+    on_open_storage: () -> Unit,
     on_logout: () -> Unit,
     on_logout_all: () -> Unit,
 ) {
@@ -2097,7 +2103,11 @@ private fun workspace_switcher_sheet(
                 }
                 Spacer(Modifier.height(16.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable(onClick = on_open_storage)
+                        .testTag("profile_menu_storage_row"),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(

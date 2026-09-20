@@ -1628,20 +1628,21 @@ private fun section_letter_header(letter: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = inbox_card_horizontal_margin)
             .acrylic_backdrop(colors)
             .drawBehind { drawRect(header_bg) }
             .padding(
-                start = inbox_card_horizontal_margin + inbox_card_content_padding,
+                start = inbox_card_content_padding,
                 end = AsterSpacing.lg,
-                top = AsterSpacing.md,
-                bottom = AsterSpacing.xs,
+                top = AsterSpacing.sm,
+                bottom = AsterSpacing.sm,
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = letter,
             color = colors.text_tertiary,
-            fontSize = 13.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
         )
     }

@@ -2248,6 +2248,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     scope.launch { drawer_state.close() }
                     nav_controller.navigate(routes.settings_detail("profile"))
                 },
+                on_open_storage = {
+                    scope.launch { drawer_state.close() }
+                    nav_controller.navigate(routes.settings_detail("storage"))
+                },
                 on_logout_all = {
                     settings_vm.logout_all {
                         accounts_vm.refresh()

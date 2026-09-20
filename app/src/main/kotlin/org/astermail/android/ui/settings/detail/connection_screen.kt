@@ -60,8 +60,8 @@ fun ConnectionScreen(on_back: () -> Unit) {
     LaunchedEffect(Unit) { vm.load_connection_preference() }
 
     val relay_connected = stringResource(R.string.connection_relay_connected)
-    val relay_restored = stringResource(R.string.connection_relay_restored)
     val relay_disconnected = stringResource(R.string.connection_relay_disconnected)
+    val relay_failed = stringResource(R.string.connection_relay_failed)
     var pending_method by androidx.compose.runtime.saveable.rememberSaveable {
         androidx.compose.runtime.mutableStateOf<String?>(null)
     }
@@ -70,9 +70,9 @@ fun ConnectionScreen(on_back: () -> Unit) {
         if (!state.connection_saving && requested != null) {
             pending_method = null
             val message = when {
-                state.connection_method != requested -> relay_disconnected
+                state.connection_method != requested -> relay_failed
                 requested == CONNECTION_METHOD_CDN_RELAY -> relay_connected
-                else -> relay_restored
+                else -> relay_disconnected
             }
             org.astermail.android.ui.common.app_toast.show(message)
         }

@@ -3420,10 +3420,22 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">已连接</string>
+    <string name="connection_relay_connected">请注意：由于流量经过 Cloudflare 转发，连接可能会变慢。</string>
     <string name="connection_relay_restored">已恢复正常</string>
     <string name="connection_relay_disconnected">已断开连接</string>
     <string name="search_groups">搜索群组</string>
     <string name="search_trash">搜索回收站</string>
     <string name="no_groups_match">没有与“%1$s”匹配的群组</string>
+    <string name="captcha_verifying">正在验证你是真人</string>
+    <string name="captcha_unavailable">验证未能加载。请检查网络连接，然后重试。</string>
+    <string name="captcha_retry">重试</string>
+    <string name="connection_relay_failed">无法更改连接方式。请重试。</string>
+    <string name="all_emails">全部邮件</string>
+    <string name="read_only">仅已读</string>
+    <string name="with_attachments">含附件</string>
+    <string name="quick_actions">快捷操作</string>
+    <string name="archive_all_read_emails">归档已读邮件</string>
+    <string name="delete_emails_older_than_30_days">删除 30 天前的邮件</string>
+    <string name="inbox_tools">筛选与快捷操作</string>
+    <string name="inbox_tools_subtitle">在收件箱标题栏中显示筛选和快捷操作按钮</string>
 </resources>

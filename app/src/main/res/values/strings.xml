@@ -3483,10 +3483,22 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">Connected</string>
+    <string name="connection_relay_connected">Heads up, your connection may be slower since it\'s routed through Cloudflare.</string>
     <string name="connection_relay_restored">Back to normal</string>
     <string name="connection_relay_disconnected">Disconnected</string>
     <string name="search_groups">Search groups</string>
     <string name="search_trash">Search trash</string>
     <string name="no_groups_match">No groups match \"%1$s\"</string>
+    <string name="captcha_verifying">Verifying that you\'re human</string>
+    <string name="captcha_unavailable">The verification check didn\'t load. Check your connection, then try again.</string>
+    <string name="captcha_retry">Try again</string>
+    <string name="connection_relay_failed">Couldn\'t change the connection method. Try again.</string>
+    <string name="all_emails">All emails</string>
+    <string name="read_only">Read only</string>
+    <string name="with_attachments">With attachments</string>
+    <string name="quick_actions">Quick actions</string>
+    <string name="archive_all_read_emails">Archive read emails</string>
+    <string name="delete_emails_older_than_30_days">Delete emails older than 30 days</string>
+    <string name="inbox_tools">Filters and quick actions</string>
+    <string name="inbox_tools_subtitle">Show the filter and quick action buttons in the inbox header</string>
 </resources>

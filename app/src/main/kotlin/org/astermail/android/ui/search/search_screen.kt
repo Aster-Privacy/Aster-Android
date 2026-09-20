@@ -867,7 +867,9 @@ fun SearchScreen(
                 org.astermail.android.ui.mail.skeleton_geometry_of(settings_state.preferences),
             )
             org.astermail.android.ui.mail.inbox_skeleton(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(top = AsterSpacing.sm),
                 list_density = search_skeleton_geometry.list_density,
                 show_avatar = search_skeleton_geometry.show_avatar,
                 show_preview = search_skeleton_geometry.show_preview,
@@ -1411,7 +1413,7 @@ internal fun search_results_list(
                     },
                 )
             },
-        contentPadding = PaddingValues(bottom = AsterSpacing.lg),
+        contentPadding = PaddingValues(top = AsterSpacing.sm, bottom = AsterSpacing.lg),
     ) {
         itemsIndexed(
             items = threads,

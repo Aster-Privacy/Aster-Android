@@ -45,6 +45,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.shape.CircleShape
@@ -61,7 +62,6 @@ import org.astermail.android.api.settings.SmtpTokenRow
 import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
@@ -95,6 +95,16 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
 
     LaunchedEffect(state.smtp_token_created) {
         if (state.smtp_token_created != null) show_create = false
+    }
+
+    var show_load_placeholder by remember { mutableStateOf(false) }
+    LaunchedEffect(state.smtp_tokens_loading, state.smtp_tokens.isEmpty()) {
+        if (state.smtp_tokens_loading && state.smtp_tokens.isEmpty()) {
+            delay(smtp_placeholder_defer_ms)
+            show_load_placeholder = state.smtp_tokens_loading
+        } else {
+            show_load_placeholder = false
+        }
     }
 
     val is_locked = plan_state.limits?.plan_code == "free" && !plan_state.is_loading
@@ -148,9 +158,11 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
                     )
                 }
 
-                if (state.smtp_tokens_loading && state.smtp_tokens.isEmpty()) {
+                if (show_load_placeholder) {
                     v_gap(AsterSpacing.md)
                     preferences_load_placeholder()
+                } else if (state.smtp_tokens.isEmpty() && state.smtp_tokens_loading) {
+                    v_gap(AsterSpacing.md)
                 } else if (state.smtp_tokens.isEmpty()) {
                     Column(
                         modifier = Modifier
@@ -158,20 +170,12 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
                             .padding(vertical = AsterSpacing.xl),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .acrylic(colors, CircleShape, colors.bg_secondary),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = TablerIcons.Key,
-                                contentDescription = null,
-                                tint = colors.text_secondary,
-                                modifier = Modifier.size(26.dp),
-                            )
-                        }
+                        Icon(
+                            imageVector = TablerIcons.Key,
+                            contentDescription = null,
+                            tint = colors.text_tertiary,
+                            modifier = Modifier.size(32.dp),
+                        )
                         v_gap(AsterSpacing.md)
                         Text(
                             text = stringResource(R.string.smtp_tokens_empty),
@@ -202,7 +206,7 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
         v_gap(AsterSpacing.xxl)
     }
 
-    if (show_create) {
+    if (show_create && state.smtp_token_created == null) {
         smtp_token_create_dialog(
             addresses = addresses.map { it.encrypted_local_part to it.domain_name },
             is_busy = state.smtp_token_creating,
@@ -336,6 +340,8 @@ private fun smtp_token_row(token: SmtpTokenRow, on_revoke: () -> Unit) {
     }
 }
 
+private const val smtp_placeholder_defer_ms = 180L
+
 private fun format_smtp_last_used(raw: String?): String? {
     if (raw.isNullOrBlank()) return null
     return runCatching {
@@ -355,6 +361,7 @@ private fun smtp_token_create_dialog(
     val colors = AsterMaterial.colors
     var name by remember { mutableStateOf("") }
     var selected by remember { mutableStateOf(addresses.firstOrNull()) }
+    
 
     AsterAlertDialog(
         on_dismiss = on_dismiss,
@@ -380,20 +387,30 @@ private fun smtp_token_create_dialog(
                 section_label(stringResource(R.string.smtp_token_address_label))
                 AsterCard(modifier = Modifier.fillMaxWidth()) {
                     addresses.forEachIndexed { i, entry ->
-                        val address = entry.first + "@" + entry.second
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { selected = entry }
-                                .padding(AsterSpacing.md),
+                                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(
-                                text = address,
-                                color = colors.text_primary,
-                                fontSize = 14.sp,
-                                modifier = Modifier.weight(1f),
-                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = entry.first,
+                                    color = colors.text_primary,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    text = "@" + entry.second,
+                                    color = colors.text_tertiary,
+                                    fontSize = 12.sp,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                )
+                            }
                             if (selected == entry) {
                                 Icon(
                                     imageVector = TablerIcons.Check,

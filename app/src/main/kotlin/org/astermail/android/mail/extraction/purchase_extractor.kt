@@ -386,7 +386,7 @@ fun extract_order_url(body: String, html: String?): String? {
     return null
 }
 
-private val purchase_indicators = listOf(
+private val strong_purchase_indicators = listOf(
     Regex("\\border\\s*(?:#|no\\.?|num(?:ber)?|id)\\s*[:#]?\\s*[A-Za-z0-9]*[0-9]", RegexOption.IGNORE_CASE),
     Regex("purchase\\s+(?:confirmation|complete|receipt)", RegexOption.IGNORE_CASE),
     Regex("thank\\s+you\\s+for\\s+(?:your\\s+)?(?:order|purchase)", RegexOption.IGNORE_CASE),
@@ -395,18 +395,25 @@ private val purchase_indicators = listOf(
     Regex("transaction\\s+(?:receipt|complete)", RegexOption.IGNORE_CASE),
     Regex("you\\s+(?:bought|purchased|paid)", RegexOption.IGNORE_CASE),
     Regex("order\\s+(?:placed|confirmed)", RegexOption.IGNORE_CASE),
-    money_after("\\btotals?\\b"),
-    money_after("\\bamount\\s+(?:paid|charged|due)\\b"),
+    Regex("\\bitems?\\s+(?:ordered|purchased)\\b", RegexOption.IGNORE_CASE),
+)
+
+private val supporting_purchase_indicators = listOf(
+    money_after("\\border\\s+total\\b"),
+    money_after("\\bgrand\\s+total\\b"),
+    money_after("\\bamount\\s+(?:paid|charged)\\b"),
+    money_after("\\bsub\\s?total\\b"),
 )
 
 fun is_purchase_email(subject: String, body: String): Boolean {
     val combined = (subject + " " + body).lowercase(Locale.ROOT)
-    var matches = 0
-    for (pattern in purchase_indicators) {
+    var strong = 0
+    for (pattern in strong_purchase_indicators) {
         if (pattern.containsMatchIn(combined)) {
-            matches += 1
-            if (matches >= 2) return true
+            strong += 1
+            if (strong >= 2) return true
         }
     }
-    return false
+    if (strong == 0) return false
+    return supporting_purchase_indicators.any { it.containsMatchIn(combined) }
 }

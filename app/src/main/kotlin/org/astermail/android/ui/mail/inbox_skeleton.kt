@@ -57,13 +57,17 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.acrylic_backdrop
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_appearance
@@ -73,6 +77,45 @@ import org.astermail.android.ui.common.page_surface
 
 const val inbox_skeleton_tag = "inbox_skeleton"
 const val inbox_skeleton_row_tag = "inbox_skeleton_row"
+
+internal const val skeleton_preview_row_limit = 12
+internal const val skeleton_preview_alpha = 0.62f
+private const val skeleton_preview_field_sep = "\u001f"
+private const val skeleton_preview_row_sep = "\u001e"
+
+data class SkeletonRowPreview(
+    val sender: String = "",
+    val subject: String = "",
+    val preview: String = "",
+    val time: String = "",
+    val unread: Boolean = false,
+)
+
+internal fun encode_skeleton_rows(rows: List<SkeletonRowPreview>): String =
+    rows.take(skeleton_preview_row_limit).joinToString(skeleton_preview_row_sep) { row ->
+        listOf(
+            row.sender.sanitized_skeleton_field(),
+            row.subject.sanitized_skeleton_field(),
+            row.preview.sanitized_skeleton_field(),
+            row.time.sanitized_skeleton_field(),
+            if (row.unread) "1" else "0",
+        ).joinToString(skeleton_preview_field_sep)
+    }
+
+private fun String.sanitized_skeleton_field(): String =
+    replace(skeleton_preview_field_sep, " ").replace(skeleton_preview_row_sep, " ").take(160)
+
+internal fun decode_skeleton_rows(raw: String?): List<SkeletonRowPreview> {
+    if (raw.isNullOrEmpty()) return emptyList()
+    return raw.split(skeleton_preview_row_sep).mapNotNull { chunk ->
+        val parts = chunk.split(skeleton_preview_field_sep)
+        if (parts.size < 5) {
+            null
+        } else {
+            SkeletonRowPreview(parts[0], parts[1], parts[2], parts[3], parts[4] == "1")
+        }
+    }
+}
 
 internal const val skeleton_sweep_lag = 0.06f
 internal const val skeleton_defer_ms = 150L
@@ -196,6 +239,48 @@ internal fun write_skeleton_first_row_height(context: android.content.Context, p
     runCatching { store.edit().putInt(skeleton_first_row_height_key, px).apply() }
 }
 
+private fun skeleton_rows_key(folder: String): String = "rows_" + folder
+
+internal fun read_skeleton_rows(
+    context: android.content.Context,
+    folder: String,
+): List<SkeletonRowPreview> {
+    val store = skeleton_geometry_store(context) ?: return emptyList()
+    return runCatching {
+        decode_skeleton_rows(store.getString(skeleton_rows_key(folder), null))
+    }.getOrDefault(emptyList())
+}
+
+internal fun write_skeleton_rows(
+    context: android.content.Context,
+    folder: String,
+    rows: List<SkeletonRowPreview>,
+) {
+    val store = skeleton_geometry_store(context) ?: return
+    runCatching {
+        store.edit().putString(skeleton_rows_key(folder), encode_skeleton_rows(rows)).apply()
+    }
+}
+
+@Composable
+fun remember_row_preview_recorder(folder: String): (Int, SkeletonRowPreview) -> Unit {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val samples = remember(context, folder) { sortedMapOf<Int, SkeletonRowPreview>() }
+    val written = remember(context, folder) { arrayOf(encode_skeleton_rows(read_skeleton_rows(context, folder))) }
+    return remember(context, folder) {
+        { index: Int, row: SkeletonRowPreview ->
+            if (index in 0 until skeleton_preview_row_limit && samples[index] != row) {
+                samples[index] = row
+                val encoded = encode_skeleton_rows(samples.values.toList())
+                if (encoded != written[0]) {
+                    written[0] = encoded
+                    write_skeleton_rows(context, folder, samples.values.toList())
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun remember_row_height_recorder(): (Int, Int) -> Unit {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -302,6 +387,7 @@ fun inbox_skeleton(
     show_preview: Boolean = true,
     row_height: Dp = 0.dp,
     first_row_height: Dp = 0.dp,
+    previews: List<SkeletonRowPreview> = emptyList(),
 ) {
     val colors = AsterMaterial.colors
     val state = shimmer_state()
@@ -321,6 +407,7 @@ fun inbox_skeleton(
                 show_avatar = show_avatar,
                 show_preview = show_preview,
                 row_height = if (index == 0 && first_row_height > 0.dp) first_row_height else row_height,
+                cached = previews.getOrNull(index),
             )
         }
     }
@@ -331,6 +418,7 @@ fun inbox_skeleton_layer(
     phase: SkeletonPhase,
     modifier: Modifier = Modifier,
     live_geometry: SkeletonGeometry? = null,
+    folder: String = "inbox",
 ) {
     val reduce_motion = aster_reduce_motion()
     val geometry = remember_skeleton_geometry(phase, live_geometry)
@@ -344,6 +432,7 @@ fun inbox_skeleton_layer(
         val px = read_skeleton_first_row_height(context)
         if (px > 0) with(density) { px.toDp() } else 0.dp
     }
+    val previews = remember(context, folder) { read_skeleton_rows(context, folder) }
     AnimatedVisibility(
         visible = phase == SkeletonPhase.skeleton,
         modifier = modifier,
@@ -357,6 +446,7 @@ fun inbox_skeleton_layer(
             show_preview = geometry.show_preview,
             row_height = row_height,
             first_row_height = first_row_height,
+            previews = previews,
             modifier = Modifier.semantics {
                 liveRegion = LiveRegionMode.Polite
                 contentDescription = loading_label
@@ -380,6 +470,25 @@ private fun skeleton_text_line(
 }
 
 @Composable
+private fun skeleton_cached_line(
+    text: String,
+    style: TextStyle,
+    color: androidx.compose.ui.graphics.Color,
+    weight: FontWeight? = null,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = text,
+        style = style,
+        color = color.copy(alpha = color.alpha * skeleton_preview_alpha),
+        fontWeight = weight,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier,
+    )
+}
+
+@Composable
 fun inbox_skeleton_row(
     state: shimmer_appearance = shimmer_state(),
     list_density: String? = null,
@@ -388,6 +497,7 @@ fun inbox_skeleton_row(
     show_avatar: Boolean = true,
     show_preview: Boolean = true,
     row_height: Dp = 0.dp,
+    cached: SkeletonRowPreview? = null,
 ) {
     val colors = AsterMaterial.colors
     val metrics = remember(list_density) { inbox_row_metrics(list_density) }
@@ -409,7 +519,8 @@ fun inbox_skeleton_row(
                 bottom = if (is_last) 0.dp else inbox_group_split,
             )
             .clip(shape)
-            .background(card_color),
+            .acrylic_backdrop(colors)
+            .drawBehind { drawRect(card_color) },
     ) {
         Row(
             modifier = Modifier
@@ -441,27 +552,70 @@ fun inbox_skeleton_row(
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.weight(1f)) {
-                        skeleton_text_line(sender_style, state, Modifier.fillMaxWidth(0.42f))
+                        if (cached != null && cached.sender.isNotBlank()) {
+                            skeleton_cached_line(
+                                text = cached.sender,
+                                style = sender_style,
+                                color = inbox_sender_color(colors, cached.unread),
+                                weight = if (cached.unread) FontWeight.Bold else FontWeight.Normal,
+                            )
+                        } else {
+                            skeleton_text_line(sender_style, state, Modifier.fillMaxWidth(0.42f))
+                        }
                     }
-                    skeleton_text_line(
-                        time_style,
-                        state,
-                        Modifier
-                            .padding(start = AsterSpacing.sm)
-                            .width(36.dp),
-                    )
+                    if (cached != null && cached.time.isNotBlank()) {
+                        skeleton_cached_line(
+                            text = cached.time,
+                            style = time_style,
+                            color = inbox_time_color(colors, cached.unread),
+                            weight = if (cached.unread) FontWeight.SemiBold else FontWeight.Normal,
+                            modifier = Modifier.padding(start = AsterSpacing.sm),
+                        )
+                    } else {
+                        skeleton_text_line(
+                            time_style,
+                            state,
+                            Modifier
+                                .padding(start = AsterSpacing.sm)
+                                .width(36.dp),
+                        )
+                    }
                 }
                 Spacer(Modifier.height(metrics.line_gap))
                 if (draw_preview) {
-                    skeleton_text_line(subject_style, state, Modifier.fillMaxWidth(0.68f))
+                    if (cached != null && cached.subject.isNotBlank()) {
+                        skeleton_cached_line(
+                            text = cached.subject,
+                            style = subject_style,
+                            color = inbox_subject_color(colors, cached.unread),
+                            weight = if (cached.unread) FontWeight.SemiBold else FontWeight.Normal,
+                        )
+                    } else {
+                        skeleton_text_line(subject_style, state, Modifier.fillMaxWidth(0.68f))
+                    }
                     Spacer(Modifier.height(metrics.line_gap))
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.weight(1f)) {
-                        if (draw_preview) {
-                            skeleton_text_line(preview_style, state, Modifier.fillMaxWidth(0.9f))
+                        val body_style = if (draw_preview) preview_style else subject_style
+                        val body_text = if (draw_preview) cached?.preview else cached?.subject
+                        val body_unread = cached?.unread == true
+                        if (!body_text.isNullOrBlank()) {
+                            skeleton_cached_line(
+                                text = body_text,
+                                style = body_style,
+                                color = if (draw_preview) {
+                                    inbox_preview_color(colors, body_unread)
+                                } else {
+                                    inbox_subject_color(colors, body_unread)
+                                },
+                            )
                         } else {
-                            skeleton_text_line(subject_style, state, Modifier.fillMaxWidth(0.68f))
+                            skeleton_text_line(
+                                body_style,
+                                state,
+                                Modifier.fillMaxWidth(if (draw_preview) 0.9f else 0.68f),
+                            )
                         }
                     }
                     Spacer(Modifier.width(AsterSpacing.sm))

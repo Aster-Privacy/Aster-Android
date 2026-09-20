@@ -3328,10 +3328,22 @@
     <string name="plan_badge_star">तारा</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">कनेक्ट हो गया</string>
+    <string name="connection_relay_connected">ध्यान दें: आपका कनेक्शन धीमा हो सकता है क्योंकि वह Cloudflare से होकर जाता है.</string>
     <string name="connection_relay_restored">सब कुछ फिर से सामान्य है</string>
     <string name="connection_relay_disconnected">डिसकनेक्ट हो गया</string>
     <string name="search_groups">समूह खोजें</string>
     <string name="search_trash">ट्रैश में खोजें</string>
     <string name="no_groups_match">\"%1$s\" से मेल खाने वाला कोई समूह नहीं</string>
+    <string name="captcha_verifying">यह जाँच रहे हैं कि आप मनुष्य हैं</string>
+    <string name="captcha_unavailable">सत्यापन लोड नहीं हुआ. अपना कनेक्शन जाँचें और फिर से कोशिश करें.</string>
+    <string name="captcha_retry">फिर से कोशिश करें</string>
+    <string name="connection_relay_failed">कनेक्शन विधि नहीं बदल सके. फिर से कोशिश करें.</string>
+    <string name="all_emails">सभी ईमेल</string>
+    <string name="read_only">केवल पढ़े गए</string>
+    <string name="with_attachments">अटैचमेंट के साथ</string>
+    <string name="quick_actions">त्वरित कार्रवाई</string>
+    <string name="archive_all_read_emails">पढ़े गए ईमेल संग्रहित करें</string>
+    <string name="delete_emails_older_than_30_days">30 दिन से पुराने ईमेल हटाएं</string>
+    <string name="inbox_tools">फ़िल्टर और त्वरित कार्रवाई</string>
+    <string name="inbox_tools_subtitle">इनबॉक्स हेडर में फ़िल्टर और त्वरित कार्रवाई बटन दिखाएं</string>
 </resources>

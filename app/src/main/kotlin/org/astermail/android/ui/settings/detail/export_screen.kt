@@ -32,8 +32,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -83,7 +85,11 @@ fun ExportScreen(
         if (state.is_running) vm.cancel_export() else on_back()
     }
 
-    detail_scaffold(title = stringResource(R.string.export_title_screen), on_back = effective_back) {
+    detail_scaffold(
+        title = stringResource(R.string.export_title_screen),
+        on_back = effective_back,
+        scrollable = state.step !is ExportViewModel.ExportStep.Progress,
+    ) {
         when (state.step) {
             is ExportViewModel.ExportStep.Warning -> {
                 warning_step(
@@ -139,12 +145,6 @@ private fun warning_step(
 ) {
     val colors = AsterMaterial.colors
     v_gap(AsterSpacing.md)
-    Text(
-        text = stringResource(R.string.export_device_decrypt_note),
-        color = colors.text_secondary,
-        fontSize = 13.sp,
-        modifier = Modifier.fillMaxWidth().padding(bottom = AsterSpacing.sm),
-    )
     AsterCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -169,8 +169,6 @@ private fun warning_step(
                     )
                 }
             }
-            v_gap(AsterSpacing.md)
-            settings_row_gap()
             v_gap(AsterSpacing.md)
             Text(
                 text = stringResource(R.string.export_warning_message),
@@ -276,19 +274,21 @@ private fun format_step(
     val colors = AsterMaterial.colors
     v_gap(AsterSpacing.md)
     section_label(stringResource(R.string.export_format_section))
-    format_card(
-        title = stringResource(R.string.export_format_mbox),
-        subtitle = stringResource(R.string.export_format_mbox_subtitle),
-        selected = format == "mbox",
-        on_click = { on_format("mbox") },
-    )
-    v_gap(AsterSpacing.sm)
-    format_card(
-        title = stringResource(R.string.export_format_eml),
-        subtitle = stringResource(R.string.export_format_eml_subtitle),
-        selected = format == "eml",
-        on_click = { on_format("eml") },
-    )
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        format_card(
+            title = stringResource(R.string.export_format_mbox),
+            subtitle = stringResource(R.string.export_format_mbox_subtitle),
+            selected = format == "mbox",
+            on_click = { on_format("mbox") },
+        )
+        settings_row_gap()
+        format_card(
+            title = stringResource(R.string.export_format_eml),
+            subtitle = stringResource(R.string.export_format_eml_subtitle),
+            selected = format == "eml",
+            on_click = { on_format("eml") },
+        )
+    }
     v_gap(AsterSpacing.lg)
     AsterButton(
         label = stringResource(R.string.export_start),
@@ -301,34 +301,30 @@ private fun format_step(
 @Composable
 private fun format_card(title: String, subtitle: String, selected: Boolean, on_click: () -> Unit) {
     val colors = AsterMaterial.colors
-    val bg = if (selected) colors.accent_blue else colors.bg_card
-    val border_color = if (selected) colors.accent_blue else colors.border_secondary
-    val title_color = if (selected) colors.on_accent else colors.text_primary
-    val subtitle_color = if (selected) colors.on_accent.copy(alpha = 0.8f) else colors.text_tertiary
+    val title_color = if (selected) colors.accent_blue else colors.text_primary
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(SquircleShape(14.dp))
-            .background(bg)
-            .border(1.dp, border_color, SquircleShape(14.dp))
             .clickable(onClick = on_click)
-            .padding(AsterSpacing.lg),
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(title, color = title_color, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
             v_gap(2.dp)
-            Text(subtitle, color = subtitle_color, fontSize = 12.sp, lineHeight = 17.sp)
+            Text(subtitle, color = colors.text_tertiary, fontSize = 12.sp, lineHeight = 17.sp)
         }
-        if (selected) {
-            Spacer(Modifier.width(AsterSpacing.md))
-            Icon(
-                imageVector = TablerIcons.CircleCheck,
-                contentDescription = null,
-                tint = colors.on_accent,
-                modifier = Modifier.size(22.dp),
-            )
-        }
+        Spacer(Modifier.width(AsterSpacing.md))
+        Box(
+            modifier = Modifier
+                .size(22.dp)
+                .clip(SquircleShape(11.dp))
+                .border(
+                    if (selected) 7.dp else 2.dp,
+                    if (selected) colors.accent_blue else colors.border_secondary,
+                    SquircleShape(11.dp),
+                ),
+        )
     }
 }
 
@@ -341,13 +337,23 @@ private fun progress_step(
     on_cancel: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    v_gap(AsterSpacing.xxl)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = AsterSpacing.lg),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
     if (error != null) {
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             Text(text = error, color = colors.danger, fontSize = 14.sp, textAlign = TextAlign.Center)
         }
         v_gap(AsterSpacing.lg)
-        AsterSecondaryButton(label = stringResource(R.string.back), onClick = on_cancel, modifier = Modifier.fillMaxWidth())
+        AsterSecondaryButton(
+            label = stringResource(R.string.back),
+            onClick = on_cancel,
+            modifier = Modifier.fillMaxWidth().widthIn(max = export_action_max_width),
+        )
     } else {
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(52.dp), strokeWidth = 4.dp)
@@ -390,10 +396,16 @@ private fun progress_step(
             )
         }
         v_gap(AsterSpacing.xxl)
-        AsterSecondaryButton(label = stringResource(R.string.cancel), onClick = on_cancel, modifier = Modifier.fillMaxWidth())
+        AsterSecondaryButton(
+            label = stringResource(R.string.cancel),
+            onClick = on_cancel,
+            modifier = Modifier.fillMaxWidth().widthIn(max = export_action_max_width),
+        )
     }
-    v_gap(AsterSpacing.xxl)
+    }
 }
+
+private val export_action_max_width = 320.dp
 
 @Composable
 private fun complete_step(

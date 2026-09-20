@@ -3420,10 +3420,22 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">接続しました</string>
+    <string name="connection_relay_connected">ご注意：Cloudflare 経由のため、通信が遅くなることがあります。</string>
     <string name="connection_relay_restored">通常の状態に戻りました</string>
     <string name="connection_relay_disconnected">切断しました</string>
     <string name="search_groups">グループを検索</string>
     <string name="search_trash">ゴミ箱を検索</string>
     <string name="no_groups_match">「%1$s」に一致するグループはありません</string>
+    <string name="captcha_verifying">人間であることを確認しています</string>
+    <string name="captcha_unavailable">確認を読み込めませんでした。接続を確認してからもう一度お試しください。</string>
+    <string name="captcha_retry">もう一度試す</string>
+    <string name="connection_relay_failed">接続方法を変更できませんでした。もう一度お試しください。</string>
+    <string name="all_emails">すべてのメール</string>
+    <string name="read_only">既読のみ</string>
+    <string name="with_attachments">添付ファイルあり</string>
+    <string name="quick_actions">クイック操作</string>
+    <string name="archive_all_read_emails">既読メールをアーカイブ</string>
+    <string name="delete_emails_older_than_30_days">30日以上前のメールを削除</string>
+    <string name="inbox_tools">フィルタとクイック操作</string>
+    <string name="inbox_tools_subtitle">受信トレイのヘッダーにフィルタとクイック操作のボタンを表示します</string>
 </resources>

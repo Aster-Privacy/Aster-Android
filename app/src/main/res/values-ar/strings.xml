@@ -3522,10 +3522,22 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">متصل</string>
+    <string name="connection_relay_connected">تنبيه: قد يصبح اتصالك أبطأ لأنه يمر عبر Cloudflare.</string>
     <string name="connection_relay_restored">عاد كل شيء إلى طبيعته</string>
     <string name="connection_relay_disconnected">غير متصل</string>
     <string name="search_groups">البحث في المجموعات</string>
     <string name="search_trash">البحث في المهملات</string>
     <string name="no_groups_match">لا توجد مجموعات تطابق \"%1$s\"</string>
+    <string name="captcha_verifying">جارٍ التحقق من أنك إنسان</string>
+    <string name="captcha_unavailable">تعذّر تحميل التحقق. تحقق من اتصالك ثم أعد المحاولة.</string>
+    <string name="captcha_retry">إعادة المحاولة</string>
+    <string name="connection_relay_failed">تعذّر تغيير طريقة الاتصال. أعد المحاولة.</string>
+    <string name="all_emails">كل الرسائل</string>
+    <string name="read_only">المقروءة فقط</string>
+    <string name="with_attachments">التي تحتوي مرفقات</string>
+    <string name="quick_actions">إجراءات سريعة</string>
+    <string name="archive_all_read_emails">أرشفة الرسائل المقروءة</string>
+    <string name="delete_emails_older_than_30_days">حذف الرسائل الأقدم من 30 يومًا</string>
+    <string name="inbox_tools">عوامل التصفية والإجراءات السريعة</string>
+    <string name="inbox_tools_subtitle">إظهار زري التصفية والإجراءات السريعة في رأس البريد الوارد</string>
 </resources>

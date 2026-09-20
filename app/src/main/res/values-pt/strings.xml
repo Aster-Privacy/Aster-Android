@@ -3438,10 +3438,22 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">Conectado</string>
+    <string name="connection_relay_connected">Atenção: a ligação pode ficar mais lenta porque passa pela Cloudflare.</string>
     <string name="connection_relay_restored">Tudo voltou ao normal</string>
     <string name="connection_relay_disconnected">Desconectado</string>
     <string name="search_groups">Pesquisar grupos</string>
     <string name="search_trash">Pesquisar na lixeira</string>
     <string name="no_groups_match">Nenhum grupo corresponde a \"%1$s\"</string>
+    <string name="captcha_verifying">A verificar se é humano</string>
+    <string name="captcha_unavailable">A verificação não carregou. Verifique a sua ligação e tente novamente.</string>
+    <string name="captcha_retry">Tentar novamente</string>
+    <string name="connection_relay_failed">Não foi possível mudar o método de ligação. Tente novamente.</string>
+    <string name="all_emails">Todos os e-mails</string>
+    <string name="read_only">Apenas lidos</string>
+    <string name="with_attachments">Com anexos</string>
+    <string name="quick_actions">Ações rápidas</string>
+    <string name="archive_all_read_emails">Arquivar e-mails lidos</string>
+    <string name="delete_emails_older_than_30_days">Excluir e-mails com mais de 30 dias</string>
+    <string name="inbox_tools">Filtros e ações rápidas</string>
+    <string name="inbox_tools_subtitle">Mostra os botões de filtro e ações rápidas no cabeçalho da caixa de entrada</string>
 </resources>

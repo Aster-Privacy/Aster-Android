@@ -92,6 +92,7 @@ fun RegisterPasswordStep(
     var password_visible by remember { mutableStateOf(false) }
     var confirm_visible by remember { mutableStateOf(false) }
     var captcha_reset_trigger by remember { mutableStateOf(0) }
+    var captcha_failed by remember { mutableStateOf(false) }
     val confirm_focus = remember { androidx.compose.ui.focus.FocusRequester() }
 
     val password = state.password.value
@@ -220,16 +221,28 @@ fun RegisterPasswordStep(
         Spacer(Modifier.height(AsterSpacing.md))
 
         TurnstileWidget(
-            on_token = { state.captcha_token.value = it },
+            on_token = {
+                state.captcha_token.value = it
+                captcha_failed = false
+            },
             on_error = {
                 state.captcha_token.value = null
-                captcha_reset_trigger += 1
+                captcha_failed = true
             },
             on_expired = {
                 state.captcha_token.value = null
                 captcha_reset_trigger += 1
             },
             reset_trigger = captcha_reset_trigger,
+        )
+
+        captcha_status_row(
+            failed = captcha_failed,
+            pending = !captcha_failed && !captcha_ok,
+            on_retry = {
+                captcha_failed = false
+                captcha_reset_trigger += 1
+            },
         )
 
         Spacer(Modifier.height(AsterSpacing.md))
@@ -422,4 +435,47 @@ private fun terms_agreement_text(
             }
         },
     )
+}
+
+@Composable
+private fun captcha_status_row(
+    failed: Boolean,
+    pending: Boolean,
+    on_retry: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    androidx.compose.animation.AnimatedVisibility(
+        visible = failed || pending,
+        enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
+        exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut(),
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Spacer(Modifier.height(AsterSpacing.sm))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = if (failed) {
+                        stringResource(R.string.captcha_unavailable)
+                    } else {
+                        stringResource(R.string.captcha_verifying)
+                    },
+                    color = if (failed) colors.danger else colors.text_tertiary,
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                )
+                if (failed) {
+                    Text(
+                        text = stringResource(R.string.captcha_retry),
+                        color = colors.accent_blue,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.clickable(onClick = on_retry),
+                    )
+                }
+            }
+        }
+    }
 }
