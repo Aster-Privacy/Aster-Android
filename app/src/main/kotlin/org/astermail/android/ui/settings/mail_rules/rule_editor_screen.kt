@@ -119,6 +119,7 @@ import org.astermail.android.ui.settings.mail_rules.pickers.picker_item
 import org.astermail.android.ui.settings.mail_rules.pickers.snooze_picker
 import org.astermail.android.ui.settings.mail_rules.pickers.text_value_picker
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.common.page_surface
 
 private sealed class active_sheet {
     data object none : active_sheet()
@@ -164,7 +165,7 @@ fun RuleEditorScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(colors.bg_primary)
+                .page_surface(colors)
                 .systemBarsPadding()
                 .testTag("rule_editor_loading"),
         ) {
@@ -190,7 +191,7 @@ fun RuleEditorScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(colors.bg_primary)
+                .page_surface(colors)
                 .systemBarsPadding()
                 .testTag("rule_editor_error"),
         ) {
@@ -333,7 +334,7 @@ fun RuleEditorScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .systemBarsPadding()
             .testTag("rule_editor"),
     ) {

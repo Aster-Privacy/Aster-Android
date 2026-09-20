@@ -64,6 +64,13 @@ class TimedOverrides(
         return entries.isEmpty()
     }
 
+    fun snapshot(): Map<String, Boolean> {
+        if (entries.isEmpty()) return emptyMap()
+        val at_now = now()
+        entries.entries.removeIf { at_now - it.value.at >= ttl_ms }
+        return entries.mapValues { it.value.value }
+    }
+
     fun clear() {
         entries.clear()
     }

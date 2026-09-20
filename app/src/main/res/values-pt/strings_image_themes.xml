@@ -31,4 +31,18 @@
     <string name="image_theme_editor_hint">Faça o gesto de pinça para ampliar e arraste para mover a foto. Toque duas vezes para ampliar ou reduzir.</string>
     <string name="image_theme_editor_set">Definir</string>
     <string name="image_theme_applied">Tema aplicado</string>
+    <string name="image_theme_no_photo">Sem foto</string>
+    <string name="image_theme_no_photo_subtitle">Use apenas cores, sem foto atrás do app.</string>
+    <string name="image_theme_reset_short">Redefinir</string>
+    <string name="image_theme_reset_confirm_title">Redefinir o tema de imagem?</string>
+    <string name="image_theme_reset_confirm_message">Isso remove a foto de fundo e devolve as cores ao tema padrão.</string>
+    <string name="theme_opacity">Opacidade do tema</string>
+    <string name="theme_opacity_clear">Transparente</string>
+    <string name="theme_opacity_clear_subtitle">Sua foto aparece ao máximo.</string>
+    <string name="theme_opacity_glass">Vidro</string>
+    <string name="theme_opacity_glass_subtitle">Equilibra sua foto com superfícies legíveis.</string>
+    <string name="theme_opacity_frosted">Fosco</string>
+    <string name="theme_opacity_frosted_subtitle">As superfícies ficam quase sólidas, com um toque da sua foto.</string>
+    <string name="theme_opacity_solid">Sólido</string>
+    <string name="theme_opacity_solid_subtitle">As superfícies ficam totalmente sólidas e sua foto permanece atrás.</string>
 </resources>

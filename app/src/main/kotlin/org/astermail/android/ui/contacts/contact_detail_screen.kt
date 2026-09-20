@@ -98,6 +98,7 @@ import org.astermail.android.design.components.AsterDestructiveButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.ui.search.build_contact_mail_query
 import androidx.compose.material.icons.filled.Star
+import org.astermail.android.ui.common.page_surface
 
 @Composable
 fun ContactDetailScreen(
@@ -155,7 +156,7 @@ fun ContactDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .systemBarsPadding(),
     ) {
         Row(

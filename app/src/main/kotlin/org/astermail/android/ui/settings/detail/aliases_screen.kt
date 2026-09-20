@@ -126,6 +126,7 @@ import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
 import org.astermail.android.ui.icons.pin_icon
 import org.astermail.android.ui.icons.pin_icon_filled
+import org.astermail.android.ui.common.page_surface
 
 @Composable
 private fun tab_labels_computed(): List<String> = listOf(
@@ -263,7 +264,7 @@ fun AliasesScreen(
     ) {
         ScrollableTabRow(
             selectedTabIndex = selected_tab,
-            containerColor = colors.bg_primary,
+            containerColor = if (colors.is_glass) androidx.compose.ui.graphics.Color.Transparent else colors.bg_primary,
             contentColor = colors.accent_blue,
             edgePadding = AsterSpacing.lg,
         ) {
@@ -495,7 +496,7 @@ private fun aliases_tab(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(colors.bg_primary)
+                .page_surface(colors)
                 .padding(
                     start = AsterSpacing.lg,
                     end = AsterSpacing.lg,

@@ -197,6 +197,7 @@ import org.astermail.android.translation.TranslationDownloadPolicy
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
 import org.astermail.android.util.clip_with_ellipsis
+import org.astermail.android.ui.common.page_surface
 
 private val placeholder_body_height = 240.dp
 private const val thread_draft_remove_ms = 260L
@@ -802,7 +803,11 @@ fun MailDetailScreen(
         settled = thread_settled,
         any_body_pending = messages.any { it.is_body_pending },
     )
-    var open_layout by remember(email_id) { mutableStateOf<ThreadOpenLayout?>(null) }
+    var open_layout by remember(email_id) {
+        mutableStateOf(
+            if (thread_complete) initial_thread_layout(messages.map { it.id }, email_id) else null,
+        )
+    }
     LaunchedEffect(email_id, thread_complete, messages) {
         if (open_layout == null && thread_complete) {
             open_layout = initial_thread_layout(messages.map { it.id }, email_id)
@@ -856,6 +861,7 @@ fun MailDetailScreen(
             thread_revealed = true
         }
     }
+    val detail_phase = remember_detail_skeleton_phase(email_id, !thread_revealed)
 
     fun show_toast(msg: String) {
         org.astermail.android.ui.common.app_toast.show(msg)
@@ -913,7 +919,7 @@ fun MailDetailScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .statusBarsPadding()
             .clear_subject_selection_on_press_outside(subject_selection),
     ) {
@@ -922,7 +928,7 @@ fun MailDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
-                    .background(colors.bg_primary)
+                    .page_surface(colors)
                     .padding(horizontal = AsterSpacing.xs),
                 contentAlignment = Alignment.Center,
             ) {
@@ -1204,13 +1210,14 @@ fun MailDetailScreen(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .background(colors.bg_primary)
+                    .page_surface(colors)
                     .clipToBounds(),
             ) {
             if (email != null) LazyColumn(
                 state = list_state,
                 modifier = Modifier
                     .fillMaxSize()
+                    .detail_content_handoff(email_id, detail_phase)
                     .clipToBounds()
                     .pointerInput(on_next, on_previous) {
                         var cumulative_drag = 0f
@@ -1535,8 +1542,8 @@ fun MailDetailScreen(
 
                 item { Spacer(Modifier.height(bottom_bar_height + 16.dp)) }
             }
-            detail_skeleton_overlay(
-                visible = !thread_revealed,
+            detail_skeleton_layer(
+                phase = detail_phase,
                 message_count = expected_message_count,
             )
 
@@ -1544,7 +1551,7 @@ fun MailDetailScreen(
         }
 
 
-        if (email != null && messages.isNotEmpty()) {
+        if (detail_phase != SkeletonPhase.skeleton && email != null && messages.isNotEmpty()) {
             val latest_msg = messages.last()
             val detail_prefs_state by settings_vm.state.collectAsStateWithLifecycle()
             LaunchedEffect(detail_prefs_state.preferences?.toolbar_actions) {
@@ -5244,7 +5251,12 @@ internal fun email_html_view(
 ) {
     val colors = AsterMaterial.colors
     val is_dark = !force_light && if (colors.is_glass) colors.is_dark else colors.bg_primary.luminance() < colors.text_primary.luminance()
-    val bg_hex = if (force_light) "#FFFFFF" else if (colors.is_glass) "transparent" else String.format(java.util.Locale.US, "#%06X", colors.bg_primary.toArgb() and 0xFFFFFF)
+    val body_surface = if (colors.is_glass) colors.thread_content_bg else colors.bg_primary
+    val bg_hex = when {
+        force_light -> "#FFFFFF"
+        colors.is_glass -> "transparent"
+        else -> String.format(java.util.Locale.US, "#%06X", body_surface.toArgb() and 0xFFFFFF)
+    }
     val fg_hex = if (force_light) "#111827" else String.format(java.util.Locale.US, "#%06X", colors.text_primary.toArgb() and 0xFFFFFF)
     val link_hex = String.format(java.util.Locale.US, "#%06X", colors.accent_blue.toArgb() and 0xFFFFFF)
 
@@ -6709,7 +6721,7 @@ private fun attachment_preview_dialog(
                                 .fillMaxSize()
                                 .padding(16.dp)
                                 .clip(SquircleShape(8.dp))
-                                .background(colors.bg_primary)
+                                .page_surface(colors)
                                 .padding(12.dp),
                         ) {
                             val scroll = rememberScrollState()

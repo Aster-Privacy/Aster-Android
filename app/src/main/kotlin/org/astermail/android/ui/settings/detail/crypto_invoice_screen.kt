@@ -100,6 +100,7 @@ import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.twofactor.render_qr_code
+import org.astermail.android.ui.common.page_surface
 
 private fun pretty_chain(chain: String): String {
     if (chain.isBlank()) return chain
@@ -207,7 +208,7 @@ internal fun crypto_invoice_screen(
         is_quote_lapsed(invoice, corrected_now_ms) &&
         received_atomic_of(invoice).signum() == 0
 
-    Column(Modifier.fillMaxSize().background(colors.bg_primary).systemBarsPadding()) {
+    Column(Modifier.fillMaxSize().page_surface(colors).systemBarsPadding()) {
         AsterTopBar(title = stringResource(R.string.crypto_native_invoice_screen_title), on_back = on_back)
         settings_row_gap()
         Column(

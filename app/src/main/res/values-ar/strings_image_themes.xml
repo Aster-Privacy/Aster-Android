@@ -31,4 +31,18 @@
     <string name="image_theme_editor_hint">اضغط بإصبعين للتكبير واسحب لتحريك الصورة. اضغط مرتين للتكبير أو التصغير.</string>
     <string name="image_theme_editor_set">تعيين</string>
     <string name="image_theme_applied">تم تطبيق السمة</string>
+    <string name="image_theme_no_photo">بدون صورة</string>
+    <string name="image_theme_no_photo_subtitle">استخدم الألوان فقط، بدون صورة خلف التطبيق.</string>
+    <string name="image_theme_reset_short">إعادة تعيين</string>
+    <string name="image_theme_reset_confirm_title">هل تريد إعادة تعيين سمة الصورة؟</string>
+    <string name="image_theme_reset_confirm_message">يؤدي هذا إلى إزالة صورة الخلفية وإعادة الألوان إلى السمة الافتراضية.</string>
+    <string name="theme_opacity">عتامة السمة</string>
+    <string name="theme_opacity_clear">شفاف</string>
+    <string name="theme_opacity_clear_subtitle">تظهر صورتك بأوضح شكل.</string>
+    <string name="theme_opacity_glass">زجاجي</string>
+    <string name="theme_opacity_glass_subtitle">يوازن بين صورتك وسطوح واضحة القراءة.</string>
+    <string name="theme_opacity_frosted">مصنفر</string>
+    <string name="theme_opacity_frosted_subtitle">تبقى الأسطح معتمة في معظمها مع لمحة من صورتك.</string>
+    <string name="theme_opacity_solid">معتم</string>
+    <string name="theme_opacity_solid_subtitle">الأسطح معتمة بالكامل وتبقى صورتك خلفها.</string>
 </resources>

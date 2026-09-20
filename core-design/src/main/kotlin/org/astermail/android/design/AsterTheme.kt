@@ -125,9 +125,14 @@ private fun apply_reduce_transparency(base: AsterSemanticColors): AsterSemanticC
 private val GLASS_INK = Color(0xFF0A0A0C)
 private val GLASS_NEUTRAL_TINT = Color(0xFF1C1C20)
 private const val GLASS_TINT_PRESENCE = 0.55f
-private const val GLASS_ACCENT_BLEED = 0.06f
+private const val GLASS_ACCENT_BLEED = 0.20f
 
-internal fun image_theme_colors(base: AsterSemanticColors, tint: Color): AsterSemanticColors {
+internal fun image_theme_colors(
+    base: AsterSemanticColors,
+    tint: Color,
+    opacity: Float = 1f,
+): AsterSemanticColors {
+    val resolved_opacity = opacity.coerceIn(0.2f, 1f)
     val resolved_tint = if (tint == Color.Unspecified) GLASS_NEUTRAL_TINT else tint.copy(alpha = 1f)
     val canvas = mix_rgb(GLASS_INK, resolved_tint, GLASS_TINT_PRESENCE)
     val harmonized = mix_rgb(canvas, base.accent_blue.copy(alpha = 1f), GLASS_ACCENT_BLEED)
@@ -139,7 +144,12 @@ internal fun image_theme_colors(base: AsterSemanticColors, tint: Color): AsterSe
         canvas, lift(0.05f), card, lift(0.08f), lift(0.10f), lift(0.11f), lift(0.12f), lift(0.13f), lift(0.14f), lift(0.15f),
     )
     val selected = lift(0.16f)
-    val all_surfaces = surfaces + selected
+    val opaque_surfaces = surfaces + selected
+    val all_surfaces = if (resolved_opacity >= 0.999f) {
+        opaque_surfaces
+    } else {
+        opaque_surfaces + opaque_surfaces.map { mix_rgb(Color.White, it, resolved_opacity) }
+    }
     val accent = ensure_contrast(base.accent_blue, all_surfaces, contrast_body_text)
     val accent_hover = ensure_contrast(base.accent_blue_hover, all_surfaces, contrast_body_text)
     fun text(color: Color): Color = ensure_contrast(color, all_surfaces, contrast_body_text)
@@ -188,6 +198,7 @@ internal fun image_theme_colors(base: AsterSemanticColors, tint: Color): AsterSe
         secondary_control_bg = lift(0.12f),
         secondary_control_border = border_strong,
         is_glass = true,
+        glass_opacity = resolved_opacity,
     )
 }
 
@@ -224,6 +235,7 @@ fun AsterTheme(
     font_choice: String = DEFAULT_FONT_ID,
     glass: Boolean = false,
     glass_tint: Color = Color.Unspecified,
+    glass_opacity: Float = 1f,
     content: @Composable () -> Unit,
 ) {
     val forced_dark = AsterColorThemes.is_dark_only(color_theme_id)
@@ -257,11 +269,19 @@ fun AsterTheme(
         }
     }
 
-    val semantic = remember(resolved_dark, palette, high_contrast, reduce_transparency, glass, glass_tint) {
+    val semantic = remember(
+        resolved_dark,
+        palette,
+        high_contrast,
+        reduce_transparency,
+        glass,
+        glass_tint,
+        glass_opacity,
+    ) {
         var built = AsterColorThemes.semantic_colors_for(resolved_dark, palette)
         if (high_contrast) built = apply_high_contrast(built)
         if (reduce_transparency) built = apply_reduce_transparency(built)
-        if (glass && resolved_dark) built = image_theme_colors(built, glass_tint)
+        if (glass && resolved_dark) built = image_theme_colors(built, glass_tint, glass_opacity)
         built
     }
     val color_scheme = remember(resolved_dark, palette, semantic) {

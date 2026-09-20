@@ -383,6 +383,7 @@ class SettingsViewModel @Inject constructor(
     init {
         hydrate_cached_preferences()
         hydrate_cached_signatures()
+        hydrate_cached_tags()
         load_preferences()
     }
 
@@ -906,6 +907,7 @@ class SettingsViewModel @Inject constructor(
         last_labels_load_ms.clear()
         _state.value = SettingsUiState()
         hydrate_cached_preferences()
+        hydrate_cached_tags()
     }
 
     fun load_blocked_senders() {
@@ -4378,7 +4380,9 @@ class SettingsViewModel @Inject constructor(
                 if (all_decryption_failed && auth_repository.try_refresh_vault_keys()) {
                     decrypted = response.tags.map { decrypt_tag(it) }
                 }
-                _state.value = _state.value.copy(tags = decrypted)
+                val merged = org.astermail.android.labels.merge_tag_snapshot(_state.value.tags, decrypted)
+                _state.value = _state.value.copy(tags = merged)
+                persist_cached_tags(merged)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
@@ -4672,6 +4676,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     tags = _state.value.tags.filter { it.id != tag_id },
                 )
+                persist_cached_tags(_state.value.tags)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
@@ -4699,6 +4704,7 @@ class SettingsViewModel @Inject constructor(
                         name_nonce = name_field.nonce_b64,
                     ),
                 )
+                persist_cached_tags(_state.value.tags)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
@@ -4725,6 +4731,7 @@ class SettingsViewModel @Inject constructor(
                         color_nonce = color_field.nonce_b64,
                     ),
                 )
+                persist_cached_tags(_state.value.tags)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
@@ -4751,6 +4758,7 @@ class SettingsViewModel @Inject constructor(
                         icon_nonce = icon_field.nonce_b64,
                     ),
                 )
+                persist_cached_tags(_state.value.tags)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
@@ -4777,6 +4785,7 @@ class SettingsViewModel @Inject constructor(
                 tags_api.bulk_reorder_tags(
                     org.astermail.android.api.tags.BulkReorderTagsRequest(tags = changed),
                 )
+                persist_cached_tags(_state.value.tags)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
@@ -5031,6 +5040,30 @@ class SettingsViewModel @Inject constructor(
         apply_signature_defaults(cached)
         _signature_loaded.value = true
         return true
+    }
+
+    private fun hydrate_cached_tags() {
+        if (_state.value.tags.isNotEmpty()) return
+        val raw = preferences_cache.read_tags(cache_account_key()) ?: return
+        val cached = runCatching {
+            cached_preferences_json.decodeFromString(
+                kotlinx.serialization.builtins.ListSerializer(TagItem.serializer()),
+                raw,
+            )
+        }.getOrNull() ?: return
+        if (cached.isEmpty()) return
+        _state.value = _state.value.copy(tags = cached)
+    }
+
+    private fun persist_cached_tags(tags: List<TagItem>) {
+        val key = cache_account_key() ?: return
+        val raw = runCatching {
+            cached_preferences_json.encodeToString(
+                kotlinx.serialization.builtins.ListSerializer(TagItem.serializer()),
+                tags,
+            )
+        }.getOrNull() ?: return
+        preferences_cache.write_tags(key, raw)
     }
 
     private fun persist_cached_signatures(decrypted: List<DecryptedSignature>) {

@@ -31,4 +31,18 @@
     <string name="image_theme_editor_hint">Zum Zoomen die Finger spreizen und zum Verschieben ziehen. Zum Vergrößern oder Verkleinern zweimal tippen.</string>
     <string name="image_theme_editor_set">Festlegen</string>
     <string name="image_theme_applied">Design angewendet</string>
+    <string name="image_theme_no_photo">Kein Foto</string>
+    <string name="image_theme_no_photo_subtitle">Nur Farben verwenden, ohne Foto hinter der App.</string>
+    <string name="image_theme_reset_short">Zurücksetzen</string>
+    <string name="image_theme_reset_confirm_title">Bildthema zurücksetzen?</string>
+    <string name="image_theme_reset_confirm_message">Dadurch wird das Hintergrundfoto entfernt und die Farben kehren zum Standardthema zurück.</string>
+    <string name="theme_opacity">Deckkraft des Themas</string>
+    <string name="theme_opacity_clear">Klar</string>
+    <string name="theme_opacity_clear_subtitle">Dein Foto ist am stärksten sichtbar.</string>
+    <string name="theme_opacity_glass">Glas</string>
+    <string name="theme_opacity_glass_subtitle">Hält die Balance zwischen Foto und lesbaren Flächen.</string>
+    <string name="theme_opacity_frosted">Milchglas</string>
+    <string name="theme_opacity_frosted_subtitle">Flächen bleiben weitgehend deckend, mit einem Hauch deines Fotos.</string>
+    <string name="theme_opacity_solid">Deckend</string>
+    <string name="theme_opacity_solid_subtitle">Flächen sind vollständig deckend und dein Foto bleibt dahinter.</string>
 </resources>

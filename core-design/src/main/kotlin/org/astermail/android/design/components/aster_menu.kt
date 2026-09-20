@@ -98,11 +98,11 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.aster_ripple
 
-private val menu_surface_shape = SquircleShape(14.dp)
-private val menu_item_shape = SquircleShape(9.dp)
+private val menu_surface_shape = SquircleShape(22.dp)
+private val menu_item_shape = SquircleShape(14.dp)
 private val menu_screen_margin = 12.dp
-private val menu_surface_padding = 5.dp
-private val menu_surface_elevation = 16.dp
+private val menu_surface_padding = 6.dp
+private val menu_surface_elevation = 18.dp
 private val menu_item_min_height = 44.dp
 private val menu_item_padding_horizontal = 12.dp
 private val menu_icon_size = 18.dp
@@ -110,7 +110,7 @@ private val menu_icon_gap = 12.dp
 private val menu_check_size = 16.dp
 private val menu_text_size = 15.sp
 private val menu_label_size = 12.sp
-private const val menu_surface_lift = 0.1f
+private const val menu_surface_lift = 0.14f
 private const val menu_border_lift_dark = 0.09f
 private const val menu_border_lift_light = 0.07f
 private const val menu_reveal_from = 0.6f

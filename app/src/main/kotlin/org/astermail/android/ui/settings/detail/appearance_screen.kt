@@ -52,6 +52,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -185,6 +186,18 @@ private val preset_swatch_ids = listOf(
 )
 
 @OptIn(ExperimentalLayoutApi::class)
+private data class ThemeOpacityLevel(val value: Float, val title: Int, val subtitle: Int)
+
+private val theme_opacity_levels = listOf(
+    ThemeOpacityLevel(0.38f, R.string.theme_opacity_clear, R.string.theme_opacity_clear_subtitle),
+    ThemeOpacityLevel(0.62f, R.string.theme_opacity_glass, R.string.theme_opacity_glass_subtitle),
+    ThemeOpacityLevel(0.82f, R.string.theme_opacity_frosted, R.string.theme_opacity_frosted_subtitle),
+    ThemeOpacityLevel(1f, R.string.theme_opacity_solid, R.string.theme_opacity_solid_subtitle),
+)
+
+private fun nearest_theme_opacity(value: Float): Float =
+    theme_opacity_levels.minBy { kotlin.math.abs(it.value - value) }.value
+
 @Composable
 fun AppearanceScreen(
     on_back: () -> Unit,
@@ -199,6 +212,8 @@ fun AppearanceScreen(
     val custom_theme_overrides by vm.custom_theme_overrides.collectAsStateWithLifecycle()
     val font_choice by vm.font_choice.collectAsStateWithLifecycle()
     val background_image by vm.background_image.collectAsStateWithLifecycle()
+    val background_opacity by vm.background_opacity.collectAsStateWithLifecycle()
+    val appearance_custom_meta by org.astermail.android.ui.theme.custom_theme_image.meta.collectAsState()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val plan_state by plan_vm.state.collectAsStateWithLifecycle()
     val prefs = settings_state.preferences
@@ -211,6 +226,7 @@ fun AppearanceScreen(
     val custom_theme_locked = plan_loaded && !custom_theme_unlocked
 
     var show_font_picker by remember { mutableStateOf(false) }
+    var show_custom_theme_upsell by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { settings_vm.load_preferences() }
 
@@ -235,7 +251,13 @@ fun AppearanceScreen(
                 else -> {}
             }
         }
-        if (remote_theme.color_theme != color_theme_key) vm.set_color_theme(remote_theme.color_theme)
+        if (remote_theme.color_theme != color_theme_key) {
+            val active_background = org.astermail.android.ui.theme.theme_background_for(background_image)
+            if (active_background != null && active_background.color_theme.name != remote_theme.color_theme) {
+                vm.set_background_image(no_theme_background)
+            }
+            vm.set_color_theme(remote_theme.color_theme)
+        }
         if (remote_theme.custom_theme_seed != custom_theme_seed) {
             vm.set_custom_theme_seed(remote_theme.custom_theme_seed)
         }
@@ -278,6 +300,27 @@ fun AppearanceScreen(
             color_theme = id.name,
         )
         if (next != base) settings_vm.save_preferences(next)
+    }
+
+    if (show_custom_theme_upsell) {
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { show_custom_theme_upsell = false },
+            title = stringResource(R.string.custom_theme_upgrade_title),
+            message = stringResource(R.string.custom_theme_upgrade_description),
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = { show_custom_theme_upsell = false },
+                )
+                org.astermail.android.design.components.AsterDialogPrimaryButton(
+                    label = stringResource(R.string.upgrade),
+                    onClick = {
+                        show_custom_theme_upsell = false
+                        on_open("billing")
+                    },
+                )
+            },
+        )
     }
 
     var library_open by rememberSaveable { mutableStateOf(false) }
@@ -416,32 +459,17 @@ fun AppearanceScreen(
                 stringResource(R.string.color_theme_aster_blue),
                 stringResource(R.string.theme_aster_blue_subtitle),
                 color_theme == ColorThemeId.aster_blue,
-            ) { apply_color_theme(ColorThemeId.aster_blue) }
+            ) { apply_color_theme(ColorThemeId.aster_blue, clear_background = true) }
             if (dynamic_color_supported) {
                 settings_row_gap(modifier = Modifier)
                 theme_option_row(
                     stringResource(R.string.theme_dynamic),
                     stringResource(R.string.theme_dynamic_subtitle),
                     color_theme == ColorThemeId.dynamic,
-                ) { apply_color_theme(ColorThemeId.dynamic) }
+                ) { apply_color_theme(ColorThemeId.dynamic, clear_background = true) }
             }
         }
 
-        v_gap(AsterSpacing.xxl)
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            val sync_enabled = prefs?.let { theme_sync_enabled(it) } ?: true
-            detail_row(
-                title = stringResource(R.string.theme_sync_across_devices),
-                subtitle = stringResource(R.string.theme_sync_across_devices_subtitle),
-                trailing = {
-                    AsterSwitch(
-                        checked = sync_enabled,
-                        onCheckedChange = { apply_theme_sync(it) },
-                        modifier = Modifier.testTag("theme_sync_switch"),
-                    )
-                },
-            )
-        }
 
         v_gap(AsterSpacing.xxl)
         section_label(stringResource(R.string.color_theme))
@@ -467,9 +495,9 @@ fun AppearanceScreen(
                                 locked = is_locked,
                                 on_click = {
                                     if (is_locked) {
-                                        on_open("billing")
+                                        show_custom_theme_upsell = true
                                     } else {
-                                        apply_color_theme(id)
+                                        apply_color_theme(id, clear_background = true)
                                     }
                                 },
                                 modifier = Modifier.weight(1f).testTag("swatch_${id.name}"),
@@ -480,13 +508,6 @@ fun AppearanceScreen(
                 }
             }
         }
-
-        v_gap(AsterSpacing.xxl)
-        section_label(stringResource(R.string.image_themes))
-        image_theme_entry_card(
-            active = theme_background_for(background_image),
-            on_click = { library_open = true },
-        )
 
         if (color_theme == ColorThemeId.custom && !custom_theme_locked) {
             v_gap(AsterSpacing.xxl)
@@ -551,6 +572,27 @@ fun AppearanceScreen(
                             )
                         }
                     }
+                }
+            }
+        }
+        v_gap(AsterSpacing.xxl)
+        section_label(stringResource(R.string.image_themes))
+        image_theme_entry_card(
+            active = remember(background_image, appearance_custom_meta) { theme_background_for(background_image) },
+            on_click = { library_open = true },
+        )
+
+        if (background_image != no_theme_background) {
+            v_gap(AsterSpacing.xxl)
+            section_label(stringResource(R.string.theme_opacity))
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                theme_opacity_levels.forEachIndexed { index, level ->
+                    theme_option_row(
+                        stringResource(level.title),
+                        stringResource(level.subtitle),
+                        nearest_theme_opacity(background_opacity) == level.value,
+                    ) { vm.set_background_opacity(level.value) }
+                    if (index < theme_opacity_levels.size - 1) settings_row_gap(modifier = Modifier)
                 }
             }
         }
@@ -702,6 +744,22 @@ fun AppearanceScreen(
                 selected = compose_font_color.isEmpty(),
                 test_tag = "compose_color_theme_default",
                 on_click = { apply_compose_font_color("") },
+            )
+        }
+        v_gap(AsterSpacing.xxl)
+        section_label(stringResource(R.string.sync))
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            val sync_enabled = prefs?.let { theme_sync_enabled(it) } ?: true
+            detail_row(
+                title = stringResource(R.string.theme_sync_across_devices),
+                subtitle = stringResource(R.string.theme_sync_across_devices_subtitle),
+                trailing = {
+                    AsterSwitch(
+                        checked = sync_enabled,
+                        onCheckedChange = { apply_theme_sync(it) },
+                        modifier = Modifier.testTag("theme_sync_switch"),
+                    )
+                },
             )
         }
         v_gap(AsterSpacing.xxl)

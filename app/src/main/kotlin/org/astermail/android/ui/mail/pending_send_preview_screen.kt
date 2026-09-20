@@ -68,6 +68,7 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.mail.MailViewModel
+import org.astermail.android.ui.common.page_surface
 
 @Composable
 fun pending_send_preview_screen(
@@ -127,7 +128,7 @@ fun pending_send_preview_screen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .statusBarsPadding()
             .clear_subject_selection_on_press_outside(subject_selection),
     ) {

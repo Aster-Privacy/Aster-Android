@@ -31,4 +31,18 @@
     <string name="image_theme_editor_hint">ज़ूम करने के लिए पिंच करें और फ़ोटो खिसकाने के लिए खींचें। ज़ूम इन या आउट करने के लिए दो बार टैप करें।</string>
     <string name="image_theme_editor_set">सेट करें</string>
     <string name="image_theme_applied">थीम लागू की गई</string>
+    <string name="image_theme_no_photo">कोई फ़ोटो नहीं</string>
+    <string name="image_theme_no_photo_subtitle">ऐप के पीछे फ़ोटो के बिना, केवल रंगों का उपयोग करें।</string>
+    <string name="image_theme_reset_short">रीसेट करें</string>
+    <string name="image_theme_reset_confirm_title">इमेज थीम रीसेट करें?</string>
+    <string name="image_theme_reset_confirm_message">इससे बैकग्राउंड फ़ोटो हट जाती है और रंग डिफ़ॉल्ट थीम पर लौट आते हैं.</string>
+    <string name="theme_opacity">थीम अपारदर्शिता</string>
+    <string name="theme_opacity_clear">पारदर्शी</string>
+    <string name="theme_opacity_clear_subtitle">आपकी फ़ोटो सबसे ज़्यादा दिखती है.</string>
+    <string name="theme_opacity_glass">ग्लास</string>
+    <string name="theme_opacity_glass_subtitle">आपकी फ़ोटो और पढ़ने लायक सतहों में संतुलन रखता है.</string>
+    <string name="theme_opacity_frosted">फ़्रॉस्टेड</string>
+    <string name="theme_opacity_frosted_subtitle">सतहें ज़्यादातर ठोस रहती हैं, आपकी फ़ोटो की हल्की झलक के साथ.</string>
+    <string name="theme_opacity_solid">ठोस</string>
+    <string name="theme_opacity_solid_subtitle">सतहें पूरी तरह ठोस हैं और आपकी फ़ोटो उनके पीछे रहती है.</string>
 </resources>

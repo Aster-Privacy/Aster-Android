@@ -51,7 +51,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -86,6 +89,10 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import org.astermail.android.R
+import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.ui.common.nav_anim_duration_ms
+import org.astermail.android.ui.common.nav_backward_exit
+import org.astermail.android.ui.common.nav_forward_enter
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.ui.theme.custom_theme_image
 
@@ -178,8 +185,17 @@ fun image_theme_photo_editor(
     var crop_loaded by remember(source) { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
+    val reduce_motion = aster_reduce_motion()
+    val anim_duration = if (reduce_motion) 0 else nav_anim_duration_ms
+    val visible_state = remember { MutableTransitionState(false).apply { targetState = true } }
+    val request_cancel = { if (!busy) visible_state.targetState = false }
+
+    LaunchedEffect(visible_state.currentState, visible_state.targetState) {
+        if (!visible_state.targetState && !visible_state.currentState) on_cancel()
+    }
+
     Dialog(
-        onDismissRequest = { if (!busy) on_cancel() },
+        onDismissRequest = request_cancel,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
         val view = LocalView.current
@@ -195,6 +211,11 @@ fun image_theme_photo_editor(
                 window.statusBarColor = android.graphics.Color.rgb(0x0B, 0x0B, 0x0D)
             }
         }
+        AnimatedVisibility(
+            visibleState = visible_state,
+            enter = nav_forward_enter(anim_duration),
+            exit = nav_backward_exit(anim_duration),
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -211,7 +232,7 @@ fun image_theme_photo_editor(
                 Text(
                     text = stringResource(R.string.image_theme_editor_title),
                     color = Color.White,
-                    fontSize = 17.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Spacer(Modifier.height(4.dp))
@@ -313,7 +334,7 @@ fun image_theme_photo_editor(
                     content = Color.White,
                     enabled = !busy,
                     busy = false,
-                    on_click = on_cancel,
+                    on_click = request_cancel,
                     modifier = Modifier.weight(1f).testTag("image_theme_editor_cancel"),
                 )
                 editor_button(
@@ -326,6 +347,7 @@ fun image_theme_photo_editor(
                     modifier = Modifier.weight(1f).testTag("image_theme_editor_set"),
                 )
             }
+        }
         }
     }
 }

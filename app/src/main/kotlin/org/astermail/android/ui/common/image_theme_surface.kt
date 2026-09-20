@@ -30,6 +30,15 @@ import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterSemanticColors
 import org.astermail.android.design.SquircleShape
 
+fun glass_page_wash(colors: AsterSemanticColors): Float =
+    ((colors.glass_opacity - 0.3f).coerceAtLeast(0f) * 0.5f).coerceIn(0f, 0.4f)
+
+fun Modifier.page_surface(colors: AsterSemanticColors): Modifier = when {
+    !colors.is_glass -> this.background(colors.bg_primary)
+    glass_page_wash(colors) <= 0.01f -> this
+    else -> this.background(colors.bg_primary.copy(alpha = glass_page_wash(colors)))
+}
+
 fun Modifier.image_theme_panel(
     colors: AsterSemanticColors,
     horizontal: Dp = 20.dp,
@@ -38,7 +47,7 @@ fun Modifier.image_theme_panel(
 ): Modifier = if (colors.is_glass) {
     this
         .clip(SquircleShape(radius))
-        .background(colors.bg_card)
+        .background(colors.glass_surface(colors.bg_card))
         .padding(horizontal = horizontal, vertical = vertical)
 } else {
     this

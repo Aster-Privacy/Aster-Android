@@ -106,6 +106,7 @@ import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.AsterTopBar
+import org.astermail.android.ui.common.page_surface
 
 private const val SUPPORT_MAIL_URL = "mailto:support@astermail.org"
 private const val HELP_CENTER_URL = "https://astermail.org/help"
@@ -139,7 +140,7 @@ fun ForgotPasswordScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .systemBarsPadding()
             .imePadding(),
     ) {

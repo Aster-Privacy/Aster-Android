@@ -103,6 +103,7 @@ import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
+import org.astermail.android.ui.common.page_surface
 
 private val group_colors: List<String> =
     org.astermail.android.ui.common.label_color_palette
@@ -227,7 +228,7 @@ fun ContactsScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .systemBarsPadding(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {

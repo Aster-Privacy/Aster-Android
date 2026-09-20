@@ -31,4 +31,18 @@
     <string name="image_theme_editor_hint">핀치하여 확대/축소하고 드래그하여 사진을 이동합니다. 두 번 탭하면 확대하거나 축소합니다.</string>
     <string name="image_theme_editor_set">설정</string>
     <string name="image_theme_applied">테마가 적용되었습니다</string>
+    <string name="image_theme_no_photo">사진 없음</string>
+    <string name="image_theme_no_photo_subtitle">앱 배경에 사진 없이 색상만 사용합니다.</string>
+    <string name="image_theme_reset_short">초기화</string>
+    <string name="image_theme_reset_confirm_title">이미지 테마를 재설정할까요?</string>
+    <string name="image_theme_reset_confirm_message">배경 사진이 삭제되고 색상이 기본 테마로 돌아갑니다.</string>
+    <string name="theme_opacity">테마 불투명도</string>
+    <string name="theme_opacity_clear">투명</string>
+    <string name="theme_opacity_clear_subtitle">사진이 가장 잘 보입니다.</string>
+    <string name="theme_opacity_glass">글래스</string>
+    <string name="theme_opacity_glass_subtitle">사진과 읽기 쉬운 표면의 균형을 맞춥니다.</string>
+    <string name="theme_opacity_frosted">프로스티드</string>
+    <string name="theme_opacity_frosted_subtitle">표면이 대부분 불투명하고 사진이 살짝 비칩니다.</string>
+    <string name="theme_opacity_solid">불투명</string>
+    <string name="theme_opacity_solid_subtitle">표면이 완전히 불투명해지고 사진은 뒤에 남습니다.</string>
 </resources>

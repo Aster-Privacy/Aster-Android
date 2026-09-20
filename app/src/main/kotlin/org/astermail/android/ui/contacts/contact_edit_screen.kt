@@ -79,6 +79,7 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterTextField
+import org.astermail.android.ui.common.page_surface
 
 @Composable
 fun ContactEditScreen(
@@ -186,7 +187,7 @@ fun ContactEditScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .systemBarsPadding(),
     ) {
         Row(

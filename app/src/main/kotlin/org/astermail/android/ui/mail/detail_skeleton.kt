@@ -40,7 +40,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -50,6 +50,7 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_state
+import org.astermail.android.ui.common.page_surface
 
 @Composable
 fun detail_skeleton(modifier: Modifier = Modifier, message_count: Int = 1) {
@@ -61,7 +62,7 @@ fun detail_skeleton(modifier: Modifier = Modifier, message_count: Int = 1) {
         modifier = modifier
             .fillMaxSize()
             .graphicsLayer()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .padding(AsterSpacing.lg),
     ) {
         Box(
@@ -149,9 +150,16 @@ fun detail_skeleton(modifier: Modifier = Modifier, message_count: Int = 1) {
 }
 
 @Composable
-fun detail_skeleton_overlay(visible: Boolean, modifier: Modifier = Modifier, message_count: Int = 1) {
+fun remember_detail_skeleton_phase(thread_key: String, wanted: Boolean): SkeletonPhase =
+    key(thread_key) { remember_skeleton_phase(wanted = wanted, rows_imminent = false).value }
+
+@Composable
+fun Modifier.detail_content_handoff(thread_key: String, phase: SkeletonPhase): Modifier =
+    key(thread_key) { this.skeleton_handoff(phase) }
+
+@Composable
+fun detail_skeleton_layer(phase: SkeletonPhase, modifier: Modifier = Modifier, message_count: Int = 1) {
     val reduce_motion = aster_reduce_motion()
-    val phase by remember_skeleton_phase(wanted = visible, rows_imminent = true)
     AnimatedVisibility(
         visible = phase == SkeletonPhase.skeleton,
         modifier = modifier,

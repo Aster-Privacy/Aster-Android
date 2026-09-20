@@ -62,6 +62,7 @@ import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterSecondaryButton
+import org.astermail.android.ui.common.page_surface
 
 const val first_run_recovery_delay_ms = 24L * 60L * 60L * 1000L
 const val first_run_plan_delay_ms = 72L * 60L * 60L * 1000L
@@ -81,7 +82,7 @@ fun FirstRunSetupSheet(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .systemBarsPadding()
             .padding(horizontal = AsterSpacing.xl),
     ) {

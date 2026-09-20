@@ -147,6 +147,11 @@ private fun decode_theme_thumbnail(context: Context, background: ThemeBackground
     return decoded.asImageBitmap().also { theme_thumbnail_cache.put(background.cache_key, it) }
 }
 
+fun evict_custom_theme_bitmaps() {
+    theme_bitmap_cache.snapshot().keys.filter { it.startsWith("custom:") }.forEach { theme_bitmap_cache.remove(it) }
+    theme_thumbnail_cache.snapshot().keys.filter { it.startsWith("custom:") }.forEach { theme_thumbnail_cache.remove(it) }
+}
+
 fun trim_theme_caches() {
     theme_thumbnail_cache.evictAll()
     theme_bitmap_cache.trimToSize(12 * 1024 * 1024)
@@ -161,6 +166,11 @@ fun remember_active_theme_bitmap(): ImageBitmap? {
     val custom_meta by custom_theme_image.meta.collectAsState()
     val id = local_background_image.current
     val background = remember(id, custom_meta) { theme_background_for(id) }
+    return remember_theme_bitmap(background)
+}
+
+@Composable
+fun remember_theme_bitmap(background: ThemeBackground?): ImageBitmap? {
     val context = LocalContext.current.applicationContext
     val sample = remember(context) { screen_sample(context) }
     val state = produceState(
@@ -183,9 +193,8 @@ fun remember_theme_thumbnail(background: ThemeBackground): State<ImageBitmap?> {
     val context = LocalContext.current.applicationContext
     val key = background.cache_key
     return produceState(initialValue = theme_thumbnail_cache.get(key), key) {
-        if (value == null) {
-            value = withContext(Dispatchers.IO) { decode_theme_thumbnail(context, background) }
-        }
+        value = theme_thumbnail_cache.get(key)
+            ?: withContext(Dispatchers.IO) { decode_theme_thumbnail(context, background) }
     }
 }
 

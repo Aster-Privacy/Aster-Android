@@ -91,6 +91,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -104,6 +105,10 @@ import compose.icons.tablericons.Refresh
 import kotlin.math.roundToInt
 import org.astermail.android.R
 import org.astermail.android.design.AsterColorThemes
+import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.ui.common.nav_anim_duration_ms
+import org.astermail.android.ui.common.nav_backward_exit
+import org.astermail.android.ui.common.nav_forward_enter
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.ColorThemeId
 import org.astermail.android.ui.theme.ThemeBackground
@@ -113,8 +118,12 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
@@ -123,6 +132,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.runtime.mutableIntStateOf
 import compose.icons.tablericons.Crop
 import compose.icons.tablericons.Photo
+import compose.icons.tablericons.PhotoOff
 import compose.icons.tablericons.Plus
 import compose.icons.tablericons.Trash
 import kotlinx.coroutines.delay
@@ -134,9 +144,13 @@ import org.astermail.android.ui.theme.custom_theme_background
 import org.astermail.android.ui.theme.custom_theme_background_entry
 import org.astermail.android.ui.theme.custom_theme_image
 import org.astermail.android.ui.theme.preload_theme_bitmap
+import org.astermail.android.ui.theme.remember_theme_bitmap
 import org.astermail.android.ui.theme.remember_theme_thumbnail
+import org.astermail.android.ui.theme.draw_theme_background
+import org.astermail.android.ui.theme.draw_theme_veil
 import org.astermail.android.ui.theme.theme_background_for
 import org.astermail.android.ui.theme.theme_categories
+import org.astermail.android.design.SquircleShape
 
 private data class LibraryPalette(
     val page_bg: Color,
@@ -155,8 +169,12 @@ private fun mix(from: Color, to: Color, amount: Float): Color = Color(
     alpha = 1f,
 )
 
-private fun library_palette_for(tint: Color, accent: Color): LibraryPalette {
-    val base = if (tint == Color.Unspecified) Color(0xFF1C1C20) else tint
+private fun library_palette_for(
+    tint: Color,
+    accent: Color,
+    fallback: Color = Color(0xFF1C1C20),
+): LibraryPalette {
+    val base = if (tint == Color.Unspecified) fallback else tint
     val canvas = mix(mix(Color(0xFF0A0A0C), base, 0.55f), accent, 0.06f)
     fun lift(amount: Float): Color = mix(canvas, Color.White, amount * 0.55f)
     return LibraryPalette(
@@ -174,6 +192,7 @@ private val default_library_palette = library_palette_for(Color(0xFF0B0B0D), Col
 
 private val local_library_palette = staticCompositionLocalOf { default_library_palette }
 private val disabled_icon = Color(0xFF55555C)
+private val library_veil_ink = Color(0xFF0A0A0C)
 private val error_text = Color(0xFFFF8A8A)
 
 private val shelf_tile_shape = RoundedCornerShape(22.dp)
@@ -198,11 +217,12 @@ fun image_theme_library(
     on_dismiss: () -> Unit,
     on_apply: (ThemeBackground?, ColorThemeId) -> Unit,
 ) {
-    val active = theme_background_for(active_id)
+    val library_custom_meta by custom_theme_image.meta.collectAsState()
+    val active = remember(active_id, library_custom_meta) { theme_background_for(active_id) }
     var pending_id by rememberSaveable { mutableStateOf(active?.id ?: no_theme_background) }
     var pending_color by rememberSaveable { mutableStateOf(active_color.name) }
     var color_chosen by rememberSaveable { mutableStateOf(active_color != ColorThemeId.default) }
-    val pending = theme_background_for(pending_id)
+    val pending = remember(pending_id, library_custom_meta) { theme_background_for(pending_id) }
     val color = ColorThemeId.from_key(pending_color)
     val dirty = pending_id != (active?.id ?: no_theme_background) || color != active_color
     val accent by animateColorAsState(accent_for(color), tween(260), label = "library_accent")
@@ -210,6 +230,7 @@ fun image_theme_library(
     val context = LocalContext.current
     var applied_tick by remember { mutableIntStateOf(0) }
     var show_applied by remember { mutableStateOf(false) }
+    var confirm_reset by remember { mutableStateOf(false) }
 
     LaunchedEffect(pending?.cache_key) {
         pending?.let { preload_theme_bitmap(context, it) }
@@ -222,8 +243,41 @@ fun image_theme_library(
         show_applied = false
     }
 
+    val reduce_motion = aster_reduce_motion()
+    val anim_duration = if (reduce_motion) 0 else nav_anim_duration_ms
+    val visible_state = remember { MutableTransitionState(false).apply { targetState = true } }
+    val request_dismiss = { visible_state.targetState = false }
+
+    LaunchedEffect(visible_state.currentState, visible_state.targetState) {
+        if (!visible_state.targetState && !visible_state.currentState) on_dismiss()
+    }
+
+    if (confirm_reset) {
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { confirm_reset = false },
+            title = stringResource(R.string.image_theme_reset_confirm_title),
+            message = stringResource(R.string.image_theme_reset_confirm_message),
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = { confirm_reset = false },
+                )
+                org.astermail.android.design.components.AsterDialogDestructiveButton(
+                    label = stringResource(R.string.image_theme_reset_short),
+                    onClick = {
+                        confirm_reset = false
+                        pending_id = no_theme_background
+                        pending_color = ColorThemeId.default.name
+                        color_chosen = false
+                        on_apply(null, ColorThemeId.default)
+                    },
+                )
+            },
+        )
+    }
+
     Dialog(
-        onDismissRequest = on_dismiss,
+        onDismissRequest = request_dismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
         val view = LocalView.current
@@ -240,25 +294,36 @@ fun image_theme_library(
             }
         }
         val nav_bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-        val palette = remember(pending?.tint, accent) {
-            library_palette_for(pending?.tint ?: Color.Unspecified, accent)
+        val theme_base = remember(color) {
+            AsterColorThemes.semantic_colors_for(true, AsterColorThemes.palette_for(color)).bg_card
+        }
+        val palette = remember(pending?.tint, accent, theme_base) {
+            library_palette_for(pending?.tint ?: Color.Unspecified, accent, theme_base)
         }
         CompositionLocalProvider(local_library_palette provides palette) {
+            AnimatedVisibility(
+                visibleState = visible_state,
+                enter = nav_forward_enter(anim_duration),
+                exit = nav_backward_exit(anim_duration),
+            ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(local_library_palette.current.page_bg)
                     .testTag("image_theme_library"),
             ) {
+                val preview_bitmap = remember_theme_bitmap(pending)
+                preview_bitmap?.let { bitmap ->
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        draw_theme_background(bitmap)
+                        draw_theme_veil(library_veil_ink)
+                    }
+                }
                 Column(modifier = Modifier.fillMaxSize()) {
                     library_top_bar(
                         reset_enabled = pending != null || color != ColorThemeId.default,
-                        on_back = on_dismiss,
-                        on_reset = {
-                            pending_id = no_theme_background
-                            pending_color = ColorThemeId.default.name
-                            color_chosen = false
-                        },
+                        on_back = request_dismiss,
+                        on_reset = { confirm_reset = true },
                     )
                     LazyColumn(
                         state = rememberLazyListState(),
@@ -275,6 +340,13 @@ fun image_theme_library(
                                 },
                             )
                         }
+                        item(key = "no_photo") {
+                            no_photo_row(
+                                selected = pending_id == no_theme_background,
+                                accent = accent,
+                                on_click = { pending_id = no_theme_background },
+                            )
+                        }
                         item(key = "yours") {
                             your_photo_section(
                                 selected = pending_id == custom_theme_background,
@@ -286,6 +358,7 @@ fun image_theme_library(
                                 },
                                 on_removed = {
                                     if (pending_id == custom_theme_background) pending_id = no_theme_background
+                                    if (active_id == custom_theme_background) on_apply(null, color)
                                 },
                             )
                         }
@@ -342,6 +415,7 @@ fun image_theme_library(
                     )
                 }
             }
+            }
         }
     }
 }
@@ -353,8 +427,8 @@ private fun library_top_bar(reset_enabled: Boolean, on_back: () -> Unit, on_rese
         modifier = Modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .height(60.dp)
-            .padding(horizontal = 6.dp),
+            .height(56.dp)
+            .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -369,31 +443,82 @@ private fun library_top_bar(reset_enabled: Boolean, on_back: () -> Unit, on_rese
                 imageVector = TablerIcons.ArrowLeft,
                 contentDescription = stringResource(R.string.close),
                 tint = Color.White,
-                modifier = Modifier.size(22.dp),
+                modifier = Modifier.size(24.dp),
             )
         }
         Text(
             text = stringResource(R.string.image_themes),
             color = Color.White,
-            fontSize = 19.sp,
+            fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f).padding(start = 6.dp),
         )
-        Box(
+        Text(
+            text = stringResource(R.string.image_theme_reset_short),
+            color = reset_tint,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
             modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
+                .clip(SquircleShape(12.dp))
                 .clickable(enabled = reset_enabled, onClick = on_reset)
+                .padding(horizontal = 14.dp, vertical = 10.dp)
                 .testTag("image_theme_reset"),
-            contentAlignment = Alignment.Center,
-        ) {
+        )
+    }
+}
+
+@Composable
+private fun no_photo_row(
+    selected: Boolean,
+    accent: Color,
+    on_click: () -> Unit,
+) {
+    val palette = local_library_palette.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 10.dp)
+            .clip(SquircleShape(16.dp))
+            .background(palette.raised_bg)
+            .border(
+                width = if (selected) 2.dp else 1.dp,
+                color = if (selected) accent else palette.hairline,
+                shape = SquircleShape(16.dp),
+            )
+            .clickable(onClick = on_click)
+            .padding(horizontal = 16.dp, vertical = 14.dp)
+            .testTag("image_theme_no_photo"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = TablerIcons.PhotoOff,
+            contentDescription = null,
+            tint = if (selected) accent else palette.muted_text,
+            modifier = Modifier.size(22.dp),
+        )
+        Spacer(Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.image_theme_no_photo),
+                color = Color.White,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = stringResource(R.string.image_theme_no_photo_subtitle),
+                color = palette.muted_text,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+            )
+        }
+        if (selected) {
             Icon(
-                imageVector = TablerIcons.Refresh,
-                contentDescription = stringResource(R.string.image_theme_reset),
-                tint = reset_tint,
-                modifier = Modifier.size(21.dp),
+                imageVector = TablerIcons.Check,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(20.dp),
             )
         }
     }
@@ -493,7 +618,7 @@ private fun your_photo_section(
     var editor_crop by remember { mutableStateOf<RectF?>(null) }
     var editor_new_source by remember { mutableStateOf(false) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri == null || importing) return@rememberLauncherForActivityResult
+        if (uri == null || importing || committing) return@rememberLauncherForActivityResult
         importing = true
         error = null
         scope.launch {
@@ -511,7 +636,7 @@ private fun your_photo_section(
         }
     }
     val adjust = {
-        if (!importing) {
+        if (!importing && !committing) {
             importing = true
             error = null
             scope.launch {
@@ -534,7 +659,10 @@ private fun your_photo_section(
             accent = accent,
             on_accent = on_accent,
             busy = committing,
-            on_cancel = { editor_source = null },
+            on_cancel = {
+                editor_source = null
+                source.recycle()
+            },
             on_set = { crop ->
                 committing = true
                 scope.launch {
@@ -544,6 +672,7 @@ private fun your_photo_section(
                     result
                         .onSuccess(on_pick)
                         .onFailure { failure ->
+                            source.recycle()
                             error = (failure as? CustomThemeImageException)?.reason ?: CustomThemeImageError.unreadable
                         }
                 }
@@ -574,7 +703,7 @@ private fun your_photo_section(
         )
         val message_color = if (error != null) error_text else local_library_palette.current.muted_text
         val choose = {
-            if (!importing) {
+            if (!importing && !committing) {
                 launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             }
         }
@@ -588,9 +717,9 @@ private fun your_photo_section(
                 on_click = choose,
             )
         } else {
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 shelf_tile(
                     background = custom_theme_background_entry(current),
@@ -598,22 +727,18 @@ private fun your_photo_section(
                     accent = accent,
                     on_accent = on_accent,
                     on_click = { on_pick(current) },
+                    width = 200.dp,
+                    height = 422.dp,
                 )
+                Spacer(Modifier.height(14.dp))
                 Column(
-                    modifier = Modifier.weight(1f).padding(start = 16.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    Text(
-                        text = message,
-                        color = message_color,
-                        fontSize = 13.sp,
-                        lineHeight = 18.sp,
-                        modifier = Modifier.padding(bottom = 6.dp),
-                    )
                     photo_action_button(
                         icon = TablerIcons.Crop,
                         label = stringResource(R.string.image_theme_adjust_photo),
-                        busy = importing,
+                        busy = importing || committing,
                         accent = accent,
                         on_click = adjust,
                         modifier = Modifier.testTag("image_theme_custom_adjust"),
@@ -632,15 +757,25 @@ private fun your_photo_section(
                         busy = false,
                         accent = accent,
                         on_click = {
-                            if (!importing) {
-                                custom_theme_image.delete(context)
+                            if (!importing && !committing) {
                                 error = null
-                                on_removed()
+                                scope.launch {
+                                    withContext(Dispatchers.IO) { custom_theme_image.delete(context) }
+                                    on_removed()
+                                }
                             }
                         },
                         modifier = Modifier.testTag("image_theme_custom_remove"),
                     )
                 }
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = message,
+                    color = message_color,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
     }
@@ -808,12 +943,14 @@ private fun shelf_tile(
     accent: Color,
     on_accent: Color,
     on_click: () -> Unit,
+    width: Dp = 144.dp,
+    height: Dp = 304.dp,
 ) {
     val progress by animateFloatAsState(if (selected) 1f else 0f, tween(200), label = "tile_select")
     Box(
         modifier = Modifier
-            .width(144.dp)
-            .height(304.dp)
+            .width(width)
+            .height(height)
             .clip(shelf_tile_shape)
             .border(1.dp, local_library_palette.current.hairline, shelf_tile_shape)
             .clickable(onClick = on_click)

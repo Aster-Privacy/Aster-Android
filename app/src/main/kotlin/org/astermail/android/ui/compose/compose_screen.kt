@@ -192,6 +192,7 @@ import org.astermail.android.ui.mail.subject_prefix
 import org.astermail.android.ui.mail.thread_message_to_mock
 import org.astermail.android.util.strip_metadata
 import org.astermail.android.util.strip_status
+import org.astermail.android.ui.common.page_surface
 
 data class AttachmentItem(
     val uri: Uri,
@@ -2037,7 +2038,7 @@ fun ComposeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .systemBarsPadding()
             .imePadding(),
     ) {
@@ -3346,9 +3347,39 @@ private fun chip_input(
             }
             .take(5)
     }
+    val internal_focus_requester = remember { androidx.compose.ui.focus.FocusRequester() }
+    val active_focus_requester = focus_requester ?: internal_focus_requester
+    var field_focused by remember { mutableStateOf(false) }
+    var expand_requested by remember { mutableStateOf(false) }
+    val collapsed = !field_focused && !expand_requested && chips.isNotEmpty() && input.isEmpty()
+    LaunchedEffect(expand_requested, collapsed) {
+        if (expand_requested && !collapsed) active_focus_requester.requestFocus()
+    }
     Box(modifier = Modifier.fillMaxWidth()) {
+        if (collapsed) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expand_requested = true },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(modifier = Modifier.weight(1f, fill = false)) {
+                    recipient_chip(chips.first(), show_encryption_indicator) { on_remove(0) }
+                }
+                if (chips.size > 1) {
+                    Spacer(Modifier.width(AsterSpacing.xs))
+                    Text(
+                        text = "+" + (chips.size - 1),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.text_tertiary,
+                    )
+                }
+            }
+        }
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(if (collapsed) Modifier.size(0.dp) else Modifier),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             androidx.compose.foundation.layout.FlowRow(
@@ -3376,13 +3407,14 @@ private fun chip_input(
                     ),
                     modifier = Modifier
                         .widthIn(min = if (chips.isEmpty()) 120.dp else 40.dp)
-                        .let { m ->
-                            if (focus_requester != null) {
-                                m.focusRequester(focus_requester)
-                            } else m
-                        }
+                        .focusRequester(active_focus_requester)
                         .onFocusChanged { focus ->
-                            if (!focus.isFocused) on_commit()
+                            field_focused = focus.isFocused
+                            if (focus.isFocused) {
+                                expand_requested = false
+                            } else {
+                                on_commit()
+                            }
                         },
                     decorationBox = { inner ->
                         if (chips.isEmpty() && input.isEmpty()) {

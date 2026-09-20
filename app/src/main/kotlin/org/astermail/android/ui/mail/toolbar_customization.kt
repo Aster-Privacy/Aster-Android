@@ -115,7 +115,22 @@ fun selection_toolbar_action_by_id(id: String): ToolbarAction? =
 
 private val star_off_toolbar_action = ToolbarAction("star", R.string.unstar, TablerIcons.StarOff)
 
-fun selection_toolbar_action_for(id: String, selection_all_starred: Boolean): ToolbarAction? {
+private val mark_unread_toolbar_action = ToolbarAction("unread", R.string.mark_as_unread, TablerIcons.Mail)
+
+private val mark_read_toolbar_action = ToolbarAction("read", R.string.mark_as_read, TablerIcons.MailOpened)
+
+fun selection_read_toolbar_action(selection_all_read: Boolean): ToolbarAction =
+    if (selection_all_read) mark_unread_toolbar_action else mark_read_toolbar_action
+
+fun selection_toolbar_action_for(
+    id: String,
+    selection_all_starred: Boolean,
+    selection_all_read: Boolean = false,
+): ToolbarAction? {
     val base = selection_toolbar_action_by_id(id) ?: return null
-    return if (base.id == "star" && selection_all_starred) star_off_toolbar_action else base
+    return when {
+        base.id == "star" && selection_all_starred -> star_off_toolbar_action
+        base.id == "read" -> selection_read_toolbar_action(selection_all_read)
+        else -> base
+    }
 }

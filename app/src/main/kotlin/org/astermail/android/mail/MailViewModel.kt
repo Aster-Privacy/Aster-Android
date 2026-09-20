@@ -71,6 +71,8 @@ private const val STATS_DIRTY_MS = 3_000L
 private const val OVERRIDE_TTL_MS = 30_000L
 private const val READ_OVERRIDE_TTL_MS = 10 * 60_000L
 private const val READ_CONFIRM_GRACE_MS = 15_000L
+private const val TAG_OVERRIDE_TTL_MS = 5 * 60_000L
+private const val TAG_CONFIRM_GRACE_MS = 15_000L
 private const val DECRYPT_RETRY_TIMEOUT_MS = 20_000L
 private const val SEND_GUARD_WINDOW_MS = 30_000L
 private const val LOAD_MORE_FAILURE_LIMIT = 3
@@ -471,6 +473,7 @@ class MailViewModel @Inject constructor(
     private var account_generation = 0
     private val star_overrides = TimedOverrides(OVERRIDE_TTL_MS)
     private val pin_overrides = TimedOverrides(OVERRIDE_TTL_MS)
+    private val tag_overrides = TimedOverrides(TAG_OVERRIDE_TTL_MS)
     internal var override_clock_ms: () -> Long = { System.currentTimeMillis() }
     private val read_overrides = TimedOverrides(READ_OVERRIDE_TTL_MS) { override_clock_ms() }
     private val star_sequence = java.util.concurrent.ConcurrentHashMap<String, Long>()
@@ -568,7 +571,7 @@ class MailViewModel @Inject constructor(
         items.forEach { item_last_confirmed.putIfAbsent(it.id, warmed_at) }
         _inbox_state.value = state.copy(
             items = apply_demo_overlay(
-                apply_pin_overrides(apply_star_overrides(apply_read_overrides(items))),
+                apply_tag_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(items)))),
                 folder,
             ),
             initial = false,
@@ -651,6 +654,7 @@ class MailViewModel @Inject constructor(
         last_stats_load_ms = 0L
         star_overrides.clear()
         pin_overrides.clear()
+        tag_overrides.clear()
         read_overrides.clear()
         read_flips.clear()
         _label_unread_deltas.value = emptyMap()
@@ -700,6 +704,49 @@ class MailViewModel @Inject constructor(
             if (override == null || override == item.is_read) item else item.copy(is_read = override)
         }
     }
+
+    private fun tag_override_key(item_id: String, tag_token: String): String =
+        "$item_id $tag_token"
+
+    private fun set_tag_override(item_id: String, tag_token: String, applied: Boolean) {
+        tag_overrides[tag_override_key(item_id, tag_token)] = applied
+    }
+
+    private fun confirm_tag_override(item_id: String, tag_token: String, applied: Boolean) {
+        tag_overrides.confirm(tag_override_key(item_id, tag_token), applied, TAG_CONFIRM_GRACE_MS)
+    }
+
+    private fun clear_tag_override(item_id: String, tag_token: String) {
+        tag_overrides.remove(tag_override_key(item_id, tag_token))
+    }
+
+    private fun pending_tag_overrides(): Map<String, Map<String, Boolean>> {
+        val snapshot = tag_overrides.snapshot()
+        if (snapshot.isEmpty()) return emptyMap()
+        val grouped = HashMap<String, MutableMap<String, Boolean>>()
+        snapshot.forEach { (key, applied) ->
+            val separator = key.indexOf(' ')
+            if (separator <= 0 || separator == key.lastIndex) return@forEach
+            grouped.getOrPut(key.substring(0, separator)) { LinkedHashMap() }[key.substring(separator + 1)] = applied
+        }
+        return grouped
+    }
+
+    private fun apply_tag_overrides(items: List<InboxItem>): List<InboxItem> {
+        val pending = pending_tag_overrides()
+        if (pending.isEmpty()) return items
+        return items.map { item ->
+            val overrides = pending[item.id] ?: return@map item
+            val merged = org.astermail.android.labels.merge_tag_tokens(item.tag_tokens, overrides)
+            if (merged == item.tag_tokens) {
+                item
+            } else {
+                item.copy(tag_tokens = merged, raw_item = item.raw_item.copy(tag_tokens = merged))
+            }
+        }
+    }
+
+    private fun apply_tag_override(item: InboxItem): InboxItem = apply_tag_overrides(listOf(item)).first()
 
     private fun next_mutation_sequence(): Long = ++mutation_sequence
 
@@ -870,8 +917,10 @@ class MailViewModel @Inject constructor(
             silent_revalidate_job?.cancel()
             val warm = cached.copy(
                 items = apply_demo_overlay(
-                    apply_pin_overrides(
-                        apply_star_overrides(apply_read_overrides(strip_removed(cached.items, folder))),
+                    apply_tag_overrides(
+                        apply_pin_overrides(
+                            apply_star_overrides(apply_read_overrides(strip_removed(cached.items, folder))),
+                        ),
                     ),
                     folder,
                 ),
@@ -907,7 +956,7 @@ class MailViewModel @Inject constructor(
                 emptyList()
             } else {
                 apply_demo_overlay(
-                    apply_pin_overrides(apply_star_overrides(apply_read_overrides(seeded))),
+                    apply_tag_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(seeded)))),
                     folder,
                 )
             },
@@ -941,7 +990,7 @@ class MailViewModel @Inject constructor(
                             val warmed_at = System.currentTimeMillis()
                             items.forEach { item_last_confirmed.putIfAbsent(it.id, warmed_at) }
                             _inbox_state.value = _inbox_state.value.copy(
-                                items = apply_demo_overlay(apply_pin_overrides(apply_star_overrides(apply_read_overrides(items))), folder),
+                                items = apply_demo_overlay(apply_tag_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(items)))), folder),
                                 initial = false,
                             )
                         }
@@ -980,7 +1029,7 @@ class MailViewModel @Inject constructor(
                     val prior = _inbox_state.value
                     val merge = merge_with_previous(page, previous_for_merge(prior.items), folder)
                     val merged_items = apply_demo_overlay(
-                        apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items))),
+                        apply_tag_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items)))),
                         folder,
                     )
                     _inbox_state.value = prior.copy(
@@ -1068,7 +1117,7 @@ class MailViewModel @Inject constructor(
                 val prior = _inbox_state.value
                 val merge = merge_with_previous(page, previous_for_merge(prior.items), folder)
                 val merged_items = apply_demo_overlay(
-                    apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items))),
+                    apply_tag_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items)))),
                     folder,
                 )
                 _inbox_state.value = prior.copy(
@@ -1180,8 +1229,10 @@ class MailViewModel @Inject constructor(
                     cursor = page.next_cursor!!
                     continue
                 }
-                val combined = apply_pin_overrides(
-                    apply_star_overrides(apply_read_overrides(existing + new_items)),
+                val combined = apply_tag_overrides(
+                    apply_pin_overrides(
+                        apply_star_overrides(apply_read_overrides(existing + new_items)),
+                    ),
                 )
                 val effective_has_more = page.has_more && cursor_advanced
                 _inbox_state.value = _inbox_state.value.copy(
@@ -1426,7 +1477,7 @@ class MailViewModel @Inject constructor(
                 repository.fetch_single_message(item_id)
             } ?: Result.failure(Exception(context.getString(R.string.something_went_wrong)))
             if (thread_gen != thread_load_generation) return@launch
-            val item = item_result.getOrNull()
+            val item = item_result.getOrNull()?.let { apply_tag_override(it) }
             if (item != null) resume_failed_open(item_id)
             val thread_token = item?.thread_token
             if (thread_token != null) {
@@ -2334,13 +2385,16 @@ class MailViewModel @Inject constructor(
             )
         }
         patch_cached_tag_tokens(setOf(item_id), tag_token)
+        set_tag_override(item_id, tag_token, true)
         viewModelScope.launch {
             repository.add_tag_to_item(item_id, tag_token).fold(
                 onSuccess = {
+                    confirm_tag_override(item_id, tag_token, true)
                     invalidate_caches(listOf("tag:$tag_token"))
                     emit_toast(context.getString(R.string.added_to_label, display_name))
                 },
                 onFailure = {
+                    clear_tag_override(item_id, tag_token)
                     patch_cached_tag_tokens(setOf(item_id), tag_token, add = false)
                     if (prev_inbox_item != null) {
                         _inbox_state.value = _inbox_state.value.copy(
@@ -2385,13 +2439,16 @@ class MailViewModel @Inject constructor(
             )
         }
         patch_cached_tag_tokens(setOf(item_id), tag_token, add = false)
+        set_tag_override(item_id, tag_token, false)
         viewModelScope.launch {
             repository.remove_tag_from_item(item_id, tag_token).fold(
                 onSuccess = {
+                    confirm_tag_override(item_id, tag_token, false)
                     invalidate_caches(listOf("tag:$tag_token"))
                     emit_toast(context.getString(R.string.removed_from_label, display_name))
                 },
                 onFailure = {
+                    clear_tag_override(item_id, tag_token)
                     patch_cached_tag_tokens(setOf(item_id), tag_token)
                     if (prev_inbox_item != null) {
                         _inbox_state.value = _inbox_state.value.copy(
@@ -2587,12 +2644,15 @@ class MailViewModel @Inject constructor(
             },
         )
         patch_cached_tag_tokens(id_set, tag_token)
+        id_set.forEach { set_tag_override(it, tag_token, true) }
         viewModelScope.launch {
             val failed_ids = repository.add_tag_bulk(ids, tag_token)
             invalidate_caches(listOf("tag:$tag_token"))
+            (id_set - failed_ids.toSet()).forEach { confirm_tag_override(it, tag_token, true) }
             if (failed_ids.isEmpty()) {
                 emit_toast(context.getString(R.string.added_to_label, display_name))
             } else {
+                failed_ids.forEach { clear_tag_override(it, tag_token) }
                 patch_cached_tag_tokens(failed_ids.toSet(), tag_token, add = false)
                 _inbox_state.value = _inbox_state.value.copy(
                     items = _inbox_state.value.items.map {
@@ -2622,12 +2682,15 @@ class MailViewModel @Inject constructor(
             },
         )
         patch_cached_tag_tokens(id_set, tag_token, add = false)
+        id_set.forEach { set_tag_override(it, tag_token, false) }
         viewModelScope.launch {
             val failed_ids = repository.remove_tag_bulk(ids, tag_token)
             invalidate_caches(listOf("tag:$tag_token"))
+            (id_set - failed_ids.toSet()).forEach { confirm_tag_override(it, tag_token, false) }
             if (failed_ids.isEmpty()) {
                 emit_toast(context.getString(R.string.removed_from_label, display_name))
             } else {
+                failed_ids.forEach { clear_tag_override(it, tag_token) }
                 patch_cached_tag_tokens(failed_ids.toSet(), tag_token)
                 _inbox_state.value = _inbox_state.value.copy(
                     items = _inbox_state.value.items.map {
@@ -4184,7 +4247,7 @@ class MailViewModel @Inject constructor(
                     val prior = _inbox_state.value
                     val merge = merge_with_previous(page, previous_for_merge(prior.items), folder)
                     val merged_items = apply_demo_overlay(
-                        apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items))),
+                        apply_tag_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items)))),
                         folder,
                     )
                     _inbox_state.value = prior.copy(

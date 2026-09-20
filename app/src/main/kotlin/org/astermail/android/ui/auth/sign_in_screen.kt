@@ -95,6 +95,7 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.util.ascii_digits
 import org.astermail.android.util.latest_code_input
+import org.astermail.android.ui.common.page_surface
 
 @Composable
 fun SignInScreen(
@@ -214,7 +215,7 @@ fun SignInScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .systemBarsPadding()
             .imePadding(),
     ) {
@@ -470,7 +471,7 @@ private fun TotpVerifyScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .systemBarsPadding()
             .imePadding(),
     ) {

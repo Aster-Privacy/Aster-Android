@@ -110,6 +110,7 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.folders.is_folder_protected
 import org.astermail.android.looks_encrypted
 import org.astermail.android.mail.InboxItem
+import org.astermail.android.ui.common.page_surface
 
 internal val detail_chip_text_size = 10.sp
 internal val detail_chip_line_height = 14.sp
@@ -442,7 +443,7 @@ internal fun detail_subject_line(
                                     width = with(density) { (slot.width + chip_gap_px).toDp() },
                                     height = with(density) { selection_line_px.toDp() },
                                 )
-                                .background(colors.bg_primary),
+                                .page_surface(colors),
                         )
                     }
                 }

@@ -31,4 +31,18 @@
     <string name="image_theme_editor_hint">Pincez pour zoomer et faites glisser pour déplacer la photo. Touchez deux fois pour agrandir ou réduire.</string>
     <string name="image_theme_editor_set">Définir</string>
     <string name="image_theme_applied">Thème appliqué</string>
+    <string name="image_theme_no_photo">Aucune photo</string>
+    <string name="image_theme_no_photo_subtitle">Utilisez uniquement des couleurs, sans photo derrière l’app.</string>
+    <string name="image_theme_reset_short">Réinitialiser</string>
+    <string name="image_theme_reset_confirm_title">Réinitialiser le thème d’image ?</string>
+    <string name="image_theme_reset_confirm_message">Cette action supprime la photo d’arrière-plan et rétablit les couleurs du thème par défaut.</string>
+    <string name="theme_opacity">Opacité du thème</string>
+    <string name="theme_opacity_clear">Transparent</string>
+    <string name="theme_opacity_clear_subtitle">Votre photo est la plus visible.</string>
+    <string name="theme_opacity_glass">Verre</string>
+    <string name="theme_opacity_glass_subtitle">Équilibre votre photo et la lisibilité des surfaces.</string>
+    <string name="theme_opacity_frosted">Givré</string>
+    <string name="theme_opacity_frosted_subtitle">Les surfaces restent presque opaques, avec un soupçon de votre photo.</string>
+    <string name="theme_opacity_solid">Opaque</string>
+    <string name="theme_opacity_solid_subtitle">Les surfaces sont entièrement opaques et votre photo reste derrière.</string>
 </resources>

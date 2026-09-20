@@ -22,8 +22,9 @@ package org.astermail.android.ui.mail
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -176,8 +177,7 @@ private fun order_details_card(
                 bottom = inbox_group_split,
             )
             .clip(inbox_card_shape)
-            .background(colors.bg_card)
-            .border(0.5.dp, colors.border_primary, inbox_card_shape)
+            .background(inbox_card_read_color(colors))
             .testTag("order_details_card"),
     ) {
         Row(
@@ -297,6 +297,7 @@ private fun order_details_card(
                             icon = TablerIcons.Truck,
                             label = tracking_label,
                             value = tracking_value,
+                            copy_value = shipping.tracking_number,
                             on_click = { copy_action(tracking_label, shipping.tracking_number, copied_text) },
                         )
                     }
@@ -355,18 +356,25 @@ private fun order_details_card(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun order_detail_row(
     icon: ImageVector,
     label: String,
     value: String,
+    copy_value: String = value,
     on_click: (() -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
+    val copy_action = remember_copy_action()
+    val copied_text = stringResource(R.string.copied_to_clipboard)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .then(if (on_click != null) Modifier.clickable(onClick = on_click) else Modifier),
+            .combinedClickable(
+                onLongClick = { copy_action(label, copy_value, copied_text) },
+                onClick = { on_click?.invoke() },
+            ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(

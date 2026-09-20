@@ -132,6 +132,20 @@ class ImageThemeContrastTest {
     }
 
     @Test
+    fun island_cards_stay_readable_over_the_brightest_possible_photo() {
+        val veil_min_alpha = 0.24f
+        each_combination { label, colors ->
+            val island = island_surface_color(colors)
+            val backdrop = mix_rgb(Color.White, colors.bg_primary, veil_min_alpha)
+            val composite = mix_rgb(backdrop, island, island.alpha)
+            for ((fg_name, fg) in body_text(colors).filter { it.first.startsWith("text_") }) {
+                val ratio = contrast_ratio(fg, composite)
+                assertTrue("$label $fg_name on island is $ratio", ratio >= contrast_body_text)
+            }
+        }
+    }
+
+    @Test
     fun ensure_contrast_keeps_passing_colors_and_fixes_failing_ones() {
         assertEquals(Color.White, ensure_contrast(Color.White, listOf(Color.Black), contrast_body_text))
         val background = Color(0xFF101010)

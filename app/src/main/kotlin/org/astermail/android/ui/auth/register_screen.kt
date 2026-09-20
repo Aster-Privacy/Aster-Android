@@ -56,6 +56,7 @@ import org.astermail.android.auth.AuthViewModel
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterIconButton
+import org.astermail.android.ui.common.page_surface
 
 @Composable
 fun RegisterScreen(
@@ -122,7 +123,7 @@ fun RegisterScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .systemBarsPadding()
             .imePadding(),
     ) {

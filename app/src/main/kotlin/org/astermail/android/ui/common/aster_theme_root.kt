@@ -23,6 +23,7 @@ package org.astermail.android.ui.common
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -31,6 +32,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.Font
@@ -50,6 +53,9 @@ import org.astermail.android.ui.theme.ThemeViewModel
 import org.astermail.android.ui.theme.local_accessibility
 import org.astermail.android.ui.theme.local_background_image
 import org.astermail.android.ui.theme.local_text_scale
+import org.astermail.android.ui.theme.draw_theme_background
+import org.astermail.android.ui.theme.draw_theme_veil
+import org.astermail.android.ui.theme.remember_active_theme_bitmap
 
 @Composable
 fun aster_theme_root(content: @Composable () -> Unit) {
@@ -69,6 +75,7 @@ fun aster_theme_root(content: @Composable () -> Unit) {
     val custom_theme_overrides by theme_vm.custom_theme_overrides.collectAsStateWithLifecycle()
     val font_choice by theme_vm.font_choice.collectAsStateWithLifecycle()
     val background_image by theme_vm.background_image.collectAsStateWithLifecycle()
+    val background_opacity by theme_vm.background_opacity.collectAsStateWithLifecycle()
     val app_context = LocalContext.current.applicationContext
     LaunchedEffect(mode_state, color_theme) {
         apply_app_night_mode(app_context, mode_state, color_theme)
@@ -121,6 +128,7 @@ fun aster_theme_root(content: @Composable () -> Unit) {
         font_choice = font_choice,
         glass = active_backdrop != null,
         glass_tint = active_backdrop?.tint ?: androidx.compose.ui.graphics.Color.Unspecified,
+        glass_opacity = background_opacity,
     ) {
         val base_density = LocalDensity.current
         val compact_factor = if (compact_mode) 0.9f else 1f
@@ -135,10 +143,25 @@ fun aster_theme_root(content: @Composable () -> Unit) {
             local_text_scale provides text_size_state.scale,
             local_accessibility provides a11y,
             local_background_image provides background_image,
+            org.astermail.android.ui.theme.local_background_opacity provides background_opacity,
             org.astermail.android.design.local_reduce_motion provides a11y.reduce_motion,
         ) {
             val colors = AsterMaterial.colors
+            val backdrop = if (colors.is_glass) {
+                remember_active_theme_bitmap()
+            } else null
             Box(modifier = Modifier.fillMaxSize().background(colors.bg_primary)) {
+                if (backdrop != null) {
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer()
+                            .drawBehind {
+                                draw_theme_background(backdrop)
+                                draw_theme_veil(colors.bg_primary)
+                            },
+                    )
+                }
                 content()
                 app_toast_host()
             }

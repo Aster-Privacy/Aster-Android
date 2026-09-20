@@ -31,4 +31,18 @@
     <string name="image_theme_editor_hint">Knijp om te zoomen en sleep om de foto te verplaatsen. Tik twee keer om in of uit te zoomen.</string>
     <string name="image_theme_editor_set">Instellen</string>
     <string name="image_theme_applied">Thema toegepast</string>
+    <string name="image_theme_no_photo">Geen foto</string>
+    <string name="image_theme_no_photo_subtitle">Gebruik alleen kleuren, zonder foto achter de app.</string>
+    <string name="image_theme_reset_short">Herstellen</string>
+    <string name="image_theme_reset_confirm_title">Afbeeldingsthema herstellen?</string>
+    <string name="image_theme_reset_confirm_message">Hiermee verwijder je de achtergrondfoto en keren de kleuren terug naar het standaardthema.</string>
+    <string name="theme_opacity">Dekking van het thema</string>
+    <string name="theme_opacity_clear">Helder</string>
+    <string name="theme_opacity_clear_subtitle">Je foto is het best zichtbaar.</string>
+    <string name="theme_opacity_glass">Glas</string>
+    <string name="theme_opacity_glass_subtitle">Houdt je foto en leesbare vlakken in balans.</string>
+    <string name="theme_opacity_frosted">Matglas</string>
+    <string name="theme_opacity_frosted_subtitle">Vlakken blijven grotendeels dekkend, met een vleugje van je foto.</string>
+    <string name="theme_opacity_solid">Dekkend</string>
+    <string name="theme_opacity_solid_subtitle">Vlakken zijn volledig dekkend en je foto blijft erachter.</string>
 </resources>

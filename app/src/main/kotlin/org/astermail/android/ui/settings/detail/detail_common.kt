@@ -91,6 +91,7 @@ import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.design.mirror_in_rtl
+import org.astermail.android.ui.common.page_surface
 
 internal val settings_row_min_height = 56.dp
 internal val settings_group_inset = 4.dp
@@ -155,7 +156,7 @@ internal fun detail_scaffold(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.ime)),
     ) {
         AsterTopBar(

@@ -52,6 +52,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterSecondaryButton
+import org.astermail.android.ui.common.page_surface
 
 private const val APPEAL_URL = "https://astermail.org/appeal"
 
@@ -65,7 +66,7 @@ internal fun account_suspended_screen(on_back: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .systemBarsPadding(),
         contentAlignment = Alignment.Center,
     ) {

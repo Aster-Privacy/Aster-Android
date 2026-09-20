@@ -68,6 +68,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
+import org.astermail.android.ui.common.page_surface
 
 enum class FilterType { folder, label, alias }
 
@@ -178,7 +179,7 @@ fun FilteredInboxScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .systemBarsPadding(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -237,7 +238,7 @@ fun FilteredInboxScreen(
                         ) { row_index, thread ->
                             Box(
                                 modifier = Modifier
-                                    .background(colors.bg_primary)
+                                    .page_surface(colors)
                                     .onSizeChanged { record_row_height(row_index, it.height) },
                             ) {
                                 ThreadInboxRow(
@@ -297,7 +298,7 @@ private fun filtered_top_bar(
     on_open_drawer: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    Column(modifier = Modifier.fillMaxWidth().background(colors.bg_primary)) {
+    Column(modifier = Modifier.fillMaxWidth().page_surface(colors)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()

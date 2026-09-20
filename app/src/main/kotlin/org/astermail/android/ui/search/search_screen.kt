@@ -116,6 +116,7 @@ import org.astermail.android.ui.mail.group_by_thread
 import org.astermail.android.ui.mail.inbox_card_read_color
 import org.astermail.android.ui.mail.inbox_item_to_email
 import org.astermail.android.ui.mail.search_field_bg_color
+import org.astermail.android.ui.common.page_surface
 
 private data class FilterChip(val key: String, val label_res: Int)
 
@@ -572,6 +573,12 @@ fun SearchScreen(
             picked.isNotEmpty() && picked.none { !it.is_starred }
         }
 
+    val selection_all_read = selected_ids.isNotEmpty() &&
+        expand_selection(selected_ids.toList()).toSet().let { ids ->
+            val picked = visible_corpus.filter { it.id in ids }
+            picked.isNotEmpty() && picked.none { !it.is_read }
+        }
+
     LaunchedEffect(result_threads, results_pending) {
         if (select_mode && !results_pending) {
             if (result_threads.isEmpty()) {
@@ -643,7 +650,7 @@ fun SearchScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .systemBarsPadding()
             .imePadding(),
     ) {
@@ -929,6 +936,7 @@ fun SearchScreen(
                     on_action = ::run_selection_action,
                     on_more = { show_selection_overflow = true },
                     selection_all_starred = selection_all_starred,
+                    selection_all_read = selection_all_read,
                 )
             }
         }
@@ -1490,6 +1498,7 @@ internal fun search_select_bottom_bar(
     on_action: (String) -> Unit,
     on_more: () -> Unit,
     selection_all_starred: Boolean = false,
+    selection_all_read: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
@@ -1511,13 +1520,16 @@ internal fun search_select_bottom_bar(
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 custom_actions.forEach { action_id ->
-                    val action = org.astermail.android.ui.mail.selection_toolbar_action_for(action_id, selection_all_starred)
-                        ?: return@forEach
+                    val action = org.astermail.android.ui.mail.selection_toolbar_action_for(
+                        action_id,
+                        selection_all_starred,
+                        selection_all_read,
+                    ) ?: return@forEach
                     search_select_action(
                         icon = action.icon,
                         label = stringResource(action.label_res),
                         enabled = enabled,
-                        on_click = { on_action(action_id) },
+                        on_click = { on_action(action.id) },
                         tint = if (action_id == "trash" || action_id == "spam") colors.danger else colors.text_primary,
                         test_tag = "search_sel_action_$action_id",
                     )

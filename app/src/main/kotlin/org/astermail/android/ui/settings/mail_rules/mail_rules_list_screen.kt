@@ -94,6 +94,7 @@ import org.astermail.android.folders.flatten_folder_tree
 import org.astermail.android.mail_rules.MailRulesViewModel
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.common.page_surface
 
 @Composable
 fun MailRulesListScreen(
@@ -128,7 +129,7 @@ fun MailRulesListScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .systemBarsPadding(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {

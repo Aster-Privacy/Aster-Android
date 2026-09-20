@@ -983,6 +983,7 @@ class AuthRepository @Inject constructor(
         runCatching { org.astermail.android.billing.AvailablePlansCache.reset() }
         runCatching { org.astermail.android.billing.PlanLimitsCache.reset() }
         runCatching { theme_store.clear() }
+        runCatching { org.astermail.android.ui.theme.custom_theme_image.delete(context) }
         runCatching { org.astermail.android.ui.compose.compose_seed_store.clear(context) }
         runCatching { org.astermail.android.notifications.MutedFolderSync.reset(context) }
         runCatching { org.astermail.android.notifications.QuietHoursSync.reset(context) }
@@ -1290,6 +1291,7 @@ class AuthRepository @Inject constructor(
         runCatching { current_id?.let { identity_pins.get().clear_account(it) } }
         runCatching { org.astermail.android.util.purge_sensitive_export_files(context, 0L) }
         runCatching { theme_store.clear() }
+        runCatching { org.astermail.android.ui.theme.custom_theme_image.delete(context) }
         runCatching { org.astermail.android.ui.compose.compose_seed_store.clear(context) }
         runCatching { org.astermail.android.notifications.MutedFolderSync.reset(context) }
         runCatching { org.astermail.android.notifications.QuietHoursSync.reset(context) }

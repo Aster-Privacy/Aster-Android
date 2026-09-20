@@ -111,6 +111,7 @@ import androidx.compose.animation.core.tween
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.storage.StoredAccount
 import org.astermail.android.ui.icons.all_mail_icon
+import org.astermail.android.ui.common.page_surface
 
 data class drawer_folder_item(
     val id: String,
@@ -378,7 +379,7 @@ fun DrawerContent(
         modifier = Modifier
             .fillMaxHeight()
             .fillMaxWidth()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .navigationBarsPadding(),
     ) {
         val current_account = accounts.firstOrNull { it.id == current_account_id }
@@ -2704,7 +2705,7 @@ private fun drawer_footer(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(colors.bg_primary),
+            .page_surface(colors),
     ) {
         Spacer(Modifier.height(AsterSpacing.sm))
         storage_meter(

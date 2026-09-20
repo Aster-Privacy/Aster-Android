@@ -31,4 +31,18 @@
     <string name="image_theme_editor_hint">Сведите или разведите пальцы, чтобы изменить масштаб, и перетащите, чтобы сдвинуть фото. Коснитесь дважды, чтобы приблизить или отдалить.</string>
     <string name="image_theme_editor_set">Установить</string>
     <string name="image_theme_applied">Тема применена</string>
+    <string name="image_theme_no_photo">Без фото</string>
+    <string name="image_theme_no_photo_subtitle">Используйте только цвета, без фото на фоне приложения.</string>
+    <string name="image_theme_reset_short">Сбросить</string>
+    <string name="image_theme_reset_confirm_title">Сбросить тему с изображением?</string>
+    <string name="image_theme_reset_confirm_message">Фоновое фото будет удалено, а цвета вернутся к теме по умолчанию.</string>
+    <string name="theme_opacity">Непрозрачность темы</string>
+    <string name="theme_opacity_clear">Прозрачная</string>
+    <string name="theme_opacity_clear_subtitle">Ваше фото видно лучше всего.</string>
+    <string name="theme_opacity_glass">Стекло</string>
+    <string name="theme_opacity_glass_subtitle">Сохраняет баланс фото и читаемых поверхностей.</string>
+    <string name="theme_opacity_frosted">Матовая</string>
+    <string name="theme_opacity_frosted_subtitle">Поверхности почти непрозрачные, с лёгким просветом фото.</string>
+    <string name="theme_opacity_solid">Непрозрачная</string>
+    <string name="theme_opacity_solid_subtitle">Поверхности полностью непрозрачные, фото остаётся за ними.</string>
 </resources>

@@ -39,7 +39,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.animation.core.tween
 import kotlin.math.abs
 import kotlin.math.sign
 import androidx.compose.foundation.layout.offset
@@ -160,6 +159,7 @@ import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.icons.all_mail_icon
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
+import org.astermail.android.ui.common.page_surface
 
 enum class InboxSortMode { newest, oldest, unread_first, starred_first }
 
@@ -988,6 +988,11 @@ fun InboxScreen(
             val picked = emails.filter { it.thread_id in ids || it.id in ids }
             picked.isNotEmpty() && picked.none { !it.is_starred }
         }
+    val selection_all_read = selected_ids.isNotEmpty() &&
+        selected_ids.toSet().let { ids ->
+            val picked = emails.filter { it.thread_id in ids || it.id in ids }
+            picked.isNotEmpty() && picked.none { !it.is_read }
+        }
     val can_offer_scope_selection = select_mode &&
         select_all_active &&
         !scope_selection_confirmed &&
@@ -1629,24 +1634,13 @@ fun InboxScreen(
         }
     }
 
-    val background_bitmap = if (colors.is_glass) org.astermail.android.ui.theme.remember_active_theme_bitmap() else null
+    val has_backdrop = colors.is_glass
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .nestedScroll(header_nested_scroll),
     ) {
-        if (background_bitmap != null) {
-            Spacer(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer()
-                    .drawBehind {
-                        draw_theme_background(background_bitmap)
-                        draw_theme_veil(colors.bg_primary)
-                    },
-            )
-        }
         Column(modifier = Modifier.fillMaxSize()) {
 
             Box(
@@ -1657,17 +1651,40 @@ fun InboxScreen(
                 val pull_indicator: @Composable androidx.compose.foundation.layout.BoxScope.() -> Unit = {
                     val refreshing_now = is_refreshing && !select_mode
                     val fraction = pull_state.distanceFraction
-                    if (fraction > 0.01f || refreshing_now) {
-                        val travel_px = with(density) { pull_refresh_travel.toPx() }
+                    val travel_px = with(density) { pull_refresh_travel.toPx() }
+                    val dragging = fraction > 0.01f
+                    val settling = !dragging && !refreshing_now
+                    val retract_ms = if (org.astermail.android.design.aster_reduce_motion()) 0 else 280
+                    val retract_spec = androidx.compose.animation.core.tween<Float>(
+                        durationMillis = retract_ms,
+                        easing = androidx.compose.animation.core.FastOutSlowInEasing,
+                    )
+                    val travel by animateFloatAsState(
+                        targetValue = when {
+                            refreshing_now -> travel_px
+                            dragging -> fraction.coerceIn(0f, 1.4f) * travel_px
+                            else -> 0f
+                        },
+                        animationSpec = if (settling) retract_spec else androidx.compose.animation.core.snap(),
+                        label = "pull_travel",
+                    )
+                    val indicator_alpha by animateFloatAsState(
+                        targetValue = when {
+                            refreshing_now -> 1f
+                            dragging -> (fraction * 2f).coerceIn(0f, 1f)
+                            else -> 0f
+                        },
+                        animationSpec = if (settling) retract_spec else androidx.compose.animation.core.snap(),
+                        label = "pull_alpha",
+                    )
+                    if (dragging || refreshing_now || indicator_alpha > 0.01f) {
                         Box(
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
                                 .padding(top = header_height_dp)
                                 .graphicsLayer {
-                                    translationY = if (refreshing_now) travel_px
-                                    else fraction.coerceIn(0f, 1.4f) * travel_px
-                                    alpha = if (refreshing_now) 1f
-                                    else (fraction * 2f).coerceIn(0f, 1f)
+                                    translationY = travel
+                                    alpha = indicator_alpha
                                 }
                                 .size(44.dp)
                                 .shadow(10.dp, CircleShape)
@@ -1682,7 +1699,7 @@ fun InboxScreen(
                                 )
                             } else {
                                 CircularProgressIndicator(
-                                    progress = { fraction.coerceIn(0f, 1f) },
+                                    progress = { (travel / travel_px).coerceIn(0f, 1f) },
                                     modifier = Modifier.size(22.dp),
                                     color = colors.accent_blue,
                                     strokeWidth = 2.5.dp,
@@ -2159,11 +2176,6 @@ fun InboxScreen(
         }
 
         val header_bg = colors.bg_primary
-        val chrome_fill by animateFloatAsState(
-            targetValue = if (scrolled_elevation) 1f else 0f,
-            animationSpec = tween(durationMillis = 180),
-            label = "chrome_fill",
-        )
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -2185,9 +2197,8 @@ fun InboxScreen(
                 .drawBehind {
                     val limit = header_height_px.toFloat()
                     val fraction = if (limit == 0f) 0f else (-header_offset_px.floatValue / limit).coerceIn(0f, 1f)
-                    if (background_bitmap != null) {
+                    if (has_backdrop) {
                         draw_chrome_scrim(header_bg, 1f - fraction)
-                        drawRect(color = colors.bg_card, alpha = chrome_fill * 0.82f * (1f - fraction))
                     } else {
                         drawRect(color = header_bg, alpha = 1f - fraction)
                     }
@@ -2266,7 +2277,7 @@ fun InboxScreen(
                 .fillMaxWidth()
                 .height(status_bar_top)
                 .then(
-                    if (background_bitmap != null) Modifier else Modifier.background(colors.bg_primary),
+                    if (has_backdrop) Modifier else Modifier.background(colors.bg_primary),
                 ),
         )
 
@@ -2298,6 +2309,7 @@ fun InboxScreen(
                 on_more = { show_selection_overflow = true },
                 current_folder = current_folder,
                 selection_all_starred = selection_all_starred,
+                selection_all_read = selection_all_read,
             )
         }
 
@@ -2926,13 +2938,6 @@ internal fun inbox_top_bar(
                     .padding(horizontal = AsterSpacing.sm)
                     .clip(SquircleShape(26.dp))
                     .background(search_field_bg_color(colors))
-                    .then(
-                        if (colors.is_glass) {
-                            Modifier.border(1.dp, colors.border_secondary, SquircleShape(26.dp))
-                        } else {
-                            Modifier
-                        },
-                    )
                     .clickable { on_open_search() }
                     .padding(horizontal = AsterSpacing.lg)
                     .testTag("search"),
@@ -3140,6 +3145,7 @@ internal fun select_mode_bottom_bar(
     on_more: () -> Unit,
     current_folder: String,
     selection_all_starred: Boolean = false,
+    selection_all_read: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
@@ -3162,11 +3168,12 @@ internal fun select_mode_bottom_bar(
             ) {
                 when (current_folder) {
                     "trash" -> {
+                        val read_action = selection_read_toolbar_action(selection_all_read)
                         bottom_select_action(
-                            icon = TablerIcons.MailOpened,
-                            label = stringResource(R.string.mark_read_action),
+                            icon = read_action.icon,
+                            label = stringResource(read_action.label_res),
                             enabled = enabled,
-                            onClick = { on_action("read") },
+                            onClick = { on_action(read_action.id) },
                             test_tag = "mark_read",
                         )
                         bottom_select_action(
@@ -3193,11 +3200,12 @@ internal fun select_mode_bottom_bar(
                         )
                     }
                     "archive" -> {
+                        val read_action = selection_read_toolbar_action(selection_all_read)
                         bottom_select_action(
-                            icon = TablerIcons.MailOpened,
-                            label = stringResource(R.string.mark_read_action),
+                            icon = read_action.icon,
+                            label = stringResource(read_action.label_res),
                             enabled = enabled,
-                            onClick = { on_action("read") },
+                            onClick = { on_action(read_action.id) },
                             test_tag = "mark_read",
                         )
                         bottom_select_action(
@@ -3231,11 +3239,12 @@ internal fun select_mode_bottom_bar(
                         )
                     }
                     "spam" -> {
+                        val read_action = selection_read_toolbar_action(selection_all_read)
                         bottom_select_action(
-                            icon = TablerIcons.MailOpened,
-                            label = stringResource(R.string.mark_read_action),
+                            icon = read_action.icon,
+                            label = stringResource(read_action.label_res),
                             enabled = enabled,
-                            onClick = { on_action("read") },
+                            onClick = { on_action(read_action.id) },
                             test_tag = "mark_read",
                         )
                         bottom_select_action(
@@ -3263,12 +3272,16 @@ internal fun select_mode_bottom_bar(
                     }
                     else -> {
                         custom_actions.forEach { action_id ->
-                            val action = selection_toolbar_action_for(action_id, selection_all_starred) ?: return@forEach
+                            val action = selection_toolbar_action_for(
+                                action_id,
+                                selection_all_starred,
+                                selection_all_read,
+                            ) ?: return@forEach
                             bottom_select_action(
                                 icon = action.icon,
                                 label = stringResource(action.label_res),
                                 enabled = enabled,
-                                onClick = { on_action(action_id) },
+                                onClick = { on_action(action.id) },
                                 tint = if (action_id == "trash" || action_id == "spam") colors.danger else colors.text_primary,
                                 test_tag = "sel_action_$action_id",
                             )

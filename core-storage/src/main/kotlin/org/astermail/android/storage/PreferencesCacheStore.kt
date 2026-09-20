@@ -80,12 +80,23 @@ class PreferencesCacheStore(context: Context? = null) {
         runCatching { prefs?.edit()?.putString(key, payload)?.apply() }
     }
 
+    fun read_tags(account_key: String?): String? {
+        val key = tag_entry_key(account_key) ?: return null
+        return runCatching { prefs?.getString(key, null) }.getOrNull()
+    }
+
+    fun write_tags(account_key: String?, payload: String) {
+        val key = tag_entry_key(account_key) ?: return
+        runCatching { prefs?.edit()?.putString(key, payload)?.apply() }
+    }
+
     fun clear(account_key: String?) {
         val key = entry_key(account_key) ?: return
         val badge_key = badge_entry_key(account_key)
         val badge_prefs_key = badge_prefs_entry_key(account_key)
         val signature_key = signature_entry_key(account_key)
         val alias_key = alias_entry_key(account_key)
+        val tag_key = tag_entry_key(account_key)
         runCatching {
             prefs?.edit()?.apply {
                 remove(key)
@@ -93,6 +104,7 @@ class PreferencesCacheStore(context: Context? = null) {
                 if (badge_prefs_key != null) remove(badge_prefs_key)
                 if (signature_key != null) remove(signature_key)
                 if (alias_key != null) remove(alias_key)
+                if (tag_key != null) remove(tag_key)
             }?.commit()
         }
     }
@@ -125,6 +137,12 @@ class PreferencesCacheStore(context: Context? = null) {
         return "$signature_key_prefix$id"
     }
 
+    private fun tag_entry_key(account_key: String?): String? {
+        val id = account_key?.trim().orEmpty()
+        if (id.isEmpty()) return null
+        return "$tag_key_prefix$id"
+    }
+
     private fun alias_entry_key(account_key: String?): String? {
         val id = account_key?.trim().orEmpty()
         if (id.isEmpty()) return null
@@ -138,5 +156,6 @@ class PreferencesCacheStore(context: Context? = null) {
         const val badge_prefs_key_prefix = "badge_prefs_json_"
         const val signature_key_prefix = "signatures_json_"
         const val alias_key_prefix = "alias_prefs_json_"
+        const val tag_key_prefix = "tags_json_"
     }
 }

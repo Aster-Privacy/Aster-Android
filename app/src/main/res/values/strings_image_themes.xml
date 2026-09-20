@@ -31,4 +31,18 @@
     <string name="image_theme_editor_hint">Pinch to zoom and drag to move the photo. Double-tap to zoom in or out.</string>
     <string name="image_theme_editor_set">Set</string>
     <string name="image_theme_applied">Theme applied</string>
+    <string name="image_theme_no_photo">No photo</string>
+    <string name="image_theme_no_photo_subtitle">Use colors only, with no photo behind the app.</string>
+    <string name="image_theme_reset_short">Reset</string>
+    <string name="image_theme_reset_confirm_title">Reset image theme?</string>
+    <string name="image_theme_reset_confirm_message">This removes the background photo and returns the colors to the default theme.</string>
+    <string name="theme_opacity">Theme opacity</string>
+    <string name="theme_opacity_clear">Clear</string>
+    <string name="theme_opacity_clear_subtitle">Your photo shows through the most.</string>
+    <string name="theme_opacity_glass">Glass</string>
+    <string name="theme_opacity_glass_subtitle">Balances your photo with readable surfaces.</string>
+    <string name="theme_opacity_frosted">Frosted</string>
+    <string name="theme_opacity_frosted_subtitle">Surfaces stay mostly solid, with a hint of your photo.</string>
+    <string name="theme_opacity_solid">Solid</string>
+    <string name="theme_opacity_solid_subtitle">Surfaces are fully solid and your photo stays behind them.</string>
 </resources>

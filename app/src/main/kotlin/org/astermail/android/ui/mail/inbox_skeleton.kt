@@ -69,6 +69,7 @@ import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_appearance
 import org.astermail.android.design.components.shimmer_line
 import org.astermail.android.design.components.shimmer_state
+import org.astermail.android.ui.common.page_surface
 
 const val inbox_skeleton_tag = "inbox_skeleton"
 const val inbox_skeleton_row_tag = "inbox_skeleton_row"
@@ -308,7 +309,7 @@ fun inbox_skeleton(
         modifier = modifier
             .fillMaxSize()
             .graphicsLayer()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .testTag(inbox_skeleton_tag),
     ) {
         repeat(row_count) { index ->

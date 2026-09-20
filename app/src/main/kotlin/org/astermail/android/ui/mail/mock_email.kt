@@ -342,7 +342,7 @@ fun inbox_item_to_email(
     val display_name = item.sender_name.ifBlank {
         item.sender_email.substringBefore('@').ifBlank { unknown_sender_label }
     }
-    val matched_tags = tags.filter { it.tag_token in item.tag_tokens }
+    val matched_tags = tags.filter { it.tag_token in item.tag_tokens && it.encrypted_name.isNotBlank() }
     return Email(
         id = item.id,
         thread_id = item.thread_token?.takeIf { it.isNotBlank() } ?: item.id,

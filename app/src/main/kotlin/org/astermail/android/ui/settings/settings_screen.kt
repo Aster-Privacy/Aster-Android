@@ -82,6 +82,7 @@ import org.astermail.android.ui.common.remember_has_paid_plan
 import org.astermail.android.ui.mail.search_field_bg_color
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
+import org.astermail.android.ui.common.page_surface
 
 private const val support_address = "hello@astermail.org"
 
@@ -180,7 +181,7 @@ fun SettingsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .systemBarsPadding(),
     ) {
         AsterTopBar(

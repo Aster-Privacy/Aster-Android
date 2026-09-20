@@ -134,6 +134,7 @@ class ThemeStore(context: Context) {
     private val key_custom_theme_overrides = stringPreferencesKey("custom_theme_overrides")
     private val key_font_choice = stringPreferencesKey("font_choice")
     private val key_background_image = stringPreferencesKey("background_image")
+    private val key_background_opacity = floatPreferencesKey("background_opacity")
 
     val theme_mode: StateFlow<ThemeMode> = app_context.theme_data_store.data
         .map { prefs -> parse_mode(prefs[key_theme_mode]) }
@@ -238,6 +239,15 @@ class ThemeStore(context: Context) {
         .map { prefs -> prefs[key_background_image] ?: "none" }
         .onEach { cache_string("background_image", it) }
         .stateIn(scope, SharingStarted.Eagerly, cached_string("background_image", "none"))
+
+    val background_opacity: StateFlow<Float> = app_context.theme_data_store.data
+        .map { prefs -> clamp_opacity(prefs[key_background_opacity] ?: default_background_opacity) }
+        .onEach { cache_float("background_opacity", it) }
+        .stateIn(
+            scope,
+            SharingStarted.Eagerly,
+            clamp_opacity(cached_float("background_opacity", default_background_opacity)),
+        )
 
     val font_choice: StateFlow<String> = app_context.theme_data_store.data
         .map { prefs -> prefs[key_font_choice] ?: "default" }
@@ -347,6 +357,12 @@ class ThemeStore(context: Context) {
         scope.launch { app_context.theme_data_store.edit { it[key_background_image] = id } }
     }
 
+    fun set_background_opacity(value: Float) {
+        scope.launch {
+            app_context.theme_data_store.edit { it[key_background_opacity] = clamp_opacity(value) }
+        }
+    }
+
     fun set_font_choice(id: String) {
         scope.launch { app_context.theme_data_store.edit { it[key_font_choice] = id } }
     }
@@ -391,6 +407,17 @@ class ThemeStore(context: Context) {
 
     companion object {
         private const val BOOT_CACHE_NAME = "aster_theme_boot"
+
+        const val default_background_opacity = 0.62f
+        const val min_background_opacity = 0.30f
+        const val max_background_opacity = 1f
+
+        fun clamp_opacity(value: Float): Float = when {
+            value.isNaN() -> default_background_opacity
+            value < min_background_opacity -> min_background_opacity
+            value > max_background_opacity -> max_background_opacity
+            else -> value
+        }
 
         fun boot_snapshot(context: Context): ThemeBootSnapshot {
             val prefs = try {

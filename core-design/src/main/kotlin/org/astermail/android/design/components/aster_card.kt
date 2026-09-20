@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.island_surface_color
 
 @Composable
 fun AsterCard(
@@ -50,10 +51,10 @@ fun AsterCard(
     val colors = AsterMaterial.colors
     val shape = SquircleShape(16.dp)
     val card_colors = CardDefaults.cardColors(
-        containerColor = colors.bg_card,
+        containerColor = island_surface_color(colors),
         contentColor = colors.text_primary,
     )
-    val border = BorderStroke(1.dp, colors.border_secondary)
+    val border: BorderStroke? = null
     val elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     if (onClick != null) {
         val interaction = remember { MutableInteractionSource() }

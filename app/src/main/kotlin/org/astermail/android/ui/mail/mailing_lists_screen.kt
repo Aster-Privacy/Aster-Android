@@ -121,6 +121,7 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.subscriptions.MailingListsViewModel
+import org.astermail.android.ui.common.page_surface
 
 @Composable
 fun MailingListsScreen(
@@ -268,7 +269,7 @@ fun MailingListsScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg_primary)
+            .page_surface(colors)
             .nestedScroll(header_nested_scroll),
     ) {
         LazyColumn(

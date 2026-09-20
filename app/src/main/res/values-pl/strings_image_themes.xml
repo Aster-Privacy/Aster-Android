@@ -31,4 +31,18 @@
     <string name="image_theme_editor_hint">Zsuń lub rozsuń palce, aby powiększyć, i przeciągnij, aby przesunąć zdjęcie. Stuknij dwukrotnie, aby powiększyć lub pomniejszyć.</string>
     <string name="image_theme_editor_set">Ustaw</string>
     <string name="image_theme_applied">Motyw zastosowany</string>
+    <string name="image_theme_no_photo">Bez zdjęcia</string>
+    <string name="image_theme_no_photo_subtitle">Używaj tylko kolorów, bez zdjęcia w tle aplikacji.</string>
+    <string name="image_theme_reset_short">Resetuj</string>
+    <string name="image_theme_reset_confirm_title">Zresetować motyw ze zdjęciem?</string>
+    <string name="image_theme_reset_confirm_message">Ta czynność usuwa zdjęcie w tle i przywraca kolory motywu domyślnego.</string>
+    <string name="theme_opacity">Krycie motywu</string>
+    <string name="theme_opacity_clear">Przezroczyste</string>
+    <string name="theme_opacity_clear_subtitle">Twoje zdjęcie jest najlepiej widoczne.</string>
+    <string name="theme_opacity_glass">Szkło</string>
+    <string name="theme_opacity_glass_subtitle">Równoważy zdjęcie i czytelność powierzchni.</string>
+    <string name="theme_opacity_frosted">Matowe</string>
+    <string name="theme_opacity_frosted_subtitle">Powierzchnie pozostają niemal pełne, z odrobiną zdjęcia.</string>
+    <string name="theme_opacity_solid">Pełne</string>
+    <string name="theme_opacity_solid_subtitle">Powierzchnie są w pełni kryjące, a zdjęcie zostaje za nimi.</string>
 </resources>

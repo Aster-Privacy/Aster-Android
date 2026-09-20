@@ -31,4 +31,18 @@
     <string name="image_theme_editor_hint">Pellizca para hacer zoom y arrastra para mover la foto. Toca dos veces para acercar o alejar.</string>
     <string name="image_theme_editor_set">Establecer</string>
     <string name="image_theme_applied">Tema aplicado</string>
+    <string name="image_theme_no_photo">Sin foto</string>
+    <string name="image_theme_no_photo_subtitle">Usa solo colores, sin foto detrás de la app.</string>
+    <string name="image_theme_reset_short">Restablecer</string>
+    <string name="image_theme_reset_confirm_title">¿Restablecer el tema de imagen?</string>
+    <string name="image_theme_reset_confirm_message">Esto quita la foto de fondo y devuelve los colores al tema predeterminado.</string>
+    <string name="theme_opacity">Opacidad del tema</string>
+    <string name="theme_opacity_clear">Transparente</string>
+    <string name="theme_opacity_clear_subtitle">Tu foto se ve al máximo.</string>
+    <string name="theme_opacity_glass">Cristal</string>
+    <string name="theme_opacity_glass_subtitle">Equilibra tu foto con superficies legibles.</string>
+    <string name="theme_opacity_frosted">Esmerilado</string>
+    <string name="theme_opacity_frosted_subtitle">Las superficies son casi sólidas, con un toque de tu foto.</string>
+    <string name="theme_opacity_solid">Sólido</string>
+    <string name="theme_opacity_solid_subtitle">Las superficies son totalmente sólidas y tu foto queda detrás.</string>
 </resources>

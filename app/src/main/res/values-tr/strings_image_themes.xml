@@ -31,4 +31,18 @@
     <string name="image_theme_editor_hint">Yakınlaştırmak için iki parmağınızı kullanın, fotoğrafı taşımak için sürükleyin. Yakınlaştırmak veya uzaklaştırmak için iki kez dokunun.</string>
     <string name="image_theme_editor_set">Ayarla</string>
     <string name="image_theme_applied">Tema uygulandı</string>
+    <string name="image_theme_no_photo">Fotoğraf yok</string>
+    <string name="image_theme_no_photo_subtitle">Uygulamanın arkasında fotoğraf olmadan yalnızca renkleri kullanın.</string>
+    <string name="image_theme_reset_short">Sıfırla</string>
+    <string name="image_theme_reset_confirm_title">Görsel tema sıfırlansın mı?</string>
+    <string name="image_theme_reset_confirm_message">Bu işlem arka plan fotoğrafını kaldırır ve renkleri varsayılan temaya döndürür.</string>
+    <string name="theme_opacity">Tema opaklığı</string>
+    <string name="theme_opacity_clear">Şeffaf</string>
+    <string name="theme_opacity_clear_subtitle">Fotoğrafınız en çok görünür.</string>
+    <string name="theme_opacity_glass">Cam</string>
+    <string name="theme_opacity_glass_subtitle">Fotoğrafınızla okunaklı yüzeyleri dengeler.</string>
+    <string name="theme_opacity_frosted">Buzlu</string>
+    <string name="theme_opacity_frosted_subtitle">Yüzeyler büyük ölçüde opak kalır, fotoğrafınızdan bir iz taşır.</string>
+    <string name="theme_opacity_solid">Opak</string>
+    <string name="theme_opacity_solid_subtitle">Yüzeyler tamamen opaktır ve fotoğrafınız arkada kalır.</string>
 </resources>

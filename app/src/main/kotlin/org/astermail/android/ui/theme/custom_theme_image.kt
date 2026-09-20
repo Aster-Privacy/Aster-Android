@@ -68,6 +68,21 @@ enum class CustomThemeImageError { too_large, unsupported, unreadable }
 
 class CustomThemeImageException(val reason: CustomThemeImageError) : Exception(reason.name)
 
+internal fun theme_image_sample_size(width: Int, height: Int, target_w: Int, target_h: Int, max_pixels: Long): Int {
+    if (width <= 0 || height <= 0 || target_w <= 0 || target_h <= 0) return 1
+    var sample = 1
+    while (width / (sample * 2) >= target_w && height / (sample * 2) >= target_h) sample *= 2
+    while (sample < 1024 && (width.toLong() / sample) * (height.toLong() / sample) > max_pixels) sample *= 2
+    return sample
+}
+
+internal fun theme_image_cap_factor(width: Int, height: Int, target_w: Int, target_h: Int, max_pixels: Long): Float {
+    if (width <= 0 || height <= 0) return 1f
+    val cover = max(target_w.toFloat() / width, target_h.toFloat() / height)
+    val budget = kotlin.math.sqrt(max_pixels.toDouble() / (width.toDouble() * height)).toFloat()
+    return min(min(1f, cover * 2f), budget).coerceAtLeast(0f)
+}
+
 object custom_theme_image {
     private const val key_alias = "aster_theme_image_v1"
     private const val keystore = "AndroidKeyStore"
@@ -79,6 +94,8 @@ object custom_theme_image {
     private const val max_source_side = 20_000
     private const val target_width = 1080
     private const val target_height = 2400
+    private const val max_decode_pixels = 8_000_000L
+    private const val max_working_pixels = 8_000_000L
     private const val prefs_name = "theme_custom_image"
     private val allowed_mime = setOf(
         "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "image/avif",
@@ -103,13 +120,15 @@ object custom_theme_image {
             val app = context.applicationContext
             val prefs = app.getSharedPreferences(prefs_name, Context.MODE_PRIVATE)
             val version = prefs.getLong("version", 0L)
-            meta_state.value = if (version > 0L && image_file(app).isFile) {
+            val stored = image_file(app)
+            meta_state.value = if (version > 0L && stored.isFile) {
                 CustomThemeImageMeta(
                     version = version,
                     tint = Color(prefs.getInt("tint", 0xFF111111.toInt())),
                     accent = ColorThemeId.from_key(prefs.getString("accent", null) ?: ColorThemeId.aster_blue.name),
                 )
             } else {
+                if (version > 0L || stored.exists() || source_file(app).exists()) runCatching { discard(app) }
                 null
             }
             initialized = true
@@ -181,8 +200,9 @@ object custom_theme_image {
             val encoded = encode(framed)
             framed.recycle()
             write_encrypted(app, encoded, image_file(app))
+            evict_custom_theme_bitmaps()
             val next = CustomThemeImageMeta(
-                version = System.currentTimeMillis(),
+                version = max(System.currentTimeMillis(), (meta_state.value?.version ?: 0L) + 1L),
                 tint = tint,
                 accent = accent,
             )
@@ -203,11 +223,17 @@ object custom_theme_image {
     }
 
     fun delete(context: Context) {
-        val app = context.applicationContext
+        discard(context.applicationContext)
+        meta_state.value = null
+    }
+
+    private fun discard(app: Context) {
         image_file(app).delete()
         source_file(app).delete()
+        File(app.noBackupFilesDir, "theme").listFiles()?.forEach { it.delete() }
         app.getSharedPreferences(prefs_name, Context.MODE_PRIVATE).edit().clear().commit()
-        meta_state.value = null
+        runCatching { KeyStore.getInstance(keystore).apply { load(null) }.deleteEntry(key_alias) }
+        evict_custom_theme_bitmaps()
     }
 
     private fun encode(bitmap: Bitmap): ByteArray = ByteArrayOutputStream(512 * 1024).use { out ->
@@ -218,8 +244,7 @@ object custom_theme_image {
     }
 
     private fun cap_source(source: Bitmap): Bitmap {
-        val cover = max(target_width.toFloat() / source.width, target_height.toFloat() / source.height)
-        val factor = min(1f, cover * 2f)
+        val factor = theme_image_cap_factor(source.width, source.height, target_width, target_height, max_working_pixels)
         if (factor >= 1f) return source
         val w = (source.width * factor).roundToInt().coerceAtLeast(1)
         val h = (source.height * factor).roundToInt().coerceAtLeast(1)
@@ -252,13 +277,21 @@ object custom_theme_image {
     fun load(context: Context, sample: Int): Bitmap? {
         val app = context.applicationContext
         val file = image_file(app)
-        if (!file.isFile) return null
-        val plain = runCatching { decrypt(file.readBytes()) }.getOrNull() ?: return null
+        if (!file.isFile) {
+            if (meta_state.value != null) delete(app)
+            return null
+        }
+        val plain = runCatching { decrypt(file.readBytes()) }.getOrNull() ?: run {
+            delete(app)
+            return null
+        }
         val options = BitmapFactory.Options().apply {
             inSampleSize = sample
             if (sample > 1) inPreferredConfig = Bitmap.Config.RGB_565
         }
-        return BitmapFactory.decodeByteArray(plain, 0, plain.size, options).also { plain.fill(0) }
+        val decoded = BitmapFactory.decodeByteArray(plain, 0, plain.size, options).also { plain.fill(0) }
+        if (decoded == null) delete(app)
+        return decoded
     }
 
     private fun read_capped(context: Context, uri: Uri): ByteArray {
@@ -301,8 +334,7 @@ object custom_theme_image {
             }
         }.getOrDefault(0)
         val (upright_w, upright_h) = if (rotation % 180 == 0) width to height else height to width
-        var sample = 1
-        while (upright_w / (sample * 2) >= target_width && upright_h / (sample * 2) >= target_height) sample *= 2
+        val sample = theme_image_sample_size(upright_w, upright_h, target_width, target_height, max_decode_pixels)
         val decoded = BitmapFactory.decodeByteArray(
             bytes,
             0,

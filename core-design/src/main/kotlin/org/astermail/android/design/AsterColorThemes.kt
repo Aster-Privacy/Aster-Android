@@ -322,7 +322,7 @@ object AsterColorThemes {
         bg_primary = "#0a0a0a", bg_secondary = "#000000", bg_tertiary = "#161616", bg_hover = "#1f1f1f",
         bg_selected = "#262626", avatar_bg = "#262626", avatar_text = "#e5e5e5",
         border_primary = "#2e2e2e", border_secondary = "#1f1f1f",
-        text_primary = "#ffffff", text_secondary = "#d4d4d4", text_tertiary = "#a3a3a3", text_muted = "#8a8a8a",
+        text_primary = "#ffffff", text_secondary = "#e3e3e3", text_tertiary = "#bdbdbd", text_muted = "#9e9e9e",
         accent_color = "#f4f4f5", accent_color_hover = "#ffffff",
         sidebar_bg = "#000000", sidebar_hover = "#0a0a0a",
         input_bg = "#161616", input_border = "#2e2e2e",
