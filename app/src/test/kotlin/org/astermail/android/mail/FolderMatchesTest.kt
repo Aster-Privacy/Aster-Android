@@ -30,6 +30,7 @@ class FolderMatchesTest {
         is_spam: Boolean = false,
         is_starred: Boolean = false,
         labels: List<String> = emptyList(),
+        routing_token: String? = null,
     ) = InboxItem(
         id = "m1",
         thread_token = null,
@@ -47,7 +48,8 @@ class FolderMatchesTest {
         is_archived = is_archived,
         is_spam = is_spam,
         labels = labels,
-        raw_item = MailItem(id = "m1", item_type = item_type),
+        routing_token = routing_token,
+        raw_item = MailItem(id = "m1", item_type = item_type, routing_token = routing_token),
     )
 
     @Test
@@ -115,5 +117,45 @@ class FolderMatchesTest {
     fun label_and_tag_prefixes_match_tokens() {
         assertTrue(folder_matches_item("label:abc", item(labels = listOf("abc"))))
         assertFalse(folder_matches_item("label:abc", item(labels = listOf("xyz"))))
+    }
+
+    @Test
+    fun alias_folder_keeps_items_routed_to_that_alias() {
+        assertTrue(
+            folder_matches_item(
+                "routing:tok1|received",
+                item(item_type = "received", routing_token = "tok1"),
+            ),
+        )
+    }
+
+    @Test
+    fun alias_folder_drops_items_routed_elsewhere() {
+        assertFalse(
+            folder_matches_item(
+                "routing:tok1|received",
+                item(item_type = "received", routing_token = "tok2"),
+            ),
+        )
+    }
+
+    @Test
+    fun alias_folder_keeps_sent_items_the_server_scoped() {
+        assertTrue(
+            folder_matches_item("routing:tok1", item(item_type = "sent")),
+        )
+        assertTrue(
+            folder_matches_item("routing:tok1|sent", item(item_type = "sent")),
+        )
+    }
+
+    @Test
+    fun alias_folder_drops_trashed_items() {
+        assertFalse(
+            folder_matches_item(
+                "routing:tok1",
+                item(item_type = "received", routing_token = "tok1", is_trashed = true),
+            ),
+        )
     }
 }

@@ -4718,6 +4718,12 @@ internal fun folder_matches_item(folder: String, item: InboxItem): Boolean = whe
             val token = folder.removePrefix("tag:")
             item.tag_tokens.contains(token) && !item.is_trashed
         }
+        folder.startsWith("routing:") -> {
+            val scope = parse_alias_routing_folder(folder)
+            val matches_received = scope != null && item.routing_token == scope.routing_token
+            !item.is_trashed &&
+                (matches_received || scope?.direction != alias_direction_received)
+        }
         else -> item.labels.contains(folder) && !item.is_trashed
     }
 }
