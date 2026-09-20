@@ -1289,6 +1289,9 @@ internal fun search_results_list(
     val haptics = LocalHapticFeedback.current
     val settings_vm = org.astermail.android.settings.optional_shared_settings_view_model()
     val settings_state = settings_vm?.state?.collectAsStateWithLifecycle()?.value
+    val search_row_geometry = org.astermail.android.ui.mail.remember_row_geometry(
+        org.astermail.android.ui.mail.skeleton_geometry_of(settings_state?.preferences),
+    )
     val live_select_mode by rememberUpdatedState(select_mode)
     val live_selected_set by rememberUpdatedState(selected_set)
     val live_threads by rememberUpdatedState(threads)
@@ -1424,6 +1427,7 @@ internal fun search_results_list(
                 select_mode = select_mode,
                 is_pinned = thread.is_pinned,
                 user_prefs = settings_state?.preferences,
+                cached_geometry = search_row_geometry,
             )
         }
     }

@@ -58,6 +58,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.astermail.android.R
@@ -155,6 +156,84 @@ fun remember_skeleton_geometry(phase: SkeletonPhase, live: SkeletonGeometry?): S
     return shown.value
 }
 
+private const val skeleton_row_height_key = "row_height_px"
+
+private const val skeleton_first_row_height_key = "first_row_height_px"
+
+internal const val skeleton_row_sample_count = 4
+
+internal val skeleton_three_line_min = 84.dp
+
+internal fun modal_row_height(samples: Collection<Int>): Int {
+    val usable = samples.filter { it > 0 }
+    if (usable.isEmpty()) return 0
+    return usable.groupingBy { it }.eachCount().entries
+        .sortedWith(compareByDescending<Map.Entry<Int, Int>> { it.value }.thenBy { it.key })
+        .first().key
+}
+
+internal fun skeleton_row_shows_preview(show_preview: Boolean, row_height: Dp): Boolean =
+    show_preview && (row_height <= 0.dp || row_height >= skeleton_three_line_min)
+
+internal fun read_skeleton_row_height(context: android.content.Context): Int {
+    val store = skeleton_geometry_store(context) ?: return 0
+    return runCatching { store.getInt(skeleton_row_height_key, 0) }.getOrDefault(0)
+}
+
+internal fun read_skeleton_first_row_height(context: android.content.Context): Int {
+    val store = skeleton_geometry_store(context) ?: return 0
+    return runCatching { store.getInt(skeleton_first_row_height_key, 0) }.getOrDefault(0)
+}
+
+internal fun write_skeleton_row_height(context: android.content.Context, px: Int) {
+    val store = skeleton_geometry_store(context) ?: return
+    runCatching { store.edit().putInt(skeleton_row_height_key, px).apply() }
+}
+
+internal fun write_skeleton_first_row_height(context: android.content.Context, px: Int) {
+    val store = skeleton_geometry_store(context) ?: return
+    runCatching { store.edit().putInt(skeleton_first_row_height_key, px).apply() }
+}
+
+@Composable
+fun remember_row_height_recorder(): (Int, Int) -> Unit {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val samples = remember(context) { mutableMapOf<Int, Int>() }
+    val written = remember(context) {
+        intArrayOf(read_skeleton_row_height(context), read_skeleton_first_row_height(context))
+    }
+    return remember(context) {
+        { index: Int, height: Int ->
+            if (index in 0 until skeleton_row_sample_count && height > 0 && samples[index] != height) {
+                samples[index] = height
+                if (index == 0 && height != written[1]) {
+                    written[1] = height
+                    write_skeleton_first_row_height(context, height)
+                }
+                if (samples.size >= skeleton_row_sample_count) {
+                    val modal = modal_row_height(samples.filterKeys { it > 0 }.values)
+                    if (modal > 0 && modal != written[0]) {
+                        written[0] = modal
+                        write_skeleton_row_height(context, modal)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun remember_row_geometry(live: SkeletonGeometry?): SkeletonGeometry {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val shown = remember(context) { mutableStateOf(read_skeleton_geometry(context)) }
+    LaunchedEffect(live) {
+        if (live == null) return@LaunchedEffect
+        if (live != shown.value) write_skeleton_geometry(context, live)
+        shown.value = live
+    }
+    return shown.value
+}
+
 internal fun initial_skeleton_phase(wanted: Boolean, rows_imminent: Boolean): SkeletonPhase = when {
     !wanted -> SkeletonPhase.content
     rows_imminent -> SkeletonPhase.blank
@@ -220,6 +299,8 @@ fun inbox_skeleton(
     row_count: Int = 10,
     show_avatar: Boolean = true,
     show_preview: Boolean = true,
+    row_height: Dp = 0.dp,
+    first_row_height: Dp = 0.dp,
 ) {
     val colors = AsterMaterial.colors
     val state = shimmer_state()
@@ -238,6 +319,7 @@ fun inbox_skeleton(
                 is_last = index == row_count - 1,
                 show_avatar = show_avatar,
                 show_preview = show_preview,
+                row_height = if (index == 0 && first_row_height > 0.dp) first_row_height else row_height,
             )
         }
     }
@@ -251,6 +333,16 @@ fun inbox_skeleton_layer(
 ) {
     val reduce_motion = aster_reduce_motion()
     val geometry = remember_skeleton_geometry(phase, live_geometry)
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val row_height = remember(context, density) {
+        val px = read_skeleton_row_height(context)
+        if (px > 0) with(density) { px.toDp() } else 0.dp
+    }
+    val first_row_height = remember(context, density) {
+        val px = read_skeleton_first_row_height(context)
+        if (px > 0) with(density) { px.toDp() } else 0.dp
+    }
     AnimatedVisibility(
         visible = phase == SkeletonPhase.skeleton,
         modifier = modifier,
@@ -262,6 +354,8 @@ fun inbox_skeleton_layer(
             list_density = geometry.list_density,
             show_avatar = geometry.show_avatar,
             show_preview = geometry.show_preview,
+            row_height = row_height,
+            first_row_height = first_row_height,
             modifier = Modifier.semantics {
                 liveRegion = LiveRegionMode.Polite
                 contentDescription = loading_label
@@ -292,9 +386,12 @@ fun inbox_skeleton_row(
     is_last: Boolean = true,
     show_avatar: Boolean = true,
     show_preview: Boolean = true,
+    row_height: Dp = 0.dp,
 ) {
     val colors = AsterMaterial.colors
     val metrics = remember(list_density) { inbox_row_metrics(list_density) }
+    val content_height = if (row_height > 0.dp && !is_last) row_height - inbox_group_split else row_height
+    val draw_preview = skeleton_row_shows_preview(show_preview, content_height)
     val shape = remember(is_first, is_last) { inbox_group_shape(is_first, is_last) }
     val card_color = remember(colors) { inbox_card_read_color(colors) }
     val sender_style = inbox_sender_text_style()
@@ -317,7 +414,13 @@ fun inbox_skeleton_row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clearAndSetSemantics { }
-                .defaultMinSize(minHeight = metrics.min_height)
+                .then(
+                    if (content_height > 0.dp) {
+                        Modifier.height(content_height)
+                    } else {
+                        Modifier.defaultMinSize(minHeight = metrics.min_height)
+                    },
+                )
                 .padding(
                     start = inbox_card_content_padding,
                     end = inbox_card_content_padding,
@@ -348,13 +451,13 @@ fun inbox_skeleton_row(
                     )
                 }
                 Spacer(Modifier.height(metrics.line_gap))
-                if (show_preview) {
+                if (draw_preview) {
                     skeleton_text_line(subject_style, state, Modifier.fillMaxWidth(0.68f))
                     Spacer(Modifier.height(metrics.line_gap))
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.weight(1f)) {
-                        if (show_preview) {
+                        if (draw_preview) {
                             skeleton_text_line(preview_style, state, Modifier.fillMaxWidth(0.9f))
                         } else {
                             skeleton_text_line(subject_style, state, Modifier.fillMaxWidth(0.68f))

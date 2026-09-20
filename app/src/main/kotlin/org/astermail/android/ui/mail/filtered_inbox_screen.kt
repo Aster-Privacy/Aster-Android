@@ -57,6 +57,7 @@ import org.astermail.android.mail.MailViewModel
 import org.astermail.android.mail.folder_cache_skeleton_allowed
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -197,6 +198,8 @@ fun FilteredInboxScreen(
                 rows_imminent = false,
             )
             val handoff = Modifier.skeleton_handoff(skeleton_phase)
+            val row_geometry = remember_row_geometry(skeleton_geometry_of(settings_state.preferences))
+            val record_row_height = remember_row_height_recorder()
             Box(modifier = Modifier.fillMaxSize()) {
             if (skeleton_now || skeleton_phase != SkeletonPhase.content) {
                 Box(Modifier.fillMaxSize())
@@ -232,7 +235,11 @@ fun FilteredInboxScreen(
                             key = { _, thread -> thread.thread_id },
                             contentType = { _, _ -> "thread_row" },
                         ) { row_index, thread ->
-                            Box(modifier = Modifier.background(colors.bg_primary)) {
+                            Box(
+                                modifier = Modifier
+                                    .background(colors.bg_primary)
+                                    .onSizeChanged { record_row_height(row_index, it.height) },
+                            ) {
                                 ThreadInboxRow(
                                     thread = thread,
                                     on_click = { on_open_email(thread_open_target_id(thread)) },
@@ -251,6 +258,7 @@ fun FilteredInboxScreen(
                                     is_first = row_index == 0,
                                     is_last = row_index == threads.lastIndex,
                                     user_prefs = settings_state.preferences,
+                                    cached_geometry = row_geometry,
                                 )
                             }
                         }

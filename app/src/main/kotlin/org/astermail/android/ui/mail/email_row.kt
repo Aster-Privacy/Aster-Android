@@ -449,13 +449,25 @@ fun ThreadInboxRow(
     is_first: Boolean = true,
     is_last: Boolean = true,
     user_prefs: UserPreferences? = null,
+    cached_geometry: SkeletonGeometry? = null,
     refresh_engaged: () -> Boolean = { false },
 ) {
     val email = thread.newest
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
     val tap_guard = remember { row_tap_guard() }
-    val metrics = remember(user_prefs?.mail_list_density) { inbox_row_metrics(user_prefs?.mail_list_density) }
+    val row_density = user_prefs?.mail_list_density ?: cached_geometry?.list_density
+    val show_avatar = if (user_prefs != null) {
+        user_prefs.show_profile_pictures != false
+    } else {
+        cached_geometry?.show_avatar != false
+    }
+    val show_preview = if (user_prefs != null) {
+        user_prefs.show_email_preview != false
+    } else {
+        cached_geometry?.show_preview != false
+    }
+    val metrics = remember(row_density) { inbox_row_metrics(row_density) }
     val is_unread = thread.has_unread
     val sender_color = if (is_unread) colors.text_primary else colors.text_secondary
     val subject_color = if (is_unread) colors.text_primary else colors.text_secondary
@@ -529,7 +541,7 @@ fun ThreadInboxRow(
         verticalAlignment = Alignment.Top,
     ) {
         inbox_leading_slot(
-            user_prefs?.show_profile_pictures != false,
+            show_avatar,
             is_selected,
             metrics.avatar_size,
         ) {
@@ -629,7 +641,7 @@ fun ThreadInboxRow(
                     base
                 }
             }
-            val has_preview = user_prefs?.show_email_preview != false && email.preview.isNotBlank()
+            val has_preview = show_preview && email.preview.isNotBlank()
             val trailing_controls: @Composable () -> Unit = {
                 if (user_prefs?.show_message_size == true && email.size_bytes > 0) {
                     Spacer(Modifier.width(4.dp))

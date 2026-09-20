@@ -1758,6 +1758,8 @@ fun InboxScreen(
                     rows_imminent = rows_imminent,
                 )
                 val handoff = Modifier.skeleton_handoff(skeleton_phase)
+                val row_geometry = remember_row_geometry(skeleton_geometry_of(settings_state.preferences))
+                val record_row_height = remember_row_height_recorder()
                 if (skeleton_now || skeleton_phase != SkeletonPhase.content) {
                     Box(Modifier.padding(top = header_height_dp))
                 } else if (inbox_error_now) {
@@ -1970,7 +1972,8 @@ fun InboxScreen(
                                 Box(
                                     modifier = Modifier
                                         .animateItem(fadeInSpec = row_fade_in_spec)
-                                        .fillMaxWidth(),
+                                        .fillMaxWidth()
+                                        .onSizeChanged { record_row_height(row_index, it.height) },
                                 ) {
                                     ThreadInboxRow(
                                         modifier = Modifier.fillMaxWidth(),
@@ -1984,12 +1987,15 @@ fun InboxScreen(
                                         is_first = row_index == 0,
                                         is_last = row_index == visible_threads.lastIndex,
                                         user_prefs = settings_state.preferences,
+                                        cached_geometry = row_geometry,
                                     )
                                 }
                             } else {
                                 val swipe_config = hoisted_swipe_config
                                 swipeable_thread_row(
-                                    modifier = Modifier.animateItem(fadeInSpec = row_fade_in_spec),
+                                    modifier = Modifier
+                                        .animateItem(fadeInSpec = row_fade_in_spec)
+                                        .onSizeChanged { record_row_height(row_index, it.height) },
                                     list_scrolling = { list_state.isScrollInProgress },
                                     refresh_engaged = { pull_state.distanceFraction > 0f },
                                     thread = thread,
@@ -2065,6 +2071,7 @@ fun InboxScreen(
                                     },
                                     haptic_enabled = haptic_enabled,
                                     user_prefs = settings_state.preferences,
+                                    cached_geometry = row_geometry,
                                     swipe_reset_token = if (swipe_reset_thread_id == thread.thread_id) swipe_reset_nonce else 0,
                                 )
                             }
@@ -3587,6 +3594,7 @@ private fun swipeable_thread_row(
     is_first: Boolean = true,
     is_last: Boolean = true,
     user_prefs: org.astermail.android.api.preferences.UserPreferences? = null,
+    cached_geometry: SkeletonGeometry? = null,
     list_scrolling: () -> Boolean = { false },
     swipe_reset_token: Int = 0,
     refresh_engaged: () -> Boolean = { false },
@@ -3623,6 +3631,7 @@ private fun swipeable_thread_row(
             is_first = is_first,
             is_last = is_last,
             user_prefs = user_prefs,
+            cached_geometry = cached_geometry,
             refresh_engaged = refresh_engaged,
         )
     }

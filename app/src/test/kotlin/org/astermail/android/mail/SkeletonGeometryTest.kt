@@ -23,8 +23,13 @@ package org.astermail.android.mail
 
 import org.astermail.android.ui.mail.SkeletonGeometry
 import org.astermail.android.ui.mail.SkeletonPhase
+import org.astermail.android.ui.mail.modal_row_height
 import org.astermail.android.ui.mail.next_skeleton_geometry
+import org.astermail.android.ui.mail.skeleton_row_shows_preview
+import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SkeletonGeometryTest {
@@ -47,5 +52,19 @@ class SkeletonGeometryTest {
     fun keeps_geometry_until_preferences_load() {
         assertEquals(compact, next_skeleton_geometry(compact, null, SkeletonPhase.content))
         assertEquals(compact, next_skeleton_geometry(compact, null, SkeletonPhase.skeleton))
+    }
+
+    @Test
+    fun picks_the_most_common_row_height() {
+        assertEquals(197, modal_row_height(listOf(239, 197, 197, 197)))
+        assertEquals(0, modal_row_height(listOf(0, 0)))
+    }
+
+    @Test
+    fun drops_the_preview_line_when_the_row_is_too_short() {
+        assertFalse(skeleton_row_shows_preview(show_preview = true, row_height = 72.dp))
+        assertTrue(skeleton_row_shows_preview(show_preview = true, row_height = 88.dp))
+        assertTrue(skeleton_row_shows_preview(show_preview = true, row_height = 0.dp))
+        assertFalse(skeleton_row_shows_preview(show_preview = false, row_height = 88.dp))
     }
 }
