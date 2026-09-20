@@ -14,4 +14,6 @@
     <string name="link_device_hero_title">デバイスコードを入力</string>
     <string name="link_device_confirm_title">このデバイスを確認</string>
     <string name="link_device_pending_badge">保留中</string>
+    <string name="link_device_step_progress">ステップ %1$d/%2$d · %3$s</string>
+    <string name="link_device_error_title">デバイスをリンクできませんでした</string>
 </resources>

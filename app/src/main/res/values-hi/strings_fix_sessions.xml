@@ -14,4 +14,6 @@
     <string name="link_device_hero_title">डिवाइस का कोड डालें</string>
     <string name="link_device_confirm_title">इस डिवाइस की पुष्टि करें</string>
     <string name="link_device_pending_badge">बाकी</string>
+    <string name="link_device_step_progress">चरण %2$d में से %1$d · %3$s</string>
+    <string name="link_device_error_title">डिवाइस को जोड़ा नहीं जा सका</string>
 </resources>

@@ -14,4 +14,6 @@
     <string name="link_device_hero_title">Saisissez le code de l\'appareil</string>
     <string name="link_device_confirm_title">Confirmez cet appareil</string>
     <string name="link_device_pending_badge">En attente</string>
+    <string name="link_device_step_progress">Étape %1$d sur %2$d · %3$s</string>
+    <string name="link_device_error_title">Impossible d’associer l’appareil</string>
 </resources>

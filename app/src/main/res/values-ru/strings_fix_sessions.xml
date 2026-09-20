@@ -14,4 +14,6 @@
     <string name="link_device_hero_title">Введите код устройства</string>
     <string name="link_device_confirm_title">Подтвердите это устройство</string>
     <string name="link_device_pending_badge">Ожидание</string>
+    <string name="link_device_step_progress">Шаг %1$d из %2$d · %3$s</string>
+    <string name="link_device_error_title">Не удалось привязать устройство</string>
 </resources>

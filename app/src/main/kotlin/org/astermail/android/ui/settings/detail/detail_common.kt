@@ -85,6 +85,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.aster_haptic
 import org.astermail.android.design.aster_tap_feedback
+import org.astermail.android.design.components.AsterAlert
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
@@ -665,24 +666,11 @@ internal fun v_gap(height: androidx.compose.ui.unit.Dp = AsterSpacing.md) {
 
 @Composable
 internal fun load_failed_card(message: String?, on_retry: () -> Unit) {
-    val colors = AsterMaterial.colors
     Column(Modifier.fillMaxWidth()) {
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(AsterSpacing.lg)) {
-                Text(
-                    text = stringResource(R.string.failed_to_load),
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                )
-                Spacer(Modifier.height(AsterSpacing.xs))
-                Text(
-                    text = message ?: stringResource(R.string.something_went_wrong),
-                    color = colors.text_secondary,
-                    fontSize = 13.sp,
-                )
-            }
-        }
+        AsterAlert(
+            message = message ?: stringResource(R.string.something_went_wrong),
+            title = stringResource(R.string.failed_to_load),
+        )
         v_gap(AsterSpacing.md)
         AsterButton(label = stringResource(R.string.retry), onClick = on_retry)
     }
@@ -690,16 +678,5 @@ internal fun load_failed_card(message: String?, on_retry: () -> Unit) {
 
 @Composable
 internal fun error_banner(message: String) {
-    val colors = AsterMaterial.colors
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                org.astermail.android.ui.mail.chip_subtle_background(colors.danger, colors.bg_card, colors.is_dark),
-                SquircleShape(16.dp),
-            )
-            .padding(AsterSpacing.md),
-    ) {
-        Text(text = message, color = colors.danger, fontSize = 13.sp)
-    }
+    AsterAlert(message = message)
 }

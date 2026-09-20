@@ -14,4 +14,6 @@
     <string name="link_device_hero_title">Enter the device code</string>
     <string name="link_device_confirm_title">Confirm this device</string>
     <string name="link_device_pending_badge">Pending</string>
+    <string name="link_device_step_progress">Step %1$d of %2$d · %3$s</string>
+    <string name="link_device_error_title">Couldn’t link the device</string>
 </resources>

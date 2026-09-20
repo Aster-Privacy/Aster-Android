@@ -14,4 +14,6 @@
     <string name="link_device_hero_title">Cihaz kodunu girin</string>
     <string name="link_device_confirm_title">Bu cihazı onaylayın</string>
     <string name="link_device_pending_badge">Beklemede</string>
+    <string name="link_device_step_progress">Adım %1$d / %2$d · %3$s</string>
+    <string name="link_device_error_title">Cihaz bağlanamadı</string>
 </resources>

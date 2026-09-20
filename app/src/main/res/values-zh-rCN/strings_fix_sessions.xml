@@ -14,4 +14,6 @@
     <string name="link_device_hero_title">输入设备代码</string>
     <string name="link_device_confirm_title">确认此设备</string>
     <string name="link_device_pending_badge">待处理</string>
+    <string name="link_device_step_progress">第 %1$d 步，共 %2$d 步 · %3$s</string>
+    <string name="link_device_error_title">无法关联设备</string>
 </resources>

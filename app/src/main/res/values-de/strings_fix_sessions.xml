@@ -14,4 +14,6 @@
     <string name="link_device_hero_title">Gerätecode eingeben</string>
     <string name="link_device_confirm_title">Dieses Gerät bestätigen</string>
     <string name="link_device_pending_badge">Ausstehend</string>
+    <string name="link_device_step_progress">Schritt %1$d von %2$d · %3$s</string>
+    <string name="link_device_error_title">Gerät konnte nicht verknüpft werden</string>
 </resources>

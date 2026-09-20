@@ -14,4 +14,6 @@
     <string name="link_device_hero_title">기기 코드 입력</string>
     <string name="link_device_confirm_title">이 기기를 확인하세요</string>
     <string name="link_device_pending_badge">대기 중</string>
+    <string name="link_device_step_progress">%2$d단계 중 %1$d단계 · %3$s</string>
+    <string name="link_device_error_title">기기를 연결하지 못했습니다</string>
 </resources>

@@ -22,23 +22,26 @@
 package org.astermail.android.ui.settings.detail
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -57,6 +60,7 @@ import compose.icons.tablericons.Key
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.components.AsterAlert
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterGhostButton
@@ -66,9 +70,13 @@ import org.astermail.android.devices.LinkDeviceStep
 import org.astermail.android.devices.LinkDeviceViewModel
 import org.astermail.android.ui.settings.device_badge
 import org.astermail.android.ui.settings.link_device_icon
-import org.astermail.android.ui.settings.link_device_step_icon
 
 private const val MAX_MACHINE_NAME_CHARS = 64
+private const val step_fill_ms = 260
+private const val hero_badge_alpha = 0.14f
+private val step_track_height = 4.dp
+private val hero_badge_size = 72.dp
+private val hero_icon_size = 34.dp
 
 private val link_device_step_titles = listOf(
     R.string.link_device_step_code,
@@ -123,7 +131,10 @@ fun LinkDeviceScreen(
         v_gap(AsterSpacing.xl)
 
         state.error?.let {
-            error_banner(stringResource(link_device_error_res(it)))
+            AsterAlert(
+                message = stringResource(link_device_error_res(it)),
+                title = stringResource(R.string.link_device_error_title),
+            )
             v_gap(AsterSpacing.lg)
         }
 
@@ -258,13 +269,20 @@ private fun link_device_hero(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = tint,
-            modifier = Modifier.size(44.dp),
-        )
-        v_gap(AsterSpacing.md)
+        Box(
+            modifier = Modifier
+                .size(hero_badge_size)
+                .background(tint.copy(alpha = hero_badge_alpha).compositeOver(colors.bg_primary), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = tint,
+                modifier = Modifier.size(hero_icon_size),
+            )
+        }
+        v_gap(AsterSpacing.lg)
         Text(
             text = title,
             color = colors.text_primary,
@@ -286,51 +304,41 @@ private fun link_device_hero(
 private fun link_device_progress(current: Int) {
     val colors = AsterMaterial.colors
     Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        Row(modifier = Modifier.fillMaxWidth()) {
             link_device_step_titles.indices.forEach { index ->
-                val reached = index <= current
-                val done = index < current
-                val tint = when {
-                    done -> colors.success
-                    reached -> colors.accent_blue
-                    else -> colors.text_muted
-                }
-                Icon(
-                    imageVector = if (done) TablerIcons.Check else link_device_step_icon(index),
-                    contentDescription = null,
-                    tint = tint,
-                    modifier = Modifier.size(24.dp),
+                val filled by animateFloatAsState(
+                    targetValue = if (index <= current) 1f else 0f,
+                    animationSpec = tween(step_fill_ms),
+                    label = "link_device_step_fill",
                 )
-                if (index < link_device_step_titles.lastIndex) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = if (index < link_device_step_titles.lastIndex) AsterSpacing.xs else 0.dp)
+                        .height(step_track_height)
+                        .background(colors.border_secondary, CircleShape),
+                ) {
                     Box(
                         modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = AsterSpacing.sm)
-                            .height(2.dp)
-                            .background(
-                                if (index < current) colors.success else colors.border_secondary,
-                            ),
+                            .fillMaxWidth(filled)
+                            .height(step_track_height)
+                            .background(colors.accent_blue, CircleShape),
                     )
                 }
             }
         }
         v_gap(AsterSpacing.sm)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            link_device_step_titles.forEachIndexed { index, label_res ->
-                Text(
-                    text = stringResource(label_res),
-                    color = if (index <= current) colors.text_secondary else colors.text_muted,
-                    fontSize = 11.sp,
-                    fontWeight = if (index == current) FontWeight.SemiBold else FontWeight.Normal,
-                )
-            }
-        }
+        Text(
+            text = stringResource(
+                R.string.link_device_step_progress,
+                current + 1,
+                link_device_step_titles.size,
+                stringResource(link_device_step_titles[current]),
+            ),
+            color = colors.text_tertiary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+        )
     }
 }
 
