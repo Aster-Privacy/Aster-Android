@@ -4,8 +4,7 @@
 #   bash scripts/build_fdroid_in_container.sh <git ref> <output dir>
 #
 # F-Droid rebuilds the fdroid flavor on Linux and compares it byte for byte with the
-# APK we publish. A Windows build is not that build: R8 writes META-INF/services
-# entries with CRLF line endings on Windows, so the signature never matches (0.6.170).
+# APK we publish, so the published APK has to come from that same Linux toolchain.
 # This clones the local repository at the given ref inside the same image the
 # fdroiddata pipeline uses, runs gradlew-fdroid exactly as F-Droid does, and copies
 # app-fdroid-release-unsigned.apk to the output directory.

@@ -133,8 +133,7 @@ say "build full flavor (signed)"
 ./gradlew --no-daemon assembleFullRelease bundleFullRelease
 
 # The fdroid flavor is built on Linux inside the F-Droid buildserver image, from the
-# tag, the way F-Droid builds it. A Windows build differs: R8 writes CRLF into
-# META-INF/services on Windows, and the copied signature then fails to verify.
+# tag, the way F-Droid builds it, so the published APK matches their rebuild.
 say "build fdroid flavor (unsigned, F-Droid buildserver container)"
 bash scripts/build_fdroid_in_container.sh "v$ver" "$work/fdroid-$ver"
 
@@ -202,9 +201,10 @@ echo "  OK fdroid APK carries no Google Play Services, Firebase, or Play classes
 
 # Text assets are packed raw, so a CRLF checkout of an html or js file changes the
 # APK bytes and F-Droid's Linux rebuild no longer matches. .gitattributes forces LF,
-# this catches a checkout that ignored it. META-INF/services is covered too: R8 on
-# Windows writes those with CRLF, which is what broke 0.6.170. Python reads the
-# entries in binary mode, because unzip -p on Windows rewrites newlines on the way out.
+# this catches a checkout that ignored it. META-INF/services must be LF too, because
+# that is what R8 emits on Linux and therefore what F-Droid's rebuild contains.
+# Python reads the entries in binary mode, because unzip -p on Windows rewrites
+# newlines on the way out.
 crlf=$(python - "$out_dir/Aster-Mail-fdroid-$ver.apk" <<'PYEOL'
 import re, sys, zipfile
 z = zipfile.ZipFile(sys.argv[1])
