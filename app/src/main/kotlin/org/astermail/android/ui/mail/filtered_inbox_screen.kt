@@ -264,9 +264,7 @@ fun FilteredInboxScreen(
             inbox_skeleton_layer(
                 phase = skeleton_phase,
                 modifier = Modifier.padding(top = inbox_group_split),
-                list_density = settings_state.preferences?.mail_list_density,
-                show_avatar = settings_state.preferences?.show_profile_pictures != false,
-                show_preview = settings_state.preferences?.show_email_preview != false,
+                live_geometry = skeleton_geometry_of(settings_state.preferences),
             )
             }
         }

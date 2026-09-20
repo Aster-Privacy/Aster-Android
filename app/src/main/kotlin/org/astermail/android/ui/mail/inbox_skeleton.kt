@@ -86,6 +86,75 @@ enum class SkeletonPhase { blank, skeleton, content }
 
 data class SkeletonStep(val target: SkeletonPhase, val after_ms: Long)
 
+data class SkeletonGeometry(
+    val list_density: String? = null,
+    val show_avatar: Boolean = true,
+    val show_preview: Boolean = true,
+)
+
+fun skeleton_geometry_of(
+    prefs: org.astermail.android.api.preferences.UserPreferences?,
+): SkeletonGeometry? = prefs?.let {
+    SkeletonGeometry(
+        list_density = it.mail_list_density,
+        show_avatar = it.show_profile_pictures != false,
+        show_preview = it.show_email_preview != false,
+    )
+}
+
+private const val skeleton_geometry_prefs = "aster_inbox_skeleton_geometry"
+private const val skeleton_geometry_density_key = "list_density"
+private const val skeleton_geometry_avatar_key = "show_avatar"
+private const val skeleton_geometry_preview_key = "show_preview"
+
+private fun skeleton_geometry_store(context: android.content.Context): android.content.SharedPreferences? =
+    runCatching {
+        context.getSharedPreferences(skeleton_geometry_prefs, android.content.Context.MODE_PRIVATE)
+    }.getOrNull()
+
+internal fun read_skeleton_geometry(context: android.content.Context): SkeletonGeometry {
+    val store = skeleton_geometry_store(context) ?: return SkeletonGeometry()
+    return runCatching {
+        SkeletonGeometry(
+            list_density = store.getString(skeleton_geometry_density_key, null),
+            show_avatar = store.getBoolean(skeleton_geometry_avatar_key, true),
+            show_preview = store.getBoolean(skeleton_geometry_preview_key, true),
+        )
+    }.getOrDefault(SkeletonGeometry())
+}
+
+internal fun write_skeleton_geometry(context: android.content.Context, value: SkeletonGeometry) {
+    val store = skeleton_geometry_store(context) ?: return
+    runCatching {
+        store.edit()
+            .putString(skeleton_geometry_density_key, value.list_density)
+            .putBoolean(skeleton_geometry_avatar_key, value.show_avatar)
+            .putBoolean(skeleton_geometry_preview_key, value.show_preview)
+            .apply()
+    }
+}
+
+internal fun next_skeleton_geometry(
+    shown: SkeletonGeometry,
+    live: SkeletonGeometry?,
+    phase: SkeletonPhase,
+): SkeletonGeometry = when {
+    live == null -> shown
+    phase == SkeletonPhase.skeleton -> shown
+    else -> live
+}
+
+@Composable
+fun remember_skeleton_geometry(phase: SkeletonPhase, live: SkeletonGeometry?): SkeletonGeometry {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val shown = remember(context) { mutableStateOf(read_skeleton_geometry(context)) }
+    LaunchedEffect(live, phase) {
+        if (live != null && live != shown.value) write_skeleton_geometry(context, live)
+        shown.value = next_skeleton_geometry(shown.value, live, phase)
+    }
+    return shown.value
+}
+
 internal fun initial_skeleton_phase(wanted: Boolean, rows_imminent: Boolean): SkeletonPhase = when {
     !wanted -> SkeletonPhase.content
     rows_imminent -> SkeletonPhase.blank
@@ -178,11 +247,10 @@ fun inbox_skeleton(
 fun inbox_skeleton_layer(
     phase: SkeletonPhase,
     modifier: Modifier = Modifier,
-    list_density: String? = null,
-    show_avatar: Boolean = true,
-    show_preview: Boolean = true,
+    live_geometry: SkeletonGeometry? = null,
 ) {
     val reduce_motion = aster_reduce_motion()
+    val geometry = remember_skeleton_geometry(phase, live_geometry)
     AnimatedVisibility(
         visible = phase == SkeletonPhase.skeleton,
         modifier = modifier,
@@ -191,9 +259,9 @@ fun inbox_skeleton_layer(
     ) {
         val loading_label = stringResource(R.string.loading)
         inbox_skeleton(
-            list_density = list_density,
-            show_avatar = show_avatar,
-            show_preview = show_preview,
+            list_density = geometry.list_density,
+            show_avatar = geometry.show_avatar,
+            show_preview = geometry.show_preview,
             modifier = Modifier.semantics {
                 liveRegion = LiveRegionMode.Polite
                 contentDescription = loading_label
