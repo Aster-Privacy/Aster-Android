@@ -25,6 +25,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterSemanticColors
@@ -38,6 +39,12 @@ fun Modifier.page_surface(colors: AsterSemanticColors): Modifier = when {
     glass_page_wash(colors) <= 0.01f -> this
     else -> this.background(colors.bg_primary.copy(alpha = glass_page_wash(colors)))
 }
+
+fun Modifier.chrome_surface(colors: AsterSemanticColors): Modifier =
+    if (colors.is_glass) this else this.background(colors.bg_primary)
+
+fun chrome_fill(colors: AsterSemanticColors): Color =
+    if (colors.is_glass) colors.glass_surface(colors.bg_card) else colors.bg_primary
 
 fun Modifier.image_theme_panel(
     colors: AsterSemanticColors,

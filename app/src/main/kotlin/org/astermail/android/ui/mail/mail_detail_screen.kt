@@ -197,6 +197,8 @@ import org.astermail.android.translation.TranslationDownloadPolicy
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
 import org.astermail.android.util.clip_with_ellipsis
+import org.astermail.android.ui.common.chrome_fill
+import org.astermail.android.ui.common.chrome_surface
 import org.astermail.android.ui.common.page_surface
 
 private val placeholder_body_height = 240.dp
@@ -928,7 +930,7 @@ fun MailDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
-                    .page_surface(colors)
+                    .chrome_surface(colors)
                     .padding(horizontal = AsterSpacing.xs),
                 contentAlignment = Alignment.Center,
             ) {
@@ -1210,7 +1212,7 @@ fun MailDetailScreen(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .page_surface(colors)
+                    .chrome_surface(colors)
                     .clipToBounds(),
             ) {
             if (email != null) LazyColumn(
@@ -1567,7 +1569,7 @@ fun MailDetailScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .background(if (colors.is_glass) colors.modal_bg.copy(alpha = 1f) else colors.bg_primary)
+                    .background(chrome_fill(colors))
                     .pointerInput(Unit) {}
                     .onGloballyPositioned { coords ->
                         val measured = with(density) { coords.size.height.toDp() }
@@ -1577,7 +1579,7 @@ fun MailDetailScreen(
                     }
                     .navigationBarsPadding(),
             ) {
-                AsterDivider(modifier = Modifier.fillMaxWidth())
+                if (!colors.is_glass) AsterDivider(modifier = Modifier.fillMaxWidth())
                 val latest_restriction = reaction_restriction_for(latest_msg)
                 LaunchedEffect(latest_restriction) {
                     if (latest_restriction != null) reaction_picker_open = false

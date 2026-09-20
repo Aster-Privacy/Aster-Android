@@ -56,7 +56,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import org.astermail.android.ui.theme.draw_theme_background
-import org.astermail.android.ui.theme.draw_chrome_scrim
+import org.astermail.android.ui.common.chrome_fill
 import org.astermail.android.ui.theme.draw_theme_veil
 import org.astermail.android.ui.common.image_theme_panel
 import androidx.compose.ui.platform.LocalDensity
@@ -2175,7 +2175,7 @@ fun InboxScreen(
             }
         }
 
-        val header_bg = colors.bg_primary
+        val header_bg = chrome_fill(colors)
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -2197,11 +2197,7 @@ fun InboxScreen(
                 .drawBehind {
                     val limit = header_height_px.toFloat()
                     val fraction = if (limit == 0f) 0f else (-header_offset_px.floatValue / limit).coerceIn(0f, 1f)
-                    if (has_backdrop) {
-                        draw_chrome_scrim(header_bg, 1f - fraction)
-                    } else {
-                        drawRect(color = header_bg, alpha = 1f - fraction)
-                    }
+                    drawRect(color = header_bg, alpha = 1f - fraction)
                 }
                 ,
         ) {
@@ -2227,7 +2223,7 @@ fun InboxScreen(
                         on_empty_trash = { show_empty_trash_dialog = true },
                         sort_mode = sort_mode,
                         on_sort_change = { sort_mode = it; sort_mode_user_set = true },
-                        show_divider = scrolled_elevation,
+                        show_divider = scrolled_elevation && !colors.is_glass,
                         current_folder = current_folder,
                         on_folder_change = on_folder_change,
                         custom_folders = custom_folders,

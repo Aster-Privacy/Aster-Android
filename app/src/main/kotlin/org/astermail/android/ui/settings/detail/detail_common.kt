@@ -95,7 +95,9 @@ import org.astermail.android.ui.common.page_surface
 
 internal val settings_row_min_height = 56.dp
 internal val settings_group_inset = 4.dp
-internal val settings_row_gap_height = 2.dp
+internal val settings_row_gap_height = 3.dp
+internal val settings_row_divider_inset = 20.dp
+internal val settings_row_divider_thickness = 1.dp
 
 internal fun absolute_date_label(iso: String?): String {
     if (iso.isNullOrBlank()) return ""
@@ -276,7 +278,21 @@ internal fun section_label(text: String) {
 
 @Composable
 internal fun settings_row_gap(modifier: Modifier = Modifier) {
-    Spacer(modifier.height(settings_row_gap_height))
+    val colors = AsterMaterial.colors
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(settings_row_gap_height)
+            .padding(start = settings_row_divider_inset, end = AsterSpacing.lg),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(settings_row_divider_thickness)
+                .background(colors.border_secondary.copy(alpha = if (colors.is_glass) 0.32f else 0.7f)),
+        )
+    }
 }
 
 @Composable
