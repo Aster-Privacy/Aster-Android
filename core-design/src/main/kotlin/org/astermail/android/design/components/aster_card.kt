@@ -40,6 +40,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterMaterial
+import androidx.compose.ui.graphics.Color
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.island_surface_color
 
 @Composable
@@ -50,8 +52,9 @@ fun AsterCard(
 ) {
     val colors = AsterMaterial.colors
     val shape = SquircleShape(16.dp)
+    val acrylic_on = colors.is_glass && org.astermail.android.design.local_acrylic.current != null
     val card_colors = CardDefaults.cardColors(
-        containerColor = island_surface_color(colors),
+        containerColor = if (acrylic_on) Color.Transparent else island_surface_color(colors),
         contentColor = colors.text_primary,
     )
     val border: BorderStroke? = null
@@ -67,7 +70,9 @@ fun AsterCard(
         Card(
             onClick = onClick,
             interactionSource = interaction,
-            modifier = modifier.graphicsLayer { scaleX = scale; scaleY = scale },
+            modifier = modifier
+                .graphicsLayer { scaleX = scale; scaleY = scale }
+                .then(if (acrylic_on) Modifier.acrylic(colors, shape) else Modifier),
             shape = shape,
             colors = card_colors,
             border = border,
@@ -76,7 +81,7 @@ fun AsterCard(
         )
     } else {
         Card(
-            modifier = modifier,
+            modifier = modifier.then(if (acrylic_on) Modifier.acrylic(colors, shape) else Modifier),
             shape = shape,
             colors = card_colors,
             border = border,

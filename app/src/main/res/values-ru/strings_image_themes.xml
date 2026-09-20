@@ -45,4 +45,7 @@
     <string name="theme_opacity_frosted_subtitle">Поверхности почти непрозрачные, с лёгким просветом фото.</string>
     <string name="theme_opacity_solid">Непрозрачная</string>
     <string name="theme_opacity_solid_subtitle">Поверхности полностью непрозрачные, фото остаётся за ними.</string>
+    <string name="glass_mode">Стекло</string>
+    <string name="glass_mode_subtitle">Фото просвечивает сквозь поверхности. Отключите, чтобы сделать их непрозрачными.</string>
+    <string name="theme_transparency">Прозрачность</string>
 </resources>

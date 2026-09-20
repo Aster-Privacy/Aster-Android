@@ -45,4 +45,7 @@
     <string name="theme_opacity_frosted_subtitle">표면이 대부분 불투명하고 사진이 살짝 비칩니다.</string>
     <string name="theme_opacity_solid">불투명</string>
     <string name="theme_opacity_solid_subtitle">표면이 완전히 불투명해지고 사진은 뒤에 남습니다.</string>
+    <string name="glass_mode">글래스</string>
+    <string name="glass_mode_subtitle">사진이 표면 뒤로 비칩니다. 불투명하게 하려면 끄세요.</string>
+    <string name="theme_transparency">투명도</string>
 </resources>

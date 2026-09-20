@@ -45,4 +45,7 @@
     <string name="theme_opacity_frosted_subtitle">تبقى الأسطح معتمة في معظمها مع لمحة من صورتك.</string>
     <string name="theme_opacity_solid">معتم</string>
     <string name="theme_opacity_solid_subtitle">الأسطح معتمة بالكامل وتبقى صورتك خلفها.</string>
+    <string name="glass_mode">زجاج</string>
+    <string name="glass_mode_subtitle">تظهر صورتك خلف الأسطح. أوقف هذا الخيار لأسطح مصمتة.</string>
+    <string name="theme_transparency">الشفافية</string>
 </resources>

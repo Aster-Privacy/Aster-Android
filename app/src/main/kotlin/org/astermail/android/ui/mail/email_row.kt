@@ -98,6 +98,7 @@ import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.acrylic_backdrop
 import org.astermail.android.design.AsterSemanticColors
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
@@ -202,6 +203,7 @@ fun EmailRow(
                 bottom = if (is_last) 0.dp else inbox_group_split,
             )
             .clip(group_shape)
+            .acrylic_backdrop(colors)
             .drawBehind { drawRect(row_bg.value) }
             .then(
                 if (select_mode) {
@@ -510,6 +512,8 @@ fun ThreadInboxRow(
                 bottom = if (is_last) 0.dp else inbox_group_split,
             )
             .clip(group_shape)
+            .acrylic_backdrop(colors)
+            .acrylic_backdrop(colors)
             .drawBehind { drawRect(row_bg.value) },
     ) {
     Row(

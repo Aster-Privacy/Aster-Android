@@ -45,4 +45,7 @@
     <string name="theme_opacity_frosted_subtitle">Powierzchnie pozostają niemal pełne, z odrobiną zdjęcia.</string>
     <string name="theme_opacity_solid">Pełne</string>
     <string name="theme_opacity_solid_subtitle">Powierzchnie są w pełni kryjące, a zdjęcie zostaje za nimi.</string>
+    <string name="glass_mode">Szkło</string>
+    <string name="glass_mode_subtitle">Twoje zdjęcie prześwituje przez powierzchnie. Wyłącz tę opcję, aby były pełne.</string>
+    <string name="theme_transparency">Przezroczystość</string>
 </resources>

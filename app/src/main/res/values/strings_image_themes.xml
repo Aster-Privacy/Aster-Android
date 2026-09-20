@@ -45,4 +45,7 @@
     <string name="theme_opacity_frosted_subtitle">Surfaces stay mostly solid, with a hint of your photo.</string>
     <string name="theme_opacity_solid">Solid</string>
     <string name="theme_opacity_solid_subtitle">Surfaces are fully solid and your photo stays behind them.</string>
+    <string name="glass_mode">Glass</string>
+    <string name="glass_mode_subtitle">Surfaces let your photo show through. Turn this off for solid surfaces.</string>
+    <string name="theme_transparency">Transparency</string>
 </resources>

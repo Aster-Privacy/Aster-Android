@@ -45,4 +45,7 @@
     <string name="theme_opacity_frosted_subtitle">Les surfaces restent presque opaques, avec un soupçon de votre photo.</string>
     <string name="theme_opacity_solid">Opaque</string>
     <string name="theme_opacity_solid_subtitle">Les surfaces sont entièrement opaques et votre photo reste derrière.</string>
+    <string name="glass_mode">Verre</string>
+    <string name="glass_mode_subtitle">Votre photo transparaît derrière les surfaces. Désactivez cette option pour des surfaces opaques.</string>
+    <string name="theme_transparency">Transparence</string>
 </resources>

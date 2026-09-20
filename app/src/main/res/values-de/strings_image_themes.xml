@@ -45,4 +45,7 @@
     <string name="theme_opacity_frosted_subtitle">Flächen bleiben weitgehend deckend, mit einem Hauch deines Fotos.</string>
     <string name="theme_opacity_solid">Deckend</string>
     <string name="theme_opacity_solid_subtitle">Flächen sind vollständig deckend und dein Foto bleibt dahinter.</string>
+    <string name="glass_mode">Glas</string>
+    <string name="glass_mode_subtitle">Dein Foto scheint durch die Oberflächen. Schalte das aus, um sie deckend zu machen.</string>
+    <string name="theme_transparency">Transparenz</string>
 </resources>

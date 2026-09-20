@@ -195,6 +195,11 @@ private val theme_opacity_levels = listOf(
     ThemeOpacityLevel(1f, R.string.theme_opacity_solid, R.string.theme_opacity_solid_subtitle),
 )
 
+internal const val solid_theme_opacity = 1f
+internal const val default_glass_opacity = 0.62f
+
+private val glass_opacity_levels = theme_opacity_levels.filter { it.value < solid_theme_opacity }
+
 private fun nearest_theme_opacity(value: Float): Float =
     theme_opacity_levels.minBy { kotlin.math.abs(it.value - value) }.value
 
@@ -584,15 +589,37 @@ fun AppearanceScreen(
 
         if (background_image != no_theme_background) {
             v_gap(AsterSpacing.xxl)
-            section_label(stringResource(R.string.theme_opacity))
+            section_label(stringResource(R.string.glass_mode))
+            val glass_on = background_opacity < solid_theme_opacity - 0.01f
             AsterCard(modifier = Modifier.fillMaxWidth()) {
-                theme_opacity_levels.forEachIndexed { index, level ->
-                    theme_option_row(
-                        stringResource(level.title),
-                        stringResource(level.subtitle),
-                        nearest_theme_opacity(background_opacity) == level.value,
-                    ) { vm.set_background_opacity(level.value) }
-                    if (index < theme_opacity_levels.size - 1) settings_row_gap(modifier = Modifier)
+                settings_toggle_row(
+                    title = stringResource(R.string.glass_mode),
+                    subtitle = stringResource(R.string.glass_mode_subtitle),
+                    checked = glass_on,
+                    test_tag = "glass_mode_toggle",
+                    on_change = { on ->
+                        vm.set_background_opacity(if (on) default_glass_opacity else solid_theme_opacity)
+                    },
+                )
+            }
+            androidx.compose.animation.AnimatedVisibility(
+                visible = glass_on,
+                enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
+                exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut(),
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    v_gap(AsterSpacing.xxl)
+                    section_label(stringResource(R.string.theme_transparency))
+                    AsterCard(modifier = Modifier.fillMaxWidth()) {
+                        glass_opacity_levels.forEachIndexed { index, level ->
+                            theme_option_row(
+                                stringResource(level.title),
+                                stringResource(level.subtitle),
+                                nearest_theme_opacity(background_opacity) == level.value,
+                            ) { vm.set_background_opacity(level.value) }
+                            if (index < glass_opacity_levels.size - 1) settings_row_gap(modifier = Modifier)
+                        }
+                    }
                 }
             }
         }

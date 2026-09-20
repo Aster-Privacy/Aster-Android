@@ -91,6 +91,7 @@ import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.design.mirror_in_rtl
+import org.astermail.android.ui.common.page_punch
 import org.astermail.android.ui.common.page_surface
 
 internal val settings_row_min_height = 56.dp
@@ -283,16 +284,8 @@ internal fun settings_row_gap(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .height(settings_row_gap_height)
-            .padding(start = settings_row_divider_inset, end = AsterSpacing.lg),
-        contentAlignment = Alignment.Center,
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(settings_row_divider_thickness)
-                .background(colors.border_secondary.copy(alpha = if (colors.is_glass) 0.32f else 0.7f)),
-        )
-    }
+            .page_punch(colors),
+    )
 }
 
 @Composable

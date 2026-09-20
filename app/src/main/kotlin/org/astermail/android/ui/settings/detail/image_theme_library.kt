@@ -50,6 +50,8 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -79,6 +81,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -717,23 +720,20 @@ private fun your_photo_section(
                 on_click = choose,
             )
         } else {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                shelf_tile(
+            val screen_height = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp
+            Column(modifier = Modifier.fillMaxWidth()) {
+                custom_photo_preview(
                     background = custom_theme_background_entry(current),
                     selected = selected,
                     accent = accent,
                     on_accent = on_accent,
                     on_click = { on_pick(current) },
-                    width = 200.dp,
-                    height = 422.dp,
+                    max_height = screen_height * 0.52f,
                 )
                 Spacer(Modifier.height(14.dp))
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     photo_action_button(
                         icon = TablerIcons.Crop,
@@ -741,7 +741,7 @@ private fun your_photo_section(
                         busy = importing || committing,
                         accent = accent,
                         on_click = adjust,
-                        modifier = Modifier.testTag("image_theme_custom_adjust"),
+                        modifier = Modifier.weight(1f).testTag("image_theme_custom_adjust"),
                     )
                     photo_action_button(
                         icon = TablerIcons.Photo,
@@ -749,13 +749,14 @@ private fun your_photo_section(
                         busy = false,
                         accent = accent,
                         on_click = choose,
-                        modifier = Modifier.testTag("image_theme_custom_replace"),
+                        modifier = Modifier.weight(1f).testTag("image_theme_custom_replace"),
                     )
                     photo_action_button(
                         icon = TablerIcons.Trash,
                         label = stringResource(R.string.image_theme_remove_photo),
                         busy = false,
                         accent = accent,
+                        destructive = true,
                         on_click = {
                             if (!importing && !committing) {
                                 error = null
@@ -765,7 +766,7 @@ private fun your_photo_section(
                                 }
                             }
                         },
-                        modifier = Modifier.testTag("image_theme_custom_remove"),
+                        modifier = Modifier.weight(1f).testTag("image_theme_custom_remove"),
                     )
                 }
                 Spacer(Modifier.height(12.dp))
@@ -774,7 +775,7 @@ private fun your_photo_section(
                     color = message_color,
                     fontSize = 13.sp,
                     lineHeight = 18.sp,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                 )
             }
         }
@@ -855,33 +856,35 @@ private fun photo_action_button(
     accent: Color,
     on_click: () -> Unit,
     modifier: Modifier = Modifier,
+    destructive: Boolean = false,
 ) {
-    Row(
+    val tint = if (destructive) error_text else Color.White
+    Column(
         modifier = modifier
-            .fillMaxWidth()
-            .height(46.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .height(74.dp)
+            .clip(SquircleShape(20.dp))
             .background(local_library_palette.current.raised_bg)
-            .border(1.dp, local_library_palette.current.hairline, RoundedCornerShape(14.dp))
             .clickable(enabled = !busy, onClick = on_click)
-            .padding(horizontal = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(horizontal = 6.dp, vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
-        Box(modifier = Modifier.size(18.dp), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.size(22.dp), contentAlignment = Alignment.Center) {
             if (busy) {
-                CircularProgressIndicator(color = accent, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
+                CircularProgressIndicator(color = accent, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
             } else {
-                Icon(imageVector = icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                Icon(imageVector = icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
             }
         }
+        Spacer(Modifier.height(6.dp))
         Text(
             text = label,
-            color = Color.White,
-            fontSize = 14.sp,
+            color = tint,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(start = 10.dp),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
     }
 }
@@ -937,6 +940,77 @@ private fun category_shelf(
 }
 
 @Composable
+private fun custom_photo_preview(
+    background: ThemeBackground,
+    selected: Boolean,
+    accent: Color,
+    on_accent: Color,
+    on_click: () -> Unit,
+    max_height: Dp,
+) {
+    val progress by animateFloatAsState(if (selected) 1f else 0f, tween(200), label = "photo_select")
+    val shape = SquircleShape(24.dp)
+    val photo = remember_theme_bitmap(background)
+    val ratio = photo?.let { it.width.toFloat() / it.height.toFloat() } ?: (3f / 4f)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .heightIn(max = max_height)
+            .aspectRatio(ratio.coerceIn(0.4f, 2.2f))
+            .clip(shape)
+            .background(background.tint)
+            .clickable(onClick = on_click)
+            .testTag("image_theme_${background.id}"),
+    ) {
+        photo?.let { bitmap ->
+            Canvas(modifier = Modifier.fillMaxSize()) { draw_cover_sharp(bitmap) }
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .border(
+                    if (progress > 0f) 3.dp else 1.dp,
+                    lerp(local_library_palette.current.hairline, accent, progress),
+                    shape,
+                ),
+        )
+        if (progress > 0f) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(10.dp)
+                    .size(26.dp)
+                    .clip(CircleShape)
+                    .background(lerp(local_library_palette.current.control_bg, accent, progress)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = TablerIcons.Check,
+                    contentDescription = null,
+                    tint = lerp(local_library_palette.current.control_bg, on_accent, progress),
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+        }
+    }
+}
+
+private fun DrawScope.draw_cover_sharp(bitmap: ImageBitmap) {
+    val scale = maxOf(size.width / bitmap.width, size.height / bitmap.height)
+    val w = bitmap.width * scale
+    val h = bitmap.height * scale
+    drawImage(
+        image = bitmap,
+        srcOffset = IntOffset.Zero,
+        srcSize = IntSize(bitmap.width, bitmap.height),
+        dstOffset = IntOffset(((size.width - w) / 2f).roundToInt(), ((size.height - h) / 2f).roundToInt()),
+        dstSize = IntSize(w.roundToInt(), h.roundToInt()),
+        filterQuality = FilterQuality.High,
+    )
+}
+
+@Composable
 private fun shelf_tile(
     background: ThemeBackground,
     selected: Boolean,
@@ -945,14 +1019,16 @@ private fun shelf_tile(
     on_click: () -> Unit,
     width: Dp = 144.dp,
     height: Dp = 304.dp,
+    fill_width: Boolean = false,
+    shape: androidx.compose.ui.graphics.Shape = shelf_tile_shape,
 ) {
     val progress by animateFloatAsState(if (selected) 1f else 0f, tween(200), label = "tile_select")
     Box(
         modifier = Modifier
-            .width(width)
+            .then(if (fill_width) Modifier.fillMaxWidth() else Modifier.width(width))
             .height(height)
-            .clip(shelf_tile_shape)
-            .border(1.dp, local_library_palette.current.hairline, shelf_tile_shape)
+            .clip(shape)
+            .border(1.dp, local_library_palette.current.hairline, shape)
             .clickable(onClick = on_click)
             .testTag("image_theme_${background.id}"),
     ) {
@@ -961,7 +1037,7 @@ private fun shelf_tile(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .border(3.dp, lerp(local_library_palette.current.hairline, accent, progress), shelf_tile_shape),
+                    .border(3.dp, lerp(local_library_palette.current.hairline, accent, progress), shape),
             )
             Box(
                 modifier = Modifier

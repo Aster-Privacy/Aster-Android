@@ -45,4 +45,7 @@
     <string name="theme_opacity_frosted_subtitle">Las superficies son casi sólidas, con un toque de tu foto.</string>
     <string name="theme_opacity_solid">Sólido</string>
     <string name="theme_opacity_solid_subtitle">Las superficies son totalmente sólidas y tu foto queda detrás.</string>
+    <string name="glass_mode">Cristal</string>
+    <string name="glass_mode_subtitle">Tu foto se ve a través de las superficies. Desactiva esta opción para superficies sólidas.</string>
+    <string name="theme_transparency">Transparencia</string>
 </resources>

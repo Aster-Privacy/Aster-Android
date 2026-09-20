@@ -45,4 +45,7 @@
     <string name="theme_opacity_frosted_subtitle">Yüzeyler büyük ölçüde opak kalır, fotoğrafınızdan bir iz taşır.</string>
     <string name="theme_opacity_solid">Opak</string>
     <string name="theme_opacity_solid_subtitle">Yüzeyler tamamen opaktır ve fotoğrafınız arkada kalır.</string>
+    <string name="glass_mode">Cam</string>
+    <string name="glass_mode_subtitle">Fotoğrafınız yüzeylerin arkasından görünür. Yüzeyleri opak yapmak için bunu kapatın.</string>
+    <string name="theme_transparency">Saydamlık</string>
 </resources>

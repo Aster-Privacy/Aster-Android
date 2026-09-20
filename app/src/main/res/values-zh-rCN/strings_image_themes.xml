@@ -45,4 +45,7 @@
     <string name="theme_opacity_frosted_subtitle">界面基本不透明，仅透出一点照片。</string>
     <string name="theme_opacity_solid">不透明</string>
     <string name="theme_opacity_solid_subtitle">界面完全不透明，照片留在其后。</string>
+    <string name="glass_mode">玻璃</string>
+    <string name="glass_mode_subtitle">照片会从表面后面透出。关闭后表面为不透明。</string>
+    <string name="theme_transparency">透明度</string>
 </resources>

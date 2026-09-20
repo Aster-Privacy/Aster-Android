@@ -55,6 +55,7 @@ import org.astermail.android.ui.theme.local_background_image
 import org.astermail.android.ui.theme.local_text_scale
 import org.astermail.android.ui.theme.draw_theme_background
 import org.astermail.android.ui.theme.draw_theme_veil
+import org.astermail.android.ui.theme.draw_theme_window_slice
 import org.astermail.android.ui.theme.remember_active_theme_bitmap
 
 @Composable
@@ -150,20 +151,39 @@ fun aster_theme_root(content: @Composable () -> Unit) {
             val backdrop = if (colors.is_glass) {
                 remember_active_theme_bitmap()
             } else null
-            Box(modifier = Modifier.fillMaxSize().background(colors.bg_primary)) {
-                if (backdrop != null) {
-                    Spacer(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .graphicsLayer()
-                            .drawBehind {
-                                draw_theme_background(backdrop)
-                                draw_theme_veil(colors.bg_primary)
-                            },
-                    )
+            val blur = if (colors.is_glass) {
+                org.astermail.android.ui.theme.remember_active_theme_blur()
+            } else null
+            val root_view = androidx.compose.ui.platform.LocalView.current
+            val veil_ink = colors.bg_primary
+            val acrylic_source = remember(blur, root_view, veil_ink) {
+                blur?.let { bitmap ->
+                    org.astermail.android.design.AcrylicSource { origin ->
+                        val window = androidx.compose.ui.geometry.Size(
+                            root_view.rootView.width.toFloat(),
+                            root_view.rootView.height.toFloat(),
+                        )
+                        draw_theme_window_slice(bitmap, window, origin)
+                        drawRect(color = veil_ink.copy(alpha = org.astermail.android.ui.theme.theme_veil_alpha))
+                    }
                 }
-                content()
-                app_toast_host()
+            }
+            CompositionLocalProvider(org.astermail.android.design.local_acrylic provides acrylic_source) {
+                Box(modifier = Modifier.fillMaxSize().background(colors.bg_primary)) {
+                    if (backdrop != null) {
+                        Spacer(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer()
+                                .drawBehind {
+                                    draw_theme_background(backdrop)
+                                    draw_theme_veil(colors.bg_primary)
+                                },
+                        )
+                    }
+                    content()
+                    app_toast_host()
+                }
             }
         }
     }

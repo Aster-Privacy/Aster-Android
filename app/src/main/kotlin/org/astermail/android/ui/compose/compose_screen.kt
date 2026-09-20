@@ -3360,7 +3360,11 @@ private fun chip_input(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { expand_requested = true },
+                    .heightIn(min = 44.dp)
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    ) { expand_requested = true },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(modifier = Modifier.weight(1f, fill = false)) {
@@ -3374,12 +3378,23 @@ private fun chip_input(
                         color = colors.text_tertiary,
                     )
                 }
+                Spacer(Modifier.weight(1f))
+                Text(
+                    text = stringResource(R.string.add_recipient),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.text_muted,
+                    maxLines = 1,
+                )
             }
         }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(if (collapsed) Modifier.size(0.dp) else Modifier),
+                .then(if (collapsed) Modifier.size(0.dp) else Modifier.heightIn(min = 44.dp))
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                ) { active_focus_requester.requestFocus() },
             verticalAlignment = Alignment.CenterVertically,
         ) {
             androidx.compose.foundation.layout.FlowRow(
@@ -3406,7 +3421,8 @@ private fun chip_input(
                         onSend = { on_commit() },
                     ),
                     modifier = Modifier
-                        .widthIn(min = if (chips.isEmpty()) 120.dp else 40.dp)
+                        .widthIn(min = 120.dp)
+                        .heightIn(min = 40.dp)
                         .focusRequester(active_focus_requester)
                         .onFocusChanged { focus ->
                             field_focused = focus.isFocused

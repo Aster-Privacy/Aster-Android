@@ -197,7 +197,7 @@ import org.astermail.android.translation.TranslationDownloadPolicy
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
 import org.astermail.android.util.clip_with_ellipsis
-import org.astermail.android.ui.common.chrome_fill
+import org.astermail.android.ui.common.glass_chrome
 import org.astermail.android.ui.common.chrome_surface
 import org.astermail.android.ui.common.page_surface
 
@@ -1569,7 +1569,8 @@ fun MailDetailScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .background(chrome_fill(colors))
+                    .glass_chrome(colors, fade_top = 18.dp)
+                    .chrome_surface(colors)
                     .pointerInput(Unit) {}
                     .onGloballyPositioned { coords ->
                         val measured = with(density) { coords.size.height.toDp() }

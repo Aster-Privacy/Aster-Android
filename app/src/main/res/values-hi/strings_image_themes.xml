@@ -45,4 +45,7 @@
     <string name="theme_opacity_frosted_subtitle">सतहें ज़्यादातर ठोस रहती हैं, आपकी फ़ोटो की हल्की झलक के साथ.</string>
     <string name="theme_opacity_solid">ठोस</string>
     <string name="theme_opacity_solid_subtitle">सतहें पूरी तरह ठोस हैं और आपकी फ़ोटो उनके पीछे रहती है.</string>
+    <string name="glass_mode">ग्लास</string>
+    <string name="glass_mode_subtitle">आपकी फ़ोटो सतहों के पीछे दिखती है। ठोस सतहों के लिए इसे बंद करें।</string>
+    <string name="theme_transparency">पारदर्शिता</string>
 </resources>

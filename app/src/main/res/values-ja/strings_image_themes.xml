@@ -45,4 +45,7 @@
     <string name="theme_opacity_frosted_subtitle">面はほぼ不透明で、写真がわずかに透けます。</string>
     <string name="theme_opacity_solid">不透明</string>
     <string name="theme_opacity_solid_subtitle">面は完全に不透明になり、写真は背面に残ります。</string>
+    <string name="glass_mode">ガラス</string>
+    <string name="glass_mode_subtitle">写真が面越しに透けて見えます。不透明にするにはオフにします。</string>
+    <string name="theme_transparency">透明度</string>
 </resources>

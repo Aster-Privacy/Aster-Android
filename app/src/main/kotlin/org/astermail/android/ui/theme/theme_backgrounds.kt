@@ -147,9 +147,86 @@ private fun decode_theme_thumbnail(context: Context, background: ThemeBackground
     return decoded.asImageBitmap().also { theme_thumbnail_cache.put(background.cache_key, it) }
 }
 
+private val theme_blur_cache = object : LruCache<String, ImageBitmap>(8 * 1024 * 1024) {
+    override fun sizeOf(key: String, value: ImageBitmap): Int = value.width * value.height * 4
+}
+
+private const val theme_blur_sample_short_side = 30
+private const val theme_blur_output_short_side = 320
+
+private fun decode_theme_blur(context: Context, background: ThemeBackground): ImageBitmap? {
+    theme_blur_cache.get(background.cache_key)?.let { return it }
+    val options = BitmapFactory.Options().apply {
+        inSampleSize = 8
+        inPreferredConfig = Bitmap.Config.ARGB_8888
+    }
+    val decoded = decode_source(context, background, options) ?: return null
+    val short_side = minOf(decoded.width, decoded.height).coerceAtLeast(1)
+    val down = theme_blur_sample_short_side.toFloat() / short_side
+    val small = Bitmap.createScaledBitmap(
+        decoded,
+        (decoded.width * down).roundToInt().coerceAtLeast(1),
+        (decoded.height * down).roundToInt().coerceAtLeast(1),
+        true,
+    )
+    if (small != decoded) decoded.recycle()
+    val up = theme_blur_output_short_side.toFloat() / minOf(small.width, small.height).coerceAtLeast(1)
+    val smooth = Bitmap.createScaledBitmap(
+        small,
+        (small.width * up).roundToInt().coerceAtLeast(1),
+        (small.height * up).roundToInt().coerceAtLeast(1),
+        true,
+    )
+    if (smooth != small) small.recycle()
+    smooth.prepareToDraw()
+    return smooth.asImageBitmap().also { theme_blur_cache.put(background.cache_key, it) }
+}
+
+@Composable
+fun remember_active_theme_blur(): ImageBitmap? {
+    val custom_meta by custom_theme_image.meta.collectAsState()
+    val id = local_background_image.current
+    val background = remember(id, custom_meta) { theme_background_for(id) }
+    val context = LocalContext.current.applicationContext
+    val state = produceState(
+        initialValue = background?.let { theme_blur_cache.get(it.cache_key) },
+        background?.cache_key,
+    ) {
+        val target = background
+        value = if (target == null) {
+            null
+        } else {
+            theme_blur_cache.get(target.cache_key)
+                ?: withContext(Dispatchers.IO) { decode_theme_blur(context, target) }
+        }
+    }
+    return state.value
+}
+
+fun DrawScope.draw_theme_window_slice(bitmap: ImageBitmap, window: Size, origin: androidx.compose.ui.geometry.Offset) {
+    if (window.width <= 0f || window.height <= 0f) return
+    if (size.width <= 0f || size.height <= 0f) return
+    val scale = maxOf(window.width / bitmap.width, window.height / bitmap.height)
+    val src_w = (window.width / scale).roundToInt().coerceIn(1, bitmap.width)
+    val src_h = (window.height / scale).roundToInt().coerceIn(1, bitmap.height)
+    val src_x = (bitmap.width - src_w) / 2
+    val src_y = (bitmap.height - src_h) / 2
+    clipRect(0f, 0f, size.width, size.height) {
+        drawImage(
+            image = bitmap,
+            srcOffset = IntOffset(src_x, src_y),
+            srcSize = IntSize(src_w, src_h),
+            dstOffset = IntOffset(-origin.x.roundToInt(), -origin.y.roundToInt()),
+            dstSize = IntSize(window.width.roundToInt(), window.height.roundToInt()),
+            filterQuality = androidx.compose.ui.graphics.FilterQuality.High,
+        )
+    }
+}
+
 fun evict_custom_theme_bitmaps() {
     theme_bitmap_cache.snapshot().keys.filter { it.startsWith("custom:") }.forEach { theme_bitmap_cache.remove(it) }
     theme_thumbnail_cache.snapshot().keys.filter { it.startsWith("custom:") }.forEach { theme_thumbnail_cache.remove(it) }
+    theme_blur_cache.snapshot().keys.filter { it.startsWith("custom:") }.forEach { theme_blur_cache.remove(it) }
 }
 
 fun trim_theme_caches() {

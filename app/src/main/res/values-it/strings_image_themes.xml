@@ -45,4 +45,7 @@
     <string name="theme_opacity_frosted_subtitle">Le superfici restano quasi piene, con un accenno della tua foto.</string>
     <string name="theme_opacity_solid">Pieno</string>
     <string name="theme_opacity_solid_subtitle">Le superfici sono completamente piene e la tua foto resta dietro.</string>
+    <string name="glass_mode">Vetro</string>
+    <string name="glass_mode_subtitle">La tua foto traspare dalle superfici. Disattiva questa opzione per superfici piene.</string>
+    <string name="theme_transparency">Trasparenza</string>
 </resources>

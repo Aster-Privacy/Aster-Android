@@ -45,4 +45,7 @@
     <string name="theme_opacity_frosted_subtitle">Vlakken blijven grotendeels dekkend, met een vleugje van je foto.</string>
     <string name="theme_opacity_solid">Dekkend</string>
     <string name="theme_opacity_solid_subtitle">Vlakken zijn volledig dekkend en je foto blijft erachter.</string>
+    <string name="glass_mode">Glas</string>
+    <string name="glass_mode_subtitle">Je foto schijnt door de oppervlakken heen. Zet dit uit voor dichte oppervlakken.</string>
+    <string name="theme_transparency">Transparantie</string>
 </resources>
