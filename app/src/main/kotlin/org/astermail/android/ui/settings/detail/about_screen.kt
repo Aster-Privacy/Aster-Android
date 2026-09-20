@@ -62,7 +62,6 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.ui.common.remember_copy_action
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -124,16 +123,16 @@ fun AboutScreen(
         }
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             detail_row(title = stringResource(R.string.privacy_policy), icon = TablerIcons.FileText, on_click = { open_url("https://astermail.org/privacy") })
-            AsterDivider()
+            settings_row_gap()
             detail_row(title = stringResource(R.string.terms_of_service), icon = TablerIcons.Scale, on_click = { open_url("https://astermail.org/terms") })
-            AsterDivider()
+            settings_row_gap()
             detail_row(title = stringResource(R.string.source_on_github), subtitle = stringResource(R.string.licensed_agpl), icon = TablerIcons.ExternalLink, on_click = { open_url("https://github.com/Aster-Privacy/Aster-Android") })
         }
         v_gap(AsterSpacing.lg)
         section_label(stringResource(R.string.about_troubleshooting))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             detail_row(title = stringResource(R.string.settings_diagnostics), icon = TablerIcons.Bug, on_click = { on_open("diagnostics") })
-            AsterDivider()
+            settings_row_gap()
             detail_row(title = stringResource(R.string.developer), icon = TablerIcons.Code, on_click = { on_open("developer") })
         }
         v_gap(AsterSpacing.xxl)

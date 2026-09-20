@@ -62,7 +62,6 @@ import org.astermail.android.ui.common.picker_theme_res
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.components.UpgradeGate
 import org.astermail.android.settings.SaveStatus
@@ -77,35 +76,14 @@ private fun switch_row(
     info: String? = null,
     on_change: (Boolean) -> Unit,
 ) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .toggleable(
-                value = checked,
-                onValueChange = on_change,
-                role = androidx.compose.ui.semantics.Role.Switch,
-            )
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = title, color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-                if (info != null) {
-                    androidx.compose.foundation.layout.Spacer(Modifier.padding(start = AsterSpacing.xs))
-                    info_dialog_button(title = title, description = info)
-                }
-            }
-            if (subtitle != null) {
-                Text(text = subtitle, color = colors.text_tertiary, fontSize = 13.sp)
-            }
-        }
-        AsterSwitch(
-            checked = checked,
-            onCheckedChange = null,
-        )
-    }
+    settings_toggle_row(
+        title = title,
+        subtitle = subtitle,
+        checked = checked,
+        info_title = if (info != null) title else null,
+        info_description = info,
+        on_change = on_change,
+    )
 }
 
 @Composable
@@ -297,9 +275,9 @@ fun NotificationsScreen(
                         org.astermail.android.notifications.PersistentPushService.set_enabled(context, false)
                     }
                 }
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 switch_row(stringResource(R.string.sound), stringResource(R.string.sound_subtitle), sound) { sound = it; save_trigger++; MailPollingWorker.set_notification_alerts(context, it, vibrate) }
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 switch_row(stringResource(R.string.vibrate), null, vibrate) { vibrate = it; save_trigger++; MailPollingWorker.set_notification_alerts(context, sound, it) }
             }
             if (!notifications_allowed.value) {
@@ -344,7 +322,7 @@ fun NotificationsScreen(
                     org.astermail.android.notifications.PersistentPushService.set_enabled(context, it)
                 }
                 if (persistent_push) {
-                    AsterDivider(modifier = Modifier)
+                    settings_row_gap(modifier = Modifier)
                     detail_row(
                         title = stringResource(R.string.persistent_push_autostart_title),
                         subtitle = stringResource(R.string.persistent_push_autostart_subtitle),
@@ -361,10 +339,10 @@ fun NotificationsScreen(
             section_label(stringResource(R.string.events))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 switch_row(stringResource(R.string.new_emails), null, new_email) { new_email = it; save_trigger++; MailPollingWorker.set_notify_new_email(context, it) }
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 switch_row(stringResource(R.string.replies), null, replies) { replies = it; save_trigger++; MailPollingWorker.set_notify_replies(context, it) }
                 if (state.product_updates_available) {
-                    AsterDivider(modifier = Modifier)
+                    settings_row_gap(modifier = Modifier)
                     switch_row(
                         stringResource(R.string.product_updates),
                         stringResource(R.string.product_updates_subtitle),
@@ -408,7 +386,7 @@ fun NotificationsScreen(
                             switch_row(label, null, id in muted_categories) {
                                 vm.toggle_category_notifications(id)
                             }
-                            if (index < rows.size - 1) AsterDivider(modifier = Modifier)
+                            if (index < rows.size - 1) settings_row_gap(modifier = Modifier)
                         }
                     }
                 }
@@ -428,13 +406,13 @@ fun NotificationsScreen(
                 AsterCard(modifier = Modifier.fillMaxWidth()) {
                     switch_row(stringResource(R.string.quiet_hours), stringResource(R.string.quiet_hours_subtitle_range, display_time(quiet_hours_start), display_time(quiet_hours_end)), quiet_hours) { quiet_hours = it; save_trigger++ }
                     if (quiet_hours) {
-                        AsterDivider(modifier = Modifier)
+                        settings_row_gap(modifier = Modifier)
                         detail_row(
                             title = stringResource(R.string.quiet_hours_start),
                             on_click = { show_time_picker(quiet_hours_start) { quiet_hours_start = it; save_trigger++ } },
                             trailing = { Text(text = display_time(quiet_hours_start), color = colors.text_secondary, fontSize = 15.sp) },
                         )
-                        AsterDivider(modifier = Modifier)
+                        settings_row_gap(modifier = Modifier)
                         detail_row(
                             title = stringResource(R.string.quiet_hours_end),
                             on_click = { show_time_picker(quiet_hours_end) { quiet_hours_end = it; save_trigger++ } },

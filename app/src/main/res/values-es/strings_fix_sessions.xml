@@ -14,4 +14,6 @@
     <string name="link_device_hero_title">Escribe el código del dispositivo</string>
     <string name="link_device_confirm_title">Confirma este dispositivo</string>
     <string name="link_device_pending_badge">Pendiente</string>
+    <string name="link_device_step_progress">Paso %1$d de %2$d · %3$s</string>
+    <string name="link_device_error_title">No se pudo vincular el dispositivo</string>
 </resources>

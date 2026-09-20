@@ -93,7 +93,6 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogDestructiveButton
 import org.astermail.android.design.components.AsterDialogOutlineButton
@@ -210,7 +209,7 @@ internal fun crypto_invoice_screen(
 
     Column(Modifier.fillMaxSize().background(colors.bg_primary).systemBarsPadding()) {
         AsterTopBar(title = stringResource(R.string.crypto_native_invoice_screen_title), on_back = on_back)
-        AsterDivider()
+        settings_row_gap()
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(AsterSpacing.lg),
         ) {

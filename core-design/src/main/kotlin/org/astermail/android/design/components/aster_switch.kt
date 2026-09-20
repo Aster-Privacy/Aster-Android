@@ -16,6 +16,8 @@
 
 package org.astermail.android.design.components
 
+import org.astermail.android.design.aster_haptic
+import org.astermail.android.design.aster_tap_feedback
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -88,6 +90,7 @@ fun AsterSwitch(
         label = "aster_switch_thumb",
     )
     val interaction = remember { MutableInteractionSource() }
+    val view = androidx.compose.ui.platform.LocalView.current
     Box(
         modifier = modifier
             .size(touch_width, touch_height)
@@ -99,7 +102,10 @@ fun AsterSwitch(
                         role = Role.Switch,
                         interactionSource = interaction,
                         indication = null,
-                        onValueChange = onCheckedChange,
+                        onValueChange = { value ->
+                            view.aster_tap_feedback(if (value) aster_haptic.toggle_on else aster_haptic.toggle_off)
+                            onCheckedChange(value)
+                        },
                     )
                 } else {
                     Modifier

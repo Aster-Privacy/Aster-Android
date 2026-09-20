@@ -40,8 +40,10 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -101,6 +103,7 @@ data class InboxUiState(
     val is_refreshing: Boolean = false,
     val list_loaded_at: Long = 0L,
     val stats_loaded_at: Long = 0L,
+    val cache_pending: Boolean = false,
 )
 
 data class ThreadUiState(
@@ -124,6 +127,7 @@ class MailViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val repository: MailRepository,
     private val search_index_manager: SearchIndexManager,
+    private val folder_cache_store: FolderCacheStore,
     private val identity_pins: org.astermail.android.mail.ratchet.RatchetIdentityPinStore,
     private val sent_mail_reseal_finisher: SentMailResealFinisher,
 ) : ViewModel() {
@@ -160,6 +164,7 @@ class MailViewModel @Inject constructor(
         if (!repository.set_custom_categories(rules)) return
         folder_cache.clear()
         folder_cache_time.clear()
+        clear_folder_cache_store()
         refresh()
     }
 
@@ -167,6 +172,7 @@ class MailViewModel @Inject constructor(
         if (!repository.set_conversation_grouping(enabled)) return
         folder_cache.clear()
         folder_cache_time.clear()
+        clear_folder_cache_store()
         refresh()
     }
 
@@ -417,8 +423,27 @@ class MailViewModel @Inject constructor(
         _thread_participants.update { it + (thread_token to participants) }
     }
 
+    private val _thread_count_corrections =
+        MutableStateFlow<Map<String, org.astermail.android.ui.mail.ThreadCountCorrection>>(emptyMap())
+    val thread_count_corrections: StateFlow<Map<String, org.astermail.android.ui.mail.ThreadCountCorrection>> =
+        _thread_count_corrections.asStateFlow()
+
+    private fun record_thread_count(thread_token: String?, claimed: Int, loaded: List<ThreadMessageDecrypted>) {
+        if (thread_token.isNullOrBlank()) return
+        val limit = org.astermail.android.api.network.thread_message_load_limit(
+            org.astermail.android.api.network.low_network_state.active(),
+        )
+        val correction = org.astermail.android.ui.mail.thread_count_correction_for(claimed, loaded.map { it.id }, limit) ?: return
+        _thread_count_corrections.update {
+            if (it[thread_token] == correction) it else it + (thread_token to correction)
+        }
+    }
+
     private val folder_cache = java.util.concurrent.ConcurrentHashMap<String, InboxUiState>()
     private val folder_cache_time = java.util.concurrent.ConcurrentHashMap<String, Long>()
+    private val disk_rows = java.util.concurrent.ConcurrentHashMap<String, List<InboxItem>>()
+    private val disk_probed = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+    private val disk_probe_jobs = java.util.concurrent.ConcurrentHashMap<String, Job>()
     private val item_last_confirmed = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val pending_removed_ids = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
     private val restore_protected_until = java.util.concurrent.ConcurrentHashMap<String, Long>()
@@ -476,6 +501,87 @@ class MailViewModel @Inject constructor(
 
     init {
         search_index_manager.add_read_overlay(index_read_overlay)
+        prime_folder_cache(_inbox_state.value.current_folder)
+        viewModelScope.launch {
+            _inbox_state
+                .map {
+                    folder_cache_persist_key(
+                        it.current_folder,
+                        it.items,
+                        it.is_loading,
+                        it.initial,
+                        it.error != null,
+                    )
+                }
+                .distinctUntilChanged()
+                .debounce(folder_cache_persist_debounce_ms)
+                .collect { key -> if (key != null) persist_folder_rows(key.first, key.second) }
+        }
+    }
+
+    private fun folder_cache_persist_key(
+        folder: String,
+        items: List<InboxItem>,
+        is_loading: Boolean,
+        initial: Boolean,
+        has_error: Boolean,
+    ): Pair<String, List<InboxItem>>? {
+        if (!folder_cache_should_persist(items.isEmpty(), is_loading, initial, has_error)) return null
+        return folder to items.take(folder_cache_row_limit)
+    }
+
+    private fun persist_folder_rows(folder: String, items: List<InboxItem>) {
+        val snapshot = items.take(folder_cache_row_limit)
+        disk_rows[folder] = snapshot
+        disk_probed.add(folder)
+        viewModelScope.launch {
+            runCatching { folder_cache_store.save(folder, snapshot, System.currentTimeMillis()) }
+        }
+    }
+
+    private fun prime_folder_cache(folder: String) {
+        if (disk_probed.contains(folder)) return
+        if (disk_probe_jobs[folder]?.isActive == true) return
+        val job = viewModelScope.launch {
+            val rows = runCatching { folder_cache_store.rows(folder) }.getOrNull().orEmpty()
+            disk_probed.add(folder)
+            if (rows.isNotEmpty()) disk_rows[folder] = rows
+            publish_disk_rows(folder, rows)
+        }
+        disk_probe_jobs[folder] = job
+        job.invokeOnCompletion { disk_probe_jobs.remove(folder) }
+    }
+
+    private fun publish_disk_rows(folder: String, rows: List<InboxItem>) {
+        val state = _inbox_state.value
+        if (state.current_folder != folder) return
+        if (state.items.isNotEmpty() || rows.isEmpty()) {
+            if (state.cache_pending) _inbox_state.value = state.copy(cache_pending = false)
+            return
+        }
+        val items = strip_removed(rows.filter { folder_matches(folder, it) }, folder)
+        if (items.isEmpty()) {
+            if (state.cache_pending) _inbox_state.value = state.copy(cache_pending = false)
+            return
+        }
+        val warmed_at = System.currentTimeMillis()
+        items.forEach { item_last_confirmed.putIfAbsent(it.id, warmed_at) }
+        _inbox_state.value = state.copy(
+            items = apply_demo_overlay(
+                apply_pin_overrides(apply_star_overrides(apply_read_overrides(items))),
+                folder,
+            ),
+            initial = false,
+            cache_pending = false,
+        )
+    }
+
+    private fun clear_folder_cache_store() {
+        disk_rows.clear()
+        disk_probed.clear()
+        disk_probe_jobs.values.forEach { it.cancel() }
+        disk_probe_jobs.clear()
+        viewModelScope.launch { runCatching { folder_cache_store.clear_all() } }
     }
 
     data class ToastEvent(
@@ -537,6 +643,7 @@ class MailViewModel @Inject constructor(
         refresh_job?.cancel()
         folder_cache.clear()
         folder_cache_time.clear()
+        clear_folder_cache_store()
         item_last_confirmed.clear()
         pending_removed_ids.clear()
         restore_protected_until.clear()
@@ -564,6 +671,7 @@ class MailViewModel @Inject constructor(
         inbox_attachment_probed.clear()
         inbox_attachment_seeded.set(false)
         _thread_participants.value = emptyMap()
+        _thread_count_corrections.value = emptyMap()
         repository.clear_account_data()
         runCatching { AsterProfileResolverHolder.shared?.clear() }
         runCatching { OwnAddressAvatars.clear() }
@@ -703,6 +811,7 @@ class MailViewModel @Inject constructor(
         list_order = order
         folder_cache.clear()
         folder_cache_time.clear()
+        clear_folder_cache_store()
         reload_keeping_items(replace_items = true)
     }
 
@@ -773,6 +882,7 @@ class MailViewModel @Inject constructor(
                 error = null,
                 current_folder = folder,
                 stats = current.stats ?: cached.stats,
+                cache_pending = false,
             )
             _inbox_state.value = warm
             val age = System.currentTimeMillis() - (folder_cache_time[folder] ?: 0L)
@@ -783,13 +893,32 @@ class MailViewModel @Inject constructor(
         }
         inbox_load_job?.cancel()
         silent_revalidate_job?.cancel()
+        val probed = disk_probed.contains(folder)
+        val seeded = strip_removed(
+            disk_rows[folder].orEmpty().filter { folder_matches(folder, it) },
+            folder,
+        )
+        if (seeded.isNotEmpty()) {
+            val warmed_at = System.currentTimeMillis()
+            seeded.forEach { item_last_confirmed.putIfAbsent(it.id, warmed_at) }
+        }
         _inbox_state.value = InboxUiState(
+            items = if (seeded.isEmpty()) {
+                emptyList()
+            } else {
+                apply_demo_overlay(
+                    apply_pin_overrides(apply_star_overrides(apply_read_overrides(seeded))),
+                    folder,
+                )
+            },
             is_loading = true,
-            initial = true,
+            initial = seeded.isEmpty(),
+            cache_pending = seeded.isEmpty() && !probed,
             current_folder = folder,
             stats = current.stats,
             stats_loaded_at = current.stats_loaded_at,
         )
+        if (!probed) prime_folder_cache(folder)
         val load_gen = ++inbox_load_generation
         inbox_load_job = viewModelScope.launch {
             if (_inbox_state.value.items.isEmpty()) {
@@ -858,6 +987,7 @@ class MailViewModel @Inject constructor(
                         items = merged_items,
                         is_loading = false,
                         initial = false,
+                        cache_pending = false,
                         list_loaded_at = override_clock_ms(),
                         has_more = if (merge.carried_deeper && prior.next_cursor != null) prior.has_more else page.has_more,
                         next_cursor = if (merge.carried_deeper && prior.next_cursor != null) prior.next_cursor else page.next_cursor,
@@ -875,6 +1005,7 @@ class MailViewModel @Inject constructor(
                     _inbox_state.value = _inbox_state.value.copy(
                         is_loading = false,
                         initial = false,
+                        cache_pending = false,
                         error = if (keep_items) null else friendly_load_error(t),
                     )
                 },
@@ -883,8 +1014,8 @@ class MailViewModel @Inject constructor(
         inbox_load_job?.invokeOnCompletion {
             if (load_gen != inbox_load_generation) return@invokeOnCompletion
             val state = _inbox_state.value
-            if (state.current_folder == folder && (state.is_loading || state.initial)) {
-                _inbox_state.value = state.copy(is_loading = false, initial = false)
+            if (state.current_folder == folder && (state.is_loading || state.initial || state.cache_pending)) {
+                _inbox_state.value = state.copy(is_loading = false, initial = false, cache_pending = false)
             }
         }
     }
@@ -1323,6 +1454,9 @@ class MailViewModel @Inject constructor(
                             attachments = if (cur_thread.item?.id == item_id) cur_thread.attachments else emptyMap(),
                         )
                         cache_thread_participants(thread_token, resolved)
+                        if (messages.isNotEmpty()) {
+                            record_thread_count(thread_token, item.thread_message_count, messages)
+                        }
                         load_attachments_for_thread(resolved)
                         load_reactions(resolved)
                     },

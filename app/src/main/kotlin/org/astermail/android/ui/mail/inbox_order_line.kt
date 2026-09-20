@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -43,7 +44,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import compose.icons.TablerIcons
-import compose.icons.tablericons.Package
+import compose.icons.tablericons.Receipt
+import compose.icons.tablericons.Truck
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.mail.extraction.ShippingStatus
@@ -102,9 +104,8 @@ internal fun inbox_preview_or_order_line(
     if (hint == null) {
         Text(
             text = preview_text,
-            style = MaterialTheme.typography.bodySmall,
+            style = inbox_preview_text_style(),
             color = preview_color,
-            fontSize = 14.sp,
             fontWeight = FontWeight.Normal,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -128,28 +129,33 @@ internal fun inbox_preview_or_order_line(
         modifier = modifier.testTag("inbox_order_line"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = pill_label,
-            color = colors.accent_blue,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            softWrap = false,
+        val tag_color = colors.text_primary.copy(alpha = 0.8f)
+        val tag_shape = RoundedCornerShape(6.dp)
+        Row(
             modifier = Modifier
-                .clip(RoundedCornerShape(999.dp))
-                .background(colors.accent_blue.copy(alpha = 0.12f))
-                .padding(horizontal = 8.dp, vertical = 2.dp),
-        )
-        Spacer(Modifier.width(6.dp))
-        if (hint.is_shipping) {
+                .clip(tag_shape)
+                .border(1.dp, colors.text_primary.copy(alpha = 0.16f), tag_shape)
+                .padding(start = 5.dp, end = 7.dp, top = 2.dp, bottom = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Icon(
-                imageVector = TablerIcons.Package,
+                imageVector = if (hint.is_shipping) TablerIcons.Truck else TablerIcons.Receipt,
                 contentDescription = null,
-                tint = preview_color,
-                modifier = Modifier.size(14.dp),
+                tint = tag_color,
+                modifier = Modifier.size(12.dp),
             )
             Spacer(Modifier.width(4.dp))
+            Text(
+                text = pill_label,
+                color = tag_color,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                softWrap = false,
+            )
         }
+        Spacer(Modifier.width(8.dp))
         Text(
             text = status_text,
             style = MaterialTheme.typography.bodySmall,

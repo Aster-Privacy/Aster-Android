@@ -157,7 +157,7 @@ fun icon_tooltip_host(
                 ) {
                     Text(
                         text = rendered_text,
-                        color = colors.bg_primary,
+                        color = colors.solid_bg,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,

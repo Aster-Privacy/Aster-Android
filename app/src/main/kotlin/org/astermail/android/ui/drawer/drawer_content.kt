@@ -24,9 +24,8 @@ package org.astermail.android.ui.drawer
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
-import org.astermail.android.design.components.aster_dropdown_divider
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
 import org.astermail.android.BuildConfig
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
@@ -763,15 +762,7 @@ fun DrawerContent(
                 }
             }
 
-            Spacer(Modifier.height(AsterSpacing.md))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.lg)
-                    .height(1.dp)
-                    .background(colors.border_secondary.copy(alpha = 0.5f)),
-            )
-            Spacer(Modifier.height(AsterSpacing.xs))
+            Spacer(Modifier.height(AsterSpacing.lg))
             drawer_row(
                 icon = TablerIcons.Settings,
                 label = stringResource(R.string.settings),
@@ -1050,13 +1041,13 @@ private fun folder_actions_menu(
     on_move_down: () -> Unit,
     on_delete: () -> Unit,
 ) {
-    aster_dropdown_menu(
+    aster_menu(
         expanded = expanded,
         on_dismiss = on_dismiss,
         modifier = Modifier.testTag("folder_actions_menu"),
     ) {
         if (item.can_have_children) {
-            aster_dropdown_item(
+            aster_menu_item(
                 label = stringResource(R.string.create_subfolder),
                 icon = TablerIcons.FolderPlus,
                 test_tag = "folder_action_create_subfolder",
@@ -1066,7 +1057,7 @@ private fun folder_actions_menu(
                 },
             )
         }
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(
                 if (item.password_set) R.string.remove_folder_lock else R.string.lock_folder
             ),
@@ -1078,7 +1069,7 @@ private fun folder_actions_menu(
             },
         )
         if (on_lock_now != null) {
-            aster_dropdown_item(
+            aster_menu_item(
                 label = stringResource(R.string.lock_folder_now),
                 icon = TablerIcons.Lock,
                 test_tag = "folder_action_lock_now",
@@ -1088,7 +1079,7 @@ private fun folder_actions_menu(
                 },
             )
         }
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.rename),
             icon = TablerIcons.Pencil,
             test_tag = "folder_action_rename",
@@ -1097,7 +1088,7 @@ private fun folder_actions_menu(
                 on_rename()
             },
         )
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.change_folder_color),
             icon = TablerIcons.Palette,
             test_tag = "folder_action_color",
@@ -1106,7 +1097,7 @@ private fun folder_actions_menu(
                 on_recolor()
             },
         )
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(
                 if (item.muted) R.string.unmute_folder_notifications else R.string.mute_folder_notifications
             ),
@@ -1117,7 +1108,7 @@ private fun folder_actions_menu(
                 on_toggle_mute()
             },
         )
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.move_folder_to),
             icon = TablerIcons.Folder,
             test_tag = "folder_action_move_to",
@@ -1126,7 +1117,7 @@ private fun folder_actions_menu(
                 on_move_to()
             },
         )
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.move_folder_up),
             icon = TablerIcons.ArrowUp,
             enabled = item.can_move_up,
@@ -1136,7 +1127,7 @@ private fun folder_actions_menu(
                 on_move_up()
             },
         )
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.move_folder_down),
             icon = TablerIcons.ArrowDown,
             enabled = item.can_move_down,
@@ -1146,8 +1137,7 @@ private fun folder_actions_menu(
                 on_move_down()
             },
         )
-        aster_dropdown_divider()
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.delete),
             icon = TablerIcons.Trash,
             destructive = true,
@@ -1172,12 +1162,12 @@ private fun label_actions_menu(
     on_move_down: () -> Unit,
     on_delete: () -> Unit,
 ) {
-    aster_dropdown_menu(
+    aster_menu(
         expanded = expanded,
         on_dismiss = on_dismiss,
         modifier = Modifier.testTag("label_actions_menu"),
     ) {
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.rename),
             icon = TablerIcons.Pencil,
             test_tag = "label_action_rename",
@@ -1186,7 +1176,7 @@ private fun label_actions_menu(
                 on_rename()
             },
         )
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.change_label_color),
             icon = TablerIcons.Palette,
             test_tag = "label_action_color",
@@ -1195,7 +1185,7 @@ private fun label_actions_menu(
                 on_recolor()
             },
         )
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.change_label_icon),
             icon = TablerIcons.Wand,
             test_tag = "label_action_icon",
@@ -1204,7 +1194,7 @@ private fun label_actions_menu(
                 on_change_icon()
             },
         )
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.move_folder_up),
             icon = TablerIcons.ArrowUp,
             enabled = item.can_move_up,
@@ -1214,7 +1204,7 @@ private fun label_actions_menu(
                 on_move_up()
             },
         )
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.move_folder_down),
             icon = TablerIcons.ArrowDown,
             enabled = item.can_move_down,
@@ -1224,8 +1214,7 @@ private fun label_actions_menu(
                 on_move_down()
             },
         )
-        aster_dropdown_divider()
-        aster_dropdown_item(
+        aster_menu_item(
             label = stringResource(R.string.delete),
             icon = TablerIcons.Trash,
             destructive = true,
@@ -1402,11 +1391,11 @@ private fun folder_move_dialog(
                         modifier = Modifier.size(20.dp),
                     )
                 }
-                aster_dropdown_menu(
+                aster_menu(
                     expanded = menu_open,
                     on_dismiss = { menu_open = false },
                 ) {
-                    aster_dropdown_item(
+                    aster_menu_item(
                         label = none_label,
                         selected = selected_parent == null,
                         on_click = {
@@ -1415,7 +1404,7 @@ private fun folder_move_dialog(
                         },
                     )
                     options.forEach { option ->
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = " ".repeat(option.depth) + option.label,
                             icon = TablerIcons.Folder,
                             icon_tint = option.color?.let { parse_hex_color_safe(it) },
@@ -1665,11 +1654,11 @@ internal fun create_folder_dialog(
                             modifier = Modifier.size(20.dp),
                         )
                     }
-                    aster_dropdown_menu(
+                    aster_menu(
                         expanded = parent_menu_open,
                         on_dismiss = { parent_menu_open = false },
                     ) {
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = none_label,
                             selected = selected_parent == null,
                             on_click = {
@@ -1678,7 +1667,7 @@ internal fun create_folder_dialog(
                             },
                         )
                         parent_options.forEach { option ->
-                            aster_dropdown_item(
+                            aster_menu_item(
                                 label = " ".repeat(option.depth) + option.label,
                                 icon = TablerIcons.Folder,
                                 icon_tint = option.color?.let { parse_hex_color_safe(it) },
@@ -1851,25 +1840,11 @@ private fun plan_badge_res(plan_code: String?): Int? = when (plan_code?.trim()?.
 @Composable
 private fun profile_menu_plan_badge(plan_code: String?) {
     val res = plan_badge_res(plan_code) ?: return
-    val accent = AsterMaterial.colors.accent_blue
-    val brush = remember(accent) {
-        androidx.compose.ui.graphics.Brush.verticalGradient(
-            listOf(
-                androidx.compose.ui.graphics.lerp(accent, Color.Black, 0.04f),
-                androidx.compose.ui.graphics.lerp(accent, Color(0xFF05070F), 0.26f),
-            ),
-        )
-    }
-    Text(
+    org.astermail.android.design.components.AsterPlanTag(
         text = stringResource(res),
-        color = Color.White,
-        fontSize = 11.sp,
-        fontWeight = FontWeight.SemiBold,
-        maxLines = 1,
-        modifier = Modifier
-            .clip(RoundedCornerShape(999.dp))
-            .background(brush)
-            .padding(horizontal = 8.dp, vertical = 2.dp),
+        font_size = 11.sp,
+        horizontal_padding = 7.dp,
+        vertical_padding = 2.dp,
     )
 }
 
@@ -2014,7 +1989,34 @@ private fun workspace_switcher_sheet(
                     .padding(16.dp)
                     .testTag("profile_menu_card"),
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                val identity_text = remember(current_name, current_email) {
+                    val name = current_name.trim()
+                    if (name.isBlank() || name.equals(current_email, ignoreCase = true)) {
+                        current_email
+                    } else {
+                        "$name <$current_email>"
+                    }
+                }
+                Row(
+                    modifier = Modifier.combinedClickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {},
+                        onLongClick = {
+                            if (current_email.isNotBlank()) {
+                                copy_action(
+                                    email_clip_label,
+                                    identity_text,
+                                    org.astermail.android.ui.common.copied_toast_text(
+                                        copy_toast_context,
+                                        identity_text,
+                                    ),
+                                )
+                            }
+                        },
+                    ),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     plan_ring(size = 48.dp, enabled = remember_has_paid_plan()) {
                         SenderAvatar(
                             email = current_email,
@@ -2704,22 +2706,12 @@ private fun drawer_footer(
             .fillMaxWidth()
             .background(colors.bg_primary),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(colors.border_secondary),
-        )
+        Spacer(Modifier.height(AsterSpacing.sm))
         storage_meter(
             used_percent = used_fraction,
             label = storage_label,
         )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(colors.border_secondary),
-        )
+        Spacer(Modifier.height(AsterSpacing.xs))
         val copy_action = org.astermail.android.ui.common.remember_copy_action()
         val version_copied = stringResource(R.string.version_copied)
         val clip_label = stringResource(R.string.app_name)

@@ -60,7 +60,11 @@ fun chip_segment(
     is_placeholder: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
-    val bg = if (is_active) colors.accent_blue.copy(alpha = 0.12f) else Color.Transparent
+    val bg = if (is_active) {
+        org.astermail.android.ui.mail.chip_subtle_background(colors.accent_blue, colors.bg_tertiary, colors.is_dark)
+    } else {
+        Color.Transparent
+    }
     val text_color = when {
         is_placeholder -> colors.text_tertiary
         is_active -> colors.accent_blue
@@ -147,8 +151,12 @@ fun add_chip_pill(label: String, on_click: () -> Unit, modifier: Modifier = Modi
         modifier = modifier
             .height(32.dp)
             .clip(SquircleShape(999.dp))
-            .background(Color.Transparent)
-            .border(1.dp, colors.accent_blue.copy(alpha = 0.5f), SquircleShape(999.dp))
+            .background(colors.bg_card, SquircleShape(999.dp))
+            .border(
+                1.dp,
+                org.astermail.android.ui.mail.chip_subtle_border(colors.accent_blue, colors.bg_card, colors.is_dark),
+                SquircleShape(999.dp),
+            )
             .clickable(onClick = on_click)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,

@@ -52,7 +52,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
-import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.ui.settings.detail.settings_row_gap
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.ui.settings.mail_rules.regex_error_res
@@ -169,7 +169,7 @@ fun address_value_picker(
                     )
                 }
                 Spacer(Modifier.height(AsterSpacing.sm))
-                AsterDivider()
+                settings_row_gap()
                 Spacer(Modifier.height(AsterSpacing.md))
             }
 

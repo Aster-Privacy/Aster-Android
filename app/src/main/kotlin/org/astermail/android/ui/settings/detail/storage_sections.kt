@@ -66,7 +66,6 @@ import compose.icons.tablericons.Trash
 import org.astermail.android.R
 import org.astermail.android.api.mail.MailUserStatsResponse
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
@@ -347,27 +346,27 @@ internal fun storage_plan_section(
             emphasis = true,
         )
         if (show_base_row) {
-            AsterDivider()
+            settings_row_gap()
             stat_row(
                 label = base_label,
                 value = format_bytes(included),
             )
         }
         if (addon_bytes > 0) {
-            AsterDivider()
+            settings_row_gap()
             stat_row(
                 label = stringResource(R.string.storage_addons_row),
                 value = format_bytes(addon_bytes),
             )
         }
         if (!show_base_row || addon_bytes > 0) {
-            AsterDivider()
+            settings_row_gap()
             stat_row(
                 label = stringResource(R.string.storage_total_row),
                 value = format_bytes(total_bytes),
             )
         }
-        AsterDivider()
+        settings_row_gap()
         stat_row(
             label = stringResource(R.string.storage_available_row),
             value = format_bytes(free_bytes),
@@ -398,7 +397,7 @@ internal fun storage_distribution_section(
     section_label(stringResource(R.string.storage_where_section))
     AsterCard(modifier = Modifier.fillMaxWidth().testTag("storage_where_card")) {
         segments.filter { it.count > 0 }.forEachIndexed { index, segment ->
-            if (index > 0) AsterDivider()
+            if (index > 0) settings_row_gap()
             legend_row(segment, total) { on_open_folder(segment.folder_id, segment.label) }
         }
     }
@@ -422,25 +421,25 @@ internal fun storage_mailbox_section(stats: MailUserStatsResponse?, used_bytes: 
             value = format_count(total_messages),
             emphasis = true,
         )
-        AsterDivider()
+        settings_row_gap()
         stat_row(
             label = stringResource(R.string.storage_unread_messages),
             value = format_count(stats.unread),
         )
-        AsterDivider()
+        settings_row_gap()
         stat_row(
             label = stringResource(R.string.storage_starred_messages),
             value = format_count(stats.starred),
         )
         if (stats.scheduled > 0) {
-            AsterDivider()
+            settings_row_gap()
             stat_row(
                 label = stringResource(R.string.storage_scheduled_messages),
                 value = format_count(stats.scheduled),
             )
         }
         if (total_messages > 0 && used_bytes > 0) {
-            AsterDivider()
+            settings_row_gap()
             stat_row(
                 label = stringResource(R.string.storage_average_size),
                 value = format_bytes(used_bytes / total_messages),
@@ -481,7 +480,7 @@ internal fun storage_cleanup_section(
                 on_open = { on_open_folder("trash", trash_label) },
             )
         }
-        if (trash_count > 0 && spam_count > 0) AsterDivider()
+        if (trash_count > 0 && spam_count > 0) settings_row_gap()
         if (spam_count > 0) {
             cleanup_row(
                 icon = TablerIcons.AlertOctagon,

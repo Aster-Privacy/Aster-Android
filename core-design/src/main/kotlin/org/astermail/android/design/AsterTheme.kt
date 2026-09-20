@@ -25,6 +25,7 @@ import org.astermail.android.design.SquircleShape
 
 import android.app.Activity
 import android.os.Build
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
@@ -37,7 +38,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -122,45 +122,92 @@ private fun apply_reduce_transparency(base: AsterSemanticColors): AsterSemanticC
     )
 }
 
-private fun apply_glass(base: AsterSemanticColors, tint: Color): AsterSemanticColors {
-    fun deep(fallback: Color, alpha: Float, lift: Float): Color =
-        if (tint == Color.Unspecified) {
-            fallback.copy(alpha = minOf(fallback.alpha, alpha))
-        } else {
-            lerp(tint, Color.White, lift).copy(alpha = alpha)
-        }
+private val GLASS_INK = Color(0xFF0A0A0C)
+private val GLASS_NEUTRAL_TINT = Color(0xFF1C1C20)
+private const val GLASS_TINT_PRESENCE = 0.55f
+private const val GLASS_ACCENT_BLEED = 0.06f
+
+internal fun image_theme_colors(base: AsterSemanticColors, tint: Color): AsterSemanticColors {
+    val resolved_tint = if (tint == Color.Unspecified) GLASS_NEUTRAL_TINT else tint.copy(alpha = 1f)
+    val canvas = mix_rgb(GLASS_INK, resolved_tint, GLASS_TINT_PRESENCE)
+    val harmonized = mix_rgb(canvas, base.accent_blue.copy(alpha = 1f), GLASS_ACCENT_BLEED)
+    fun lift(amount: Float): Color = mix_rgb(harmonized, Color.White, amount * 0.55f)
+    val card = lift(0.07f)
+    val border_strong = lift(0.26f)
+    val border_soft = lift(0.17f)
+    val surfaces = listOf(
+        canvas, lift(0.05f), card, lift(0.08f), lift(0.10f), lift(0.11f), lift(0.12f), lift(0.13f), lift(0.14f), lift(0.15f),
+    )
+    val selected = lift(0.16f)
+    val all_surfaces = surfaces + selected
+    val accent = ensure_contrast(base.accent_blue, all_surfaces, contrast_body_text)
+    val accent_hover = ensure_contrast(base.accent_blue_hover, all_surfaces, contrast_body_text)
+    fun text(color: Color): Color = ensure_contrast(color, all_surfaces, contrast_body_text)
+    val on_accent = base.on_accent.copy(alpha = 1f).takeIf {
+        contrast_ratio(it, accent) >= contrast_body_text && contrast_ratio(it, accent_hover) >= contrast_body_text
+    } ?: readable_on(accent).takeIf { contrast_ratio(it, accent_hover) >= contrast_body_text } ?: readable_on(accent_hover)
+    val avatar_bg = lift(0.2f)
     return base.copy(
-        bg_primary = Color.Transparent,
-        bg_secondary = deep(base.bg_secondary, 0.72f, 0.05f),
-        bg_tertiary = deep(base.bg_tertiary, 0.8f, 0.09f),
-        bg_hover = deep(base.bg_hover, 0.82f, 0.11f),
-        bg_card = deep(base.bg_card, 0.68f, 0.03f),
-        sidebar_bg = deep(base.sidebar_bg, 0.95f, 0.02f),
-        sidebar_hover = deep(base.sidebar_hover, 0.92f, 0.1f),
-        modal_bg = deep(base.modal_bg, 0.97f, 0.05f),
-        dropdown_bg = deep(base.dropdown_bg, 0.98f, 0.07f),
-        input_bg = deep(base.input_bg, 0.7f, 0.08f),
-        indicator_bg = deep(base.indicator_bg, 0.85f, 0.14f),
-        thread_card_bg = deep(base.thread_card_bg, 0.74f, 0.04f),
-        thread_card_bg_hover = deep(base.thread_card_bg_hover, 0.82f, 0.09f),
-        thread_header_bg = deep(base.thread_header_bg, 0.74f, 0.04f),
-        thread_content_bg = deep(base.thread_content_bg, 0.78f, 0.03f),
-        secondary_control_bg = deep(base.secondary_control_bg, 0.74f, 0.1f),
-        border_primary = Color.White.copy(alpha = 0.1f),
-        border_secondary = Color.White.copy(alpha = 0.07f),
+        bg_primary = harmonized,
+        bg_secondary = lift(0.05f),
+        bg_tertiary = lift(0.10f),
+        bg_hover = lift(0.13f),
+        bg_selected = selected,
+        bg_card = card,
+        border_primary = border_strong,
+        border_secondary = border_soft,
+        border_thread_divider = border_soft,
+        text_primary = text(base.text_primary),
+        text_secondary = text(base.text_secondary),
+        text_tertiary = text(base.text_tertiary),
+        text_muted = text(base.text_muted),
+        accent_blue = accent,
+        accent_blue_hover = accent_hover,
+        avatar_bg = avatar_bg,
+        avatar_text = ensure_contrast(base.avatar_text, listOf(avatar_bg), contrast_body_text),
+        indicator_bg = lift(0.15f),
+        indicator_border = border_strong,
+        sidebar_bg = harmonized,
+        sidebar_hover = lift(0.10f),
+        modal_bg = harmonized,
+        dropdown_bg = lift(0.08f),
+        dropdown_hover = lift(0.14f),
+        input_bg = lift(0.10f),
+        input_border = border_strong,
+        danger = text(base.danger),
+        warning = text(base.warning),
+        success = text(base.success),
+        info = text(base.info),
+        thread_card_bg = card,
+        thread_card_bg_hover = lift(0.11f),
+        thread_card_border = border_soft,
+        thread_header_bg = card,
+        thread_content_bg = harmonized,
+        star = ensure_contrast(base.star, all_surfaces, contrast_large_text),
+        on_accent = on_accent,
+        secondary_control_bg = lift(0.12f),
+        secondary_control_border = border_strong,
         is_glass = true,
     )
 }
 
 private fun apply_glass_scheme(scheme: ColorScheme, semantic: AsterSemanticColors): ColorScheme = scheme.copy(
-    background = Color.Transparent,
-    surface = semantic.bg_card,
+    primary = semantic.accent_blue,
+    onPrimary = semantic.on_accent,
+    background = semantic.bg_primary,
+    onBackground = semantic.text_primary,
+    surface = semantic.bg_primary,
+    onSurface = semantic.text_primary,
     surfaceVariant = semantic.bg_secondary,
-    surfaceContainerLowest = semantic.bg_card,
-    surfaceContainerLow = semantic.modal_bg,
-    surfaceContainer = semantic.modal_bg,
-    surfaceContainerHigh = semantic.modal_bg,
-    surfaceContainerHighest = semantic.dropdown_bg,
+    onSurfaceVariant = semantic.text_secondary,
+    surfaceContainerLowest = semantic.bg_primary,
+    surfaceContainerLow = semantic.bg_secondary,
+    surfaceContainer = semantic.bg_card,
+    surfaceContainerHigh = semantic.dropdown_bg,
+    surfaceContainerHighest = semantic.bg_tertiary,
+    outline = semantic.border_primary,
+    outlineVariant = semantic.border_secondary,
+    error = semantic.danger,
 )
 
 @Composable
@@ -214,7 +261,7 @@ fun AsterTheme(
         var built = AsterColorThemes.semantic_colors_for(resolved_dark, palette)
         if (high_contrast) built = apply_high_contrast(built)
         if (reduce_transparency) built = apply_reduce_transparency(built)
-        if (glass) built = apply_glass(built, glass_tint)
+        if (glass && resolved_dark) built = image_theme_colors(built, glass_tint)
         built
     }
     val color_scheme = remember(resolved_dark, palette, semantic) {
@@ -260,8 +307,9 @@ fun AsterTheme(
             colorScheme = color_scheme,
             typography = typography,
             shapes = aster_shapes,
-            content = content,
-        )
+        ) {
+            CompositionLocalProvider(LocalIndication provides aster_ripple(), content = content)
+        }
     }
 }
 

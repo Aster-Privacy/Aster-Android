@@ -3425,4 +3425,7 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
+    <string name="connection_relay_connected">연결됨</string>
+    <string name="connection_relay_restored">정상으로 돌아왔습니다</string>
+    <string name="connection_relay_disconnected">연결이 끊어졌습니다</string>
 </resources>

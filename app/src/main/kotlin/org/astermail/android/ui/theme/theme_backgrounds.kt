@@ -21,138 +21,189 @@
 
 package org.astermail.android.ui.theme
 
-import android.content.res.Resources
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.LruCache
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalContext
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import kotlin.math.roundToInt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.astermail.android.R
 import org.astermail.android.design.ColorThemeId
+
+enum class ThemeCategory(val label_res: Int) {
+    calm(R.string.image_theme_category_calm),
+    space(R.string.image_theme_category_space),
+    planets(R.string.image_theme_category_planets),
+    night_sky(R.string.image_theme_category_night_sky),
+    cities(R.string.image_theme_category_cities),
+    landscapes(R.string.image_theme_category_landscapes),
+    water(R.string.image_theme_category_water),
+    yours(R.string.image_theme_category_yours),
+}
 
 data class ThemeBackground(
     val id: String,
     val drawable_res: Int,
-    val label_res: Int,
+    val category: ThemeCategory,
     val color_theme: ColorThemeId,
     val tint: Color,
     val credit: String,
-)
+    val custom_version: Long = 0L,
+) {
+    val is_custom: Boolean get() = custom_version > 0L
+    val cache_key: String get() = if (is_custom) "custom:$custom_version" else drawable_res.toString()
+    val is_generated: Boolean get() = category == ThemeCategory.calm
+}
 
 const val no_theme_background = "none"
 
-val theme_backgrounds = listOf(
-    ThemeBackground("fjord", R.drawable.theme_bg_fjord, R.string.image_theme_fjord, ColorThemeId.aster_blue, Color(0xFF0A1428), "W.carter, CC0"),
-    ThemeBackground("aurora", R.drawable.theme_bg_aurora, R.string.image_theme_aurora, ColorThemeId.emerald, Color(0xFF081A18), "Giles Laurent, CC BY-SA 4.0"),
-    ThemeBackground("desert", R.drawable.theme_bg_desert, R.string.image_theme_desert, ColorThemeId.amber, Color(0xFF120F1C), "Sergey Pesterev, CC BY-SA 4.0"),
-    ThemeBackground("clouds", R.drawable.theme_bg_clouds, R.string.image_theme_clouds, ColorThemeId.indigo, Color(0xFF0B1424), "W.carter, CC BY-SA 4.0"),
-    ThemeBackground("sunrise", R.drawable.theme_bg_sunrise, R.string.image_theme_sunrise, ColorThemeId.orange, Color(0xFF16121A), "Sri Chakra Pranav, UnpetitproleX, CC BY-SA 4.0"),
-    ThemeBackground("above", R.drawable.theme_bg_above, R.string.image_theme_above, ColorThemeId.slate, Color(0xFF12151A), "Jörg Braukmann, CC BY-SA 4.0"),
-)
-
-fun theme_background_for(id: String?): ThemeBackground? = theme_backgrounds.firstOrNull { it.id == id }
-
-@Composable
-fun theme_background_bitmap(): ImageBitmap? {
-    val background = theme_background_for(local_background_image.current) ?: return null
-    return ImageBitmap.imageResource(background.drawable_res)
+val theme_categories: List<Pair<ThemeCategory, List<ThemeBackground>>> by lazy {
+    ThemeCategory.entries.map { category -> category to theme_backgrounds.filter { it.category == category } }
+        .filter { it.second.isNotEmpty() }
 }
 
-private val theme_bitmap_cache = object : LruCache<String, ImageBitmap>(48 * 1024 * 1024) {
+fun custom_theme_background_entry(meta: CustomThemeImageMeta): ThemeBackground = ThemeBackground(
+    id = custom_theme_background,
+    drawable_res = 0,
+    category = ThemeCategory.yours,
+    color_theme = meta.accent,
+    tint = meta.tint,
+    credit = "",
+    custom_version = meta.version,
+)
+
+fun theme_background_for(id: String?): ThemeBackground? {
+    if (id == custom_theme_background) return custom_theme_image.meta.value?.let(::custom_theme_background_entry)
+    return theme_backgrounds.firstOrNull { it.id == id }
+}
+
+private const val theme_source_width = 1080
+private const val theme_source_height = 2400
+
+private val theme_bitmap_cache = object : LruCache<String, ImageBitmap>(24 * 1024 * 1024) {
     override fun sizeOf(key: String, value: ImageBitmap): Int = value.width * value.height * 4
 }
 
-private fun decode_theme_bitmap(resources: Resources, res: Int, sample: Int, soften: Boolean): ImageBitmap? {
-    val key = "$res:$sample:$soften"
-    theme_bitmap_cache.get(key)?.let { return it }
-    val options = BitmapFactory.Options().apply { inSampleSize = sample }
-    val decoded = BitmapFactory.decodeResource(resources, res, options) ?: return null
-    val result = if (soften) {
-        val up = Bitmap.createScaledBitmap(decoded, decoded.width * 4, decoded.height * 4, true)
-        Bitmap.createScaledBitmap(up, decoded.width * 2, decoded.height * 2, true).also {
-            if (up !== it) up.recycle()
-        }
-    } else {
-        decoded
+private val theme_thumbnail_cache = object : LruCache<String, ImageBitmap>(32 * 1024 * 1024) {
+    override fun sizeOf(key: String, value: ImageBitmap): Int = value.width * value.height * 2
+}
+
+private fun screen_sample(context: Context): Int {
+    val metrics = context.resources.displayMetrics
+    val short_side = minOf(metrics.widthPixels, metrics.heightPixels).coerceAtLeast(1)
+    val long_side = maxOf(metrics.widthPixels, metrics.heightPixels).coerceAtLeast(1)
+    var sample = 1
+    while (theme_source_width / (sample * 2) >= short_side && theme_source_height / (sample * 2) >= long_side) {
+        sample *= 2
     }
-    return result.asImageBitmap().also { theme_bitmap_cache.put(key, it) }
+    return sample
+}
+
+private fun screen_key(background: ThemeBackground, sample: Int): String = "${background.cache_key}:$sample"
+
+private fun decode_source(context: Context, background: ThemeBackground, options: BitmapFactory.Options): Bitmap? =
+    if (background.is_custom) {
+        custom_theme_image.load(context, options.inSampleSize)
+    } else {
+        BitmapFactory.decodeResource(context.resources, background.drawable_res, options)
+    }
+
+private fun decode_screen_bitmap(context: Context, background: ThemeBackground): ImageBitmap? {
+    val sample = screen_sample(context)
+    val key = screen_key(background, sample)
+    theme_bitmap_cache.get(key)?.let { return it }
+    val options = BitmapFactory.Options().apply {
+        inSampleSize = sample
+        inPreferredConfig = Bitmap.Config.ARGB_8888
+    }
+    val decoded = decode_source(context, background, options) ?: return null
+    decoded.prepareToDraw()
+    return decoded.asImageBitmap().also { theme_bitmap_cache.put(key, it) }
+}
+
+private fun decode_theme_thumbnail(context: Context, background: ThemeBackground): ImageBitmap? {
+    theme_thumbnail_cache.get(background.cache_key)?.let { return it }
+    val options = BitmapFactory.Options().apply {
+        inSampleSize = 4
+        inPreferredConfig = Bitmap.Config.RGB_565
+    }
+    val decoded = decode_source(context, background, options) ?: return null
+    return decoded.asImageBitmap().also { theme_thumbnail_cache.put(background.cache_key, it) }
+}
+
+fun trim_theme_caches() {
+    theme_thumbnail_cache.evictAll()
+    theme_bitmap_cache.trimToSize(12 * 1024 * 1024)
+}
+
+suspend fun preload_theme_bitmap(context: Context, background: ThemeBackground) {
+    withContext(Dispatchers.IO) { decode_screen_bitmap(context.applicationContext, background) }
 }
 
 @Composable
-fun remember_theme_bitmap(res: Int, sample: Int = 1, soften: Boolean = false): State<ImageBitmap?> {
-    val resources = LocalContext.current.resources
-    return produceState(initialValue = theme_bitmap_cache.get("$res:$sample:$soften"), res, sample, soften) {
+fun remember_active_theme_bitmap(): ImageBitmap? {
+    val custom_meta by custom_theme_image.meta.collectAsState()
+    val id = local_background_image.current
+    val background = remember(id, custom_meta) { theme_background_for(id) }
+    val context = LocalContext.current.applicationContext
+    val sample = remember(context) { screen_sample(context) }
+    val state = produceState(
+        initialValue = background?.let { theme_bitmap_cache.get(screen_key(it, sample)) },
+        background?.cache_key,
+    ) {
+        val target = background
+        value = if (target == null) {
+            null
+        } else {
+            theme_bitmap_cache.get(screen_key(target, sample))
+                ?: withContext(Dispatchers.IO) { decode_screen_bitmap(context, target) }
+        }
+    }
+    return state.value
+}
+
+@Composable
+fun remember_theme_thumbnail(background: ThemeBackground): State<ImageBitmap?> {
+    val context = LocalContext.current.applicationContext
+    val key = background.cache_key
+    return produceState(initialValue = theme_thumbnail_cache.get(key), key) {
         if (value == null) {
-            value = withContext(Dispatchers.IO) { decode_theme_bitmap(resources, res, sample, soften) }
+            value = withContext(Dispatchers.IO) { decode_theme_thumbnail(context, background) }
         }
     }
 }
 
-fun DrawScope.draw_theme_background_at(
-    bitmap: ImageBitmap,
-    area: Size,
-    top_in_area: Float = 0f,
-    alpha: Float = 1f,
-) {
+fun DrawScope.draw_theme_background(bitmap: ImageBitmap) {
+    val area: Size = size
     if (area.width <= 0f || area.height <= 0f) return
     val scale = maxOf(area.width / bitmap.width, area.height / bitmap.height)
     val src_w = (area.width / scale).roundToInt().coerceIn(1, bitmap.width)
     val src_h = (area.height / scale).roundToInt().coerceIn(1, bitmap.height)
     val src_x = (bitmap.width - src_w) / 2
     val src_y = (bitmap.height - src_h) / 2
-    clipRect(0f, 0f, size.width, size.height) {
+    clipRect(0f, 0f, area.width, area.height) {
         drawImage(
             image = bitmap,
             srcOffset = IntOffset(src_x, src_y),
             srcSize = IntSize(src_w, src_h),
-            dstOffset = IntOffset(0, (-top_in_area).roundToInt()),
+            dstOffset = IntOffset.Zero,
             dstSize = IntSize(area.width.roundToInt(), area.height.roundToInt()),
-            alpha = alpha,
-        )
-    }
-}
-
-private val theme_backdrop_scrim = listOf(
-    0f to Color.Black.copy(alpha = 0.35f),
-    0.2f to Color.Black.copy(alpha = 0.12f),
-    0.65f to Color.Black.copy(alpha = 0.16f),
-    1f to Color.Black.copy(alpha = 0.4f),
-)
-
-fun DrawScope.draw_theme_backdrop(
-    bitmap: ImageBitmap,
-    area: Size,
-    top_in_area: Float = 0f,
-    alpha: Float = 1f,
-) {
-    if (area.width <= 0f || area.height <= 0f) return
-    draw_theme_background_at(bitmap, area, top_in_area, alpha)
-    clipRect(0f, 0f, size.width, size.height) {
-        drawRect(
-            brush = Brush.verticalGradient(
-                colorStops = theme_backdrop_scrim.toTypedArray(),
-                startY = -top_in_area,
-                endY = area.height - top_in_area,
-            ),
-            topLeft = Offset.Zero,
-            size = size,
-            alpha = alpha,
         )
     }
 }

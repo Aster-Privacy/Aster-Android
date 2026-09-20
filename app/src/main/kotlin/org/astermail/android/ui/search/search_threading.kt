@@ -32,7 +32,7 @@ internal fun search_result_threads(
     grouping_enabled: Boolean,
     context: android.content.Context? = null,
 ): List<ThreadRow> {
-    val emails = items.map { inbox_item_to_email(it, context = context) }
+    val emails = items.distinctBy { it.id }.map { inbox_item_to_email(it, context = context) }
     val rows = if (grouping_enabled) group_by_thread(emails) else flat_thread_rows(emails)
     return rows.sortedWith(
         compareByDescending<ThreadRow> { it.newest.received_at }.thenByDescending { it.thread_id },

@@ -46,6 +46,7 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
@@ -82,12 +83,18 @@ import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.aster_haptic
+import org.astermail.android.design.aster_tap_feedback
+import org.astermail.android.design.components.AsterAlert
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.design.mirror_in_rtl
+
+internal val settings_row_min_height = 56.dp
+internal val settings_group_inset = 4.dp
+internal val settings_row_gap_height = 2.dp
 
 internal fun absolute_date_label(iso: String?): String {
     if (iso.isNullOrBlank()) return ""
@@ -161,7 +168,7 @@ internal fun detail_scaffold(
                 }
             },
         )
-        AsterDivider()
+
         if (scrollable) {
             Column(
                 modifier = Modifier
@@ -256,8 +263,105 @@ internal fun section_label(text: String) {
         color = colors.text_tertiary,
         fontSize = 11.sp,
         fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.padding(top = AsterSpacing.md, bottom = AsterSpacing.xs),
+        letterSpacing = 0.8.sp,
+        modifier = Modifier.padding(
+            start = AsterSpacing.xs,
+            end = AsterSpacing.xs,
+            top = AsterSpacing.xl,
+            bottom = AsterSpacing.sm,
+        ),
     )
+}
+
+@Composable
+internal fun settings_row_gap(modifier: Modifier = Modifier) {
+    Spacer(modifier.height(settings_row_gap_height))
+}
+
+@Composable
+internal fun settings_group(
+    title: String? = null,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        if (title != null) section_label(title)
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = settings_group_inset),
+                content = content,
+            )
+        }
+    }
+}
+
+@Composable
+internal fun settings_toggle_row(
+    title: String,
+    checked: Boolean,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    enabled: Boolean = true,
+    info_title: String? = null,
+    info_description: String? = null,
+    test_tag: String? = null,
+    on_change: (Boolean) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val view = androidx.compose.ui.platform.LocalView.current
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .toggleable(
+                value = checked,
+                enabled = enabled,
+                role = Role.Switch,
+                indication = androidx.compose.material3.ripple(),
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                onValueChange = { value ->
+                    view.aster_tap_feedback(
+                        if (value) aster_haptic.toggle_on else aster_haptic.toggle_off,
+                    )
+                    on_change(value)
+                },
+            )
+            .then(if (test_tag != null) Modifier.testTag(test_tag) else Modifier)
+            .heightIn(min = settings_row_min_height)
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = title,
+                    color = if (enabled) colors.text_primary else colors.text_tertiary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                if (info_title != null && info_description != null) {
+                    Spacer(Modifier.width(AsterSpacing.xs))
+                    info_dialog_button(title = info_title, description = info_description)
+                }
+            }
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
+        }
+        Spacer(Modifier.width(AsterSpacing.md))
+        org.astermail.android.design.components.AsterSwitch(
+            checked = checked,
+            onCheckedChange = null,
+            enabled = enabled,
+        )
+    }
 }
 
 @Composable
@@ -312,7 +416,7 @@ internal fun choice_option_row(
             .fillMaxWidth()
             .clip(androidx.compose.ui.graphics.RectangleShape)
             .then(interaction)
-            .background(if (selected) colors.accent_blue.copy(alpha = 0.08f) else Color.Transparent)
+            .background(if (selected) colors.bg_selected else colors.bg_card)
             .then(if (test_tag != null) Modifier.testTag(test_tag) else Modifier)
             .heightIn(min = 54.dp)
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
@@ -446,14 +550,15 @@ internal fun detail_row(
     info_title: String? = null,
     info_description: String? = null,
     icon_tint: androidx.compose.ui.graphics.Color? = null,
+    value: String? = null,
 ) {
     val colors = AsterMaterial.colors
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .then(if (on_click != null) Modifier.clickable(onClick = on_click) else Modifier)
-            .heightIn(min = 56.dp)
-            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+            .heightIn(min = settings_row_min_height)
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
@@ -490,6 +595,17 @@ internal fun detail_row(
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
             }
+        }
+        if (value != null) {
+            Spacer(Modifier.width(AsterSpacing.md))
+            Text(
+                text = value,
+                color = colors.text_tertiary,
+                fontSize = 14.sp,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier.widthIn(max = 148.dp),
+            )
         }
         if (trailing != null) {
             Spacer(Modifier.width(AsterSpacing.sm))
@@ -550,24 +666,11 @@ internal fun v_gap(height: androidx.compose.ui.unit.Dp = AsterSpacing.md) {
 
 @Composable
 internal fun load_failed_card(message: String?, on_retry: () -> Unit) {
-    val colors = AsterMaterial.colors
     Column(Modifier.fillMaxWidth()) {
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(AsterSpacing.lg)) {
-                Text(
-                    text = stringResource(R.string.failed_to_load),
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                )
-                Spacer(Modifier.height(AsterSpacing.xs))
-                Text(
-                    text = message ?: stringResource(R.string.something_went_wrong),
-                    color = colors.text_secondary,
-                    fontSize = 13.sp,
-                )
-            }
-        }
+        AsterAlert(
+            message = message ?: stringResource(R.string.something_went_wrong),
+            title = stringResource(R.string.failed_to_load),
+        )
         v_gap(AsterSpacing.md)
         AsterButton(label = stringResource(R.string.retry), onClick = on_retry)
     }
@@ -575,13 +678,5 @@ internal fun load_failed_card(message: String?, on_retry: () -> Unit) {
 
 @Composable
 internal fun error_banner(message: String) {
-    val colors = AsterMaterial.colors
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(colors.danger.copy(alpha = 0.12f), SquircleShape(18.dp))
-            .padding(AsterSpacing.md),
-    ) {
-        Text(text = message, color = colors.danger, fontSize = 13.sp)
-    }
+    AsterAlert(message = message)
 }

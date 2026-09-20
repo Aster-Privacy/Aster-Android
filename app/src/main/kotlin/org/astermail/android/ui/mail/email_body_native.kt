@@ -98,12 +98,20 @@ private val PIXEL_WIDTH_ATTRIBUTE = Regex("""^(\d{3,4})(?:px)?$""", RegexOption.
 
 private val UNSIZED_FIT_TAGS = setOf("img", "video", "iframe", "hr", "canvas")
 
+private val STYLE_FLUID_MAX_WIDTH =
+    Regex("""(?<![a-z-])max-width\s*:\s*(?:\d{1,3}(?:\.\d+)?%|\d{1,3}(?:\.\d+)?vw)""", RegexOption.IGNORE_CASE)
+
 internal fun declared_content_width(body: String): Int? = try {
     val doc = Jsoup.parseBodyFragment(body).apply { outputSettings(raw_body_output_settings()) }
     var widest = 0
     for (element in doc.body().select("*")) {
         if (element.tagName().lowercase() in UNSIZED_FIT_TAGS) continue
-        val from_style = STYLE_PIXEL_WIDTH.find(element.attr("style"))?.groupValues?.get(1)?.toIntOrNull() ?: 0
+        val style = element.attr("style")
+        val from_style = if (STYLE_FLUID_MAX_WIDTH.containsMatchIn(style)) {
+            0
+        } else {
+            STYLE_PIXEL_WIDTH.find(style)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+        }
         val from_attribute =
             PIXEL_WIDTH_ATTRIBUTE.find(element.attr("width").trim())?.groupValues?.get(1)?.toIntOrNull() ?: 0
         val declared = maxOf(from_style, from_attribute)

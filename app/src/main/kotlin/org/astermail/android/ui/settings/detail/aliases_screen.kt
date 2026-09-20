@@ -99,8 +99,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
 import org.astermail.android.R
 import org.astermail.android.api.settings.AliasDirectory
 import org.astermail.android.api.settings.CustomDomain
@@ -111,7 +111,6 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSecondaryButton
@@ -225,11 +224,11 @@ fun AliasesScreen(
                         onClick = { alias_actions_open = true },
                         modifier = Modifier.testTag("alias_overflow_action"),
                     )
-                    aster_dropdown_menu(
+                    aster_menu(
                         expanded = alias_actions_open,
                         on_dismiss = { alias_actions_open = false },
                     ) {
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = stringResource(R.string.alias_import_action),
                             icon = TablerIcons.Upload,
                             test_tag = "alias_overflow_import",
@@ -238,7 +237,7 @@ fun AliasesScreen(
                                 show_alias_import = true
                             },
                         )
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = stringResource(R.string.alias_export_csv),
                             icon = TablerIcons.Download,
                             test_tag = "alias_overflow_export",
@@ -247,7 +246,7 @@ fun AliasesScreen(
                                 if (alias_export_locked) on_open("billing") else show_alias_export = true
                             },
                         )
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = stringResource(R.string.recently_deleted_aliases_title),
                             icon = TablerIcons.Trash,
                             test_tag = "alias_overflow_deleted",
@@ -575,11 +574,11 @@ private fun aliases_tab(
                                 on_click = { domain_menu_open = true },
                                 trailing_icon = TablerIcons.ChevronDown,
                             )
-                            aster_dropdown_menu(
+                            aster_menu(
                                 expanded = domain_menu_open,
                                 on_dismiss = { domain_menu_open = false },
                             ) {
-                                aster_dropdown_item(
+                                aster_menu_item(
                                     label = stringResource(R.string.alias_filter_all_domains),
                                     selected = alias_domain_filter == null,
                                     test_tag = "alias_filter_all_domains",
@@ -589,7 +588,7 @@ private fun aliases_tab(
                                     },
                                 )
                                 alias_domains.forEach { domain_name ->
-                                    aster_dropdown_item(
+                                    aster_menu_item(
                                         label = "@$domain_name",
                                         selected = alias_domain_filter == domain_name,
                                         test_tag = "alias_filter_domain_$domain_name",
@@ -644,7 +643,7 @@ private fun aliases_tab(
                 )
             }
         }
-        AsterDivider(modifier = Modifier.fillMaxWidth())
+        settings_row_gap(modifier = Modifier.fillMaxWidth())
         LazyColumn(
             modifier = Modifier.fillMaxWidth().weight(1f),
             contentPadding = PaddingValues(
@@ -667,7 +666,7 @@ private fun aliases_tab(
                                 title = stringResource(R.string.failed_to_load),
                                 subtitle = load_error,
                             )
-                            AsterDivider()
+                            settings_row_gap()
                             detail_row(
                                 title = stringResource(R.string.retry),
                                 on_click = { vm.load_aliases(force = true) },
@@ -1165,12 +1164,12 @@ internal fun alias_list_row(
                     onClick = { row_menu_open = true },
                     modifier = Modifier.testTag("alias_menu_${alias.id}"),
                 )
-                aster_dropdown_menu(
+                aster_menu(
                     expanded = row_menu_open,
                     on_dismiss = { row_menu_open = false },
                 ) {
                     if (on_toggle_expanded != null && !alias.decryption_failed) {
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = if (expanded) {
                                 stringResource(R.string.alias_collapse_settings)
                             } else {
@@ -1185,7 +1184,7 @@ internal fun alias_list_row(
                         )
                     }
                     if (on_toggle_pin != null && !alias.decryption_failed) {
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = if (alias.is_pinned) {
                                 stringResource(R.string.alias_unpin)
                             } else {
@@ -1200,7 +1199,7 @@ internal fun alias_list_row(
                         )
                     }
                     if (on_edit_note != null && !alias.decryption_failed) {
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = stringResource(R.string.alias_note_title),
                             icon = TablerIcons.Notes,
                             test_tag = "alias_note_${alias.id}",
@@ -1210,7 +1209,7 @@ internal fun alias_list_row(
                             },
                         )
                     }
-                    aster_dropdown_item(
+                    aster_menu_item(
                         label = stringResource(R.string.delete),
                         icon = TablerIcons.Trash,
                         destructive = true,
@@ -1786,13 +1785,13 @@ private fun directories_tab(
                     modifier = Modifier.size(16.dp),
                 )
             }
-            aster_dropdown_menu(
+            aster_menu(
                 expanded = domain_menu_open,
                 on_dismiss = { domain_menu_open = false },
                 min_width = 180.dp,
             ) {
                 domain_options.forEach { option ->
-                    aster_dropdown_item(
+                    aster_menu_item(
                         label = "@${option.domain_name}",
                         selected = option.domain_name == dir_domain,
                         on_click = { dir_domain = option.domain_name; domain_menu_open = false },
@@ -1955,7 +1954,7 @@ private fun directories_tab(
                         tint = colors.danger,
                     )
                 }
-                if (idx < state.directories.lastIndex) AsterDivider(modifier = Modifier)
+                if (idx < state.directories.lastIndex) settings_row_gap(modifier = Modifier)
             }
         }
     }
@@ -2133,7 +2132,7 @@ internal fun ghost_tab(
                         )
                     }
                 }
-                if (idx < state.ghost_aliases.lastIndex) AsterDivider(modifier = Modifier)
+                if (idx < state.ghost_aliases.lastIndex) settings_row_gap(modifier = Modifier)
             }
         }
     }
@@ -2297,7 +2296,7 @@ private fun preferences_tab(
                 on_select = { vm.update_alias_preference(UpdateAliasPreferencesRequest(alias_sender_format = it)) },
             )
         }
-        AsterDivider()
+        settings_row_gap()
         detail_row(
             title = stringResource(R.string.alias_unsubscribe_action),
             subtitle = when (prefs?.alias_unsubscribe_action) {
@@ -2331,7 +2330,7 @@ private fun preferences_tab(
                 on_select = { vm.update_alias_preference(UpdateAliasPreferencesRequest(alias_disabled_response = it)) },
             )
         }
-        AsterDivider()
+        settings_row_gap()
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.alias_delete_behavior), color = colors.text_primary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
@@ -2346,7 +2345,7 @@ private fun preferences_tab(
                 on_select = { vm.update_alias_preference(UpdateAliasPreferencesRequest(alias_delete_action = it)) },
             )
         }
-        AsterDivider()
+        settings_row_gap()
         detail_row(
             title = stringResource(R.string.alias_always_expand),
             subtitle = stringResource(R.string.alias_always_expand_subtitle),
@@ -2359,7 +2358,7 @@ private fun preferences_tab(
                 )
             },
         )
-        AsterDivider()
+        settings_row_gap()
         detail_row(
             title = stringResource(R.string.alias_readable_reverse),
             subtitle = stringResource(R.string.alias_readable_reverse_subtitle),
@@ -2730,7 +2729,7 @@ private fun domain_card(
 
             if (is_expanded) {
                 v_gap(AsterSpacing.md)
-                AsterDivider()
+                settings_row_gap()
                 v_gap(AsterSpacing.md)
 
                 if (domain.is_shared) {
@@ -3147,13 +3146,13 @@ private fun create_alias_dialog(
                             modifier = Modifier.size(20.dp),
                         )
                     }
-                    aster_dropdown_menu(
+                    aster_menu(
                         expanded = domain_menu_open,
                         on_dismiss = { domain_menu_open = false },
                     ) {
                         available_domains.forEach { domain ->
                             val domain_locked = domain.is_premium && !premium_domains_allowed
-                            aster_dropdown_item(
+                            aster_menu_item(
                                 label = "@${domain.domain_name}",
                                 icon = if (domain_locked) TablerIcons.Lock else null,
                                 selected = domain.domain_name == active_domain.domain_name,

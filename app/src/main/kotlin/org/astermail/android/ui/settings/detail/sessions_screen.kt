@@ -52,7 +52,6 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
@@ -138,7 +137,7 @@ fun SessionsScreen(
                             session = s,
                             on_revoke = { pending_revoke_id = s.id },
                         )
-                        if (idx < other_sessions.lastIndex) AsterDivider()
+                        if (idx < other_sessions.lastIndex) settings_row_gap()
                     }
                 }
             }

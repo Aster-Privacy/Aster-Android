@@ -94,12 +94,11 @@ import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_state
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSwitch
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
 import org.astermail.android.security.AppLockStore
 import org.astermail.android.security.AppLockViewModel
 import org.astermail.android.settings.SettingsViewModel
@@ -562,7 +561,7 @@ fun SecurityScreen(
                 on_click = { on_open("change_password") },
             )
             if (state.inactive_key_sets > 0) {
-                AsterDivider()
+                settings_row_gap()
                 detail_row(
                     title = stringResource(R.string.recover_older_data_title),
                     subtitle = stringResource(R.string.recover_older_data_desc),
@@ -570,14 +569,14 @@ fun SecurityScreen(
                     on_click = { show_recover_dialog = true },
                 )
             }
-            AsterDivider()
+            settings_row_gap()
             detail_row(
                 title = stringResource(R.string.two_factor_auth),
                 subtitle = totp_sub,
                 icon = TablerIcons.ShieldCheck,
                 on_click = { on_open("two_factor") },
             )
-            AsterDivider()
+            settings_row_gap()
             Box(modifier = anchor_modifier(security_anchor.login_alerts)) {
                 detail_row(
                     title = stringResource(R.string.login_alerts),
@@ -601,14 +600,14 @@ fun SecurityScreen(
                     },
                 )
             }
-            AsterDivider()
+            settings_row_gap()
             detail_row(
                 title = stringResource(R.string.active_sessions),
                 subtitle = stringResource(R.string.devices_signed_in),
                 icon = TablerIcons.Devices,
                 on_click = { on_open("sessions") },
             )
-            AsterDivider()
+            settings_row_gap()
             Column(modifier = anchor_modifier(security_anchor.passkeys)) {
                 if (hardware_keys_count == 0 && state.hardware_keys_load_failed) {
                     detail_row(
@@ -638,7 +637,7 @@ fun SecurityScreen(
                     ) {
                         Column {
                             state.hardware_keys.forEach { key ->
-                                AsterDivider()
+                                settings_row_gap()
                                 hardware_key_row(
                                     key = key,
                                     on_delete = { vm.delete_hardware_key(key.id) },
@@ -688,7 +687,7 @@ fun SecurityScreen(
                         on_revoke = { vm.revoke_trusted_device(device.id) },
                         colors = colors,
                     )
-                    AsterDivider()
+                    settings_row_gap()
                 }
                 if (trusted_hidden > 0) {
                     devices_list_action_row(
@@ -698,7 +697,7 @@ fun SecurityScreen(
                         test_tag = "trusted_devices_show_more",
                         on_click = { trusted_expanded = true },
                     )
-                    AsterDivider()
+                    settings_row_gap()
                 } else if (trusted_expanded && state.trusted_devices.size > trusted_preview_count) {
                     devices_list_action_row(
                         label = stringResource(R.string.show_less),
@@ -707,7 +706,7 @@ fun SecurityScreen(
                         test_tag = "trusted_devices_show_less",
                         on_click = { trusted_expanded = false },
                     )
-                    AsterDivider()
+                    settings_row_gap()
                 }
                 devices_list_action_row(
                     label = stringResource(R.string.revoke_all_action),
@@ -755,7 +754,7 @@ fun SecurityScreen(
                     )
                 }
                 if (prefs.block_external_content != false) {
-                    AsterDivider()
+                    settings_row_gap()
                     Box(modifier = anchor_modifier(security_anchor.tracking_pixels)) {
                         detail_row(
                             title = stringResource(R.string.block_tracking_pixels),
@@ -771,7 +770,7 @@ fun SecurityScreen(
                             },
                         )
                     }
-                    AsterDivider()
+                    settings_row_gap()
                     detail_row(
                         title = stringResource(R.string.block_tracking_links),
                         subtitle = stringResource(R.string.block_tracking_links_subtitle),
@@ -818,7 +817,7 @@ fun SecurityScreen(
                         },
                     )
                 }
-                AsterDivider()
+                settings_row_gap()
                 remote_image_loading_row(
                     selected_id = prefs.load_remote_images,
                     on_select = { id ->
@@ -830,7 +829,7 @@ fun SecurityScreen(
                         }
                     },
                 )
-                AsterDivider()
+                settings_row_gap()
                 detail_row(
                     title = stringResource(R.string.block_remote_fonts),
                     subtitle = stringResource(R.string.block_remote_fonts_subtitle),
@@ -842,7 +841,7 @@ fun SecurityScreen(
                         )
                     },
                 )
-                AsterDivider()
+                settings_row_gap()
                 detail_row(
                     title = stringResource(R.string.block_remote_css),
                     subtitle = stringResource(R.string.block_remote_css_subtitle),
@@ -854,7 +853,7 @@ fun SecurityScreen(
                         )
                     },
                 )
-                AsterDivider()
+                settings_row_gap()
                 Box(modifier = anchor_modifier(security_anchor.strip_exif)) {
                     detail_row(
                         title = stringResource(R.string.strip_exif),
@@ -934,7 +933,7 @@ fun SecurityScreen(
                 icon = TablerIcons.Key,
                 on_click = { on_open("recovery_codes") },
             )
-            AsterDivider()
+            settings_row_gap()
             detail_row(
                 title = stringResource(R.string.recovery_email),
                 subtitle = recovery_email_sub,
@@ -953,7 +952,7 @@ fun SecurityScreen(
                 icon = TablerIcons.Ban,
                 on_click = { on_open("blocked") },
             )
-            AsterDivider()
+            settings_row_gap()
             detail_row(
                 title = stringResource(R.string.encryption_keys),
                 subtitle = stringResource(R.string.encryption_keys_subtitle),
@@ -1155,7 +1154,7 @@ private fun vanguard_section(
             ) {
                 Column {
                     Spacer(Modifier.height(AsterSpacing.md))
-                    AsterDivider()
+                    settings_row_gap()
                     Spacer(Modifier.height(AsterSpacing.md))
                     app_lock_row(
                         store = store,
@@ -1692,12 +1691,12 @@ private fun recent_activity_section(
                         modifier = Modifier.size(14.dp),
                     )
                 }
-                aster_dropdown_menu(
+                aster_menu(
                     expanded = filter_menu_open,
                     on_dismiss = { filter_menu_open = false },
                 ) {
                     filter_options.forEach { (id, label_res) ->
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = stringResource(label_res),
                             selected = selected_filter == id,
                             test_tag = "security_activity_filter_${id.name}",
@@ -1762,7 +1761,7 @@ private fun recent_activity_section(
             Spacer(Modifier.height(AsterSpacing.sm))
         }
         if (filtered.size > activity_preview_count) {
-            AsterDivider()
+            settings_row_gap()
             val remaining = filtered.size - activity_preview_count
             devices_list_action_row(
                 label = if (expanded) {
@@ -1903,12 +1902,12 @@ private fun remote_image_loading_row(
                         modifier = Modifier.size(16.dp),
                     )
                 }
-                aster_dropdown_menu(
+                aster_menu(
                     expanded = menu_open,
                     on_dismiss = { menu_open = false },
                 ) {
                     options.forEach { (id, label) ->
-                        aster_dropdown_item(
+                        aster_menu_item(
                             label = label,
                             selected = selected_id == id,
                             test_tag = "remote_image_loading_$id",

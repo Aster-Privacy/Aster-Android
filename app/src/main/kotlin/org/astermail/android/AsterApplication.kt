@@ -76,11 +76,19 @@ class AsterApplication : Application(), ImageLoaderFactory {
         }
     }
 
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) {
+            org.astermail.android.ui.theme.trim_theme_caches()
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         install_crash_reporting()
         runCatching { org.astermail.android.ui.common.apply_app_night_mode(this) }
         start_secure_prefs_warm()
+        org.astermail.android.ui.theme.custom_theme_image.init(this)
         org.astermail.android.ui.mail.AsterTimePreferences.set_use_24h(
             android.text.format.DateFormat.is24HourFormat(this),
         )

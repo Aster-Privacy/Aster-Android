@@ -3443,4 +3443,7 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
+    <string name="connection_relay_connected">Bağlandı</string>
+    <string name="connection_relay_restored">Her şey normale döndü</string>
+    <string name="connection_relay_disconnected">Bağlantı kesildi</string>
 </resources>

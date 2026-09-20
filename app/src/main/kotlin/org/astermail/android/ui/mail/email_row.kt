@@ -88,6 +88,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -152,9 +153,11 @@ fun EmailRow(
     list_density: String? = null,
     show_sender_pictures: Boolean = true,
     show_email_preview: Boolean = true,
+    refresh_engaged: () -> Boolean = { false },
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
+    val tap_guard = remember { row_tap_guard() }
     val metrics = remember(list_density) { inbox_row_metrics(list_density) }
     val is_unread = !email.is_read
     val sender_color = if (is_unread) colors.text_primary else colors.text_secondary
@@ -204,13 +207,15 @@ fun EmailRow(
                 if (select_mode) {
                     Modifier
                 } else {
-                    Modifier.combinedClickable(
-                        interactionSource = interaction_source,
-                        indication = androidx.compose.material3.ripple(),
-                        onClick = on_click,
-                        onLongClick = on_long_click,
-                        hapticFeedbackEnabled = haptic_enabled,
-                    )
+                    Modifier
+                        .row_tap_guard(tap_guard, refresh_engaged)
+                        .combinedClickable(
+                            interactionSource = interaction_source,
+                            indication = androidx.compose.material3.ripple(),
+                            onClick = { if (!tap_guard.blocked) on_click() },
+                            onLongClick = on_long_click,
+                            hapticFeedbackEnabled = haptic_enabled,
+                        )
                 },
             )
             .defaultMinSize(minHeight = metrics.min_height)
@@ -385,7 +390,7 @@ private fun star_button(
         val star_interaction = remember { MutableInteractionSource() }
         Box(
             modifier = modifier
-                .size(32.dp)
+                .size(inbox_star_slot_size)
                 .wrapContentSize(unbounded = true),
             contentAlignment = Alignment.Center,
         ) {
@@ -444,11 +449,25 @@ fun ThreadInboxRow(
     is_first: Boolean = true,
     is_last: Boolean = true,
     user_prefs: UserPreferences? = null,
+    cached_geometry: SkeletonGeometry? = null,
+    refresh_engaged: () -> Boolean = { false },
 ) {
     val email = thread.newest
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
-    val metrics = remember(user_prefs?.mail_list_density) { inbox_row_metrics(user_prefs?.mail_list_density) }
+    val tap_guard = remember { row_tap_guard() }
+    val row_density = user_prefs?.mail_list_density ?: cached_geometry?.list_density
+    val show_avatar = if (user_prefs != null) {
+        user_prefs.show_profile_pictures != false
+    } else {
+        cached_geometry?.show_avatar != false
+    }
+    val show_preview = if (user_prefs != null) {
+        user_prefs.show_email_preview != false
+    } else {
+        cached_geometry?.show_preview != false
+    }
+    val metrics = remember(row_density) { inbox_row_metrics(row_density) }
     val is_unread = thread.has_unread
     val sender_color = if (is_unread) colors.text_primary else colors.text_secondary
     val subject_color = if (is_unread) colors.text_primary else colors.text_secondary
@@ -501,13 +520,15 @@ fun ThreadInboxRow(
                 if (select_mode) {
                     Modifier
                 } else {
-                    Modifier.combinedClickable(
-                        interactionSource = interaction_source,
-                        indication = androidx.compose.material3.ripple(),
-                        onClick = on_click,
-                        onLongClick = on_long_click,
-                        hapticFeedbackEnabled = haptic_enabled,
-                    )
+                    Modifier
+                        .row_tap_guard(tap_guard, refresh_engaged)
+                        .combinedClickable(
+                            interactionSource = interaction_source,
+                            indication = androidx.compose.material3.ripple(),
+                            onClick = { if (!tap_guard.blocked) on_click() },
+                            onLongClick = on_long_click,
+                            hapticFeedbackEnabled = haptic_enabled,
+                        )
                 },
             )
             .defaultMinSize(minHeight = metrics.min_height)
@@ -520,7 +541,7 @@ fun ThreadInboxRow(
         verticalAlignment = Alignment.Top,
     ) {
         inbox_leading_slot(
-            user_prefs?.show_profile_pictures != false,
+            show_avatar,
             is_selected,
             metrics.avatar_size,
         ) {
@@ -569,9 +590,8 @@ fun ThreadInboxRow(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = participants_text,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = inbox_sender_text_style(),
                     color = sender_color,
-                    fontSize = 16.sp,
                     fontWeight = if (is_unread) FontWeight.Bold else FontWeight.Normal,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -600,9 +620,8 @@ fun ThreadInboxRow(
                 }
                 Text(
                     text = relative_time,
-                    style = MaterialTheme.typography.labelSmall,
+                    style = inbox_time_text_style(),
                     color = if (is_unread) colors.text_primary else colors.text_muted,
-                    fontSize = 13.sp,
                     fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
                     modifier = Modifier.padding(start = if (thread.has_attachment) 4.dp else AsterSpacing.sm),
                 )
@@ -622,7 +641,7 @@ fun ThreadInboxRow(
                     base
                 }
             }
-            val has_preview = user_prefs?.show_email_preview != false && email.preview.isNotBlank()
+            val has_preview = show_preview && email.preview.isNotBlank()
             val trailing_controls: @Composable () -> Unit = {
                 if (user_prefs?.show_message_size == true && email.size_bytes > 0) {
                     Spacer(Modifier.width(4.dp))
@@ -652,9 +671,8 @@ fun ThreadInboxRow(
                 ) {
                     Text(
                         text = subject_text,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = inbox_subject_text_style(),
                         color = subject_color,
-                        fontSize = 15.sp,
                         fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -738,6 +756,24 @@ fun ThreadInboxRow(
     }
 }
 
+@Composable
+internal fun inbox_sender_text_style(): TextStyle =
+    MaterialTheme.typography.bodyLarge.merge(TextStyle(fontSize = 16.sp))
+
+@Composable
+internal fun inbox_time_text_style(): TextStyle =
+    MaterialTheme.typography.labelSmall.merge(TextStyle(fontSize = 13.sp))
+
+@Composable
+internal fun inbox_subject_text_style(): TextStyle =
+    MaterialTheme.typography.bodyMedium.merge(TextStyle(fontSize = 15.sp))
+
+@Composable
+internal fun inbox_preview_text_style(): TextStyle =
+    MaterialTheme.typography.bodySmall.merge(TextStyle(fontSize = 14.sp))
+
+internal val inbox_star_slot_size = 32.dp
+
 internal data class InboxRowMetrics(
     val min_height: androidx.compose.ui.unit.Dp,
     val vertical_padding: androidx.compose.ui.unit.Dp,
@@ -796,7 +832,7 @@ private fun lightness_of(color: Color): Float {
 
 internal fun inbox_card_read_color(colors: AsterSemanticColors): Color =
     if (colors.is_glass) {
-        colors.bg_card
+        colors.bg_card.copy(alpha = 0.66f)
     } else if (colors.is_dark) {
         shift_lightness(colors.bg_primary, 0.045f, 1f)
     } else {
@@ -808,7 +844,7 @@ internal fun inbox_card_unread_color(colors: AsterSemanticColors): Color =
 
 internal fun search_field_bg_color(colors: AsterSemanticColors): Color =
     if (colors.is_glass) {
-        colors.input_bg
+        colors.input_bg.copy(alpha = 0.72f)
     } else if (colors.is_dark) {
         shift_lightness(colors.bg_primary, 0.09f, 1.15f)
     } else {

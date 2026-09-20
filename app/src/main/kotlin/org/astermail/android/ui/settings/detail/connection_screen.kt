@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -57,6 +58,25 @@ fun ConnectionScreen(on_back: () -> Unit) {
     val colors = AsterMaterial.colors
 
     LaunchedEffect(Unit) { vm.load_connection_preference() }
+
+    val relay_connected = stringResource(R.string.connection_relay_connected)
+    val relay_restored = stringResource(R.string.connection_relay_restored)
+    val relay_disconnected = stringResource(R.string.connection_relay_disconnected)
+    var pending_method by androidx.compose.runtime.saveable.rememberSaveable {
+        androidx.compose.runtime.mutableStateOf<String?>(null)
+    }
+    LaunchedEffect(state.connection_saving) {
+        val requested = pending_method
+        if (!state.connection_saving && requested != null) {
+            pending_method = null
+            val message = when {
+                state.connection_method != requested -> relay_disconnected
+                requested == CONNECTION_METHOD_CDN_RELAY -> relay_connected
+                else -> relay_restored
+            }
+            org.astermail.android.ui.common.app_toast.show(message)
+        }
+    }
 
     val options = listOf(
         ConnectionMethodOption(
@@ -102,6 +122,7 @@ fun ConnectionScreen(on_back: () -> Unit) {
                             .testTag("connection_option_${option.id}"),
                         on_click = {
                             if (!state.connection_saving && state.connection_method != option.id) {
+                                pending_method = option.id
                                 vm.update_connection_preference(option.id)
                             }
                         },

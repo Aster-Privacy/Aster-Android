@@ -32,9 +32,9 @@ import compose.icons.tablericons.Plus
 
 import org.astermail.android.ui.icons.pin_icon
 import org.astermail.android.ui.icons.pin_icon_filled
-import org.astermail.android.design.components.aster_dropdown_divider
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
+import org.astermail.android.design.components.aster_menu_surface
 import org.astermail.android.BuildConfig
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.basicMarquee
@@ -77,6 +77,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CircularProgressIndicator
@@ -179,6 +180,7 @@ import org.astermail.android.design.AsterColors
 import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
@@ -717,7 +719,6 @@ fun MailDetailScreen(
     var show_label_sheet by remember { mutableStateOf(false) }
     var action_target_id by remember { mutableStateOf<String?>(null) }
 
-    var body_ready by remember(email_id) { mutableStateOf(false) }
     var show_encryption_dropdown by remember { mutableStateOf(false) }
     var hidden_group_revealed by remember(email_id) { mutableStateOf(false) }
     var allow_external_ids by remember(email_id) { mutableStateOf(emptySet<String>()) }
@@ -779,45 +780,81 @@ fun MailDetailScreen(
     }
 
     val messages = remember(email_id, api_messages) { api_messages.distinctBy { it.id } }
+    val detail_count_corrections by mail_vm.thread_count_corrections.collectAsStateWithLifecycle()
+    val expected_message_count = remember(
+        email_id,
+        api_item?.thread_message_count,
+        inbox_state_for_folder.items,
+        detail_count_corrections,
+    ) {
+        val listed = inbox_state_for_folder.items.firstOrNull { it.id == email_id }
+        val claimed = api_item?.thread_message_count ?: listed?.thread_message_count ?: 1
+        val token = api_item?.thread_token ?: listed?.thread_token
+        corrected_thread_count(claimed.coerceAtLeast(1), token?.let { detail_count_corrections[it] })
+    }
+    var thread_settled by remember(email_id) { mutableStateOf(false) }
+    LaunchedEffect(email_id, thread_matches_email, thread_state.is_loading, messages.size) {
+        if (thread_matches_email && !thread_state.is_loading && messages.isNotEmpty()) thread_settled = true
+    }
+    val thread_complete = email != null && thread_is_complete(
+        loaded_count = messages.size,
+        expected_count = expected_message_count,
+        settled = thread_settled,
+        any_body_pending = messages.any { it.is_body_pending },
+    )
+    var open_layout by remember(email_id) { mutableStateOf<ThreadOpenLayout?>(null) }
+    LaunchedEffect(email_id, thread_complete, messages) {
+        if (open_layout == null && thread_complete) {
+            open_layout = initial_thread_layout(messages.map { it.id }, email_id)
+        }
+    }
     val is_thread_encrypted = remember(messages) { thread_is_end_to_end_encrypted(messages) }
     val is_thread_pgp = remember(messages) { thread_is_pgp_encrypted(messages) }
     val thread_trackers_blocked = remember(messages) { messages.sumOf { it.trackers_blocked } }
 
     var bottom_bar_height by remember { mutableStateOf(132.dp) }
 
-    val visible_tail_count = 2
-    val hidden_seed_ids = remember(email_id) { mutableStateOf<Set<String>?>(null) }
-    LaunchedEffect(email_id, messages.size) {
-        if (hidden_seed_ids.value != null || messages.size <= 1) return@LaunchedEffect
-        hidden_seed_ids.value = if (messages.size <= visible_tail_count + 2) {
-            emptySet()
-        } else {
-            messages.subList(1, messages.size - visible_tail_count).map { it.id }.toSet()
-        }
-    }
-    val hidden_id_set = remember(messages, hidden_group_revealed, hidden_seed_ids.value) {
+    val hidden_seed_ids = open_layout?.hidden_ids.orEmpty()
+    val hidden_id_set = remember(messages, hidden_group_revealed, hidden_seed_ids) {
         if (hidden_group_revealed) emptySet()
-        else {
-            val seed = hidden_seed_ids.value ?: emptySet()
-            messages.asSequence().map { it.id }.filter { it in seed }.toSet()
-        }
+        else messages.asSequence().map { it.id }.filter { it in hidden_seed_ids }.toSet()
     }
     val first_hidden_idx = remember(messages, hidden_id_set) {
         messages.indexOfFirst { it.id in hidden_id_set }
     }
 
-    val expanded_ids = remember(email_id) {
-        mutableStateOf(emptySet<String>())
+    val user_expanded_ids = remember(email_id) {
+        mutableStateOf<Set<String>?>(null)
     }
-    val seeded_last_id = remember(email_id) {
-        mutableStateOf<String?>(null)
+    val current_expanded_ids = user_expanded_ids.value ?: open_layout?.expanded_ids.orEmpty()
+    val ready_body_ids = remember(email_id) { mutableStateOf(emptySet<String>()) }
+    var body_wait_expired by remember(email_id) { mutableStateOf(false) }
+    LaunchedEffect(email_id, open_layout != null) {
+        if (open_layout == null) return@LaunchedEffect
+        kotlinx.coroutines.delay(thread_body_wait_ms)
+        body_wait_expired = true
     }
-    LaunchedEffect(email_id, messages.size) {
-        if (messages.isEmpty()) return@LaunchedEffect
-        val last_id = messages.last().id
-        if (seeded_last_id.value == last_id) return@LaunchedEffect
-        seeded_last_id.value = last_id
-        expanded_ids.value = expanded_ids.value + last_id
+    var thread_revealed by remember(email_id) { mutableStateOf(false) }
+    LaunchedEffect(
+        email_id,
+        thread_complete,
+        open_layout,
+        hidden_id_set,
+        ready_body_ids.value,
+        body_wait_expired,
+    ) {
+        val layout = open_layout ?: return@LaunchedEffect
+        if (thread_revealed) return@LaunchedEffect
+        if (thread_reveal_ready(
+                complete = thread_complete,
+                expanded_ids = layout.expanded_ids,
+                hidden_ids = hidden_id_set,
+                ready_body_ids = ready_body_ids.value,
+                body_wait_expired = body_wait_expired,
+            )
+        ) {
+            thread_revealed = true
+        }
     }
 
     fun show_toast(msg: String) {
@@ -877,7 +914,7 @@ fun MailDetailScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.bg_primary)
-            .systemBarsPadding()
+            .statusBarsPadding()
             .clear_subject_selection_on_press_outside(subject_selection),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -920,7 +957,7 @@ fun MailDetailScreen(
                         )
                     }
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = !show_topbar_subject && email != null && show_encryption_indicators,
+                        visible = !show_topbar_subject && email != null && thread_settled && show_encryption_indicators,
                         enter = fadeIn(),
                         exit = fadeOut(),
                     ) {
@@ -964,7 +1001,7 @@ fun MailDetailScreen(
                         onClick = { show_topbar_menu = true },
                         modifier = Modifier.testTag("more"),
                     )
-                    aster_dropdown_menu(
+                    aster_menu(
                         expanded = show_topbar_menu,
                         on_dismiss = { show_topbar_menu = false },
                         offset = DpOffset(0.dp, 8.dp),
@@ -1285,16 +1322,21 @@ fun MailDetailScreen(
                     }
                 }
 
-                items(messages.size, key = { messages[it].id }, contentType = { "thread_message" }) { idx ->
-                    val msg = messages[idx]
-                    val is_last = idx == messages.size - 1
-                    val is_last_message = idx == messages.size - 1
-                    val is_expanded = messages.size <= 1 ||
-                        expanded_ids.value.contains(msg.id)
+                val thread_items = if (open_layout == null) emptyList() else messages
+                items(thread_items.size, key = { thread_items[it].id }, contentType = { "thread_message" }) { idx ->
+                    val msg = thread_items[idx]
+                    val is_last = idx == thread_items.size - 1
+                    val is_expanded = thread_message_is_expanded(
+                        message_id = msg.id,
+                        is_last = is_last,
+                        total_messages = thread_items.size,
+                        expanded_ids = current_expanded_ids,
+                        known_ids = open_layout?.known_ids.orEmpty(),
+                    )
 
                     val is_hidden = msg.id in hidden_id_set
                     val is_after_indicator = hidden_id_set.isNotEmpty() &&
-                        idx > 0 && messages[idx - 1].id in hidden_id_set
+                        idx > 0 && thread_items[idx - 1].id in hidden_id_set
 
                     if (is_hidden) {
                         if (idx == first_hidden_idx) {
@@ -1361,7 +1403,7 @@ fun MailDetailScreen(
                             on_dismiss_unsub = {
                                 dismissed_unsub_ids = dismissed_unsub_ids + msg.id
                             },
-                            on_body_ready = { body_ready = true },
+                            on_body_ready = { ready_body_ids.value = ready_body_ids.value + msg.id },
                             on_track = { _, _, _ -> },
                             access_token = settings_vm.get_access_token(),
                             on_link_click = { url ->
@@ -1406,7 +1448,7 @@ fun MailDetailScreen(
                             },
                             on_collapse = {
                                 anchor_toggle(msg.id)
-                                expanded_ids.value = expanded_ids.value - msg.id
+                                user_expanded_ids.value = current_expanded_ids - msg.id
                             },
                             on_sender_tap = { email, name ->
                                 profile_sender = email to name
@@ -1485,15 +1527,18 @@ fun MailDetailScreen(
                             message_index = idx,
                             on_expand = {
                                 anchor_toggle(msg.id)
-                                expanded_ids.value = expanded_ids.value + msg.id
+                                user_expanded_ids.value = current_expanded_ids + msg.id
                             },
                         )
                     }
                 }
 
-                item { Spacer(Modifier.height(bottom_bar_height)) }
+                item { Spacer(Modifier.height(bottom_bar_height + 16.dp)) }
             }
-            detail_skeleton_overlay(visible = email == null)
+            detail_skeleton_overlay(
+                visible = !thread_revealed,
+                message_count = expected_message_count,
+            )
 
             }
         }
@@ -1515,7 +1560,7 @@ fun MailDetailScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .background(colors.bg_primary)
+                    .background(if (colors.is_glass) colors.modal_bg.copy(alpha = 1f) else colors.bg_primary)
                     .pointerInput(Unit) {}
                     .onGloballyPositioned { coords ->
                         val measured = with(density) { coords.size.height.toDp() }
@@ -1564,11 +1609,7 @@ fun MailDetailScreen(
                     reply_action_row(
                         on_reply = { on_reply(latest_msg.id, thread_ghost_email) },
                         on_forward = { on_forward(latest_msg.id, thread_ghost_email) },
-                        show_react = latest_restriction == null ||
-                            (
-                                latest_restriction != org.astermail.android.mail.ReactionRestriction.disabled &&
-                                    latest_restriction != org.astermail.android.mail.ReactionRestriction.own_message
-                                ),
+                        show_react = latest_restriction != org.astermail.android.mail.ReactionRestriction.disabled,
                         react_enabled = latest_restriction == null,
                         on_react = {
                             val blocked = reaction_restriction_for(latest_msg)
@@ -2519,9 +2560,6 @@ internal fun expanded_message(
             html_rendering_mode = body_settings_state.preferences?.html_rendering_mode,
             low_network = org.astermail.android.network.low_network_active(),
         )
-        val body_skeleton_seen = remember(msg.id) { booleanArrayOf(false) }
-        val body_skeleton_reveal = !body_skeleton_seen[0]
-        if (msg.is_body_pending) body_skeleton_seen[0] = true
         if (msg.is_body_pending) {
             var body_wait_expired by remember(msg.id, retry_in_progress) { mutableStateOf(false) }
             LaunchedEffect(msg.id, retry_in_progress) {
@@ -2566,7 +2604,6 @@ internal fun expanded_message(
                 on_ready = on_body_ready,
                 on_link_click = on_link_click,
                 on_image_click = on_image_click,
-                skeleton_reveal = body_skeleton_reveal,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = AsterSpacing.xs, bottom = if (is_last) 0.dp else AsterSpacing.sm)
@@ -2678,7 +2715,6 @@ internal fun expanded_message(
                 on_ready = on_body_ready,
                 on_link_click = on_link_click,
                 on_image_click = on_image_click,
-                skeleton_reveal = body_skeleton_reveal,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = AsterSpacing.xs, bottom = if (is_last) 0.dp else AsterSpacing.sm)
@@ -4253,7 +4289,6 @@ private object action_menu_position_provider : PopupPositionProvider {
     ): IntOffset = IntOffset.Zero
 }
 
-private val action_menu_elevation = 12.dp
 private val action_menu_shadow_gutter = 22.dp
 
 @Composable
@@ -4280,7 +4315,6 @@ internal fun action_menu_sheet(
     visible_state.targetState = expanded
     if (!visible_state.currentState && !visible_state.targetState) return
 
-    val shape = SquircleShape(20.dp)
     val scrim_interaction = remember { MutableInteractionSource() }
     val menu_reduce_motion = aster_reduce_motion()
     val menu_pop_fade_enter = if (menu_reduce_motion) AsterDuration.instant else AsterDuration.menu_fade_enter
@@ -4332,58 +4366,50 @@ internal fun action_menu_sheet(
                         transformOrigin = TransformOrigin(1f, 1f),
                     ),
             ) {
-                Column(
-                    modifier = Modifier
-                        .testTag("action_menu")
-                        .shadow(action_menu_elevation, shape, clip = false)
-                        .clip(shape)
-                        .background(colors.dropdown_bg)
-                        .widthIn(min = 240.dp, max = 320.dp)
-                        .heightIn(max = 460.dp)
-                        .verticalScroll(rememberScrollState())
-                        .padding(vertical = 7.dp),
+                aster_menu_surface(
+                    modifier = Modifier.testTag("action_menu"),
+                    min_width = 240.dp,
+                    max_width = 320.dp,
+                    max_height = 460.dp,
                 ) {
-                    aster_dropdown_item(stringResource(R.string.reply), on_reply, icon = TablerIcons.ArrowBackUp)
-                    aster_dropdown_item(stringResource(R.string.reply_all), on_reply_all, icon = TablerIcons.ArrowsLeft)
-                    aster_dropdown_item(stringResource(R.string.forward), on_forward, icon = TablerIcons.MailForward)
-                    aster_dropdown_divider()
-                    aster_dropdown_item(
+                    aster_menu_item(stringResource(R.string.reply), on_reply, icon = TablerIcons.ArrowBackUp)
+                    aster_menu_item(stringResource(R.string.reply_all), on_reply_all, icon = TablerIcons.ArrowsLeft)
+                    aster_menu_item(stringResource(R.string.forward), on_forward, icon = TablerIcons.MailForward)
+                    aster_menu_item(
                         if (is_starred) stringResource(R.string.unstar) else stringResource(R.string.star),
                         on_star,
                         icon = TablerIcons.Star,
                     )
-                    aster_dropdown_item(stringResource(R.string.mark_as_unread), on_mark_unread, icon = TablerIcons.Mail)
-                    aster_dropdown_item(stringResource(R.string.label), on_label, icon = TablerIcons.Tag)
-                    aster_dropdown_item(stringResource(R.string.snooze), on_snooze, icon = TablerIcons.Moon)
-                    aster_dropdown_divider()
-                    aster_dropdown_item(
+                    aster_menu_item(stringResource(R.string.mark_as_unread), on_mark_unread, icon = TablerIcons.Mail)
+                    aster_menu_item(stringResource(R.string.label), on_label, icon = TablerIcons.Tag)
+                    aster_menu_item(stringResource(R.string.snooze), on_snooze, icon = TablerIcons.Moon)
+                    aster_menu_item(
                         if (is_archived) stringResource(R.string.swipe_move_to_inbox) else stringResource(R.string.swipe_archive),
                         on_archive,
                         icon = if (is_archived) TablerIcons.Inbox else TablerIcons.Archive,
                     )
                     if (is_spam) {
-                        aster_dropdown_item(
+                        aster_menu_item(
                             stringResource(R.string.swipe_not_spam),
                             on_spam,
                             icon = TablerIcons.ShieldCheck,
                             tint = colors.accent_blue,
                         )
                     } else {
-                        aster_dropdown_item(
+                        aster_menu_item(
                             stringResource(R.string.report_spam),
                             on_spam,
                             icon = TablerIcons.AlertTriangle,
                             destructive = true,
                         )
                     }
-                    aster_dropdown_item(
+                    aster_menu_item(
                         stringResource(R.string.move_to_trash),
                         on_trash,
                         icon = TablerIcons.Trash,
                         destructive = true,
                     )
-                    aster_dropdown_divider()
-                    aster_dropdown_item(
+                    aster_menu_item(
                         stringResource(R.string.customize_toolbar),
                         on_customize_toolbar,
                         icon = TablerIcons.Adjustments,
@@ -5215,7 +5241,6 @@ internal fun email_html_view(
     on_ready: () -> Unit = {},
     on_link_click: (String) -> Unit = {},
     on_image_click: (String) -> Unit = {},
-    skeleton_reveal: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
     val is_dark = !force_light && if (colors.is_glass) colors.is_dark else colors.bg_primary.luminance() < colors.text_primary.luminance()
@@ -6001,7 +6026,6 @@ internal fun email_html_view(
         }
         if (!renderer_exhausted.value && !body_shown) {
             email_body_skeleton(
-                reveal = skeleton_reveal,
                 modifier = Modifier
                     .matchParentSize()
                     .background(inbox_card_read_color(colors))
@@ -6809,7 +6833,7 @@ private fun detail_menu_action(
     test_tag: String? = null,
     onClick: () -> Unit,
 ) {
-    aster_dropdown_item(
+    aster_menu_item(
         label = text,
         icon = icon,
         tint = tint,

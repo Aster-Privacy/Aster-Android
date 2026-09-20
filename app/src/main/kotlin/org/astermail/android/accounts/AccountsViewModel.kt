@@ -65,7 +65,12 @@ class AccountsViewModel @Inject constructor(
         }
     }
 
+    private var last_profile_refresh_at = 0L
+
     fun refresh_with_profile() {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (now - last_profile_refresh_at < profile_refresh_interval_ms) return
+        last_profile_refresh_at = now
         viewModelScope.launch {
             auth_repository.refresh_profile()
             refresh()
@@ -145,5 +150,6 @@ class AccountsViewModel @Inject constructor(
 
     private companion object {
         const val limit_key_max_multi_accounts = "max_multi_accounts"
+        const val profile_refresh_interval_ms = 60_000L
     }
 }

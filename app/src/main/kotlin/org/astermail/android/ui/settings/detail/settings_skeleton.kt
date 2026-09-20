@@ -46,7 +46,6 @@ import kotlinx.coroutines.delay
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_appearance
 import org.astermail.android.design.components.shimmer_state
@@ -142,7 +141,7 @@ internal fun skeleton_card_list(
                     subtitle_fraction = if (idx % 2 == 0) 0.33f else 0.4f,
                     trailing_width = trailing_width,
                 )
-                if (idx < rows - 1) AsterDivider()
+                if (idx < rows - 1) settings_row_gap()
             }
         }
     }

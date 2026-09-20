@@ -54,8 +54,10 @@ import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.hilt.navigation.compose.hiltViewModel
 import org.astermail.android.mail.MailViewModel
+import org.astermail.android.mail.folder_cache_skeleton_allowed
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -143,8 +145,13 @@ fun FilteredInboxScreen(
         inbox_state.items.map { inbox_item_to_email(it, settings_state.tags, context = email_label_context) }
     }
     val grouping_enabled = settings_state.preferences?.conversation_grouping != false
-    val threads = remember(filtered_emails, grouping_enabled) {
-        val rows = if (grouping_enabled) group_by_thread(filtered_emails) else flat_thread_rows(filtered_emails)
+    val filtered_count_corrections by mail_vm.thread_count_corrections.collectAsStateWithLifecycle()
+    val threads = remember(filtered_emails, grouping_enabled, filtered_count_corrections) {
+        val rows = if (grouping_enabled) {
+            group_by_thread(filtered_emails, filtered_count_corrections)
+        } else {
+            flat_thread_rows(filtered_emails.distinctBy { it.id })
+        }
         rows.sortedWith(compareByDescending<ThreadRow> { it.newest.received_at }.thenByDescending { it.thread_id })
     }
 
@@ -183,17 +190,28 @@ fun FilteredInboxScreen(
             AsterDivider(modifier = Modifier.fillMaxWidth())
             val showing_requested = inbox_state.current_folder == requested_folder
             val has_rows = showing_requested && threads.isNotEmpty()
-            val skeleton_now = !has_rows && (inbox_state.is_loading || !showing_requested)
+            val skeleton_now = folder_cache_skeleton_allowed(inbox_state.cache_pending, threads.size) &&
+                !has_rows &&
+                (inbox_state.is_loading || !showing_requested)
+            val skeleton_phase by remember_skeleton_phase(
+                wanted = skeleton_now,
+                rows_imminent = false,
+            )
+            val handoff = Modifier.skeleton_handoff(skeleton_phase)
+            val row_geometry = remember_row_geometry(skeleton_geometry_of(settings_state.preferences))
+            val record_row_height = remember_row_height_recorder()
             Box(modifier = Modifier.fillMaxSize()) {
-            if (skeleton_now) {
+            if (skeleton_now || skeleton_phase != SkeletonPhase.content) {
                 Box(Modifier.fillMaxSize())
             } else if (threads.isEmpty() && inbox_state.error != null) {
-                inbox_error_state(inbox_state.error.orEmpty()) {
-                    mail_vm.load_inbox(requested_folder, force = true)
+                Box(modifier = Modifier.fillMaxSize().then(handoff)) {
+                    inbox_error_state(inbox_state.error.orEmpty()) {
+                        mail_vm.load_inbox(requested_folder, force = true)
+                    }
                 }
             } else if (threads.isEmpty()) {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().then(handoff),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -203,7 +221,7 @@ fun FilteredInboxScreen(
                     )
                 }
             } else {
-                Box(modifier = Modifier.fillMaxSize()) {
+                Box(modifier = Modifier.fillMaxSize().then(handoff)) {
                     LazyColumn(
                         state = list_state,
                         modifier = Modifier.fillMaxSize(),
@@ -217,7 +235,11 @@ fun FilteredInboxScreen(
                             key = { _, thread -> thread.thread_id },
                             contentType = { _, _ -> "thread_row" },
                         ) { row_index, thread ->
-                            Box(modifier = Modifier.background(colors.bg_primary)) {
+                            Box(
+                                modifier = Modifier
+                                    .background(colors.bg_primary)
+                                    .onSizeChanged { record_row_height(row_index, it.height) },
+                            ) {
                                 ThreadInboxRow(
                                     thread = thread,
                                     on_click = { on_open_email(thread_open_target_id(thread)) },
@@ -236,6 +258,7 @@ fun FilteredInboxScreen(
                                     is_first = row_index == 0,
                                     is_last = row_index == threads.lastIndex,
                                     user_prefs = settings_state.preferences,
+                                    cached_geometry = row_geometry,
                                 )
                             }
                         }
@@ -246,10 +269,10 @@ fun FilteredInboxScreen(
                     )
                 }
             }
-            inbox_skeleton_overlay(
-                visible = skeleton_now,
+            inbox_skeleton_layer(
+                phase = skeleton_phase,
                 modifier = Modifier.padding(top = inbox_group_split),
-                list_density = settings_state.preferences?.mail_list_density,
+                live_geometry = skeleton_geometry_of(settings_state.preferences),
             )
             }
         }

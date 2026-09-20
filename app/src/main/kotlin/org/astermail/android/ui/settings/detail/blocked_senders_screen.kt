@@ -69,7 +69,6 @@ import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogDestructiveButton
 import org.astermail.android.design.components.AsterDialogOutlineButton
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.SettingsViewModel
@@ -412,7 +411,7 @@ fun BlockedSendersScreen(
                                 action_label = unblock_label,
                                 on_action = { vm.unblock_sender(sender.sender_token) },
                             )
-                            if (idx < filtered.lastIndex) AsterDivider(modifier = Modifier)
+                            if (idx < filtered.lastIndex) settings_row_gap(modifier = Modifier)
                         }
                     }
                 }

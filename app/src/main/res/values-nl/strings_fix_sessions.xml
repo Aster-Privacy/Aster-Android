@@ -14,4 +14,6 @@
     <string name="link_device_hero_title">Voer de apparaatcode in</string>
     <string name="link_device_confirm_title">Bevestig dit apparaat</string>
     <string name="link_device_pending_badge">In afwachting</string>
+    <string name="link_device_step_progress">Stap %1$d van %2$d · %3$s</string>
+    <string name="link_device_error_title">Kan het apparaat niet koppelen</string>
 </resources>

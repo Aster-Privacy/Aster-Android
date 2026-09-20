@@ -15,6 +15,10 @@ kotlin {
 val is_fdroid_build = project.hasProperty("fdroid") ||
     gradle.startParameter.taskNames.any { it.contains("fdroid", ignoreCase = true) }
 
+if (!is_fdroid_build) {
+    apply(plugin = "androidx.baselineprofile")
+}
+
 android {
     namespace = "org.astermail.android"
     compileSdk = 36
@@ -181,6 +185,11 @@ dependencies {
     implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.credentials)
     "fullImplementation"(libs.androidx.credentials.play.services.auth)
+    implementation(libs.androidx.profileinstaller)
+
+    if (!is_fdroid_build) {
+        "baselineProfile"(project(":baselineprofile"))
+    }
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

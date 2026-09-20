@@ -104,8 +104,8 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
 import org.astermail.android.mail.InboxItem
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.ui.mail.EmailRow
@@ -853,7 +853,16 @@ fun SearchScreen(
                 )
             }
         } else if (result_threads.isEmpty() && results_pending) {
-            org.astermail.android.ui.mail.inbox_skeleton(Modifier.weight(1f))
+            val search_skeleton_geometry = org.astermail.android.ui.mail.remember_skeleton_geometry(
+                org.astermail.android.ui.mail.SkeletonPhase.skeleton,
+                org.astermail.android.ui.mail.skeleton_geometry_of(settings_state.preferences),
+            )
+            org.astermail.android.ui.mail.inbox_skeleton(
+                modifier = Modifier.weight(1f),
+                list_density = search_skeleton_geometry.list_density,
+                show_avatar = search_skeleton_geometry.show_avatar,
+                show_preview = search_skeleton_geometry.show_preview,
+            )
         } else if (result_threads.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -1243,13 +1252,13 @@ private fun search_input_bar(
                     modifier = Modifier.size(22.dp),
                 )
             }
-            aster_dropdown_menu(
+            aster_menu(
                 expanded = filter_menu_open,
                 on_dismiss = { filter_menu_open = false },
             ) {
                 FILTER_CHIPS.forEach { chip ->
                     val selected = active_filter == chip.key
-                    aster_dropdown_item(
+                    aster_menu_item(
                         label = stringResource(chip.label_res),
                         selected = selected,
                         on_click = {
@@ -1280,6 +1289,9 @@ internal fun search_results_list(
     val haptics = LocalHapticFeedback.current
     val settings_vm = org.astermail.android.settings.optional_shared_settings_view_model()
     val settings_state = settings_vm?.state?.collectAsStateWithLifecycle()?.value
+    val search_row_geometry = org.astermail.android.ui.mail.remember_row_geometry(
+        org.astermail.android.ui.mail.skeleton_geometry_of(settings_state?.preferences),
+    )
     val live_select_mode by rememberUpdatedState(select_mode)
     val live_selected_set by rememberUpdatedState(selected_set)
     val live_threads by rememberUpdatedState(threads)
@@ -1415,6 +1427,7 @@ internal fun search_results_list(
                 select_mode = select_mode,
                 is_pinned = thread.is_pinned,
                 user_prefs = settings_state?.preferences,
+                cached_geometry = search_row_geometry,
             )
         }
     }

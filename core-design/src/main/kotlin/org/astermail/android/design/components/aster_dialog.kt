@@ -21,6 +21,7 @@
 
 package org.astermail.android.design.components
 
+import org.astermail.android.design.remember_click_interaction
 import org.astermail.android.design.SquircleShape
 
 import androidx.compose.foundation.background
@@ -49,7 +50,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.ripple
+import org.astermail.android.design.aster_ripple
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateFloatAsState
@@ -511,7 +512,7 @@ private fun dialog_depth_button(
             .clickable(
                 enabled = interactive,
                 interactionSource = interaction,
-                indication = ripple(color = label_color),
+                indication = aster_ripple(color = label_color),
                 onClick = onClick,
             )
             .padding(horizontal = 12.dp),
@@ -537,6 +538,7 @@ fun AsterDialogOutlineButton(
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
+        interactionSource = remember_click_interaction(),
         modifier = modifier.height(dialog_button_height),
         shape = dialog_button_shape,
         colors = ButtonDefaults.outlinedButtonColors(

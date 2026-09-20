@@ -3483,4 +3483,7 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
+    <string name="connection_relay_connected">Подключено</string>
+    <string name="connection_relay_restored">Всё снова работает как обычно</string>
+    <string name="connection_relay_disconnected">Отключено</string>
 </resources>

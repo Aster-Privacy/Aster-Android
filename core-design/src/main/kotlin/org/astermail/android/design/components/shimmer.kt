@@ -37,11 +37,22 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.aster_reduce_motion
 
-private const val shimmer_period_ms = 1200L
+private const val shimmer_period_ms = 1600L
 private const val shimmer_band_fraction = 0.6f
 
 private fun mix(from: Color, to: Color, amount: Float): Color = Color(
@@ -92,9 +103,9 @@ fun shimmer_state(animated: Boolean = true): shimmer_appearance {
                 0.05f,
             ),
             highlight = mix(
-                mix(surface, lift, if (colors.is_dark) 0.16f else 0.03f),
+                mix(surface, lift, if (colors.is_dark) 0.12f else 0.04f),
                 colors.accent_blue,
-                0.13f,
+                0.08f,
             ),
             phase = phase,
             animated = is_animated,
@@ -140,3 +151,59 @@ fun Modifier.shimmer(
     shape: Shape = RectangleShape,
     animated: Boolean = true,
 ): Modifier = this.shimmer(shimmer_state(animated), shape)
+
+@Composable
+fun Modifier.shimmer_line(
+    state: shimmer_appearance,
+    height_fraction: Float = 0.6f,
+    corner: Dp = 4.dp,
+): Modifier {
+    val origin = remember { FloatArray(1) }
+    val density = LocalDensity.current
+    val sweep_width = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
+    val corner_px = with(density) { corner.toPx() }
+    return this
+        .onGloballyPositioned { origin[0] = it.positionInWindow().x }
+        .graphicsLayer()
+        .drawWithCache {
+            val bar_height = size.height * height_fraction.coerceIn(0f, 1f)
+            val bar_top = (size.height - bar_height) / 2f
+            val bar = Path().apply {
+                addRoundRect(
+                    RoundRect(
+                        left = 0f,
+                        top = bar_top,
+                        right = size.width,
+                        bottom = bar_top + bar_height,
+                        cornerRadius = CornerRadius(corner_px.coerceAtMost(bar_height / 2f)),
+                    ),
+                )
+            }
+            val band = sweep_width * shimmer_band_fraction
+            val band_brush = if (band > 0f) {
+                Brush.linearGradient(
+                    colors = listOf(state.base, state.highlight, state.base),
+                    start = Offset.Zero,
+                    end = Offset(band, 0f),
+                )
+            } else {
+                null
+            }
+            val travel = sweep_width + band
+            onDrawBehind {
+                clipPath(bar) {
+                    drawRect(state.base)
+                    if (band_brush != null && state.animated) {
+                        val band_left = state.phase.value * travel - band - origin[0]
+                        translate(left = band_left) {
+                            drawRect(
+                                brush = band_brush,
+                                topLeft = Offset.Zero,
+                                size = Size(band, size.height),
+                            )
+                        }
+                    }
+                }
+            }
+        }
+}

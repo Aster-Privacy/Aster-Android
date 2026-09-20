@@ -211,7 +211,7 @@ fun pending_send_preview_screen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(colors.bg_primary)
+                .background(if (colors.is_glass) colors.modal_bg.copy(alpha = 1f) else colors.bg_primary)
                 .padding(WindowInsets.navigationBars.asPaddingValues()),
             verticalAlignment = Alignment.CenterVertically,
         ) {

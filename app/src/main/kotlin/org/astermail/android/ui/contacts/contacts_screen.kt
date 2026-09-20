@@ -99,9 +99,8 @@ import org.astermail.android.design.components.AsterDialogPrimaryButton
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterTextField
-import org.astermail.android.design.components.aster_dropdown_divider
-import org.astermail.android.design.components.aster_dropdown_item
-import org.astermail.android.design.components.aster_dropdown_menu
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_menu
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 
@@ -277,11 +276,11 @@ fun ContactsScreen(
                             onClick = { show_bulk_menu = true },
                             modifier = Modifier.testTag("contacts_bulk_menu"),
                         )
-                        aster_dropdown_menu(
+                        aster_menu(
                             expanded = show_bulk_menu,
                             on_dismiss = { show_bulk_menu = false },
                         ) {
-                            aster_dropdown_item(
+                            aster_menu_item(
                                 label = stringResource(R.string.compose),
                                 icon = TablerIcons.Mail,
                                 test_tag = "bulk_compose",
@@ -290,7 +289,7 @@ fun ContactsScreen(
                                     on_compose_selection()
                                 },
                             )
-                            aster_dropdown_item(
+                            aster_menu_item(
                                 label = stringResource(R.string.add_to_group),
                                 icon = TablerIcons.Users,
                                 test_tag = "bulk_add_to_group",
@@ -300,7 +299,7 @@ fun ContactsScreen(
                                     show_group_picker = true
                                 },
                             )
-                            aster_dropdown_item(
+                            aster_menu_item(
                                 label = stringResource(R.string.export_as_vcard),
                                 icon = TablerIcons.Download,
                                 test_tag = "bulk_export_vcard",
@@ -312,7 +311,7 @@ fun ContactsScreen(
                                     )
                                 },
                             )
-                            aster_dropdown_item(
+                            aster_menu_item(
                                 label = stringResource(R.string.export_as_csv),
                                 icon = TablerIcons.Download,
                                 test_tag = "bulk_export_csv",
@@ -324,8 +323,7 @@ fun ContactsScreen(
                                     )
                                 },
                             )
-                            aster_dropdown_divider()
-                            aster_dropdown_item(
+                            aster_menu_item(
                                 label = stringResource(R.string.delete),
                                 icon = TablerIcons.Trash,
                                 destructive = true,
@@ -385,11 +383,11 @@ fun ContactsScreen(
                             onClick = { show_overflow_menu = true },
                             modifier = Modifier.testTag("contacts_overflow_menu"),
                         )
-                        aster_dropdown_menu(
+                        aster_menu(
                             expanded = show_overflow_menu,
                             on_dismiss = { show_overflow_menu = false },
                         ) {
-                            aster_dropdown_item(
+                            aster_menu_item(
                                 label = stringResource(
                                     if (ui_state.is_syncing) R.string.syncing else R.string.sync_contacts,
                                 ),
@@ -401,8 +399,7 @@ fun ContactsScreen(
                                     show_sync_confirm = true
                                 },
                             )
-                            aster_dropdown_divider()
-                            aster_dropdown_item(
+                            aster_menu_item(
                                 label = stringResource(R.string.import_contacts_file),
                                 icon = TablerIcons.Upload,
                                 test_tag = "contacts_import_file",
@@ -421,8 +418,7 @@ fun ContactsScreen(
                                     )
                                 },
                             )
-                            aster_dropdown_divider()
-                            aster_dropdown_item(
+                            aster_menu_item(
                                 label = stringResource(R.string.export_as_vcard),
                                 icon = TablerIcons.Download,
                                 enabled = ui_state.contacts.isNotEmpty(),
@@ -435,7 +431,7 @@ fun ContactsScreen(
                                     )
                                 },
                             )
-                            aster_dropdown_item(
+                            aster_menu_item(
                                 label = stringResource(R.string.export_as_csv),
                                 icon = TablerIcons.Download,
                                 enabled = ui_state.contacts.isNotEmpty(),
@@ -596,7 +592,7 @@ fun ContactsScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(colors.bg_primary)
+                                        .background(colors.solid_bg)
                                         .padding(
                                             horizontal = AsterSpacing.lg,
                                             vertical = AsterSpacing.xs,

@@ -3333,4 +3333,7 @@
     <string name="plan_badge_star">तारा</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
+    <string name="connection_relay_connected">कनेक्ट हो गया</string>
+    <string name="connection_relay_restored">सब कुछ फिर से सामान्य है</string>
+    <string name="connection_relay_disconnected">डिसकनेक्ट हो गया</string>
 </resources>

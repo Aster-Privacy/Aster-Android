@@ -21,7 +21,11 @@
 
 package org.astermail.android.ui.mail
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,6 +36,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -43,6 +48,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -64,7 +72,6 @@ import org.astermail.android.R
 import org.astermail.android.contacts.ContactsViewModel
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.ui.contacts.Contact
@@ -77,7 +84,7 @@ fun is_internal_sender(email: String): Boolean {
     return domain in internal_sender_domains
 }
 
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun sender_profile_sheet(
     sender_email: String,
@@ -92,12 +99,19 @@ fun sender_profile_sheet(
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val header_tap = remember { MutableInteractionSource() }
     val state = rememberModalBottomSheetState()
     val contacts_state by contacts_vm.state.collectAsStateWithLifecycle()
     val normalized = remember(sender_email) { sender_email.trim().lowercase() }
     val is_internal = remember(normalized) { is_internal_sender(normalized) }
     val existing_contact = remember(contacts_state.contacts, normalized) {
         contacts_state.contacts.firstOrNull { it.email.trim().lowercase() == normalized }
+    }
+
+    val identity_text = remember(sender_name, normalized) {
+        val name = sender_name.trim()
+        if (name.isBlank() || name.equals(normalized, ignoreCase = true)) normalized else "$name <$normalized>"
     }
 
     LaunchedEffect(Unit) {
@@ -120,7 +134,16 @@ fun sender_profile_sheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = AsterSpacing.xl)
-                    .padding(bottom = AsterSpacing.md),
+                    .padding(bottom = AsterSpacing.md)
+                    .combinedClickable(
+                        interactionSource = header_tap,
+                        indication = null,
+                        onClick = {},
+                        onLongClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            on_copy(identity_text)
+                        },
+                    ),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 SenderAvatar(email = normalized, name = sender_name, size = 64.dp)
@@ -149,24 +172,25 @@ fun sender_profile_sheet(
                     Spacer(Modifier.height(AsterSpacing.sm))
                     Row(
                         modifier = Modifier
-                            .clip(SquircleShape(999.dp))
-                            .background(colors.accent_blue.copy(alpha = 0.14f))
-                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(lerp(colors.bg_card, colors.text_primary, 0.06f))
+                            .border(1.dp, lerp(colors.bg_card, colors.text_primary, 0.14f), RoundedCornerShape(6.dp))
+                            .padding(horizontal = 8.dp, vertical = 3.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center,
                     ) {
                         Icon(
                             imageVector = TablerIcons.ShieldLock,
                             contentDescription = null,
-                            tint = colors.accent_blue,
-                            modifier = Modifier.size(13.dp),
+                            tint = colors.text_primary,
+                            modifier = Modifier.size(12.dp),
                         )
                         Spacer(Modifier.width(5.dp))
                         Text(
                             text = stringResource(R.string.sender_on_aster),
-                            color = colors.accent_blue,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            color = colors.text_primary,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
                         )
                     }
                 }

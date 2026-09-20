@@ -40,10 +40,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -68,7 +66,7 @@ fun fast_scroll_bar(
 ) {
     val colors = AsterMaterial.colors
     val density = LocalDensity.current
-    val haptics = LocalHapticFeedback.current
+    val haptics = org.astermail.android.design.remember_haptic()
     val haptic_enabled = local_accessibility.current.haptic_enabled
 
     var dragging by remember { mutableStateOf(false) }
@@ -177,7 +175,7 @@ fun fast_scroll_bar(
                             locked_geometry[0] = thumb
                             locked_geometry[1] = span
                             dragging = true
-                            if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            if (haptic_enabled) haptics(org.astermail.android.design.aster_haptic.tick)
                         },
                         onDragEnd = {
                             dragging = false

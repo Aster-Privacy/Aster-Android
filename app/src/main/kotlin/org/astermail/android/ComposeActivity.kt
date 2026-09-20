@@ -225,7 +225,7 @@ private fun compose_locked_overlay() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(colors.bg_primary)
+                .background(colors.solid_bg)
                 .pointerInput(Unit) {},
             contentAlignment = Alignment.Center,
         ) {

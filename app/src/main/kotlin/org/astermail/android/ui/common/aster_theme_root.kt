@@ -27,10 +27,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.Font
@@ -48,7 +48,6 @@ import org.astermail.android.storage.ThemeMode
 import org.astermail.android.ui.theme.AccessibilityState
 import org.astermail.android.ui.theme.ThemeViewModel
 import org.astermail.android.ui.theme.local_accessibility
-import org.astermail.android.ui.theme.draw_theme_backdrop
 import org.astermail.android.ui.theme.local_background_image
 import org.astermail.android.ui.theme.local_text_scale
 
@@ -106,9 +105,10 @@ fun aster_theme_root(content: @Composable () -> Unit) {
         } else null
     }
 
-    val active_backdrop = org.astermail.android.ui.theme.theme_background_for(background_image)
-        ?.takeIf { !reduce_transparency }
-    androidx.compose.runtime.SideEffect { nav_glass_mode = active_backdrop != null }
+    val custom_image_meta by org.astermail.android.ui.theme.custom_theme_image.meta.collectAsState()
+    val active_backdrop = remember(background_image, custom_image_meta) {
+        org.astermail.android.ui.theme.theme_background_for(background_image)
+    }?.takeIf { !reduce_transparency }
     AsterTheme(
         theme_mode = resolved_mode,
         high_contrast = high_contrast,
@@ -138,18 +138,7 @@ fun aster_theme_root(content: @Composable () -> Unit) {
             org.astermail.android.design.local_reduce_motion provides a11y.reduce_motion,
         ) {
             val colors = AsterMaterial.colors
-            val backdrop = if (colors.is_glass) org.astermail.android.ui.theme.theme_background_bitmap() else null
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .then(
-                        if (backdrop != null) {
-                            Modifier.drawBehind { draw_theme_backdrop(backdrop, size) }
-                        } else {
-                            Modifier.background(colors.bg_primary)
-                        },
-                    ),
-            ) {
+            Box(modifier = Modifier.fillMaxSize().background(colors.bg_primary)) {
                 content()
                 app_toast_host()
             }

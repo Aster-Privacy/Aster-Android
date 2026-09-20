@@ -60,7 +60,6 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.mail.DEFAULT_SWIPE_LEFT_ACTION
 import org.astermail.android.mail.DEFAULT_SWIPE_RIGHT_ACTION
 import org.astermail.android.mail.SWIPE_ACTION_ARCHIVE
@@ -148,7 +147,7 @@ fun SwipeActionsScreen(on_back: () -> Unit) {
                             }
                         },
                     )
-                    if (i < action_options.lastIndex) AsterDivider(modifier = Modifier)
+                    if (i < action_options.lastIndex) settings_row_gap(modifier = Modifier)
                 }
             }
             v_gap(AsterSpacing.xl)
@@ -172,7 +171,7 @@ fun SwipeActionsScreen(on_back: () -> Unit) {
                             }
                         },
                     )
-                    if (i < action_options.lastIndex) AsterDivider(modifier = Modifier)
+                    if (i < action_options.lastIndex) settings_row_gap(modifier = Modifier)
                 }
             }
         }

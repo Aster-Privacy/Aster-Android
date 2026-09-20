@@ -297,13 +297,14 @@ private fun state_pill(state_value: String, on_click: (() -> Unit)? = null) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val (bg, fg) = when (state_value.lowercase()) {
-        "needs_reauth" -> colors.warning.copy(alpha = 0.18f) to colors.warning
-        "failed" -> colors.danger.copy(alpha = 0.15f) to colors.danger
-        "done" -> colors.success.copy(alpha = 0.15f) to colors.success
-        "paused_quota" -> colors.warning.copy(alpha = 0.15f) to colors.warning
-        "running", "queued" -> colors.accent_blue.copy(alpha = 0.15f) to colors.accent_blue
-        "cancelled" -> colors.text_tertiary.copy(alpha = 0.15f) to colors.text_tertiary
-        else -> colors.text_tertiary.copy(alpha = 0.15f) to colors.text_tertiary
+        "needs_reauth" -> colors.warning
+        "failed" -> colors.danger
+        "done" -> colors.success
+        "paused_quota" -> colors.warning
+        "running", "queued" -> colors.accent_blue
+        else -> colors.text_tertiary
+    }.let { tone ->
+        org.astermail.android.ui.mail.chip_subtle_background(tone, colors.bg_card, colors.is_dark) to tone
     }
     Box(
         modifier = Modifier
@@ -333,7 +334,7 @@ private fun provider_row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(SquircleShape(18.dp))
-            .border(1.dp, colors.text_tertiary.copy(alpha = 0.18f), SquircleShape(18.dp))
+            .border(1.dp, colors.border_secondary, SquircleShape(18.dp))
             .clickable(onClick = on_click)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -342,7 +343,7 @@ private fun provider_row(
             modifier = Modifier
                 .size(36.dp)
                 .clip(SquircleShape(8.dp))
-                .background(colors.text_tertiary.copy(alpha = 0.06f)),
+                .background(colors.bg_tertiary),
             contentAlignment = Alignment.Center,
         ) {
             Image(
@@ -363,7 +364,7 @@ private fun provider_row(
             Box(
                 modifier = Modifier
                     .clip(SquircleShape(999.dp))
-                    .background(colors.text_tertiary.copy(alpha = 0.12f))
+                    .background(colors.bg_tertiary)
                     .padding(horizontal = 10.dp, vertical = 4.dp),
             ) {
                 Text(

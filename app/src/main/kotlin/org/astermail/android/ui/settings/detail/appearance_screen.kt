@@ -48,16 +48,23 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.foundation.ScrollState
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -83,7 +90,6 @@ import org.astermail.android.design.FONT_OPTIONS
 import org.astermail.android.ui.theme.ThemeBackground
 import org.astermail.android.ui.theme.no_theme_background
 import org.astermail.android.ui.theme.theme_background_for
-import org.astermail.android.ui.theme.theme_backgrounds
 import org.astermail.android.design.preview_font_family_for
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.ui.mail.is_comfortable_density
@@ -97,10 +103,9 @@ import org.astermail.android.api.preferences.theme_sync_enabled
 import org.astermail.android.api.preferences.with_theme_sync_enabled
 import org.astermail.android.api.preferences.with_theme_values
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
-import org.astermail.android.design.components.UpgradeGate
+
 import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.storage.ThemeMode
@@ -151,7 +156,7 @@ private fun font_label_res(id: String): Int = when (id) {
     else -> R.string.font_option_default
 }
 
-private fun color_theme_label_res(id: ColorThemeId): Int = when (id) {
+internal fun color_theme_label_res(id: ColorThemeId): Int = when (id) {
     ColorThemeId.default -> R.string.color_theme_default
     ColorThemeId.custom -> R.string.color_theme_custom
     ColorThemeId.dynamic -> R.string.theme_dynamic
@@ -206,7 +211,6 @@ fun AppearanceScreen(
     val custom_theme_locked = plan_loaded && !custom_theme_unlocked
 
     var show_font_picker by remember { mutableStateOf(false) }
-    var show_custom_theme_upgrade by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { settings_vm.load_preferences() }
 
@@ -261,10 +265,10 @@ fun AppearanceScreen(
         if (next != base) settings_vm.save_preferences(next)
     }
 
-    fun apply_color_theme(id: ColorThemeId) {
+    fun apply_color_theme(id: ColorThemeId, clear_background: Boolean = false) {
         val base = prefs ?: return
         remote_prefs_adopted = true
-        vm.set_background_image(no_theme_background)
+        if (clear_background) vm.set_background_image(no_theme_background)
         vm.set_color_theme(id.name)
         val forced_dark = AsterColorThemes.is_dark_only(id)
         if (forced_dark) vm.set_mode(ThemeMode.dark)
@@ -276,19 +280,19 @@ fun AppearanceScreen(
         if (next != base) settings_vm.save_preferences(next)
     }
 
-    var gallery_start by remember { mutableStateOf<ThemeBackground?>(null) }
+    var library_open by rememberSaveable { mutableStateOf(false) }
 
-    fun apply_image_theme(background: ThemeBackground?) {
+    fun apply_image_theme(background: ThemeBackground?, color: ColorThemeId) {
         if (background == null) {
-            vm.set_background_image(no_theme_background)
+            apply_color_theme(color, clear_background = true)
             return
         }
         val base = prefs ?: return
         remote_prefs_adopted = true
-        vm.set_color_theme(background.color_theme.name)
+        vm.set_color_theme(color.name)
         vm.set_mode(ThemeMode.dark)
         vm.set_background_image(background.id)
-        val next = with_theme_values(base, theme = "dark", color_theme = background.color_theme.name)
+        val next = with_theme_values(base, theme = "dark", color_theme = color.name)
         if (next != base) settings_vm.save_preferences(next)
     }
 
@@ -374,9 +378,17 @@ fun AppearanceScreen(
         )
     }
 
-    detail_scaffold(title = stringResource(R.string.settings_appearance), on_back = on_back) {
+    val page_scroll = rememberSaveable(saver = ScrollState.Saver) { ScrollState(0) }
+    var page_loaded_once by rememberSaveable { mutableStateOf(false) }
+    SideEffect { if (prefs_authoritative && !page_loaded_once) page_loaded_once = true }
+
+    detail_scaffold(
+        title = stringResource(R.string.settings_appearance),
+        on_back = on_back,
+        scroll_state = page_scroll,
+    ) {
         preferences_save_error_banner()
-        if (prefs == null || !settings_state.preferences_authoritative) {
+        if (prefs == null || (!settings_state.preferences_authoritative && !page_loaded_once)) {
             preferences_load_placeholder()
             return@detail_scaffold
         }
@@ -387,26 +399,26 @@ fun AppearanceScreen(
                 stringResource(R.string.theme_system_subtitle),
                 mode == ThemeMode.system && color_theme == ColorThemeId.default,
             ) { apply(ThemeMode.system, "system") }
-            AsterDivider(modifier = Modifier)
+            settings_row_gap(modifier = Modifier)
             theme_option_row(
                 stringResource(R.string.theme_light),
                 stringResource(R.string.theme_light_subtitle),
                 mode == ThemeMode.light && color_theme == ColorThemeId.default,
             ) { apply(ThemeMode.light, "light") }
-            AsterDivider(modifier = Modifier)
+            settings_row_gap(modifier = Modifier)
             theme_option_row(
                 stringResource(R.string.theme_dark),
                 stringResource(R.string.theme_dark_subtitle),
                 mode == ThemeMode.dark && color_theme == ColorThemeId.default,
             ) { apply(ThemeMode.dark, "dark") }
-            AsterDivider(modifier = Modifier)
+            settings_row_gap(modifier = Modifier)
             theme_option_row(
                 stringResource(R.string.color_theme_aster_blue),
                 stringResource(R.string.theme_aster_blue_subtitle),
                 color_theme == ColorThemeId.aster_blue,
             ) { apply_color_theme(ColorThemeId.aster_blue) }
             if (dynamic_color_supported) {
-                AsterDivider(modifier = Modifier)
+                settings_row_gap(modifier = Modifier)
                 theme_option_row(
                     stringResource(R.string.theme_dynamic),
                     stringResource(R.string.theme_dynamic_subtitle),
@@ -455,7 +467,7 @@ fun AppearanceScreen(
                                 locked = is_locked,
                                 on_click = {
                                     if (is_locked) {
-                                        show_custom_theme_upgrade = true
+                                        on_open("billing")
                                     } else {
                                         apply_color_theme(id)
                                     }
@@ -471,57 +483,10 @@ fun AppearanceScreen(
 
         v_gap(AsterSpacing.xxl)
         section_label(stringResource(R.string.image_themes))
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-                Text(
-                    text = stringResource(R.string.image_themes_subtitle),
-                    color = colors.text_tertiary,
-                    fontSize = 12.sp,
-                )
-                v_gap(AsterSpacing.md)
-                val active_background = theme_background_for(background_image)
-                androidx.compose.foundation.lazy.LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    items(listOf<ThemeBackground?>(null) + theme_backgrounds) { background ->
-                        image_theme_tile(
-                            background = background,
-                            selected = active_background?.id == background?.id,
-                            on_click = {
-                                if (background == null) apply_image_theme(null) else gallery_start = background
-                            },
-                            modifier = Modifier
-                                .width(84.dp)
-                                .testTag("image_theme_${background?.id ?: no_theme_background}"),
-                        )
-                    }
-                }
-            }
-        }
-        gallery_start?.let { start ->
-            image_theme_gallery(
-                initial = start,
-                active_id = background_image,
-                on_dismiss = { gallery_start = null },
-                on_apply = { chosen ->
-                    apply_image_theme(chosen)
-                    gallery_start = null
-                },
-            )
-        }
-
-        if (show_custom_theme_upgrade && custom_theme_locked) {
-            v_gap(AsterSpacing.xxl)
-            UpgradeGate(
-                title = stringResource(R.string.custom_theme_upgrade_title),
-                description = stringResource(R.string.custom_theme_upgrade_description),
-                plan_name = "Star",
-                on_upgrade = { on_open("billing") },
-                requires_label = stringResource(R.string.requires_plan, "Star"),
-                button_label = stringResource(R.string.upgrade),
-            )
-        }
+        image_theme_entry_card(
+            active = theme_background_for(background_image),
+            on_click = { library_open = true },
+        )
 
         if (color_theme == ColorThemeId.custom && !custom_theme_locked) {
             v_gap(AsterSpacing.xxl)
@@ -608,7 +573,7 @@ fun AppearanceScreen(
                 "",
                 !effective_24h,
             ) { apply_time_format("12h") }
-            AsterDivider(modifier = Modifier)
+            settings_row_gap(modifier = Modifier)
             theme_option_row(
                 stringResource(R.string.time_format_24h),
                 "",
@@ -624,7 +589,7 @@ fun AppearanceScreen(
                 stringResource(R.string.density_compact_subtitle),
                 !is_comfortable_density(prefs?.mail_list_density),
             ) { apply_density("compact") }
-            AsterDivider(modifier = Modifier)
+            settings_row_gap(modifier = Modifier)
             theme_option_row(
                 stringResource(R.string.density_comfortable),
                 stringResource(R.string.density_comfortable_subtitle),
@@ -655,7 +620,7 @@ fun AppearanceScreen(
                     test_tag = "compose_size_$label",
                     on_click = { apply_compose_font_size(label) },
                 )
-                if (index < compose_font_size_labels.size - 1) AsterDivider(modifier = Modifier)
+                if (index < compose_font_size_labels.size - 1) settings_row_gap(modifier = Modifier)
             }
         }
 
@@ -731,7 +696,7 @@ fun AppearanceScreen(
                     }
                 }
             }
-            AsterDivider(modifier = Modifier)
+            settings_row_gap(modifier = Modifier)
             compose_choice_row(
                 label = stringResource(R.string.compose_text_color_theme_default),
                 selected = compose_font_color.isEmpty(),
@@ -740,6 +705,15 @@ fun AppearanceScreen(
             )
         }
         v_gap(AsterSpacing.xxl)
+    }
+
+    if (library_open) {
+        image_theme_library(
+            active_id = background_image,
+            active_color = color_theme,
+            on_dismiss = { library_open = false },
+            on_apply = { chosen, color -> apply_image_theme(chosen, color) },
+        )
     }
 
     if (show_font_picker) {
@@ -830,20 +804,25 @@ internal fun theme_swatch(
                         .background(palette.accent_color),
                 )
             }
-            if (selected || locked) {
+            if (locked && !selected) {
+                plan_pill(
+                    text = stringResource(R.string.plan_badge_star),
+                    modifier = Modifier.align(Alignment.BottomCenter).offset(y = 7.dp),
+                )
+            } else if (selected) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .offset(x = 3.dp, y = 3.dp)
                         .size(23.dp)
-                        .background(if (selected) colors.accent_blue else colors.bg_card, CircleShape)
+                        .background(colors.accent_blue, CircleShape)
                         .border(2.dp, colors.bg_card, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = if (selected) TablerIcons.Check else TablerIcons.Lock,
+                        imageVector = TablerIcons.Check,
                         contentDescription = null,
-                        tint = if (selected) colors.on_accent else colors.text_secondary,
+                        tint = colors.on_accent,
                         modifier = Modifier.size(14.dp),
                     )
                 }
@@ -863,85 +842,78 @@ internal fun theme_swatch(
 }
 
 @Composable
-private fun image_theme_tile(
-    background: ThemeBackground?,
-    selected: Boolean,
+internal fun plan_pill(text: String, modifier: Modifier = Modifier) {
+    org.astermail.android.design.components.AsterPlanTag(
+        text = text,
+        modifier = modifier,
+        font_size = 11.sp,
+        horizontal_padding = 7.dp,
+        vertical_padding = 2.dp,
+    )
+}
+
+@Composable
+private fun image_theme_entry_card(
+    active: ThemeBackground?,
     on_click: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
-    val shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp)
-    Column(
-        modifier = modifier.clickable(onClick = on_click),
-        horizontalAlignment = Alignment.CenterHorizontally,
+    val featured = remember(active?.id) {
+        listOfNotNull(active) + org.astermail.android.ui.theme.theme_categories
+            .mapNotNull { it.second.firstOrNull() }
+            .filter { it.id != active?.id }
+    }.take(3)
+    AsterCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = on_click)
+            .testTag("image_theme_browse"),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(0.62f)
-                .border(
-                    width = if (selected) 2.dp else 1.dp,
-                    color = if (selected) colors.accent_blue else colors.border_primary,
-                    shape = shape,
-                )
-                .padding(if (selected) 4.dp else 0.dp)
-                .clip(if (selected) androidx.compose.foundation.shape.RoundedCornerShape(10.dp) else shape)
-                .background(colors.bg_secondary),
-            contentAlignment = Alignment.Center,
+        Row(
+            modifier = Modifier.padding(AsterSpacing.lg),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (background != null) {
-                val thumb by org.astermail.android.ui.theme.remember_theme_bitmap(background.drawable_res, sample = 4)
-                androidx.compose.animation.AnimatedVisibility(
-                    visible = thumb != null,
-                    enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(160)),
-                    exit = androidx.compose.animation.ExitTransition.None,
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    thumb?.let { bitmap ->
-                        androidx.compose.foundation.Image(
-                            bitmap = bitmap,
-                            contentDescription = null,
-                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                }
-            } else {
-                Icon(
-                    imageVector = TablerIcons.Ban,
-                    contentDescription = null,
-                    tint = colors.text_tertiary,
-                    modifier = Modifier.size(22.dp),
-                )
-            }
-            if (selected) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(6.dp)
-                        .size(22.dp)
-                        .background(colors.accent_blue, CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = TablerIcons.Check,
-                        contentDescription = null,
-                        tint = colors.on_accent,
-                        modifier = Modifier.size(13.dp),
+            Box(modifier = Modifier.size(width = 92.dp, height = 84.dp)) {
+                featured.reversed().forEachIndexed { reversed_index, background ->
+                    val index = featured.size - 1 - reversed_index
+                    image_theme_thumbnail(
+                        background = background,
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .padding(start = (index * 22).dp)
+                            .size(width = 46.dp, height = 82.dp)
+                            .graphicsLayer {
+                                rotationZ = (index - 1) * 6f
+                                scaleX = 1f - index * 0.06f
+                                scaleY = 1f - index * 0.06f
+                            }
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
+                            .border(1.5.dp, colors.bg_card.copy(alpha = 1f), androidx.compose.foundation.shape.RoundedCornerShape(10.dp)),
                     )
                 }
             }
+            Spacer(Modifier.width(AsterSpacing.lg))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.image_theme_browse),
+                    color = colors.text_primary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = active?.let { stringResource(it.category.label_res) } ?: stringResource(R.string.image_themes_subtitle),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                )
+            }
+            Icon(
+                imageVector = TablerIcons.ChevronRight,
+                contentDescription = null,
+                tint = colors.text_tertiary,
+                modifier = Modifier.size(20.dp),
+            )
         }
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = stringResource(background?.label_res ?: R.string.image_theme_none),
-            color = if (selected) colors.text_primary else colors.text_secondary,
-            fontSize = 12.sp,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-            maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-        )
     }
 }
 

@@ -23,120 +23,78 @@ package org.astermail.android.ui.common
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.ui.graphics.TransformOrigin
 import org.astermail.android.design.AsterEasing
 
-const val nav_anim_forward_ms = 220
-const val nav_anim_backward_ms = 200
+const val nav_anim_forward_ms = 280
+const val nav_anim_backward_ms = 260
 const val nav_anim_duration_ms = nav_anim_forward_ms
-const val nav_slide_fraction = 0.18f
-const val nav_anim_expand_ms = 500
-const val nav_anim_collapse_ms = 220
-private const val nav_fade_in_ms = 150
-private const val nav_fade_out_ms = 130
+const val nav_slide_fraction = 0.1f
+private const val nav_fade_out_ms = 90
+private const val nav_fade_in_delay_ms = 70
 
-@Volatile
-var nav_glass_mode: Boolean = false
+private val nav_easing_emphasized = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+private val nav_easing_fade_in = CubicBezierEasing(0f, 0f, 0.2f, 1f)
+private val nav_easing_fade_out = CubicBezierEasing(0.4f, 0f, 1f, 1f)
 
-private const val nav_glass_out_ms = 90
-private const val nav_glass_in_ms = 200
+private fun shared_axis_enter(duration: Int, from_end: Boolean): EnterTransition =
+    slideInHorizontally(
+        animationSpec = tween(durationMillis = duration, easing = nav_easing_emphasized),
+        initialOffsetX = { w -> ((if (from_end) 1 else -1) * w * nav_slide_fraction).toInt() },
+    ) + fadeIn(
+        animationSpec = tween(
+            durationMillis = (duration - nav_fade_in_delay_ms).coerceAtLeast(1),
+            delayMillis = nav_fade_in_delay_ms,
+            easing = nav_easing_fade_in,
+        ),
+    )
 
-private fun glass_enter(offset_x: (Int) -> Int = { 0 }, offset_y: (Int) -> Int = { 0 }): EnterTransition =
-    fadeIn(animationSpec = tween(durationMillis = nav_glass_in_ms, delayMillis = nav_glass_out_ms, easing = nav_easing_enter)) +
-        slideIn(
-            animationSpec = tween(durationMillis = nav_glass_in_ms + nav_glass_out_ms, easing = nav_easing_enter),
-            initialOffset = { size -> androidx.compose.ui.unit.IntOffset(offset_x(size.width), offset_y(size.height)) },
-        )
-
-private fun glass_exit(): ExitTransition =
-    fadeOut(animationSpec = tween(durationMillis = nav_glass_out_ms, easing = nav_easing_exit))
-
-private val nav_easing_expand = androidx.compose.animation.core.CubicBezierEasing(0.2f, 0f, 0f, 1f)
-private val nav_easing_enter = AsterEasing.standard_enter
-private val nav_easing_exit = AsterEasing.standard_exit
+private fun shared_axis_exit(duration: Int, to_start: Boolean): ExitTransition =
+    slideOutHorizontally(
+        animationSpec = tween(durationMillis = duration, easing = nav_easing_emphasized),
+        targetOffsetX = { w -> ((if (to_start) -1 else 1) * w * nav_slide_fraction).toInt() },
+    ) + fadeOut(animationSpec = tween(durationMillis = nav_fade_out_ms, easing = nav_easing_fade_out))
 
 fun nav_forward_enter(duration: Int = nav_anim_forward_ms): EnterTransition {
     if (duration == 0) return EnterTransition.None
-    if (nav_glass_mode) return glass_enter(offset_x = { w -> (w * 0.06f).toInt() })
-    return slideInHorizontally(
-        animationSpec = tween(durationMillis = duration, easing = nav_easing_enter),
-        initialOffsetX = { w -> (w * nav_slide_fraction).toInt() },
-    ) + fadeIn(animationSpec = tween(durationMillis = nav_fade_in_ms, easing = nav_easing_enter))
+    return shared_axis_enter(duration, from_end = true)
 }
 
 fun nav_forward_exit(duration: Int = nav_anim_forward_ms): ExitTransition {
     if (duration == 0) return ExitTransition.None
-    if (nav_glass_mode) return glass_exit()
-    return slideOutHorizontally(
-        animationSpec = tween(durationMillis = duration, easing = nav_easing_exit),
-        targetOffsetX = { w -> -(w * nav_slide_fraction).toInt() },
-    ) + fadeOut(animationSpec = tween(durationMillis = nav_fade_out_ms, easing = nav_easing_exit))
+    return shared_axis_exit(duration, to_start = true)
 }
 
 fun nav_backward_enter(duration: Int = nav_anim_backward_ms): EnterTransition {
     if (duration == 0) return EnterTransition.None
-    if (nav_glass_mode) return glass_enter(offset_x = { w -> -(w * 0.06f).toInt() })
-    return slideInHorizontally(
-        animationSpec = tween(durationMillis = duration, easing = nav_easing_enter),
-        initialOffsetX = { w -> -(w * nav_slide_fraction).toInt() },
-    ) + fadeIn(animationSpec = tween(durationMillis = nav_fade_in_ms, easing = nav_easing_enter))
+    return shared_axis_enter(duration, from_end = false)
 }
 
 fun nav_backward_exit(duration: Int = nav_anim_backward_ms): ExitTransition {
     if (duration == 0) return ExitTransition.None
-    if (nav_glass_mode) return glass_exit()
-    return slideOutHorizontally(
-        animationSpec = tween(durationMillis = duration, easing = nav_easing_exit),
-        targetOffsetX = { w -> (w * nav_slide_fraction).toInt() },
-    ) + fadeOut(animationSpec = tween(durationMillis = nav_fade_out_ms, easing = nav_easing_exit))
+    return shared_axis_exit(duration, to_start = false)
 }
 
 fun nav_sheet_enter(duration: Int = nav_anim_forward_ms): EnterTransition {
     if (duration == 0) return EnterTransition.None
-    if (nav_glass_mode) return glass_enter(offset_y = { h -> (h * 0.05f).toInt() })
     return slideInVertically(
         animationSpec = tween(durationMillis = 320, easing = AsterEasing.standard_enter),
         initialOffsetY = { h -> h },
-    ) + fadeIn(animationSpec = tween(durationMillis = nav_fade_in_ms, easing = nav_easing_enter))
+    ) + fadeIn(animationSpec = tween(durationMillis = 150, easing = LinearEasing))
 }
 
 fun nav_sheet_exit(duration: Int = nav_anim_backward_ms): ExitTransition {
     if (duration == 0) return ExitTransition.None
-    if (nav_glass_mode) return glass_exit()
     return slideOutVertically(
         animationSpec = tween(durationMillis = 220, easing = AsterEasing.standard_exit),
         targetOffsetY = { h -> h },
-    ) + fadeOut(animationSpec = tween(durationMillis = nav_fade_out_ms, easing = nav_easing_exit))
-}
-
-private val nav_expand_origin = TransformOrigin(0.5f, 0.09f)
-
-fun nav_expand_enter(duration: Int = nav_anim_expand_ms): EnterTransition {
-    if (duration == 0) return EnterTransition.None
-    if (nav_glass_mode) return glass_enter(offset_y = { h -> (h * 0.03f).toInt() })
-    return scaleIn(
-        animationSpec = tween(durationMillis = duration, easing = nav_easing_expand),
-        initialScale = 0.9f,
-        transformOrigin = nav_expand_origin,
-    ) + fadeIn(animationSpec = tween(durationMillis = 140, easing = nav_easing_enter))
-}
-
-fun nav_expand_exit(duration: Int = nav_anim_collapse_ms): ExitTransition {
-    if (duration == 0) return ExitTransition.None
-    if (nav_glass_mode) return glass_exit()
-    return scaleOut(
-        animationSpec = tween(durationMillis = duration, easing = nav_easing_expand),
-        targetScale = 0.9f,
-        transformOrigin = nav_expand_origin,
-    ) + fadeOut(animationSpec = tween(durationMillis = duration, easing = nav_easing_exit))
+    ) + fadeOut(animationSpec = tween(durationMillis = 130, easing = LinearEasing))
 }

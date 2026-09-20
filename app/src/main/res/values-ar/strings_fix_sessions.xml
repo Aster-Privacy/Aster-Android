@@ -14,4 +14,6 @@
     <string name="link_device_hero_title">أدخل رمز الجهاز</string>
     <string name="link_device_confirm_title">أكّد هذا الجهاز</string>
     <string name="link_device_pending_badge">قيد الانتظار</string>
+    <string name="link_device_step_progress">الخطوة %1$d من %2$d · %3$s</string>
+    <string name="link_device_error_title">تعذّر ربط الجهاز</string>
 </resources>

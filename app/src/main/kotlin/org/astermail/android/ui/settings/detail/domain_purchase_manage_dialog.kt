@@ -59,7 +59,6 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDialogPrimaryButton
-import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.settings.DomainPurchaseErrorKind
 
@@ -157,27 +156,27 @@ internal fun domain_purchase_manage_dialog(
                         value_color = status_color,
                         padded = true,
                     )
-                    AsterDivider()
+                    settings_row_gap()
                     manage_row(
                         label = stringResource(R.string.domain_purchase_manage_registered),
                         value = format_day(order.created_at),
                         padded = true,
                     )
                     order.expires_at?.let {
-                        AsterDivider()
+                        settings_row_gap()
                         manage_row(
                             label = stringResource(R.string.domain_purchase_manage_expires),
                             value = format_day(it),
                             padded = true,
                         )
                     }
-                    AsterDivider()
+                    settings_row_gap()
                     manage_row(
                         label = stringResource(R.string.domain_purchase_manage_term),
                         value = term_text,
                         padded = true,
                     )
-                    AsterDivider()
+                    settings_row_gap()
                     manage_row(
                         label = stringResource(R.string.domain_purchase_manage_paid),
                         value = format_order_price(order.price_cents, order.currency),
@@ -214,7 +213,7 @@ internal fun domain_purchase_manage_dialog(
                 }
 
                 Spacer(Modifier.height(AsterSpacing.md))
-                AsterDivider()
+                settings_row_gap()
                 Spacer(Modifier.height(AsterSpacing.md))
                 Text(
                     text = stringResource(R.string.domain_purchase_manage_auto_renew_note),
