@@ -568,6 +568,7 @@ internal fun detail_row(
     info_description: String? = null,
     icon_tint: androidx.compose.ui.graphics.Color? = null,
     value: String? = null,
+    leading: (@Composable () -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     Row(
@@ -578,7 +579,10 @@ internal fun detail_row(
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (icon != null) {
+        if (leading != null) {
+            leading()
+            Spacer(Modifier.width(AsterSpacing.md))
+        } else if (icon != null) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,

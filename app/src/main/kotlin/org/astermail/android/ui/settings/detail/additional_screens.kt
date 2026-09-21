@@ -234,9 +234,8 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
                             removal_tick++
                         },
                     ) {
-                        val icon = org.astermail.android.ui.settings.device_client_icon(
-                            org.astermail.android.ui.settings.device_client_kind(s.browser, s.device_type, s.os),
-                        )
+                        val client_kind =
+                            org.astermail.android.ui.settings.device_client_kind(s.browser, s.device_type, s.os)
                         val name = org.astermail.android.ui.settings.device_display_name(s.browser, s.device_type)
                             .ifEmpty { stringResource(R.string.unknown_device) }
                         val last_seen = if (s.is_current) stringResource(R.string.active_now) else relative_time_label(s.last_active)
@@ -244,7 +243,12 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
                             detail_row(
                                 title = name,
                                 subtitle = last_seen,
-                                icon = icon,
+                                leading = {
+                                    org.astermail.android.ui.settings.device_client_glyph(
+                                        browser = s.browser,
+                                        kind = client_kind,
+                                    )
+                                },
                                 on_click = null,
                                 trailing = {
                                     if (s.is_current) {

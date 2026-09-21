@@ -240,7 +240,7 @@ private fun session_row(
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        device_client_avatar(kind = kind)
+        device_client_avatar(kind = kind, browser = session.browser)
         Spacer(Modifier.size(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
             Text(

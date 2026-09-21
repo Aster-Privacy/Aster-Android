@@ -1,9 +1,9 @@
-Bug fixes and improvements:
+What's new
+- The inbox opens straight into your messages instead of a blank loading state.
+- Filters and quick actions now sit in the inbox header. To hide them, go to Settings, then Appearance.
+- Contacts, search filters, and the export screen have a cleaner design.
 
-- The inbox opens straight into your messages instead of a blank loading state
-- Filter and quick action buttons in the inbox header, with a setting to hide them
-- A cleaner contact page, search filters, and export screen
-- Creating an SMTP token no longer flickers
-- Unread only no longer loads forever or snaps back when you scroll
-- Sign up continues after you paste a password
-- Order details no longer appear inside a plain reply
+Fixed
+- Unread only no longer loads forever or snaps back as you scroll.
+- The scroll bar now reaches the bottom of the inbox.
+- Sign up continues after you paste a password.

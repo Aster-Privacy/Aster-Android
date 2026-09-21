@@ -25,6 +25,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -33,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -77,6 +79,21 @@ private val browser_hints = listOf(
 )
 
 enum class DeviceClientKind { bridge, tablet, phone, desktop_app, browser, desktop }
+
+fun browser_logo_res(browser: String): Int? {
+    val lower = browser.lowercase()
+    return when {
+        lower.contains("edge") -> R.drawable.browser_edge
+        lower.contains("chrome") || lower.contains("chromium") -> R.drawable.browser_chrome
+        lower.contains("firefox") -> R.drawable.browser_firefox
+        lower.contains("safari") -> R.drawable.browser_safari
+        lower.contains("brave") -> R.drawable.browser_brave
+        lower.contains("opera") -> R.drawable.browser_opera
+        lower.contains("vivaldi") -> R.drawable.browser_vivaldi
+        lower.contains("duckduckgo") -> R.drawable.browser_duckduckgo
+        else -> null
+    }
+}
 
 fun device_display_name(browser: String, device_type: String): String {
     val from_browser = browser.trim()
@@ -189,8 +206,19 @@ fun this_device_badge() {
 }
 
 @Composable
-fun device_client_avatar(kind: DeviceClientKind, size_dp: Int = 40) {
+fun device_client_avatar(kind: DeviceClientKind, size_dp: Int = 40, browser: String = "") {
     val colors = AsterMaterial.colors
+    val logo = browser_logo_res(browser)
+    if (logo != null) {
+        Image(
+            painter = painterResource(logo),
+            contentDescription = null,
+            modifier = Modifier
+                .size(size_dp.dp)
+                .padding((size_dp * 0.22f).dp),
+        )
+        return
+    }
     Icon(
         imageVector = device_client_icon(kind),
         contentDescription = null,
@@ -198,5 +226,25 @@ fun device_client_avatar(kind: DeviceClientKind, size_dp: Int = 40) {
         modifier = Modifier
             .size(size_dp.dp)
             .padding((size_dp * 0.22f).dp),
+    )
+}
+
+@Composable
+fun device_client_glyph(browser: String, kind: DeviceClientKind, size_dp: Int = 22) {
+    val colors = AsterMaterial.colors
+    val logo = browser_logo_res(browser)
+    if (logo != null) {
+        Image(
+            painter = painterResource(logo),
+            contentDescription = null,
+            modifier = Modifier.size(size_dp.dp),
+        )
+        return
+    }
+    Icon(
+        imageVector = device_client_icon(kind),
+        contentDescription = null,
+        tint = colors.text_secondary,
+        modifier = Modifier.size(size_dp.dp),
     )
 }
