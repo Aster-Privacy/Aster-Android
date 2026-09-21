@@ -106,6 +106,7 @@ object EmailHtmlSanitizer {
         if (options.remove_tracking_pixels) remove_tracking_pixels(doc)
         scrub_style_blocks(doc, options)
         autolink_bare_urls(doc, options.clean_tracking_links)
+        mark_email_buttons(doc)
         val sb = StringBuilder()
         for (css in head_styles) {
             val safe_css = sanitize_css_block(css, options)
@@ -392,18 +393,35 @@ object EmailHtmlSanitizer {
 
     private fun extract_head_styles(html: String): List<String> {
         val result = mutableListOf<String>()
-        val head_match = Regex("<head\\b[\\s>][\\s\\S]*?</head\\s*>", RegexOption.IGNORE_CASE).find(html) ?: return result
+        val head_re = Regex("<head\\b[\\s>][\\s\\S]*?</head\\s*>", RegexOption.IGNORE_CASE)
         val style_re = Regex("<style\\b[^>]*>([\\s\\S]*?)</style\\s*>", RegexOption.IGNORE_CASE)
-        for (m in style_re.findAll(head_match.value)) {
-            result.add(m.groupValues[1])
+        for (head in head_re.findAll(html)) {
+            for (m in style_re.findAll(head.value)) {
+                result.add(m.groupValues[1])
+            }
         }
         return result
     }
 
     private fun extract_body_html(html: String): String {
-        val body_match = Regex("<body\\b[^>]*>([\\s\\S]*?)</body\\s*>", RegexOption.IGNORE_CASE).find(html)
-        if (body_match != null) return body_match.groupValues[1]
-        return html
+        val open = Regex("<body\\b[^>]*>", RegexOption.IGNORE_CASE).find(html) ?: return html
+        if (!is_document_preamble(html.substring(0, open.range.first))) return html
+        val close = Regex("</body\\s*>", RegexOption.IGNORE_CASE).findAll(html).lastOrNull()
+            ?: return html.substring(open.range.last + 1)
+        if (close.range.first < open.range.last) return html
+        return html.substring(open.range.last + 1, close.range.first)
+    }
+
+    private fun is_document_preamble(prefix: String): Boolean {
+        val stripped = prefix
+            .replace(Regex("<!--[\\s\\S]*?-->"), "")
+            .replace(Regex("<\\?[\\s\\S]*?\\?>"), "")
+            .replace(Regex("<!doctype\\b[^>]*>", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("<html\\b[^>]*>", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("<head\\b[\\s>][\\s\\S]*?</head\\s*>", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("<(style|title)\\b[^>]*>[\\s\\S]*?</\\1\\s*>", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("</?(head|meta|link|title|base|style)\\b[^>]*>", RegexOption.IGNORE_CASE), "")
+        return stripped.isBlank()
     }
 
     private fun build_safelist(): Safelist {
@@ -563,6 +581,31 @@ object EmailHtmlSanitizer {
                     if (cleaned_href != href) el.attr("href", cleaned_href)
                 }
             }
+        }
+    }
+
+    private const val max_button_label_chars = 48
+
+    private val button_background = Regex(
+        "background(-color)?\\s*:\\s*(?!\\s*(transparent|none|inherit|initial))[^;]+",
+        RegexOption.IGNORE_CASE,
+    )
+
+    fun is_email_button(anchor: Element): Boolean {
+        val label = anchor.text().trim()
+        if (label.isEmpty() || label.length > max_button_label_chars) return false
+        if (anchor.selectFirst("img") != null) return false
+        val own_style = anchor.attr("style")
+        if (button_background.containsMatchIn(own_style)) return true
+        val cell = anchor.parent() ?: return false
+        if (!cell.normalName().equals("td", ignoreCase = true)) return false
+        if (cell.text().trim() != label) return false
+        return cell.hasAttr("bgcolor") || button_background.containsMatchIn(cell.attr("style"))
+    }
+
+    private fun mark_email_buttons(doc: Document) {
+        for (anchor in doc.select("a")) {
+            if (is_email_button(anchor)) anchor.addClass("aster-email-button")
         }
     }
 

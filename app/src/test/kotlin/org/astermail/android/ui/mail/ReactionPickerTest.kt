@@ -69,18 +69,27 @@ class ReactionPickerTest {
     }
 
     @Test
-    fun chip_palette_uses_solid_fills() {
-        val light = reaction_chip_palette(is_dark = false)
-        val dark = reaction_chip_palette(is_dark = true)
-        assertEquals(Color(0xFFD3E3FD), light.own_fill)
-        assertEquals(Color(0xFF0842A0), light.own_text)
-        assertEquals(Color(0xFFECEEF1), light.other_fill)
-        assertEquals(Color(0xFF004A77), dark.own_fill)
-        assertEquals(Color(0xFFC2E7FF), dark.own_text)
-        assertEquals(Color(0xFF282A2C), dark.other_fill)
+    fun chip_palette_uses_solid_fills_from_theme_accent() {
+        val accent = Color(0xFF2ECC71)
+        val light = reaction_chip_palette(
+            is_dark = false,
+            accent = accent,
+            surface = Color(0xFFFFFFFF),
+            text_secondary = Color(0xFF444746),
+        )
+        val dark = reaction_chip_palette(
+            is_dark = true,
+            accent = accent,
+            surface = Color(0xFF16181A),
+            text_secondary = Color(0xFFC4C7C5),
+        )
         listOf(light, dark).forEach { palette ->
             assertEquals(1f, palette.own_fill.alpha)
             assertEquals(1f, palette.other_fill.alpha)
+            assertTrue(palette.own_fill.green > palette.own_fill.blue)
+            assertTrue(palette.own_text.green > palette.own_text.blue)
         }
+        assertEquals(Color(0xFF444746), light.other_text)
+        assertEquals(Color(0xFFC4C7C5), dark.other_text)
     }
 }

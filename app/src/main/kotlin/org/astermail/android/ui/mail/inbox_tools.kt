@@ -42,6 +42,8 @@ const val inbox_quick_action_delete_old = "delete_old"
 
 const val inbox_quick_action_age_days = 30
 
+data class quick_delete_target(val ids: List<String>, val thread_ids: Set<String>)
+
 fun thread_matches_inbox_filter(thread: ThreadRow, filter: String): Boolean = when (filter) {
     inbox_filter_unread -> thread.has_unread
     inbox_filter_read -> !thread.has_unread

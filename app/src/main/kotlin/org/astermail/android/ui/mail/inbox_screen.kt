@@ -103,6 +103,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.graphics.Color
@@ -273,6 +276,8 @@ internal interface InboxLiveSyncDeps {
 private const val DRAG_HAPTIC_MIN_GAP_MS = 55L
 
 private val pull_refresh_travel = 56.dp
+
+private val pull_refresh_bar_height = 3.dp
 
 private val chrome_reveal_distance = 24.dp
 
@@ -780,6 +785,7 @@ fun InboxScreen(
     var scope_selection_confirmed by remember { mutableStateOf(false) }
     val selected_ids = remember { mutableStateListOf<String>() }
     var show_empty_trash_dialog by remember { mutableStateOf(false) }
+    var quick_delete_old_pending by remember { mutableStateOf<quick_delete_target?>(null) }
     var show_bulk_delete_permanent_dialog by remember { mutableStateOf(false) }
     var bulk_delete_permanent_is_scope by remember { mutableStateOf(false) }
     var show_selection_overflow by remember { mutableStateOf(false) }
@@ -848,7 +854,7 @@ fun InboxScreen(
         null
     }
     var active_filter by rememberSaveable { mutableStateOf(inbox_filter_all) }
-    val unread_only = active_filter != inbox_filter_all
+    val filter_active = active_filter != inbox_filter_all
     val tools_visible = show_inbox_tools()
     val grouping_enabled = settings_state.preferences?.conversation_grouping != false
     val initial_threads = remember {
@@ -958,14 +964,9 @@ fun InboxScreen(
 
     val folder_count = when (current_folder) {
         "inbox" -> inbox_state.stats?.unread ?: 0
-        "sent" -> inbox_state.stats?.sent ?: 0
         "drafts" -> inbox_state.stats?.drafts ?: 0
-        "starred" -> inbox_state.stats?.starred ?: 0
-        "archive" -> inbox_state.stats?.archived ?: 0
         "scheduled" -> inbox_state.stats?.scheduled ?: 0
-        "spam" -> inbox_state.stats?.spam ?: 0
-        "trash" -> inbox_state.stats?.trash ?: 0
-        else -> 0
+        else -> threads.count { it.has_unread }
     }
     val folder_total = when (current_folder) {
         "inbox" -> inbox_state.stats?.inbox ?: 0
@@ -982,7 +983,7 @@ fun InboxScreen(
             0
         }
     }
-    val visible_threads = if (unread_only) {
+    val visible_threads = if (filter_active) {
         threads.filter { thread_matches_inbox_filter(it, active_filter) }
     } else {
         threads
@@ -1040,7 +1041,7 @@ fun InboxScreen(
             val near_end = total > 0 && (total - last_visible) <= 3
             val s = inbox_state
             near_end &&
-                !unread_only &&
+                !filter_active &&
                 s.has_more &&
                 !s.is_loading &&
                 !s.is_loading_more &&
@@ -1065,7 +1066,7 @@ fun InboxScreen(
         inbox_state.initial,
     ) {
         val s = inbox_state
-        if (!unread_only &&
+        if (!filter_active &&
             s.has_more &&
             !s.is_loading &&
             !s.is_loading_more &&
@@ -1114,31 +1115,67 @@ fun InboxScreen(
         }
     }
 
+    val quick_action_unavailable_text = stringResource(R.string.quick_action_unavailable)
+    val quick_action_no_unread_text = stringResource(R.string.quick_action_no_unread)
+    val quick_action_no_read_text = stringResource(R.string.quick_action_no_read)
+    val quick_action_no_old_text = stringResource(R.string.quick_action_no_old)
+
+    fun quick_action_notice(message: String) {
+        top_toast_state = org.astermail.android.ui.common.TopToastState(message = message)
+    }
+
     fun run_quick_action(action: String) {
         when (action) {
-            inbox_quick_action_mark_all_read -> mark_all_read(true)
+            inbox_quick_action_mark_all_read -> {
+                if (current_folder == "drafts" || current_folder == "scheduled") {
+                    quick_action_notice(quick_action_unavailable_text)
+                    return
+                }
+                if (threads.none { it.has_unread }) {
+                    quick_action_notice(quick_action_no_unread_text)
+                    return
+                }
+                mark_all_read(true)
+            }
             inbox_quick_action_archive_read -> {
-                if (current_folder == "scheduled" || current_folder == "drafts") return
+                if (current_folder == "scheduled" || current_folder == "drafts" || current_folder == "archive") {
+                    quick_action_notice(quick_action_unavailable_text)
+                    return
+                }
                 val read_threads = threads.filter { !it.has_unread }.map { it.thread_id }.toSet()
-                if (read_threads.isEmpty()) return
-                val ids = emails.filter { thread_row_covers(it, read_threads, grouping_enabled) }.map { it.id }
-                if (ids.isEmpty()) return
+                val ids = if (read_threads.isEmpty()) {
+                    emptyList()
+                } else {
+                    emails.filter { thread_row_covers(it, read_threads, grouping_enabled) }.map { it.id }
+                }
+                if (ids.isEmpty()) {
+                    quick_action_notice(quick_action_no_read_text)
+                    return
+                }
                 mail_vm.archive(ids, read_threads.size)
                 emails.removeAll { thread_row_covers(it, read_threads, grouping_enabled) }
             }
             inbox_quick_action_delete_old -> {
-                if (current_folder == "scheduled" || current_folder == "trash") return
+                if (current_folder == "scheduled" || current_folder == "trash") {
+                    quick_action_notice(quick_action_unavailable_text)
+                    return
+                }
                 val cutoff = System.currentTimeMillis() -
                     inbox_quick_action_age_days.toLong() * 24L * 60L * 60L * 1000L
                 val old_threads = threads
                     .filter { it.newest.received_at < cutoff }
                     .map { it.thread_id }
                     .toSet()
-                if (old_threads.isEmpty()) return
-                val ids = emails.filter { thread_row_covers(it, old_threads, grouping_enabled) }.map { it.id }
-                if (ids.isEmpty()) return
-                mail_vm.trash(ids, old_threads.size)
-                emails.removeAll { thread_row_covers(it, old_threads, grouping_enabled) }
+                val ids = if (old_threads.isEmpty()) {
+                    emptyList()
+                } else {
+                    emails.filter { thread_row_covers(it, old_threads, grouping_enabled) }.map { it.id }
+                }
+                if (ids.isEmpty()) {
+                    quick_action_notice(quick_action_no_old_text)
+                    return
+                }
+                quick_delete_old_pending = quick_delete_target(ids, old_threads)
             }
         }
     }
@@ -1743,33 +1780,72 @@ fun InboxScreen(
                         label = "pull_alpha",
                     )
                     if (dragging || refreshing_now || indicator_alpha > 0.01f) {
+                        val sweep_transition = androidx.compose.animation.core.rememberInfiniteTransition(
+                            label = "pull_sweep",
+                        )
+                        val sweep by sweep_transition.animateFloat(
+                            initialValue = 0f,
+                            targetValue = 1f,
+                            animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+                                animation = androidx.compose.animation.core.tween(
+                                    durationMillis = 1100,
+                                    easing = androidx.compose.animation.core.LinearEasing,
+                                ),
+                            ),
+                            label = "pull_sweep_value",
+                        )
+                        val accent = colors.accent_blue
+                        val drag_progress = (travel / travel_px).coerceIn(0f, 1f)
+                        val armed = drag_progress >= 1f
                         Box(
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
                                 .padding(top = header_height_dp)
                                 .offset { IntOffset(0, travel.roundToInt()) }
                                 .graphicsLayer { alpha = indicator_alpha }
-                                .size(44.dp)
-                                .shadow(10.dp, CircleShape)
-                                .acrylic(colors, CircleShape),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            if (refreshing_now) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(22.dp),
-                                    color = colors.accent_blue,
-                                    strokeWidth = 2.5.dp,
-                                )
-                            } else {
-                                CircularProgressIndicator(
-                                    progress = { (travel / travel_px).coerceIn(0f, 1f) },
-                                    modifier = Modifier.size(22.dp),
-                                    color = colors.accent_blue,
-                                    strokeWidth = 2.5.dp,
-                                    trackColor = Color.Transparent,
-                                )
-                            }
-                        }
+                                .fillMaxWidth()
+                                .height(pull_refresh_bar_height)
+                                .drawBehind {
+                                    drawRect(accent.copy(alpha = 0.12f))
+                                    if (refreshing_now) {
+                                        val band = size.width * 0.38f
+                                        val travel_span = size.width + band
+                                        val left = sweep * travel_span - band
+                                        drawRect(
+                                            brush = Brush.horizontalGradient(
+                                                colors = listOf(
+                                                    accent.copy(alpha = 0f),
+                                                    accent.copy(alpha = 0.55f),
+                                                    accent,
+                                                    accent.copy(alpha = 0f),
+                                                ),
+                                                startX = left,
+                                                endX = left + band,
+                                            ),
+                                            topLeft = Offset(left.coerceAtLeast(0f), 0f),
+                                            size = Size(
+                                                width = (left + band).coerceAtMost(size.width) -
+                                                    left.coerceAtLeast(0f),
+                                                height = size.height,
+                                            ),
+                                        )
+                                    } else if (drag_progress > 0f) {
+                                        val filled = size.width * drag_progress
+                                        drawRect(
+                                            brush = Brush.horizontalGradient(
+                                                colors = listOf(
+                                                    accent.copy(alpha = 0.35f),
+                                                    accent.copy(alpha = if (armed) 1f else 0.8f),
+                                                ),
+                                                startX = 0f,
+                                                endX = filled.coerceAtLeast(1f),
+                                            ),
+                                            topLeft = Offset.Zero,
+                                            size = Size(filled, size.height),
+                                        )
+                                    }
+                                },
+                        )
                     }
                 }
                 val hidden_by_category = threads.isEmpty() && !threads_pending && inbox_state.items.isNotEmpty()
@@ -1827,9 +1903,17 @@ fun InboxScreen(
                     threads.isEmpty() &&
                     !empty_settled &&
                     !thread_gate.category_only
-                val skeleton_now = cache_pending ||
-                    skeleton_target ||
-                    (!inbox_error_now && !contradicts_unread && (category_skeleton || empty_skeleton))
+                var empty_state_seen by remember(current_folder, active_category_label) {
+                    mutableStateOf(false)
+                }
+                LaunchedEffect(threads.isEmpty()) {
+                    if (!threads.isEmpty()) empty_state_seen = false
+                }
+                val skeleton_now = (
+                    cache_pending ||
+                        skeleton_target ||
+                        (!inbox_error_now && !contradicts_unread && (category_skeleton || empty_skeleton))
+                    ) && !(is_refreshing && empty_state_seen)
                 val rows_imminent = threads.isEmpty() && threads_pending && inbox_state.items.isNotEmpty()
                 val skeleton_phase by remember_skeleton_phase(
                     wanted = skeleton_now,
@@ -1868,6 +1952,7 @@ fun InboxScreen(
                         )
                     }
                 } else if (threads.isEmpty()) {
+                    LaunchedEffect(Unit) { empty_state_seen = true }
                     org.astermail.android.ui.common.overscroll_stretch(
                         modifier = Modifier.padding(top = header_height_dp).then(handoff),
                     ) { empty_inbox_state(current_folder) }
@@ -2206,7 +2291,7 @@ fun InboxScreen(
                                 }
                             }
                         }
-                        if (inbox_state.is_loading_more && !unread_only) {
+                        if (inbox_state.is_loading_more && !filter_active) {
                             items(
                                 count = 3,
                                 key = { "_loading_more_$it" },
@@ -2228,7 +2313,7 @@ fun InboxScreen(
                                 }
                             }
                         } else if (
-                            (!inbox_state.has_more || unread_only) &&
+                            (!inbox_state.has_more || filter_active) &&
                             !inbox_state.is_loading &&
                             !inbox_state.initial &&
                             visible_threads.isNotEmpty()
@@ -2259,7 +2344,7 @@ fun InboxScreen(
                 }
                 inbox_skeleton_layer(
                     phase = skeleton_phase,
-                    modifier = Modifier.padding(top = header_height_dp),
+                    modifier = Modifier.padding(top = header_height_dp + AsterSpacing.sm),
                     live_geometry = skeleton_geometry_of(settings_state.preferences),
                     folder = current_folder,
                 )
@@ -2342,15 +2427,6 @@ fun InboxScreen(
                         all_mail_include_spam = all_mail_include_spam,
                         all_mail_include_trash = all_mail_include_trash,
                         on_all_mail_scope_change = on_all_mail_scope_change,
-                        show_unread_filter = categories_enabled,
-                        unread_only = active_filter == inbox_filter_unread,
-                        on_toggle_unread_only = {
-                            active_filter = if (active_filter == inbox_filter_unread) {
-                                inbox_filter_all
-                            } else {
-                                inbox_filter_unread
-                            }
-                        },
                         show_tools = tools_visible,
                         active_filter = active_filter,
                         on_filter_change = { active_filter = it },
@@ -2621,6 +2697,28 @@ fun InboxScreen(
             )
         }
 
+        val pending_delete_old = quick_delete_old_pending
+        if (pending_delete_old != null) {
+            org.astermail.android.design.components.AsterAlertDialog(
+                on_dismiss = { quick_delete_old_pending = null },
+                title = stringResource(R.string.delete_emails_older_than_30_days),
+                message = stringResource(
+                    R.string.quick_action_delete_old_confirm,
+                    pending_delete_old.thread_ids.size,
+                ),
+                confirm_label = stringResource(R.string.delete),
+                cancel_label = stringResource(R.string.cancel),
+                confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+                on_confirm = {
+                    quick_delete_old_pending = null
+                    mail_vm.trash(pending_delete_old.ids, pending_delete_old.thread_ids.size)
+                    emails.removeAll {
+                        thread_row_covers(it, pending_delete_old.thread_ids, grouping_enabled)
+                    }
+                },
+            )
+        }
+
         if (show_empty_trash_dialog) {
             org.astermail.android.design.components.AsterAlertDialog(
                 on_dismiss = { show_empty_trash_dialog = false },
@@ -2857,9 +2955,6 @@ internal fun inbox_top_bar(
     all_mail_include_spam: Boolean = false,
     all_mail_include_trash: Boolean = false,
     on_all_mail_scope_change: (Boolean, Boolean) -> Unit = { _, _ -> },
-    show_unread_filter: Boolean = false,
-    unread_only: Boolean = false,
-    on_toggle_unread_only: () -> Unit = {},
     show_tools: Boolean = true,
     active_filter: String = inbox_filter_all,
     on_filter_change: (String) -> Unit = {},
@@ -3085,17 +3180,6 @@ internal fun inbox_top_bar(
                         overflow_menu_open = false
                         on_enter_select_mode()
                     }
-                    if (show_unread_filter) {
-                        aster_menu_item(
-                            label = stringResource(R.string.filter_unread_only),
-                            icon = TablerIcons.MailOpened,
-                            selected = unread_only,
-                            on_click = {
-                                overflow_menu_open = false
-                                on_toggle_unread_only()
-                            },
-                        )
-                    }
                     overflow_menu_item(
                         label = stringResource(R.string.refresh),
                         icon = TablerIcons.Refresh,
@@ -3144,12 +3228,17 @@ internal fun inbox_top_bar(
                 .height(52.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            AsterIconButton(
-                icon = TablerIcons.Menu2,
+            org.astermail.android.design.components.AsterIconSlotButton(
                 content_description = stringResource(R.string.open_drawer),
                 onClick = on_open_drawer,
                 modifier = Modifier.testTag("open_drawer"),
-            )
+            ) { tint, icon_modifier ->
+                org.astermail.android.design.components.menu_back_morph_icon(
+                    progress = 0f,
+                    tint = tint,
+                    modifier = icon_modifier,
+                )
+            }
             Row(
                 modifier = Modifier
                     .weight(1f)
@@ -3584,6 +3673,7 @@ internal fun selection_overflow_sheet(
     val colors = AsterMaterial.colors
     val state = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
     androidx.compose.material3.ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = on_close,
         sheetState = state,
         containerColor = sheet_container_color(colors),
@@ -3689,6 +3779,7 @@ internal fun scheduled_actions_sheet(
     val colors = AsterMaterial.colors
     val state = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
     androidx.compose.material3.ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = on_close,
         sheetState = state,
         containerColor = sheet_container_color(colors),

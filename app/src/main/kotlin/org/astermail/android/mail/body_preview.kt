@@ -216,10 +216,35 @@ fun strip_quoted_html(html: String): String {
     return html.substring(0, match.range.first)
 }
 
+private val QUOTE_ATTR_START_PATTERN = Regex(
+    "<\\s*div\\b[^>]*class\\s*=\\s*[\"'][^\"']*(?:aster_quote_attr|gmail_attr)[^\"']*[\"'][^>]*>",
+    RegexOption.IGNORE_CASE,
+)
+
+private val DIV_TAG_PATTERN = Regex("<\\s*(/?)\\s*div\\b[^>]*>", RegexOption.IGNORE_CASE)
+
+fun has_quote_attribution(html: String): Boolean = QUOTE_ATTR_START_PATTERN.containsMatchIn(html)
+
+fun strip_quote_attribution(html: String): String {
+    val start = QUOTE_ATTR_START_PATTERN.find(html) ?: return html
+    var depth = 1
+    var index = start.range.last + 1
+    while (depth > 0) {
+        val tag = DIV_TAG_PATTERN.find(html, index) ?: return html.substring(0, start.range.first)
+        depth += if (tag.groupValues[1] == "/") -1 else 1
+        index = tag.range.last + 1
+    }
+    return html.substring(0, start.range.first) + html.substring(index)
+}
+
 fun thread_card_preview(body_html: String?, display_body: String): String {
     if (body_html != null && !looks_like_ciphertext(body_html)) {
         val unquoted = strip_body_html(strip_quoted_html(body_html))
         if (unquoted.length > 4) return unquoted
+        if (has_quote_attribution(body_html)) {
+            val quoted = strip_body_html(strip_quote_attribution(body_html))
+            if (quoted.length > 4) return quoted
+        }
     }
     return display_body
 }
@@ -230,7 +255,7 @@ fun clean_body_preview(body_text: String, body_html: String?): String {
         if (preheader.isNotEmpty()) return take_whole_chars(preheader, PREVIEW_MAX_LENGTH)
         val unquoted = strip_body_html(strip_quoted_html(body_html))
         if (unquoted.length > 4) return take_whole_chars(unquoted, PREVIEW_MAX_LENGTH)
-        val from_html = strip_body_html(body_html)
+        val from_html = strip_body_html(strip_quote_attribution(body_html))
         if (from_html.length > 4) return take_whole_chars(from_html, PREVIEW_MAX_LENGTH)
     }
     if (looks_like_ciphertext(body_text)) return ""

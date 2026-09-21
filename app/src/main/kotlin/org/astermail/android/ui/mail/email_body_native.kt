@@ -160,6 +160,7 @@ internal fun prepare_email_body(
     collapse_quoted_content(root, forwarded_label)
     wrap_images_for_zoom(root)
     label_images_for_failure(root, image_failed_label)
+    trim_leading_blank_nodes(root)
     trim_trailing_blank_nodes(root)
     root.html()
 } catch (_: Throwable) {
@@ -435,6 +436,15 @@ private fun is_blank_spacer(node: Node?): Boolean {
     return node.selectFirst(SPACER_CONTENT) == null
 }
 
+private fun trim_leading_blank_nodes(root: Element) {
+    var first: Node? = root.childNodes().firstOrNull()
+    while (first != null && is_blank_spacer(first)) {
+        val removed = first
+        first = removed.nextSibling()
+        removed.remove()
+    }
+}
+
 private fun trim_trailing_blank_nodes(root: Element) {
     var container: Element = root
     while (true) {
@@ -455,6 +465,19 @@ private fun trim_trailing_blank_nodes(root: Element) {
         }
         break
     }
+}
+
+private fun trim_blank_nodes_before(target: Node) {
+    var previous = target.previousSibling()
+    while (previous != null && is_blank_spacer(previous)) {
+        val removed = previous
+        previous = removed.previousSibling()
+        removed.remove()
+    }
+    val element = previous as? Element ?: return
+    if (element.tagName().lowercase() !in setOf("div", "p")) return
+    if (element.selectFirst("details.aster-quoted-wrapper, details.aster-forwarded-collapse") != null) return
+    trim_trailing_blank_nodes(element)
 }
 
 private fun quote_details(forwarded: Boolean, label: String): Element {
@@ -499,6 +522,15 @@ private fun hoist_trailing_signature(details: Element) {
     parent.insertChildren(index, moved)
 }
 
+private fun reveal_element(target: Element) {
+    val parent = target.parent() ?: return
+    val wrapper = Element("div")
+    wrapper.attr("class", "aster-quoted-content aster-quoted-solo")
+    parent.insertChildren(target.siblingIndex(), listOf(wrapper))
+    target.remove()
+    wrapper.appendChild(target)
+}
+
 private fun collapse_element(target: Element) {
     val parent = target.parent() ?: return
     val details = quote_details(forwarded = false, label = QUOTE_TOGGLE_LABEL)
@@ -506,6 +538,7 @@ private fun collapse_element(target: Element) {
     target.remove()
     quote_content(details).appendChild(target)
     hoist_trailing_signature(details)
+    trim_blank_nodes_before(details)
 }
 
 private fun is_within(node: Node, owners: List<Node>): Boolean {
@@ -517,8 +550,22 @@ private fun is_within(node: Node, owners: List<Node>): Boolean {
     return false
 }
 
+private val QUOTE_ROOT_SELECTOR =
+    "div.aster_quote, div.gmail_quote, blockquote.gmail_quote, blockquote.aster_quote, " +
+        "blockquote.protonmail_quote, div.yahoo_quoted, blockquote.yahoo_quoted"
+
+private fun quote_is_whole_body(root: Element): Boolean {
+    val quote = root.selectFirst(QUOTE_ROOT_SELECTOR) ?: return false
+    if (root.text().length - quote.text().length > 4) return false
+    return root.select("img").size <= quote.select("img").size
+}
+
 private fun collapse_quoted_content(root: Element, forwarded_label: String) {
     collapse_proton_forward(root, forwarded_label)
+    if (!already_collapsed(root) && quote_is_whole_body(root)) {
+        root.selectFirst(QUOTE_ROOT_SELECTOR)?.let { reveal_element(it) }
+        return
+    }
     if (!already_collapsed(root)) {
         root.selectFirst("div.aster_quote, div.gmail_quote")?.let { collapse_element(it) }
     }
@@ -568,6 +615,7 @@ private fun collapse_proton_forward(root: Element, forwarded_label: String) {
         node.remove()
         content.appendChild(node)
     }
+    trim_blank_nodes_before(details)
 }
 
 private fun block_ancestor(node: Node, root: Element): Node {
@@ -674,6 +722,7 @@ private fun collapse_by_text_marker(root: Element) {
         node.remove()
         content.appendChild(node)
     }
+    trim_blank_nodes_before(details)
 }
 
 private fun translation_skipped(node: Node, root: Element): Boolean {

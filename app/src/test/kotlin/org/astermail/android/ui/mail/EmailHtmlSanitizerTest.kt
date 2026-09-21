@@ -382,4 +382,67 @@ class EmailHtmlSanitizerTest {
         val out = EmailHtmlSanitizer.sanitize("""<img src="https://example.com/a.png" width="100%" height="auto">""")
         assertFalse(out.contains("aspect-ratio"))
     }
+
+    @Test
+    fun a_forward_keeps_the_text_that_precedes_the_quoted_document() {
+        val html = """
+            <div>Passing this along.</div>
+            <div class="aster-quote">
+            <div>From: the sender</div>
+            <div>Subject: Welcome</div>
+            <html><head><style>p{color:#111}</style></head><body><p>Original body</p></body></html>
+            </div>
+        """.trimIndent()
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertTrue(out.contains("Passing this along."))
+        assertTrue(out.contains("From: the sender"))
+        assertTrue(out.contains("Subject: Welcome"))
+        assertTrue(out.contains("Original body"))
+    }
+
+    @Test
+    fun a_real_document_wrapper_is_still_unwrapped() {
+        val html = """<!DOCTYPE html><html><head><title>t</title></head><body><p>Only this</p></body></html>"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertTrue(out.contains("Only this"))
+        assertFalse(out.contains("<body"))
+        assertFalse(out.contains("t</"))
+    }
+
+    @Test
+    fun a_wrapper_holding_a_nested_document_keeps_the_trailing_content() {
+        val html = """<html><body><div>Note</div><html><body><p>Inner</p></body></html><div>Tail</div></body></html>"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertTrue(out.contains("Note"))
+        assertTrue(out.contains("Inner"))
+        assertTrue(out.contains("Tail"))
+    }
+
+    @Test
+    fun marks_a_styled_call_to_action_link_as_a_button() {
+        val html = """<a href="https://billing.example.com/update" style="background-color:#635bff;padding:12px 24px;color:#fff;line-height:44px">Update payment method</a>"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertTrue(out.contains("aster-email-button"))
+    }
+
+    @Test
+    fun marks_a_table_cell_call_to_action_as_a_button() {
+        val html = """<table><tr><td bgcolor="#635bff"><a href="https://billing.example.com/update" style="line-height:44px">Update payment method</a></td></tr></table>"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertTrue(out.contains("aster-email-button"))
+    }
+
+    @Test
+    fun leaves_an_ordinary_body_link_alone() {
+        val html = """<p>Read the <a href="https://example.com/terms">terms</a> before you continue.</p>"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertFalse(out.contains("aster-email-button"))
+    }
+
+    @Test
+    fun leaves_a_long_styled_paragraph_link_alone() {
+        val html = """<a href="https://example.com" style="background-color:#eee">This sentence is far too long to be a button label on any email</a>"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertFalse(out.contains("aster-email-button"))
+    }
 }

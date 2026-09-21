@@ -88,4 +88,36 @@ class SentReplyPreviewTest {
 
         assertEquals("fallback body", thread_card_preview(forward_only, "fallback body"))
     }
+
+    @Test
+    fun a_forward_with_no_new_text_hides_the_quote_attribution() {
+        val forward_only =
+            "<br><div class=\"aster_quote gmail_quote\">" +
+                "<div class=\"aster_quote_attr gmail_attr\">" +
+                "<div><b>From:</b> noreply@astermail.org</div>" +
+                "<div><b>Date:</b> Sep 19, 2026</div>" +
+                "<div><b>Subject:</b> Welcome to Aster Mail</div></div>" +
+                "<blockquote class=\"gmail_quote\">" + quoted_original + "</blockquote></div>"
+
+        val preview = clean_body_preview("", forward_only)
+
+        assertFalse(preview, preview.contains("From:"))
+        assertFalse(preview, preview.contains("Subject:"))
+        assertTrue(preview, preview.contains("all great questions"))
+    }
+
+    @Test
+    fun a_forward_thread_card_hides_the_quote_attribution() {
+        val forward_only =
+            "<br><div class=\"aster_quote gmail_quote\">" +
+                "<div class=\"aster_quote_attr gmail_attr\">" +
+                "<div><b>From:</b> noreply@astermail.org</div>" +
+                "<div><b>Subject:</b> Welcome to Aster Mail</div></div>" +
+                "<blockquote class=\"gmail_quote\">" + quoted_original + "</blockquote></div>"
+
+        val preview = thread_card_preview(forward_only, "From: noreply@astermail.org Subject: Welcome")
+
+        assertFalse(preview, preview.contains("From:"))
+        assertTrue(preview, preview.contains("all great questions"))
+    }
 }

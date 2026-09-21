@@ -184,4 +184,47 @@ class EmailBodyNativeTest {
         assertNull(declared_content_width(body))
     }
 
+
+    @Test
+    fun a_forward_that_is_only_a_quote_stays_expanded() {
+        val body = "<br><div class=\"aster_quote gmail_quote\">" +
+            "<div class=\"aster_quote_attr gmail_attr\"><div><b>From:</b> a sender</div></div>" +
+            "<blockquote class=\"gmail_quote\"><p>the original message body</p></blockquote></div>"
+        val prepared = prepare(body)
+
+        assertFalse(prepared.contains("aster-quoted-wrapper"))
+        assertTrue(prepared.contains("aster-quoted-content"))
+        assertTrue(prepared.contains("the original message body"))
+    }
+
+    @Test
+    fun blank_lines_before_a_collapsed_quote_are_dropped() {
+        val body = "<div>Reply number 8.</div><br><br><br>" +
+            "<div class=\"aster_quote gmail_quote\">" +
+            "<blockquote class=\"gmail_quote\"><p>the original message body</p></blockquote></div>"
+        val prepared = prepare(body)
+
+        assertTrue(prepared.contains("aster-quoted-wrapper"))
+        assertFalse(prepared.contains("<br>"))
+    }
+
+    @Test
+    fun blank_lines_inside_the_last_block_before_a_quote_are_dropped() {
+        val body = "<div>Reply number 8.<br><br></div>" +
+            "<div class=\"aster_quote gmail_quote\">" +
+            "<blockquote class=\"gmail_quote\"><p>the original message body</p></blockquote></div>"
+        val prepared = prepare(body)
+
+        assertTrue(prepared.contains("aster-quoted-wrapper"))
+        assertFalse(prepared.contains("<br>"))
+    }
+
+    @Test
+    fun a_forward_with_its_own_text_still_collapses_the_quote() {
+        val body = "<div>Passing this along.</div><div class=\"aster_quote gmail_quote\">" +
+            "<blockquote class=\"gmail_quote\"><p>the original message body</p></blockquote></div>"
+        val prepared = prepare(body)
+
+        assertTrue(prepared.contains("aster-quoted-wrapper"))
+    }
 }

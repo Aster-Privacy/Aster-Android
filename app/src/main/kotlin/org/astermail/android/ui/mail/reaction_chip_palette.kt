@@ -23,6 +23,7 @@ package org.astermail.android.ui.mail
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 
 @Immutable
 data class ReactionChipPalette(
@@ -32,19 +33,24 @@ data class ReactionChipPalette(
     val other_text: Color,
 )
 
-private val light_reaction_chip_palette = ReactionChipPalette(
-    own_fill = Color(0xFFD3E3FD),
-    own_text = Color(0xFF0842A0),
-    other_fill = Color(0xFFECEEF1),
-    other_text = Color(0xFF444746),
-)
+private fun solid_mix(base: Color, over: Color, amount: Float): Color =
+    lerp(base.copy(alpha = 1f), over.copy(alpha = 1f), amount).copy(alpha = 1f)
 
-private val dark_reaction_chip_palette = ReactionChipPalette(
-    own_fill = Color(0xFF004A77),
-    own_text = Color(0xFFC2E7FF),
-    other_fill = Color(0xFF282A2C),
-    other_text = Color(0xFFC4C7C5),
-)
-
-fun reaction_chip_palette(is_dark: Boolean): ReactionChipPalette =
-    if (is_dark) dark_reaction_chip_palette else light_reaction_chip_palette
+fun reaction_chip_palette(
+    is_dark: Boolean,
+    accent: Color,
+    surface: Color,
+    text_secondary: Color,
+): ReactionChipPalette {
+    val lift = if (is_dark) Color.White else Color.Black
+    return ReactionChipPalette(
+        own_fill = solid_mix(surface, accent, if (is_dark) 0.34f else 0.20f),
+        own_text = if (is_dark) {
+            solid_mix(accent, Color.White, 0.55f)
+        } else {
+            solid_mix(accent, Color.Black, 0.38f)
+        },
+        other_fill = solid_mix(surface, lift, if (is_dark) 0.09f else 0.07f),
+        other_text = text_secondary,
+    )
+}

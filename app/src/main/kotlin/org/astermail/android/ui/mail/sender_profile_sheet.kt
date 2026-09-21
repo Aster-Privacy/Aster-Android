@@ -120,6 +120,7 @@ fun sender_profile_sheet(
     }
 
     ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = on_close,
         sheetState = state,
         containerColor = sheet_container_color(colors),
