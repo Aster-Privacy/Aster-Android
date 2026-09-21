@@ -1,0 +1,10 @@
+What's new
+- Emails open much faster and show the sender and subject right away.
+- Pull to refresh has a new progress bar that matches your theme.
+- The menu button turns into a back button when you open an email.
+
+Fixed
+- Long emails no longer cut off partway through, and loading no longer leaves large gaps.
+- Quick actions, unread filters, and the thread counter work again.
+- Toasts no longer overlap or freeze while fading out.
+- Buttons in Encryption settings now fit their labels.
