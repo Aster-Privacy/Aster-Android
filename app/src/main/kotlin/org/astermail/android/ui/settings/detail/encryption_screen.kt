@@ -373,51 +373,56 @@ fun EncryptionScreen(
 
                     settings_row_gap()
 
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(AsterSpacing.lg),
-                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                        verticalAlignment = Alignment.CenterVertically,
+                        verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
                     ) {
-                        AsterButton(
-                            label = stringResource(R.string.export_public_key),
-                            modifier = Modifier.weight(1f).testTag("export_public_key_button"),
-                            onClick = {
-                                scope.launch {
-                                    val armored = vm.export_public_key_now()
-                                    if (armored != null) {
-                                        share_public_key(context, armored)
-                                    } else {
-                                        Toast.makeText(context, context.getString(R.string.something_went_wrong), Toast.LENGTH_SHORT).show()
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            AsterButton(
+                                label = stringResource(R.string.export_public_key),
+                                modifier = Modifier.weight(1f).testTag("export_public_key_button"),
+                                onClick = {
+                                    scope.launch {
+                                        val armored = vm.export_public_key_now()
+                                        if (armored != null) {
+                                            share_public_key(context, armored)
+                                        } else {
+                                            Toast.makeText(context, context.getString(R.string.something_went_wrong), Toast.LENGTH_SHORT).show()
+                                        }
                                     }
-                                }
-                            },
-                        )
+                                },
+                            )
+                            AsterIconButton(
+                                icon = TablerIcons.Copy,
+                                content_description = stringResource(R.string.copy_public_key),
+                                modifier = Modifier.testTag("copy_public_key_button"),
+                                onClick = {
+                                    scope.launch {
+                                        val armored = vm.export_public_key_now()
+                                        if (armored != null && copy_to_clipboard(context, context.getString(R.string.clipboard_label_identity_public_key), armored)) {
+                                            Toast.makeText(context, context.getString(R.string.public_key_copied), Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            show_copy_failed_toast(context)
+                                        }
+                                    }
+                                },
+                                icon_size = 18,
+                            )
+                        }
                         AsterButton(
                             label = stringResource(R.string.export_private_key_label),
-                            modifier = Modifier.weight(1f).testTag("export_private_key_button"),
+                            modifier = Modifier.fillMaxWidth().testTag("export_private_key_button"),
                             onClick = {
                                 export_private_password = ""
                                 export_private_error = null
                                 show_export_private_dialog = true
                             },
-                        )
-                        AsterIconButton(
-                            icon = TablerIcons.Copy,
-                            content_description = stringResource(R.string.copy_public_key),
-                            modifier = Modifier.testTag("copy_public_key_button"),
-                            onClick = {
-                                scope.launch {
-                                    val armored = vm.export_public_key_now()
-                                    if (armored != null && copy_to_clipboard(context, context.getString(R.string.clipboard_label_identity_public_key), armored)) {
-                                        Toast.makeText(context, context.getString(R.string.public_key_copied), Toast.LENGTH_SHORT).show()
-                                    } else {
-                                        show_copy_failed_toast(context)
-                                    }
-                                }
-                            },
-                            icon_size = 18,
                         )
                     }
                 }

@@ -158,7 +158,9 @@ fun StorageScreen(
     detail_scaffold(title = stringResource(R.string.storage_title), on_back = on_back) {
         val storage = state.storage
         val stats = inbox_state.stats
-        val awaiting_first_load = storage == null && stats == null &&
+        val has_usable_storage = (storage != null && storage.total_bytes > 0L) ||
+            (stats != null && stats.storage_total_bytes > 0L)
+        val awaiting_first_load = !has_usable_storage &&
             (!load_requested || state.is_loading || (state.error == null && !storage_load_settled))
         if (awaiting_first_load) {
             storage_skeleton()

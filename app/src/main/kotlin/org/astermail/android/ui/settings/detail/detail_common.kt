@@ -673,6 +673,7 @@ internal fun verified_badge(
             text = text,
             color = content,
             fontSize = 11.sp,
+            lineHeight = 14.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
