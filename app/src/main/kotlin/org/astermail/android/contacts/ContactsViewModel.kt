@@ -30,12 +30,17 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import org.astermail.android.ui.contacts.Contact
+
+private const val bulk_delete_concurrency = 8
 
 private const val CONTACT_TRASH_RETENTION_DAYS = 30L
 
@@ -76,6 +81,8 @@ data class ContactsUiState(
     val duplicates_dismissed: Boolean = false,
     val is_bulk_working: Boolean = false,
     val is_transferring: Boolean = false,
+    val bulk_done: Int = 0,
+    val bulk_total: Int = 0,
 ) {
     val is_selecting: Boolean get() = selected_ids.isNotEmpty()
 
@@ -861,12 +868,31 @@ class ContactsViewModel @Inject constructor(
         val targets = _state.value.contacts.filter { it.id in ids }
         val untracked = ids.filterNot { id -> targets.any { it.id == id } }
         mutation_in_flight = true
-        _state.value = _state.value.copy(is_bulk_working = true, error = null)
+        _state.value = _state.value.copy(
+            is_bulk_working = true,
+            error = null,
+            bulk_done = 0,
+            bulk_total = targets.size + if (untracked.isEmpty()) 0 else 1,
+        )
         viewModelScope.launch {
             val trashed_at = java.time.Instant.now().toString()
+            val completed = java.util.concurrent.atomic.AtomicInteger(0)
             val outcome = runCatching {
-                for (contact in targets) repository.trash_contact(contact).getOrThrow()
-                if (untracked.isNotEmpty()) repository.bulk_delete_contacts(untracked).getOrThrow()
+                val gate = kotlinx.coroutines.sync.Semaphore(bulk_delete_concurrency)
+                kotlinx.coroutines.coroutineScope {
+                    targets.map { contact ->
+                        async {
+                            gate.withPermit { repository.trash_contact(contact).getOrThrow() }
+                            _state.value = _state.value.copy(
+                                bulk_done = completed.incrementAndGet(),
+                            )
+                        }
+                    }.awaitAll()
+                }
+                if (untracked.isNotEmpty()) {
+                    repository.bulk_delete_contacts(untracked).getOrThrow()
+                    _state.value = _state.value.copy(bulk_done = completed.incrementAndGet())
+                }
             }
             mutation_in_flight = false
             outcome.fold(
@@ -877,6 +903,8 @@ class ContactsViewModel @Inject constructor(
                     _state.value = with_contacts(_state.value, remaining + trashed).copy(
                         is_bulk_working = false,
                         delete_success = true,
+                        bulk_done = 0,
+                        bulk_total = 0,
                     )
                     on_complete?.invoke(true)
                 },
@@ -884,6 +912,8 @@ class ContactsViewModel @Inject constructor(
                     _state.value = _state.value.copy(
                         is_bulk_working = false,
                         error = friendly_error(t),
+                        bulk_done = 0,
+                        bulk_total = 0,
                     )
                     on_complete?.invoke(false)
                 },

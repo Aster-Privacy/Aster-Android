@@ -29,6 +29,7 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -259,6 +260,12 @@ fun ContactsScreen(
             .systemBarsPadding(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
+            if (ui_state.is_bulk_working && ui_state.bulk_total > 1) {
+                bulk_progress_banner(
+                    done = ui_state.bulk_done,
+                    total = ui_state.bulk_total,
+                )
+            }
             if (ui_state.is_selecting) {
                 Row(
                     modifier = Modifier
@@ -1761,6 +1768,41 @@ private fun ContactRow(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun bulk_progress_banner(done: Int, total: Int) {
+    val colors = AsterMaterial.colors
+    val safe_total = total.coerceAtLeast(1)
+    val target = (done.toFloat() / safe_total).coerceIn(0f, 1f)
+    val progress by animateFloatAsState(targetValue = target, label = "bulk_progress")
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+    ) {
+        Text(
+            text = stringResource(R.string.contacts_bulk_progress, done.coerceAtMost(total), total),
+            color = colors.text_secondary,
+            fontSize = 12.sp,
+        )
+        Spacer(Modifier.height(AsterSpacing.xs))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(3.dp)
+                .clip(CircleShape)
+                .background(colors.accent_blue.copy(alpha = 0.18f)),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(progress)
+                    .height(3.dp)
+                    .clip(CircleShape)
+                    .background(colors.accent_blue),
+            )
         }
     }
 }

@@ -638,6 +638,29 @@ class ContactsViewModelTest {
     }
 
     @Test
+    fun `delete_selection trashes every selected contact and clears progress`() = runTest {
+        val many = (1..25).map { fake_contact("c_$it", "Name $it", "n$it@astermail.org") }
+        coEvery { repository.fetch_contacts() } returns Result.success(many)
+        coEvery { repository.trash_contact(any()) } returns Result.success(Unit)
+
+        vm.load_contacts()
+        advanceUntilIdle()
+        vm.set_selection(many.map { it.id }.toSet())
+
+        vm.delete_selection()
+        advanceUntilIdle()
+
+        coVerify(exactly = 25) { repository.trash_contact(any()) }
+        coVerify(exactly = 0) { repository.bulk_delete_contacts(any()) }
+        val state = vm.state.value
+        assertTrue(state.contacts.isEmpty())
+        assertEquals(25, state.trashed_contacts.size)
+        assertEquals(0, state.bulk_total)
+        assertEquals(0, state.bulk_done)
+        assertFalse(state.is_bulk_working)
+    }
+
+    @Test
     fun `delete_selection does nothing without a selection`() = runTest {
         var reported = true
         vm.delete_selection { ok -> reported = ok }

@@ -37,7 +37,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -76,6 +81,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterActionRow
+import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
@@ -273,26 +279,46 @@ fun ContactEditScreen(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = AsterSpacing.xxl),
+                .padding(horizontal = AsterSpacing.md)
+                .padding(top = AsterSpacing.md, bottom = AsterSpacing.xxl),
+            verticalArrangement = Arrangement.spacedBy(AsterSpacing.md),
         ) {
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = AsterSpacing.xl),
+                    .padding(vertical = AsterSpacing.lg),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                ContactAvatar(
-                    avatar_url = avatar_url,
-                    email = email,
-                    name = name,
-                    size = 80.dp,
-                    content_description = stringResource(R.string.contact_photo),
-                    profile_color = source?.profile_color.orEmpty(),
-                )
+                if (avatar_url.isBlank() && name.isBlank() && email.isBlank()) {
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .acrylic(colors, CircleShape, colors.bg_secondary),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        androidx.compose.material3.Icon(
+                            imageVector = TablerIcons.User,
+                            contentDescription = stringResource(R.string.contact_photo),
+                            tint = colors.text_muted,
+                            modifier = Modifier.size(34.dp),
+                        )
+                    }
+                } else {
+                    ContactAvatar(
+                        avatar_url = avatar_url,
+                        email = email,
+                        name = name,
+                        size = 80.dp,
+                        content_description = stringResource(R.string.contact_photo),
+                        profile_color = source?.profile_color.orEmpty(),
+                    )
+                }
                 Spacer(Modifier.height(AsterSpacing.sm))
-                AsterActionRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    spacing = AsterSpacing.sm,
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     AsterGhostButton(
                         label = if (avatar_url.isBlank()) {
@@ -323,99 +349,111 @@ fun ContactEditScreen(
                     fontSize = 17.sp,
                 )
             }
-
-            AsterDivider()
-
-            FormGroup(icon = TablerIcons.User) {
-                FormField(stringResource(R.string.name), name) { name = it }
             }
-            AsterDivider()
 
-            FormGroup(icon = TablerIcons.Mail) {
-                FormField(stringResource(R.string.email), email) { email = it }
-                FormField(stringResource(R.string.work_email), work_email) { work_email = it }
-            }
-            AsterDivider()
-
-            FormGroup(icon = TablerIcons.Phone) {
-                FormField(stringResource(R.string.phone), phone) { phone = it }
-                FormField(stringResource(R.string.work_phone), work_phone) { work_phone = it }
-            }
-            AsterDivider()
-
-            FormGroup(icon = TablerIcons.Briefcase) {
-                FormField(stringResource(R.string.company), company) { company = it }
-                FormField(stringResource(R.string.title), title) { title = it }
-            }
-            AsterDivider()
-
-            FormGroup(icon = TablerIcons.Calendar) {
+            FormSection(icon = TablerIcons.User, title = stringResource(R.string.personal)) {
+                FormField(stringResource(R.string.name), name, keyboard_capitalization = KeyboardCapitalization.Words) { name = it }
+                FormField(stringResource(R.string.email), email, keyboard_type = KeyboardType.Email) { email = it }
+                FormField(stringResource(R.string.phone), phone, keyboard_type = KeyboardType.Phone) { phone = it }
                 FormField(stringResource(R.string.birthday), birthday) { birthday = it }
             }
-            AsterDivider()
 
-            FormGroup(icon = TablerIcons.MapPin) {
-                FormField(stringResource(R.string.street), address) { address = it }
-                FormField(stringResource(R.string.city), city) { city = it }
-                FormField(stringResource(R.string.region), region) { region = it }
-                FormField(stringResource(R.string.postal_code), postal_code) { postal_code = it }
-                FormField(stringResource(R.string.country), country) { country = it }
+            FormSection(icon = TablerIcons.Briefcase, title = stringResource(R.string.work)) {
+                FormField(stringResource(R.string.company), company, keyboard_capitalization = KeyboardCapitalization.Words) { company = it }
+                FormField(stringResource(R.string.title), title, keyboard_capitalization = KeyboardCapitalization.Words) { title = it }
+                FormField(stringResource(R.string.work_email), work_email, keyboard_type = KeyboardType.Email) { work_email = it }
+                FormField(stringResource(R.string.work_phone), work_phone, keyboard_type = KeyboardType.Phone) { work_phone = it }
             }
-            AsterDivider()
 
-            FormGroup(icon = TablerIcons.Link) {
-                FormField(stringResource(R.string.website), website) { website = it }
+            FormSection(icon = TablerIcons.MapPin, title = stringResource(R.string.address)) {
+                FormField(stringResource(R.string.street), address, keyboard_capitalization = KeyboardCapitalization.Words) { address = it }
+                FormField(stringResource(R.string.city), city, keyboard_capitalization = KeyboardCapitalization.Words) { city = it }
+                FormField(stringResource(R.string.region), region, keyboard_capitalization = KeyboardCapitalization.Words) { region = it }
+                FormField(stringResource(R.string.postal_code), postal_code) { postal_code = it }
+                FormField(stringResource(R.string.country), country, keyboard_capitalization = KeyboardCapitalization.Words) { country = it }
+            }
+
+            FormSection(icon = TablerIcons.Link, title = stringResource(R.string.social)) {
+                FormField(stringResource(R.string.website), website, keyboard_type = KeyboardType.Uri) { website = it }
                 FormField(stringResource(R.string.twitter), twitter) { twitter = it }
                 FormField(stringResource(R.string.linkedin), linkedin) { linkedin = it }
             }
-            AsterDivider()
 
-            FormGroup(icon = TablerIcons.Notes) {
-                FormField(stringResource(R.string.notes), notes) { notes = it }
+            FormSection(icon = TablerIcons.Notes, title = stringResource(R.string.notes)) {
+                FormField(
+                    label = stringResource(R.string.notes),
+                    value = notes,
+                    single_line = false,
+                    keyboard_capitalization = KeyboardCapitalization.Sentences,
+                    on_change = { notes = it },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun FormGroup(icon: androidx.compose.ui.graphics.vector.ImageVector, content: @Composable () -> Unit) {
+private fun FormSection(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
-    ) {
-        Box(
-            modifier = Modifier
-                .padding(top = AsterSpacing.xs)
-                .size(40.dp)
-                .clip(CircleShape)
-                .acrylic(colors, CircleShape, colors.bg_secondary),
-            contentAlignment = Alignment.Center,
-        ) {
-            androidx.compose.material3.Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = colors.text_secondary,
-                modifier = Modifier.size(18.dp),
-            )
-        }
-        Spacer(Modifier.width(AsterSpacing.lg))
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.md),
             verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
         ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .acrylic(colors, CircleShape, colors.bg_secondary),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    androidx.compose.material3.Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = colors.text_secondary,
+                        modifier = Modifier.size(15.dp),
+                    )
+                }
+                Spacer(Modifier.width(AsterSpacing.sm))
+                Text(
+                    text = title,
+                    color = colors.text_secondary,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp,
+                    letterSpacing = 0.6.sp,
+                )
+            }
             content()
         }
     }
 }
 
 @Composable
-private fun FormField(label: String, value: String, on_change: (String) -> Unit) {
+private fun FormField(
+    label: String,
+    value: String,
+    keyboard_type: KeyboardType = KeyboardType.Text,
+    keyboard_capitalization: KeyboardCapitalization = KeyboardCapitalization.None,
+    single_line: Boolean = true,
+    on_change: (String) -> Unit,
+) {
     AsterTextField(
         value = value,
         onValueChange = on_change,
         label = label,
-        placeholder = label,
+        singleLine = single_line,
+        min_lines = if (single_line) 1 else 3,
+        keyboard_options = KeyboardOptions(
+            keyboardType = keyboard_type,
+            capitalization = keyboard_capitalization,
+            imeAction = if (single_line) ImeAction.Next else ImeAction.Default,
+        ),
     )
 }
