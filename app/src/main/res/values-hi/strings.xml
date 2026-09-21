@@ -3328,7 +3328,7 @@
     <string name="plan_badge_star">तारा</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">ध्यान दें: आपका कनेक्शन धीमा हो सकता है क्योंकि वह Cloudflare से होकर जाता है.</string>
+    <string name="connection_relay_connected">रिले चालू. आपका कनेक्शन धीमा हो सकता है.</string>
     <string name="connection_relay_restored">सब कुछ फिर से सामान्य है</string>
     <string name="connection_relay_disconnected">डिसकनेक्ट हो गया</string>
     <string name="search_groups">समूह खोजें</string>
@@ -3346,4 +3346,11 @@
     <string name="delete_emails_older_than_30_days">30 दिन से पुराने ईमेल हटाएं</string>
     <string name="inbox_tools">फ़िल्टर और त्वरित कार्रवाई</string>
     <string name="inbox_tools_subtitle">इनबॉक्स हेडर में फ़िल्टर और त्वरित कार्रवाई बटन दिखाएं</string>
+    <string name="contacts_bulk_progress">%2$d में से %1$d संपर्क हटाए जा रहे हैं</string>
+    <string name="plan_badge_thanks">%1$s की सदस्यता लेने के लिए धन्यवाद।</string>
+    <string name="quick_action_unavailable">यह त्वरित कार्रवाई इस फ़ोल्डर में उपलब्ध नहीं है</string>
+    <string name="quick_action_no_unread">यहाँ पढ़ा हुआ चिह्नित करने के लिए कुछ नहीं है</string>
+    <string name="quick_action_no_read">यहाँ संग्रहित करने के लिए कोई पढ़ा हुआ ईमेल नहीं है</string>
+    <string name="quick_action_no_old">यहाँ 30 दिनों से पुराना कोई ईमेल नहीं है</string>
+    <string name="quick_action_delete_old_confirm">30 दिनों से पुरानी %1$d बातचीत को ट्रैश में ले जाएँ?</string>
 </resources>

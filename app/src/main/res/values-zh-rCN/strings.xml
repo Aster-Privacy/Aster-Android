@@ -3420,7 +3420,7 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">请注意：由于流量经过 Cloudflare 转发，连接可能会变慢。</string>
+    <string name="connection_relay_connected">中继已开启。连接可能会变慢。</string>
     <string name="connection_relay_restored">已恢复正常</string>
     <string name="connection_relay_disconnected">已断开连接</string>
     <string name="search_groups">搜索群组</string>
@@ -3438,4 +3438,11 @@
     <string name="delete_emails_older_than_30_days">删除 30 天前的邮件</string>
     <string name="inbox_tools">筛选与快捷操作</string>
     <string name="inbox_tools_subtitle">在收件箱标题栏中显示筛选和快捷操作按钮</string>
+    <string name="contacts_bulk_progress">正在删除 %2$d 个联系人中的 %1$d 个</string>
+    <string name="plan_badge_thanks">感谢你订阅 %1$s。</string>
+    <string name="quick_action_unavailable">此文件夹中无法使用该快捷操作</string>
+    <string name="quick_action_no_unread">这里没有可标记为已读的内容</string>
+    <string name="quick_action_no_read">这里没有可归档的已读邮件</string>
+    <string name="quick_action_no_old">这里没有超过 30 天的邮件</string>
+    <string name="quick_action_delete_old_confirm">将 %1$d 个超过 30 天的会话移到回收站吗？</string>
 </resources>

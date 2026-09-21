@@ -3438,7 +3438,7 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">Let op: je verbinding kan trager zijn omdat die via Cloudflare loopt.</string>
+    <string name="connection_relay_connected">Relay aan. Je verbinding kan trager zijn.</string>
     <string name="connection_relay_restored">Weer normaal</string>
     <string name="connection_relay_disconnected">Verbinding verbroken</string>
     <string name="search_groups">Groepen zoeken</string>
@@ -3456,4 +3456,11 @@
     <string name="delete_emails_older_than_30_days">E-mails ouder dan 30 dagen verwijderen</string>
     <string name="inbox_tools">Filters en snelle acties</string>
     <string name="inbox_tools_subtitle">Toont de knoppen voor filters en snelle acties in de koptekst van het Postvak IN</string>
+    <string name="contacts_bulk_progress">%1$d van %2$d contacten verwijderen</string>
+    <string name="plan_badge_thanks">Bedankt voor je %1$s-abonnement.</string>
+    <string name="quick_action_unavailable">Die snelle actie is niet beschikbaar in deze map</string>
+    <string name="quick_action_no_unread">Hier is niets om als gelezen te markeren</string>
+    <string name="quick_action_no_read">Hier zijn geen gelezen e-mails om te archiveren</string>
+    <string name="quick_action_no_old">Hier zijn geen e-mails ouder dan 30 dagen</string>
+    <string name="quick_action_delete_old_confirm">%1$d gesprekken ouder dan 30 dagen naar de prullenbak verplaatsen?</string>
 </resources>

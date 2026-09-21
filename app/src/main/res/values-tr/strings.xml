@@ -3438,7 +3438,7 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">Not: Bağlantınız Cloudflare üzerinden geçtiği için daha yavaş olabilir.</string>
+    <string name="connection_relay_connected">Aktarma açık. Bağlantınız daha yavaş olabilir.</string>
     <string name="connection_relay_restored">Her şey normale döndü</string>
     <string name="connection_relay_disconnected">Bağlantı kesildi</string>
     <string name="search_groups">Gruplarda ara</string>
@@ -3456,4 +3456,11 @@
     <string name="delete_emails_older_than_30_days">30 günden eski e-postaları sil</string>
     <string name="inbox_tools">Filtreler ve hızlı işlemler</string>
     <string name="inbox_tools_subtitle">Gelen kutusu başlığında filtre ve hızlı işlem düğmelerini gösterir</string>
+    <string name="contacts_bulk_progress">%2$d kişiden %1$d tanesi siliniyor</string>
+    <string name="plan_badge_thanks">%1$s aboneliğiniz için teşekkürler.</string>
+    <string name="quick_action_unavailable">Bu hızlı işlem bu klasörde kullanılamaz</string>
+    <string name="quick_action_no_unread">Burada okundu olarak işaretlenecek bir şey yok</string>
+    <string name="quick_action_no_read">Burada arşivlenecek okunmuş e-posta yok</string>
+    <string name="quick_action_no_old">Burada 30 günden eski e-posta yok</string>
+    <string name="quick_action_delete_old_confirm">30 günden eski %1$d konuşma çöp kutusuna taşınsın mı?</string>
 </resources>

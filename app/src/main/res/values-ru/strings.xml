@@ -3480,7 +3480,7 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">Учтите: соединение может стать медленнее, так как идёт через Cloudflare.</string>
+    <string name="connection_relay_connected">Ретрансляция включена. Соединение может быть медленнее.</string>
     <string name="connection_relay_restored">Всё снова работает как обычно</string>
     <string name="connection_relay_disconnected">Отключено</string>
     <string name="search_groups">Поиск групп</string>
@@ -3498,4 +3498,11 @@
     <string name="delete_emails_older_than_30_days">Удалить письма старше 30 дней</string>
     <string name="inbox_tools">Фильтры и быстрые действия</string>
     <string name="inbox_tools_subtitle">Показывает кнопки фильтров и быстрых действий в заголовке входящих</string>
+    <string name="contacts_bulk_progress">Удаление %1$d из %2$d контактов</string>
+    <string name="plan_badge_thanks">Спасибо за подписку %1$s.</string>
+    <string name="quick_action_unavailable">Это быстрое действие недоступно в этой папке</string>
+    <string name="quick_action_no_unread">Здесь нечего отмечать как прочитанное</string>
+    <string name="quick_action_no_read">Здесь нет прочитанных писем для архивации</string>
+    <string name="quick_action_no_old">Здесь нет писем старше 30 дней</string>
+    <string name="quick_action_delete_old_confirm">Переместить %1$d бесед старше 30 дней в корзину?</string>
 </resources>

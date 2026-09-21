@@ -577,6 +577,7 @@
     <string name="search_senders">Search senders</string>
     <string name="deselect_all">Deselect all</string>
     <string name="count_selected">%1$d selected</string>
+    <string name="contacts_bulk_progress">Deleting %1$d of %2$d contacts</string>
     <string name="unsubscribe_selected">Unsubscribe (%1$d)</string>
     <string name="reactivate_selected">Reactivate (%1$d)</string>
     <string name="open_unsubscribe_page">Open unsubscribe page</string>
@@ -2978,7 +2979,7 @@
     <string name="domain_purchase_error_limit">You have reached the domain limit for your plan. Upgrade to add more.</string>
     <string name="domain_purchase_error_slow_down">Too many domain orders right now. Finish or wait for the ones in progress.</string>
     <string name="domain_purchase_error_paused">Domain purchases are paused for a few minutes. Please try again shortly.</string>
-    <string name="domain_purchase_error_not_allowed">This domain isn\'t available on your account right now. Try a different name or contact support.</string>
+    <string name="domain_purchase_error_not_allowed">Your account can\'t complete this purchase right now. Contact support for help.</string>
     <string name="domain_purchase_progress_title">Setting up %1$s</string>
     <string name="domain_purchase_step_payment">Payment received</string>
     <string name="domain_purchase_step_registering">Registering with NameSilo</string>
@@ -3483,7 +3484,8 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">Heads up, your connection may be slower since it\'s routed through Cloudflare.</string>
+    <string name="plan_badge_thanks">Thanks for being a %1$s subscriber.</string>
+    <string name="connection_relay_connected">Relay on. Your connection may be slower.</string>
     <string name="connection_relay_restored">Back to normal</string>
     <string name="connection_relay_disconnected">Disconnected</string>
     <string name="search_groups">Search groups</string>
@@ -3499,6 +3501,11 @@
     <string name="quick_actions">Quick actions</string>
     <string name="archive_all_read_emails">Archive read emails</string>
     <string name="delete_emails_older_than_30_days">Delete emails older than 30 days</string>
+    <string name="quick_action_unavailable">That quick action isn\'t available in this folder</string>
+    <string name="quick_action_no_unread">Nothing to mark as read here</string>
+    <string name="quick_action_no_read">No read emails to archive here</string>
+    <string name="quick_action_no_old">No emails older than 30 days here</string>
+    <string name="quick_action_delete_old_confirm">Move %1$d conversations older than 30 days to Trash?</string>
     <string name="inbox_tools">Filters and quick actions</string>
     <string name="inbox_tools_subtitle">Show the filter and quick action buttons in the inbox header</string>
 </resources>

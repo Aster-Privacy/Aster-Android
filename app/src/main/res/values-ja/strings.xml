@@ -3420,7 +3420,7 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">ご注意：Cloudflare 経由のため、通信が遅くなることがあります。</string>
+    <string name="connection_relay_connected">リレーが有効です。通信が遅くなることがあります。</string>
     <string name="connection_relay_restored">通常の状態に戻りました</string>
     <string name="connection_relay_disconnected">切断しました</string>
     <string name="search_groups">グループを検索</string>
@@ -3438,4 +3438,11 @@
     <string name="delete_emails_older_than_30_days">30日以上前のメールを削除</string>
     <string name="inbox_tools">フィルタとクイック操作</string>
     <string name="inbox_tools_subtitle">受信トレイのヘッダーにフィルタとクイック操作のボタンを表示します</string>
+    <string name="contacts_bulk_progress">%2$d件中%1$d件の連絡先を削除しています</string>
+    <string name="plan_badge_thanks">%1$s をご利用いただきありがとうございます。</string>
+    <string name="quick_action_unavailable">このクイック操作はこのフォルダでは使用できません</string>
+    <string name="quick_action_no_unread">既読にする項目がありません</string>
+    <string name="quick_action_no_read">アーカイブできる既読メールがありません</string>
+    <string name="quick_action_no_old">30日より前のメールはありません</string>
+    <string name="quick_action_delete_old_confirm">30日より前のスレッド %1$d 件をゴミ箱に移動しますか?</string>
 </resources>

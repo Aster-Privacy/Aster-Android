@@ -3439,7 +3439,7 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">Hinweis: Deine Verbindung kann langsamer sein, da sie über Cloudflare läuft.</string>
+    <string name="connection_relay_connected">Relay aktiv. Deine Verbindung kann langsamer sein.</string>
     <string name="connection_relay_restored">Wieder normal</string>
     <string name="connection_relay_disconnected">Getrennt</string>
     <string name="search_groups">Gruppen suchen</string>
@@ -3457,4 +3457,11 @@
     <string name="delete_emails_older_than_30_days">E-Mails löschen, die älter als 30 Tage sind</string>
     <string name="inbox_tools">Filter und Schnellaktionen</string>
     <string name="inbox_tools_subtitle">Zeigt die Schaltflächen für Filter und Schnellaktionen in der Posteingangsleiste an</string>
+    <string name="contacts_bulk_progress">%1$d von %2$d Kontakten werden gelöscht</string>
+    <string name="plan_badge_thanks">Danke für dein %1$s-Abo.</string>
+    <string name="quick_action_unavailable">Diese Schnellaktion ist in diesem Ordner nicht verfügbar</string>
+    <string name="quick_action_no_unread">Hier gibt es nichts als gelesen zu markieren</string>
+    <string name="quick_action_no_read">Hier gibt es keine gelesenen E-Mails zum Archivieren</string>
+    <string name="quick_action_no_old">Hier gibt es keine E-Mails, die älter als 30 Tage sind</string>
+    <string name="quick_action_delete_old_confirm">%1$d Konversationen, die älter als 30 Tage sind, in den Papierkorb verschieben?</string>
 </resources>

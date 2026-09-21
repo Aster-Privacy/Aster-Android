@@ -3438,7 +3438,7 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">Atenção: a ligação pode ficar mais lenta porque passa pela Cloudflare.</string>
+    <string name="connection_relay_connected">Retransmissão ativada. A ligação pode ficar mais lenta.</string>
     <string name="connection_relay_restored">Tudo voltou ao normal</string>
     <string name="connection_relay_disconnected">Desconectado</string>
     <string name="search_groups">Pesquisar grupos</string>
@@ -3456,4 +3456,11 @@
     <string name="delete_emails_older_than_30_days">Excluir e-mails com mais de 30 dias</string>
     <string name="inbox_tools">Filtros e ações rápidas</string>
     <string name="inbox_tools_subtitle">Mostra os botões de filtro e ações rápidas no cabeçalho da caixa de entrada</string>
+    <string name="contacts_bulk_progress">Excluindo %1$d de %2$d contatos</string>
+    <string name="plan_badge_thanks">Obrigado pela sua assinatura %1$s.</string>
+    <string name="quick_action_unavailable">Essa ação rápida não está disponível nesta pasta</string>
+    <string name="quick_action_no_unread">Não há nada para marcar como lido aqui</string>
+    <string name="quick_action_no_read">Não há e-mails lidos para arquivar aqui</string>
+    <string name="quick_action_no_old">Não há e-mails com mais de 30 dias aqui</string>
+    <string name="quick_action_delete_old_confirm">Mover %1$d conversas com mais de 30 dias para a lixeira?</string>
 </resources>

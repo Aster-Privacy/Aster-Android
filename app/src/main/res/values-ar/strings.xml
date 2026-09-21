@@ -3522,7 +3522,7 @@
     <string name="plan_badge_star">Star</string>
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
-    <string name="connection_relay_connected">تنبيه: قد يصبح اتصالك أبطأ لأنه يمر عبر Cloudflare.</string>
+    <string name="connection_relay_connected">تم تفعيل الترحيل. قد يصبح اتصالك أبطأ.</string>
     <string name="connection_relay_restored">عاد كل شيء إلى طبيعته</string>
     <string name="connection_relay_disconnected">غير متصل</string>
     <string name="search_groups">البحث في المجموعات</string>
@@ -3540,4 +3540,11 @@
     <string name="delete_emails_older_than_30_days">حذف الرسائل الأقدم من 30 يومًا</string>
     <string name="inbox_tools">عوامل التصفية والإجراءات السريعة</string>
     <string name="inbox_tools_subtitle">إظهار زري التصفية والإجراءات السريعة في رأس البريد الوارد</string>
+    <string name="contacts_bulk_progress">جارٍ حذف %1$d من أصل %2$d جهة اتصال</string>
+    <string name="plan_badge_thanks">شكرًا لاشتراكك في %1$s.</string>
+    <string name="quick_action_unavailable">هذا الإجراء السريع غير متاح في هذا المجلد</string>
+    <string name="quick_action_no_unread">لا يوجد شيء لوضع علامة مقروء عليه هنا</string>
+    <string name="quick_action_no_read">لا توجد رسائل مقروءة لأرشفتها هنا</string>
+    <string name="quick_action_no_old">لا توجد رسائل أقدم من 30 يومًا هنا</string>
+    <string name="quick_action_delete_old_confirm">هل تريد نقل %1$d محادثة أقدم من 30 يومًا إلى المهملات؟</string>
 </resources>
