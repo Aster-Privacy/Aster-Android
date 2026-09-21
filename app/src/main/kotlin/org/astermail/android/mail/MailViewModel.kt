@@ -66,8 +66,8 @@ private const val BULK_ACTION_CONCURRENCY = 6
 private const val RESTORE_PROTECTION_MS = 15_000L
 private const val REMOVAL_PROTECTION_MS = 15_000L
 private const val STATS_TTL_MS = 30_000L
-private const val STATS_DEBOUNCE_MS = 1_200L
-private const val STATS_DIRTY_MS = 3_000L
+private const val STATS_DEBOUNCE_MS = 400L
+private const val STATS_DIRTY_MS = 1_200L
 private const val OVERRIDE_TTL_MS = 30_000L
 private const val READ_OVERRIDE_TTL_MS = 10 * 60_000L
 private const val READ_CONFIRM_GRACE_MS = 15_000L
@@ -1455,10 +1455,10 @@ class MailViewModel @Inject constructor(
             return
         }
         val cur_thread = _thread_state.value
+        val seed = find_item(item_id)
         _thread_state.value = if (cur_thread.item?.id == item_id && cur_thread.messages.isNotEmpty()) {
             cur_thread.copy(is_loading = true, error = null)
         } else {
-            val seed = find_item(item_id)
             if (seed != null) {
                 ThreadUiState(
                     is_loading = true,
@@ -1472,17 +1472,35 @@ class MailViewModel @Inject constructor(
         thread_load_job?.cancel()
         val thread_gen = ++thread_load_generation
         thread_load_job = viewModelScope.launch(Dispatchers.IO) {
+                val seed_token = (cur_thread.item?.takeIf { it.id == item_id } ?: seed)?.thread_token
+                ?.takeIf { it.isNotBlank() }
+            val early_thread = if (seed_token != null) {
+                async(Dispatchers.IO) {
+                    withTimeoutOrNull(15_000) { repository.fetch_thread(seed_token) }
+                }
+            } else {
+                null
+            }
             try {
             val item_result = withTimeoutOrNull(15_000) {
                 repository.fetch_single_message(item_id)
             } ?: Result.failure(Exception(context.getString(R.string.something_went_wrong)))
-            if (thread_gen != thread_load_generation) return@launch
+            if (thread_gen != thread_load_generation) {
+                early_thread?.cancel()
+                return@launch
+            }
             val item = item_result.getOrNull()?.let { apply_tag_override(it) }
             if (item != null) resume_failed_open(item_id)
             val thread_token = item?.thread_token
             if (thread_token != null) {
                 val fallback = listOf(message_from_item_safe(item))
-                val result = withTimeoutOrNull(15_000) {
+                val reusable = if (seed_token == thread_token) {
+                    early_thread?.await()?.takeIf { it.isSuccess }
+                } else {
+                    early_thread?.cancel()
+                    null
+                }
+                val result = reusable ?: withTimeoutOrNull(15_000) {
                     repository.fetch_thread(thread_token)
                 } ?: Result.failure(Exception(context.getString(R.string.something_went_wrong)))
                 if (thread_gen != thread_load_generation) return@launch
@@ -1556,6 +1574,7 @@ class MailViewModel @Inject constructor(
                 }
             }
             } finally {
+                early_thread?.cancel()
                 if (thread_gen == thread_load_generation) {
                     _thread_state.update { if (it.is_loading) it.copy(is_loading = false) else it }
                 }
@@ -2066,6 +2085,14 @@ class MailViewModel @Inject constructor(
                     revert_read_state(event.item_id, local.item?.is_read ?: false, flipped)
                 }
             }
+        }
+    }
+
+    private fun clear_stats_unread() {
+        stats_dirty_until = System.currentTimeMillis() + STATS_DIRTY_MS
+        _inbox_state.update { s ->
+            val stats = s.stats ?: return@update s
+            if (stats.unread == 0) s else s.copy(stats = stats.copy(unread = 0))
         }
     }
 
@@ -3694,6 +3721,7 @@ class MailViewModel @Inject constructor(
         MailPollingWorker.clear_all_mail_notifications(context)
         val prior_reads = collect_read_states(folder)
         adjust_stats_unread(inbox_unread_delta(prior_reads, true))
+        if (folder == "inbox" && repository.folder_supports_bulk_scope(folder)) clear_stats_unread()
         note_read_flips(prior_reads, true)
         prior_reads.keys.forEach { read_overrides[it] = true }
         apply_bulk_read(folder, true)

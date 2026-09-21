@@ -22,7 +22,8 @@
 package org.astermail.android.ui.mail
 
 const val thread_visible_tail_count = 2
-const val thread_body_wait_ms = 700L
+const val thread_body_wait_ms = 280L
+const val thread_min_hidden_run = 2
 
 data class ThreadOpenLayout(
     val known_ids: Set<String>,
@@ -56,10 +57,33 @@ fun initial_thread_layout(
         emptySet()
     } else {
         val range = 1 until message_ids.size - tail_count
-        if (opened_index in range) emptySet() else range.map { message_ids[it] }.toSet()
+        range.filter { it != opened_index }
+            .fold(mutableListOf<MutableList<Int>>()) { runs, index ->
+                val current = runs.lastOrNull()
+                if (current != null && current.last() == index - 1) current.add(index)
+                else runs.add(mutableListOf(index))
+                runs
+            }
+            .filter { it.size >= thread_min_hidden_run }
+            .flatten()
+            .map { message_ids[it] }
+            .toSet()
     }
     val expanded = if (opened_index >= 0) setOf(last_id, opened_id) else setOf(last_id)
     return ThreadOpenLayout(known_ids = known, hidden_ids = hidden, expanded_ids = expanded)
+}
+
+fun initial_thread_scroll_index(
+    message_ids: List<String>,
+    opened_id: String,
+    header_item_count: Int,
+    tail_count: Int = thread_visible_tail_count,
+): Int? {
+    if (message_ids.size <= tail_count) return null
+    val opened_index = message_ids.indexOf(opened_id)
+    val target = if (opened_index >= 0) opened_index else message_ids.lastIndex
+    if (target <= 0) return null
+    return header_item_count + target
 }
 
 fun thread_message_is_expanded(

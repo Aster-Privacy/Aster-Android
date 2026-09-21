@@ -222,8 +222,8 @@ private fun estimated_body_height(html: String, width_dp: Int): androidx.compose
     val text_length = body_tag_regex.replace(sample, " ").trim().length
     val chars_per_line = (width_dp / 7).coerceAtLeast(24)
     val lines = (text_length + chars_per_line - 1) / chars_per_line + 2
-    val images = body_image_tag_regex.findAll(sample).count().coerceAtMost(10)
-    return (lines * 19 + images * 150).coerceIn(120, 1600).dp
+    val images = body_image_tag_regex.findAll(sample).count().coerceAtMost(4)
+    return (lines * 19 + images * 120).coerceIn(120, 640).dp
 }
 
 private fun escape_body_text(raw: String): String = raw
@@ -473,10 +473,15 @@ private const val TRANSPARENT_PIXEL_DATA_URI =
 internal fun normalized_content_id(raw: String?): String =
     raw?.trim()?.trim('<', '>').orEmpty()
 
+internal fun inline_reference_key(raw: String?): String =
+    normalized_content_id(raw).lowercase()
+
 internal fun resolve_inline_cids(html: String, inline_images: Map<String, String>): String =
     CID_SRC_PATTERN.replace(html) { match ->
-        val cid = normalized_content_id(match.groupValues[2])
-        val resolved = inline_images[cid] ?: TRANSPARENT_PIXEL_DATA_URI
+        val reference = inline_reference_key(match.groupValues[2])
+        val resolved = inline_images[reference]
+            ?: inline_images[reference.substringBefore('@')]
+            ?: TRANSPARENT_PIXEL_DATA_URI
         "${match.groupValues[1]}$resolved${match.groupValues[3]}"
     }
 
@@ -485,13 +490,27 @@ internal fun inline_image_sources(
     attachments: List<MessageAttachment>,
 ): Map<String, String> {
     if (body_html.isBlank() || attachments.isEmpty()) return emptyMap()
+    val referenced = CID_SRC_PATTERN.findAll(body_html)
+        .map { inline_reference_key(it.groupValues[2]) }
+        .filter { it.isNotBlank() }
+        .toSet()
+    if (referenced.isEmpty()) return emptyMap()
     val resolved = LinkedHashMap<String, String>()
     var budget = INLINE_IMAGE_TOTAL_BUDGET_BYTES
     for (att in attachments) {
-        val cid = normalized_content_id(att.content_id)
-        if (cid.isBlank() || resolved.containsKey(cid)) continue
-        if (!body_html.contains("cid:$cid", ignoreCase = true)) continue
         if (!att.content_type.startsWith("image/", ignoreCase = true)) continue
+        val cid = inline_reference_key(att.content_id)
+        val filename = att.filename.trim().lowercase()
+        val aliases = buildList {
+            if (cid.isNotBlank()) {
+                add(cid)
+                cid.substringBefore('@').takeIf { it.isNotBlank() && it != cid }?.let { add(it) }
+            }
+            if (filename.isNotBlank()) add(filename)
+        }
+        val used = aliases.filter { it in referenced }
+        if (used.isEmpty()) continue
+        if (used.all { resolved.containsKey(it) }) continue
         val data = att.encrypted_data
         val nonce = att.data_nonce
         if (data.isNullOrBlank() || nonce.isNullOrBlank()) continue
@@ -506,9 +525,10 @@ internal fun inline_image_sources(
         }.getOrNull() ?: continue
         if (bytes.isEmpty() || bytes.size > INLINE_IMAGE_MAX_BYTES || bytes.size > budget) continue
         budget -= bytes.size
-        val key = InlineImageStore.content_key(cid, bytes)
+        val key = InlineImageStore.content_key(used.first(), bytes)
         InlineImageStore.put(key, att.content_type, bytes)
-        resolved[cid] = InlineImageStore.url_for(key)
+        val url = InlineImageStore.url_for(key)
+        used.forEach { alias -> resolved.putIfAbsent(alias, url) }
     }
     return resolved
 }
@@ -808,13 +828,17 @@ fun MailDetailScreen(
         settled = thread_settled,
         any_body_pending = messages.any { it.is_body_pending },
     )
+    val single_message_open = expected_message_count <= 1 &&
+        messages.size <= 1 &&
+        messages.any { it.id == email_id }
+    val layout_ready = thread_complete || single_message_open
     var open_layout by remember(email_id) {
         mutableStateOf(
-            if (thread_complete) initial_thread_layout(messages.map { it.id }, email_id) else null,
+            if (layout_ready) initial_thread_layout(messages.map { it.id }, email_id) else null,
         )
     }
-    LaunchedEffect(email_id, thread_complete, messages) {
-        if (open_layout == null && thread_complete) {
+    LaunchedEffect(email_id, layout_ready, messages) {
+        if (open_layout == null && layout_ready) {
             open_layout = initial_thread_layout(messages.map { it.id }, email_id)
         }
     }
@@ -829,8 +853,18 @@ fun MailDetailScreen(
         if (hidden_group_revealed) emptySet()
         else messages.asSequence().map { it.id }.filter { it in hidden_seed_ids }.toSet()
     }
-    val first_hidden_idx = remember(messages, hidden_id_set) {
-        messages.indexOfFirst { it.id in hidden_id_set }
+    val hidden_run_sizes = remember(messages, hidden_id_set) {
+        val sizes = mutableMapOf<Int, Int>()
+        var run_start = -1
+        messages.forEachIndexed { idx, msg ->
+            if (msg.id in hidden_id_set) {
+                if (run_start < 0) run_start = idx
+                sizes[run_start] = (sizes[run_start] ?: 0) + 1
+            } else {
+                run_start = -1
+            }
+        }
+        sizes.toMap()
     }
 
     val user_expanded_ids = remember(email_id) {
@@ -844,10 +878,13 @@ fun MailDetailScreen(
         kotlinx.coroutines.delay(thread_body_wait_ms)
         body_wait_expired = true
     }
-    var thread_revealed by remember(email_id) { mutableStateOf(false) }
+    var thread_revealed by remember(email_id) {
+        mutableStateOf(thread_revealed_cache.was_revealed(email_id))
+    }
     LaunchedEffect(
         email_id,
         thread_complete,
+        single_message_open,
         open_layout,
         hidden_id_set,
         ready_body_ids.value,
@@ -855,6 +892,10 @@ fun MailDetailScreen(
     ) {
         val layout = open_layout ?: return@LaunchedEffect
         if (thread_revealed) return@LaunchedEffect
+        if (single_message_open) {
+            thread_revealed = true
+            return@LaunchedEffect
+        }
         if (thread_reveal_ready(
                 complete = thread_complete,
                 expanded_ids = layout.expanded_ids,
@@ -866,6 +907,9 @@ fun MailDetailScreen(
             thread_revealed = true
         }
     }
+    LaunchedEffect(email_id, thread_revealed) {
+        if (thread_revealed) thread_revealed_cache.mark_revealed(email_id)
+    }
     val detail_phase = remember_detail_skeleton_phase(email_id, !thread_revealed)
 
     fun show_toast(msg: String) {
@@ -875,6 +919,18 @@ fun MailDetailScreen(
     val list_state = rememberLazyListState()
     val show_topbar_subject by remember {
         derivedStateOf { list_state.firstVisibleItemIndex > 0 || list_state.firstVisibleItemScrollOffset > 80 }
+    }
+
+    var initial_scroll_done by remember(email_id) { mutableStateOf(false) }
+    LaunchedEffect(email_id, thread_revealed, messages.size) {
+        if (initial_scroll_done || !thread_revealed) return@LaunchedEffect
+        val target = initial_thread_scroll_index(
+            message_ids = messages.map { it.id },
+            opened_id = email_id,
+            header_item_count = 1,
+        )
+        initial_scroll_done = true
+        if (target != null) list_state.scrollToItem(target)
     }
 
     val pending_anchor = remember { mutableStateOf<Pair<String, Int>?>(null) }
@@ -937,13 +993,27 @@ fun MailDetailScreen(
                     .padding(horizontal = AsterSpacing.xs),
                 contentAlignment = Alignment.Center,
             ) {
-                AsterIconButton(
-                    icon = TablerIcons.ArrowLeft,
-                    auto_mirror = true,
+                org.astermail.android.design.components.AsterIconSlotButton(
                     content_description = stringResource(R.string.back),
                     onClick = on_back,
                     modifier = Modifier.align(Alignment.CenterStart).testTag("back"),
-                )
+                ) { tint, icon_modifier ->
+                    val morph = remember { androidx.compose.animation.core.Animatable(0f) }
+                    LaunchedEffect(Unit) {
+                        morph.animateTo(
+                            targetValue = 1f,
+                            animationSpec = androidx.compose.animation.core.tween(
+                                durationMillis = 320,
+                                easing = androidx.compose.animation.core.FastOutSlowInEasing,
+                            ),
+                        )
+                    }
+                    org.astermail.android.design.components.menu_back_morph_icon(
+                        progress = morph.value,
+                        tint = tint,
+                        modifier = icon_modifier.mirror_in_rtl(),
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1186,8 +1256,11 @@ fun MailDetailScreen(
                 }
             }
 
-            val subject_text = email?.subject?.ifBlank { stringResource(R.string.no_subject) }
+            val subject_base = email?.subject?.ifBlank { stringResource(R.string.no_subject) }
                 ?: stringResource(R.string.no_subject)
+            val subject_thread_count = if (thread_settled) messages.size else expected_message_count
+            val subject_count_format = stringResource(R.string.inbox_subject_with_count, subject_base, subject_thread_count)
+            val subject_text = if (subject_thread_count > 1) subject_count_format else subject_base
 
             if (email == null && !thread_state.is_loading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -1351,9 +1424,10 @@ fun MailDetailScreen(
                         idx > 0 && thread_items[idx - 1].id in hidden_id_set
 
                     if (is_hidden) {
-                        if (idx == first_hidden_idx) {
+                        val run_size = hidden_run_sizes[idx]
+                        if (run_size != null) {
                             hidden_group_indicator(
-                                count = hidden_id_set.size,
+                                count = run_size,
                                 on_reveal = { hidden_group_revealed = true },
                             )
                         }
@@ -2738,10 +2812,13 @@ internal fun expanded_message(
         val visible_attachments = remember(msg.attachments, msg.body_html, inline_images) {
             val body = msg.body_html.orEmpty()
             msg.attachments.filter { att ->
-                val cid = normalized_content_id(att.content_id)
-                if (cid.isBlank()) return@filter true
-                if (!body.contains("cid:$cid", ignoreCase = true)) return@filter true
-                !inline_images.containsKey(cid)
+                val cid = inline_reference_key(att.content_id)
+                val filename = att.filename.trim().lowercase()
+                val aliases = listOf(cid, cid.substringBefore('@'), filename)
+                    .filter { it.isNotBlank() }
+                if (aliases.isEmpty()) return@filter true
+                if (aliases.none { body.contains("cid:$it", ignoreCase = true) }) return@filter true
+                aliases.none { inline_images.containsKey(it) }
             }
         }
         if (visible_attachments.isNotEmpty()) {
@@ -3079,7 +3156,14 @@ private fun reaction_chip_row(
     val colors = AsterMaterial.colors
     val reduce_motion = aster_reduce_motion()
     var info_emoji by remember { mutableStateOf<String?>(null) }
-    val chip_palette = reaction_chip_palette(is_dark = colors.is_dark)
+    val chip_palette = remember(colors) {
+        reaction_chip_palette(
+            is_dark = colors.is_dark,
+            accent = colors.accent_blue,
+            surface = colors.bg_card,
+            text_secondary = colors.text_secondary,
+        )
+    }
     val groups = remember(reactions, my_email) {
         reactions.groupBy { it.emoji }
             .map { (emoji, list) ->
@@ -4461,6 +4545,7 @@ internal fun snooze_sheet(
         )
     }
     ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = on_close,
         sheetState = state,
         containerColor = sheet_container_color(colors),
@@ -4549,6 +4634,7 @@ internal fun label_picker_sheet(
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
     ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = on_close,
         sheetState = state,
         containerColor = sheet_container_color(colors),
@@ -4648,6 +4734,7 @@ internal fun tag_picker_sheet(
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
     ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = on_close,
         sheetState = state,
         containerColor = sheet_container_color(colors),
@@ -4942,6 +5029,67 @@ private fun is_safe_unsubscribe_url(url: String): Boolean {
     return scheme in safe_unsubscribe_schemes
 }
 
+private const val max_body_height_px = 40000
+private const val height_watch_fast_ms = 24L
+private const val height_watch_slow_ms = 100L
+private const val height_watch_fast_window_ms = 1000L
+private const val height_watch_probe_ms = 64L
+private const val height_watch_exact_stable_ms = 48L
+private const val height_watch_settle_ms = 2000L
+private const val height_watch_budget_ms = 15000L
+
+internal class mail_body_web_view(
+    ctx: android.content.Context,
+) : android.webkit.WebView(ctx) {
+
+    var selection_active: Boolean = false
+        private set
+
+    private fun wrap(
+        callback: android.view.ActionMode.Callback,
+    ): android.view.ActionMode.Callback = object : android.view.ActionMode.Callback {
+        override fun onCreateActionMode(
+            mode: android.view.ActionMode,
+            menu: android.view.Menu,
+        ): Boolean {
+            selection_active = true
+            parent?.requestDisallowInterceptTouchEvent(true)
+            return callback.onCreateActionMode(mode, menu)
+        }
+
+        override fun onPrepareActionMode(
+            mode: android.view.ActionMode,
+            menu: android.view.Menu,
+        ): Boolean = callback.onPrepareActionMode(mode, menu)
+
+        override fun onActionItemClicked(
+            mode: android.view.ActionMode,
+            item: android.view.MenuItem,
+        ): Boolean = callback.onActionItemClicked(mode, item)
+
+        override fun onDestroyActionMode(mode: android.view.ActionMode) {
+            selection_active = false
+            parent?.requestDisallowInterceptTouchEvent(false)
+            callback.onDestroyActionMode(mode)
+        }
+    }
+
+    override fun startActionMode(
+        callback: android.view.ActionMode.Callback?,
+    ): android.view.ActionMode? =
+        if (callback == null) super.startActionMode(null) else super.startActionMode(wrap(callback))
+
+    override fun startActionMode(
+        callback: android.view.ActionMode.Callback?,
+        type: Int,
+    ): android.view.ActionMode? =
+        if (callback == null) {
+            super.startActionMode(null, type)
+        } else {
+            super.startActionMode(wrap(callback), type)
+        }
+}
+
 internal fun configure_mail_body_web_view(
     web: android.webkit.WebView,
     text_zoom: Int,
@@ -5007,6 +5155,24 @@ private object body_height_cache {
     }
     @Synchronized fun get(key: Long): Float? = store[key]
     @Synchronized fun put(key: Long, value: Float) { store[key] = value }
+}
+
+private object body_shown_cache {
+    private const val max_entries = 128
+    private val store = object : java.util.LinkedHashMap<Long, Boolean>(max_entries, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, Boolean>?): Boolean = size > max_entries
+    }
+    @Synchronized fun was_shown(key: Long): Boolean = store[key] == true
+    @Synchronized fun mark_shown(key: Long) { store[key] = true }
+}
+
+private object thread_revealed_cache {
+    private const val max_entries = 64
+    private val store = object : java.util.LinkedHashMap<String, Boolean>(max_entries, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Boolean>?): Boolean = size > max_entries
+    }
+    @Synchronized fun was_revealed(key: String): Boolean = store[key] == true
+    @Synchronized fun mark_revealed(key: String) { store[key] = true }
 }
 
 private object html_cache {
@@ -5412,8 +5578,12 @@ internal fun email_html_view(
     var content_height_dp by remember(height_cache_key) { mutableStateOf((cached_height ?: 0f).dp) }
     var has_measured by remember(height_cache_key) { mutableStateOf(cached_height != null) }
     var height_settled by remember(height_cache_key) { mutableStateOf(cached_height != null) }
-    var body_shown by remember { mutableStateOf(false) }
-    val loading_height = remember { cached_height?.dp ?: placeholder_body_height }
+    var body_shown by remember(height_cache_key) {
+        mutableStateOf(cached_height != null && body_shown_cache.was_shown(height_cache_key))
+    }
+    val loading_height = remember(height_cache_key, estimated_height) {
+        cached_height?.dp ?: if (html.isEmpty()) placeholder_body_height else estimated_height
+    }
     val shown_height_ref = remember { floatArrayOf(0f) }
     val page_painted = remember(height_cache_key) { mutableStateOf(false) }
     val measure_probe = remember(height_cache_key) { mutableStateOf(false) }
@@ -5468,7 +5638,7 @@ internal fun email_html_view(
 
     val on_height_report by rememberUpdatedState<(Int, Boolean) -> Unit> { h, exact ->
         if (h > 0) {
-            val visual_h = (h * scale_ref[0]).toInt()
+            val visual_h = (h * scale_ref[0]).toInt().coerceAtMost(max_body_height_px)
             val new_dp = visual_h.dp
             val natural_scale = if (is_nl_ref[0]) nl_scale_ref[0] else 1f
             val is_natural = kotlin.math.abs(zoom_scale_ref[0] - natural_scale) < 0.01f
@@ -5563,13 +5733,15 @@ internal fun email_html_view(
 
     LaunchedEffect(height_cache_key, prebuilt_html, web_generation) {
         if (prebuilt_html == null) return@LaunchedEffect
-        var attempts = 0
+        var elapsed = 0L
         var last_reported = 0
-        var stable_rounds = 0
+        var stable_ms = 0L
+        var exact_sent = false
         var probed = false
-        while (attempts < 60) {
-            delay(if (attempts == 0) 120L else 100L)
-            attempts++
+        while (elapsed < height_watch_budget_ms) {
+            val step = if (elapsed < height_watch_fast_window_ms) height_watch_fast_ms else height_watch_slow_ms
+            delay(step)
+            elapsed += step
             val web = web_ref[0] ?: continue
             val content = web.contentHeight
             if (content <= 0) continue
@@ -5579,22 +5751,26 @@ internal fun email_html_view(
                 probed = true
                 measure_probe.value = true
                 last_reported = 0
-                stable_rounds = 0
-                delay(200L)
+                stable_ms = 0L
+                exact_sent = false
+                delay(height_watch_probe_ms)
+                elapsed += height_watch_probe_ms
                 continue
             }
             if (content == last_reported) {
-                stable_rounds++
+                stable_ms += step
             } else {
-                stable_rounds = 0
+                stable_ms = 0L
+                exact_sent = false
                 last_reported = content
                 height_sink.report(content, exact = false)
             }
-            if (stable_rounds == 2) {
+            if (!exact_sent && stable_ms >= height_watch_exact_stable_ms) {
+                exact_sent = true
                 height_sink.report(content, exact = true)
                 measure_probe.value = false
-                if (has_measured) break
             }
+            if (has_measured && stable_ms >= height_watch_settle_ms) break
         }
         measure_probe.value = false
         height_settled = true
@@ -5890,7 +6066,10 @@ internal fun email_html_view(
       )
       val body_ready_now = html.isNotEmpty() && has_measured && height_settled && page_painted.value
       LaunchedEffect(body_ready_now) {
-          if (body_ready_now) body_shown = true
+          if (body_ready_now) {
+              body_shown = true
+              body_shown_cache.mark_shown(height_cache_key)
+          }
       }
       val body_reveal by animateFloatAsState(
           targetValue = if (body_shown) 1f else 0f,
@@ -5932,11 +6111,15 @@ internal fun email_html_view(
         } else androidx.compose.runtime.key(web_generation) {
         androidx.compose.ui.viewinterop.AndroidView(
             factory = { ctx ->
-                android.webkit.WebView(ctx).apply {
+                mail_body_web_view(ctx).apply {
                     configure_mail_body_web_view(this, text_zoom, allow_external)
                     var touch_down_x = 0f
                     var touch_down_y = 0f
                     setOnTouchListener { v, ev ->
+                        if ((v as? mail_body_web_view)?.selection_active == true) {
+                            v.parent?.requestDisallowInterceptTouchEvent(true)
+                            return@setOnTouchListener false
+                        }
                         when (ev.actionMasked) {
                             android.view.MotionEvent.ACTION_DOWN -> {
                                 touch_down_x = ev.x
@@ -6098,6 +6281,7 @@ private fun link_options_sheet(
     val copied_label = stringResource(R.string.link_copied)
     val state = rememberModalBottomSheetState()
     ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = on_close,
         sheetState = state,
         containerColor = sheet_container_color(colors),
@@ -6532,6 +6716,7 @@ private fun attachment_options_sheet(
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
     ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = on_close,
         sheetState = state,
         containerColor = sheet_container_color(colors),

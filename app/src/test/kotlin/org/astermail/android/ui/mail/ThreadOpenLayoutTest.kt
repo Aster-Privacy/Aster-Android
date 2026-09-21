@@ -23,6 +23,7 @@ package org.astermail.android.ui.mail
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -59,7 +60,19 @@ class ThreadOpenLayoutTest {
     @Test
     fun the_hidden_group_never_swallows_the_tapped_message() {
         val layout = initial_thread_layout(ids, "m3")
-        assertTrue(layout.hidden_ids.isEmpty())
+        assertFalse(layout.hidden_ids.contains("m3"))
+    }
+
+    @Test
+    fun a_long_thread_opened_in_the_middle_still_collapses_the_rest() {
+        val long_ids = (1..12).map { "m$it" }
+        val layout = initial_thread_layout(long_ids, "m6")
+        assertFalse(layout.hidden_ids.contains("m6"))
+        assertTrue(layout.hidden_ids.contains("m2"))
+        assertTrue(layout.hidden_ids.contains("m9"))
+        assertFalse(layout.hidden_ids.contains("m1"))
+        assertFalse(layout.hidden_ids.contains("m11"))
+        assertFalse(layout.hidden_ids.contains("m12"))
     }
 
     @Test
@@ -207,5 +220,22 @@ class ThreadOpenLayoutTest {
                 body_wait_expired = true,
             ),
         )
+    }
+
+    @Test
+    fun a_long_thread_opens_scrolled_to_the_newest_message() {
+        val ids = (1..13).map { "m$it" }
+        assertEquals(13, initial_thread_scroll_index(ids, "m13", header_item_count = 1))
+    }
+
+    @Test
+    fun opening_an_older_message_scrolls_to_that_message() {
+        val ids = (1..13).map { "m$it" }
+        assertEquals(5, initial_thread_scroll_index(ids, "m5", header_item_count = 1))
+    }
+
+    @Test
+    fun a_short_thread_stays_at_the_top() {
+        assertNull(initial_thread_scroll_index(listOf("m1", "m2"), "m2", header_item_count = 1))
     }
 }

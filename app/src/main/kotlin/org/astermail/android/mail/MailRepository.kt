@@ -119,6 +119,7 @@ private const val SENT_FOLDER_RESOLVE_TIMEOUT_MS = 20_000L
 private const val SENDER_ALIAS_BACKFILL_PAGE_SIZE = 100
 private const val SENDER_ALIAS_BACKFILL_CHUNK = 200
 private const val SENDER_ALIAS_BACKFILL_MAX_PAGES = 500
+private const val SENDER_ALIAS_BACKFILL_MAX_ATTEMPTS = 3
 private const val UNDO_SAFETY_DRAFT_TIMEOUT_MS = 12_000L
 private const val METADATA_PATCH_ATTEMPTS = 3
 private const val METADATA_PATCH_RETRY_DELAY_MS = 400L
@@ -580,10 +581,14 @@ class MailRepository @Inject constructor(
             _sender_alias_backfill_status.value = SenderAliasBackfillStatus.done
             return
         }
+        if (sender_alias_backfill_prefs.getInt("${user_key}_attempts", 0) >= SENDER_ALIAS_BACKFILL_MAX_ATTEMPTS) {
+            mark_sender_alias_backfill_done(user_key)
+            return
+        }
         if (!sender_alias_backfill_mutex.tryLock()) return
         try {
             _sender_alias_backfill_status.value = SenderAliasBackfillStatus.running
-            var cursor: String? = null
+            var cursor: String? = sender_alias_backfill_prefs.getString("${user_key}_cursor", null)
             var pages = 0
             do {
                 val response = mail_api.list_messages(
@@ -606,17 +611,32 @@ class MailRepository @Inject constructor(
                 }
                 cursor = response.next_cursor
                 pages += 1
+                sender_alias_backfill_prefs.edit().putString("${user_key}_cursor", cursor).commit()
             } while (response.has_more && cursor != null && pages < SENDER_ALIAS_BACKFILL_MAX_PAGES)
-            sender_alias_backfill_prefs.edit().putBoolean(user_key, true).apply()
-            _sender_alias_backfill_status.value = SenderAliasBackfillStatus.done
+            mark_sender_alias_backfill_done(user_key)
         } catch (cancelled: CancellationException) {
             _sender_alias_backfill_status.value = SenderAliasBackfillStatus.idle
             throw cancelled
         } catch (error: Throwable) {
-            _sender_alias_backfill_status.value = SenderAliasBackfillStatus.idle
+            val attempts = sender_alias_backfill_prefs.getInt("${user_key}_attempts", 0) + 1
+            sender_alias_backfill_prefs.edit().putInt("${user_key}_attempts", attempts).commit()
+            if (attempts >= SENDER_ALIAS_BACKFILL_MAX_ATTEMPTS) {
+                mark_sender_alias_backfill_done(user_key)
+            } else {
+                _sender_alias_backfill_status.value = SenderAliasBackfillStatus.idle
+            }
         } finally {
             sender_alias_backfill_mutex.unlock()
         }
+    }
+
+    private fun mark_sender_alias_backfill_done(user_key: String) {
+        sender_alias_backfill_prefs.edit()
+            .putBoolean(user_key, true)
+            .remove("${user_key}_cursor")
+            .remove("${user_key}_attempts")
+            .commit()
+        _sender_alias_backfill_status.value = SenderAliasBackfillStatus.done
     }
 
     private suspend fun resolve_sent_folder_token(): String? {
