@@ -166,6 +166,7 @@ fun aster_menu_surface(
         modifier = modifier
             .shadow(menu_surface_elevation, menu_surface_shape, clip = false)
             .acrylic(AsterMaterial.colors, menu_surface_shape, aster_menu_surface_color())
+            .border(1.dp, aster_menu_border_color(), menu_surface_shape)
             .defaultMinSize(minWidth = min_width)
             .widthIn(max = max_width)
             .width(IntrinsicSize.Max)
@@ -246,6 +247,8 @@ fun aster_menu(
 
     val menu_colors = AsterMaterial.colors
     val surface_color = aster_menu_surface_color()
+    val border_color = aster_menu_border_color()
+    val scrim_color = Color.Black.copy(alpha = if (menu_colors.is_dark) 0.34f else 0.16f)
     val surface_tap = remember { MutableInteractionSource() }
 
     Popup(
@@ -259,6 +262,7 @@ fun aster_menu(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer { alpha = fade }
+                    .background(scrim_color)
                     .pointerInput(on_dismiss) {
                         awaitEachGesture {
                             awaitFirstDown(requireUnconsumed = false)
@@ -271,6 +275,7 @@ fun aster_menu(
                     Column(
                         modifier = modifier
                             .acrylic(menu_colors, menu_surface_shape, surface_color)
+                            .border(1.dp, border_color, menu_surface_shape)
                             .clickable(interactionSource = surface_tap, indication = null) {}
                             .defaultMinSize(minWidth = min_width)
                             .widthIn(max = max_width)

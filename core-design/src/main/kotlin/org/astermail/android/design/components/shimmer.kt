@@ -35,6 +35,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.clipPath
@@ -89,24 +90,19 @@ class shimmer_appearance internal constructor(
 )
 
 @Composable
-fun shimmer_state(animated: Boolean = true): shimmer_appearance {
+fun shimmer_state(
+    animated: Boolean = true,
+    surface: Color = Color.Unspecified,
+): shimmer_appearance {
     val colors = AsterMaterial.colors
     val is_animated = animated && !aster_reduce_motion()
     val phase = shimmer_phase(is_animated)
-    return remember(colors, is_animated, phase) {
-        val surface = colors.bg_card
+    val resolved_surface = if (surface.isSpecified) surface else colors.bg_card
+    return remember(resolved_surface, colors.is_dark, is_animated, phase) {
         val lift = if (colors.is_dark) Color.White else Color.Black
         shimmer_appearance(
-            base = mix(
-                mix(surface, lift, if (colors.is_dark) 0.07f else 0.09f),
-                colors.accent_blue,
-                0.05f,
-            ),
-            highlight = mix(
-                mix(surface, lift, if (colors.is_dark) 0.12f else 0.04f),
-                colors.accent_blue,
-                0.08f,
-            ),
+            base = mix(resolved_surface, lift, if (colors.is_dark) 0.06f else 0.05f),
+            highlight = mix(resolved_surface, lift, if (colors.is_dark) 0.14f else 0.11f),
             phase = phase,
             animated = is_animated,
         )

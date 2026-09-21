@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 private const val toast_transition_delay_ms = 280L
+private const val toast_exit_gap_ms = 220L
 
 object app_toast {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -41,13 +42,25 @@ object app_toast {
 
     fun show(toast: TopToastState) {
         pending?.cancel()
-        state.value = toast
+        if (state.value == null) {
+            state.value = toast
+            return
+        }
+        pending = scope.launch {
+            state.value = null
+            delay(toast_exit_gap_ms)
+            state.value = toast
+        }
     }
 
     fun show_after_transition(message: String) {
         pending?.cancel()
         pending = scope.launch {
             delay(toast_transition_delay_ms)
+            if (state.value != null) {
+                state.value = null
+                delay(toast_exit_gap_ms)
+            }
             state.value = TopToastState(message = message)
         }
     }

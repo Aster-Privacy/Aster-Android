@@ -50,6 +50,8 @@ import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_appearance
 import org.astermail.android.design.components.shimmer_state
 
+private const val load_settle_timeout_ms = 6000L
+
 @Composable
 internal fun remember_load_settled(is_loading: Boolean): Boolean {
     var saw_loading by remember { mutableStateOf(false) }
@@ -58,7 +60,7 @@ internal fun remember_load_settled(is_loading: Boolean): Boolean {
         if (is_loading) saw_loading = true else if (saw_loading) settled = true
     }
     LaunchedEffect(Unit) {
-        delay(1500)
+        delay(load_settle_timeout_ms)
         settled = true
     }
     return settled

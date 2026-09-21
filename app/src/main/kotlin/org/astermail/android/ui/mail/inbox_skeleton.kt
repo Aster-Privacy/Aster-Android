@@ -119,10 +119,10 @@ internal fun decode_skeleton_rows(raw: String?): List<SkeletonRowPreview> {
 
 internal const val skeleton_sweep_lag = 0.06f
 internal const val skeleton_defer_ms = 150L
-internal const val skeleton_min_visible_ms = 300L
-internal const val skeleton_fade_out_ms = 150
-internal const val skeleton_handoff_ms = 150
-internal const val skeleton_await_rows_ms = 120L
+internal const val skeleton_min_visible_ms = 140L
+internal const val skeleton_fade_out_ms = 90
+internal const val skeleton_handoff_ms = 90
+internal const val skeleton_await_rows_ms = 60L
 
 internal fun skeleton_visible_after(has_data: Boolean, pending: Boolean, pending_for_ms: Long): Boolean =
     !has_data && pending && pending_for_ms >= skeleton_defer_ms
@@ -390,7 +390,7 @@ fun inbox_skeleton(
     previews: List<SkeletonRowPreview> = emptyList(),
 ) {
     val colors = AsterMaterial.colors
-    val state = shimmer_state()
+    val state = shimmer_state(surface = inbox_card_read_color(colors))
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -490,7 +490,7 @@ private fun skeleton_cached_line(
 
 @Composable
 fun inbox_skeleton_row(
-    state: shimmer_appearance = shimmer_state(),
+    state: shimmer_appearance = shimmer_state(surface = inbox_card_read_color(AsterMaterial.colors)),
     list_density: String? = null,
     is_first: Boolean = false,
     is_last: Boolean = true,

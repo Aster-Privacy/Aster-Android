@@ -3992,6 +3992,7 @@ private fun ScheduleSheet(
         org.astermail.android.mail.schedule_target_labels(now).mapNotNull { label_by_id[it] }
     }
     ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = on_close,
         sheetState = state,
         containerColor = sheet_container_color(colors),
@@ -4040,6 +4041,7 @@ private fun AttachSheet(
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
     ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = on_close,
         sheetState = state,
         containerColor = sheet_container_color(colors),
@@ -4098,6 +4100,7 @@ private fun FromAliasSheet(
         pinned + rest
     }
     ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = on_close,
         sheetState = state,
         containerColor = sheet_container_color(colors),
@@ -4267,6 +4270,7 @@ private fun OverflowSheet(
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
     ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = on_close,
         sheetState = state,
         containerColor = sheet_container_color(colors),
@@ -4329,6 +4333,7 @@ private fun TemplatePickerSheet(
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
     ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = on_close,
         sheetState = state,
         containerColor = sheet_container_color(colors),
@@ -4519,6 +4524,7 @@ private fun SignaturePickerSheet(
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
     ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = on_close,
         sheetState = state,
         containerColor = sheet_container_color(colors),
@@ -4630,6 +4636,7 @@ private fun GhostAliasSheet(
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
     ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = on_close,
         sheetState = state,
         containerColor = sheet_container_color(colors),
@@ -4751,6 +4758,7 @@ internal fun ExpiringSheet(
         }
     }
     ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = commit_or_close,
         sheetState = state,
         containerColor = sheet_container_color(colors),

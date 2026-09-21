@@ -21,8 +21,13 @@
 
 package org.astermail.android.ui.common
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterSemanticColors
 
 fun sheet_container_color(colors: AsterSemanticColors): Color =
     if (colors.is_glass) colors.solid_bg else colors.bg_card
+
+val aster_sheet_shape: Shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)

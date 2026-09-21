@@ -1846,11 +1846,20 @@ private fun plan_badge_res(plan_code: String?): Int? = when (plan_code?.trim()?.
 @Composable
 private fun profile_menu_plan_badge(plan_code: String?) {
     val res = plan_badge_res(plan_code) ?: return
+    val label = stringResource(res)
+    val thanks = stringResource(R.string.plan_badge_thanks, label)
     org.astermail.android.design.components.AsterPlanTag(
-        text = stringResource(res),
+        text = label,
+        plan = org.astermail.android.design.components.aster_plan_kind_of(plan_code),
         font_size = 11.sp,
-        horizontal_padding = 7.dp,
-        vertical_padding = 2.dp,
+        horizontal_padding = 9.dp,
+        vertical_padding = 3.dp,
+        modifier = Modifier.clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null,
+        ) {
+            org.astermail.android.ui.common.app_toast.show(thanks)
+        },
     )
 }
 
@@ -1975,6 +1984,7 @@ private fun workspace_switcher_sheet(
     ) + stringResource(R.string.profile_menu_greeting_comma)
 
     ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = on_dismiss,
         sheetState = sheet_state,
         containerColor = surface,

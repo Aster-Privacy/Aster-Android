@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
@@ -91,6 +92,8 @@ data class TopToastState(
     val accumulation_key: String? = null,
 )
 
+private val toast_control_size = 32.dp
+
 @Composable
 private fun toast_action(
     label: String,
@@ -99,19 +102,25 @@ private fun toast_action(
 ) {
     val colors = AsterMaterial.colors
     val shape = SquircleShape(999.dp)
-    Text(
-        text = label,
-        color = colors.on_accent,
-        fontSize = 13.sp,
-        fontWeight = FontWeight.SemiBold,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
+    Box(
         modifier = Modifier
+            .height(toast_control_size)
             .clip(shape)
             .background(colors.accent_blue)
             .clickable(enabled = enabled, onClick = on_click)
-            .padding(horizontal = 14.dp, vertical = 7.dp),
-    )
+            .padding(horizontal = 14.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            color = colors.on_accent,
+            fontSize = 13.sp,
+            lineHeight = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
 }
 
 @Composable
@@ -124,7 +133,7 @@ private fun toast_icon_action(
     val colors = AsterMaterial.colors
     Box(
         modifier = Modifier
-            .size(32.dp)
+            .size(toast_control_size)
             .clip(SquircleShape(999.dp))
             .background(toast_control_fill(colors))
             .clickable(enabled = enabled, onClick = on_click),
@@ -280,6 +289,7 @@ fun top_toast_overlay(
                     text = s.message,
                     color = colors.text_primary,
                     fontSize = 14.sp,
+                    lineHeight = 18.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = if (s.secondary_label == null && s.undo_label == null) 2 else 1,
                     overflow = TextOverflow.Ellipsis,

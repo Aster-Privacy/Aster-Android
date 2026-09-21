@@ -180,6 +180,7 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
     val active_plan = plan_options.firstOrNull { it.code == active_code }
 
     ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = { UpgradeStore.close() },
         sheetState = sheet_state,
         containerColor = sheet_container_color(colors),

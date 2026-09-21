@@ -29,6 +29,8 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterMaterial
@@ -65,6 +67,35 @@ fun AsterIconButton(
             } else {
                 Modifier.size(icon_size.dp)
             },
+        )
+    }
+}
+
+@Composable
+fun AsterIconSlotButton(
+    content_description: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    tint: Color = Color.Unspecified,
+    icon_size: Int = 22,
+    content: @Composable (Color, Modifier) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val resolved_tint = if (tint == Color.Unspecified) colors.text_secondary else tint
+    IconButton(
+        onClick = onClick,
+        enabled = enabled,
+        interactionSource = remember_click_interaction(),
+        modifier = modifier.size(48.dp).semantics { contentDescription = content_description.orEmpty() },
+        colors = IconButtonDefaults.iconButtonColors(
+            contentColor = resolved_tint,
+            disabledContentColor = colors.text_muted,
+        ),
+    ) {
+        content(
+            if (enabled) resolved_tint else colors.text_muted,
+            Modifier.size(icon_size.dp),
         )
     }
 }

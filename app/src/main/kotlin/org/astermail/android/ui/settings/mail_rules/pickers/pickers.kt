@@ -122,6 +122,7 @@ fun base_sheet(
     val colors = AsterMaterial.colors
     val sheet_state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = on_dismiss,
         sheetState = sheet_state,
         containerColor = sheet_container_color(colors),
