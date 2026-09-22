@@ -2,7 +2,7 @@ What's new
 - Sign in with a passkey, and add one in Settings.
 - Choose your default sender in Settings.
 - Choose whether replies quote the original and add Re:.
-- Force dark mode for emails works with any theme.
+- Force dark mode works with any theme.
 - A new pull to refresh indicator.
 
 Fixed
