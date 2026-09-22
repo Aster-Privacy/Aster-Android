@@ -252,7 +252,7 @@ class SecurityApiImpl(private val client: ApiClient) : SecurityApi {
 
     override suspend fun initiate_passkey_registration(): PasskeyRegistrationOptions {
         val response = client.http.post("${client.base_url}$base/auth/hardware-keys/register/initiate") {
-            header(HttpHeaders.Origin, client.base_url.trimEnd('/'))
+            header(HttpHeaders.Origin, client.webauthn_origin.trimEnd('/'))
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
         }
         return decode_or_throw(response)
@@ -263,7 +263,7 @@ class SecurityApiImpl(private val client: ApiClient) : SecurityApi {
     ): PasskeyRegistrationCompleteResponse {
         val response = client.http.post("${client.base_url}$base/auth/hardware-keys/register/complete") {
             contentType(ContentType.Application.Json)
-            header(HttpHeaders.Origin, client.base_url.trimEnd('/'))
+            header(HttpHeaders.Origin, client.webauthn_origin.trimEnd('/'))
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
         }

@@ -175,6 +175,7 @@ class ApiClient(
     private val allow_cleartext_for_test: Boolean = false,
     release_name: String = BuildConfig.VERSION_NAME,
     private val device_id: String? = null,
+    val webauthn_origin: String = BuildConfig.WEBAUTHN_ORIGIN,
 ) {
     val json: Json = Json {
         ignoreUnknownKeys = true
