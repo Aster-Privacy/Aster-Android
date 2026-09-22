@@ -2043,6 +2043,10 @@
     <string name="section_advanced">उन्नत</string>
     <string name="developer_mode_subtitle_behavior">बिल्ड जानकारी, क्रिप्टो स्थिति और डीबग टूल के साथ डेवलपर टैब दिखाएं</string>
     <string name="auto_save_recipients_subtitle">जिन पतों पर आप भेजते हैं उन्हें अपने आप संपर्कों में जोड़ें</string>
+    <string name="reply_include_quoted">उद्धृत टेक्स्ट शामिल करें</string>
+    <string name="reply_include_quoted_subtitle">हर उत्तर आपके टेक्स्ट के नीचे उद्धृत मूल संदेश से शुरू होता है</string>
+    <string name="reply_prefix_subject">विषय में Re: जोड़ें</string>
+    <string name="reply_prefix_subject_subtitle">उत्तर देने पर मूल विषय से पहले Re: लगाता है</string>
     <string name="section_account_protection">खाते की सुरक्षा</string>
     <string name="protection_score">सुरक्षा स्कोर</string>
     <string name="section_authentication">प्रमाणीकरण</string>

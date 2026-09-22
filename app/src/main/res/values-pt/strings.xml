@@ -2138,6 +2138,10 @@
     <string name="section_advanced">Avançado</string>
     <string name="developer_mode_subtitle_behavior">Mostra a aba de desenvolvimento com dados da compilação, estado da criptografia e ferramentas de depuração</string>
     <string name="auto_save_recipients_subtitle">Salva automaticamente nos contatos os endereços para os quais você escreve</string>
+    <string name="reply_include_quoted">Incluir o texto citado</string>
+    <string name="reply_include_quoted_subtitle">Cada resposta começa com a mensagem original citada abaixo do seu texto</string>
+    <string name="reply_prefix_subject">Adicionar Re: ao assunto</string>
+    <string name="reply_prefix_subject_subtitle">Coloca Re: antes do assunto original quando responde</string>
     <string name="section_account_protection">Proteção da conta</string>
     <string name="protection_score">Pontuação de proteção</string>
     <string name="section_authentication">Autenticação</string>

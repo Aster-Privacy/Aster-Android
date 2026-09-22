@@ -2138,6 +2138,10 @@
     <string name="section_advanced">Gelişmiş</string>
     <string name="developer_mode_subtitle_behavior">Yapı bilgisi, şifreleme durumu ve hata ayıklama araçlarını içeren Geliştirici sekmesini gösterir</string>
     <string name="auto_save_recipients_subtitle">Yazdığın adresleri otomatik olarak kişilere ekler</string>
+    <string name="reply_include_quoted">Alıntılanan metni ekle</string>
+    <string name="reply_include_quoted_subtitle">Her yanıt, metninizin altında alıntılanan özgün iletiyle başlar</string>
+    <string name="reply_prefix_subject">Konuya Yt: ekle</string>
+    <string name="reply_prefix_subject_subtitle">Yanıtladığınızda özgün konunun önüne Yt: ekler</string>
     <string name="section_account_protection">Hesap koruması</string>
     <string name="protection_score">Koruma puanı</string>
     <string name="section_authentication">Kimlik doğrulama</string>

@@ -73,6 +73,38 @@ class ComposeInitialStateTest {
     }
 
     @Test
+    fun reply_subject_keeps_the_prefix_by_default() {
+        val state = build_compose_initial_state(
+            args = compose_screen_args(reply_to = "msg_1", mode = "reply"),
+            identity = identity,
+            thread = thread,
+        )
+        assertEquals("Re: Quarterly plan", state.subject)
+    }
+
+    @Test
+    fun reply_subject_drops_the_prefix_when_the_setting_is_off() {
+        val state = build_compose_initial_state(
+            args = compose_screen_args(reply_to = "msg_1", mode = "reply"),
+            identity = identity,
+            thread = thread,
+            prefix_reply_subject = false,
+        )
+        assertEquals("Quarterly plan", state.subject)
+    }
+
+    @Test
+    fun forward_subject_keeps_its_prefix_when_reply_prefix_is_off() {
+        val state = build_compose_initial_state(
+            args = compose_screen_args(reply_to = "msg_1", mode = "forward"),
+            identity = identity,
+            thread = thread,
+            prefix_reply_subject = false,
+        )
+        assertEquals("Fwd: Quarterly plan", state.subject)
+    }
+
+    @Test
     fun reply_is_complete_on_first_build() {
         val state = build_compose_initial_state(
             args = compose_screen_args(reply_to = "msg_1", mode = "reply"),

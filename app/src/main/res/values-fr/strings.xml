@@ -1512,6 +1512,10 @@
     <string name="section_advanced">Avancé</string>
     <string name="developer_mode_subtitle_behavior">Afficher l\'onglet Développeur avec les infos de build, l\'état crypto et les outils de débogage</string>
     <string name="auto_save_recipients_subtitle">Ajouter automatiquement les adresses auxquelles vous envoyez comme contacts</string>
+    <string name="reply_include_quoted">Inclure le texte cité</string>
+    <string name="reply_include_quoted_subtitle">Chaque réponse commence par le message d\'origine cité sous votre texte</string>
+    <string name="reply_prefix_subject">Ajouter Rép. : à l\'objet</string>
+    <string name="reply_prefix_subject_subtitle">Place Rép. : devant l\'objet d\'origine lorsque vous répondez</string>
 
     <!-- Security screen -->
     <string name="section_account_protection">Protection du compte</string>

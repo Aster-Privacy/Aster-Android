@@ -2146,6 +2146,10 @@
     <string name="section_advanced">Zaawansowane</string>
     <string name="developer_mode_subtitle_behavior">Pokazuje kartę dewelopera z informacjami o kompilacji, stanem szyfrowania i narzędziami diagnostycznymi</string>
     <string name="auto_save_recipients_subtitle">Automatycznie zapisuje w kontaktach adresy, na które piszesz</string>
+    <string name="reply_include_quoted">Dołącz cytowany tekst</string>
+    <string name="reply_include_quoted_subtitle">Każda odpowiedź zaczyna się od oryginalnej wiadomości cytowanej pod Twoim tekstem</string>
+    <string name="reply_prefix_subject">Dodaj Odp: do tematu</string>
+    <string name="reply_prefix_subject_subtitle">Umieszcza Odp: przed oryginalnym tematem, gdy odpowiadasz</string>
     <string name="section_account_protection">Ochrona konta</string>
     <string name="protection_score">Wynik ochrony</string>
     <string name="section_authentication">Uwierzytelnianie</string>

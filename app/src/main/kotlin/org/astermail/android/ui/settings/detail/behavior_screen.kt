@@ -145,6 +145,8 @@ fun BehaviorScreen(
     var force_dark_emails by remember(prefs_loaded) { mutableStateOf(prefs?.force_dark_emails ?: false) }
     var default_reply by remember(prefs_loaded) { mutableStateOf(prefs?.default_reply_behavior ?: "reply") }
     var auto_save_recipients by remember(prefs_loaded) { mutableStateOf(prefs?.auto_save_recent_recipients ?: true) }
+    var reply_include_quoted by remember(prefs_loaded) { mutableStateOf(prefs?.reply_include_quoted != false) }
+    var reply_prefix_subject by remember(prefs_loaded) { mutableStateOf(prefs?.reply_prefix_subject != false) }
     var undo_send by remember(prefs_loaded) { mutableStateOf(prefs?.undo_send_enabled ?: true) }
     var undo_send_secs by remember(prefs_loaded) { mutableIntStateOf(prefs?.undo_send_seconds ?: 10) }
     var confirm_delete by remember(prefs_loaded) { mutableStateOf(prefs?.confirm_delete ?: false) }
@@ -213,6 +215,8 @@ fun BehaviorScreen(
                 force_dark_emails = prefs.force_dark_emails
                 default_reply = prefs.default_reply_behavior
                 auto_save_recipients = prefs.auto_save_recent_recipients
+                reply_include_quoted = prefs.reply_include_quoted
+                reply_prefix_subject = prefs.reply_prefix_subject
                 undo_send = prefs.undo_send_enabled
                 undo_send_secs = prefs.undo_send_seconds
                 confirm_delete = prefs.confirm_delete
@@ -280,6 +284,8 @@ fun BehaviorScreen(
                 force_dark_emails = force_dark_emails,
                 default_reply_behavior = default_reply,
                 auto_save_recent_recipients = auto_save_recipients,
+                reply_include_quoted = reply_include_quoted,
+                reply_prefix_subject = reply_prefix_subject,
                 undo_send_enabled = undo_send,
                 undo_send_seconds = undo_send_secs,
                 confirm_delete = confirm_delete,
@@ -475,6 +481,20 @@ fun BehaviorScreen(
                     subtitle = stringResource(R.string.auto_save_recipients_subtitle),
                     checked = auto_save_recipients,
                     on_change = { auto_save_recipients = it; save_trigger++ },
+                )
+                settings_row_gap(modifier = Modifier)
+                behavior_toggle(
+                    title = stringResource(R.string.reply_include_quoted),
+                    subtitle = stringResource(R.string.reply_include_quoted_subtitle),
+                    checked = reply_include_quoted,
+                    on_change = { reply_include_quoted = it; save_trigger++ },
+                )
+                settings_row_gap(modifier = Modifier)
+                behavior_toggle(
+                    title = stringResource(R.string.reply_prefix_subject),
+                    subtitle = stringResource(R.string.reply_prefix_subject_subtitle),
+                    checked = reply_prefix_subject,
+                    on_change = { reply_prefix_subject = it; save_trigger++ },
                 )
             }
 

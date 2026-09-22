@@ -2135,6 +2135,10 @@
     <string name="section_advanced">高级</string>
     <string name="developer_mode_subtitle_behavior">显示开发者标签页，包含构建信息、加密状态和调试工具</string>
     <string name="auto_save_recipients_subtitle">自动把你发送过的地址加入联系人</string>
+    <string name="reply_include_quoted">包含引用的文本</string>
+    <string name="reply_include_quoted_subtitle">每条回复都以引用在你所写文本下方的原始邮件开头</string>
+    <string name="reply_prefix_subject">在主题中添加“回复：”</string>
+    <string name="reply_prefix_subject_subtitle">回复时在原主题前加上“回复：”</string>
     <string name="section_account_protection">账户保护</string>
     <string name="protection_score">保护评分</string>
     <string name="section_authentication">身份验证</string>

@@ -2138,6 +2138,10 @@
     <string name="section_advanced">Geavanceerd</string>
     <string name="developer_mode_subtitle_behavior">Toont het ontwikkelaarstabblad met buildinfo, cryptostatus en foutopsporingshulpmiddelen</string>
     <string name="auto_save_recipients_subtitle">Adressen waarnaar je mailt automatisch als contact opslaan</string>
+    <string name="reply_include_quoted">Geciteerde tekst toevoegen</string>
+    <string name="reply_include_quoted_subtitle">Elk antwoord begint met het originele bericht geciteerd onder je tekst</string>
+    <string name="reply_prefix_subject">Re: aan het onderwerp toevoegen</string>
+    <string name="reply_prefix_subject_subtitle">Zet Re: voor het originele onderwerp wanneer je antwoordt</string>
     <string name="section_account_protection">Accountbeveiliging</string>
     <string name="protection_score">Beveiligingsscore</string>
     <string name="section_authentication">Aanmelden</string>

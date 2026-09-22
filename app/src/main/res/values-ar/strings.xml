@@ -2154,6 +2154,10 @@
     <string name="section_advanced">متقدم</string>
     <string name="developer_mode_subtitle_behavior">إظهار تبويب المطوّر بمعلومات البناء وحالة التشفير وأدوات التصحيح</string>
     <string name="auto_save_recipients_subtitle">إضافة العناوين التي تراسلها إلى جهات الاتصال تلقائيًا</string>
+    <string name="reply_include_quoted">تضمين النص المقتبس</string>
+    <string name="reply_include_quoted_subtitle">يبدأ كل رد بالرسالة الأصلية مقتبسة أسفل نصك</string>
+    <string name="reply_prefix_subject">إضافة رد: إلى الموضوع</string>
+    <string name="reply_prefix_subject_subtitle">يضع رد: قبل الموضوع الأصلي عند الرد</string>
     <string name="section_account_protection">حماية الحساب</string>
     <string name="protection_score">درجة الحماية</string>
     <string name="section_authentication">المصادقة</string>
