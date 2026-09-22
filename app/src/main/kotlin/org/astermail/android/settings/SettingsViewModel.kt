@@ -3426,7 +3426,12 @@ class SettingsViewModel @Inject constructor(
                         context.getString(R.string.passkey_create_unavailable)
                     is org.astermail.android.auth.PasskeyFailedException ->
                         context.getString(R.string.passkey_create_failed)
-                    else -> org.astermail.android.localized_api_error(context, t, context.getString(R.string.passkey_create_failed))
+                    else ->
+                        if (org.astermail.android.auth.is_passkey_challenge_expired(t)) {
+                            context.getString(R.string.error_passkey_timed_out)
+                        } else {
+                            org.astermail.android.localized_api_error(context, t, context.getString(R.string.passkey_create_failed))
+                        }
                 }
                 _state.update { it.copy(is_adding_passkey = false, action_result = message ?: it.action_result) }
             }

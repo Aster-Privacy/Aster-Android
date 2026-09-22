@@ -3526,4 +3526,6 @@
     <string name="passkey_already_registered">Ten klucz dostępu jest już zapisany na Twoim koncie.</string>
     <string name="passkey_create_unavailable">To urządzenie nie może zapisywać kluczy dostępu. Sprawdź, czy blokada ekranu jest włączona i czy skonfigurowano menedżer haseł.</string>
     <string name="passkey_create_failed">Nie udało się dodać klucza dostępu. Spróbuj ponownie.</string>
+    <string name="error_passkey_not_recognized">Ten klucz dostępu nie jest powiązany z kontem Aster Mail. Zaloguj się hasłem, a następnie dodaj klucz dostępu w Ustawieniach.</string>
+    <string name="error_passkey_timed_out">Żądanie klucza dostępu wygasło. Spróbuj ponownie.</string>
 </resources>

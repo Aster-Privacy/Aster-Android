@@ -3484,4 +3484,6 @@
     <string name="passkey_already_registered">Bu geçiş anahtarı zaten hesabına kayıtlı.</string>
     <string name="passkey_create_unavailable">Bu cihaz geçiş anahtarı kaydedemiyor. Ekran kilidinin açık ve bir parola yöneticisinin kurulu olduğundan emin ol.</string>
     <string name="passkey_create_failed">Geçiş anahtarı eklenemedi. Tekrar dene.</string>
+    <string name="error_passkey_not_recognized">Bu geçiş anahtarı bir Aster Mail hesabına bağlı değil. Parolanızla giriş yapın, ardından Ayarlar\'dan bir geçiş anahtarı ekleyin.</string>
+    <string name="error_passkey_timed_out">Geçiş anahtarı isteğinin süresi doldu. Tekrar deneyin.</string>
 </resources>

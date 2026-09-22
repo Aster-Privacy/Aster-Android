@@ -41,6 +41,7 @@ import androidx.credentials.exceptions.NoCredentialException
 import androidx.credentials.exceptions.domerrors.InvalidStateError
 import androidx.credentials.exceptions.domerrors.NotAllowedError
 import androidx.credentials.exceptions.publickeycredential.CreatePublicKeyCredentialDomException
+import androidx.credentials.exceptions.publickeycredential.GetPublicKeyCredentialDomException
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
@@ -322,28 +323,47 @@ fun registration_complete_request(
     )
 }
 
+fun map_get_credential_failure(failure: Throwable): Exception = when (failure) {
+    is GetCredentialCancellationException -> PasskeyCancelledException()
+    is NoCredentialException -> PasskeyUnavailableException(failure)
+    is GetCredentialProviderConfigurationException -> PasskeyUnavailableException(failure)
+    is GetCredentialUnsupportedException -> PasskeyUnavailableException(failure)
+    is GetPublicKeyCredentialDomException -> when (failure.domError) {
+        is NotAllowedError -> PasskeyCancelledException()
+        else -> PasskeyFailedException(failure)
+    }
+    is NoClassDefFoundError -> PasskeyUnavailableException(failure)
+    else -> PasskeyFailedException(failure)
+}
+
 suspend fun request_passkey_json(context: Context, request_json: String): String {
     val request = GetCredentialRequest(
         listOf(GetPublicKeyCredentialOption(request_json)),
     )
     val credential = try {
         CredentialManager.create(context).getCredential(context, request).credential
-    } catch (cancelled: GetCredentialCancellationException) {
-        throw PasskeyCancelledException()
-    } catch (missing: NoCredentialException) {
-        throw PasskeyUnavailableException(missing)
-    } catch (missing: GetCredentialProviderConfigurationException) {
-        throw PasskeyUnavailableException(missing)
-    } catch (missing: GetCredentialUnsupportedException) {
-        throw PasskeyUnavailableException(missing)
     } catch (failure: GetCredentialException) {
-        throw PasskeyFailedException(failure)
+        throw map_get_credential_failure(failure)
     } catch (failure: NoClassDefFoundError) {
-        throw PasskeyUnavailableException(failure)
+        throw map_get_credential_failure(failure)
     }
     val public_key = credential as? PublicKeyCredential
         ?: throw PasskeyFailedException()
     return public_key.authenticationResponseJson
+}
+
+fun map_create_credential_failure(failure: Throwable): Exception = when (failure) {
+    is CreateCredentialCancellationException -> PasskeyCancelledException()
+    is CreateCredentialNoCreateOptionException -> PasskeyUnavailableException(failure)
+    is CreateCredentialProviderConfigurationException -> PasskeyUnavailableException(failure)
+    is CreateCredentialUnsupportedException -> PasskeyUnavailableException(failure)
+    is CreatePublicKeyCredentialDomException -> when (failure.domError) {
+        is InvalidStateError -> PasskeyAlreadyRegisteredException(failure)
+        is NotAllowedError -> PasskeyCancelledException()
+        else -> PasskeyFailedException(failure)
+    }
+    is NoClassDefFoundError -> PasskeyUnavailableException(failure)
+    else -> PasskeyFailedException(failure)
 }
 
 suspend fun create_passkey_json(context: Context, request_json: String): String {
@@ -352,24 +372,10 @@ suspend fun create_passkey_json(context: Context, request_json: String): String 
             context,
             CreatePublicKeyCredentialRequest(request_json),
         )
-    } catch (cancelled: CreateCredentialCancellationException) {
-        throw PasskeyCancelledException()
-    } catch (missing: CreateCredentialNoCreateOptionException) {
-        throw PasskeyUnavailableException(missing)
-    } catch (missing: CreateCredentialProviderConfigurationException) {
-        throw PasskeyUnavailableException(missing)
-    } catch (missing: CreateCredentialUnsupportedException) {
-        throw PasskeyUnavailableException(missing)
-    } catch (dom: CreatePublicKeyCredentialDomException) {
-        when (dom.domError) {
-            is InvalidStateError -> throw PasskeyAlreadyRegisteredException(dom)
-            is NotAllowedError -> throw PasskeyCancelledException()
-            else -> throw PasskeyFailedException(dom)
-        }
     } catch (failure: CreateCredentialException) {
-        throw PasskeyFailedException(failure)
+        throw map_create_credential_failure(failure)
     } catch (failure: NoClassDefFoundError) {
-        throw PasskeyUnavailableException(failure)
+        throw map_create_credential_failure(failure)
     }
     val public_key = response as? CreatePublicKeyCredentialResponse
         ?: throw PasskeyFailedException()
@@ -380,3 +386,9 @@ suspend fun request_passkey_assertion(
     context: Context,
     options: WebAuthnAssertionOptions,
 ): String = request_passkey_json(context, assertion_request_json(options))
+
+const val PASSKEY_CHALLENGE_EXPIRED_MESSAGE = "Challenge expired"
+
+fun is_passkey_challenge_expired(cause: Throwable): Boolean =
+    cause is org.astermail.android.api.ApiError.ValidationError &&
+        cause.messages.any { it.equals(PASSKEY_CHALLENGE_EXPIRED_MESSAGE, ignoreCase = true) }

@@ -3485,4 +3485,6 @@
     <string name="passkey_already_registered">Dieser Passkey ist bereits in deinem Konto gespeichert.</string>
     <string name="passkey_create_unavailable">Dieses Gerät kann keine Passkeys speichern. Prüfe, ob die Displaysperre aktiv und ein Passwortmanager eingerichtet ist.</string>
     <string name="passkey_create_failed">Der Passkey konnte nicht hinzugefügt werden. Versuche es erneut.</string>
+    <string name="error_passkey_not_recognized">Dieser Passkey ist mit keinem Aster Mail-Konto verknüpft. Melde dich mit deinem Passwort an und füge dann in den Einstellungen einen Passkey hinzu.</string>
+    <string name="error_passkey_timed_out">Die Passkey-Anfrage ist abgelaufen. Versuche es erneut.</string>
 </resources>

@@ -3568,4 +3568,6 @@
     <string name="passkey_already_registered">مفتاح المرور هذا محفوظ بالفعل في حسابك.</string>
     <string name="passkey_create_unavailable">لا يمكن لهذا الجهاز حفظ مفاتيح المرور. تأكد من تفعيل قفل الشاشة وإعداد مدير كلمات مرور.</string>
     <string name="passkey_create_failed">تعذّرت إضافة مفتاح المرور. حاول مرة أخرى.</string>
+    <string name="error_passkey_not_recognized">مفتاح المرور هذا غير مرتبط بأي حساب في Aster Mail. سجّل الدخول بكلمة السر، ثم أضف مفتاح مرور من الإعدادات.</string>
+    <string name="error_passkey_timed_out">انتهت مهلة طلب مفتاح المرور. حاول مرة أخرى.</string>
 </resources>

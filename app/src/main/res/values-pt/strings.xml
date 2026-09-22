@@ -3484,4 +3484,6 @@
     <string name="passkey_already_registered">Esta chave de acesso já está salva na sua conta.</string>
     <string name="passkey_create_unavailable">Este dispositivo não pode salvar chaves de acesso. Verifique se o bloqueio de tela está ativado e se há um gerenciador de senhas configurado.</string>
     <string name="passkey_create_failed">Não foi possível adicionar a chave de acesso. Tente novamente.</string>
+    <string name="error_passkey_not_recognized">Esta chave de acesso não está vinculada a uma conta do Aster Mail. Entre com sua senha e adicione uma chave de acesso em Ajustes.</string>
+    <string name="error_passkey_timed_out">A solicitação da chave de acesso expirou. Tente novamente.</string>
 </resources>

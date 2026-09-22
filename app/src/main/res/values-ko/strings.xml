@@ -3466,4 +3466,6 @@
     <string name="passkey_already_registered">이 패스키는 이미 계정에 저장되어 있습니다.</string>
     <string name="passkey_create_unavailable">이 기기에는 패스키를 저장할 수 없습니다. 화면 잠금이 켜져 있고 비밀번호 관리자가 설정되어 있는지 확인하세요.</string>
     <string name="passkey_create_failed">패스키를 추가하지 못했습니다. 다시 시도하세요.</string>
+    <string name="error_passkey_not_recognized">이 패스키는 Aster Mail 계정에 연결되어 있지 않습니다. 암호로 로그인한 다음 설정에서 패스키를 추가하세요.</string>
+    <string name="error_passkey_timed_out">패스키 요청 시간이 초과되었습니다. 다시 시도하세요.</string>
 </resources>

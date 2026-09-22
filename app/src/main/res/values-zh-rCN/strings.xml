@@ -3466,4 +3466,6 @@
     <string name="passkey_already_registered">此通行密钥已保存到你的帐户。</string>
     <string name="passkey_create_unavailable">此设备无法保存通行密钥。请确认已开启屏幕锁定并设置了密码管理器。</string>
     <string name="passkey_create_failed">无法添加通行密钥。请重试。</string>
+    <string name="error_passkey_not_recognized">此通行密钥未关联任何 Aster Mail 帐户。请使用密码登录，然后在设置中添加通行密钥。</string>
+    <string name="error_passkey_timed_out">通行密钥请求已超时。请重试。</string>
 </resources>

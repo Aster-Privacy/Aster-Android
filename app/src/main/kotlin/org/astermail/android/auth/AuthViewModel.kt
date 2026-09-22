@@ -151,7 +151,12 @@ class AuthViewModel @Inject constructor(
                             AuthUiState.Error(ctx.getString(R.string.error_passkey_unavailable))
                         is PasskeyFailedException ->
                             AuthUiState.Error(ctx.getString(R.string.error_passkey_failed))
-                        else -> second_factor_failure_state(cause, challenge)
+                        else ->
+                            if (is_passkey_challenge_expired(cause)) {
+                                AuthUiState.Error(ctx.getString(R.string.error_passkey_timed_out))
+                            } else {
+                                second_factor_failure_state(cause, challenge)
+                            }
                     }
                 },
             )
@@ -188,12 +193,18 @@ class AuthViewModel @Inject constructor(
                             AuthUiState.Error(ctx.getString(R.string.error_passkey_failed))
                         is PasskeyVaultNeedsPasswordException ->
                             AuthUiState.Error(ctx.getString(R.string.error_passkey_needs_password))
+                        is ApiError.ValidationError ->
+                            AuthUiState.Error(ctx.getString(passkey_login_rejection_string(cause)))
                         else -> failure_state(cause)
                     }
                 },
             )
         }
     }
+
+    private fun passkey_login_rejection_string(cause: ApiError.ValidationError): Int =
+        if (is_passkey_challenge_expired(cause)) R.string.error_passkey_timed_out
+        else R.string.error_passkey_not_recognized
 
     private fun second_factor_failure_state(
         cause: Throwable,

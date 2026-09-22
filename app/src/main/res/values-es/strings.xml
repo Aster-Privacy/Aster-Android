@@ -3485,4 +3485,6 @@
     <string name="passkey_already_registered">Esta llave de acceso ya está guardada en tu cuenta.</string>
     <string name="passkey_create_unavailable">Este dispositivo no puede guardar llaves de acceso. Comprueba que el bloqueo de pantalla esté activado y que haya un gestor de contraseñas configurado.</string>
     <string name="passkey_create_failed">No se pudo añadir la llave de acceso. Inténtalo de nuevo.</string>
+    <string name="error_passkey_not_recognized">Esta llave de acceso no está vinculada a ninguna cuenta de Aster Mail. Inicia sesión con tu contraseña y añade una llave de acceso en Ajustes.</string>
+    <string name="error_passkey_timed_out">La solicitud de la llave de acceso caducó. Inténtalo de nuevo.</string>
 </resources>

@@ -3466,4 +3466,6 @@
     <string name="passkey_already_registered">このパスキーはすでにアカウントに保存されています。</string>
     <string name="passkey_create_unavailable">このデバイスではパスキーを保存できません。画面ロックがオンで、パスワード マネージャーが設定されていることを確認してください。</string>
     <string name="passkey_create_failed">パスキーを追加できませんでした。もう一度お試しください。</string>
+    <string name="error_passkey_not_recognized">このパスキーはどの Aster Mail アカウントにもリンクされていません。パスワードでサインインしてから、設定でパスキーを追加してください。</string>
+    <string name="error_passkey_timed_out">パスキーのリクエストがタイムアウトしました。もう一度お試しください。</string>
 </resources>

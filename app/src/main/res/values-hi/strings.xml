@@ -3374,4 +3374,6 @@
     <string name="passkey_already_registered">यह पासकी पहले से आपके खाते में सेव है।</string>
     <string name="passkey_create_unavailable">यह डिवाइस पासकी सेव नहीं कर सकता। पक्का करें कि स्क्रीन लॉक चालू है और पासवर्ड मैनेजर सेट है।</string>
     <string name="passkey_create_failed">पासकी नहीं जोड़ी जा सकी। फिर से कोशिश करें।</string>
+    <string name="error_passkey_not_recognized">यह पासकी किसी Aster Mail खाते से जुड़ी नहीं है। अपने पासवर्ड से साइन इन करें, फिर सेटिंग्स में पासकी जोड़ें।</string>
+    <string name="error_passkey_timed_out">पासकी अनुरोध का समय समाप्त हो गया। फिर से कोशिश करें।</string>
 </resources>
