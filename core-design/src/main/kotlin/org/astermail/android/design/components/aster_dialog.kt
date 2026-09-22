@@ -293,6 +293,7 @@ fun AsterAlertDialog(
     confirm_style: DialogConfirmStyle = DialogConfirmStyle.primary,
     confirm_enabled: Boolean = true,
     is_busy: Boolean = false,
+    dismiss_on_confirm: Boolean = true,
     extra_content: @Composable (() -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
@@ -318,7 +319,14 @@ fun AsterAlertDialog(
     val scale = dialog_scale(content_progress)
     val slide = dialog_slide(content_progress)
     val start_dismiss: () -> Unit = { pending_confirm = false; visible = false }
-    val start_confirm: () -> Unit = { pending_confirm = true; visible = false }
+    val start_confirm: () -> Unit = {
+        if (dismiss_on_confirm) {
+            pending_confirm = true
+            visible = false
+        } else {
+            on_confirm()
+        }
+    }
     Dialog(onDismissRequest = start_dismiss, properties = dialog_properties) {
         prepare_dialog_window()
         dialog_scrim(progress = scrim_progress, on_dismiss = { if (!is_busy) start_dismiss() }) {
