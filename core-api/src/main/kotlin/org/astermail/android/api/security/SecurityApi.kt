@@ -100,6 +100,12 @@ data class PasskeyRegistrationParam(
 )
 
 @Serializable
+data class PasskeyCredentialDescriptor(
+    val type: String = "public-key",
+    val id: String,
+)
+
+@Serializable
 data class PasskeyRegistrationOptions(
     val challenge: String,
     val challenge_token: String,
@@ -108,6 +114,7 @@ data class PasskeyRegistrationOptions(
     val pubKeyCredParams: List<PasskeyRegistrationParam> = emptyList(),
     val timeout: Long = 60000,
     val attestation: String = "none",
+    val excludeCredentials: List<PasskeyCredentialDescriptor> = emptyList(),
 )
 
 @Serializable

@@ -266,7 +266,7 @@ fun registration_request_json(options: PasskeyRegistrationOptions): String {
         .put("pubKeyCredParams", params)
         .put("timeout", options.timeout)
         .put("attestation", "none")
-        .put("excludeCredentials", JSONArray())
+        .put("excludeCredentials", exclude_credentials_json(options))
         .put(
             "authenticatorSelection",
             JSONObject()
@@ -277,6 +277,14 @@ fun registration_request_json(options: PasskeyRegistrationOptions): String {
         )
         .put("extensions", prf_extension())
         .toString()
+}
+
+fun exclude_credentials_json(options: PasskeyRegistrationOptions): JSONArray {
+    val out = JSONArray()
+    options.excludeCredentials
+        .filter { it.id.isNotBlank() }
+        .forEach { out.put(JSONObject().put("type", it.type).put("id", it.id)) }
+    return out
 }
 
 class PasskeyRegistration(
