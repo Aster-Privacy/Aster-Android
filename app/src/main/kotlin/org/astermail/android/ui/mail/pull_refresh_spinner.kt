@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -115,6 +116,7 @@ internal fun pull_refresh_spinner(
                 compositingStrategy = CompositingStrategy.ModulateAlpha
             }
             .size(spinner_disc_size)
+            .shadow(elevation = 3.dp, shape = CircleShape, clip = false)
             .acrylic(colors, CircleShape, colors.bg_secondary)
             .border(1.dp, colors.border_secondary, CircleShape),
         contentAlignment = Alignment.Center,
