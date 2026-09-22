@@ -5030,6 +5030,9 @@ private fun is_safe_unsubscribe_url(url: String): Boolean {
 }
 
 private const val max_body_height_px = 40000
+private const val remeasure_settle_ms = 220L
+private const val remeasure_probe_step_ms = 32L
+private const val remeasure_probe_rounds = 14
 private const val height_watch_fast_ms = 24L
 private const val height_watch_slow_ms = 100L
 private const val height_watch_fast_window_ms = 1000L
@@ -5587,6 +5590,7 @@ internal fun email_html_view(
     val shown_height_ref = remember { floatArrayOf(0f) }
     val page_painted = remember(height_cache_key) { mutableStateOf(false) }
     val measure_probe = remember(height_cache_key) { mutableStateOf(false) }
+    val probe_hold_dp = remember(height_cache_key) { mutableStateOf(0.dp) }
     val visual_ready = remember(height_cache_key) { mutableStateOf(false) }
     val renderer_gone = remember { mutableStateOf(false) }
     var web_generation by remember(height_cache_key) { mutableStateOf(0) }
@@ -5636,13 +5640,19 @@ internal fun email_html_view(
     val white_page_ref = remember { booleanArrayOf(false) }
     var long_pressed_link by remember { mutableStateOf<String?>(null) }
 
-    val on_height_report by rememberUpdatedState<(Int, Boolean) -> Unit> { h, exact ->
+    val on_height_report by rememberUpdatedState<(Int, Boolean, Boolean) -> Unit> { h, exact, forced ->
         if (h > 0) {
+            val natural_scale = if (is_nl_ref[0]) nl_scale_ref[0] else 1f
+            val is_natural = forced || kotlin.math.abs(zoom_scale_ref[0] - natural_scale) < 0.01f
+            if (has_measured && !is_natural) return@rememberUpdatedState
+            if (forced) {
+                zoom_active = false
+                scale_ref[0] = natural_scale
+                zoom_scale_ref[0] = natural_scale
+                if (zoom_last_ref[0] > 0f) zoom_base_ref[0] = zoom_last_ref[0]
+            }
             val visual_h = (h * scale_ref[0]).toInt().coerceAtMost(max_body_height_px)
             val new_dp = visual_h.dp
-            val natural_scale = if (is_nl_ref[0]) nl_scale_ref[0] else 1f
-            val is_natural = kotlin.math.abs(zoom_scale_ref[0] - natural_scale) < 0.01f
-            if (has_measured && !is_natural) return@rememberUpdatedState
             if (!has_measured) {
                 content_height_dp = new_dp
                 measured_dp_ref[0] = new_dp.value
@@ -5670,7 +5680,7 @@ internal fun email_html_view(
         }
     }
 
-    val height_sink = remember { height_channel { h, exact -> on_height_report(h, exact) } }
+    val height_sink = remember { height_channel { h, exact -> on_height_report(h, exact, false) } }
 
     LaunchedEffect(height_cache_key) {
         if (has_measured) on_ready()
@@ -5791,25 +5801,37 @@ internal fun email_html_view(
 
     LaunchedEffect(remeasure_trigger.value) {
         if (remeasure_trigger.value == 0) return@LaunchedEffect
-        if (zoom_active) return@LaunchedEffect
-        var rounds = 0
-        var last = web_ref[0]?.contentHeight ?: 0
-        var settled = 0
-        while (rounds < 24) {
-            delay(60L)
-            rounds++
-            if (zoom_active) return@LaunchedEffect
-            val web = web_ref[0] ?: continue
-            val content = web.contentHeight
-            if (content <= 0) continue
-            if (content == last) {
-                settled++
-                if (settled >= 3 && rounds > 3) break
-            } else {
-                settled = 0
-                last = content
-                height_sink.report(content, exact = true)
+        delay(remeasure_settle_ms)
+        val grown = web_ref[0]?.contentHeight ?: 0
+        if (grown > 0 && (grown * scale_ref[0]) > content_height_dp.value + 8f) {
+            on_height_report(grown, true, true)
+            return@LaunchedEffect
+        }
+        if (content_height_dp > 0.dp) probe_hold_dp.value = content_height_dp
+        measure_probe.value = true
+        try {
+            var rounds = 0
+            var last = 0
+            var settled = 0
+            var measured = 0
+            while (rounds < remeasure_probe_rounds) {
+                delay(remeasure_probe_step_ms)
+                rounds++
+                val content = web_ref[0]?.contentHeight ?: 0
+                if (content <= 0) continue
+                measured = content
+                if (content == last) {
+                    settled++
+                    if (settled >= 2) break
+                } else {
+                    settled = 0
+                    last = content
+                }
             }
+            if (measured > 0) on_height_report(measured, true, true)
+        } finally {
+            measure_probe.value = false
+            probe_hold_dp.value = 0.dp
         }
     }
 
@@ -5905,6 +5927,11 @@ internal fun email_html_view(
             override fun onScaleChanged(view: android.webkit.WebView?, oldScale: Float, newScale: Float) {
                 if (newScale <= 0f) return
                 zoom_last_ref[0] = newScale
+                if (!height_settled) {
+                    zoom_base_ref[0] = newScale
+                    zoom_active = false
+                    return
+                }
                 if (zoom_base_ref[0] <= 0f) zoom_base_ref[0] = newScale
                 val ratio = newScale / zoom_base_ref[0]
                 scale_ref[0] = if (is_nl_ref[0]) nl_scale_ref[0] else ratio
@@ -6108,13 +6135,27 @@ internal fun email_html_view(
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                 )
             }
-        } else androidx.compose.runtime.key(web_generation) {
+        } else Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (measure_probe.value && probe_hold_dp.value > 0.dp) {
+                        Modifier.height(probe_hold_dp.value)
+                    } else {
+                        Modifier
+                    },
+                )
+                .clipToBounds(),
+            contentAlignment = Alignment.TopCenter,
+        ) {
+        androidx.compose.runtime.key(web_generation) {
         androidx.compose.ui.viewinterop.AndroidView(
             factory = { ctx ->
                 mail_body_web_view(ctx).apply {
                     configure_mail_body_web_view(this, text_zoom, allow_external)
                     var touch_down_x = 0f
                     var touch_down_y = 0f
+                    var multi_touch = false
                     setOnTouchListener { v, ev ->
                         if ((v as? mail_body_web_view)?.selection_active == true) {
                             v.parent?.requestDisallowInterceptTouchEvent(true)
@@ -6124,15 +6165,17 @@ internal fun email_html_view(
                             android.view.MotionEvent.ACTION_DOWN -> {
                                 touch_down_x = ev.x
                                 touch_down_y = ev.y
+                                multi_touch = false
                                 v.parent?.requestDisallowInterceptTouchEvent(false)
                             }
                             android.view.MotionEvent.ACTION_POINTER_DOWN -> {
+                                multi_touch = true
                                 v.parent?.requestDisallowInterceptTouchEvent(true)
                             }
                             android.view.MotionEvent.ACTION_UP -> {
                                 val dx = Math.abs(ev.x - touch_down_x)
                                 val dy = Math.abs(ev.y - touch_down_y)
-                                if (dx < 16f && dy < 16f) remeasure_trigger.value += 1
+                                if (!multi_touch && dx < 16f && dy < 16f) remeasure_trigger.value += 1
                             }
                             android.view.MotionEvent.ACTION_MOVE -> {
                                 if (ev.pointerCount > 1) {
@@ -6224,8 +6267,8 @@ internal fun email_html_view(
             },
             modifier = run {
                 val target = when {
-                    has_measured && content_height_dp > 0.dp -> content_height_dp
                     measure_probe.value -> MEASURE_PROBE_HEIGHT
+                    has_measured && content_height_dp > 0.dp -> content_height_dp
                     body_shown && shown_height_ref[0] > 0f -> shown_height_ref[0].dp
                     settled_height_ref[0] > 0f -> settled_height_ref[0].dp
                     else -> estimated_height
@@ -6233,7 +6276,11 @@ internal fun email_html_view(
                 if (has_measured && content_height_dp > 0.dp) shown_height_ref[0] = content_height_dp.value
                 val animated_target by animateDpAsState(
                     targetValue = target,
-                    animationSpec = if (zoom_active || !body_shown) snap() else tween(durationMillis = 220),
+                    animationSpec = if (zoom_active || !body_shown || measure_probe.value) {
+                        snap()
+                    } else {
+                        tween(durationMillis = 220)
+                    },
                     label = "body_height",
                 )
                 Modifier
@@ -6252,6 +6299,7 @@ internal fun email_html_view(
                 }
             },
         )
+        }
         }
         if (!renderer_exhausted.value && !body_shown) {
             email_body_skeleton(

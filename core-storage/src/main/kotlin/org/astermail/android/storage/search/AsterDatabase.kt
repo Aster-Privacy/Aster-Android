@@ -28,7 +28,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.outbox.PendingSendEntity
 
-const val aster_database_version = 15
+const val aster_database_version = 16
 
 data class schema_column(val table: String, val name: String, val definition: String)
 
@@ -93,6 +93,16 @@ private const val create_pending_send_queue =
         "`created_at_ms` INTEGER NOT NULL, " +
         "PRIMARY KEY(`id`))"
 
+const val create_message_body_cache =
+    "CREATE TABLE IF NOT EXISTS `message_body_cache` (" +
+        "`id` TEXT NOT NULL, " +
+        "`body_text` TEXT NOT NULL, " +
+        "`body_html` TEXT, " +
+        "`built_key` INTEGER NOT NULL, " +
+        "`built_html` TEXT, " +
+        "`cached_at` INTEGER NOT NULL, " +
+        "PRIMARY KEY(`id`))"
+
 val migration_columns: Map<Int, List<schema_column>> = mapOf(
     3 to listOf(schema_column(decrypted_mail_table, "category", "TEXT NOT NULL DEFAULT 'primary'")),
     5 to listOf(
@@ -123,6 +133,7 @@ val migration_statements: Map<Int, List<String>> = mapOf(
     8 to listOf("DELETE FROM decrypted_mail_cache"),
     10 to listOf("DELETE FROM decrypted_mail_cache"),
     15 to listOf(create_folder_row_cache),
+    16 to listOf(create_message_body_cache),
 )
 
 private fun has_table(db: SupportSQLiteDatabase, table: String): Boolean =
@@ -161,7 +172,12 @@ private fun step_migration(to_version: Int): Migration = object : Migration(to_v
 }
 
 @Database(
-    entities = [DecryptedMailEntity::class, PendingSendEntity::class, FolderRowEntity::class],
+    entities = [
+        DecryptedMailEntity::class,
+        PendingSendEntity::class,
+        FolderRowEntity::class,
+        MessageBodyEntity::class,
+    ],
     version = aster_database_version,
     exportSchema = false,
 )
@@ -169,6 +185,7 @@ abstract class AsterDatabase : RoomDatabase() {
     abstract fun decrypted_mail_dao(): DecryptedMailDao
     abstract fun pending_send_dao(): PendingSendDao
     abstract fun folder_row_dao(): FolderRowDao
+    abstract fun message_body_dao(): MessageBodyDao
 
     companion object {
         val migration_1_2 = step_migration(2)
@@ -185,6 +202,7 @@ abstract class AsterDatabase : RoomDatabase() {
         val migration_12_13 = step_migration(13)
         val migration_13_14 = step_migration(14)
         val migration_14_15 = step_migration(15)
+        val migration_15_16 = step_migration(16)
 
         val all_migrations: Array<Migration> = arrayOf(
             migration_1_2,
@@ -201,6 +219,7 @@ abstract class AsterDatabase : RoomDatabase() {
             migration_12_13,
             migration_13_14,
             migration_14_15,
+            migration_15_16,
         )
     }
 }

@@ -279,6 +279,8 @@ private val pull_refresh_travel = 56.dp
 
 private val pull_refresh_bar_height = 3.dp
 
+private val pull_refresh_spinner_size = 20.dp
+
 private val chrome_reveal_distance = 24.dp
 
 val pull_refresh_threshold = 56.dp
@@ -1801,7 +1803,6 @@ fun InboxScreen(
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
                                 .padding(top = header_height_dp)
-                                .offset { IntOffset(0, travel.roundToInt()) }
                                 .graphicsLayer { alpha = indicator_alpha }
                                 .fillMaxWidth()
                                 .height(pull_refresh_bar_height)
@@ -1846,6 +1847,35 @@ fun InboxScreen(
                                     }
                                 },
                         )
+                        if (refreshing_now || drag_progress > 0f) {
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopCenter)
+                                    .padding(top = header_height_dp + pull_refresh_bar_height + 10.dp)
+                                    .graphicsLayer { alpha = indicator_alpha }
+                                    .size(pull_refresh_spinner_size + 16.dp)
+                                    .clip(CircleShape)
+                                    .background(colors.bg_secondary)
+                                    .border(1.dp, colors.border_secondary, CircleShape),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                if (refreshing_now) {
+                                    CircularProgressIndicator(
+                                        color = accent,
+                                        strokeWidth = 2.dp,
+                                        modifier = Modifier.size(pull_refresh_spinner_size),
+                                    )
+                                } else {
+                                    CircularProgressIndicator(
+                                        progress = { drag_progress },
+                                        color = accent,
+                                        trackColor = accent.copy(alpha = 0.18f),
+                                        strokeWidth = 2.dp,
+                                        modifier = Modifier.size(pull_refresh_spinner_size),
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
                 val hidden_by_category = threads.isEmpty() && !threads_pending && inbox_state.items.isNotEmpty()

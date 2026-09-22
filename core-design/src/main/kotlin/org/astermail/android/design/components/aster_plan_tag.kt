@@ -53,25 +53,16 @@ fun aster_plan_kind_of(plan_code: String?): aster_plan_kind? =
         else -> null
     }
 
+private val plan_tag_shade = Color(0xFF05070F)
+
 @Composable
-private fun plan_tag_gradient(plan: aster_plan_kind?): List<Color> {
-    val colors = AsterMaterial.colors
-    val accent = colors.accent_blue
-    return when (plan) {
-        aster_plan_kind.star -> listOf(
-            lerp(accent, Color(0xFF38BDF8), 0.35f),
-            lerp(accent, Color(0xFF6366F1), 0.35f),
-        )
-        aster_plan_kind.nova -> listOf(
-            lerp(accent, Color(0xFF8B5CF6), 0.55f),
-            lerp(accent, Color(0xFFEC4899), 0.55f),
-        )
-        aster_plan_kind.supernova -> listOf(
-            lerp(accent, Color(0xFFF59E0B), 0.6f),
-            lerp(accent, Color(0xFFEC4899), 0.6f),
-        )
-        null -> listOf(accent, accent)
-    }
+private fun plan_tag_gradient(): List<Color> {
+    val accent = AsterMaterial.colors.accent_blue
+    return listOf(
+        lerp(accent, Color.White, 0.16f),
+        lerp(accent, Color.Black, 0.04f),
+        lerp(accent, plan_tag_shade, 0.26f),
+    )
 }
 
 @Composable
@@ -80,28 +71,28 @@ fun AsterPlanTag(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     plan: aster_plan_kind? = null,
-    font_size: TextUnit = 12.sp,
-    horizontal_padding: Dp = 8.dp,
-    vertical_padding: Dp = 3.dp,
+    font_size: TextUnit = 11.sp,
+    horizontal_padding: Dp = 7.dp,
+    vertical_padding: Dp = 2.dp,
 ) {
     val colors = AsterMaterial.colors
-    val stops = plan_tag_gradient(plan)
-    val brush = remember(stops) { Brush.horizontalGradient(stops) }
+    val stops = plan_tag_gradient()
+    val brush = remember(stops) { Brush.verticalGradient(stops) }
     Row(
         modifier = modifier
             .clip(plan_tag_shape)
             .background(brush, plan_tag_shape)
-            .border(1.dp, Color.White.copy(alpha = 0.22f), plan_tag_shape)
+            .border(1.dp, Color.White.copy(alpha = 0.18f), plan_tag_shape)
             .padding(horizontal = horizontal_padding, vertical = vertical_padding),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {
         if (icon != null) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = colors.on_accent,
-                modifier = Modifier.size(12.dp),
+                modifier = Modifier.size(10.dp),
             )
         }
         Text(
@@ -109,7 +100,7 @@ fun AsterPlanTag(
             color = colors.on_accent,
             fontSize = font_size,
             fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.3.sp,
+            letterSpacing = 0.1.sp,
             maxLines = 1,
         )
     }

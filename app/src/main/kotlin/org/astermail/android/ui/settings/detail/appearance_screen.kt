@@ -1004,9 +1004,6 @@ internal fun plan_pill(text: String, modifier: Modifier = Modifier) {
     org.astermail.android.design.components.AsterPlanTag(
         text = text,
         modifier = modifier,
-        font_size = 11.sp,
-        horizontal_padding = 7.dp,
-        vertical_padding = 2.dp,
     )
 }
 

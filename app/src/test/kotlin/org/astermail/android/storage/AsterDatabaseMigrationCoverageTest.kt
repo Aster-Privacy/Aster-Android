@@ -25,8 +25,10 @@ import org.astermail.android.storage.outbox.PendingSendEntity
 import org.astermail.android.storage.search.AsterDatabase
 import org.astermail.android.storage.search.DecryptedMailEntity
 import org.astermail.android.storage.search.FolderRowEntity
+import org.astermail.android.storage.search.MessageBodyEntity
 import org.astermail.android.storage.search.aster_database_version
 import org.astermail.android.storage.search.create_folder_row_cache
+import org.astermail.android.storage.search.create_message_body_cache
 import org.astermail.android.storage.search.migration_columns
 import org.astermail.android.storage.search.migration_statements
 import org.junit.Assert.assertEquals
@@ -38,6 +40,7 @@ class AsterDatabaseMigrationCoverageTest {
     private val decrypted_mail_table = "decrypted_mail_cache"
     private val pending_send_table = "pending_send_queue"
     private val folder_row_table = "folder_row_cache"
+    private val message_body_table = "message_body_cache"
 
     private val decrypted_mail_baseline = listOf(
         "id",
@@ -113,11 +116,27 @@ class AsterDatabaseMigrationCoverageTest {
     }
 
     @Test
-    fun the_folder_cache_table_is_created_by_the_latest_migration_step() {
-        val statements = migration_statements.getValue(aster_database_version)
+    fun the_folder_cache_table_is_created_by_its_migration_step() {
+        val statements = migration_statements.getValue(15)
 
         assertTrue(statements.contains(create_folder_row_cache))
         assertTrue(create_folder_row_cache.contains("PRIMARY KEY(`folder`, `id`)"))
+    }
+
+    @Test
+    fun the_message_body_cache_table_is_created_by_the_latest_migration_step() {
+        val statements = migration_statements.getValue(aster_database_version)
+
+        assertTrue(statements.contains(create_message_body_cache))
+        assertTrue(create_message_body_cache.contains("PRIMARY KEY(`id`)"))
+    }
+
+    @Test
+    fun every_message_body_column_is_created_by_the_message_body_migration() {
+        val expected = entity_columns(MessageBodyEntity::class.java).sorted()
+        val actual = created_columns(create_message_body_cache, message_body_table).sorted()
+
+        assertEquals(expected, actual)
     }
 
     @Test

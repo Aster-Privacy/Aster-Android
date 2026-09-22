@@ -1851,9 +1851,6 @@ private fun profile_menu_plan_badge(plan_code: String?) {
     org.astermail.android.design.components.AsterPlanTag(
         text = label,
         plan = org.astermail.android.design.components.aster_plan_kind_of(plan_code),
-        font_size = 11.sp,
-        horizontal_padding = 9.dp,
-        vertical_padding = 3.dp,
         modifier = Modifier.clickable(
             interactionSource = remember { MutableInteractionSource() },
             indication = null,
