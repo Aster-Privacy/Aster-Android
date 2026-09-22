@@ -276,10 +276,6 @@ internal interface InboxLiveSyncDeps {
 
 private const val DRAG_HAPTIC_MIN_GAP_MS = 55L
 
-private val pull_refresh_bar_height = 3.dp
-
-private val pull_refresh_spinner_size = 20.dp
-
 private val chrome_reveal_distance = 24.dp
 
 val pull_refresh_threshold = 56.dp
@@ -1790,7 +1786,7 @@ fun InboxScreen(
                     }
                     val pull_line = remember { androidx.compose.animation.core.Animatable(0f) }
                     LaunchedEffect(pull_state, reduce_motion) {
-                        snapshotFlow { pull_state.distanceFraction.coerceIn(0f, 1f) }
+                        snapshotFlow { pull_state.distanceFraction.coerceIn(0f, 2f) }
                             .collectLatest { fraction ->
                                 if (fraction > 0f || reduce_motion) {
                                     pull_line.snapTo(fraction)
@@ -1798,113 +1794,47 @@ fun InboxScreen(
                                     pull_line.animateTo(
                                         targetValue = 0f,
                                         animationSpec = tween(
-                                            durationMillis = 220,
+                                            durationMillis = 260,
                                             easing = androidx.compose.animation.core.FastOutSlowInEasing,
                                         ),
                                     )
                                 }
                             }
                     }
-                    val bar_active by remember {
-                        androidx.compose.runtime.derivedStateOf { shown.value > 0.001f || pull_line.value > 0.001f }
+                    LaunchedEffect(refresh_visible) {
+                        if (refresh_visible && pull_line.value >= 0.95f) shown.snapTo(1f)
+                    }
+                    val pull_pop = remember { androidx.compose.animation.core.Animatable(0f) }
+                    LaunchedEffect(pull_state, reduce_motion, haptic_enabled) {
+                        snapshotFlow { pull_state.distanceFraction >= 1f }
+                            .collectLatest { reached ->
+                                if (!reached) return@collectLatest
+                                if (haptic_enabled) tactile(org.astermail.android.design.aster_haptic.gesture_threshold)
+                                if (reduce_motion) return@collectLatest
+                                pull_pop.snapTo(1f)
+                                pull_pop.animateTo(
+                                    targetValue = 0f,
+                                    animationSpec = androidx.compose.animation.core.spring(
+                                        dampingRatio = 0.42f,
+                                        stiffness = 520f,
+                                    ),
+                                )
+                            }
                     }
                     val disc_active by remember {
-                        androidx.compose.runtime.derivedStateOf { shown.value > 0.001f }
-                    }
-                    if (bar_active) {
-                        val accent = colors.accent_blue
-                        val sweep_transition = androidx.compose.animation.core.rememberInfiniteTransition(
-                            label = "pull_sweep",
-                        )
-                        val sweep = sweep_transition.animateFloat(
-                            initialValue = 0f,
-                            targetValue = 1f,
-                            animationSpec = androidx.compose.animation.core.infiniteRepeatable(
-                                animation = tween(
-                                    durationMillis = 1100,
-                                    easing = androidx.compose.animation.core.LinearEasing,
-                                ),
-                            ),
-                            label = "pull_sweep_value",
-                        )
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .padding(top = header_height_dp)
-                                .fillMaxWidth()
-                                .height(pull_refresh_bar_height)
-                                .drawBehind {
-                                    val reveal = shown.value
-                                    val progress = pull_line.value
-                                    if (reveal > 0f) {
-                                        drawRect(accent.copy(alpha = 0.12f * reveal))
-                                        val band = size.width * 0.38f
-                                        val travel_span = size.width + band
-                                        val left = sweep.value * travel_span - band
-                                        val visible_left = left.coerceAtLeast(0f)
-                                        val visible_width = (left + band).coerceAtMost(size.width) - visible_left
-                                        if (visible_width > 0f) {
-                                            drawRect(
-                                                brush = Brush.horizontalGradient(
-                                                    colors = listOf(
-                                                        accent.copy(alpha = 0f),
-                                                        accent.copy(alpha = 0.55f * reveal),
-                                                        accent.copy(alpha = reveal),
-                                                        accent.copy(alpha = 0f),
-                                                    ),
-                                                    startX = left,
-                                                    endX = left + band,
-                                                ),
-                                                topLeft = Offset(visible_left, 0f),
-                                                size = Size(visible_width, size.height),
-                                            )
-                                        }
-                                    }
-                                    val line_alpha = 1f - reveal
-                                    if (progress > 0f && line_alpha > 0f) {
-                                        val filled = size.width * progress
-                                        val head_alpha = if (progress >= 1f) 1f else 0.8f
-                                        drawRect(
-                                            brush = Brush.horizontalGradient(
-                                                colors = listOf(
-                                                    accent.copy(alpha = 0.35f * line_alpha),
-                                                    accent.copy(alpha = head_alpha * line_alpha),
-                                                ),
-                                                startX = 0f,
-                                                endX = filled.coerceAtLeast(1f),
-                                            ),
-                                            topLeft = Offset.Zero,
-                                            size = Size(filled, size.height),
-                                        )
-                                    }
-                                },
-                        )
+                        androidx.compose.runtime.derivedStateOf { shown.value > 0.001f || pull_line.value > 0.001f }
                     }
                     if (disc_active) {
-                        val slide_px = with(density) { 12.dp.toPx() }
-                        Box(
+                        pull_refresh_spinner(
+                            pull = { pull_line.value },
+                            shown = { shown.value },
+                            pop = { pull_pop.value },
+                            spinning = refresh_visible,
+                            reduce_motion = reduce_motion,
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
-                                .padding(top = header_height_dp + pull_refresh_bar_height + 10.dp)
-                                .graphicsLayer {
-                                    val reveal = shown.value
-                                    alpha = reveal
-                                    scaleX = 0.7f + 0.3f * reveal
-                                    scaleY = 0.7f + 0.3f * reveal
-                                    translationY = -slide_px * (1f - reveal)
-                                    compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.ModulateAlpha
-                                }
-                                .size(pull_refresh_spinner_size + 16.dp)
-                                .acrylic(colors, CircleShape, colors.bg_secondary)
-                                .border(1.dp, colors.border_secondary, CircleShape),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            CircularProgressIndicator(
-                                color = colors.accent_blue,
-                                strokeWidth = 2.dp,
-                                modifier = Modifier.size(pull_refresh_spinner_size),
-                            )
-                        }
+                                .padding(top = header_height_dp + 12.dp),
+                        )
                     }
                 }
                 val hidden_by_category = threads.isEmpty() && !threads_pending && inbox_state.items.isNotEmpty()
