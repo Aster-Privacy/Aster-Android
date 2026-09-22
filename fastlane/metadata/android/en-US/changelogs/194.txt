@@ -1,0 +1,11 @@
+What's new
+- Sign in with a passkey, and add one in Settings.
+- Choose the address new messages come from in Settings > Default sender.
+- Choose whether replies quote the original and add Re:.
+- Force dark mode for emails now works with any app theme.
+- A new pull to refresh indicator.
+
+Fixed
+- The back arrow and quoted text animate smoothly.
+- Placeholders match your theme; text is readable over photos.
+- New mail notifies you even when its sent date is older.
