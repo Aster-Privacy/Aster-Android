@@ -2154,7 +2154,7 @@
     <string name="login_alerts_info_title">Оповещения о входе</string>
     <string name="login_alerts_info_desc">Мы отправляем письмо каждый раз, когда в ваш аккаунт входят с нового устройства или из нового места. Это помогает вовремя заметить чужой доступ.</string>
     <string name="passkeys_security_keys">Ключи доступа и аппаратные ключи</string>
-    <string name="passkeys_none_subtitle">Ключи не зарегистрированы. Зарегистрируйте их на компьютере.</string>
+    <string name="passkeys_none_subtitle">Ключей доступа пока нет</string>
     <string name="section_trusted_devices">Доверенные устройства</string>
     <string name="no_trusted_devices">Доверенных устройств нет</string>
     <string name="no_trusted_devices_subtitle">Здесь появятся устройства, которым разрешено пропускать двухфакторную проверку</string>
@@ -3505,4 +3505,17 @@
     <string name="quick_action_no_read">Здесь нет прочитанных писем для архивации</string>
     <string name="quick_action_no_old">Здесь нет писем старше 30 дней</string>
     <string name="quick_action_delete_old_confirm">Переместить %1$d бесед старше 30 дней в корзину?</string>
+    <string name="sign_in_with_passkey">Войти с ключом доступа</string>
+    <string name="error_passkey_sign_in_unavailable">На этом устройстве нет ключа доступа Aster Mail. Войдите с паролем, а затем добавьте ключ доступа в настройках.</string>
+    <string name="error_passkey_needs_password">Этот ключ доступа пока не может сам разблокировать ваш почтовый ящик. Войдите с паролем.</string>
+    <string name="passkey_add">Добавить ключ доступа</string>
+    <string name="passkey_add_subtitle">Входите с помощью отпечатка пальца, лица или блокировки экрана</string>
+    <string name="passkey_adding">Добавление ключа доступа…</string>
+    <string name="passkey_default_name">Ключ доступа (%1$s)</string>
+    <string name="passkey_added">Ключ доступа добавлен</string>
+    <string name="passkey_added_sessions_revoked">Ключ доступа добавлен. Вы вышли из аккаунта на других устройствах.</string>
+    <string name="passkey_added_second_step_only">Ключ доступа добавлен. Используйте его как второй шаг при входе с паролем.</string>
+    <string name="passkey_already_registered">Этот ключ доступа уже сохранен в вашем аккаунте.</string>
+    <string name="passkey_create_unavailable">Это устройство не может сохранять ключи доступа. Убедитесь, что блокировка экрана включена и настроен менеджер паролей.</string>
+    <string name="passkey_create_failed">Не удалось добавить ключ доступа. Повторите попытку.</string>
 </resources>

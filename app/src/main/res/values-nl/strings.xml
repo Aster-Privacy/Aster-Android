@@ -2146,7 +2146,7 @@
     <string name="login_alerts_info_title">Aanmeldmeldingen</string>
     <string name="login_alerts_info_desc">We sturen je een e-mail zodra iemand zich vanaf een nieuw apparaat of een nieuwe locatie bij je account aanmeldt. Zo merk je ongeoorloofde toegang snel op.</string>
     <string name="passkeys_security_keys">Passkeys &amp; beveiligingssleutels</string>
-    <string name="passkeys_none_subtitle">Geen sleutels geregistreerd. Registreer ze op de desktop.</string>
+    <string name="passkeys_none_subtitle">Nog geen passkeys</string>
     <string name="section_trusted_devices">Vertrouwde apparaten</string>
     <string name="no_trusted_devices">Geen vertrouwde apparaten</string>
     <string name="no_trusted_devices_subtitle">Apparaten die de tweestapsverificatie mogen overslaan verschijnen hier</string>
@@ -3463,4 +3463,17 @@
     <string name="quick_action_no_read">Hier zijn geen gelezen e-mails om te archiveren</string>
     <string name="quick_action_no_old">Hier zijn geen e-mails ouder dan 30 dagen</string>
     <string name="quick_action_delete_old_confirm">%1$d gesprekken ouder dan 30 dagen naar de prullenbak verplaatsen?</string>
+    <string name="sign_in_with_passkey">Inloggen met een passkey</string>
+    <string name="error_passkey_sign_in_unavailable">Er is geen Aster Mail-passkey beschikbaar op dit apparaat. Log in met je wachtwoord en voeg daarna een passkey toe in Instellingen.</string>
+    <string name="error_passkey_needs_password">Deze passkey kan je mailbox nog niet zelfstandig ontgrendelen. Log in met je wachtwoord.</string>
+    <string name="passkey_add">Passkey toevoegen</string>
+    <string name="passkey_add_subtitle">Log in met je vingerafdruk, gezicht of schermvergrendeling</string>
+    <string name="passkey_adding">Passkey toevoegen…</string>
+    <string name="passkey_default_name">Passkey (%1$s)</string>
+    <string name="passkey_added">Passkey toegevoegd</string>
+    <string name="passkey_added_sessions_revoked">Passkey toegevoegd. Je bent uitgelogd op je andere apparaten.</string>
+    <string name="passkey_added_second_step_only">Passkey toegevoegd. Gebruik hem als tweede stap wanneer je inlogt met je wachtwoord.</string>
+    <string name="passkey_already_registered">Deze passkey is al opgeslagen in je account.</string>
+    <string name="passkey_create_unavailable">Dit apparaat kan geen passkeys opslaan. Controleer of schermvergrendeling aan staat en er een wachtwoordbeheerder is ingesteld.</string>
+    <string name="passkey_create_failed">Kan de passkey niet toevoegen. Probeer het opnieuw.</string>
 </resources>

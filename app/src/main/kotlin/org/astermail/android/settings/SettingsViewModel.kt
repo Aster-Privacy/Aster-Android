@@ -241,6 +241,7 @@ data class SettingsUiState(
     val login_alerts_load_failed: Boolean = false,
     val hardware_keys: List<HardwareKey> = emptyList(),
     val hardware_keys_load_failed: Boolean = false,
+    val is_adding_passkey: Boolean = false,
     val hardware_key_step_up_id: String? = null,
     val hardware_key_step_up_error: String? = null,
     val hardware_key_step_up_busy: Boolean = false,
@@ -3381,6 +3382,85 @@ class SettingsViewModel @Inject constructor(
                 }
                 _state.value = _state.value.copy(action_result = message, hardware_key_step_up_busy = false)
             }
+        }
+    }
+
+    fun add_passkey(
+        create_credential: suspend (String) -> String,
+        get_credential: suspend (String) -> String,
+    ) {
+        if (_state.value.is_adding_passkey) return
+        _state.update { it.copy(is_adding_passkey = true) }
+        viewModelScope.launch {
+            try {
+                val options = security_api.initiate_passkey_registration()
+                val response_json = create_credential(org.astermail.android.auth.registration_request_json(options))
+                val registration = org.astermail.android.auth.registration_complete_request(
+                    response_json = response_json,
+                    options = options,
+                    name = context.getString(R.string.passkey_default_name, android.os.Build.MODEL.orEmpty().trim()).trim(),
+                )
+                val completed = security_api.complete_passkey_registration(registration.request)
+                val prf_saved = runCatching {
+                    save_passkey_prf(completed.key_id, options.rp.id, registration, get_credential)
+                }.getOrElse { t ->
+                    if (t is kotlinx.coroutines.CancellationException) throw t
+                    if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "save_passkey_prf", t)
+                    false
+                }
+                val message = when {
+                    completed.other_sessions_revoked -> R.string.passkey_added_sessions_revoked
+                    prf_saved -> R.string.passkey_added
+                    else -> R.string.passkey_added_second_step_only
+                }
+                _state.update { it.copy(is_adding_passkey = false, action_result = context.getString(message)) }
+                load_hardware_keys()
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "add_passkey", t)
+                val message = when (t) {
+                    is org.astermail.android.auth.PasskeyCancelledException -> null
+                    is org.astermail.android.auth.PasskeyAlreadyRegisteredException ->
+                        context.getString(R.string.passkey_already_registered)
+                    is org.astermail.android.auth.PasskeyUnavailableException ->
+                        context.getString(R.string.passkey_create_unavailable)
+                    is org.astermail.android.auth.PasskeyFailedException ->
+                        context.getString(R.string.passkey_create_failed)
+                    else -> org.astermail.android.localized_api_error(context, t, context.getString(R.string.passkey_create_failed))
+                }
+                _state.update { it.copy(is_adding_passkey = false, action_result = message ?: it.action_result) }
+            }
+        }
+    }
+
+    private suspend fun save_passkey_prf(
+        key_id: String,
+        rp_id: String,
+        registration: org.astermail.android.auth.PasskeyRegistration,
+        get_credential: suspend (String) -> String,
+    ): Boolean {
+        val passphrase = session_key_store.get_passphrase() ?: return false
+        try {
+            val prf_output = registration.prf_output ?: if (registration.prf_enabled) {
+                org.astermail.android.auth.prf_output_from(
+                    get_credential(org.astermail.android.auth.prf_assertion_request_json(rp_id, registration.credential_id)),
+                )
+            } else {
+                null
+            }
+            prf_output ?: return false
+            val (encrypted, nonce) = org.astermail.android.auth.encrypt_passphrase_with_prf(prf_output, passphrase)
+            prf_output.fill(0)
+            security_api.store_passkey_prf(
+                key_id,
+                org.astermail.android.api.security.StorePasskeyPrfRequest(
+                    prf_encrypted_passphrase = encrypted,
+                    prf_nonce = nonce,
+                ),
+            )
+            return true
+        } finally {
+            passphrase.fill(0)
         }
     }
 

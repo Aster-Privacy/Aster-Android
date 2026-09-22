@@ -2146,7 +2146,7 @@
     <string name="login_alerts_info_title">Alertas de login</string>
     <string name="login_alerts_info_desc">Enviamos um e-mail sempre que alguém entra na sua conta de um dispositivo ou lugar novo. Ajuda a perceber acessos não autorizados cedo.</string>
     <string name="passkeys_security_keys">Chaves de acesso e chaves de segurança</string>
-    <string name="passkeys_none_subtitle">Nenhuma chave registrada. Registre pelo computador.</string>
+    <string name="passkeys_none_subtitle">Nenhuma chave de acesso ainda</string>
     <string name="section_trusted_devices">Dispositivos confiáveis</string>
     <string name="no_trusted_devices">Nenhum dispositivo confiável</string>
     <string name="no_trusted_devices_subtitle">Os dispositivos que podem pular a verificação em duas etapas aparecerão aqui</string>
@@ -3463,4 +3463,17 @@
     <string name="quick_action_no_read">Não há e-mails lidos para arquivar aqui</string>
     <string name="quick_action_no_old">Não há e-mails com mais de 30 dias aqui</string>
     <string name="quick_action_delete_old_confirm">Mover %1$d conversas com mais de 30 dias para a lixeira?</string>
+    <string name="sign_in_with_passkey">Iniciar sessão com uma chave de acesso</string>
+    <string name="error_passkey_sign_in_unavailable">Nenhuma chave de acesso do Aster Mail está disponível neste dispositivo. Inicie sessão com sua senha e adicione uma chave de acesso em Configurações.</string>
+    <string name="error_passkey_needs_password">Esta chave de acesso ainda não consegue desbloquear sua caixa de correio sozinha. Inicie sessão com sua senha.</string>
+    <string name="passkey_add">Adicionar uma chave de acesso</string>
+    <string name="passkey_add_subtitle">Inicie sessão com sua impressão digital, rosto ou bloqueio de tela</string>
+    <string name="passkey_adding">Adicionando chave de acesso…</string>
+    <string name="passkey_default_name">Chave de acesso (%1$s)</string>
+    <string name="passkey_added">Chave de acesso adicionada</string>
+    <string name="passkey_added_sessions_revoked">Chave de acesso adicionada. Sua sessão foi encerrada nos outros dispositivos.</string>
+    <string name="passkey_added_second_step_only">Chave de acesso adicionada. Use-a como segunda etapa ao iniciar sessão com sua senha.</string>
+    <string name="passkey_already_registered">Esta chave de acesso já está salva na sua conta.</string>
+    <string name="passkey_create_unavailable">Este dispositivo não pode salvar chaves de acesso. Verifique se o bloqueio de tela está ativado e se há um gerenciador de senhas configurado.</string>
+    <string name="passkey_create_failed">Não foi possível adicionar a chave de acesso. Tente novamente.</string>
 </resources>

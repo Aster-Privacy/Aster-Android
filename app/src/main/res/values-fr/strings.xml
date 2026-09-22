@@ -1522,7 +1522,7 @@
     <string name="login_alerts_info_title">Alertes de connexion</string>
     <string name="login_alerts_info_desc">Vous envoie un e-mail chaque fois que votre compte est connecté depuis un nouvel appareil ou emplacement. Utile pour détecter rapidement les accès non autorisés.</string>
     <string name="passkeys_security_keys">Clés d\'accès &amp; clés de sécurité</string>
-    <string name="passkeys_none_subtitle">Aucune clé enregistrée. Enregistrez-en une sur ordinateur.</string>
+    <string name="passkeys_none_subtitle">Aucune clé d\'accès pour le moment</string>
     <string name="section_trusted_devices">Appareils de confiance</string>
     <string name="no_trusted_devices">Aucun appareil de confiance</string>
     <string name="no_trusted_devices_subtitle">Les appareils que vous approuvez pour contourner la 2FA apparaîtront ici</string>
@@ -3490,4 +3490,17 @@
     <string name="quick_action_no_read">Aucun message lu à archiver ici</string>
     <string name="quick_action_no_old">Aucun message de plus de 30 jours ici</string>
     <string name="quick_action_delete_old_confirm">Déplacer %1$d conversations de plus de 30 jours vers la corbeille ?</string>
+    <string name="sign_in_with_passkey">Se connecter avec une clé d\'accès</string>
+    <string name="error_passkey_sign_in_unavailable">Aucune clé d\'accès Aster Mail n\'est disponible sur cet appareil. Connectez-vous avec votre mot de passe, puis ajoutez une clé d\'accès dans Réglages.</string>
+    <string name="error_passkey_needs_password">Cette clé d\'accès ne peut pas encore déverrouiller votre boîte aux lettres seule. Connectez-vous avec votre mot de passe.</string>
+    <string name="passkey_add">Ajouter une clé d\'accès</string>
+    <string name="passkey_add_subtitle">Connectez-vous avec votre empreinte, votre visage ou le verrouillage de l\'écran</string>
+    <string name="passkey_adding">Ajout de la clé d\'accès…</string>
+    <string name="passkey_default_name">Clé d\'accès (%1$s)</string>
+    <string name="passkey_added">Clé d\'accès ajoutée</string>
+    <string name="passkey_added_sessions_revoked">Clé d\'accès ajoutée. Vous êtes déconnecté de vos autres appareils.</string>
+    <string name="passkey_added_second_step_only">Clé d\'accès ajoutée. Utilisez-la comme deuxième étape lorsque vous vous connectez avec votre mot de passe.</string>
+    <string name="passkey_already_registered">Cette clé d\'accès est déjà enregistrée dans votre compte.</string>
+    <string name="passkey_create_unavailable">Cet appareil ne peut pas enregistrer de clés d\'accès. Vérifiez que le verrouillage de l\'écran est activé et qu\'un gestionnaire de mots de passe est configuré.</string>
+    <string name="passkey_create_failed">Impossible d\'ajouter la clé d\'accès. Réessayez.</string>
 </resources>

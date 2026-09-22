@@ -2146,7 +2146,7 @@
     <string name="login_alerts_info_title">Avvisi di accesso</string>
     <string name="login_alerts_info_desc">Ti inviamo un\'email ogni volta che si accede al tuo account da un dispositivo o da un luogo nuovo. Utile per accorgersi subito di accessi non autorizzati.</string>
     <string name="passkeys_security_keys">Passkey e chiavi di sicurezza</string>
-    <string name="passkeys_none_subtitle">Nessuna chiave registrata. Registrala dal desktop.</string>
+    <string name="passkeys_none_subtitle">Ancora nessuna passkey</string>
     <string name="section_trusted_devices">Dispositivi fidati</string>
     <string name="no_trusted_devices">Nessun dispositivo fidato</string>
     <string name="no_trusted_devices_subtitle">Qui compariranno i dispositivi che possono saltare la verifica in due passaggi</string>
@@ -3463,4 +3463,17 @@
     <string name="quick_action_no_read">Qui non ci sono email lette da archiviare</string>
     <string name="quick_action_no_old">Qui non ci sono email più vecchie di 30 giorni</string>
     <string name="quick_action_delete_old_confirm">Spostare %1$d conversazioni più vecchie di 30 giorni nel cestino?</string>
+    <string name="sign_in_with_passkey">Accedi con una passkey</string>
+    <string name="error_passkey_sign_in_unavailable">Su questo dispositivo non è disponibile alcuna passkey di Aster Mail. Accedi con la password, quindi aggiungi una passkey in Impostazioni.</string>
+    <string name="error_passkey_needs_password">Questa passkey non può ancora sbloccare da sola la tua casella di posta. Accedi con la password.</string>
+    <string name="passkey_add">Aggiungi una passkey</string>
+    <string name="passkey_add_subtitle">Accedi con impronta, volto o blocco schermo</string>
+    <string name="passkey_adding">Aggiunta della passkey…</string>
+    <string name="passkey_default_name">Passkey (%1$s)</string>
+    <string name="passkey_added">Passkey aggiunta</string>
+    <string name="passkey_added_sessions_revoked">Passkey aggiunta. Sei stato disconnesso dagli altri dispositivi.</string>
+    <string name="passkey_added_second_step_only">Passkey aggiunta. Usala come secondo passaggio quando accedi con la password.</string>
+    <string name="passkey_already_registered">Questa passkey è già salvata nel tuo account.</string>
+    <string name="passkey_create_unavailable">Questo dispositivo non può salvare passkey. Verifica che il blocco schermo sia attivo e che sia configurato un gestore di password.</string>
+    <string name="passkey_create_failed">Impossibile aggiungere la passkey. Riprova.</string>
 </resources>

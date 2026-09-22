@@ -370,6 +370,54 @@ class AuthRepository @Inject constructor(
         finish_second_factor_login(outcome, challenge, trust_device)
     }
 
+    suspend fun begin_passkey_login(): Result<org.astermail.android.api.auth.PasskeyLoginOptions> = runCatching {
+        auth_api.initiate_passkey_login()
+    }
+
+    suspend fun finish_passkey_login(
+        request: org.astermail.android.api.auth.PasskeyLoginVerifyRequest,
+        prf_output: ByteArray?,
+    ): Result<Unit> = runCatching {
+        val outcome = auth_api.verify_passkey_login(request)
+        val login_resp = outcome.response
+        val encrypted_passphrase = outcome.prf.prf_encrypted_passphrase
+        val prf_nonce = outcome.prf.prf_nonce
+        if (prf_output == null || encrypted_passphrase.isNullOrBlank() || prf_nonce.isNullOrBlank()) {
+            throw PasskeyVaultNeedsPasswordException()
+        }
+        val password_bytes = decrypt_passphrase_with_prf(prf_output, encrypted_passphrase, prf_nonce)
+            ?: throw PasskeyVaultNeedsPasswordException()
+        val vault_opens = runCatching {
+            CryptoNative.decrypt_vault_with_password(
+                base64_decode(login_resp.encrypted_vault),
+                base64_decode(login_resp.vault_nonce),
+                password_bytes,
+            ).fill(0)
+        }.isSuccess
+        if (!vault_opens) {
+            password_bytes.fill(0)
+            throw PasskeyVaultNeedsPasswordException()
+        }
+        val normalized = normalize_email(login_resp.email)
+        val dotless_hash = CryptoNative.hash_email(normalized)
+        val dotted_hash = CryptoNative.hash_email_keeping_dots(normalized)
+        val salt_resp = runCatching { auth_api.get_user_salt(dotless_hash) }.getOrElse { error ->
+            if (dotted_hash == dotless_hash) throw error
+            auth_api.get_user_salt(dotted_hash)
+        }
+        val salt_bytes = base64_decode(salt_resp.salt)
+        AuthSaltGuard.require_usable_auth_salt(salt_bytes, cached_vault_bytes())
+        val password_hash_bytes = CryptoNative.derive_pbkdf2_hash(
+            password_bytes,
+            salt_bytes,
+            pbkdf2_iterations,
+        )
+        outcome.trusted_device_token?.takeIf { it.isNotBlank() }?.let { token ->
+            trusted_device_store.put_token(normalized, token)
+        }
+        complete_login(login_resp, password_bytes, password_hash_bytes, salt_bytes)
+    }
+
     fun login_device_label(): String? {
         val manufacturer = android.os.Build.MANUFACTURER.orEmpty().trim()
         val model = android.os.Build.MODEL.orEmpty().trim()

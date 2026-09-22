@@ -2143,7 +2143,7 @@
     <string name="login_alerts_info_title">로그인 알림</string>
     <string name="login_alerts_info_desc">새 기기나 새 위치에서 계정에 로그인할 때마다 메일로 알려 줍니다. 무단 접근을 일찍 알아채는 데 좋습니다.</string>
     <string name="passkeys_security_keys">패스키 및 보안 키</string>
-    <string name="passkeys_none_subtitle">등록된 키가 없습니다. 데스크톱에서 등록하세요.</string>
+    <string name="passkeys_none_subtitle">아직 패스키가 없습니다</string>
     <string name="section_trusted_devices">신뢰하는 기기</string>
     <string name="no_trusted_devices">신뢰하는 기기 없음</string>
     <string name="no_trusted_devices_subtitle">2단계 인증을 건너뛸 수 있는 기기가 여기에 표시됩니다</string>
@@ -3445,4 +3445,17 @@
     <string name="quick_action_no_read">보관할 읽은 메일이 없습니다</string>
     <string name="quick_action_no_old">30일이 지난 메일이 없습니다</string>
     <string name="quick_action_delete_old_confirm">30일이 지난 대화 %1$d개를 휴지통으로 옮길까요?</string>
+    <string name="sign_in_with_passkey">패스키로 로그인</string>
+    <string name="error_passkey_sign_in_unavailable">이 기기에 Aster Mail 패스키가 없습니다. 비밀번호로 로그인한 후 설정에서 패스키를 추가하세요.</string>
+    <string name="error_passkey_needs_password">이 패스키만으로는 아직 메일함 잠금을 해제할 수 없습니다. 비밀번호로 로그인하세요.</string>
+    <string name="passkey_add">패스키 추가</string>
+    <string name="passkey_add_subtitle">지문, 얼굴 또는 화면 잠금으로 로그인하세요</string>
+    <string name="passkey_adding">패스키 추가 중…</string>
+    <string name="passkey_default_name">패스키(%1$s)</string>
+    <string name="passkey_added">패스키를 추가했습니다</string>
+    <string name="passkey_added_sessions_revoked">패스키를 추가했습니다. 다른 기기에서 로그아웃되었습니다.</string>
+    <string name="passkey_added_second_step_only">패스키를 추가했습니다. 비밀번호로 로그인할 때 두 번째 단계로 사용하세요.</string>
+    <string name="passkey_already_registered">이 패스키는 이미 계정에 저장되어 있습니다.</string>
+    <string name="passkey_create_unavailable">이 기기에는 패스키를 저장할 수 없습니다. 화면 잠금이 켜져 있고 비밀번호 관리자가 설정되어 있는지 확인하세요.</string>
+    <string name="passkey_create_failed">패스키를 추가하지 못했습니다. 다시 시도하세요.</string>
 </resources>

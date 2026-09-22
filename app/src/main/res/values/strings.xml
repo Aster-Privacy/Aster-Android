@@ -2312,7 +2312,7 @@
     <string name="login_alerts_info_title">Login Alerts</string>
     <string name="login_alerts_info_desc">Sends you an email whenever your account is signed in from a new device or location. Good for catching unauthorized access early.</string>
     <string name="passkeys_security_keys">Passkeys &amp; Security Keys</string>
-    <string name="passkeys_none_subtitle">No keys registered. Register on desktop.</string>
+    <string name="passkeys_none_subtitle">No passkeys yet</string>
     <string name="section_trusted_devices">Trusted Devices</string>
     <string name="no_trusted_devices">No trusted devices</string>
     <string name="no_trusted_devices_subtitle">Devices you trust for 2FA bypass will appear here</string>
@@ -3508,4 +3508,17 @@
     <string name="quick_action_delete_old_confirm">Move %1$d conversations older than 30 days to Trash?</string>
     <string name="inbox_tools">Filters and quick actions</string>
     <string name="inbox_tools_subtitle">Show the filter and quick action buttons in the inbox header</string>
+    <string name="sign_in_with_passkey">Sign in with a passkey</string>
+    <string name="error_passkey_sign_in_unavailable">No Aster Mail passkey is available on this device. Sign in with your password, then add a passkey in Settings.</string>
+    <string name="error_passkey_needs_password">This passkey can\'t unlock your mailbox on its own yet. Sign in with your password.</string>
+    <string name="passkey_add">Add a passkey</string>
+    <string name="passkey_add_subtitle">Sign in with your fingerprint, face, or screen lock</string>
+    <string name="passkey_adding">Adding passkey…</string>
+    <string name="passkey_default_name">Passkey (%1$s)</string>
+    <string name="passkey_added">Passkey added</string>
+    <string name="passkey_added_sessions_revoked">Passkey added. You\'re signed out on your other devices.</string>
+    <string name="passkey_added_second_step_only">Passkey added. Use it as a second step when you sign in with your password.</string>
+    <string name="passkey_already_registered">This passkey is already saved to your account.</string>
+    <string name="passkey_create_unavailable">This device can\'t save passkeys. Make sure screen lock is on and a password manager is set up.</string>
+    <string name="passkey_create_failed">Couldn\'t add the passkey. Try again.</string>
 </resources>
