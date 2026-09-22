@@ -26,6 +26,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
+import org.jsoup.safety.Cleaner
 import org.jsoup.safety.Safelist
 import org.jsoup.select.NodeTraversor
 import org.jsoup.select.NodeVisitor
@@ -100,8 +101,8 @@ object EmailHtmlSanitizer {
         val pre = strip_dangerous_blocks(bounded_html)
         val head_styles = extract_head_styles(pre)
         val body_only = extract_body_html(pre)
-        val cleaned_body = Jsoup.clean(body_only, "https://mail-content.invalid/", safelist, raw_output_settings())
-        val doc = Jsoup.parseBodyFragment(cleaned_body).apply { outputSettings(raw_output_settings()) }
+        val dirty = Jsoup.parseBodyFragment(body_only, "https://mail-content.invalid/")
+        val doc = Cleaner(safelist).clean(dirty).apply { outputSettings(raw_output_settings()) }
         scrub_attributes(doc, options.clean_tracking_links)
         if (options.remove_tracking_pixels) remove_tracking_pixels(doc)
         scrub_style_blocks(doc, options)
@@ -393,8 +394,8 @@ object EmailHtmlSanitizer {
 
     private fun extract_head_styles(html: String): List<String> {
         val result = mutableListOf<String>()
-        val head_re = Regex("<head\\b[\\s>][\\s\\S]*?</head\\s*>", RegexOption.IGNORE_CASE)
-        val style_re = Regex("<style\\b[^>]*>([\\s\\S]*?)</style\\s*>", RegexOption.IGNORE_CASE)
+        val head_re = head_block_regex
+        val style_re = style_block_regex
         for (head in head_re.findAll(html)) {
             for (m in style_re.findAll(head.value)) {
                 result.add(m.groupValues[1])
@@ -404,9 +405,9 @@ object EmailHtmlSanitizer {
     }
 
     private fun extract_body_html(html: String): String {
-        val open = Regex("<body\\b[^>]*>", RegexOption.IGNORE_CASE).find(html) ?: return html
+        val open = body_open_regex.find(html) ?: return html
         if (!is_document_preamble(html.substring(0, open.range.first))) return html
-        val close = Regex("</body\\s*>", RegexOption.IGNORE_CASE).findAll(html).lastOrNull()
+        val close = body_close_regex.findAll(html).lastOrNull()
             ?: return html.substring(open.range.last + 1)
         if (close.range.first < open.range.last) return html
         return html.substring(open.range.last + 1, close.range.first)
@@ -414,13 +415,13 @@ object EmailHtmlSanitizer {
 
     private fun is_document_preamble(prefix: String): Boolean {
         val stripped = prefix
-            .replace(Regex("<!--[\\s\\S]*?-->"), "")
-            .replace(Regex("<\\?[\\s\\S]*?\\?>"), "")
-            .replace(Regex("<!doctype\\b[^>]*>", RegexOption.IGNORE_CASE), "")
-            .replace(Regex("<html\\b[^>]*>", RegexOption.IGNORE_CASE), "")
-            .replace(Regex("<head\\b[\\s>][\\s\\S]*?</head\\s*>", RegexOption.IGNORE_CASE), "")
-            .replace(Regex("<(style|title)\\b[^>]*>[\\s\\S]*?</\\1\\s*>", RegexOption.IGNORE_CASE), "")
-            .replace(Regex("</?(head|meta|link|title|base|style)\\b[^>]*>", RegexOption.IGNORE_CASE), "")
+            .replace(html_comment_regex, "")
+            .replace(processing_instruction_regex, "")
+            .replace(doctype_regex, "")
+            .replace(html_open_regex, "")
+            .replace(head_block_regex, "")
+            .replace(style_or_title_block_regex, "")
+            .replace(document_shell_tag_regex, "")
         return stripped.isBlank()
     }
 
@@ -462,11 +463,11 @@ object EmailHtmlSanitizer {
 
     private fun strip_mso_conditionals(html: String): String {
         var out = html
-        out = out.replace(Regex("<!--\\[if\\s[^\\]!]*?mso[^\\]]*?\\]>[\\s\\S]*?<!\\[endif\\]\\s*--\\s*>", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("<!--\\[if\\s!mso\\]><!-->\\s*", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("\\s*<!--<!\\[endif\\]\\s*--\\s*>", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("<!--\\[if\\s!mso\\]>\\s*<!--\\s*--\\s*>", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("<!--\\s*<!\\[endif\\]\\s*--\\s*>", RegexOption.IGNORE_CASE), "")
+        out = out.replace(mso_conditional_regex, "")
+        out = out.replace(mso_downlevel_open_regex, "")
+        out = out.replace(mso_downlevel_close_regex, "")
+        out = out.replace(mso_downlevel_empty_regex, "")
+        out = out.replace(mso_endif_regex, "")
         return out
     }
 
@@ -478,15 +479,60 @@ object EmailHtmlSanitizer {
         var out = html
         out = strip_mso_conditionals(out)
         out = strip_script_like_blocks(out)
-        out = out.replace(Regex("<embed\\b[^>]*/?>", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("<base\\b[^>]*/?>", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("<meta\\b[^>]*http-equiv\\s*=\\s*[\"']?refresh[\"']?[^>]*/?>", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("<link\\b[^>]*rel\\s*=\\s*[\"']?(?:import|prefetch|preload)[\"']?[^>]*/?>", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("<form\\b[^>]*>|</form\\s*>", RegexOption.IGNORE_CASE), "")
+        out = out.replace(embed_tag_regex, "")
+        out = out.replace(base_tag_regex, "")
+        out = out.replace(meta_refresh_regex, "")
+        out = out.replace(link_preload_regex, "")
+        out = out.replace(form_tag_regex, "")
         return neutralize_unterminated_comments(out)
     }
 
     private val comment_end_regex = Regex("--!?>")
+
+    private val meta_refresh_regex =
+        Regex("<meta\\b[^>]*http-equiv\\s*=\\s*[\"']?refresh[\"']?[^>]*/?>", RegexOption.IGNORE_CASE)
+
+    private val link_preload_regex =
+        Regex("<link\\b[^>]*rel\\s*=\\s*[\"']?(?:import|prefetch|preload)[\"']?[^>]*/?>", RegexOption.IGNORE_CASE)
+
+    private val head_block_regex =Regex("<head\\b[\\s>][\\s\\S]*?</head\\s*>", RegexOption.IGNORE_CASE)
+    private val style_block_regex = Regex("<style\\b[^>]*>([\\s\\S]*?)</style\\s*>", RegexOption.IGNORE_CASE)
+    private val body_open_regex = Regex("<body\\b[^>]*>", RegexOption.IGNORE_CASE)
+    private val body_close_regex = Regex("</body\\s*>", RegexOption.IGNORE_CASE)
+    private val html_comment_regex = Regex("<!--[\\s\\S]*?-->")
+    private val processing_instruction_regex = Regex("<\\?[\\s\\S]*?\\?>")
+    private val doctype_regex = Regex("<!doctype\\b[^>]*>", RegexOption.IGNORE_CASE)
+    private val html_open_regex = Regex("<html\\b[^>]*>", RegexOption.IGNORE_CASE)
+    private val style_or_title_block_regex = Regex("<(style|title)\\b[^>]*>[\\s\\S]*?</\\1\\s*>", RegexOption.IGNORE_CASE)
+    private val document_shell_tag_regex = Regex("</?(head|meta|link|title|base|style)\\b[^>]*>", RegexOption.IGNORE_CASE)
+    private val mso_conditional_regex = Regex("<!--\\[if\\s[^\\]!]*?mso[^\\]]*?\\]>[\\s\\S]*?<!\\[endif\\]\\s*--\\s*>", RegexOption.IGNORE_CASE)
+    private val mso_downlevel_open_regex = Regex("<!--\\[if\\s!mso\\]><!-->\\s*", RegexOption.IGNORE_CASE)
+    private val mso_downlevel_close_regex = Regex("\\s*<!--<!\\[endif\\]\\s*--\\s*>", RegexOption.IGNORE_CASE)
+    private val mso_downlevel_empty_regex = Regex("<!--\\[if\\s!mso\\]>\\s*<!--\\s*--\\s*>", RegexOption.IGNORE_CASE)
+    private val mso_endif_regex = Regex("<!--\\s*<!\\[endif\\]\\s*--\\s*>", RegexOption.IGNORE_CASE)
+    private val embed_tag_regex = Regex("<embed\\b[^>]*/?>", RegexOption.IGNORE_CASE)
+    private val base_tag_regex = Regex("<base\\b[^>]*/?>", RegexOption.IGNORE_CASE)
+    private val form_tag_regex = Regex("<form\\b[^>]*>|</form\\s*>", RegexOption.IGNORE_CASE)
+    private val javascript_uri_regex = Regex("^\\s*javascript\\s*:", RegexOption.IGNORE_CASE)
+    private val data_html_uri_regex = Regex("^\\s*data\\s*:\\s*text/html", RegexOption.IGNORE_CASE)
+    private val vbscript_uri_regex = Regex("^\\s*vbscript\\s*:", RegexOption.IGNORE_CASE)
+    private val data_uri_regex = Regex("^\\s*data\\s*:", RegexOption.IGNORE_CASE)
+    private val css_expression_regex = Regex("expression\\s*\\(", RegexOption.IGNORE_CASE)
+    private val css_javascript_regex = Regex("javascript\\s*:", RegexOption.IGNORE_CASE)
+    private val css_vbscript_regex = Regex("vbscript\\s*:", RegexOption.IGNORE_CASE)
+    private val css_import_regex = Regex("@import\\b[^;]*;?", RegexOption.IGNORE_CASE)
+    private val css_behavior_regex = Regex("behavior\\s*:[^;]*;?", RegexOption.IGNORE_CASE)
+    private val css_moz_binding_regex = Regex("-moz-binding\\s*:[^;]*;?", RegexOption.IGNORE_CASE)
+    private val css_fixed_position_regex = Regex("position\\s*:\\s*(fixed|sticky)", RegexOption.IGNORE_CASE)
+    private val css_charset_regex = Regex("@charset\\b[^;]*;?", RegexOption.IGNORE_CASE)
+    private val css_namespace_regex = Regex("@namespace\\b[^;]*;?", RegexOption.IGNORE_CASE)
+    private val css_document_regex = Regex("@document\\b[^;]*;?", RegexOption.IGNORE_CASE)
+    private val css_moz_document_regex = Regex("-moz-document[^;{]*\\{[^}]*\\}", RegexOption.IGNORE_CASE)
+    private val css_image_set_regex = Regex("image-set\\s*\\([^)]*\\)", RegexOption.IGNORE_CASE)
+    private val css_webkit_image_set_regex = Regex("-webkit-image-set\\s*\\([^)]*\\)", RegexOption.IGNORE_CASE)
+    private val css_cross_fade_regex = Regex("cross-fade\\s*\\([^)]*\\)", RegexOption.IGNORE_CASE)
+    private val css_closing_tag_regex = Regex("</(style|script)", RegexOption.IGNORE_CASE)
+    private val dark_mode_media_regex = Regex("@media\\s*\\([^)]*prefers-color-scheme\\s*:\\s*dark[^)]*\\)\\s*\\{", RegexOption.IGNORE_CASE)
 
     private fun neutralize_unterminated_comments(html: String): String {
         if (!html.contains("<!--")) return html
@@ -542,10 +588,10 @@ object EmailHtmlSanitizer {
     private fun is_safe_image_data_uri(value: String): Boolean = safe_image_data_uri.containsMatchIn(value)
 
     private fun scrub_attributes(doc: Document, clean_tracking_links: Boolean = true) {
-        val js_uri = Regex("^\\s*javascript\\s*:", RegexOption.IGNORE_CASE)
-        val data_html_uri = Regex("^\\s*data\\s*:\\s*text/html", RegexOption.IGNORE_CASE)
-        val vbscript_uri = Regex("^\\s*vbscript\\s*:", RegexOption.IGNORE_CASE)
-        val data_uri = Regex("^\\s*data\\s*:", RegexOption.IGNORE_CASE)
+        val js_uri = javascript_uri_regex
+        val data_html_uri = data_html_uri_regex
+        val vbscript_uri = vbscript_uri_regex
+        val data_uri = data_uri_regex
         for (el in doc.allElements) {
             val to_remove = mutableListOf<String>()
             for (attr in el.attributes()) {
@@ -632,13 +678,13 @@ object EmailHtmlSanitizer {
     private fun sanitize_style_value(css: String): String {
         var out = strip_css_comments(css)
         out = out.replace("<", "")
-        out = out.replace(Regex("expression\\s*\\(", RegexOption.IGNORE_CASE), "blocked(")
-        out = out.replace(Regex("javascript\\s*:", RegexOption.IGNORE_CASE), "blocked:")
-        out = out.replace(Regex("vbscript\\s*:", RegexOption.IGNORE_CASE), "blocked:")
-        out = out.replace(Regex("@import\\b[^;]*;?", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("behavior\\s*:[^;]*;?", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("-moz-binding\\s*:[^;]*;?", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("position\\s*:\\s*(fixed|sticky)", RegexOption.IGNORE_CASE), "position: relative")
+        out = out.replace(css_expression_regex, "blocked(")
+        out = out.replace(css_javascript_regex, "blocked:")
+        out = out.replace(css_vbscript_regex, "blocked:")
+        out = out.replace(css_import_regex, "")
+        out = out.replace(css_behavior_regex, "")
+        out = out.replace(css_moz_binding_regex, "")
+        out = out.replace(css_fixed_position_regex, "position: relative")
         return out
     }
 
@@ -647,34 +693,34 @@ object EmailHtmlSanitizer {
     private fun sanitize_css_block(css: String, options: SanitizeOptions = SanitizeOptions()): String {
         var out = strip_css_comments(css)
         if (options.block_remote_css) {
-            out = out.replace(Regex("@import\\b[^;]*;?", RegexOption.IGNORE_CASE), "")
+            out = out.replace(css_import_regex, "")
         }
         if (options.block_remote_fonts) {
             out = font_face_block.replace(out) { m ->
                 if (css_remote_url.containsMatchIn(m.value)) "" else m.value
             }
         }
-        out = out.replace(Regex("@charset\\b[^;]*;?", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("@namespace\\b[^;]*;?", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("@document\\b[^;]*;?", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("-moz-document[^;{]*\\{[^}]*\\}", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("expression\\s*\\(", RegexOption.IGNORE_CASE), "blocked(")
-        out = out.replace(Regex("javascript\\s*:", RegexOption.IGNORE_CASE), "blocked:")
-        out = out.replace(Regex("vbscript\\s*:", RegexOption.IGNORE_CASE), "blocked:")
-        out = out.replace(Regex("behavior\\s*:[^;]*;?", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("-moz-binding\\s*:[^;]*;?", RegexOption.IGNORE_CASE), "")
-        out = out.replace(Regex("image-set\\s*\\([^)]*\\)", RegexOption.IGNORE_CASE), "none")
-        out = out.replace(Regex("-webkit-image-set\\s*\\([^)]*\\)", RegexOption.IGNORE_CASE), "none")
-        out = out.replace(Regex("cross-fade\\s*\\([^)]*\\)", RegexOption.IGNORE_CASE), "none")
+        out = out.replace(css_charset_regex, "")
+        out = out.replace(css_namespace_regex, "")
+        out = out.replace(css_document_regex, "")
+        out = out.replace(css_moz_document_regex, "")
+        out = out.replace(css_expression_regex, "blocked(")
+        out = out.replace(css_javascript_regex, "blocked:")
+        out = out.replace(css_vbscript_regex, "blocked:")
+        out = out.replace(css_behavior_regex, "")
+        out = out.replace(css_moz_binding_regex, "")
+        out = out.replace(css_image_set_regex, "none")
+        out = out.replace(css_webkit_image_set_regex, "none")
+        out = out.replace(css_cross_fade_regex, "none")
         out = strip_dark_mode_media(out)
-        out = out.replace(Regex("position\\s*:\\s*(fixed|sticky)", RegexOption.IGNORE_CASE), "position: relative")
-        out = out.replace(Regex("</(style|script)", RegexOption.IGNORE_CASE), """<\\/$1""")
+        out = out.replace(css_fixed_position_regex, "position: relative")
+        out = out.replace(css_closing_tag_regex, """<\\/$1""")
         return out
     }
 
     private fun strip_dark_mode_media(css: String): String {
         var result = css
-        val pattern = Regex("@media\\s*\\([^)]*prefers-color-scheme\\s*:\\s*dark[^)]*\\)\\s*\\{", RegexOption.IGNORE_CASE)
+        val pattern = dark_mode_media_regex
         var match = pattern.find(result)
         while (match != null) {
             var depth = 1
