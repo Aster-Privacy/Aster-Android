@@ -830,6 +830,12 @@ private fun AsterNavHost() {
             val inbox_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
             }
+            val returns_to_inbox = remember(entry) {
+                nav_controller.previousBackStackEntry?.destination?.route == routes.inbox
+            }
+            androidx.compose.runtime.LaunchedEffect(entry, returns_to_inbox) {
+                if (returns_to_inbox) org.astermail.android.design.components.arm_menu_back_return_morph()
+            }
             val shared_mail_vm: org.astermail.android.mail.MailViewModel =
                 if (inbox_entry != null) hiltViewModel(inbox_entry) else hiltViewModel()
             val shared_settings_vm: org.astermail.android.settings.SettingsViewModel =

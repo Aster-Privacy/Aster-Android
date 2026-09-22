@@ -129,6 +129,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import androidx.compose.ui.platform.LocalContext
 import coil.imageLoader
@@ -275,8 +276,6 @@ internal interface InboxLiveSyncDeps {
 
 private const val DRAG_HAPTIC_MIN_GAP_MS = 55L
 
-private val pull_refresh_travel = 56.dp
-
 private val pull_refresh_bar_height = 3.dp
 
 private val pull_refresh_spinner_size = 20.dp
@@ -287,14 +286,19 @@ val pull_refresh_threshold = 56.dp
 
 private const val PULL_DRAG_RATIO = 0.6f
 
+private const val PULL_REFRESH_MIN_VISIBLE_MS = 600L
+
+private const val PULL_REFRESH_START_WAIT_MS = 800L
+
 private class inbox_pull_connection(
-    private val scope: kotlinx.coroutines.CoroutineScope,
     private val threshold_px: () -> Float,
     private val can_pull: () -> Boolean,
     private val on_refresh: () -> Unit,
 ) : NestedScrollConnection {
-    private var distance by mutableFloatStateOf(0f)
-    private var settle: kotlinx.coroutines.Job? = null
+    var distance by mutableFloatStateOf(0f)
+        private set
+    var holding by mutableStateOf(false)
+        private set
 
     val distanceFraction: Float
         get() = threshold_px().let { if (it > 0f) distance / it else 0f }
@@ -305,30 +309,26 @@ private class inbox_pull_connection(
     }
 
     override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-        if (source != NestedScrollSource.UserInput || available.y <= 0f || !can_pull()) return Offset.Zero
+        if (source != NestedScrollSource.UserInput || available.y <= 0f || holding || !can_pull()) return Offset.Zero
         return Offset(0f, drag(available.y))
     }
 
     override suspend fun onPreFling(available: androidx.compose.ui.unit.Velocity): androidx.compose.ui.unit.Velocity {
         if (distance <= 0f) return androidx.compose.ui.unit.Velocity.Zero
-        if (distance >= threshold_px() && can_pull()) on_refresh()
-        val from = distance
-        settle?.cancel()
-        settle = scope.launch {
-            androidx.compose.animation.core.animate(
-                initialValue = from,
-                targetValue = 0f,
-                animationSpec = androidx.compose.animation.core.spring(
-                    stiffness = androidx.compose.animation.core.Spring.StiffnessMedium,
-                ),
-            ) { value, _ -> distance = value }
+        val armed = distance >= threshold_px() && !holding && can_pull()
+        distance = 0f
+        if (armed) {
+            holding = true
+            on_refresh()
         }
         return if (available.y > 0f) available else androidx.compose.ui.unit.Velocity.Zero
     }
 
+    fun release() {
+        holding = false
+    }
+
     private fun drag(dy: Float): Float {
-        settle?.cancel()
-        settle = null
         val before = distance
         val next = (before + dy * PULL_DRAG_RATIO).coerceIn(0f, threshold_px() * 2f)
         distance = next
@@ -1598,9 +1598,8 @@ fun InboxScreen(
     val pull_select_mode = rememberUpdatedState(select_mode)
     val pull_refreshing = rememberUpdatedState(is_refreshing)
     val pull_on_refresh = rememberUpdatedState<() -> Unit>({ do_refresh() })
-    val pull_state = remember(scope) {
+    val pull_state = remember {
         inbox_pull_connection(
-            scope = scope,
             threshold_px = { pull_threshold_px },
             can_pull = { !pull_select_mode.value && !pull_refreshing.value },
             on_refresh = { pull_on_refresh.value() },
@@ -1753,90 +1752,123 @@ fun InboxScreen(
                     .nestedScroll(pull_state),
             ) {
                 val pull_indicator: @Composable androidx.compose.foundation.layout.BoxScope.() -> Unit = {
-                    val refreshing_now = is_refreshing && !select_mode
-                    val fraction = pull_state.distanceFraction
-                    val travel_px = with(density) { pull_refresh_travel.toPx() }
-                    val dragging = fraction > 0.01f
-                    val settling = !dragging && !refreshing_now
-                    val retract_ms = if (org.astermail.android.design.aster_reduce_motion()) 0 else 280
-                    val retract_spec = androidx.compose.animation.core.tween<Float>(
-                        durationMillis = retract_ms,
-                        easing = androidx.compose.animation.core.FastOutSlowInEasing,
-                    )
-                    val travel by animateFloatAsState(
-                        targetValue = when {
-                            refreshing_now -> travel_px
-                            dragging -> fraction.coerceIn(0f, 1.4f) * travel_px
-                            else -> 0f
-                        },
-                        animationSpec = if (settling) retract_spec else androidx.compose.animation.core.snap(),
-                        label = "pull_travel",
-                    )
-                    val indicator_alpha by animateFloatAsState(
-                        targetValue = when {
-                            refreshing_now -> 1f
-                            dragging -> (fraction * 2f).coerceIn(0f, 1f)
-                            else -> 0f
-                        },
-                        animationSpec = if (settling) retract_spec else androidx.compose.animation.core.snap(),
-                        label = "pull_alpha",
-                    )
-                    if (dragging || refreshing_now || indicator_alpha > 0.01f) {
+                    val reduce_motion = org.astermail.android.design.aster_reduce_motion()
+                    val refresh_raw = (is_refreshing || pull_state.holding) && !select_mode
+                    var refresh_visible by remember { mutableStateOf(false) }
+                    val refresh_shown_at = remember { longArrayOf(0L) }
+                    LaunchedEffect(refresh_raw) {
+                        if (refresh_raw) {
+                            if (!refresh_visible) refresh_shown_at[0] = android.os.SystemClock.uptimeMillis()
+                            refresh_visible = true
+                        } else if (refresh_visible) {
+                            val shown_for = android.os.SystemClock.uptimeMillis() - refresh_shown_at[0]
+                            kotlinx.coroutines.delay((PULL_REFRESH_MIN_VISIBLE_MS - shown_for).coerceAtLeast(0L))
+                            refresh_visible = false
+                        }
+                    }
+                    LaunchedEffect(pull_state.holding) {
+                        if (!pull_state.holding) return@LaunchedEffect
+                        withTimeoutOrNull(PULL_REFRESH_START_WAIT_MS) {
+                            snapshotFlow { pull_refreshing.value }.first { it }
+                        }
+                        snapshotFlow { pull_refreshing.value }.first { !it }
+                        pull_state.release()
+                    }
+                    val shown = remember { androidx.compose.animation.core.Animatable(0f) }
+                    LaunchedEffect(refresh_visible, reduce_motion) {
+                        shown.animateTo(
+                            targetValue = if (refresh_visible) 1f else 0f,
+                            animationSpec = tween(
+                                durationMillis = when {
+                                    reduce_motion -> 0
+                                    refresh_visible -> 240
+                                    else -> 320
+                                },
+                                easing = androidx.compose.animation.core.FastOutSlowInEasing,
+                            ),
+                        )
+                    }
+                    val pull_line = remember { androidx.compose.animation.core.Animatable(0f) }
+                    LaunchedEffect(pull_state, reduce_motion) {
+                        snapshotFlow { pull_state.distanceFraction.coerceIn(0f, 1f) }
+                            .collectLatest { fraction ->
+                                if (fraction > 0f || reduce_motion) {
+                                    pull_line.snapTo(fraction)
+                                } else {
+                                    pull_line.animateTo(
+                                        targetValue = 0f,
+                                        animationSpec = tween(
+                                            durationMillis = 220,
+                                            easing = androidx.compose.animation.core.FastOutSlowInEasing,
+                                        ),
+                                    )
+                                }
+                            }
+                    }
+                    val bar_active by remember {
+                        androidx.compose.runtime.derivedStateOf { shown.value > 0.001f || pull_line.value > 0.001f }
+                    }
+                    val disc_active by remember {
+                        androidx.compose.runtime.derivedStateOf { shown.value > 0.001f }
+                    }
+                    if (bar_active) {
+                        val accent = colors.accent_blue
                         val sweep_transition = androidx.compose.animation.core.rememberInfiniteTransition(
                             label = "pull_sweep",
                         )
-                        val sweep by sweep_transition.animateFloat(
+                        val sweep = sweep_transition.animateFloat(
                             initialValue = 0f,
                             targetValue = 1f,
                             animationSpec = androidx.compose.animation.core.infiniteRepeatable(
-                                animation = androidx.compose.animation.core.tween(
+                                animation = tween(
                                     durationMillis = 1100,
                                     easing = androidx.compose.animation.core.LinearEasing,
                                 ),
                             ),
                             label = "pull_sweep_value",
                         )
-                        val accent = colors.accent_blue
-                        val drag_progress = (travel / travel_px).coerceIn(0f, 1f)
-                        val armed = drag_progress >= 1f
                         Box(
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
                                 .padding(top = header_height_dp)
-                                .graphicsLayer { alpha = indicator_alpha }
                                 .fillMaxWidth()
                                 .height(pull_refresh_bar_height)
                                 .drawBehind {
-                                    drawRect(accent.copy(alpha = 0.12f))
-                                    if (refreshing_now) {
+                                    val reveal = shown.value
+                                    val progress = pull_line.value
+                                    if (reveal > 0f) {
+                                        drawRect(accent.copy(alpha = 0.12f * reveal))
                                         val band = size.width * 0.38f
                                         val travel_span = size.width + band
-                                        val left = sweep * travel_span - band
-                                        drawRect(
-                                            brush = Brush.horizontalGradient(
-                                                colors = listOf(
-                                                    accent.copy(alpha = 0f),
-                                                    accent.copy(alpha = 0.55f),
-                                                    accent,
-                                                    accent.copy(alpha = 0f),
+                                        val left = sweep.value * travel_span - band
+                                        val visible_left = left.coerceAtLeast(0f)
+                                        val visible_width = (left + band).coerceAtMost(size.width) - visible_left
+                                        if (visible_width > 0f) {
+                                            drawRect(
+                                                brush = Brush.horizontalGradient(
+                                                    colors = listOf(
+                                                        accent.copy(alpha = 0f),
+                                                        accent.copy(alpha = 0.55f * reveal),
+                                                        accent.copy(alpha = reveal),
+                                                        accent.copy(alpha = 0f),
+                                                    ),
+                                                    startX = left,
+                                                    endX = left + band,
                                                 ),
-                                                startX = left,
-                                                endX = left + band,
-                                            ),
-                                            topLeft = Offset(left.coerceAtLeast(0f), 0f),
-                                            size = Size(
-                                                width = (left + band).coerceAtMost(size.width) -
-                                                    left.coerceAtLeast(0f),
-                                                height = size.height,
-                                            ),
-                                        )
-                                    } else if (drag_progress > 0f) {
-                                        val filled = size.width * drag_progress
+                                                topLeft = Offset(visible_left, 0f),
+                                                size = Size(visible_width, size.height),
+                                            )
+                                        }
+                                    }
+                                    val line_alpha = 1f - reveal
+                                    if (progress > 0f && line_alpha > 0f) {
+                                        val filled = size.width * progress
+                                        val head_alpha = if (progress >= 1f) 1f else 0.8f
                                         drawRect(
                                             brush = Brush.horizontalGradient(
                                                 colors = listOf(
-                                                    accent.copy(alpha = 0.35f),
-                                                    accent.copy(alpha = if (armed) 1f else 0.8f),
+                                                    accent.copy(alpha = 0.35f * line_alpha),
+                                                    accent.copy(alpha = head_alpha * line_alpha),
                                                 ),
                                                 startX = 0f,
                                                 endX = filled.coerceAtLeast(1f),
@@ -1847,34 +1879,31 @@ fun InboxScreen(
                                     }
                                 },
                         )
-                        if (refreshing_now || drag_progress > 0f) {
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.TopCenter)
-                                    .padding(top = header_height_dp + pull_refresh_bar_height + 10.dp)
-                                    .graphicsLayer { alpha = indicator_alpha }
-                                    .size(pull_refresh_spinner_size + 16.dp)
-                                    .clip(CircleShape)
-                                    .background(colors.bg_secondary)
-                                    .border(1.dp, colors.border_secondary, CircleShape),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                if (refreshing_now) {
-                                    CircularProgressIndicator(
-                                        color = accent,
-                                        strokeWidth = 2.dp,
-                                        modifier = Modifier.size(pull_refresh_spinner_size),
-                                    )
-                                } else {
-                                    CircularProgressIndicator(
-                                        progress = { drag_progress },
-                                        color = accent,
-                                        trackColor = accent.copy(alpha = 0.18f),
-                                        strokeWidth = 2.dp,
-                                        modifier = Modifier.size(pull_refresh_spinner_size),
-                                    )
+                    }
+                    if (disc_active) {
+                        val slide_px = with(density) { 12.dp.toPx() }
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .padding(top = header_height_dp + pull_refresh_bar_height + 10.dp)
+                                .graphicsLayer {
+                                    val reveal = shown.value
+                                    alpha = reveal
+                                    scaleX = 0.7f + 0.3f * reveal
+                                    scaleY = 0.7f + 0.3f * reveal
+                                    translationY = -slide_px * (1f - reveal)
+                                    compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.ModulateAlpha
                                 }
-                            }
+                                .size(pull_refresh_spinner_size + 16.dp)
+                                .acrylic(colors, CircleShape, colors.bg_secondary)
+                                .border(1.dp, colors.border_secondary, CircleShape),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(
+                                color = colors.accent_blue,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(pull_refresh_spinner_size),
+                            )
                         }
                     }
                 }
@@ -3263,10 +3292,9 @@ internal fun inbox_top_bar(
                 onClick = on_open_drawer,
                 modifier = Modifier.testTag("open_drawer"),
             ) { tint, icon_modifier ->
-                org.astermail.android.design.components.menu_back_morph_icon(
-                    progress = 0f,
+                org.astermail.android.design.components.menu_back_return_morph_icon(
                     tint = tint,
-                    modifier = icon_modifier,
+                    modifier = icon_modifier.mirror_in_rtl(),
                 )
             }
             Row(
