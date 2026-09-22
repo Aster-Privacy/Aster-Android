@@ -84,7 +84,7 @@ import org.astermail.android.auth.AuthUiState
 import org.astermail.android.debugtools.debug_build_banner
 import org.astermail.android.auth.AuthViewModel
 import org.astermail.android.auth.request_passkey_assertion
-import org.astermail.android.auth.request_passkey_json
+import org.astermail.android.auth.request_sign_in_credential
 import org.astermail.android.design.readable_on
 import org.astermail.android.settings.host_activity
 import org.astermail.android.design.SquircleShape
@@ -218,7 +218,13 @@ fun SignInScreen(
         on_passkey = {
             keyboard_controller?.hide()
             val host = context.host_activity() ?: context
-            view_model.submit_passkey_login { json -> request_passkey_json(host, json) }
+            view_model.submit_passkey_login(
+                get_credential = { json -> request_sign_in_credential(host, json) },
+                resolve_email = { id ->
+                    val trimmed = id.trim()
+                    if (trimmed.contains("@")) trimmed else "$trimmed@$email_domain"
+                },
+            )
         },
     )
 

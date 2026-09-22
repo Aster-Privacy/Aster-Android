@@ -26,7 +26,9 @@ import androidx.credentials.CreatePublicKeyCredentialRequest
 import androidx.credentials.CreatePublicKeyCredentialResponse
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.GetPasswordOption
 import androidx.credentials.GetPublicKeyCredentialOption
+import androidx.credentials.PasswordCredential
 import androidx.credentials.PublicKeyCredential
 import androidx.credentials.exceptions.CreateCredentialCancellationException
 import androidx.credentials.exceptions.CreateCredentialException
@@ -358,6 +360,29 @@ suspend fun request_passkey_json(context: Context, request_json: String): String
     val public_key = credential as? PublicKeyCredential
         ?: throw PasskeyFailedException()
     return public_key.authenticationResponseJson
+}
+
+sealed interface SignInCredential {
+    data class Passkey(val response_json: String) : SignInCredential
+    class Password(val id: String, val password: String) : SignInCredential
+}
+
+suspend fun request_sign_in_credential(context: Context, request_json: String): SignInCredential {
+    val request = GetCredentialRequest(
+        listOf(GetPublicKeyCredentialOption(request_json), GetPasswordOption()),
+    )
+    val credential = try {
+        CredentialManager.create(context).getCredential(context, request).credential
+    } catch (failure: GetCredentialException) {
+        throw map_get_credential_failure(failure)
+    } catch (failure: NoClassDefFoundError) {
+        throw map_get_credential_failure(failure)
+    }
+    return when (credential) {
+        is PublicKeyCredential -> SignInCredential.Passkey(credential.authenticationResponseJson)
+        is PasswordCredential -> SignInCredential.Password(credential.id, credential.password)
+        else -> throw PasskeyFailedException()
+    }
 }
 
 fun map_create_credential_failure(failure: Throwable): Exception = when (failure) {
