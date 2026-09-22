@@ -390,7 +390,7 @@ fun inbox_skeleton(
     previews: List<SkeletonRowPreview> = emptyList(),
 ) {
     val colors = AsterMaterial.colors
-    val state = shimmer_state(surface = inbox_card_read_color(colors))
+    val state = shimmer_state()
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -490,7 +490,7 @@ private fun skeleton_cached_line(
 
 @Composable
 fun inbox_skeleton_row(
-    state: shimmer_appearance = shimmer_state(surface = inbox_card_read_color(AsterMaterial.colors)),
+    state: shimmer_appearance = shimmer_state(),
     list_density: String? = null,
     is_first: Boolean = false,
     is_last: Boolean = true,

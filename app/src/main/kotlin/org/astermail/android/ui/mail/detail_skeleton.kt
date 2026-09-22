@@ -129,7 +129,7 @@ private fun detail_skeleton_sender_row(state: shimmer_appearance, shape: Shape, 
 fun detail_skeleton(modifier: Modifier = Modifier, message_count: Int = 1) {
     val colors = AsterMaterial.colors
     val card_color = remember(colors) { inbox_card_read_color(colors) }
-    val state = shimmer_state(surface = card_color)
+    val state = shimmer_state()
     val shape = RoundedCornerShape(6.dp)
     val collapsed = (message_count - 1).coerceIn(0, 3)
     val card_count = collapsed + 1
@@ -242,8 +242,7 @@ fun detail_skeleton_layer(phase: SkeletonPhase, modifier: Modifier = Modifier, m
 
 @Composable
 fun email_body_skeleton(modifier: Modifier = Modifier) {
-    val colors = AsterMaterial.colors
-    val state = shimmer_state(surface = remember(colors) { inbox_card_read_color(colors) })
+    val state = shimmer_state()
     val shape = RoundedCornerShape(6.dp)
 
     Column(modifier = modifier.graphicsLayer().padding(horizontal = 8.dp, vertical = AsterSpacing.md)) {
