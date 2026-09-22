@@ -405,9 +405,9 @@ internal fun choice_group_title(text: String, subtitle: String? = null) {
 }
 
 private fun choice_row_fill(colors: AsterSemanticColors, selected: Boolean): Color = when {
-    !colors.is_glass -> if (selected) colors.bg_selected else colors.bg_card
-    selected -> colors.bg_selected.copy(alpha = 0.34f)
-    else -> Color.Transparent
+    !selected -> Color.Transparent
+    !colors.is_glass -> colors.bg_selected
+    else -> colors.bg_selected.copy(alpha = 0.34f)
 }
 
 @Composable
@@ -470,7 +470,7 @@ internal fun choice_option_row(
 private fun choice_indicator(selected: Boolean, enabled: Boolean, multi_select: Boolean) {
     val colors = AsterMaterial.colors
     val accent = if (enabled) colors.accent_blue else colors.accent_blue.copy(alpha = 0.4f)
-    val ring = if (enabled) colors.border_secondary else colors.border_secondary.copy(alpha = 0.5f)
+    val ring = if (enabled) colors.text_tertiary else colors.text_tertiary.copy(alpha = 0.4f)
     val shape = if (multi_select) RoundedCornerShape(6.dp) else CircleShape
     Box(
         modifier = Modifier
