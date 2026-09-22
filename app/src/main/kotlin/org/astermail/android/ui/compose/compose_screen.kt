@@ -806,7 +806,9 @@ fun ComposeScreen(
     val body_editor_ref = remember { androidx.compose.runtime.mutableStateOf<RichBodyEditText?>(null) }
     fun get_body_with_formatting(): String {
         val et = body_editor_ref.value ?: return body
-        val editable = et.text ?: return body
+        val live = et.text ?: return body
+        val editable = android.text.SpannableStringBuilder(live)
+        android.view.inputmethod.BaseInputConnection.removeComposingSpans(editable)
         val has_spans = editable.getSpans(0, editable.length, android.text.style.AbsoluteSizeSpan::class.java).isNotEmpty() ||
             editable.getSpans(0, editable.length, android.text.style.ForegroundColorSpan::class.java).isNotEmpty() ||
             editable.getSpans(0, editable.length, android.text.style.StyleSpan::class.java).isNotEmpty() ||
@@ -1360,7 +1362,9 @@ fun ComposeScreen(
         val hi = if (s == e) (lo + 1).coerceAtMost(editable.length) else e
         format_bold.value = editable.getSpans(lo, hi, android.text.style.StyleSpan::class.java).any { it.style == android.graphics.Typeface.BOLD }
         format_italic.value = editable.getSpans(lo, hi, android.text.style.StyleSpan::class.java).any { it.style == android.graphics.Typeface.ITALIC }
-        format_underline.value = editable.getSpans(lo, hi, android.text.style.UnderlineSpan::class.java).isNotEmpty()
+        format_underline.value = editable.getSpans(lo, hi, android.text.style.UnderlineSpan::class.java).any {
+            editable.getSpanFlags(it) and android.text.Spanned.SPAN_COMPOSING == 0
+        }
         format_strike.value = editable.getSpans(lo, hi, android.text.style.StrikethroughSpan::class.java).isNotEmpty()
         format_quote.value = editable.getSpans(lo, hi, android.text.style.QuoteSpan::class.java).isNotEmpty()
     }
