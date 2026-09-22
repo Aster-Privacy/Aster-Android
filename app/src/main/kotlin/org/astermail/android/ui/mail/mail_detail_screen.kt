@@ -5868,6 +5868,7 @@ internal fun email_html_view(
         try {
             delay(remeasure_settle_ms)
             val first_web = web_ref[0] ?: return@LaunchedEffect
+            if ((first_web as? mail_body_web_view)?.selection_active == true) return@LaunchedEffect
             await_web_visual_state(first_web)
             val grown = first_web.contentHeight
             if (grown > 0 && (grown * scale_ref[0]) > start_dp.value + 8f) {
@@ -6290,7 +6291,11 @@ internal fun email_html_view(
                             android.view.MotionEvent.ACTION_UP -> {
                                 val dx = Math.abs(ev.x - touch_down_x)
                                 val dy = Math.abs(ev.y - touch_down_y)
-                                if (!multi_touch && dx < 16f && dy < 16f) remeasure_trigger.value += 1
+                                val quick_tap = ev.eventTime - ev.downTime <
+                                    android.view.ViewConfiguration.getLongPressTimeout()
+                                if (!multi_touch && quick_tap && dx < 16f && dy < 16f) {
+                                    remeasure_trigger.value += 1
+                                }
                             }
                             android.view.MotionEvent.ACTION_MOVE -> {
                                 if (ev.pointerCount > 1) {
@@ -6312,12 +6317,25 @@ internal fun email_html_view(
                     }
                     setOnLongClickListener {
                         val hit = hitTestResult
-                        fun is_web_link(href: String?): Boolean =
-                            href != null && (href.startsWith("http://") || href.startsWith("https://"))
+                        fun is_copyable_link(href: String?): Boolean =
+                            href != null && (
+                                href.startsWith("http://") ||
+                                    href.startsWith("https://") ||
+                                    href.startsWith("mailto:", ignoreCase = true)
+                                )
                         when (hit.type) {
+                            android.webkit.WebView.HitTestResult.EMAIL_TYPE -> {
+                                val address = hit.extra
+                                if (!address.isNullOrBlank()) {
+                                    long_pressed_link = "mailto:$address"
+                                    true
+                                } else {
+                                    false
+                                }
+                            }
                             android.webkit.WebView.HitTestResult.SRC_ANCHOR_TYPE -> {
                                 val href = hit.extra
-                                if (is_web_link(href)) {
+                                if (is_copyable_link(href)) {
                                     long_pressed_link = href
                                     true
                                 } else {
@@ -6327,7 +6345,7 @@ internal fun email_html_view(
                             android.webkit.WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE -> {
                                 val handler = android.os.Handler(android.os.Looper.getMainLooper()) { msg ->
                                     val href = msg.data.getString("url")
-                                    if (is_web_link(href)) long_pressed_link = href
+                                    if (is_copyable_link(href)) long_pressed_link = href
                                     true
                                 }
                                 requestFocusNodeHref(handler.obtainMessage())
@@ -6441,7 +6459,15 @@ private fun link_options_sheet(
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
-    val copied_label = stringResource(R.string.link_copied)
+    val address = remember(url) {
+        if (url.startsWith("mailto:", ignoreCase = true)) {
+            android.net.Uri.decode(url.substring("mailto:".length).substringBefore('?')).trim()
+        } else {
+            null
+        }
+    }
+    val shown = address ?: url
+    val copied_label = stringResource(if (address != null) R.string.email_copied else R.string.link_copied)
     val state = rememberModalBottomSheetState()
     ModalBottomSheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
@@ -6457,7 +6483,7 @@ private fun link_options_sheet(
                 .navigationBarsPadding(),
         ) {
             Text(
-                text = url,
+                text = shown,
                 color = colors.text_secondary,
                 fontSize = 13.sp,
                 maxLines = 2,
@@ -6465,21 +6491,25 @@ private fun link_options_sheet(
                 modifier = Modifier.padding(horizontal = AsterSpacing.xl, vertical = AsterSpacing.xs),
             )
             AsterDivider()
-            sheet_row(stringResource(R.string.copy_link), colors.text_primary) {
-                if (write_to_clipboard(context, android.content.ClipData.newPlainText("link", url))) {
+            val copy_label = stringResource(if (address != null) R.string.copy_address else R.string.copy_link)
+            sheet_row(copy_label, colors.text_primary) {
+                val clip = android.content.ClipData.newPlainText(if (address != null) "address" else "link", shown)
+                if (write_to_clipboard(context, clip)) {
                     Toast.makeText(context, copied_label, Toast.LENGTH_SHORT).show()
                 } else {
                     show_copy_failed_toast(context)
                 }
                 on_close()
             }
-            sheet_row(stringResource(R.string.share_link), colors.text_primary) {
-                val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(android.content.Intent.EXTRA_TEXT, url)
+            if (address == null) {
+                sheet_row(stringResource(R.string.share_link), colors.text_primary) {
+                    val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(android.content.Intent.EXTRA_TEXT, url)
+                    }
+                    context.startActivity(android.content.Intent.createChooser(send, null))
+                    on_close()
                 }
-                context.startActivity(android.content.Intent.createChooser(send, null))
-                on_close()
             }
             Spacer(Modifier.height(AsterSpacing.sm))
         }
