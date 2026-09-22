@@ -124,6 +124,22 @@ class PushPollBaselineTest {
     }
 
     @Test
+    fun imported_mail_with_an_old_date_header_notifies_when_it_just_arrived() {
+        val sent = java.time.Instant.ofEpochMilli(floor_ms - slack_ms - 3_600_000L).toString()
+        val arrived = java.time.Instant.ofEpochMilli(floor_ms + 1_000L).toString()
+        val imported = item("imported", sent).let { it.copy(raw_item = it.raw_item.copy(created_at = arrived)) }
+        assertTrue(MailPollingWorker.is_item_newer_than_baseline(imported, floor_ms))
+    }
+
+    @Test
+    fun old_mail_that_also_arrived_long_ago_stays_silent() {
+        val old = java.time.Instant.ofEpochMilli(floor_ms - slack_ms - 3_600_000L).toString()
+        val stale = item("stale", old).let { it.copy(raw_item = it.raw_item.copy(created_at = old)) }
+        assertFalse(MailPollingWorker.is_item_newer_than_baseline(stale, floor_ms))
+        assertFalse(MailPollingWorker.is_item_newer_than_baseline(item("no_arrival", old), floor_ms))
+    }
+
+    @Test
     fun push_bump_is_ignored_before_the_first_poll_established_a_baseline() {
         val prefs = fake_prefs()
         MailPollingWorker.advance_baseline_for_push(prefs)
