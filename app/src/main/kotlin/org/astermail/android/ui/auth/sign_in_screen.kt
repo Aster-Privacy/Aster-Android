@@ -84,12 +84,15 @@ import org.astermail.android.auth.AuthUiState
 import org.astermail.android.debugtools.debug_build_banner
 import org.astermail.android.auth.AuthViewModel
 import org.astermail.android.auth.request_passkey_assertion
+import org.astermail.android.auth.request_passkey_json
 import org.astermail.android.design.readable_on
 import org.astermail.android.settings.host_activity
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
+import org.astermail.android.design.components.AsterSecondaryButton
+import androidx.compose.ui.platform.testTag
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterTextField
@@ -118,6 +121,7 @@ fun SignInScreen(
     val email_focus = remember { FocusRequester() }
     val password_focus = remember { FocusRequester() }
     val keyboard_controller = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+    val context = LocalContext.current
 
     var cached_totp_challenge by remember {
         mutableStateOf<org.astermail.android.auth.TotpChallenge?>(null)
@@ -211,6 +215,11 @@ fun SignInScreen(
         on_submit = submit,
         on_forgot_password = on_forgot_password,
         on_register = on_register,
+        on_passkey = {
+            keyboard_controller?.hide()
+            val host = context.host_activity() ?: context
+            view_model.submit_passkey_login { json -> request_passkey_json(host, json) }
+        },
     )
 
     Box(
@@ -259,6 +268,7 @@ private class SignInCallbacks(
     val on_submit: () -> Unit,
     val on_forgot_password: () -> Unit,
     val on_register: () -> Unit,
+    val on_passkey: () -> Unit,
 )
 
 @Composable
@@ -388,6 +398,15 @@ private fun aster_variant_body(
             onClick = cb.on_submit,
             enabled = fields.can_submit,
             is_loading = fields.is_loading,
+        )
+
+        Spacer(Modifier.height(AsterSpacing.sm))
+
+        AsterSecondaryButton(
+            label = stringResource(R.string.sign_in_with_passkey),
+            onClick = cb.on_passkey,
+            modifier = Modifier.fillMaxWidth().testTag("sign_in_passkey_button"),
+            enabled = !fields.is_loading,
         )
 
         Spacer(Modifier.height(AsterSpacing.lg))

@@ -2147,7 +2147,7 @@
     <string name="login_alerts_info_title">ログイン通知</string>
     <string name="login_alerts_info_desc">新しい端末や場所からアカウントにサインインがあるたびにメールでお知らせします。不正アクセスに早く気づけます。</string>
     <string name="passkeys_security_keys">パスキーとセキュリティキー</string>
-    <string name="passkeys_none_subtitle">登録済みのキーはありません。デスクトップから登録してください。</string>
+    <string name="passkeys_none_subtitle">パスキーはまだありません</string>
     <string name="section_trusted_devices">信頼済みの端末</string>
     <string name="no_trusted_devices">信頼済みの端末はありません</string>
     <string name="no_trusted_devices_subtitle">2 段階認証を省略できる端末がここに表示されます</string>
@@ -3453,4 +3453,17 @@
     <string name="default_sender_description">新規メッセージはこのアドレスから送信されます。返信には、メッセージが届いたアドレスを使用します。</string>
     <string name="default_sender_no_addresses">ほかのアドレスはありません</string>
     <string name="default_sender_primary_note">メインのアドレス</string>
+    <string name="sign_in_with_passkey">パスキーでサインイン</string>
+    <string name="error_passkey_sign_in_unavailable">このデバイスには Aster Mail のパスキーがありません。パスワードでサインインしてから、設定でパスキーを追加してください。</string>
+    <string name="error_passkey_needs_password">このパスキーだけではまだメールボックスのロックを解除できません。パスワードでサインインしてください。</string>
+    <string name="passkey_add">パスキーを追加</string>
+    <string name="passkey_add_subtitle">指紋、顔、または画面ロックでサインインします</string>
+    <string name="passkey_adding">パスキーを追加しています…</string>
+    <string name="passkey_default_name">パスキー (%1$s)</string>
+    <string name="passkey_added">パスキーを追加しました</string>
+    <string name="passkey_added_sessions_revoked">パスキーを追加しました。ほかのデバイスからサインアウトしました。</string>
+    <string name="passkey_added_second_step_only">パスキーを追加しました。パスワードでサインインするときの 2 段階目として使用できます。</string>
+    <string name="passkey_already_registered">このパスキーはすでにアカウントに保存されています。</string>
+    <string name="passkey_create_unavailable">このデバイスではパスキーを保存できません。画面ロックがオンで、パスワード マネージャーが設定されていることを確認してください。</string>
+    <string name="passkey_create_failed">パスキーを追加できませんでした。もう一度お試しください。</string>
 </resources>

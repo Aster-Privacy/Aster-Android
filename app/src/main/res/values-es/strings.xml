@@ -2151,7 +2151,7 @@
     <string name="login_alerts_info_title">Avisos de inicio de sesión</string>
     <string name="login_alerts_info_desc">Te enviamos un correo cada vez que alguien entra en tu cuenta desde un dispositivo o lugar nuevo. Sirve para detectar accesos no autorizados a tiempo.</string>
     <string name="passkeys_security_keys">Claves de acceso y llaves de seguridad</string>
-    <string name="passkeys_none_subtitle">No hay llaves registradas. Regístralas desde el escritorio.</string>
+    <string name="passkeys_none_subtitle">Aún no hay llaves de acceso</string>
     <string name="section_trusted_devices">Dispositivos de confianza</string>
     <string name="no_trusted_devices">Sin dispositivos de confianza</string>
     <string name="no_trusted_devices_subtitle">Aquí aparecerán los dispositivos que pueden saltarse la verificación en dos pasos</string>
@@ -3472,4 +3472,17 @@
     <string name="default_sender_description">Los mensajes nuevos se envían desde esta dirección. Las respuestas usan la dirección a la que se envió el mensaje.</string>
     <string name="default_sender_no_addresses">No hay otras direcciones</string>
     <string name="default_sender_primary_note">Tu dirección principal</string>
+    <string name="sign_in_with_passkey">Iniciar sesión con una llave de acceso</string>
+    <string name="error_passkey_sign_in_unavailable">No hay ninguna llave de acceso de Aster Mail en este dispositivo. Inicia sesión con tu contraseña y añade una llave de acceso en Ajustes.</string>
+    <string name="error_passkey_needs_password">Esta llave de acceso aún no puede desbloquear tu buzón por sí sola. Inicia sesión con tu contraseña.</string>
+    <string name="passkey_add">Añadir una llave de acceso</string>
+    <string name="passkey_add_subtitle">Inicia sesión con tu huella, tu cara o el bloqueo de pantalla</string>
+    <string name="passkey_adding">Añadiendo llave de acceso…</string>
+    <string name="passkey_default_name">Llave de acceso (%1$s)</string>
+    <string name="passkey_added">Llave de acceso añadida</string>
+    <string name="passkey_added_sessions_revoked">Llave de acceso añadida. Se cerró la sesión en tus otros dispositivos.</string>
+    <string name="passkey_added_second_step_only">Llave de acceso añadida. Úsala como segundo paso al iniciar sesión con tu contraseña.</string>
+    <string name="passkey_already_registered">Esta llave de acceso ya está guardada en tu cuenta.</string>
+    <string name="passkey_create_unavailable">Este dispositivo no puede guardar llaves de acceso. Comprueba que el bloqueo de pantalla esté activado y que haya un gestor de contraseñas configurado.</string>
+    <string name="passkey_create_failed">No se pudo añadir la llave de acceso. Inténtalo de nuevo.</string>
 </resources>

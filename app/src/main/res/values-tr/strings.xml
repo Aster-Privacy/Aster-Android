@@ -2150,7 +2150,7 @@
     <string name="login_alerts_info_title">Oturum açma uyarıları</string>
     <string name="login_alerts_info_desc">Hesabınıza yeni bir cihazdan ya da yeni bir konumdan her giriş yapıldığında size e-posta gönderiyoruz. İzinsiz erişimi erken fark etmenizi sağlar.</string>
     <string name="passkeys_security_keys">Geçiş anahtarları ve güvenlik anahtarları</string>
-    <string name="passkeys_none_subtitle">Kayıtlı anahtar yok. Masaüstünden kaydet.</string>
+    <string name="passkeys_none_subtitle">Henüz geçiş anahtarı yok</string>
     <string name="section_trusted_devices">Güvenilen cihazlar</string>
     <string name="no_trusted_devices">Güvenilen cihaz yok</string>
     <string name="no_trusted_devices_subtitle">İki adımlı doğrulamayı atlamasına izin verdiğin cihazlar burada görünür</string>
@@ -3471,4 +3471,17 @@
     <string name="default_sender_description">Yeni iletiler bu adresten gönderilir. Yanıtlar, iletinin gönderildiği adresi kullanır.</string>
     <string name="default_sender_no_addresses">Başka adres yok</string>
     <string name="default_sender_primary_note">Birincil adresiniz</string>
+    <string name="sign_in_with_passkey">Geçiş anahtarıyla oturum aç</string>
+    <string name="error_passkey_sign_in_unavailable">Bu cihazda Aster Mail geçiş anahtarı yok. Parolanla oturum aç, ardından Ayarlar\'dan bir geçiş anahtarı ekle.</string>
+    <string name="error_passkey_needs_password">Bu geçiş anahtarı posta kutunun kilidini henüz tek başına açamıyor. Parolanla oturum aç.</string>
+    <string name="passkey_add">Geçiş anahtarı ekle</string>
+    <string name="passkey_add_subtitle">Parmak izin, yüzün veya ekran kilidinle oturum aç</string>
+    <string name="passkey_adding">Geçiş anahtarı ekleniyor…</string>
+    <string name="passkey_default_name">Geçiş anahtarı (%1$s)</string>
+    <string name="passkey_added">Geçiş anahtarı eklendi</string>
+    <string name="passkey_added_sessions_revoked">Geçiş anahtarı eklendi. Diğer cihazlarındaki oturumların kapatıldı.</string>
+    <string name="passkey_added_second_step_only">Geçiş anahtarı eklendi. Parolanla oturum açarken ikinci adım olarak kullan.</string>
+    <string name="passkey_already_registered">Bu geçiş anahtarı zaten hesabına kayıtlı.</string>
+    <string name="passkey_create_unavailable">Bu cihaz geçiş anahtarı kaydedemiyor. Ekran kilidinin açık ve bir parola yöneticisinin kurulu olduğundan emin ol.</string>
+    <string name="passkey_create_failed">Geçiş anahtarı eklenemedi. Tekrar dene.</string>
 </resources>

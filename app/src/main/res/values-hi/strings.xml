@@ -2055,7 +2055,7 @@
     <string name="login_alerts_info_title">साइन इन अलर्ट</string>
     <string name="login_alerts_info_desc">जब भी आपका खाता किसी नए डिवाइस या जगह से साइन इन हो, आपको ईमेल भेजता है। अनधिकृत पहुंच जल्दी पकड़ने के लिए अच्छा है।</string>
     <string name="passkeys_security_keys">पासकी और सुरक्षा कुंजियां</string>
-    <string name="passkeys_none_subtitle">कोई कुंजी दर्ज नहीं है। डेस्कटॉप पर दर्ज करें।</string>
+    <string name="passkeys_none_subtitle">अभी कोई पासकी नहीं है</string>
     <string name="section_trusted_devices">भरोसेमंद डिवाइस</string>
     <string name="no_trusted_devices">कोई भरोसेमंद डिवाइस नहीं</string>
     <string name="no_trusted_devices_subtitle">दो-चरणीय प्रमाणीकरण छोड़ने के लिए आप जिन डिवाइस पर भरोसा करते हैं, वे यहां दिखेंगे</string>
@@ -3361,4 +3361,17 @@
     <string name="default_sender_description">नए संदेश इसी पते से भेजे जाते हैं। उत्तर उसी पते का उपयोग करते हैं जिस पर संदेश आया था।</string>
     <string name="default_sender_no_addresses">कोई अन्य पता नहीं</string>
     <string name="default_sender_primary_note">आपका प्राथमिक पता</string>
+    <string name="sign_in_with_passkey">पासकी से साइन इन करें</string>
+    <string name="error_passkey_sign_in_unavailable">इस डिवाइस पर Aster Mail की कोई पासकी उपलब्ध नहीं है। अपने पासवर्ड से साइन इन करें, फिर सेटिंग्स में पासकी जोड़ें।</string>
+    <string name="error_passkey_needs_password">यह पासकी अभी अकेले आपका मेलबॉक्स अनलॉक नहीं कर सकती। अपने पासवर्ड से साइन इन करें।</string>
+    <string name="passkey_add">पासकी जोड़ें</string>
+    <string name="passkey_add_subtitle">अपने फ़िंगरप्रिंट, चेहरे या स्क्रीन लॉक से साइन इन करें</string>
+    <string name="passkey_adding">पासकी जोड़ी जा रही है…</string>
+    <string name="passkey_default_name">पासकी (%1$s)</string>
+    <string name="passkey_added">पासकी जोड़ी गई</string>
+    <string name="passkey_added_sessions_revoked">पासकी जोड़ी गई। आपके दूसरे डिवाइस से साइन आउट कर दिया गया है।</string>
+    <string name="passkey_added_second_step_only">पासकी जोड़ी गई। पासवर्ड से साइन इन करते समय इसे दूसरे चरण के रूप में इस्तेमाल करें।</string>
+    <string name="passkey_already_registered">यह पासकी पहले से आपके खाते में सेव है।</string>
+    <string name="passkey_create_unavailable">यह डिवाइस पासकी सेव नहीं कर सकता। पक्का करें कि स्क्रीन लॉक चालू है और पासवर्ड मैनेजर सेट है।</string>
+    <string name="passkey_create_failed">पासकी नहीं जोड़ी जा सकी। फिर से कोशिश करें।</string>
 </resources>

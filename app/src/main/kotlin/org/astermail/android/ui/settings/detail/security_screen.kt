@@ -102,6 +102,9 @@ import org.astermail.android.design.components.aster_menu
 import org.astermail.android.security.AppLockStore
 import org.astermail.android.security.AppLockViewModel
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.settings.host_activity
+import org.astermail.android.auth.create_passkey_json
+import org.astermail.android.auth.request_passkey_json
 import org.astermail.android.ui.security.AppLockSetupSheet
 import org.astermail.android.ui.security.AppLockVerifySheet
 import org.astermail.android.settings.shared_settings_view_model
@@ -654,6 +657,23 @@ fun SecurityScreen(
                         icon = TablerIcons.Key,
                     )
                 }
+                settings_row_gap()
+                detail_row(
+                    title = stringResource(R.string.passkey_add),
+                    subtitle = stringResource(
+                        if (state.is_adding_passkey) R.string.passkey_adding else R.string.passkey_add_subtitle,
+                    ),
+                    icon = TablerIcons.Plus,
+                    on_click = if (state.is_adding_passkey) null else {
+                        {
+                            val host = context.host_activity() ?: context
+                            vm.add_passkey(
+                                create_credential = { json -> create_passkey_json(host, json) },
+                                get_credential = { json -> request_passkey_json(host, json) },
+                            )
+                        }
+                    },
+                )
             }
         }
 

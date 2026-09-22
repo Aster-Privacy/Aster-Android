@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.astermail.android.R
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.recovery_email.RecoveryEmailApiImpl
@@ -151,6 +152,43 @@ class AuthViewModel @Inject constructor(
                         is PasskeyFailedException ->
                             AuthUiState.Error(ctx.getString(R.string.error_passkey_failed))
                         else -> second_factor_failure_state(cause, challenge)
+                    }
+                },
+            )
+        }
+    }
+
+    fun submit_passkey_login(get_assertion: suspend (String) -> String) {
+        if (_ui_state.value == AuthUiState.Loading) return
+        _ui_state.value = AuthUiState.Loading
+        viewModelScope.launch {
+            val result = runCatching {
+                val options = repository.begin_passkey_login().getOrThrow()
+                val response_json = get_assertion(passkey_login_request_json(options))
+                val request = passkey_login_verify_request(
+                    response_json = response_json,
+                    options = options,
+                    device_label = repository.login_device_label(),
+                )
+                val prf_output = prf_output_from(response_json)
+                withContext(Dispatchers.IO) {
+                    kotlinx.coroutines.withTimeout(25_000L) {
+                        repository.finish_passkey_login(request, prf_output).getOrThrow()
+                    }
+                }
+            }
+            _ui_state.value = result.fold(
+                onSuccess = { AuthUiState.Success },
+                onFailure = { cause ->
+                    when (cause) {
+                        is PasskeyCancelledException -> AuthUiState.Idle
+                        is PasskeyUnavailableException ->
+                            AuthUiState.Error(ctx.getString(R.string.error_passkey_sign_in_unavailable))
+                        is PasskeyFailedException ->
+                            AuthUiState.Error(ctx.getString(R.string.error_passkey_failed))
+                        is PasskeyVaultNeedsPasswordException ->
+                            AuthUiState.Error(ctx.getString(R.string.error_passkey_needs_password))
+                        else -> failure_state(cause)
                     }
                 },
             )

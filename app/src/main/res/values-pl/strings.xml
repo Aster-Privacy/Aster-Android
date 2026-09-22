@@ -2158,7 +2158,7 @@
     <string name="login_alerts_info_title">Alerty logowania</string>
     <string name="login_alerts_info_desc">Wysyłamy wiadomość za każdym razem, gdy ktoś zaloguje się do Twojego konta z nowego urządzenia lub miejsca. Pomaga to wcześnie wykryć nieuprawniony dostęp.</string>
     <string name="passkeys_security_keys">Klucze dostępu i klucze bezpieczeństwa</string>
-    <string name="passkeys_none_subtitle">Brak zarejestrowanych kluczy. Zarejestruj je na komputerze.</string>
+    <string name="passkeys_none_subtitle">Brak kluczy dostępu</string>
     <string name="section_trusted_devices">Zaufane urządzenia</string>
     <string name="no_trusted_devices">Brak zaufanych urządzeń</string>
     <string name="no_trusted_devices_subtitle">Tutaj pojawią się urządzenia, które mogą pomijać weryfikację dwuetapową</string>
@@ -3513,4 +3513,17 @@
     <string name="default_sender_description">Nowe wiadomości są wysyłane z tego adresu. Odpowiedzi używają adresu, na który wysłano wiadomość.</string>
     <string name="default_sender_no_addresses">Brak innych adresów</string>
     <string name="default_sender_primary_note">Twój główny adres</string>
+    <string name="sign_in_with_passkey">Zaloguj się kluczem dostępu</string>
+    <string name="error_passkey_sign_in_unavailable">Na tym urządzeniu nie ma klucza dostępu Aster Mail. Zaloguj się hasłem, a następnie dodaj klucz dostępu w Ustawieniach.</string>
+    <string name="error_passkey_needs_password">Ten klucz dostępu nie może jeszcze samodzielnie odblokować skrzynki. Zaloguj się hasłem.</string>
+    <string name="passkey_add">Dodaj klucz dostępu</string>
+    <string name="passkey_add_subtitle">Loguj się odciskiem palca, twarzą lub blokadą ekranu</string>
+    <string name="passkey_adding">Dodawanie klucza dostępu…</string>
+    <string name="passkey_default_name">Klucz dostępu (%1$s)</string>
+    <string name="passkey_added">Dodano klucz dostępu</string>
+    <string name="passkey_added_sessions_revoked">Dodano klucz dostępu. Wylogowano Cię na innych urządzeniach.</string>
+    <string name="passkey_added_second_step_only">Dodano klucz dostępu. Używaj go jako drugiego kroku podczas logowania hasłem.</string>
+    <string name="passkey_already_registered">Ten klucz dostępu jest już zapisany na Twoim koncie.</string>
+    <string name="passkey_create_unavailable">To urządzenie nie może zapisywać kluczy dostępu. Sprawdź, czy blokada ekranu jest włączona i czy skonfigurowano menedżer haseł.</string>
+    <string name="passkey_create_failed">Nie udało się dodać klucza dostępu. Spróbuj ponownie.</string>
 </resources>
