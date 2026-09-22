@@ -3218,7 +3218,7 @@
     <string name="failed_to_move_items">Move failed</string>
     <string name="folder_name_taken">A folder with this name already exists.</string>
     <string name="generate_ghost_alias_message">Aster creates a random address that forwards to your inbox. Burn it at any time without affecting your other addresses.</string>
-    <string name="hardware_key_remove_confirm">You won\'t be able to sign in with this security key any more.</string>
+    <string name="hardware_key_remove_confirm">You won\'t be able to sign in with this security key anymore.</string>
     <string name="hardware_key_remove_last_title">Remove your last security key?</string>
     <string name="hardware_key_remove_last_description">This is the last second factor on your account. To remove it, enter your password.</string>
     <string name="image_insert_failed">That image could not be added. It may be too large or in an unsupported format.</string>
