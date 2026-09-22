@@ -695,4 +695,51 @@ class AuthViewModelTest {
 
         assertEquals("Something went wrong. Please try again.", vm.recovery_email_error.value)
     }
+
+    @Test
+    fun `passkey sheet saved password signs in with the password`() = runTest {
+        coEvery { repository.begin_passkey_login() } returns Result.success(
+            org.astermail.android.api.auth.PasskeyLoginOptions(
+                challenge = "abc",
+                challenge_token = "token",
+                rpId = "astermail.org",
+            ),
+        )
+        coEvery { repository.login(any(), any(), any()) } returns Result.success(LoginOutcome.Success)
+        var request_json: String? = null
+
+        vm.submit_passkey_login(
+            get_credential = { json ->
+                request_json = json
+                SignInCredential.Password("user", "password123!")
+            },
+            resolve_email = { "$it@astermail.org" },
+        )
+        advanceUntilIdle()
+
+        assertTrue(request_json!!.contains("astermail.org"))
+        assertEquals(AuthUiState.Success, vm.ui_state.value)
+        io.mockk.unmockkStatic(Dispatchers::class)
+        coVerify { repository.login("user@astermail.org", "password123!", null) }
+        coVerify(exactly = 0) { repository.finish_passkey_login(any(), any()) }
+    }
+
+    @Test
+    fun `passkey sheet cancel leaves the password form idle`() = runTest {
+        coEvery { repository.begin_passkey_login() } returns Result.success(
+            org.astermail.android.api.auth.PasskeyLoginOptions(
+                challenge = "abc",
+                challenge_token = "token",
+                rpId = "astermail.org",
+            ),
+        )
+
+        vm.submit_passkey_login(get_credential = { throw PasskeyCancelledException() })
+        advanceUntilIdle()
+
+        assertEquals(AuthUiState.Idle, vm.ui_state.value)
+        io.mockk.unmockkStatic(Dispatchers::class)
+        coVerify(exactly = 0) { repository.login(any(), any(), any()) }
+        coVerify(exactly = 0) { repository.finish_passkey_login(any(), any()) }
+    }
 }

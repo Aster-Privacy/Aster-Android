@@ -3526,4 +3526,6 @@
     <string name="passkey_already_registered">Этот ключ доступа уже сохранен в вашем аккаунте.</string>
     <string name="passkey_create_unavailable">Это устройство не может сохранять ключи доступа. Убедитесь, что блокировка экрана включена и настроен менеджер паролей.</string>
     <string name="passkey_create_failed">Не удалось добавить ключ доступа. Повторите попытку.</string>
+    <string name="error_passkey_not_recognized">Этот ключ доступа не связан с аккаунтом Aster Mail. Войдите с паролем, а затем добавьте ключ доступа в настройках.</string>
+    <string name="error_passkey_timed_out">Время запроса ключа доступа истекло. Попробуйте ещё раз.</string>
 </resources>

@@ -628,7 +628,10 @@ fun SecurityScreen(
                         trailing = {
                             AsterIconButton(
                                 icon = if (hardware_keys_expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
-                                content_description = null,
+                                content_description = stringResource(
+                                    if (hardware_keys_expanded) R.string.collapse_folder else R.string.expand_folder,
+                                    stringResource(R.string.passkeys_security_keys),
+                                ),
                                 onClick = { hardware_keys_expanded = !hardware_keys_expanded },
                             )
                         },
@@ -1201,6 +1204,7 @@ private fun vanguard_section(
             confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
             confirm_enabled = step_up_password.isNotBlank() && !state.hardware_key_step_up_busy,
             is_busy = state.hardware_key_step_up_busy,
+            dismiss_on_confirm = false,
             on_confirm = { vm.delete_hardware_key(step_up_key_id, step_up_password) },
             extra_content = {
                 Column {

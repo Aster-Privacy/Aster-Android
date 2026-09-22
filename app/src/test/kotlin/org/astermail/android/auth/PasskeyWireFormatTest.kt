@@ -25,6 +25,8 @@ import java.nio.ByteBuffer
 import java.util.Base64
 import java.util.UUID
 import org.astermail.android.api.auth.PasskeyLoginOptions
+import org.astermail.android.api.ApiError
+import org.astermail.android.api.security.PasskeyCredentialDescriptor
 import org.astermail.android.api.security.PasskeyRegistrationOptions
 import org.astermail.android.api.security.PasskeyRegistrationParam
 import org.astermail.android.api.security.PasskeyRegistrationRp
@@ -32,6 +34,7 @@ import org.astermail.android.api.security.PasskeyRegistrationUser
 import org.json.JSONObject
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -154,5 +157,32 @@ class PasskeyWireFormatTest {
         assertTrue(registration.request.is_passkey)
         assertTrue(registration.prf_enabled)
         assertArrayEquals(prf, registration.prf_output)
+    }
+
+    @Test
+    fun registration_request_excludes_nothing_when_backend_sends_no_credentials() {
+        val json = JSONObject(registration_request_json(registration_options))
+        assertEquals(0, json.getJSONArray("excludeCredentials").length())
+    }
+
+    @Test
+    fun registration_request_excludes_credentials_the_backend_already_has() {
+        val options = registration_options.copy(
+            excludeCredentials = listOf(
+                PasskeyCredentialDescriptor(id = "Y3JlZC1vbmU"),
+                PasskeyCredentialDescriptor(id = ""),
+            ),
+        )
+        val excluded = JSONObject(registration_request_json(options)).getJSONArray("excludeCredentials")
+        assertEquals(1, excluded.length())
+        assertEquals("Y3JlZC1vbmU", excluded.getJSONObject(0).getString("id"))
+        assertEquals("public-key", excluded.getJSONObject(0).getString("type"))
+    }
+
+    @Test
+    fun expired_challenge_is_detected_only_from_the_server_message() {
+        assertTrue(is_passkey_challenge_expired(ApiError.ValidationError(listOf("Challenge expired"))))
+        assertFalse(is_passkey_challenge_expired(ApiError.ValidationError(listOf("Validation failed"))))
+        assertFalse(is_passkey_challenge_expired(IllegalStateException("Challenge expired")))
     }
 }

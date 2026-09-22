@@ -100,6 +100,12 @@ data class PasskeyRegistrationParam(
 )
 
 @Serializable
+data class PasskeyCredentialDescriptor(
+    val type: String = "public-key",
+    val id: String,
+)
+
+@Serializable
 data class PasskeyRegistrationOptions(
     val challenge: String,
     val challenge_token: String,
@@ -108,6 +114,7 @@ data class PasskeyRegistrationOptions(
     val pubKeyCredParams: List<PasskeyRegistrationParam> = emptyList(),
     val timeout: Long = 60000,
     val attestation: String = "none",
+    val excludeCredentials: List<PasskeyCredentialDescriptor> = emptyList(),
 )
 
 @Serializable
@@ -252,7 +259,7 @@ class SecurityApiImpl(private val client: ApiClient) : SecurityApi {
 
     override suspend fun initiate_passkey_registration(): PasskeyRegistrationOptions {
         val response = client.http.post("${client.base_url}$base/auth/hardware-keys/register/initiate") {
-            header(HttpHeaders.Origin, client.base_url.trimEnd('/'))
+            header(HttpHeaders.Origin, client.webauthn_origin.trimEnd('/'))
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
         }
         return decode_or_throw(response)
@@ -263,7 +270,7 @@ class SecurityApiImpl(private val client: ApiClient) : SecurityApi {
     ): PasskeyRegistrationCompleteResponse {
         val response = client.http.post("${client.base_url}$base/auth/hardware-keys/register/complete") {
             contentType(ContentType.Application.Json)
-            header(HttpHeaders.Origin, client.base_url.trimEnd('/'))
+            header(HttpHeaders.Origin, client.webauthn_origin.trimEnd('/'))
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
         }

@@ -151,31 +151,51 @@ class AuthViewModel @Inject constructor(
                             AuthUiState.Error(ctx.getString(R.string.error_passkey_unavailable))
                         is PasskeyFailedException ->
                             AuthUiState.Error(ctx.getString(R.string.error_passkey_failed))
-                        else -> second_factor_failure_state(cause, challenge)
+                        else ->
+                            if (is_passkey_challenge_expired(cause)) {
+                                AuthUiState.Error(ctx.getString(R.string.error_passkey_timed_out))
+                            } else {
+                                second_factor_failure_state(cause, challenge)
+                            }
                     }
                 },
             )
         }
     }
 
-    fun submit_passkey_login(get_assertion: suspend (String) -> String) {
+    fun submit_passkey_login(
+        get_credential: suspend (String) -> SignInCredential,
+        resolve_email: (String) -> String = { it },
+    ) {
         if (_ui_state.value == AuthUiState.Loading) return
         _ui_state.value = AuthUiState.Loading
         viewModelScope.launch {
             val result = runCatching {
                 val options = repository.begin_passkey_login().getOrThrow()
-                val response_json = get_assertion(passkey_login_request_json(options))
-                val request = passkey_login_verify_request(
-                    response_json = response_json,
-                    options = options,
-                    device_label = repository.login_device_label(),
-                )
-                val prf_output = prf_output_from(response_json)
-                withContext(Dispatchers.IO) {
-                    kotlinx.coroutines.withTimeout(25_000L) {
-                        repository.finish_passkey_login(request, prf_output).getOrThrow()
+                when (val credential = get_credential(passkey_login_request_json(options))) {
+                    is SignInCredential.Password -> credential
+                    is SignInCredential.Passkey -> {
+                        val response_json = credential.response_json
+                        val request = passkey_login_verify_request(
+                            response_json = response_json,
+                            options = options,
+                            device_label = repository.login_device_label(),
+                        )
+                        val prf_output = prf_output_from(response_json)
+                        withContext(Dispatchers.IO) {
+                            kotlinx.coroutines.withTimeout(25_000L) {
+                                repository.finish_passkey_login(request, prf_output).getOrThrow()
+                            }
+                        }
+                        null
                     }
                 }
+            }
+            val saved_password = result.getOrNull()
+            if (saved_password != null) {
+                _ui_state.value = AuthUiState.Idle
+                submit_login(resolve_email(saved_password.id), saved_password.password)
+                return@launch
             }
             _ui_state.value = result.fold(
                 onSuccess = { AuthUiState.Success },
@@ -188,12 +208,18 @@ class AuthViewModel @Inject constructor(
                             AuthUiState.Error(ctx.getString(R.string.error_passkey_failed))
                         is PasskeyVaultNeedsPasswordException ->
                             AuthUiState.Error(ctx.getString(R.string.error_passkey_needs_password))
+                        is ApiError.ValidationError ->
+                            AuthUiState.Error(ctx.getString(passkey_login_rejection_string(cause)))
                         else -> failure_state(cause)
                     }
                 },
             )
         }
     }
+
+    private fun passkey_login_rejection_string(cause: ApiError.ValidationError): Int =
+        if (is_passkey_challenge_expired(cause)) R.string.error_passkey_timed_out
+        else R.string.error_passkey_not_recognized
 
     private fun second_factor_failure_state(
         cause: Throwable,

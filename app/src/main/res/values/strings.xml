@@ -3218,7 +3218,7 @@
     <string name="failed_to_move_items">Move failed</string>
     <string name="folder_name_taken">A folder with this name already exists.</string>
     <string name="generate_ghost_alias_message">Aster creates a random address that forwards to your inbox. Burn it at any time without affecting your other addresses.</string>
-    <string name="hardware_key_remove_confirm">You won\'t be able to sign in with this security key any more.</string>
+    <string name="hardware_key_remove_confirm">You won\'t be able to sign in with this security key anymore.</string>
     <string name="hardware_key_remove_last_title">Remove your last security key?</string>
     <string name="hardware_key_remove_last_description">This is the last second factor on your account. To remove it, enter your password.</string>
     <string name="image_insert_failed">That image could not be added. It may be too large or in an unsupported format.</string>
@@ -3529,4 +3529,6 @@
     <string name="passkey_already_registered">This passkey is already saved to your account.</string>
     <string name="passkey_create_unavailable">This device can\'t save passkeys. Make sure screen lock is on and a password manager is set up.</string>
     <string name="passkey_create_failed">Couldn\'t add the passkey. Try again.</string>
+    <string name="error_passkey_not_recognized">This passkey isn\'t linked to an Aster Mail account. Sign in with your password, then add a passkey in Settings.</string>
+    <string name="error_passkey_timed_out">The passkey request timed out. Try again.</string>
 </resources>
