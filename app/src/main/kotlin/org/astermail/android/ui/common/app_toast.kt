@@ -42,7 +42,8 @@ object app_toast {
 
     fun show(toast: TopToastState) {
         pending?.cancel()
-        if (state.value == null) {
+        val current = state.value
+        if (current == null || current.key == toast.key) {
             state.value = toast
             return
         }
