@@ -70,6 +70,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.DisposableEffect
+import android.app.Activity
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -108,6 +112,7 @@ import compose.icons.tablericons.Check
 import compose.icons.tablericons.Refresh
 import kotlin.math.roundToInt
 import org.astermail.android.R
+import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterColorThemes
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.ui.common.nav_anim_duration_ms
@@ -295,6 +300,25 @@ fun image_theme_library(
         )
     }
 
+    val host_view = LocalView.current
+    val host_light_bars by rememberUpdatedState(AsterMaterial.colors.bg_primary.luminance() > 0.5f)
+    SideEffect {
+        val window = (host_view.context as? Activity)?.window ?: return@SideEffect
+        WindowCompat.getInsetsController(window, host_view).apply {
+            isAppearanceLightStatusBars = false
+            isAppearanceLightNavigationBars = false
+        }
+    }
+    DisposableEffect(host_view) {
+        onDispose {
+            val window = (host_view.context as? Activity)?.window ?: return@onDispose
+            WindowCompat.getInsetsController(window, host_view).apply {
+                isAppearanceLightStatusBars = host_light_bars
+                isAppearanceLightNavigationBars = host_light_bars
+            }
+        }
+    }
+
     Dialog(
         onDismissRequest = request_dismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
@@ -305,6 +329,10 @@ fun image_theme_library(
             WindowCompat.setDecorFitsSystemWindows(window, false)
             window.setDimAmount(0f)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) window.isNavigationBarContrastEnforced = false
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = false
+                isAppearanceLightNavigationBars = false
+            }
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                 @Suppress("DEPRECATION")
                 window.navigationBarColor = android.graphics.Color.TRANSPARENT
@@ -600,6 +628,11 @@ private fun colors_section(
                     selected = option == selected,
                     on_click = { on_color(option) },
                     modifier = Modifier.width(76.dp).testTag("image_theme_color_${option.name}"),
+                    label_color = local_library_palette.current.muted_text,
+                    selected_label_color = local_library_palette.current.ink,
+                    ring_gap_color = local_library_palette.current.page_bg,
+                    accent_color = local_library_palette.current.accent,
+                    on_accent_color = on_accent_for(selected),
                 )
             }
         }
