@@ -1,0 +1,6 @@
+What's new
+- Messages you have already opened appear instantly, with no loading skeleton.
+- Email with rich formatting renders faster.
+
+Fixed
+- A message no longer keeps extra blank height after you hide the quoted text.
