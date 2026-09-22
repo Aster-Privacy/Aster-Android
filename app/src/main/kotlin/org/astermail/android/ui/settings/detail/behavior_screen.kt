@@ -85,6 +85,20 @@ import org.astermail.android.translation.translation_language_codes
 import org.astermail.android.translation.translation_supported
 import org.astermail.android.settings.shared_settings_view_model
 
+private const val retention_days_options_count = 8
+
+@Composable
+private fun retention_days_options(): List<Pair<Int, String>> = listOf(
+    7 to stringResource(R.string.auto_delete_spam_7),
+    14 to stringResource(R.string.auto_delete_spam_14),
+    30 to stringResource(R.string.auto_delete_spam_30),
+    60 to stringResource(R.string.auto_delete_spam_60),
+    90 to stringResource(R.string.auto_delete_spam_90),
+    180 to stringResource(R.string.auto_delete_spam_180),
+    365 to stringResource(R.string.auto_delete_spam_365),
+    0 to stringResource(R.string.auto_delete_spam_never),
+)
+
 @Composable
 private fun behavior_toggle(
     title: String,
@@ -160,6 +174,9 @@ fun BehaviorScreen(
     var auto_delete_spam_days by remember(prefs_loaded, spam_settings != null) {
         mutableIntStateOf(spam_settings?.spam_retention_days ?: prefs?.auto_delete_spam_days ?: 30)
     }
+    var auto_delete_trash_days by remember(prefs_loaded, spam_settings != null) {
+        mutableIntStateOf(spam_settings?.trash_retention_days ?: prefs?.auto_delete_trash_days ?: 30)
+    }
     var folder_lock_mode by remember(prefs_loaded) { mutableStateOf(prefs?.folder_lock_mode ?: "session") }
     var purge_locked_folder_on_delete by remember(prefs_loaded) {
         mutableStateOf(prefs?.purge_locked_folder_on_delete ?: false)
@@ -222,6 +239,7 @@ fun BehaviorScreen(
                     spam_filter_enabled = prefs.spam_filter_enabled
                     spam_sensitivity = prefs.spam_sensitivity
                     auto_delete_spam_days = prefs.auto_delete_spam_days
+                    auto_delete_trash_days = prefs.auto_delete_trash_days
                 }
                 folder_lock_mode = prefs.folder_lock_mode
                 purge_locked_folder_on_delete = prefs.purge_locked_folder_on_delete
@@ -240,6 +258,7 @@ fun BehaviorScreen(
         spam_filter_enabled = server.spam_filter_enabled
         spam_sensitivity = server.spam_sensitivity
         auto_delete_spam_days = server.spam_retention_days
+        auto_delete_trash_days = server.trash_retention_days
     }
 
     val toast_context = LocalContext.current
@@ -255,6 +274,7 @@ fun BehaviorScreen(
                 spam_retention_days = auto_delete_spam_days,
                 spam_sensitivity = spam_sensitivity,
                 spam_filter_enabled = spam_filter_enabled,
+                trash_retention_days = auto_delete_trash_days,
             ),
         )
     }
@@ -288,6 +308,7 @@ fun BehaviorScreen(
                 spam_filter_enabled = spam_filter_enabled,
                 spam_sensitivity = spam_sensitivity,
                 auto_delete_spam_days = auto_delete_spam_days,
+                auto_delete_trash_days = auto_delete_trash_days,
                 folder_lock_mode = folder_lock_mode,
                 purge_locked_folder_on_delete = purge_locked_folder_on_delete,
                 haptic_enabled = haptic,
@@ -546,16 +567,26 @@ fun BehaviorScreen(
                         }
                         settings_row_gap(modifier = Modifier)
                         choice_group_title(stringResource(R.string.auto_delete_spam))
-                        listOf(
-                            7 to stringResource(R.string.auto_delete_spam_7),
-                            14 to stringResource(R.string.auto_delete_spam_14),
-                            30 to stringResource(R.string.auto_delete_spam_30),
-                            0 to stringResource(R.string.auto_delete_spam_never),
-                        ).forEachIndexed { i, (days, label) ->
+                        retention_days_options().forEachIndexed { i, (days, label) ->
                             choice_option_row(label, auto_delete_spam_days == days) { auto_delete_spam_days = days; push_spam_settings(); save_trigger++ }
-                            if (i < 3) settings_row_gap(modifier = Modifier)
+                            if (i < retention_days_options_count - 1) settings_row_gap(modifier = Modifier)
                         }
                     }
+                }
+            }
+
+            v_gap(AsterSpacing.lg)
+
+            // ── Trash ───────────────────────────────────────────────
+            section_label(stringResource(R.string.folder_trash))
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                choice_group_title(
+                    stringResource(R.string.auto_delete_trash),
+                    stringResource(R.string.auto_delete_trash_subtitle),
+                )
+                retention_days_options().forEachIndexed { i, (days, label) ->
+                    choice_option_row(label, auto_delete_trash_days == days) { auto_delete_trash_days = days; push_spam_settings(); save_trigger++ }
+                    if (i < retention_days_options_count - 1) settings_row_gap(modifier = Modifier)
                 }
             }
 

@@ -2124,8 +2124,10 @@ fun InboxScreen(
                         }
                         val spam_retention_days = settings_state.preferences?.auto_delete_spam_days
                             ?: default_trash_retention_days
+                        val trash_retention_days = settings_state.preferences?.auto_delete_trash_days
+                            ?: default_trash_retention_days
                         val retention_notice_days = when {
-                            current_folder == "trash" -> default_trash_retention_days
+                            current_folder == "trash" -> trash_retention_days
                             current_folder == "spam" -> spam_retention_days
                             else -> 0
                         }

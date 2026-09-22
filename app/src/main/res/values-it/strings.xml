@@ -2119,6 +2119,12 @@
     <string name="auto_delete_spam_7">7 giorni</string>
     <string name="auto_delete_spam_14">14 giorni</string>
     <string name="auto_delete_spam_30">30 giorni</string>
+    <string name="auto_delete_spam_60">60 giorni</string>
+    <string name="auto_delete_spam_90">90 giorni</string>
+    <string name="auto_delete_spam_180">180 giorni</string>
+    <string name="auto_delete_spam_365">365 giorni</string>
+    <string name="auto_delete_trash">Elimina automaticamente il cestino dopo</string>
+    <string name="auto_delete_trash_subtitle">Le email nel Cestino più vecchie di questo periodo vengono eliminate definitivamente.</string>
     <string name="auto_delete_spam_never">Mai (conserva per sempre)</string>
     <string name="emails_per_page">Email per pagina</string>
     <string name="emails_per_page_subtitle">Numero di email caricate per pagina in Posta in arrivo, Archivio e altre cartelle</string>

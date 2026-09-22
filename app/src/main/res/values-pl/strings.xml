@@ -2127,6 +2127,12 @@
     <string name="auto_delete_spam_7">7 dniach</string>
     <string name="auto_delete_spam_14">14 dniach</string>
     <string name="auto_delete_spam_30">30 dniach</string>
+    <string name="auto_delete_spam_60">60 dniach</string>
+    <string name="auto_delete_spam_90">90 dniach</string>
+    <string name="auto_delete_spam_180">180 dniach</string>
+    <string name="auto_delete_spam_365">365 dniach</string>
+    <string name="auto_delete_trash">Automatycznie usuwaj kosz po</string>
+    <string name="auto_delete_trash_subtitle">Wiadomości w Koszu starsze niż ta wartość zostają trwale usunięte.</string>
     <string name="auto_delete_spam_never">Nigdy (zachowuj na stałe)</string>
     <string name="emails_per_page">Wiadomości na stronę</string>
     <string name="emails_per_page_subtitle">Liczba wiadomości wczytywanych na stronę w Odebranych, Archiwum i innych folderach</string>

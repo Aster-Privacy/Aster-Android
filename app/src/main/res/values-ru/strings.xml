@@ -2127,6 +2127,12 @@
     <string name="auto_delete_spam_7">7 дней</string>
     <string name="auto_delete_spam_14">14 дней</string>
     <string name="auto_delete_spam_30">30 дней</string>
+    <string name="auto_delete_spam_60">60 дней</string>
+    <string name="auto_delete_spam_90">90 дней</string>
+    <string name="auto_delete_spam_180">180 дней</string>
+    <string name="auto_delete_spam_365">365 дней</string>
+    <string name="auto_delete_trash">Автоматическое удаление корзины через</string>
+    <string name="auto_delete_trash_subtitle">Письма в Корзине старше указанного срока удаляются навсегда.</string>
     <string name="auto_delete_spam_never">Никогда (хранить всегда)</string>
     <string name="emails_per_page">Писем на странице</string>
     <string name="emails_per_page_subtitle">Количество писем, загружаемых на странице во Входящих, Архиве и других папках</string>

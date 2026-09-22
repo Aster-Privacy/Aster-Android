@@ -2116,6 +2116,12 @@
     <string name="auto_delete_spam_7">7 日</string>
     <string name="auto_delete_spam_14">14 日</string>
     <string name="auto_delete_spam_30">30 日</string>
+    <string name="auto_delete_spam_60">60 日</string>
+    <string name="auto_delete_spam_90">90 日</string>
+    <string name="auto_delete_spam_180">180 日</string>
+    <string name="auto_delete_spam_365">365 日</string>
+    <string name="auto_delete_trash">ゴミ箱の自動削除期間</string>
+    <string name="auto_delete_trash_subtitle">この期間より古いゴミ箱のメールは完全に削除されます。</string>
     <string name="auto_delete_spam_never">削除しない（ずっと保持）</string>
     <string name="emails_per_page">1ページあたりのメール数</string>
     <string name="emails_per_page_subtitle">受信トレイ、アーカイブ、その他のフォルダーで1ページに読み込むメール数</string>

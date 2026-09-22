@@ -2120,6 +2120,12 @@
     <string name="auto_delete_spam_7">7 días</string>
     <string name="auto_delete_spam_14">14 días</string>
     <string name="auto_delete_spam_30">30 días</string>
+    <string name="auto_delete_spam_60">60 días</string>
+    <string name="auto_delete_spam_90">90 días</string>
+    <string name="auto_delete_spam_180">180 días</string>
+    <string name="auto_delete_spam_365">365 días</string>
+    <string name="auto_delete_trash">Eliminar la papelera automáticamente después de</string>
+    <string name="auto_delete_trash_subtitle">Los correos en la Papelera más antiguos que este periodo se eliminan permanentemente.</string>
     <string name="auto_delete_spam_never">Nunca (conservarlo siempre)</string>
     <string name="emails_per_page">Correos por página</string>
     <string name="emails_per_page_subtitle">Número de correos cargados por página en Recibidos, Archivo y otras carpetas</string>

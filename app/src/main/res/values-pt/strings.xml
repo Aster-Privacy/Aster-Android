@@ -2119,6 +2119,12 @@
     <string name="auto_delete_spam_7">7 dias</string>
     <string name="auto_delete_spam_14">14 dias</string>
     <string name="auto_delete_spam_30">30 dias</string>
+    <string name="auto_delete_spam_60">60 dias</string>
+    <string name="auto_delete_spam_90">90 dias</string>
+    <string name="auto_delete_spam_180">180 dias</string>
+    <string name="auto_delete_spam_365">365 dias</string>
+    <string name="auto_delete_trash">Excluir a lixeira automaticamente após</string>
+    <string name="auto_delete_trash_subtitle">Os e-mails na Lixeira mais antigos que este período são excluídos permanentemente.</string>
     <string name="auto_delete_spam_never">Nunca (guardar sempre)</string>
     <string name="emails_per_page">E-mails por página</string>
     <string name="emails_per_page_subtitle">Número de e-mails carregados por página na Caixa de entrada, Arquivo e outras pastas</string>

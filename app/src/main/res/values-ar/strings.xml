@@ -2135,6 +2135,12 @@
     <string name="auto_delete_spam_7">7 أيام</string>
     <string name="auto_delete_spam_14">14 يومًا</string>
     <string name="auto_delete_spam_30">30 يومًا</string>
+    <string name="auto_delete_spam_60">60 يومًا</string>
+    <string name="auto_delete_spam_90">90 يومًا</string>
+    <string name="auto_delete_spam_180">180 يوم</string>
+    <string name="auto_delete_spam_365">365 يوم</string>
+    <string name="auto_delete_trash">حذف سلة المهملات تلقائيًا بعد</string>
+    <string name="auto_delete_trash_subtitle">تُحذف الرسائل في سلة المهملات الأقدم من هذه المدة نهائيًا.</string>
     <string name="auto_delete_spam_never">أبدًا (الاحتفاظ دائمًا)</string>
     <string name="emails_per_page">عدد الرسائل في الصفحة</string>
     <string name="emails_per_page_subtitle">عدد الرسائل التي يتم تحميلها في كل صفحة في البريد الوارد والأرشيف والمجلدات الأخرى</string>

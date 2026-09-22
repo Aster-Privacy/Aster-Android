@@ -2116,6 +2116,12 @@
     <string name="auto_delete_spam_7">7일</string>
     <string name="auto_delete_spam_14">14일</string>
     <string name="auto_delete_spam_30">30일</string>
+    <string name="auto_delete_spam_60">60일</string>
+    <string name="auto_delete_spam_90">90일</string>
+    <string name="auto_delete_spam_180">180일</string>
+    <string name="auto_delete_spam_365">365일</string>
+    <string name="auto_delete_trash">일정 기간 후 휴지통 자동 삭제</string>
+    <string name="auto_delete_trash_subtitle">이 기간보다 오래된 휴지통의 이메일은 영구적으로 삭제됩니다.</string>
     <string name="auto_delete_spam_never">삭제 안 함 (계속 보관)</string>
     <string name="emails_per_page">페이지당 이메일 수</string>
     <string name="emails_per_page_subtitle">받은편지함, 보관함 및 기타 폴더에서 페이지당 불러오는 이메일 수</string>

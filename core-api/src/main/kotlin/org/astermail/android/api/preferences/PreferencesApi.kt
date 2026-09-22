@@ -140,6 +140,7 @@ data class UserPreferences(
     val spam_filter_enabled: Boolean = true,
     val spam_sensitivity: String = "medium",
     val auto_delete_spam_days: Int = 30,
+    val auto_delete_trash_days: Int = 30,
     val auto_discover_keys: Boolean = false,
     val encrypt_emails: Boolean = false,
     val require_encryption: Boolean = false,
@@ -167,6 +168,7 @@ data class SpamSettings(
     val spam_retention_days: Int = 30,
     val spam_sensitivity: String = "medium",
     val spam_filter_enabled: Boolean = true,
+    val trash_retention_days: Int = 30,
 )
 
 @Serializable

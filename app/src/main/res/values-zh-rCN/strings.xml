@@ -2116,6 +2116,12 @@
     <string name="auto_delete_spam_7">7 天</string>
     <string name="auto_delete_spam_14">14 天</string>
     <string name="auto_delete_spam_30">30 天</string>
+    <string name="auto_delete_spam_60">60 天</string>
+    <string name="auto_delete_spam_90">90 天</string>
+    <string name="auto_delete_spam_180">180 天</string>
+    <string name="auto_delete_spam_365">365 天</string>
+    <string name="auto_delete_trash">自动清空回收站的时间</string>
+    <string name="auto_delete_trash_subtitle">超过此期限的回收站邮件将被永久删除</string>
     <string name="auto_delete_spam_never">从不（一直保留）</string>
     <string name="emails_per_page">每页邮件数</string>
     <string name="emails_per_page_subtitle">收件箱、归档和其他文件夹中每页加载的邮件数量</string>

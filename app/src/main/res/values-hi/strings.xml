@@ -2024,6 +2024,12 @@
     <string name="auto_delete_spam_7">7 दिन</string>
     <string name="auto_delete_spam_14">14 दिन</string>
     <string name="auto_delete_spam_30">30 दिन</string>
+    <string name="auto_delete_spam_60">60 दिन</string>
+    <string name="auto_delete_spam_90">90 दिन</string>
+    <string name="auto_delete_spam_180">180 दिन</string>
+    <string name="auto_delete_spam_365">365 दिन</string>
+    <string name="auto_delete_trash">इतने समय बाद ट्रैश अपने आप हटाएं</string>
+    <string name="auto_delete_trash_subtitle">ट्रैश में इससे पुराने ईमेल हमेशा के लिए हटा दिए जाते हैं।</string>
     <string name="auto_delete_spam_never">कभी नहीं (हमेशा रखें)</string>
     <string name="emails_per_page">प्रति पेज ईमेल</string>
     <string name="emails_per_page_subtitle">इनबॉक्स, आर्काइव और दूसरे फ़ोल्डर में हर पेज पर लोड होने वाली ईमेल की संख्या</string>

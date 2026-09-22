@@ -3550,7 +3550,8 @@ class SettingsViewModel @Inject constructor(
         val prefs = _state.value.preferences ?: return
         if (prefs.spam_filter_enabled == settings.spam_filter_enabled &&
             prefs.spam_sensitivity == settings.spam_sensitivity &&
-            prefs.auto_delete_spam_days == settings.spam_retention_days
+            prefs.auto_delete_spam_days == settings.spam_retention_days &&
+            prefs.auto_delete_trash_days == settings.trash_retention_days
         ) {
             return
         }
@@ -3561,6 +3562,7 @@ class SettingsViewModel @Inject constructor(
                 spam_filter_enabled = settings.spam_filter_enabled,
                 spam_sensitivity = settings.spam_sensitivity,
                 auto_delete_spam_days = settings.spam_retention_days,
+                auto_delete_trash_days = settings.trash_retention_days,
             )
         )
     }
