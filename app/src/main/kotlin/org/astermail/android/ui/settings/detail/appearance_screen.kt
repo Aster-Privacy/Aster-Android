@@ -1091,42 +1091,12 @@ private fun compose_choice_row(
     test_tag: String,
     on_click: () -> Unit,
 ) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = on_click)
-            .testTag(test_tag)
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(20.dp)
-                .border(
-                    width = 2.dp,
-                    color = if (selected) colors.accent_blue else colors.border_primary,
-                    shape = CircleShape,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (selected) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .background(colors.accent_blue, CircleShape),
-                )
-            }
-        }
-        Spacer(Modifier.width(AsterSpacing.md))
-        Text(
-            text = label,
-            color = colors.text_primary,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.weight(1f),
-        )
-    }
+    choice_option_row(
+        label = label,
+        selected = selected,
+        test_tag = test_tag,
+        on_click = on_click,
+    )
 }
 
 @Composable

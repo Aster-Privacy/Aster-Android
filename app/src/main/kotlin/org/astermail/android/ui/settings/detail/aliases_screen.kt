@@ -2629,7 +2629,7 @@ private fun preference_option(
                 .background(if (selected) colors.accent_blue else Color.Transparent)
                 .border(
                     1.5.dp,
-                    if (selected) colors.accent_blue else colors.border_primary,
+                    if (selected) colors.accent_blue else colors.text_tertiary,
                     CircleShape,
                 ),
             contentAlignment = Alignment.Center,

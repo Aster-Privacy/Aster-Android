@@ -1554,7 +1554,7 @@ private fun merge_radio_dot(selected: Boolean) {
             .size(20.dp)
             .clip(CircleShape)
             .background(if (selected) colors.accent_blue else Color.Transparent)
-            .border(1.5.dp, if (selected) colors.accent_blue else colors.border_primary, CircleShape),
+            .border(1.5.dp, if (selected) colors.accent_blue else colors.text_tertiary, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         if (selected) {
