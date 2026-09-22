@@ -66,9 +66,6 @@ gh auth status >/dev/null 2>&1 || die "gh is not authenticated"
 echo "apksigner: $apksigner (build-tools $bt_ver)"
 echo "notes:     $notes"
 
-cur_vc=$(grep -oE 'versionCode = [0-9]+' "$repo_root/app/build.gradle.kts" | grep -oE '[0-9]+' | head -1)
-vc="${ASTER_VERSION_CODE:-$((cur_vc + 1))}"
-echo "version:   $ver (versionCode $vc, previous $cur_vc)"
 if git ls-remote --tags https://github.com/Aster-Privacy/Aster-Android.git "refs/tags/v$ver" | grep -q .; then
   die "tag v$ver already exists on the remote"
 fi
@@ -79,6 +76,18 @@ mkdir -p "$work"
 git clone -q --branch main https://github.com/Aster-Privacy/Aster-Android.git "$clone"
 cd "$clone"
 echo "HEAD $(git rev-parse --short HEAD)"
+
+cur_vc=$(grep -oE 'versionCode = [0-9]+' app/build.gradle.kts | grep -oE '[0-9]+' | head -1)
+[ -n "$cur_vc" ] || die "could not read versionCode from main"
+for tag in $(git tag -l 'v*' --sort=-v:refname | head -20); do
+  tag_vc=$(git show "$tag:app/build.gradle.kts" 2>/dev/null | grep -oE 'versionCode = [0-9]+' | grep -oE '[0-9]+' | head -1)
+  if [ -n "$tag_vc" ] && [ "$tag_vc" -gt "$cur_vc" ]; then
+    cur_vc="$tag_vc"
+  fi
+done
+vc="${ASTER_VERSION_CODE:-$((cur_vc + 1))}"
+[ "$vc" -gt "$cur_vc" ] || die "versionCode $vc is not higher than the highest released $cur_vc"
+echo "version:   $ver (versionCode $vc, highest released $cur_vc)"
 
 head_sha="$(git rev-parse HEAD)"
 if [ "${ASTER_SKIP_CI_CHECK:-0}" != "1" ]; then
