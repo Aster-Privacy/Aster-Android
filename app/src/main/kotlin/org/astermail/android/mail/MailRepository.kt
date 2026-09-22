@@ -4130,6 +4130,10 @@ class MailRepository @Inject constructor(
 
         val sent_folder_token = resolve_sent_folder_token()
 
+        if (sent_folder_token.isNullOrBlank()) {
+            throw IllegalStateException(context.getString(R.string.send_sent_folder_unavailable))
+        }
+
         val internal = is_internal_recipient(recipient)
         val resolved_group_id = message_group_id
             ?: if (internal) {
@@ -4642,6 +4646,10 @@ class MailRepository @Inject constructor(
         ephemeral_key.fill(0)
 
         val sent_folder_token = resolve_sent_folder_token()
+
+        if (sent_folder_token.isNullOrBlank()) {
+            throw IllegalStateException(context.getString(R.string.send_sent_folder_unavailable))
+        }
 
         val response = scheduled_api.create_scheduled(
             CreateScheduledRequest(
