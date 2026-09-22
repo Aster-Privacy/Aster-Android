@@ -161,6 +161,28 @@ private val operator_chips_saver = listSaver<List<SearchOperator>, String>(
     },
 )
 
+private object search_screen_cache {
+    var source: List<org.astermail.android.mail.InboxItem>? = null
+    var lock_revision: Long = Long.MIN_VALUE
+    var visible: List<org.astermail.android.mail.InboxItem>? = null
+    var corpus: List<org.astermail.android.mail.InboxItem>? = null
+    var sorted: List<org.astermail.android.mail.InboxItem>? = null
+    var parsed: ParsedQuery? = null
+    var filter: String? = null
+    var outcome: SearchOutcome? = null
+
+    fun sorted_for(corpus: List<org.astermail.android.mail.InboxItem>) =
+        sorted.takeIf { this.corpus === corpus }
+
+    fun outcome_for(
+        parsed: ParsedQuery,
+        filter: String?,
+        sorted: List<org.astermail.android.mail.InboxItem>?,
+    ) = outcome.takeIf {
+        sorted != null && this.sorted === sorted && this.parsed == parsed && this.filter == filter
+    }
+}
+
 internal fun parse_query(raw: String): ParsedQuery {
     val operators = mutableListOf<SearchOperator>()
 
@@ -489,24 +511,38 @@ fun SearchScreen(
 
     val lock_revision by org.astermail.android.folders.folder_lock_store.revision.collectAsState()
     val visible_corpus = remember(search_state.all_items, lock_revision) {
-        org.astermail.android.folders.filter_locked_items(search_state.all_items)
+        val source = search_state.all_items
+        val revision = lock_revision.toLong()
+        search_screen_cache.visible
+            ?.takeIf { search_screen_cache.source === source && search_screen_cache.lock_revision == revision }
+            ?: org.astermail.android.folders.filter_locked_items(source).also {
+                search_screen_cache.source = source
+                search_screen_cache.lock_revision = revision
+                search_screen_cache.visible = it
+            }
     }
 
     val sorted_corpus by androidx.compose.runtime.produceState<List<org.astermail.android.mail.InboxItem>?>(
-        initialValue = null,
+        initialValue = search_screen_cache.sorted_for(visible_corpus),
         visible_corpus,
     ) {
-        value = null
-        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+        search_screen_cache.sorted_for(visible_corpus)?.let {
+            value = it
+            return@produceState
+        }
+        val sorted = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
             visible_corpus
                 .map { it to parse_item_timestamp(it.timestamp) }
                 .sortedByDescending { it.second }
                 .map { it.first }
         }
+        search_screen_cache.corpus = visible_corpus
+        search_screen_cache.sorted = sorted
+        value = sorted
     }
 
     val computed by androidx.compose.runtime.produceState<SearchOutcome?>(
-        initialValue = null,
+        initialValue = search_screen_cache.outcome_for(parsed, active_filter, sorted_corpus),
         parsed, active_filter, sorted_corpus, has_query,
     ) {
         if (!has_query) {
@@ -518,9 +554,13 @@ fun SearchScreen(
             value = null
             return@produceState
         }
+        search_screen_cache.outcome_for(parsed, active_filter, corpus)?.let {
+            value = it
+            return@produceState
+        }
         value = null
         if (parsed.free_text.isNotEmpty()) kotlinx.coroutines.delay(120)
-        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+        val outcome = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
             val results = mutableListOf<org.astermail.android.mail.InboxItem>()
             var hidden = 0
             for (item in corpus) {
@@ -536,9 +576,20 @@ fun SearchScreen(
             }
             SearchOutcome(results, hidden)
         }
+        search_screen_cache.parsed = parsed
+        search_screen_cache.filter = active_filter
+        search_screen_cache.outcome = outcome
+        value = outcome
     }
 
-    var last_results by remember { mutableStateOf<List<org.astermail.android.mail.InboxItem>>(emptyList()) }
+    var last_results by remember {
+        mutableStateOf(
+            search_screen_cache.outcome
+                ?.takeIf { search_screen_cache.parsed == parsed && search_screen_cache.filter == active_filter }
+                ?.results
+                ?: emptyList(),
+        )
+    }
     LaunchedEffect(computed, has_query) {
         val settled = computed
         last_results = if (!has_query) emptyList() else settled?.results ?: last_results
