@@ -1444,6 +1444,67 @@ class MailViewModel @Inject constructor(
     private var thread_load_job: kotlinx.coroutines.Job? = null
     private var thread_load_generation = 0L
 
+    private var thread_open_started_at = 0L
+
+    private val thread_open_painted = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+
+    private fun log_body_paint(source: String) {
+        if (!BuildConfig.DEBUG || thread_open_started_at == 0L) return
+        if (thread_open_painted.putIfAbsent(source, true) != null) return
+        android.util.Log.d(
+            "aster_perf",
+            "thread_body_ms=" + (android.os.SystemClock.elapsedRealtime() - thread_open_started_at) + " source=" + source,
+        )
+    }
+
+    private suspend fun paint_cached_thread(
+        item_id: String,
+        thread_token: String?,
+        thread_gen: Long,
+    ): Boolean {
+        if (thread_token.isNullOrBlank()) return false
+        val pending = _thread_state.value
+        if (pending.item?.id != item_id || pending.messages.none { it.is_body_pending }) return false
+        val cached = runCatching { repository.cached_thread_messages(thread_token) }.getOrNull()
+        if (cached.isNullOrEmpty() || thread_gen != thread_load_generation) return false
+        if (cached.none { it.id == item_id }) return false
+        _thread_state.update { state ->
+            if (state.item?.id != item_id) state else state.copy(messages = cached)
+        }
+        log_body_paint("snapshot")
+        return true
+    }
+
+    private suspend fun paint_cached_bodies(item_id: String, thread_gen: Long) {
+        val pending = _thread_state.value
+        if (pending.item?.id != item_id) return
+        val ids = pending.messages.filter { it.is_body_pending }.map { it.id }
+        if (ids.isEmpty()) return
+        val cached = runCatching { repository.cached_message_bodies(ids) }.getOrNull().orEmpty()
+        if (cached.isEmpty() || thread_gen != thread_load_generation) return
+        _thread_state.update { state ->
+            if (state.item?.id != item_id) {
+                state
+            } else {
+                state.copy(
+                    messages = state.messages.map { message ->
+                        val body = cached[message.id]
+                        if (body == null || !message.is_body_pending) {
+                            message
+                        } else {
+                            message.copy(
+                                body_text = body.first,
+                                body_html = body.second,
+                                is_body_pending = false,
+                            )
+                        }
+                    },
+                )
+            }
+        }
+        log_body_paint("cache")
+    }
+
     fun load_thread(item_id: String) {
         if (item_id == DEMO_PHISH_ITEM_ID) {
             val demo_item = build_demo_phishing_inbox_item()
@@ -1470,10 +1531,15 @@ class MailViewModel @Inject constructor(
             }
         }
         thread_load_job?.cancel()
+        thread_open_started_at = android.os.SystemClock.elapsedRealtime()
+        thread_open_painted.clear()
         val thread_gen = ++thread_load_generation
         thread_load_job = viewModelScope.launch(Dispatchers.IO) {
                 val seed_token = (cur_thread.item?.takeIf { it.id == item_id } ?: seed)?.thread_token
                 ?.takeIf { it.isNotBlank() }
+            if (!paint_cached_thread(item_id, seed_token, thread_gen)) {
+                paint_cached_bodies(item_id, thread_gen)
+            }
             val early_thread = if (seed_token != null) {
                 async(Dispatchers.IO) {
                     withTimeoutOrNull(15_000) { repository.fetch_thread(seed_token) }
@@ -1522,6 +1588,7 @@ class MailViewModel @Inject constructor(
                             item = item,
                             attachments = if (cur_thread.item?.id == item_id) cur_thread.attachments else emptyMap(),
                         )
+                        log_body_paint("network")
                         cache_thread_participants(thread_token, resolved)
                         if (messages.isNotEmpty()) {
                             record_thread_count(thread_token, item.thread_message_count, messages)

@@ -85,6 +85,12 @@ import org.astermail.android.notifications.UndoSendWorker
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.outbox.PendingSendEntity
+import org.astermail.android.storage.search.MessageBodyDao
+import org.astermail.android.storage.search.MessageBodyEntity
+import org.astermail.android.storage.search.ThreadSnapshotDao
+import org.astermail.android.storage.search.ThreadSnapshotEntity
+import org.astermail.android.storage.search.message_body_cache_limit
+import org.astermail.android.storage.search.thread_snapshot_cache_limit
 
 enum class PendingSendOutcome { SENT, GONE, RETRY, FAILED, DEFERRED }
 
@@ -416,11 +422,88 @@ class MailRepository @Inject constructor(
     private val ratchet_plaintext_cache: org.astermail.android.mail.ratchet.RatchetPlaintextCache,
     private val system_folder_bootstrap: SystemFolderBootstrap,
     private val pending_send_dao_provider: dagger.Lazy<PendingSendDao>,
+    private val message_body_dao_provider: dagger.Lazy<MessageBodyDao>,
+    private val thread_snapshot_dao_provider: dagger.Lazy<ThreadSnapshotDao>,
     @ApplicationContext private val context: Context,
     private val auth_repository: dagger.Lazy<org.astermail.android.auth.AuthRepository>,
 ) {
     private val pending_send_dao: PendingSendDao
         get() = pending_send_dao_provider.get()
+
+    private val message_body_dao: MessageBodyDao
+        get() = message_body_dao_provider.get()
+
+    suspend fun cached_message_body(id: String): Pair<String, String?>? = withContext(Dispatchers.IO) {
+        val row = runCatching { message_body_dao.get(id) }.getOrNull() ?: return@withContext null
+        if (row.body_text.isBlank() && row.body_html.isNullOrBlank()) null else row.body_text to row.body_html
+    }
+
+    suspend fun cached_message_bodies(ids: List<String>): Map<String, Pair<String, String?>> =
+        withContext(Dispatchers.IO) {
+            if (ids.isEmpty()) return@withContext emptyMap()
+            val rows = runCatching { message_body_dao.get_many(ids) }.getOrNull().orEmpty()
+            rows.filterNot { it.body_text.isBlank() && it.body_html.isNullOrBlank() }
+                .associate { it.id to (it.body_text to it.body_html) }
+        }
+
+    private val thread_snapshot_dao: ThreadSnapshotDao
+        get() = thread_snapshot_dao_provider.get()
+
+    suspend fun cached_thread_messages(thread_token: String): List<ThreadMessageDecrypted>? =
+        withContext(Dispatchers.IO) {
+            val row = runCatching { thread_snapshot_dao.get(thread_token) }.getOrNull()
+                ?: return@withContext null
+            val parsed = runCatching {
+                thread_snapshot_json.decodeFromString<List<thread_snapshot_message>>(row.payload)
+            }.getOrNull() ?: return@withContext null
+            parsed.map { thread_message_of(it) }.takeIf { it.isNotEmpty() }
+        }
+
+    private suspend fun store_thread_snapshot(
+        thread_token: String,
+        messages: List<ThreadMessageDecrypted>,
+    ) {
+        if (messages.isEmpty() || messages.any { it.is_undecryptable || it.is_body_pending }) return
+        val payload = runCatching {
+            thread_snapshot_json.encodeToString(messages.map { thread_snapshot_of(it) })
+        }.getOrNull() ?: return
+        runCatching {
+            thread_snapshot_dao.upsert(
+                ThreadSnapshotEntity(
+                    thread_token = thread_token,
+                    payload = payload,
+                    cached_at = System.currentTimeMillis(),
+                ),
+            )
+            thread_snapshot_dao.trim_to(thread_snapshot_cache_limit)
+        }
+    }
+
+    suspend fun clear_cached_message_bodies() {
+        runCatching { message_body_dao.clear_all() }
+        runCatching { thread_snapshot_dao.clear_all() }
+    }
+
+    private suspend fun store_message_bodies(messages: List<ThreadMessageDecrypted>) {
+        val now = System.currentTimeMillis()
+        val rows = messages.filterNot { it.is_undecryptable || it.is_body_pending }
+            .filterNot { it.body_text.isBlank() && it.body_html.isNullOrBlank() }
+            .map {
+                MessageBodyEntity(
+                    id = it.id,
+                    body_text = it.body_text,
+                    body_html = it.body_html,
+                    built_key = 0L,
+                    built_html = null,
+                    cached_at = now,
+                )
+            }
+        if (rows.isEmpty()) return
+        runCatching {
+            message_body_dao.upsert_all(rows)
+            message_body_dao.trim_to(message_body_cache_limit)
+        }
+    }
 
     @Volatile
     private var custom_categories: List<org.astermail.android.api.preferences.CustomCategoryRule> =
@@ -1747,6 +1830,8 @@ class MailRepository @Inject constructor(
                 async(Dispatchers.IO) { decrypt_thread_message(msg) }
             }.awaitAll()
             val healed = heal_undecryptable_thread_messages(decrypted)
+            store_message_bodies(healed)
+            store_thread_snapshot(thread_token, healed)
             prefetch_sender_profiles(healed.map { org.astermail.android.ui.mail.displayed_sender_email(it.display_sender_email, it.sender_email) })
             healed
         }
@@ -2491,11 +2576,14 @@ class MailRepository @Inject constructor(
     suspend fun decrypt_single_thread_message(item: ThreadMessageItem): ThreadMessageDecrypted =
         withContext(Dispatchers.IO) {
             val decrypted = decrypt_thread_message(item)
-            if (decrypted.is_undecryptable && is_sealed_inbound_nonce(item.envelope_nonce) && heal_envelope_keys()) {
-                runCatching { decrypt_thread_message(item) }.getOrElse { decrypted }
-            } else {
-                decrypted
-            }
+            val resolved =
+                if (decrypted.is_undecryptable && is_sealed_inbound_nonce(item.envelope_nonce) && heal_envelope_keys()) {
+                    runCatching { decrypt_thread_message(item) }.getOrElse { decrypted }
+                } else {
+                    decrypted
+                }
+            store_message_bodies(listOf(resolved))
+            resolved
         }
 
     private fun merge_server_flags(meta: MailItemMetadata, item: MailItem): MailItemMetadata = meta.copy(

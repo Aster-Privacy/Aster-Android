@@ -40,6 +40,8 @@ import org.astermail.android.storage.TokenStore
 import org.astermail.android.storage.TrustedDeviceStore
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.search.AsterDatabase
+import org.astermail.android.storage.search.MessageBodyDao
+import org.astermail.android.storage.search.ThreadSnapshotDao
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -48,6 +50,14 @@ object StorageModule {
     @Provides
     @Singleton
     fun provide_pending_send_dao(database: AsterDatabase): PendingSendDao = database.pending_send_dao()
+
+    @Provides
+    @Singleton
+    fun provide_message_body_dao(database: AsterDatabase): MessageBodyDao = database.message_body_dao()
+
+    @Provides
+    @Singleton
+    fun provide_thread_snapshot_dao(database: AsterDatabase): ThreadSnapshotDao = database.thread_snapshot_dao()
 
     @Provides
     @Singleton
