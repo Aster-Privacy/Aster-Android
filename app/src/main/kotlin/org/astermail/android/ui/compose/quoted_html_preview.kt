@@ -98,12 +98,18 @@ internal fun quoted_html_preview(html: String, modifier: Modifier = Modifier) {
         "extra_large" -> 140
         else -> 100
     }
-    val is_dark = if (colors.is_glass) {
+    val theme_dark = if (colors.is_glass) {
         colors.is_dark
     } else {
         colors.bg_primary.luminance() < colors.text_primary.luminance()
     }
-    val fg_hex = String.format(java.util.Locale.US, "#%06X", colors.text_secondary.toArgb() and 0xFFFFFF)
+    val force_dark_emails = preferences?.force_dark_emails == true
+    val is_dark = theme_dark || force_dark_emails
+    val fg_hex = if (force_dark_emails && !theme_dark) {
+        org.astermail.android.ui.mail.FORCED_DARK_INK
+    } else {
+        String.format(java.util.Locale.US, "#%06X", colors.text_secondary.toArgb() and 0xFFFFFF)
+    }
     val link_hex = String.format(java.util.Locale.US, "#%06X", colors.accent_blue.toArgb() and 0xFFFFFF)
     val forwarded_label = stringResource(R.string.forwarded_message_label)
     val image_blocked_label = stringResource(R.string.image_blocked_placeholder)
@@ -114,7 +120,6 @@ internal fun quoted_html_preview(html: String, modifier: Modifier = Modifier) {
         preferences?.email_font_choice,
         preferences?.font_choice,
     )
-    val force_dark_emails = is_dark && preferences?.force_dark_emails == true
     val screen_height_dp = LocalConfiguration.current.screenHeightDp
     val max_height_dp = minOf(quoted_preview_max_height_dp, (screen_height_dp * 0.45f).toInt())
         .coerceAtLeast(quoted_preview_min_height_dp)
@@ -148,6 +153,7 @@ internal fun quoted_html_preview(html: String, modifier: Modifier = Modifier) {
                     forwarded_label = forwarded_label,
                     image_failed_label = image_failed_label,
                     force_dark_emails = force_dark_emails,
+                    forced_dark_canvas = force_dark_emails && !theme_dark,
                     dyslexia_font = dyslexia_font,
                     translate_mode = "off",
                     email_font_id = email_font_id,
@@ -215,10 +221,11 @@ internal fun quoted_html_preview(html: String, modifier: Modifier = Modifier) {
             web_view.settings.textZoom = text_zoom
             web_view.settings.blockNetworkImage = !allow_external
             web_view.setBackgroundColor(
-                if (doc.contains("data-white=\"1\"")) {
-                    android.graphics.Color.WHITE
-                } else {
-                    android.graphics.Color.TRANSPARENT
+                when {
+                    doc.contains("data-white=\"1\"") -> android.graphics.Color.WHITE
+                    force_dark_emails && !theme_dark ->
+                        android.graphics.Color.parseColor(org.astermail.android.ui.mail.FORCED_DARK_CANVAS)
+                    else -> android.graphics.Color.TRANSPARENT
                 },
             )
             if (web_view.tag != doc) {

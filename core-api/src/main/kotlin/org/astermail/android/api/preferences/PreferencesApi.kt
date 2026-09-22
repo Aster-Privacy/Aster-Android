@@ -81,6 +81,8 @@ data class UserPreferences(
     val mark_as_read: String = "1_second",
     val auto_advance: String = "Go to next message",
     val default_reply_behavior: String = "reply",
+    val reply_include_quoted: Boolean = true,
+    val reply_prefix_subject: Boolean = true,
     val block_external_images: Boolean = true,
     val block_tracking_pixels: Boolean = true,
     val block_tracking_links: Boolean = true,

@@ -2135,6 +2135,10 @@
     <string name="section_advanced">詳細設定</string>
     <string name="developer_mode_subtitle_behavior">ビルド情報、暗号の状態、デバッグ用ツールを含む開発者タブを表示します</string>
     <string name="auto_save_recipients_subtitle">送信した相手のアドレスを自動で連絡先に追加します</string>
+    <string name="reply_include_quoted">引用文を含める</string>
+    <string name="reply_include_quoted_subtitle">すべての返信が、入力欄の下に引用された元のメッセージで始まります</string>
+    <string name="reply_prefix_subject">件名に Re: を追加</string>
+    <string name="reply_prefix_subject_subtitle">返信するときに元の件名の前に Re: を付けます</string>
     <string name="section_account_protection">アカウント保護</string>
     <string name="protection_score">保護スコア</string>
     <string name="section_authentication">認証</string>

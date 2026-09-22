@@ -564,6 +564,7 @@ fun ComposeScreen(
             } else {
                 mode
             },
+            prefix_reply_subject = settings_state.preferences?.reply_prefix_subject != false,
         )
     }
 
@@ -939,8 +940,11 @@ fun ComposeScreen(
             )
         }
     }
-    val quoted_source = remember(reply_to, mode, thread_state, seeded_quoted_source) {
+    val quotes_replies = settings_state.preferences?.reply_include_quoted != false
+    val quoted_source = remember(reply_to, mode, thread_state, seeded_quoted_source, quotes_replies) {
         if (reply_to.isNullOrBlank() || mode.isNullOrBlank()) {
+            null
+        } else if (!quotes_replies && (mode == "reply" || mode == "reply_all")) {
             null
         } else {
             val msg = thread_state.messages.firstOrNull { it.id == reply_to }

@@ -2146,6 +2146,10 @@
     <string name="section_advanced">Дополнительно</string>
     <string name="developer_mode_subtitle_behavior">Показывает вкладку разработчика со сведениями о сборке, состоянием шифрования и инструментами отладки</string>
     <string name="auto_save_recipients_subtitle">Автоматически добавляет адреса, которым вы пишете, в контакты</string>
+    <string name="reply_include_quoted">Включать цитируемый текст</string>
+    <string name="reply_include_quoted_subtitle">Каждый ответ начинается с исходного письма, процитированного под вашим текстом</string>
+    <string name="reply_prefix_subject">Добавлять Re: к теме</string>
+    <string name="reply_prefix_subject_subtitle">Ставит Re: перед исходной темой, когда вы отвечаете</string>
     <string name="section_account_protection">Защита аккаунта</string>
     <string name="protection_score">Оценка защиты</string>
     <string name="section_authentication">Аутентификация</string>

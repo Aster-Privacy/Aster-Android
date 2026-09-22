@@ -53,6 +53,7 @@ internal fun build_email_html(
     forwarded_label: String,
     image_failed_label: String,
     force_dark_emails: Boolean,
+    forced_dark_canvas: Boolean = false,
     dyslexia_font: Boolean,
     translate_mode: String,
     email_font_id: String? = null,
@@ -158,8 +159,20 @@ html,body{background-color:#ffffff!important}
     val detail_border = if (simple_dark) "#374151" else "#e5e7eb"
     val detail_color = if (simple_dark) "#9ca3af" else "#6b7280"
 
+    val forced_dark_css = if (force_dark_emails) {
+        forced_dark_mode_css(
+            link_hex,
+            "#4b5563",
+            "#9ca3af",
+            if (forced_dark_canvas) FORCED_DARK_CANVAS else "transparent",
+        )
+    } else {
+        ""
+    }
+    val dark_ready_body = if (force_dark_emails) lighten_dark_email_text(render_body) else render_body
+
     val prepared_body = prepare_email_body(
-        body = render_body,
+        body = dark_ready_body,
         forwarded_label = forwarded_label,
         image_failed_label = image_failed_label,
         is_newsletter = has_newsletter_layout,
@@ -213,6 +226,7 @@ $user_font_css
 $underline_css
 $dyslexia_css
 $dark_css
+$forced_dark_css
 </style>
 </head><body style="$body_style"><div id="m"${if (seeded_background != null) " style=\"background-color:$seeded_background\"" else ""}>$prepared_body</div>
 </body></html>"""

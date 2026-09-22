@@ -2302,6 +2302,10 @@
     <string name="section_advanced">Advanced</string>
     <string name="developer_mode_subtitle_behavior">Show the Developer tab with build info, crypto status, and debug tools</string>
     <string name="auto_save_recipients_subtitle">Automatically add addresses you send to as contacts</string>
+    <string name="reply_include_quoted">Include quoted text</string>
+    <string name="reply_include_quoted_subtitle">Start every reply with the original message quoted below your text</string>
+    <string name="reply_prefix_subject">Add Re: to the subject</string>
+    <string name="reply_prefix_subject_subtitle">Put Re: in front of the original subject when you reply</string>
 
     <!-- Security screen -->
     <string name="section_account_protection">Account Protection</string>

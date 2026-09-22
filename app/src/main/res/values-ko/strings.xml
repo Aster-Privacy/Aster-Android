@@ -2135,6 +2135,10 @@
     <string name="section_advanced">고급</string>
     <string name="developer_mode_subtitle_behavior">빌드 정보, 암호화 상태, 디버그 도구가 있는 개발자 탭을 표시합니다</string>
     <string name="auto_save_recipients_subtitle">메일을 보낸 주소를 연락처에 자동으로 추가합니다</string>
+    <string name="reply_include_quoted">인용된 텍스트 포함</string>
+    <string name="reply_include_quoted_subtitle">모든 답장이 작성 영역 아래에 인용된 원본 메시지로 시작합니다</string>
+    <string name="reply_prefix_subject">제목에 Re: 추가</string>
+    <string name="reply_prefix_subject_subtitle">답장할 때 원본 제목 앞에 Re: 를 붙입니다</string>
     <string name="section_account_protection">계정 보호</string>
     <string name="protection_score">보호 점수</string>
     <string name="section_authentication">인증</string>

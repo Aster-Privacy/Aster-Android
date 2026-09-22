@@ -2139,6 +2139,10 @@
     <string name="section_advanced">Erweitert</string>
     <string name="developer_mode_subtitle_behavior">Zeigt den Entwickler-Tab mit Build-Infos, Krypto-Status und Debug-Werkzeugen</string>
     <string name="auto_save_recipients_subtitle">Adressen, an die du schreibst, automatisch als Kontakte speichern</string>
+    <string name="reply_include_quoted">Zitierten Text einfügen</string>
+    <string name="reply_include_quoted_subtitle">Jede Antwort beginnt mit der zitierten Originalnachricht unter Ihrem Text</string>
+    <string name="reply_prefix_subject">Aw: zum Betreff hinzufügen</string>
+    <string name="reply_prefix_subject_subtitle">Stellt Aw: vor den ursprünglichen Betreff, wenn Sie antworten</string>
     <string name="section_account_protection">Kontoschutz</string>
     <string name="protection_score">Schutzbewertung</string>
     <string name="section_authentication">Anmeldung</string>
