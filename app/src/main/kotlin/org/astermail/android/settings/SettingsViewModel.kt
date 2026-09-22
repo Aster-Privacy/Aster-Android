@@ -3605,22 +3605,8 @@ class SettingsViewModel @Inject constructor(
     private suspend fun converge_require_encryption(server_value: Boolean) {
         val prefs = _state.value.preferences ?: return
         if (prefs.require_encryption == server_value) return
-        if (prefs.require_encryption) {
-            val saved = try {
-                encryption_api.update_encryption_settings(
-                    org.astermail.android.api.encryption.UpdateEncryptionSettingsRequest(require_encryption = true)
-                )
-            } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
-                false
-            }
-            if (saved) {
-                _state.update { it.copy(encryption_settings = it.encryption_settings?.copy(require_encryption = true)) }
-            }
-            return
-        }
         if (prefs_load_succeeded && (!account_uses_encrypted_prefs || _state.value.preferences_authoritative)) {
-            save_preferences(prefs.copy(require_encryption = true))
+            save_preferences(prefs.copy(require_encryption = server_value))
         }
     }
 
