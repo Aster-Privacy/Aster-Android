@@ -3551,4 +3551,8 @@
     <string name="quick_action_no_read">لا توجد رسائل مقروءة لأرشفتها هنا</string>
     <string name="quick_action_no_old">لا توجد رسائل أقدم من 30 يومًا هنا</string>
     <string name="quick_action_delete_old_confirm">هل تريد نقل %1$d محادثة أقدم من 30 يومًا إلى المهملات؟</string>
+    <string name="settings_default_sender">المُرسِل الافتراضي</string>
+    <string name="default_sender_description">تُرسَل الرسائل الجديدة من هذا العنوان. وتستخدم الردود العنوان الذي أُرسلت إليه الرسالة.</string>
+    <string name="default_sender_no_addresses">لا توجد عناوين أخرى</string>
+    <string name="default_sender_primary_note">عنوانك الأساسي</string>
 </resources>

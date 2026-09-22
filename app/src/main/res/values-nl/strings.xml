@@ -3467,4 +3467,8 @@
     <string name="quick_action_no_read">Hier zijn geen gelezen e-mails om te archiveren</string>
     <string name="quick_action_no_old">Hier zijn geen e-mails ouder dan 30 dagen</string>
     <string name="quick_action_delete_old_confirm">%1$d gesprekken ouder dan 30 dagen naar de prullenbak verplaatsen?</string>
+    <string name="settings_default_sender">Standaardafzender</string>
+    <string name="default_sender_description">Nieuwe berichten worden vanaf dit adres verzonden. Antwoorden gebruiken het adres waarnaar het bericht is verzonden.</string>
+    <string name="default_sender_no_addresses">Geen andere adressen</string>
+    <string name="default_sender_primary_note">Je primaire adres</string>
 </resources>

@@ -3509,4 +3509,8 @@
     <string name="quick_action_no_read">Здесь нет прочитанных писем для архивации</string>
     <string name="quick_action_no_old">Здесь нет писем старше 30 дней</string>
     <string name="quick_action_delete_old_confirm">Переместить %1$d бесед старше 30 дней в корзину?</string>
+    <string name="settings_default_sender">Отправитель по умолчанию</string>
+    <string name="default_sender_description">Новые письма отправляются с этого адреса. Ответы используют адрес, на который пришло письмо.</string>
+    <string name="default_sender_no_addresses">Других адресов нет</string>
+    <string name="default_sender_primary_note">Ваш основной адрес</string>
 </resources>

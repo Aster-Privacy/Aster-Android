@@ -3494,4 +3494,8 @@
     <string name="quick_action_no_read">Aucun message lu à archiver ici</string>
     <string name="quick_action_no_old">Aucun message de plus de 30 jours ici</string>
     <string name="quick_action_delete_old_confirm">Déplacer %1$d conversations de plus de 30 jours vers la corbeille ?</string>
+    <string name="settings_default_sender">Expéditeur par défaut</string>
+    <string name="default_sender_description">Les nouveaux messages partent de cette adresse. Les réponses utilisent l’adresse à laquelle le message a été envoyé.</string>
+    <string name="default_sender_no_addresses">Aucune autre adresse</string>
+    <string name="default_sender_primary_note">Votre adresse principale</string>
 </resources>

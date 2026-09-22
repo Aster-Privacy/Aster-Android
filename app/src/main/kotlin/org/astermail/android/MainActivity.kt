@@ -137,6 +137,7 @@ import org.astermail.android.ui.settings.detail.AboutScreen
 import org.astermail.android.ui.settings.detail.AccessibilityScreen
 import org.astermail.android.ui.settings.detail.ApiKeysScreen
 import org.astermail.android.ui.settings.detail.ConnectionScreen
+import org.astermail.android.ui.settings.detail.DefaultSenderScreen
 import org.astermail.android.ui.settings.detail.SmtpTokensScreen
 import org.astermail.android.ui.settings.detail.DeveloperScreen
 import org.astermail.android.ui.settings.detail.FamilyScreen
@@ -1220,6 +1221,9 @@ private fun AsterNavHost() {
                 on_back = { back(); Unit },
                 on_open = open_detail,
             )
+        }
+        composable(routes.settings_detail("default_sender")) {
+            DefaultSenderScreen(on_back = { back(); Unit })
         }
         composable(routes.settings_detail("signature")) {
             SignatureScreen(on_back = { back(); Unit }, on_open = open_detail)

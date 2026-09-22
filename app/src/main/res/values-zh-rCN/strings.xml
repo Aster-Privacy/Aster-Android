@@ -3449,4 +3449,8 @@
     <string name="quick_action_no_read">这里没有可归档的已读邮件</string>
     <string name="quick_action_no_old">这里没有超过 30 天的邮件</string>
     <string name="quick_action_delete_old_confirm">将 %1$d 个超过 30 天的会话移到回收站吗？</string>
+    <string name="settings_default_sender">默认发件人</string>
+    <string name="default_sender_description">新邮件从此地址发出。回复使用邮件送达的地址。</string>
+    <string name="default_sender_no_addresses">没有其他地址</string>
+    <string name="default_sender_primary_note">你的主地址</string>
 </resources>

@@ -3467,4 +3467,8 @@
     <string name="quick_action_no_read">Qui non ci sono email lette da archiviare</string>
     <string name="quick_action_no_old">Qui non ci sono email più vecchie di 30 giorni</string>
     <string name="quick_action_delete_old_confirm">Spostare %1$d conversazioni più vecchie di 30 giorni nel cestino?</string>
+    <string name="settings_default_sender">Mittente predefinito</string>
+    <string name="default_sender_description">I nuovi messaggi partono da questo indirizzo. Le risposte usano l’indirizzo a cui è stato inviato il messaggio.</string>
+    <string name="default_sender_no_addresses">Nessun altro indirizzo</string>
+    <string name="default_sender_primary_note">Il tuo indirizzo principale</string>
 </resources>

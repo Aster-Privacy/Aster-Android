@@ -3467,4 +3467,8 @@
     <string name="quick_action_no_read">Não há e-mails lidos para arquivar aqui</string>
     <string name="quick_action_no_old">Não há e-mails com mais de 30 dias aqui</string>
     <string name="quick_action_delete_old_confirm">Mover %1$d conversas com mais de 30 dias para a lixeira?</string>
+    <string name="settings_default_sender">Remetente padrão</string>
+    <string name="default_sender_description">As novas mensagens são enviadas deste endereço. As respostas usam o endereço para o qual a mensagem foi enviada.</string>
+    <string name="default_sender_no_addresses">Sem outros endereços</string>
+    <string name="default_sender_primary_note">O seu endereço principal</string>
 </resources>

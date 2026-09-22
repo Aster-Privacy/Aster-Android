@@ -3509,4 +3509,8 @@
     <string name="quick_action_no_read">Nie ma tu przeczytanych wiadomości do zarchiwizowania</string>
     <string name="quick_action_no_old">Nie ma tu wiadomości starszych niż 30 dni</string>
     <string name="quick_action_delete_old_confirm">Przenieść %1$d konwersacji starszych niż 30 dni do kosza?</string>
+    <string name="settings_default_sender">Domyślny nadawca</string>
+    <string name="default_sender_description">Nowe wiadomości są wysyłane z tego adresu. Odpowiedzi używają adresu, na który wysłano wiadomość.</string>
+    <string name="default_sender_no_addresses">Brak innych adresów</string>
+    <string name="default_sender_primary_note">Twój główny adres</string>
 </resources>

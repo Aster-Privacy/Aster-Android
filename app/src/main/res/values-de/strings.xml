@@ -3468,4 +3468,8 @@
     <string name="quick_action_no_read">Hier gibt es keine gelesenen E-Mails zum Archivieren</string>
     <string name="quick_action_no_old">Hier gibt es keine E-Mails, die älter als 30 Tage sind</string>
     <string name="quick_action_delete_old_confirm">%1$d Konversationen, die älter als 30 Tage sind, in den Papierkorb verschieben?</string>
+    <string name="settings_default_sender">Standardabsender</string>
+    <string name="default_sender_description">Neue Nachrichten werden von dieser Adresse gesendet. Antworten verwenden die Adresse, an die die Nachricht gesendet wurde.</string>
+    <string name="default_sender_no_addresses">Keine weiteren Adressen</string>
+    <string name="default_sender_primary_note">Deine Hauptadresse</string>
 </resources>

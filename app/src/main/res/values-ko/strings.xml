@@ -3449,4 +3449,8 @@
     <string name="quick_action_no_read">보관할 읽은 메일이 없습니다</string>
     <string name="quick_action_no_old">30일이 지난 메일이 없습니다</string>
     <string name="quick_action_delete_old_confirm">30일이 지난 대화 %1$d개를 휴지통으로 옮길까요?</string>
+    <string name="settings_default_sender">기본 보내는 사람</string>
+    <string name="default_sender_description">새 메시지는 이 주소에서 보냅니다. 답장에는 메시지를 받은 주소를 사용합니다.</string>
+    <string name="default_sender_no_addresses">다른 주소가 없습니다</string>
+    <string name="default_sender_primary_note">기본 주소</string>
 </resources>

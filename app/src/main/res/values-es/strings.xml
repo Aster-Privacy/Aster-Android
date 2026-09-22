@@ -3468,4 +3468,8 @@
     <string name="quick_action_no_read">Aquí no hay correos leídos para archivar</string>
     <string name="quick_action_no_old">Aquí no hay correos de más de 30 días</string>
     <string name="quick_action_delete_old_confirm">¿Mover %1$d conversaciones de más de 30 días a la papelera?</string>
+    <string name="settings_default_sender">Remitente predeterminado</string>
+    <string name="default_sender_description">Los mensajes nuevos se envían desde esta dirección. Las respuestas usan la dirección a la que se envió el mensaje.</string>
+    <string name="default_sender_no_addresses">No hay otras direcciones</string>
+    <string name="default_sender_primary_note">Tu dirección principal</string>
 </resources>

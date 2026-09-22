@@ -3357,4 +3357,8 @@
     <string name="quick_action_no_read">यहाँ संग्रहित करने के लिए कोई पढ़ा हुआ ईमेल नहीं है</string>
     <string name="quick_action_no_old">यहाँ 30 दिनों से पुराना कोई ईमेल नहीं है</string>
     <string name="quick_action_delete_old_confirm">30 दिनों से पुरानी %1$d बातचीत को ट्रैश में ले जाएँ?</string>
+    <string name="settings_default_sender">डिफ़ॉल्ट प्रेषक</string>
+    <string name="default_sender_description">नए संदेश इसी पते से भेजे जाते हैं। उत्तर उसी पते का उपयोग करते हैं जिस पर संदेश आया था।</string>
+    <string name="default_sender_no_addresses">कोई अन्य पता नहीं</string>
+    <string name="default_sender_primary_note">आपका प्राथमिक पता</string>
 </resources>
