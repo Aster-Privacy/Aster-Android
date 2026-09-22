@@ -3438,4 +3438,8 @@
     <string name="delete_emails_older_than_30_days">30日以上前のメールを削除</string>
     <string name="inbox_tools">フィルタとクイック操作</string>
     <string name="inbox_tools_subtitle">受信トレイのヘッダーにフィルタとクイック操作のボタンを表示します</string>
+    <string name="settings_default_sender">デフォルトの送信元</string>
+    <string name="default_sender_description">新規メッセージはこのアドレスから送信されます。返信には、メッセージが届いたアドレスを使用します。</string>
+    <string name="default_sender_no_addresses">ほかのアドレスはありません</string>
+    <string name="default_sender_primary_note">メインのアドレス</string>
 </resources>

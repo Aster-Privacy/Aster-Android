@@ -3438,4 +3438,8 @@
     <string name="delete_emails_older_than_30_days">30일이 지난 메일 삭제</string>
     <string name="inbox_tools">필터 및 빠른 작업</string>
     <string name="inbox_tools_subtitle">받은편지함 헤더에 필터 및 빠른 작업 버튼을 표시합니다</string>
+    <string name="settings_default_sender">기본 보내는 사람</string>
+    <string name="default_sender_description">새 메시지는 이 주소에서 보냅니다. 답장에는 메시지를 받은 주소를 사용합니다.</string>
+    <string name="default_sender_no_addresses">다른 주소가 없습니다</string>
+    <string name="default_sender_primary_note">기본 주소</string>
 </resources>

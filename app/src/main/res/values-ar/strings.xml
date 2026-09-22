@@ -3540,4 +3540,8 @@
     <string name="delete_emails_older_than_30_days">حذف الرسائل الأقدم من 30 يومًا</string>
     <string name="inbox_tools">عوامل التصفية والإجراءات السريعة</string>
     <string name="inbox_tools_subtitle">إظهار زري التصفية والإجراءات السريعة في رأس البريد الوارد</string>
+    <string name="settings_default_sender">المُرسِل الافتراضي</string>
+    <string name="default_sender_description">تُرسَل الرسائل الجديدة من هذا العنوان. وتستخدم الردود العنوان الذي أُرسلت إليه الرسالة.</string>
+    <string name="default_sender_no_addresses">لا توجد عناوين أخرى</string>
+    <string name="default_sender_primary_note">عنوانك الأساسي</string>
 </resources>

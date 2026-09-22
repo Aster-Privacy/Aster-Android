@@ -3483,4 +3483,8 @@
     <string name="delete_emails_older_than_30_days">Supprimer les e-mails de plus de 30 jours</string>
     <string name="inbox_tools">Filtres et actions rapides</string>
     <string name="inbox_tools_subtitle">Affiche les boutons de filtre et d\'actions rapides dans l\'en-tête de la boîte de réception</string>
+    <string name="settings_default_sender">Expéditeur par défaut</string>
+    <string name="default_sender_description">Les nouveaux messages partent de cette adresse. Les réponses utilisent l’adresse à laquelle le message a été envoyé.</string>
+    <string name="default_sender_no_addresses">Aucune autre adresse</string>
+    <string name="default_sender_primary_note">Votre adresse principale</string>
 </resources>

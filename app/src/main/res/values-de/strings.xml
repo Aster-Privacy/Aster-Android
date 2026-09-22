@@ -3457,4 +3457,8 @@
     <string name="delete_emails_older_than_30_days">E-Mails löschen, die älter als 30 Tage sind</string>
     <string name="inbox_tools">Filter und Schnellaktionen</string>
     <string name="inbox_tools_subtitle">Zeigt die Schaltflächen für Filter und Schnellaktionen in der Posteingangsleiste an</string>
+    <string name="settings_default_sender">Standardabsender</string>
+    <string name="default_sender_description">Neue Nachrichten werden von dieser Adresse gesendet. Antworten verwenden die Adresse, an die die Nachricht gesendet wurde.</string>
+    <string name="default_sender_no_addresses">Keine weiteren Adressen</string>
+    <string name="default_sender_primary_note">Deine Hauptadresse</string>
 </resources>

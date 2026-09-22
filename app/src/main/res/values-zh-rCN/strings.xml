@@ -3438,4 +3438,8 @@
     <string name="delete_emails_older_than_30_days">删除 30 天前的邮件</string>
     <string name="inbox_tools">筛选与快捷操作</string>
     <string name="inbox_tools_subtitle">在收件箱标题栏中显示筛选和快捷操作按钮</string>
+    <string name="settings_default_sender">默认发件人</string>
+    <string name="default_sender_description">新邮件从此地址发出。回复使用邮件送达的地址。</string>
+    <string name="default_sender_no_addresses">没有其他地址</string>
+    <string name="default_sender_primary_note">你的主地址</string>
 </resources>

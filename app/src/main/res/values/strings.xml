@@ -3501,4 +3501,8 @@
     <string name="delete_emails_older_than_30_days">Delete emails older than 30 days</string>
     <string name="inbox_tools">Filters and quick actions</string>
     <string name="inbox_tools_subtitle">Show the filter and quick action buttons in the inbox header</string>
+    <string name="settings_default_sender">Default sender</string>
+    <string name="default_sender_description">New messages start from this address. Replies use the address the message was sent to.</string>
+    <string name="default_sender_no_addresses">No other addresses</string>
+    <string name="default_sender_primary_note">Your primary address</string>
 </resources>

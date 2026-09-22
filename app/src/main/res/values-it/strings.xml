@@ -3456,4 +3456,8 @@
     <string name="delete_emails_older_than_30_days">Elimina le email più vecchie di 30 giorni</string>
     <string name="inbox_tools">Filtri e azioni rapide</string>
     <string name="inbox_tools_subtitle">Mostra i pulsanti di filtro e azioni rapide nell\'intestazione della posta in arrivo</string>
+    <string name="settings_default_sender">Mittente predefinito</string>
+    <string name="default_sender_description">I nuovi messaggi partono da questo indirizzo. Le risposte usano l’indirizzo a cui è stato inviato il messaggio.</string>
+    <string name="default_sender_no_addresses">Nessun altro indirizzo</string>
+    <string name="default_sender_primary_note">Il tuo indirizzo principale</string>
 </resources>

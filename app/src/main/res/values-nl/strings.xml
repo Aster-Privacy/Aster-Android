@@ -3456,4 +3456,8 @@
     <string name="delete_emails_older_than_30_days">E-mails ouder dan 30 dagen verwijderen</string>
     <string name="inbox_tools">Filters en snelle acties</string>
     <string name="inbox_tools_subtitle">Toont de knoppen voor filters en snelle acties in de koptekst van het Postvak IN</string>
+    <string name="settings_default_sender">Standaardafzender</string>
+    <string name="default_sender_description">Nieuwe berichten worden vanaf dit adres verzonden. Antwoorden gebruiken het adres waarnaar het bericht is verzonden.</string>
+    <string name="default_sender_no_addresses">Geen andere adressen</string>
+    <string name="default_sender_primary_note">Je primaire adres</string>
 </resources>

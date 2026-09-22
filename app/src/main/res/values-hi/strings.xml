@@ -3346,4 +3346,8 @@
     <string name="delete_emails_older_than_30_days">30 दिन से पुराने ईमेल हटाएं</string>
     <string name="inbox_tools">फ़िल्टर और त्वरित कार्रवाई</string>
     <string name="inbox_tools_subtitle">इनबॉक्स हेडर में फ़िल्टर और त्वरित कार्रवाई बटन दिखाएं</string>
+    <string name="settings_default_sender">डिफ़ॉल्ट प्रेषक</string>
+    <string name="default_sender_description">नए संदेश इसी पते से भेजे जाते हैं। उत्तर उसी पते का उपयोग करते हैं जिस पर संदेश आया था।</string>
+    <string name="default_sender_no_addresses">कोई अन्य पता नहीं</string>
+    <string name="default_sender_primary_note">आपका प्राथमिक पता</string>
 </resources>

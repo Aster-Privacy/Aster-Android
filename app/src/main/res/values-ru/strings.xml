@@ -3498,4 +3498,8 @@
     <string name="delete_emails_older_than_30_days">Удалить письма старше 30 дней</string>
     <string name="inbox_tools">Фильтры и быстрые действия</string>
     <string name="inbox_tools_subtitle">Показывает кнопки фильтров и быстрых действий в заголовке входящих</string>
+    <string name="settings_default_sender">Отправитель по умолчанию</string>
+    <string name="default_sender_description">Новые письма отправляются с этого адреса. Ответы используют адрес, на который пришло письмо.</string>
+    <string name="default_sender_no_addresses">Других адресов нет</string>
+    <string name="default_sender_primary_note">Ваш основной адрес</string>
 </resources>

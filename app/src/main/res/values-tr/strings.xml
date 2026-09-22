@@ -3456,4 +3456,8 @@
     <string name="delete_emails_older_than_30_days">30 günden eski e-postaları sil</string>
     <string name="inbox_tools">Filtreler ve hızlı işlemler</string>
     <string name="inbox_tools_subtitle">Gelen kutusu başlığında filtre ve hızlı işlem düğmelerini gösterir</string>
+    <string name="settings_default_sender">Varsayılan gönderen</string>
+    <string name="default_sender_description">Yeni iletiler bu adresten gönderilir. Yanıtlar, iletinin gönderildiği adresi kullanır.</string>
+    <string name="default_sender_no_addresses">Başka adres yok</string>
+    <string name="default_sender_primary_note">Birincil adresiniz</string>
 </resources>
