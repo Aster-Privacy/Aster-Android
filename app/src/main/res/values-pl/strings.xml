@@ -1375,7 +1375,7 @@
     <string name="totp_passkey_subtitle">Potwierdź kluczem dostępu lub kluczem bezpieczeństwa zapisanym dla tego konta</string>
     <string name="totp_passkey_button">Kontynuuj kluczem dostępu</string>
     <string name="totp_use_passkey">Użyj klucza dostępu</string>
-    <string name="totp_backup_code_hint">Kod zapasowy ma 8 znaków i pochodzi z konfiguracji aplikacji uwierzytelniającej. Kod odzyskiwania zaczynający się od ASTER przywraca skrzynkę i nie działa w tym miejscu.</string>
+    <string name="totp_backup_code_hint">Użyj jednego z kodów zapasowych zapisanych podczas konfiguracji aplikacji uwierzytelniającej. Kod odzyskiwania zaczynający się od ASTER przywraca skrzynkę i nie działa w tym miejscu.</string>
     <string name="totp_trust_device">Zaufaj temu urządzeniu przez 30 dni</string>
     <string name="failed_block_sender">Nie można zablokować nadawcy</string>
     <string name="failed_unblock_sender">Nie można odblokować nadawcy</string>

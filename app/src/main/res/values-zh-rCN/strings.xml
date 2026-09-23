@@ -1367,7 +1367,7 @@
     <string name="totp_passkey_subtitle">使用你为此账户保存的通行密钥或安全密钥进行确认</string>
     <string name="totp_passkey_button">使用通行密钥继续</string>
     <string name="totp_use_passkey">使用通行密钥</string>
-    <string name="totp_backup_code_hint">备用代码为 8 个字符，来自你设置验证器应用时获得的列表。以 ASTER 开头的恢复代码用于恢复邮箱，在这里无法使用。</string>
+    <string name="totp_backup_code_hint">请使用你设置验证器应用时保存的任一备用代码。以 ASTER 开头的恢复代码用于恢复邮箱，在这里无法使用。</string>
     <string name="totp_trust_device">信任此设备 30 天</string>
     <string name="failed_block_sender">无法屏蔽发件人</string>
     <string name="failed_unblock_sender">无法解除屏蔽发件人</string>

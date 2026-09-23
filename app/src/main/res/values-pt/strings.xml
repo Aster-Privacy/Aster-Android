@@ -1369,7 +1369,7 @@
     <string name="totp_passkey_subtitle">Confirme com a chave de acesso ou chave de segurança que você salvou para esta conta</string>
     <string name="totp_passkey_button">Continuar com uma chave de acesso</string>
     <string name="totp_use_passkey">Usar uma chave de acesso</string>
-    <string name="totp_backup_code_hint">Um código de backup tem 8 caracteres e veio da configuração do seu app autenticador. Um código de recuperação que começa com ASTER restaura sua caixa de entrada e não funciona aqui.</string>
+    <string name="totp_backup_code_hint">Use um dos códigos de backup que você salvou ao configurar seu app autenticador. Um código de recuperação que começa com ASTER restaura sua caixa de entrada e não funciona aqui.</string>
     <string name="totp_trust_device">Confiar neste dispositivo por 30 dias</string>
     <string name="failed_block_sender">Não foi possível bloquear o remetente</string>
     <string name="failed_unblock_sender">Não foi possível desbloquear o remetente</string>

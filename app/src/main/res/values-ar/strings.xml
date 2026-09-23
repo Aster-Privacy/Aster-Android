@@ -1381,7 +1381,7 @@
     <string name="totp_passkey_subtitle">أكد باستخدام مفتاح المرور أو مفتاح الأمان المحفوظ لهذا الحساب</string>
     <string name="totp_passkey_button">المتابعة بمفتاح مرور</string>
     <string name="totp_use_passkey">استخدام مفتاح مرور</string>
-    <string name="totp_backup_code_hint">يتكون رمز النسخ الاحتياطي من 8 أحرف وتم إنشاؤه عند إعداد تطبيق المصادقة. أما رمز الاسترداد الذي يبدأ بـ ASTER فيستعيد صندوق بريدك ولا يصلح هنا.</string>
+    <string name="totp_backup_code_hint">استخدم أحد رموز النسخ الاحتياطي التي حفظتها عند إعداد تطبيق المصادقة. أما رمز الاسترداد الذي يبدأ بـ ASTER فيستعيد صندوق بريدك ولا يصلح هنا.</string>
     <string name="totp_trust_device">الوثوق بهذا الجهاز لمدة 30 يومًا</string>
     <string name="failed_block_sender">تعذر حظر المرسل</string>
     <string name="failed_unblock_sender">تعذر إلغاء حظر المرسل</string>

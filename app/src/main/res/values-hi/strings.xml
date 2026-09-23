@@ -1051,7 +1051,7 @@
     <string name="totp_passkey_subtitle">इस खाते के लिए सहेजी गई पासकी या सुरक्षा कुंजी से पुष्टि करें</string>
     <string name="totp_passkey_button">पासकी से जारी रखें</string>
     <string name="totp_use_passkey">पासकी का उपयोग करें</string>
-    <string name="totp_backup_code_hint">बैकअप कोड में 8 वर्ण होते हैं और यह आपके प्रमाणक ऐप सेटअप से मिला था। ASTER से शुरू होने वाला रिकवरी कोड आपका मेलबॉक्स बहाल करता है और यहाँ काम नहीं करता।</string>
+    <string name="totp_backup_code_hint">प्रमाणक ऐप सेट अप करते समय सहेजे गए बैकअप कोड में से कोई एक इस्तेमाल करें। ASTER से शुरू होने वाला रिकवरी कोड आपका मेलबॉक्स बहाल करता है और यहाँ काम नहीं करता।</string>
     <string name="totp_trust_device">इस डिवाइस पर 30 दिन तक भरोसा करें</string>
     <string name="sessions">सत्र</string>
     <string name="no_active_sessions">कोई सक्रिय सत्र नहीं</string>

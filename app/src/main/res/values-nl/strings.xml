@@ -1369,7 +1369,7 @@
     <string name="totp_passkey_subtitle">Bevestig met de passkey of beveiligingssleutel die je voor dit account hebt opgeslagen</string>
     <string name="totp_passkey_button">Doorgaan met een passkey</string>
     <string name="totp_use_passkey">Een passkey gebruiken</string>
-    <string name="totp_backup_code_hint">Een back-upcode heeft 8 tekens en komt uit de installatie van je authenticator-app. Een herstelcode die met ASTER begint, herstelt je mailbox en werkt hier niet.</string>
+    <string name="totp_backup_code_hint">Gebruik een van de back-upcodes die je hebt bewaard bij het instellen van je authenticator-app. Een herstelcode die met ASTER begint, herstelt je mailbox en werkt hier niet.</string>
     <string name="totp_trust_device">Dit apparaat 30 dagen vertrouwen</string>
     <string name="failed_block_sender">Kan afzender niet blokkeren</string>
     <string name="failed_unblock_sender">Kan afzender niet deblokkeren</string>

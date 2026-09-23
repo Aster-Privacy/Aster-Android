@@ -1375,7 +1375,7 @@
     <string name="totp_passkey_subtitle">Подтвердите ключом доступа или аппаратным ключом, сохранённым для этого аккаунта</string>
     <string name="totp_passkey_button">Продолжить с ключом доступа</string>
     <string name="totp_use_passkey">Использовать ключ доступа</string>
-    <string name="totp_backup_code_hint">Резервный код состоит из 8 символов и выдаётся при настройке приложения-аутентификатора. Код восстановления, начинающийся с ASTER, восстанавливает почтовый ящик и здесь не работает.</string>
+    <string name="totp_backup_code_hint">Введите один из резервных кодов, сохранённых при настройке приложения-аутентификатора. Код восстановления, начинающийся с ASTER, восстанавливает почтовый ящик и здесь не работает.</string>
     <string name="totp_trust_device">Доверять этому устройству 30 дней</string>
     <string name="failed_block_sender">Не удалось заблокировать отправителя</string>
     <string name="failed_unblock_sender">Не удалось разблокировать отправителя</string>

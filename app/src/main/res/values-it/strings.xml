@@ -1369,7 +1369,7 @@
     <string name="totp_passkey_subtitle">Conferma con la passkey o la chiave di sicurezza salvata per questo account</string>
     <string name="totp_passkey_button">Continua con una passkey</string>
     <string name="totp_use_passkey">Usa una passkey</string>
-    <string name="totp_backup_code_hint">Un codice di backup ha 8 caratteri e proviene dalla configurazione della tua app di autenticazione. Un codice di recupero che inizia con ASTER ripristina la casella e non funziona qui.</string>
+    <string name="totp_backup_code_hint">Usa uno dei codici di backup che hai salvato durante la configurazione della tua app di autenticazione. Un codice di recupero che inizia con ASTER ripristina la casella e non funziona qui.</string>
     <string name="totp_trust_device">Considera attendibile questo dispositivo per 30 giorni</string>
     <string name="failed_block_sender">Impossibile bloccare il mittente</string>
     <string name="failed_unblock_sender">Impossibile sbloccare il mittente</string>

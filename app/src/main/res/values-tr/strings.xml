@@ -1369,7 +1369,7 @@
     <string name="totp_passkey_subtitle">Bu hesap için kaydettiğin geçiş anahtarı veya güvenlik anahtarıyla onayla</string>
     <string name="totp_passkey_button">Geçiş anahtarıyla devam et</string>
     <string name="totp_use_passkey">Geçiş anahtarı kullan</string>
-    <string name="totp_backup_code_hint">Yedek kod 8 karakterlidir ve kimlik doğrulama uygulaması kurulumundan gelir. ASTER ile başlayan kurtarma kodu posta kutunu geri yükler, burada çalışmaz.</string>
+    <string name="totp_backup_code_hint">Kimlik doğrulama uygulamasını kurarken kaydettiğin yedek kodlardan birini kullan. ASTER ile başlayan kurtarma kodu posta kutunu geri yükler, burada çalışmaz.</string>
     <string name="totp_trust_device">Bu cihaza 30 gün boyunca güven</string>
     <string name="failed_block_sender">Gönderici engellenemedi</string>
     <string name="failed_unblock_sender">Göndericinin engeli kaldırılamadı</string>

@@ -1189,7 +1189,7 @@
     <string name="totp_passkey_subtitle">Confirm with the passkey or security key you saved for this account</string>
     <string name="totp_passkey_button">Continue with a passkey</string>
     <string name="totp_use_passkey">Use a passkey</string>
-    <string name="totp_backup_code_hint">A backup code has 8 characters and came with your authenticator app setup. A recovery code that starts with ASTER restores your mailbox and does not work here.</string>
+    <string name="totp_backup_code_hint">Use one of the backup codes you saved when you set up your authenticator app. A recovery code that starts with ASTER restores your mailbox and does not work here.</string>
     <string name="totp_trust_device">Trust this device for 30 days</string>
 
     <!-- Sessions -->

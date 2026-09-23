@@ -1370,7 +1370,7 @@
     <string name="totp_passkey_subtitle">Confirma con la clave de acceso o la llave de seguridad que guardaste para esta cuenta</string>
     <string name="totp_passkey_button">Continuar con una clave de acceso</string>
     <string name="totp_use_passkey">Usar una clave de acceso</string>
-    <string name="totp_backup_code_hint">Un código de respaldo tiene 8 caracteres y viene de la configuración de tu app de autenticación. Un código de recuperación que empieza por ASTER restaura tu buzón y no sirve aquí.</string>
+    <string name="totp_backup_code_hint">Usa uno de los códigos de respaldo que guardaste al configurar tu app de autenticación. Un código de recuperación que empieza por ASTER restaura tu buzón y no sirve aquí.</string>
     <string name="totp_trust_device">Confiar en este dispositivo durante 30 días</string>
     <string name="failed_block_sender">No se pudo bloquear al remitente</string>
     <string name="failed_unblock_sender">No se pudo desbloquear al remitente</string>
