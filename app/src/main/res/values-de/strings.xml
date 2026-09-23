@@ -3472,9 +3472,6 @@
     <string name="default_sender_description">Neue Nachrichten werden von dieser Adresse gesendet. Antworten verwenden die Adresse, an die die Nachricht gesendet wurde.</string>
     <string name="default_sender_no_addresses">Keine weiteren Adressen</string>
     <string name="default_sender_primary_note">Deine Hauptadresse</string>
-    <string name="sign_in_with_passkey">Mit Passkey anmelden</string>
-    <string name="error_passkey_sign_in_unavailable">Auf diesem Gerät ist kein Passkey für Aster Mail verfügbar. Melde dich mit deinem Passwort an und füge dann in den Einstellungen einen Passkey hinzu.</string>
-    <string name="error_passkey_needs_password">Dieser Passkey kann dein Postfach noch nicht allein entsperren. Melde dich mit deinem Passwort an.</string>
     <string name="passkey_add">Passkey hinzufügen</string>
     <string name="passkey_add_subtitle">Mit Fingerabdruck, Gesicht oder Displaysperre anmelden</string>
     <string name="passkey_adding">Passkey wird hinzugefügt …</string>
@@ -3485,6 +3482,5 @@
     <string name="passkey_already_registered">Dieser Passkey ist bereits in deinem Konto gespeichert.</string>
     <string name="passkey_create_unavailable">Dieses Gerät kann keine Passkeys speichern. Prüfe, ob die Displaysperre aktiv und ein Passwortmanager eingerichtet ist.</string>
     <string name="passkey_create_failed">Der Passkey konnte nicht hinzugefügt werden. Versuche es erneut.</string>
-    <string name="error_passkey_not_recognized">Dieser Passkey ist mit keinem Aster Mail-Konto verknüpft. Melde dich mit deinem Passwort an und füge dann in den Einstellungen einen Passkey hinzu.</string>
     <string name="error_passkey_timed_out">Die Passkey-Anfrage ist abgelaufen. Versuche es erneut.</string>
 </resources>

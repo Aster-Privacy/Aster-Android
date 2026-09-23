@@ -3555,9 +3555,6 @@
     <string name="default_sender_description">تُرسَل الرسائل الجديدة من هذا العنوان. وتستخدم الردود العنوان الذي أُرسلت إليه الرسالة.</string>
     <string name="default_sender_no_addresses">لا توجد عناوين أخرى</string>
     <string name="default_sender_primary_note">عنوانك الأساسي</string>
-    <string name="sign_in_with_passkey">تسجيل الدخول باستخدام مفتاح مرور</string>
-    <string name="error_passkey_sign_in_unavailable">لا يتوفر مفتاح مرور لـ Aster Mail على هذا الجهاز. سجّل الدخول بكلمة المرور، ثم أضف مفتاح مرور من الإعدادات.</string>
-    <string name="error_passkey_needs_password">لا يمكن لمفتاح المرور هذا فتح صندوق بريدك بمفرده بعد. سجّل الدخول بكلمة المرور.</string>
     <string name="passkey_add">إضافة مفتاح مرور</string>
     <string name="passkey_add_subtitle">سجّل الدخول ببصمة الإصبع أو الوجه أو قفل الشاشة</string>
     <string name="passkey_adding">جارٍ إضافة مفتاح المرور…</string>
@@ -3568,6 +3565,5 @@
     <string name="passkey_already_registered">مفتاح المرور هذا محفوظ بالفعل في حسابك.</string>
     <string name="passkey_create_unavailable">لا يمكن لهذا الجهاز حفظ مفاتيح المرور. تأكد من تفعيل قفل الشاشة وإعداد مدير كلمات مرور.</string>
     <string name="passkey_create_failed">تعذّرت إضافة مفتاح المرور. حاول مرة أخرى.</string>
-    <string name="error_passkey_not_recognized">مفتاح المرور هذا غير مرتبط بأي حساب في Aster Mail. سجّل الدخول بكلمة السر، ثم أضف مفتاح مرور من الإعدادات.</string>
     <string name="error_passkey_timed_out">انتهت مهلة طلب مفتاح المرور. حاول مرة أخرى.</string>
 </resources>

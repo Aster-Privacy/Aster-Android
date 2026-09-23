@@ -3471,9 +3471,6 @@
     <string name="default_sender_description">As novas mensagens são enviadas deste endereço. As respostas usam o endereço para o qual a mensagem foi enviada.</string>
     <string name="default_sender_no_addresses">Sem outros endereços</string>
     <string name="default_sender_primary_note">O seu endereço principal</string>
-    <string name="sign_in_with_passkey">Iniciar sessão com uma chave de acesso</string>
-    <string name="error_passkey_sign_in_unavailable">Nenhuma chave de acesso do Aster Mail está disponível neste dispositivo. Inicie sessão com sua senha e adicione uma chave de acesso em Configurações.</string>
-    <string name="error_passkey_needs_password">Esta chave de acesso ainda não consegue desbloquear sua caixa de correio sozinha. Inicie sessão com sua senha.</string>
     <string name="passkey_add">Adicionar uma chave de acesso</string>
     <string name="passkey_add_subtitle">Inicie sessão com sua impressão digital, rosto ou bloqueio de tela</string>
     <string name="passkey_adding">Adicionando chave de acesso…</string>
@@ -3484,6 +3481,5 @@
     <string name="passkey_already_registered">Esta chave de acesso já está salva na sua conta.</string>
     <string name="passkey_create_unavailable">Este dispositivo não pode salvar chaves de acesso. Verifique se o bloqueio de tela está ativado e se há um gerenciador de senhas configurado.</string>
     <string name="passkey_create_failed">Não foi possível adicionar a chave de acesso. Tente novamente.</string>
-    <string name="error_passkey_not_recognized">Esta chave de acesso não está vinculada a uma conta do Aster Mail. Entre com sua senha e adicione uma chave de acesso em Ajustes.</string>
     <string name="error_passkey_timed_out">A solicitação da chave de acesso expirou. Tente novamente.</string>
 </resources>

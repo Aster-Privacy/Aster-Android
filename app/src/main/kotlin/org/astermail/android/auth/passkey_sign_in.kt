@@ -26,9 +26,7 @@ import androidx.credentials.CreatePublicKeyCredentialRequest
 import androidx.credentials.CreatePublicKeyCredentialResponse
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
-import androidx.credentials.GetPasswordOption
 import androidx.credentials.GetPublicKeyCredentialOption
-import androidx.credentials.PasswordCredential
 import androidx.credentials.PublicKeyCredential
 import androidx.credentials.exceptions.CreateCredentialCancellationException
 import androidx.credentials.exceptions.CreateCredentialException
@@ -47,9 +45,6 @@ import androidx.credentials.exceptions.publickeycredential.GetPublicKeyCredentia
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
-import org.astermail.android.api.auth.PasskeyLoginAssertionData
-import org.astermail.android.api.auth.PasskeyLoginOptions
-import org.astermail.android.api.auth.PasskeyLoginVerifyRequest
 import org.astermail.android.api.auth.WebAuthnAssertionData
 import org.astermail.android.api.auth.WebAuthnAssertionOptions
 import org.astermail.android.api.auth.WebAuthnAssertionVerifyRequest
@@ -69,8 +64,6 @@ class PasskeyUnavailableException(cause: Throwable? = null) : Exception(cause)
 class PasskeyFailedException(cause: Throwable? = null) : Exception(cause)
 
 class PasskeyAlreadyRegisteredException(cause: Throwable? = null) : Exception(cause)
-
-class PasskeyVaultNeedsPasswordException : Exception()
 
 private const val prf_eval_label = "aster-vault-prf-eval-v1"
 private const val prf_key_salt = "aster-vault-passphrase-key-v1"
@@ -191,48 +184,6 @@ fun assertion_verify_request(
         trust_device = trust_device,
         device_label = device_label,
         remember_me = challenge.remember_me,
-    )
-}
-
-fun passkey_login_request_json(options: PasskeyLoginOptions): String =
-    JSONObject()
-        .put("challenge", options.challenge)
-        .put("timeout", options.timeout)
-        .put("rpId", options.rpId)
-        .put("allowCredentials", JSONArray())
-        .put("userVerification", options.userVerification)
-        .put("extensions", prf_extension())
-        .toString()
-
-fun passkey_login_verify_request(
-    response_json: String,
-    options: PasskeyLoginOptions,
-    device_label: String?,
-): PasskeyLoginVerifyRequest {
-    val parsed = JSONObject(response_json)
-    val inner = parsed.optJSONObject("response")
-        ?: throw PasskeyFailedException()
-    val raw_id = parsed.optString("rawId").ifBlank { parsed.optString("id") }
-    val credential_id = parsed.optString("id").ifBlank { raw_id }
-    val authenticator_data = inner.optString("authenticatorData")
-    val client_data_json = inner.optString("clientDataJSON")
-    val signature = inner.optString("signature")
-    val user_handle = inner.optString("userHandle").takeIf { it.isNotBlank() && it != "null" }
-    if (raw_id.isBlank() || authenticator_data.isBlank() || client_data_json.isBlank() || signature.isBlank()) {
-        throw PasskeyFailedException()
-    }
-    return PasskeyLoginVerifyRequest(
-        id = credential_id,
-        raw_id = raw_id,
-        response = PasskeyLoginAssertionData(
-            authenticator_data = authenticator_data,
-            client_data_json = client_data_json,
-            signature = signature,
-            user_handle = user_handle,
-        ),
-        challenge_token = options.challenge_token,
-        remember_me = true,
-        device_label = device_label,
     )
 }
 
@@ -360,29 +311,6 @@ suspend fun request_passkey_json(context: Context, request_json: String): String
     val public_key = credential as? PublicKeyCredential
         ?: throw PasskeyFailedException()
     return public_key.authenticationResponseJson
-}
-
-sealed interface SignInCredential {
-    data class Passkey(val response_json: String) : SignInCredential
-    class Password(val id: String, val password: String) : SignInCredential
-}
-
-suspend fun request_sign_in_credential(context: Context, request_json: String): SignInCredential {
-    val request = GetCredentialRequest(
-        listOf(GetPublicKeyCredentialOption(request_json), GetPasswordOption()),
-    )
-    val credential = try {
-        CredentialManager.create(context).getCredential(context, request).credential
-    } catch (failure: GetCredentialException) {
-        throw map_get_credential_failure(failure)
-    } catch (failure: NoClassDefFoundError) {
-        throw map_get_credential_failure(failure)
-    }
-    return when (credential) {
-        is PublicKeyCredential -> SignInCredential.Passkey(credential.authenticationResponseJson)
-        is PasswordCredential -> SignInCredential.Password(credential.id, credential.password)
-        else -> throw PasskeyFailedException()
-    }
 }
 
 fun map_create_credential_failure(failure: Throwable): Exception = when (failure) {

@@ -3516,9 +3516,6 @@
     <string name="default_sender_description">New messages start from this address. Replies use the address the message was sent to.</string>
     <string name="default_sender_no_addresses">No other addresses</string>
     <string name="default_sender_primary_note">Your primary address</string>
-    <string name="sign_in_with_passkey">Sign in with a passkey</string>
-    <string name="error_passkey_sign_in_unavailable">No Aster Mail passkey is available on this device. Sign in with your password, then add a passkey in Settings.</string>
-    <string name="error_passkey_needs_password">This passkey can\'t unlock your mailbox on its own yet. Sign in with your password.</string>
     <string name="passkey_add">Add a passkey</string>
     <string name="passkey_add_subtitle">Sign in with your fingerprint, face, or screen lock</string>
     <string name="passkey_adding">Adding passkey…</string>
@@ -3529,6 +3526,5 @@
     <string name="passkey_already_registered">This passkey is already saved to your account.</string>
     <string name="passkey_create_unavailable">This device can\'t save passkeys. Make sure screen lock is on and a password manager is set up.</string>
     <string name="passkey_create_failed">Couldn\'t add the passkey. Try again.</string>
-    <string name="error_passkey_not_recognized">This passkey isn\'t linked to an Aster Mail account. Sign in with your password, then add a passkey in Settings.</string>
     <string name="error_passkey_timed_out">The passkey request timed out. Try again.</string>
 </resources>
