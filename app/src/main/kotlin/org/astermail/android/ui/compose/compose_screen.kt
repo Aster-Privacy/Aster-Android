@@ -508,6 +508,8 @@ fun ComposeScreen(
         primary_sender_email,
         alias_display_name_map,
         settings_state.ghost_aliases,
+        settings_state.aliases,
+        settings_state.custom_domain_addresses,
     ) {
         compose_identity_snapshot(
             user_email = user_email,
@@ -516,6 +518,7 @@ fun ComposeScreen(
             primary_sender_email = primary_sender_email,
             alias_display_names = alias_display_name_map,
             ghost_addresses = settings_state.ghost_aliases.map { it.address },
+            alias_ids = alias_id_map(settings_state),
         )
     }
     LaunchedEffect(live_identity) {
@@ -774,6 +777,7 @@ fun ComposeScreen(
                 .firstOrNull { it.address == from_alias }?.id
                 ?: settings_state.custom_domain_addresses
                     .firstOrNull { it.address == from_alias }?.id
+                ?: seed_identity.alias_ids[from_alias]
             settings_vm.signature_for(preload_alias_id)
         }
     }
@@ -839,6 +843,7 @@ fun ComposeScreen(
     val current_alias_id = remember(from_alias, settings_state.aliases, settings_state.custom_domain_addresses) {
         settings_state.aliases.firstOrNull { it.address == from_alias }?.id
             ?: settings_state.custom_domain_addresses.firstOrNull { it.address == from_alias }?.id
+            ?: seed_identity.alias_ids[from_alias]
     }
     val signature_scope_allowed = when (mode) {
         "reply", "reply_all" -> settings_state.preferences?.signature_in_replies != false
@@ -872,7 +877,7 @@ fun ComposeScreen(
         applied_signature = resolved
         signature_applied = true
     }
-    LaunchedEffect(current_alias_id, signature_applied, auto_signature_enabled) {
+    LaunchedEffect(current_alias_id, signature_applied, auto_signature_enabled, signatures_list) {
         if (!signature_applied) return@LaunchedEffect
         if (mode == "draft") return@LaunchedEffect
         if (manual_signature_id != "auto") return@LaunchedEffect
@@ -2553,7 +2558,7 @@ fun ComposeScreen(
                         }
                     },
                     update = { et ->
-                        val target_min = ((if (quoted_html != null) 72 else 200) * et.resources.displayMetrics.density).toInt()
+                        val target_min = (compose_body_min_height_dp(signature_html.isNotBlank(), quoted_html != null) * et.resources.displayMetrics.density).toInt()
                         if (et.minHeight != target_min) et.minHeight = target_min
                         val current = et.text?.toString().orEmpty()
                         if (current != body) {
@@ -2567,7 +2572,7 @@ fun ComposeScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .defaultMinSize(minHeight = if (quoted_html != null) 72.dp else 200.dp),
+                        .defaultMinSize(minHeight = compose_body_min_height_dp(signature_html.isNotBlank(), quoted_html != null).dp),
                 )
 
             }
@@ -2618,10 +2623,11 @@ fun ComposeScreen(
                             .testTag("compose_quote_toggle"),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            text = "•••",
-                            color = colors.text_muted,
-                            fontSize = 15.sp,
+                        Icon(
+                            imageVector = TablerIcons.Dots,
+                            contentDescription = null,
+                            tint = colors.text_muted,
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                     AnimatedVisibility(
@@ -4435,8 +4441,74 @@ private fun TemplatePickerSheet(
     }
 }
 
+internal fun compose_body_min_height_dp(has_html_signature: Boolean, has_quote: Boolean): Int = when {
+    has_html_signature -> 48
+    has_quote -> 72
+    else -> 200
+}
+
+internal fun signature_html_has_images(html: String): Boolean =
+    html.contains("<img", ignoreCase = true) || html.contains("background-image", ignoreCase = true)
+
 @Composable
 internal fun signature_preview_card(html: String) {
+    if (signature_html_has_images(html)) {
+        signature_web_card(html)
+    } else {
+        signature_native_block(html)
+    }
+}
+
+@Composable
+private fun signature_native_block(html: String) {
+    val colors = AsterMaterial.colors
+    val text_color_argb = colors.text_primary.toArgb()
+    val link_color_argb = colors.accent_blue.toArgb()
+    val rendered = remember(html) {
+        val safe_html = org.astermail.android.ui.mail.EmailHtmlSanitizer.sanitize(
+            html,
+            org.astermail.android.ui.mail.EmailHtmlSanitizer.SanitizeOptions(
+                clean_tracking_links = false,
+                remove_tracking_pixels = false,
+                block_remote_fonts = false,
+                block_remote_css = false,
+            ),
+        )
+        val spanned = androidx.core.text.HtmlCompat.fromHtml(
+            safe_html,
+            androidx.core.text.HtmlCompat.FROM_HTML_MODE_COMPACT,
+        )
+        var end = spanned.length
+        while (end > 0 && spanned[end - 1].isWhitespace()) end--
+        spanned.subSequence(0, end)
+    }
+    androidx.compose.ui.viewinterop.AndroidView(
+        factory = { ctx ->
+            android.widget.TextView(ctx).apply {
+                textSize = 16f
+                includeFontPadding = false
+                setLineSpacing(0f, 1f)
+                isClickable = false
+                isFocusable = false
+            }
+        },
+        update = { tv ->
+            tv.setTextColor(text_color_argb)
+            tv.setLinkTextColor(link_color_argb)
+            if (tv.text?.toString() != rendered.toString() || tv.tag != html) {
+                tv.tag = html
+                tv.text = rendered
+            }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.lg)
+            .testTag("compose_signature_block"),
+    )
+}
+
+@Composable
+private fun signature_web_card(html: String) {
     val colors = AsterMaterial.colors
     Column(
         modifier = Modifier

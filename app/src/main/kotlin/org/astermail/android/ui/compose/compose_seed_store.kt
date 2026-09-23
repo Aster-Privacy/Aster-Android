@@ -96,12 +96,15 @@ object compose_seed_store {
         cached.ghost_addresses.forEach { if (it !in ghosts) ghosts.add(it) }
         val names = cached.alias_display_names.toMutableMap()
         names.putAll(fresh.alias_display_names)
+        val ids = cached.alias_ids.toMutableMap()
+        ids.putAll(fresh.alias_ids)
         return fresh.copy(
             display_name = fresh.display_name.ifBlank { cached.display_name },
             alias_options = options.toList(),
             primary_sender_email = fresh.primary_sender_email.ifBlank { cached.primary_sender_email },
             alias_display_names = names.toMap(),
             ghost_addresses = ghosts.toList(),
+            alias_ids = ids.toMap(),
         )
     }
 
@@ -130,6 +133,8 @@ object compose_seed_store {
     private fun encode_identity(snapshot: compose_identity_snapshot): String {
         val names = JSONObject()
         snapshot.alias_display_names.forEach { (address, name) -> names.put(address, name) }
+        val ids = JSONObject()
+        snapshot.alias_ids.forEach { (address, id) -> ids.put(address, id) }
         return JSONObject()
             .put("user_email", snapshot.user_email)
             .put("display_name", snapshot.display_name)
@@ -137,29 +142,33 @@ object compose_seed_store {
             .put("alias_options", JSONArray(snapshot.alias_options))
             .put("ghost_addresses", JSONArray(snapshot.ghost_addresses))
             .put("alias_display_names", names)
+            .put("alias_ids", ids)
             .toString()
     }
 
     private fun decode_identity(payload: String): compose_identity_snapshot {
         val root = JSONObject(payload)
-        val names = root.optJSONObject("alias_display_names")
-        val name_map = mutableMapOf<String, String>()
-        if (names != null) {
-            val keys = names.keys()
-            while (keys.hasNext()) {
-                val key = keys.next()
-                val value = names.optString(key).orEmpty()
-                if (key.isNotBlank() && value.isNotBlank()) name_map[key] = value
-            }
-        }
         return compose_identity_snapshot(
             user_email = root.optString("user_email").orEmpty(),
             display_name = root.optString("display_name").orEmpty(),
             alias_options = string_list(root.optJSONArray("alias_options")),
             primary_sender_email = root.optString("primary_sender_email").orEmpty(),
-            alias_display_names = name_map.toMap(),
+            alias_display_names = string_map(root.optJSONObject("alias_display_names")),
             ghost_addresses = string_list(root.optJSONArray("ghost_addresses")),
+            alias_ids = string_map(root.optJSONObject("alias_ids")),
         )
+    }
+
+    private fun string_map(obj: JSONObject?): Map<String, String> {
+        if (obj == null) return emptyMap()
+        val values = mutableMapOf<String, String>()
+        val keys = obj.keys()
+        while (keys.hasNext()) {
+            val key = keys.next()
+            val value = obj.optString(key).orEmpty()
+            if (key.isNotBlank() && value.isNotBlank()) values[key] = value
+        }
+        return values.toMap()
     }
 
     private fun string_list(array: JSONArray?): List<String> {
@@ -239,7 +248,15 @@ fun identity_snapshot_from(
         ),
         alias_display_names = names.toMap(),
         ghost_addresses = state.ghost_aliases.map { it.address }.filter { it.isNotBlank() },
+        alias_ids = alias_id_map(state),
     )
+}
+
+fun alias_id_map(state: SettingsUiState): Map<String, String> {
+    val ids = mutableMapOf<String, String>()
+    state.custom_domain_addresses.forEach { if (it.address.isNotBlank() && it.id.isNotBlank()) ids[it.address] = it.id }
+    state.aliases.forEach { if (it.address.isNotBlank() && it.id.isNotBlank()) ids[it.address] = it.id }
+    return ids.toMap()
 }
 
 fun publish_compose_identity_seed(

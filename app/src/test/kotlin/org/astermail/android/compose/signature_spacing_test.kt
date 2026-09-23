@@ -41,16 +41,16 @@ class signature_spacing_test {
     }
 
     @Test
-    fun `new message leaves one empty line above the signature`() {
+    fun `new message leaves the caret line and one blank line above the signature`() {
         val body = seeded_body_with_signature("", signature, "")
-        assertEquals(1, blank_lines_before_signature(body))
-        assertEquals("\n--\nAdam\nAster", body)
+        assertEquals(2, blank_lines_before_signature(body))
+        assertEquals("\n\n--\nAdam\nAster", body)
     }
 
     @Test
     fun `watermark does not add lines above the signature`() {
         val body = seeded_body_with_signature("", signature, watermark)
-        assertEquals(1, blank_lines_before_signature(body))
+        assertEquals(2, blank_lines_before_signature(body))
         assertTrue(body.endsWith(watermark))
     }
 
@@ -65,7 +65,7 @@ class signature_spacing_test {
     fun `signature content with leading newlines is trimmed`() {
         val padded = plain_signature_with_separator("\n\n\nAdam\n", true)
         assertEquals("--\nAdam", padded)
-        assertEquals(1, seeded_body_with_signature("", padded, "").takeWhile { it == '\n' }.length)
+        assertEquals(2, seeded_body_with_signature("", padded, "").takeWhile { it == '\n' }.length)
     }
 
     @Test
@@ -82,9 +82,9 @@ class signature_spacing_test {
     }
 
     @Test
-    fun `switching sender on an empty body adds one empty line`() {
-        assertEquals("\n--\nAdam\nAster", append_signature("\n", signature))
-        assertEquals("\n--\nAdam\nAster", append_signature("", signature))
+    fun `switching sender on an empty body keeps the caret line and one blank line`() {
+        assertEquals("\n\n--\nAdam\nAster", append_signature("\n", signature))
+        assertEquals("\n\n--\nAdam\nAster", append_signature("", signature))
     }
 
     @Test

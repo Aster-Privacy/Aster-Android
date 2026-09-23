@@ -42,12 +42,12 @@ fun plain_signature_with_separator(content: String, preference: Boolean?): Strin
 
 fun seeded_body_with_signature(prefix: String, signature: String, watermark: String): String = when {
     signature.isBlank() -> prefix + watermark
-    prefix.isBlank() -> "\n" + signature + watermark
+    prefix.isBlank() -> "\n\n" + signature + watermark
     else -> prefix + signature + watermark
 }
 
 fun append_signature(core: String, signature: String): String =
-    if (core.isBlank()) "\n" + signature else core + "\n\n" + signature
+    if (core.isBlank()) "\n\n" + signature else core + "\n\n" + signature
 
 fun caret_starts_above_signature(body: String): Boolean =
     body.startsWith("\n") && body.length > 1
