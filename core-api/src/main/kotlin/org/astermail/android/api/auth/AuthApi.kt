@@ -239,6 +239,7 @@ data class UserInfo(
     val created_at: String? = null,
     val identity_key: String? = null,
     val lockdown_mode_enabled: Boolean = false,
+    val pgp_rekey_required: Boolean = false,
 )
 
 @Serializable

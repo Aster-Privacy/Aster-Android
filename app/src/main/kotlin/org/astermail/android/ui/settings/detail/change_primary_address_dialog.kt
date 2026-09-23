@@ -517,6 +517,7 @@ internal fun change_primary_address_dialog(
                 PrimaryAddressStep.PASSWORD -> {
                     AsterDialogOutlineButton(
                         label = stringResource(R.string.back),
+                        enabled = !state.busy,
                         onClick = vm::back_to_review,
                     )
                     AsterDialogPrimaryButton(

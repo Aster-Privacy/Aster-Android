@@ -31,6 +31,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -500,8 +501,13 @@ class PrimaryAddressViewModel @Inject constructor(
                     }
                 }
                 follow_up.exceptionOrNull()?.let { throwable ->
-                    if (throwable is CancellationException) throw throwable
+                    if (throwable is CancellationException &&
+                        throwable !is TimeoutCancellationException
+                    ) {
+                        throw throwable
+                    }
                 }
+                auth_repository.refresh_session_snapshot()
                 _state.value = _state.value.copy(
                     busy = false,
                     status = if (follow_up.getOrDefault(false)) {

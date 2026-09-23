@@ -711,6 +711,10 @@ class AuthRepository @Inject constructor(
         RegisterSuccess(recovery_codes = recovery_codes, recovery_backup_saved = recovery_backup_saved)
     }
 
+    fun refresh_session_snapshot() {
+        runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
+    }
+
     private fun save_session_snapshot(account_id: String) {
         runCatching {
             session_snapshot_store.save(
@@ -1029,7 +1033,14 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun refresh_profile(): Result<Unit> = runCatching {
-        absorb_profile(auth_api.me())
+        val profile = auth_api.me()
+        absorb_profile(profile)
+        if (profile.pgp_rekey_required) {
+            val email = session_key_store.get_user_email() ?: profile.email
+            if (!email.isNullOrBlank()) {
+                add_address_to_identity_key(email, profile.display_name.orEmpty())
+            }
+        }
     }
 
     fun absorb_profile(profile: org.astermail.android.api.auth.UserInfo) {
