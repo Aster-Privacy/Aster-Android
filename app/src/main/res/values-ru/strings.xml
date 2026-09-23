@@ -1375,7 +1375,7 @@
     <string name="totp_passkey_subtitle">Подтвердите ключом доступа или аппаратным ключом, сохранённым для этого аккаунта</string>
     <string name="totp_passkey_button">Продолжить с ключом доступа</string>
     <string name="totp_use_passkey">Использовать ключ доступа</string>
-    <string name="totp_backup_code_hint">Резервный код состоит из 8 символов и выдаётся при настройке приложения-аутентификатора. Код восстановления, начинающийся с ASTER, восстанавливает почтовый ящик и здесь не работает.</string>
+    <string name="totp_backup_code_hint">Введите один из резервных кодов, сохранённых при настройке приложения-аутентификатора. Код восстановления, начинающийся с ASTER, восстанавливает почтовый ящик и здесь не работает.</string>
     <string name="totp_trust_device">Доверять этому устройству 30 дней</string>
     <string name="failed_block_sender">Не удалось заблокировать отправителя</string>
     <string name="failed_unblock_sender">Не удалось разблокировать отправителя</string>
@@ -3513,9 +3513,6 @@
     <string name="default_sender_description">Новые письма отправляются с этого адреса. Ответы используют адрес, на который пришло письмо.</string>
     <string name="default_sender_no_addresses">Других адресов нет</string>
     <string name="default_sender_primary_note">Ваш основной адрес</string>
-    <string name="sign_in_with_passkey">Войти с ключом доступа</string>
-    <string name="error_passkey_sign_in_unavailable">На этом устройстве нет ключа доступа Aster Mail. Войдите с паролем, а затем добавьте ключ доступа в настройках.</string>
-    <string name="error_passkey_needs_password">Этот ключ доступа пока не может сам разблокировать ваш почтовый ящик. Войдите с паролем.</string>
     <string name="passkey_add">Добавить ключ доступа</string>
     <string name="passkey_add_subtitle">Входите с помощью отпечатка пальца, лица или блокировки экрана</string>
     <string name="passkey_adding">Добавление ключа доступа…</string>
@@ -3526,6 +3523,5 @@
     <string name="passkey_already_registered">Этот ключ доступа уже сохранен в вашем аккаунте.</string>
     <string name="passkey_create_unavailable">Это устройство не может сохранять ключи доступа. Убедитесь, что блокировка экрана включена и настроен менеджер паролей.</string>
     <string name="passkey_create_failed">Не удалось добавить ключ доступа. Повторите попытку.</string>
-    <string name="error_passkey_not_recognized">Этот ключ доступа не связан с аккаунтом Aster Mail. Войдите с паролем, а затем добавьте ключ доступа в настройках.</string>
     <string name="error_passkey_timed_out">Время запроса ключа доступа истекло. Попробуйте ещё раз.</string>
 </resources>

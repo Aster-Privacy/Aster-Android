@@ -727,7 +727,7 @@ fun EncryptionScreen(
                                     show_export_private_dialog = false
                                     export_private_password = ""
                                     if (copy_to_clipboard(context_export, "private_key", armored)) {
-                                        org.astermail.android.util.schedule_sensitive_clipboard_clear(context_export, armored)
+                                        org.astermail.android.util.schedule_sensitive_clipboard_clear(context_export)
                                         Toast.makeText(context_export, context_export.getString(R.string.toast_private_key_copied), Toast.LENGTH_LONG).show()
                                     } else {
                                         show_copy_failed_toast(context_export)

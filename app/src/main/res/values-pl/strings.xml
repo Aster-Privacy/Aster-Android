@@ -1375,7 +1375,7 @@
     <string name="totp_passkey_subtitle">Potwierdź kluczem dostępu lub kluczem bezpieczeństwa zapisanym dla tego konta</string>
     <string name="totp_passkey_button">Kontynuuj kluczem dostępu</string>
     <string name="totp_use_passkey">Użyj klucza dostępu</string>
-    <string name="totp_backup_code_hint">Kod zapasowy ma 8 znaków i pochodzi z konfiguracji aplikacji uwierzytelniającej. Kod odzyskiwania zaczynający się od ASTER przywraca skrzynkę i nie działa w tym miejscu.</string>
+    <string name="totp_backup_code_hint">Użyj jednego z kodów zapasowych zapisanych podczas konfiguracji aplikacji uwierzytelniającej. Kod odzyskiwania zaczynający się od ASTER przywraca skrzynkę i nie działa w tym miejscu.</string>
     <string name="totp_trust_device">Zaufaj temu urządzeniu przez 30 dni</string>
     <string name="failed_block_sender">Nie można zablokować nadawcy</string>
     <string name="failed_unblock_sender">Nie można odblokować nadawcy</string>
@@ -3513,9 +3513,6 @@
     <string name="default_sender_description">Nowe wiadomości są wysyłane z tego adresu. Odpowiedzi używają adresu, na który wysłano wiadomość.</string>
     <string name="default_sender_no_addresses">Brak innych adresów</string>
     <string name="default_sender_primary_note">Twój główny adres</string>
-    <string name="sign_in_with_passkey">Zaloguj się kluczem dostępu</string>
-    <string name="error_passkey_sign_in_unavailable">Na tym urządzeniu nie ma klucza dostępu Aster Mail. Zaloguj się hasłem, a następnie dodaj klucz dostępu w Ustawieniach.</string>
-    <string name="error_passkey_needs_password">Ten klucz dostępu nie może jeszcze samodzielnie odblokować skrzynki. Zaloguj się hasłem.</string>
     <string name="passkey_add">Dodaj klucz dostępu</string>
     <string name="passkey_add_subtitle">Loguj się odciskiem palca, twarzą lub blokadą ekranu</string>
     <string name="passkey_adding">Dodawanie klucza dostępu…</string>
@@ -3526,6 +3523,5 @@
     <string name="passkey_already_registered">Ten klucz dostępu jest już zapisany na Twoim koncie.</string>
     <string name="passkey_create_unavailable">To urządzenie nie może zapisywać kluczy dostępu. Sprawdź, czy blokada ekranu jest włączona i czy skonfigurowano menedżer haseł.</string>
     <string name="passkey_create_failed">Nie udało się dodać klucza dostępu. Spróbuj ponownie.</string>
-    <string name="error_passkey_not_recognized">Ten klucz dostępu nie jest powiązany z kontem Aster Mail. Zaloguj się hasłem, a następnie dodaj klucz dostępu w Ustawieniach.</string>
     <string name="error_passkey_timed_out">Żądanie klucza dostępu wygasło. Spróbuj ponownie.</string>
 </resources>

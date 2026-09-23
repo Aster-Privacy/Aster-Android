@@ -124,47 +124,6 @@ data class WebAuthnAssertionVerifyRequest(
     val remember_me: Boolean = false,
 )
 
-@Serializable
-data class PasskeyLoginOptions(
-    val challenge: String,
-    val challenge_token: String,
-    val rpId: String,
-    val timeout: Long = 60000,
-    val userVerification: String = "required",
-)
-
-@Serializable
-data class PasskeyLoginAssertionData(
-    val authenticator_data: String,
-    val client_data_json: String,
-    val signature: String,
-    val user_handle: String? = null,
-)
-
-@Serializable
-data class PasskeyLoginVerifyRequest(
-    val id: String,
-    val raw_id: String,
-    val response: PasskeyLoginAssertionData,
-    val type: String = "public-key",
-    val challenge_token: String,
-    val remember_me: Boolean = false,
-    val trust_device: Boolean = false,
-    val device_label: String? = null,
-)
-
-@Serializable
-data class PasskeyLoginPrf(
-    val prf_encrypted_passphrase: String? = null,
-    val prf_nonce: String? = null,
-)
-
-data class PasskeyLoginOutcome(
-    val response: LoginResponse,
-    val trusted_device_token: String?,
-    val prf: PasskeyLoginPrf,
-)
-
 data class TotpVerifyOutcome(
     val response: LoginResponse,
     val trusted_device_token: String?,
@@ -301,8 +260,6 @@ interface AuthApi {
     suspend fun verify_backup_code_login(request: TotpLoginVerifyRequest): TotpVerifyOutcome
     suspend fun initiate_webauthn_assertion(request: WebAuthnAssertionInitiateRequest): WebAuthnAssertionOptions
     suspend fun verify_webauthn_assertion(request: WebAuthnAssertionVerifyRequest): TotpVerifyOutcome
-    suspend fun initiate_passkey_login(): PasskeyLoginOptions
-    suspend fun verify_passkey_login(request: PasskeyLoginVerifyRequest): PasskeyLoginOutcome
     suspend fun register(request: RegisterRequest): RegisterResponse
     suspend fun refresh(refresh_token: String?): RefreshResponse
     suspend fun logout()
@@ -378,38 +335,6 @@ class AuthApiImpl(private val client: ApiClient) : AuthApi {
             setBody(request)
         }
         return second_factor_outcome(response)
-    }
-
-    override suspend fun initiate_passkey_login(): PasskeyLoginOptions {
-        val response = client.http.post("${client.base_url}$base/passkeys/initiate") {
-            contentType(ContentType.Application.Json)
-            header(HttpHeaders.Origin, webauthn_origin())
-            setBody(JsonObject(emptyMap()))
-        }
-        return decode_or_throw(response)
-    }
-
-    override suspend fun verify_passkey_login(request: PasskeyLoginVerifyRequest): PasskeyLoginOutcome {
-        val response = client.http.post("${client.base_url}$base/passkeys/verify") {
-            contentType(ContentType.Application.Json)
-            header(HttpHeaders.Origin, webauthn_origin())
-            setBody(request)
-        }
-        if (!response_is_success(response.status.value)) {
-            val body = try { response.body<String>() } catch (_: Throwable) { "" }
-            throw client.map_http_status(response.status.value, body)
-        }
-        val body_str: String = response.body()
-        val login_resp = client.json.decodeFromString<LoginResponse>(body_str)
-        val prf = client.json.decodeFromString<PasskeyLoginPrf>(body_str)
-        client.set_csrf(login_resp.csrf_token)
-        val set_cookies = response.headers.getAll(HttpHeaders.SetCookie)
-        val refresh = login_resp.refresh_token ?: parse_refresh_cookie(set_cookies)
-        return PasskeyLoginOutcome(
-            response = login_resp.copy(refresh_token = refresh),
-            trusted_device_token = parse_trusted_device_cookie(set_cookies),
-            prf = prf,
-        )
     }
 
     private fun webauthn_origin(): String = client.webauthn_origin.trimEnd('/')

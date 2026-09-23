@@ -1051,7 +1051,7 @@
     <string name="totp_passkey_subtitle">इस खाते के लिए सहेजी गई पासकी या सुरक्षा कुंजी से पुष्टि करें</string>
     <string name="totp_passkey_button">पासकी से जारी रखें</string>
     <string name="totp_use_passkey">पासकी का उपयोग करें</string>
-    <string name="totp_backup_code_hint">बैकअप कोड में 8 वर्ण होते हैं और यह आपके प्रमाणक ऐप सेटअप से मिला था। ASTER से शुरू होने वाला रिकवरी कोड आपका मेलबॉक्स बहाल करता है और यहाँ काम नहीं करता।</string>
+    <string name="totp_backup_code_hint">प्रमाणक ऐप सेट अप करते समय सहेजे गए बैकअप कोड में से कोई एक इस्तेमाल करें। ASTER से शुरू होने वाला रिकवरी कोड आपका मेलबॉक्स बहाल करता है और यहाँ काम नहीं करता।</string>
     <string name="totp_trust_device">इस डिवाइस पर 30 दिन तक भरोसा करें</string>
     <string name="sessions">सत्र</string>
     <string name="no_active_sessions">कोई सक्रिय सत्र नहीं</string>
@@ -3361,9 +3361,6 @@
     <string name="default_sender_description">नए संदेश इसी पते से भेजे जाते हैं। उत्तर उसी पते का उपयोग करते हैं जिस पर संदेश आया था।</string>
     <string name="default_sender_no_addresses">कोई अन्य पता नहीं</string>
     <string name="default_sender_primary_note">आपका प्राथमिक पता</string>
-    <string name="sign_in_with_passkey">पासकी से साइन इन करें</string>
-    <string name="error_passkey_sign_in_unavailable">इस डिवाइस पर Aster Mail की कोई पासकी उपलब्ध नहीं है। अपने पासवर्ड से साइन इन करें, फिर सेटिंग्स में पासकी जोड़ें।</string>
-    <string name="error_passkey_needs_password">यह पासकी अभी अकेले आपका मेलबॉक्स अनलॉक नहीं कर सकती। अपने पासवर्ड से साइन इन करें।</string>
     <string name="passkey_add">पासकी जोड़ें</string>
     <string name="passkey_add_subtitle">अपने फ़िंगरप्रिंट, चेहरे या स्क्रीन लॉक से साइन इन करें</string>
     <string name="passkey_adding">पासकी जोड़ी जा रही है…</string>
@@ -3374,6 +3371,5 @@
     <string name="passkey_already_registered">यह पासकी पहले से आपके खाते में सेव है।</string>
     <string name="passkey_create_unavailable">यह डिवाइस पासकी सेव नहीं कर सकता। पक्का करें कि स्क्रीन लॉक चालू है और पासवर्ड मैनेजर सेट है।</string>
     <string name="passkey_create_failed">पासकी नहीं जोड़ी जा सकी। फिर से कोशिश करें।</string>
-    <string name="error_passkey_not_recognized">यह पासकी किसी Aster Mail खाते से जुड़ी नहीं है। अपने पासवर्ड से साइन इन करें, फिर सेटिंग्स में पासकी जोड़ें।</string>
     <string name="error_passkey_timed_out">पासकी अनुरोध का समय समाप्त हो गया। फिर से कोशिश करें।</string>
 </resources>

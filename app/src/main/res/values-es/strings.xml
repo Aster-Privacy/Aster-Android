@@ -1370,7 +1370,7 @@
     <string name="totp_passkey_subtitle">Confirma con la clave de acceso o la llave de seguridad que guardaste para esta cuenta</string>
     <string name="totp_passkey_button">Continuar con una clave de acceso</string>
     <string name="totp_use_passkey">Usar una clave de acceso</string>
-    <string name="totp_backup_code_hint">Un código de respaldo tiene 8 caracteres y viene de la configuración de tu app de autenticación. Un código de recuperación que empieza por ASTER restaura tu buzón y no sirve aquí.</string>
+    <string name="totp_backup_code_hint">Usa uno de los códigos de respaldo que guardaste al configurar tu app de autenticación. Un código de recuperación que empieza por ASTER restaura tu buzón y no sirve aquí.</string>
     <string name="totp_trust_device">Confiar en este dispositivo durante 30 días</string>
     <string name="failed_block_sender">No se pudo bloquear al remitente</string>
     <string name="failed_unblock_sender">No se pudo desbloquear al remitente</string>
@@ -3472,9 +3472,6 @@
     <string name="default_sender_description">Los mensajes nuevos se envían desde esta dirección. Las respuestas usan la dirección a la que se envió el mensaje.</string>
     <string name="default_sender_no_addresses">No hay otras direcciones</string>
     <string name="default_sender_primary_note">Tu dirección principal</string>
-    <string name="sign_in_with_passkey">Iniciar sesión con una llave de acceso</string>
-    <string name="error_passkey_sign_in_unavailable">No hay ninguna llave de acceso de Aster Mail en este dispositivo. Inicia sesión con tu contraseña y añade una llave de acceso en Ajustes.</string>
-    <string name="error_passkey_needs_password">Esta llave de acceso aún no puede desbloquear tu buzón por sí sola. Inicia sesión con tu contraseña.</string>
     <string name="passkey_add">Añadir una llave de acceso</string>
     <string name="passkey_add_subtitle">Inicia sesión con tu huella, tu cara o el bloqueo de pantalla</string>
     <string name="passkey_adding">Añadiendo llave de acceso…</string>
@@ -3485,6 +3482,5 @@
     <string name="passkey_already_registered">Esta llave de acceso ya está guardada en tu cuenta.</string>
     <string name="passkey_create_unavailable">Este dispositivo no puede guardar llaves de acceso. Comprueba que el bloqueo de pantalla esté activado y que haya un gestor de contraseñas configurado.</string>
     <string name="passkey_create_failed">No se pudo añadir la llave de acceso. Inténtalo de nuevo.</string>
-    <string name="error_passkey_not_recognized">Esta llave de acceso no está vinculada a ninguna cuenta de Aster Mail. Inicia sesión con tu contraseña y añade una llave de acceso en Ajustes.</string>
     <string name="error_passkey_timed_out">La solicitud de la llave de acceso caducó. Inténtalo de nuevo.</string>
 </resources>

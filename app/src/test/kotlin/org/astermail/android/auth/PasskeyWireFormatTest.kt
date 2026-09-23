@@ -24,7 +24,6 @@ package org.astermail.android.auth
 import java.nio.ByteBuffer
 import java.util.Base64
 import java.util.UUID
-import org.astermail.android.api.auth.PasskeyLoginOptions
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.security.PasskeyCredentialDescriptor
 import org.astermail.android.api.security.PasskeyRegistrationOptions
@@ -102,28 +101,9 @@ class PasskeyWireFormatTest {
     fun user_handle_round_trips_to_backend_user_id() {
         val json = JSONObject(registration_request_json(registration_options))
         val handle = json.getJSONObject("user").getString("id")
-        val options = PasskeyLoginOptions(challenge = "c2lnbg", challenge_token = "token-2", rpId = "app.astermail.org")
-        val assertion = JSONObject()
-            .put("id", "Y3JlZC1pZA")
-            .put("rawId", "Y3JlZC1pZA")
-            .put("type", "public-key")
-            .put(
-                "response",
-                JSONObject()
-                    .put("authenticatorData", "YXV0aA")
-                    .put("clientDataJSON", "Y2xpZW50")
-                    .put("signature", "c2ln")
-                    .put("userHandle", handle),
-            )
-            .toString()
-        val request = passkey_login_verify_request(assertion, options, "Pixel")
-        val sent_handle = request.response.user_handle!!
-        val decoded_text = String(Base64.getUrlDecoder().decode(sent_handle), Charsets.UTF_8)
+        val decoded_text = String(Base64.getUrlDecoder().decode(handle), Charsets.UTF_8)
         val decoded_uuid = ByteBuffer.wrap(Base64.getDecoder().decode(decoded_text)).let { UUID(it.long, it.long) }
         assertEquals(user_uuid, decoded_uuid)
-        assertEquals("token-2", request.challenge_token)
-        assertEquals("Y3JlZC1pZA", request.raw_id)
-        assertTrue(request.remember_me)
     }
 
     @Test

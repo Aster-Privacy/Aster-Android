@@ -195,7 +195,7 @@ fun aster_theme_root(content: @Composable () -> Unit) {
                                 },
                         )
                     }
-                    content()
+                    deferred_clipboard_provider(content)
                     app_toast_host()
                 }
             }
