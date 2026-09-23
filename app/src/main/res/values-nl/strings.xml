@@ -3284,6 +3284,9 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Inbegrepen</string>
     <string name="special_offer_compare_not_included">Niet inbegrepen</string>
+    <string name="special_offers">Speciale aanbiedingen</string>
+    <string name="special_offers_description">Toon af en toe abonnementen met korting in de app. Als dit uitstaat, zie je geen aanbiedingen en tel je niet mee in de resultaten van aanbiedingen.</string>
+    <string name="special_offers_save_failed">Je instelling voor speciale aanbiedingen is niet opgeslagen. Probeer het opnieuw.</string>
     <string name="storage_format_updated">Opslagformaat bijgewerkt</string>
     <string name="storage_format_update_failed">Kan het opslagformaat niet wijzigen</string>
     <string name="saved_to_downloads">Opgeslagen in Downloads</string>

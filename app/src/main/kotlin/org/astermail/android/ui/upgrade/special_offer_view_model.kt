@@ -29,9 +29,13 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.astermail.android.api.billing.BillingApi
@@ -95,6 +99,7 @@ data class SpecialOfferState(
 class SpecialOfferViewModel @Inject constructor(
     private val billing_api: BillingApi,
     private val auth_repository: AuthRepository,
+    private val offer_preferences: OfferPreferencesStore,
 ) : ViewModel() {
     private val _state = MutableStateFlow(SpecialOfferState())
     val state: StateFlow<SpecialOfferState> = _state.asStateFlow()
@@ -105,11 +110,36 @@ class SpecialOfferViewModel @Inject constructor(
     private var last_plan_code: String? = null
     private var load_job: Job? = null
     private var account_job = SupervisorJob(viewModelScope.coroutineContext[Job])
+    private var auto_show_suppressed = false
+    private var preference_fallback = false
 
     init {
         viewModelScope.launch {
             auth_repository.active_account_id.collect { id -> switch_account(id) }
         }
+        viewModelScope.launch {
+            offer_preferences.state.map { it.enabled }.distinctUntilChanged().collect { enabled ->
+                preference_fallback = false
+                if (!enabled) {
+                    suppress()
+                } else if (auto_show_suppressed) {
+                    refresh()
+                }
+            }
+        }
+    }
+
+    private fun offers_enabled(): Boolean = preference_fallback || offer_preferences.state.value.enabled
+
+    private fun suppress() {
+        auto_show_suppressed = true
+        _state.update { it.copy(is_open = false, available = false, auto_show = false) }
+    }
+
+    private fun refresh() {
+        if (account_id == null) return
+        load_job?.cancel()
+        fetch()
     }
 
     private fun switch_account(id: String?) {
@@ -145,14 +175,20 @@ class SpecialOfferViewModel @Inject constructor(
         val expected = generation
         load_job = launch_for_account {
             try {
-                val status = billing_api.get_special_offer()
+                val (status, preference_loaded) = coroutineScope {
+                    val status_request = async { billing_api.get_special_offer() }
+                    val preference_request = async { offer_preferences.load() }
+                    status_request.await() to preference_request.await()
+                }
                 if (expected != generation) return@launch_for_account
                 load_succeeded = true
+                preference_fallback = !preference_loaded
+                val enabled = offers_enabled()
                 _state.update {
                     it.copy(
                         is_loaded = true,
-                        available = status.available,
-                        auto_show = status.auto_show,
+                        available = status.available && enabled,
+                        auto_show = status.auto_show && enabled && !auto_show_suppressed,
                         percent_off = status.percent_off,
                         duration_months = status.duration_months,
                         plan_code = status.plan_code.ifBlank { SPECIAL_OFFER_DEFAULT_PLAN_CODE },
@@ -169,7 +205,7 @@ class SpecialOfferViewModel @Inject constructor(
 
     fun claim_and_open() {
         val current = _state.value
-        if (!current.auto_show || current.is_claiming || current.is_open) return
+        if (!current.auto_show || current.is_claiming || current.is_open || !offers_enabled()) return
         val expected = generation
         _state.update { it.copy(is_claiming = true) }
         launch_for_account {
@@ -184,7 +220,7 @@ class SpecialOfferViewModel @Inject constructor(
             _state.update {
                 it.copy(
                     is_claiming = false,
-                    is_open = granted,
+                    is_open = granted && offers_enabled(),
                     auto_show = false,
                     accept_failed = false,
                     step = SpecialOfferStep.offer,

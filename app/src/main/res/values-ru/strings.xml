@@ -3326,6 +3326,9 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Включено</string>
     <string name="special_offer_compare_not_included">Не включено</string>
+    <string name="special_offers">Спецпредложения</string>
+    <string name="special_offers_description">Время от времени показывать в приложении предложения тарифов со скидкой. Когда этот параметр выключен, вы не видите предложений и ваш аккаунт не учитывается в результатах предложений.</string>
+    <string name="special_offers_save_failed">Настройка спецпредложений не сохранена. Повторите попытку.</string>
     <string name="storage_format_updated">Формат хранения обновлён</string>
     <string name="storage_format_update_failed">Не удалось изменить формат хранения</string>
     <string name="saved_to_downloads">Сохранено в папке «Загрузки»</string>

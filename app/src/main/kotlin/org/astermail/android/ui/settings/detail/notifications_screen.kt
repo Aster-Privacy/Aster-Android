@@ -103,6 +103,18 @@ fun NotificationsScreen(
 
     LaunchedEffect(Unit) { vm.load_preferences() }
     LaunchedEffect(Unit) { vm.load_product_updates() }
+    val offer_vm: org.astermail.android.ui.upgrade.OfferPreferencesViewModel = hiltViewModel()
+    val offer_prefs by offer_vm.state.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { offer_vm.load() }
+    LaunchedEffect(offer_prefs.save_failed) {
+        if (!offer_prefs.save_failed) return@LaunchedEffect
+        android.widget.Toast.makeText(
+            context,
+            context.getString(R.string.special_offers_save_failed),
+            android.widget.Toast.LENGTH_SHORT,
+        ).show()
+        offer_vm.clear_save_failed()
+    }
 
     val prefs_seeded = prefs != null && state.preferences_authoritative
     var push by remember(prefs_seeded) { mutableStateOf(prefs?.push_notifications ?: true) }
@@ -349,6 +361,14 @@ fun NotificationsScreen(
                         state.product_updates,
                         stringResource(R.string.product_updates_info),
                     ) { vm.set_product_updates(it) }
+                }
+                if (offer_prefs.available) {
+                    AsterDivider(modifier = Modifier)
+                    switch_row(
+                        stringResource(R.string.special_offers),
+                        stringResource(R.string.special_offers_description),
+                        offer_prefs.enabled,
+                    ) { offer_vm.set_enabled(it) }
                 }
             }
             if (prefs.inbox_categories_enabled) {

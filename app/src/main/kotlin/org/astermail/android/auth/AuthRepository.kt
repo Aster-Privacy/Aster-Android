@@ -123,6 +123,7 @@ class AuthRepository @Inject constructor(
     private val system_folder_bootstrap: org.astermail.android.mail.SystemFolderBootstrap,
     private val password_change_sent_mail: org.astermail.android.mail.PasswordChangeSentMail,
     private val identity_pins: dagger.Lazy<org.astermail.android.mail.ratchet.RatchetIdentityPinStore>,
+    private val offer_preferences_store: org.astermail.android.ui.upgrade.OfferPreferencesStore,
     @ApplicationContext private val context: Context,
 ) {
 
@@ -769,6 +770,7 @@ class AuthRepository @Inject constructor(
         snapshot.previous_keys?.let { session_key_store.put_previous_keys(it) }
         snapshot.legacy_keks?.let { session_key_store.put_legacy_keks(it) }
         runCatching { try_recover_identity_key() }
+        runCatching { offer_preferences_store.reset() }
         runCatching {
             val loader = coil.Coil.imageLoader(context)
             loader.memoryCache?.clear()
@@ -1003,6 +1005,7 @@ class AuthRepository @Inject constructor(
         runCatching { org.astermail.android.billing.PlanLimitsCache.reset() }
         runCatching { theme_store.clear() }
         runCatching { org.astermail.android.ui.theme.custom_theme_image.delete(context) }
+        runCatching { offer_preferences_store.reset() }
         runCatching { org.astermail.android.ui.compose.compose_seed_store.clear(context) }
         runCatching { org.astermail.android.notifications.MutedFolderSync.reset(context) }
         runCatching { org.astermail.android.notifications.QuietHoursSync.reset(context) }
@@ -1363,6 +1366,7 @@ class AuthRepository @Inject constructor(
         runCatching { org.astermail.android.util.purge_sensitive_export_files(context, 0L) }
         runCatching { theme_store.clear() }
         runCatching { org.astermail.android.ui.theme.custom_theme_image.delete(context) }
+        runCatching { offer_preferences_store.reset() }
         runCatching { org.astermail.android.ui.compose.compose_seed_store.clear(context) }
         runCatching { org.astermail.android.notifications.MutedFolderSync.reset(context) }
         runCatching { org.astermail.android.notifications.QuietHoursSync.reset(context) }

@@ -3174,6 +3174,9 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">शामिल है</string>
     <string name="special_offer_compare_not_included">शामिल नहीं है</string>
+    <string name="special_offers">विशेष ऑफ़र</string>
+    <string name="special_offers_description">ऐप में समय-समय पर छूट वाले प्लान ऑफ़र दिखाएं। इसे बंद करने पर आपको ऑफ़र नहीं दिखते और आपको ऑफ़र के नतीजों में नहीं गिना जाता।</string>
+    <string name="special_offers_save_failed">आपकी विशेष ऑफ़र सेटिंग सहेजी नहीं गई। फिर से कोशिश करें।</string>
     <string name="storage_format_updated">स्टोरेज का प्रारूप अपडेट हो गया</string>
     <string name="storage_format_update_failed">स्टोरेज का प्रारूप नहीं बदला जा सका</string>
     <string name="saved_to_downloads">डाउनलोड में सहेजा गया</string>
