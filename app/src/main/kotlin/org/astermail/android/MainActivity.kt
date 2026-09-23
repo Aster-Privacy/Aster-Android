@@ -550,6 +550,7 @@ private fun AsterNavHost() {
     val notification_prompt_route by nav_controller.currentBackStackEntryAsState()
     request_notification_permission(
         should_request = is_signed_in_state && !is_locked &&
+            notification_prompt_route != null &&
             notification_prompt_route?.destination?.route != routes.register,
     )
     val context = LocalContext.current
@@ -777,7 +778,7 @@ private fun AsterNavHost() {
                     mark_signed_up_now(context)
                     theme_vm.mark_first_run(setup_pending = false)
                     nav_controller.navigate(routes.inbox) {
-                        popUpTo(routes.welcome) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                     }
                     if (destination != null) {
                         nav_controller.navigate(routes.settings_detail(destination))
