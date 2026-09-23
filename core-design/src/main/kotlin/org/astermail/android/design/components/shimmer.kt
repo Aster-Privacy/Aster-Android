@@ -105,38 +105,45 @@ fun shimmer_state(
     }
 }
 
+@Composable
 fun Modifier.shimmer(
     state: shimmer_appearance,
     shape: Shape = RectangleShape,
     phase_shift: Float = 0f,
-): Modifier = this
-    .clip(shape)
-    .drawWithCache {
-        val band = size.width * shimmer_band_fraction
-        val band_brush = if (band > 0f) {
-            Brush.linearGradient(
-                colors = listOf(state.band_edge, state.highlight, state.band_edge),
-                start = Offset.Zero,
-                end = Offset(band, 0f),
-            )
-        } else {
-            null
-        }
-        val travel = size.width + band
-        onDrawBehind {
-            drawRect(state.base)
-            if (band_brush != null && state.animated) {
-                val local_phase = ((state.phase.value - phase_shift) % 1f + 1f) % 1f
-                translate(left = local_phase * travel - band) {
-                    drawRect(
-                        brush = band_brush,
-                        topLeft = Offset.Zero,
-                        size = Size(band, size.height),
-                    )
+): Modifier {
+    val origin = remember { FloatArray(1) }
+    val density = LocalDensity.current
+    val sweep_width = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
+    return this
+        .onGloballyPositioned { origin[0] = it.positionInWindow().x }
+        .clip(shape)
+        .drawWithCache {
+            val band = sweep_width * shimmer_band_fraction
+            val band_brush = if (band > 0f) {
+                Brush.linearGradient(
+                    colors = listOf(state.band_edge, state.highlight, state.band_edge),
+                    start = Offset.Zero,
+                    end = Offset(band, 0f),
+                )
+            } else {
+                null
+            }
+            val travel = sweep_width + band
+            onDrawBehind {
+                drawRect(state.base)
+                if (band_brush != null && state.animated) {
+                    val local_phase = ((state.phase.value - phase_shift) % 1f + 1f) % 1f
+                    translate(left = local_phase * travel - band - origin[0]) {
+                        drawRect(
+                            brush = band_brush,
+                            topLeft = Offset.Zero,
+                            size = Size(band, size.height),
+                        )
+                    }
                 }
             }
         }
-    }
+}
 
 @Composable
 fun Modifier.shimmer(

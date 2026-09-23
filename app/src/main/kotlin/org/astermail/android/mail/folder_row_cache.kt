@@ -156,6 +156,16 @@ fun folder_cache_should_persist(
     has_error: Boolean,
 ): Boolean = if (!items_empty) true else !is_loading && !initial && !has_error
 
+fun folder_cache_layout_signature(
+    grouping: Boolean,
+    list_order: String?,
+    custom_categories: Int,
+): String = listOf(
+    if (grouping) "g1" else "g0",
+    "o" + (list_order ?: "desc"),
+    "c" + custom_categories.toString(16),
+).joinToString(":")
+
 fun folder_cache_skeleton_allowed(cache_pending: Boolean, cached_count: Int): Boolean =
     !cache_pending && cached_count == 0
 

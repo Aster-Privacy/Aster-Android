@@ -164,18 +164,12 @@ class MailViewModel @Inject constructor(
         rules: List<org.astermail.android.api.preferences.CustomCategoryRule>,
     ) {
         if (!repository.set_custom_categories(rules)) return
-        folder_cache.clear()
-        folder_cache_time.clear()
-        clear_folder_cache_store()
-        refresh()
+        on_list_layout_changed { refresh() }
     }
 
     fun set_conversation_grouping(enabled: Boolean) {
         if (!repository.set_conversation_grouping(enabled)) return
-        folder_cache.clear()
-        folder_cache_time.clear()
-        clear_folder_cache_store()
-        refresh()
+        on_list_layout_changed { refresh() }
     }
 
     private val _search_state = MutableStateFlow(SearchUiState())
@@ -584,7 +578,27 @@ class MailViewModel @Inject constructor(
         disk_probed.clear()
         disk_probe_jobs.values.forEach { it.cancel() }
         disk_probe_jobs.clear()
+        _inbox_state.update { if (it.cache_pending) it.copy(cache_pending = false) else it }
         viewModelScope.launch { runCatching { folder_cache_store.clear_all() } }
+    }
+
+    private fun list_layout_signature(): String = folder_cache_layout_signature(
+        grouping = repository.is_conversation_grouping_enabled,
+        list_order = list_order,
+        custom_categories = repository.custom_categories_fingerprint,
+    )
+
+    private fun on_list_layout_changed(user_initiated_reload: () -> Unit) {
+        folder_cache.clear()
+        folder_cache_time.clear()
+        val signature = list_layout_signature()
+        if (folder_cache_store.layout_signature() == signature) {
+            reload_keeping_items(replace_items = true)
+            return
+        }
+        clear_folder_cache_store()
+        folder_cache_store.set_layout_signature(signature)
+        user_initiated_reload()
     }
 
     data class ToastEvent(
@@ -856,10 +870,7 @@ class MailViewModel @Inject constructor(
     fun set_list_order(order: String?) {
         if (list_order == order) return
         list_order = order
-        folder_cache.clear()
-        folder_cache_time.clear()
-        clear_folder_cache_store()
-        reload_keeping_items(replace_items = true)
+        on_list_layout_changed { reload_keeping_items(replace_items = true) }
     }
 
     @Volatile private var replace_on_revalidate = false
@@ -884,7 +895,7 @@ class MailViewModel @Inject constructor(
         if (replace_items) replace_on_revalidate = true
         inbox_load_job?.cancel()
         if (current.is_loading || current.initial) {
-            _inbox_state.value = current.copy(is_loading = false, initial = false)
+            _inbox_state.value = current.copy(is_loading = false, initial = false, cache_pending = false)
         }
         silent_revalidate(folder)
     }
@@ -992,6 +1003,7 @@ class MailViewModel @Inject constructor(
                             _inbox_state.value = _inbox_state.value.copy(
                                 items = apply_demo_overlay(apply_tag_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(items)))), folder),
                                 initial = false,
+                                cache_pending = false,
                             )
                         }
                     }
@@ -1124,6 +1136,7 @@ class MailViewModel @Inject constructor(
                     items = merged_items,
                     is_loading = false,
                     initial = false,
+                    cache_pending = false,
                     error = null,
                     list_loaded_at = override_clock_ms(),
                     has_more = if (merge.carried_deeper && prior.next_cursor != null) prior.has_more else page.has_more,
@@ -4351,6 +4364,7 @@ class MailViewModel @Inject constructor(
                         is_refreshing = false,
                         list_loaded_at = override_clock_ms(),
                         initial = false,
+                        cache_pending = false,
                         error = null,
                         has_more = if (merge.carried_deeper && prior.next_cursor != null) prior.has_more else page.has_more,
                         next_cursor = if (merge.carried_deeper && prior.next_cursor != null) prior.next_cursor else page.next_cursor,
@@ -4367,6 +4381,7 @@ class MailViewModel @Inject constructor(
                             is_refreshing = false,
                             is_loading = false,
                             initial = false,
+                            cache_pending = false,
                             error = if (it.items.isEmpty() && !is_cancellation(t)) friendly_load_error(t) else null,
                         )
                     }
@@ -4376,8 +4391,8 @@ class MailViewModel @Inject constructor(
         refresh_job?.invokeOnCompletion {
             if (refresh_gen != refresh_generation) return@invokeOnCompletion
             val state = _inbox_state.value
-            if (state.is_refreshing || state.is_loading || state.initial) {
-                _inbox_state.value = state.copy(is_refreshing = false, is_loading = false, initial = false)
+            if (state.is_refreshing || state.is_loading || state.initial || state.cache_pending) {
+                _inbox_state.value = state.copy(is_refreshing = false, is_loading = false, initial = false, cache_pending = false)
             }
         }
     }

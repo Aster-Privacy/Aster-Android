@@ -518,6 +518,9 @@ class MailRepository @Inject constructor(
         return true
     }
 
+    val custom_categories_fingerprint: Int
+        get() = custom_categories.toString().hashCode()
+
     @Volatile
     private var conversation_grouping: Boolean = true
 
