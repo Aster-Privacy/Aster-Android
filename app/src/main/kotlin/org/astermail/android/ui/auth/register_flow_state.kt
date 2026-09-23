@@ -23,6 +23,9 @@ package org.astermail.android.ui.auth
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -48,8 +51,31 @@ class RegisterFlowState(
     val confirm_password: MutableState<String>,
     val remember_me: MutableState<Boolean>,
     val recovery_email: MutableState<String>,
-    val recovery_email_saved: MutableState<Boolean>,
+    val saved_recovery_email: MutableState<String>,
     val captcha_token: MutableState<String?>,
+    val address_slots: List<register_address_slot>,
+)
+
+class register_address_slot(
+    value: String = "",
+    domain: String? = null,
+    added: Boolean = false,
+) {
+    var value by mutableStateOf(value)
+    var domain by mutableStateOf(domain)
+    var error by mutableStateOf<String?>(null)
+    var added by mutableStateOf(added)
+}
+
+private const val register_address_slot_count = 3
+
+private val register_address_slots_saver = listSaver<List<register_address_slot>, Any?>(
+    save = { slots -> slots.flatMap { listOf(it.value, it.domain, it.added) } },
+    restore = { saved ->
+        saved.chunked(3).map { (value, domain, added) ->
+            register_address_slot(value as String, domain as String?, added as Boolean)
+        }
+    },
 )
 
 @Composable
@@ -62,8 +88,11 @@ fun remember_register_flow_state(): RegisterFlowState {
     val confirm_password = remember { mutableStateOf("") }
     val remember_me = rememberSaveable { mutableStateOf(true) }
     val recovery_email = rememberSaveable { mutableStateOf("") }
-    val recovery_email_saved = rememberSaveable { mutableStateOf(false) }
+    val saved_recovery_email = rememberSaveable { mutableStateOf("") }
     val captcha_token = remember { mutableStateOf<String?>(null) }
+    val address_slots = rememberSaveable(saver = register_address_slots_saver) {
+        List(register_address_slot_count) { register_address_slot() }
+    }
     return RegisterFlowState(
         step,
         username,
@@ -73,9 +102,23 @@ fun remember_register_flow_state(): RegisterFlowState {
         confirm_password,
         remember_me,
         recovery_email,
-        recovery_email_saved,
+        saved_recovery_email,
         captcha_token,
+        address_slots,
     )
+}
+
+fun previous_register_step(step: RegisterStep): RegisterStep? = when (step) {
+    RegisterStep.password -> RegisterStep.email
+    RegisterStep.notifications -> RegisterStep.recovery_email
+    RegisterStep.addresses -> RegisterStep.notifications
+    RegisterStep.custom_domain -> RegisterStep.addresses
+    RegisterStep.import_mail -> RegisterStep.custom_domain
+    RegisterStep.email,
+    RegisterStep.generating,
+    RegisterStep.recovery_key,
+    RegisterStep.recovery_email,
+    -> null
 }
 
 fun step_progress(step: RegisterStep): Float {

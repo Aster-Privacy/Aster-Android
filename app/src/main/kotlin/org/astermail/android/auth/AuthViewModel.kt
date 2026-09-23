@@ -258,6 +258,7 @@ class AuthViewModel @Inject constructor(
         confirm_password: String,
         captcha_token: String? = null,
         remember_me: Boolean = true,
+        display_name: String? = null,
     ) {
         if (_ui_state.value == AuthUiState.Loading) return
         val trimmed = email.trim()
@@ -275,7 +276,7 @@ class AuthViewModel @Inject constructor(
         }
         _ui_state.value = AuthUiState.Loading
         viewModelScope.launch(Dispatchers.IO) {
-            val result = repository.register(trimmed, password, captcha_token, remember_me)
+            val result = repository.register(trimmed, password, captcha_token, remember_me, display_name)
             result.fold(
                 onSuccess = { success ->
                     _recovery_codes.value = success.recovery_codes
