@@ -3479,4 +3479,12 @@
     <string name="passkey_create_unavailable">Este dispositivo não pode salvar chaves de acesso. Verifique se o bloqueio de tela está ativado e se há um gerenciador de senhas configurado.</string>
     <string name="passkey_create_failed">Não foi possível adicionar a chave de acesso. Tente novamente.</string>
     <string name="error_passkey_timed_out">A solicitação da chave de acesso expirou. Tente novamente.</string>
+    <string name="billing_play_unavailable">As compras pelo Google Play não estão disponíveis no momento. Tente novamente mais tarde.</string>
+    <string name="billing_play_failed">O Google Play não conseguiu concluir sua compra. Tente novamente.</string>
+    <string name="billing_play_pending">Sua compra está pendente. Seu plano será ativado quando o Google Play confirmar o pagamento.</string>
+    <string name="billing_play_success">Seu plano está ativo.</string>
+    <string name="billing_play_blocked">Você já tem uma assinatura. Para alterá-la, gerencie-a onde você a comprou.</string>
+    <string name="billing_play_verify_failed">Sua compra foi concluída, mas ainda não foi confirmada. O Aster Mail a confirmará automaticamente na próxima vez que você abrir o app.</string>
+    <string name="billing_play_manage">Gerenciar no Google Play</string>
+    <string name="billing_play_not_on_device">Sua assinatura não está vinculada à conta do Google neste dispositivo. Gerencie-a no Google Play.</string>
 </resources>

@@ -3461,4 +3461,12 @@
     <string name="passkey_create_unavailable">此设备无法保存通行密钥。请确认已开启屏幕锁定并设置了密码管理器。</string>
     <string name="passkey_create_failed">无法添加通行密钥。请重试。</string>
     <string name="error_passkey_timed_out">通行密钥请求已超时。请重试。</string>
+    <string name="billing_play_unavailable">目前无法通过 Google Play 购买。请稍后再试。</string>
+    <string name="billing_play_failed">Google Play 无法完成你的购买。请重试。</string>
+    <string name="billing_play_pending">你的购买正在处理中。Google Play 确认付款后，你的方案将会生效。</string>
+    <string name="billing_play_success">你的方案已生效。</string>
+    <string name="billing_play_blocked">你已有订阅。如需更改，请在购买订阅的地方进行管理。</string>
+    <string name="billing_play_verify_failed">你的购买已完成，但尚未确认。下次打开应用时，Aster Mail 会自动确认。</string>
+    <string name="billing_play_manage">在 Google Play 中管理</string>
+    <string name="billing_play_not_on_device">你的订阅未关联到此设备上的 Google 账号。请在 Google Play 中管理。</string>
 </resources>

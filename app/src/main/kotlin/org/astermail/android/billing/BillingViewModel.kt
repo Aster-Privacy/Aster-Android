@@ -45,6 +45,8 @@ import org.astermail.android.api.billing.CancelSubscriptionRequest
 import org.astermail.android.api.billing.ChangePlanRequest
 import org.astermail.android.api.billing.CheckoutSessionRequest
 import org.astermail.android.api.billing.DetachPaymentMethodRequest
+import org.astermail.android.api.billing.GooglePlayProduct
+import org.astermail.android.api.billing.GooglePlayVerifyRequest
 import org.astermail.android.api.billing.PaymentMethodItem
 import org.astermail.android.api.billing.PlanChangePreviewResponse
 import org.astermail.android.api.billing.PlanLimitsResponse
@@ -86,6 +88,13 @@ data class BillingUiState(
     val credits: org.astermail.android.api.billing.CreditBalanceResponse? = null,
     val academic: org.astermail.android.api.billing.AcademicDiscountStatusResponse? = null,
     val onboarding: org.astermail.android.api.billing.OnboardingChecklistResponse? = null,
+    val play_enabled: Boolean = false,
+    val play_account_id: String? = null,
+    val play_products: List<GooglePlayProduct> = emptyList(),
+    val play_offers: List<PlayOffer> = emptyList(),
+    val play_blocked_reason: String? = null,
+    val play_currency: String? = null,
+    val play_purchase_request: PlayPurchaseRequest? = null,
 )
 
 object AvailablePlansCache {
@@ -157,7 +166,431 @@ class BillingViewModel @Inject constructor(
 
     private var snapshot_before_checkout: String? = null
 
+    internal var play_store: PlayStore = PlayBilling
+
+    private val cached_play_install by lazy { is_play_install(ctx, play_store) }
+
+    internal var play_install_check: () -> Boolean = { cached_play_install }
+
+    internal var play_retry_delays_ms: List<Long> = PLAY_VERIFY_RETRY_DELAYS_MS
+
+    private var play_config_job: Job? = null
+
+    private var raw_plans: List<AvailablePlan> = AvailablePlansCache.plans()
+
+    private var play_redeem_job: Job? = null
+
+    private var play_redeem_requested = false
+
+    private var play_redeem_force_requested = false
+
+    private var play_account_seen = false
+
+    private var play_account_key: String? = null
+
+    private var play_generation = 0
+
+    private val redeemed_play_tokens = java.util.Collections.synchronizedSet(mutableSetOf<String>())
+
+    private val conflicted_play_tokens = java.util.Collections.synchronizedSet(mutableSetOf<String>())
+
+    private enum class PlayVerifyResult { Confirmed, Pending, Conflict, Failed }
+
+    private fun priced_plans(plans: List<AvailablePlan>, s: BillingUiState = _state.value): List<AvailablePlan> = when {
+        s.play_enabled -> apply_play_prices(plans, s.play_offers, s.play_products)
+        play_install_check() -> apply_play_prices(plans, emptyList(), emptyList())
+        else -> plans
+    }
+
+    private fun switch_play_account(id: String?) {
+        if (play_account_seen && id == play_account_key) return
+        val first = !play_account_seen
+        play_account_seen = true
+        play_account_key = id
+        if (first) return
+        play_generation += 1
+        play_config_job?.cancel()
+        play_config_job = null
+        play_redeem_job?.cancel()
+        play_redeem_job = null
+        play_redeem_requested = false
+        play_redeem_force_requested = false
+        redeemed_play_tokens.clear()
+        conflicted_play_tokens.clear()
+        _state.update {
+            val next = it.copy(
+                play_enabled = false,
+                play_account_id = null,
+                play_products = emptyList(),
+                play_offers = emptyList(),
+                play_blocked_reason = null,
+                play_currency = null,
+                play_purchase_request = null,
+            )
+            next.copy(available_plans = priced_plans(raw_plans.ifEmpty { it.available_plans }, next))
+        }
+    }
+
+    fun ensure_play_config(): Job? {
+        if (!play_install_check()) return null
+        val existing = play_config_job
+        if (existing != null && (existing.isActive || _state.value.play_enabled)) return existing
+        return viewModelScope.launch { load_play_config() }.also { play_config_job = it }
+    }
+
+    fun load_play_offers() {
+        viewModelScope.launch {
+            val job = ensure_play_config() ?: return@launch
+            job.join()
+            if (_state.value.play_enabled && _state.value.play_offers.isEmpty()) refresh_play_offers()
+        }
+    }
+
+    private suspend fun load_play_config(redeem: Boolean = true): Boolean {
+        val generation = play_generation
+        val config = try {
+            billing_api.get_google_play_config()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (t: Throwable) {
+            if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_google_play_config failed", t)
+            return false
+        }
+        if (generation != play_generation) return false
+        val account_id = config.obfuscated_account_id?.takeIf { it.isNotBlank() }
+        if (!config.enabled || account_id == null || config.products.isEmpty()) {
+            _state.update {
+                val next = it.copy(
+                    play_enabled = false,
+                    play_account_id = null,
+                    play_products = emptyList(),
+                    play_offers = emptyList(),
+                    play_blocked_reason = null,
+                    play_currency = null,
+                )
+                next.copy(available_plans = priced_plans(raw_plans.ifEmpty { it.available_plans }, next))
+            }
+            return true
+        }
+        val product_ids = config.products.map { it.product_id }.toSet()
+        val fetched = play_store.query_offers(ctx, product_ids.toList())
+        if (generation != play_generation) return false
+        val offers = fetched.ifEmpty { _state.value.play_offers.filter { it.product_id in product_ids } }
+        _state.update {
+            val next = it.copy(
+                play_enabled = true,
+                play_account_id = account_id,
+                play_products = config.products,
+                play_offers = offers,
+                play_blocked_reason = config.purchase_blocked_reason,
+                play_currency = offers.firstOrNull()?.currency_code?.lowercase(),
+            )
+            next.copy(available_plans = priced_plans(raw_plans.ifEmpty { it.available_plans }, next))
+        }
+        if (redeem) redeem_play_purchases()
+        return true
+    }
+
+    private suspend fun refresh_play_offers() {
+        val generation = play_generation
+        val s = _state.value
+        if (!s.play_enabled || s.play_products.isEmpty()) return
+        val offers = play_store.query_offers(ctx, s.play_products.map { it.product_id })
+        if (offers.isEmpty() || generation != play_generation) return
+        _state.update {
+            val next = it.copy(play_offers = offers, play_currency = offers.first().currency_code.lowercase())
+            next.copy(available_plans = priced_plans(raw_plans.ifEmpty { it.available_plans }, next))
+        }
+    }
+
+    private fun finish_play_action(error: Int? = null, info: Int? = null) {
+        _state.update {
+            it.copy(
+                is_acting = false,
+                acting_action = null,
+                error = error?.let { res -> ctx.getString(res) } ?: it.error,
+                info = info?.let { res -> ctx.getString(res) } ?: it.info,
+            )
+        }
+    }
+
+    private suspend fun fresh_subscription(): SubscriptionResponse? = try {
+        billing_api.get_subscription().also { sub -> _state.update { it.copy(subscription = sub) } }
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (t: Throwable) {
+        if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_subscription failed", t)
+        _state.value.subscription
+    }
+
+    private fun play_product_ids(): Set<String> = _state.value.play_products.map { it.product_id }.toSet()
+
+    private fun backend_play_sub_for(product_id: String, s: BillingUiState = _state.value): Boolean =
+        is_google_play_provider(s.subscription?.payment_provider) &&
+            play_product_for_plan(s.play_products, s.subscription?.plan?.code)?.product_id == product_id
+
+    private suspend fun prepare_play_purchase(plan_code: String, billing_interval: String) {
+        val generation = play_generation
+        play_config_job?.takeIf { it.isActive }?.join()
+        val loaded = load_play_config(redeem = false)
+        if (generation != play_generation) {
+            finish_play_action()
+            return
+        }
+        if (!loaded || !_state.value.play_enabled) {
+            finish_play_action(error = R.string.billing_play_unavailable)
+            ensure_play_config()
+            return
+        }
+        val sub = fresh_subscription()
+        val owned = play_store.owned_purchases(ctx)
+        if (generation != play_generation) {
+            finish_play_action()
+            return
+        }
+        if (owned == null) {
+            finish_play_action(error = R.string.billing_play_unavailable)
+            return
+        }
+        val catalog = play_product_ids()
+        val owned_catalog = owned.filter { it.is_purchased && !it.is_pending && it.product_ids.any { id -> id in catalog } }
+        val is_play_sub = is_google_play_provider(sub?.payment_provider)
+        if (!is_play_sub && owned_catalog.isNotEmpty()) {
+            play_redeem_job?.takeIf { it.isActive }?.join()
+            val result = verify_play_purchases(owned_catalog, force = true)
+            if (generation != play_generation) {
+                finish_play_action()
+                return
+            }
+            reload_subscription()
+            when (result) {
+                PlayVerifyResult.Confirmed -> finish_play_action(info = R.string.billing_play_success)
+                PlayVerifyResult.Pending -> finish_play_action(info = R.string.billing_play_pending)
+                PlayVerifyResult.Conflict -> finish_play_action(error = R.string.billing_play_blocked)
+                PlayVerifyResult.Failed -> finish_play_action(error = R.string.billing_play_verify_failed)
+            }
+            return
+        }
+        if (!is_play_sub && _state.value.play_blocked_reason == PLAY_BLOCKED_ACTIVE_SUBSCRIPTION) {
+            finish_play_action(error = R.string.billing_play_blocked)
+            return
+        }
+        var offer = play_offer_for(_state.value.play_offers, _state.value.play_products, plan_code, billing_interval)
+        if (offer == null) {
+            refresh_play_offers()
+            offer = play_offer_for(_state.value.play_offers, _state.value.play_products, plan_code, billing_interval)
+        }
+        val account_id = _state.value.play_account_id
+        if (offer == null || account_id == null) {
+            finish_play_action(error = R.string.billing_play_unavailable)
+            return
+        }
+        val old_token = if (is_play_sub) {
+            val current_product = play_product_for_plan(_state.value.play_products, sub?.plan?.code)?.product_id
+            val current = owned_catalog.firstOrNull { current_product != null && current_product in it.product_ids }
+                ?: owned_catalog.firstOrNull()
+            if (current == null) {
+                open_play_subscriptions()
+                finish_play_action(info = R.string.billing_play_not_on_device)
+                return
+            }
+            current.purchase_token
+        } else {
+            null
+        }
+        _state.update {
+            it.copy(
+                is_acting = false,
+                acting_action = null,
+                play_purchase_request = PlayPurchaseRequest(offer, account_id, old_token),
+            )
+        }
+    }
+
+    fun launch_play_purchase(activity: android.app.Activity) {
+        val request = _state.value.play_purchase_request ?: return
+        val generation = play_generation
+        _state.update {
+            it.copy(
+                play_purchase_request = null,
+                is_acting = true,
+                acting_action = "play_${request.offer.product_id}",
+                error = null,
+                info = null,
+            )
+        }
+        viewModelScope.launch {
+            val outcome = try {
+                play_store.purchase(activity, request.offer, request.obfuscated_account_id, request.old_purchase_token)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (t: Throwable) {
+                if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "play purchase failed", t)
+                PlayPurchaseOutcome.Failed(-1)
+            }
+            if (generation != play_generation) {
+                finish_play_action()
+                return@launch
+            }
+            when (outcome) {
+                is PlayPurchaseOutcome.Purchased -> {
+                    val result = verify_play_purchases(outcome.purchases, force = true)
+                    reload_subscription()
+                    when (result) {
+                        PlayVerifyResult.Confirmed -> finish_play_action(info = R.string.billing_play_success)
+                        PlayVerifyResult.Pending -> finish_play_action(info = R.string.billing_play_pending)
+                        PlayVerifyResult.Conflict -> finish_play_action(error = R.string.billing_play_blocked)
+                        PlayVerifyResult.Failed -> finish_play_action(info = R.string.billing_play_verify_failed)
+                    }
+                }
+                PlayPurchaseOutcome.Pending -> finish_play_action(info = R.string.billing_play_pending)
+                PlayPurchaseOutcome.Cancelled -> finish_play_action()
+                PlayPurchaseOutcome.AlreadyOwned -> {
+                    finish_play_action()
+                    redeem_play_purchases(force = true)
+                }
+                PlayPurchaseOutcome.Unavailable -> finish_play_action(error = R.string.billing_play_unavailable)
+                is PlayPurchaseOutcome.Failed -> finish_play_action(error = R.string.billing_play_failed)
+            }
+        }
+    }
+
+    private suspend fun verify_play_purchases(purchases: List<PlayOwnedPurchase>, force: Boolean = false): PlayVerifyResult {
+        val generation = play_generation
+        val catalog = play_product_ids()
+        var pending = false
+        var conflict = false
+        var failed = false
+        for (purchase in purchases.filter { it.is_purchased && !it.is_pending }) {
+            if (generation != play_generation) return PlayVerifyResult.Failed
+            if (!force && purchase.purchase_token in redeemed_play_tokens) continue
+            val product_id = purchase.product_ids.firstOrNull { it in catalog } ?: continue
+            try {
+                val response = with_play_retry {
+                    billing_api.verify_google_play_purchase(
+                        GooglePlayVerifyRequest(product_id = product_id, purchase_token = purchase.purchase_token),
+                    )
+                }
+                if (generation != play_generation) return PlayVerifyResult.Failed
+                conflicted_play_tokens.remove(purchase.purchase_token)
+                if (response.pending) pending = true else redeemed_play_tokens.add(purchase.purchase_token)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (conflict_error: org.astermail.android.api.ApiError.Conflict) {
+                if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "verify_google_play_purchase conflict", conflict_error)
+                conflicted_play_tokens.add(purchase.purchase_token)
+                conflict = true
+            } catch (t: Throwable) {
+                if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "verify_google_play_purchase failed", t)
+                failed = true
+            }
+        }
+        return when {
+            conflict -> PlayVerifyResult.Conflict
+            failed -> PlayVerifyResult.Failed
+            pending -> PlayVerifyResult.Pending
+            else -> PlayVerifyResult.Confirmed
+        }
+    }
+
+    private suspend fun <T> with_play_retry(block: suspend () -> T): T {
+        var attempt = 0
+        while (true) {
+            try {
+                return block()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (t: Throwable) {
+                if (attempt >= play_retry_delays_ms.size || !is_retryable_play_error(t)) throw t
+                delay(play_retry_delays_ms[attempt])
+                attempt += 1
+            }
+        }
+    }
+
+    fun redeem_play_purchases(force: Boolean = false) {
+        if (!_state.value.play_enabled) return
+        if (play_redeem_job?.isActive == true) {
+            play_redeem_requested = true
+            if (force) play_redeem_force_requested = true
+            return
+        }
+        val generation = play_generation
+        play_redeem_job = viewModelScope.launch {
+            var run_force = force
+            while (generation == play_generation) {
+                run_force = run_force || play_redeem_force_requested
+                play_redeem_requested = false
+                play_redeem_force_requested = false
+                run_play_redeem(run_force, generation)
+                if (!play_redeem_requested) break
+                run_force = false
+            }
+        }
+    }
+
+    private suspend fun run_play_redeem(force: Boolean, generation: Int) {
+        val owned = play_store.owned_purchases(ctx) ?: return
+        if (generation != play_generation) return
+        val s = _state.value
+        val catalog = play_product_ids()
+        val candidates = owned.filter { purchase ->
+            val product_id = purchase.product_ids.firstOrNull { it in catalog } ?: return@filter false
+            purchase.is_purchased && !purchase.is_pending && when {
+                force -> true
+                purchase.purchase_token in redeemed_play_tokens -> false
+                purchase.purchase_token in conflicted_play_tokens -> false
+                !purchase.is_acknowledged -> true
+                else -> !backend_play_sub_for(product_id, s)
+            }
+        }
+        if (candidates.isEmpty()) return
+        val before = redeemed_play_tokens.size
+        verify_play_purchases(candidates, force = force)
+        if (generation != play_generation) return
+        if (force || redeemed_play_tokens.size > before) reload_subscription()
+    }
+
+    private fun open_play_subscriptions() {
+        val s = _state.value
+        val product_id = play_product_for_plan(s.play_products, s.subscription?.plan?.code)?.product_id
+        _state.update {
+            it.copy(
+                is_acting = false,
+                acting_action = null,
+                portal_url = play_manage_subscription_url(ctx.packageName, product_id),
+            )
+        }
+    }
+
+    private fun is_play_subscriber(): Boolean = is_google_play_provider(_state.value.subscription?.payment_provider)
+
+    private fun blocks_external_checkout(): Boolean {
+        if (!play_install_check()) return false
+        _state.update {
+            it.copy(
+                is_acting = false,
+                acting_action = null,
+                error = ctx.getString(R.string.billing_play_unavailable),
+                info = null,
+                checkout_url = null,
+            )
+        }
+        ensure_play_config()
+        return true
+    }
+
+    private fun blocks_stripe_management(): Boolean {
+        if (!play_install_check()) return false
+        _state.update { it.copy(is_acting = false, acting_action = null, error = ctx.getString(R.string.billing_play_blocked), info = null) }
+        return true
+    }
+
     init {
+        _state.update { it.copy(available_plans = priced_plans(it.available_plans, it)) }
+        viewModelScope.launch {
+            auth_repository.active_account_id.collect { id -> switch_play_account(id) }
+        }
         viewModelScope.launch {
             billing_return_store.outcome.collect { outcome ->
                 if (outcome == null) return@collect
@@ -207,14 +640,20 @@ class BillingViewModel @Inject constructor(
 
     fun load_plans() {
         viewModelScope.launch {
+            val config_job = ensure_play_config()
             try {
                 val response = billing_api.get_available_plans()
                 AvailablePlansCache.update(response.plans)
-                _state.update { it.copy(available_plans = response.plans, plans_failed = response.plans.isEmpty()) }
+                raw_plans = response.plans
+                _state.update { it.copy(available_plans = priced_plans(response.plans, it), plans_failed = response.plans.isEmpty()) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_available_plans failed", t)
                 _state.update { it.copy(plans_failed = true) }
+            }
+            if (config_job != null) {
+                config_job.join()
+                if (_state.value.play_enabled && _state.value.play_offers.isEmpty()) refresh_play_offers()
             }
         }
     }
@@ -266,6 +705,10 @@ class BillingViewModel @Inject constructor(
                 _state.value = _state.value.copy(is_acting = false, acting_action = null, error = ctx.getString(R.string.session_expired_sign_in))
                 return@launch
             }
+            if (play_install_check()) {
+                prepare_play_purchase(plan_code, billing_interval)
+                return@launch
+            }
             try {
                 val response = billing_api.create_checkout_session(
                     CheckoutSessionRequest(
@@ -294,6 +737,11 @@ class BillingViewModel @Inject constructor(
 
     fun open_portal() {
         if (_state.value.is_acting) return
+        if (is_play_subscriber()) {
+            open_play_subscriptions()
+            return
+        }
+        if (blocks_stripe_management()) return
         viewModelScope.launch {
             _state.value = _state.value.copy(is_acting = true, acting_action = "portal", error = null, portal_url = null)
             try {
@@ -315,6 +763,10 @@ class BillingViewModel @Inject constructor(
         if (_state.value.is_acting) {
             _state.value = _state.value.copy(error = ctx.getString(R.string.billing_action_in_progress), info = null)
             return false
+        }
+        if (is_play_subscriber()) {
+            open_play_subscriptions()
+            return true
         }
         val chosen_reason = reason?.takeIf { it in CANCEL_REASONS }
         _state.value = _state.value.copy(is_acting = true, acting_action = "cancel", error = null, info = null)
@@ -358,6 +810,10 @@ class BillingViewModel @Inject constructor(
 
     fun reactivate_subscription() {
         if (_state.value.is_acting) return
+        if (is_play_subscriber()) {
+            open_play_subscriptions()
+            return
+        }
         viewModelScope.launch {
             _state.value = _state.value.copy(is_acting = true, acting_action = "reactivate", error = null, info = null)
             try {
@@ -378,6 +834,11 @@ class BillingViewModel @Inject constructor(
 
     fun switch_billing(billing_interval: String) {
         if (_state.value.is_acting) return
+        if (is_play_subscriber()) {
+            change_play_subscription(_state.value.subscription?.plan?.code.orEmpty(), billing_interval)
+            return
+        }
+        if (blocks_stripe_management()) return
         viewModelScope.launch {
             _state.value = _state.value.copy(is_acting = true, acting_action = "switch", error = null, info = null)
             try {
@@ -402,8 +863,24 @@ class BillingViewModel @Inject constructor(
         }
     }
 
+    private fun change_play_subscription(plan_code: String, billing_interval: String) {
+        _state.update { it.copy(is_acting = true, acting_action = "change_$plan_code", error = null, info = null) }
+        viewModelScope.launch {
+            if (plan_code.isNotBlank() && play_install_check()) {
+                prepare_play_purchase(plan_code, billing_interval)
+            } else {
+                open_play_subscriptions()
+            }
+        }
+    }
+
     fun change_plan(plan_code: String, billing_interval: String) {
         if (_state.value.is_acting) return
+        if (is_play_subscriber()) {
+            change_play_subscription(plan_code, billing_interval)
+            return
+        }
+        if (blocks_stripe_management()) return
         viewModelScope.launch {
             _state.value = _state.value.copy(is_acting = true, acting_action = "change_$plan_code", error = null, info = null)
             try {
@@ -585,6 +1062,7 @@ class BillingViewModel @Inject constructor(
 
     fun start_crypto_checkout(plan_code: String, term_months: Int) {
         if (_state.value.is_acting) return
+        if (blocks_external_checkout()) return
         viewModelScope.launch {
             _state.value = _state.value.copy(is_acting = true, acting_action = "crypto_$plan_code", error = null, checkout_url = null)
             try {
@@ -612,6 +1090,7 @@ class BillingViewModel @Inject constructor(
 
     fun purchase_addon_crypto(addon_id: String, term_months: Int) {
         if (_state.value.is_acting) return
+        if (blocks_external_checkout()) return
         viewModelScope.launch {
             _state.value = _state.value.copy(is_acting = true, acting_action = "crypto_addon_$addon_id", error = null, checkout_url = null)
             try {
@@ -673,6 +1152,7 @@ class BillingViewModel @Inject constructor(
 
     fun create_crypto_native_invoice(plan_code: String, term_months: Int, currency: String, chain: String) {
         if (_state.value.is_acting) return
+        if (blocks_external_checkout()) return
         viewModelScope.launch {
             _state.value = _state.value.copy(
                 is_acting = true,
@@ -732,6 +1212,7 @@ class BillingViewModel @Inject constructor(
             _state.value = _state.value.copy(error = ctx.getString(R.string.billing_action_in_progress), info = null)
             return
         }
+        if (blocks_external_checkout()) return
         viewModelScope.launch {
             _state.value = _state.value.copy(is_acting = true, acting_action = "addon_$addon_id", error = null, checkout_url = null)
             try {
@@ -881,4 +1362,13 @@ class BillingViewModel @Inject constructor(
             }
         }
     }
+}
+
+internal val PLAY_VERIFY_RETRY_DELAYS_MS = listOf(2_000L, 5_000L, 10_000L)
+
+internal fun is_retryable_play_error(t: Throwable): Boolean = when (t) {
+    is org.astermail.android.api.ApiError.NetworkError -> true
+    is org.astermail.android.api.ApiError.ServerError -> t.code >= 500
+    is java.io.IOException -> true
+    else -> false
 }

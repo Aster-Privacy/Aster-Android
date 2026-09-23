@@ -3479,4 +3479,12 @@
     <string name="passkey_create_unavailable">Dit apparaat kan geen passkeys opslaan. Controleer of schermvergrendeling aan staat en er een wachtwoordbeheerder is ingesteld.</string>
     <string name="passkey_create_failed">Kan de passkey niet toevoegen. Probeer het opnieuw.</string>
     <string name="error_passkey_timed_out">Het verzoek voor de toegangssleutel is verlopen. Probeer het opnieuw.</string>
+    <string name="billing_play_unavailable">Aankopen via Google Play zijn nu niet beschikbaar. Probeer het later opnieuw.</string>
+    <string name="billing_play_failed">Google Play kon je aankoop niet voltooien. Probeer het opnieuw.</string>
+    <string name="billing_play_pending">Je aankoop is in behandeling. Je abonnement wordt actief zodra Google Play de betaling bevestigt.</string>
+    <string name="billing_play_success">Je abonnement is actief.</string>
+    <string name="billing_play_blocked">Je hebt al een abonnement. Beheer het waar je het hebt gekocht om het te wijzigen.</string>
+    <string name="billing_play_verify_failed">Je aankoop is gelukt, maar nog niet bevestigd. Aster Mail bevestigt deze automatisch de volgende keer dat je de app opent.</string>
+    <string name="billing_play_manage">Beheren in Google Play</string>
+    <string name="billing_play_not_on_device">Je abonnement is niet gekoppeld aan het Google-account op dit apparaat. Beheer het in Google Play.</string>
 </resources>

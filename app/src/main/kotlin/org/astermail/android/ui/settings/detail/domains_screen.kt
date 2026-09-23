@@ -219,6 +219,7 @@ fun DomainsScreen(
         v_gap(AsterSpacing.md)
         domain_purchase_area(
             state = purchase_state,
+            can_buy = !org.astermail.android.billing.remember_play_install(),
             on_buy = on_open_buy_domain,
             on_open_order = { on_open_domain_order(it.id) },
             on_cancel = { purchase_vm.cancel_order(it) },

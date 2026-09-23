@@ -3369,4 +3369,12 @@
     <string name="passkey_create_unavailable">यह डिवाइस पासकी सेव नहीं कर सकता। पक्का करें कि स्क्रीन लॉक चालू है और पासवर्ड मैनेजर सेट है।</string>
     <string name="passkey_create_failed">पासकी नहीं जोड़ी जा सकी। फिर से कोशिश करें।</string>
     <string name="error_passkey_timed_out">पासकी अनुरोध का समय समाप्त हो गया। फिर से कोशिश करें।</string>
+    <string name="billing_play_unavailable">Google Play से खरीदारी अभी उपलब्ध नहीं है। बाद में फिर से कोशिश करें।</string>
+    <string name="billing_play_failed">Google Play आपकी खरीदारी पूरी नहीं कर सका। फिर से कोशिश करें।</string>
+    <string name="billing_play_pending">आपकी खरीदारी लंबित है। Google Play के भुगतान की पुष्टि करने के बाद आपका प्लान चालू हो जाएगा।</string>
+    <string name="billing_play_success">आपका प्लान चालू है।</string>
+    <string name="billing_play_blocked">आपके पास पहले से एक सदस्यता है। इसे बदलने के लिए, वहीं प्रबंधित करें जहां से आपने इसे खरीदा था।</string>
+    <string name="billing_play_verify_failed">आपकी खरीदारी हो गई, लेकिन अभी तक इसकी पुष्टि नहीं हुई है। अगली बार ऐप खोलने पर Aster Mail इसकी पुष्टि अपने आप कर देगा।</string>
+    <string name="billing_play_manage">Google Play में प्रबंधित करें</string>
+    <string name="billing_play_not_on_device">आपकी सदस्यता इस डिवाइस के Google खाते से लिंक नहीं है। इसे Google Play में प्रबंधित करें।</string>
 </resources>

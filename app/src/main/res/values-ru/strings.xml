@@ -3521,4 +3521,12 @@
     <string name="passkey_create_unavailable">Это устройство не может сохранять ключи доступа. Убедитесь, что блокировка экрана включена и настроен менеджер паролей.</string>
     <string name="passkey_create_failed">Не удалось добавить ключ доступа. Повторите попытку.</string>
     <string name="error_passkey_timed_out">Время запроса ключа доступа истекло. Попробуйте ещё раз.</string>
+    <string name="billing_play_unavailable">Покупки через Google Play сейчас недоступны. Повторите попытку позже.</string>
+    <string name="billing_play_failed">Google Play не удалось завершить покупку. Повторите попытку.</string>
+    <string name="billing_play_pending">Покупка ожидает подтверждения. Тариф активируется, когда Google Play подтвердит платеж.</string>
+    <string name="billing_play_success">Ваш тариф активен.</string>
+    <string name="billing_play_blocked">У вас уже есть подписка. Чтобы изменить ее, управляйте ею там, где вы ее оформили.</string>
+    <string name="billing_play_verify_failed">Покупка выполнена, но еще не подтверждена. Aster Mail подтвердит ее автоматически при следующем открытии приложения.</string>
+    <string name="billing_play_manage">Управлять в Google Play</string>
+    <string name="billing_play_not_on_device">Ваша подписка не связана с аккаунтом Google на этом устройстве. Управляйте ею в Google Play.</string>
 </resources>

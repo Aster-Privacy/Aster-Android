@@ -213,7 +213,11 @@ fun RegisterScreen(
                     )
                     RegisterStep.custom_domain -> RegisterCustomDomainStep(
                         on_own_domain = { on_registered("domains") },
-                        on_new_domain = { on_registered("buy_domain") },
+                        on_new_domain = if (org.astermail.android.billing.remember_play_install()) {
+                            null
+                        } else {
+                            { on_registered("buy_domain") }
+                        },
                         on_skip = { state.step.value = RegisterStep.import_mail },
                     )
                     RegisterStep.import_mail -> RegisterImportMailStep(

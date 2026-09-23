@@ -3506,4 +3506,12 @@
     <string name="passkey_create_unavailable">Cet appareil ne peut pas enregistrer de clés d\'accès. Vérifiez que le verrouillage de l\'écran est activé et qu\'un gestionnaire de mots de passe est configuré.</string>
     <string name="passkey_create_failed">Impossible d\'ajouter la clé d\'accès. Réessayez.</string>
     <string name="error_passkey_timed_out">La demande de clé d\'accès a expiré. Réessayez.</string>
+    <string name="billing_play_unavailable">Les achats Google Play ne sont pas disponibles pour le moment. Réessayez plus tard.</string>
+    <string name="billing_play_failed">Google Play n\'a pas pu finaliser votre achat. Réessayez.</string>
+    <string name="billing_play_pending">Votre achat est en attente. Votre forfait sera activé une fois le paiement confirmé par Google Play.</string>
+    <string name="billing_play_success">Votre forfait est actif.</string>
+    <string name="billing_play_blocked">Vous avez déjà un abonnement. Pour le modifier, gérez-le là où vous l\'avez acheté.</string>
+    <string name="billing_play_verify_failed">Votre achat a abouti, mais il n\'est pas encore confirmé. Aster Mail le confirmera automatiquement à la prochaine ouverture de l\'app.</string>
+    <string name="billing_play_manage">Gérer dans Google Play</string>
+    <string name="billing_play_not_on_device">Votre abonnement n\'est pas associé au compte Google de cet appareil. Gérez-le dans Google Play.</string>
 </resources>

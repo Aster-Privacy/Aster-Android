@@ -2012,11 +2012,18 @@ fun InboxScreen(
                                     plan_name = settings_state.subscription?.effective_plan_name.orEmpty(),
                                     due_date = payment_failed_due.orEmpty(),
                                     is_loading = billing_state.is_acting && billing_state.acting_action == "portal",
-                                    on_update_card = {
-                                        if (org.astermail.android.billing.is_crypto_provider(settings_state.subscription?.payment_provider)) {
-                                            org.astermail.android.billing.open_billing_in_app(banner_context)
-                                        } else if (!billing_state.is_acting) {
-                                            billing_vm.open_portal()
+                                    on_update_card = if (
+                                        org.astermail.android.billing.remember_play_install() &&
+                                        !org.astermail.android.billing.is_google_play_provider(settings_state.subscription?.payment_provider)
+                                    ) {
+                                        null
+                                    } else {
+                                        {
+                                            if (org.astermail.android.billing.is_crypto_provider(settings_state.subscription?.payment_provider)) {
+                                                org.astermail.android.billing.open_billing_in_app(banner_context)
+                                            } else if (!billing_state.is_acting) {
+                                                billing_vm.open_portal()
+                                            }
                                         }
                                     },
                                     modifier = Modifier.padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs),

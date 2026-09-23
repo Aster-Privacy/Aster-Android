@@ -3479,4 +3479,12 @@
     <string name="passkey_create_unavailable">Bu cihaz geçiş anahtarı kaydedemiyor. Ekran kilidinin açık ve bir parola yöneticisinin kurulu olduğundan emin ol.</string>
     <string name="passkey_create_failed">Geçiş anahtarı eklenemedi. Tekrar dene.</string>
     <string name="error_passkey_timed_out">Geçiş anahtarı isteğinin süresi doldu. Tekrar deneyin.</string>
+    <string name="billing_play_unavailable">Google Play satın alımları şu anda kullanılamıyor. Daha sonra tekrar deneyin.</string>
+    <string name="billing_play_failed">Google Play satın alma işleminizi tamamlayamadı. Tekrar deneyin.</string>
+    <string name="billing_play_pending">Satın alma işleminiz beklemede. Google Play ödemeyi onayladığında planınız etkinleşir.</string>
+    <string name="billing_play_success">Planınız etkin.</string>
+    <string name="billing_play_blocked">Zaten bir aboneliğiniz var. Değiştirmek için satın aldığınız yerden yönetin.</string>
+    <string name="billing_play_verify_failed">Satın alma işleminiz tamamlandı ancak henüz onaylanmadı. Aster Mail, uygulamayı bir sonraki açışınızda bunu otomatik olarak onaylar.</string>
+    <string name="billing_play_manage">Google Play\'de yönet</string>
+    <string name="billing_play_not_on_device">Aboneliğiniz bu cihazdaki Google hesabına bağlı değil. Google Play\'de yönetin.</string>
 </resources>

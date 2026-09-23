@@ -3563,4 +3563,12 @@
     <string name="passkey_create_unavailable">لا يمكن لهذا الجهاز حفظ مفاتيح المرور. تأكد من تفعيل قفل الشاشة وإعداد مدير كلمات مرور.</string>
     <string name="passkey_create_failed">تعذّرت إضافة مفتاح المرور. حاول مرة أخرى.</string>
     <string name="error_passkey_timed_out">انتهت مهلة طلب مفتاح المرور. حاول مرة أخرى.</string>
+    <string name="billing_play_unavailable">عمليات الشراء عبر Google Play غير متاحة الآن. حاول مرة أخرى لاحقًا.</string>
+    <string name="billing_play_failed">تعذّر على Google Play إكمال عملية الشراء. حاول مرة أخرى.</string>
+    <string name="billing_play_pending">عملية الشراء قيد الانتظار. سيتم تفعيل خطتك بعد أن يؤكد Google Play الدفع.</string>
+    <string name="billing_play_success">خطتك مفعّلة.</string>
+    <string name="billing_play_blocked">لديك اشتراك بالفعل. لتغييره، أدِره من المكان الذي اشتريته منه.</string>
+    <string name="billing_play_verify_failed">تمت عملية الشراء، لكنها لم تُؤكَّد بعد. سيؤكدها Aster Mail تلقائيًا في المرة القادمة التي تفتح فيها التطبيق.</string>
+    <string name="billing_play_manage">الإدارة في Google Play</string>
+    <string name="billing_play_not_on_device">اشتراكك غير مرتبط بحساب Google على هذا الجهاز. أدِره في Google Play.</string>
 </resources>

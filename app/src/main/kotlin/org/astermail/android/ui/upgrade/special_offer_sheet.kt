@@ -183,6 +183,7 @@ fun special_offer_view_model(): SpecialOfferViewModel {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SpecialOfferHost() {
+    if (org.astermail.android.billing.remember_play_install()) return
     val offer_vm = special_offer_view_model()
     val offer_state by offer_vm.state.collectAsStateWithLifecycle()
     val billing_vm: BillingViewModel = org.astermail.android.billing.billing_view_model()

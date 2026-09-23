@@ -3524,4 +3524,12 @@
     <string name="passkey_create_unavailable">This device can\'t save passkeys. Make sure screen lock is on and a password manager is set up.</string>
     <string name="passkey_create_failed">Couldn\'t add the passkey. Try again.</string>
     <string name="error_passkey_timed_out">The passkey request timed out. Try again.</string>
+    <string name="billing_play_unavailable">Google Play purchases aren\'t available right now. Try again later.</string>
+    <string name="billing_play_failed">Google Play couldn\'t complete your purchase. Try again.</string>
+    <string name="billing_play_pending">Your purchase is pending. Your plan activates after Google Play confirms the payment.</string>
+    <string name="billing_play_success">Your plan is active.</string>
+    <string name="billing_play_blocked">You already have a subscription. To change it, manage it where you bought it.</string>
+    <string name="billing_play_verify_failed">Your purchase went through, but it isn\'t confirmed yet. Aster Mail confirms it automatically the next time you open the app.</string>
+    <string name="billing_play_manage">Manage in Google Play</string>
+    <string name="billing_play_not_on_device">Your subscription isn\'t linked to the Google account on this device. Manage it in Google Play.</string>
 </resources>
