@@ -373,13 +373,94 @@ private val order_url_patterns = listOf(
 
 private val order_url_trailing_junk = Regex("""['">\]).,]+$""")
 
+private val order_url_image_path = Regex("""\.(?:png|jpe?g|gif|svg|webp|bmp|ico)(?:[?#].*)?$""", RegexOption.IGNORE_CASE)
+
+private val order_url_excluded_words = listOf("track", "unsubscribe", "preferences", "opt-out", "optout")
+
+private val order_link_view_phrase = Regex(
+    """\b(?:view|see|open|download|print|get)\s+(?:your\s+|the\s+|this\s+|my\s+)?(?:full\s+)?(?:order|receipt|invoice|purchase)""",
+    RegexOption.IGNORE_CASE,
+)
+
+private val order_link_details_phrase = Regex(
+    """\b(?:order|receipt|invoice|purchase)\s+(?:details|summary|status|history)\b""",
+    RegexOption.IGNORE_CASE,
+)
+
+private val order_link_keyword = Regex("""\b(?:order|receipt|invoice|purchase)s?\b""", RegexOption.IGNORE_CASE)
+
+private val order_link_browser_phrase = Regex(
+    """\bview\s+(?:it\s+|this\s+(?:email\s+|message\s+)?)?(?:in|on)\s+(?:your\s+|a\s+)?(?:web\s+)?browser\b""",
+    RegexOption.IGNORE_CASE,
+)
+
+private val order_link_url_keyword = Regex("""(?:order|receipt|invoice|purchase)""", RegexOption.IGNORE_CASE)
+
+private fun is_hosted_receipt_url(uri: java.net.URI): Boolean {
+    val host = uri.host?.lowercase(Locale.ROOT) ?: return false
+    val path = uri.path?.lowercase(Locale.ROOT).orEmpty()
+    return when (host) {
+        "pay.stripe.com" -> path.startsWith("/receipts/") || path.startsWith("/invoice/")
+        "invoice.stripe.com" -> path.startsWith("/i/") || path.contains("invoice") || path.contains("receipt")
+        else -> false
+    }
+}
+
+private fun is_usable_order_url(url: String): Boolean {
+    val lower = url.lowercase(Locale.ROOT)
+    if (!lower.startsWith("https://") && !lower.startsWith("http://")) return false
+    if (order_url_excluded_words.any { lower.contains(it) }) return false
+    val path = runCatching { java.net.URI(url).path }.getOrNull().orEmpty()
+    return !order_url_image_path.containsMatchIn(path)
+}
+
+internal fun score_order_link(href: String, text: String): Int {
+    if (!is_usable_order_url(href)) return 0
+    val label = text.replace(Regex("""\s+"""), " ").trim()
+    if (label.isEmpty()) return 0
+    val lower_label = label.lowercase(Locale.ROOT)
+    if (order_url_excluded_words.any { lower_label.contains(it) }) return 0
+    val uri = runCatching { java.net.URI(href) }.getOrNull() ?: return 0
+    val path_and_query = (uri.rawPath.orEmpty() + "?" + uri.rawQuery.orEmpty())
+    var score = 0
+    if (is_hosted_receipt_url(uri)) score += 100
+    score += when {
+        order_link_view_phrase.containsMatchIn(label) -> 80
+        order_link_details_phrase.containsMatchIn(label) -> 70
+        order_link_keyword.containsMatchIn(label) -> 50
+        order_link_browser_phrase.containsMatchIn(label) -> 40
+        else -> 0
+    }
+    if (order_link_url_keyword.containsMatchIn(path_and_query)) score += 30
+    return score
+}
+
+private fun select_order_link_from_html(html: String): String? {
+    val document = runCatching { org.jsoup.Jsoup.parse(html) }.getOrNull() ?: return null
+    var best: String? = null
+    var best_score = 0
+    for (anchor in document.select("a[href]")) {
+        val href = anchor.attr("href").trim()
+        val score = score_order_link(href, anchor.text())
+        if (score > best_score) {
+            best = href
+            best_score = score
+        }
+    }
+    return best
+}
+
 fun extract_order_url(body: String, html: String?): String? {
-    val content = if (!html.isNullOrEmpty()) html else body
+    val body_is_html = looks_like_html_body(body)
+    val markup = html?.takeIf { it.isNotEmpty() } ?: body.takeIf { body_is_html }
+    if (markup != null) {
+        select_order_link_from_html(markup)?.let { return it }
+    }
+    val plain = if (body_is_html) html_to_plain_text(body) else body
     for (pattern in order_url_patterns) {
-        for (match in pattern.findAll(content)) {
+        for (match in pattern.findAll(plain)) {
             val url = match.value.replace(order_url_trailing_junk, "")
-            val lower = url.lowercase(Locale.ROOT)
-            if (lower.contains("track") || lower.contains("unsubscribe")) continue
+            if (!is_usable_order_url(url)) continue
             return url
         }
     }

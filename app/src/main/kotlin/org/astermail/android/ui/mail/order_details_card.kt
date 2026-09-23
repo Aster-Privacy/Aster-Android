@@ -47,14 +47,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.request.ImageRequest
 import compose.icons.TablerIcons
 import compose.icons.tablericons.BuildingStore
 import compose.icons.tablericons.ChevronDown
@@ -77,6 +84,7 @@ import org.astermail.android.mail.extraction.extract_order_url
 import org.astermail.android.ui.common.open_external_url
 import org.astermail.android.ui.common.remember_copy_action
 import java.util.Collections
+import java.util.Locale
 
 private val collapsed_order_cards: MutableSet<String> = Collections.synchronizedSet(HashSet())
 
@@ -84,6 +92,107 @@ internal class order_card_model(
     val result: EmailExtractionResult,
     val order_url: String?,
 )
+
+private const val logo_sample_grid = 24
+private const val logo_min_ink_fraction = 0.04f
+
+internal fun merchant_matches_sender_domain(merchant: String, sender_email: String): Boolean {
+    val domain = sender_email.substringAfter('@', "").trim().lowercase(Locale.ROOT)
+    if (domain.isEmpty()) return false
+    val label = get_root_domain(domain).substringBefore('.').filter { it.isLetterOrDigit() }
+    val merchant_key = merchant.lowercase(Locale.ROOT).filter { it.isLetterOrDigit() }
+    if (label.length < 3 || merchant_key.length < 3) return false
+    return merchant_key.contains(label) || label.contains(merchant_key)
+}
+
+internal fun is_blank_logo_pixels(pixels: IntArray): Boolean {
+    if (pixels.isEmpty()) return true
+    var ink = 0
+    for (pixel in pixels) {
+        val alpha = (pixel ushr 24) and 0xFF
+        if (alpha < 40) continue
+        val red = (pixel shr 16) and 0xFF
+        val green = (pixel shr 8) and 0xFF
+        val blue = pixel and 0xFF
+        if (red > 235 && green > 235 && blue > 235) continue
+        ink += 1
+    }
+    return ink.toFloat() / pixels.size < logo_min_ink_fraction
+}
+
+private fun is_blank_logo(drawable: android.graphics.drawable.Drawable): Boolean {
+    val bitmap = (drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap ?: return false
+    if (bitmap.config == android.graphics.Bitmap.Config.HARDWARE) return false
+    if (bitmap.width <= 0 || bitmap.height <= 0) return true
+    val columns = minOf(logo_sample_grid, bitmap.width)
+    val rows = minOf(logo_sample_grid, bitmap.height)
+    val samples = IntArray(columns * rows)
+    for (row in 0 until rows) {
+        val y = (row * bitmap.height) / rows
+        for (column in 0 until columns) {
+            val x = (column * bitmap.width) / columns
+            samples[row * columns + column] = bitmap.getPixel(x, y)
+        }
+    }
+    return is_blank_logo_pixels(samples)
+}
+
+@Composable
+private fun merchant_avatar(
+    merchant: String,
+    sender_email: String,
+    size: Dp,
+) {
+    val context = LocalContext.current
+    val low_network = org.astermail.android.network.low_network_active()
+    val logos_allowed = org.astermail.android.api.network.should_load_sender_logo(low_network)
+    val (bg, fg) = remember(merchant) { avatar_colors_for(avatar_key_for("", merchant)) }
+    val logo_url = remember(merchant, sender_email) {
+        if (merchant_matches_sender_domain(merchant, sender_email)) {
+            get_favicon_url(get_root_domain(sender_email.substringAfter('@').trim().lowercase(Locale.ROOT)))
+        } else {
+            null
+        }
+    }
+    var logo_ok by remember(logo_url) { mutableStateOf(false) }
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(if (logo_ok) Color.White else bg),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (!logo_ok) {
+            Text(
+                text = initial_for(merchant, sender_email),
+                color = fg,
+                style = avatar_initial_style(size),
+            )
+        }
+        if (logo_url != null && logos_allowed) {
+            val request = remember(logo_url) {
+                ImageRequest.Builder(context)
+                    .data(logo_url)
+                    .allowHardware(false)
+                    .crossfade(false)
+                    .build()
+            }
+            AsyncImage(
+                model = request,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                onState = { state ->
+                    logo_ok = state is AsyncImagePainter.State.Success &&
+                        !is_blank_logo(state.result.drawable)
+                },
+                modifier = Modifier
+                    .size(size)
+                    .clip(CircleShape)
+                    .graphicsLayer { alpha = if (logo_ok) 1f else 0f },
+            )
+        }
+    }
+}
 
 @Composable
 internal fun shipping_status_text(status: ShippingStatus): String = stringResource(
@@ -196,9 +305,9 @@ private fun order_details_card(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (merchant != null) {
-                SenderAvatar(
-                    email = shown_sender_email,
-                    name = shown_sender_name,
+                merchant_avatar(
+                    merchant = merchant,
+                    sender_email = shown_sender_email,
                     size = 36.dp,
                 )
             } else {
