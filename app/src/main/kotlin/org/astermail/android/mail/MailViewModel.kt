@@ -3089,8 +3089,8 @@ class MailViewModel @Inject constructor(
         }
         val previous = _inbox_state.value.items
         val keeps_archived = folder_keeps_archived(_inbox_state.value.current_folder)
-        val archived_items = previous.filter { it.id in item_ids }
-        val removed_items = if (keeps_archived) emptyList() else archived_items
+        val target_items = previous.filter { it.id in item_ids }
+        val removed_items = if (keeps_archived) emptyList() else target_items
         val raw_items = lookup_raw_items(item_ids)
         if (keeps_archived) {
             set_archived_in_view(item_ids, true)
@@ -3105,8 +3105,8 @@ class MailViewModel @Inject constructor(
             pending_removed_ids.addAll(item_ids)
             protect_removed(item_ids)
         }
-        val affected_label_caches = archived_items.flatMap { it.labels }.map { "label:$it" }
-        val affected_tag_caches = archived_items.flatMap { it.tag_tokens }.map { "tag:$it" }
+        val affected_label_caches = target_items.flatMap { it.labels }.map { "label:$it" }
+        val affected_tag_caches = target_items.flatMap { it.tag_tokens }.map { "tag:$it" }
         invalidate_caches_except_current(listOf("archive", "inbox", "starred", "snoozed") + all_mail_folder_ids + affected_label_caches + affected_tag_caches)
         val archive_key = batch_action_key("archive", message_scope)
         var archive_job: kotlinx.coroutines.Job? = null
@@ -4899,12 +4899,14 @@ fun org.astermail.android.storage.search.DecryptedMailEntity.to_inbox_item(): In
     ),
 )
 
-internal fun folder_keeps_archived(folder: String): Boolean = when {
-    folder == "archive" || folder == "starred" || folder == "snoozed" || folder == "sent" -> true
-    is_all_mail_folder(folder) -> true
-    folder.startsWith("label:") || folder.startsWith("tag:") || folder.startsWith("routing:") -> true
-    else -> false
-}
+private val folders_keeping_archived = setOf("archive", "starred", "snoozed", "sent")
+
+internal fun folder_keeps_archived(folder: String): Boolean =
+    folder in folders_keeping_archived ||
+        is_all_mail_folder(folder) ||
+        folder.startsWith("label:") ||
+        folder.startsWith("tag:") ||
+        folder.startsWith("routing:")
 
 internal fun folder_matches_item(folder: String, item: InboxItem): Boolean = when (folder) {
     "inbox" -> !item.is_trashed && !item.is_archived && !item.is_spam && item.labels.isEmpty()
