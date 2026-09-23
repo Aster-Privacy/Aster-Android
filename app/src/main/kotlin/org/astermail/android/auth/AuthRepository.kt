@@ -593,6 +593,7 @@ class AuthRepository @Inject constructor(
         password: String,
         captcha_token: String? = null,
         remember_me: Boolean = true,
+        display_name: String? = null,
     ): Result<RegisterSuccess> = runCatching {
         val trimmed = email.trim().lowercase(java.util.Locale.ROOT)
         val at_index = trimmed.indexOf('@')
@@ -664,6 +665,7 @@ class AuthRepository @Inject constructor(
         val register_resp = auth_api.register(
             RegisterRequest(
                 username = username,
+                display_name = display_name?.trim()?.takeIf { it.isNotEmpty() },
                 user_hash = user_hash,
                 password_hash = base64_encode(password_hash_bytes),
                 password_salt = base64_encode(salt_bytes),
