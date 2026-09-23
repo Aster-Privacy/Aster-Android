@@ -104,6 +104,7 @@ class SettingsViewModelTest {
     private lateinit var alias_detail_api: org.astermail.android.api.aliases.AliasDetailApi
     private lateinit var recovery_api: org.astermail.android.api.recovery.RecoveryApi
     private lateinit var mail_rules_api: org.astermail.android.api.mail_rules.MailRulesApi
+    private lateinit var keys_api: org.astermail.android.api.keys.KeysApi
     private lateinit var auth_repository: AuthRepository
     private lateinit var session_key_store: SessionKeyStore
     private lateinit var token_store: TokenStore
@@ -195,6 +196,7 @@ class SettingsViewModelTest {
         alias_detail_api = mockk(relaxed = true)
         recovery_api = mockk(relaxed = true)
         mail_rules_api = mockk(relaxed = true)
+        keys_api = mockk(relaxed = true)
         auth_repository = mockk(relaxed = true)
         session_key_store = mockk(relaxed = true)
         every { session_key_store.get_data_kek() } answers { test_data_kek.copyOf() }
@@ -242,6 +244,7 @@ class SettingsViewModelTest {
             alias_detail_api = alias_detail_api,
             recovery_api = recovery_api,
             mail_rules_api = mail_rules_api,
+            keys_api = keys_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
             token_store = token_store,
@@ -1995,6 +1998,7 @@ class SettingsViewModelTest {
             alias_detail_api = alias_detail_api,
             recovery_api = recovery_api,
             mail_rules_api = mail_rules_api,
+            keys_api = keys_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
             token_store = token_store,
@@ -2037,6 +2041,7 @@ class SettingsViewModelTest {
             alias_detail_api = alias_detail_api,
             recovery_api = recovery_api,
             mail_rules_api = mail_rules_api,
+            keys_api = keys_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
             token_store = token_store,
@@ -2112,6 +2117,7 @@ class SettingsViewModelTest {
             alias_detail_api = alias_detail_api,
             recovery_api = recovery_api,
             mail_rules_api = mail_rules_api,
+            keys_api = keys_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
             token_store = token_store,
@@ -2140,6 +2146,210 @@ class SettingsViewModelTest {
         assertTrue(written.contains("\"haptic_enabled\":false"))
         assertTrue(written.contains("\"web_only_setting\":\"keep_me\""))
         assertTrue(written.contains("\"show_aster_branding\":false"))
+    }
+
+    private val account_prefs_key = ByteArray(32) { (it * 7 + 3).toByte() }
+
+    private fun new_vm() = SettingsViewModel(
+        auth_api = auth_api,
+        user_api = user_api,
+        settings_api = settings_api,
+        labels_api = labels_api,
+        family_api = family_api,
+        tags_api = tags_api,
+        preferences_api = preferences_api,
+        signatures_api = signatures_api,
+        ghost_alias_api = ghost_alias_api,
+        auto_forward_api = auto_forward_api,
+        developer_api = developer_api,
+        subscriptions_api = subscriptions_api,
+        recovery_email_api = recovery_email_api,
+        security_api = security_api,
+        encryption_api = encryption_api,
+        alias_detail_api = alias_detail_api,
+        recovery_api = recovery_api,
+        mail_rules_api = mail_rules_api,
+        keys_api = keys_api,
+        auth_repository = auth_repository,
+        session_key_store = session_key_store,
+        token_store = token_store,
+        account_store = account_store,
+        preferences_cache = preferences_cache,
+        theme_store = theme_store,
+        context = context,
+    )
+
+    private fun aes_gcm(mode: Int, key: ByteArray, nonce: ByteArray, input: ByteArray): ByteArray {
+        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(
+            mode,
+            javax.crypto.spec.SecretKeySpec(key, "AES"),
+            javax.crypto.spec.GCMParameterSpec(128, nonce),
+        )
+        return cipher.doFinal(input)
+    }
+
+    private fun encrypt_with_raw_key(json_str: String, key: ByteArray): Pair<String, String> {
+        val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
+        val ct = aes_gcm(javax.crypto.Cipher.ENCRYPT_MODE, key, nonce, json_str.toByteArray(Charsets.UTF_8))
+        return java.util.Base64.getEncoder().encodeToString(ct) to
+            java.util.Base64.getEncoder().encodeToString(nonce)
+    }
+
+    private fun decrypt_with_raw_key(encrypted_b64: String, nonce_b64: String, key: ByteArray): String =
+        String(
+            aes_gcm(
+                javax.crypto.Cipher.DECRYPT_MODE,
+                key,
+                java.util.Base64.getDecoder().decode(nonce_b64),
+                java.util.Base64.getDecoder().decode(encrypted_b64),
+            ),
+            Charsets.UTF_8,
+        )
+
+    private fun server_blob(blob: Pair<String, String>) {
+        coEvery { preferences_api.get_encrypted_preferences() } returns
+            org.astermail.android.api.preferences.EncryptedPreferencesResponse(
+                encrypted_preferences = blob.first,
+                preferences_nonce = blob.second,
+            )
+    }
+
+    private fun account_write_key_available(format_writes: Boolean) {
+        every { session_key_store.has_account_write_kek("astermail-preferences-v1") } returns true
+        every { session_key_store.get_account_write_kek("astermail-preferences-v1") } answers {
+            account_prefs_key.copyOf()
+        }
+        coEvery { keys_api.get_account_key_format_writes() } returns format_writes
+    }
+
+    private fun kotlinx.coroutines.test.TestScope.save_and_capture(
+        target: SettingsViewModel,
+    ): org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest {
+        val request = io.mockk.slot<org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest>()
+        coEvery { preferences_api.save_encrypted_preferences(capture(request)) } returns Unit
+        target.save_preferences(target.state.value.preferences!!.copy(show_aster_branding = false))
+        advanceUntilIdle()
+        assertEquals(SaveStatus.SAVED, target.state.value.save_status)
+        return request.captured
+    }
+
+    @Test
+    fun `save writes preferences with the account key when the flag is on`() = runTest {
+        val identity_key = "user_identity_key"
+        every { session_key_store.get_identity_key() } returns identity_key
+        server_blob(encrypt_test_blob("""{"web_only_setting":"keep_me"}""", identity_key))
+        account_write_key_available(format_writes = true)
+        val target = new_vm()
+        advanceUntilIdle()
+
+        val request = save_and_capture(target)
+
+        val written = decrypt_with_raw_key(request.encrypted_preferences, request.preferences_nonce, account_prefs_key)
+        assertTrue(written.contains("\"show_aster_branding\":false"))
+        assertTrue(written.contains("\"web_only_setting\":\"keep_me\""))
+        assertTrue(
+            runCatching {
+                decrypt_test_blob(request.encrypted_preferences, request.preferences_nonce, identity_key)
+            }.isFailure,
+        )
+    }
+
+    @Test
+    fun `save keeps the legacy key when the flag is off`() = runTest {
+        val identity_key = "user_identity_key"
+        every { session_key_store.get_identity_key() } returns identity_key
+        server_blob(encrypt_test_blob("""{"web_only_setting":"keep_me"}""", identity_key))
+        account_write_key_available(format_writes = false)
+        val target = new_vm()
+        advanceUntilIdle()
+
+        val request = save_and_capture(target)
+
+        val written = decrypt_test_blob(request.encrypted_preferences, request.preferences_nonce, identity_key)
+        assertTrue(written.contains("\"show_aster_branding\":false"))
+    }
+
+    @Test
+    fun `save keeps the legacy key and skips the flag without an account write key`() = runTest {
+        val identity_key = "user_identity_key"
+        every { session_key_store.get_identity_key() } returns identity_key
+        server_blob(encrypt_test_blob("""{"web_only_setting":"keep_me"}""", identity_key))
+        coEvery { keys_api.get_account_key_format_writes() } returns true
+        val target = new_vm()
+        advanceUntilIdle()
+
+        val request = save_and_capture(target)
+
+        decrypt_test_blob(request.encrypted_preferences, request.preferences_nonce, identity_key)
+        coVerify(exactly = 0) { keys_api.get_account_key_format_writes() }
+    }
+
+    @Test
+    fun `save keeps the legacy key when the capability request throws`() = runTest {
+        val identity_key = "user_identity_key"
+        every { session_key_store.get_identity_key() } returns identity_key
+        server_blob(encrypt_test_blob("""{"web_only_setting":"keep_me"}""", identity_key))
+        account_write_key_available(format_writes = true)
+        coEvery { keys_api.get_account_key_format_writes() } throws RuntimeException("offline")
+        val target = new_vm()
+        advanceUntilIdle()
+
+        val request = save_and_capture(target)
+
+        decrypt_test_blob(request.encrypted_preferences, request.preferences_nonce, identity_key)
+    }
+
+    @Test
+    fun `load reads preferences written with the account key`() = runTest {
+        every { session_key_store.get_identity_key() } returns "user_identity_key"
+        every { session_key_store.get_decrypt_keks() } returns
+            listOf(java.util.Base64.getEncoder().encodeToString(account_prefs_key))
+        server_blob(encrypt_with_raw_key("""{"show_aster_branding":false}""", account_prefs_key))
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertEquals(false, target.state.value.preferences?.show_aster_branding)
+        assertTrue(target.state.value.preferences_authoritative)
+    }
+
+    @Test
+    fun `load reads preferences written under a previous identity key`() = runTest {
+        every { session_key_store.get_identity_key() } returns "relocked_identity_key"
+        every { session_key_store.get_previous_keys() } returns listOf("old_identity_key")
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
+        server_blob(encrypt_test_blob("""{"show_aster_branding":false}""", "old_identity_key"))
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertEquals(false, target.state.value.preferences?.show_aster_branding)
+    }
+
+    @Test
+    fun `load waits for the account key load before giving up`() = runTest {
+        var keks = emptyList<String>()
+        every { session_key_store.get_identity_key() } returns "user_identity_key"
+        every { session_key_store.get_decrypt_keks() } answers { keks }
+        coEvery { session_key_store.await_account_key_load(any()) } answers {
+            keks = listOf(java.util.Base64.getEncoder().encodeToString(account_prefs_key))
+        }
+        server_blob(encrypt_with_raw_key("""{"show_aster_branding":false}""", account_prefs_key))
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertEquals(false, target.state.value.preferences?.show_aster_branding)
+        coVerify(exactly = 1) { session_key_store.await_account_key_load(5_000L) }
+    }
+
+    @Test
+    fun `load does not wait when the legacy key opens the preferences`() = runTest {
+        every { session_key_store.get_identity_key() } returns "user_identity_key"
+        server_blob(encrypt_test_blob("""{"show_aster_branding":false}""", "user_identity_key"))
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertEquals(false, target.state.value.preferences?.show_aster_branding)
+        coVerify(exactly = 0) { session_key_store.await_account_key_load(any()) }
     }
 
     @Test
@@ -2183,6 +2393,7 @@ class SettingsViewModelTest {
             alias_detail_api = alias_detail_api,
             recovery_api = recovery_api,
             mail_rules_api = mail_rules_api,
+            keys_api = keys_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
             token_store = token_store,
@@ -2233,6 +2444,7 @@ class SettingsViewModelTest {
             alias_detail_api = alias_detail_api,
             recovery_api = recovery_api,
             mail_rules_api = mail_rules_api,
+            keys_api = keys_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
             token_store = token_store,
@@ -2292,6 +2504,7 @@ class SettingsViewModelTest {
             alias_detail_api = alias_detail_api,
             recovery_api = recovery_api,
             mail_rules_api = mail_rules_api,
+            keys_api = keys_api,
             auth_repository = auth_repository,
             session_key_store = session_key_store,
             token_store = token_store,

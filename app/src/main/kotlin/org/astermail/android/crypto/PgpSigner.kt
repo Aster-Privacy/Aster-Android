@@ -85,7 +85,7 @@ object PgpSigner {
         }
     }
 
-    private fun select_signing_key(armored_private_key: String): PGPSecretKey? {
+    internal fun select_signing_key(armored_private_key: String): PGPSecretKey? {
         return try {
             val stream = PGPUtil.getDecoderStream(
                 ByteArrayInputStream(armored_private_key.toByteArray(Charsets.UTF_8)),

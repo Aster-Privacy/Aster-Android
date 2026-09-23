@@ -311,7 +311,7 @@ class ContactsRepository @Inject constructor(
             }
         }
         session_key_store.get_data_kek()?.let { if (it.size == 32) yield(it) }
-        session_key_store.get_legacy_keks().orEmpty().forEach { kek_b64 ->
+        session_key_store.get_decrypt_keks().forEach { kek_b64 ->
             val raw = runCatching {
                 android.util.Base64.decode(kek_b64, android.util.Base64.DEFAULT)
             }.getOrNull()

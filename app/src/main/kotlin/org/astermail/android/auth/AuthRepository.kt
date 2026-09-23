@@ -121,8 +121,7 @@ class AuthRepository @Inject constructor(
     private val theme_store: ThemeStore,
     private val ratchet_bootstrap_service: org.astermail.android.mail.ratchet.RatchetBootstrapService,
     private val system_folder_bootstrap: org.astermail.android.mail.SystemFolderBootstrap,
-    private val sent_mail_resealer: org.astermail.android.mail.SentMailResealer,
-    private val sent_mail_reseal_finisher: org.astermail.android.mail.SentMailResealFinisher,
+    private val password_change_sent_mail: org.astermail.android.mail.PasswordChangeSentMail,
     private val identity_pins: dagger.Lazy<org.astermail.android.mail.ratchet.RatchetIdentityPinStore>,
     @ApplicationContext private val context: Context,
 ) {
@@ -152,6 +151,7 @@ class AuthRepository @Inject constructor(
     )
 
     private val dead_session_mutex = kotlinx.coroutines.sync.Mutex()
+    private val vault_commit_mutex = kotlinx.coroutines.sync.Mutex()
 
     init {
         session_refresher.on_auth_failure { presented ->
@@ -179,8 +179,15 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    private val account_key_loader = AccountKeyLoader(keys_api, session_key_store)
+
+    private fun load_account_keks() {
+        background_scope.launch { runCatching { account_key_loader.load() } }
+    }
+
     fun trigger_ratchet_bootstrap() {
         if (!_is_signed_in.value) return
+        load_account_keks()
         if (BuildConfig.DEBUG) android.util.Log.w("RatchetBootstrap", "trigger_ratchet_bootstrap firing")
         background_scope.launch {
             runCatching { ratchet_bootstrap_service.bootstrap_if_needed() }
@@ -562,6 +569,7 @@ class AuthRepository @Inject constructor(
         background_scope.launch { runCatching { system_folder_bootstrap.ensure_system_folders() } }
         background_scope.launch { runCatching { backfill_server_recovery_email() } }
         background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
+        load_account_keks()
     }
 
     private val pending_recovery_backup = java.util.concurrent.atomic.AtomicReference<SaveRecoveryBackupRequest?>(null)
@@ -756,6 +764,7 @@ class AuthRepository @Inject constructor(
         runCatching { UnifiedPushState.sync_registration(context) }
         runCatching { org.astermail.android.notifications.PersistentPushService.start_if_enabled(context) }
         background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
+        load_account_keks()
         RegisterSuccess(recovery_codes = recovery_codes, recovery_backup_saved = recovery_backup_saved)
     }
 
@@ -816,6 +825,7 @@ class AuthRepository @Inject constructor(
         _session_expired.value = false
         background_scope.launch { runCatching { ensure_csrf_ready() } }
         background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
+        load_account_keks()
         background_scope.launch { runCatching { system_folder_bootstrap.ensure_system_folders() } }
         return true
     }
@@ -879,6 +889,11 @@ class AuthRepository @Inject constructor(
         val vault_obj = org.json.JSONObject(String(vault_plain, Charsets.UTF_8))
         vault_plain.fill(0)
 
+        val sent_mail_conversion = password_change_sent_mail.convert_before_change(
+            vault_obj.optString("identity_key", "").ifBlank { vault_obj.optString("identity_private_key", "") },
+            current_password_bytes,
+        )
+
         val current_identity = vault_obj.optString("identity_private_key", "")
         if (current_identity.isNotBlank()) {
             val previous = vault_obj.optJSONArray("previous_keys") ?: org.json.JSONArray()
@@ -940,14 +955,12 @@ class AuthRepository @Inject constructor(
 
             runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
 
-            sent_mail_reseal_finisher.mark_pending(current_password_bytes)
-
-            val reseal = runCatching {
-                sent_mail_resealer.run(current_password_bytes, new_password_bytes)
-            }.getOrElse { org.astermail.android.mail.SentMailResealSummary(failed = 1) }
-                .let { if (pgp_rewrapped) it else it.copy(failed = it.failed + 1) }
-
-            if (reseal.failed == 0) sent_mail_reseal_finisher.mark_done()
+            val reseal = password_change_sent_mail.reseal_after_change(
+                sent_mail_conversion,
+                current_password_bytes,
+                new_password_bytes,
+                pgp_rewrapped,
+            )
 
             mail_repository.clear_caches()
             database.decrypted_mail_dao().clear_all()
@@ -1101,12 +1114,6 @@ class AuthRepository @Inject constructor(
         )
     }
 
-    suspend fun count_inactive_key_sets(): Int = runCatching {
-        recovery_api.list_inactive_key_sets().inactive_key_sets.size
-    }.getOrDefault(0)
-
-    suspend fun discard_inactive_key_sets(): Int = consume_all_inactive_key_sets(recovery_api)
-
     suspend fun restore_inactive_key_sets(old_password: String): Int {
         val sets = runCatching { recovery_api.list_inactive_key_sets().inactive_key_sets }
             .getOrDefault(emptyList())
@@ -1134,6 +1141,7 @@ class AuthRepository @Inject constructor(
             val recovered_keks = mutableListOf<String>()
             val recovered_ratchet = mutableListOf<org.json.JSONObject>()
             val unlocked = mutableListOf<String>()
+            val old_vaults = mutableListOf<org.json.JSONObject>()
 
             try {
                 for (set in sets) {
@@ -1165,6 +1173,7 @@ class AuthRepository @Inject constructor(
                     recovered_keks.addAll(harvest_storage_keks(old_vault, derived))
                     recovered_ratchet.addAll(retain_previous_ratchet_keys(old_vault))
                     unlocked.add(set.id)
+                    old_vaults.add(old_vault)
                 }
             } finally {
                 old_password_bytes.fill(0)
@@ -1172,45 +1181,25 @@ class AuthRepository @Inject constructor(
 
             if (unlocked.isEmpty()) return 0
 
-            vault_obj.put(
-                "legacy_keks",
-                merge_legacy_keks(
-                    vault_obj.optJSONArray("legacy_keks"),
-                    recovered_keks,
-                    java.time.Instant.now().toString(),
-                ),
+            val old_password_chars = old_password.toCharArray()
+            val current_chars = passphrase_chars(passphrase)
+            val identity_keys = try {
+                merge_recovered_identity_keys(vault_obj, old_vaults, old_password_chars, current_chars)
+            } finally {
+                old_password_chars.fill(' ')
+                current_chars.fill(' ')
+            }
+            val committed = commit_recovered_keys(
+                user_id = user_id,
+                passphrase = passphrase,
+                vault_obj = vault_obj,
+                identity_keys = identity_keys,
+                recovered_keks = recovered_keks,
+                recovered_ratchet = recovered_ratchet,
             )
-            vault_obj.put(
-                "ratchet_previous_keys",
-                merge_previous_ratchet_keys(
-                    vault_obj.optJSONArray("ratchet_previous_keys"),
-                    recovered_ratchet,
-                ),
-            )
+            if (!committed) return 0
 
-            val updated_plain = vault_obj.toString().toByteArray(Charsets.UTF_8)
-            val sealed = runCatching {
-                CryptoNative.encrypt_vault_with_password(updated_plain, passphrase)
-            }.getOrNull()
-            updated_plain.fill(0)
-            if (sealed == null) return 0
-
-            val encrypted_vault = base64_encode(sealed.encrypted_vault)
-            val vault_nonce = base64_encode(sealed.vault_nonce)
-            val pushed = runCatching {
-                keys_api.update_vault(
-                    encrypted_vault,
-                    vault_nonce,
-                    user_id,
-                    org.astermail.android.mail.ratchet.collect_vault_key_fingerprints(vault_obj),
-                )
-            }.getOrDefault(false)
-            if (!pushed) return 0
-
-            session_key_store.put_encrypted_vault(encrypted_vault, vault_nonce)
-            absorb_previous_keys_and_keks(vault_obj)
-
-            for (id in unlocked) {
+            unlocked.filterIndexed { index, _ -> identity_keys.absorbed.getOrElse(index) { false } }.forEach { id ->
                 runCatching { recovery_api.consume_inactive_key_set(ConsumeInactiveKeySetRequest(id)) }
             }
 
@@ -1218,6 +1207,80 @@ class AuthRepository @Inject constructor(
         } finally {
             passphrase.fill(0)
         }
+    }
+
+    suspend fun commit_recovered_keys(
+        user_id: String,
+        passphrase: ByteArray,
+        vault_obj: org.json.JSONObject,
+        identity_keys: RecoveredIdentityKeys,
+        recovered_keks: List<String>,
+        recovered_ratchet: List<org.json.JSONObject>,
+    ): Boolean = vault_commit_mutex.withLock {
+        vault_obj.put("previous_keys", org.json.JSONArray(identity_keys.previous_keys))
+        vault_obj.put("legacy_identity_keys", org.json.JSONArray(identity_keys.legacy_identity_keys))
+        vault_obj.put(
+            "legacy_keks",
+            merge_legacy_keks(
+                vault_obj.optJSONArray("legacy_keks"),
+                recovered_keks,
+                java.time.Instant.now().toString(),
+            ),
+        )
+        vault_obj.put(
+            "ratchet_previous_keys",
+            merge_previous_ratchet_keys(
+                vault_obj.optJSONArray("ratchet_previous_keys"),
+                recovered_ratchet,
+            ),
+        )
+
+        val updated_plain = vault_obj.toString().toByteArray(Charsets.UTF_8)
+        val sealed = runCatching {
+            CryptoNative.encrypt_vault_with_password(updated_plain, passphrase)
+        }.getOrNull()
+        updated_plain.fill(0)
+        if (sealed == null) return@withLock false
+
+        val encrypted_vault = base64_encode(sealed.encrypted_vault)
+        val vault_nonce = base64_encode(sealed.vault_nonce)
+        if (!vault_roundtrip_ok(encrypted_vault, vault_nonce, passphrase, vault_identity_key(vault_obj))) {
+            return@withLock false
+        }
+
+        val pushed = runCatching {
+            keys_api.update_vault(
+                encrypted_vault,
+                vault_nonce,
+                user_id,
+                org.astermail.android.mail.ratchet.collect_vault_key_fingerprints(vault_obj),
+            )
+        }.getOrDefault(false)
+        if (!pushed) return@withLock false
+
+        session_key_store.put_encrypted_vault(encrypted_vault, vault_nonce)
+        absorb_previous_keys_and_keks(vault_obj)
+        true
+    }
+
+    private fun vault_roundtrip_ok(
+        encrypted_vault: String,
+        vault_nonce: String,
+        passphrase: ByteArray,
+        expected_identity_key: String,
+    ): Boolean {
+        val plain = runCatching {
+            CryptoNative.decrypt_vault_with_password(
+                base64_decode(encrypted_vault),
+                base64_decode(vault_nonce),
+                passphrase,
+            )
+        }.getOrNull() ?: return false
+        val matches = runCatching {
+            vault_identity_key(org.json.JSONObject(String(plain, Charsets.UTF_8))) == expected_identity_key
+        }.getOrDefault(false)
+        plain.fill(0)
+        return matches
     }
 
     private fun absorb_previous_keys_and_keks(vault_obj: org.json.JSONObject) {
@@ -1533,6 +1596,31 @@ class AuthRepository @Inject constructor(
         null
     }
 
+    fun exportable_private_key(
+        fingerprint: String,
+        password: String,
+        encrypted_blob_b64: String?,
+        nonce_b64: String?,
+    ): String? {
+        val password_chars = password.toCharArray()
+        try {
+            val candidates = buildList {
+                session_key_store.get_identity_key()?.let { add(it) }
+                session_key_store.get_previous_keys()?.let { addAll(it) }
+            }
+            return PrivateKeyExport.select(
+                candidates = candidates,
+                fingerprint = fingerprint,
+                password = password_chars,
+                encrypted_blob_b64 = encrypted_blob_b64,
+                nonce_b64 = nonce_b64,
+                pbkdf2_iterations = pgp_private_key_pbkdf2_iterations,
+            )
+        } finally {
+            password_chars.fill(' ')
+        }
+    }
+
     private suspend fun republish_pgp_key_with_password(identity_key: String, password: String) {
         val password_chars = password.toCharArray()
         try {
@@ -1754,17 +1842,4 @@ class AuthRepository @Inject constructor(
         private const val pgp_private_key_pbkdf2_iterations = 310000
         private const val HKDF_INFO = "Aster Mail_Recovery_Vault_v1"
     }
-}
-
-internal suspend fun consume_all_inactive_key_sets(recovery_api: RecoveryApi): Int {
-    val sets = runCatching { recovery_api.list_inactive_key_sets().inactive_key_sets }
-        .getOrElse { return 0 }
-    var consumed = 0
-    for (set in sets) {
-        val success = runCatching {
-            recovery_api.consume_inactive_key_set(ConsumeInactiveKeySetRequest(set.id)).success
-        }.getOrDefault(false)
-        if (success) consumed += 1
-    }
-    return consumed
 }

@@ -339,4 +339,49 @@ class PreferencesMergeTest {
         assertEquals("large", value.content)
         assertTrue(value.isString)
     }
+
+    @Test
+    fun reads_the_locked_data_banner_dismissal_written_by_the_web_client() {
+        val server_blob = """{"theme":"dark","locked_data_banner_dismissed":"set_a,set_b|sent"}"""
+
+        val merged = merge_decrypted_preferences(json, server_blob, null)
+
+        assertEquals("set_a,set_b|sent", merged.locked_data_banner_dismissed)
+    }
+
+    @Test
+    fun saving_an_unrelated_setting_keeps_the_locked_data_banner_dismissal() {
+        val server_blob = """{"theme":"dark","locked_data_banner_dismissed":"set_a|","undo_send_period":"30 seconds"}"""
+        val prefs = merge_decrypted_preferences(json, server_blob, null).copy(show_aster_branding = false)
+
+        val encoded = encode_preferences_preserving_unknown(json, prefs, server_blob)
+        val obj = json.parseToJsonElement(encoded).jsonObject
+
+        assertEquals("set_a|", obj["locked_data_banner_dismissed"]?.jsonPrimitive?.content)
+        assertEquals("30 seconds", obj["undo_send_period"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun dismissing_the_banner_writes_the_signature_as_a_string() {
+        val server_blob = """{"theme":"dark"}"""
+        val prefs = merge_decrypted_preferences(json, server_blob, null)
+            .copy(locked_data_banner_dismissed = "|sent")
+
+        val encoded = encode_preferences_preserving_unknown(json, prefs, server_blob)
+        val value = json.parseToJsonElement(encoded).jsonObject["locked_data_banner_dismissed"]!!.jsonPrimitive
+
+        assertEquals("|sent", value.content)
+        assertTrue(value.isString)
+        val reread = merge_decrypted_preferences(json, encoded, null)
+        assertEquals("|sent", reread.locked_data_banner_dismissed)
+    }
+
+    @Test
+    fun keeps_the_last_known_dismissal_when_a_stale_client_dropped_the_key() {
+        val previous = UserPreferences(locked_data_banner_dismissed = "set_a|sent")
+
+        val merged = merge_decrypted_preferences(json, """{"theme":"dark"}""", previous)
+
+        assertEquals("set_a|sent", merged.locked_data_banner_dismissed)
+    }
 }

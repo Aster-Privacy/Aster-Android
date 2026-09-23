@@ -128,12 +128,89 @@ class PgpInboundIndicationTest {
         assertEquals(PgpSignatureStatus.UNVERIFIED, result.signature)
     }
 
-    private fun sign_and_encrypt(plaintext: String): String {
+    @Test
+    fun own_keys_report_a_self_signature_as_valid() {
+        val armored = sign_and_encrypt("sealed by me", signer = recipient)
+
+        val result = PgpDecryptor.decrypt_with_own_keys_status(
+            armored,
+            listOf(recipient.armored_private_key),
+            passphrase,
+        )
+
+        assertEquals("sealed by me", result?.plaintext)
+        assertEquals(PgpSignatureStatus.VALID, result?.signature)
+    }
+
+    @Test
+    fun own_keys_leave_a_foreign_signature_unverified() {
+        val armored = sign_and_encrypt("signed hello")
+
+        val result = PgpDecryptor.decrypt_with_own_keys_status(
+            armored,
+            listOf(recipient.armored_private_key),
+            passphrase,
+        )
+
+        assertEquals("signed hello", result?.plaintext)
+        assertEquals(PgpSignatureStatus.UNVERIFIED, result?.signature)
+    }
+
+    @Test
+    fun own_keys_verify_a_self_signature_from_a_previous_key() {
+        val previous = PgpKeyGenerator.generate("Recipient", "recipient@astermail.org", passphrase)
+        val armored = sign_and_encrypt("old sealed", signer = previous, to = previous)
+
+        val result = PgpDecryptor.decrypt_with_own_keys_status(
+            armored,
+            listOf(recipient.armored_private_key, previous.armored_private_key),
+            passphrase,
+        )
+
+        assertEquals("old sealed", result?.plaintext)
+        assertEquals(PgpSignatureStatus.VALID, result?.signature)
+    }
+
+    @Test
+    fun own_keys_report_nothing_for_unsigned_or_unreadable_messages() {
+        val unsigned = PgpEncryptor.encrypt_to_keys("plain", listOf(recipient.armored_public_key))!!
+        val unsigned_result = PgpDecryptor.decrypt_with_own_keys_status(
+            unsigned,
+            listOf(recipient.armored_private_key),
+            passphrase,
+        )
+        assertEquals("plain", unsigned_result?.plaintext)
+        assertEquals(PgpSignatureStatus.NONE, unsigned_result?.signature)
+
+        val for_someone_else = sign_and_encrypt("not mine", signer = recipient, to = sender)
+        assertEquals(
+            null,
+            PgpDecryptor.decrypt_with_own_keys_status(
+                for_someone_else,
+                listOf(recipient.armored_private_key),
+                passphrase,
+            ),
+        )
+        assertEquals(
+            null,
+            PgpDecryptor.decrypt_with_own_keys_status(
+                sign_and_encrypt("x", signer = recipient),
+                listOf(recipient.armored_private_key),
+                "wrong".toCharArray(),
+            ),
+        )
+    }
+
+    private fun sign_and_encrypt(
+        plaintext: String,
+        signer: PgpKeyPairResult = sender,
+        to: PgpKeyPairResult = recipient,
+    ): String {
         java.security.Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME)
         java.security.Security.addProvider(BouncyCastleProvider())
 
-        val encryption_key = select_encryption_key(recipient.armored_public_key)
-        val signing_key = select_signing_key(sender.armored_private_key)
+        val encryption_key = select_encryption_key(to.armored_public_key)
+        val signing_key = select_signing_key(signer.armored_private_key)
         val private_key = signing_key.extractPrivateKey(
             JcePBESecretKeyDecryptorBuilder()
                 .setProvider(BouncyCastleProvider.PROVIDER_NAME)
