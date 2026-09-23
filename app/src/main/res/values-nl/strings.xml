@@ -1374,7 +1374,7 @@
     <string name="failed_block_sender">Kan afzender niet blokkeren</string>
     <string name="failed_unblock_sender">Kan afzender niet deblokkeren</string>
     <string name="settings_plan_free_tagline">Alles wat je nodig hebt om te beginnen met privé, versleutelde e-mail.</string>
-    <string name="settings_plan_star_tagline">Meer opslag, meer aliassen en je eerste eigen domein.</string>
+    <string name="settings_plan_star_tagline">Meer opslag, meer aliassen en tot 5 aangepaste domeinen.</string>
     <string name="settings_plan_nova_tagline">Meer opslag, eigen domeinen en onbeperkte aliassen.</string>
     <string name="settings_plan_supernova_tagline">Maximale opslag, de hoogste limieten en toegewijde ondersteuning.</string>
     <string name="settings_plan_lead_star">Alles uit Star, plus:</string>
@@ -1423,7 +1423,7 @@
     <string name="settings_suffix_per_yr">/yr</string>
     <string name="settings_save_yearly">Bespaar %1$s</string>
     <string name="plan_desc_free">Alles wat je nodig hebt om te beginnen met privé, versleutelde e-mail.</string>
-    <string name="plan_desc_star">Meer opslag, meer aliassen en je eerste eigen domein.</string>
+    <string name="plan_desc_star">Meer opslag, meer aliassen en tot 5 aangepaste domeinen.</string>
     <string name="plan_desc_nova">Meer opslag, eigen domeinen en onbeperkte aliassen.</string>
     <string name="plan_desc_supernova">Maximale opslag, de hoogste limieten en toegewijde ondersteuning.</string>
     <string name="set_as_primary">Instellen als primair adres</string>
@@ -2034,7 +2034,7 @@
     <string name="storage_format_aster">Aster-server</string>
     <string name="storage_format_aster_sub">Standaard versleutelde opslag</string>
     <string name="storage_format_ipfs">IPFS</string>
-    <string name="storage_format_ipfs_sub">Gedecentraliseerde opslag</string>
+    <string name="storage_format_ipfs_sub">Privéopslag op de servers van Aster</string>
     <string name="encryption_behavior">Versleutelingsgedrag</string>
     <string name="auto_discover_keys">Sleutels automatisch vinden</string>
     <string name="auto_discover_keys_sub">Zoekt automatisch de versleutelingssleutels van contacten</string>

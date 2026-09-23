@@ -75,7 +75,7 @@
     <string name="settings_val_count">%1$d</string>
 
     <string name="settings_plan_free_tagline">Tout ce dont vous avez besoin pour commencer avec un e-mail privé et chiffré.</string>
-    <string name="settings_plan_star_tagline">Plus de stockage, plus d\'alias et votre premier domaine personnalisé.</string>
+    <string name="settings_plan_star_tagline">Plus de stockage, plus d\'alias et jusqu\'à 5 domaines personnalisés.</string>
     <string name="settings_plan_nova_tagline">Plus de stockage, des domaines personnalisés et des alias illimités.</string>
     <string name="settings_plan_supernova_tagline">Le plus grand espace de stockage, des alias et domaines illimités, et une assistance dédiée.</string>
 

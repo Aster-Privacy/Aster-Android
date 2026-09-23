@@ -1386,7 +1386,7 @@
     <string name="failed_block_sender">تعذر حظر المرسل</string>
     <string name="failed_unblock_sender">تعذر إلغاء حظر المرسل</string>
     <string name="settings_plan_free_tagline">كل ما تحتاجه لبدء البريد الخاص والمشفر.</string>
-    <string name="settings_plan_star_tagline">مساحة أكبر، أسماء مستعارة أكثر، ونطاقك المخصص الأول.</string>
+    <string name="settings_plan_star_tagline">مساحة تخزين أكبر، وأسماء مستعارة أكثر، وما يصل إلى 5 نطاقات مخصصة.</string>
     <string name="settings_plan_nova_tagline">مساحة أكبر، نطاقات مخصصة، وأسماء مستعارة غير محدودة.</string>
     <string name="settings_plan_supernova_tagline">أقصى مساحة، وأعلى الحدود، ودعم مخصص.</string>
     <string name="settings_plan_lead_star">كل شيء في Star، بالإضافة إلى:</string>
@@ -1435,7 +1435,7 @@
     <string name="settings_suffix_per_yr">/سنة</string>
     <string name="settings_save_yearly">وفّر %1$s</string>
     <string name="plan_desc_free">كل ما تحتاجه لبدء البريد الخاص والمشفر.</string>
-    <string name="plan_desc_star">مساحة أكبر، أسماء مستعارة أكثر، ونطاقك المخصص الأول.</string>
+    <string name="plan_desc_star">مساحة تخزين أكبر، وأسماء مستعارة أكثر، وما يصل إلى 5 نطاقات مخصصة.</string>
     <string name="plan_desc_nova">مساحة أكبر، نطاقات مخصصة، وأسماء مستعارة غير محدودة.</string>
     <string name="plan_desc_supernova">أقصى مساحة، وأعلى الحدود، ودعم مخصص.</string>
     <string name="set_as_primary">تعيين كعنوان أساسي</string>
@@ -2050,7 +2050,7 @@
     <string name="storage_format_aster">خادم Aster</string>
     <string name="storage_format_aster_sub">التخزين المشفّر الافتراضي</string>
     <string name="storage_format_ipfs">IPFS</string>
-    <string name="storage_format_ipfs_sub">تخزين لامركزي</string>
+    <string name="storage_format_ipfs_sub">تخزين خاص على خوادم Aster</string>
     <string name="encryption_behavior">سلوك التشفير</string>
     <string name="auto_discover_keys">اكتشاف المفاتيح تلقائيًا</string>
     <string name="auto_discover_keys_sub">العثور تلقائيًا على مفاتيح التشفير لجهات الاتصال</string>

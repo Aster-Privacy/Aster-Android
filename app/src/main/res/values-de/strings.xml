@@ -1375,7 +1375,7 @@
     <string name="failed_block_sender">Absender konnte nicht blockiert werden</string>
     <string name="failed_unblock_sender">Absender konnte nicht entsperrt werden</string>
     <string name="settings_plan_free_tagline">Alles, was Sie für den Einstieg in private, verschlüsselte E-Mails benötigen.</string>
-    <string name="settings_plan_star_tagline">Mehr Speicher, mehr Aliase und Ihre erste benutzerdefinierte Domain.</string>
+    <string name="settings_plan_star_tagline">Mehr Speicher, mehr Aliase und bis zu 5 benutzerdefinierte Domains.</string>
     <string name="settings_plan_nova_tagline">Mehr Speicher, benutzerdefinierte Domains und unbegrenzte Aliase.</string>
     <string name="settings_plan_supernova_tagline">Maximaler Speicher, die höchsten Limits und dedizierter Support.</string>
     <string name="settings_plan_lead_star">Alles in Star, plus:</string>
@@ -1424,7 +1424,7 @@
     <string name="settings_suffix_per_yr">/Jahr</string>
     <string name="settings_save_yearly">%1$s sparen</string>
     <string name="plan_desc_free">Alles, was Sie für den Einstieg in private, verschlüsselte E-Mails benötigen.</string>
-    <string name="plan_desc_star">Mehr Speicher, mehr Aliase und Ihre erste benutzerdefinierte Domain.</string>
+    <string name="plan_desc_star">Mehr Speicher, mehr Aliase und bis zu 5 benutzerdefinierte Domains.</string>
     <string name="plan_desc_nova">Mehr Speicher, benutzerdefinierte Domains und unbegrenzte Aliase.</string>
     <string name="plan_desc_supernova">Maximaler Speicher, die höchsten Limits und dedizierter Support.</string>
     <string name="set_as_primary">Als primäre Adresse festlegen</string>
@@ -2035,7 +2035,7 @@
     <string name="storage_format_aster">Aster-Server</string>
     <string name="storage_format_aster_sub">Standardmäßig verschlüsselter Speicher</string>
     <string name="storage_format_ipfs">IPFS</string>
-    <string name="storage_format_ipfs_sub">Dezentraler Speicher</string>
+    <string name="storage_format_ipfs_sub">Privater Speicher auf den Servern von Aster</string>
     <string name="encryption_behavior">Verschlüsselungsverhalten</string>
     <string name="auto_discover_keys">Schlüssel automatisch finden</string>
     <string name="auto_discover_keys_sub">Verschlüsselungsschlüssel von Kontakten automatisch suchen</string>

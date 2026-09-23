@@ -1374,7 +1374,7 @@
     <string name="failed_block_sender">Impossibile bloccare il mittente</string>
     <string name="failed_unblock_sender">Impossibile sbloccare il mittente</string>
     <string name="settings_plan_free_tagline">Tutto ciò che serve per iniziare con la posta privata e crittografata.</string>
-    <string name="settings_plan_star_tagline">Più spazio, più alias e il tuo primo dominio personalizzato.</string>
+    <string name="settings_plan_star_tagline">Più spazio, più alias e fino a 5 domini personalizzati.</string>
     <string name="settings_plan_nova_tagline">Più spazio, domini personalizzati e alias illimitati.</string>
     <string name="settings_plan_supernova_tagline">Spazio massimo, i limiti più alti e assistenza dedicata.</string>
     <string name="settings_plan_lead_star">Tutto ciò che c\'è in Star, più:</string>
@@ -1423,7 +1423,7 @@
     <string name="settings_suffix_per_yr">/yr</string>
     <string name="settings_save_yearly">Risparmia %1$s</string>
     <string name="plan_desc_free">Tutto ciò che serve per iniziare con la posta privata e crittografata.</string>
-    <string name="plan_desc_star">Più spazio, più alias e il tuo primo dominio personalizzato.</string>
+    <string name="plan_desc_star">Più spazio, più alias e fino a 5 domini personalizzati.</string>
     <string name="plan_desc_nova">Più spazio, domini personalizzati e alias illimitati.</string>
     <string name="plan_desc_supernova">Spazio massimo, i limiti più alti e assistenza dedicata.</string>
     <string name="set_as_primary">Imposta come indirizzo principale</string>
@@ -2034,7 +2034,7 @@
     <string name="storage_format_aster">Server Aster</string>
     <string name="storage_format_aster_sub">Archiviazione cifrata predefinita</string>
     <string name="storage_format_ipfs">IPFS</string>
-    <string name="storage_format_ipfs_sub">Archiviazione decentralizzata</string>
+    <string name="storage_format_ipfs_sub">Archivio privato sui server di Aster</string>
     <string name="encryption_behavior">Comportamento della cifratura</string>
     <string name="auto_discover_keys">Trova le chiavi automaticamente</string>
     <string name="auto_discover_keys_sub">Cerca automaticamente le chiavi di cifratura dei contatti</string>

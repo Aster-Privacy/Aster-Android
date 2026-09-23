@@ -1380,7 +1380,7 @@
     <string name="failed_block_sender">Не удалось заблокировать отправителя</string>
     <string name="failed_unblock_sender">Не удалось разблокировать отправителя</string>
     <string name="settings_plan_free_tagline">Всё необходимое для начала работы с защищённой зашифрованной почтой.</string>
-    <string name="settings_plan_star_tagline">Больше места, больше псевдонимов и первый пользовательский домен.</string>
+    <string name="settings_plan_star_tagline">Больше места, больше псевдонимов и до 5 собственных доменов.</string>
     <string name="settings_plan_nova_tagline">Больше места, пользовательские домены и неограниченные псевдонимы.</string>
     <string name="settings_plan_supernova_tagline">Максимальное место, самые высокие лимиты и выделенная поддержка.</string>
     <string name="settings_plan_lead_star">Всё из Star, плюс:</string>
@@ -1429,7 +1429,7 @@
     <string name="settings_suffix_per_yr">/год</string>
     <string name="settings_save_yearly">Экономия %1$s</string>
     <string name="plan_desc_free">Всё необходимое для начала работы с защищённой зашифрованной почтой.</string>
-    <string name="plan_desc_star">Больше места, больше псевдонимов и первый пользовательский домен.</string>
+    <string name="plan_desc_star">Больше места, больше псевдонимов и до 5 собственных доменов.</string>
     <string name="plan_desc_nova">Больше места, пользовательские домены и неограниченные псевдонимы.</string>
     <string name="plan_desc_supernova">Максимальное место, самые высокие лимиты и выделенная поддержка.</string>
     <string name="set_as_primary">Сделать основным адресом</string>
@@ -2042,7 +2042,7 @@
     <string name="storage_format_aster">Сервер Aster</string>
     <string name="storage_format_aster_sub">Зашифрованное хранилище по умолчанию</string>
     <string name="storage_format_ipfs">IPFS</string>
-    <string name="storage_format_ipfs_sub">Децентрализованное хранилище</string>
+    <string name="storage_format_ipfs_sub">Частное хранилище на серверах Aster</string>
     <string name="encryption_behavior">Поведение шифрования</string>
     <string name="auto_discover_keys">Искать ключи автоматически</string>
     <string name="auto_discover_keys_sub">Автоматически находит ключи шифрования контактов</string>

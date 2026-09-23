@@ -1374,7 +1374,7 @@
     <string name="failed_block_sender">Gönderici engellenemedi</string>
     <string name="failed_unblock_sender">Göndericinin engeli kaldırılamadı</string>
     <string name="settings_plan_free_tagline">Özel, şifreli e-postaya başlamak için ihtiyacınız olan her şey.</string>
-    <string name="settings_plan_star_tagline">Daha fazla alan, daha fazla takma ad ve ilk özel alan adınız.</string>
+    <string name="settings_plan_star_tagline">Daha fazla depolama, daha fazla takma ad ve en fazla 5 özel alan adı.</string>
     <string name="settings_plan_nova_tagline">Daha fazla alan, özel alan adları ve sınırsız takma ad.</string>
     <string name="settings_plan_supernova_tagline">Maksimum alan, en yüksek limitler ve özel destek.</string>
     <string name="settings_plan_lead_star">Star\'daki her şey, artı:</string>
@@ -1423,7 +1423,7 @@
     <string name="settings_suffix_per_yr">/yıl</string>
     <string name="settings_save_yearly">%1$s tasarruf edin</string>
     <string name="plan_desc_free">Özel, şifreli e-postaya başlamak için ihtiyacınız olan her şey.</string>
-    <string name="plan_desc_star">Daha fazla alan, daha fazla takma ad ve ilk özel alan adınız.</string>
+    <string name="plan_desc_star">Daha fazla depolama, daha fazla takma ad ve en fazla 5 özel alan adı.</string>
     <string name="plan_desc_nova">Daha fazla alan, özel alan adları ve sınırsız takma ad.</string>
     <string name="plan_desc_supernova">Maksimum alan, en yüksek limitler ve özel destek.</string>
     <string name="set_as_primary">Birincil adres olarak ayarla</string>
@@ -2034,7 +2034,7 @@
     <string name="storage_format_aster">Aster sunucusu</string>
     <string name="storage_format_aster_sub">Varsayılan şifreli depolama</string>
     <string name="storage_format_ipfs">IPFS</string>
-    <string name="storage_format_ipfs_sub">Merkeziyetsiz depolama</string>
+    <string name="storage_format_ipfs_sub">Aster sunucularında özel depolama</string>
     <string name="encryption_behavior">Şifreleme davranışı</string>
     <string name="auto_discover_keys">Anahtarları otomatik bul</string>
     <string name="auto_discover_keys_sub">Kişilerin şifreleme anahtarlarını otomatik olarak bulur</string>

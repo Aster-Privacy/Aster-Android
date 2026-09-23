@@ -1380,7 +1380,7 @@
     <string name="failed_block_sender">Nie można zablokować nadawcy</string>
     <string name="failed_unblock_sender">Nie można odblokować nadawcy</string>
     <string name="settings_plan_free_tagline">Wszystko, czego potrzebujesz, by zacząć z prywatną, szyfrowaną pocztą.</string>
-    <string name="settings_plan_star_tagline">Więcej miejsca, więcej aliasów i twoja pierwsza własna domena.</string>
+    <string name="settings_plan_star_tagline">Więcej miejsca, więcej aliasów i do 5 własnych domen.</string>
     <string name="settings_plan_nova_tagline">Więcej miejsca, własne domeny i nieograniczone aliasy.</string>
     <string name="settings_plan_supernova_tagline">Maksymalne miejsce, najwyższe limity i dedykowane wsparcie.</string>
     <string name="settings_plan_lead_star">Wszystko ze Star, a do tego:</string>
@@ -1429,7 +1429,7 @@
     <string name="settings_suffix_per_yr">/yr</string>
     <string name="settings_save_yearly">Oszczędź %1$s</string>
     <string name="plan_desc_free">Wszystko, czego potrzebujesz, by zacząć z prywatną, szyfrowaną pocztą.</string>
-    <string name="plan_desc_star">Więcej miejsca, więcej aliasów i twoja pierwsza własna domena.</string>
+    <string name="plan_desc_star">Więcej miejsca, więcej aliasów i do 5 własnych domen.</string>
     <string name="plan_desc_nova">Więcej miejsca, własne domeny i nieograniczone aliasy.</string>
     <string name="plan_desc_supernova">Maksymalne miejsce, najwyższe limity i dedykowane wsparcie.</string>
     <string name="set_as_primary">Ustaw jako adres główny</string>
@@ -2042,7 +2042,7 @@
     <string name="storage_format_aster">Serwer Aster</string>
     <string name="storage_format_aster_sub">Domyślne szyfrowane przechowywanie</string>
     <string name="storage_format_ipfs">IPFS</string>
-    <string name="storage_format_ipfs_sub">Przechowywanie zdecentralizowane</string>
+    <string name="storage_format_ipfs_sub">Prywatny magazyn na serwerach Aster</string>
     <string name="encryption_behavior">Zachowanie szyfrowania</string>
     <string name="auto_discover_keys">Automatycznie znajduj klucze</string>
     <string name="auto_discover_keys_sub">Samo wyszukuje klucze szyfrowania kontaktów</string>

@@ -1753,7 +1753,7 @@
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Supernova</string>
     <string name="plan_desc_free">निजी, एन्क्रिप्टेड ईमेल शुरू करने के लिए ज़रूरी हर चीज़।</string>
-    <string name="plan_desc_star">ज़्यादा स्टोरेज, ज़्यादा एलियास, और आपका पहला कस्टम डोमेन।</string>
+    <string name="plan_desc_star">अधिक स्टोरेज, अधिक उपनाम, और अधिकतम 5 कस्टम डोमेन।</string>
     <string name="plan_desc_nova">ज़्यादा स्टोरेज, कस्टम डोमेन और असीमित एलियास।</string>
     <string name="plan_desc_supernova">सबसे ज़्यादा स्टोरेज, सबसे ऊंची सीमाएं और समर्पित सहायता।</string>
     <plurals name="aliases_count_plural">
@@ -1937,7 +1937,7 @@
     <string name="storage_format_aster">Aster सर्वर</string>
     <string name="storage_format_aster_sub">डिफ़ॉल्ट एन्क्रिप्टेड स्टोरेज</string>
     <string name="storage_format_ipfs">IPFS</string>
-    <string name="storage_format_ipfs_sub">विकेंद्रित स्टोरेज</string>
+    <string name="storage_format_ipfs_sub">Aster के सर्वरों पर निजी स्टोरेज</string>
     <string name="encryption_behavior">एन्क्रिप्शन का व्यवहार</string>
     <string name="auto_discover_keys">कुंजियां अपने आप खोजें</string>
     <string name="auto_discover_keys_sub">संपर्कों की एन्क्रिप्शन कुंजियां अपने आप खोजें</string>

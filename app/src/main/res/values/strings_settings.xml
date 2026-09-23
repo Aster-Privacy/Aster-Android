@@ -75,7 +75,7 @@
     <string name="settings_val_count">%1$d</string>
 
     <string name="settings_plan_free_tagline">Everything you need to get started with private, encrypted email.</string>
-    <string name="settings_plan_star_tagline">More storage, more aliases, and your first custom domain.</string>
+    <string name="settings_plan_star_tagline">More storage, more aliases, and up to 5 custom domains.</string>
     <string name="settings_plan_nova_tagline">More storage, custom domains, and unlimited aliases.</string>
     <string name="settings_plan_supernova_tagline">The most storage, unlimited aliases and domains, and dedicated support.</string>
 

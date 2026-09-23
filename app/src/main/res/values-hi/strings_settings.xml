@@ -71,7 +71,7 @@
     <string name="settings_val_one_year">1 साल</string>
     <string name="settings_val_count">%1$d</string>
     <string name="settings_plan_free_tagline">निजी, एन्क्रिप्टेड ईमेल शुरू करने के लिए ज़रूरी हर चीज़।</string>
-    <string name="settings_plan_star_tagline">ज़्यादा स्टोरेज, ज़्यादा एलियास, और आपका पहला कस्टम डोमेन।</string>
+    <string name="settings_plan_star_tagline">अधिक स्टोरेज, अधिक उपनाम, और अधिकतम 5 कस्टम डोमेन।</string>
     <string name="settings_plan_nova_tagline">ज़्यादा स्टोरेज, कस्टम डोमेन और असीमित एलियास।</string>
     <string name="settings_plan_supernova_tagline">सबसे ज़्यादा स्टोरेज, बिना सीमा एलियास और डोमेन, और समर्पित सहायता।</string>
     <string name="settings_plan_lead_star">Star का सब कुछ, साथ में:</string>

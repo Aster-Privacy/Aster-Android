@@ -1372,7 +1372,7 @@
     <string name="failed_block_sender">送信者をブロックできませんでした</string>
     <string name="failed_unblock_sender">送信者のブロック解除に失敗しました</string>
     <string name="settings_plan_free_tagline">プライベートな暗号化メールを始めるために必要なすべて。</string>
-    <string name="settings_plan_star_tagline">より多くのストレージ、エイリアス、そして最初のカスタムドメイン。</string>
+    <string name="settings_plan_star_tagline">より多くのストレージ、より多くのエイリアス、最大5つのカスタムドメイン。</string>
     <string name="settings_plan_nova_tagline">より多くのストレージ、カスタムドメイン、無制限のエイリアス。</string>
     <string name="settings_plan_supernova_tagline">最大ストレージ、最も高い上限、専任サポート。</string>
     <string name="settings_plan_lead_star">Starのすべて、さらに：</string>
@@ -1421,7 +1421,7 @@
     <string name="settings_suffix_per_yr">/年</string>
     <string name="settings_save_yearly">%1$s節約</string>
     <string name="plan_desc_free">プライベートな暗号化メールを始めるために必要なすべて。</string>
-    <string name="plan_desc_star">より多くのストレージ、エイリアス、そして最初のカスタムドメイン。</string>
+    <string name="plan_desc_star">より多くのストレージ、より多くのエイリアス、最大5つのカスタムドメイン。</string>
     <string name="plan_desc_nova">より多くのストレージ、カスタムドメイン、無制限のエイリアス。</string>
     <string name="plan_desc_supernova">最大ストレージ、最も高い上限、専任サポート。</string>
     <string name="set_as_primary">プライマリアドレスに設定</string>
@@ -2031,7 +2031,7 @@
     <string name="storage_format_aster">Aster サーバー</string>
     <string name="storage_format_aster_sub">既定の暗号化ストレージ</string>
     <string name="storage_format_ipfs">IPFS</string>
-    <string name="storage_format_ipfs_sub">分散型ストレージ</string>
+    <string name="storage_format_ipfs_sub">Asterのサーバー上のプライベートストア</string>
     <string name="encryption_behavior">暗号化の動作</string>
     <string name="auto_discover_keys">鍵を自動で探す</string>
     <string name="auto_discover_keys_sub">連絡先の暗号化鍵を自動的に取得します</string>
