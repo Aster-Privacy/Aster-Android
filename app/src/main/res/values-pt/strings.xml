@@ -1374,7 +1374,7 @@
     <string name="failed_block_sender">Não foi possível bloquear o remetente</string>
     <string name="failed_unblock_sender">Não foi possível desbloquear o remetente</string>
     <string name="settings_plan_free_tagline">Tudo o que você precisa para começar com e-mail privado e criptografado.</string>
-    <string name="settings_plan_star_tagline">Mais armazenamento, mais aliases e seu primeiro domínio próprio.</string>
+    <string name="settings_plan_star_tagline">Mais armazenamento, mais aliases e até 5 domínios personalizados.</string>
     <string name="settings_plan_nova_tagline">Mais armazenamento, domínios próprios e aliases ilimitados.</string>
     <string name="settings_plan_supernova_tagline">Armazenamento máximo, os limites mais altos e suporte dedicado.</string>
     <string name="settings_plan_lead_star">Tudo do Star, mais:</string>
@@ -1423,7 +1423,7 @@
     <string name="settings_suffix_per_yr">/yr</string>
     <string name="settings_save_yearly">Economize %1$s</string>
     <string name="plan_desc_free">Tudo o que você precisa para começar com e-mail privado e criptografado.</string>
-    <string name="plan_desc_star">Mais armazenamento, mais aliases e seu primeiro domínio próprio.</string>
+    <string name="plan_desc_star">Mais armazenamento, mais aliases e até 5 domínios personalizados.</string>
     <string name="plan_desc_nova">Mais armazenamento, domínios próprios e aliases ilimitados.</string>
     <string name="plan_desc_supernova">Armazenamento máximo, os limites mais altos e suporte dedicado.</string>
     <string name="set_as_primary">Definir como endereço principal</string>
@@ -2034,7 +2034,7 @@
     <string name="storage_format_aster">Servidor Aster</string>
     <string name="storage_format_aster_sub">Armazenamento criptografado padrão</string>
     <string name="storage_format_ipfs">IPFS</string>
-    <string name="storage_format_ipfs_sub">Armazenamento descentralizado</string>
+    <string name="storage_format_ipfs_sub">Armazenamento privado nos servidores da Aster</string>
     <string name="encryption_behavior">Comportamento da criptografia</string>
     <string name="auto_discover_keys">Descobrir chaves automaticamente</string>
     <string name="auto_discover_keys_sub">Busca automaticamente as chaves de criptografia dos contatos</string>

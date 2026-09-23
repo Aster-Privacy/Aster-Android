@@ -1372,7 +1372,7 @@
     <string name="failed_block_sender">无法屏蔽发件人</string>
     <string name="failed_unblock_sender">无法解除屏蔽发件人</string>
     <string name="settings_plan_free_tagline">开始使用私密加密邮件所需的一切。</string>
-    <string name="settings_plan_star_tagline">更多存储空间、别名，以及您的第一个自定义域名。</string>
+    <string name="settings_plan_star_tagline">更多存储空间、更多别名，以及最多5个自定义域名。</string>
     <string name="settings_plan_nova_tagline">更多存储空间、自定义域名和无限别名。</string>
     <string name="settings_plan_supernova_tagline">最大存储空间、最高的额度上限，以及专属支持。</string>
     <string name="settings_plan_lead_star">Star 的一切，另加：</string>
@@ -1421,7 +1421,7 @@
     <string name="settings_suffix_per_yr">/年</string>
     <string name="settings_save_yearly">节省 %1$s</string>
     <string name="plan_desc_free">开始使用私密加密邮件所需的一切。</string>
-    <string name="plan_desc_star">更多存储空间、别名，以及您的第一个自定义域名。</string>
+    <string name="plan_desc_star">更多存储空间、更多别名，以及最多5个自定义域名。</string>
     <string name="plan_desc_nova">更多存储空间、自定义域名和无限别名。</string>
     <string name="plan_desc_supernova">最大存储空间、最高的额度上限，以及专属支持。</string>
     <string name="set_as_primary">设为主地址</string>
@@ -2031,7 +2031,7 @@
     <string name="storage_format_aster">Aster 服务器</string>
     <string name="storage_format_aster_sub">默认加密存储</string>
     <string name="storage_format_ipfs">IPFS</string>
-    <string name="storage_format_ipfs_sub">去中心化存储</string>
+    <string name="storage_format_ipfs_sub">Aster服务器上的私有存储</string>
     <string name="encryption_behavior">加密行为</string>
     <string name="auto_discover_keys">自动发现密钥</string>
     <string name="auto_discover_keys_sub">自动查找联系人的加密密钥</string>

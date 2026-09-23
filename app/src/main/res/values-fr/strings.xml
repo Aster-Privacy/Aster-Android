@@ -2059,7 +2059,7 @@
     <string name="pick_template">Choisir un modèle</string>
     <string name="plan_desc_free">Tout ce dont vous avez besoin pour commencer avec un e-mail privé et chiffré.</string>
     <string name="plan_desc_nova">Plus de stockage, des domaines personnalisés et des alias illimités.</string>
-    <string name="plan_desc_star">Plus de stockage, plus d\'alias et votre premier domaine personnalisé.</string>
+    <string name="plan_desc_star">Plus de stockage, plus d\'alias et jusqu\'à 5 domaines personnalisés.</string>
     <string name="plan_desc_supernova">Stockage maximum, les limites les plus élevées et un support dédié.</string>
     <string name="plan_features_format_v2">%1$s stockage  -  %2$s  -  %3$s</string>
     <string name="plan_name_nova">Nova</string>
@@ -2121,7 +2121,7 @@
     <string name="storage_format_aster">Serveur Aster</string>
     <string name="storage_format_aster_sub">Stockage chiffré par défaut</string>
     <string name="storage_format_ipfs">IPFS</string>
-    <string name="storage_format_ipfs_sub">Stockage décentralisé</string>
+    <string name="storage_format_ipfs_sub">Stockage privé sur les serveurs d\'Aster</string>
     <string name="storage_locked_bounce_warning">Rejet permanent dans %1$s.</string>
     <string name="storage_locked_description">Le courrier entrant sera rejeté jusqu\'à ce que vous libériez de l\'espace ou ajoutiez du stockage.</string>
     <string name="storage_locked_title">Le stockage est plein</string>
