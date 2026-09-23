@@ -113,6 +113,7 @@ fun ExternalAccountsScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
     start_gmail_wizard: Boolean = false,
+    embedded: Boolean = false,
     vm: ExternalAccountsViewModel = hiltViewModel(),
 ) {
     val colors = AsterMaterial.colors
@@ -178,7 +179,11 @@ fun ExternalAccountsScreen(
         }
     }
 
-    detail_scaffold(title = stringResource(R.string.external_accounts), on_back = on_back) {
+    embeddable_detail_scaffold(
+        embedded = embedded,
+        title = stringResource(R.string.external_accounts),
+        on_back = on_back,
+    ) {
         if (plan_vm.is_feature_locked("has_external_accounts") && !plan_state.is_loading) {
             UpgradeGate(
                 title = stringResource(R.string.external_accounts),
@@ -188,7 +193,7 @@ fun ExternalAccountsScreen(
                 requires_label = stringResource(R.string.requires_plan, "Star"),
                 button_label = stringResource(R.string.upgrade),
             )
-            return@detail_scaffold
+            return@embeddable_detail_scaffold
         }
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(AsterSpacing.lg)) {

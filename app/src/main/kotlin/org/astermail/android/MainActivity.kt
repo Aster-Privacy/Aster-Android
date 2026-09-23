@@ -168,10 +168,9 @@ import org.astermail.android.ui.settings.detail.ChangePasswordScreen
 import org.astermail.android.ui.settings.detail.DeleteAccountScreen
 import org.astermail.android.ui.settings.detail.DiagnosticsScreen
 import org.astermail.android.ui.settings.detail.EncryptionScreen
-import org.astermail.android.ui.settings.detail.ExportScreen
-import org.astermail.android.ui.settings.detail.ExternalAccountsScreen
 import org.astermail.android.ui.settings.detail.FeedbackScreen
-import org.astermail.android.ui.settings.detail.ImportScreen
+import org.astermail.android.ui.settings.detail.ImportGroupScreen
+import org.astermail.android.ui.settings.detail.import_group_tab_for_route
 import org.astermail.android.ui.settings.detail.NotificationsScreen
 import org.astermail.android.ui.settings.detail.ProfileScreen
 import org.astermail.android.ui.settings.detail.RecoveryCodesScreen
@@ -1417,10 +1416,14 @@ private fun AsterNavHost() {
             VacationReplyScreen(on_back = { back(); Unit }, on_open = open_detail)
         }
         composable(routes.settings_detail("import")) {
-            ImportScreen(on_back = { back(); Unit }, on_open = open_detail)
+            ImportGroupScreen(on_back = { back(); Unit }, on_open = open_detail)
         }
         composable(routes.settings_detail("export")) {
-            ExportScreen(on_back = { back(); Unit })
+            ImportGroupScreen(
+                on_back = { back(); Unit },
+                on_open = open_detail,
+                initial_tab = import_group_tab_for_route("export"),
+            )
         }
         composable(routes.settings_detail("diagnostics")) {
             DiagnosticsScreen(on_back = { back(); Unit })
@@ -1496,12 +1499,17 @@ private fun AsterNavHost() {
             FeedbackScreen(on_back = { back(); Unit })
         }
         composable(routes.settings_detail("external_accounts")) {
-            ExternalAccountsScreen(on_back = { back(); Unit }, on_open = open_detail)
-        }
-        composable(routes.settings_detail("external_accounts_gmail")) {
-            ExternalAccountsScreen(
+            ImportGroupScreen(
                 on_back = { back(); Unit },
                 on_open = open_detail,
+                initial_tab = import_group_tab_for_route("external_accounts"),
+            )
+        }
+        composable(routes.settings_detail("external_accounts_gmail")) {
+            ImportGroupScreen(
+                on_back = { back(); Unit },
+                on_open = open_detail,
+                initial_tab = import_group_tab_for_route("external_accounts_gmail"),
                 start_gmail_wizard = true,
             )
         }
