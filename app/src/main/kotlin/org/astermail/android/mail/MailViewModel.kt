@@ -4900,7 +4900,7 @@ fun org.astermail.android.storage.search.DecryptedMailEntity.to_inbox_item(): In
 )
 
 internal fun folder_keeps_archived(folder: String): Boolean = when {
-    folder == "archive" || folder == "starred" || folder == "snoozed" -> true
+    folder == "archive" || folder == "starred" || folder == "snoozed" || folder == "sent" -> true
     is_all_mail_folder(folder) -> true
     folder.startsWith("label:") || folder.startsWith("tag:") || folder.startsWith("routing:") -> true
     else -> false
@@ -4911,31 +4911,31 @@ internal fun folder_matches_item(folder: String, item: InboxItem): Boolean = whe
     "starred" -> item.is_starred && !item.is_trashed && !item.is_spam
     "trash" -> item.is_trashed
     "spam" -> item.is_spam
-    "archive" -> item.is_archived
-    "sent" -> item.raw_item.item_type == "sent" && !item.is_trashed
+    "archive" -> item.is_archived && !item.is_trashed && !item.is_spam
+    "sent" -> item.raw_item.item_type == "sent" && !item.is_trashed && !item.is_spam
     "drafts" -> item.raw_item.item_type == "draft" && !item.is_trashed
     "scheduled" -> item.raw_item.item_type == "scheduled" && !item.is_trashed
     "outbox" -> item.raw_item.item_type == "outbox" && !item.is_trashed
-    "snoozed" -> !item.is_trashed
+    "snoozed" -> !item.is_trashed && !item.is_spam
     else -> when {
         is_all_mail_folder(folder) ->
             (all_mail_includes_trash(folder) || !item.is_trashed) &&
                 (all_mail_includes_spam(folder) || !item.is_spam)
         folder.startsWith("label:") -> {
             val token = folder.removePrefix("label:")
-            item.labels.contains(token) && !item.is_trashed
+            item.labels.contains(token) && !item.is_trashed && !item.is_spam
         }
         folder.startsWith("tag:") -> {
             val token = folder.removePrefix("tag:")
-            item.tag_tokens.contains(token) && !item.is_trashed
+            item.tag_tokens.contains(token) && !item.is_trashed && !item.is_spam
         }
         folder.startsWith("routing:") -> {
             val scope = parse_alias_routing_folder(folder)
             val matches_received = scope != null && item.routing_token == scope.routing_token
-            !item.is_trashed &&
+            !item.is_trashed && !item.is_spam &&
                 (matches_received || scope?.direction != alias_direction_received)
         }
-        else -> item.labels.contains(folder) && !item.is_trashed
+        else -> item.labels.contains(folder) && !item.is_trashed && !item.is_spam
     }
 }
 

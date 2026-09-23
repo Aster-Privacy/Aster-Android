@@ -179,6 +179,21 @@ class FolderMatchesTest {
     }
 
     @Test
+    fun sent_keeps_archived_items_and_drops_spam() {
+        assertTrue(folder_matches_item("sent", item(item_type = "sent", is_archived = true)))
+        assertFalse(folder_matches_item("sent", item(item_type = "sent", is_spam = true)))
+    }
+
+    @Test
+    fun folders_tags_and_archive_drop_spam_items() {
+        assertFalse(folder_matches_item("label:abc", item(labels = listOf("abc"), is_spam = true)))
+        assertFalse(folder_matches_item("archive", item(is_archived = true, is_spam = true)))
+        assertFalse(folder_matches_item("archive", item(is_archived = true, is_trashed = true)))
+        assertFalse(folder_matches_item("snoozed", item(is_spam = true)))
+        assertTrue(folder_matches_item("archive", item(is_archived = true)))
+    }
+
+    @Test
     fun archiving_keeps_the_row_only_in_views_that_include_archived_mail() {
         assertTrue(folder_keeps_archived("archive"))
         assertTrue(folder_keeps_archived("starred"))
@@ -188,8 +203,8 @@ class FolderMatchesTest {
         assertTrue(folder_keeps_archived("label:bills"))
         assertTrue(folder_keeps_archived("tag:work"))
         assertTrue(folder_keeps_archived("routing:tok1"))
+        assertTrue(folder_keeps_archived("sent"))
         assertFalse(folder_keeps_archived("inbox"))
-        assertFalse(folder_keeps_archived("sent"))
         assertFalse(folder_keeps_archived("trash"))
         assertFalse(folder_keeps_archived("spam"))
     }
