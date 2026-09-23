@@ -64,6 +64,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
+import org.astermail.android.api.mail.MailUserStatsResponse
+import org.astermail.android.ui.settings.detail.compute_distribution
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
@@ -101,6 +103,9 @@ fun FilteredInboxScreen(
     }
     LaunchedEffect(requested_folder) {
         mail_vm.load_inbox(requested_folder, force = true)
+        if (filter_type == FilterType.folder && filter_value in stats_backed_folders) {
+            mail_vm.load_stats(force = false)
+        }
     }
 
     val lifecycle_owner = LocalLifecycleOwner.current
@@ -185,7 +190,21 @@ fun FilteredInboxScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             filtered_top_bar(
                 title = filter_display_name,
-                subtitle = subtitle_for(filter_type, threads.size),
+                subtitle = subtitle_for(
+                    filter_type,
+                    filtered_message_count(
+                        filter_type = filter_type,
+                        filter_value = filter_value,
+                        stats = inbox_state.stats,
+                        server_total = inbox_state.total.takeIf {
+                            inbox_state.current_folder == requested_folder &&
+                                !inbox_state.initial &&
+                                !inbox_state.is_loading
+                        },
+                        loaded_rows = threads.size,
+                        has_more = inbox_state.has_more,
+                    ),
+                ),
                 on_open_drawer = on_open_drawer,
             )
             AsterDivider(modifier = Modifier.fillMaxWidth())
@@ -281,8 +300,42 @@ fun FilteredInboxScreen(
     }
 }
 
+internal val stats_backed_folders = setOf("inbox", "archive", "sent", "drafts", "spam", "trash")
+
+internal fun stats_folder_count(folder_id: String, stats: MailUserStatsResponse): Int? {
+    val distribution = compute_distribution(stats)
+    return when (folder_id) {
+        "inbox" -> distribution.inbox
+        "archive" -> distribution.archived
+        "sent" -> distribution.sent
+        "drafts" -> distribution.drafts
+        "spam" -> distribution.spam
+        "trash" -> distribution.trash
+        else -> null
+    }
+}
+
+internal fun filtered_message_count(
+    filter_type: FilterType,
+    filter_value: String,
+    stats: MailUserStatsResponse?,
+    server_total: Int?,
+    loaded_rows: Int,
+    has_more: Boolean,
+): Int? {
+    if (filter_type == FilterType.folder && stats != null) {
+        stats_folder_count(filter_value, stats)?.let { return it }
+    }
+    if (server_total != null && server_total >= 0 && (server_total > 0 || (!has_more && loaded_rows == 0))) {
+        return server_total
+    }
+    if (!has_more) return loaded_rows
+    return null
+}
+
 @Composable
-private fun subtitle_for(filter_type: FilterType, count: Int): String {
+private fun subtitle_for(filter_type: FilterType, count: Int?): String? {
+    if (count == null) return null
     val type_label = when (filter_type) {
         FilterType.folder -> stringResource(R.string.type_folder)
         FilterType.label -> stringResource(R.string.type_label)
@@ -295,7 +348,7 @@ private fun subtitle_for(filter_type: FilterType, count: Int): String {
 @Composable
 private fun filtered_top_bar(
     title: String,
-    subtitle: String,
+    subtitle: String?,
     on_open_drawer: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -322,7 +375,7 @@ private fun filtered_top_bar(
                     fontSize = 20.sp,
                 )
                 Text(
-                    text = subtitle,
+                    text = subtitle.orEmpty(),
                     color = colors.text_muted,
                     fontSize = 12.sp,
                 )
