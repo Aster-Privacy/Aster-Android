@@ -1675,6 +1675,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         settings_vm.load_custom_domain_addresses()
         settings_vm.load_ghost_aliases()
         settings_vm.load_preferences()
+        settings_vm.load_signature()
         mail_vm.load_stats()
     }
 
@@ -2181,6 +2182,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         accounts_vm.switch_account(account.id) { restored ->
                             if (restored) {
                                 settings_vm.load_preferences()
+                                settings_vm.load_signature()
                                 selected_folder = "inbox"
                                 filter_kind = null
                                 nav_controller.navigate(routes.inbox) {
@@ -2302,6 +2304,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             mail_vm.reset_for_account_switch()
                             settings_vm.reset_for_account_switch()
                             settings_vm.load_preferences()
+                            settings_vm.load_signature()
                             selected_folder = "inbox"
                             filter_kind = null
                             nav_controller.navigate(routes.inbox) {

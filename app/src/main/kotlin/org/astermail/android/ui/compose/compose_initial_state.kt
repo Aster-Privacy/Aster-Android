@@ -40,6 +40,7 @@ data class compose_identity_snapshot(
     val primary_sender_email: String = "",
     val alias_display_names: Map<String, String> = emptyMap(),
     val ghost_addresses: List<String> = emptyList(),
+    val alias_ids: Map<String, String> = emptyMap(),
 ) {
     val is_ready: Boolean
         get() = user_email.isNotBlank() && alias_options.isNotEmpty()
