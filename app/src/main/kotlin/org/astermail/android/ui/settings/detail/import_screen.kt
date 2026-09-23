@@ -39,9 +39,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
+import compose.icons.TablerIcons
+import compose.icons.tablericons.ArrowsRightLeft
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -324,10 +328,11 @@ private fun state_pill(state_value: String, on_click: (() -> Unit)? = null) {
 
 @Composable
 private fun provider_row(
-    icon_res: Int,
+    icon_res: Int?,
     label: String,
     trailing_label: String?,
     on_click: () -> Unit,
+    icon_vector: ImageVector? = null,
 ) {
     val colors = AsterMaterial.colors
     Row(
@@ -346,11 +351,20 @@ private fun provider_row(
                 .background(colors.bg_tertiary),
             contentAlignment = Alignment.Center,
         ) {
-            Image(
-                painter = painterResource(id = icon_res),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-            )
+            if (icon_res != null) {
+                Image(
+                    painter = painterResource(id = icon_res),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                )
+            } else if (icon_vector != null) {
+                Icon(
+                    imageVector = icon_vector,
+                    contentDescription = null,
+                    tint = colors.text_secondary,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
         Spacer(Modifier.size(AsterSpacing.md))
         Text(
@@ -483,6 +497,14 @@ fun ImportScreen(
                 provider_row(
                     icon_res = R.drawable.ic_external_link,
                     label = stringResource(R.string.import_provider_other_imap),
+                    trailing_label = null,
+                    on_click = { on_open("external_accounts") },
+                )
+                Spacer(Modifier.size(AsterSpacing.sm))
+                provider_row(
+                    icon_res = null,
+                    icon_vector = TablerIcons.ArrowsRightLeft,
+                    label = stringResource(R.string.external_accounts),
                     trailing_label = null,
                     on_click = { on_open("external_accounts") },
                 )

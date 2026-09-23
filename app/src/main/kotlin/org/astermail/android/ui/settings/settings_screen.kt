@@ -151,7 +151,6 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
         R.string.tools,
         listOf(
             settings_row_item("import", R.string.settings_import, icon = TablerIcons.CloudUpload),
-            settings_row_item("external_accounts", R.string.external_accounts, icon = TablerIcons.ArrowsRightLeft),
             settings_row_item("smtp_tokens", R.string.settings_smtp_tokens, icon = TablerIcons.Send),
         ),
     ),
