@@ -414,11 +414,7 @@ fun DrawerContent(
                     drawer_row(
                         icon = item.icon,
                         label = item.label,
-                        count = if (categories_expanded && category_unread.isNotEmpty()) {
-                            category_unread["primary"] ?: 0
-                        } else {
-                            item.count
-                        },
+                        count = item.count,
                         is_unread_count = true,
                         selected = selected_id == "inbox" && selected_category == "primary",
                         on_click = {

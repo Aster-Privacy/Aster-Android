@@ -964,7 +964,15 @@ fun InboxScreen(
         "inbox" -> inbox_state.stats?.unread ?: 0
         "drafts" -> inbox_state.stats?.drafts ?: 0
         "scheduled" -> inbox_state.stats?.scheduled ?: 0
-        else -> threads.count { it.has_unread }
+        else -> folder_unread_counts[current_folder]?.takeIf { current_folder != "spam" && current_folder != "trash" } ?: if (
+            inbox_state.current_folder == current_folder &&
+            !inbox_state.has_more &&
+            !inbox_state.is_loading
+        ) {
+            threads.count { it.has_unread }
+        } else {
+            0
+        }
     }
     val folder_total = when (current_folder) {
         "inbox" -> inbox_state.stats?.inbox ?: 0
