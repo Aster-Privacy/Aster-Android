@@ -34,19 +34,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import kotlin.math.cos
-import kotlin.math.sin
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.acrylic
 
@@ -116,7 +111,6 @@ internal fun pull_refresh_spinner(
                 compositingStrategy = CompositingStrategy.ModulateAlpha
             }
             .size(spinner_disc_size)
-            .shadow(elevation = 3.dp, shape = CircleShape, clip = false)
             .acrylic(colors, CircleShape, colors.bg_secondary)
             .border(1.dp, colors.border_secondary, CircleShape),
         contentAlignment = Alignment.Center,
@@ -153,37 +147,15 @@ internal fun pull_refresh_spinner(
                 intensity = if (progress >= 1f) 1f else mix(0.45f, 0.85f, progress)
             }
             sweep = sweep.coerceIn(ARC_MIN_DEG, 360f - ARC_CAP_DEG * 2f)
-            val closing = if (spinning_now && !spinning) ease((1f - spin) * 2.2f) else 0f
-            val tail_alpha = mix(0.18f, 1f, closing) * intensity
-            rotate(degrees = start - ARC_CAP_DEG, pivot = center) {
-                drawArc(
-                    brush = Brush.sweepGradient(
-                        0f to accent.copy(alpha = tail_alpha),
-                        ARC_CAP_DEG / 360f to accent.copy(alpha = tail_alpha),
-                        (ARC_CAP_DEG + sweep) / 360f to accent.copy(alpha = intensity),
-                        1f to accent.copy(alpha = intensity),
-                        center = center,
-                    ),
-                    startAngle = ARC_CAP_DEG,
-                    sweepAngle = sweep,
-                    useCenter = false,
-                    topLeft = arc_origin,
-                    size = arc_size,
-                    style = Stroke(width = stroke, cap = StrokeCap.Round),
-                )
-            }
-            if (spinning_now && closing < 1f) {
-                val head_rad = Math.toRadians((start + sweep).toDouble())
-                val head_center = Offset(
-                    center.x + radius * cos(head_rad).toFloat(),
-                    center.y + radius * sin(head_rad).toFloat(),
-                )
-                drawCircle(
-                    color = accent.copy(alpha = 0.22f * (1f - closing)),
-                    radius = stroke * 1.35f,
-                    center = head_center,
-                )
-            }
+            drawArc(
+                color = accent.copy(alpha = intensity),
+                startAngle = start,
+                sweepAngle = sweep,
+                useCenter = false,
+                topLeft = arc_origin,
+                size = arc_size,
+                style = Stroke(width = stroke, cap = StrokeCap.Round),
+            )
         }
     }
 }
