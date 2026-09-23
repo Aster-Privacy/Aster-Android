@@ -283,6 +283,58 @@ class MailViewModelTest {
     }
 
     @Test
+    fun `a refresh that supersedes a cold load clears cache_pending`() = runTest {
+        coEvery { folder_cache_store.rows(any(), any()) } coAnswers { kotlinx.coroutines.awaitCancellation() }
+        coEvery { repository.fetch_sent(any(), any()) } returns Result.success(fake_inbox_page(3))
+
+        vm.load_inbox("sent")
+        assertTrue(vm.inbox_state.value.cache_pending)
+        vm.refresh()
+        advanceUntilIdle()
+
+        val state = vm.inbox_state.value
+        assertEquals(3, state.items.size)
+        assertFalse(state.cache_pending)
+        assertFalse(state.is_loading)
+        assertFalse(state.initial)
+    }
+
+    @Test
+    fun `restoring the saved list layout at startup keeps the disk cache`() = runTest {
+        var clears = 0
+        coEvery { folder_cache_store.clear_all() } coAnswers { clears++ }
+        every { repository.set_conversation_grouping(false) } returns true
+        every { repository.is_conversation_grouping_enabled } returns false
+        every { repository.custom_categories_fingerprint } returns 7
+        every { folder_cache_store.layout_signature() } returns
+            folder_cache_layout_signature(grouping = false, list_order = null, custom_categories = 7)
+
+        vm.set_conversation_grouping(false)
+        advanceUntilIdle()
+
+        assertEquals(0, clears)
+    }
+
+    @Test
+    fun `changing the list layout clears the disk cache and records it`() = runTest {
+        var clears = 0
+        var recorded: String? = null
+        coEvery { folder_cache_store.clear_all() } coAnswers { clears++ }
+        every { folder_cache_store.set_layout_signature(any()) } answers { recorded = firstArg() }
+        every { repository.set_conversation_grouping(false) } returns true
+        every { repository.is_conversation_grouping_enabled } returns false
+        every { repository.custom_categories_fingerprint } returns 7
+        every { folder_cache_store.layout_signature() } returns
+            folder_cache_layout_signature(grouping = true, list_order = null, custom_categories = 7)
+
+        vm.set_conversation_grouping(false)
+        advanceUntilIdle()
+
+        assertEquals(1, clears)
+        assertEquals(folder_cache_layout_signature(grouping = false, list_order = null, custom_categories = 7), recorded)
+    }
+
+    @Test
     fun `load_more appends items and updates cursor`() = runTest {
         val page1 = fake_inbox_page(3, has_more = true, next_cursor = "cursor_1")
         coEvery { repository.fetch_inbox(any(), cursor = isNull(), any(), any()) } returns Result.success(page1)

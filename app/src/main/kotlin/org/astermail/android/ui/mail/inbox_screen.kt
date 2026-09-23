@@ -1859,7 +1859,9 @@ fun InboxScreen(
                         contradicts_unread = true
                     }
                 }
-                val cache_pending = inbox_state.cache_pending
+                val cache_pending = inbox_state.cache_pending &&
+                    threads.isEmpty() &&
+                    (inbox_state.is_loading || inbox_state.initial)
                 val skeleton_target = (inbox_state.initial && threads.isEmpty()) ||
                     (
                         !thread_gate.category_only &&
@@ -1911,8 +1913,6 @@ fun InboxScreen(
                 val handoff = Modifier.skeleton_handoff(skeleton_phase)
                 val row_geometry = remember_row_geometry(skeleton_geometry_of(settings_state.preferences))
                 val record_row_height = remember_row_height_recorder()
-                val record_row_preview = remember_row_preview_recorder(current_folder)
-                val skeleton_yesterday_label = stringResource(R.string.yesterday)
                 if (skeleton_now || skeleton_phase != SkeletonPhase.content) {
                     Box(Modifier.padding(top = header_height_dp))
                 } else if (inbox_error_now) {
@@ -2134,22 +2134,6 @@ fun InboxScreen(
                             val is_selected by remember(thread.thread_id) {
                                 derivedStateOf { select_mode && selected_ids.contains(thread.thread_id) }
                             }
-                            LaunchedEffect(thread.thread_id, row_index, thread.newest.is_read) {
-                                record_row_preview(
-                                    row_index,
-                                    SkeletonRowPreview(
-                                        sender = displayed_sender_name(
-                                            thread.newest.display_sender_name,
-                                            thread.newest.sender_name,
-                                        ),
-                                        subject = thread.newest.subject,
-                                        preview = thread.newest.preview,
-                                        time = thread.newest.received_at
-                                            .format_relative_time(skeleton_yesterday_label),
-                                        unread = !thread.newest.is_read,
-                                    ),
-                                )
-                            }
                             if (select_mode) {
                                 Box(
                                     modifier = Modifier
@@ -2335,7 +2319,6 @@ fun InboxScreen(
                     phase = skeleton_phase,
                     modifier = Modifier.padding(top = header_height_dp + AsterSpacing.sm),
                     live_geometry = skeleton_geometry_of(settings_state.preferences),
-                    folder = current_folder,
                 )
                 pull_indicator()
             }
