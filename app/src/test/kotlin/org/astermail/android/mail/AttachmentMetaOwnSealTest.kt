@@ -101,6 +101,8 @@ class AttachmentMetaOwnSealTest {
             ratchet_plaintext_cache = mockk(relaxed = true),
             system_folder_bootstrap = mockk(relaxed = true),
             pending_send_dao_provider = dagger.Lazy { mockk(relaxed = true) },
+            message_body_dao_provider = dagger.Lazy { mockk(relaxed = true) },
+            thread_snapshot_dao_provider = dagger.Lazy { mockk(relaxed = true) },
             context = context,
             auth_repository = mockk(relaxed = true),
         )
