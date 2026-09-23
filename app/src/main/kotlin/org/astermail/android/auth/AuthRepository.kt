@@ -1221,7 +1221,10 @@ class AuthRepository @Inject constructor(
                     passphrase,
                     display_name,
                     new_address,
-                ) ?: return true
+                ) ?: return org.astermail.android.crypto.pgp_key_covers_address(
+                    identity_key,
+                    new_address,
+                )
 
                 if (!store_identity_key_in_vault(updated, passphrase_bytes)) return false
                 session_key_store.put_identity_key(updated)

@@ -6149,11 +6149,16 @@ class SettingsViewModel @Inject constructor(
             }
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
+            val retained = if (alias.is_retained_primary) {
+                alias.retained_local_part.orEmpty()
+            } else {
+                ""
+            }
             return alias.copy(
-                encrypted_local_part = "",
+                encrypted_local_part = retained,
                 encrypted_display_name = null,
                 encrypted_note = null,
-                decryption_failed = true,
+                decryption_failed = retained.isEmpty(),
             )
         }
         val enc_name = alias.encrypted_display_name

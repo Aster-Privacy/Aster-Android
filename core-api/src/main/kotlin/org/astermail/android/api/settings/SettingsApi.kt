@@ -189,6 +189,7 @@ data class AliasInfo(
     val downgrade_grace_expires_at: String? = null,
     val decryption_failed: Boolean = false,
     val is_retained_primary: Boolean = false,
+    val retained_local_part: String? = null,
 ) {
     val address: String get() = when {
         decryption_failed -> if (domain.isNotBlank()) "@$domain" else id

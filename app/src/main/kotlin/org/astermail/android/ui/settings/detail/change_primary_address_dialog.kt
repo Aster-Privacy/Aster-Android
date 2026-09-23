@@ -82,6 +82,7 @@ import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.settings.PrimaryAddressStep
 import org.astermail.android.settings.PrimaryAddressViewModel
 import org.astermail.android.settings.primary_address_domains
+import org.astermail.android.settings.primary_local_part_valid
 import org.astermail.android.settings.primary_address_reason_account_kind
 import org.astermail.android.settings.primary_address_reason_cooldown
 import org.astermail.android.settings.primary_address_reason_custom_domain
@@ -117,7 +118,8 @@ internal fun change_primary_address_dialog(
             val at = address.lastIndexOf('@')
             at > 0 &&
                 address.substring(at + 1).lowercase(Locale.ROOT) in primary_address_domains &&
-                !address.equals(shown_current, ignoreCase = true)
+                !address.equals(shown_current, ignoreCase = true) &&
+                primary_local_part_valid(address.substring(0, at).lowercase(Locale.ROOT))
         }
     }
     val new_address_is_existing_alias = remember(alias_addresses, state.new_address) {

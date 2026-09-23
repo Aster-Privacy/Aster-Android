@@ -65,6 +65,16 @@ private fun address_ignoring_dots(address: String): String {
     return "$local@$domain"
 }
 
+fun primary_local_part_valid(local_part: String): Boolean {
+    val stripped = local_part.replace(".", "")
+    return local_part.length <= 64 &&
+        local_part.matches(Regex("^[a-z0-9.]+$")) &&
+        !local_part.startsWith(".") &&
+        !local_part.endsWith(".") &&
+        !local_part.contains("..") &&
+        stripped.length in 3..40
+}
+
 enum class PrimaryAddressStep { INTRO, PICK, REVIEW, PASSWORD, CODE, DONE }
 
 const val primary_address_reason_account_kind = "account_kind"
@@ -107,12 +117,7 @@ data class PrimaryAddressUiState(
         get() = local_part.replace(".", "")
 
     val local_part_valid: Boolean
-        get() = local_part.length <= 64 &&
-            local_part.matches(Regex("^[a-z0-9.]+$")) &&
-            !local_part.startsWith(".") &&
-            !local_part.endsWith(".") &&
-            !local_part.contains("..") &&
-            local_part_stripped.length in 3..40
+        get() = primary_local_part_valid(local_part)
 
     val same_as_current: Boolean
         get() = current_address.isNotEmpty() &&
@@ -165,7 +170,7 @@ class PrimaryAddressViewModel @Inject constructor(
                     if (throwable is CancellationException) throw throwable
                     _state.value = _state.value.copy(
                         eligible = false,
-                        eligibility_failed = true,
+                        eligibility_failed = throwable !is ApiError.NotFoundError,
                     )
                 }
         }
@@ -207,15 +212,30 @@ class PrimaryAddressViewModel @Inject constructor(
     }
 
     fun back_to_intro() {
-        _state.value = _state.value.copy(step = PrimaryAddressStep.INTRO, error = null)
+        _state.value = _state.value.copy(
+            step = PrimaryAddressStep.INTRO,
+            password = "",
+            show_password = false,
+            error = null,
+        )
     }
 
     fun back_to_pick() {
-        _state.value = _state.value.copy(step = PrimaryAddressStep.PICK, error = null)
+        _state.value = _state.value.copy(
+            step = PrimaryAddressStep.PICK,
+            password = "",
+            show_password = false,
+            error = null,
+        )
     }
 
     fun back_to_review() {
-        _state.value = _state.value.copy(step = PrimaryAddressStep.REVIEW, error = null)
+        _state.value = _state.value.copy(
+            step = PrimaryAddressStep.REVIEW,
+            password = "",
+            show_password = false,
+            error = null,
+        )
     }
 
     fun set_local_part(value: String) {
