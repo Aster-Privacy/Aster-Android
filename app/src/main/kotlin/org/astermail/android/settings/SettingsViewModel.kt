@@ -6259,44 +6259,18 @@ class SettingsViewModel @Inject constructor(
         throw IllegalStateException("alias decryption failed")
     }
 
-    private fun encrypt_alias_field(plaintext: String): Pair<String, String> {
-        val key = derive_encryption_key()
-        try {
-            val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
-            val ciphertext = AesGcm.encrypt(key, nonce, plaintext.toByteArray(Charsets.UTF_8))
-            return android.util.Base64.encodeToString(ciphertext, android.util.Base64.NO_WRAP) to
-                android.util.Base64.encodeToString(nonce, android.util.Base64.NO_WRAP)
-        } finally {
-            key.fill(0)
-        }
-    }
+    private fun encrypt_alias_field(plaintext: String): Pair<String, String> =
+        encrypt_alias_field_with(session_key_store, plaintext)
 
     private fun normalize_alias_local_part(local_part: String): String {
         return local_part.lowercase(java.util.Locale.ROOT).replace(".", "")
     }
 
-    private fun compute_alias_address_hash(local_part: String, domain: String): String {
-        val enc_key = derive_encryption_key()
-        try {
-            val info = "astermail-alias-hmac-v1".toByteArray(Charsets.UTF_8)
-            val combined = enc_key + info
-            val hmac_key_bytes = MessageDigest.getInstance("SHA-256").digest(combined)
-            combined.fill(0)
-            val mac = Mac.getInstance("HmacSHA256")
-            mac.init(SecretKeySpec(hmac_key_bytes, "HmacSHA256"))
-            val sig = mac.doFinal("${normalize_alias_local_part(local_part)}@$domain".toByteArray(Charsets.UTF_8))
-            hmac_key_bytes.fill(0)
-            return android.util.Base64.encodeToString(sig, android.util.Base64.NO_WRAP)
-        } finally {
-            enc_key.fill(0)
-        }
-    }
+    private fun compute_alias_address_hash(local_part: String, domain: String): String =
+        compute_alias_address_hash_with(session_key_store, local_part, domain)
 
-    private fun compute_routing_address_hash(local_part: String, domain: String): String {
-        val data = "${normalize_alias_local_part(local_part)}@$domain".toByteArray(Charsets.UTF_8)
-        val hash = MessageDigest.getInstance("SHA-256").digest(data)
-        return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
-    }
+    private fun compute_routing_address_hash(local_part: String, domain: String): String =
+        compute_routing_address_hash_for(local_part, domain)
 
     private fun compute_domain_address_hash(local_part: String, domain: String): String {
         val enc_key = derive_encryption_key()

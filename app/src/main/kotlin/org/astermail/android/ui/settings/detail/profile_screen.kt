@@ -89,6 +89,7 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu
 import org.astermail.android.settings.SaveStatus
+import org.astermail.android.settings.PrimaryAddressViewModel
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.common.resolve_primary_sender_email
 import org.astermail.android.ui.mail.SenderAvatar
@@ -134,6 +135,11 @@ fun ProfileScreen(
         val incoming = user?.display_name ?: live_account?.display_name ?: return@LaunchedEffect
         if (incoming != display_name) display_name = incoming
     }
+
+    val address_vm: PrimaryAddressViewModel = hiltViewModel()
+    val address_state by address_vm.state.collectAsStateWithLifecycle()
+    var show_address_dialog by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { address_vm.load_eligibility() }
 
     var photo_uploading by remember { mutableStateOf(false) }
     var photo_failed by remember { mutableStateOf(false) }
@@ -250,7 +256,53 @@ fun ProfileScreen(
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             detail_row(title = email, subtitle = stringResource(R.string.primary_address))
         }
-        val member_since = remember(user?.created_at) { format_member_since(user?.created_at) }
+        if (address_state.eligibility_loaded || address_state.eligibility_failed) {
+            val lock_message = address_change_lock_message(
+                reason = address_state.lock_reason,
+                eligibility_failed = address_state.eligibility_failed,
+                next_change_available_at = address_state.next_change_available_at,
+            )
+            v_gap(AsterSpacing.xs)
+            Text(
+                text = lock_message
+                    ?: stringResource(R.string.address_change_once_title),
+                color = colors.text_muted,
+                fontSize = 13.sp,
+            )
+            v_gap(AsterSpacing.sm)
+            if (address_state.eligibility_failed) {
+                AsterButton(
+                    label = stringResource(R.string.retry),
+                    onClick = { address_vm.load_eligibility() },
+                )
+            } else {
+                AsterButton(
+                    label = stringResource(R.string.change_address),
+                    onClick = { show_address_dialog = true },
+                    enabled = address_state.eligible,
+                )
+            }
+        }
+        if (show_address_dialog) {
+            change_primary_address_dialog(
+                current_address = email,
+                display_name = display_name,
+                alias_addresses = state.aliases
+                    .filter { it.is_enabled && !it.decryption_failed && !it.is_retained_primary }
+                    .map { it.address },
+                on_dismiss = {
+                    show_address_dialog = false
+                    address_vm.reset()
+                },
+                on_changed = {
+                    vm.load_profile()
+                    vm.load_aliases()
+                    address_vm.load_eligibility()
+                },
+                vm = address_vm,
+            )
+        }
+        val member_since = remember(user?.created_at) { format_settings_date(user?.created_at) }
         if (member_since.isNotEmpty()) {
             v_gap(AsterSpacing.lg)
             AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -362,19 +414,6 @@ private fun badge_chip(badge: Badge) {
                 fontWeight = FontWeight.Medium,
             )
         }
-    }
-}
-
-private fun format_member_since(raw: String?): String {
-    if (raw.isNullOrBlank()) return ""
-    return try {
-        val instant = java.time.OffsetDateTime.parse(raw).toInstant()
-        java.time.format.DateTimeFormatter
-            .ofLocalizedDate(java.time.format.FormatStyle.MEDIUM)
-            .withZone(org.astermail.android.ui.mail.AsterTimePreferences.account_zone_id())
-            .format(instant)
-    } catch (_: Throwable) {
-        ""
     }
 }
 

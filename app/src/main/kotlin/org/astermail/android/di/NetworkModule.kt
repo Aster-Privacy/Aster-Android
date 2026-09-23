@@ -33,6 +33,8 @@ import org.astermail.android.api.BuildConfig
 import org.astermail.android.api.TokenProvider
 import org.astermail.android.api.account.AccountApi
 import org.astermail.android.api.account.AccountApiImpl
+import org.astermail.android.api.account.PrimaryAddressApi
+import org.astermail.android.api.account.PrimaryAddressApiImpl
 import org.astermail.android.api.aliases.AliasDetailApi
 import org.astermail.android.api.aliases.AliasDetailApiImpl
 import org.astermail.android.api.auth.AuthApi
@@ -180,6 +182,11 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provide_account_api(client: ApiClient): AccountApi = AccountApiImpl(client)
+
+    @Provides
+    @Singleton
+    fun provide_primary_address_api(client: ApiClient): PrimaryAddressApi =
+        PrimaryAddressApiImpl(client)
 
     @Provides
     @Singleton
