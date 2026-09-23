@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -109,6 +110,8 @@ internal fun change_primary_address_dialog(
 ) {
     val colors = AsterMaterial.colors
     val state by vm.state.collectAsStateWithLifecycle()
+
+    BackHandler(enabled = state.busy) {}
 
     LaunchedEffect(Unit) { vm.load_eligibility() }
 

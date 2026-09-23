@@ -1034,18 +1034,40 @@ class AuthRepository @Inject constructor(
 
     suspend fun refresh_profile(): Result<Unit> = runCatching {
         val profile = auth_api.me()
+        val email = adopt_server_email(profile)
         absorb_profile(profile)
-        if (profile.pgp_rekey_required) {
-            val email = session_key_store.get_user_email() ?: profile.email
-            if (!email.isNullOrBlank()) {
-                add_address_to_identity_key(email, profile.display_name.orEmpty())
-            }
+        if (profile.pgp_rekey_required && !email.isNullOrBlank()) {
+            add_address_to_identity_key(email, profile.display_name.orEmpty())
         }
+    }
+
+    private fun profile_matches_session(
+        profile: org.astermail.android.api.auth.UserInfo,
+    ): Boolean {
+        val session_id = session_key_store.get_user_id() ?: return true
+
+        return profile.user_id.isBlank() || profile.user_id == session_id
+    }
+
+    private fun adopt_server_email(profile: org.astermail.android.api.auth.UserInfo): String? {
+        val server_email = profile.email?.trim()?.takeIf { it.isNotBlank() }
+        val stored_email = session_key_store.get_user_email()
+
+        if (server_email == null) return stored_email
+        if (server_email.equals(stored_email, ignoreCase = true)) return stored_email
+        if (!profile_matches_session(profile)) return stored_email
+
+        session_key_store.put_user_email(server_email)
+        refresh_session_snapshot()
+
+        return server_email
     }
 
     fun absorb_profile(profile: org.astermail.android.api.auth.UserInfo) {
         val current_id = session_key_store.get_user_id() ?: profile.user_id
-        val email = session_key_store.get_user_email() ?: profile.email ?: return
+        val server_email = profile.email?.trim()
+            ?.takeIf { it.isNotBlank() && profile_matches_session(profile) }
+        val email = server_email ?: session_key_store.get_user_email() ?: return
         account_store.add_or_update(
             StoredAccount(
                 id = current_id,
@@ -1232,10 +1254,19 @@ class AuthRepository @Inject constructor(
                     passphrase,
                     display_name,
                     new_address,
-                ) ?: return org.astermail.android.crypto.pgp_key_covers_address(
-                    identity_key,
-                    new_address,
-                )
+                ) ?: run {
+                    if (!org.astermail.android.crypto.pgp_key_covers_address(
+                            identity_key,
+                            new_address,
+                        )
+                    ) {
+                        return false
+                    }
+
+                    republish_pgp_key_with_password(identity_key, passphrase)
+
+                    return true
+                }
 
                 if (!store_identity_key_in_vault(updated, passphrase_bytes)) return false
                 session_key_store.put_identity_key(updated)

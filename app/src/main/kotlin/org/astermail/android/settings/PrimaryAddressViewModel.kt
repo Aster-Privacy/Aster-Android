@@ -43,6 +43,7 @@ import org.astermail.android.api.ApiError
 import org.astermail.android.api.account.PrimaryAddressApi
 import org.astermail.android.api.account.PrimaryAddressAvailabilityRequest
 import org.astermail.android.api.account.PrimaryAddressConfirmRequest
+import org.astermail.android.api.account.PrimaryAddressEligibilityResponse
 import org.astermail.android.api.account.PrimaryAddressStartRequest
 import org.astermail.android.auth.AuthRepository
 import org.astermail.android.crypto.CryptoNative
@@ -485,46 +486,34 @@ class PrimaryAddressViewModel @Inject constructor(
             }
 
             result.onSuccess { response ->
-                _state.value = _state.value.copy(
-                    code = "",
-                    status = context.getString(R.string.address_change_updating_key),
-                )
-                val follow_up = runCatching {
-                    withTimeout(republish_timeout_ms) {
-                        session_key_store.put_user_email(response.new_address)
-                        val republished = auth_repository.add_address_to_identity_key(
-                            response.new_address,
-                            display_name,
-                        )
-                        auth_repository.refresh_profile()
-                        republished
-                    }
-                }
-                follow_up.exceptionOrNull()?.let { throwable ->
-                    if (throwable is CancellationException &&
-                        throwable !is TimeoutCancellationException
-                    ) {
-                        throw throwable
-                    }
-                }
-                auth_repository.refresh_session_snapshot()
-                _state.value = _state.value.copy(
-                    busy = false,
-                    status = if (follow_up.getOrDefault(false)) {
-                        null
-                    } else {
-                        context.getString(R.string.address_change_done_partial)
-                    },
-                    eligible = false,
-                    next_change_available_at = response.next_change_available_at
-                        ?: _state.value.next_change_available_at,
-                    final_address = response.new_address,
+                apply_confirmed_change(
+                    new_address = response.new_address,
                     retained_address = snapshot.current_address,
-                    step = PrimaryAddressStep.DONE,
+                    next_change_available_at = response.next_change_available_at,
+                    display_name = display_name,
+                    on_changed = on_changed,
                 )
-                on_changed(response.new_address)
             }.onFailure { throwable ->
                 if (throwable is CancellationException) throw throwable
+
+                val settled = if (is_indeterminate_failure(throwable)) {
+                    settled_new_address(snapshot.new_address)
+                } else {
+                    null
+                }
+
+                if (settled != null) {
+                    apply_confirmed_change(
+                        new_address = settled.current_address,
+                        retained_address = snapshot.current_address,
+                        next_change_available_at = settled.next_change_available_at,
+                        display_name = display_name,
+                        on_changed = on_changed,
+                    )
+
+                    return@onFailure
+                }
+
                 _state.value = _state.value.copy(
                     busy = false,
                     status = null,
@@ -533,6 +522,90 @@ class PrimaryAddressViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    private fun is_indeterminate_failure(throwable: Throwable): Boolean = when (throwable) {
+        is ApiError.InvalidCredentials,
+        is ApiError.RateLimited,
+        is ApiError.NotFoundError,
+        is ApiError.Conflict,
+        is ApiError.PlanLimitExceeded,
+        is ApiError.ForbiddenError,
+        is ApiError.ValidationError,
+        -> false
+        else -> true
+    }
+
+    private suspend fun settled_new_address(
+        new_address: String,
+    ): PrimaryAddressEligibilityResponse? {
+        val settled = runCatching { primary_address_api.get_eligibility() }.getOrNull()
+            ?: return null
+
+        return settled.takeIf {
+            routing_form(it.current_address) == routing_form(new_address)
+        }
+    }
+
+    private suspend fun apply_confirmed_change(
+        new_address: String,
+        retained_address: String,
+        next_change_available_at: String?,
+        display_name: String,
+        on_changed: (String) -> Unit,
+    ) {
+        _state.value = _state.value.copy(
+            code = "",
+            status = context.getString(R.string.address_change_updating_key),
+        )
+
+        val follow_up = runCatching {
+            withTimeout(republish_timeout_ms) {
+                session_key_store.put_user_email(new_address)
+                val republished = auth_repository.add_address_to_identity_key(
+                    new_address,
+                    display_name,
+                )
+                auth_repository.refresh_profile()
+                republished
+            }
+        }
+
+        follow_up.exceptionOrNull()?.let { throwable ->
+            if (throwable is CancellationException &&
+                throwable !is TimeoutCancellationException
+            ) {
+                throw throwable
+            }
+        }
+
+        auth_repository.refresh_session_snapshot()
+        _state.value = _state.value.copy(
+            busy = false,
+            error = null,
+            status = if (follow_up.getOrDefault(false)) {
+                null
+            } else {
+                context.getString(R.string.address_change_done_partial)
+            },
+            eligible = false,
+            next_change_available_at = next_change_available_at
+                ?: _state.value.next_change_available_at,
+            final_address = new_address,
+            retained_address = retained_address,
+            step = PrimaryAddressStep.DONE,
+        )
+        on_changed(new_address)
+    }
+
+    private fun routing_form(address: String): String {
+        val normalized = address.trim().lowercase(Locale.ROOT)
+        val at = normalized.lastIndexOf('@')
+
+        if (at <= 0) return normalized
+
+        return normalized.substring(0, at).replace(".", "") +
+            normalized.substring(at)
     }
 
     private fun confirm_error_message(throwable: Throwable): String = when (throwable) {
