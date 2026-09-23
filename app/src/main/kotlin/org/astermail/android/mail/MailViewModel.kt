@@ -3088,18 +3088,26 @@ class MailViewModel @Inject constructor(
             return
         }
         val previous = _inbox_state.value.items
-        val removed_items = previous.filter { it.id in item_ids }
+        val keeps_archived = folder_keeps_archived(_inbox_state.value.current_folder)
+        val target_items = previous.filter { it.id in item_ids }
+        val removed_items = if (keeps_archived) emptyList() else target_items
         val raw_items = lookup_raw_items(item_ids)
-        _inbox_state.value = _inbox_state.value.copy(
-            items = previous.filter { it.id !in item_ids },
-        )
-        adjust_stats_for_removed(removed_items)
+        if (keeps_archived) {
+            set_archived_in_view(item_ids, true)
+        } else {
+            _inbox_state.value = _inbox_state.value.copy(
+                items = previous.filter { it.id !in item_ids },
+            )
+            adjust_stats_for_removed(removed_items)
+        }
         val search_removed = remove_search_items(item_ids)
-        pending_removed_ids.addAll(item_ids)
-        protect_removed(item_ids)
-        val affected_label_caches = removed_items.flatMap { it.labels }.map { "label:$it" }
-        val affected_tag_caches = removed_items.flatMap { it.tag_tokens }.map { "tag:$it" }
-        invalidate_caches_except_current(listOf("archive", "inbox") + all_mail_folder_ids + affected_label_caches + affected_tag_caches)
+        if (!keeps_archived) {
+            pending_removed_ids.addAll(item_ids)
+            protect_removed(item_ids)
+        }
+        val affected_label_caches = target_items.flatMap { it.labels }.map { "label:$it" }
+        val affected_tag_caches = target_items.flatMap { it.tag_tokens }.map { "tag:$it" }
+        invalidate_caches_except_current(listOf("archive", "inbox", "starred", "snoozed") + all_mail_folder_ids + affected_label_caches + affected_tag_caches)
         val archive_key = batch_action_key("archive", message_scope)
         var archive_job: kotlinx.coroutines.Job? = null
         accumulate_batch_action(
@@ -3110,6 +3118,7 @@ class MailViewModel @Inject constructor(
         ) { prev_undo ->
             {
                 prev_undo?.invoke()
+                if (keeps_archived) set_archived_in_view(item_ids, false)
                 undo_restore(
                     removed_items = removed_items,
                     search_removed = search_removed,
@@ -3130,6 +3139,7 @@ class MailViewModel @Inject constructor(
                     onFailure = { t ->
                         if (BuildConfig.DEBUG) android.util.Log.w("MailVM", "archive failed", t)
                         clear_batch_action(archive_key)
+                        if (keeps_archived) set_archived_in_view(item_ids, false)
                         undo_local_restore(removed_items)
                         undo_search_restore(search_removed)
                         emit_toast(context.getString(R.string.failed_to_archive))
@@ -3140,6 +3150,7 @@ class MailViewModel @Inject constructor(
             } catch (t: Throwable) {
                 if (BuildConfig.DEBUG) android.util.Log.w("MailVM", "archive threw", t)
                 clear_batch_action(archive_key)
+                if (keeps_archived) set_archived_in_view(item_ids, false)
                 undo_local_restore(removed_items)
                 undo_search_restore(search_removed)
                 emit_toast(context.getString(R.string.failed_to_archive))
@@ -3414,6 +3425,17 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    private fun set_archived_in_view(item_ids: Collection<String>, archived: Boolean) {
+        val ids = item_ids.toHashSet()
+        _inbox_state.update { s ->
+            s.copy(
+                items = s.items.map {
+                    if (it.id in ids && it.is_archived != archived) it.copy(is_archived = archived) else it
+                },
+            )
+        }
+    }
+
     private fun undo_local_restore(removed: List<InboxItem>) {
         if (removed.isEmpty()) return
         clear_removal_protection(removed.map { it.id })
@@ -3559,14 +3581,21 @@ class MailViewModel @Inject constructor(
     fun unarchive(item_ids: List<String>) {
         if (item_ids.isEmpty()) return
         val previous = _inbox_state.value.items
-        val removed_items = previous.filter { it.id in item_ids }
+        val keeps_unarchived = _inbox_state.value.current_folder != "archive" &&
+            folder_keeps_archived(_inbox_state.value.current_folder)
+        val removed_items = if (keeps_unarchived) emptyList() else previous.filter { it.id in item_ids }
         val raw_items = lookup_raw_items(item_ids)
-        _inbox_state.value = _inbox_state.value.copy(
-            items = previous.filter { it.id !in item_ids },
-        )
-        pending_removed_ids.addAll(item_ids)
-        protect_removed(item_ids)
+        if (keeps_unarchived) {
+            set_archived_in_view(item_ids, false)
+        } else {
+            _inbox_state.value = _inbox_state.value.copy(
+                items = previous.filter { it.id !in item_ids },
+            )
+            pending_removed_ids.addAll(item_ids)
+            protect_removed(item_ids)
+        }
         invalidate_caches(listOf("inbox", "archive"))
+        invalidate_caches_except_current(listOf("starred", "snoozed"))
         viewModelScope.launch {
             try {
                 repository.unarchive(item_ids, raw_items).fold(
@@ -3576,6 +3605,7 @@ class MailViewModel @Inject constructor(
                             context.getString(R.string.moved_to_inbox),
                             context.getString(R.string.undo),
                         ) {
+                            if (keeps_unarchived) set_archived_in_view(item_ids, true)
                             undo_restore(
                                 removed_items = removed_items,
                                 search_removed = emptyList(),
@@ -3587,6 +3617,7 @@ class MailViewModel @Inject constructor(
                         load_stats()
                     },
                     onFailure = {
+                        if (keeps_unarchived) set_archived_in_view(item_ids, true)
                         undo_local_restore(removed_items)
                         emit_toast(context.getString(R.string.failed_to_unarchive))
                     },
@@ -4868,36 +4899,45 @@ fun org.astermail.android.storage.search.DecryptedMailEntity.to_inbox_item(): In
     ),
 )
 
+private val folders_keeping_archived = setOf("archive", "starred", "snoozed", "sent")
+
+internal fun folder_keeps_archived(folder: String): Boolean =
+    folder in folders_keeping_archived ||
+        is_all_mail_folder(folder) ||
+        folder.startsWith("label:") ||
+        folder.startsWith("tag:") ||
+        folder.startsWith("routing:")
+
 internal fun folder_matches_item(folder: String, item: InboxItem): Boolean = when (folder) {
     "inbox" -> !item.is_trashed && !item.is_archived && !item.is_spam && item.labels.isEmpty()
-    "starred" -> item.is_starred && !item.is_trashed
+    "starred" -> item.is_starred && !item.is_trashed && !item.is_spam
     "trash" -> item.is_trashed
     "spam" -> item.is_spam
-    "archive" -> item.is_archived
-    "sent" -> item.raw_item.item_type == "sent" && !item.is_trashed
+    "archive" -> item.is_archived && !item.is_trashed && !item.is_spam
+    "sent" -> item.raw_item.item_type == "sent" && !item.is_trashed && !item.is_spam
     "drafts" -> item.raw_item.item_type == "draft" && !item.is_trashed
     "scheduled" -> item.raw_item.item_type == "scheduled" && !item.is_trashed
     "outbox" -> item.raw_item.item_type == "outbox" && !item.is_trashed
-    "snoozed" -> !item.is_trashed
+    "snoozed" -> !item.is_trashed && !item.is_spam
     else -> when {
         is_all_mail_folder(folder) ->
             (all_mail_includes_trash(folder) || !item.is_trashed) &&
                 (all_mail_includes_spam(folder) || !item.is_spam)
         folder.startsWith("label:") -> {
             val token = folder.removePrefix("label:")
-            item.labels.contains(token) && !item.is_trashed
+            item.labels.contains(token) && !item.is_trashed && !item.is_spam
         }
         folder.startsWith("tag:") -> {
             val token = folder.removePrefix("tag:")
-            item.tag_tokens.contains(token) && !item.is_trashed
+            item.tag_tokens.contains(token) && !item.is_trashed && !item.is_spam
         }
         folder.startsWith("routing:") -> {
             val scope = parse_alias_routing_folder(folder)
             val matches_received = scope != null && item.routing_token == scope.routing_token
-            !item.is_trashed &&
+            !item.is_trashed && !item.is_spam &&
                 (matches_received || scope?.direction != alias_direction_received)
         }
-        else -> item.labels.contains(folder) && !item.is_trashed
+        else -> item.labels.contains(folder) && !item.is_trashed && !item.is_spam
     }
 }
 
