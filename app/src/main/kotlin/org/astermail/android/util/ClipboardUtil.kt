@@ -21,26 +21,28 @@
 
 package org.astermail.android.util
 
+import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 
 private const val SENSITIVE_CLIP_CLEAR_DELAY_MS = 60_000L
 
-fun schedule_sensitive_clipboard_clear(context: Context, copied_text: String) {
+fun schedule_sensitive_clipboard_clear(context: Context) {
     val app_context = context.applicationContext
+    val clipboard = app_context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return
+    val copied_at = runCatching { clipboard.primaryClipDescription?.timestamp }.getOrNull() ?: return
     Handler(Looper.getMainLooper()).postDelayed({
-        val clipboard = app_context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-            ?: return@postDelayed
-        val current = clipboard.primaryClip
-        val current_text = if (current != null && current.itemCount > 0) {
-            current.getItemAt(0).coerceToText(app_context)?.toString()
-        } else {
-            null
-        }
-        if (current_text == copied_text) {
-            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("", ""))
+        val current_at = runCatching { clipboard.primaryClipDescription?.timestamp }.getOrNull()
+        if (current_at != copied_at) return@postDelayed
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                clipboard.clearPrimaryClip()
+            } else {
+                clipboard.setPrimaryClip(ClipData.newPlainText("", ""))
+            }
         }
     }, SENSITIVE_CLIP_CLEAR_DELAY_MS)
 }

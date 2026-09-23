@@ -424,6 +424,6 @@ private fun copy_to_clipboard(context: Context, label: String, value: String) {
         show_copy_failed_toast(context)
         return
     }
-    org.astermail.android.util.schedule_sensitive_clipboard_clear(context, value)
+    org.astermail.android.util.schedule_sensitive_clipboard_clear(context)
     Toast.makeText(context, context.getString(R.string.copied_to_clipboard), Toast.LENGTH_SHORT).show()
 }
