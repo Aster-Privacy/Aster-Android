@@ -240,6 +240,7 @@ data class UserInfo(
     val identity_key: String? = null,
     val lockdown_mode_enabled: Boolean = false,
     val pgp_rekey_required: Boolean = false,
+    val pgp_uid_update_required: Boolean = false,
 )
 
 @Serializable

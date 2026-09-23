@@ -1036,7 +1036,8 @@ class AuthRepository @Inject constructor(
         val profile = auth_api.me()
         val email = adopt_server_email(profile)
         absorb_profile(profile)
-        if (profile.pgp_rekey_required && !email.isNullOrBlank()) {
+        val key_uid_stale = profile.pgp_rekey_required || profile.pgp_uid_update_required
+        if (key_uid_stale && !email.isNullOrBlank()) {
             add_address_to_identity_key(email, profile.display_name.orEmpty())
         }
     }
