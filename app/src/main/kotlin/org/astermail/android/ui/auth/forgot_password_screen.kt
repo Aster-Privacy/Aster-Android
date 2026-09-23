@@ -970,7 +970,7 @@ private fun new_codes_step(
                 putBoolean("android.content.extra.IS_SENSITIVE", true)
             }
             if (write_to_clipboard(context, clip)) {
-                org.astermail.android.util.schedule_sensitive_clipboard_clear(context, text)
+                org.astermail.android.util.schedule_sensitive_clipboard_clear(context)
                 Toast.makeText(context, copied_message, Toast.LENGTH_SHORT).show()
             } else {
                 show_copy_failed_toast(context)

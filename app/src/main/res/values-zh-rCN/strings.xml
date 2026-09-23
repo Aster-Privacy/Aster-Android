@@ -1377,7 +1377,7 @@
     <string name="totp_passkey_subtitle">使用你为此账户保存的通行密钥或安全密钥进行确认</string>
     <string name="totp_passkey_button">使用通行密钥继续</string>
     <string name="totp_use_passkey">使用通行密钥</string>
-    <string name="totp_backup_code_hint">备用代码为 8 个字符，来自你设置验证器应用时获得的列表。以 ASTER 开头的恢复代码用于恢复邮箱，在这里无法使用。</string>
+    <string name="totp_backup_code_hint">请使用你设置验证器应用时保存的任一备用代码。以 ASTER 开头的恢复代码用于恢复邮箱，在这里无法使用。</string>
     <string name="totp_trust_device">信任此设备 30 天</string>
     <string name="failed_block_sender">无法屏蔽发件人</string>
     <string name="failed_unblock_sender">无法解除屏蔽发件人</string>
@@ -3450,9 +3450,6 @@
     <string name="default_sender_description">新邮件从此地址发出。回复使用邮件送达的地址。</string>
     <string name="default_sender_no_addresses">没有其他地址</string>
     <string name="default_sender_primary_note">你的主地址</string>
-    <string name="sign_in_with_passkey">使用通行密钥登录</string>
-    <string name="error_passkey_sign_in_unavailable">此设备上没有 Aster Mail 通行密钥。请使用密码登录，然后在设置中添加通行密钥。</string>
-    <string name="error_passkey_needs_password">此通行密钥暂时无法单独解锁你的邮箱。请使用密码登录。</string>
     <string name="passkey_add">添加通行密钥</string>
     <string name="passkey_add_subtitle">使用指纹、面孔或屏幕锁定登录</string>
     <string name="passkey_adding">正在添加通行密钥…</string>
@@ -3463,6 +3460,5 @@
     <string name="passkey_already_registered">此通行密钥已保存到你的帐户。</string>
     <string name="passkey_create_unavailable">此设备无法保存通行密钥。请确认已开启屏幕锁定并设置了密码管理器。</string>
     <string name="passkey_create_failed">无法添加通行密钥。请重试。</string>
-    <string name="error_passkey_not_recognized">此通行密钥未关联任何 Aster Mail 帐户。请使用密码登录，然后在设置中添加通行密钥。</string>
     <string name="error_passkey_timed_out">通行密钥请求已超时。请重试。</string>
 </resources>

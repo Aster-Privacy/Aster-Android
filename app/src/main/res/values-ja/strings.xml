@@ -1377,7 +1377,7 @@
     <string name="totp_passkey_subtitle">このアカウント用に保存したパスキーまたはセキュリティキーで確認します</string>
     <string name="totp_passkey_button">パスキーで続ける</string>
     <string name="totp_use_passkey">パスキーを使う</string>
-    <string name="totp_backup_code_hint">バックアップコードは8文字で、認証アプリの設定時に発行されます。ASTER で始まるリカバリーコードはメールボックスを復元するためのもので、ここでは使えません。</string>
+    <string name="totp_backup_code_hint">認証アプリの設定時に保存したバックアップコードのいずれかを入力してください。ASTER で始まるリカバリーコードはメールボックスを復元するためのもので、ここでは使えません。</string>
     <string name="totp_trust_device">このデバイスを30日間信頼する</string>
     <string name="failed_block_sender">送信者をブロックできませんでした</string>
     <string name="failed_unblock_sender">送信者のブロック解除に失敗しました</string>
@@ -3450,9 +3450,6 @@
     <string name="default_sender_description">新規メッセージはこのアドレスから送信されます。返信には、メッセージが届いたアドレスを使用します。</string>
     <string name="default_sender_no_addresses">ほかのアドレスはありません</string>
     <string name="default_sender_primary_note">メインのアドレス</string>
-    <string name="sign_in_with_passkey">パスキーでサインイン</string>
-    <string name="error_passkey_sign_in_unavailable">このデバイスには Aster Mail のパスキーがありません。パスワードでサインインしてから、設定でパスキーを追加してください。</string>
-    <string name="error_passkey_needs_password">このパスキーだけではまだメールボックスのロックを解除できません。パスワードでサインインしてください。</string>
     <string name="passkey_add">パスキーを追加</string>
     <string name="passkey_add_subtitle">指紋、顔、または画面ロックでサインインします</string>
     <string name="passkey_adding">パスキーを追加しています…</string>
@@ -3463,6 +3460,5 @@
     <string name="passkey_already_registered">このパスキーはすでにアカウントに保存されています。</string>
     <string name="passkey_create_unavailable">このデバイスではパスキーを保存できません。画面ロックがオンで、パスワード マネージャーが設定されていることを確認してください。</string>
     <string name="passkey_create_failed">パスキーを追加できませんでした。もう一度お試しください。</string>
-    <string name="error_passkey_not_recognized">このパスキーはどの Aster Mail アカウントにもリンクされていません。パスワードでサインインしてから、設定でパスキーを追加してください。</string>
     <string name="error_passkey_timed_out">パスキーのリクエストがタイムアウトしました。もう一度お試しください。</string>
 </resources>

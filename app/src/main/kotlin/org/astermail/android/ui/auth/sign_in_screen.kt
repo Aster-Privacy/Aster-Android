@@ -44,7 +44,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -53,8 +55,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
@@ -84,15 +88,12 @@ import org.astermail.android.auth.AuthUiState
 import org.astermail.android.debugtools.debug_build_banner
 import org.astermail.android.auth.AuthViewModel
 import org.astermail.android.auth.request_passkey_assertion
-import org.astermail.android.auth.request_sign_in_credential
 import org.astermail.android.design.readable_on
 import org.astermail.android.settings.host_activity
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
-import org.astermail.android.design.components.AsterSecondaryButton
-import androidx.compose.ui.platform.testTag
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterTextField
@@ -121,7 +122,6 @@ fun SignInScreen(
     val email_focus = remember { FocusRequester() }
     val password_focus = remember { FocusRequester() }
     val keyboard_controller = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
-    val context = LocalContext.current
 
     var cached_totp_challenge by remember {
         mutableStateOf<org.astermail.android.auth.TotpChallenge?>(null)
@@ -215,17 +215,6 @@ fun SignInScreen(
         on_submit = submit,
         on_forgot_password = on_forgot_password,
         on_register = on_register,
-        on_passkey = {
-            keyboard_controller?.hide()
-            val host = context.host_activity() ?: context
-            view_model.submit_passkey_login(
-                get_credential = { json -> request_sign_in_credential(host, json) },
-                resolve_email = { id ->
-                    val trimmed = id.trim()
-                    if (trimmed.contains("@")) trimmed else "$trimmed@$email_domain"
-                },
-            )
-        },
     )
 
     Box(
@@ -274,7 +263,6 @@ private class SignInCallbacks(
     val on_submit: () -> Unit,
     val on_forgot_password: () -> Unit,
     val on_register: () -> Unit,
-    val on_passkey: () -> Unit,
 )
 
 @Composable
@@ -406,15 +394,6 @@ private fun aster_variant_body(
             is_loading = fields.is_loading,
         )
 
-        Spacer(Modifier.height(AsterSpacing.sm))
-
-        AsterSecondaryButton(
-            label = stringResource(R.string.sign_in_with_passkey),
-            onClick = cb.on_passkey,
-            modifier = Modifier.fillMaxWidth().testTag("sign_in_passkey_button"),
-            enabled = !fields.is_loading,
-        )
-
         Spacer(Modifier.height(AsterSpacing.lg))
 
         Row(
@@ -529,47 +508,57 @@ private fun TotpVerifyScreen(
                     Spacer(Modifier.height(AsterSpacing.md))
                 }
 
-                if (!use_passkey) {
-                AsterTextField(
-                    value = code,
-                    onValueChange = { v ->
-                        code = if (use_backup) {
-                            latest_code_input(v.filter { it.isLetterOrDigit() || it == '-' }, 20)
-                        } else {
-                            latest_code_input(ascii_digits(v), 6)
-                        }
-                        if (state is AuthUiState.Error) view_model.reset_state()
-                    },
-                    label = if (use_backup) {
-                        stringResource(R.string.totp_backup_code_label)
-                    } else {
-                        stringResource(R.string.totp_code_label)
-                    },
-                    keyboard_options = KeyboardOptions(
-                        keyboardType = if (use_backup) KeyboardType.Text else KeyboardType.Number,
-                        imeAction = ImeAction.Done,
-                    ),
-                    keyboard_actions = KeyboardActions(
-                        onDone = { submit_code() },
-                    ),
-                    leading_icon = {
-                        Icon(
-                            imageVector = TablerIcons.Lock,
-                            contentDescription = null,
-                            tint = colors.text_muted,
-                        )
-                    },
-                    modifier = Modifier.focusRequester(code_focus),
-                )
-
-                if (use_backup) {
-                    Spacer(Modifier.height(AsterSpacing.sm))
-                    Text(
-                        text = stringResource(R.string.totp_backup_code_hint),
-                        color = colors.text_tertiary,
-                        fontSize = 13.sp,
+                if (use_passkey) {
+                    Icon(
+                        imageVector = TablerIcons.Fingerprint,
+                        contentDescription = null,
+                        tint = colors.accent_blue,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .size(56.dp),
                     )
-                }
+                    Spacer(Modifier.height(AsterSpacing.md))
+                } else {
+                    AsterTextField(
+                        value = code,
+                        onValueChange = { v ->
+                            code = if (use_backup) {
+                                latest_code_input(v.filter { it.isLetterOrDigit() || it == '-' }, 20)
+                            } else {
+                                latest_code_input(ascii_digits(v), 6)
+                            }
+                            if (state is AuthUiState.Error) view_model.reset_state()
+                        },
+                        label = if (use_backup) {
+                            stringResource(R.string.totp_backup_code_label)
+                        } else {
+                            stringResource(R.string.totp_code_label)
+                        },
+                        keyboard_options = KeyboardOptions(
+                            keyboardType = if (use_backup) KeyboardType.Text else KeyboardType.Number,
+                            imeAction = ImeAction.Done,
+                        ),
+                        keyboard_actions = KeyboardActions(
+                            onDone = { submit_code() },
+                        ),
+                        leading_icon = {
+                            Icon(
+                                imageVector = TablerIcons.Lock,
+                                contentDescription = null,
+                                tint = colors.text_muted,
+                            )
+                        },
+                        modifier = Modifier.focusRequester(code_focus),
+                    )
+
+                    if (use_backup) {
+                        Spacer(Modifier.height(AsterSpacing.sm))
+                        Text(
+                            text = stringResource(R.string.totp_backup_code_hint),
+                            color = colors.text_tertiary,
+                            fontSize = 13.sp,
+                        )
+                    }
                 }
 
                 Spacer(Modifier.height(AsterSpacing.md))
@@ -580,15 +569,18 @@ private fun TotpVerifyScreen(
                         .clickable(enabled = !is_loading) { trust_device = !trust_device },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Checkbox(
-                        checked = trust_device,
-                        onCheckedChange = { trust_device = it },
-                        enabled = !is_loading,
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = colors.accent_blue,
-                            uncheckedColor = colors.text_muted,
-                        ),
-                    )
+                    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
+                        Checkbox(
+                            checked = trust_device,
+                            onCheckedChange = { trust_device = it },
+                            enabled = !is_loading,
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = colors.accent_blue,
+                                uncheckedColor = colors.text_muted,
+                            ),
+                        )
+                    }
+                    Spacer(Modifier.width(AsterSpacing.sm))
                     Text(
                         text = stringResource(R.string.totp_trust_device),
                         color = colors.text_secondary,
@@ -645,15 +637,12 @@ private fun ColumnScope.second_factor_method_switch(
     on_click: () -> Unit,
 ) {
     if (!visible) return
-    Spacer(Modifier.height(AsterSpacing.md))
-    Text(
-        text = label,
-        color = AsterMaterial.colors.accent_blue,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Medium,
-        modifier = Modifier
-            .align(Alignment.CenterHorizontally)
-            .clickable(enabled = enabled, onClick = on_click),
+    Spacer(Modifier.height(AsterSpacing.xs))
+    AsterGhostButton(
+        label = label,
+        onClick = on_click,
+        enabled = enabled,
+        modifier = Modifier.fillMaxWidth(),
     )
 }
 

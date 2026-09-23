@@ -550,6 +550,7 @@ private fun AsterNavHost() {
     val notification_prompt_route by nav_controller.currentBackStackEntryAsState()
     request_notification_permission(
         should_request = is_signed_in_state && !is_locked &&
+            notification_prompt_route != null &&
             notification_prompt_route?.destination?.route != routes.register,
     )
     val context = LocalContext.current
@@ -777,7 +778,7 @@ private fun AsterNavHost() {
                     mark_signed_up_now(context)
                     theme_vm.mark_first_run(setup_pending = false)
                     nav_controller.navigate(routes.inbox) {
-                        popUpTo(routes.welcome) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                     }
                     if (destination != null) {
                         nav_controller.navigate(routes.settings_detail(destination))
@@ -1675,6 +1676,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         settings_vm.load_custom_domain_addresses()
         settings_vm.load_ghost_aliases()
         settings_vm.load_preferences()
+        settings_vm.load_signature()
         mail_vm.load_stats()
     }
 
@@ -2181,6 +2183,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         accounts_vm.switch_account(account.id) { restored ->
                             if (restored) {
                                 settings_vm.load_preferences()
+                                settings_vm.load_signature()
                                 selected_folder = "inbox"
                                 filter_kind = null
                                 nav_controller.navigate(routes.inbox) {
@@ -2302,6 +2305,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             mail_vm.reset_for_account_switch()
                             settings_vm.reset_for_account_switch()
                             settings_vm.load_preferences()
+                            settings_vm.load_signature()
                             selected_folder = "inbox"
                             filter_kind = null
                             nav_controller.navigate(routes.inbox) {

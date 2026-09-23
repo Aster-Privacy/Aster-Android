@@ -1,0 +1,9 @@
+Bug fixes and improvements:
+
+- Long messages load in full and stay visible as you scroll.
+- Your signature appears right away when you reply.
+- Starred shows archived starred mail, and spam stays out of folders.
+- Passkeys appear after you enter your username.
+- Aster reads the clipboard only when you paste.
+- Pull to refresh has one haptic and a new indicator.
+- Back in sign-up setup returns to the previous step.

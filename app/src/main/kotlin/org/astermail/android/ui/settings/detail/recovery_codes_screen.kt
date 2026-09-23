@@ -295,7 +295,7 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
                                 putBoolean("android.content.extra.IS_SENSITIVE", true)
                             }
                             if (write_to_clipboard(context, clip)) {
-                                org.astermail.android.util.schedule_sensitive_clipboard_clear(context, text)
+                                org.astermail.android.util.schedule_sensitive_clipboard_clear(context)
                                 Toast.makeText(
                                     context,
                                     context.getString(R.string.codes_copied),

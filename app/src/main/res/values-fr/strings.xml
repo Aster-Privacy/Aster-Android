@@ -1435,7 +1435,7 @@
     <string name="totp_passkey_subtitle">Confirmez avec la clé d’accès ou la clé de sécurité enregistrée pour ce compte</string>
     <string name="totp_passkey_button">Continuer avec une clé d’accès</string>
     <string name="totp_use_passkey">Utiliser une clé d’accès</string>
-    <string name="totp_backup_code_hint">Un code de secours comporte 8 caractères et provient de la configuration de votre application d’authentification. Un code de récupération commençant par ASTER restaure votre boîte mail et ne fonctionne pas ici.</string>
+    <string name="totp_backup_code_hint">Utilisez l’un des codes de secours enregistrés lors de la configuration de votre application d’authentification. Un code de récupération commençant par ASTER restaure votre boîte mail et ne fonctionne pas ici.</string>
     <string name="totp_trust_device">Faire confiance à cet appareil pendant 30 jours</string>
     <string name="failed_block_sender">Impossible de bloquer l\'expéditeur</string>
     <string name="failed_unblock_sender">Impossible de débloquer l\'expéditeur</string>
@@ -3495,9 +3495,6 @@
     <string name="default_sender_description">Les nouveaux messages partent de cette adresse. Les réponses utilisent l’adresse à laquelle le message a été envoyé.</string>
     <string name="default_sender_no_addresses">Aucune autre adresse</string>
     <string name="default_sender_primary_note">Votre adresse principale</string>
-    <string name="sign_in_with_passkey">Se connecter avec une clé d\'accès</string>
-    <string name="error_passkey_sign_in_unavailable">Aucune clé d\'accès Aster Mail n\'est disponible sur cet appareil. Connectez-vous avec votre mot de passe, puis ajoutez une clé d\'accès dans Réglages.</string>
-    <string name="error_passkey_needs_password">Cette clé d\'accès ne peut pas encore déverrouiller votre boîte aux lettres seule. Connectez-vous avec votre mot de passe.</string>
     <string name="passkey_add">Ajouter une clé d\'accès</string>
     <string name="passkey_add_subtitle">Connectez-vous avec votre empreinte, votre visage ou le verrouillage de l\'écran</string>
     <string name="passkey_adding">Ajout de la clé d\'accès…</string>
@@ -3508,6 +3505,5 @@
     <string name="passkey_already_registered">Cette clé d\'accès est déjà enregistrée dans votre compte.</string>
     <string name="passkey_create_unavailable">Cet appareil ne peut pas enregistrer de clés d\'accès. Vérifiez que le verrouillage de l\'écran est activé et qu\'un gestionnaire de mots de passe est configuré.</string>
     <string name="passkey_create_failed">Impossible d\'ajouter la clé d\'accès. Réessayez.</string>
-    <string name="error_passkey_not_recognized">Cette clé d\'accès n\'est associée à aucun compte Aster Mail. Connectez-vous avec votre mot de passe, puis ajoutez une clé d\'accès dans les Réglages.</string>
     <string name="error_passkey_timed_out">La demande de clé d\'accès a expiré. Réessayez.</string>
 </resources>

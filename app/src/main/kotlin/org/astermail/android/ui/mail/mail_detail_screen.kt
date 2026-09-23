@@ -124,6 +124,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -5029,7 +5030,7 @@ private fun is_safe_unsubscribe_url(url: String): Boolean {
     return scheme in safe_unsubscribe_schemes
 }
 
-private const val max_body_height_px = 40000
+private const val max_body_layout_px = 200000
 private const val remeasure_settle_ms = 32L
 private const val remeasure_visual_timeout_ms = 250L
 private const val remeasure_resize_frames = 20
@@ -5634,6 +5635,10 @@ internal fun email_html_view(
     val renderer_gone = remember { mutableStateOf(false) }
     var web_generation by remember(height_cache_key) { mutableStateOf(0) }
     val remeasure_trigger = remember(height_cache_key) { mutableStateOf(0) }
+    val layout_density = LocalDensity.current.density
+    val max_body_height_px = remember(layout_density) { (max_body_layout_px / layout_density.coerceAtLeast(1f)).toInt() }
+    val last_window_y = remember { floatArrayOf(Float.NaN) }
+    val has_toggles_ref = remember { booleanArrayOf(true) }
     val reload_policy = remember(height_cache_key) { body_reload_policy() }
     val renderer_exhausted = remember(height_cache_key) { mutableStateOf(false) }
 
@@ -6293,7 +6298,7 @@ internal fun email_html_view(
                                 val dy = Math.abs(ev.y - touch_down_y)
                                 val quick_tap = ev.eventTime - ev.downTime <
                                     android.view.ViewConfiguration.getLongPressTimeout()
-                                if (!multi_touch && quick_tap && dx < 16f && dy < 16f) {
+                                if (!multi_touch && quick_tap && dx < 16f && dy < 16f && has_toggles_ref[0]) {
                                     remeasure_trigger.value += 1
                                 }
                             }
@@ -6378,6 +6383,7 @@ internal fun email_html_view(
                     web_view.setBackgroundColor(
                         if (wants_white_page) android.graphics.Color.WHITE else android.graphics.Color.TRANSPARENT,
                     )
+                    has_toggles_ref[0] = built.contains("<details")
                     loaded_built = built
                     loaded_external = allow_external
                     white_page_ref[0] = wants_white_page
@@ -6421,6 +6427,13 @@ internal fun email_html_view(
                     .wrapContentHeight(align = Alignment.Top, unbounded = true)
                     .height(animated_target)
                     .clipToBounds()
+                    .onGloballyPositioned { coords ->
+                        val window_y = coords.positionInWindow().y
+                        if (window_y != last_window_y[0]) {
+                            last_window_y[0] = window_y
+                            web_ref[0]?.invalidate()
+                        }
+                    }
                     .then(if (body_reveal < 1f) Modifier.alpha(body_reveal) else Modifier)
             },
             onRelease = { web_view ->

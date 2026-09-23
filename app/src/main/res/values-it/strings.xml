@@ -1379,7 +1379,7 @@
     <string name="totp_passkey_subtitle">Conferma con la passkey o la chiave di sicurezza salvata per questo account</string>
     <string name="totp_passkey_button">Continua con una passkey</string>
     <string name="totp_use_passkey">Usa una passkey</string>
-    <string name="totp_backup_code_hint">Un codice di backup ha 8 caratteri e proviene dalla configurazione della tua app di autenticazione. Un codice di recupero che inizia con ASTER ripristina la casella e non funziona qui.</string>
+    <string name="totp_backup_code_hint">Usa uno dei codici di backup che hai salvato durante la configurazione della tua app di autenticazione. Un codice di recupero che inizia con ASTER ripristina la casella e non funziona qui.</string>
     <string name="totp_trust_device">Considera attendibile questo dispositivo per 30 giorni</string>
     <string name="failed_block_sender">Impossibile bloccare il mittente</string>
     <string name="failed_unblock_sender">Impossibile sbloccare il mittente</string>
@@ -3468,9 +3468,6 @@
     <string name="default_sender_description">I nuovi messaggi partono da questo indirizzo. Le risposte usano l’indirizzo a cui è stato inviato il messaggio.</string>
     <string name="default_sender_no_addresses">Nessun altro indirizzo</string>
     <string name="default_sender_primary_note">Il tuo indirizzo principale</string>
-    <string name="sign_in_with_passkey">Accedi con una passkey</string>
-    <string name="error_passkey_sign_in_unavailable">Su questo dispositivo non è disponibile alcuna passkey di Aster Mail. Accedi con la password, quindi aggiungi una passkey in Impostazioni.</string>
-    <string name="error_passkey_needs_password">Questa passkey non può ancora sbloccare da sola la tua casella di posta. Accedi con la password.</string>
     <string name="passkey_add">Aggiungi una passkey</string>
     <string name="passkey_add_subtitle">Accedi con impronta, volto o blocco schermo</string>
     <string name="passkey_adding">Aggiunta della passkey…</string>
@@ -3481,6 +3478,5 @@
     <string name="passkey_already_registered">Questa passkey è già salvata nel tuo account.</string>
     <string name="passkey_create_unavailable">Questo dispositivo non può salvare passkey. Verifica che il blocco schermo sia attivo e che sia configurato un gestore di password.</string>
     <string name="passkey_create_failed">Impossibile aggiungere la passkey. Riprova.</string>
-    <string name="error_passkey_not_recognized">Questa passkey non è collegata a un account Aster Mail. Accedi con la password, poi aggiungi una passkey nelle Impostazioni.</string>
     <string name="error_passkey_timed_out">La richiesta della passkey è scaduta. Riprova.</string>
 </resources>

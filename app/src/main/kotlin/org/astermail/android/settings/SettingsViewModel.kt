@@ -910,6 +910,11 @@ class SettingsViewModel @Inject constructor(
         last_storage_load_ms = 0L
         last_labels_load_ms.clear()
         _state.value = SettingsUiState()
+        _signatures.value = emptyList()
+        _signature_text.value = ""
+        _signature_loaded.value = false
+        default_signature_id = null
+        default_signature_is_html = false
         hydrate_cached_preferences()
         hydrate_cached_tags()
     }

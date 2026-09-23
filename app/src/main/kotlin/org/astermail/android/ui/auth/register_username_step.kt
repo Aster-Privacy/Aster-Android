@@ -59,6 +59,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.res.painterResource
@@ -76,6 +78,8 @@ import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterTextField
 
+private const val display_name_max_length = 100
+
 @Composable
 fun RegisterUsernameStep(
     state: RegisterFlowState,
@@ -84,6 +88,7 @@ fun RegisterUsernameStep(
     on_sign_in: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
+    val display_name_focus = remember { FocusRequester() }
 
     auth_centered_column {
         Image(
@@ -136,6 +141,7 @@ fun RegisterUsernameStep(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next,
             ),
+            keyboard_actions = KeyboardActions(onNext = { display_name_focus.requestFocus() }),
             leading_icon = {
                 Icon(
                     imageVector = TablerIcons.At,
@@ -157,7 +163,11 @@ fun RegisterUsernameStep(
 
         AsterTextField(
             value = state.display_name.value,
-            onValueChange = { state.display_name.value = it },
+            onValueChange = { input ->
+                state.display_name.value = input
+                    .filter { it != '<' && it != '>' && it.code != 0 }
+                    .take(display_name_max_length)
+            },
             label = null,
             placeholder = stringResource(R.string.display_name_optional),
             keyboard_options = KeyboardOptions(
@@ -169,6 +179,7 @@ fun RegisterUsernameStep(
                     if (state.username.value.replace(".", "").length in 3..40) on_next()
                 },
             ),
+            modifier = Modifier.focusRequester(display_name_focus),
         )
 
         Spacer(Modifier.height(AsterSpacing.xl))
