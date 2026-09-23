@@ -75,6 +75,7 @@ import org.astermail.android.export.ExportViewModel
 fun ExportScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
+    embedded: Boolean = false,
 ) {
     val vm: ExportViewModel = hiltViewModel()
     val state by vm.state.collectAsStateWithLifecycle()
@@ -85,7 +86,12 @@ fun ExportScreen(
         if (state.is_running) vm.cancel_export() else on_back()
     }
 
-    detail_scaffold(
+    androidx.activity.compose.BackHandler(enabled = embedded && state.is_running) {
+        vm.cancel_export()
+    }
+
+    embeddable_detail_scaffold(
+        embedded = embedded,
         title = stringResource(R.string.export_title_screen),
         on_back = effective_back,
         scrollable = state.step !is ExportViewModel.ExportStep.Progress,

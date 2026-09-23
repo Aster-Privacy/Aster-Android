@@ -797,9 +797,7 @@ fun ComposeScreen(
         mutableStateOf(
             when {
                 prefill.body.isNotBlank() -> prefill.body
-                preloaded_signature.isNotBlank() ->
-                    share_body_prefix + "\n\n" + preloaded_signature + initial_watermark
-                else -> share_body_prefix + initial_watermark
+                else -> seeded_body_with_signature(share_body_prefix, preloaded_signature, initial_watermark)
             },
         )
     }
@@ -860,13 +858,8 @@ fun ComposeScreen(
         )
         val show_branding = settings_state.preferences?.show_aster_branding == true
         val watermark = if (show_branding) "\n\n${context.getString(R.string.compose_footer_secured_by_plain)}" else ""
-        val new_body = share_body_prefix +
-            if (resolved.isNotBlank()) "\n\n${resolved}${watermark}" else watermark
-        val seeded_body = if (preloaded_signature.isNotBlank()) {
-            share_body_prefix + "\n\n" + preloaded_signature + initial_watermark
-        } else {
-            share_body_prefix + initial_watermark
-        }
+        val new_body = seeded_body_with_signature(share_body_prefix, resolved, watermark)
+        val seeded_body = seeded_body_with_signature(share_body_prefix, preloaded_signature, initial_watermark)
         if (body == seeded_body || body == share_body_prefix + initial_watermark || body.isBlank()) {
             body = new_body
             initial_body = new_body
@@ -903,7 +896,7 @@ fun ComposeScreen(
             val before = core.substring(0, core.length - applied_signature.length)
             if (resolved.isNotBlank()) before + resolved else before.trimEnd('\n')
         } else if (applied_signature.isBlank() && resolved.isNotBlank()) {
-            "${core}\n\n${resolved}"
+            append_signature(core, resolved)
         } else core
         body = new_core + kept_suffix
         applied_signature = resolved
@@ -2555,8 +2548,7 @@ fun ComposeScreen(
                             })
                             setText(body)
                             text?.let { apply_compose_defaults(it) }
-                            val has_signature = body.startsWith("\n\n") && body.length > 2
-                            setSelection(if (has_signature) 0 else text?.length ?: 0)
+                            setSelection(if (caret_starts_above_signature(body)) 0 else text?.length ?: 0)
                             body_editor_ref.value = this
                         }
                     },
@@ -2936,7 +2928,7 @@ fun ComposeScreen(
                     val before = core.substring(0, core.length - applied_signature.length)
                     if (new_content.isNotBlank()) before + new_content else before.trimEnd('\n')
                 } else if (applied_signature.isBlank() && new_content.isNotBlank()) {
-                    "${core}\n\n${new_content}"
+                    append_signature(core, new_content)
                 } else core
                 body = new_core + kept_suffix
                 applied_signature = new_content

@@ -382,6 +382,7 @@ private fun provider_row(
 fun ImportScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit = {},
+    embedded: Boolean = false,
     vm: ImportViewModel = hiltViewModel(),
 ) {
     val colors = AsterMaterial.colors
@@ -441,7 +442,11 @@ fun ImportScreen(
         }
     }
 
-    detail_scaffold(title = stringResource(R.string.import_title), on_back = on_back) {
+    embeddable_detail_scaffold(
+        embedded = embedded,
+        title = stringResource(R.string.import_title),
+        on_back = on_back,
+    ) {
         section_label(stringResource(R.string.import_section_connect))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(AsterSpacing.lg)) {

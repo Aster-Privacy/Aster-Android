@@ -193,6 +193,31 @@ internal fun detail_scaffold(
 }
 
 @Composable
+internal fun embeddable_detail_scaffold(
+    embedded: Boolean,
+    title: String,
+    on_back: () -> Unit,
+    scrollable: Boolean = true,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    if (!embedded) {
+        detail_scaffold(title = title, on_back = on_back, scrollable = scrollable, content = content)
+        return
+    }
+    if (scrollable) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(AsterSpacing.lg),
+            content = content,
+        )
+    } else {
+        Column(modifier = Modifier.fillMaxSize(), content = content)
+    }
+}
+
+@Composable
 internal fun preferences_load_placeholder() {
     val vm = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()

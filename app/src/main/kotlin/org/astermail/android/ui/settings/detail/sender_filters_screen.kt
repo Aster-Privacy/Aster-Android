@@ -25,7 +25,6 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.Ban
 import compose.icons.tablericons.ChevronRight
 import compose.icons.tablericons.CircleCheck
-import compose.icons.tablericons.CloudDownload
 import compose.icons.tablericons.Mail
 import compose.icons.tablericons.MailForward
 import compose.icons.tablericons.MailOpened
@@ -150,16 +149,6 @@ fun SenderFiltersScreen(
                 subtitle = stringResource(R.string.vacation_reply_short),
                 icon = TablerIcons.MailOpened,
                 on_click = { on_open("vacation_reply") },
-            )
-        }
-        v_gap(AsterSpacing.lg)
-        section_label(stringResource(R.string.storage_data))
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            filters_nav_row(
-                title = stringResource(R.string.export_label),
-                subtitle = stringResource(R.string.export_your_mail),
-                icon = TablerIcons.CloudDownload,
-                on_click = { on_open("export") },
             )
         }
         v_gap(AsterSpacing.xxl)
