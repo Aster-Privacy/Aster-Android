@@ -158,4 +158,39 @@ class FolderMatchesTest {
             ),
         )
     }
+
+    @Test
+    fun starred_keeps_archived_and_foldered_items() {
+        assertTrue(folder_matches_item("starred", item(is_starred = true)))
+        assertTrue(folder_matches_item("starred", item(is_starred = true, is_archived = true)))
+        assertTrue(folder_matches_item("starred", item(is_starred = true, labels = listOf("bills"))))
+    }
+
+    @Test
+    fun starred_drops_unstarred_trashed_and_spam_items() {
+        assertFalse(folder_matches_item("starred", item()))
+        assertFalse(folder_matches_item("starred", item(is_starred = true, is_trashed = true)))
+        assertFalse(folder_matches_item("starred", item(is_starred = true, is_spam = true)))
+    }
+
+    @Test
+    fun snoozed_keeps_archived_items() {
+        assertTrue(folder_matches_item("snoozed", item(is_archived = true)))
+    }
+
+    @Test
+    fun archiving_keeps_the_row_only_in_views_that_include_archived_mail() {
+        assertTrue(folder_keeps_archived("archive"))
+        assertTrue(folder_keeps_archived("starred"))
+        assertTrue(folder_keeps_archived("snoozed"))
+        assertTrue(folder_keeps_archived("all"))
+        assertTrue(folder_keeps_archived("all+spam+trash"))
+        assertTrue(folder_keeps_archived("label:bills"))
+        assertTrue(folder_keeps_archived("tag:work"))
+        assertTrue(folder_keeps_archived("routing:tok1"))
+        assertFalse(folder_keeps_archived("inbox"))
+        assertFalse(folder_keeps_archived("sent"))
+        assertFalse(folder_keeps_archived("trash"))
+        assertFalse(folder_keeps_archived("spam"))
+    }
 }
