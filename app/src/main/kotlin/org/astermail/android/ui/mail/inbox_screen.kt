@@ -278,61 +278,6 @@ private const val DRAG_HAPTIC_MIN_GAP_MS = 55L
 
 private val chrome_reveal_distance = 24.dp
 
-val pull_refresh_threshold = 56.dp
-
-private const val PULL_DRAG_RATIO = 0.6f
-
-private const val PULL_REFRESH_MIN_VISIBLE_MS = 600L
-
-private const val PULL_REFRESH_START_WAIT_MS = 800L
-
-private class inbox_pull_connection(
-    private val threshold_px: () -> Float,
-    private val can_pull: () -> Boolean,
-    private val on_refresh: () -> Unit,
-) : NestedScrollConnection {
-    var distance by mutableFloatStateOf(0f)
-        private set
-    var holding by mutableStateOf(false)
-        private set
-
-    val distanceFraction: Float
-        get() = threshold_px().let { if (it > 0f) distance / it else 0f }
-
-    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-        if (source != NestedScrollSource.UserInput || available.y >= 0f || distance <= 0f) return Offset.Zero
-        return Offset(0f, drag(available.y))
-    }
-
-    override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-        if (source != NestedScrollSource.UserInput || available.y <= 0f || holding || !can_pull()) return Offset.Zero
-        return Offset(0f, drag(available.y))
-    }
-
-    override suspend fun onPreFling(available: androidx.compose.ui.unit.Velocity): androidx.compose.ui.unit.Velocity {
-        if (distance <= 0f) return androidx.compose.ui.unit.Velocity.Zero
-        val armed = distance >= threshold_px() && !holding && can_pull()
-        distance = 0f
-        if (armed) {
-            holding = true
-            on_refresh()
-        }
-        return if (available.y > 0f) available else androidx.compose.ui.unit.Velocity.Zero
-    }
-
-    fun release() {
-        holding = false
-    }
-
-    private fun drag(dy: Float): Float {
-        val before = distance
-        val next = (before + dy * PULL_DRAG_RATIO).coerceIn(0f, threshold_px() * 2f)
-        distance = next
-        return (next - before) / PULL_DRAG_RATIO
-    }
-}
-
-
 private const val ONBOARDING_INSTALL_APP_DONE_KEY = "install_app_done"
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -1097,7 +1042,6 @@ fun InboxScreen(
     var refresh_scroll_pending by remember { mutableStateOf(false) }
 
     fun do_refresh() {
-        if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         refresh_top_key_before[0] = top_thread_key
         refresh_scroll_pending = true
         mail_vm.refresh()
@@ -1598,17 +1542,12 @@ fun InboxScreen(
     val header_offset_px = remember { mutableFloatStateOf(0f) }
     var header_hidden by remember { mutableStateOf(false) }
     val header_height_dp = with(density) { header_height_px.toDp() }
-    val pull_threshold_px = with(density) { pull_refresh_threshold.toPx() }
     val pull_select_mode = rememberUpdatedState(select_mode)
-    val pull_refreshing = rememberUpdatedState(is_refreshing)
-    val pull_on_refresh = rememberUpdatedState<() -> Unit>({ do_refresh() })
-    val pull_state = remember {
-        inbox_pull_connection(
-            threshold_px = { pull_threshold_px },
-            can_pull = { !pull_select_mode.value && !pull_refreshing.value },
-            on_refresh = { pull_on_refresh.value() },
-        )
-    }
+    val pull_state = org.astermail.android.ui.common.remember_aster_pull_refresh_state(
+        refreshing = is_refreshing,
+        enabled = !select_mode,
+        on_refresh = { do_refresh() },
+    )
     val header_nested_scroll = remember(header_offset_px, pull_state, pull_select_mode) {
         object : NestedScrollConnection {
             override fun onPostScroll(
@@ -1619,7 +1558,7 @@ fun InboxScreen(
                 if (pull_select_mode.value) return Offset.Zero
                 val limit = header_height_px.toFloat()
                 if (limit == 0f) return Offset.Zero
-                if (pull_state.distanceFraction > 0f) return Offset.Zero
+                if (pull_state.distance_fraction > 0f) return Offset.Zero
                 if (consumed.y == 0f) return Offset.Zero
                 val next = (header_offset_px.floatValue + consumed.y).coerceIn(-limit, 0f)
                 if (next != header_offset_px.floatValue) header_offset_px.floatValue = next
@@ -1756,94 +1695,14 @@ fun InboxScreen(
                     .nestedScroll(pull_state),
             ) {
                 val pull_indicator: @Composable androidx.compose.foundation.layout.BoxScope.() -> Unit = {
-                    val reduce_motion = org.astermail.android.design.aster_reduce_motion()
-                    val refresh_raw = (is_refreshing || pull_state.holding) && !select_mode
-                    var refresh_visible by remember { mutableStateOf(false) }
-                    val refresh_shown_at = remember { longArrayOf(0L) }
-                    LaunchedEffect(refresh_raw) {
-                        if (refresh_raw) {
-                            if (!refresh_visible) refresh_shown_at[0] = android.os.SystemClock.uptimeMillis()
-                            refresh_visible = true
-                        } else if (refresh_visible) {
-                            val shown_for = android.os.SystemClock.uptimeMillis() - refresh_shown_at[0]
-                            kotlinx.coroutines.delay((PULL_REFRESH_MIN_VISIBLE_MS - shown_for).coerceAtLeast(0L))
-                            refresh_visible = false
-                        }
-                    }
-                    LaunchedEffect(pull_state.holding) {
-                        if (!pull_state.holding) return@LaunchedEffect
-                        withTimeoutOrNull(PULL_REFRESH_START_WAIT_MS) {
-                            snapshotFlow { pull_refreshing.value }.first { it }
-                        }
-                        snapshotFlow { pull_refreshing.value }.first { !it }
-                        pull_state.release()
-                    }
-                    val shown = remember { androidx.compose.animation.core.Animatable(0f) }
-                    LaunchedEffect(refresh_visible, reduce_motion) {
-                        shown.animateTo(
-                            targetValue = if (refresh_visible) 1f else 0f,
-                            animationSpec = tween(
-                                durationMillis = when {
-                                    reduce_motion -> 0
-                                    refresh_visible -> 240
-                                    else -> 320
-                                },
-                                easing = androidx.compose.animation.core.FastOutSlowInEasing,
-                            ),
-                        )
-                    }
-                    val pull_line = remember { androidx.compose.animation.core.Animatable(0f) }
-                    LaunchedEffect(pull_state, reduce_motion) {
-                        snapshotFlow { pull_state.distanceFraction.coerceIn(0f, 2f) }
-                            .collectLatest { fraction ->
-                                if (fraction > 0f || reduce_motion) {
-                                    pull_line.snapTo(fraction)
-                                } else {
-                                    pull_line.animateTo(
-                                        targetValue = 0f,
-                                        animationSpec = tween(
-                                            durationMillis = 260,
-                                            easing = androidx.compose.animation.core.FastOutSlowInEasing,
-                                        ),
-                                    )
-                                }
-                            }
-                    }
-                    LaunchedEffect(refresh_visible) {
-                        if (refresh_visible && pull_line.value >= 0.95f) shown.snapTo(1f)
-                    }
-                    val pull_pop = remember { androidx.compose.animation.core.Animatable(0f) }
-                    LaunchedEffect(pull_state, reduce_motion, haptic_enabled) {
-                        snapshotFlow { pull_state.distanceFraction >= 1f }
-                            .collectLatest { reached ->
-                                if (!reached) return@collectLatest
-                                if (haptic_enabled) tactile(org.astermail.android.design.aster_haptic.gesture_threshold)
-                                if (reduce_motion) return@collectLatest
-                                pull_pop.snapTo(1f)
-                                pull_pop.animateTo(
-                                    targetValue = 0f,
-                                    animationSpec = androidx.compose.animation.core.spring(
-                                        dampingRatio = 0.42f,
-                                        stiffness = 520f,
-                                    ),
-                                )
-                            }
-                    }
-                    val disc_active by remember {
-                        androidx.compose.runtime.derivedStateOf { shown.value > 0.001f || pull_line.value > 0.001f }
-                    }
-                    if (disc_active) {
-                        pull_refresh_spinner(
-                            pull = { pull_line.value },
-                            shown = { shown.value },
-                            pop = { pull_pop.value },
-                            spinning = refresh_visible,
-                            reduce_motion = reduce_motion,
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .padding(top = header_height_dp + 12.dp),
-                        )
-                    }
+                    org.astermail.android.ui.common.aster_pull_refresh_indicator(
+                        state = pull_state,
+                        refreshing = is_refreshing,
+                        enabled = !select_mode,
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = header_height_dp),
+                    )
                 }
                 val hidden_by_category = threads.isEmpty() && !threads_pending && inbox_state.items.isNotEmpty()
                 val category_drain_active = categories_enabled &&
@@ -2171,7 +2030,7 @@ fun InboxScreen(
                                         .animateItem(fadeInSpec = row_fade_in_spec)
                                         .onSizeChanged { record_row_height(row_index, it.height) },
                                     list_scrolling = { list_state.isScrollInProgress },
-                                    refresh_engaged = { pull_state.distanceFraction > 0f },
+                                    refresh_engaged = { pull_state.distance_fraction > 0f },
                                     thread = thread,
                                     is_first = row_index == 0,
                                     is_last = row_index == visible_threads.lastIndex,
