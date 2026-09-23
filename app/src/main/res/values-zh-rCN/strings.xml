@@ -1427,6 +1427,7 @@
     <string name="set_as_primary">设为主地址</string>
     <string name="primary_badge">主地址</string>
     <string name="also_receives_at">同时在 %1$s 接收</string>
+    <string name="sends_from_address">从 %1$s 发送</string>
     <string name="badges">徽章</string>
     <string name="no_badges_yet">暂无徽章</string>
 

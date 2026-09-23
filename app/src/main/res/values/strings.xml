@@ -1125,6 +1125,7 @@
     <string name="set_as_primary">Set as primary address</string>
     <string name="primary_badge">Primary</string>
     <string name="also_receives_at">Also receives at %1$s</string>
+    <string name="sends_from_address">Sends from %1$s</string>
     <string name="badges">Badges</string>
     <string name="no_badges_yet">No badges yet</string>
 

@@ -1429,6 +1429,7 @@
     <string name="set_as_primary">Birincil adres olarak ayarla</string>
     <string name="primary_badge">Birincil</string>
     <string name="also_receives_at">Ayrıca %1$s adresinde alır</string>
+    <string name="sends_from_address">%1$s adresinden gönderir</string>
     <string name="badges">Rozetler</string>
     <string name="no_badges_yet">Henuz rozet yok</string>
 

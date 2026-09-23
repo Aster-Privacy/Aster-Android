@@ -1427,6 +1427,7 @@
     <string name="set_as_primary">プライマリアドレスに設定</string>
     <string name="primary_badge">プライマリ</string>
     <string name="also_receives_at">%1$s でも受信します</string>
+    <string name="sends_from_address">%1$s から送信します</string>
     <string name="badges">バッジ</string>
     <string name="no_badges_yet">まだバッジはありません</string>
 

@@ -1435,6 +1435,7 @@
     <string name="set_as_primary">Сделать основным адресом</string>
     <string name="primary_badge">Основной</string>
     <string name="also_receives_at">Также получает на %1$s</string>
+    <string name="sends_from_address">Отправляет с %1$s</string>
     <string name="badges">Значки</string>
     <string name="no_badges_yet">Пока нет значков</string>
 

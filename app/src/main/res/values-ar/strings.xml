@@ -1441,6 +1441,7 @@
     <string name="set_as_primary">تعيين كعنوان أساسي</string>
     <string name="primary_badge">أساسي</string>
     <string name="also_receives_at">يستقبل أيضًا على %1$s</string>
+    <string name="sends_from_address">يرسل من %1$s</string>
     <string name="badges">الشارات</string>
     <string name="no_badges_yet">لا توجد شارات بعد</string>
 

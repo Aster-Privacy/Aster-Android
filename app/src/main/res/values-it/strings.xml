@@ -1429,6 +1429,7 @@
     <string name="set_as_primary">Imposta come indirizzo principale</string>
     <string name="primary_badge">Principale</string>
     <string name="also_receives_at">Riceve anche su %1$s</string>
+    <string name="sends_from_address">Invia da %1$s</string>
     <string name="badges">Badge</string>
     <string name="no_badges_yet">Nessun badge ancora</string>
 

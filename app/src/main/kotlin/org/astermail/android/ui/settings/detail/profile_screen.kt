@@ -201,13 +201,13 @@ fun ProfileScreen(
                         fontWeight = FontWeight.SemiBold,
                     )
                     Text(
-                        text = primary_email,
+                        text = email,
                         color = colors.text_tertiary,
                         fontSize = 13.sp,
                     )
-                    if (primary_email != email && email.isNotBlank()) {
+                    if (primary_email != email && primary_email.isNotBlank()) {
                         Text(
-                            text = stringResource(R.string.also_receives_at, email),
+                            text = stringResource(R.string.sends_from_address, primary_email),
                             color = colors.text_muted,
                             fontSize = 12.sp,
                         )

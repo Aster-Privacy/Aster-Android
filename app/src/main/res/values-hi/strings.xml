@@ -995,6 +995,7 @@
     <string name="set_as_primary">मुख्य पता बनाएं</string>
     <string name="primary_badge">मुख्य</string>
     <string name="also_receives_at">%1$s पर भी मेल पाता है</string>
+    <string name="sends_from_address">%1$s से भेजता है</string>
     <string name="badges">बैज</string>
     <string name="no_badges_yet">अभी तक कोई बैज नहीं</string>
     <string name="security">सुरक्षा</string>

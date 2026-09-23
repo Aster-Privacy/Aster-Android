@@ -1429,6 +1429,7 @@
     <string name="set_as_primary">Instellen als primair adres</string>
     <string name="primary_badge">Primair</string>
     <string name="also_receives_at">Ontvangt ook op %1$s</string>
+    <string name="sends_from_address">Verzendt vanaf %1$s</string>
     <string name="badges">Badges</string>
     <string name="no_badges_yet">Nog geen badges</string>
 

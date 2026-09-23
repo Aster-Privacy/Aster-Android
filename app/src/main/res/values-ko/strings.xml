@@ -1427,6 +1427,7 @@
     <string name="set_as_primary">기본 주소로 설정</string>
     <string name="primary_badge">기본</string>
     <string name="also_receives_at">%1$s에서도 수신합니다</string>
+    <string name="sends_from_address">%1$s에서 보냅니다</string>
     <string name="badges">배지</string>
     <string name="no_badges_yet">아직 배지가 없습니다</string>
 
