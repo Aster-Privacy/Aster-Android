@@ -1268,8 +1268,16 @@ class AuthRepository @Inject constructor(
                     return true
                 }
 
-                if (!store_identity_key_in_vault(updated, passphrase_bytes)) return false
-                session_key_store.put_identity_key(updated)
+                val stored = withContext(NonCancellable) {
+                    if (!store_identity_key_in_vault(updated, passphrase_bytes)) {
+                        return@withContext false
+                    }
+                    session_key_store.put_identity_key(updated)
+                    true
+                }
+
+                if (!stored) return false
+
                 republish_pgp_key_with_password(updated, passphrase)
                 return true
             } finally {

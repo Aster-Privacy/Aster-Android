@@ -546,8 +546,16 @@ internal fun change_primary_address_dialog(
                 }
 
                 PrimaryAddressStep.DONE -> {
+                    if (state.key_retry_available) {
+                        AsterDialogOutlineButton(
+                            label = stringResource(R.string.retry),
+                            enabled = !state.busy,
+                            onClick = { vm.retry_republish(display_name) },
+                        )
+                    }
                     AsterDialogPrimaryButton(
                         label = stringResource(R.string.done),
+                        enabled = !state.busy,
                         onClick = on_dismiss,
                     )
                 }

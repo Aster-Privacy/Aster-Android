@@ -111,6 +111,7 @@ data class PrimaryAddressUiState(
     val retained_address: String = "",
     val resend_seconds: Int = 0,
     val code_locked: Boolean = false,
+    val key_retry_available: Boolean = false,
 ) {
     val new_address: String
         get() = "$local_part@$domain"
@@ -524,6 +525,48 @@ class PrimaryAddressViewModel @Inject constructor(
         }
     }
 
+    fun retry_republish(display_name: String) {
+        val snapshot = _state.value
+
+        if (!snapshot.key_retry_available || snapshot.busy) return
+        if (snapshot.final_address.isBlank()) return
+
+        viewModelScope.launch {
+            _state.value = _state.value.copy(
+                busy = true,
+                status = context.getString(R.string.address_change_updating_key),
+            )
+
+            val republished = runCatching {
+                withTimeout(republish_timeout_ms) {
+                    auth_repository.add_address_to_identity_key(
+                        snapshot.final_address,
+                        display_name,
+                    )
+                }
+            }
+
+            republished.exceptionOrNull()?.let { throwable ->
+                if (throwable is CancellationException &&
+                    throwable !is TimeoutCancellationException
+                ) {
+                    throw throwable
+                }
+            }
+
+            val done = republished.getOrDefault(false)
+            _state.value = _state.value.copy(
+                busy = false,
+                key_retry_available = !done,
+                status = if (done) {
+                    null
+                } else {
+                    context.getString(R.string.address_change_done_partial)
+                },
+            )
+        }
+    }
+
     private fun is_indeterminate_failure(throwable: Throwable): Boolean = when (throwable) {
         is ApiError.InvalidCredentials,
         is ApiError.RateLimited,
@@ -580,14 +623,16 @@ class PrimaryAddressViewModel @Inject constructor(
         }
 
         auth_repository.refresh_session_snapshot()
+        val republished = follow_up.getOrDefault(false)
         _state.value = _state.value.copy(
             busy = false,
             error = null,
-            status = if (follow_up.getOrDefault(false)) {
+            status = if (republished) {
                 null
             } else {
                 context.getString(R.string.address_change_done_partial)
             },
+            key_retry_available = !republished,
             eligible = false,
             next_change_available_at = next_change_available_at
                 ?: _state.value.next_change_available_at,
