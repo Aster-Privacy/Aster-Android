@@ -42,7 +42,7 @@ import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.settings.BimiUiState
 import org.astermail.android.settings.BimiViewModel
-import org.astermail.android.ui.settings.detail.relative_time_label
+import org.astermail.android.ui.settings.detail.absolute_date_time_label
 import org.astermail.android.ui.settings.detail.section_label
 import org.astermail.android.ui.settings.detail.v_gap
 
@@ -74,10 +74,11 @@ internal fun bimi_state_line(state: BimiState, last_checked_at: String?) {
     val colors = AsterMaterial.colors
     Row(verticalAlignment = Alignment.CenterVertically) {
         bimi_state_chip(state)
-        if (!last_checked_at.isNullOrBlank()) {
+        val checked_label = absolute_date_time_label(last_checked_at)
+        if (checked_label.isNotEmpty()) {
             Spacer(Modifier.width(AsterSpacing.sm))
             Text(
-                text = stringResource(R.string.domain_bimi_last_checked, relative_time_label(last_checked_at)),
+                text = stringResource(R.string.domain_bimi_last_checked, checked_label),
                 color = colors.text_tertiary,
                 fontSize = 12.sp,
             )

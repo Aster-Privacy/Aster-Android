@@ -102,6 +102,23 @@ internal val settings_row_gap_height = 3.dp
 internal val settings_row_divider_inset = 20.dp
 internal val settings_row_divider_thickness = 1.dp
 
+internal fun absolute_date_time_label(iso: String?): String {
+    if (iso.isNullOrBlank()) return ""
+    val instant = try {
+        java.time.OffsetDateTime.parse(iso).toInstant()
+    } catch (_: Throwable) {
+        try {
+            java.time.Instant.parse(iso)
+        } catch (_: Throwable) {
+            null
+        }
+    } ?: return ""
+    return java.time.format.DateTimeFormatter
+        .ofLocalizedDateTime(java.time.format.FormatStyle.MEDIUM, java.time.format.FormatStyle.SHORT)
+        .withZone(org.astermail.android.ui.mail.AsterTimePreferences.account_zone_id())
+        .format(instant)
+}
+
 internal fun absolute_date_label(iso: String?): String {
     if (iso.isNullOrBlank()) return ""
     val instant = try {
