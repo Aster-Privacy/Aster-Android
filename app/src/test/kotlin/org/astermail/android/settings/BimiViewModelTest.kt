@@ -320,6 +320,25 @@ class BimiViewModelTest {
     }
 
     @Test
+    fun `leaving replace on an unpublished draft opens the publish step`() = runTest {
+        coEvery { bimi_api.get_bimi(domain_id) } returns view("live")
+        vm.load(domain_id)
+        runCurrent()
+
+        vm.replace_logo()
+        vm.go_to_manage()
+        assertEquals(BimiStep.manage, vm.state.value.step)
+
+        coEvery { bimi_api.get_bimi(domain_id) } returns view("draft")
+        vm.retry_load()
+        runCurrent()
+        vm.replace_logo()
+        vm.go_to_manage()
+        assertEquals(BimiStep.publish, vm.state.value.step)
+        assertFalse(vm.state.value.replacing)
+    }
+
+    @Test
     fun `a failed load can be retried`() = runTest {
         coEvery { bimi_api.get_bimi(domain_id) } throws ApiError.NetworkError andThen view("live")
         vm.load(domain_id)

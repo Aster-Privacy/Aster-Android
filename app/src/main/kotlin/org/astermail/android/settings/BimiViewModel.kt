@@ -328,7 +328,13 @@ class BimiViewModel @Inject constructor(
     fun go_to_manage() {
         if (_state.value.busy) return
         _state.update {
-            it.copy(step = BimiStep.manage, replacing = false, error = null, adjustments = emptyList(), logo_errors = emptyList())
+            it.copy(
+                step = if (it.is_published) BimiStep.manage else bimi_initial_step(it.bimi_state),
+                replacing = false,
+                error = null,
+                adjustments = emptyList(),
+                logo_errors = emptyList(),
+            )
         }
         sync_auto_check()
     }
