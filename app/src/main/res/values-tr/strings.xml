@@ -3481,4 +3481,5 @@
     <string name="error_passkey_timed_out">Geçiş anahtarı isteğinin süresi doldu. Tekrar deneyin.</string>
     <string name="expiry_password_internal_removed">Aster alıcıları süreli e-postaları parola olmadan açar, bu yüzden parola kaldırıldı. Mesajı göndermek için Gönder\'e yeniden dokunun.</string>
     <string name="expiring_requires_secure_message">Şifrelemeyi zorunlu kıl açıkken bu uygulamadan harici adreslere süreli e-posta gönderemezsiniz. Göndermek için süre sonunu kaldırın veya Şifrelemeyi zorunlu kıl seçeneğini kapatın.</string>
+    <string name="signature_too_large">Bu imza kaydedilemeyecek kadar büyük. Kaydetmek için bir görseli kaldırın veya metni kısaltın.</string>
 </resources>

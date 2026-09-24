@@ -3482,4 +3482,5 @@
     <string name="error_passkey_timed_out">Die Passkey-Anfrage ist abgelaufen. Versuche es erneut.</string>
     <string name="expiry_password_internal_removed">Aster-Empfänger öffnen ablaufende E-Mails ohne Passwort, deshalb wurde das Passwort entfernt. Tippe erneut auf Senden, um die Nachricht zu senden.</string>
     <string name="expiring_requires_secure_message">Solange Verschlüsselung erzwingen aktiviert ist, kannst du aus dieser App keine ablaufenden E-Mails an externe Adressen senden. Entferne zum Senden das Ablaufdatum oder deaktiviere Verschlüsselung erzwingen.</string>
+    <string name="signature_too_large">Diese Signatur ist zu groß zum Speichern. Entferne ein Bild oder kürze den Text, um sie zu speichern.</string>
 </resources>

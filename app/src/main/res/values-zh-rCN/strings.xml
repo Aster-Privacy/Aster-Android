@@ -3463,4 +3463,5 @@
     <string name="error_passkey_timed_out">通行密钥请求已超时。请重试。</string>
     <string name="expiry_password_internal_removed">Aster 收件人无需密码即可打开限时邮件，因此已移除密码。要发送该邮件，请再次点按“发送”。</string>
     <string name="expiring_requires_secure_message">开启“强制加密”时，你无法通过此 App 向外部地址发送限时邮件。要发送，请移除到期时间或关闭“强制加密”。</string>
+    <string name="signature_too_large">此签名太大，无法保存。要保存它，请移除图片或缩短文字。</string>
 </resources>

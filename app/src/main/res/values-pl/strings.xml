@@ -3523,4 +3523,5 @@
     <string name="error_passkey_timed_out">Żądanie klucza dostępu wygasło. Spróbuj ponownie.</string>
     <string name="expiry_password_internal_removed">Odbiorcy Aster otwierają wygasające wiadomości bez hasła, więc hasło zostało usunięte. Aby wysłać wiadomość, ponownie stuknij Wyślij.</string>
     <string name="expiring_requires_secure_message">Gdy opcja Wymagaj szyfrowania jest włączona, nie możesz wysyłać wygasających wiadomości na adresy zewnętrzne z tej aplikacji. Aby wysłać, usuń datę wygaśnięcia lub wyłącz opcję Wymagaj szyfrowania.</string>
+    <string name="signature_too_large">Ten podpis jest za duży, aby go zapisać. Aby go zapisać, usuń obraz lub skróć tekst.</string>
 </resources>

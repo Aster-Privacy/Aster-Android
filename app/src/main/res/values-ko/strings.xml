@@ -3463,4 +3463,5 @@
     <string name="error_passkey_timed_out">패스키 요청 시간이 초과되었습니다. 다시 시도하세요.</string>
     <string name="expiry_password_internal_removed">Aster 수신자는 비밀번호 없이 만료 이메일을 열 수 있으므로 비밀번호가 제거되었습니다. 메시지를 보내려면 보내기를 다시 탭하세요.</string>
     <string name="expiring_requires_secure_message">암호화 필수가 켜져 있는 동안에는 이 앱에서 외부 주소로 만료 이메일을 보낼 수 없습니다. 보내려면 만료를 제거하거나 암호화 필수를 끄세요.</string>
+    <string name="signature_too_large">이 서명은 너무 커서 저장할 수 없습니다. 저장하려면 이미지를 제거하거나 텍스트를 줄이세요.</string>
 </resources>
