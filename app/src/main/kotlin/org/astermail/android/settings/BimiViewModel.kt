@@ -186,9 +186,17 @@ class BimiViewModel @Inject constructor(
             } catch (t: CancellationException) {
                 throw t
             } catch (t: BimiLogoInvalid) {
-                _state.update { it.copy(uploading = false, logo_errors = t.errors.ifEmpty { listOf("malformed") }) }
+                _state.update {
+                    if (is_current(gen)) {
+                        it.copy(uploading = false, logo_errors = t.errors.ifEmpty { listOf("malformed") })
+                    } else {
+                        it.copy(uploading = false)
+                    }
+                }
             } catch (t: Throwable) {
-                _state.update { it.copy(uploading = false, error = bimi_error_kind(t)) }
+                _state.update {
+                    if (is_current(gen)) it.copy(uploading = false, error = bimi_error_kind(t)) else it.copy(uploading = false)
+                }
             }
             sync_auto_check()
         }
@@ -224,7 +232,9 @@ class BimiViewModel @Inject constructor(
             } catch (t: CancellationException) {
                 throw t
             } catch (t: Throwable) {
-                _state.update { it.copy(publishing = false, error = bimi_error_kind(t)) }
+                _state.update {
+                    if (is_current(gen)) it.copy(publishing = false, error = bimi_error_kind(t)) else it.copy(publishing = false)
+                }
             }
             sync_auto_check()
         }
@@ -244,7 +254,9 @@ class BimiViewModel @Inject constructor(
             } catch (t: CancellationException) {
                 throw t
             } catch (t: Throwable) {
-                _state.update { it.copy(checking = false, error = bimi_error_kind(t)) }
+                _state.update {
+                    if (is_current(gen)) it.copy(checking = false, error = bimi_error_kind(t)) else it.copy(checking = false)
+                }
             }
             sync_auto_check()
         }
@@ -292,7 +304,9 @@ class BimiViewModel @Inject constructor(
             } catch (t: CancellationException) {
                 throw t
             } catch (t: Throwable) {
-                _state.update { it.copy(turning_off = false, error = bimi_error_kind(t)) }
+                _state.update {
+                    if (is_current(gen)) it.copy(turning_off = false, error = bimi_error_kind(t)) else it.copy(turning_off = false)
+                }
             }
             sync_auto_check()
         }
