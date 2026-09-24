@@ -473,8 +473,13 @@ object EmailHtmlSanitizer {
 
     fun neutralize_amp_markup(html: String): String {
         if (!html.contains("amp", ignoreCase = true)) return html
-        return html
-            .replace(amp_boilerplate_style_regex, "")
+        var result = html
+        while (true) {
+            val next = result.replace(amp_boilerplate_style_regex, "")
+            if (next == result) break
+            result = next
+        }
+        return result
             .replace(amp_img_open_regex, "<img")
             .replace(amp_img_close_regex, "")
     }

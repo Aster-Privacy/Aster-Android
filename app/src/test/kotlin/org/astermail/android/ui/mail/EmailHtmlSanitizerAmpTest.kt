@@ -71,4 +71,14 @@ class EmailHtmlSanitizerAmpTest {
         assertFalse(out.contains("visibility:hidden"))
         assertTrue(out.contains("<style amp-custom>"))
     }
+
+    @Test
+    fun removes_a_boilerplate_block_rebuilt_from_nested_markup() {
+        val out = EmailHtmlSanitizer.neutralize_amp_markup(
+            "<st<style amp4email-boilerplate></style>yle amp4email-boilerplate>body{visibility:hidden}</style><p>ok</p>",
+        )
+        assertFalse(out.contains("visibility:hidden"))
+        assertFalse(out.contains("amp4email-boilerplate", ignoreCase = true))
+        assertTrue(out.contains("<p>ok</p>"))
+    }
 }
