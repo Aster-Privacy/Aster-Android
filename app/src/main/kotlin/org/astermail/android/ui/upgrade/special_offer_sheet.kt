@@ -23,8 +23,7 @@ package org.astermail.android.ui.upgrade
 
 import compose.icons.TablerIcons
 import compose.icons.tablericons.AlertCircle
-import compose.icons.tablericons.Check
-import compose.icons.tablericons.Discount2
+import compose.icons.tablericons.CircleCheck
 import compose.icons.tablericons.X
 
 import android.content.Context
@@ -106,6 +105,7 @@ import org.astermail.android.billing.api_plan_price_cents
 import org.astermail.android.billing.billing_interval_per_label
 import org.astermail.android.billing.format_money
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.components.AsterPlanTag
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic
 import org.astermail.android.ui.security.lock_dialog_window_effect
@@ -558,30 +558,12 @@ private fun SpecialOfferHero(aspect_ratio: Float) {
 
 @Composable
 private fun SpecialOfferBadge() {
-    val colors = AsterMaterial.colors
-
-    Row(
-        modifier = Modifier
-            .clip(CircleShape)
-            .background(colors.accent_blue.copy(alpha = if (colors.is_dark) 0.2f else 0.1f))
-            .padding(start = 8.dp, end = 10.dp, top = 4.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            imageVector = TablerIcons.Discount2,
-            contentDescription = null,
-            tint = colors.accent_blue,
-            modifier = Modifier.size(14.dp),
-        )
-        Spacer(Modifier.width(5.dp))
-        Text(
-            text = stringResource(R.string.special_offer_entry),
-            color = colors.accent_blue,
-            fontSize = 12.sp,
-            lineHeight = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
-    }
+    AsterPlanTag(
+        text = stringResource(R.string.special_offer_entry),
+        font_size = 12.sp,
+        horizontal_padding = 9.dp,
+        vertical_padding = 3.dp,
+    )
 }
 
 @Composable
@@ -594,21 +576,12 @@ private fun SpecialOfferBenefits(benefits: List<Pair<String, String>>, show_deta
     ) {
         benefits.forEach { (title, body) ->
             Row(modifier = Modifier.fillMaxWidth()) {
-                Box(
-                    modifier = Modifier
-                        .padding(top = 1.dp)
-                        .size(BENEFIT_CHECK_SIZE)
-                        .clip(CircleShape)
-                        .background(colors.accent_blue),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = TablerIcons.Check,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(13.dp),
-                    )
-                }
+                Icon(
+                    imageVector = TablerIcons.CircleCheck,
+                    contentDescription = null,
+                    tint = colors.accent_blue,
+                    modifier = Modifier.size(BENEFIT_CHECK_SIZE),
+                )
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
