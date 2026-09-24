@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.upgrade
 
+import android.content.Context
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -58,7 +59,7 @@ class SpecialOfferViewModelTest {
         val account = MutableStateFlow<String?>(null)
         val auth = mockk<AuthRepository>(relaxed = true)
         every { auth.active_account_id } returns account
-        return SpecialOfferViewModel(billing_api, auth, store).also { accounts[it] = account }
+        return SpecialOfferViewModel(billing_api, auth, store, mockk<Context>(relaxed = true)).also { accounts[it] = account }
     }
 
     private fun SpecialOfferViewModel.load() {

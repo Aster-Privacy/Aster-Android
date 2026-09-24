@@ -3358,8 +3358,9 @@
     <string name="special_offer_title">بريد خاص بنصف السعر</string>
     <string name="special_offer_unavailable">لم يعد هذا العرض متاحًا.</string>
     <string name="special_offer_price_period">شهريًا</string>
-    <string name="special_offer_fine_print">تدفع %1$s شهريًا لأول %2$d شهرًا. بعد ذلك تُجدَّد خطتك بسعر %3$s شهريًا حتى تلغيها من الإعدادات.</string>
     <string name="special_offer_dismiss">عدم عرض هذا العرض مرة أخرى</string>
+    <string name="special_offer_why_label">لماذا هذا العرض؟</string>
+    <string name="special_offer_why_body">Aster شركة مستقلة بفريق صغير. تحافظ الاشتراكات على استمرار الخدمة وتموّل الميزات الجديدة، ويسهّل عليك هذا العرض البدء.</string>
     <string name="special_offer_entry">عرض خاص</string>
     <string name="special_offer_cta_claim">احصل على خصم %1$d%%</string>
     <string name="special_offer_benefit_aliases_title">أسماء مستعارة غير محدودة</string>

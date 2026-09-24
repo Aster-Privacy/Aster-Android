@@ -628,10 +628,6 @@ private fun AsterNavHost() {
             },
         )
         org.astermail.android.billing.PlayBillingHost()
-        val offer_route by nav_controller.currentBackStackEntryAsState()
-        if (!is_locked && offer_route?.destination?.route != routes.register && !within_sign_up_quiet_period(context)) {
-            org.astermail.android.ui.upgrade.SpecialOfferHost()
-        }
         androidx.compose.runtime.LaunchedEffect(Unit) {
             org.astermail.android.api.AuthEventBus.unauthorized.collect {
                 auth_gate.auth_repository.handle_unauthorized_signal()
@@ -1565,6 +1561,13 @@ composable(routes.settings_detail("family")) {
         }
         composable(routes.settings_detail("developer")) {
             DeveloperScreen(on_back = { back(); Unit })
+        }
+    }
+
+    if (is_signed_in_state) {
+        val offer_route by nav_controller.currentBackStackEntryAsState()
+        if (!is_locked && offer_route?.destination?.route != routes.register && !within_sign_up_quiet_period(context)) {
+            org.astermail.android.ui.upgrade.SpecialOfferHost()
         }
     }
 

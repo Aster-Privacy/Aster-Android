@@ -2171,11 +2171,12 @@
     <string name="storage_locked_description">Incoming mail will be rejected until you free up space or add storage.</string>
     <string name="storage_locked_bounce_warning">Permanent bounce in %1$s.</string>
     <string name="usage_of">%1$s of %2$s</string>
-    <string name="special_offer_title">Private mail, half price</string>
+    <string name="special_offer_title">Private mail, half the price</string>
     <string name="special_offer_unavailable">This offer is no longer available.</string>
     <string name="special_offer_price_period">per month</string>
-    <string name="special_offer_fine_print">You pay %1$s per month for the first %2$d months. Your plan then renews at %3$s per month until you cancel it in Settings.</string>
     <string name="special_offer_dismiss">Don\'t show this offer again</string>
+    <string name="special_offer_why_label">Why this offer?</string>
+    <string name="special_offer_why_body">Aster is an independent company with a small team. Subscriptions keep the service running and fund new features, and this offer makes it easier to get started.</string>
     <string name="special_offer_entry">Special offer</string>
     <string name="special_offer_cta_claim">Claim %1$d%% off</string>
     <string name="special_offer_benefit_aliases_title">Unlimited aliases</string>

@@ -42,4 +42,10 @@
         <item quantity="many">Przez pierwsze %1$d miesięcy</item>
         <item quantity="other">Przez pierwsze %1$d miesiąca</item>
     </plurals>
+    <plurals name="special_offer_fine_print">
+        <item quantity="one">Przez pierwszy miesiąc płacisz %1$s miesięcznie. Potem plan odnawia się za %3$s miesięcznie, dopóki nie anulujesz go w Ustawieniach.</item>
+        <item quantity="few">Przez pierwsze %2$d miesiące płacisz %1$s miesięcznie. Potem plan odnawia się za %3$s miesięcznie, dopóki nie anulujesz go w Ustawieniach.</item>
+        <item quantity="many">Przez pierwsze %2$d miesięcy płacisz %1$s miesięcznie. Potem plan odnawia się za %3$s miesięcznie, dopóki nie anulujesz go w Ustawieniach.</item>
+        <item quantity="other">Przez pierwsze %2$d miesiąca płacisz %1$s miesięcznie. Potem plan odnawia się za %3$s miesięcznie, dopóki nie anulujesz go w Ustawieniach.</item>
+    </plurals>
 </resources>

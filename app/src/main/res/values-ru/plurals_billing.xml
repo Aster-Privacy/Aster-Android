@@ -37,9 +37,15 @@
         <item quantity="other">Ваш тариф заканчивается через %1$d дней, %2$s.</item>
     </plurals>
     <plurals name="special_offer_entry_body">
-        <item quantity="one">На первый %1$d месяц</item>
-        <item quantity="few">На первые %1$d месяца</item>
-        <item quantity="many">На первые %1$d месяцев</item>
-        <item quantity="other">На первые %1$d месяца</item>
+        <item quantity="one">На %1$d месяц</item>
+        <item quantity="few">На %1$d месяца</item>
+        <item quantity="many">На %1$d месяцев</item>
+        <item quantity="other">На %1$d месяца</item>
+    </plurals>
+    <plurals name="special_offer_fine_print">
+        <item quantity="one">В течение %2$d месяца вы платите %1$s в месяц. Затем план продлевается за %3$s в месяц, пока вы не отмените его в Настройках.</item>
+        <item quantity="few">В течение первых %2$d месяцев вы платите %1$s в месяц. Затем план продлевается за %3$s в месяц, пока вы не отмените его в Настройках.</item>
+        <item quantity="many">В течение первых %2$d месяцев вы платите %1$s в месяц. Затем план продлевается за %3$s в месяц, пока вы не отмените его в Настройках.</item>
+        <item quantity="other">В течение первых %2$d месяца вы платите %1$s в месяц. Затем план продлевается за %3$s в месяц, пока вы не отмените его в Настройках.</item>
     </plurals>
 </resources>

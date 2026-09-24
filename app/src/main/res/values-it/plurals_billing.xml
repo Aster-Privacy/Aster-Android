@@ -29,4 +29,9 @@
         <item quantity="many">Per i tuoi primi %1$d mesi</item>
         <item quantity="other">Per i tuoi primi %1$d mesi</item>
     </plurals>
+    <plurals name="special_offer_fine_print">
+        <item quantity="one">Paghi %1$s al mese per il primo mese. Il piano si rinnova poi a %3$s al mese finché non lo annulli in Impostazioni.</item>
+        <item quantity="many">Paghi %1$s al mese per i primi %2$d mesi. Il piano si rinnova poi a %3$s al mese finché non lo annulli in Impostazioni.</item>
+        <item quantity="other">Paghi %1$s al mese per i primi %2$d mesi. Il piano si rinnova poi a %3$s al mese finché non lo annulli in Impostazioni.</item>
+    </plurals>
 </resources>

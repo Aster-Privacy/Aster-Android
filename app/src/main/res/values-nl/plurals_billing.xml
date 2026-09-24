@@ -28,4 +28,8 @@
         <item quantity="one">Voor je eerste maand</item>
         <item quantity="other">Voor je eerste %1$d maanden</item>
     </plurals>
+    <plurals name="special_offer_fine_print">
+        <item quantity="one">Je betaalt %1$s per maand voor de eerste maand. Daarna wordt je abonnement verlengd voor %3$s per maand totdat je het opzegt in Instellingen.</item>
+        <item quantity="other">Je betaalt %1$s per maand voor de eerste %2$d maanden. Daarna wordt je abonnement verlengd voor %3$s per maand totdat je het opzegt in Instellingen.</item>
+    </plurals>
 </resources>

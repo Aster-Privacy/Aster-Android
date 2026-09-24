@@ -3255,9 +3255,10 @@
     <string name="domain_catch_all_hint">이 도메인의 모든 주소로 보낸 메일을 받습니다.</string>
     <string name="special_offer_title">프라이빗 메일을 반값에</string>
     <string name="special_offer_unavailable">이 혜택은 더 이상 제공되지 않습니다.</string>
-    <string name="special_offer_price_period">월</string>
-    <string name="special_offer_fine_print">처음 %2$d개월 동안 월 %1$s을 결제합니다. 이후에는 설정에서 취소할 때까지 월 %3$s으로 갱신됩니다.</string>
+    <string name="special_offer_price_period">/월</string>
     <string name="special_offer_dismiss">이 혜택 다시 보지 않기</string>
+    <string name="special_offer_why_label">이 혜택을 드리는 이유</string>
+    <string name="special_offer_why_body">Aster는 작은 팀으로 운영되는 독립 기업입니다. 구독은 서비스 운영과 새로운 기능 개발을 뒷받침하며, 이 혜택으로 더 쉽게 시작할 수 있습니다.</string>
     <string name="special_offer_entry">특별 혜택</string>
     <string name="special_offer_cta_claim">%1$d%% 할인 받기</string>
     <string name="special_offer_benefit_aliases_title">무제한 별칭</string>

@@ -204,6 +204,8 @@ class BillingViewModel @Inject constructor(
 
     private var play_generation = 0
 
+    private var play_offer_cancel_seq = 0
+
     private val redeemed_play_tokens = java.util.Collections.synchronizedSet(mutableSetOf<String>())
 
     private val conflicted_play_tokens = java.util.Collections.synchronizedSet(mutableSetOf<String>())
@@ -398,6 +400,7 @@ class BillingViewModel @Inject constructor(
 
     private suspend fun prepare_play_purchase(target: PlayTarget) {
         val generation = play_generation
+        val cancel_seq = play_offer_cancel_seq
         play_config_job?.takeIf { it.isActive }?.join()
         val loaded = load_play_config(redeem = false)
         if (generation != play_generation) {
@@ -476,6 +479,10 @@ class BillingViewModel @Inject constructor(
             }
             play_replacement_mode(current_offer, offer)
         }
+        if (generation != play_generation || cancel_seq != play_offer_cancel_seq) {
+            if (cancel_seq == play_offer_cancel_seq) finish_play_action()
+            return
+        }
         _state.update {
             it.copy(
                 is_acting = false,
@@ -512,6 +519,13 @@ class BillingViewModel @Inject constructor(
     fun start_play_special_offer() {
         if (!play_install_check()) return
         start_play_target("play_special_offer", PlayTarget.SpecialOffer)
+    }
+
+    fun cancel_play_special_offer() {
+        val s = _state.value
+        if (s.acting_action != "play_special_offer" || s.play_purchase_request != null) return
+        play_offer_cancel_seq += 1
+        _state.update { it.copy(is_acting = false, acting_action = null) }
     }
 
     fun restore_play_purchases() {

@@ -3316,8 +3316,9 @@
     <string name="special_offer_title">Prywatna poczta o połowę taniej</string>
     <string name="special_offer_unavailable">Ta oferta nie jest już dostępna.</string>
     <string name="special_offer_price_period">miesięcznie</string>
-    <string name="special_offer_fine_print">Przez pierwsze %2$d miesięcy płacisz %1$s miesięcznie. Potem plan odnawia się za %3$s miesięcznie, dopóki nie anulujesz go w Ustawieniach.</string>
     <string name="special_offer_dismiss">Nie pokazuj więcej tej oferty</string>
+    <string name="special_offer_why_label">Dlaczego ta oferta?</string>
+    <string name="special_offer_why_body">Aster to niezależna firma z małym zespołem. Subskrypcje utrzymują usługę i finansują nowe funkcje, a ta oferta ułatwia rozpoczęcie.</string>
     <string name="special_offer_entry">Oferta specjalna</string>
     <string name="special_offer_cta_claim">Odbierz %1$d%% zniżki</string>
     <string name="special_offer_benefit_aliases_title">Nieograniczone aliasy</string>

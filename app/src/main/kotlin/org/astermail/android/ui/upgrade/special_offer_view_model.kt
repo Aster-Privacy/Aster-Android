@@ -21,9 +21,11 @@
 
 package org.astermail.android.ui.upgrade
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -101,7 +103,9 @@ class SpecialOfferViewModel @Inject constructor(
     private val billing_api: BillingApi,
     private val auth_repository: AuthRepository,
     private val offer_preferences: OfferPreferencesStore,
+    @ApplicationContext context: Context,
 ) : ViewModel() {
+    private val offer_cache = context.getSharedPreferences(OFFER_CACHE_PREFS, Context.MODE_PRIVATE)
     private val _state = MutableStateFlow(SpecialOfferState())
     val state: StateFlow<SpecialOfferState> = _state.asStateFlow()
 
@@ -154,8 +158,30 @@ class SpecialOfferViewModel @Inject constructor(
         last_plan_code = null
         auto_show_suppressed = false
         preference_fallback = false
-        _state.value = SpecialOfferState()
+        _state.value = if (id != null) cached_state(id) else SpecialOfferState()
         if (id != null) fetch()
+    }
+
+    private fun cached_state(id: String): SpecialOfferState {
+        if (!offer_preferences.state.value.enabled) return SpecialOfferState()
+        if (!offer_cache.getBoolean("$id.available", false)) return SpecialOfferState()
+        return SpecialOfferState(
+            available = true,
+            percent_off = offer_cache.getInt("$id.percent_off", 0),
+            duration_months = offer_cache.getInt("$id.duration_months", 0),
+            plan_code = offer_cache.getString("$id.plan_code", null) ?: SPECIAL_OFFER_DEFAULT_PLAN_CODE,
+        )
+    }
+
+    private fun store_cache() {
+        val id = account_id ?: return
+        val current = _state.value
+        offer_cache.edit()
+            .putBoolean("$id.available", current.available)
+            .putInt("$id.percent_off", current.percent_off)
+            .putInt("$id.duration_months", current.duration_months)
+            .putString("$id.plan_code", current.plan_code)
+            .apply()
     }
 
     private fun launch_for_account(block: suspend CoroutineScope.() -> Unit): Job =
@@ -198,11 +224,12 @@ class SpecialOfferViewModel @Inject constructor(
                         plan_code = status.plan_code.ifBlank { SPECIAL_OFFER_DEFAULT_PLAN_CODE },
                     )
                 }
+                store_cache()
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (t: Throwable) {
                 if (expected != generation) return@launch_for_account
-                _state.update { it.copy(is_loaded = true, available = false, auto_show = false) }
+                _state.update { it.copy(is_loaded = true, auto_show = false) }
             }
         }
     }
@@ -284,6 +311,7 @@ class SpecialOfferViewModel @Inject constructor(
                     step = if (ok == true) SpecialOfferStep.payment_method else SpecialOfferStep.offer,
                 )
             }
+            if (ok == false) store_cache()
         }
     }
 
@@ -310,13 +338,25 @@ class SpecialOfferViewModel @Inject constructor(
                 step = SpecialOfferStep.offer,
             )
         }
+        store_cache()
         launch_for_account {
-            try {
-                billing_api.dismiss_special_offer()
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (t: Throwable) {
+            var attempt = 0
+            var sent = false
+            while (!sent && attempt < DISMISS_ATTEMPTS) {
+                try {
+                    billing_api.dismiss_special_offer()
+                    sent = true
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (t: Throwable) {
+                    attempt += 1
+                    if (attempt < DISMISS_ATTEMPTS) kotlinx.coroutines.delay(DISMISS_RETRY_MS * attempt)
+                }
             }
         }
     }
 }
+
+private const val OFFER_CACHE_PREFS = "special_offer_cache"
+private const val DISMISS_ATTEMPTS = 4
+private const val DISMISS_RETRY_MS = 2000L

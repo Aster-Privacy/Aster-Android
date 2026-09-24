@@ -3164,8 +3164,9 @@
     <string name="special_offer_title">निजी मेल, आधी कीमत में</string>
     <string name="special_offer_unavailable">यह ऑफ़र अब उपलब्ध नहीं है।</string>
     <string name="special_offer_price_period">प्रति माह</string>
-    <string name="special_offer_fine_print">पहले %2$d महीनों के लिए आप %1$s प्रति माह चुकाते हैं। इसके बाद आपकी योजना %3$s प्रति माह पर नवीनीकृत होती रहेगी, जब तक आप इसे सेटिंग में रद्द नहीं करते।</string>
     <string name="special_offer_dismiss">यह ऑफ़र दोबारा न दिखाएँ</string>
+    <string name="special_offer_why_label">यह ऑफ़र क्यों?</string>
+    <string name="special_offer_why_body">Aster एक छोटी टीम वाली स्वतंत्र कंपनी है। सदस्यताएं सेवा को चालू रखती हैं और नई सुविधाओं का खर्च उठाती हैं, और यह ऑफ़र शुरुआत करना आसान बनाता है।</string>
     <string name="special_offer_entry">विशेष ऑफ़र</string>
     <string name="special_offer_cta_claim">%1$d%% छूट पाएं</string>
     <string name="special_offer_benefit_aliases_title">असीमित उपनाम</string>

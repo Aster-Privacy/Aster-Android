@@ -29,4 +29,9 @@
         <item quantity="many">Pendant vos %1$d premiers mois</item>
         <item quantity="other">Pendant vos %1$d premiers mois</item>
     </plurals>
+    <plurals name="special_offer_fine_print">
+        <item quantity="one">Vous payez %1$s par mois pendant le premier mois. Votre forfait est ensuite renouvelé à %3$s par mois jusqu\'à ce que vous l\'annuliez dans Paramètres.</item>
+        <item quantity="many">Vous payez %1$s par mois pendant les %2$d premiers mois. Votre forfait est ensuite renouvelé à %3$s par mois jusqu\'à ce que vous l\'annuliez dans Paramètres.</item>
+        <item quantity="other">Vous payez %1$s par mois pendant les %2$d premiers mois. Votre forfait est ensuite renouvelé à %3$s par mois jusqu\'à ce que vous l\'annuliez dans Paramètres.</item>
+    </plurals>
 </resources>

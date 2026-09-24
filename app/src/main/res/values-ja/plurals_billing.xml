@@ -21,4 +21,7 @@
     <plurals name="special_offer_entry_body">
         <item quantity="other">最初の%1$dか月間</item>
     </plurals>
+    <plurals name="special_offer_fine_print">
+        <item quantity="other">最初の%2$dか月は月額%1$sです。その後は、設定で解約するまで月額%3$sで更新されます。</item>
+    </plurals>
 </resources>

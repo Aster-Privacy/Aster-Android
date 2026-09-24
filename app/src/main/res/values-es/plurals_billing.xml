@@ -29,4 +29,9 @@
         <item quantity="many">Durante tus primeros %1$d meses</item>
         <item quantity="other">Durante tus primeros %1$d meses</item>
     </plurals>
+    <plurals name="special_offer_fine_print">
+        <item quantity="one">Pagas %1$s al mes durante el primer mes. Después, tu plan se renueva por %3$s al mes hasta que lo canceles en Configuración.</item>
+        <item quantity="many">Pagas %1$s al mes durante los primeros %2$d meses. Después, tu plan se renueva por %3$s al mes hasta que lo canceles en Configuración.</item>
+        <item quantity="other">Pagas %1$s al mes durante los primeros %2$d meses. Después, tu plan se renueva por %3$s al mes hasta que lo canceles en Configuración.</item>
+    </plurals>
 </resources>

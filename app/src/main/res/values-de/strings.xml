@@ -3275,10 +3275,11 @@
     <string name="special_offer_title">Private E-Mails zum halben Preis</string>
     <string name="special_offer_unavailable">Dieses Angebot ist nicht mehr verfügbar.</string>
     <string name="special_offer_price_period">pro Monat</string>
-    <string name="special_offer_fine_print">Sie zahlen %1$s pro Monat für die ersten %2$d Monate. Danach verlängert sich Ihr Tarif für %3$s pro Monat, bis Sie ihn in den Einstellungen kündigen.</string>
     <string name="special_offer_dismiss">Dieses Angebot nicht mehr anzeigen</string>
+    <string name="special_offer_why_label">Warum dieses Angebot?</string>
+    <string name="special_offer_why_body">Aster ist ein unabhängiges Unternehmen mit einem kleinen Team. Abonnements halten den Dienst am Laufen und finanzieren neue Funktionen. Mit diesem Angebot fällt der Einstieg leichter.</string>
     <string name="special_offer_entry">Sonderangebot</string>
-    <string name="special_offer_cta_claim">%1$d %% Rabatt sichern</string>
+    <string name="special_offer_cta_claim">%1$d%% Rabatt sichern</string>
     <string name="special_offer_benefit_aliases_title">Unbegrenzte Aliasse</string>
     <string name="special_offer_benefit_storage_title">500 GB verschlüsselter Speicher</string>
     <string name="special_offer_benefit_domains_title">Bis zu 30 eigene Domains</string>
@@ -3287,7 +3288,7 @@
     <string name="special_offer_benefit_storage_body">Platz für E-Mails und Dateien aus vielen Jahren.</string>
     <string name="special_offer_benefit_domains_body">Sende von Adressen auf deinen eigenen Domains.</string>
     <string name="special_offer_benefit_attachments_body">Sende große Dateien als Anhang.</string>
-    <string name="special_offer_entry_title">%1$d %% Rabatt auf Nova</string>
+    <string name="special_offer_entry_title">%1$d%% Rabatt auf Nova</string>
     <string name="special_offers">Sonderangebote</string>
     <string name="special_offers_description">Gelegentlich vergünstigte Tarifangebote in der App anzeigen. Wenn dies ausgeschaltet ist, siehst du keine Angebote und wirst in den Angebotsergebnissen nicht mitgezählt.</string>
     <string name="special_offers_save_failed">Deine Einstellung für Sonderangebote wurde nicht gespeichert. Versuche es erneut.</string>

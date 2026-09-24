@@ -21,4 +21,7 @@
     <plurals name="special_offer_entry_body">
         <item quantity="other">前 %1$d 个月</item>
     </plurals>
+    <plurals name="special_offer_fine_print">
+        <item quantity="other">前 %2$d 个月每月支付 %1$s。之后套餐将按每月 %3$s 续订，直到你在设置中取消。</item>
+    </plurals>
 </resources>

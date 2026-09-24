@@ -3274,8 +3274,9 @@
     <string name="special_offer_title">E-mail privado pela metade do preço</string>
     <string name="special_offer_unavailable">Esta oferta não está mais disponível.</string>
     <string name="special_offer_price_period">por mês</string>
-    <string name="special_offer_fine_print">Você paga %1$s por mês nos primeiros %2$d meses. Depois, seu plano é renovado por %3$s por mês até você cancelar em Configurações.</string>
     <string name="special_offer_dismiss">Não mostrar esta oferta novamente</string>
+    <string name="special_offer_why_label">Por que esta oferta?</string>
+    <string name="special_offer_why_body">O Aster é uma empresa independente com uma equipe pequena. As assinaturas mantêm o serviço funcionando e financiam novos recursos, e esta oferta torna mais fácil começar.</string>
     <string name="special_offer_entry">Oferta especial</string>
     <string name="special_offer_cta_claim">Garantir %1$d%% de desconto</string>
     <string name="special_offer_benefit_aliases_title">Aliases ilimitados</string>

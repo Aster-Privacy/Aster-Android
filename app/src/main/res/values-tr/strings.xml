@@ -1662,7 +1662,7 @@
     <string name="recovery_step_up_description">Güvenliğiniz için devam etmek üzere parolanızı onaylayın.</string>
     <string name="settings_upgrade_cta">Yükselt</string>
     <string name="unlock_aster_premium">Aster premium\'un kilidini açın</string>
-    <string name="save_percent">%1$d%% tasarruf</string>
+    <string name="save_percent">%%%1$d tasarruf</string>
     <string name="free">Ücretsiz</string>
     <string name="popular">Popüler</string>
     <string name="feature_storage">%1$s şifreli depolama</string>
@@ -3274,8 +3274,9 @@
     <string name="special_offer_title">Gizli e-posta, yarı fiyatına</string>
     <string name="special_offer_unavailable">Bu teklif artık geçerli değil.</string>
     <string name="special_offer_price_period">aylık</string>
-    <string name="special_offer_fine_print">İlk %2$d ay boyunca aylık %1$s ödersiniz. Ardından planınız, Ayarlar bölümünden iptal edene kadar aylık %3$s olarak yenilenir.</string>
     <string name="special_offer_dismiss">Bu teklifi bir daha gösterme</string>
+    <string name="special_offer_why_label">Neden bu teklif?</string>
+    <string name="special_offer_why_body">Aster, küçük bir ekibe sahip bağımsız bir şirkettir. Abonelikler hizmetin çalışmasını sağlar ve yeni özellikleri finanse eder. Bu teklif, başlamanızı kolaylaştırır.</string>
     <string name="special_offer_entry">Özel teklif</string>
     <string name="special_offer_cta_claim">%%%1$d indirimi alın</string>
     <string name="special_offer_benefit_aliases_title">Sınırsız takma ad</string>

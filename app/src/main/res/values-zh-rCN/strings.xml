@@ -3256,8 +3256,9 @@
     <string name="special_offer_title">私密邮箱，半价体验</string>
     <string name="special_offer_unavailable">此优惠已失效。</string>
     <string name="special_offer_price_period">每月</string>
-    <string name="special_offer_fine_print">前 %2$d 个月每月支付 %1$s。之后套餐将按每月 %3$s 续订，直到你在设置中取消。</string>
     <string name="special_offer_dismiss">不再显示此优惠</string>
+    <string name="special_offer_why_label">为什么有这个优惠？</string>
+    <string name="special_offer_why_body">Aster 是一家拥有小型团队的独立公司。订阅费用维持服务运行并支持新功能开发，这个优惠让你更容易开始使用。</string>
     <string name="special_offer_entry">特别优惠</string>
     <string name="special_offer_cta_claim">领取 %1$d%% 优惠</string>
     <string name="special_offer_benefit_aliases_title">无限别名</string>

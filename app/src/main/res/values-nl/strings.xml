@@ -3274,8 +3274,9 @@
     <string name="special_offer_title">Privé-e-mail voor de helft van de prijs</string>
     <string name="special_offer_unavailable">Deze aanbieding is niet meer beschikbaar.</string>
     <string name="special_offer_price_period">per maand</string>
-    <string name="special_offer_fine_print">Je betaalt %1$s per maand voor de eerste %2$d maanden. Daarna wordt je abonnement verlengd voor %3$s per maand totdat je het opzegt in Instellingen.</string>
     <string name="special_offer_dismiss">Deze aanbieding niet meer tonen</string>
+    <string name="special_offer_why_label">Waarom deze aanbieding?</string>
+    <string name="special_offer_why_body">Aster is een onafhankelijk bedrijf met een klein team. Abonnementen houden de dienst draaiende en financieren nieuwe functies, en met deze aanbieding begin je makkelijker.</string>
     <string name="special_offer_entry">Speciale aanbieding</string>
     <string name="special_offer_cta_claim">Claim %1$d%% korting</string>
     <string name="special_offer_benefit_aliases_title">Onbeperkte aliassen</string>

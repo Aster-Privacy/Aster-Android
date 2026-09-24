@@ -28,4 +28,8 @@
         <item quantity="one">For your first month</item>
         <item quantity="other">For your first %1$d months</item>
     </plurals>
+    <plurals name="special_offer_fine_print">
+        <item quantity="one">You pay %1$s per month for the first month. Your plan then renews at %3$s per month until you cancel it in Settings.</item>
+        <item quantity="other">You pay %1$s per month for the first %2$d months. Your plan then renews at %3$s per month until you cancel it in Settings.</item>
+    </plurals>
 </resources>

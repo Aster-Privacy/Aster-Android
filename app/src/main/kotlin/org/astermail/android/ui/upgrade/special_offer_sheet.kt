@@ -22,13 +22,33 @@
 package org.astermail.android.ui.upgrade
 
 import compose.icons.TablerIcons
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.input.pointer.pointerInput
+import compose.icons.tablericons.ChevronDown
+import compose.icons.tablericons.InfoCircle
 import compose.icons.tablericons.AlertCircle
 import compose.icons.tablericons.CircleCheck
 import compose.icons.tablericons.X
 
 import android.content.Context
+import androidx.activity.compose.BackHandler
 import android.content.ContextWrapper
 import androidx.activity.ComponentActivity
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -84,6 +104,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
@@ -92,8 +113,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -108,7 +127,6 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.components.AsterPlanTag
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic
-import org.astermail.android.ui.security.lock_dialog_window_effect
 import org.astermail.android.ui.settings.detail.crypto_term_dialog
 import org.astermail.android.ui.settings.detail.payment_method_crypto
 import org.astermail.android.ui.settings.detail.payment_review_dialog
@@ -129,10 +147,17 @@ private val CTA_HEIGHT = 52.dp
 private val CTA_LIP = 2.dp
 private val CTA_SHAPE = SquircleShape(999.dp)
 private val SCRIM_COLOR = Color(0xE6000000)
-private val CLOSE_BUTTON_FILL = Color(0xFF1C1C1E)
-private val CLOSE_BUTTON_SIZE = 32.dp
+private val CLOSE_BUTTON_SIZE = 34.dp
+private const val HERO_FADE_START = 0.58f
+private val DIVIDER_THICKNESS = 1.5.dp
 private val CLOSE_TOUCH_TARGET = 48.dp
 private val BENEFIT_CHECK_SIZE = 20.dp
+private const val OPEN_DAMPING = 0.78f
+private const val OPEN_STIFFNESS = 420f
+private const val CLOSE_MS = 170
+private const val SCRIM_LEAD = 1.6f
+private const val APPEAR_START_SCALE = 0.94f
+private val APPEAR_LIFT = 18.dp
 
 internal fun special_offer_price_pair(
     list_cents: Long,
@@ -213,10 +238,18 @@ fun SpecialOfferHost() {
         if (offer_state.auto_show && (!play_install || play_ready)) offer_vm.claim_and_open()
     }
 
+    LaunchedEffect(billing_state.subscription?.plan?.code) {
+        offer_vm.on_plan_code(billing_state.subscription?.plan?.code)
+    }
+
     var play_cta_pressed by remember { mutableStateOf(false) }
-    LaunchedEffect(billing_state.play_purchase_request, offer_state.is_open) {
-        if (!offer_state.is_open) play_cta_pressed = false
-        if (play_install && offer_state.is_open && play_cta_pressed && billing_state.play_purchase_request != null) {
+    LaunchedEffect(offer_state.is_open, billing_state.is_acting, billing_state.play_purchase_request) {
+        if (!offer_state.is_open) {
+            play_cta_pressed = false
+            return@LaunchedEffect
+        }
+        if (!play_install || !play_cta_pressed || billing_state.is_acting) return@LaunchedEffect
+        if (billing_state.play_purchase_request != null || billing_state.error.isNullOrBlank()) {
             play_cta_pressed = false
             offer_vm.close()
         }
@@ -241,7 +274,19 @@ fun SpecialOfferHost() {
         offer_vm.close()
     }
 
-    if (!offer_state.is_open) return
+    val appear = remember { Animatable(0f) }
+    var mounted by remember { mutableStateOf(false) }
+    LaunchedEffect(offer_state.is_open) {
+        if (offer_state.is_open) {
+            mounted = true
+            appear.animateTo(1f, spring(dampingRatio = OPEN_DAMPING, stiffness = OPEN_STIFFNESS))
+        } else if (mounted) {
+            appear.animateTo(0f, tween(durationMillis = CLOSE_MS, easing = FastOutLinearInEasing))
+            mounted = false
+        }
+    }
+
+    if (!mounted && !offer_state.is_open) return
 
     LaunchedEffect(Unit) {
         if (billing_state.available_plans.isEmpty()) billing_vm.load_plans()
@@ -279,217 +324,232 @@ fun SpecialOfferHost() {
         stringResource(R.string.special_offer_benefit_attachments_title) to stringResource(R.string.special_offer_benefit_attachments_body),
     )
 
-    Dialog(
-        onDismissRequest = {},
-        properties = DialogProperties(
-            dismissOnBackPress = false,
-            dismissOnClickOutside = false,
-            usePlatformDefaultWidth = false,
-            decorFitsSystemWindows = false,
-        ),
+    val interactive = offer_state.is_open
+    val close_offer = {
+        if (offer_state.is_open) {
+            billing_vm.cancel_play_special_offer()
+            offer_vm.close()
+        }
+    }
+
+    BackHandler(enabled = interactive, onBack = close_offer)
+
+    val colors = AsterMaterial.colors
+    val lift_px = with(LocalDensity.current) { APPEAR_LIFT.toPx() }
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .drawBehind {
+                drawRect(SCRIM_COLOR, alpha = (appear.value * SCRIM_LEAD).coerceIn(0f, 1f))
+            }
+            .pointerInput(Unit) { detectTapGestures { } }
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        lock_dialog_window_effect()
-        val colors = AsterMaterial.colors
-
-        BoxWithConstraints(
+        val height_budget = maxHeight / LocalDensity.current.fontScale.coerceAtLeast(1f)
+        val compact = height_budget < COMPACT_HEIGHT
+        val gap = if (compact) 10.dp else 14.dp
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(SCRIM_COLOR)
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .padding(16.dp),
-            contentAlignment = Alignment.Center,
+                .widthIn(max = CARD_MAX_WIDTH)
+                .fillMaxWidth()
+                .graphicsLayer {
+                    val scale = APPEAR_START_SCALE + (1f - APPEAR_START_SCALE) * appear.value
+                    alpha = appear.value.coerceIn(0f, 1f)
+                    scaleX = scale
+                    scaleY = scale
+                    translationY = (1f - appear.value) * lift_px
+                    transformOrigin = TransformOrigin(0.5f, 0.6f)
+                }
+                .shadow(elevation = 28.dp, shape = CARD_SHAPE)
+                .clip(CARD_SHAPE)
+                .acrylic(colors, CARD_SHAPE, colors.bg_card)
+                .border(1.dp, colors.border_secondary, CARD_SHAPE),
         ) {
-            val height_budget = maxHeight / LocalDensity.current.fontScale.coerceAtLeast(1f)
-            val compact = height_budget < COMPACT_HEIGHT
-            val gap = if (compact) 10.dp else 14.dp
-            Box(
-                modifier = Modifier
-                    .widthIn(max = CARD_MAX_WIDTH)
-                    .fillMaxWidth()
-                    .shadow(elevation = 28.dp, shape = CARD_SHAPE)
-                    .clip(CARD_SHAPE)
-                    .acrylic(colors, CARD_SHAPE, colors.bg_card)
-                    .border(1.dp, colors.border_secondary, CARD_SHAPE),
-            ) {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    SpecialOfferHero(aspect_ratio = if (compact) HERO_ASPECT_RATIO_COMPACT else HERO_ASPECT_RATIO)
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                SpecialOfferHero(aspect_ratio = if (compact) HERO_ASPECT_RATIO_COMPACT else HERO_ASPECT_RATIO)
 
-                    Column(
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = CARD_PADDING,
+                            top = 6.dp,
+                            end = CARD_PADDING,
+                            bottom = 8.dp,
+                        ),
+                ) {
+                    SpecialOfferBadge()
+
+                    Spacer(Modifier.height(10.dp))
+
+                    Text(
+                        text = stringResource(R.string.special_offer_title),
+                        color = colors.text_primary,
+                        fontSize = 22.sp,
+                        lineHeight = 27.sp,
+                        letterSpacing = (-0.3).sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+
+                    Spacer(Modifier.height(6.dp))
+
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        Text(
+                            text = offer_label,
+                            color = colors.text_primary,
+                            fontSize = 38.sp,
+                            lineHeight = 42.sp,
+                            letterSpacing = (-1).sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.alignByBaseline(),
+                        )
+                        Text(
+                            text = stringResource(R.string.special_offer_price_period),
+                            color = colors.text_secondary,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.alignByBaseline(),
+                        )
+                        Text(
+                            text = list_label,
+                            color = colors.text_tertiary,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            textDecoration = TextDecoration.LineThrough,
+                            modifier = Modifier.alignByBaseline(),
+                        )
+                    }
+
+                    Spacer(Modifier.height(gap + 4.dp))
+
+                    SpecialOfferDivider()
+
+                    Spacer(Modifier.height(gap + 4.dp))
+
+                    SpecialOfferBenefits(benefits = benefits, show_details = !compact)
+
+                    Spacer(Modifier.height(gap))
+
+                    SpecialOfferWhy()
+
+                    Spacer(Modifier.height(gap))
+
+                    if (error_text != null) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(ERROR_SHAPE)
+                                .background(colors.danger.copy(alpha = 0.08f))
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                imageVector = TablerIcons.AlertCircle,
+                                contentDescription = null,
+                                tint = colors.danger,
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = error_text,
+                                color = colors.text_primary,
+                                fontSize = 13.sp,
+                                lineHeight = 18.sp,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                        Spacer(Modifier.height(12.dp))
+                    }
+
+                    SpecialOfferDepthButton(
+                        label = if (offer_state.offer_expired) {
+                            stringResource(R.string.close)
+                        } else {
+                            stringResource(R.string.special_offer_cta_claim, percent_off)
+                        },
+                        is_loading = is_busy,
+                        onClick = {
+                            if (offer_state.offer_expired) {
+                                offer_vm.close()
+                            } else if (play_install) {
+                                billing_vm.clear_messages()
+                                play_cta_pressed = true
+                                billing_vm.start_play_special_offer()
+                            } else {
+                                billing_vm.clear_messages()
+                                offer_vm.release_checkout()
+                                offer_vm.accept()
+                            }
+                        },
+                    )
+
+                    Spacer(Modifier.height(10.dp))
+
+                    Text(
+                        text = pluralStringResource(
+                            R.plurals.special_offer_fine_print,
+                            months,
+                            offer_label,
+                            months,
+                            list_label,
+                        ),
+                        color = colors.text_tertiary,
+                        fontSize = 12.sp,
+                        lineHeight = 17.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    Spacer(Modifier.height(2.dp))
+
+                    Text(
+                        text = stringResource(R.string.special_offer_dismiss),
+                        color = colors.text_secondary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(
-                                start = CARD_PADDING,
-                                top = CARD_PADDING,
-                                end = CARD_PADDING,
-                                bottom = 8.dp,
-                            ),
-                    ) {
-                        SpecialOfferBadge()
-
-                        Spacer(Modifier.height(10.dp))
-
-                        Text(
-                            text = stringResource(R.string.special_offer_title),
-                            color = colors.text_primary,
-                            fontSize = 22.sp,
-                            lineHeight = 27.sp,
-                            letterSpacing = (-0.3).sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-
-                        Spacer(Modifier.height(6.dp))
-
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(2.dp),
-                        ) {
-                            Text(
-                                text = offer_label,
-                                color = colors.text_primary,
-                                fontSize = 38.sp,
-                                lineHeight = 42.sp,
-                                letterSpacing = (-1).sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.alignByBaseline(),
-                            )
-                            Text(
-                                text = stringResource(R.string.special_offer_price_period),
-                                color = colors.text_secondary,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
-                                modifier = Modifier.alignByBaseline(),
-                            )
-                            Text(
-                                text = list_label,
-                                color = colors.text_tertiary,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Medium,
-                                textDecoration = TextDecoration.LineThrough,
-                                modifier = Modifier.alignByBaseline(),
-                            )
-                        }
-
-                        Spacer(Modifier.height(gap + 2.dp))
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .background(colors.border_secondary),
-                        )
-
-                        Spacer(Modifier.height(gap))
-
-                        SpecialOfferBenefits(benefits = benefits, show_details = !compact)
-
-                        Spacer(Modifier.height(gap + 4.dp))
-
-                        if (error_text != null) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(ERROR_SHAPE)
-                                    .background(colors.danger.copy(alpha = 0.08f))
-                                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(
-                                    imageVector = TablerIcons.AlertCircle,
-                                    contentDescription = null,
-                                    tint = colors.danger,
-                                    modifier = Modifier.size(16.dp),
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text(
-                                    text = error_text,
-                                    color = colors.text_primary,
-                                    fontSize = 13.sp,
-                                    lineHeight = 18.sp,
-                                    modifier = Modifier.weight(1f),
-                                )
+                            .clip(CircleShape)
+                            .clickable(enabled = interactive, role = Role.Button) {
+                                billing_vm.cancel_play_special_offer()
+                                offer_vm.dismiss_forever()
                             }
-                            Spacer(Modifier.height(12.dp))
-                        }
-
-                        SpecialOfferDepthButton(
-                            label = if (offer_state.offer_expired) {
-                                stringResource(R.string.close)
-                            } else {
-                                stringResource(R.string.special_offer_cta_claim, percent_off)
-                            },
-                            is_loading = is_busy,
-                            onClick = {
-                                if (offer_state.offer_expired) {
-                                    offer_vm.close()
-                                } else if (play_install) {
-                                    billing_vm.clear_messages()
-                                    play_cta_pressed = true
-                                    billing_vm.start_play_special_offer()
-                                } else {
-                                    billing_vm.clear_messages()
-                                    offer_vm.release_checkout()
-                                    offer_vm.accept()
-                                }
-                            },
-                        )
-
-                        Spacer(Modifier.height(10.dp))
-
-                        Text(
-                            text = stringResource(
-                                R.string.special_offer_fine_print,
-                                offer_label,
-                                months,
-                                list_label,
-                            ),
-                            color = colors.text_tertiary,
-                            fontSize = 12.sp,
-                            lineHeight = 17.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-
-                        Spacer(Modifier.height(2.dp))
-
-                        Text(
-                            text = stringResource(R.string.special_offer_dismiss),
-                            color = colors.text_secondary,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(CircleShape)
-                                .clickable(enabled = !is_busy, role = Role.Button) { offer_vm.dismiss_forever() }
-                                .padding(vertical = 10.dp),
-                        )
-                    }
+                            .padding(vertical = 10.dp),
+                    )
                 }
+            }
 
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 6.dp, end = 6.dp)
+                    .size(CLOSE_TOUCH_TARGET)
+                    .clip(CircleShape)
+                    .clickable(enabled = interactive, role = Role.Button) { close_offer() },
+                contentAlignment = Alignment.Center,
+            ) {
                 Box(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 6.dp, end = 6.dp)
-                        .size(CLOSE_TOUCH_TARGET)
-                        .clip(CircleShape)
-                        .clickable(enabled = !is_busy, role = Role.Button) { offer_vm.close() },
+                        .size(CLOSE_BUTTON_SIZE)
+                        .shadow(elevation = 4.dp, shape = CircleShape)
+                        .acrylic(colors, CircleShape, colors.bg_secondary)
+                        .border(1.dp, colors.border_secondary, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(CLOSE_BUTTON_SIZE)
-                            .clip(CircleShape)
-                            .background(CLOSE_BUTTON_FILL),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = TablerIcons.X,
-                            contentDescription = stringResource(R.string.close),
-                            tint = Color.White,
-                            modifier = Modifier.size(17.dp),
-                        )
-                    }
+                    Icon(
+                        imageVector = TablerIcons.X,
+                        contentDescription = stringResource(R.string.close),
+                        tint = colors.text_primary,
+                        modifier = Modifier.size(17.dp),
+                    )
                 }
             }
         }
@@ -533,8 +593,6 @@ fun SpecialOfferHost() {
 
 @Composable
 private fun SpecialOfferHero(aspect_ratio: Float) {
-    val colors = AsterMaterial.colors
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -544,15 +602,98 @@ private fun SpecialOfferHero(aspect_ratio: Float) {
             painter = painterResource(R.drawable.special_offer_hero),
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-        )
-        Box(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(colors.border_secondary),
+                .fillMaxSize()
+                .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                .drawWithContent {
+                    drawContent()
+                    drawRect(
+                        brush = Brush.verticalGradient(
+                            0f to Color.Black,
+                            HERO_FADE_START to Color.Black,
+                            1f to Color.Transparent,
+                        ),
+                        blendMode = BlendMode.DstIn,
+                    )
+                },
         )
+    }
+}
+
+@Composable
+private fun SpecialOfferDivider() {
+    val edge = AsterMaterial.colors.border_secondary
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(DIVIDER_THICKNESS)
+            .clip(CircleShape)
+            .background(
+                Brush.horizontalGradient(
+                    0f to edge.copy(alpha = 0f),
+                    0.2f to edge,
+                    0.8f to edge,
+                    1f to edge.copy(alpha = 0f),
+                ),
+            ),
+    )
+}
+
+@Composable
+private fun SpecialOfferWhy() {
+    val colors = AsterMaterial.colors
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    val chevron by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+        label = "offer_why_chevron",
+    )
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .clip(CircleShape)
+                .clickable(role = Role.Button) { expanded = !expanded }
+                .padding(vertical = 6.dp, horizontal = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = TablerIcons.InfoCircle,
+                contentDescription = null,
+                tint = colors.text_tertiary,
+                modifier = Modifier.size(15.dp),
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = stringResource(R.string.special_offer_why_label),
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            Spacer(Modifier.width(2.dp))
+            Icon(
+                imageVector = TablerIcons.ChevronDown,
+                contentDescription = null,
+                tint = colors.text_tertiary,
+                modifier = Modifier
+                    .size(14.dp)
+                    .graphicsLayer { rotationZ = chevron },
+            )
+        }
+        AnimatedVisibility(
+            visible = expanded,
+            enter = fadeIn(tween(200, delayMillis = 40)) + expandVertically(tween(220, easing = FastOutSlowInEasing)),
+            exit = fadeOut(tween(120)) + shrinkVertically(tween(200, easing = FastOutSlowInEasing)),
+        ) {
+            Text(
+                text = stringResource(R.string.special_offer_why_body),
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+                lineHeight = 19.sp,
+                modifier = Modifier.padding(start = 23.dp, top = 2.dp, bottom = 4.dp),
+            )
+        }
     }
 }
 

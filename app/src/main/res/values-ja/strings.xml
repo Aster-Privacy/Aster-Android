@@ -3255,9 +3255,10 @@
     <string name="domain_catch_all_hint">このドメインのすべてのアドレス宛てのメールを受信します。</string>
     <string name="special_offer_title">プライベートなメールを半額で</string>
     <string name="special_offer_unavailable">このオファーは終了しました。</string>
-    <string name="special_offer_price_period">月額</string>
-    <string name="special_offer_fine_print">最初の%2$dか月は月額%1$sです。その後は、設定で解約するまで月額%3$sで更新されます。</string>
+    <string name="special_offer_price_period">/月</string>
     <string name="special_offer_dismiss">このオファーを今後表示しない</string>
+    <string name="special_offer_why_label">このオファーを提供する理由</string>
+    <string name="special_offer_why_body">Aster は小規模なチームで運営する独立系企業です。サブスクリプションがサービスの運営と新機能の開発を支えています。このオファーで、より気軽に始められます。</string>
     <string name="special_offer_entry">特別オファー</string>
     <string name="special_offer_cta_claim">%1$d%%オフで始める</string>
     <string name="special_offer_benefit_aliases_title">エイリアス無制限</string>

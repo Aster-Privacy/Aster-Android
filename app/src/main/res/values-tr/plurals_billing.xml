@@ -28,4 +28,8 @@
         <item quantity="one">İlk ayınız için</item>
         <item quantity="other">İlk %1$d ayınız için</item>
     </plurals>
+    <plurals name="special_offer_fine_print">
+        <item quantity="one">İlk %2$d ay boyunca aylık %1$s ödersiniz. Ardından planınız, Ayarlar bölümünden iptal edene kadar aylık %3$s olarak yenilenir.</item>
+        <item quantity="other">İlk %2$d ay boyunca aylık %1$s ödersiniz. Ardından planınız, Ayarlar bölümünden iptal edene kadar aylık %3$s olarak yenilenir.</item>
+    </plurals>
 </resources>
