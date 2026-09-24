@@ -725,6 +725,8 @@ private val all_settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("domains", R.string.settings_domains, R.string.custom_domains, false),
     settings_index_entry("domains", R.string.settings_domains, R.string.catch_all, false),
     settings_index_entry("domains", R.string.settings_domains, R.string.domain_dns_records, false),
+    settings_index_entry("domains", R.string.settings_domains, R.string.domain_bimi_title, false),
+    settings_index_entry("domains", R.string.settings_domains, R.string.domain_bimi_search_keyword, false),
     settings_index_entry("referral", R.string.referral_program, R.string.referral_program, true),
     settings_index_entry("referral", R.string.referral_program, R.string.clipboard_label_referral, false),
     settings_index_entry("referral", R.string.referral_program, R.string.share_referral, false),

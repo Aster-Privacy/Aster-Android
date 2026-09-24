@@ -1689,6 +1689,7 @@ internal fun domains_tab(
     on_verify_result: (String, SettingsViewModel.DomainVerifyOutcome) -> Unit,
     on_show_add: () -> Unit,
     catch_all_locked: Boolean = false,
+    on_open_bimi: (String) -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
 
@@ -1758,6 +1759,7 @@ internal fun domains_tab(
                     }
                 },
                 on_delete = { vm.delete_domain(domain.id) },
+                on_open_bimi = { on_open_bimi(domain.id) },
             )
             v_gap(AsterSpacing.md)
         }
@@ -2647,7 +2649,7 @@ private fun preference_option(
 }
 
 @Composable
-private fun domain_status_badge(text: String, tint: Color) {
+internal fun domain_status_badge(text: String, tint: Color) {
     val colors = AsterMaterial.colors
     val background = org.astermail.android.ui.mail.chip_background(tint, colors.bg_card, colors.is_dark)
     Box(
@@ -2708,6 +2710,7 @@ private fun domain_card(
     on_verify: () -> Unit,
     on_delete: () -> Unit,
     catch_all_locked: Boolean = false,
+    on_open_bimi: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
@@ -2907,12 +2910,21 @@ private fun domain_card(
                         enabled = !is_verifying,
                     )
                 }
+
+                if (domain.bimi_available) {
+                    v_gap(AsterSpacing.md)
+                    org.astermail.android.ui.settings.detail.bimi.bimi_row(
+                        domain = domain,
+                        is_active = is_active,
+                        on_open = on_open_bimi,
+                    )
+                }
             }
         }
     }
 }
 
-private fun copy_dns_value(context: Context, label: String, value: String) {
+internal fun copy_dns_value(context: Context, label: String, value: String) {
     if (write_to_clipboard(context, ClipData.newPlainText(label, value))) {
         android.widget.Toast.makeText(
             context,
@@ -2967,7 +2979,7 @@ private fun dns_record_detail(record: DnsRecord, on_copy: (String, String) -> Un
 }
 
 @Composable
-private fun dns_record_field(label: String, value: String, on_copy: () -> Unit) {
+internal fun dns_record_field(label: String, value: String, on_copy: () -> Unit) {
     val colors = AsterMaterial.colors
     var value_expanded by remember(value) { mutableStateOf(false) }
     Row(
