@@ -22,6 +22,7 @@
 package org.astermail.android.ui.upgrade
 
 import compose.icons.TablerIcons
+import compose.icons.tablericons.AlertCircle
 import compose.icons.tablericons.Check
 import compose.icons.tablericons.X
 
@@ -101,7 +102,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
 import org.astermail.android.billing.BillingViewModel
 import org.astermail.android.billing.api_plan_price_cents
-import org.astermail.android.ui.settings.detail.galaxy_badge
 import org.astermail.android.billing.billing_interval_per_label
 import org.astermail.android.billing.format_money
 import org.astermail.android.design.AsterMaterial
@@ -121,6 +121,7 @@ private const val HERO_ASPECT_RATIO_COMPACT = 3.2f
 private val COMPACT_HEIGHT = 780.dp
 
 private val CARD_SHAPE = SquircleShape(24.dp)
+private val ERROR_SHAPE = SquircleShape(12.dp)
 private val CARD_MAX_WIDTH = 420.dp
 private val CARD_PADDING = 20.dp
 private val CTA_HEIGHT = 52.dp
@@ -130,11 +131,6 @@ private val SCRIM_COLOR = Color(0xE6000000)
 private val CLOSE_BUTTON_FILL = Color(0xFF1C1C1E)
 private val CLOSE_BUTTON_SIZE = 32.dp
 private val CLOSE_TOUCH_TARGET = 48.dp
-
-private data class SpecialOfferBenefit(
-    val title: String,
-    val detail: String,
-)
 
 internal fun special_offer_price_pair(
     list_cents: Long,
@@ -244,30 +240,17 @@ fun SpecialOfferHost() {
     val term_prices = special_offer_term_prices(offer_state, plan_code, list_cents, yearly_cents, save_badge)
     val is_busy = offer_state.is_accepting || billing_state.is_acting
     val checkout_error = billing_state.error?.takeIf { offer_state.owns_checkout && it.isNotBlank() }
-    val error_text = if (offer_state.accept_failed) {
-        stringResource(R.string.could_not_start_checkout)
-    } else {
-        checkout_error
+    val error_text = when {
+        offer_state.offer_expired -> stringResource(R.string.special_offer_unavailable)
+        offer_state.accept_failed -> stringResource(R.string.could_not_start_checkout)
+        else -> checkout_error
     }
 
-    val savings_label = format_money((list_cents - offer_cents).coerceAtLeast(0L) * months, SPECIAL_OFFER_CURRENCY)
     val benefits = listOf(
-        SpecialOfferBenefit(
-            stringResource(R.string.special_offer_benefit_aliases_title),
-            stringResource(R.string.special_offer_benefit_aliases_detail),
-        ),
-        SpecialOfferBenefit(
-            stringResource(R.string.special_offer_benefit_storage_title),
-            stringResource(R.string.special_offer_benefit_storage_detail),
-        ),
-        SpecialOfferBenefit(
-            stringResource(R.string.special_offer_benefit_domains_title),
-            stringResource(R.string.special_offer_benefit_domains_detail),
-        ),
-        SpecialOfferBenefit(
-            stringResource(R.string.special_offer_benefit_attachments_title),
-            stringResource(R.string.special_offer_benefit_attachments_detail),
-        ),
+        stringResource(R.string.special_offer_benefit_aliases_title),
+        stringResource(R.string.special_offer_benefit_storage_title),
+        stringResource(R.string.special_offer_benefit_domains_title),
+        stringResource(R.string.special_offer_benefit_attachments_title),
     )
 
     Dialog(
@@ -316,13 +299,6 @@ fun SpecialOfferHost() {
                                 bottom = 8.dp,
                             ),
                     ) {
-                        galaxy_badge(
-                            text = stringResource(R.string.special_offer_badge, percent_off, months),
-                            font_size = 11.sp,
-                        )
-
-                        Spacer(Modifier.height(10.dp))
-
                         Text(
                             text = stringResource(R.string.special_offer_title),
                             color = colors.text_primary,
@@ -364,17 +340,7 @@ fun SpecialOfferHost() {
                             )
                         }
 
-                        Spacer(Modifier.height(4.dp))
-
-                        Text(
-                            text = stringResource(R.string.special_offer_savings, savings_label, months),
-                            color = colors.success,
-                            fontSize = 14.sp,
-                            lineHeight = 19.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-
-                        Spacer(Modifier.height(gap))
+                        Spacer(Modifier.height(gap + 2.dp))
 
                         Box(
                             modifier = Modifier
@@ -385,46 +351,56 @@ fun SpecialOfferHost() {
 
                         Spacer(Modifier.height(gap))
 
-                        SpecialOfferBenefits(benefits = benefits, show_details = !compact)
+                        SpecialOfferBenefits(benefits = benefits)
 
                         Spacer(Modifier.height(gap + 4.dp))
 
                         if (error_text != null) {
-                            Text(
-                                text = error_text,
-                                color = colors.danger,
-                                fontSize = 13.sp,
-                                lineHeight = 18.sp,
-                                fontWeight = FontWeight.Medium,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                            Spacer(Modifier.height(10.dp))
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(ERROR_SHAPE)
+                                    .background(colors.danger.copy(alpha = 0.08f))
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    imageVector = TablerIcons.AlertCircle,
+                                    contentDescription = null,
+                                    tint = colors.danger,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = error_text,
+                                    color = colors.text_primary,
+                                    fontSize = 13.sp,
+                                    lineHeight = 18.sp,
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                            Spacer(Modifier.height(12.dp))
                         }
 
                         SpecialOfferDepthButton(
-                            label = stringResource(R.string.special_offer_cta_claim, percent_off),
+                            label = if (offer_state.offer_expired) {
+                                stringResource(R.string.close)
+                            } else {
+                                stringResource(R.string.special_offer_cta_claim, percent_off)
+                            },
                             is_loading = is_busy,
                             onClick = {
-                                billing_vm.clear_messages()
-                                offer_vm.release_checkout()
-                                offer_vm.accept()
+                                if (offer_state.offer_expired) {
+                                    offer_vm.close()
+                                } else {
+                                    billing_vm.clear_messages()
+                                    offer_vm.release_checkout()
+                                    offer_vm.accept()
+                                }
                             },
                         )
 
-                        Spacer(Modifier.height(12.dp))
-
-                        Text(
-                            text = stringResource(R.string.special_offer_reassurance),
-                            color = colors.text_secondary,
-                            fontSize = 13.sp,
-                            lineHeight = 18.sp,
-                            fontWeight = FontWeight.Medium,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-
-                        Spacer(Modifier.height(4.dp))
+                        Spacer(Modifier.height(10.dp))
 
                         Text(
                             text = stringResource(
@@ -547,49 +523,31 @@ private fun SpecialOfferHero(aspect_ratio: Float) {
 }
 
 @Composable
-private fun SpecialOfferBenefits(benefits: List<SpecialOfferBenefit>, show_details: Boolean) {
+private fun SpecialOfferBenefits(benefits: List<String>) {
     val colors = AsterMaterial.colors
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(if (show_details) 12.dp else 10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         benefits.forEach { benefit ->
             Row(modifier = Modifier.fillMaxWidth()) {
-                Box(
+                Icon(
+                    imageVector = TablerIcons.Check,
+                    contentDescription = null,
+                    tint = colors.accent_blue,
                     modifier = Modifier
                         .padding(top = 1.dp)
-                        .size(20.dp)
-                        .clip(CircleShape)
-                        .background(colors.accent_blue),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = TablerIcons.Check,
-                        contentDescription = null,
-                        tint = colors.on_accent,
-                        modifier = Modifier.size(13.dp),
-                    )
-                }
+                        .size(18.dp),
+                )
                 Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = benefit.title,
-                        color = colors.text_primary,
-                        fontSize = 15.sp,
-                        lineHeight = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    if (show_details) {
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            text = benefit.detail,
-                            color = colors.text_secondary,
-                            fontSize = 13.sp,
-                            lineHeight = 18.sp,
-                        )
-                    }
-                }
+                Text(
+                    text = benefit,
+                    color = colors.text_primary,
+                    fontSize = 15.sp,
+                    lineHeight = 20.sp,
+                    modifier = Modifier.weight(1f),
+                )
             }
         }
     }
