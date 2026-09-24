@@ -167,6 +167,7 @@ data class DecryptedEnvelope(
     val pgp_signature: org.astermail.android.crypto.PgpSignatureStatus =
         org.astermail.android.crypto.PgpSignatureStatus.NONE,
     val draft_attachments: List<ExternalAttachmentPayload> = emptyList(),
+    val is_decrypt_pending: Boolean = false,
 )
 
 const val PGP_ENCRYPTED_MESSAGE_HEADER = "-----BEGIN PGP MESSAGE-----"
@@ -363,6 +364,7 @@ data class InboxItem(
     val routing_token: String? = null,
     val is_undecryptable: Boolean = false,
     val raw_item: MailItem,
+    val is_decrypt_pending: Boolean = false,
 )
 
 data class AttachmentMeta(
@@ -568,6 +570,8 @@ class MailRepository @Inject constructor(
     val draft_changes: kotlinx.coroutines.flow.SharedFlow<Unit> = _draft_changes
 
     fun get_user_email(): String? = session_key_store.get_user_email()
+
+    fun current_account_id(): String? = session_key_store.get_user_id()
 
     private val _visible_order = kotlinx.coroutines.flow.MutableStateFlow<List<String>>(emptyList())
     val visible_order: kotlinx.coroutines.flow.StateFlow<List<String>> = _visible_order
@@ -2525,6 +2529,8 @@ class MailRepository @Inject constructor(
         )
         val is_undecryptable = envelope?.is_undecryptable
             ?: !item.encrypted_envelope.isNullOrBlank()
+        val is_decrypt_pending = is_undecryptable && envelope?.is_decrypt_pending == true
+        val show_placeholder = is_undecryptable && !is_decrypt_pending
         val enc_meta = item.encrypted_metadata
         val meta_nonce = item.metadata_nonce
         val decrypted_meta = item.metadata
@@ -2539,17 +2545,17 @@ class MailRepository @Inject constructor(
             id = item.id,
             thread_token = item.thread_token,
             thread_message_count = item.thread_message_count ?: 1,
-            sender_name = if (is_undecryptable) context.getString(R.string.encrypted) else envelope?.from_name ?: "",
+            sender_name = if (show_placeholder) context.getString(R.string.encrypted) else envelope?.from_name ?: "",
             sender_email = envelope?.from_email ?: "",
-            subject = if (is_undecryptable) {
+            subject = if (show_placeholder) {
                 context.getString(R.string.decrypt_failed_title)
             } else {
                 envelope?.subject ?: ""
             },
-            preview = if (is_undecryptable) {
-                context.getString(R.string.undecryptable_message_preview)
-            } else {
-                envelope?.let { clean_preview(it.body_text, it.body_html) } ?: ""
+            preview = when {
+                show_placeholder -> context.getString(R.string.undecryptable_message_preview)
+                is_decrypt_pending -> ""
+                else -> envelope?.let { clean_preview(it.body_text, it.body_html) } ?: ""
             },
             timestamp = item.message_ts ?: item.created_at ?: "",
             is_read = resolve_read_state(item.item_type, item.is_read, meta?.is_read) ||
@@ -2582,6 +2588,7 @@ class MailRepository @Inject constructor(
             },
             is_undecryptable = is_undecryptable,
             raw_item = if (meta != null) item.copy(metadata = meta) else item,
+            is_decrypt_pending = is_decrypt_pending,
         )
     }
 
@@ -3827,6 +3834,7 @@ class MailRepository @Inject constructor(
         var body_text = envelope.body_text
         var body_html = envelope.body_html
         var is_undecryptable = false
+        var is_decrypt_pending = false
         var is_unauthenticated = envelope.is_unauthenticated
         var ratchet_decrypted = false
 
@@ -3837,12 +3845,17 @@ class MailRepository @Inject constructor(
             if (!our_email.isNullOrBlank() && sender_email.isNotBlank()) {
                 val decrypted = ratchet_override ?: kotlinx.coroutines.runBlocking {
                     runCatching {
-                        kotlinx.coroutines.withTimeout(RATCHET_INLINE_TIMEOUT_MS) {
+                        kotlinx.coroutines.withTimeoutOrNull(RATCHET_INLINE_TIMEOUT_MS) {
                             resolve_ratchet_body(envelope, ratchet_candidate, message_id)
                         }
                     }.getOrDefault(org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL)
                 }
-                if (decrypted != org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL) {
+                if (decrypted == null) {
+                    body_text = ""
+                    body_html = null
+                    is_undecryptable = true
+                    is_decrypt_pending = true
+                } else if (decrypted != org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL) {
                     is_unauthenticated = false
                     body_text = decrypted
                     body_html = null
@@ -3918,6 +3931,7 @@ class MailRepository @Inject constructor(
             body_html != envelope.body_html ||
             resolved_subject != envelope.subject ||
             is_undecryptable != envelope.is_undecryptable ||
+            is_decrypt_pending != envelope.is_decrypt_pending ||
             is_unauthenticated != envelope.is_unauthenticated ||
             pgp_encrypted != envelope.pgp_encrypted ||
             pgp_signature != envelope.pgp_signature
@@ -3927,6 +3941,7 @@ class MailRepository @Inject constructor(
                 body_text = body_text,
                 body_html = body_html,
                 is_undecryptable = is_undecryptable,
+                is_decrypt_pending = is_decrypt_pending,
                 is_unauthenticated = is_unauthenticated,
                 pgp_encrypted = pgp_encrypted,
                 pgp_signature = pgp_signature,

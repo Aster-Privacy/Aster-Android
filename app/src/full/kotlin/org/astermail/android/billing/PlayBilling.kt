@@ -61,7 +61,7 @@ object PlayBilling : PlayStore {
     private val product_details = ConcurrentHashMap<String, ProductDetails>()
 
     private val listener = PurchasesUpdatedListener { result, purchases ->
-        val outcome = outcome_for(result, purchases)
+        val outcome = outcome_for(result, purchases, after_launch = true)
         val owner = synchronized(lock) {
             val waiting = pending_flow
             val owns = waiting != null && (purchases.isNullOrEmpty() || purchases.any { waiting.product_id in it.products })
@@ -75,7 +75,11 @@ object PlayBilling : PlayStore {
         }
     }
 
-    private fun outcome_for(result: BillingResult, purchases: List<Purchase>?): PlayPurchaseOutcome =
+    private fun outcome_for(
+        result: BillingResult,
+        purchases: List<Purchase>?,
+        after_launch: Boolean = false,
+    ): PlayPurchaseOutcome =
         when (result.responseCode) {
             BillingClient.BillingResponseCode.OK -> {
                 val owned = purchases.orEmpty().map { it.to_owned() }
@@ -89,7 +93,8 @@ object PlayBilling : PlayStore {
             }
             BillingClient.BillingResponseCode.USER_CANCELED -> PlayPurchaseOutcome.Cancelled
             BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> PlayPurchaseOutcome.AlreadyOwned
-            BillingClient.BillingResponseCode.BILLING_UNAVAILABLE,
+            BillingClient.BillingResponseCode.BILLING_UNAVAILABLE ->
+                if (after_launch) PlayPurchaseOutcome.PaymentDeclined else PlayPurchaseOutcome.Unavailable
             BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED,
             BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE,
             -> PlayPurchaseOutcome.Unavailable

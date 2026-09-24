@@ -30,6 +30,21 @@ import org.astermail.android.storage.search.FolderRowDao
 
 private const val folder_cache_meta_prefs = "aster_folder_cache_meta"
 private const val folder_cache_layout_key = "layout_signature"
+private const val folder_cache_stats_prefix = "stats_"
+private val folder_cache_stats_json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+
+fun clear_folder_cache_stats(context: android.content.Context, account_id: String?) {
+    runCatching {
+        val prefs = context.getSharedPreferences(folder_cache_meta_prefs, android.content.Context.MODE_PRIVATE)
+        val editor = prefs.edit()
+        if (account_id == null) {
+            prefs.all.keys.filter { it.startsWith(folder_cache_stats_prefix) }.forEach { editor.remove(it) }
+        } else {
+            editor.remove(folder_cache_stats_prefix + account_id)
+        }
+        editor.apply()
+    }
+}
 
 @Singleton
 class FolderCacheStore @Inject constructor(
@@ -48,6 +63,29 @@ class FolderCacheStore @Inject constructor(
 
     fun set_layout_signature(signature: String) {
         runCatching { meta?.edit()?.putString(folder_cache_layout_key, signature)?.apply() }
+    }
+
+    fun cached_stats(account_id: String?): org.astermail.android.api.mail.MailUserStatsResponse? {
+        if (account_id.isNullOrBlank()) return null
+        val raw = runCatching { meta?.getString(folder_cache_stats_prefix + account_id, null) }.getOrNull()
+            ?: return null
+        return runCatching {
+            folder_cache_stats_json.decodeFromString(
+                org.astermail.android.api.mail.MailUserStatsResponse.serializer(),
+                raw,
+            )
+        }.getOrNull()
+    }
+
+    fun save_stats(account_id: String?, stats: org.astermail.android.api.mail.MailUserStatsResponse) {
+        if (account_id.isNullOrBlank()) return
+        runCatching {
+            val raw = folder_cache_stats_json.encodeToString(
+                org.astermail.android.api.mail.MailUserStatsResponse.serializer(),
+                stats,
+            )
+            meta?.edit()?.putString(folder_cache_stats_prefix + account_id, raw)?.apply()
+        }
     }
 
     suspend fun rows(folder: String, limit: Int = folder_cache_row_limit): List<InboxItem> =

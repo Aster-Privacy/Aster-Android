@@ -181,3 +181,38 @@ fun folder_cache_apply_overrides(
     if (starred != null && starred != updated.is_starred) updated = updated.copy(is_starred = starred)
     updated
 }
+
+fun carry_decrypted_content(item: InboxItem, previous: InboxItem?): InboxItem {
+    if (!item.is_undecryptable || previous == null || previous.is_undecryptable) return item
+    return item.copy(
+        sender_name = previous.sender_name,
+        sender_email = previous.sender_email,
+        subject = previous.subject,
+        preview = previous.preview,
+        category = previous.category,
+        received_on = previous.received_on ?: item.received_on,
+        display_sender_name = previous.display_sender_name,
+        display_sender_email = previous.display_sender_email,
+        to_addresses = previous.to_addresses,
+        is_undecryptable = false,
+        is_decrypt_pending = false,
+    )
+}
+
+fun folder_cache_carry_decrypted(items: List<InboxItem>, previous: List<InboxItem>): List<InboxItem> {
+    if (previous.isEmpty() || items.none { it.is_undecryptable }) return items
+    val previous_by_id = previous.associateBy { it.id }
+    return items.map { carry_decrypted_content(it, previous_by_id[it.id]) }
+}
+
+fun folder_cache_mark_placeholders(
+    rows: List<InboxItem>,
+    placeholder_sender: String,
+    placeholder_subject: String,
+): List<InboxItem> = rows.map { row ->
+    if (!row.is_undecryptable && row.sender_name == placeholder_sender && row.subject == placeholder_subject) {
+        row.copy(is_undecryptable = true)
+    } else {
+        row
+    }
+}

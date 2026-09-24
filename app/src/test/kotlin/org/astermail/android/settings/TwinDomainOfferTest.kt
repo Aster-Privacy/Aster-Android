@@ -21,33 +21,102 @@
 
 package org.astermail.android.settings
 
+import org.astermail.android.api.settings.TwinAddressResponse
+import org.astermail.android.api.settings.TwinSibling
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TwinDomainOfferTest {
 
     @Test
-    fun a_free_plan_is_not_offered_a_premium_matching_address() {
-        assertFalse(twin_domain_offerable("astermail.me", "available", premium_allowed = false))
-        assertFalse(twin_domain_offerable("astermail.net", "reserved", premium_allowed = false))
-    }
-
-    @Test
-    fun a_free_plan_keeps_the_standard_matching_address() {
-        assertTrue(twin_domain_offerable("aster.cx", "available", premium_allowed = false))
-        assertTrue(twin_domain_offerable("astermail.org", "reserved", premium_allowed = false))
-    }
-
-    @Test
-    fun a_premium_plan_is_offered_every_matching_address() {
-        assertTrue(twin_domain_offerable("astermail.me", "available", premium_allowed = true))
-        assertTrue(twin_domain_offerable("astermail.net", "reserved", premium_allowed = true))
+    fun only_the_aster_cx_matching_address_is_offered() {
+        assertTrue(twin_domain_offerable("aster.cx", "available"))
+        assertTrue(twin_domain_offerable("aster.cx", "reserved"))
+        assertFalse(twin_domain_offerable("astermail.me", "available"))
+        assertFalse(twin_domain_offerable("astermail.net", "reserved"))
+        assertFalse(twin_domain_offerable("astermail.org", "reserved"))
     }
 
     @Test
     fun a_taken_or_claimed_address_is_never_offered() {
-        assertFalse(twin_domain_offerable("aster.cx", "taken", premium_allowed = true))
-        assertFalse(twin_domain_offerable("astermail.me", "claimed", premium_allowed = true))
+        assertFalse(twin_domain_offerable("aster.cx", "taken"))
+        assertFalse(twin_domain_offerable("aster.cx", "claimed"))
+    }
+
+    @Test
+    fun sibling_list_is_narrowed_to_aster_cx() {
+        val twin = TwinAddressResponse(
+            address = "user@aster.cx",
+            domain = "aster.cx",
+            local_part = "user",
+            state = "reserved",
+            siblings = listOf(
+                TwinSibling("user@aster.cx", "aster.cx", "user", "reserved"),
+                TwinSibling("user@astermail.me", "astermail.me", "user", "reserved"),
+                TwinSibling("user@astermail.net", "astermail.net", "user", "available"),
+            ),
+        )
+        assertEquals(listOf("user@aster.cx"), offerable_twin_siblings(twin).map { it.address })
+        assertTrue(offerable_twin_siblings(null).isEmpty())
+    }
+
+    @Test
+    fun seed_derives_the_aster_cx_address_from_the_primary_address() {
+        val seeded = seed_twin_address("User.Name@astermail.org", emptyList())
+        assertEquals("user.name@aster.cx", seeded?.address)
+        assertEquals(listOf("user.name@aster.cx"), offerable_twin_siblings(seeded).map { it.address })
+    }
+
+    @Test
+    fun seed_hides_an_address_the_account_already_owns() {
+        val seeded = seed_twin_address("user@astermail.org", listOf("user@aster.cx"))
+        assertTrue(offerable_twin_siblings(seeded).isEmpty())
+    }
+
+    @Test
+    fun a_seeded_twin_waits_for_the_alias_list() {
+        val seeded = seed_twin_address("user@astermail.org", emptyList())
+        assertTrue(twin_offer_siblings(seeded, emptyList(), verified = false, owned_loaded = false).isEmpty())
+        assertEquals(
+            listOf("user@aster.cx"),
+            twin_offer_siblings(seeded, emptyList(), verified = false, owned_loaded = true).map { it.address },
+        )
+    }
+
+    @Test
+    fun a_twin_the_account_already_owns_is_not_offered_once_aliases_load() {
+        val seeded = seed_twin_address("user.name@astermail.org", emptyList())
+        assertTrue(
+            twin_offer_siblings(seeded, listOf("UserName@aster.cx"), verified = false, owned_loaded = true).isEmpty(),
+        )
+        assertTrue(
+            twin_offer_siblings(seeded, listOf("user.name@aster.cx"), verified = true, owned_loaded = false).isEmpty(),
+        )
+    }
+
+    @Test
+    fun a_verified_twin_shows_before_aliases_load() {
+        val twin = TwinAddressResponse(
+            address = "user@aster.cx",
+            domain = "aster.cx",
+            local_part = "user",
+            state = "reserved",
+        )
+        assertEquals(
+            listOf("user@aster.cx"),
+            twin_offer_siblings(twin, emptyList(), verified = true, owned_loaded = false).map { it.address },
+        )
+    }
+
+    @Test
+    fun seed_skips_accounts_without_a_twin() {
+        assertNull(seed_twin_address("user@aster.cx", emptyList()))
+        assertNull(seed_twin_address("user@example.com", emptyList()))
+        assertNull(seed_twin_address("12345@astermail.org", emptyList()))
+        assertNull(seed_twin_address("", emptyList()))
+        assertNull(seed_twin_address(null, emptyList()))
     }
 }

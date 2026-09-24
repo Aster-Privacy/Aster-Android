@@ -150,7 +150,7 @@ class MailViewModel @Inject constructor(
         viewModelScope.launch { repository.backfill_sender_alias(hash_by_address) }
     }
 
-    private val _inbox_state = MutableStateFlow(InboxUiState())
+    private val _inbox_state = MutableStateFlow(InboxUiState(stats = cached_stats_for_account()))
     val inbox_state: StateFlow<InboxUiState> = _inbox_state.asStateFlow()
 
     private val _thread_state = MutableStateFlow(ThreadUiState())
@@ -451,6 +451,8 @@ class MailViewModel @Inject constructor(
     private var configured_page_size: Int = 50
     private var inbox_load_job: Job? = null
     private var last_stats_load_ms = 0L
+    @Volatile private var stats_seed_blocked_account: String? = null
+    @Volatile private var stats_owner_account: String? = current_account_id_or_null()
     private var stats_job: Job? = null
     private val _emptying_spam = MutableStateFlow(false)
     val emptying_spam_state: StateFlow<Boolean> = _emptying_spam.asStateFlow()
@@ -498,9 +500,47 @@ class MailViewModel @Inject constructor(
     private val failed_open_ids = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
     private val index_read_overlay: (String) -> Boolean? = { id -> read_overrides[id] }
 
+    private fun current_account_id_or_null(): String? =
+        runCatching { repository.current_account_id() }.getOrNull()
+
+    private fun cached_stats_for_account(): MailUserStatsResponse? =
+        runCatching { folder_cache_store.cached_stats(repository.current_account_id()) }.getOrNull()
+
+    private fun seed_cached_stats() {
+        val account_id = current_account_id_or_null()
+        val owner = stats_owner_account
+        val stale_owner = owner != null && account_id != null && owner != account_id
+        if (_inbox_state.value.stats != null && !stale_owner) return
+        if (stale_owner) {
+            stats_owner_account = null
+            _inbox_state.update { it.copy(stats = null, stats_loaded_at = 0L) }
+        }
+        if (account_id == null) return
+        val blocked = stats_seed_blocked_account
+        if (blocked != null) {
+            if (account_id == blocked) return
+            stats_seed_blocked_account = null
+        }
+        val cached = runCatching { folder_cache_store.cached_stats(account_id) }.getOrNull() ?: return
+        stats_owner_account = account_id
+        _inbox_state.update { if (it.stats == null) it.copy(stats = cached) else it }
+    }
+
     init {
         search_index_manager.add_read_overlay(index_read_overlay)
         prime_folder_cache(_inbox_state.value.current_folder)
+        viewModelScope.launch {
+            _inbox_state
+                .map { state -> state.stats?.let { Triple(it, stats_owner_account, account_generation) } }
+                .distinctUntilChanged()
+                .debounce(folder_cache_persist_debounce_ms)
+                .collect { snapshot ->
+                    val owner = snapshot?.second
+                    if (snapshot != null && owner != null && snapshot.third == account_generation) {
+                        runCatching { folder_cache_store.save_stats(owner, snapshot.first) }
+                    }
+                }
+        }
         viewModelScope.launch {
             _inbox_state
                 .map {
@@ -530,7 +570,10 @@ class MailViewModel @Inject constructor(
     }
 
     private fun persist_folder_rows(folder: String, items: List<InboxItem>) {
-        val snapshot = items.take(folder_cache_row_limit)
+        val snapshot = folder_cache_carry_decrypted(
+            items.take(folder_cache_row_limit),
+            disk_rows[folder].orEmpty(),
+        )
         disk_rows[folder] = snapshot
         disk_probed.add(folder)
         viewModelScope.launch {
@@ -542,7 +585,11 @@ class MailViewModel @Inject constructor(
         if (disk_probed.contains(folder)) return
         if (disk_probe_jobs[folder]?.isActive == true) return
         val job = viewModelScope.launch {
-            val rows = runCatching { folder_cache_store.rows(folder) }.getOrNull().orEmpty()
+            val rows = folder_cache_mark_placeholders(
+                runCatching { folder_cache_store.rows(folder) }.getOrNull().orEmpty(),
+                context.getString(R.string.encrypted),
+                context.getString(R.string.decrypt_failed_title),
+            )
             disk_probed.add(folder)
             if (rows.isNotEmpty()) disk_rows[folder] = rows
             publish_disk_rows(folder, rows)
@@ -668,6 +715,9 @@ class MailViewModel @Inject constructor(
         restore_protected_until.clear()
         removed_protected_until.clear()
         last_stats_load_ms = 0L
+        stats_job?.cancel()
+        stats_seed_blocked_account = current_account_id_or_null()
+        stats_owner_account = null
         star_overrides.clear()
         pin_overrides.clear()
         tag_overrides.clear()
@@ -805,15 +855,7 @@ class MailViewModel @Inject constructor(
             page.items.filter { !removal_suppressed(it.id, folder, now) }
         }
         if (previous_items.isEmpty()) return MergeResult(live_items, false)
-        val previous_by_id = previous_items.associateBy { it.id }
-        val adjusted = live_items.map { item ->
-            val prev = previous_by_id[item.id]
-            if (item.is_undecryptable && prev != null && !prev.is_undecryptable) {
-                item.copy(category = prev.category)
-            } else {
-                item
-            }
-        }
+        val adjusted = folder_cache_carry_decrypted(live_items, previous_items)
         val page_ids = adjusted.mapTo(HashSet()) { it.id }
         val ascending = list_order != null
         val whole_scope = !page.has_more
@@ -1326,13 +1368,17 @@ class MailViewModel @Inject constructor(
             default_ttl_ms = STATS_TTL_MS,
             low_network = org.astermail.android.api.network.low_network_state.active(),
         )
+        seed_cached_stats()
         if (!force && _inbox_state.value.stats != null && now - last_stats_load_ms < stats_ttl) return
         stats_job?.cancel()
+        val gen = account_generation
+        val account_id = current_account_id_or_null()
         stats_job = viewModelScope.launch {
             delay(maxOf(STATS_DEBOUNCE_MS, stats_dirty_until - System.currentTimeMillis()))
             last_stats_load_ms = System.currentTimeMillis()
             val started = override_clock_ms()
             repository.get_stats().onSuccess { stats ->
+                if (gen != account_generation || current_account_id_or_null() != account_id) return@onSuccess
                 val pending = read_flips.values.sumOf { flip ->
                     val confirmed_at = flip.confirmed_at
                     val step: Int = when {
@@ -1347,6 +1393,8 @@ class MailViewModel @Inject constructor(
                     if (confirmed_at != null && confirmed_at <= started) flip.copy(stats_absorbed = true) else flip
                 }
                 prune_read_flips()
+                stats_owner_account = account_id
+                if (account_id == stats_seed_blocked_account) stats_seed_blocked_account = null
                 _inbox_state.update {
                     it.copy(
                         stats = stats.copy(unread = (stats.unread + pending).coerceAtLeast(0)),

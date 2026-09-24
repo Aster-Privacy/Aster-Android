@@ -3275,19 +3275,20 @@
     <string name="special_offer_unavailable">Esta oferta não está mais disponível.</string>
     <string name="special_offer_price_period">por mês</string>
     <string name="special_offer_dismiss">Não mostrar esta oferta novamente</string>
+    <string name="special_offer_success_title">Agora você tem o Nova</string>
+    <string name="special_offer_success_body">Seu preço com desconto já foi aplicado, e todos os recursos do Nova estão prontos para usar.</string>
     <string name="special_offer_why_label">Por que esta oferta?</string>
-    <string name="special_offer_why_body">O Aster é uma empresa independente com uma equipe pequena. As assinaturas mantêm o serviço funcionando e financiam novos recursos, e esta oferta torna mais fácil começar.</string>
+    <string name="special_offer_why_body">O Aster é uma empresa independente com uma equipe pequena, e o seu apoio significa muito para nós. As assinaturas mantêm o serviço funcionando e nos permitem continuar desenvolvendo o Aster com cuidado todos os dias. Esta oferta torna mais fácil começar.</string>
     <string name="special_offer_entry">Oferta especial</string>
     <string name="special_offer_cta_claim">Garantir %1$d%% de desconto</string>
     <string name="special_offer_benefit_aliases_title">Aliases ilimitados</string>
     <string name="special_offer_benefit_storage_title">500 GB de armazenamento criptografado</string>
     <string name="special_offer_benefit_domains_title">Até 30 domínios personalizados</string>
-    <string name="special_offer_benefit_attachments_title">Anexos de até 100 MB</string>
+    <string name="special_offer_benefit_vanguard_title">Aster Vanguard</string>
     <string name="special_offer_benefit_aliases_body">Dê a cada site um endereço próprio.</string>
     <string name="special_offer_benefit_storage_body">Espaço para anos de e-mails e arquivos.</string>
     <string name="special_offer_benefit_domains_body">Envie de endereços nos seus próprios domínios.</string>
-    <string name="special_offer_benefit_attachments_body">Envie arquivos grandes como anexos.</string>
-    <string name="special_offer_entry_title">%1$d%% de desconto no Nova</string>
+    <string name="special_offer_benefit_vanguard_body">Bloqueio do app e proteção avançada da privacidade.</string>
     <string name="special_offers">Ofertas especiais</string>
     <string name="special_offers_description">Mostre ofertas ocasionais de planos com desconto no app. Com esta opção desativada, você não vê ofertas e não entra nos resultados das ofertas.</string>
     <string name="special_offers_save_failed">Sua preferência de ofertas especiais não foi salva. Tente de novo.</string>
@@ -3488,6 +3489,7 @@
     <string name="error_passkey_timed_out">A solicitação da chave de acesso expirou. Tente novamente.</string>
     <string name="billing_play_unavailable">As compras pelo Google Play não estão disponíveis no momento. Tente novamente mais tarde.</string>
     <string name="billing_play_failed">O Google Play não conseguiu concluir sua compra. Tente novamente.</string>
+    <string name="billing_play_payment_declined">O Google Play não conseguiu processar seu pagamento. Verifique sua forma de pagamento e tente novamente.</string>
     <string name="billing_play_pending">Sua compra está pendente. Seu plano será ativado quando o Google Play confirmar o pagamento.</string>
     <string name="billing_play_success">Seu plano está ativo.</string>
     <string name="billing_play_blocked">Você já tem uma assinatura. Para alterá-la, gerencie-a onde você a comprou.</string>
@@ -3499,4 +3501,5 @@
     <string name="billing_play_restore_none">Não há compras para restaurar na conta do Google deste dispositivo.</string>
     <string name="billing_play_offer_unavailable">Esta oferta não está disponível para sua conta.</string>
     <string name="billing_play_addon_success">Seu armazenamento extra está ativo.</string>
+    <string name="billing_play_already_owned">Você já tem esta assinatura no Google Play. O Aster Mail está adicionando-a à sua conta.</string>
 </resources>

@@ -3257,19 +3257,20 @@
     <string name="special_offer_unavailable">このオファーは終了しました。</string>
     <string name="special_offer_price_period">/月</string>
     <string name="special_offer_dismiss">このオファーを今後表示しない</string>
+    <string name="special_offer_success_title">Nova をご利用いただけます</string>
+    <string name="special_offer_success_body">割引価格が適用され、Nova のすべての機能をすぐにお使いいただけます。</string>
     <string name="special_offer_why_label">このオファーを提供する理由</string>
-    <string name="special_offer_why_body">Aster は小規模なチームで運営する独立系企業です。サブスクリプションがサービスの運営と新機能の開発を支えています。このオファーで、より気軽に始められます。</string>
+    <string name="special_offer_why_body">Aster は小さなチームで運営する独立した企業で、皆さまのご支援は私たちにとって大きな意味があります。サブスクリプションはサービスの運営を支え、Aster を毎日丁寧に開発し続けることを可能にしています。このオファーで、より気軽に始めていただけます。</string>
     <string name="special_offer_entry">特別オファー</string>
     <string name="special_offer_cta_claim">%1$d%%オフで始める</string>
     <string name="special_offer_benefit_aliases_title">エイリアス無制限</string>
     <string name="special_offer_benefit_storage_title">500 GBの暗号化ストレージ</string>
     <string name="special_offer_benefit_domains_title">カスタムドメイン最大30個</string>
-    <string name="special_offer_benefit_attachments_title">100 MBまでの添付ファイル</string>
+    <string name="special_offer_benefit_vanguard_title">Aster Vanguard</string>
     <string name="special_offer_benefit_aliases_body">サイトごとに専用のアドレスを使えます。</string>
     <string name="special_offer_benefit_storage_body">何年分ものメールとファイルを保存できます。</string>
     <string name="special_offer_benefit_domains_body">独自ドメインのアドレスから送信できます。</string>
-    <string name="special_offer_benefit_attachments_body">大きなファイルも添付して送れます。</string>
-    <string name="special_offer_entry_title">Nova が%1$d%%オフ</string>
+    <string name="special_offer_benefit_vanguard_body">アプリロックと高度なプライバシー保護。</string>
     <string name="special_offers">特別オファー</string>
     <string name="special_offers_description">割引されたプランのオファーをアプリ内でときどき表示します。オフにすると、オファーは表示されず、オファーの結果にも含まれません。</string>
     <string name="special_offers_save_failed">特別オファーの設定を保存できませんでした。もう一度お試しください。</string>
@@ -3470,6 +3471,7 @@
     <string name="error_passkey_timed_out">パスキーのリクエストがタイムアウトしました。もう一度お試しください。</string>
     <string name="billing_play_unavailable">現在 Google Play での購入はご利用いただけません。しばらくしてからもう一度お試しください。</string>
     <string name="billing_play_failed">Google Play で購入を完了できませんでした。もう一度お試しください。</string>
+    <string name="billing_play_payment_declined">Google Play でお支払いを処理できませんでした。お支払い方法を確認して、もう一度お試しください。</string>
     <string name="billing_play_pending">購入は保留中です。Google Play が支払いを確認すると、プランが有効になります。</string>
     <string name="billing_play_success">プランが有効になりました。</string>
     <string name="billing_play_blocked">すでにサブスクリプションをお持ちです。変更するには、購入した場所で管理してください。</string>
@@ -3481,4 +3483,5 @@
     <string name="billing_play_restore_none">このデバイスの Google アカウントには復元できる購入がありません。</string>
     <string name="billing_play_offer_unavailable">このオファーはお使いのアカウントではご利用いただけません。</string>
     <string name="billing_play_addon_success">追加ストレージが有効になりました。</string>
+    <string name="billing_play_already_owned">このサブスクリプションはすでに Google Play で購入済みです。Aster Mail がアカウントに追加しています。</string>
 </resources>

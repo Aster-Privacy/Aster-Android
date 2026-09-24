@@ -114,8 +114,8 @@ internal fun billing_cta_button(
     val colors = AsterMaterial.colors
     val shape = SquircleShape(14.dp)
     val outlined_surface = Modifier
-        .acrylic(colors, shape, colors.bg_card)
-        .border(BorderStroke(1.dp, colors.border_primary), shape)
+        .background(lerp(colors.bg_card, colors.text_primary, 0.10f), shape)
+        .border(BorderStroke(1.dp, colors.text_primary.copy(alpha = 0.16f)), shape)
     Box(
         modifier = modifier
             .fillMaxWidth()

@@ -974,6 +974,7 @@ class AuthRepository @Inject constructor(
             sign_out_internal(remove_account = true)
             if (!_is_signed_in.value) break
         }
+        runCatching { org.astermail.android.mail.clear_folder_cache_stats(context, null) }
         _active_account_id.value = null
         _is_signed_in.value = false
     }
@@ -1023,6 +1024,7 @@ class AuthRepository @Inject constructor(
         runCatching { database.folder_row_dao().clear_all() }
         runCatching { database.message_body_dao().clear_all() }
         runCatching { database.thread_snapshot_dao().clear_all() }
+        current_id?.let { runCatching { org.astermail.android.mail.clear_folder_cache_stats(context, it) } }
         if (remove_account) {
             runCatching {
                 current_id?.let { database.pending_send_dao().clear_for_account(it) }
@@ -1386,6 +1388,7 @@ class AuthRepository @Inject constructor(
         database.thread_snapshot_dao().clear_all()
         current_email?.let { trusted_device_store.clear(it) }
         if (current_id != null) {
+            runCatching { org.astermail.android.mail.clear_folder_cache_stats(context, current_id) }
             account_store.remove(current_id)
             runCatching { session_snapshot_store.remove(current_id) }
         }

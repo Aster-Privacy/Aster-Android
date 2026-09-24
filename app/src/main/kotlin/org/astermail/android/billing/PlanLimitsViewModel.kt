@@ -67,6 +67,9 @@ class PlanLimitsViewModel @Inject constructor(
 
     init {
         load()
+        viewModelScope.launch {
+            SubscriptionEvents.changed.collect { load() }
+        }
     }
 
     fun load() {

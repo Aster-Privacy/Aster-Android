@@ -106,6 +106,7 @@ data class CheckoutSessionRequest(
     val test_mode: Boolean = false,
     val success_url: String? = null,
     val cancel_url: String? = null,
+    val special_offer: Boolean = false,
 )
 
 @Serializable
@@ -341,6 +342,7 @@ data class CryptoCheckoutRequest(
     val term_months: Int,
     val success_url: String? = null,
     val cancel_url: String? = null,
+    val special_offer: Boolean = false,
 )
 
 @Serializable

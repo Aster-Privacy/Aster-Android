@@ -3165,19 +3165,20 @@
     <string name="special_offer_unavailable">यह ऑफ़र अब उपलब्ध नहीं है।</string>
     <string name="special_offer_price_period">प्रति माह</string>
     <string name="special_offer_dismiss">यह ऑफ़र दोबारा न दिखाएँ</string>
+    <string name="special_offer_success_title">अब आप Nova पर हैं</string>
+    <string name="special_offer_success_body">आपकी छूट वाली कीमत लागू हो गई है, और Nova की सभी सुविधाएं इस्तेमाल के लिए तैयार हैं।</string>
     <string name="special_offer_why_label">यह ऑफ़र क्यों?</string>
-    <string name="special_offer_why_body">Aster एक छोटी टीम वाली स्वतंत्र कंपनी है। सदस्यताएं सेवा को चालू रखती हैं और नई सुविधाओं का खर्च उठाती हैं, और यह ऑफ़र शुरुआत करना आसान बनाता है।</string>
+    <string name="special_offer_why_body">Aster एक छोटी टीम वाली स्वतंत्र कंपनी है, और आपका समर्थन हमारे लिए बहुत मायने रखता है। सदस्यताएँ सेवा को चालू रखती हैं और हमें हर दिन ध्यान से Aster को बेहतर बनाते रहने में मदद करती हैं। यह ऑफ़र शुरुआत करना आसान बनाता है।</string>
     <string name="special_offer_entry">विशेष ऑफ़र</string>
     <string name="special_offer_cta_claim">%1$d%% छूट पाएं</string>
     <string name="special_offer_benefit_aliases_title">असीमित उपनाम</string>
     <string name="special_offer_benefit_storage_title">500 GB एन्क्रिप्टेड स्टोरेज</string>
     <string name="special_offer_benefit_domains_title">30 तक कस्टम डोमेन</string>
-    <string name="special_offer_benefit_attachments_title">100 MB तक अटैचमेंट</string>
+    <string name="special_offer_benefit_vanguard_title">Aster Vanguard</string>
     <string name="special_offer_benefit_aliases_body">हर साइट को उसका अपना पता दें।</string>
     <string name="special_offer_benefit_storage_body">सालों के मेल और फ़ाइलों के लिए जगह।</string>
     <string name="special_offer_benefit_domains_body">अपने डोमेन के पतों से मेल भेजें।</string>
-    <string name="special_offer_benefit_attachments_body">बड़ी फ़ाइलें अटैचमेंट के रूप में भेजें।</string>
-    <string name="special_offer_entry_title">Nova पर %1$d%% छूट</string>
+    <string name="special_offer_benefit_vanguard_body">ऐप लॉक और उन्नत गोपनीयता सुरक्षा।</string>
     <string name="special_offers">विशेष ऑफ़र</string>
     <string name="special_offers_description">ऐप में समय-समय पर छूट वाले प्लान ऑफ़र दिखाएं। इसे बंद करने पर आपको ऑफ़र नहीं दिखते और आपको ऑफ़र के नतीजों में नहीं गिना जाता।</string>
     <string name="special_offers_save_failed">आपकी विशेष ऑफ़र सेटिंग सहेजी नहीं गई। फिर से कोशिश करें।</string>
@@ -3378,6 +3379,7 @@
     <string name="error_passkey_timed_out">पासकी अनुरोध का समय समाप्त हो गया। फिर से कोशिश करें।</string>
     <string name="billing_play_unavailable">Google Play से खरीदारी अभी उपलब्ध नहीं है। बाद में फिर से कोशिश करें।</string>
     <string name="billing_play_failed">Google Play आपकी खरीदारी पूरी नहीं कर सका। फिर से कोशिश करें।</string>
+    <string name="billing_play_payment_declined">Google Play आपका भुगतान प्रोसेस नहीं कर सका। अपना भुगतान तरीका जांचें और फिर से कोशिश करें।</string>
     <string name="billing_play_pending">आपकी खरीदारी लंबित है। Google Play के भुगतान की पुष्टि करने के बाद आपका प्लान चालू हो जाएगा।</string>
     <string name="billing_play_success">आपका प्लान चालू है।</string>
     <string name="billing_play_blocked">आपके पास पहले से एक सदस्यता है। इसे बदलने के लिए, वहीं प्रबंधित करें जहां से आपने इसे खरीदा था।</string>
@@ -3389,4 +3391,5 @@
     <string name="billing_play_restore_none">इस डिवाइस के Google खाते के लिए बहाल करने लायक कोई खरीदारी नहीं है।</string>
     <string name="billing_play_offer_unavailable">यह ऑफ़र आपके खाते के लिए उपलब्ध नहीं है।</string>
     <string name="billing_play_addon_success">आपका अतिरिक्त स्टोरेज सक्रिय है।</string>
+    <string name="billing_play_already_owned">आपके पास Google Play पर यह सदस्यता पहले से है। Aster Mail इसे आपके खाते में जोड़ रहा है।</string>
 </resources>

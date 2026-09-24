@@ -80,6 +80,16 @@ class PreferencesCacheStore(context: Context? = null) {
         runCatching { prefs?.edit()?.putString(key, payload)?.apply() }
     }
 
+    fun read_twin_address(account_key: String?): String? {
+        val key = twin_entry_key(account_key) ?: return null
+        return runCatching { prefs?.getString(key, null) }.getOrNull()
+    }
+
+    fun write_twin_address(account_key: String?, payload: String) {
+        val key = twin_entry_key(account_key) ?: return
+        runCatching { prefs?.edit()?.putString(key, payload)?.apply() }
+    }
+
     fun read_tags(account_key: String?): String? {
         val key = tag_entry_key(account_key) ?: return null
         return runCatching { prefs?.getString(key, null) }.getOrNull()
@@ -97,6 +107,7 @@ class PreferencesCacheStore(context: Context? = null) {
         val signature_key = signature_entry_key(account_key)
         val alias_key = alias_entry_key(account_key)
         val tag_key = tag_entry_key(account_key)
+        val twin_key = twin_entry_key(account_key)
         runCatching {
             prefs?.edit()?.apply {
                 remove(key)
@@ -105,6 +116,7 @@ class PreferencesCacheStore(context: Context? = null) {
                 if (signature_key != null) remove(signature_key)
                 if (alias_key != null) remove(alias_key)
                 if (tag_key != null) remove(tag_key)
+                if (twin_key != null) remove(twin_key)
             }?.commit()
         }
     }
@@ -149,6 +161,12 @@ class PreferencesCacheStore(context: Context? = null) {
         return "$alias_key_prefix$id"
     }
 
+    private fun twin_entry_key(account_key: String?): String? {
+        val id = account_key?.trim().orEmpty()
+        if (id.isEmpty()) return null
+        return "$twin_key_prefix$id"
+    }
+
     private companion object {
         const val prefs_name = "aster_preferences_cache"
         const val key_prefix = "prefs_json_"
@@ -157,5 +175,6 @@ class PreferencesCacheStore(context: Context? = null) {
         const val signature_key_prefix = "signatures_json_"
         const val alias_key_prefix = "alias_prefs_json_"
         const val tag_key_prefix = "tags_json_"
+        const val twin_key_prefix = "twin_address_json_"
     }
 }

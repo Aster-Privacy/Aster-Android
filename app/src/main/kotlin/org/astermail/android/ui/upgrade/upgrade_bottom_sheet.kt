@@ -150,8 +150,6 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
     val plan_state by plan_vm.state.collectAsStateWithLifecycle()
     val billing_vm: BillingViewModel = org.astermail.android.billing.billing_view_model()
     val billing_state by billing_vm.state.collectAsStateWithLifecycle()
-    val offer_vm = special_offer_view_model()
-    val offer_state by offer_vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     LaunchedEffect(state.is_open) { if (state.is_open) plan_vm.load() }
 
@@ -184,7 +182,6 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
         ?: billing_state.subscription?.currency?.takeIf { it.isNotBlank() }
         ?: "usd"
     val save_percent = upgrade_yearly_save_percent(plans)
-    val offer_badge = stringResource(R.string.save_percent, offer_state.effective_percent_off)
     var selected_code by remember { mutableStateOf<String?>(null) }
     val recommended_code = plan_options.firstOrNull { it.code.lowercase() == "nova" }?.code
         ?: plan_options.firstOrNull()?.code
@@ -415,20 +412,7 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
                         } else {
                             null
                         },
-                        offer = if (
-                            plan.price_cents > 0 &&
-                            !play_install &&
-                            offer_state.applies_to_card(plan.code.lowercase(), effective_interval)
-                        ) {
-                            special_offer_price_pair(
-                                plan.price_cents.toLong(),
-                                offer_state.effective_percent_off,
-                                currency,
-                                offer_badge,
-                            )
-                        } else {
-                            null
-                        },
+                        offer = null,
                         on_select = { selected_code = plan.code },
                     )
                     Spacer(Modifier.height(AsterSpacing.md))

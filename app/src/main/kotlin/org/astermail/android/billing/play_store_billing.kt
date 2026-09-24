@@ -69,6 +69,7 @@ sealed interface PlayPurchaseOutcome {
     data object Cancelled : PlayPurchaseOutcome
     data object AlreadyOwned : PlayPurchaseOutcome
     data object Unavailable : PlayPurchaseOutcome
+    data object PaymentDeclined : PlayPurchaseOutcome
     data class Failed(val response_code: Int) : PlayPurchaseOutcome
 }
 
@@ -91,6 +92,7 @@ data class PlayPurchaseRequest(
     val obfuscated_account_id: String,
     val old_purchase_token: String?,
     val replacement_mode: PlayReplacementMode = PlayReplacementMode.WITH_TIME_PRORATION,
+    val special_offer: Boolean = false,
 )
 
 fun installed_from_play(context: Context): Boolean = runCatching {

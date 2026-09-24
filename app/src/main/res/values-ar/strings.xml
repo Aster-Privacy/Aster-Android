@@ -3359,19 +3359,20 @@
     <string name="special_offer_unavailable">لم يعد هذا العرض متاحًا.</string>
     <string name="special_offer_price_period">شهريًا</string>
     <string name="special_offer_dismiss">عدم عرض هذا العرض مرة أخرى</string>
+    <string name="special_offer_success_title">أصبحت مشتركًا في Nova</string>
+    <string name="special_offer_success_body">تم تطبيق السعر المخفَّض، وجميع ميزات Nova جاهزة للاستخدام.</string>
     <string name="special_offer_why_label">لماذا هذا العرض؟</string>
-    <string name="special_offer_why_body">Aster شركة مستقلة بفريق صغير. تحافظ الاشتراكات على استمرار الخدمة وتموّل الميزات الجديدة، ويسهّل عليك هذا العرض البدء.</string>
+    <string name="special_offer_why_body">Aster شركة مستقلة يديرها فريق صغير، ودعمك يعني لنا الكثير. تحافظ الاشتراكات على استمرار الخدمة وتتيح لنا مواصلة تطوير Aster بعناية كل يوم. يسهّل عليك هذا العرض البدء.</string>
     <string name="special_offer_entry">عرض خاص</string>
     <string name="special_offer_cta_claim">احصل على خصم %1$d%%</string>
     <string name="special_offer_benefit_aliases_title">أسماء مستعارة غير محدودة</string>
     <string name="special_offer_benefit_storage_title">مساحة تخزين مشفرة بسعة 500 GB</string>
     <string name="special_offer_benefit_domains_title">حتى 30 نطاقًا مخصصًا</string>
-    <string name="special_offer_benefit_attachments_title">مرفقات حتى 100 MB</string>
+    <string name="special_offer_benefit_vanguard_title">Aster Vanguard</string>
     <string name="special_offer_benefit_aliases_body">امنح كل موقع عنوانًا خاصًا به.</string>
     <string name="special_offer_benefit_storage_body">مساحة تكفي بريدك وملفاتك لسنوات.</string>
     <string name="special_offer_benefit_domains_body">أرسل من عناوين على نطاقاتك الخاصة.</string>
-    <string name="special_offer_benefit_attachments_body">أرسل الملفات الكبيرة كمرفقات.</string>
-    <string name="special_offer_entry_title">خصم %1$d%% على Nova</string>
+    <string name="special_offer_benefit_vanguard_body">قفل التطبيق وحماية متقدمة للخصوصية.</string>
     <string name="special_offers">العروض الخاصة</string>
     <string name="special_offers_description">اعرض من حين لآخر عروضًا مخفّضة على الخطط داخل التطبيق. عند إيقاف هذا الخيار، لا تظهر لك العروض ولا تُحتسب ضمن نتائج العروض.</string>
     <string name="special_offers_save_failed">لم يُحفظ إعداد العروض الخاصة. حاول مرة أخرى.</string>
@@ -3572,6 +3573,7 @@
     <string name="error_passkey_timed_out">انتهت مهلة طلب مفتاح المرور. حاول مرة أخرى.</string>
     <string name="billing_play_unavailable">عمليات الشراء عبر Google Play غير متاحة الآن. حاول مرة أخرى لاحقًا.</string>
     <string name="billing_play_failed">تعذّر على Google Play إكمال عملية الشراء. حاول مرة أخرى.</string>
+    <string name="billing_play_payment_declined">تعذّر على Google Play معالجة الدفع. تحقّق من طريقة الدفع وحاول مرة أخرى.</string>
     <string name="billing_play_pending">عملية الشراء قيد الانتظار. سيتم تفعيل خطتك بعد أن يؤكد Google Play الدفع.</string>
     <string name="billing_play_success">خطتك مفعّلة.</string>
     <string name="billing_play_blocked">لديك اشتراك بالفعل. لتغييره، أدِره من المكان الذي اشتريته منه.</string>
@@ -3583,4 +3585,5 @@
     <string name="billing_play_restore_none">لا توجد مشتريات لاستعادتها لحساب Google على هذا الجهاز.</string>
     <string name="billing_play_offer_unavailable">هذا العرض غير متاح لحسابك.</string>
     <string name="billing_play_addon_success">مساحة التخزين الإضافية مفعّلة الآن.</string>
+    <string name="billing_play_already_owned">لديك هذا الاشتراك بالفعل على Google Play. يضيفه Aster Mail إلى حسابك الآن.</string>
 </resources>

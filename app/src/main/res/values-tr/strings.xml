@@ -3275,19 +3275,20 @@
     <string name="special_offer_unavailable">Bu teklif artık geçerli değil.</string>
     <string name="special_offer_price_period">aylık</string>
     <string name="special_offer_dismiss">Bu teklifi bir daha gösterme</string>
+    <string name="special_offer_success_title">Artık Nova kullanıyorsunuz</string>
+    <string name="special_offer_success_body">İndirimli fiyatınız uygulandı ve tüm Nova özellikleri kullanıma hazır.</string>
     <string name="special_offer_why_label">Neden bu teklif?</string>
-    <string name="special_offer_why_body">Aster, küçük bir ekibe sahip bağımsız bir şirkettir. Abonelikler hizmetin çalışmasını sağlar ve yeni özellikleri finanse eder. Bu teklif, başlamanızı kolaylaştırır.</string>
+    <string name="special_offer_why_body">Aster, küçük bir ekibe sahip bağımsız bir şirkettir ve desteğiniz bizim için çok değerlidir. Abonelikler hizmetin çalışmasını sağlar ve Aster\'ı her gün özenle geliştirmeye devam etmemize olanak tanır. Bu teklif başlamanızı kolaylaştırır.</string>
     <string name="special_offer_entry">Özel teklif</string>
     <string name="special_offer_cta_claim">%%%1$d indirimi alın</string>
     <string name="special_offer_benefit_aliases_title">Sınırsız takma ad</string>
     <string name="special_offer_benefit_storage_title">500 GB şifreli depolama</string>
     <string name="special_offer_benefit_domains_title">30\'a kadar özel alan adı</string>
-    <string name="special_offer_benefit_attachments_title">100 MB\'a kadar ekler</string>
+    <string name="special_offer_benefit_vanguard_title">Aster Vanguard</string>
     <string name="special_offer_benefit_aliases_body">Her siteye ayrı bir adres verin.</string>
     <string name="special_offer_benefit_storage_body">Yıllarca e-posta ve dosya için yer.</string>
     <string name="special_offer_benefit_domains_body">Kendi alan adlarınızdaki adreslerden gönderin.</string>
-    <string name="special_offer_benefit_attachments_body">Büyük dosyaları ek olarak gönderin.</string>
-    <string name="special_offer_entry_title">Nova\'da %%%1$d indirim</string>
+    <string name="special_offer_benefit_vanguard_body">Uygulama kilidi ve gelişmiş gizlilik koruması.</string>
     <string name="special_offers">Özel teklifler</string>
     <string name="special_offers_description">Uygulamada ara sıra indirimli plan teklifleri gösterin. Bu ayar kapalıyken teklif görmezsiniz ve teklif sonuçlarına dahil edilmezsiniz.</string>
     <string name="special_offers_save_failed">Özel teklifler ayarınız kaydedilmedi. Tekrar deneyin.</string>
@@ -3488,6 +3489,7 @@
     <string name="error_passkey_timed_out">Geçiş anahtarı isteğinin süresi doldu. Tekrar deneyin.</string>
     <string name="billing_play_unavailable">Google Play satın alımları şu anda kullanılamıyor. Daha sonra tekrar deneyin.</string>
     <string name="billing_play_failed">Google Play satın alma işleminizi tamamlayamadı. Tekrar deneyin.</string>
+    <string name="billing_play_payment_declined">Google Play ödemenizi işleyemedi. Ödeme yönteminizi kontrol edip tekrar deneyin.</string>
     <string name="billing_play_pending">Satın alma işleminiz beklemede. Google Play ödemeyi onayladığında planınız etkinleşir.</string>
     <string name="billing_play_success">Planınız etkin.</string>
     <string name="billing_play_blocked">Zaten bir aboneliğiniz var. Değiştirmek için satın aldığınız yerden yönetin.</string>
@@ -3499,4 +3501,5 @@
     <string name="billing_play_restore_none">Bu cihazdaki Google hesabı için geri yüklenecek satın alım yok.</string>
     <string name="billing_play_offer_unavailable">Bu teklif hesabınız için kullanılamıyor.</string>
     <string name="billing_play_addon_success">Ek depolama alanınız etkin.</string>
+    <string name="billing_play_already_owned">Bu aboneliğe Google Play\'de zaten sahipsiniz. Aster Mail aboneliği hesabınıza ekliyor.</string>
 </resources>

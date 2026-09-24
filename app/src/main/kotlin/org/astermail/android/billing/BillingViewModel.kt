@@ -98,6 +98,8 @@ data class BillingUiState(
     val play_blocked_reason: String? = null,
     val play_currency: String? = null,
     val play_purchase_request: PlayPurchaseRequest? = null,
+    val play_confirmed_product: String? = null,
+    val play_confirmed_special_offer: Boolean = false,
     val play_addon_products: List<GooglePlayAddonProduct> = emptyList(),
     val play_special_offer: GooglePlaySpecialOffer? = null,
     val play_special_offer_eligible: Boolean = false,
@@ -391,6 +393,7 @@ class BillingViewModel @Inject constructor(
 
     private suspend fun refresh_after_play_verify() {
         reload_subscription()
+        SubscriptionEvents.notify_changed()
         if (_state.value.storage_addons != null || _state.value.play_active_addons.isNotEmpty()) refresh_storage_addons()
         load_play_config(redeem = false)
     }
@@ -487,7 +490,13 @@ class BillingViewModel @Inject constructor(
             it.copy(
                 is_acting = false,
                 acting_action = null,
-                play_purchase_request = PlayPurchaseRequest(offer, account_id, old_token, replacement_mode),
+                play_purchase_request = PlayPurchaseRequest(
+                    offer,
+                    account_id,
+                    old_token,
+                    replacement_mode,
+                    special_offer = target is PlayTarget.SpecialOffer,
+                ),
             )
         }
     }
@@ -587,12 +596,18 @@ class BillingViewModel @Inject constructor(
         }
     }
 
+    fun consume_play_confirmation() {
+        _state.update { it.copy(play_confirmed_product = null, play_confirmed_special_offer = false) }
+    }
+
     fun launch_play_purchase(activity: android.app.Activity) {
         val request = _state.value.play_purchase_request ?: return
         val generation = play_generation
         _state.update {
             it.copy(
                 play_purchase_request = null,
+                play_confirmed_product = null,
+                play_confirmed_special_offer = false,
                 is_acting = true,
                 acting_action = "play_${request.offer.product_id}",
                 error = null,
@@ -626,6 +641,14 @@ class BillingViewModel @Inject constructor(
                         return@launch
                     }
                     refresh_after_play_verify()
+                    if (result == PlayVerifyResult.Confirmed) {
+                        _state.update {
+                            it.copy(
+                                play_confirmed_product = request.offer.product_id,
+                                play_confirmed_special_offer = request.special_offer,
+                            )
+                        }
+                    }
                     val success = if (request.offer.product_id in play_addon_ids()) {
                         R.string.billing_play_addon_success
                     } else {
@@ -636,10 +659,11 @@ class BillingViewModel @Inject constructor(
                 PlayPurchaseOutcome.Pending -> finish_play_action(info = R.string.billing_play_pending)
                 PlayPurchaseOutcome.Cancelled -> finish_play_action()
                 PlayPurchaseOutcome.AlreadyOwned -> {
-                    finish_play_action()
+                    finish_play_action(info = R.string.billing_play_already_owned)
                     redeem_play_purchases(force = true)
                 }
                 PlayPurchaseOutcome.Unavailable -> finish_play_action(error = R.string.billing_play_unavailable)
+                PlayPurchaseOutcome.PaymentDeclined -> finish_play_action(error = R.string.billing_play_payment_declined)
                 is PlayPurchaseOutcome.Failed -> finish_play_action(error = R.string.billing_play_failed)
             }
         }
@@ -886,7 +910,12 @@ class BillingViewModel @Inject constructor(
         }
     }
 
-    fun start_checkout(plan_code: String, billing_interval: String = "month", currency: String? = null) {
+    fun start_checkout(
+        plan_code: String,
+        billing_interval: String = "month",
+        currency: String? = null,
+        special_offer: Boolean = false,
+    ) {
         if (_state.value.is_acting) {
             _state.value = _state.value.copy(error = ctx.getString(R.string.billing_action_in_progress), info = null)
             return
@@ -910,6 +939,7 @@ class BillingViewModel @Inject constructor(
                         test_mode = org.astermail.android.BuildConfig.DEBUG,
                         success_url = BILLING_RETURN_SUCCESS,
                         cancel_url = BILLING_RETURN_CANCELLED,
+                        special_offer = special_offer,
                     ),
                 )
                 pending_checkout_plan = plan_code
@@ -1252,7 +1282,7 @@ class BillingViewModel @Inject constructor(
         }
     }
 
-    fun start_crypto_checkout(plan_code: String, term_months: Int) {
+    fun start_crypto_checkout(plan_code: String, term_months: Int, special_offer: Boolean = false) {
         if (_state.value.is_acting) return
         if (blocks_external_checkout()) return
         viewModelScope.launch {
@@ -1264,6 +1294,7 @@ class BillingViewModel @Inject constructor(
                         term_months = term_months,
                         success_url = BILLING_RETURN_SUCCESS,
                         cancel_url = BILLING_RETURN_CANCELLED,
+                        special_offer = special_offer,
                     )
                 )
                 pending_checkout_plan = plan_code

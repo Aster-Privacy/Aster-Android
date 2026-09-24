@@ -24,10 +24,6 @@
         <item quantity="one">Dein Tarif endet in %1$d Tag, am %2$s.</item>
         <item quantity="other">Dein Tarif endet in %1$d Tagen, am %2$s.</item>
     </plurals>
-    <plurals name="special_offer_entry_body">
-        <item quantity="one">Für deinen ersten Monat</item>
-        <item quantity="other">Für deine ersten %1$d Monate</item>
-    </plurals>
     <plurals name="special_offer_fine_print">
         <item quantity="one">Du zahlst %1$s pro Monat für den ersten Monat. Danach verlängert sich dein Tarif für %3$s pro Monat, bis du ihn in den Einstellungen kündigst.</item>
         <item quantity="other">Du zahlst %1$s pro Monat für die ersten %2$d Monate. Danach verlängert sich dein Tarif für %3$s pro Monat, bis du ihn in den Einstellungen kündigst.</item>

@@ -24,6 +24,7 @@ package org.astermail.android.ui.drawer
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import org.astermail.android.design.components.AsterPlanTag
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu
 import org.astermail.android.BuildConfig
@@ -37,11 +38,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.core.Animatable
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.Brush
 import kotlinx.coroutines.delay
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -233,9 +230,7 @@ private const val key_expanded_folders = "expanded_folders"
 private const val key_categories_collapsed = "categories_collapsed"
 
 
-private const val OFFER_BANNER_ENTER_MS = 260
-private const val OFFER_BANNER_SHIMMER_MS = 1100
-private const val OFFER_BANNER_SHIMMER_DELAY_MS = 350L
+private const val OFFER_ENTRY_ENTER_MS = 260
 @Composable
 fun DrawerContent(
     selected_id: String,
@@ -414,10 +409,9 @@ fun DrawerContent(
 
         val offer_vm = org.astermail.android.ui.upgrade.special_offer_view_model()
         val offer_state by offer_vm.state.collectAsStateWithLifecycle()
-        special_offer_drawer_banner(
+        special_offer_drawer_entry(
             visible = offer_state.available,
             percent_off = offer_state.effective_percent_off,
-            duration_months = offer_state.effective_duration_months,
             on_click = {
                 on_close()
                 offer_vm.reopen()
@@ -2511,65 +2505,27 @@ private fun folder_expand_toggle(
 }
 
 @Composable
-private fun special_offer_drawer_banner(
+private fun special_offer_drawer_entry(
     visible: Boolean,
     percent_off: Int,
-    duration_months: Int,
     on_click: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val shape = RoundedCornerShape(999.dp)
-    val shimmer = remember { Animatable(0f) }
-    LaunchedEffect(visible) {
-        if (!visible) return@LaunchedEffect
-        shimmer.snapTo(0f)
-        delay(OFFER_BANNER_SHIMMER_DELAY_MS)
-        shimmer.animateTo(1f, tween(durationMillis = OFFER_BANNER_SHIMMER_MS, easing = FastOutSlowInEasing))
-    }
-    val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
-    val press_scale by animateFloatAsState(
-        targetValue = if (pressed) 0.98f else 1f,
-        animationSpec = tween(durationMillis = 120),
-        label = "offer_banner_press",
-    )
-    val fill = colors.accent_blue.copy(alpha = if (colors.is_dark) 0.14f else 0.08f)
-    val highlight = Color.White.copy(alpha = if (colors.is_dark) 0.08f else 0.40f)
-
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(tween(OFFER_BANNER_ENTER_MS, easing = FastOutSlowInEasing)) +
-            expandVertically(tween(OFFER_BANNER_ENTER_MS, easing = FastOutSlowInEasing)),
+        enter = fadeIn(tween(OFFER_ENTRY_ENTER_MS, easing = FastOutSlowInEasing)) +
+            expandVertically(tween(OFFER_ENTRY_ENTER_MS, easing = FastOutSlowInEasing)),
         exit = fadeOut(tween(160)) + shrinkVertically(tween(200, easing = FastOutSlowInEasing)),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 10.dp, end = 10.dp, top = 8.dp, bottom = 2.dp)
-                .graphicsLayer {
-                    scaleX = press_scale
-                    scaleY = press_scale
-                }
-                .clip(shape)
-                .background(fill)
-                .drawWithContent {
-                    drawContent()
-                    val progress = shimmer.value
-                    if (progress <= 0f || progress >= 1f) return@drawWithContent
-                    val band = size.width * 0.35f
-                    val x = -band + (size.width + band * 2) * progress
-                    drawRect(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(Color.Transparent, highlight, Color.Transparent),
-                            startX = x - band,
-                            endX = x + band,
-                        ),
-                    )
-                }
-                .clickable(interactionSource = interaction, indication = null, onClick = on_click)
+                .padding(start = 10.dp, end = 10.dp, top = 6.dp, bottom = 2.dp)
+                .height(48.dp)
+                .clip(RoundedCornerShape(999.dp))
+                .clickable(onClick = on_click)
                 .testTag("special_offer_entry")
-                .heightIn(min = 56.dp)
-                .padding(start = 15.dp, end = 14.dp, top = 8.dp, bottom = 8.dp),
+                .padding(start = 15.dp, end = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -2579,28 +2535,21 @@ private fun special_offer_drawer_banner(
                 modifier = Modifier.size(22.dp),
             )
             Spacer(Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.special_offer_entry_title, percent_off),
-                    color = colors.text_primary,
-                    fontSize = 15.5.sp,
-                    lineHeight = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = (-0.15).sp,
-                )
-                Text(
-                    text = pluralStringResource(R.plurals.special_offer_entry_body, duration_months, duration_months),
-                    color = colors.text_muted,
-                    fontSize = 13.sp,
-                    lineHeight = 17.sp,
-                )
-            }
+            Text(
+                text = stringResource(R.string.special_offer_entry),
+                color = colors.text_secondary,
+                fontSize = 15.5.sp,
+                letterSpacing = (-0.15).sp,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
             Spacer(Modifier.width(8.dp))
-            Icon(
-                imageVector = TablerIcons.ChevronRight,
-                contentDescription = null,
-                tint = colors.text_muted,
-                modifier = Modifier.size(16.dp),
+            AsterPlanTag(
+                text = stringResource(R.string.save_percent, percent_off),
+                font_size = 12.sp,
+                horizontal_padding = 9.dp,
+                vertical_padding = 3.dp,
             )
         }
     }

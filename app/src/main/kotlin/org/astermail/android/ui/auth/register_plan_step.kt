@@ -137,10 +137,7 @@ fun RegisterPlanStep(
     val currency = state.play_currency?.takeIf { state.play_enabled }
         ?: state.subscription?.currency?.takeIf { it.isNotBlank() }
         ?: "usd"
-    val offer_vm = org.astermail.android.ui.upgrade.special_offer_view_model()
-    val offer_state by offer_vm.state.collectAsStateWithLifecycle()
     val play_install = org.astermail.android.billing.remember_play_install()
-    val offer_badge = stringResource(R.string.save_percent, offer_state.effective_percent_off)
 
     val split_by_period = plans.any { it.billing_period == "year" && it.price_cents > 0 }
     val has_yearly = split_by_period || plans.any { it.yearly_price_cents > 0 }
@@ -297,20 +294,7 @@ fun RegisterPlanStep(
                     } else {
                         null
                     },
-                    offer = if (
-                        plan.price_cents > 0 &&
-                        !play_install &&
-                        offer_state.applies_to_card(plan.code.lowercase(), effective_interval)
-                    ) {
-                        org.astermail.android.ui.upgrade.special_offer_price_pair(
-                            plan.price_cents.toLong(),
-                            offer_state.effective_percent_off,
-                            currency,
-                            offer_badge,
-                        )
-                    } else {
-                        null
-                    },
+                    offer = null,
                     on_select = {
                         selected_code = plan.code
                         billing_vm.clear_messages()

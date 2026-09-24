@@ -3275,19 +3275,20 @@
     <string name="special_offer_unavailable">Questa offerta non è più disponibile.</string>
     <string name="special_offer_price_period">al mese</string>
     <string name="special_offer_dismiss">Non mostrare più questa offerta</string>
+    <string name="special_offer_success_title">Ora hai Nova</string>
+    <string name="special_offer_success_body">Il prezzo scontato è applicato e tutte le funzionalità di Nova sono pronte all\'uso.</string>
     <string name="special_offer_why_label">Perché questa offerta?</string>
-    <string name="special_offer_why_body">Aster è un’azienda indipendente con un piccolo team. Gli abbonamenti mantengono attivo il servizio e finanziano nuove funzionalità, e questa offerta ti aiuta a iniziare.</string>
+    <string name="special_offer_why_body">Aster è un\'azienda indipendente con un piccolo team, e il tuo supporto per noi conta molto. Gli abbonamenti mantengono attivo il servizio e ci permettono di continuare a sviluppare Aster con cura ogni giorno. Questa offerta ti rende più facile iniziare.</string>
     <string name="special_offer_entry">Offerta speciale</string>
     <string name="special_offer_cta_claim">Ottieni il %1$d%% di sconto</string>
     <string name="special_offer_benefit_aliases_title">Alias illimitati</string>
     <string name="special_offer_benefit_storage_title">500 GB di spazio crittografato</string>
     <string name="special_offer_benefit_domains_title">Fino a 30 domini personalizzati</string>
-    <string name="special_offer_benefit_attachments_title">Allegati fino a 100 MB</string>
+    <string name="special_offer_benefit_vanguard_title">Aster Vanguard</string>
     <string name="special_offer_benefit_aliases_body">Dai a ogni sito un indirizzo tutto suo.</string>
     <string name="special_offer_benefit_storage_body">Spazio per anni di email e file.</string>
     <string name="special_offer_benefit_domains_body">Invia da indirizzi sui tuoi domini.</string>
-    <string name="special_offer_benefit_attachments_body">Invia file di grandi dimensioni come allegati.</string>
-    <string name="special_offer_entry_title">%1$d%% di sconto su Nova</string>
+    <string name="special_offer_benefit_vanguard_body">Blocco dell\'app e protezione avanzata della privacy.</string>
     <string name="special_offers">Offerte speciali</string>
     <string name="special_offers_description">Mostra di tanto in tanto offerte scontate sui piani nell\'app. Quando questa opzione è disattivata, non vedi offerte e non rientri nei risultati delle offerte.</string>
     <string name="special_offers_save_failed">La tua preferenza sulle offerte speciali non è stata salvata. Riprova.</string>
@@ -3488,6 +3489,7 @@
     <string name="error_passkey_timed_out">La richiesta della passkey è scaduta. Riprova.</string>
     <string name="billing_play_unavailable">Gli acquisti con Google Play non sono disponibili al momento. Riprova più tardi.</string>
     <string name="billing_play_failed">Google Play non è riuscito a completare l\'acquisto. Riprova.</string>
+    <string name="billing_play_payment_declined">Google Play non è riuscito a elaborare il pagamento. Controlla il metodo di pagamento e riprova.</string>
     <string name="billing_play_pending">Il tuo acquisto è in attesa. Il piano si attiva quando Google Play conferma il pagamento.</string>
     <string name="billing_play_success">Il tuo piano è attivo.</string>
     <string name="billing_play_blocked">Hai già un abbonamento. Per modificarlo, gestiscilo dove l\'hai acquistato.</string>
@@ -3499,4 +3501,5 @@
     <string name="billing_play_restore_none">Non ci sono acquisti da ripristinare per l\'account Google su questo dispositivo.</string>
     <string name="billing_play_offer_unavailable">Questa offerta non è disponibile per il tuo account.</string>
     <string name="billing_play_addon_success">Il tuo spazio di archiviazione aggiuntivo è attivo.</string>
+    <string name="billing_play_already_owned">Hai già questo abbonamento su Google Play. Aster Mail lo sta aggiungendo al tuo account.</string>
 </resources>

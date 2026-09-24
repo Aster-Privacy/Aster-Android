@@ -24,11 +24,6 @@
         <item quantity="one">O seu plano termina em %1$d dia, em %2$s.</item>
         <item quantity="other">O seu plano termina em %1$d dias, em %2$s.</item>
     </plurals>
-    <plurals name="special_offer_entry_body">
-        <item quantity="one">Durante o primeiro mês</item>
-        <item quantity="many">Durante os primeiros %1$d meses</item>
-        <item quantity="other">Durante os primeiros %1$d meses</item>
-    </plurals>
     <plurals name="special_offer_fine_print">
         <item quantity="one">Você paga %1$s por mês no primeiro mês. Depois, seu plano é renovado por %3$s por mês até que você o cancele em Configurações.</item>
         <item quantity="many">Você paga %1$s por mês nos primeiros %2$d meses. Depois, seu plano é renovado por %3$s por mês até que você o cancele em Configurações.</item>

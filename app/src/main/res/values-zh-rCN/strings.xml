@@ -3257,19 +3257,20 @@
     <string name="special_offer_unavailable">此优惠已失效。</string>
     <string name="special_offer_price_period">每月</string>
     <string name="special_offer_dismiss">不再显示此优惠</string>
+    <string name="special_offer_success_title">你已升级到 Nova</string>
+    <string name="special_offer_success_body">折扣价格已生效，Nova 的所有功能现已可用。</string>
     <string name="special_offer_why_label">为什么有这个优惠？</string>
-    <string name="special_offer_why_body">Aster 是一家拥有小型团队的独立公司。订阅费用维持服务运行并支持新功能开发，这个优惠让你更容易开始使用。</string>
+    <string name="special_offer_why_body">Aster 是一家由小团队运营的独立公司，你的支持对我们意义重大。订阅让服务得以持续运行，也让我们能够每天用心打造 Aster。这个优惠让你能更轻松地开始使用。</string>
     <string name="special_offer_entry">特别优惠</string>
     <string name="special_offer_cta_claim">领取 %1$d%% 优惠</string>
     <string name="special_offer_benefit_aliases_title">无限别名</string>
     <string name="special_offer_benefit_storage_title">500 GB 加密存储空间</string>
     <string name="special_offer_benefit_domains_title">最多 30 个自定义域名</string>
-    <string name="special_offer_benefit_attachments_title">最大 100 MB 附件</string>
+    <string name="special_offer_benefit_vanguard_title">Aster Vanguard</string>
     <string name="special_offer_benefit_aliases_body">为每个网站使用独立的地址。</string>
     <string name="special_offer_benefit_storage_body">足以存放多年的邮件和文件。</string>
     <string name="special_offer_benefit_domains_body">使用你自己域名下的地址发送邮件。</string>
-    <string name="special_offer_benefit_attachments_body">以附件形式发送大文件。</string>
-    <string name="special_offer_entry_title">Nova 享 %1$d%% 优惠</string>
+    <string name="special_offer_benefit_vanguard_body">应用锁和高级隐私保护。</string>
     <string name="special_offers">特别优惠</string>
     <string name="special_offers_description">在应用中偶尔显示套餐折扣优惠。关闭后，你不会看到优惠，也不会被计入优惠结果。</string>
     <string name="special_offers_save_failed">特别优惠设置未保存。请重试。</string>
@@ -3470,6 +3471,7 @@
     <string name="error_passkey_timed_out">通行密钥请求已超时。请重试。</string>
     <string name="billing_play_unavailable">目前无法通过 Google Play 购买。请稍后再试。</string>
     <string name="billing_play_failed">Google Play 无法完成你的购买。请重试。</string>
+    <string name="billing_play_payment_declined">Google Play 无法处理你的付款。请检查你的付款方式，然后重试。</string>
     <string name="billing_play_pending">你的购买正在处理中。Google Play 确认付款后，你的方案将会生效。</string>
     <string name="billing_play_success">你的方案已生效。</string>
     <string name="billing_play_blocked">你已有订阅。如需更改，请在购买订阅的地方进行管理。</string>
@@ -3481,4 +3483,5 @@
     <string name="billing_play_restore_none">此设备上的 Google 账号没有可恢复的购买。</string>
     <string name="billing_play_offer_unavailable">此优惠不适用于你的账号。</string>
     <string name="billing_play_addon_success">你的额外存储空间已启用。</string>
+    <string name="billing_play_already_owned">你已在 Google Play 上拥有此订阅。Aster Mail 正在将其添加到你的账户。</string>
 </resources>

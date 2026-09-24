@@ -3302,19 +3302,20 @@
     <string name="special_offer_unavailable">Cette offre n\'est plus disponible.</string>
     <string name="special_offer_price_period">par mois</string>
     <string name="special_offer_dismiss">Ne plus afficher cette offre</string>
+    <string name="special_offer_success_title">Nova est activé</string>
+    <string name="special_offer_success_body">Votre prix réduit est appliqué, et toutes les fonctionnalités de Nova sont prêtes à l\'emploi.</string>
     <string name="special_offer_why_label">Pourquoi cette offre ?</string>
-    <string name="special_offer_why_body">Aster est une entreprise indépendante avec une petite équipe. Les abonnements font fonctionner le service et financent les nouvelles fonctionnalités, et cette offre vous aide à vous lancer.</string>
+    <string name="special_offer_why_body">Aster est une entreprise indépendante dotée d\'une petite équipe, et votre soutien compte beaucoup pour nous. Les abonnements font fonctionner le service et nous permettent de continuer à développer Aster avec soin chaque jour. Cette offre vous aide à vous lancer.</string>
     <string name="special_offer_entry">Offre spéciale</string>
     <string name="special_offer_cta_claim">Profiter de %1$d%% de réduction</string>
     <string name="special_offer_benefit_aliases_title">Alias illimités</string>
     <string name="special_offer_benefit_storage_title">500 Go de stockage chiffré</string>
     <string name="special_offer_benefit_domains_title">Jusqu\'à 30 domaines personnalisés</string>
-    <string name="special_offer_benefit_attachments_title">Pièces jointes de 100 Mo</string>
+    <string name="special_offer_benefit_vanguard_title">Aster Vanguard</string>
     <string name="special_offer_benefit_aliases_body">Donnez à chaque site sa propre adresse.</string>
     <string name="special_offer_benefit_storage_body">De la place pour des années d\'e-mails et de fichiers.</string>
     <string name="special_offer_benefit_domains_body">Envoyez depuis des adresses sur vos propres domaines.</string>
-    <string name="special_offer_benefit_attachments_body">Envoyez des fichiers volumineux en pièce jointe.</string>
-    <string name="special_offer_entry_title">-%1$d%% sur Nova</string>
+    <string name="special_offer_benefit_vanguard_body">Verrouillage de l\'app et protection avancée de la confidentialité.</string>
     <string name="special_offers">Offres spéciales</string>
     <string name="special_offers_description">Affichez de temps en temps des offres de forfaits à prix réduit dans l’application. Lorsque cette option est désactivée, vous ne voyez aucune offre et vous n’êtes pas pris en compte dans les résultats des offres.</string>
     <string name="special_offers_save_failed">Votre préférence d’offres spéciales n’a pas été enregistrée. Réessayez.</string>
@@ -3515,6 +3516,7 @@
     <string name="error_passkey_timed_out">La demande de clé d\'accès a expiré. Réessayez.</string>
     <string name="billing_play_unavailable">Les achats Google Play ne sont pas disponibles pour le moment. Réessayez plus tard.</string>
     <string name="billing_play_failed">Google Play n\'a pas pu finaliser votre achat. Réessayez.</string>
+    <string name="billing_play_payment_declined">Google Play n\'a pas pu traiter votre paiement. Vérifiez votre mode de paiement et réessayez.</string>
     <string name="billing_play_pending">Votre achat est en attente. Votre forfait sera activé une fois le paiement confirmé par Google Play.</string>
     <string name="billing_play_success">Votre forfait est actif.</string>
     <string name="billing_play_blocked">Vous avez déjà un abonnement. Pour le modifier, gérez-le là où vous l\'avez acheté.</string>
@@ -3526,4 +3528,5 @@
     <string name="billing_play_restore_none">Aucun achat à restaurer pour le compte Google de cet appareil.</string>
     <string name="billing_play_offer_unavailable">Cette offre n\'est pas disponible pour votre compte.</string>
     <string name="billing_play_addon_success">Votre stockage supplémentaire est actif.</string>
+    <string name="billing_play_already_owned">Vous avez déjà cet abonnement sur Google Play. Aster Mail l\'ajoute à votre compte.</string>
 </resources>

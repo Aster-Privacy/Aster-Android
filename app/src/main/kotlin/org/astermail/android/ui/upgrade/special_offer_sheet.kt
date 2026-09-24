@@ -23,7 +23,6 @@ package org.astermail.android.ui.upgrade
 
 import compose.icons.TablerIcons
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -48,6 +47,7 @@ import androidx.activity.compose.BackHandler
 import android.content.ContextWrapper
 import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -154,7 +154,7 @@ private val CLOSE_TOUCH_TARGET = 48.dp
 private val BENEFIT_CHECK_SIZE = 20.dp
 private const val OPEN_DAMPING = 0.78f
 private const val OPEN_STIFFNESS = 420f
-private const val CLOSE_MS = 170
+private const val CLOSE_MS = 200
 private const val SCRIM_LEAD = 1.6f
 private const val APPEAR_START_SCALE = 0.94f
 private val APPEAR_LIFT = 18.dp
@@ -243,16 +243,31 @@ fun SpecialOfferHost() {
     }
 
     var play_cta_pressed by remember { mutableStateOf(false) }
-    LaunchedEffect(offer_state.is_open, billing_state.is_acting, billing_state.play_purchase_request) {
+    var offer_success by remember { mutableStateOf(false) }
+    LaunchedEffect(billing_state.play_confirmed_product, billing_state.play_confirmed_special_offer) {
+        if (billing_state.play_confirmed_product == null) return@LaunchedEffect
+        val special_offer = billing_state.play_confirmed_special_offer
+        billing_vm.consume_play_confirmation()
+        if (!special_offer) return@LaunchedEffect
+        offer_vm.mark_redeemed()
+        if (offer_state.is_open && play_cta_pressed) offer_success = true
+        play_cta_pressed = false
+    }
+    LaunchedEffect(
+        offer_state.is_open,
+        billing_state.is_acting,
+        billing_state.play_purchase_request,
+        billing_state.play_confirmed_product,
+        billing_state.error,
+        billing_state.info,
+    ) {
         if (!offer_state.is_open) {
             play_cta_pressed = false
             return@LaunchedEffect
         }
         if (!play_install || !play_cta_pressed || billing_state.is_acting) return@LaunchedEffect
-        if (billing_state.play_purchase_request != null || billing_state.error.isNullOrBlank()) {
-            play_cta_pressed = false
-            offer_vm.close()
-        }
+        if (billing_state.play_purchase_request != null || billing_state.play_confirmed_product != null) return@LaunchedEffect
+        if (billing_state.error.isNullOrBlank() && billing_state.info.isNullOrBlank()) play_cta_pressed = false
     }
 
     var offer_checkout_pending by remember { mutableStateOf(false) }
@@ -281,8 +296,9 @@ fun SpecialOfferHost() {
             mounted = true
             appear.animateTo(1f, spring(dampingRatio = OPEN_DAMPING, stiffness = OPEN_STIFFNESS))
         } else if (mounted) {
-            appear.animateTo(0f, tween(durationMillis = CLOSE_MS, easing = FastOutLinearInEasing))
+            appear.animateTo(0f, tween(durationMillis = CLOSE_MS, easing = LinearOutSlowInEasing))
             mounted = false
+            offer_success = false
         }
     }
 
@@ -309,19 +325,21 @@ fun SpecialOfferHost() {
         ?.toLong()
         ?: SPECIAL_OFFER_YEARLY_CENTS
     val term_prices = special_offer_term_prices(offer_state, plan_code, list_cents, yearly_cents, save_badge)
-    val is_busy = offer_state.is_accepting || billing_state.is_acting
+    val is_busy = offer_state.is_accepting || billing_state.is_acting || billing_state.play_purchase_request != null
     val checkout_error = billing_state.error?.takeIf { (offer_state.owns_checkout || play_cta_pressed) && it.isNotBlank() }
     val error_text = when {
         offer_state.offer_expired -> stringResource(R.string.special_offer_unavailable)
         offer_state.accept_failed -> stringResource(R.string.could_not_start_checkout)
         else -> checkout_error
     }
+    val info_text = billing_state.info
+        ?.takeIf { error_text == null && play_cta_pressed && !billing_state.is_acting && it.isNotBlank() }
 
     val benefits = listOf(
         stringResource(R.string.special_offer_benefit_aliases_title) to stringResource(R.string.special_offer_benefit_aliases_body),
         stringResource(R.string.special_offer_benefit_storage_title) to stringResource(R.string.special_offer_benefit_storage_body),
         stringResource(R.string.special_offer_benefit_domains_title) to stringResource(R.string.special_offer_benefit_domains_body),
-        stringResource(R.string.special_offer_benefit_attachments_title) to stringResource(R.string.special_offer_benefit_attachments_body),
+        stringResource(R.string.special_offer_benefit_vanguard_title) to stringResource(R.string.special_offer_benefit_vanguard_body),
     )
 
     val interactive = offer_state.is_open
@@ -341,7 +359,8 @@ fun SpecialOfferHost() {
         modifier = Modifier
             .fillMaxSize()
             .drawBehind {
-                drawRect(SCRIM_COLOR, alpha = (appear.value * SCRIM_LEAD).coerceIn(0f, 1f))
+                val lead = if (offer_state.is_open) SCRIM_LEAD else 1f
+                drawRect(SCRIM_COLOR, alpha = (appear.value * lead).coerceIn(0f, 1f))
             }
             .pointerInput(Unit) { detectTapGestures { } }
             .statusBarsPadding()
@@ -366,165 +385,194 @@ fun SpecialOfferHost() {
                 }
                 .shadow(elevation = 28.dp, shape = CARD_SHAPE)
                 .clip(CARD_SHAPE)
-                .acrylic(colors, CARD_SHAPE, colors.bg_card)
-                .border(1.dp, colors.border_secondary, CARD_SHAPE),
+                .acrylic(colors, CARD_SHAPE, colors.bg_card),
         ) {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                SpecialOfferHero(aspect_ratio = if (compact) HERO_ASPECT_RATIO_COMPACT else HERO_ASPECT_RATIO)
+            if (offer_success) {
+                SpecialOfferSuccess(onDone = { offer_vm.close() })
+            } else Column {
+                Column(modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                    SpecialOfferHero(aspect_ratio = if (compact) HERO_ASPECT_RATIO_COMPACT else HERO_ASPECT_RATIO)
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = CARD_PADDING,
-                            top = 6.dp,
-                            end = CARD_PADDING,
-                            bottom = 8.dp,
-                        ),
-                ) {
-                    SpecialOfferBadge()
-
-                    Spacer(Modifier.height(10.dp))
-
-                    Text(
-                        text = stringResource(R.string.special_offer_title),
-                        color = colors.text_primary,
-                        fontSize = 22.sp,
-                        lineHeight = 27.sp,
-                        letterSpacing = (-0.3).sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-
-                    Spacer(Modifier.height(6.dp))
-
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                    ) {
-                        Text(
-                            text = offer_label,
-                            color = colors.text_primary,
-                            fontSize = 38.sp,
-                            lineHeight = 42.sp,
-                            letterSpacing = (-1).sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.alignByBaseline(),
-                        )
-                        Text(
-                            text = stringResource(R.string.special_offer_price_period),
-                            color = colors.text_secondary,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.alignByBaseline(),
-                        )
-                        Text(
-                            text = list_label,
-                            color = colors.text_tertiary,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            textDecoration = TextDecoration.LineThrough,
-                            modifier = Modifier.alignByBaseline(),
-                        )
-                    }
-
-                    Spacer(Modifier.height(gap + 4.dp))
-
-                    SpecialOfferDivider()
-
-                    Spacer(Modifier.height(gap + 4.dp))
-
-                    SpecialOfferBenefits(benefits = benefits, show_details = !compact)
-
-                    Spacer(Modifier.height(gap))
-
-                    SpecialOfferWhy()
-
-                    Spacer(Modifier.height(gap))
-
-                    if (error_text != null) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(ERROR_SHAPE)
-                                .background(colors.danger.copy(alpha = 0.08f))
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Icon(
-                                imageVector = TablerIcons.AlertCircle,
-                                contentDescription = null,
-                                tint = colors.danger,
-                                modifier = Modifier.size(16.dp),
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = error_text,
-                                color = colors.text_primary,
-                                fontSize = 13.sp,
-                                lineHeight = 18.sp,
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-                        Spacer(Modifier.height(12.dp))
-                    }
-
-                    SpecialOfferDepthButton(
-                        label = if (offer_state.offer_expired) {
-                            stringResource(R.string.close)
-                        } else {
-                            stringResource(R.string.special_offer_cta_claim, percent_off)
-                        },
-                        is_loading = is_busy,
-                        onClick = {
-                            if (offer_state.offer_expired) {
-                                offer_vm.close()
-                            } else if (play_install) {
-                                billing_vm.clear_messages()
-                                play_cta_pressed = true
-                                billing_vm.start_play_special_offer()
-                            } else {
-                                billing_vm.clear_messages()
-                                offer_vm.release_checkout()
-                                offer_vm.accept()
-                            }
-                        },
-                    )
-
-                    Spacer(Modifier.height(10.dp))
-
-                    Text(
-                        text = pluralStringResource(
-                            R.plurals.special_offer_fine_print,
-                            months,
-                            offer_label,
-                            months,
-                            list_label,
-                        ),
-                        color = colors.text_tertiary,
-                        fontSize = 12.sp,
-                        lineHeight = 17.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-
-                    Spacer(Modifier.height(2.dp))
-
-                    Text(
-                        text = stringResource(R.string.special_offer_dismiss),
-                        color = colors.text_secondary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center,
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(CircleShape)
-                            .clickable(enabled = interactive, role = Role.Button) {
-                                billing_vm.cancel_play_special_offer()
-                                offer_vm.dismiss_forever()
+                            .padding(
+                                start = CARD_PADDING,
+                                top = 6.dp,
+                                end = CARD_PADDING,
+                                bottom = 8.dp,
+                            ),
+                    ) {
+                        SpecialOfferBadge()
+
+                        Spacer(Modifier.height(10.dp))
+
+                        Text(
+                            text = stringResource(R.string.special_offer_title),
+                            color = colors.text_primary,
+                            fontSize = 22.sp,
+                            lineHeight = 27.sp,
+                            letterSpacing = (-0.3).sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+
+                        Spacer(Modifier.height(6.dp))
+
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                        ) {
+                            Text(
+                                text = offer_label,
+                                color = colors.text_primary,
+                                fontSize = 38.sp,
+                                lineHeight = 42.sp,
+                                letterSpacing = (-1).sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.alignByBaseline(),
+                            )
+                            Text(
+                                text = stringResource(R.string.special_offer_price_period),
+                                color = colors.text_secondary,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.alignByBaseline(),
+                            )
+                            Text(
+                                text = list_label,
+                                color = colors.text_tertiary,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                                textDecoration = TextDecoration.LineThrough,
+                                modifier = Modifier.alignByBaseline(),
+                            )
+                        }
+
+                        Spacer(Modifier.height(gap + 4.dp))
+
+                        SpecialOfferDivider()
+
+                        Spacer(Modifier.height(gap + 4.dp))
+
+                        SpecialOfferBenefits(benefits = benefits, show_details = !compact)
+
+                        Spacer(Modifier.height(gap))
+
+                        SpecialOfferWhy()
+
+                        Spacer(Modifier.height(gap))
+
+                        if (error_text != null) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(ERROR_SHAPE)
+                                    .background(colors.danger.copy(alpha = 0.08f))
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    imageVector = TablerIcons.AlertCircle,
+                                    contentDescription = null,
+                                    tint = colors.danger,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = error_text,
+                                    color = colors.text_primary,
+                                    fontSize = 13.sp,
+                                    lineHeight = 18.sp,
+                                    modifier = Modifier.weight(1f),
+                                )
                             }
-                            .padding(vertical = 10.dp),
-                    )
+                            Spacer(Modifier.height(12.dp))
+                        }
+
+                        if (info_text != null) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(ERROR_SHAPE)
+                                    .background(colors.accent_blue.copy(alpha = 0.08f))
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    imageVector = TablerIcons.InfoCircle,
+                                    contentDescription = null,
+                                    tint = colors.accent_blue,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = info_text,
+                                    color = colors.text_primary,
+                                    fontSize = 13.sp,
+                                    lineHeight = 18.sp,
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                            Spacer(Modifier.height(12.dp))
+                        }
+
+                        SpecialOfferDepthButton(
+                            label = if (offer_state.offer_expired) {
+                                stringResource(R.string.close)
+                            } else {
+                                stringResource(R.string.special_offer_cta_claim, percent_off)
+                            },
+                            is_loading = is_busy,
+                            onClick = {
+                                if (offer_state.offer_expired) {
+                                    offer_vm.close()
+                                } else if (play_install) {
+                                    billing_vm.clear_messages()
+                                    play_cta_pressed = true
+                                    billing_vm.start_play_special_offer()
+                                } else {
+                                    billing_vm.clear_messages()
+                                    offer_vm.release_checkout()
+                                    offer_vm.accept()
+                                }
+                            },
+                        )
+
+                        Spacer(Modifier.height(10.dp))
+
+                        Text(
+                            text = pluralStringResource(
+                                R.plurals.special_offer_fine_print,
+                                months,
+                                offer_label,
+                                months,
+                                list_label,
+                            ),
+                            color = colors.text_tertiary,
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                 }
+
+                Text(
+                    text = stringResource(R.string.special_offer_dismiss),
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = CARD_PADDING, end = CARD_PADDING, bottom = 8.dp)
+                        .clip(CircleShape)
+                        .clickable(enabled = interactive, role = Role.Button) {
+                            billing_vm.cancel_play_special_offer()
+                            offer_vm.dismiss_forever()
+                        }
+                        .padding(vertical = 10.dp),
+                )
             }
 
             Box(
@@ -574,7 +622,7 @@ fun SpecialOfferHost() {
                 } else {
                     billing_vm.clear_messages()
                     offer_vm.begin_checkout()
-                    billing_vm.start_checkout(plan_code, SPECIAL_OFFER_INTERVAL, SPECIAL_OFFER_CURRENCY)
+                    billing_vm.start_checkout(plan_code, SPECIAL_OFFER_INTERVAL, SPECIAL_OFFER_CURRENCY, special_offer = true)
                 }
             },
         )
@@ -583,7 +631,7 @@ fun SpecialOfferHost() {
             on_confirm = { term ->
                 billing_vm.clear_messages()
                 offer_vm.begin_checkout()
-                billing_vm.start_crypto_checkout(plan_code, term)
+                billing_vm.start_crypto_checkout(plan_code, term, special_offer = true)
             },
             offer_prices = term_prices,
         )
@@ -743,6 +791,59 @@ private fun SpecialOfferBenefits(benefits: List<Pair<String, String>>, show_deta
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SpecialOfferSuccess(onDone: () -> Unit) {
+    val colors = AsterMaterial.colors
+    val pop = remember { Animatable(0.6f) }
+    LaunchedEffect(Unit) { pop.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = 420f)) }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = CARD_PADDING, top = 36.dp, end = CARD_PADDING, bottom = CARD_PADDING),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .graphicsLayer { scaleX = pop.value; scaleY = pop.value }
+                .clip(CircleShape)
+                .background(colors.success.copy(alpha = 0.14f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = TablerIcons.CircleCheck,
+                contentDescription = null,
+                tint = colors.success,
+                modifier = Modifier.size(34.dp),
+            )
+        }
+        Spacer(Modifier.height(18.dp))
+        Text(
+            text = stringResource(R.string.special_offer_success_title),
+            color = colors.text_primary,
+            fontSize = 22.sp,
+            lineHeight = 27.sp,
+            letterSpacing = (-0.3).sp,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.special_offer_success_body),
+            color = colors.text_secondary,
+            fontSize = 14.sp,
+            lineHeight = 20.sp,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(24.dp))
+        SpecialOfferDepthButton(
+            label = stringResource(R.string.done),
+            is_loading = false,
+            onClick = onDone,
+        )
     }
 }
 

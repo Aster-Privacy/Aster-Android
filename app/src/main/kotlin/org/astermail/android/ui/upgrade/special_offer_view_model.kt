@@ -91,9 +91,6 @@ data class SpecialOfferState(
     fun applies_to(plan_code: String?): Boolean =
         available && plan_code != null && plan_code.equals(this.plan_code, ignoreCase = true)
 
-    fun applies_to_card(plan_code: String?, billing_interval: String?): Boolean =
-        applies_to(plan_code) && billing_interval == SPECIAL_OFFER_CARD_INTERVAL
-
     fun applies_to_crypto_term(plan_code: String?, term_months: Int): Boolean =
         applies_to(plan_code) && term_months in SPECIAL_OFFER_CRYPTO_TERMS
 }
@@ -325,6 +322,11 @@ class SpecialOfferViewModel @Inject constructor(
 
     fun release_checkout() {
         _state.update { it.copy(owns_checkout = false) }
+    }
+
+    fun mark_redeemed() {
+        _state.update { it.copy(available = false, auto_show = false, owns_checkout = false) }
+        store_cache()
     }
 
     fun dismiss_forever() {

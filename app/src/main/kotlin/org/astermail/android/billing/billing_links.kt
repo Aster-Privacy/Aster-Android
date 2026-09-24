@@ -55,12 +55,27 @@ fun parse_billing_return(uri: Uri?): billing_return_outcome? {
     }
 }
 
+private tailrec fun Context.billing_link_activity(): android.app.Activity? = when (this) {
+    is android.app.Activity -> this
+    is android.content.ContextWrapper -> baseContext.billing_link_activity()
+    else -> null
+}
+
 fun open_billing_tab(context: Context, url: String): Boolean {
     val uri = Uri.parse(url)
     if (uri.host == "play.google.com") {
-        val opened = runCatching {
-            context.startActivity(Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        }.isSuccess
+        val activity = context.billing_link_activity()
+        val opened = if (activity != null) {
+            runCatching {
+                activity.startActivity(Intent(Intent.ACTION_VIEW, uri).setPackage(PLAY_STORE_PACKAGE))
+            }.isSuccess || runCatching {
+                activity.startActivity(Intent(Intent.ACTION_VIEW, uri))
+            }.isSuccess
+        } else {
+            runCatching {
+                context.startActivity(Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }.isSuccess
+        }
         if (opened) return true
     }
     val tab = runCatching {

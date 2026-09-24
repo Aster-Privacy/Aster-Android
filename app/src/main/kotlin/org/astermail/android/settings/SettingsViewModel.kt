@@ -227,6 +227,8 @@ data class SettingsUiState(
     val alias_preferences: AliasPreferences? = null,
     val alias_preferences_load_failed: Boolean = false,
     val twin_address: org.astermail.android.api.settings.TwinAddressResponse? = null,
+    val twin_address_verified: Boolean = false,
+    val aliases_loaded: Boolean = false,
     val expanded_alias_ids: Set<String> = emptySet(),
     val alias_details: Map<String, AliasDetailState> = emptyMap(),
     val mail_rules: List<org.astermail.android.api.mail_rules.MailRule> = emptyList(),
@@ -377,6 +379,8 @@ class SettingsViewModel @Inject constructor(
     private val last_labels_load_ms = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private var save_preferences_job: kotlinx.coroutines.Job? = null
     private var prefs_load_succeeded = false
+    private var twin_address_job: kotlinx.coroutines.Job? = null
+    private var twin_address_generation = 0
 
     private val account_data_writer = org.astermail.android.crypto.AccountDataWriter(
         session_key_store,
@@ -388,7 +392,11 @@ class SettingsViewModel @Inject constructor(
         hydrate_cached_preferences()
         hydrate_cached_signatures()
         hydrate_cached_tags()
+        hydrate_twin_address()
         load_preferences()
+        viewModelScope.launch {
+            org.astermail.android.billing.SubscriptionEvents.changed.collect { load_subscription(force = true) }
+        }
     }
 
     private fun cache_account_key(): String? =
@@ -894,6 +902,9 @@ class SettingsViewModel @Inject constructor(
         org.astermail.android.folders.folder_lock_store.lock_all()
         load_preferences_job?.cancel()
         save_preferences_job?.cancel()
+        twin_address_generation++
+        twin_address_job?.cancel()
+        twin_address_job = null
         prefs_load_succeeded = false
         account_uses_encrypted_prefs = false
         last_preferences_raw_json = null
@@ -1333,6 +1344,7 @@ class SettingsViewModel @Inject constructor(
                 prime_own_alias_avatars(decrypted)
                 _state.value = _state.value.copy(
                     aliases = decrypted,
+                    aliases_loaded = true,
                     max_aliases = max_aliases,
                     is_loading = false,
                     aliases_loading = false,
@@ -2843,16 +2855,64 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun load_twin_address() {
-        viewModelScope.launch {
+        hydrate_twin_address()
+        val key = cache_account_key()
+        val gen = twin_address_generation
+        twin_address_job?.cancel()
+        twin_address_job = viewModelScope.launch {
             try {
                 val twin_address = settings_api.get_twin_address()
-                _state.update { it.copy(twin_address = twin_address) }
+                if (gen != twin_address_generation || cache_account_key() != key) return@launch
+                _state.update { it.copy(twin_address = twin_address, twin_address_verified = true) }
+                persist_cached_twin_address(key, twin_address)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_twin_address", t)
-                _state.update { it.copy(twin_address = null) }
+                if (gen == twin_address_generation) hydrate_twin_address()
             }
         }
+    }
+
+    private fun hydrate_twin_address() {
+        val key = cache_account_key()
+        if (key == null) {
+            _state.update { it.copy(twin_address = null, twin_address_verified = false) }
+            return
+        }
+        val cached = preferences_cache.read_twin_address(key)?.let { raw ->
+            runCatching {
+                cached_preferences_json.decodeFromString(
+                    org.astermail.android.api.settings.TwinAddressResponse.serializer(),
+                    raw,
+                )
+            }.getOrNull()
+        }
+        if (cached != null) {
+            _state.update { it.copy(twin_address = cached, twin_address_verified = true) }
+            return
+        }
+        val seeded = runCatching {
+            val current = _state.value
+            seed_twin_address(
+                account_store.get_current()?.email,
+                current.aliases.map { it.address } + current.custom_domain_addresses.map { it.address },
+            )
+        }.getOrNull()
+        _state.update { it.copy(twin_address = seeded, twin_address_verified = false) }
+    }
+
+    private fun persist_cached_twin_address(
+        key: String?,
+        twin_address: org.astermail.android.api.settings.TwinAddressResponse,
+    ) {
+        if (key == null) return
+        val raw = runCatching {
+            cached_preferences_json.encodeToString(
+                org.astermail.android.api.settings.TwinAddressResponse.serializer(),
+                twin_address,
+            )
+        }.getOrNull() ?: return
+        preferences_cache.write_twin_address(key, raw)
     }
 
     private fun hydrate_cached_alias_preferences() {

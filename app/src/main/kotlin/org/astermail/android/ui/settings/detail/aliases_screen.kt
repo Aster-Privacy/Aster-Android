@@ -622,28 +622,20 @@ private fun aliases_tab(
                 }
             }
             val twin = state.twin_address
-            val twin_siblings = remember(twin, premium_domains_allowed) {
-                val all = if (twin == null) {
-                    emptyList()
-                } else if (twin.siblings.isNotEmpty()) {
-                    twin.siblings
-                } else {
-                    listOf(
-                        org.astermail.android.api.settings.TwinSibling(
-                            address = twin.address,
-                            domain = twin.domain,
-                            local_part = twin.local_part,
-                            state = twin.state,
-                        ),
-                    )
-                }
-                all.filter {
-                    org.astermail.android.settings.twin_domain_offerable(
-                        it.domain,
-                        it.state,
-                        premium_domains_allowed,
-                    )
-                }
+            val twin_siblings = remember(
+                twin,
+                state.twin_address_verified,
+                state.aliases_loaded,
+                state.aliases,
+                state.custom_domain_addresses,
+            ) {
+                org.astermail.android.settings.twin_offer_siblings(
+                    twin = twin,
+                    owned_addresses = state.aliases.map { it.address } +
+                        state.custom_domain_addresses.map { it.address },
+                    verified = state.twin_address_verified,
+                    owned_loaded = state.aliases_loaded,
+                )
             }
             twin_siblings.forEach { sibling ->
                 v_gap(AsterSpacing.sm)
