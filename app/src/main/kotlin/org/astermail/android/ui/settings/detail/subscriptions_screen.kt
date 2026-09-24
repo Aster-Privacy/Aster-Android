@@ -475,6 +475,7 @@ fun SubscriptionsScreen(
 
     var plans_section_offset by remember { mutableStateOf(0f) }
     var selected_addon_id by remember { mutableStateOf<String?>(null) }
+    var addon_interval by remember { mutableStateOf("month") }
     var plan_type by remember(current_code) {
         mutableStateOf(if (current_code in FAMILY_PLAN_CODES) "family" else "individual")
     }
@@ -816,12 +817,23 @@ fun SubscriptionsScreen(
                 addons?.available_addons.orEmpty(),
                 billing_state.play_offers,
                 billing_state.play_addon_products,
+                addon_interval,
             )
         } else {
             addons?.available_addons.orEmpty()
         }
         val active_addons = addons?.active_addons.orEmpty()
         val play_active_addon_ids = billing_state.play_active_addons.map { it.product_id }.toSet()
+        val play_yearly_addon_ids = billing_state.play_active_addons.filter { it.term_months == 12 }.map { it.product_id }.toSet()
+        val addons_sell_yearly = play_install &&
+            org.astermail.android.billing.play_addon_sells_yearly(billing_state.play_offers, billing_state.play_addon_products)
+        val addon_yearly_badge = if (addons_sell_yearly) {
+            org.astermail.android.billing.play_addon_yearly_savings_percent(billing_state.play_offers, billing_state.play_addon_products)
+                ?.takeIf { it > 0 }
+                ?.let { stringResource(R.string.save_percent, it) }
+        } else {
+            null
+        }
         if ((!play_install || play_mode) && (available_addons.isNotEmpty() || active_addons.isNotEmpty())) {
             v_gap(AsterSpacing.lg)
             Box(
@@ -836,16 +848,37 @@ fun SubscriptionsScreen(
                 currency = detected_currency,
                 is_acting = billing_state.is_acting,
                 is_buying = billing_state.is_acting && billing_state.acting_action?.startsWith("addon_") == true,
-                price_label_for = { bytes ->
+                interval = if (addons_sell_yearly) addon_interval else "month",
+                yearly_badge = addon_yearly_badge,
+                on_interval = if (addons_sell_yearly) {
+                    { next ->
+                        if (next != addon_interval) {
+                            addon_interval = next
+                            selected_addon_id = null
+                        }
+                    }
+                } else {
+                    null
+                },
+                price_label_for = { bytes, interval ->
                     if (play_install) {
                         org.astermail.android.billing.play_addon_price_label(
                             billing_state.play_offers,
                             billing_state.play_addon_products,
                             bytes,
+                            interval,
                         )
                     } else {
                         null
                     }
+                },
+                active_interval_for = { bytes ->
+                    val product_id = if (play_install) {
+                        org.astermail.android.billing.play_addon_product_for(billing_state.play_addon_products, bytes)?.product_id
+                    } else {
+                        null
+                    }
+                    if (product_id != null && product_id in play_yearly_addon_ids) "year" else "month"
                 },
                 play_product_for = { bytes ->
                     if (play_install) {
@@ -1128,7 +1161,7 @@ fun SubscriptionsScreen(
         pending_addon_id = null
         if (billing_state.is_acting) return@LaunchedEffect
         if (addon_id != null) {
-            billing_vm.purchase_storage_addon(addon_id)
+            billing_vm.purchase_storage_addon(addon_id, addon_interval)
         } else if (plan_code != null) {
             billing_vm.start_checkout(plan_code, billing_interval, detected_currency)
         }
@@ -1204,7 +1237,7 @@ fun SubscriptionsScreen(
                     show_crypto_terms = true
                 } else {
                     pending_plan_code?.let { billing_vm.start_checkout(it, billing_interval, detected_currency) }
-                        ?: pending_addon_id?.let { billing_vm.purchase_storage_addon(it) }
+                        ?: pending_addon_id?.let { billing_vm.purchase_storage_addon(it, addon_interval) }
                 }
             },
         )
@@ -2292,7 +2325,11 @@ private fun storage_addons_card(
     currency: String,
     is_acting: Boolean,
     is_buying: Boolean,
-    price_label_for: (Long) -> String? = { null },
+    interval: String = "month",
+    yearly_badge: String? = null,
+    on_interval: ((String) -> Unit)? = null,
+    price_label_for: (Long, String) -> String? = { _, _ -> null },
+    active_interval_for: (Long) -> String = { "month" },
     play_product_for: (Long) -> String? = { null },
     on_manage_play: (String) -> Unit = {},
     on_select: (String) -> Unit,
@@ -2300,6 +2337,8 @@ private fun storage_addons_card(
 ) {
     val colors = AsterMaterial.colors
     val per_month = stringResource(R.string.fix_billing_per_month_short)
+    val per_year = stringResource(R.string.fix_billing_per_year_short)
+    val suffix_for = { value: String -> if (value == "year") per_year else per_month }
     AsterCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
             Text(
@@ -2335,8 +2374,10 @@ private fun storage_addons_card(
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Medium,
                                 )
+                                val active_interval = active_interval_for(addon.size_bytes)
                                 Text(
-                                    text = (price_label_for(addon.size_bytes) ?: format_price(addon.price_cents, currency)) + per_month,
+                                    text = (price_label_for(addon.size_bytes, active_interval) ?: format_price(addon.price_cents, currency)) +
+                                        suffix_for(active_interval),
                                     color = colors.text_tertiary,
                                     fontSize = 12.sp,
                                 )
@@ -2375,6 +2416,12 @@ private fun storage_addons_card(
                     }
                 }
             }
+            if (on_interval != null) {
+                Spacer(Modifier.height(AsterSpacing.lg))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                    billing_interval_toggle(selected = interval, on_select = on_interval, yearly_badge = yearly_badge)
+                }
+            }
             if (available.isNotEmpty()) {
                 Spacer(Modifier.height(AsterSpacing.lg))
                 Column(
@@ -2391,7 +2438,8 @@ private fun storage_addons_card(
                                     addon = addon,
                                     selected = addon.id == selected_id,
                                     currency = currency,
-                                    price_label = price_label_for(addon.storage_bytes),
+                                    price_label = price_label_for(addon.storage_bytes, interval),
+                                    period_suffix = suffix_for(interval),
                                     enabled = !is_acting,
                                     on_click = { on_select(addon.id) },
                                     modifier = Modifier.weight(1f).fillMaxHeight(),
@@ -2410,7 +2458,9 @@ private fun storage_addons_card(
                 )
                 Spacer(Modifier.height(AsterSpacing.sm))
                 Text(
-                    text = stringResource(R.string.settings_storage_addons_monthly_note),
+                    text = stringResource(
+                        if (interval == "year") R.string.settings_storage_addons_yearly_note else R.string.settings_storage_addons_monthly_note,
+                    ),
                     color = colors.text_tertiary,
                     fontSize = 11.sp,
                     lineHeight = 15.sp,
@@ -2428,6 +2478,7 @@ private fun addon_tile(
     selected: Boolean,
     currency: String,
     price_label: String? = null,
+    period_suffix: String,
     enabled: Boolean,
     on_click: () -> Unit,
     modifier: Modifier = Modifier,
@@ -2469,7 +2520,7 @@ private fun addon_tile(
         }
         Spacer(Modifier.height(2.dp))
         Text(
-            text = (price_label ?: format_price(addon.price_cents, currency)) + stringResource(R.string.fix_billing_per_month_short),
+            text = (price_label ?: format_price(addon.price_cents, currency)) + period_suffix,
             color = colors.text_tertiary,
             fontSize = 12.sp,
         )

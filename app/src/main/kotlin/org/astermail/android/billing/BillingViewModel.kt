@@ -107,7 +107,7 @@ data class BillingUiState(
 
 internal sealed interface PlayTarget {
     data class Plan(val plan_code: String, val billing_interval: String) : PlayTarget
-    data class Addon(val storage_bytes: Long) : PlayTarget
+    data class Addon(val storage_bytes: Long, val billing_interval: String = "month") : PlayTarget
     data object SpecialOffer : PlayTarget
 }
 
@@ -489,7 +489,7 @@ class BillingViewModel @Inject constructor(
         val s = _state.value
         return when (target) {
             is PlayTarget.Plan -> play_offer_for(s.play_offers, s.play_products, target.plan_code, target.billing_interval)
-            is PlayTarget.Addon -> play_addon_offer_for(s.play_offers, s.play_addon_products, target.storage_bytes)
+            is PlayTarget.Addon -> play_addon_offer_for(s.play_offers, s.play_addon_products, target.storage_bytes, target.billing_interval)
             PlayTarget.SpecialOffer -> play_special_offer_for(s.play_offers, s.play_special_offer)
         }
     }
@@ -1397,7 +1397,7 @@ class BillingViewModel @Inject constructor(
         }
     }
 
-    fun purchase_storage_addon(addon_id: String) {
+    fun purchase_storage_addon(addon_id: String, billing_interval: String = "month") {
         if (_state.value.is_acting) {
             _state.value = _state.value.copy(error = ctx.getString(R.string.billing_action_in_progress), info = null)
             return
@@ -1408,7 +1408,7 @@ class BillingViewModel @Inject constructor(
                 _state.update { it.copy(error = ctx.getString(R.string.billing_play_unavailable), info = null) }
                 return
             }
-            start_play_target("addon_$addon_id", PlayTarget.Addon(bytes))
+            start_play_target("addon_$addon_id", PlayTarget.Addon(bytes, billing_interval))
             return
         }
         if (blocks_external_checkout()) return

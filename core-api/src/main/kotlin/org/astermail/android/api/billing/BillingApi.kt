@@ -552,6 +552,7 @@ data class GooglePlaySpecialOffer(
 data class GooglePlayActiveAddon(
     val product_id: String = "",
     val paid_until: String? = null,
+    val term_months: Int = 1,
 )
 
 @Serializable

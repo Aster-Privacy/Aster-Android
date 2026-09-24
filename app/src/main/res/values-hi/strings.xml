@@ -2849,6 +2849,7 @@
     <string name="settings_plan_current_note">आपने अपना %1$d%% स्टोरेज इस्तेमाल किया है, तो आपके पास जगह बची हुई है।</string>
     <string name="settings_plan_storage_tight_note">आपने अपना %1$d%% स्टोरेज इस्तेमाल किया है। %2$s आपको ज़्यादा जगह देता है।</string>
     <string name="settings_storage_addons_monthly_note">स्टोरेज के अतिरिक्त पैकेज का बिल हर महीने बनता है, भले ही आपके प्लान का बिल सालाना बनता हो।</string>
+    <string name="settings_storage_addons_yearly_note">स्टोरेज के अतिरिक्त पैकेज का बिल हर साल बनता है, आपके प्लान से अलग।</string>
     <string name="autorenew_notice_short">कार्ड से भुगतान करने पर आपका प्लान अपने आप नवीनीकृत होता है। अगला शुल्क टालने के लिए, नवीनीकरण की तारीख से पहले सेटिंग में जाकर इसे रद्द करें।</string>
     <string name="account_suspended_title">खाता निलंबित किया गया</string>
     <string name="account_suspended_message">सेवा की शर्तों का उल्लंघन करने पर आपका खाता निलंबित है, इसलिए आप अभी साइन इन नहीं कर सकते।</string>

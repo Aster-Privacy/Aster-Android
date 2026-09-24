@@ -205,22 +205,28 @@ fun play_addon_offer_for(
     offers: List<PlayOffer>,
     addon_products: List<GooglePlayAddonProduct>,
     storage_bytes: Long,
+    billing_interval: String = "month",
 ): PlayOffer? {
     val product = play_addon_product_for(addon_products, storage_bytes) ?: return null
+    val interval = if (billing_interval == "year") "year" else "month"
+    val base_plan_id = play_base_plan_id(interval)
     val product_offers = offers.filter { it.product_id == product.product_id && it.offer_id == null }
-    return product_offers.firstOrNull { it.base_plan_id == PLAY_MONTHLY_BASE_PLAN }
-        ?: product_offers.firstOrNull { offer ->
-            offer.billing_interval == "month" &&
-                (product.base_plan_ids.isEmpty() || offer.base_plan_id in product.base_plan_ids)
-        }
+    product_offers.firstOrNull { it.base_plan_id == base_plan_id }?.let { return it }
+    if (base_plan_id in product.base_plan_ids) return null
+    return product_offers.firstOrNull { offer ->
+        offer.billing_interval == interval &&
+            (product.base_plan_ids.isEmpty() || offer.base_plan_id in product.base_plan_ids)
+    }
 }
 
 fun apply_play_addon_prices(
     addons: List<StorageAddonItem>,
     offers: List<PlayOffer>,
     addon_products: List<GooglePlayAddonProduct>,
+    billing_interval: String = "month",
 ): List<StorageAddonItem> = addons.mapNotNull { addon ->
-    val offer = play_addon_offer_for(offers, addon_products, addon.storage_bytes) ?: return@mapNotNull null
+    val offer = play_addon_offer_for(offers, addon_products, addon.storage_bytes, billing_interval)
+        ?: return@mapNotNull null
     addon.copy(price_cents = play_price_cents(offer.price_micros))
 }
 
@@ -228,9 +234,22 @@ fun play_addon_price_label(
     offers: List<PlayOffer>,
     addon_products: List<GooglePlayAddonProduct>,
     storage_bytes: Long,
-): String? = play_addon_offer_for(offers, addon_products, storage_bytes)
+    billing_interval: String = "month",
+): String? = play_addon_offer_for(offers, addon_products, storage_bytes, billing_interval)
     ?.formatted_price
     ?.takeIf { it.isNotBlank() }
+
+fun play_addon_sells_yearly(offers: List<PlayOffer>, addon_products: List<GooglePlayAddonProduct>): Boolean =
+    addon_products.any { play_addon_offer_for(offers, addon_products, it.size_bytes, "year") != null }
+
+fun play_addon_yearly_savings_percent(
+    offers: List<PlayOffer>,
+    addon_products: List<GooglePlayAddonProduct>,
+): Int? = addon_products.mapNotNull { product ->
+    val monthly = play_addon_offer_for(offers, addon_products, product.size_bytes, "month") ?: return@mapNotNull null
+    val yearly = play_addon_offer_for(offers, addon_products, product.size_bytes, "year") ?: return@mapNotNull null
+    yearly_savings_percent(play_price_cents(monthly.price_micros), play_price_cents(yearly.price_micros))
+}.minOrNull()
 
 fun play_replacement_mode(current: PlayOffer?, next: PlayOffer): PlayReplacementMode =
     if (

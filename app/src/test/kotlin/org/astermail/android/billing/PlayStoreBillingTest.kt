@@ -188,6 +188,34 @@ class PlayStoreBillingTest {
     }
 
     @Test
+    fun `picks the yearly add-on plan and skips sizes sold monthly only`() {
+        val yearly_products = listOf(
+            GooglePlayAddonProduct("storage_5gb", "5 GB", 5 * gb, listOf("monthly", "yearly")),
+            GooglePlayAddonProduct("storage_10tb", "10 TB", 10240 * gb, listOf("monthly")),
+        )
+        val addon_offers = listOf(
+            offer("storage_5gb", "month", 990_000),
+            offer("storage_5gb", "year", 9_990_000),
+            offer("storage_10tb", "month", 149_990_000),
+        )
+        assertEquals("storage_5gb-year", play_addon_offer_for(addon_offers, yearly_products, 5 * gb, "year")?.offer_token)
+        assertEquals("storage_5gb-month", play_addon_offer_for(addon_offers, yearly_products, 5 * gb)?.offer_token)
+        assertNull(play_addon_offer_for(addon_offers, yearly_products, 10240 * gb, "year"))
+        assertNull(play_addon_offer_for(addon_offers.take(1), yearly_products, 5 * gb, "year"))
+        assertTrue(play_addon_sells_yearly(addon_offers, yearly_products))
+        assertFalse(play_addon_sells_yearly(addon_offers.filter { it.billing_interval == "month" }, yearly_products))
+        assertEquals(15, play_addon_yearly_savings_percent(addon_offers, yearly_products))
+
+        val addons = listOf(
+            StorageAddonItem(id = "a", storage_bytes = 5 * gb, price_cents = 99),
+            StorageAddonItem(id = "b", storage_bytes = 10240 * gb, price_cents = 14999),
+        )
+        val yearly = apply_play_addon_prices(addons, addon_offers, yearly_products, "year")
+        assertEquals(listOf("a"), yearly.map { it.id })
+        assertEquals(999, yearly.single().price_cents)
+    }
+
+    @Test
     fun `charges the prorated price only for a same-interval upgrade`() {
         val star_m = offer("star", "month", 2_990_000)
         val nova_m = offer("nova", "month", 8_990_000)
