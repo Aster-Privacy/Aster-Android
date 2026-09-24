@@ -46,7 +46,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -103,6 +102,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
 import org.astermail.android.billing.BillingViewModel
 import org.astermail.android.billing.api_plan_price_cents
+import org.astermail.android.ui.settings.detail.galaxy_badge
 import org.astermail.android.billing.billing_interval_per_label
 import org.astermail.android.billing.format_money
 import org.astermail.android.design.AsterMaterial
@@ -124,7 +124,6 @@ private val CARD_SHAPE = SquircleShape(24.dp)
 private val CARD_MAX_WIDTH = 420.dp
 private val CARD_PADDING = 20.dp
 private val COMPARISON_COLUMN_WIDTH = 84.dp
-private val COMPARISON_HIGHLIGHT_SHAPE = SquircleShape(16.dp)
 private val CTA_HEIGHT = 52.dp
 private val CTA_LIP = 2.dp
 private val CTA_SHAPE = SquircleShape(999.dp)
@@ -352,16 +351,9 @@ fun SpecialOfferHost() {
 
                         Spacer(Modifier.height(8.dp))
 
-                        Text(
+                        galaxy_badge(
                             text = stringResource(R.string.special_offer_hero_duration, months),
-                            color = colors.accent_blue,
-                            fontSize = 12.sp,
-                            lineHeight = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .background(colors.accent_blue.copy(alpha = 0.12f))
-                                .padding(horizontal = 10.dp, vertical = 4.dp),
+                            font_size = 11.sp,
                         )
 
                         Spacer(Modifier.height(20.dp))
@@ -534,39 +526,29 @@ private fun SpecialOfferComparison(rows: List<SpecialOfferComparisonRow>, includ
         LocalDensity.current.fontScale.coerceIn(1f, COMPARISON_MAX_FONT_SCALE)
 
     Box(modifier = Modifier.fillMaxWidth()) {
-        Box(modifier = Modifier.matchParentSize()) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .width(column_width)
-                    .fillMaxHeight()
-                    .clip(COMPARISON_HIGHLIGHT_SHAPE)
-                    .background(colors.accent_blue.copy(alpha = 0.08f))
-                    .border(1.dp, colors.accent_blue.copy(alpha = 0.22f), COMPARISON_HIGHLIGHT_SHAPE),
-            )
-        }
-
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 10.dp, bottom = 6.dp),
+                    .padding(bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Spacer(Modifier.weight(1f))
                 Text(
-                    text = stringResource(R.string.plan_name_free),
+                    text = stringResource(R.string.plan_name_free).uppercase(),
                     color = colors.text_tertiary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontSize = 11.sp,
+                    letterSpacing = 0.6.sp,
+                    fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
                     maxLines = 2,
                     modifier = Modifier.width(column_width),
                 )
                 Text(
-                    text = stringResource(R.string.plan_name_nova),
+                    text = stringResource(R.string.plan_name_nova).uppercase(),
                     color = colors.accent_blue,
-                    fontSize = 13.sp,
+                    fontSize = 11.sp,
+                    letterSpacing = 0.6.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
                     maxLines = 2,
@@ -574,16 +556,13 @@ private fun SpecialOfferComparison(rows: List<SpecialOfferComparisonRow>, includ
                 )
             }
 
-            rows.forEachIndexed { index, row ->
-                if (index > 0) {
-                    Box(
-                        modifier = Modifier
-                            .padding(end = column_width)
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .background(colors.border_secondary),
-                    )
-                }
+            rows.forEach { row ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(colors.border_secondary),
+                )
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -614,7 +593,12 @@ private fun SpecialOfferComparison(rows: List<SpecialOfferComparisonRow>, includ
                 }
             }
 
-            Spacer(Modifier.height(6.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(colors.border_secondary),
+            )
         }
     }
 }
