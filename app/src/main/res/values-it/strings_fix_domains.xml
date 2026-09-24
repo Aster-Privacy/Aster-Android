@@ -41,12 +41,10 @@
     <string name="domain_bimi_step_logo">Logo</string>
     <string name="domain_bimi_step_publish">Pubblica</string>
     <string name="domain_bimi_step_of">Passaggio %1$d di %2$d</string>
-    <string name="domain_bimi_logo_requirements">File SVG, quadrato, fino a 32 KB.</string>
     <string name="domain_bimi_logo_public_note">Il tuo logo è pubblico. Chiunque riceva le tue email può vederlo.</string>
     <string name="domain_bimi_choose_file">Scegli file</string>
     <string name="domain_bimi_uploading">Caricamento in corso</string>
     <string name="domain_bimi_replace_logo">Sostituisci logo</string>
-    <string name="domain_bimi_preview_title">Anteprima</string>
     <string name="domain_bimi_preview_inbox_subject">Il tuo ultimo aggiornamento</string>
     <string name="domain_bimi_adjustments_title">Aster ha modificato il tuo file per soddisfare i requisiti:</string>
     <string name="domain_bimi_errors_title">Questo file non può essere usato come logo del brand:</string>
@@ -61,7 +59,6 @@
     <string name="domain_bimi_publish">Pubblica logo</string>
     <string name="domain_bimi_publishing">Pubblicazione in corso</string>
     <string name="domain_bimi_check_again">Verifica di nuovo</string>
-    <string name="domain_bimi_check_record">Verifica record</string>
     <string name="domain_bimi_checking">Verifica in corso</string>
     <string name="domain_bimi_last_checked">Ultima verifica: %1$s</string>
     <string name="domain_bimi_record_title">Aggiungi questo record presso il tuo provider DNS</string>
@@ -118,4 +115,19 @@
     <string name="domain_bimi_adj_removed_editor_data">Dati dell\'editor rimossi.</string>
     <string name="domain_bimi_adj_converted_inline_styles">Stili inline convertiti in attributi.</string>
     <string name="domain_bimi_adj_removed_unsupported_attributes">Attributi non supportati rimossi.</string>
+    <string name="domain_bimi_rules_title">Requisiti del file</string>
+    <string name="domain_bimi_rule_svg">File SVG</string>
+    <string name="domain_bimi_rule_square">Quadrato, con larghezza e altezza uguali</string>
+    <string name="domain_bimi_rule_size">32 KB o meno dopo l\'ottimizzazione di Aster</string>
+    <string name="domain_bimi_rule_vector">Solo forme vettoriali, con il testo convertito in tracciati</string>
+    <string name="domain_bimi_rule_safe">Nessuno script o link esterno</string>
+    <string name="domain_bimi_logo_ready">Il tuo logo soddisfa i requisiti.</string>
+    <string name="domain_bimi_preview_inbox_title">Come appare nella posta in arrivo</string>
+    <string name="domain_bimi_preview_light">Chiaro</string>
+    <string name="domain_bimi_preview_dark">Scuro</string>
+    <string name="domain_bimi_auto_checking">Aster controlla il record automaticamente finché questa pagina è aperta.</string>
+    <string name="domain_bimi_turn_off_description">Il tuo logo non viene più mostrato nelle caselle di posta.</string>
+    <string name="domain_bimi_error_logo_required">Carica un logo prima di pubblicare.</string>
+    <string name="domain_bimi_record_removed">Aster non trova più questo record. Aggiungilo di nuovo presso il tuo provider DNS.</string>
+    <string name="domain_bimi_preview_alt">Anteprima del logo del tuo marchio</string>
 </resources>

@@ -548,6 +548,7 @@ data class CustomDomain(
     val can_create_aliases: Boolean = true,
     val bimi_available: Boolean = false,
     val bimi_state: String? = null,
+    val purchased: Boolean = false,
 )
 
 @Serializable

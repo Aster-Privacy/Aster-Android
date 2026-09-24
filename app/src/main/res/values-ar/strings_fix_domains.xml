@@ -41,12 +41,10 @@
     <string name="domain_bimi_step_logo">الشعار</string>
     <string name="domain_bimi_step_publish">النشر</string>
     <string name="domain_bimi_step_of">الخطوة %1$d من %2$d</string>
-    <string name="domain_bimi_logo_requirements">ملف SVG مربع، بحجم يصل إلى 32 KB.</string>
     <string name="domain_bimi_logo_public_note">شعارك عام. يمكن لأي شخص يتلقى رسائلك رؤيته.</string>
     <string name="domain_bimi_choose_file">اختيار ملف</string>
     <string name="domain_bimi_uploading">جارٍ الرفع</string>
     <string name="domain_bimi_replace_logo">استبدال الشعار</string>
-    <string name="domain_bimi_preview_title">معاينة</string>
     <string name="domain_bimi_preview_inbox_subject">آخر تحديثاتك</string>
     <string name="domain_bimi_adjustments_title">عدّل Aster ملفك ليستوفي المتطلبات:</string>
     <string name="domain_bimi_errors_title">لا يمكن استخدام هذا الملف كشعار للعلامة التجارية:</string>
@@ -61,7 +59,6 @@
     <string name="domain_bimi_publish">نشر الشعار</string>
     <string name="domain_bimi_publishing">جارٍ النشر</string>
     <string name="domain_bimi_check_again">التحقق مرة أخرى</string>
-    <string name="domain_bimi_check_record">التحقق من السجل</string>
     <string name="domain_bimi_checking">جارٍ التحقق</string>
     <string name="domain_bimi_last_checked">آخر تحقق: %1$s</string>
     <string name="domain_bimi_record_title">أضف هذا السجل لدى مزوّد DNS الخاص بك</string>
@@ -118,4 +115,19 @@
     <string name="domain_bimi_adj_removed_editor_data">تمت إزالة بيانات المحرر.</string>
     <string name="domain_bimi_adj_converted_inline_styles">تم تحويل الأنماط المضمّنة إلى سمات.</string>
     <string name="domain_bimi_adj_removed_unsupported_attributes">تمت إزالة السمات غير المدعومة.</string>
+    <string name="domain_bimi_rules_title">متطلبات الملف</string>
+    <string name="domain_bimi_rule_svg">ملف SVG</string>
+    <string name="domain_bimi_rule_square">مربع، بعرض وارتفاع متساويين</string>
+    <string name="domain_bimi_rule_size">32 كيلوبايت أو أقل بعد أن يحسّنه Aster</string>
+    <string name="domain_bimi_rule_vector">أشكال متجهة فقط، مع تحويل النص إلى مخططات</string>
+    <string name="domain_bimi_rule_safe">بدون نصوص برمجية أو روابط خارجية</string>
+    <string name="domain_bimi_logo_ready">يستوفي شعارك المتطلبات.</string>
+    <string name="domain_bimi_preview_inbox_title">كيف يظهر في البريد الوارد</string>
+    <string name="domain_bimi_preview_light">فاتح</string>
+    <string name="domain_bimi_preview_dark">داكن</string>
+    <string name="domain_bimi_auto_checking">يتحقق Aster من السجل تلقائيًا ما دامت هذه الصفحة مفتوحة.</string>
+    <string name="domain_bimi_turn_off_description">إيقاف عرض شعارك في صناديق البريد.</string>
+    <string name="domain_bimi_error_logo_required">حمّل شعارًا قبل النشر.</string>
+    <string name="domain_bimi_record_removed">لم يعد Aster يعثر على هذا السجل. أضفه مرة أخرى لدى مزوّد DNS.</string>
+    <string name="domain_bimi_preview_alt">معاينة شعار علامتك التجارية</string>
 </resources>

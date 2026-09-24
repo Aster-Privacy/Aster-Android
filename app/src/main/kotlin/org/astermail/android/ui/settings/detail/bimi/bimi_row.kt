@@ -26,8 +26,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,47 +48,44 @@ import org.astermail.android.ui.settings.detail.v_gap
 internal fun bimi_row(domain: CustomDomain, is_active: Boolean, on_open: () -> Unit) {
     val colors = AsterMaterial.colors
     val state = bimi_state_from(domain.bimi_state) ?: BimiState.off
-    val subtitle = if (!is_active) {
-        stringResource(R.string.domain_bimi_row_inactive)
+    val message = if (!is_active) {
+        R.string.domain_bimi_row_inactive
     } else {
-        when (state) {
-            BimiState.off -> stringResource(R.string.domain_bimi_row_off)
-            BimiState.draft -> stringResource(R.string.domain_bimi_row_draft)
-            BimiState.pending -> stringResource(R.string.domain_bimi_row_pending)
-            BimiState.live -> stringResource(R.string.domain_bimi_row_live)
-            BimiState.attention -> stringResource(R.string.domain_bimi_row_attention)
-            BimiState.external -> stringResource(R.string.domain_bimi_row_external)
-        }
+        bimi_row_message_res(state, domain.purchased)
     }
-    val content_alpha = if (is_active) 1f else 0.4f
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+        bimi_first_line_icon(Icons.Rounded.Image, colors.text_tertiary, 18.dp, 20.sp)
+        Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(R.string.domain_bimi_title),
-                color = colors.text_primary.copy(alpha = content_alpha),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            if (is_active && state != BimiState.off) {
-                v_gap(3.dp)
-                bimi_state_chip(state)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.domain_bimi_title),
+                    color = colors.text_primary,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                if (is_active && state != BimiState.off) {
+                    Spacer(Modifier.width(AsterSpacing.sm))
+                    bimi_state_chip(state)
+                }
             }
             v_gap(2.dp)
             Text(
-                text = subtitle,
+                text = stringResource(message),
                 color = colors.text_tertiary,
-                fontSize = 12.sp,
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
             )
         }
         Spacer(Modifier.width(AsterSpacing.sm))
-        TextButton(onClick = on_open, enabled = is_active) {
-            Text(
-                text = stringResource(
-                    if (state == BimiState.off) R.string.domain_bimi_set_up else R.string.domain_bimi_manage,
-                ),
-                color = colors.accent_blue.copy(alpha = content_alpha),
-                fontSize = 14.sp,
-            )
-        }
+        bimi_compact_button(
+            label = stringResource(if (state == BimiState.off) R.string.domain_bimi_set_up else R.string.domain_bimi_manage),
+            on_click = on_open,
+            enabled = is_active,
+            modifier = Modifier.align(Alignment.CenterVertically),
+        )
     }
 }

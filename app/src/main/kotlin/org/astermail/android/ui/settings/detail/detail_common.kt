@@ -74,6 +74,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Arrangement
@@ -689,17 +690,31 @@ internal fun verified_badge(
     text: String = "Verified",
     icon: ImageVector? = TablerIcons.Check,
 ) {
+    tone_badge(
+        text = text,
+        tone = AsterMaterial.colors.success,
+        icon = icon,
+        modifier = Modifier.testTag("verified_badge"),
+    )
+}
+
+@Composable
+internal fun tone_badge(
+    text: String,
+    tone: Color,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    icon_size: Dp = 11.dp,
+) {
     val colors = AsterMaterial.colors
-    val tone = colors.success
     val background = org.astermail.android.ui.mail.chip_background(tone, colors.bg_primary, colors.is_dark)
     val content = org.astermail.android.ui.mail.chip_content(tone, background, colors.is_dark)
     val border = org.astermail.android.ui.mail.chip_border(tone, colors.bg_primary, colors.is_dark)
     Row(
-        modifier = Modifier
+        modifier = modifier
             .background(background, SquircleShape(8.dp))
             .border(1.dp, border, SquircleShape(8.dp))
-            .padding(horizontal = AsterSpacing.sm, vertical = 3.dp)
-            .testTag("verified_badge"),
+            .padding(horizontal = AsterSpacing.sm, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
@@ -707,7 +722,7 @@ internal fun verified_badge(
                 imageVector = icon,
                 contentDescription = null,
                 tint = content,
-                modifier = Modifier.size(11.dp),
+                modifier = Modifier.size(icon_size),
             )
             Spacer(Modifier.width(3.dp))
         }

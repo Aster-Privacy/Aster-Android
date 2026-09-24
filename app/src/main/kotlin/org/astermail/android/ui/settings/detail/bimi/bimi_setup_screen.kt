@@ -21,12 +21,17 @@
 
 package org.astermail.android.ui.settings.detail.bimi
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,25 +44,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.components.AsterButton
+import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.settings.BimiStep
+import org.astermail.android.settings.BimiUiState
 import org.astermail.android.settings.BimiViewModel
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.ui.settings.detail.detail_scaffold
-import org.astermail.android.ui.settings.detail.error_banner
 import org.astermail.android.ui.settings.detail.load_failed_card
 import org.astermail.android.ui.settings.detail.v_gap
-
-private const val bimi_step_total = 2
 
 @Composable
 fun bimi_setup_screen(domain_id: String, on_back: () -> Unit) {
@@ -87,74 +93,153 @@ fun bimi_setup_screen(domain_id: String, on_back: () -> Unit) {
         lifecycle_owner.lifecycle.addObserver(observer)
         onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }
     }
-    val publish_visible = is_started && state.step == BimiStep.publish
-    DisposableEffect(publish_visible) {
-        vm.set_publish_visible(publish_visible)
-        onDispose { vm.set_publish_visible(false) }
+    DisposableEffect(is_started) {
+        vm.set_screen_visible(is_started)
+        onDispose { vm.set_screen_visible(false) }
     }
 
-    val domain_name = domain?.domain_name.orEmpty()
+    val is_loading = state.step == BimiStep.loading && !state.load_failed
+    var show_spinner by remember { mutableStateOf(false) }
+    LaunchedEffect(is_loading) {
+        show_spinner = false
+        if (is_loading) {
+            delay(250)
+            show_spinner = true
+        }
+    }
 
-    detail_scaffold(title = stringResource(R.string.domain_bimi_title), on_back = on_back) {
-        if (domain_name.isNotEmpty()) {
-            Text(
-                text = domain_name,
-                color = AsterMaterial.colors.text_tertiary,
-                fontSize = 13.sp,
-            )
-            v_gap(AsterSpacing.md)
-        }
-        if (state.load_failed) {
-            load_failed_card(message = null, on_retry = vm::retry_load)
-            return@detail_scaffold
-        }
-        if (state.step == BimiStep.loading) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(vertical = AsterSpacing.xxxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = AsterMaterial.colors.accent_blue)
+    val scroll_state = rememberScrollState()
+    LaunchedEffect(state.step) { scroll_state.scrollTo(0) }
+
+    val domain_name = domain?.domain_name.orEmpty()
+    val colors = AsterMaterial.colors
+
+    detail_scaffold(
+        title = stringResource(R.string.domain_bimi_title),
+        on_back = on_back,
+        scrollable = false,
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(scroll_state)
+                .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.lg),
+        ) {
+            if (domain_name.isNotEmpty() && state.step != BimiStep.manage) {
+                Text(
+                    text = domain_name,
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                )
+                v_gap(AsterSpacing.lg)
             }
-            return@detail_scaffold
+            when {
+                state.load_failed -> load_failed_card(message = null, on_retry = vm::retry_load)
+                is_loading -> Box(
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 240.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (show_spinner) CircularProgressIndicator(color = colors.accent_blue)
+                }
+                state.step == BimiStep.logo -> bimi_logo_step(state = state, domain_name = domain_name, vm = vm)
+                state.step == BimiStep.publish -> bimi_publish_step(state = state, domain = domain)
+                state.step == BimiStep.manage -> bimi_manage_view(state = state, domain_name = domain_name, vm = vm)
+            }
+            v_gap(AsterSpacing.lg)
         }
-        state.error?.let { kind ->
-            error_banner(bimi_error_text(kind))
-            v_gap(AsterSpacing.md)
+        if (!state.load_failed && state.step != BimiStep.loading) {
+            Box(Modifier.fillMaxWidth().height(1.dp).background(colors.border_secondary))
+            bimi_footer(state = state, vm = vm, on_back = on_back)
         }
-        if (state.step != BimiStep.manage && !state.replacing) {
-            bimi_step_indicator(
-                current = if (state.step == BimiStep.logo) 1 else 2,
-                name = stringResource(
-                    if (state.step == BimiStep.logo) R.string.domain_bimi_step_logo else R.string.domain_bimi_step_publish,
-                ),
-            )
-            v_gap(AsterSpacing.md)
-        }
-        when (state.step) {
-            BimiStep.logo -> bimi_logo_step(state = state, domain_name = domain_name, vm = vm)
-            BimiStep.publish -> bimi_publish_step(state = state, domain = domain, vm = vm)
-            BimiStep.manage -> bimi_manage_view(state = state, domain = domain, domain_name = domain_name, vm = vm)
-            BimiStep.loading -> Unit
-        }
-        v_gap(AsterSpacing.xxl)
     }
 }
 
 @Composable
-private fun bimi_step_indicator(current: Int, name: String) {
-    val colors = AsterMaterial.colors
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            text = stringResource(R.string.domain_bimi_step_of, current, bimi_step_total),
-            color = colors.text_tertiary,
-            fontSize = 12.sp,
-        )
-        Spacer(Modifier.width(AsterSpacing.sm))
-        Text(
-            text = name,
-            color = colors.text_primary,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
+private fun bimi_footer(state: BimiUiState, vm: BimiViewModel, on_back: () -> Unit) {
+    val view = state.view
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+        verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+    ) {
+        when (state.step) {
+            BimiStep.logo -> {
+                val has_logo = bimi_has_valid_logo(state)
+                Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
+                    if (state.replacing) {
+                        AsterSecondaryButton(
+                            label = stringResource(R.string.domain_bimi_back),
+                            onClick = vm::go_to_manage,
+                            modifier = Modifier.weight(1f),
+                            enabled = !state.busy,
+                        )
+                        AsterButton(
+                            label = stringResource(R.string.domain_bimi_done),
+                            onClick = vm::go_to_manage,
+                            modifier = Modifier.weight(1f),
+                            enabled = !state.busy && has_logo,
+                        )
+                    } else {
+                        AsterSecondaryButton(
+                            label = stringResource(R.string.cancel),
+                            onClick = on_back,
+                            modifier = Modifier.weight(1f),
+                        )
+                        AsterButton(
+                            label = stringResource(R.string.domain_bimi_continue),
+                            onClick = vm::go_to_publish,
+                            modifier = Modifier.weight(1f),
+                            enabled = !state.busy && has_logo,
+                        )
+                    }
+                }
+            }
+            BimiStep.publish -> {
+                Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
+                    AsterSecondaryButton(
+                        label = stringResource(R.string.domain_bimi_back),
+                        onClick = vm::go_to_logo,
+                        modifier = Modifier.weight(1f),
+                        enabled = !state.busy,
+                    )
+                    AsterButton(
+                        label = stringResource(
+                            if (state.publishing) R.string.domain_bimi_publishing else R.string.domain_bimi_publish,
+                        ),
+                        onClick = vm::publish,
+                        modifier = Modifier.weight(1f),
+                        enabled = !state.busy && view?.domain_active == true && view.preview_png != null,
+                        is_loading = state.publishing,
+                    )
+                }
+            }
+            BimiStep.manage -> {
+                Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
+                    AsterSecondaryButton(
+                        label = stringResource(R.string.domain_bimi_replace_logo),
+                        onClick = vm::replace_logo,
+                        modifier = Modifier.weight(1f),
+                        enabled = !state.busy,
+                    )
+                    AsterSecondaryButton(
+                        label = stringResource(
+                            if (state.checking) R.string.domain_bimi_checking else R.string.domain_bimi_check_again,
+                        ),
+                        onClick = vm::check,
+                        modifier = Modifier.weight(1f),
+                        enabled = !state.busy,
+                        is_loading = state.checking,
+                    )
+                }
+                AsterButton(
+                    label = stringResource(R.string.domain_bimi_done),
+                    onClick = on_back,
+                )
+            }
+            BimiStep.loading -> Unit
+        }
     }
 }

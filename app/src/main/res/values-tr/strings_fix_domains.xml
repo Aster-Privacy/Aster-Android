@@ -41,12 +41,10 @@
     <string name="domain_bimi_step_logo">Logo</string>
     <string name="domain_bimi_step_publish">Yayımla</string>
     <string name="domain_bimi_step_of">Adım %1$d / %2$d</string>
-    <string name="domain_bimi_logo_requirements">SVG dosyası, kare, en fazla 32 KB.</string>
     <string name="domain_bimi_logo_public_note">Logonuz herkese açıktır. Postanızı alan herkes logonuzu görebilir.</string>
     <string name="domain_bimi_choose_file">Dosya seç</string>
     <string name="domain_bimi_uploading">Yükleniyor</string>
     <string name="domain_bimi_replace_logo">Logoyu değiştir</string>
-    <string name="domain_bimi_preview_title">Önizleme</string>
     <string name="domain_bimi_preview_inbox_subject">En son güncellememiz</string>
     <string name="domain_bimi_adjustments_title">Aster, dosyanızı gereksinimleri karşılayacak şekilde düzenledi:</string>
     <string name="domain_bimi_errors_title">Bu dosya marka logosu olarak kullanılamaz:</string>
@@ -61,12 +59,11 @@
     <string name="domain_bimi_publish">Logoyu yayımla</string>
     <string name="domain_bimi_publishing">Yayımlanıyor</string>
     <string name="domain_bimi_check_again">Tekrar kontrol et</string>
-    <string name="domain_bimi_check_record">Kaydı kontrol et</string>
     <string name="domain_bimi_checking">Kontrol ediliyor</string>
     <string name="domain_bimi_last_checked">Son kontrol: %1$s</string>
     <string name="domain_bimi_record_title">Bu kaydı DNS sağlayıcınıza ekleyin</string>
     <string name="domain_bimi_record_type">Tür</string>
-    <string name="domain_bimi_record_host">Ana makine</string>
+    <string name="domain_bimi_record_host">Ana bilgisayar</string>
     <string name="domain_bimi_record_value">Değer</string>
     <string name="domain_bimi_managed_note">Alan adınız Aster üzerinden satın alındığı için DNS kaydı sizin için eklenir.</string>
     <string name="domain_bimi_verified_mark_note">Bazı gelen kutuları marka logolarını yalnızca doğrulanmış marka sertifikası (VMC) olan alan adları için gösterir.</string>
@@ -118,4 +115,19 @@
     <string name="domain_bimi_adj_removed_editor_data">Düzenleyici verileri kaldırıldı.</string>
     <string name="domain_bimi_adj_converted_inline_styles">Satır içi stiller özniteliklere dönüştürüldü.</string>
     <string name="domain_bimi_adj_removed_unsupported_attributes">Desteklenmeyen öznitelikler kaldırıldı.</string>
+    <string name="domain_bimi_rules_title">Dosya gereksinimleri</string>
+    <string name="domain_bimi_rule_svg">SVG dosyası</string>
+    <string name="domain_bimi_rule_square">Genişliği ve yüksekliği eşit bir kare</string>
+    <string name="domain_bimi_rule_size">Aster optimize ettikten sonra 32 KB veya daha küçük</string>
+    <string name="domain_bimi_rule_vector">Yalnızca vektör şekiller, metin anahatlara dönüştürülmüş</string>
+    <string name="domain_bimi_rule_safe">Komut dosyası veya harici bağlantı yok</string>
+    <string name="domain_bimi_logo_ready">Logonuz gereksinimleri karşılıyor.</string>
+    <string name="domain_bimi_preview_inbox_title">Gelen kutusunda nasıl görünür</string>
+    <string name="domain_bimi_preview_light">Açık</string>
+    <string name="domain_bimi_preview_dark">Koyu</string>
+    <string name="domain_bimi_auto_checking">Bu sayfa açıkken Aster kaydı otomatik olarak kontrol eder.</string>
+    <string name="domain_bimi_turn_off_description">Logonuz gelen kutularında artık gösterilmez.</string>
+    <string name="domain_bimi_error_logo_required">Yayımlamadan önce bir logo yükleyin.</string>
+    <string name="domain_bimi_record_removed">Aster bu kaydı artık bulamıyor. Kaydı DNS sağlayıcınızda yeniden ekleyin.</string>
+    <string name="domain_bimi_preview_alt">Marka logonuzun önizlemesi</string>
 </resources>

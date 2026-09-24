@@ -58,9 +58,9 @@ class BimiViewModelTest {
     private val domain_id = "dom-1"
     private val svg = "<svg/>".toByteArray()
 
-    private fun view(state: String, managed_dns: Boolean = false) = BimiView(
+    private fun view(state: String, managed_dns: Boolean = false, domain_active: Boolean = true) = BimiView(
         state = state,
-        domain_active = true,
+        domain_active = domain_active,
         managed_dns = managed_dns,
         preview_png = if (state == "off") null else "iVBORw0KGgo=",
     )
@@ -94,10 +94,18 @@ class BimiViewModelTest {
         assertEquals(BimiStep.logo, vm.state.value.step)
 
         val other = BimiViewModel(bimi_api)
-        coEvery { bimi_api.get_bimi("dom-2") } returns view("pending")
+        coEvery { bimi_api.get_bimi("dom-2") } returns view("draft")
         other.load("dom-2")
         runCurrent()
         assertEquals(BimiStep.publish, other.state.value.step)
+
+        for ((index, raw) in listOf("pending", "attention", "external").withIndex()) {
+            val managed = BimiViewModel(bimi_api)
+            coEvery { bimi_api.get_bimi("dom-m$index") } returns view(raw)
+            managed.load("dom-m$index")
+            runCurrent()
+            assertEquals(BimiStep.manage, managed.state.value.step)
+        }
 
         val live = BimiViewModel(bimi_api)
         coEvery { bimi_api.get_bimi("dom-3") } returns view("live")
@@ -189,13 +197,13 @@ class BimiViewModelTest {
     }
 
     @Test
-    fun `auto check runs every 20 seconds while the publish step is visible and pending`() = runTest {
+    fun `auto check runs every 20 seconds on the manage step while pending`() = runTest {
         coEvery { bimi_api.get_bimi(domain_id) } returns view("draft")
         coEvery { bimi_api.publish(domain_id) } returns view("pending")
         coEvery { bimi_api.check(domain_id) } returns view("pending")
         vm.load(domain_id)
         runCurrent()
-        vm.set_publish_visible(true)
+        vm.set_screen_visible(true)
 
         advanceTimeBy(BIMI_AUTO_CHECK_INTERVAL_MS + 1)
         runCurrent()
@@ -205,13 +213,14 @@ class BimiViewModelTest {
         runCurrent()
         advanceTimeBy(BIMI_AUTO_CHECK_INTERVAL_MS + 1)
         runCurrent()
+        assertEquals(BimiStep.manage, vm.state.value.step)
         coVerify(exactly = 1) { bimi_api.check(domain_id) }
 
         advanceTimeBy(BIMI_AUTO_CHECK_INTERVAL_MS)
         runCurrent()
         coVerify(exactly = 2) { bimi_api.check(domain_id) }
 
-        vm.set_publish_visible(false)
+        vm.set_screen_visible(false)
         advanceTimeBy(BIMI_AUTO_CHECK_INTERVAL_MS * 3)
         runCurrent()
         coVerify(exactly = 2) { bimi_api.check(domain_id) }
@@ -223,7 +232,7 @@ class BimiViewModelTest {
         coEvery { bimi_api.check(domain_id) } returns view("live")
         vm.load(domain_id)
         runCurrent()
-        vm.set_publish_visible(true)
+        vm.set_screen_visible(true)
 
         advanceTimeBy(BIMI_AUTO_CHECK_INTERVAL_MS + 1)
         runCurrent()
@@ -237,10 +246,10 @@ class BimiViewModelTest {
     @Test
     fun `auto check ignores a throttled check silently`() = runTest {
         coEvery { bimi_api.get_bimi(domain_id) } returns view("attention")
-        coEvery { bimi_api.check(domain_id) } throws ApiError.RateLimited(code = "BIMI_CHECK_THROTTLED") andThen view("attention")
+        coEvery { bimi_api.check(domain_id) } throws ApiError.RateLimited(code = "BIMI_ACTION_THROTTLED") andThen view("attention")
         vm.load(domain_id)
         runCurrent()
-        vm.set_publish_visible(true)
+        vm.set_screen_visible(true)
 
         advanceTimeBy(BIMI_AUTO_CHECK_INTERVAL_MS + 1)
         runCurrent()
@@ -249,13 +258,13 @@ class BimiViewModelTest {
         advanceTimeBy(BIMI_AUTO_CHECK_INTERVAL_MS)
         runCurrent()
         coVerify(exactly = 2) { bimi_api.check(domain_id) }
-        vm.set_publish_visible(false)
+        vm.set_screen_visible(false)
     }
 
     @Test
     fun `a manual check that is throttled shows the wait message`() = runTest {
         coEvery { bimi_api.get_bimi(domain_id) } returns view("pending")
-        coEvery { bimi_api.check(domain_id) } throws ApiError.RateLimited(code = "BIMI_CHECK_THROTTLED")
+        coEvery { bimi_api.check(domain_id) } throws ApiError.RateLimited(code = "BIMI_ACTION_THROTTLED")
         vm.load(domain_id)
         runCurrent()
 
@@ -308,5 +317,135 @@ class BimiViewModelTest {
         vm.go_to_manage()
         assertEquals(BimiStep.manage, vm.state.value.step)
         assertFalse(vm.state.value.replacing)
+    }
+
+    @Test
+    fun `a failed load can be retried`() = runTest {
+        coEvery { bimi_api.get_bimi(domain_id) } throws ApiError.NetworkError andThen view("live")
+        vm.load(domain_id)
+        runCurrent()
+        assertTrue(vm.state.value.load_failed)
+        assertEquals(BimiStep.loading, vm.state.value.step)
+
+        vm.retry_load()
+        runCurrent()
+        assertFalse(vm.state.value.load_failed)
+        assertEquals(BimiStep.manage, vm.state.value.step)
+    }
+
+    @Test
+    fun `publishing on an inactive domain is blocked without a request`() = runTest {
+        coEvery { bimi_api.get_bimi(domain_id) } returns view("draft", domain_active = false)
+        vm.load(domain_id)
+        runCurrent()
+
+        vm.publish()
+        runCurrent()
+
+        assertEquals(BimiErrorKind.domain_not_active, vm.state.value.error)
+        coVerify(exactly = 0) { bimi_api.publish(any()) }
+    }
+
+    @Test
+    fun `a successful publish opens the manage view`() = runTest {
+        coEvery { bimi_api.get_bimi(domain_id) } returns view("draft")
+        coEvery { bimi_api.publish(domain_id) } returns view("pending")
+        vm.load(domain_id)
+        runCurrent()
+
+        vm.publish()
+        runCurrent()
+
+        assertEquals(BimiStep.manage, vm.state.value.step)
+        assertEquals(BimiState.pending, vm.state.value.bimi_state)
+        assertFalse(vm.state.value.publishing)
+    }
+
+    @Test
+    fun `server error codes map to their messages`() {
+        assertEquals(
+            BimiErrorKind.logo_required,
+            bimi_error_kind(ApiError.ValidationError(listOf("x"), "BIMI_LOGO_REQUIRED")),
+        )
+        assertEquals(
+            BimiErrorKind.logo_required,
+            bimi_error_kind(ApiError.Conflict("x", "BIMI_LOGO_REQUIRED")),
+        )
+        assertEquals(
+            BimiErrorKind.domain_not_active,
+            bimi_error_kind(ApiError.Conflict("x", "BIMI_DOMAIN_NOT_ACTIVE")),
+        )
+        assertEquals(BimiErrorKind.file_too_large, bimi_error_kind(ApiError.AttachmentTooLarge()))
+        assertEquals(
+            BimiErrorKind.file_too_large,
+            bimi_error_kind(ApiError.ValidationError(listOf("x"), "PAYLOAD_TOO_LARGE")),
+        )
+        assertEquals(BimiErrorKind.throttled, bimi_error_kind(ApiError.RateLimited(code = "RATE_LIMIT_EXCEEDED")))
+        assertEquals(
+            BimiErrorKind.generic,
+            bimi_error_kind(ApiError.Conflict("x", "BIMI_RECORD_CONFLICT")),
+        )
+        assertEquals(BimiErrorKind.generic, bimi_error_kind(ApiError.NetworkError))
+    }
+
+    @Test
+    fun `auto check waits while the turn off confirmation is open`() = runTest {
+        coEvery { bimi_api.get_bimi(domain_id) } returns view("pending")
+        coEvery { bimi_api.check(domain_id) } returns view("pending")
+        vm.load(domain_id)
+        runCurrent()
+        vm.set_screen_visible(true)
+
+        vm.request_turn_off()
+        assertTrue(vm.state.value.confirm_turn_off)
+        advanceTimeBy(BIMI_AUTO_CHECK_INTERVAL_MS * 2 + 1)
+        runCurrent()
+        coVerify(exactly = 0) { bimi_api.check(any()) }
+
+        vm.dismiss_turn_off()
+        advanceTimeBy(BIMI_AUTO_CHECK_INTERVAL_MS + 1)
+        runCurrent()
+        coVerify(exactly = 1) { bimi_api.check(domain_id) }
+        vm.set_screen_visible(false)
+    }
+
+    @Test
+    fun `auto check does not run outside the manage step`() = runTest {
+        coEvery { bimi_api.get_bimi(domain_id) } returns view("pending")
+        vm.load(domain_id)
+        runCurrent()
+        vm.set_screen_visible(true)
+
+        vm.replace_logo()
+        advanceTimeBy(BIMI_AUTO_CHECK_INTERVAL_MS * 3)
+        runCurrent()
+        coVerify(exactly = 0) { bimi_api.check(any()) }
+    }
+
+    @Test
+    fun `a stale auto check response is dropped`() = runTest {
+        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+        coEvery { bimi_api.get_bimi(domain_id) } returns view("pending")
+        coEvery { bimi_api.check(domain_id) } coAnswers {
+            gate.await()
+            view("attention")
+        }
+        coEvery { bimi_api.turn_off(domain_id) } returns view("off")
+        vm.load(domain_id)
+        runCurrent()
+        vm.set_screen_visible(true)
+
+        advanceTimeBy(BIMI_AUTO_CHECK_INTERVAL_MS + 1)
+        runCurrent()
+        vm.request_turn_off()
+        vm.turn_off()
+        runCurrent()
+        assertEquals(BimiState.off, vm.state.value.bimi_state)
+
+        gate.complete(Unit)
+        runCurrent()
+        assertEquals(BimiState.off, vm.state.value.bimi_state)
+        assertEquals(BimiStep.logo, vm.state.value.step)
+        vm.set_screen_visible(false)
     }
 }
