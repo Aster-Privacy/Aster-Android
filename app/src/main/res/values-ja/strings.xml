@@ -3257,8 +3257,8 @@
     <string name="special_offer_unavailable">このオファーは終了しました。</string>
     <string name="special_offer_price_period">/月</string>
     <string name="special_offer_dismiss">このオファーを今後表示しない</string>
-    <string name="special_offer_success_title">Nova をご利用いただけます</string>
-    <string name="special_offer_success_body">割引価格が適用され、Nova のすべての機能をすぐにお使いいただけます。</string>
+    <string name="special_offer_success_title">ありがとうございます。Nova をご利用いただけます。</string>
+    <string name="special_offer_success_body">ご登録ありがとうございます。皆さまのご支援が私たちの大きな励みです。</string>
     <string name="special_offer_why_label">このオファーを提供する理由</string>
     <string name="special_offer_why_body">Aster は小さなチームで運営する独立した企業で、皆さまのご支援は私たちにとって大きな意味があります。サブスクリプションはサービスの運営を支え、Aster を毎日丁寧に開発し続けることを可能にしています。このオファーで、より気軽に始めていただけます。</string>
     <string name="special_offer_entry">特別オファー</string>
@@ -3266,7 +3266,7 @@
     <string name="special_offer_benefit_aliases_title">エイリアス無制限</string>
     <string name="special_offer_benefit_storage_title">500 GBの暗号化ストレージ</string>
     <string name="special_offer_benefit_domains_title">カスタムドメイン最大30個</string>
-    <string name="special_offer_benefit_vanguard_title">Aster Vanguard</string>
+    <string name="special_offer_benefit_vanguard_title">Vanguardで強化されたセキュリティ</string>
     <string name="special_offer_benefit_aliases_body">サイトごとに専用のアドレスを使えます。</string>
     <string name="special_offer_benefit_storage_body">何年分ものメールとファイルを保存できます。</string>
     <string name="special_offer_benefit_domains_body">独自ドメインのアドレスから送信できます。</string>

@@ -294,7 +294,6 @@ fun RegisterPlanStep(
                     } else {
                         null
                     },
-                    offer = null,
                     on_select = {
                         selected_code = plan.code
                         billing_vm.clear_messages()
@@ -405,7 +404,6 @@ private fun plan_card(
     billing_interval: String,
     currency: String,
     price_label: String? = null,
-    offer: org.astermail.android.ui.settings.detail.review_offer_price? = null,
     on_select: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -458,19 +456,7 @@ private fun plan_card(
             } else {
                 stringResource(R.string.free_forever)
             }
-            if (offer != null && amount_cents > 0 && price_interval == org.astermail.android.ui.upgrade.SPECIAL_OFFER_CARD_INTERVAL) {
-                org.astermail.android.ui.settings.detail.offer_price_line(
-                    offer.copy(
-                        discounted = stringResource(
-                            R.string.settings_price_per_interval,
-                            offer.discounted,
-                            org.astermail.android.billing.billing_interval_label(context, price_interval),
-                        ),
-                    ),
-                )
-            } else {
-                Text(text = price_text, color = colors.text_secondary, fontSize = 15.sp)
-            }
+            Text(text = price_text, color = colors.text_secondary, fontSize = 15.sp)
 
             val localized_desc = when (plan.code.lowercase()) {
                 "free" -> stringResource(R.string.plan_desc_free)

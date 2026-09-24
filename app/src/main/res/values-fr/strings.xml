@@ -3302,8 +3302,8 @@
     <string name="special_offer_unavailable">Cette offre n\'est plus disponible.</string>
     <string name="special_offer_price_period">par mois</string>
     <string name="special_offer_dismiss">Ne plus afficher cette offre</string>
-    <string name="special_offer_success_title">Nova est activé</string>
-    <string name="special_offer_success_body">Votre prix réduit est appliqué, et toutes les fonctionnalités de Nova sont prêtes à l\'emploi.</string>
+    <string name="special_offer_success_title">Merci. Vous êtes passé à Nova.</string>
+    <string name="special_offer_success_body">Merci pour votre abonnement. Votre soutien compte beaucoup pour nous.</string>
     <string name="special_offer_why_label">Pourquoi cette offre ?</string>
     <string name="special_offer_why_body">Aster est une entreprise indépendante dotée d\'une petite équipe, et votre soutien compte beaucoup pour nous. Les abonnements font fonctionner le service et nous permettent de continuer à développer Aster avec soin chaque jour. Cette offre vous aide à vous lancer.</string>
     <string name="special_offer_entry">Offre spéciale</string>
@@ -3311,7 +3311,7 @@
     <string name="special_offer_benefit_aliases_title">Alias illimités</string>
     <string name="special_offer_benefit_storage_title">500 Go de stockage chiffré</string>
     <string name="special_offer_benefit_domains_title">Jusqu\'à 30 domaines personnalisés</string>
-    <string name="special_offer_benefit_vanguard_title">Aster Vanguard</string>
+    <string name="special_offer_benefit_vanguard_title">Sécurité renforcée avec Vanguard</string>
     <string name="special_offer_benefit_aliases_body">Donnez à chaque site sa propre adresse.</string>
     <string name="special_offer_benefit_storage_body">De la place pour des années d\'e-mails et de fichiers.</string>
     <string name="special_offer_benefit_domains_body">Envoyez depuis des adresses sur vos propres domaines.</string>

@@ -3359,8 +3359,8 @@
     <string name="special_offer_unavailable">لم يعد هذا العرض متاحًا.</string>
     <string name="special_offer_price_period">شهريًا</string>
     <string name="special_offer_dismiss">عدم عرض هذا العرض مرة أخرى</string>
-    <string name="special_offer_success_title">أصبحت مشتركًا في Nova</string>
-    <string name="special_offer_success_body">تم تطبيق السعر المخفَّض، وجميع ميزات Nova جاهزة للاستخدام.</string>
+    <string name="special_offer_success_title">شكرًا لك. أصبحت مشتركًا في Nova.</string>
+    <string name="special_offer_success_body">شكرًا لاشتراكك. دعمك يعني لنا الكثير.</string>
     <string name="special_offer_why_label">لماذا هذا العرض؟</string>
     <string name="special_offer_why_body">Aster شركة مستقلة يديرها فريق صغير، ودعمك يعني لنا الكثير. تحافظ الاشتراكات على استمرار الخدمة وتتيح لنا مواصلة تطوير Aster بعناية كل يوم. يسهّل عليك هذا العرض البدء.</string>
     <string name="special_offer_entry">عرض خاص</string>
@@ -3368,7 +3368,7 @@
     <string name="special_offer_benefit_aliases_title">أسماء مستعارة غير محدودة</string>
     <string name="special_offer_benefit_storage_title">مساحة تخزين مشفرة بسعة 500 GB</string>
     <string name="special_offer_benefit_domains_title">حتى 30 نطاقًا مخصصًا</string>
-    <string name="special_offer_benefit_vanguard_title">Aster Vanguard</string>
+    <string name="special_offer_benefit_vanguard_title">أمان متقدم مع Vanguard</string>
     <string name="special_offer_benefit_aliases_body">امنح كل موقع عنوانًا خاصًا به.</string>
     <string name="special_offer_benefit_storage_body">مساحة تكفي بريدك وملفاتك لسنوات.</string>
     <string name="special_offer_benefit_domains_body">أرسل من عناوين على نطاقاتك الخاصة.</string>

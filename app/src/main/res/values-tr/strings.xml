@@ -3275,8 +3275,8 @@
     <string name="special_offer_unavailable">Bu teklif artık geçerli değil.</string>
     <string name="special_offer_price_period">aylık</string>
     <string name="special_offer_dismiss">Bu teklifi bir daha gösterme</string>
-    <string name="special_offer_success_title">Artık Nova kullanıyorsunuz</string>
-    <string name="special_offer_success_body">İndirimli fiyatınız uygulandı ve tüm Nova özellikleri kullanıma hazır.</string>
+    <string name="special_offer_success_title">Teşekkürler. Artık Nova kullanıyorsunuz.</string>
+    <string name="special_offer_success_body">Abone olduğunuz için teşekkürler. Desteğiniz bizim için çok değerli.</string>
     <string name="special_offer_why_label">Neden bu teklif?</string>
     <string name="special_offer_why_body">Aster, küçük bir ekibe sahip bağımsız bir şirkettir ve desteğiniz bizim için çok değerlidir. Abonelikler hizmetin çalışmasını sağlar ve Aster\'ı her gün özenle geliştirmeye devam etmemize olanak tanır. Bu teklif başlamanızı kolaylaştırır.</string>
     <string name="special_offer_entry">Özel teklif</string>
@@ -3284,7 +3284,7 @@
     <string name="special_offer_benefit_aliases_title">Sınırsız takma ad</string>
     <string name="special_offer_benefit_storage_title">500 GB şifreli depolama</string>
     <string name="special_offer_benefit_domains_title">30\'a kadar özel alan adı</string>
-    <string name="special_offer_benefit_vanguard_title">Aster Vanguard</string>
+    <string name="special_offer_benefit_vanguard_title">Vanguard ile gelişmiş güvenlik</string>
     <string name="special_offer_benefit_aliases_body">Her siteye ayrı bir adres verin.</string>
     <string name="special_offer_benefit_storage_body">Yıllarca e-posta ve dosya için yer.</string>
     <string name="special_offer_benefit_domains_body">Kendi alan adlarınızdaki adreslerden gönderin.</string>

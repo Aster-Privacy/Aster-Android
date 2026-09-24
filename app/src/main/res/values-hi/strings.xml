@@ -3165,8 +3165,8 @@
     <string name="special_offer_unavailable">यह ऑफ़र अब उपलब्ध नहीं है।</string>
     <string name="special_offer_price_period">प्रति माह</string>
     <string name="special_offer_dismiss">यह ऑफ़र दोबारा न दिखाएँ</string>
-    <string name="special_offer_success_title">अब आप Nova पर हैं</string>
-    <string name="special_offer_success_body">आपकी छूट वाली कीमत लागू हो गई है, और Nova की सभी सुविधाएं इस्तेमाल के लिए तैयार हैं।</string>
+    <string name="special_offer_success_title">धन्यवाद। अब आप Nova पर हैं।</string>
+    <string name="special_offer_success_body">सदस्यता लेने के लिए धन्यवाद। आपका समर्थन हमारे लिए बहुत मायने रखता है।</string>
     <string name="special_offer_why_label">यह ऑफ़र क्यों?</string>
     <string name="special_offer_why_body">Aster एक छोटी टीम वाली स्वतंत्र कंपनी है, और आपका समर्थन हमारे लिए बहुत मायने रखता है। सदस्यताएँ सेवा को चालू रखती हैं और हमें हर दिन ध्यान से Aster को बेहतर बनाते रहने में मदद करती हैं। यह ऑफ़र शुरुआत करना आसान बनाता है।</string>
     <string name="special_offer_entry">विशेष ऑफ़र</string>
@@ -3174,7 +3174,7 @@
     <string name="special_offer_benefit_aliases_title">असीमित उपनाम</string>
     <string name="special_offer_benefit_storage_title">500 GB एन्क्रिप्टेड स्टोरेज</string>
     <string name="special_offer_benefit_domains_title">30 तक कस्टम डोमेन</string>
-    <string name="special_offer_benefit_vanguard_title">Aster Vanguard</string>
+    <string name="special_offer_benefit_vanguard_title">Vanguard के साथ उन्नत सुरक्षा</string>
     <string name="special_offer_benefit_aliases_body">हर साइट को उसका अपना पता दें।</string>
     <string name="special_offer_benefit_storage_body">सालों के मेल और फ़ाइलों के लिए जगह।</string>
     <string name="special_offer_benefit_domains_body">अपने डोमेन के पतों से मेल भेजें।</string>

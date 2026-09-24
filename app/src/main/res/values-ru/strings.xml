@@ -3317,8 +3317,8 @@
     <string name="special_offer_unavailable">Это предложение больше не действует.</string>
     <string name="special_offer_price_period">в месяц</string>
     <string name="special_offer_dismiss">Больше не показывать это предложение</string>
-    <string name="special_offer_success_title">Теперь у вас Nova</string>
-    <string name="special_offer_success_body">Скидка применена, и все функции Nova уже доступны.</string>
+    <string name="special_offer_success_title">Спасибо. Теперь у вас Nova.</string>
+    <string name="special_offer_success_body">Спасибо за подписку. Ваша поддержка очень много для нас значит.</string>
     <string name="special_offer_why_label">Почему это предложение?</string>
     <string name="special_offer_why_body">Aster является независимой компанией с небольшой командой, и ваша поддержка очень много для нас значит. Подписки поддерживают работу сервиса и позволяют нам каждый день бережно развивать Aster, а с этим предложением начать проще.</string>
     <string name="special_offer_entry">Специальное предложение</string>
@@ -3326,7 +3326,7 @@
     <string name="special_offer_benefit_aliases_title">Неограниченные псевдонимы</string>
     <string name="special_offer_benefit_storage_title">500 ГБ зашифрованного хранилища</string>
     <string name="special_offer_benefit_domains_title">До 30 собственных доменов</string>
-    <string name="special_offer_benefit_vanguard_title">Aster Vanguard</string>
+    <string name="special_offer_benefit_vanguard_title">Усиленная защита с Vanguard</string>
     <string name="special_offer_benefit_aliases_body">Отдельный адрес для каждого сайта.</string>
     <string name="special_offer_benefit_storage_body">Места хватит на годы писем и файлов.</string>
     <string name="special_offer_benefit_domains_body">Отправляйте письма с адресов на своих доменах.</string>

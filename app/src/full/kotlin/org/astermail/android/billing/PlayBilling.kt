@@ -135,7 +135,7 @@ object PlayBilling : PlayStore {
                         }
                     })
                 } catch (t: Throwable) {
-                    Log.w(TAG, "startConnection failed", t)
+                    if (org.astermail.android.BuildConfig.DEBUG) Log.w(TAG, "startConnection failed", t)
                     deferred.complete(false)
                 }
             }
@@ -162,7 +162,7 @@ object PlayBilling : PlayStore {
                 val list = if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     query.productDetailsList
                 } else {
-                    Log.w(TAG, "queryProductDetails failed: ${result.responseCode}")
+                    if (org.astermail.android.BuildConfig.DEBUG) Log.w(TAG, "queryProductDetails failed: ${result.responseCode}")
                     emptyList()
                 }
                 if (cont.isActive) cont.resume(list)
@@ -236,7 +236,7 @@ object PlayBilling : PlayStore {
         val launch = try {
             billing.launchBillingFlow(activity, builder.build())
         } catch (t: Throwable) {
-            Log.w(TAG, "launchBillingFlow failed", t)
+            if (org.astermail.android.BuildConfig.DEBUG) Log.w(TAG, "launchBillingFlow failed", t)
             release(waiting)
             return PlayPurchaseOutcome.Unavailable
         }

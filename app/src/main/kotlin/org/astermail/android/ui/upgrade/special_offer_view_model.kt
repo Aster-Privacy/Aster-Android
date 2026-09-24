@@ -49,7 +49,6 @@ internal const val SPECIAL_OFFER_DEFAULT_DURATION_MONTHS = 12
 internal const val SPECIAL_OFFER_CURRENCY = "usd"
 private const val SPECIAL_OFFER_MIN_CENTS = 50L
 
-internal const val SPECIAL_OFFER_CARD_INTERVAL = "month"
 internal val SPECIAL_OFFER_CRYPTO_TERMS = listOf(1, 3, 6, 12)
 
 internal fun special_offer_price_cents(list_cents: Long, percent_off: Int): Long {

@@ -412,7 +412,6 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
                         } else {
                             null
                         },
-                        offer = null,
                         on_select = { selected_code = plan.code },
                     )
                     Spacer(Modifier.height(AsterSpacing.md))
@@ -515,7 +514,6 @@ internal fun UpgradePlanCard(
     billing_interval: String,
     currency: String,
     price_label: String? = null,
-    offer: org.astermail.android.ui.settings.detail.review_offer_price? = null,
     on_select: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -547,23 +545,15 @@ internal fun UpgradePlanCard(
             val amount_cents = if (yearly_selected) plan.yearly_price_cents else plan.price_cents
             val price_interval = if (yearly_selected) "year" else plan.billing_period ?: billing_interval
             val interval_text = org.astermail.android.billing.billing_interval_label(context, price_interval)
-            if (offer != null && price_interval == SPECIAL_OFFER_CARD_INTERVAL) {
-                org.astermail.android.ui.settings.detail.offer_price_line(
-                    offer.copy(
-                        discounted = stringResource(R.string.settings_price_per_interval, offer.discounted, interval_text),
-                    ),
-                )
-            } else {
-                Text(
-                    text = stringResource(
-                        R.string.settings_price_per_interval,
-                        price_label ?: org.astermail.android.billing.format_money(amount_cents.toLong(), currency),
-                        interval_text,
-                    ),
-                    color = colors.text_secondary,
-                    fontSize = 15.sp,
-                )
-            }
+            Text(
+                text = stringResource(
+                    R.string.settings_price_per_interval,
+                    price_label ?: org.astermail.android.billing.format_money(amount_cents.toLong(), currency),
+                    interval_text,
+                ),
+                color = colors.text_secondary,
+                fontSize = 15.sp,
+            )
 
             Spacer(Modifier.height(AsterSpacing.sm))
 
