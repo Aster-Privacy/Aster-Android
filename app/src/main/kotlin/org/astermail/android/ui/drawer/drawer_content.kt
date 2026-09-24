@@ -230,6 +230,8 @@ fun DrawerContent(
     on_navigate_alias: (String, String, String?) -> Unit = { _, _, _ -> },
     inbox_unread: Int = 0,
     drafts_count: Int = 0,
+    scheduled_count: Int = 0,
+    snoozed_count: Int = 0,
     spam_count: Int = 0,
     trash_count: Int = 0,
     categories_enabled: Boolean = false,
@@ -368,10 +370,10 @@ fun DrawerContent(
         )
     }
 
-    val more_secondary = remember(label_scheduled, label_snoozed, label_subscriptions) {
+    val more_secondary = remember(scheduled_count, snoozed_count, label_scheduled, label_snoozed, label_subscriptions) {
         listOf(
-            drawer_folder_item("scheduled", label_scheduled, TablerIcons.Clock),
-            drawer_folder_item("snoozed", label_snoozed, TablerIcons.BellMinus),
+            drawer_folder_item("scheduled", label_scheduled, TablerIcons.Clock, scheduled_count),
+            drawer_folder_item("snoozed", label_snoozed, TablerIcons.BellMinus, snoozed_count),
             drawer_folder_item("subscriptions", label_subscriptions, TablerIcons.News),
         )
     }

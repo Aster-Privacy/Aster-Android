@@ -2154,6 +2154,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 },
                 inbox_unread = stats?.unread ?: 0,
                 drafts_count = stats?.drafts ?: 0,
+                scheduled_count = stats?.scheduled ?: 0,
+                snoozed_count = stats?.snoozed ?: 0,
                 spam_count = stats?.spam ?: 0,
                 trash_count = stats?.trash ?: 0,
                 categories_enabled = categories_enabled,
