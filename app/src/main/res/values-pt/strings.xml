@@ -3502,4 +3502,7 @@
     <string name="billing_play_offer_unavailable">Esta oferta não está disponível para sua conta.</string>
     <string name="billing_play_addon_success">Seu armazenamento extra está ativo.</string>
     <string name="billing_play_already_owned">Você já tem esta assinatura no Google Play. O Aster Mail está adicionando-a à sua conta.</string>
+    <string name="expiry_password_internal_removed">Os destinatários do Aster abrem e-mails com expiração sem senha, por isso a senha foi removida. Para enviar a mensagem, toque em Enviar novamente.</string>
+    <string name="expiring_requires_secure_message">Enquanto Exigir criptografia estiver ativado, não é possível enviar e-mails com expiração para endereços externos por este app. Para enviar, remova a expiração ou desative Exigir criptografia.</string>
+    <string name="signature_too_large">Esta assinatura é grande demais para ser salva. Para salvá-la, remova uma imagem ou encurte o texto.</string>
 </resources>

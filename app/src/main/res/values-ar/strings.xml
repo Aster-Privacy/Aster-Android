@@ -3586,4 +3586,7 @@
     <string name="billing_play_offer_unavailable">هذا العرض غير متاح لحسابك.</string>
     <string name="billing_play_addon_success">مساحة التخزين الإضافية مفعّلة الآن.</string>
     <string name="billing_play_already_owned">لديك هذا الاشتراك بالفعل على Google Play. يضيفه Aster Mail إلى حسابك الآن.</string>
+    <string name="expiry_password_internal_removed">يفتح مستلمو Aster البريد ذا الصلاحية المحدودة بدون كلمة مرور، لذلك تمت إزالة كلمة المرور. لإرسال الرسالة، اضغط على إرسال مرة أخرى.</string>
+    <string name="expiring_requires_secure_message">أثناء تشغيل اشتراط التشفير، لا يمكنك إرسال بريد ذي صلاحية محدودة إلى عناوين خارجية من هذا التطبيق. للإرسال، أزل تاريخ انتهاء الصلاحية أو أوقف اشتراط التشفير.</string>
+    <string name="signature_too_large">هذا التوقيع كبير جدًا بحيث لا يمكن حفظه. لحفظه، أزل صورة أو اختصر النص.</string>
 </resources>

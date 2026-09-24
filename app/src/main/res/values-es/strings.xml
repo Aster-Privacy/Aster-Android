@@ -3503,4 +3503,7 @@
     <string name="billing_play_offer_unavailable">Esta oferta no está disponible para tu cuenta.</string>
     <string name="billing_play_addon_success">Tu almacenamiento adicional está activo.</string>
     <string name="billing_play_already_owned">Ya tienes esta suscripción en Google Play. Aster Mail la está añadiendo a tu cuenta.</string>
+    <string name="expiry_password_internal_removed">Los destinatarios de Aster abren el correo con caducidad sin contraseña, así que se ha quitado la contraseña. Para enviar el mensaje, toca Enviar de nuevo.</string>
+    <string name="expiring_requires_secure_message">Mientras Exigir cifrado esté activado, no puedes enviar correo con caducidad a direcciones externas desde esta app. Para enviarlo, quita la caducidad o desactiva Exigir cifrado.</string>
+    <string name="signature_too_large">Esta firma es demasiado grande para guardarla. Para guardarla, quita una imagen o acorta el texto.</string>
 </resources>

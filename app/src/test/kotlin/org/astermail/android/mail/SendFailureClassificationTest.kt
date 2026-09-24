@@ -24,7 +24,9 @@ package org.astermail.android.mail
 import org.astermail.android.api.ApiError
 import org.astermail.android.mail.ratchet.PostQuantumUnavailableException
 import org.astermail.android.mail.ratchet.RatchetEncryptionException
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
@@ -157,5 +159,66 @@ class SendFailureClassificationTest {
         )
 
         assertTrue(is_permanent_send_failure_cause(err))
+    }
+
+    @Test
+    fun `a forbidden send is a permanent failure`() {
+        val err = ApiError.ForbiddenError("sending is disabled for this account", "ACCOUNT_SUSPENDED")
+
+        assertTrue(is_permanent_send_failure_cause(err))
+        assertTrue(is_permanent_send_failure_cause(RuntimeException("send failed", err)))
+    }
+
+    @Test
+    fun `a csrf or origin refusal is retried`() {
+        assertFalse(is_permanent_send_failure_cause(ApiError.ForbiddenError("csrf", "CSRF_INVALID")))
+        assertFalse(is_permanent_send_failure_cause(ApiError.ForbiddenError("origin", "ORIGIN_NOT_ALLOWED")))
+    }
+
+    @Test
+    fun `plan and quota refusals are permanent failures`() {
+        assertTrue(is_permanent_send_failure_cause(ApiError.PlanLimitExceeded("upgrade", "has_email_expiration")))
+        assertTrue(is_permanent_send_failure_cause(ApiError.PaymentRequired("payment required")))
+        assertTrue(is_permanent_send_failure_cause(ApiError.SendQuotaReached("quota")))
+        assertTrue(is_permanent_send_failure_cause(ApiError.StorageQuotaExceeded("full")))
+    }
+
+    @Test
+    fun `a validation error that mentions a timeout is still permanent`() {
+        val err = ApiError.ValidationError(listOf("expiration timeout is out of range"))
+
+        assertTrue(is_permanent_send_failure_cause(err))
+    }
+
+    @Test
+    fun `mixed recipients are a permanent failure`() {
+        assertTrue(is_permanent_send_failure_cause(MixedRecipientsException()))
+    }
+
+    @Test
+    fun `unauthorized, timeout, rate limit and server errors are retried`() {
+        assertFalse(is_permanent_send_failure_cause(ApiError.UnauthorizedError))
+        assertFalse(is_permanent_send_failure_cause(ApiError.UnknownError("request timeout")))
+        assertFalse(is_permanent_send_failure_cause(ApiError.UnknownError("http 408")))
+        assertFalse(is_permanent_send_failure_cause(ApiError.RateLimited()))
+        assertFalse(is_permanent_send_failure_cause(ApiError.ServerError(500)))
+        assertFalse(is_permanent_send_failure_cause(ApiError.ServerError(503)))
+    }
+
+    @Test
+    fun `the server rejection is surfaced from behind a wrapper`() {
+        val inner = ApiError.ForbiddenError("expiring messages need a paid plan", "PLAN_REQUIRED")
+        val err = IllegalStateException("send failed", inner)
+
+        assertEquals(inner, server_rejection_cause(err))
+        assertNull(server_rejection_cause(IOException("connection reset")))
+    }
+
+    @Test
+    fun `recipients on internal and external domains are mixed`() {
+        assertTrue(has_mixed_recipients(listOf("a@astermail.org", "b@example.com")))
+        assertFalse(has_mixed_recipients(listOf("a@astermail.org", "b@aster.cx", "c@realiased.me")))
+        assertFalse(has_mixed_recipients(listOf("a@example.com", "b@example.net")))
+        assertFalse(has_mixed_recipients(listOf("a@gs-cloud.space", "b@example.com")))
     }
 }

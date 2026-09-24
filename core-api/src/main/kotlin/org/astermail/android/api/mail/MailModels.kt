@@ -274,6 +274,7 @@ data class MailUserStatsResponse(
     val sent: Int = 0,
     val drafts: Int = 0,
     val scheduled: Int = 0,
+    val snoozed: Int = 0,
     val starred: Int = 0,
     val archived: Int = 0,
     val spam: Int = 0,

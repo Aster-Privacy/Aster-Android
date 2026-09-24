@@ -3544,4 +3544,7 @@
     <string name="billing_play_offer_unavailable">Это предложение недоступно для вашего аккаунта.</string>
     <string name="billing_play_addon_success">Дополнительное хранилище активно.</string>
     <string name="billing_play_already_owned">У вас уже есть эта подписка в Google Play. Aster Mail добавляет ее в ваш аккаунт.</string>
+    <string name="expiry_password_internal_removed">Получатели Aster открывают письма с ограниченным сроком действия без пароля, поэтому пароль удален. Чтобы отправить сообщение, нажмите «Отправить» еще раз.</string>
+    <string name="expiring_requires_secure_message">Пока включен параметр «Требовать шифрование», из этого приложения нельзя отправлять письма с ограниченным сроком действия на внешние адреса. Чтобы отправить письмо, уберите срок действия или отключите «Требовать шифрование».</string>
+    <string name="signature_too_large">Эта подпись слишком большая для сохранения. Чтобы сохранить ее, удалите изображение или сократите текст.</string>
 </resources>

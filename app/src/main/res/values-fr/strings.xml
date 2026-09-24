@@ -3529,4 +3529,7 @@
     <string name="billing_play_offer_unavailable">Cette offre n\'est pas disponible pour votre compte.</string>
     <string name="billing_play_addon_success">Votre stockage supplémentaire est actif.</string>
     <string name="billing_play_already_owned">Vous avez déjà cet abonnement sur Google Play. Aster Mail l\'ajoute à votre compte.</string>
+    <string name="expiry_password_internal_removed">Les destinataires Aster ouvrent les e-mails éphémères sans mot de passe, le mot de passe a donc été retiré. Pour envoyer le message, touchez à nouveau Envoyer.</string>
+    <string name="expiring_requires_secure_message">Lorsque Chiffrement obligatoire est activé, vous ne pouvez pas envoyer d\'e-mails éphémères à des adresses externes depuis cette app. Pour envoyer, retirez l\'expiration ou désactivez Chiffrement obligatoire.</string>
+    <string name="signature_too_large">Cette signature est trop volumineuse pour être enregistrée. Pour l\'enregistrer, retirez une image ou raccourcissez le texte.</string>
 </resources>

@@ -3392,4 +3392,7 @@
     <string name="billing_play_offer_unavailable">यह ऑफ़र आपके खाते के लिए उपलब्ध नहीं है।</string>
     <string name="billing_play_addon_success">आपका अतिरिक्त स्टोरेज सक्रिय है।</string>
     <string name="billing_play_already_owned">आपके पास Google Play पर यह सदस्यता पहले से है। Aster Mail इसे आपके खाते में जोड़ रहा है।</string>
+    <string name="expiry_password_internal_removed">Aster प्राप्तकर्ता समय-सीमा वाले ईमेल को बिना पासवर्ड के खोलते हैं, इसलिए पासवर्ड हटा दिया गया। संदेश भेजने के लिए, भेजें पर फिर से टैप करें।</string>
+    <string name="expiring_requires_secure_message">जब एन्क्रिप्शन ज़रूरी करें चालू हो, तब आप इस ऐप से बाहरी पतों पर समय-सीमा वाला ईमेल नहीं भेज सकते। भेजने के लिए, समय-सीमा हटाएँ या एन्क्रिप्शन ज़रूरी करें बंद करें।</string>
+    <string name="signature_too_large">यह सिग्नेचर सहेजने के लिए बहुत बड़ा है। इसे सहेजने के लिए, कोई इमेज हटाएँ या टेक्स्ट छोटा करें।</string>
 </resources>

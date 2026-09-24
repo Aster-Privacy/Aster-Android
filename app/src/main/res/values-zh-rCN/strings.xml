@@ -3484,4 +3484,7 @@
     <string name="billing_play_offer_unavailable">此优惠不适用于你的账号。</string>
     <string name="billing_play_addon_success">你的额外存储空间已启用。</string>
     <string name="billing_play_already_owned">你已在 Google Play 上拥有此订阅。Aster Mail 正在将其添加到你的账户。</string>
+    <string name="expiry_password_internal_removed">Aster 收件人无需密码即可打开限时邮件，因此已移除密码。要发送该邮件，请再次点按“发送”。</string>
+    <string name="expiring_requires_secure_message">开启“强制加密”时，你无法通过此 App 向外部地址发送限时邮件。要发送，请移除到期时间或关闭“强制加密”。</string>
+    <string name="signature_too_large">此签名太大，无法保存。要保存它，请移除图片或缩短文字。</string>
 </resources>

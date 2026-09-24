@@ -471,12 +471,25 @@ object EmailHtmlSanitizer {
         return out
     }
 
+    fun neutralize_amp_markup(html: String): String {
+        if (!html.contains("amp", ignoreCase = true)) return html
+        var result = html
+        while (true) {
+            val next = result.replace(amp_boilerplate_style_regex, "")
+            if (next == result) break
+            result = next
+        }
+        return result
+            .replace(amp_img_open_regex, "<img")
+            .replace(amp_img_close_regex, "")
+    }
+
     fun repair_comment_markup(html: String): String {
-        return neutralize_unterminated_comments(strip_mso_conditionals(html))
+        return neutralize_unterminated_comments(strip_mso_conditionals(neutralize_amp_markup(html)))
     }
 
     private fun strip_dangerous_blocks(html: String): String {
-        var out = html
+        var out = neutralize_amp_markup(html)
         out = strip_mso_conditionals(out)
         out = strip_script_like_blocks(out)
         out = out.replace(embed_tag_regex, "")
@@ -510,6 +523,12 @@ object EmailHtmlSanitizer {
     private val mso_downlevel_close_regex = Regex("\\s*<!--<!\\[endif\\]\\s*--\\s*>", RegexOption.IGNORE_CASE)
     private val mso_downlevel_empty_regex = Regex("<!--\\[if\\s!mso\\]>\\s*<!--\\s*--\\s*>", RegexOption.IGNORE_CASE)
     private val mso_endif_regex = Regex("<!--\\s*<!\\[endif\\]\\s*--\\s*>", RegexOption.IGNORE_CASE)
+    private val amp_boilerplate_style_regex = Regex(
+        "<style\\b[^>]*?\\samp(?:4email|4ads)?-boilerplate\\b[^>]*>[\\s\\S]*?</style\\s*>",
+        RegexOption.IGNORE_CASE,
+    )
+    private val amp_img_open_regex = Regex("<amp-img\\b", RegexOption.IGNORE_CASE)
+    private val amp_img_close_regex = Regex("</amp-img\\s*>", RegexOption.IGNORE_CASE)
     private val embed_tag_regex = Regex("<embed\\b[^>]*/?>", RegexOption.IGNORE_CASE)
     private val base_tag_regex = Regex("<base\\b[^>]*/?>", RegexOption.IGNORE_CASE)
     private val form_tag_regex = Regex("<form\\b[^>]*>|</form\\s*>", RegexOption.IGNORE_CASE)

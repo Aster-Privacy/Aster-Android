@@ -3547,4 +3547,7 @@
     <string name="billing_play_offer_unavailable">This offer isn\'t available for your account.</string>
     <string name="billing_play_addon_success">Your extra storage is active.</string>
     <string name="billing_play_already_owned">You already have this subscription on Google Play. Aster Mail is adding it to your account.</string>
+    <string name="expiry_password_internal_removed">Aster recipients open expiring email without a password, so the password was removed. To send the message, tap Send again.</string>
+    <string name="expiring_requires_secure_message">While Require encryption is on, you can\'t send expiring email to outside addresses from this app. To send, remove the expiration or turn off Require encryption.</string>
+    <string name="signature_too_large">This signature is too large to save. To save it, remove an image or shorten the text.</string>
 </resources>
