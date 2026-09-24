@@ -3524,4 +3524,6 @@
     <string name="passkey_create_unavailable">This device can\'t save passkeys. Make sure screen lock is on and a password manager is set up.</string>
     <string name="passkey_create_failed">Couldn\'t add the passkey. Try again.</string>
     <string name="error_passkey_timed_out">The passkey request timed out. Try again.</string>
+    <string name="expiry_password_internal_removed">Aster recipients open expiring email without a password, so the password was removed. To send the message, tap Send again.</string>
+    <string name="expiring_requires_secure_message">While Require encryption is on, you can\'t send expiring email to outside addresses from this app. To send, remove the expiration or turn off Require encryption.</string>
 </resources>

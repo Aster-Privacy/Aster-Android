@@ -180,7 +180,6 @@ import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.billing.AttachmentLimits
 import org.astermail.android.util.meets_min_search_length
 import org.astermail.android.billing.PlanLimitsViewModel
-import org.astermail.android.mail.ASTER_INTERNAL_DOMAINS
 import org.astermail.android.mail.is_sendable_address
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.mail.is_sendable_address
@@ -1830,6 +1829,33 @@ fun ComposeScreen(
             }
             return
         }
+        val send_blocker = send_blocker_for(
+            recipients = to_chips.toList() + cc_chips.toList() + bcc_chips.toList(),
+            via_connected_account = external_sender_tokens[from_alias] != null,
+            has_expiry = expires_at_iso != null,
+            has_expiry_password = !expiry_password.isNullOrBlank(),
+            expiration_locked = plan_vm.is_feature_locked("has_email_expiration") && !plan_state.is_loading,
+            expiry_password_locked = plan_vm.is_feature_locked("has_password_protected_messages") && !plan_state.is_loading,
+            require_encryption = settings_state.encryption_settings?.require_encryption
+                ?: settings_state.preferences?.require_encryption
+                ?: false,
+        )
+        if (send_blocker != null) {
+            send_lock.set(false)
+            when (send_blocker) {
+                SendBlocker.MIXED_RECIPIENTS ->
+                    send_error = context.getString(R.string.cannot_mix_recipients)
+                SendBlocker.EXPIRATION_LOCKED, SendBlocker.EXPIRY_PASSWORD_LOCKED ->
+                    org.astermail.android.ui.upgrade.UpgradeStore.show_plan_limit(null, null)
+                SendBlocker.EXPIRY_PASSWORD_INTERNAL -> {
+                    expiry_password = null
+                    send_error = context.getString(R.string.expiry_password_internal_removed)
+                }
+                SendBlocker.EXPIRY_NEEDS_SECURE_MESSAGE ->
+                    send_error = context.getString(R.string.expiring_requires_secure_message)
+            }
+            return
+        }
         if (is_sending) { send_lock.set(false); return }
         dismiss_keyboard()
         is_sending = true
@@ -1893,14 +1919,6 @@ fun ComposeScreen(
                 return@launch
             }
             val (body_html, attachment_payloads, suppress_branding) = prepared
-
-            val all_recipients = snap_to + snap_cc + snap_bcc
-            if (all_recipients.any { is_internal_email(it) } && all_recipients.any { !is_internal_email(it) }) {
-                is_sending = false
-                send_lock.set(false)
-                send_error = context.getString(R.string.cannot_mix_recipients)
-                return@launch
-            }
 
             val external_token = external_sender_tokens[snap_from]
             if (external_token != null) {
@@ -2873,6 +2891,9 @@ fun ComposeScreen(
                     expiry_password = null
                 } else if (scheduled_send) {
                     app_toast.show(context.getString(R.string.expiring_not_with_schedule))
+                } else if (plan_vm.is_feature_locked("has_email_expiration") && !plan_state.is_loading) {
+                    show_overflow_sheet = false
+                    org.astermail.android.ui.upgrade.UpgradeStore.show_plan_limit(null, null)
                 } else {
                     show_overflow_sheet = false
                     show_expiring_sheet = true
@@ -2966,7 +2987,16 @@ fun ComposeScreen(
     }
 
     if (show_expiring_sheet) {
+        val expiry_recipients = to_chips.toList() + cc_chips.toList() + bcc_chips.toList()
         ExpiringSheet(
+            password_mode = expiry_password_mode_for(
+                recipients = expiry_recipients,
+                password_locked = plan_vm.is_feature_locked("has_password_protected_messages") && !plan_state.is_loading,
+            ),
+            on_password_locked = {
+                show_expiring_sheet = false
+                org.astermail.android.ui.upgrade.UpgradeStore.show_plan_limit(null, null)
+            },
             on_close = { show_expiring_sheet = false },
             on_pick = { expires_epoch_ms, label, password ->
                 show_expiring_sheet = false
@@ -3650,8 +3680,6 @@ private class anchored_below_position_provider(
     }
 }
 
-private val internal_domains = ASTER_INTERNAL_DOMAINS
-
 private val pgp_provider_domains = listOf(
     "protonmail.com",
     "protonmail.ch",
@@ -3681,10 +3709,8 @@ private fun derive_contact_name(email: String): String {
     return derived.ifBlank { local_part }
 }
 
-private fun is_internal_email(email: String): Boolean {
-    val lower = email.lowercase()
-    return internal_domains.any { lower.endsWith("@$it") }
-}
+private fun is_internal_email(email: String): Boolean =
+    org.astermail.android.mail.is_internal_recipient(email)
 
 private fun email_domain(email: String): String {
     val at = email.lastIndexOf('@')
@@ -4752,6 +4778,8 @@ private fun GhostAliasSheet(
 internal fun ExpiringSheet(
     on_close: () -> Unit,
     on_pick: (expires_epoch_ms: Long, label: String, password: String?) -> Unit,
+    password_mode: ExpiryPasswordMode = ExpiryPasswordMode.AVAILABLE,
+    on_password_locked: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
@@ -4762,6 +4790,7 @@ internal fun ExpiringSheet(
     var selected_hours by remember { mutableStateOf<Int?>(null) }
     var custom_epoch_ms by remember { mutableStateOf<Long?>(null) }
     val password_arg = password.trim().ifBlank { null }
+        ?.takeIf { password_mode == ExpiryPasswordMode.AVAILABLE }
     val one_hour_label_top = stringResource(R.string.duration_one_hour)
     val one_day_label_top = stringResource(R.string.duration_one_day)
     val seven_days_label_top = pluralStringResource(R.plurals.duration_n_days, 7, 7)
@@ -4874,73 +4903,83 @@ internal fun ExpiringSheet(
                 custom_epoch_ms?.let { stringResource(R.string.expires_custom_at, format_custom_label(it)) } ?: stringResource(R.string.expires_custom),
                 custom_epoch_ms != null,
             ) { open_custom_picker() }
-            Spacer(Modifier.height(AsterSpacing.md))
-            Text(
-                text = stringResource(R.string.expiry_password_label),
-                color = colors.text_primary,
-                fontWeight = FontWeight.Medium,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(start = AsterSpacing.sm),
-            )
-            Text(
-                text = stringResource(R.string.expiry_password_subtitle),
-                color = colors.text_muted,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(start = AsterSpacing.sm, end = AsterSpacing.sm, top = 2.dp, bottom = AsterSpacing.xs),
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.sm)
-                    .clip(SquircleShape(10.dp))
-                    .border(1.dp, colors.border_secondary, SquircleShape(10.dp))
-                    .acrylic(colors, RectangleShape, colors.bg_secondary)
-                    .padding(start = AsterSpacing.md, end = AsterSpacing.xs, top = 6.dp, bottom = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                BasicTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    singleLine = true,
-                    visualTransformation = if (password_visible) {
-                        VisualTransformation.None
-                    } else {
-                        PasswordVisualTransformation()
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        autoCorrectEnabled = false,
-                        capitalization = KeyboardCapitalization.None,
-                    ),
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.text_primary),
-                    cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.accent_blue),
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(vertical = 6.dp)
-                        .testTag("expiry_password_field"),
-                    decorationBox = { inner ->
-                        if (password.isEmpty()) {
-                            Text(
-                                text = stringResource(R.string.expiry_password_label),
-                                color = colors.text_muted,
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                        }
-                        inner()
-                    },
+            if (password_mode == ExpiryPasswordMode.LOCKED) {
+                Spacer(Modifier.height(AsterSpacing.md))
+                toggle_sheet_row(
+                    TablerIcons.Lock,
+                    stringResource(R.string.expiry_password_label),
+                    false,
+                ) { on_password_locked() }
+            }
+            if (password_mode == ExpiryPasswordMode.AVAILABLE) {
+                Spacer(Modifier.height(AsterSpacing.md))
+                Text(
+                    text = stringResource(R.string.expiry_password_label),
+                    color = colors.text_primary,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(start = AsterSpacing.sm),
                 )
-                Icon(
-                    imageVector = if (password_visible) TablerIcons.EyeOff else TablerIcons.Eye,
-                    contentDescription = stringResource(
-                        if (password_visible) R.string.hide_password else R.string.show_password,
-                    ),
-                    tint = colors.text_muted,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(SquircleShape(AsterRadius.sm))
-                        .clickable { password_visible = !password_visible }
-                        .padding(9.dp),
+                Text(
+                    text = stringResource(R.string.expiry_password_subtitle),
+                    color = colors.text_muted,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(start = AsterSpacing.sm, end = AsterSpacing.sm, top = 2.dp, bottom = AsterSpacing.xs),
                 )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AsterSpacing.sm)
+                        .clip(SquircleShape(10.dp))
+                        .border(1.dp, colors.border_secondary, SquircleShape(10.dp))
+                        .acrylic(colors, RectangleShape, colors.bg_secondary)
+                        .padding(start = AsterSpacing.md, end = AsterSpacing.xs, top = 6.dp, bottom = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    BasicTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        singleLine = true,
+                        visualTransformation = if (password_visible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            autoCorrectEnabled = false,
+                            capitalization = KeyboardCapitalization.None,
+                        ),
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.text_primary),
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.accent_blue),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(vertical = 6.dp)
+                            .testTag("expiry_password_field"),
+                        decorationBox = { inner ->
+                            if (password.isEmpty()) {
+                                Text(
+                                    text = stringResource(R.string.expiry_password_label),
+                                    color = colors.text_muted,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                )
+                            }
+                            inner()
+                        },
+                    )
+                    Icon(
+                        imageVector = if (password_visible) TablerIcons.EyeOff else TablerIcons.Eye,
+                        contentDescription = stringResource(
+                            if (password_visible) R.string.hide_password else R.string.show_password,
+                        ),
+                        tint = colors.text_muted,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(SquircleShape(AsterRadius.sm))
+                            .clickable { password_visible = !password_visible }
+                            .padding(9.dp),
+                    )
+                }
             }
             Spacer(Modifier.height(AsterSpacing.md))
             org.astermail.android.design.components.AsterButton(

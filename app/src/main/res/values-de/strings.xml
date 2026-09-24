@@ -3480,4 +3480,6 @@
     <string name="passkey_create_unavailable">Dieses Gerät kann keine Passkeys speichern. Prüfe, ob die Displaysperre aktiv und ein Passwortmanager eingerichtet ist.</string>
     <string name="passkey_create_failed">Der Passkey konnte nicht hinzugefügt werden. Versuche es erneut.</string>
     <string name="error_passkey_timed_out">Die Passkey-Anfrage ist abgelaufen. Versuche es erneut.</string>
+    <string name="expiry_password_internal_removed">Aster-Empfänger öffnen ablaufende E-Mails ohne Passwort, deshalb wurde das Passwort entfernt. Tippe erneut auf Senden, um die Nachricht zu senden.</string>
+    <string name="expiring_requires_secure_message">Solange Verschlüsselung erzwingen aktiviert ist, kannst du aus dieser App keine ablaufenden E-Mails an externe Adressen senden. Entferne zum Senden das Ablaufdatum oder deaktiviere Verschlüsselung erzwingen.</string>
 </resources>

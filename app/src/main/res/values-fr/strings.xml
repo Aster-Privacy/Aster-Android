@@ -3506,4 +3506,6 @@
     <string name="passkey_create_unavailable">Cet appareil ne peut pas enregistrer de clés d\'accès. Vérifiez que le verrouillage de l\'écran est activé et qu\'un gestionnaire de mots de passe est configuré.</string>
     <string name="passkey_create_failed">Impossible d\'ajouter la clé d\'accès. Réessayez.</string>
     <string name="error_passkey_timed_out">La demande de clé d\'accès a expiré. Réessayez.</string>
+    <string name="expiry_password_internal_removed">Les destinataires Aster ouvrent les e-mails éphémères sans mot de passe, le mot de passe a donc été retiré. Pour envoyer le message, touchez à nouveau Envoyer.</string>
+    <string name="expiring_requires_secure_message">Lorsque Chiffrement obligatoire est activé, vous ne pouvez pas envoyer d\'e-mails éphémères à des adresses externes depuis cette app. Pour envoyer, retirez l\'expiration ou désactivez Chiffrement obligatoire.</string>
 </resources>

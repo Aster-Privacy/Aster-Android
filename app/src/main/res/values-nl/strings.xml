@@ -3479,4 +3479,6 @@
     <string name="passkey_create_unavailable">Dit apparaat kan geen passkeys opslaan. Controleer of schermvergrendeling aan staat en er een wachtwoordbeheerder is ingesteld.</string>
     <string name="passkey_create_failed">Kan de passkey niet toevoegen. Probeer het opnieuw.</string>
     <string name="error_passkey_timed_out">Het verzoek voor de toegangssleutel is verlopen. Probeer het opnieuw.</string>
+    <string name="expiry_password_internal_removed">Aster-ontvangers openen verlopende e-mail zonder wachtwoord, dus het wachtwoord is verwijderd. Tik nogmaals op Verzenden om het bericht te verzenden.</string>
+    <string name="expiring_requires_secure_message">Zolang Versleuteling verplichten aan staat, kun je vanuit deze app geen verlopende e-mail naar externe adressen sturen. Verwijder de vervaldatum of zet Versleuteling verplichten uit om te verzenden.</string>
 </resources>
