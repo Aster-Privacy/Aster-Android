@@ -96,6 +96,13 @@ enum class PendingSendOutcome { SENT, GONE, RETRY, FAILED, DEFERRED }
 
 class TransientSendException : Exception("send retry pending")
 
+class MixedRecipientsException : Exception("internal and external recipients in one send")
+
+fun has_mixed_recipients(recipients: List<String>): Boolean {
+    val addresses = recipients.filter { it.isNotBlank() }
+    return addresses.any { is_internal_recipient(it) } && addresses.any { !is_internal_recipient(it) }
+}
+
 class SentCopyAttachmentException(val failed_count: Int) :
     Exception("sent copy attachments not stored")
 
@@ -1154,7 +1161,9 @@ class MailRepository @Inject constructor(
             }
             if (is_permanent_send_failure(err) || attempt >= SEND_RETRY_MAX_ATTEMPTS) {
                 _send_problem.value = true
-                _send_result_events.tryEmit(Result.failure(err ?: IllegalStateException("send rejected")))
+                _send_result_events.tryEmit(
+                    Result.failure(server_rejection_cause(err) ?: err ?: IllegalStateException("send rejected")),
+                )
                 runCatching { pending_send_dao.mark_failed(pending_id) }
                 refresh_failed_send_count()
                 preserve_failed_send_draft(pending_id, row, recipients, attachments)
@@ -3985,6 +3994,7 @@ class MailRepository @Inject constructor(
         suppress_branding: Boolean? = null,
         allow_non_post_quantum: Boolean = false,
     ): Result<SimpleSendResponse> = runCatching {
+        if (has_mixed_recipients(to + cc + bcc)) throw MixedRecipientsException()
         val envelope = build_envelope_json(
             subject = subject,
             body_html = body_html,
@@ -5041,7 +5051,33 @@ internal fun has_retryable_api_cause(err: Throwable?): Boolean {
     return false
 }
 
+private val retryable_forbidden_codes = setOf("CSRF_INVALID", "ORIGIN_NOT_ALLOWED")
+
+internal fun is_server_rejection(err: Throwable): Boolean = when (err) {
+    is org.astermail.android.api.ApiError.ValidationError -> true
+    is org.astermail.android.api.ApiError.AttachmentTooLarge -> true
+    is org.astermail.android.api.ApiError.PlanLimitExceeded -> true
+    is org.astermail.android.api.ApiError.PaymentRequired -> true
+    is org.astermail.android.api.ApiError.SendQuotaReached -> true
+    is org.astermail.android.api.ApiError.StorageQuotaExceeded -> true
+    is org.astermail.android.api.ApiError.ForbiddenError -> err.code !in retryable_forbidden_codes
+    is MixedRecipientsException -> true
+    else -> false
+}
+
+internal fun server_rejection_cause(err: Throwable?): Throwable? {
+    var cause = err
+    var depth = 0
+    while (cause != null && depth < 8) {
+        if (is_server_rejection(cause)) return cause
+        cause = cause.cause
+        depth++
+    }
+    return null
+}
+
 internal fun is_permanent_send_failure_cause(err: Throwable?): Boolean {
+    if (server_rejection_cause(err) != null) return true
     if (is_transient_send_cause(err)) return false
     var cause = err
     var depth = 0

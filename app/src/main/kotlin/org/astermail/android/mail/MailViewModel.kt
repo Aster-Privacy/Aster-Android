@@ -4949,6 +4949,7 @@ internal data class SendResultMessage(val res_id: Int, val arg: Int?)
 
 internal fun send_result_message_for(error: Throwable): SendResultMessage = when (error) {
     is TransientSendException -> SendResultMessage(R.string.send_still_trying, null)
+    is MixedRecipientsException -> SendResultMessage(R.string.cannot_mix_recipients, null)
     is SentCopyAttachmentException ->
         SendResultMessage(R.string.sent_copy_attachments_missing, error.failed_count)
     else -> SendResultMessage(R.string.send_problem_failed_message, null)
