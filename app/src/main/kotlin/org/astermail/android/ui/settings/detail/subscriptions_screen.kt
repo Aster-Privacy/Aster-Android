@@ -717,7 +717,7 @@ fun SubscriptionsScreen(
                 },
                 on_switch_yearly = {
                     if (is_play_sub) {
-                        if (!billing_state.is_acting) billing_vm.open_portal()
+                        if (!billing_state.is_acting) billing_vm.switch_billing("year")
                     } else {
                         show_switch_yearly = true
                     }
@@ -742,7 +742,7 @@ fun SubscriptionsScreen(
                         scroll_state.animateScrollTo(addons_section_offset.toInt().coerceAtLeast(0))
                     }
                 },
-                show_add_storage = !play_install,
+                show_add_storage = !play_install || play_mode,
             )
         }
         if (lapsed != null && !lapsed_dismissed) {
@@ -811,9 +811,18 @@ fun SubscriptionsScreen(
         }
 
         val addons = billing_state.storage_addons
-        val available_addons = addons?.available_addons.orEmpty()
+        val available_addons = if (play_install) {
+            org.astermail.android.billing.apply_play_addon_prices(
+                addons?.available_addons.orEmpty(),
+                billing_state.play_offers,
+                billing_state.play_addon_products,
+            )
+        } else {
+            addons?.available_addons.orEmpty()
+        }
         val active_addons = addons?.active_addons.orEmpty()
-        if (!play_install && (available_addons.isNotEmpty() || active_addons.isNotEmpty())) {
+        val play_active_addon_ids = billing_state.play_active_addons.map { it.product_id }.toSet()
+        if ((!play_install || play_mode) && (available_addons.isNotEmpty() || active_addons.isNotEmpty())) {
             v_gap(AsterSpacing.lg)
             Box(
                 modifier = Modifier.onGloballyPositioned { coords ->
@@ -827,6 +836,27 @@ fun SubscriptionsScreen(
                 currency = detected_currency,
                 is_acting = billing_state.is_acting,
                 is_buying = billing_state.is_acting && billing_state.acting_action?.startsWith("addon_") == true,
+                price_label_for = { bytes ->
+                    if (play_install) {
+                        org.astermail.android.billing.play_addon_price_label(
+                            billing_state.play_offers,
+                            billing_state.play_addon_products,
+                            bytes,
+                        )
+                    } else {
+                        null
+                    }
+                },
+                play_product_for = { bytes ->
+                    if (play_install) {
+                        org.astermail.android.billing.play_addon_product_for(billing_state.play_addon_products, bytes)
+                            ?.product_id
+                            ?.takeIf { it in play_active_addon_ids }
+                    } else {
+                        null
+                    }
+                },
+                on_manage_play = { product_id -> billing_vm.manage_play_addon(product_id) },
                 on_select = { id -> selected_addon_id = if (selected_addon_id == id) null else id },
                 on_buy = {
                     val id = selected_addon_id
@@ -847,7 +877,7 @@ fun SubscriptionsScreen(
                 plans_section_offset = coords.positionInParent().y
             },
         ) { section_label(stringResource(R.string.fix_billing_available_plans)) }
-        if (!play_install) {
+        if (!play_install || play_mode) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 aster_tabs(
                     value = plan_type,
@@ -887,7 +917,7 @@ fun SubscriptionsScreen(
         )
         val current_rank = tier_rank(current_code)
         val paid_stripe_current = current_rank >= 0 && (sub?.effective_price_cents ?: 0) > 0
-        val effective_plan_type = if (play_install) "individual" else plan_type
+        val effective_plan_type = if (play_install && !play_mode) "individual" else plan_type
         val visible_tiers = plan_tiers.filter { (it.code in FAMILY_PLAN_CODES) == (effective_plan_type == "family") }
         visible_tiers.forEach { tier ->
             val is_downgrade = paid_stripe_current && !play_install && tier_rank(tier.code) < current_rank
@@ -906,12 +936,22 @@ fun SubscriptionsScreen(
                 monthly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, tier.code, "month"),
                 yearly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, tier.code, "year"),
                 currency = detected_currency,
-                price_label = if (play_install) {
+                price_label = if (play_install && billing_interval != "year") {
                     org.astermail.android.billing.play_price_label(
                         billing_state.play_offers,
                         billing_state.play_products,
                         tier.code,
-                        billing_interval,
+                        "month",
+                    )
+                } else {
+                    null
+                },
+                yearly_total_label = if (play_install) {
+                    org.astermail.android.billing.play_price_label(
+                        billing_state.play_offers,
+                        billing_state.play_products,
+                        tier.code,
+                        "year",
                     )
                 } else {
                     null
@@ -925,7 +965,9 @@ fun SubscriptionsScreen(
                     }
                 },
                 on_choose = {
-                    if (is_interval_switch) {
+                    if (is_interval_switch && is_play_sub) {
+                        if (!billing_state.is_acting) billing_vm.switch_billing("year")
+                    } else if (is_interval_switch) {
                         show_switch_yearly = true
                     } else if (is_downgrade) {
                         pending_downgrade_code = tier.code
@@ -958,6 +1000,24 @@ fun SubscriptionsScreen(
                 },
                 color = colors.text_tertiary,
                 fontSize = 12.sp,
+            )
+        }
+        if (play_install) {
+            v_gap(AsterSpacing.sm)
+            Text(
+                text = stringResource(R.string.billing_play_restore_purchases),
+                color = colors.accent_blue,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+                    .clip(SquircleShape(10.dp))
+                    .clickable(role = Role.Button, enabled = !billing_state.is_acting) {
+                        billing_vm.restore_play_purchases()
+                    }
+                    .padding(vertical = 14.dp),
             )
         }
         if (!play_install) {
@@ -1064,8 +1124,12 @@ fun SubscriptionsScreen(
         if (!show_payment_picker || !play_install) return@LaunchedEffect
         show_payment_picker = false
         val plan_code = pending_plan_code
+        val addon_id = pending_addon_id
         pending_addon_id = null
-        if (plan_code != null && !billing_state.is_acting) {
+        if (billing_state.is_acting) return@LaunchedEffect
+        if (addon_id != null) {
+            billing_vm.purchase_storage_addon(addon_id)
+        } else if (plan_code != null) {
             billing_vm.start_checkout(plan_code, billing_interval, detected_currency)
         }
     }
@@ -2228,6 +2292,9 @@ private fun storage_addons_card(
     currency: String,
     is_acting: Boolean,
     is_buying: Boolean,
+    price_label_for: (Long) -> String? = { null },
+    play_product_for: (Long) -> String? = { null },
+    on_manage_play: (String) -> Unit = {},
     on_select: (String) -> Unit,
     on_buy: () -> Unit,
 ) {
@@ -2269,10 +2336,25 @@ private fun storage_addons_card(
                                     fontWeight = FontWeight.Medium,
                                 )
                                 Text(
-                                    text = format_price(addon.price_cents, currency) + per_month,
+                                    text = (price_label_for(addon.size_bytes) ?: format_price(addon.price_cents, currency)) + per_month,
                                     color = colors.text_tertiary,
                                     fontSize = 12.sp,
                                 )
+                                val play_product_id = play_product_for(addon.size_bytes)
+                                if (play_product_id != null) {
+                                    Text(
+                                        text = stringResource(R.string.billing_play_manage),
+                                        color = colors.accent_blue,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier
+                                            .heightIn(min = 48.dp)
+                                            .clickable(role = Role.Button, enabled = !is_acting) {
+                                                on_manage_play(play_product_id)
+                                            }
+                                            .padding(vertical = 14.dp),
+                                    )
+                                }
                                 if (addon.cancel_at_period_end && addon.current_period_end != null) {
                                     Spacer(Modifier.height(2.dp))
                                     Text(
@@ -2309,6 +2391,7 @@ private fun storage_addons_card(
                                     addon = addon,
                                     selected = addon.id == selected_id,
                                     currency = currency,
+                                    price_label = price_label_for(addon.storage_bytes),
                                     enabled = !is_acting,
                                     on_click = { on_select(addon.id) },
                                     modifier = Modifier.weight(1f).fillMaxHeight(),
@@ -2344,6 +2427,7 @@ private fun addon_tile(
     addon: org.astermail.android.api.billing.StorageAddonItem,
     selected: Boolean,
     currency: String,
+    price_label: String? = null,
     enabled: Boolean,
     on_click: () -> Unit,
     modifier: Modifier = Modifier,
@@ -2385,7 +2469,7 @@ private fun addon_tile(
         }
         Spacer(Modifier.height(2.dp))
         Text(
-            text = format_price(addon.price_cents, currency) + stringResource(R.string.fix_billing_per_month_short),
+            text = (price_label ?: format_price(addon.price_cents, currency)) + stringResource(R.string.fix_billing_per_month_short),
             color = colors.text_tertiary,
             fontSize = 12.sp,
         )

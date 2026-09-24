@@ -3517,4 +3517,9 @@
     <string name="billing_play_verify_failed">Votre achat a abouti, mais il n\'est pas encore confirmé. Aster Mail le confirmera automatiquement à la prochaine ouverture de l\'app.</string>
     <string name="billing_play_manage">Gérer dans Google Play</string>
     <string name="billing_play_not_on_device">Votre abonnement n\'est pas associé au compte Google de cet appareil. Gérez-le dans Google Play.</string>
+    <string name="billing_play_restore_purchases">Restaurer les achats</string>
+    <string name="billing_play_restored">Vos achats sont restaurés.</string>
+    <string name="billing_play_restore_none">Aucun achat à restaurer pour le compte Google de cet appareil.</string>
+    <string name="billing_play_offer_unavailable">Cette offre n\'est pas disponible pour votre compte.</string>
+    <string name="billing_play_addon_success">Votre stockage supplémentaire est actif.</string>
 </resources>

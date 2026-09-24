@@ -22,7 +22,10 @@
 package org.astermail.android.billing
 
 import org.astermail.android.api.billing.AvailablePlan
+import org.astermail.android.api.billing.GooglePlayAddonProduct
 import org.astermail.android.api.billing.GooglePlayProduct
+import org.astermail.android.api.billing.GooglePlaySpecialOffer
+import org.astermail.android.api.billing.StorageAddonItem
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -139,5 +142,64 @@ class PlayStoreBillingTest {
         assertTrue(is_google_play_provider(" Google_Play "))
         assertFalse(is_google_play_provider("stripe"))
         assertFalse(is_google_play_provider(null))
+    }
+
+    private val gb = 1024L * 1024 * 1024
+    private val addon_products = listOf(
+        GooglePlayAddonProduct("storage_5gb", "5 GB", 5 * gb, listOf("monthly")),
+        GooglePlayAddonProduct("storage_1tb", "1 TB", 1024 * gb, listOf("monthly")),
+    )
+    private val half_price = offer("nova", "month", 8_990_000).copy(offer_token = "nova-half", offer_id = "half-price-12m")
+
+    @Test
+    fun `base plan lookup ignores developer offers`() {
+        val picked = play_offer_for(listOf(half_price) + offers, products, "nova", "month")
+        assertEquals("nova-month", picked?.offer_token)
+        assertNull(play_offer_for(listOf(half_price), products, "nova", "month"))
+    }
+
+    @Test
+    fun `finds the special offer by product, base plan, and offer id`() {
+        val special = GooglePlaySpecialOffer("nova", "monthly", "half-price-12m", 50, 12)
+        assertEquals("nova-half", play_special_offer_for(offers + half_price, special)?.offer_token)
+        assertNull(play_special_offer_for(offers, special))
+        assertNull(play_special_offer_for(offers + half_price, special.copy(offer_id = "")))
+        assertNull(play_special_offer_for(offers + half_price, null))
+    }
+
+    @Test
+    fun `matches add-on products by size`() {
+        val addon_offers = listOf(offer("storage_5gb", "month", 990_000), offer("storage_1tb", "month", 19_990_000))
+        assertEquals("storage_5gb-month", play_addon_offer_for(addon_offers, addon_products, 5 * gb)?.offer_token)
+        assertEquals("storage_1tb-month", play_addon_offer_for(addon_offers, addon_products, 1024 * gb)?.offer_token)
+        assertNull(play_addon_offer_for(addon_offers, addon_products, 7 * gb))
+        assertNull(play_addon_offer_for(addon_offers, addon_products, 0))
+    }
+
+    @Test
+    fun `prices add-ons from play and drops the ones play does not sell`() {
+        val addons = listOf(
+            StorageAddonItem(id = "a", storage_bytes = 5 * gb, price_cents = 99),
+            StorageAddonItem(id = "b", storage_bytes = 1024 * gb, price_cents = 1999),
+        )
+        val priced = apply_play_addon_prices(addons, listOf(offer("storage_5gb", "month", 1_190_000)), addon_products)
+        assertEquals(listOf("a"), priced.map { it.id })
+        assertEquals(119, priced.single().price_cents)
+    }
+
+    @Test
+    fun `charges the prorated price only for a same-interval upgrade`() {
+        val star_m = offer("star", "month", 2_990_000)
+        val nova_m = offer("nova", "month", 8_990_000)
+        val star_y = offer("star", "year", 28_990_000)
+        assertEquals(PlayReplacementMode.CHARGE_PRORATED_PRICE, play_replacement_mode(star_m, nova_m))
+        assertEquals(PlayReplacementMode.WITH_TIME_PRORATION, play_replacement_mode(nova_m, star_m))
+        assertEquals(PlayReplacementMode.WITH_TIME_PRORATION, play_replacement_mode(star_m, star_y))
+        assertEquals(PlayReplacementMode.WITH_TIME_PRORATION, play_replacement_mode(null, nova_m))
+        assertEquals(PlayReplacementMode.WITH_TIME_PRORATION, play_replacement_mode(star_m, half_price))
+        assertEquals(
+            PlayReplacementMode.WITH_TIME_PRORATION,
+            play_replacement_mode(star_m, nova_m.copy(currency_code = "EUR")),
+        )
     }
 }

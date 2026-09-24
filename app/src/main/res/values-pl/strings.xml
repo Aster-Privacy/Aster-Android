@@ -3532,4 +3532,9 @@
     <string name="billing_play_verify_failed">Zakup się powiódł, ale nie został jeszcze potwierdzony. Aster Mail potwierdzi go automatycznie przy następnym otwarciu aplikacji.</string>
     <string name="billing_play_manage">Zarządzaj w Google Play</string>
     <string name="billing_play_not_on_device">Twoja subskrypcja nie jest połączona z kontem Google na tym urządzeniu. Zarządzaj nią w Google Play.</string>
+    <string name="billing_play_restore_purchases">Przywróć zakupy</string>
+    <string name="billing_play_restored">Twoje zakupy zostały przywrócone.</string>
+    <string name="billing_play_restore_none">Brak zakupów do przywrócenia dla konta Google na tym urządzeniu.</string>
+    <string name="billing_play_offer_unavailable">Ta oferta nie jest dostępna dla Twojego konta.</string>
+    <string name="billing_play_addon_success">Dodatkowe miejsce na dane jest aktywne.</string>
 </resources>

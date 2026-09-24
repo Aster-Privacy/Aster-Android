@@ -42,8 +42,12 @@ import kotlinx.coroutines.test.setMain
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.billing.BillingApi
 import org.astermail.android.api.billing.CheckoutSessionRequest
+import org.astermail.android.api.billing.GooglePlayAddonProduct
 import org.astermail.android.api.billing.GooglePlayConfigResponse
 import org.astermail.android.api.billing.GooglePlayProduct
+import org.astermail.android.api.billing.GooglePlaySpecialOffer
+import org.astermail.android.api.billing.StorageAddonItem
+import org.astermail.android.api.billing.StorageAddonsResponse
 import org.astermail.android.api.billing.GooglePlayVerifyRequest
 import org.astermail.android.api.billing.GooglePlayVerifyResponse
 import org.astermail.android.api.billing.PlanInfo
@@ -74,8 +78,9 @@ class BillingViewModelPlayTest {
             offer: PlayOffer,
             obfuscated_account_id: String,
             old_purchase_token: String?,
+            replacement_mode: PlayReplacementMode,
         ): PlayPurchaseOutcome {
-            purchases += PlayPurchaseRequest(offer, obfuscated_account_id, old_purchase_token)
+            purchases += PlayPurchaseRequest(offer, obfuscated_account_id, old_purchase_token, replacement_mode)
             return outcome
         }
         override suspend fun owned_purchases(context: Context) = owned
@@ -96,6 +101,32 @@ class BillingViewModelPlayTest {
         products = listOf(GooglePlayProduct("star", "star", listOf("monthly", "yearly"))),
     )
     private val confirmed = GooglePlayVerifyResponse(plan_code = "star", pending = false)
+
+    private val five_gb = 5L * 1024 * 1024 * 1024
+    private val nova_month = PlayOffer("nova", "monthly", "tok_nova_m", "$8.99", 8_990_000, "EUR", "month")
+    private val nova_half = PlayOffer(
+        "nova", "monthly", "tok_nova_half", "$8.99", 8_990_000, "EUR", "month",
+        offer_id = "half-price-12m",
+        intro_formatted_price = "$4.49",
+        intro_price_micros = 4_490_000,
+    )
+    private val addon_5gb = PlayOffer("storage_5gb", "monthly", "tok_5gb", "$0.99", 990_000, "EUR", "month")
+    private val full_config = enabled_config.copy(
+        products = listOf(
+            GooglePlayProduct("star", "star", listOf("monthly", "yearly")),
+            GooglePlayProduct("nova", "nova", listOf("monthly", "yearly")),
+        ),
+        addon_products = listOf(GooglePlayAddonProduct("storage_5gb", "5 GB", five_gb, listOf("monthly"))),
+        special_offer = GooglePlaySpecialOffer("nova", "monthly", "half-price-12m", 50, 12),
+    )
+    private val addons_response = StorageAddonsResponse(
+        available_addons = listOf(StorageAddonItem(id = "addon_5", name = "5 GB", storage_bytes = five_gb, price_cents = 99)),
+    )
+
+    private fun use_full_catalog() {
+        store.offers = listOf(star_month, star_year, nova_month, nova_half, addon_5gb)
+        coEvery { billing_api.get_storage_addons() } returns addons_response
+    }
 
     private fun owned_star(token: String, acknowledged: Boolean) =
         PlayOwnedPurchase(token, listOf("star"), is_purchased = true, is_pending = false, is_acknowledged = acknowledged)
@@ -361,5 +392,154 @@ class BillingViewModelPlayTest {
         assertNull(vm.state.value.portal_url)
         assertNotNull(vm.state.value.error)
         coVerify(exactly = 0) { billing_api.create_portal_session() }
+    }
+
+    @Test
+    fun `buys a storage add-on through play without replacing the plan`() = runTest {
+        use_full_catalog()
+        coEvery { billing_api.get_google_play_config() } returns full_config.copy(purchase_blocked_reason = "active_subscription")
+        coEvery { billing_api.get_subscription() } returns SubscriptionResponse(
+            plan = PlanInfo(code = "star", price_cents = 349),
+            status = "active",
+            payment_provider = "stripe",
+        )
+        vm.load_storage_addons()
+        advanceUntilIdle()
+        vm.purchase_storage_addon("addon_5")
+        advanceUntilIdle()
+        val request = vm.state.value.play_purchase_request
+        assertNotNull(request)
+        assertEquals("tok_5gb", request!!.offer.offer_token)
+        assertNull(request.old_purchase_token)
+        coVerify(exactly = 0) { billing_api.purchase_storage_addon(any()) }
+    }
+
+    @Test
+    fun `refuses an unknown add-on on a play install`() = runTest {
+        use_full_catalog()
+        coEvery { billing_api.get_google_play_config() } returns full_config
+        vm.load_storage_addons()
+        advanceUntilIdle()
+        vm.purchase_storage_addon("missing")
+        advanceUntilIdle()
+        assertNull(vm.state.value.play_purchase_request)
+        assertNotNull(vm.state.value.error)
+        coVerify(exactly = 0) { billing_api.purchase_storage_addon(any()) }
+    }
+
+    @Test
+    fun `launches the play offer token for an eligible special offer`() = runTest {
+        use_full_catalog()
+        coEvery { billing_api.get_google_play_config() } returns full_config.copy(special_offer_eligible = true)
+        vm.start_play_special_offer()
+        advanceUntilIdle()
+        val request = vm.state.value.play_purchase_request
+        assertNotNull(request)
+        assertEquals("tok_nova_half", request!!.offer.offer_token)
+        assertEquals("half-price-12m", request.offer.offer_id)
+    }
+
+    @Test
+    fun `does not launch the special offer when the account is not eligible`() = runTest {
+        use_full_catalog()
+        coEvery { billing_api.get_google_play_config() } returns full_config.copy(special_offer_eligible = false)
+        vm.start_play_special_offer()
+        advanceUntilIdle()
+        assertNull(vm.state.value.play_purchase_request)
+        assertNotNull(vm.state.value.error)
+        assertFalse(vm.state.value.is_acting)
+    }
+
+    @Test
+    fun `plan purchases never use the special offer token`() = runTest {
+        use_full_catalog()
+        coEvery { billing_api.get_google_play_config() } returns full_config.copy(special_offer_eligible = true)
+        vm.start_checkout("nova", "month")
+        advanceUntilIdle()
+        assertEquals("tok_nova_m", vm.state.value.play_purchase_request?.offer?.offer_token)
+    }
+
+    @Test
+    fun `reports an ineligible offer purchase as an error`() = runTest {
+        use_full_catalog()
+        coEvery { billing_api.get_google_play_config() } returns full_config.copy(special_offer_eligible = true)
+        coEvery { billing_api.verify_google_play_purchase(any()) } throws ApiError.Conflict("ineligible", PLAY_SPECIAL_OFFER_INELIGIBLE)
+        store.outcome = PlayPurchaseOutcome.Purchased(
+            listOf(PlayOwnedPurchase("purchase_offer", listOf("nova"), is_purchased = true, is_pending = false, is_acknowledged = false)),
+        )
+        vm.start_play_special_offer()
+        advanceUntilIdle()
+        vm.launch_play_purchase(mockk(relaxed = true))
+        advanceUntilIdle()
+        assertNotNull(vm.state.value.error)
+        assertNull(vm.state.value.info)
+        assertFalse(vm.state.value.is_acting)
+    }
+
+    @Test
+    fun `charges the prorated price when a play subscriber upgrades`() = runTest {
+        use_full_catalog()
+        coEvery { billing_api.get_google_play_config() } returns full_config
+        coEvery { billing_api.get_subscription() } returns SubscriptionResponse(
+            plan = PlanInfo(code = "star", price_cents = 349, billing_period = "month"),
+            status = "active",
+            payment_provider = "google_play",
+        )
+        store.owned = listOf(owned_star("tok_old", acknowledged = true))
+        vm.start_checkout("nova", "month")
+        advanceUntilIdle()
+        val request = vm.state.value.play_purchase_request
+        assertEquals("tok_old", request?.old_purchase_token)
+        assertEquals(PlayReplacementMode.CHARGE_PRORATED_PRICE, request?.replacement_mode)
+    }
+
+    @Test
+    fun `uses time proration when a play subscriber switches to yearly`() = runTest {
+        use_full_catalog()
+        coEvery { billing_api.get_google_play_config() } returns full_config
+        coEvery { billing_api.get_subscription() } returns SubscriptionResponse(
+            plan = PlanInfo(code = "star", price_cents = 349, billing_period = "month"),
+            status = "active",
+            payment_provider = "google_play",
+        )
+        store.owned = listOf(owned_star("tok_old", acknowledged = true))
+        vm.load_subscription()
+        advanceUntilIdle()
+        vm.switch_billing("year")
+        advanceUntilIdle()
+        val request = vm.state.value.play_purchase_request
+        assertEquals("tok_star_y", request?.offer?.offer_token)
+        assertEquals(PlayReplacementMode.WITH_TIME_PRORATION, request?.replacement_mode)
+    }
+
+    @Test
+    fun `restore reports when there is nothing to restore`() = runTest {
+        use_full_catalog()
+        coEvery { billing_api.get_google_play_config() } returns full_config
+        vm.restore_play_purchases()
+        advanceUntilIdle()
+        assertNotNull(vm.state.value.info)
+        assertNull(vm.state.value.error)
+        assertFalse(vm.state.value.is_acting)
+        coVerify(exactly = 0) { billing_api.verify_google_play_purchase(any()) }
+    }
+
+    @Test
+    fun `restore verifies every owned catalog purchase`() = runTest {
+        use_full_catalog()
+        coEvery { billing_api.get_google_play_config() } returns full_config
+        coEvery { billing_api.verify_google_play_purchase(any()) } returns confirmed
+        store.owned = listOf(
+            owned_star("tok_plan", acknowledged = true),
+            PlayOwnedPurchase("tok_addon", listOf("storage_5gb"), is_purchased = true, is_pending = false, is_acknowledged = true),
+            PlayOwnedPurchase("tok_other", listOf("unrelated"), is_purchased = true, is_pending = false, is_acknowledged = true),
+        )
+        vm.restore_play_purchases()
+        advanceUntilIdle()
+        coVerify(atLeast = 1) { billing_api.verify_google_play_purchase(GooglePlayVerifyRequest("star", "tok_plan")) }
+        coVerify(atLeast = 1) { billing_api.verify_google_play_purchase(GooglePlayVerifyRequest("storage_5gb", "tok_addon")) }
+        coVerify(exactly = 0) { billing_api.verify_google_play_purchase(GooglePlayVerifyRequest("unrelated", "tok_other")) }
+        assertNotNull(vm.state.value.info)
+        assertFalse(vm.state.value.is_acting)
     }
 }

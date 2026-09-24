@@ -3472,4 +3472,9 @@
     <string name="billing_play_verify_failed">你的购买已完成，但尚未确认。下次打开应用时，Aster Mail 会自动确认。</string>
     <string name="billing_play_manage">在 Google Play 中管理</string>
     <string name="billing_play_not_on_device">你的订阅未关联到此设备上的 Google 账号。请在 Google Play 中管理。</string>
+    <string name="billing_play_restore_purchases">恢复购买</string>
+    <string name="billing_play_restored">你的购买已恢复。</string>
+    <string name="billing_play_restore_none">此设备上的 Google 账号没有可恢复的购买。</string>
+    <string name="billing_play_offer_unavailable">此优惠不适用于你的账号。</string>
+    <string name="billing_play_addon_success">你的额外存储空间已启用。</string>
 </resources>

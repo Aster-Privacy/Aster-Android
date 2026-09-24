@@ -532,11 +532,39 @@ data class GooglePlayProduct(
 )
 
 @Serializable
+data class GooglePlayAddonProduct(
+    val product_id: String = "",
+    val size_label: String = "",
+    val size_bytes: Long = 0,
+    val base_plan_ids: List<String> = emptyList(),
+)
+
+@Serializable
+data class GooglePlaySpecialOffer(
+    val product_id: String = "",
+    val base_plan_id: String = "",
+    val offer_id: String = "",
+    val percent_off: Int = 0,
+    val duration_months: Int = 0,
+)
+
+@Serializable
+data class GooglePlayActiveAddon(
+    val product_id: String = "",
+    val paid_until: String? = null,
+)
+
+@Serializable
 data class GooglePlayConfigResponse(
     val enabled: Boolean = false,
     val obfuscated_account_id: String? = null,
     val products: List<GooglePlayProduct> = emptyList(),
+    val addon_products: List<GooglePlayAddonProduct> = emptyList(),
     val purchase_blocked_reason: String? = null,
+    val special_offer_eligible: Boolean = false,
+    val special_offer: GooglePlaySpecialOffer? = null,
+    val active_google_play_plan: String? = null,
+    val active_google_play_addons: List<GooglePlayActiveAddon> = emptyList(),
 )
 
 @Serializable
@@ -548,6 +576,7 @@ data class GooglePlayVerifyRequest(
 @Serializable
 data class GooglePlayVerifyResponse(
     val plan_code: String? = null,
+    val product_kind: String? = null,
     val paid_until: String? = null,
     val pending: Boolean = false,
 )

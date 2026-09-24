@@ -45,7 +45,10 @@ import org.astermail.android.api.billing.CancelSubscriptionRequest
 import org.astermail.android.api.billing.ChangePlanRequest
 import org.astermail.android.api.billing.CheckoutSessionRequest
 import org.astermail.android.api.billing.DetachPaymentMethodRequest
+import org.astermail.android.api.billing.GooglePlayActiveAddon
+import org.astermail.android.api.billing.GooglePlayAddonProduct
 import org.astermail.android.api.billing.GooglePlayProduct
+import org.astermail.android.api.billing.GooglePlaySpecialOffer
 import org.astermail.android.api.billing.GooglePlayVerifyRequest
 import org.astermail.android.api.billing.PaymentMethodItem
 import org.astermail.android.api.billing.PlanChangePreviewResponse
@@ -95,7 +98,18 @@ data class BillingUiState(
     val play_blocked_reason: String? = null,
     val play_currency: String? = null,
     val play_purchase_request: PlayPurchaseRequest? = null,
+    val play_addon_products: List<GooglePlayAddonProduct> = emptyList(),
+    val play_special_offer: GooglePlaySpecialOffer? = null,
+    val play_special_offer_eligible: Boolean = false,
+    val play_active_plan: String? = null,
+    val play_active_addons: List<GooglePlayActiveAddon> = emptyList(),
 )
+
+internal sealed interface PlayTarget {
+    data class Plan(val plan_code: String, val billing_interval: String) : PlayTarget
+    data class Addon(val storage_bytes: Long) : PlayTarget
+    data object SpecialOffer : PlayTarget
+}
 
 object AvailablePlansCache {
     @Volatile
@@ -194,7 +208,7 @@ class BillingViewModel @Inject constructor(
 
     private val conflicted_play_tokens = java.util.Collections.synchronizedSet(mutableSetOf<String>())
 
-    private enum class PlayVerifyResult { Confirmed, Pending, Conflict, Failed }
+    private enum class PlayVerifyResult { Confirmed, Pending, Conflict, Ineligible, Failed }
 
     private fun priced_plans(plans: List<AvailablePlan>, s: BillingUiState = _state.value): List<AvailablePlan> = when {
         s.play_enabled -> apply_play_prices(plans, s.play_offers, s.play_products)
@@ -226,6 +240,11 @@ class BillingViewModel @Inject constructor(
                 play_blocked_reason = null,
                 play_currency = null,
                 play_purchase_request = null,
+                play_addon_products = emptyList(),
+                play_special_offer = null,
+                play_special_offer_eligible = false,
+                play_active_plan = null,
+                play_active_addons = emptyList(),
             )
             next.copy(available_plans = priced_plans(raw_plans.ifEmpty { it.available_plans }, next))
         }
@@ -267,12 +286,17 @@ class BillingViewModel @Inject constructor(
                     play_offers = emptyList(),
                     play_blocked_reason = null,
                     play_currency = null,
+                    play_addon_products = emptyList(),
+                    play_special_offer = null,
+                    play_special_offer_eligible = false,
+                    play_active_plan = null,
+                    play_active_addons = emptyList(),
                 )
                 next.copy(available_plans = priced_plans(raw_plans.ifEmpty { it.available_plans }, next))
             }
             return true
         }
-        val product_ids = config.products.map { it.product_id }.toSet()
+        val product_ids = (config.products.map { it.product_id } + config.addon_products.map { it.product_id }).toSet()
         val fetched = play_store.query_offers(ctx, product_ids.toList())
         if (generation != play_generation) return false
         val offers = fetched.ifEmpty { _state.value.play_offers.filter { it.product_id in product_ids } }
@@ -283,7 +307,12 @@ class BillingViewModel @Inject constructor(
                 play_products = config.products,
                 play_offers = offers,
                 play_blocked_reason = config.purchase_blocked_reason,
-                play_currency = offers.firstOrNull()?.currency_code?.lowercase(),
+                play_currency = play_currency_of(offers),
+                play_addon_products = config.addon_products,
+                play_special_offer = config.special_offer,
+                play_special_offer_eligible = config.special_offer_eligible && config.special_offer != null,
+                play_active_plan = config.active_google_play_plan,
+                play_active_addons = config.active_google_play_addons,
             )
             next.copy(available_plans = priced_plans(raw_plans.ifEmpty { it.available_plans }, next))
         }
@@ -295,10 +324,10 @@ class BillingViewModel @Inject constructor(
         val generation = play_generation
         val s = _state.value
         if (!s.play_enabled || s.play_products.isEmpty()) return
-        val offers = play_store.query_offers(ctx, s.play_products.map { it.product_id })
+        val offers = play_store.query_offers(ctx, play_catalog_ids(s).toList())
         if (offers.isEmpty() || generation != play_generation) return
         _state.update {
-            val next = it.copy(play_offers = offers, play_currency = offers.first().currency_code.lowercase())
+            val next = it.copy(play_offers = offers, play_currency = play_currency_of(offers))
             next.copy(available_plans = priced_plans(raw_plans.ifEmpty { it.available_plans }, next))
         }
     }
@@ -323,13 +352,51 @@ class BillingViewModel @Inject constructor(
         _state.value.subscription
     }
 
-    private fun play_product_ids(): Set<String> = _state.value.play_products.map { it.product_id }.toSet()
+    private fun play_currency_of(offers: List<PlayOffer>): String? =
+        (offers.firstOrNull { it.offer_id == null } ?: offers.firstOrNull())?.currency_code?.lowercase()
+
+    private fun play_plan_ids(s: BillingUiState = _state.value): Set<String> = s.play_products.map { it.product_id }.toSet()
+
+    private fun play_addon_ids(s: BillingUiState = _state.value): Set<String> = s.play_addon_products.map { it.product_id }.toSet()
+
+    private fun play_catalog_ids(s: BillingUiState = _state.value): Set<String> = play_plan_ids(s) + play_addon_ids(s)
 
     private fun backend_play_sub_for(product_id: String, s: BillingUiState = _state.value): Boolean =
-        is_google_play_provider(s.subscription?.payment_provider) &&
-            play_product_for_plan(s.play_products, s.subscription?.plan?.code)?.product_id == product_id
+        if (product_id in play_addon_ids(s)) {
+            s.play_active_addons.any { it.product_id == product_id }
+        } else {
+            is_google_play_provider(s.subscription?.payment_provider) &&
+                play_product_for_plan(s.play_products, s.subscription?.plan?.code)?.product_id == product_id
+        }
 
-    private suspend fun prepare_play_purchase(plan_code: String, billing_interval: String) {
+    private fun finish_play_verify(
+        result: PlayVerifyResult,
+        failed_is_error: Boolean = true,
+        success: Int = R.string.billing_play_success,
+    ) {
+        when (result) {
+            PlayVerifyResult.Confirmed -> finish_play_action(info = success)
+            PlayVerifyResult.Pending -> finish_play_action(info = R.string.billing_play_pending)
+            PlayVerifyResult.Conflict -> finish_play_action(error = R.string.billing_play_blocked)
+            PlayVerifyResult.Ineligible -> finish_play_action(error = R.string.billing_play_offer_unavailable)
+            PlayVerifyResult.Failed -> if (failed_is_error) {
+                finish_play_action(error = R.string.billing_play_verify_failed)
+            } else {
+                finish_play_action(info = R.string.billing_play_verify_failed)
+            }
+        }
+    }
+
+    private suspend fun refresh_after_play_verify() {
+        reload_subscription()
+        if (_state.value.storage_addons != null || _state.value.play_active_addons.isNotEmpty()) refresh_storage_addons()
+        load_play_config(redeem = false)
+    }
+
+    private suspend fun prepare_play_purchase(plan_code: String, billing_interval: String) =
+        prepare_play_purchase(PlayTarget.Plan(plan_code, billing_interval))
+
+    private suspend fun prepare_play_purchase(target: PlayTarget) {
         val generation = play_generation
         play_config_job?.takeIf { it.isActive }?.join()
         val loaded = load_play_config(redeem = false)
@@ -352,43 +419,45 @@ class BillingViewModel @Inject constructor(
             finish_play_action(error = R.string.billing_play_unavailable)
             return
         }
-        val catalog = play_product_ids()
-        val owned_catalog = owned.filter { it.is_purchased && !it.is_pending && it.product_ids.any { id -> id in catalog } }
+        val plan_catalog = play_plan_ids()
+        val owned_plans = owned.filter { it.is_purchased && !it.is_pending && it.product_ids.any { id -> id in plan_catalog } }
         val is_play_sub = is_google_play_provider(sub?.payment_provider)
-        if (!is_play_sub && owned_catalog.isNotEmpty()) {
+        val is_plan_target = target !is PlayTarget.Addon
+        if (is_plan_target && !is_play_sub && owned_plans.isNotEmpty()) {
             play_redeem_job?.takeIf { it.isActive }?.join()
-            val result = verify_play_purchases(owned_catalog, force = true)
+            val result = verify_play_purchases(owned_plans, force = true)
             if (generation != play_generation) {
                 finish_play_action()
                 return
             }
-            reload_subscription()
-            when (result) {
-                PlayVerifyResult.Confirmed -> finish_play_action(info = R.string.billing_play_success)
-                PlayVerifyResult.Pending -> finish_play_action(info = R.string.billing_play_pending)
-                PlayVerifyResult.Conflict -> finish_play_action(error = R.string.billing_play_blocked)
-                PlayVerifyResult.Failed -> finish_play_action(error = R.string.billing_play_verify_failed)
-            }
+            refresh_after_play_verify()
+            finish_play_verify(result)
             return
         }
-        if (!is_play_sub && _state.value.play_blocked_reason == PLAY_BLOCKED_ACTIVE_SUBSCRIPTION) {
+        if (is_plan_target && !is_play_sub && _state.value.play_blocked_reason == PLAY_BLOCKED_ACTIVE_SUBSCRIPTION) {
             finish_play_action(error = R.string.billing_play_blocked)
             return
         }
-        var offer = play_offer_for(_state.value.play_offers, _state.value.play_products, plan_code, billing_interval)
+        if (target is PlayTarget.SpecialOffer && !_state.value.play_special_offer_eligible) {
+            finish_play_action(error = R.string.billing_play_offer_unavailable)
+            return
+        }
+        var offer = play_offer_for_target(target)
         if (offer == null) {
             refresh_play_offers()
-            offer = play_offer_for(_state.value.play_offers, _state.value.play_products, plan_code, billing_interval)
+            offer = play_offer_for_target(target)
         }
         val account_id = _state.value.play_account_id
         if (offer == null || account_id == null) {
-            finish_play_action(error = R.string.billing_play_unavailable)
+            finish_play_action(
+                error = if (target is PlayTarget.SpecialOffer) R.string.billing_play_offer_unavailable else R.string.billing_play_unavailable,
+            )
             return
         }
-        val old_token = if (is_play_sub) {
+        val old_token = if (is_plan_target && is_play_sub) {
             val current_product = play_product_for_plan(_state.value.play_products, sub?.plan?.code)?.product_id
-            val current = owned_catalog.firstOrNull { current_product != null && current_product in it.product_ids }
-                ?: owned_catalog.firstOrNull()
+            val current = owned_plans.firstOrNull { current_product != null && current_product in it.product_ids }
+                ?: owned_plans.firstOrNull()
             if (current == null) {
                 open_play_subscriptions()
                 finish_play_action(info = R.string.billing_play_not_on_device)
@@ -398,11 +467,108 @@ class BillingViewModel @Inject constructor(
         } else {
             null
         }
+        val replacement_mode = if (old_token == null) {
+            PlayReplacementMode.WITH_TIME_PRORATION
+        } else {
+            val current_interval = sub?.plan?.billing_period?.takeIf { it.isNotBlank() }?.let { normalize_billing_interval(it) }
+            val current_offer = current_interval?.let { interval ->
+                play_offer_for(_state.value.play_offers, _state.value.play_products, sub.plan?.code.orEmpty(), interval)
+            }
+            play_replacement_mode(current_offer, offer)
+        }
         _state.update {
             it.copy(
                 is_acting = false,
                 acting_action = null,
-                play_purchase_request = PlayPurchaseRequest(offer, account_id, old_token),
+                play_purchase_request = PlayPurchaseRequest(offer, account_id, old_token, replacement_mode),
+            )
+        }
+    }
+
+    private fun play_offer_for_target(target: PlayTarget): PlayOffer? {
+        val s = _state.value
+        return when (target) {
+            is PlayTarget.Plan -> play_offer_for(s.play_offers, s.play_products, target.plan_code, target.billing_interval)
+            is PlayTarget.Addon -> play_addon_offer_for(s.play_offers, s.play_addon_products, target.storage_bytes)
+            PlayTarget.SpecialOffer -> play_special_offer_for(s.play_offers, s.play_special_offer)
+        }
+    }
+
+    private fun start_play_target(action: String, target: PlayTarget) {
+        if (_state.value.is_acting) {
+            _state.update { it.copy(error = ctx.getString(R.string.billing_action_in_progress), info = null) }
+            return
+        }
+        _state.update { it.copy(is_acting = true, acting_action = action, error = null, info = null, checkout_url = null) }
+        viewModelScope.launch {
+            if (!await_signed_in()) {
+                _state.update { it.copy(is_acting = false, acting_action = null, error = ctx.getString(R.string.session_expired_sign_in)) }
+                return@launch
+            }
+            prepare_play_purchase(target)
+        }
+    }
+
+    fun start_play_special_offer() {
+        if (!play_install_check()) return
+        start_play_target("play_special_offer", PlayTarget.SpecialOffer)
+    }
+
+    fun restore_play_purchases() {
+        if (!play_install_check()) return
+        if (_state.value.is_acting) {
+            _state.update { it.copy(error = ctx.getString(R.string.billing_action_in_progress), info = null) }
+            return
+        }
+        _state.update { it.copy(is_acting = true, acting_action = "play_restore", error = null, info = null) }
+        viewModelScope.launch {
+            val generation = play_generation
+            play_config_job?.takeIf { it.isActive }?.join()
+            val loaded = load_play_config(redeem = false)
+            if (generation != play_generation) {
+                finish_play_action()
+                return@launch
+            }
+            if (!loaded || !_state.value.play_enabled) {
+                finish_play_action(error = R.string.billing_play_unavailable)
+                return@launch
+            }
+            val owned = play_store.owned_purchases(ctx)
+            if (generation != play_generation) {
+                finish_play_action()
+                return@launch
+            }
+            if (owned == null) {
+                finish_play_action(error = R.string.billing_play_unavailable)
+                return@launch
+            }
+            val catalog = play_catalog_ids()
+            val candidates = owned.filter { it.is_purchased && !it.is_pending && it.product_ids.any { id -> id in catalog } }
+            if (candidates.isEmpty()) {
+                finish_play_action(info = R.string.billing_play_restore_none)
+                return@launch
+            }
+            play_redeem_job?.takeIf { it.isActive }?.join()
+            val result = verify_play_purchases(candidates, force = true)
+            if (generation != play_generation) {
+                finish_play_action()
+                return@launch
+            }
+            refresh_after_play_verify()
+            if (result == PlayVerifyResult.Confirmed) {
+                finish_play_action(info = R.string.billing_play_restored)
+            } else {
+                finish_play_verify(result)
+            }
+        }
+    }
+
+    fun manage_play_addon(product_id: String?) {
+        _state.update {
+            it.copy(
+                is_acting = false,
+                acting_action = null,
+                portal_url = play_manage_subscription_url(ctx.packageName, product_id),
             )
         }
     }
@@ -421,7 +587,13 @@ class BillingViewModel @Inject constructor(
         }
         viewModelScope.launch {
             val outcome = try {
-                play_store.purchase(activity, request.offer, request.obfuscated_account_id, request.old_purchase_token)
+                play_store.purchase(
+                    activity,
+                    request.offer,
+                    request.obfuscated_account_id,
+                    request.old_purchase_token,
+                    request.replacement_mode,
+                )
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (t: Throwable) {
@@ -435,13 +607,17 @@ class BillingViewModel @Inject constructor(
             when (outcome) {
                 is PlayPurchaseOutcome.Purchased -> {
                     val result = verify_play_purchases(outcome.purchases, force = true)
-                    reload_subscription()
-                    when (result) {
-                        PlayVerifyResult.Confirmed -> finish_play_action(info = R.string.billing_play_success)
-                        PlayVerifyResult.Pending -> finish_play_action(info = R.string.billing_play_pending)
-                        PlayVerifyResult.Conflict -> finish_play_action(error = R.string.billing_play_blocked)
-                        PlayVerifyResult.Failed -> finish_play_action(info = R.string.billing_play_verify_failed)
+                    if (generation != play_generation) {
+                        finish_play_action()
+                        return@launch
                     }
+                    refresh_after_play_verify()
+                    val success = if (request.offer.product_id in play_addon_ids()) {
+                        R.string.billing_play_addon_success
+                    } else {
+                        R.string.billing_play_success
+                    }
+                    finish_play_verify(result, failed_is_error = false, success = success)
                 }
                 PlayPurchaseOutcome.Pending -> finish_play_action(info = R.string.billing_play_pending)
                 PlayPurchaseOutcome.Cancelled -> finish_play_action()
@@ -457,9 +633,10 @@ class BillingViewModel @Inject constructor(
 
     private suspend fun verify_play_purchases(purchases: List<PlayOwnedPurchase>, force: Boolean = false): PlayVerifyResult {
         val generation = play_generation
-        val catalog = play_product_ids()
+        val catalog = play_catalog_ids()
         var pending = false
         var conflict = false
+        var ineligible = false
         var failed = false
         for (purchase in purchases.filter { it.is_purchased && !it.is_pending }) {
             if (generation != play_generation) return PlayVerifyResult.Failed
@@ -479,13 +656,14 @@ class BillingViewModel @Inject constructor(
             } catch (conflict_error: org.astermail.android.api.ApiError.Conflict) {
                 if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "verify_google_play_purchase conflict", conflict_error)
                 conflicted_play_tokens.add(purchase.purchase_token)
-                conflict = true
+                if (conflict_error.code == PLAY_SPECIAL_OFFER_INELIGIBLE) ineligible = true else conflict = true
             } catch (t: Throwable) {
                 if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "verify_google_play_purchase failed", t)
                 failed = true
             }
         }
         return when {
+            ineligible -> PlayVerifyResult.Ineligible
             conflict -> PlayVerifyResult.Conflict
             failed -> PlayVerifyResult.Failed
             pending -> PlayVerifyResult.Pending
@@ -533,7 +711,7 @@ class BillingViewModel @Inject constructor(
         val owned = play_store.owned_purchases(ctx) ?: return
         if (generation != play_generation) return
         val s = _state.value
-        val catalog = play_product_ids()
+        val catalog = play_catalog_ids(s)
         val candidates = owned.filter { purchase ->
             val product_id = purchase.product_ids.firstOrNull { it in catalog } ?: return@filter false
             purchase.is_purchased && !purchase.is_pending && when {
@@ -548,7 +726,7 @@ class BillingViewModel @Inject constructor(
         val before = redeemed_play_tokens.size
         verify_play_purchases(candidates, force = force)
         if (generation != play_generation) return
-        if (force || redeemed_play_tokens.size > before) reload_subscription()
+        if (force || redeemed_play_tokens.size > before) refresh_after_play_verify()
     }
 
     private fun open_play_subscriptions() {
@@ -1191,6 +1369,7 @@ class BillingViewModel @Inject constructor(
 
     fun load_storage_addons() {
         viewModelScope.launch {
+            ensure_play_config()
             try {
                 val response = billing_api.get_storage_addons()
                 _state.value = _state.value.copy(storage_addons = response)
@@ -1207,9 +1386,29 @@ class BillingViewModel @Inject constructor(
         }
     }
 
+    private suspend fun refresh_storage_addons() {
+        try {
+            val response = billing_api.get_storage_addons()
+            _state.update { it.copy(storage_addons = response) }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (t: Throwable) {
+            if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_storage_addons failed", t)
+        }
+    }
+
     fun purchase_storage_addon(addon_id: String) {
         if (_state.value.is_acting) {
             _state.value = _state.value.copy(error = ctx.getString(R.string.billing_action_in_progress), info = null)
+            return
+        }
+        if (play_install_check()) {
+            val bytes = _state.value.storage_addons?.available_addons?.firstOrNull { it.id == addon_id }?.storage_bytes
+            if (bytes == null || bytes <= 0) {
+                _state.update { it.copy(error = ctx.getString(R.string.billing_play_unavailable), info = null) }
+                return
+            }
+            start_play_target("addon_$addon_id", PlayTarget.Addon(bytes))
             return
         }
         if (blocks_external_checkout()) return
@@ -1365,6 +1564,8 @@ class BillingViewModel @Inject constructor(
 }
 
 internal val PLAY_VERIFY_RETRY_DELAYS_MS = listOf(2_000L, 5_000L, 10_000L)
+
+internal const val PLAY_SPECIAL_OFFER_INELIGIBLE = "SPECIAL_OFFER_INELIGIBLE"
 
 internal fun is_retryable_play_error(t: Throwable): Boolean = when (t) {
     is org.astermail.android.api.ApiError.NetworkError -> true

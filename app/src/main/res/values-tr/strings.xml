@@ -3490,4 +3490,9 @@
     <string name="billing_play_verify_failed">Satın alma işleminiz tamamlandı ancak henüz onaylanmadı. Aster Mail, uygulamayı bir sonraki açışınızda bunu otomatik olarak onaylar.</string>
     <string name="billing_play_manage">Google Play\'de yönet</string>
     <string name="billing_play_not_on_device">Aboneliğiniz bu cihazdaki Google hesabına bağlı değil. Google Play\'de yönetin.</string>
+    <string name="billing_play_restore_purchases">Satın alımları geri yükle</string>
+    <string name="billing_play_restored">Satın alımlarınız geri yüklendi.</string>
+    <string name="billing_play_restore_none">Bu cihazdaki Google hesabı için geri yüklenecek satın alım yok.</string>
+    <string name="billing_play_offer_unavailable">Bu teklif hesabınız için kullanılamıyor.</string>
+    <string name="billing_play_addon_success">Ek depolama alanınız etkin.</string>
 </resources>

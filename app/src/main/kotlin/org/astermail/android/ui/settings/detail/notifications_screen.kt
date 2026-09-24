@@ -363,7 +363,7 @@ fun NotificationsScreen(
                     ) { vm.set_product_updates(it) }
                 }
                 if (offer_prefs.available) {
-                    AsterDivider(modifier = Modifier)
+                    settings_row_gap(modifier = Modifier)
                     switch_row(
                         stringResource(R.string.special_offers),
                         stringResource(R.string.special_offers_description),

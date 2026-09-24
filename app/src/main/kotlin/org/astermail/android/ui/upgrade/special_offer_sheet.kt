@@ -183,7 +183,7 @@ fun special_offer_view_model(): SpecialOfferViewModel {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SpecialOfferHost() {
-    if (org.astermail.android.billing.remember_play_install()) return
+    val play_install = org.astermail.android.billing.remember_play_install()
     val offer_vm = special_offer_view_model()
     val offer_state by offer_vm.state.collectAsStateWithLifecycle()
     val billing_vm: BillingViewModel = org.astermail.android.billing.billing_view_model()
@@ -201,8 +201,28 @@ fun SpecialOfferHost() {
         onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }
     }
 
-    LaunchedEffect(offer_state.auto_show) {
-        if (offer_state.auto_show) offer_vm.claim_and_open()
+    LaunchedEffect(play_install) {
+        if (play_install) billing_vm.load_play_offers()
+    }
+
+    val play_offer = if (play_install) {
+        org.astermail.android.billing.play_special_offer_for(billing_state.play_offers, billing_state.play_special_offer)
+    } else {
+        null
+    }
+    val play_ready = billing_state.play_enabled && billing_state.play_special_offer_eligible && play_offer != null
+
+    LaunchedEffect(offer_state.auto_show, play_install, play_ready) {
+        if (offer_state.auto_show && (!play_install || play_ready)) offer_vm.claim_and_open()
+    }
+
+    var play_cta_pressed by remember { mutableStateOf(false) }
+    LaunchedEffect(billing_state.play_purchase_request, offer_state.is_open) {
+        if (!offer_state.is_open) play_cta_pressed = false
+        if (play_install && offer_state.is_open && play_cta_pressed && billing_state.play_purchase_request != null) {
+            play_cta_pressed = false
+            offer_vm.close()
+        }
     }
 
     var offer_checkout_pending by remember { mutableStateOf(false) }
@@ -230,22 +250,25 @@ fun SpecialOfferHost() {
         if (billing_state.available_plans.isEmpty()) billing_vm.load_plans()
     }
 
-    val percent_off = offer_state.effective_percent_off
-    val months = offer_state.effective_duration_months
+    val play_special = billing_state.play_special_offer.takeIf { play_install }
+    val percent_off = play_special?.percent_off?.takeIf { it > 0 } ?: offer_state.effective_percent_off
+    val months = play_special?.duration_months?.takeIf { it > 0 } ?: offer_state.effective_duration_months
     val plan_code = offer_state.plan_code
     val list_cents = api_plan_price_cents(billing_state.available_plans, plan_code, SPECIAL_OFFER_INTERVAL)
         ?.toLong()
         ?: SPECIAL_OFFER_LIST_CENTS
     val offer_cents = special_offer_price_cents(list_cents, percent_off)
-    val offer_label = format_money(offer_cents, SPECIAL_OFFER_CURRENCY)
-    val list_label = format_money(list_cents, SPECIAL_OFFER_CURRENCY)
+    val offer_label = play_offer?.intro_formatted_price?.takeIf { it.isNotBlank() }
+        ?: format_money(offer_cents, SPECIAL_OFFER_CURRENCY)
+    val list_label = play_offer?.formatted_price?.takeIf { it.isNotBlank() }
+        ?: format_money(list_cents, SPECIAL_OFFER_CURRENCY)
     val save_badge = stringResource(R.string.save_percent, percent_off)
     val yearly_cents = api_plan_price_cents(billing_state.available_plans, plan_code, "year")
         ?.toLong()
         ?: SPECIAL_OFFER_YEARLY_CENTS
     val term_prices = special_offer_term_prices(offer_state, plan_code, list_cents, yearly_cents, save_badge)
     val is_busy = offer_state.is_accepting || billing_state.is_acting
-    val checkout_error = billing_state.error?.takeIf { offer_state.owns_checkout && it.isNotBlank() }
+    val checkout_error = billing_state.error?.takeIf { (offer_state.owns_checkout || play_cta_pressed) && it.isNotBlank() }
     val error_text = if (offer_state.accept_failed) {
         stringResource(R.string.could_not_start_checkout)
     } else {
@@ -377,8 +400,13 @@ fun SpecialOfferHost() {
                             is_loading = is_busy,
                             onClick = {
                                 billing_vm.clear_messages()
-                                offer_vm.release_checkout()
-                                offer_vm.accept()
+                                if (play_install) {
+                                    play_cta_pressed = true
+                                    billing_vm.start_play_special_offer()
+                                } else {
+                                    offer_vm.release_checkout()
+                                    offer_vm.accept()
+                                }
                             },
                         )
 

@@ -29,7 +29,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.flow.Flow
 import org.astermail.android.api.billing.AvailablePlan
+import org.astermail.android.api.billing.GooglePlayAddonProduct
 import org.astermail.android.api.billing.GooglePlayProduct
+import org.astermail.android.api.billing.GooglePlaySpecialOffer
+import org.astermail.android.api.billing.StorageAddonItem
 
 const val PLAY_STORE_PACKAGE = "com.android.vending"
 const val GOOGLE_PLAY_PROVIDER = "google_play"
@@ -45,7 +48,12 @@ data class PlayOffer(
     val price_micros: Long,
     val currency_code: String,
     val billing_interval: String,
+    val offer_id: String? = null,
+    val intro_formatted_price: String? = null,
+    val intro_price_micros: Long? = null,
 )
+
+enum class PlayReplacementMode { WITH_TIME_PRORATION, CHARGE_PRORATED_PRICE }
 
 data class PlayOwnedPurchase(
     val purchase_token: String,
@@ -73,6 +81,7 @@ interface PlayStore {
         offer: PlayOffer,
         obfuscated_account_id: String,
         old_purchase_token: String?,
+        replacement_mode: PlayReplacementMode,
     ): PlayPurchaseOutcome
     suspend fun owned_purchases(context: Context): List<PlayOwnedPurchase>?
 }
@@ -81,6 +90,7 @@ data class PlayPurchaseRequest(
     val offer: PlayOffer,
     val obfuscated_account_id: String,
     val old_purchase_token: String?,
+    val replacement_mode: PlayReplacementMode = PlayReplacementMode.WITH_TIME_PRORATION,
 )
 
 fun installed_from_play(context: Context): Boolean = runCatching {
@@ -135,7 +145,7 @@ fun play_offer_for(
     val product = play_product_for_plan(products, plan_code) ?: return null
     val interval = if (billing_interval == "year") "year" else "month"
     val base_plan_id = play_base_plan_id(interval)
-    val product_offers = offers.filter { it.product_id == product.product_id }
+    val product_offers = offers.filter { it.product_id == product.product_id && it.offer_id == null }
     product_offers.firstOrNull { it.base_plan_id == base_plan_id }?.let { return it }
     if (base_plan_id in product.base_plan_ids) return null
     return product_offers.firstOrNull { offer ->
@@ -178,3 +188,61 @@ fun apply_play_prices(
         }
     }
 }
+
+fun play_special_offer_for(offers: List<PlayOffer>, special: GooglePlaySpecialOffer?): PlayOffer? {
+    if (special == null || special.offer_id.isBlank()) return null
+    return offers.firstOrNull {
+        it.product_id == special.product_id &&
+            it.base_plan_id == special.base_plan_id &&
+            it.offer_id == special.offer_id
+    }
+}
+
+fun play_addon_product_for(addon_products: List<GooglePlayAddonProduct>, storage_bytes: Long): GooglePlayAddonProduct? =
+    if (storage_bytes <= 0) null else addon_products.firstOrNull { it.size_bytes == storage_bytes }
+
+fun play_addon_offer_for(
+    offers: List<PlayOffer>,
+    addon_products: List<GooglePlayAddonProduct>,
+    storage_bytes: Long,
+): PlayOffer? {
+    val product = play_addon_product_for(addon_products, storage_bytes) ?: return null
+    val product_offers = offers.filter { it.product_id == product.product_id && it.offer_id == null }
+    return product_offers.firstOrNull { it.base_plan_id == PLAY_MONTHLY_BASE_PLAN }
+        ?: product_offers.firstOrNull { offer ->
+            offer.billing_interval == "month" &&
+                (product.base_plan_ids.isEmpty() || offer.base_plan_id in product.base_plan_ids)
+        }
+}
+
+fun apply_play_addon_prices(
+    addons: List<StorageAddonItem>,
+    offers: List<PlayOffer>,
+    addon_products: List<GooglePlayAddonProduct>,
+): List<StorageAddonItem> = addons.mapNotNull { addon ->
+    val offer = play_addon_offer_for(offers, addon_products, addon.storage_bytes) ?: return@mapNotNull null
+    addon.copy(price_cents = play_price_cents(offer.price_micros))
+}
+
+fun play_addon_price_label(
+    offers: List<PlayOffer>,
+    addon_products: List<GooglePlayAddonProduct>,
+    storage_bytes: Long,
+): String? = play_addon_offer_for(offers, addon_products, storage_bytes)
+    ?.formatted_price
+    ?.takeIf { it.isNotBlank() }
+
+fun play_replacement_mode(current: PlayOffer?, next: PlayOffer): PlayReplacementMode =
+    if (
+        current != null &&
+        current.offer_id == null &&
+        next.offer_id == null &&
+        current.product_id != next.product_id &&
+        current.billing_interval == next.billing_interval &&
+        current.currency_code.equals(next.currency_code, ignoreCase = true) &&
+        next.price_micros > current.price_micros
+    ) {
+        PlayReplacementMode.CHARGE_PRORATED_PRICE
+    } else {
+        PlayReplacementMode.WITH_TIME_PRORATION
+    }

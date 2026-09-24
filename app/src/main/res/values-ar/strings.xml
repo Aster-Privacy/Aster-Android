@@ -3574,4 +3574,9 @@
     <string name="billing_play_verify_failed">تمت عملية الشراء، لكنها لم تُؤكَّد بعد. سيؤكدها Aster Mail تلقائيًا في المرة القادمة التي تفتح فيها التطبيق.</string>
     <string name="billing_play_manage">الإدارة في Google Play</string>
     <string name="billing_play_not_on_device">اشتراكك غير مرتبط بحساب Google على هذا الجهاز. أدِره في Google Play.</string>
+    <string name="billing_play_restore_purchases">استعادة المشتريات</string>
+    <string name="billing_play_restored">تمت استعادة مشترياتك.</string>
+    <string name="billing_play_restore_none">لا توجد مشتريات لاستعادتها لحساب Google على هذا الجهاز.</string>
+    <string name="billing_play_offer_unavailable">هذا العرض غير متاح لحسابك.</string>
+    <string name="billing_play_addon_success">مساحة التخزين الإضافية مفعّلة الآن.</string>
 </resources>

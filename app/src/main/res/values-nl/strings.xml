@@ -3490,4 +3490,9 @@
     <string name="billing_play_verify_failed">Je aankoop is gelukt, maar nog niet bevestigd. Aster Mail bevestigt deze automatisch de volgende keer dat je de app opent.</string>
     <string name="billing_play_manage">Beheren in Google Play</string>
     <string name="billing_play_not_on_device">Je abonnement is niet gekoppeld aan het Google-account op dit apparaat. Beheer het in Google Play.</string>
+    <string name="billing_play_restore_purchases">Aankopen herstellen</string>
+    <string name="billing_play_restored">Je aankopen zijn hersteld.</string>
+    <string name="billing_play_restore_none">Er zijn geen aankopen om te herstellen voor het Google-account op dit apparaat.</string>
+    <string name="billing_play_offer_unavailable">Deze aanbieding is niet beschikbaar voor je account.</string>
+    <string name="billing_play_addon_success">Je extra opslag is actief.</string>
 </resources>

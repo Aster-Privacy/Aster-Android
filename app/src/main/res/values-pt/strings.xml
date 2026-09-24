@@ -3490,4 +3490,9 @@
     <string name="billing_play_verify_failed">Sua compra foi concluída, mas ainda não foi confirmada. O Aster Mail a confirmará automaticamente na próxima vez que você abrir o app.</string>
     <string name="billing_play_manage">Gerenciar no Google Play</string>
     <string name="billing_play_not_on_device">Sua assinatura não está vinculada à conta do Google neste dispositivo. Gerencie-a no Google Play.</string>
+    <string name="billing_play_restore_purchases">Restaurar compras</string>
+    <string name="billing_play_restored">Suas compras foram restauradas.</string>
+    <string name="billing_play_restore_none">Não há compras para restaurar na conta do Google deste dispositivo.</string>
+    <string name="billing_play_offer_unavailable">Esta oferta não está disponível para sua conta.</string>
+    <string name="billing_play_addon_success">Seu armazenamento extra está ativo.</string>
 </resources>

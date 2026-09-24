@@ -3472,4 +3472,9 @@
     <string name="billing_play_verify_failed">購入は完了しましたが、まだ確認されていません。次回アプリを開いたときに Aster Mail が自動的に確認します。</string>
     <string name="billing_play_manage">Google Play で管理</string>
     <string name="billing_play_not_on_device">サブスクリプションはこのデバイスの Google アカウントにリンクされていません。Google Play で管理してください。</string>
+    <string name="billing_play_restore_purchases">購入を復元</string>
+    <string name="billing_play_restored">購入を復元しました。</string>
+    <string name="billing_play_restore_none">このデバイスの Google アカウントには復元できる購入がありません。</string>
+    <string name="billing_play_offer_unavailable">このオファーはお使いのアカウントではご利用いただけません。</string>
+    <string name="billing_play_addon_success">追加ストレージが有効になりました。</string>
 </resources>

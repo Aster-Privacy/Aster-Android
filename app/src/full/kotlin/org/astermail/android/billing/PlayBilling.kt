@@ -166,10 +166,11 @@ object PlayBilling : PlayStore {
         return details.flatMap { product ->
             product_details[product.productId] = product
             product.subscriptionOfferDetails.orEmpty()
-                .filter { it.offerId == null }
                 .mapNotNull { offer ->
-                    val phase = offer.pricingPhases.pricingPhaseList.lastOrNull() ?: return@mapNotNull null
+                    val phases = offer.pricingPhases.pricingPhaseList
+                    val phase = phases.lastOrNull() ?: return@mapNotNull null
                     val interval = play_billing_interval(phase.billingPeriod) ?: return@mapNotNull null
+                    val intro = if (offer.offerId != null && phases.size > 1) phases.first() else null
                     PlayOffer(
                         product_id = product.productId,
                         base_plan_id = offer.basePlanId,
@@ -178,6 +179,9 @@ object PlayBilling : PlayStore {
                         price_micros = phase.priceAmountMicros,
                         currency_code = phase.priceCurrencyCode,
                         billing_interval = interval,
+                        offer_id = offer.offerId,
+                        intro_formatted_price = intro?.formattedPrice,
+                        intro_price_micros = intro?.priceAmountMicros,
                     )
                 }
         }
@@ -188,6 +192,7 @@ object PlayBilling : PlayStore {
         offer: PlayOffer,
         obfuscated_account_id: String,
         old_purchase_token: String?,
+        replacement_mode: PlayReplacementMode,
     ): PlayPurchaseOutcome {
         val billing = ready(activity) ?: return PlayPurchaseOutcome.Unavailable
         val details = product_details[offer.product_id] ?: return PlayPurchaseOutcome.Unavailable
@@ -206,7 +211,12 @@ object PlayBilling : PlayStore {
                 BillingFlowParams.SubscriptionUpdateParams.newBuilder()
                     .setOldPurchaseToken(old_purchase_token)
                     .setSubscriptionReplacementMode(
-                        BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.WITH_TIME_PRORATION,
+                        when (replacement_mode) {
+                            PlayReplacementMode.CHARGE_PRORATED_PRICE ->
+                                BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.CHARGE_PRORATED_PRICE
+                            PlayReplacementMode.WITH_TIME_PRORATION ->
+                                BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.WITH_TIME_PRORATION
+                        },
                     )
                     .build(),
             )

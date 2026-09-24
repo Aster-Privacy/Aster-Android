@@ -38,6 +38,7 @@ object PlayBilling : PlayStore {
         offer: PlayOffer,
         obfuscated_account_id: String,
         old_purchase_token: String?,
+        replacement_mode: PlayReplacementMode,
     ): PlayPurchaseOutcome = PlayPurchaseOutcome.Unavailable
 
     override suspend fun owned_purchases(context: Context): List<PlayOwnedPurchase>? = null
