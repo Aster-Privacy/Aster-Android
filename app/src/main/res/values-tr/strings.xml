@@ -3432,7 +3432,7 @@
     <string name="profile_menu_greeting_comma">,</string>
     <string name="profile_menu_manage_account">Hesap ayarları</string>
     <string name="profile_menu_add_another_account">Başka bir hesap ekle</string>
-    <string name="profile_menu_resubscribe">Aster'a yeniden abone ol</string>
+    <string name="profile_menu_resubscribe">Aster\'a yeniden abone ol</string>
     <string name="profile_menu_sign_out_all">Tüm hesaplardan çıkış yap</string>
     <string name="profile_menu_session_expired">Oturum sona erdi</string>
     <string name="profile_menu_default_account">Varsayılan</string>
