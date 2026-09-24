@@ -154,6 +154,24 @@ class SpecialOfferViewModelTest {
     }
 
     @Test
+    fun `offer hidden by an opt out reopens from the entry point`() = runTest {
+        vm.load()
+        advanceUntilIdle()
+        store.set_enabled(false)
+        advanceUntilIdle()
+        store.set_enabled(true)
+        advanceUntilIdle()
+
+        vm.claim_and_open()
+        advanceUntilIdle()
+        assertFalse(vm.state.value.is_open)
+        coVerify(exactly = 0) { billing_api.claim_special_offer() }
+
+        vm.reopen()
+        assertTrue(vm.state.value.is_open)
+    }
+
+    @Test
     fun `failed opt out keeps the offer`() = runTest {
         coEvery { billing_api.set_offer_preferences(any()) } throws java.io.IOException("offline")
         vm.load()
@@ -187,6 +205,7 @@ class SpecialOfferViewModelTest {
 
         server_offers_enabled = true
         store.reset()
+        accounts.getValue(vm).value = "second_account"
         advanceUntilIdle()
 
         assertTrue(store.state.value.enabled)

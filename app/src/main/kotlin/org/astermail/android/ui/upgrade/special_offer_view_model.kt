@@ -76,6 +76,7 @@ data class SpecialOfferState(
     val is_accepting: Boolean = false,
     val is_accepted: Boolean = false,
     val accept_failed: Boolean = false,
+    val offer_expired: Boolean = false,
     val owns_checkout: Boolean = false,
     val step: SpecialOfferStep = SpecialOfferStep.offer,
 ) {
@@ -151,6 +152,8 @@ class SpecialOfferViewModel @Inject constructor(
         load_job = null
         load_succeeded = false
         last_plan_code = null
+        auto_show_suppressed = false
+        preference_fallback = false
         _state.value = SpecialOfferState()
         if (id != null) fetch()
     }
@@ -183,6 +186,7 @@ class SpecialOfferViewModel @Inject constructor(
                 if (expected != generation) return@launch_for_account
                 load_succeeded = true
                 preference_fallback = !preference_loaded
+                if (preference_fallback) auto_show_suppressed = false
                 val enabled = offers_enabled()
                 _state.update {
                     it.copy(
@@ -229,11 +233,22 @@ class SpecialOfferViewModel @Inject constructor(
         }
     }
 
+    fun reopen() {
+        _state.update {
+            if (!it.available || it.is_open || it.is_claiming) {
+                it
+            } else {
+                it.copy(is_open = true, auto_show = false, accept_failed = false, offer_expired = false, step = SpecialOfferStep.offer)
+            }
+        }
+    }
+
     fun close() {
         _state.update {
             it.copy(
                 is_open = false,
                 accept_failed = false,
+                offer_expired = false,
                 owns_checkout = false,
                 step = SpecialOfferStep.offer,
             )
@@ -250,20 +265,23 @@ class SpecialOfferViewModel @Inject constructor(
         val expected = generation
         _state.update { it.copy(is_accepting = true, accept_failed = false) }
         launch_for_account {
-            val ok = try {
+            val ok: Boolean? = try {
                 billing_api.accept_special_offer().ok
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (t: Throwable) {
-                false
+                null
             }
             if (expected != generation) return@launch_for_account
             _state.update {
                 it.copy(
                     is_accepting = false,
-                    is_accepted = ok,
-                    accept_failed = !ok,
-                    step = if (ok) SpecialOfferStep.payment_method else SpecialOfferStep.offer,
+                    is_accepted = ok == true,
+                    accept_failed = ok == null,
+                    offer_expired = ok == false,
+                    available = it.available && ok != false,
+                    auto_show = it.auto_show && ok != false,
+                    step = if (ok == true) SpecialOfferStep.payment_method else SpecialOfferStep.offer,
                 )
             }
         }

@@ -73,6 +73,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.remember
@@ -761,6 +762,23 @@ fun DrawerContent(
             }
 
             Spacer(Modifier.height(AsterSpacing.lg))
+            val offer_vm = org.astermail.android.ui.upgrade.special_offer_view_model()
+            val offer_state by offer_vm.state.collectAsStateWithLifecycle()
+            if (offer_state.available) {
+                drawer_row(
+                    icon = TablerIcons.Discount2,
+                    label = stringResource(R.string.special_offer_entry),
+                    count = 0,
+                    is_unread_count = false,
+                    selected = false,
+                    on_click = {
+                        on_close()
+                        offer_vm.reopen()
+                    },
+                    test_tag = "special_offer_entry",
+                    icon_tint = AsterMaterial.colors.accent_blue,
+                )
+            }
             drawer_row(
                 icon = TablerIcons.Settings,
                 label = stringResource(R.string.settings),
