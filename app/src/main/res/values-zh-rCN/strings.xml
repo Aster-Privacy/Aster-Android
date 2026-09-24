@@ -3414,6 +3414,7 @@
     <string name="profile_menu_greeting_comma">，</string>
     <string name="profile_menu_manage_account">账户设置</string>
     <string name="profile_menu_add_another_account">添加另一个账户</string>
+    <string name="profile_menu_resubscribe">重新订阅 Aster</string>
     <string name="profile_menu_sign_out_all">退出所有账户</string>
     <string name="profile_menu_session_expired">会话已过期</string>
     <string name="profile_menu_default_account">默认</string>

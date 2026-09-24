@@ -3432,6 +3432,7 @@
     <string name="profile_menu_greeting_comma">,</string>
     <string name="profile_menu_manage_account">Accountinstellingen</string>
     <string name="profile_menu_add_another_account">Nog een account toevoegen</string>
+    <string name="profile_menu_resubscribe">Opnieuw abonneren op Aster</string>
     <string name="profile_menu_sign_out_all">Uitloggen bij alle accounts</string>
     <string name="profile_menu_session_expired">Sessie verlopen</string>
     <string name="profile_menu_default_account">Standaard</string>

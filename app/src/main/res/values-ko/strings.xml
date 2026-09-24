@@ -3414,6 +3414,7 @@
     <string name="profile_menu_greeting_comma">,</string>
     <string name="profile_menu_manage_account">계정 설정</string>
     <string name="profile_menu_add_another_account">다른 계정 추가</string>
+    <string name="profile_menu_resubscribe">Aster 다시 구독하기</string>
     <string name="profile_menu_sign_out_all">모든 계정에서 로그아웃</string>
     <string name="profile_menu_session_expired">세션 만료됨</string>
     <string name="profile_menu_default_account">기본</string>

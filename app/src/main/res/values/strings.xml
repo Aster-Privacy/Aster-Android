@@ -3478,6 +3478,7 @@
     <string name="profile_menu_greeting_comma">,</string>
     <string name="profile_menu_manage_account">Account settings</string>
     <string name="profile_menu_add_another_account">Add another account</string>
+    <string name="profile_menu_resubscribe">Resubscribe to Aster</string>
     <string name="profile_menu_sign_out_all">Sign out of all accounts</string>
     <string name="profile_menu_session_expired">Session expired</string>
     <string name="profile_menu_default_account">Default</string>

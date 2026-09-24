@@ -3516,6 +3516,7 @@
     <string name="profile_menu_greeting_comma">،</string>
     <string name="profile_menu_manage_account">إعدادات الحساب</string>
     <string name="profile_menu_add_another_account">إضافة حساب آخر</string>
+    <string name="profile_menu_resubscribe">إعادة الاشتراك في Aster</string>
     <string name="profile_menu_sign_out_all">تسجيل الخروج من كل الحسابات</string>
     <string name="profile_menu_session_expired">انتهت الجلسة</string>
     <string name="profile_menu_default_account">افتراضي</string>

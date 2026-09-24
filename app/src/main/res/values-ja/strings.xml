@@ -3414,6 +3414,7 @@
     <string name="profile_menu_greeting_comma">、</string>
     <string name="profile_menu_manage_account">アカウント設定</string>
     <string name="profile_menu_add_another_account">別のアカウントを追加</string>
+    <string name="profile_menu_resubscribe">Asterに再登録</string>
     <string name="profile_menu_sign_out_all">すべてのアカウントからサインアウト</string>
     <string name="profile_menu_session_expired">セッション期限切れ</string>
     <string name="profile_menu_default_account">既定</string>
