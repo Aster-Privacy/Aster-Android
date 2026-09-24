@@ -213,7 +213,7 @@ internal fun change_primary_address_dialog(
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold,
                             )
-                            eligible_aliases.take(4).forEach { alias ->
+                            eligible_aliases.forEach { alias ->
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -412,14 +412,6 @@ internal fun change_primary_address_dialog(
                             ),
                         )
                         Text(
-                            text = stringResource(
-                                R.string.address_change_permanent_body,
-                                shown_current,
-                            ),
-                            color = colors.text_tertiary,
-                            fontSize = 12.sp,
-                        )
-                        Text(
                             modifier = Modifier
                                 .clip(SquircleShape(8.dp))
                                 .clickable(enabled = state.can_resend_code, role = Role.Button) { vm.resend_code() }
@@ -572,9 +564,9 @@ private fun domain_picker(domain: String, on_select: (String) -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(SquircleShape(14.dp))
-                .background(colors.input_bg, SquircleShape(14.dp))
-                .border(1.dp, colors.input_border, SquircleShape(14.dp))
+                .clip(SquircleShape(18.dp))
+                .background(colors.input_bg, SquircleShape(18.dp))
+                .border(1.5.dp, colors.input_border, SquircleShape(18.dp))
                 .clickable(role = Role.DropdownList) { open = true }
                 .padding(horizontal = AsterSpacing.md, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,

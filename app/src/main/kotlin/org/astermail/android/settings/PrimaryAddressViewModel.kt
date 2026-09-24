@@ -117,9 +117,6 @@ data class PrimaryAddressUiState(
     val new_address: String
         get() = "$local_part@$domain"
 
-    val local_part_stripped: String
-        get() = local_part.replace(".", "")
-
     val local_part_valid: Boolean
         get() = primary_local_part_valid(local_part)
 
@@ -646,7 +643,9 @@ class PrimaryAddressViewModel @Inject constructor(
             eligible = false,
             next_change_available_at = next_change_available_at
                 ?: _state.value.next_change_available_at,
-            final_address = new_address,
+            final_address = _state.value.new_address.takeIf {
+                routing_form(it) == routing_form(new_address)
+            } ?: new_address,
             retained_address = retained_address,
             step = PrimaryAddressStep.DONE,
         )

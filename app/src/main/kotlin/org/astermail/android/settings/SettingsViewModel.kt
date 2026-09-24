@@ -263,6 +263,7 @@ data class SettingsUiState(
     val keyserver_status: org.astermail.android.api.encryption.KeyserverStatusResponse? = null,
     val badges: List<Badge> = emptyList(),
     val badge_preferences: org.astermail.android.api.user.BadgePreferences? = null,
+    val badges_loaded: Boolean = false,
     val is_loading: Boolean = false,
     val aliases_loading: Boolean = false,
     val error: String? = null,
@@ -512,12 +513,11 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val result = user_api.fetch_badges()
-                if (result != _state.value.badges) {
-                    _state.value = _state.value.copy(badges = result)
-                }
+                _state.value = _state.value.copy(badges = result, badges_loaded = true)
                 persist_cached_badges(result)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(badges_loaded = true)
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_badges", t)
             }
         }
@@ -528,6 +528,10 @@ class SettingsViewModel @Inject constructor(
                 persist_cached_badge_preferences(prefs)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(
+                    badge_preferences = _state.value.badge_preferences
+                        ?: org.astermail.android.api.user.BadgePreferences(),
+                )
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_badge_preferences", t)
             }
         }

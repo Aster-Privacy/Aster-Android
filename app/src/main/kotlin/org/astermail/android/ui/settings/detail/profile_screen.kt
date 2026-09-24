@@ -58,6 +58,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
@@ -93,6 +94,8 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.components.shimmer
+import org.astermail.android.design.components.shimmer_state
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.aster_menu_item
@@ -190,7 +193,17 @@ fun ProfileScreen(
         live_account?.email?.substringBefore("@")?.takeIf { it.isNotBlank() },
     ).firstOrNull() ?: stringResource(R.string.your_name)
 
+    val profile_loaded = user != null &&
+        (state.subscription != null || state.subscription_load_failed) &&
+        state.badge_preferences != null &&
+        state.badges_loaded
+    val load_settled = remember_load_settled(!profile_loaded)
+
     detail_scaffold(title = stringResource(R.string.profile), on_back = on_back) {
+        if (!profile_loaded && !load_settled) {
+            profile_pulse_skeleton()
+            return@detail_scaffold
+        }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -298,8 +311,11 @@ fun ProfileScreen(
                 icon = TablerIcons.At,
                 on_click = {
                     when {
-                        !address_state.eligibility_loaded || address_state.eligibility_failed ->
+                        address_state.eligibility_failed -> {
                             address_vm.load_eligibility()
+                            show_address_locked = true
+                        }
+                        !address_state.eligibility_loaded -> address_vm.load_eligibility()
                         address_state.lock_reason == primary_address_reason_plan -> show_address_upsell = true
                         !address_state.eligible -> show_address_locked = true
                         else -> show_address_dialog = true
@@ -435,6 +451,41 @@ fun ProfileScreen(
             }
         }
         v_gap(AsterSpacing.xxl)
+    }
+}
+
+@Composable
+private fun profile_pulse_skeleton() {
+    val tone = shimmer_state()
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clearAndSetSemantics {},
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.lg),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(modifier = Modifier.size(112.dp).shimmer(tone, CircleShape))
+            v_gap(AsterSpacing.lg)
+            skeleton_block(tone, 184.dp, 26.dp, corner = 8.dp)
+            v_gap(AsterSpacing.xs)
+            skeleton_block(tone, 212.dp, 14.dp)
+            v_gap(AsterSpacing.md)
+            Box(modifier = Modifier.height(48.dp), contentAlignment = Alignment.Center) {
+                skeleton_block(tone, 132.dp, 26.dp, corner = 13.dp)
+            }
+        }
+        v_gap(AsterSpacing.lg)
+        skeleton_section_label()
+        skeleton_card_list(rows = 3, leading_circle = true)
+        v_gap(AsterSpacing.lg)
+        skeleton_section_label()
+        skeleton_block_fill(tone, 52.dp, corner = 12.dp)
+        v_gap(AsterSpacing.sm)
+        skeleton_block_fill(tone, 48.dp, corner = 12.dp)
     }
 }
 
