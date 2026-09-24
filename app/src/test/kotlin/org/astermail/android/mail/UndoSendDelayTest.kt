@@ -21,6 +21,8 @@
 package org.astermail.android.mail
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class UndoSendDelayTest {
@@ -52,5 +54,36 @@ class UndoSendDelayTest {
     @Test
     fun clamp_replaces_below_range_values_with_the_default() {
         assertEquals(UNDO_SEND_DEFAULT_SECONDS, clamp_undo_send_seconds(0))
+    }
+
+    @Test
+    fun zero_or_disabled_undo_send_is_inactive() {
+        assertFalse(is_undo_send_active(true, 0))
+        assertFalse(is_undo_send_active(false, 10))
+        assertTrue(is_undo_send_active(true, 10))
+        assertTrue(is_undo_send_active(null, null))
+    }
+
+    @Test
+    fun a_synced_value_outside_the_presets_is_listed() {
+        assertEquals(listOf(3, 5, 7, 10, 15, 20, 30), undo_send_delay_options(7))
+        assertEquals(listOf(1, 3, 5, 10, 15, 20, 30), undo_send_delay_options(1))
+    }
+
+    @Test
+    fun a_preset_value_keeps_the_preset_list() {
+        assertEquals(UNDO_SEND_PRESET_SECONDS, undo_send_delay_options(10))
+    }
+
+    @Test
+    fun out_of_range_values_are_listed_after_clamping() {
+        assertEquals(UNDO_SEND_PRESET_SECONDS, undo_send_delay_options(600))
+        assertEquals(UNDO_SEND_PRESET_SECONDS, undo_send_delay_options(0))
+    }
+
+    @Test
+    fun clamp_caps_values_above_the_maximum() {
+        assertEquals(UNDO_SEND_MAX_SECONDS, clamp_undo_send_seconds(45))
+        assertEquals(UNDO_SEND_MIN_SECONDS, clamp_undo_send_seconds(1))
     }
 }
