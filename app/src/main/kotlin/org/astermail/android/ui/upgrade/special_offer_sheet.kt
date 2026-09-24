@@ -23,7 +23,6 @@ package org.astermail.android.ui.upgrade
 
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Check
-import compose.icons.tablericons.Minus
 import compose.icons.tablericons.X
 
 import android.content.Context
@@ -81,7 +80,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -89,7 +87,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -118,12 +115,10 @@ private const val SPECIAL_OFFER_INTERVAL = "month"
 private const val SPECIAL_OFFER_LIST_CENTS = 899L
 private const val SPECIAL_OFFER_YEARLY_CENTS = 8699L
 private const val HERO_ASPECT_RATIO = 2f
-private const val COMPARISON_MAX_FONT_SCALE = 1.6f
 
 private val CARD_SHAPE = SquircleShape(24.dp)
 private val CARD_MAX_WIDTH = 420.dp
 private val CARD_PADDING = 20.dp
-private val COMPARISON_COLUMN_WIDTH = 84.dp
 private val CTA_HEIGHT = 52.dp
 private val CTA_LIP = 2.dp
 private val CTA_SHAPE = SquircleShape(999.dp)
@@ -132,10 +127,9 @@ private val CLOSE_BUTTON_FILL = Color(0xFF1C1C1E)
 private val CLOSE_BUTTON_SIZE = 32.dp
 private val CLOSE_TOUCH_TARGET = 48.dp
 
-private data class SpecialOfferComparisonRow(
-    val label: String,
-    val free_value: String?,
-    val paid_value: String?,
+private data class SpecialOfferBenefit(
+    val title: String,
+    val detail: String,
 )
 
 internal fun special_offer_price_pair(
@@ -252,17 +246,24 @@ fun SpecialOfferHost() {
         checkout_error
     }
 
-    val included = stringResource(R.string.special_offer_compare_included)
-    val rows = listOf(
-        SpecialOfferComparisonRow(stringResource(R.string.special_offer_compare_storage), "10 GB", "500 GB"),
-        SpecialOfferComparisonRow(
-            stringResource(R.string.special_offer_compare_aliases),
-            "5",
-            stringResource(R.string.usage_unlimited),
+    val savings_label = format_money((list_cents - offer_cents).coerceAtLeast(0L) * months, SPECIAL_OFFER_CURRENCY)
+    val benefits = listOf(
+        SpecialOfferBenefit(
+            stringResource(R.string.special_offer_benefit_aliases_title),
+            stringResource(R.string.special_offer_benefit_aliases_detail),
         ),
-        SpecialOfferComparisonRow(stringResource(R.string.special_offer_compare_domains), "1", "30"),
-        SpecialOfferComparisonRow(stringResource(R.string.special_offer_compare_attachments), "25 MB", "100 MB"),
-        SpecialOfferComparisonRow(stringResource(R.string.special_offer_compare_vanguard), null, included),
+        SpecialOfferBenefit(
+            stringResource(R.string.special_offer_benefit_storage_title),
+            stringResource(R.string.special_offer_benefit_storage_detail),
+        ),
+        SpecialOfferBenefit(
+            stringResource(R.string.special_offer_benefit_domains_title),
+            stringResource(R.string.special_offer_benefit_domains_detail),
+        ),
+        SpecialOfferBenefit(
+            stringResource(R.string.special_offer_benefit_attachments_title),
+            stringResource(R.string.special_offer_benefit_attachments_detail),
+        ),
     )
 
     Dialog(
@@ -308,6 +309,13 @@ fun SpecialOfferHost() {
                                 bottom = 12.dp,
                             ),
                     ) {
+                        galaxy_badge(
+                            text = stringResource(R.string.special_offer_badge, percent_off, months),
+                            font_size = 11.sp,
+                        )
+
+                        Spacer(Modifier.height(12.dp))
+
                         Text(
                             text = stringResource(R.string.special_offer_title),
                             color = colors.text_primary,
@@ -349,16 +357,28 @@ fun SpecialOfferHost() {
                             )
                         }
 
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(4.dp))
 
-                        galaxy_badge(
-                            text = stringResource(R.string.special_offer_hero_duration, months),
-                            font_size = 11.sp,
+                        Text(
+                            text = stringResource(R.string.special_offer_savings, savings_label, months),
+                            color = colors.success,
+                            fontSize = 14.sp,
+                            lineHeight = 19.sp,
+                            fontWeight = FontWeight.SemiBold,
                         )
 
-                        Spacer(Modifier.height(20.dp))
+                        Spacer(Modifier.height(18.dp))
 
-                        SpecialOfferComparison(rows = rows, included = included)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(colors.border_secondary),
+                        )
+
+                        Spacer(Modifier.height(18.dp))
+
+                        SpecialOfferBenefits(benefits = benefits)
 
                         Spacer(Modifier.height(20.dp))
 
@@ -376,7 +396,7 @@ fun SpecialOfferHost() {
                         }
 
                         SpecialOfferDepthButton(
-                            label = stringResource(R.string.special_offer_cta_upgrade, offer_label),
+                            label = stringResource(R.string.special_offer_cta_claim, percent_off),
                             is_loading = is_busy,
                             onClick = {
                                 billing_vm.clear_messages()
@@ -520,127 +540,48 @@ private fun SpecialOfferHero() {
 }
 
 @Composable
-private fun SpecialOfferComparison(rows: List<SpecialOfferComparisonRow>, included: String) {
+private fun SpecialOfferBenefits(benefits: List<SpecialOfferBenefit>) {
     val colors = AsterMaterial.colors
-    val column_width = COMPARISON_COLUMN_WIDTH *
-        LocalDensity.current.fontScale.coerceIn(1f, COMPARISON_MAX_FONT_SCALE)
 
-    Box(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Spacer(Modifier.weight(1f))
-                Text(
-                    text = stringResource(R.string.plan_name_free).uppercase(),
-                    color = colors.text_tertiary,
-                    fontSize = 11.sp,
-                    letterSpacing = 0.6.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    modifier = Modifier.width(column_width),
-                )
-                Text(
-                    text = stringResource(R.string.plan_name_nova).uppercase(),
-                    color = colors.accent_blue,
-                    fontSize = 11.sp,
-                    letterSpacing = 0.6.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    modifier = Modifier.width(column_width),
-                )
-            }
-
-            rows.forEach { row ->
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        benefits.forEach { benefit ->
+            Row(modifier = Modifier.fillMaxWidth()) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(colors.border_secondary),
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 42.dp)
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                        .padding(top = 1.dp)
+                        .size(20.dp)
+                        .clip(CircleShape)
+                        .background(colors.accent_blue),
+                    contentAlignment = Alignment.Center,
                 ) {
+                    Icon(
+                        imageVector = TablerIcons.Check,
+                        contentDescription = null,
+                        tint = colors.on_accent,
+                        modifier = Modifier.size(13.dp),
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = row.label,
+                        text = benefit.title,
                         color = colors.text_primary,
-                        fontSize = 14.sp,
-                        lineHeight = 19.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.weight(1f),
+                        fontSize = 15.sp,
+                        lineHeight = 20.sp,
+                        fontWeight = FontWeight.SemiBold,
                     )
-                    SpecialOfferComparisonValue(
-                        value = row.free_value,
-                        included = included,
-                        is_paid = false,
-                        column_width = column_width,
-                    )
-                    SpecialOfferComparisonValue(
-                        value = row.paid_value,
-                        included = included,
-                        is_paid = true,
-                        column_width = column_width,
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = benefit.detail,
+                        color = colors.text_secondary,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
                     )
                 }
             }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(colors.border_secondary),
-            )
-        }
-    }
-}
-
-@Composable
-private fun SpecialOfferComparisonValue(value: String?, included: String, is_paid: Boolean, column_width: Dp) {
-    val colors = AsterMaterial.colors
-
-    Box(
-        modifier = Modifier.width(column_width),
-        contentAlignment = Alignment.Center,
-    ) {
-        when {
-            value == null -> Icon(
-                imageVector = TablerIcons.Minus,
-                contentDescription = stringResource(R.string.special_offer_compare_not_included),
-                tint = colors.text_muted,
-                modifier = Modifier.size(16.dp),
-            )
-            value == included -> Box(
-                modifier = Modifier
-                    .size(20.dp)
-                    .clip(CircleShape)
-                    .background(colors.accent_blue),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.Check,
-                    contentDescription = value,
-                    tint = colors.on_accent,
-                    modifier = Modifier.size(13.dp),
-                )
-            }
-            else -> Text(
-                text = value,
-                color = if (is_paid) colors.text_primary else colors.text_tertiary,
-                fontSize = 14.sp,
-                lineHeight = 18.sp,
-                fontWeight = if (is_paid) FontWeight.SemiBold else FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-            )
         }
     }
 }
