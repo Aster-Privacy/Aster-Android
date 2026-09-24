@@ -3563,4 +3563,7 @@
     <string name="passkey_create_unavailable">لا يمكن لهذا الجهاز حفظ مفاتيح المرور. تأكد من تفعيل قفل الشاشة وإعداد مدير كلمات مرور.</string>
     <string name="passkey_create_failed">تعذّرت إضافة مفتاح المرور. حاول مرة أخرى.</string>
     <string name="error_passkey_timed_out">انتهت مهلة طلب مفتاح المرور. حاول مرة أخرى.</string>
+    <string name="expiry_password_internal_removed">يفتح مستلمو Aster البريد ذا الصلاحية المحدودة بدون كلمة مرور، لذلك تمت إزالة كلمة المرور. لإرسال الرسالة، اضغط على إرسال مرة أخرى.</string>
+    <string name="expiring_requires_secure_message">أثناء تشغيل اشتراط التشفير، لا يمكنك إرسال بريد ذي صلاحية محدودة إلى عناوين خارجية من هذا التطبيق. للإرسال، أزل تاريخ انتهاء الصلاحية أو أوقف اشتراط التشفير.</string>
+    <string name="signature_too_large">هذا التوقيع كبير جدًا بحيث لا يمكن حفظه. لحفظه، أزل صورة أو اختصر النص.</string>
 </resources>

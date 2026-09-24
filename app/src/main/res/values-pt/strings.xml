@@ -3479,4 +3479,7 @@
     <string name="passkey_create_unavailable">Este dispositivo não pode salvar chaves de acesso. Verifique se o bloqueio de tela está ativado e se há um gerenciador de senhas configurado.</string>
     <string name="passkey_create_failed">Não foi possível adicionar a chave de acesso. Tente novamente.</string>
     <string name="error_passkey_timed_out">A solicitação da chave de acesso expirou. Tente novamente.</string>
+    <string name="expiry_password_internal_removed">Os destinatários do Aster abrem e-mails com expiração sem senha, por isso a senha foi removida. Para enviar a mensagem, toque em Enviar novamente.</string>
+    <string name="expiring_requires_secure_message">Enquanto Exigir criptografia estiver ativado, não é possível enviar e-mails com expiração para endereços externos por este app. Para enviar, remova a expiração ou desative Exigir criptografia.</string>
+    <string name="signature_too_large">Esta assinatura é grande demais para ser salva. Para salvá-la, remova uma imagem ou encurte o texto.</string>
 </resources>

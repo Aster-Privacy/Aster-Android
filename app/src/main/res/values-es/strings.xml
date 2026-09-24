@@ -3480,4 +3480,7 @@
     <string name="passkey_create_unavailable">Este dispositivo no puede guardar llaves de acceso. Comprueba que el bloqueo de pantalla esté activado y que haya un gestor de contraseñas configurado.</string>
     <string name="passkey_create_failed">No se pudo añadir la llave de acceso. Inténtalo de nuevo.</string>
     <string name="error_passkey_timed_out">La solicitud de la llave de acceso caducó. Inténtalo de nuevo.</string>
+    <string name="expiry_password_internal_removed">Los destinatarios de Aster abren el correo con caducidad sin contraseña, así que se ha quitado la contraseña. Para enviar el mensaje, toca Enviar de nuevo.</string>
+    <string name="expiring_requires_secure_message">Mientras Exigir cifrado esté activado, no puedes enviar correo con caducidad a direcciones externas desde esta app. Para enviarlo, quita la caducidad o desactiva Exigir cifrado.</string>
+    <string name="signature_too_large">Esta firma es demasiado grande para guardarla. Para guardarla, quita una imagen o acorta el texto.</string>
 </resources>

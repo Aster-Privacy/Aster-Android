@@ -5163,6 +5163,18 @@ class SettingsViewModel @Inject constructor(
             ?: all.firstOrNull { it.alias_id == null }
     }
 
+    suspend fun fit_signature_for_save(content: String): String? =
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            fit_signature_content(content, BitmapSignatureImageEncoder)
+        }
+
+    private fun report_signature_too_large() {
+        _state.value = _state.value.copy(
+            save_status = SaveStatus.ERROR,
+            error = context.getString(R.string.signature_too_large),
+        )
+    }
+
     fun create_signature(
         name: String,
         content: String,
@@ -5174,6 +5186,10 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = _state.value.copy(save_status = SaveStatus.SAVING)
             try {
+                if (!signature_fits(content)) {
+                    report_signature_too_large()
+                    return@launch
+                }
                 val name_enc = encrypt_signature_field(name)
                 val content_enc = encrypt_signature_field(content)
                 signatures_api.create_signature(
@@ -5212,6 +5228,10 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = _state.value.copy(save_status = SaveStatus.SAVING)
             try {
+                if (content != null && !signature_fits(content)) {
+                    report_signature_too_large()
+                    return@launch
+                }
                 val name_enc = name?.let { encrypt_signature_field(it) }
                 val content_enc = content?.let { encrypt_signature_field(it) }
                 signatures_api.update_signature(

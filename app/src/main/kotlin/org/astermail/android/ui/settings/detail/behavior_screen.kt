@@ -147,8 +147,16 @@ fun BehaviorScreen(
     var auto_save_recipients by remember(prefs_loaded) { mutableStateOf(prefs?.auto_save_recent_recipients ?: true) }
     var reply_include_quoted by remember(prefs_loaded) { mutableStateOf(prefs?.reply_include_quoted != false) }
     var reply_prefix_subject by remember(prefs_loaded) { mutableStateOf(prefs?.reply_prefix_subject != false) }
-    var undo_send by remember(prefs_loaded) { mutableStateOf(prefs?.undo_send_enabled ?: true) }
-    var undo_send_secs by remember(prefs_loaded) { mutableIntStateOf(prefs?.undo_send_seconds ?: 10) }
+    var undo_send by remember(prefs_loaded) {
+        mutableStateOf(org.astermail.android.mail.is_undo_send_active(prefs?.undo_send_enabled ?: true, prefs?.undo_send_seconds))
+    }
+    var undo_send_secs by remember(prefs_loaded) {
+        mutableIntStateOf(
+            org.astermail.android.mail.clamp_undo_send_seconds(
+                prefs?.undo_send_seconds ?: org.astermail.android.mail.UNDO_SEND_DEFAULT_SECONDS,
+            ),
+        )
+    }
     var confirm_delete by remember(prefs_loaded) { mutableStateOf(prefs?.confirm_delete ?: false) }
     var confirm_archive by remember(prefs_loaded) { mutableStateOf(prefs?.confirm_archive ?: false) }
     var confirm_spam by remember(prefs_loaded) { mutableStateOf(prefs?.confirm_spam ?: false) }
@@ -217,8 +225,8 @@ fun BehaviorScreen(
                 auto_save_recipients = prefs.auto_save_recent_recipients
                 reply_include_quoted = prefs.reply_include_quoted
                 reply_prefix_subject = prefs.reply_prefix_subject
-                undo_send = prefs.undo_send_enabled
-                undo_send_secs = prefs.undo_send_seconds
+                undo_send = org.astermail.android.mail.is_undo_send_active(prefs.undo_send_enabled, prefs.undo_send_seconds)
+                undo_send_secs = org.astermail.android.mail.clamp_undo_send_seconds(prefs.undo_send_seconds)
                 confirm_delete = prefs.confirm_delete
                 confirm_archive = prefs.confirm_archive
                 confirm_spam = prefs.confirm_spam
@@ -287,7 +295,7 @@ fun BehaviorScreen(
                 reply_include_quoted = reply_include_quoted,
                 reply_prefix_subject = reply_prefix_subject,
                 undo_send_enabled = undo_send,
-                undo_send_seconds = undo_send_secs,
+                undo_send_seconds = org.astermail.android.mail.clamp_undo_send_seconds(undo_send_secs),
                 confirm_delete = confirm_delete,
                 confirm_archive = confirm_archive,
                 confirm_spam = confirm_spam,
@@ -517,9 +525,12 @@ fun BehaviorScreen(
                     Column {
                         settings_row_gap(modifier = Modifier)
                         choice_group_title(stringResource(R.string.cancellation_period))
-                        listOf(3, 5, 10, 15, 20, 30).forEachIndexed { i, secs ->
+                        val undo_send_options = remember(prefs_loaded, prefs?.undo_send_seconds) {
+                            org.astermail.android.mail.undo_send_delay_options(undo_send_secs)
+                        }
+                        undo_send_options.forEachIndexed { i, secs ->
                             choice_option_row(stringResource(R.string.undo_send_delay_seconds, secs), undo_send_secs == secs) { undo_send_secs = secs; save_trigger++ }
-                            if (i < 5) settings_row_gap(modifier = Modifier)
+                            if (i < undo_send_options.lastIndex) settings_row_gap(modifier = Modifier)
                         }
                     }
                 }
