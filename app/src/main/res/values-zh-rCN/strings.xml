@@ -3256,6 +3256,7 @@
     <string name="special_offer_price_period">每月</string>
     <string name="special_offer_fine_print">前 %2$d 个月每月支付 %1$s。之后套餐将按每月 %3$s 续订，直到你在设置中取消。</string>
     <string name="special_offer_dismiss">不再显示此优惠</string>
+    <string name="special_offer_entry">特别优惠</string>
     <string name="special_offer_reassurance">随时可取消。Aster 不展示广告，也不跟踪你。</string>
     <string name="special_offer_badge">%2$d 个月内立减 %1$d%%</string>
     <string name="special_offer_savings">%2$d 个月共节省 %1$s。</string>

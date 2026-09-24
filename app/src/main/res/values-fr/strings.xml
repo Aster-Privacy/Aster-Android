@@ -3301,6 +3301,7 @@
     <string name="special_offer_price_period">par mois</string>
     <string name="special_offer_fine_print">Vous payez %1$s par mois pendant les %2$d premiers mois. Votre offre est ensuite renouvelée à %3$s par mois jusqu\'à ce que vous l\'annuliez dans Réglages.</string>
     <string name="special_offer_dismiss">Ne plus afficher cette offre</string>
+    <string name="special_offer_entry">Offre spéciale</string>
     <string name="special_offer_reassurance">Annulez à tout moment. Aster n\'affiche aucune publicité et ne vous piste pas.</string>
     <string name="special_offer_badge">-%1$d %% pendant %2$d mois</string>
     <string name="special_offer_savings">Vous économisez %1$s sur %2$d mois.</string>

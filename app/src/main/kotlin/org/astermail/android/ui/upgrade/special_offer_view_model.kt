@@ -193,6 +193,16 @@ class SpecialOfferViewModel @Inject constructor(
         }
     }
 
+    fun reopen() {
+        _state.update {
+            if (!it.available || it.is_open || it.is_claiming) {
+                it
+            } else {
+                it.copy(is_open = true, auto_show = false, accept_failed = false, step = SpecialOfferStep.offer)
+            }
+        }
+    }
+
     fun close() {
         _state.update {
             it.copy(

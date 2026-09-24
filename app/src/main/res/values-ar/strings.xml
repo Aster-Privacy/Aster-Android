@@ -3358,6 +3358,7 @@
     <string name="special_offer_price_period">شهريًا</string>
     <string name="special_offer_fine_print">تدفع %1$s شهريًا لأول %2$d شهرًا. بعد ذلك تُجدَّد خطتك بسعر %3$s شهريًا حتى تلغيها من الإعدادات.</string>
     <string name="special_offer_dismiss">عدم عرض هذا العرض مرة أخرى</string>
+    <string name="special_offer_entry">عرض خاص</string>
     <string name="special_offer_reassurance">يمكنك الإلغاء في أي وقت. لا يعرض Aster إعلانات ولا يتتبعك.</string>
     <string name="special_offer_badge">خصم %1$d%% لمدة %2$d شهرًا</string>
     <string name="special_offer_savings">توفّر %1$s خلال %2$d شهرًا.</string>

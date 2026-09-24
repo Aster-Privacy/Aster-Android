@@ -3256,6 +3256,7 @@
     <string name="special_offer_price_period">월</string>
     <string name="special_offer_fine_print">처음 %2$d개월 동안 월 %1$s을 결제합니다. 이후에는 설정에서 취소할 때까지 월 %3$s으로 갱신됩니다.</string>
     <string name="special_offer_dismiss">이 혜택 다시 보지 않기</string>
+    <string name="special_offer_entry">특별 혜택</string>
     <string name="special_offer_reassurance">언제든지 해지할 수 있습니다. Aster는 광고를 표시하거나 사용자를 추적하지 않습니다.</string>
     <string name="special_offer_badge">%2$d개월 동안 %1$d%% 할인</string>
     <string name="special_offer_savings">%2$d개월 동안 %1$s 절약할 수 있습니다.</string>

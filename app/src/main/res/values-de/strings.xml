@@ -3275,6 +3275,7 @@
     <string name="special_offer_price_period">pro Monat</string>
     <string name="special_offer_fine_print">Sie zahlen %1$s pro Monat für die ersten %2$d Monate. Danach verlängert sich Ihr Tarif für %3$s pro Monat, bis Sie ihn in den Einstellungen kündigen.</string>
     <string name="special_offer_dismiss">Dieses Angebot nicht mehr anzeigen</string>
+    <string name="special_offer_entry">Sonderangebot</string>
     <string name="special_offer_reassurance">Jederzeit kündbar. Aster zeigt keine Werbung und verfolgt Sie nicht.</string>
     <string name="special_offer_badge">%1$d %% Rabatt für %2$d Monate</string>
     <string name="special_offer_savings">Sie sparen %1$s in %2$d Monaten.</string>

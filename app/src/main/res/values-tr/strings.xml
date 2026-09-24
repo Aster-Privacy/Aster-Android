@@ -3274,6 +3274,7 @@
     <string name="special_offer_price_period">aylık</string>
     <string name="special_offer_fine_print">İlk %2$d ay boyunca aylık %1$s ödersiniz. Ardından planınız, Ayarlar bölümünden iptal edene kadar aylık %3$s olarak yenilenir.</string>
     <string name="special_offer_dismiss">Bu teklifi bir daha gösterme</string>
+    <string name="special_offer_entry">Özel teklif</string>
     <string name="special_offer_reassurance">İstediğiniz zaman iptal edin. Aster reklam göstermez ve sizi izlemez.</string>
     <string name="special_offer_badge">%2$d ay boyunca %%%1$d indirim</string>
     <string name="special_offer_savings">%2$d ayda %1$s tasarruf edersiniz.</string>

@@ -3164,6 +3164,7 @@
     <string name="special_offer_price_period">प्रति माह</string>
     <string name="special_offer_fine_print">पहले %2$d महीनों के लिए आप %1$s प्रति माह चुकाते हैं। इसके बाद आपकी योजना %3$s प्रति माह पर नवीनीकृत होती रहेगी, जब तक आप इसे सेटिंग में रद्द नहीं करते।</string>
     <string name="special_offer_dismiss">यह ऑफ़र दोबारा न दिखाएँ</string>
+    <string name="special_offer_entry">विशेष ऑफ़र</string>
     <string name="special_offer_reassurance">कभी भी रद्द करें। Aster न विज्ञापन दिखाता है, न आपको ट्रैक करता है।</string>
     <string name="special_offer_badge">%2$d महीनों के लिए %1$d%% छूट</string>
     <string name="special_offer_savings">%2$d महीनों में आप %1$s बचाते हैं।</string>

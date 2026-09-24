@@ -3256,6 +3256,7 @@
     <string name="special_offer_price_period">月額</string>
     <string name="special_offer_fine_print">最初の%2$dか月は月額%1$sです。その後は、設定で解約するまで月額%3$sで更新されます。</string>
     <string name="special_offer_dismiss">このオファーを今後表示しない</string>
+    <string name="special_offer_entry">特別オファー</string>
     <string name="special_offer_reassurance">いつでも解約できます。Asterは広告を表示せず、トラッキングもしません。</string>
     <string name="special_offer_badge">%2$dか月間%1$d%%オフ</string>
     <string name="special_offer_savings">%2$dか月で%1$sお得になります。</string>

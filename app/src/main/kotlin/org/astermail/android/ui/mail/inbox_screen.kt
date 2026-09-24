@@ -3210,6 +3210,7 @@ internal fun inbox_top_bar(
                 }
             }
             debug_build_pill_inline()
+            org.astermail.android.ui.upgrade.special_offer_header_button()
             if (show_tools) {
                 filter_button()
                 quick_actions_button()
