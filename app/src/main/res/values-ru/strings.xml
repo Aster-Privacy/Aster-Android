@@ -1435,7 +1435,6 @@
     <string name="set_as_primary">Сделать основным адресом</string>
     <string name="primary_badge">Основной</string>
     <string name="also_receives_at">Также получает на %1$s</string>
-    <string name="sends_from_address">Отправляет с %1$s</string>
     <string name="badges">Значки</string>
     <string name="no_badges_yet">Пока нет значков</string>
 
@@ -3512,7 +3511,7 @@
     <string name="address_change_keep_old_title">Вы сохраняете %1$s</string>
     <string name="address_change_keep_old_body">Он по-прежнему получает почту и позволяет входить в аккаунт на всех устройствах.</string>
     <string name="address_change_no_limit_title">Старый адрес остается бесплатным</string>
-    <string name="address_change_no_limit_body">Ваш прежний адрес не учитывается в лимите псевдонимов, и никто другой не сможет его занять.</string>
+    <string name="address_change_no_limit_body">Ваш прежний адрес не учитывается в лимите псевдонимов, никто другой не сможет его занять, и удалить его нельзя.</string>
     <string name="address_change_once_title">Раз в год</string>
     <string name="address_change_once_body">После этого изменения следующее будет доступно %1$s.</string>
     <string name="address_change_permanent_title">Это нельзя отменить</string>
@@ -3532,7 +3531,7 @@
     <string name="address_change_effect_signed_in">Вы останетесь в аккаунте на всех устройствах.</string>
     <string name="address_change_same_as_current">Это уже ваш адрес</string>
     <string name="address_change_effect_alias_title">%1$s перестаёт быть псевдонимом</string>
-    <string name="address_change_effect_alias_body">Правила и переадресация, настроенные для этого псевдонима, будут удалены. Письма на этот адрес продолжат приходить, теперь на ваш основной адрес.</string>
+    <string name="address_change_effect_alias_body">Правила, пересылка, подписи и обратные псевдонимы, настроенные для этого псевдонима, будут удалены. Письма на этот адрес продолжат приходить, теперь как на основной адрес.</string>
     <string name="address_change_effect_final">Изменение необратимо. Чтобы продолжить, введите новый адрес.</string>
     <string name="address_change_type_to_confirm">Введите %1$s для подтверждения</string>
     <string name="address_change_password_title">Подтвердите, что это вы</string>
@@ -3560,8 +3559,8 @@
     <string name="address_change_not_available">Сейчас вы не можете сменить адрес.</string>
     <string name="address_change_check_failed">Aster Mail не смог проверить этот адрес. Повторите попытку через минуту.</string>
     <string name="address_change_eligibility_failed">Aster Mail не смог проверить, можете ли вы сменить адрес.</string>
-    <string name="address_change_done_partial">Ваш адрес изменен. Некоторые данные не успели обновиться, поэтому перезапустите приложение.</string>
-    <string name="address_change_too_many_requests">Слишком много попыток. Повторите позже.</string>
+    <string name="address_change_done_partial">Адрес изменён, но ключ шифрования не обновился до конца. До этого ваш новый адрес не указан в ключе.</string>
+    <string name="address_change_too_many_requests">Вы запустили слишком много смен адреса. Повторите через час.</string>
     <string name="address_change_resend_too_soon">Подождите немного, прежде чем запрашивать новый код.</string>
     <string name="address_change_send_failed">Aster Mail не смог отправить код. Повторите попытку через минуту.</string>
     <string name="address_change_invalid_address">Этот адрес недействителен.</string>

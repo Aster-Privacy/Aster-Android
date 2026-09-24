@@ -1435,7 +1435,6 @@
     <string name="set_as_primary">Ustaw jako adres główny</string>
     <string name="primary_badge">Główny</string>
     <string name="also_receives_at">Odbiera również na %1$s</string>
-    <string name="sends_from_address">Wysyła z %1$s</string>
     <string name="badges">Odznaki</string>
     <string name="no_badges_yet">Brak odznak</string>
 
@@ -3512,7 +3511,7 @@
     <string name="address_change_keep_old_title">Zachowujesz %1$s</string>
     <string name="address_change_keep_old_body">Nadal odbiera pocztę i nadal loguje Cię na każdym urządzeniu.</string>
     <string name="address_change_no_limit_title">Twój stary adres pozostaje bezpłatny</string>
-    <string name="address_change_no_limit_body">Twój stary adres nie wlicza się do limitu aliasów i nikt inny nie może go przejąć.</string>
+    <string name="address_change_no_limit_body">Twój stary adres nie wlicza się do limitu aliasów, nikt inny nie może go przejąć i nie możesz go usunąć.</string>
     <string name="address_change_once_title">Raz w roku</string>
     <string name="address_change_once_body">Po tej zmianie następna będzie dostępna %1$s.</string>
     <string name="address_change_permanent_title">Nie możesz tego cofnąć</string>
@@ -3532,7 +3531,7 @@
     <string name="address_change_effect_signed_in">Pozostajesz zalogowany wszędzie.</string>
     <string name="address_change_same_as_current">To już jest twój adres</string>
     <string name="address_change_effect_alias_title">%1$s przestaje być aliasem</string>
-    <string name="address_change_effect_alias_body">Reguły i przekierowania ustawione dla tego aliasu zostaną usunięte. Wiadomości wysłane na ten adres nadal będą przychodzić, teraz na twój adres główny.</string>
+    <string name="address_change_effect_alias_body">Reguły, przekierowania, podpisy i aliasy odwrotne ustawione dla tego aliasu zostają usunięte. Wiadomości wysyłane na ten adres nadal docierają, teraz jako Twój adres główny.</string>
     <string name="address_change_effect_final">Zmiana jest ostateczna. Aby kontynuować, wpisz nowy adres.</string>
     <string name="address_change_type_to_confirm">Wpisz %1$s, aby potwierdzić</string>
     <string name="address_change_password_title">Potwierdź, że to Ty</string>
@@ -3560,8 +3559,8 @@
     <string name="address_change_not_available">Nie możesz teraz zmienić swojego adresu.</string>
     <string name="address_change_check_failed">Aster Mail nie mógł sprawdzić tego adresu. Spróbuj ponownie za chwilę.</string>
     <string name="address_change_eligibility_failed">Aster Mail nie mógł sprawdzić, czy możesz zmienić swój adres.</string>
-    <string name="address_change_done_partial">Twój adres został zmieniony. Część danych nie zaktualizowała się do końca, więc uruchom aplikację ponownie.</string>
-    <string name="address_change_too_many_requests">Zbyt wiele prób. Spróbuj ponownie później.</string>
+    <string name="address_change_done_partial">Twój adres został zmieniony, ale klucz szyfrowania nie zakończył aktualizacji. Do tego czasu nowy adres nie znajduje się na kluczu.</string>
+    <string name="address_change_too_many_requests">Rozpoczęto zbyt wiele zmian adresu. Spróbuj ponownie za godzinę.</string>
     <string name="address_change_resend_too_soon">Poczekaj chwilę, zanim poprosisz o kolejny kod.</string>
     <string name="address_change_send_failed">Aster Mail nie mógł wysłać kodu. Spróbuj ponownie za chwilę.</string>
     <string name="address_change_invalid_address">Ten adres jest nieprawidłowy.</string>

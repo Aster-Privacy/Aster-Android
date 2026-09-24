@@ -47,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -113,7 +114,6 @@ internal fun change_primary_address_dialog(
 
     BackHandler(enabled = state.busy) {}
 
-    LaunchedEffect(Unit) { vm.load_eligibility() }
 
     val shown_current = state.current_address.ifEmpty { current_address }
     val eligible_aliases = remember(alias_addresses, shown_current) {
@@ -220,7 +220,7 @@ internal fun change_primary_address_dialog(
                                         .fillMaxWidth()
                                         .clip(SquircleShape(12.dp))
                                         .background(colors.bg_secondary, SquircleShape(12.dp))
-                                        .clickable { vm.use_alias(alias) }
+                                        .clickable(role = Role.Button) { vm.use_alias(alias) }
                                         .padding(
                                             horizontal = AsterSpacing.md,
                                             vertical = 10.dp,
@@ -423,7 +423,7 @@ internal fun change_primary_address_dialog(
                         Text(
                             modifier = Modifier
                                 .clip(SquircleShape(8.dp))
-                                .clickable(enabled = state.can_resend_code) { vm.resend_code() }
+                                .clickable(enabled = state.can_resend_code, role = Role.Button) { vm.resend_code() }
                                 .padding(vertical = 4.dp),
                             text = if (state.resend_seconds > 0) {
                                 stringResource(
@@ -576,7 +576,7 @@ private fun domain_picker(domain: String, on_select: (String) -> Unit) {
                 .clip(SquircleShape(14.dp))
                 .background(colors.input_bg, SquircleShape(14.dp))
                 .border(1.dp, colors.input_border, SquircleShape(14.dp))
-                .clickable { open = true }
+                .clickable(role = Role.DropdownList) { open = true }
                 .padding(horizontal = AsterSpacing.md, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {

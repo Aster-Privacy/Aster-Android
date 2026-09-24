@@ -33,6 +33,7 @@ import org.astermail.android.util.passphrase_chars
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -1032,13 +1033,21 @@ class AuthRepository @Inject constructor(
         _is_signed_in.value = false
     }
 
+    private var uid_update_attempted_for: String? = null
+
     suspend fun refresh_profile(): Result<Unit> = runCatching {
         val profile = auth_api.me()
         val email = adopt_server_email(profile)
         absorb_profile(profile)
-        val key_uid_stale = profile.pgp_rekey_required || profile.pgp_uid_update_required
-        if (key_uid_stale && !email.isNullOrBlank()) {
-            add_address_to_identity_key(email, profile.display_name.orEmpty())
+        if (profile.pgp_uid_update_required &&
+            !email.isNullOrBlank() &&
+            uid_update_attempted_for != email
+        ) {
+            uid_update_attempted_for = email
+            val uid_updated = runCatching {
+                add_address_to_identity_key(email, profile.display_name.orEmpty())
+            }.getOrDefault(false)
+            if (!uid_updated) uid_update_attempted_for = null
         }
     }
 
@@ -1242,7 +1251,15 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun add_address_to_identity_key(new_address: String, display_name: String): Boolean {
+    suspend fun add_address_to_identity_key(new_address: String, display_name: String): Boolean =
+        withContext(Dispatchers.Default) {
+            add_address_to_identity_key_blocking(new_address, display_name)
+        }
+
+    private suspend fun add_address_to_identity_key_blocking(
+        new_address: String,
+        display_name: String,
+    ): Boolean {
         val identity_key = session_key_store.get_identity_key() ?: return false
         if (!identity_key.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY")) return false
 

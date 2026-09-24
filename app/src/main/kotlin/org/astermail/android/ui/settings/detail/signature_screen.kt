@@ -243,7 +243,7 @@ fun SignatureScreen(
                 fontSize = 12.sp,
             )
             v_gap(AsterSpacing.sm)
-            AsterSecondaryButton(
+            AsterButton(
                 label = stringResource(R.string.upgrade),
                 onClick = { on_open("billing") },
             )

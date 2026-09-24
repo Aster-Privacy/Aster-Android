@@ -1427,7 +1427,6 @@
     <string name="set_as_primary">プライマリアドレスに設定</string>
     <string name="primary_badge">プライマリ</string>
     <string name="also_receives_at">%1$s でも受信します</string>
-    <string name="sends_from_address">%1$s から送信します</string>
     <string name="badges">バッジ</string>
     <string name="no_badges_yet">まだバッジはありません</string>
 
@@ -3452,7 +3451,7 @@
     <string name="address_change_keep_old_title">%1$s はそのまま使えます</string>
     <string name="address_change_keep_old_body">引き続きメールを受信でき、すべてのデバイスでサインインにも使えます。</string>
     <string name="address_change_no_limit_title">以前のアドレスは無料のまま残ります</string>
-    <string name="address_change_no_limit_body">以前のアドレスはエイリアスの上限に含まれず、ほかの人が取得することもできません。</string>
+    <string name="address_change_no_limit_body">以前のアドレスはエイリアスの上限に含まれず、ほかの人が取得することも、削除することもできません。</string>
     <string name="address_change_once_title">年に 1 回</string>
     <string name="address_change_once_body">今回の変更後、次の変更は %1$s から可能になります。</string>
     <string name="address_change_permanent_title">この操作は取り消せません</string>
@@ -3472,7 +3471,7 @@
     <string name="address_change_effect_signed_in">どのデバイスでもサインインしたままです。</string>
     <string name="address_change_same_as_current">すでにこのアドレスを使っています</string>
     <string name="address_change_effect_alias_title">%1$s はエイリアスではなくなります</string>
-    <string name="address_change_effect_alias_body">このエイリアスに設定したルールと転送は削除されます。このアドレス宛のメールは引き続き届き、今後はメインアドレスとして扱われます。</string>
+    <string name="address_change_effect_alias_body">このエイリアスに設定したルール、転送、署名、リバースエイリアスはすべて削除されます。このアドレス宛のメールは、メインアドレスとして引き続き届きます。</string>
     <string name="address_change_effect_final">この変更は取り消せません。続けるには、新しいアドレスを入力してください。</string>
     <string name="address_change_type_to_confirm">確認のため %1$s と入力してください</string>
     <string name="address_change_password_title">本人確認</string>
@@ -3500,8 +3499,8 @@
     <string name="address_change_not_available">現在アドレスを変更できません。</string>
     <string name="address_change_check_failed">Aster Mail はこのアドレスを確認できませんでした。しばらくしてからもう一度お試しください。</string>
     <string name="address_change_eligibility_failed">Aster Mail はアドレスを変更できるかどうかを確認できませんでした。</string>
-    <string name="address_change_done_partial">アドレスを変更しました。一部の情報の更新が完了していないため、アプリを再起動してください。</string>
-    <string name="address_change_too_many_requests">試行回数が多すぎます。しばらくしてからもう一度お試しください。</string>
+    <string name="address_change_done_partial">アドレスは変更されましたが、暗号化キーの更新が完了していません。完了するまで、新しいアドレスはキーに含まれません。</string>
+    <string name="address_change_too_many_requests">アドレス変更の開始が多すぎます。1 時間後にもう一度お試しください。</string>
     <string name="address_change_resend_too_soon">次のコードを求める前に、少し待ってください。</string>
     <string name="address_change_send_failed">Aster Mail はコードを送信できませんでした。しばらくしてからもう一度お試しください。</string>
     <string name="address_change_invalid_address">このアドレスは正しくありません。</string>

@@ -64,6 +64,8 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.darken
 
 private val aster_button_height = 54.dp
+private val aster_button_compact_height = 40.dp
+private val aster_button_compact_label_size = 14.sp
 private val aster_button_shape = SquircleShape(999.dp)
 private val aster_button_label_size = 16.sp
 private val aster_button_spinner_size = 20.dp
@@ -71,10 +73,14 @@ private val aster_button_spinner_size = 20.dp
 private val depth_red = Color(0xFFDC2626)
 
 @Composable
-private fun aster_button_label(label: String, content_color: Color) {
+private fun aster_button_label(
+    label: String,
+    content_color: Color,
+    label_size: androidx.compose.ui.unit.TextUnit = aster_button_label_size,
+) {
     Text(
         text = label,
-        fontSize = aster_button_label_size,
+        fontSize = label_size,
         fontWeight = FontWeight.SemiBold,
         color = content_color,
         maxLines = 1,
@@ -96,12 +102,27 @@ private fun aster_button_content(
     label: String,
     is_loading: Boolean,
     content_color: Color,
+    label_size: androidx.compose.ui.unit.TextUnit = aster_button_label_size,
+    stretch: Boolean = true,
 ) {
+    if (!stretch) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            aster_button_label(label, content_color, label_size)
+            if (is_loading) {
+                Spacer(modifier = Modifier.width(AsterSpacing.sm))
+                aster_button_spinner(content_color)
+            }
+        }
+        return
+    }
     Box(
         modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
     ) {
-        aster_button_label(label, content_color)
+        aster_button_label(label, content_color, label_size)
         if (is_loading) {
             Box(modifier = Modifier.align(Alignment.CenterEnd)) {
                 aster_button_spinner(content_color)
@@ -169,6 +190,30 @@ fun AsterAccentButton(
 }
 
 @Composable
+fun AsterCompactButton(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    is_loading: Boolean = false,
+    fill: Color = AsterMaterial.colors.accent_blue,
+    content_color: Color = AsterMaterial.colors.on_accent,
+) {
+    depth_button(
+        label = label,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        is_loading = is_loading,
+        fill = fill,
+        content_color = content_color,
+        stretch = false,
+        height = aster_button_compact_height,
+        label_size = aster_button_compact_label_size,
+    )
+}
+
+@Composable
 private fun depth_button(
     label: String,
     onClick: () -> Unit,
@@ -177,6 +222,9 @@ private fun depth_button(
     is_loading: Boolean,
     fill: Color,
     content_color: Color = Color.White,
+    stretch: Boolean = true,
+    height: androidx.compose.ui.unit.Dp = aster_button_height,
+    label_size: androidx.compose.ui.unit.TextUnit = aster_button_label_size,
 ) {
     val interactive = enabled && !is_loading
     val interaction = remember_click_interaction()
@@ -200,8 +248,8 @@ private fun depth_button(
     )
     Box(
         modifier = modifier
-            .fillMaxWidth()
-            .height(aster_button_height)
+            .then(if (stretch) Modifier.fillMaxWidth() else Modifier)
+            .height(height)
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .clip(aster_button_shape)
             .background(press_color.copy(alpha = alpha), aster_button_shape)
@@ -215,7 +263,13 @@ private fun depth_button(
             .padding(horizontal = AsterSpacing.lg),
         contentAlignment = Alignment.Center,
     ) {
-        aster_button_content(label, is_loading, content_color.copy(alpha = if (interactive) 1f else 0.8f))
+        aster_button_content(
+            label,
+            is_loading,
+            content_color.copy(alpha = if (interactive) 1f else 0.8f),
+            label_size,
+            stretch,
+        )
     }
 }
 

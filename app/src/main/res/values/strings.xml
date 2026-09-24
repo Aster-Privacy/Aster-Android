@@ -1125,7 +1125,6 @@
     <string name="set_as_primary">Set as primary address</string>
     <string name="primary_badge">Primary</string>
     <string name="also_receives_at">Also receives at %1$s</string>
-    <string name="sends_from_address">Sends from %1$s</string>
     <string name="badges">Badges</string>
     <string name="no_badges_yet">No badges yet</string>
 
@@ -3515,7 +3514,7 @@
     <string name="address_change_keep_old_title">You keep %1$s</string>
     <string name="address_change_keep_old_body">It still receives mail and still signs you in, on every device.</string>
     <string name="address_change_no_limit_title">Your old address stays free</string>
-    <string name="address_change_no_limit_body">Your old address does not count toward your alias limit, and nobody else can take it.</string>
+    <string name="address_change_no_limit_body">Your old address does not count toward your alias limit, nobody else can take it, and you cannot delete it.</string>
     <string name="address_change_once_title">Once a year</string>
     <string name="address_change_once_body">After this change, your next one is available on %1$s.</string>
     <string name="address_change_permanent_title">You cannot undo this</string>
@@ -3535,7 +3534,7 @@
     <string name="address_change_effect_signed_in">You stay signed in everywhere.</string>
     <string name="address_change_same_as_current">That is already your address</string>
     <string name="address_change_effect_alias_title">%1$s stops being an alias</string>
-    <string name="address_change_effect_alias_body">Any rules and forwarding you set up for this alias are removed. Mail sent to the address keeps arriving, now as your primary address.</string>
+    <string name="address_change_effect_alias_body">Any rules, forwarding, signatures, and reverse aliases you set up for this alias are removed. Mail sent to the address keeps arriving, now as your primary address.</string>
     <string name="address_change_effect_final">The change is final. To continue, type your new address.</string>
     <string name="address_change_type_to_confirm">Type %1$s to confirm</string>
     <string name="address_change_password_title">Confirm it is you</string>
@@ -3563,8 +3562,8 @@
     <string name="address_change_not_available">You cannot change your address right now.</string>
     <string name="address_change_check_failed">Aster Mail could not check that address. Try again in a moment.</string>
     <string name="address_change_eligibility_failed">Aster Mail could not check whether you can change your address.</string>
-    <string name="address_change_done_partial">Your address changed. Some details did not finish updating, so restart the app.</string>
-    <string name="address_change_too_many_requests">You tried too many times. Try again later.</string>
+    <string name="address_change_done_partial">Your address changed, but your encryption key did not finish updating. Until it does, your new address is not on your key.</string>
+    <string name="address_change_too_many_requests">You started too many address changes. Try again in an hour.</string>
     <string name="address_change_resend_too_soon">Wait a moment before you ask for another code.</string>
     <string name="address_change_send_failed">Aster Mail could not send the code. Try again in a moment.</string>
     <string name="address_change_invalid_address">That address is not valid.</string>

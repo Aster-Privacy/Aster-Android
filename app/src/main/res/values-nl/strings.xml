@@ -1429,7 +1429,6 @@
     <string name="set_as_primary">Instellen als primair adres</string>
     <string name="primary_badge">Primair</string>
     <string name="also_receives_at">Ontvangt ook op %1$s</string>
-    <string name="sends_from_address">Verzendt vanaf %1$s</string>
     <string name="badges">Badges</string>
     <string name="no_badges_yet">Nog geen badges</string>
 
@@ -3470,7 +3469,7 @@
     <string name="address_change_keep_old_title">Je houdt %1$s</string>
     <string name="address_change_keep_old_body">Het ontvangt nog steeds e-mail en laat je nog steeds inloggen, op elk apparaat.</string>
     <string name="address_change_no_limit_title">Je oude adres blijft gratis</string>
-    <string name="address_change_no_limit_body">Je oude adres telt niet mee voor je aliaslimiet en niemand anders kan het overnemen.</string>
+    <string name="address_change_no_limit_body">Je oude adres telt niet mee voor je aliaslimiet, niemand anders kan het overnemen en je kunt het niet verwijderen.</string>
     <string name="address_change_once_title">Eén keer per jaar</string>
     <string name="address_change_once_body">Na deze wijziging is de volgende beschikbaar op %1$s.</string>
     <string name="address_change_permanent_title">Je kunt dit niet ongedaan maken</string>
@@ -3490,7 +3489,7 @@
     <string name="address_change_effect_signed_in">Je blijft overal ingelogd.</string>
     <string name="address_change_same_as_current">Dat is al je adres</string>
     <string name="address_change_effect_alias_title">%1$s is dan geen alias meer</string>
-    <string name="address_change_effect_alias_body">Regels en doorsturen die je voor dit alias hebt ingesteld, worden verwijderd. Berichten aan dit adres blijven binnenkomen, nu als je hoofdadres.</string>
+    <string name="address_change_effect_alias_body">Regels, doorsturen, handtekeningen en omgekeerde aliassen die je voor dit alias hebt ingesteld, worden verwijderd. Berichten aan dit adres blijven binnenkomen, nu als je primaire adres.</string>
     <string name="address_change_effect_final">De wijziging is definitief. Typ je nieuwe adres om door te gaan.</string>
     <string name="address_change_type_to_confirm">Typ %1$s om te bevestigen</string>
     <string name="address_change_password_title">Bevestig dat jij het bent</string>
@@ -3518,8 +3517,8 @@
     <string name="address_change_not_available">Je kunt je adres op dit moment niet wijzigen.</string>
     <string name="address_change_check_failed">Aster Mail kon dit adres niet controleren. Probeer het zo meteen opnieuw.</string>
     <string name="address_change_eligibility_failed">Aster Mail kon niet controleren of je je adres kunt wijzigen.</string>
-    <string name="address_change_done_partial">Je adres is gewijzigd. Sommige details zijn niet bijgewerkt, start de app daarom opnieuw.</string>
-    <string name="address_change_too_many_requests">Je hebt het te vaak geprobeerd. Probeer het later opnieuw.</string>
+    <string name="address_change_done_partial">Je adres is gewijzigd, maar je versleutelingssleutel is niet volledig bijgewerkt. Tot die tijd staat je nieuwe adres niet op je sleutel.</string>
+    <string name="address_change_too_many_requests">Je hebt te veel adreswijzigingen gestart. Probeer het over een uur opnieuw.</string>
     <string name="address_change_resend_too_soon">Wacht even voordat je een nieuwe code aanvraagt.</string>
     <string name="address_change_send_failed">Aster Mail kon de code niet versturen. Probeer het zo meteen opnieuw.</string>
     <string name="address_change_invalid_address">Dat adres is niet geldig.</string>

@@ -1429,7 +1429,6 @@
     <string name="set_as_primary">Birincil adres olarak ayarla</string>
     <string name="primary_badge">Birincil</string>
     <string name="also_receives_at">Ayrıca %1$s adresinde alır</string>
-    <string name="sends_from_address">%1$s adresinden gönderir</string>
     <string name="badges">Rozetler</string>
     <string name="no_badges_yet">Henuz rozet yok</string>
 
@@ -3470,7 +3469,7 @@
     <string name="address_change_keep_old_title">%1$s sende kalır</string>
     <string name="address_change_keep_old_body">Posta almaya devam eder ve her cihazda oturum açmanı sağlamayı sürdürür.</string>
     <string name="address_change_no_limit_title">Eski adresin ücretsiz kalır</string>
-    <string name="address_change_no_limit_body">Eski adresin takma ad sınırına dahil edilmez ve başka kimse onu alamaz.</string>
+    <string name="address_change_no_limit_body">Eski adresin takma ad sınırına dahil edilmez, başka kimse onu alamaz ve onu silemezsin.</string>
     <string name="address_change_once_title">Yılda bir kez</string>
     <string name="address_change_once_body">Bu değişiklikten sonra bir sonraki %1$s tarihinde kullanılabilir.</string>
     <string name="address_change_permanent_title">Bunu geri alamazsın</string>
@@ -3490,7 +3489,7 @@
     <string name="address_change_effect_signed_in">Her yerde oturumun açık kalır.</string>
     <string name="address_change_same_as_current">Bu zaten sizin adresiniz</string>
     <string name="address_change_effect_alias_title">%1$s artık bir takma ad olmayacak</string>
-    <string name="address_change_effect_alias_body">Bu takma ad için oluşturduğunuz kurallar ve yönlendirmeler kaldırılır. Bu adrese gelen iletiler gelmeye devam eder, artık birincil adresiniz olarak.</string>
+    <string name="address_change_effect_alias_body">Bu takma ad için ayarladığın kurallar, yönlendirmeler, imzalar ve ters rumuzlar kaldırılır. Bu adrese gönderilen iletiler, artık birincil adresin olarak gelmeye devam eder.</string>
     <string name="address_change_effect_final">Değişiklik kesindir. Devam etmek için yeni adresini yaz.</string>
     <string name="address_change_type_to_confirm">Onaylamak için %1$s yaz</string>
     <string name="address_change_password_title">Sen olduğunu doğrula</string>
@@ -3518,8 +3517,8 @@
     <string name="address_change_not_available">Şu anda adresinizi değiştiremezsiniz.</string>
     <string name="address_change_check_failed">Aster Mail bu adresi kontrol edemedi. Birazdan yeniden dene.</string>
     <string name="address_change_eligibility_failed">Aster Mail adresini değiştirip değiştiremeyeceğini denetleyemedi.</string>
-    <string name="address_change_done_partial">Adresiniz değişti. Bazı ayrıntılar güncellenmeyi tamamlamadı, bu yüzden uygulamayı yeniden başlatın.</string>
-    <string name="address_change_too_many_requests">Çok fazla denediniz. Daha sonra yeniden deneyin.</string>
+    <string name="address_change_done_partial">Adresin değişti ama şifreleme anahtarın güncellenmeyi tamamlamadı. O zamana kadar yeni adresin anahtarında yer almaz.</string>
+    <string name="address_change_too_many_requests">Çok fazla adres değişikliği başlattın. Bir saat sonra yeniden dene.</string>
     <string name="address_change_resend_too_soon">Başka bir kod istemeden önce biraz bekleyin.</string>
     <string name="address_change_send_failed">Aster Mail kodu gönderemedi. Birazdan yeniden deneyin.</string>
     <string name="address_change_invalid_address">Bu adres geçerli değil.</string>

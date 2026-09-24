@@ -1598,7 +1598,7 @@ internal fun deleted_aliases_screen(
                                     )
                                 }
                                 if (restore_locked) {
-                                    AsterGhostButton(
+                                    org.astermail.android.design.components.AsterCompactButton(
                                         label = stringResource(R.string.upgrade),
                                         onClick = on_upgrade,
                                     )

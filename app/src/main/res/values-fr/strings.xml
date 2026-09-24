@@ -1432,7 +1432,6 @@
     <string name="set_as_primary">Définir comme adresse principale</string>
     <string name="primary_badge">Principale</string>
     <string name="also_receives_at">Reçoit aussi à %1$s</string>
-    <string name="sends_from_address">Envoie depuis %1$s</string>
     <string name="badges">Badges</string>
     <string name="no_badges_yet">Aucun badge pour le moment</string>
 
@@ -3497,7 +3496,7 @@
     <string name="address_change_keep_old_title">Vous gardez %1$s</string>
     <string name="address_change_keep_old_body">Elle reçoit toujours vos messages et vous connecte toujours, sur tous vos appareils.</string>
     <string name="address_change_no_limit_title">Votre ancienne adresse reste gratuite</string>
-    <string name="address_change_no_limit_body">Votre ancienne adresse ne compte pas dans votre limite d\'alias, et personne d\'autre ne peut la prendre.</string>
+    <string name="address_change_no_limit_body">Votre ancienne adresse ne compte pas dans votre limite d\'alias, personne d\'autre ne peut la prendre et vous ne pouvez pas la supprimer.</string>
     <string name="address_change_once_title">Une fois par an</string>
     <string name="address_change_once_body">Après ce changement, le suivant sera possible le %1$s.</string>
     <string name="address_change_permanent_title">Vous ne pouvez pas annuler cette action</string>
@@ -3517,7 +3516,7 @@
     <string name="address_change_effect_signed_in">Vous restez connecté partout.</string>
     <string name="address_change_same_as_current">C’est déjà votre adresse</string>
     <string name="address_change_effect_alias_title">%1$s n’est plus un alias</string>
-    <string name="address_change_effect_alias_body">Les règles et les transferts configurés pour cet alias sont supprimés. Les messages envoyés à cette adresse continuent d’arriver, désormais comme votre adresse principale.</string>
+    <string name="address_change_effect_alias_body">Les règles, les redirections, les signatures et les alias inversés que vous avez définis pour cet alias sont supprimés. Les messages envoyés à cette adresse continuent d’arriver, désormais comme votre adresse principale.</string>
     <string name="address_change_effect_final">Le changement est définitif. Pour continuer, saisissez votre nouvelle adresse.</string>
     <string name="address_change_type_to_confirm">Saisissez %1$s pour confirmer</string>
     <string name="address_change_password_title">Confirmez qu\'il s\'agit bien de vous</string>
@@ -3545,8 +3544,8 @@
     <string name="address_change_not_available">Vous ne pouvez pas changer d\'adresse pour le moment.</string>
     <string name="address_change_check_failed">Aster Mail n’a pas pu vérifier cette adresse. Réessayez dans un instant.</string>
     <string name="address_change_eligibility_failed">Aster Mail n\'a pas pu vérifier si vous pouvez changer votre adresse.</string>
-    <string name="address_change_done_partial">Votre adresse a changé. Certains détails n\'ont pas fini de se mettre à jour, redémarrez donc l\'app.</string>
-    <string name="address_change_too_many_requests">Vous avez fait trop de tentatives. Réessayez plus tard.</string>
+    <string name="address_change_done_partial">Votre adresse a changé, mais votre clé de chiffrement n\'a pas fini de se mettre à jour. En attendant, votre nouvelle adresse ne figure pas sur votre clé.</string>
+    <string name="address_change_too_many_requests">Vous avez lancé trop de changements d’adresse. Réessayez dans une heure.</string>
     <string name="address_change_resend_too_soon">Patientez un instant avant de demander un autre code.</string>
     <string name="address_change_send_failed">Aster Mail n\'a pas pu envoyer le code. Réessayez dans un instant.</string>
     <string name="address_change_invalid_address">Cette adresse n\'est pas valide.</string>

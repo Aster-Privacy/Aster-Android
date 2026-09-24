@@ -95,6 +95,7 @@ data class PrimaryAddressUiState(
     val next_change_available_at: String? = null,
     val renames_allowed_per_year: Int = 0,
     val eligibility_failed: Boolean = false,
+    val eligibility_checked: Boolean = false,
     val local_part: String = "",
     val domain: String = primary_address_domains.first(),
     val checking: Boolean = false,
@@ -127,10 +128,11 @@ data class PrimaryAddressUiState(
             address_ignoring_dots(new_address) == address_ignoring_dots(current_address)
 
     val eligibility_loaded: Boolean
-        get() = current_address.isNotEmpty()
+        get() = eligibility_checked
 
     val can_continue_from_pick: Boolean
-        get() = local_part_valid && is_available == true && !checking && !same_as_current
+        get() = local_part_valid && (is_available == true || availability_check_failed) &&
+            !checking && !same_as_current
 
     val can_continue_from_review: Boolean
         get() = confirm_text.trim().equals(new_address, ignoreCase = true)
@@ -167,13 +169,15 @@ class PrimaryAddressViewModel @Inject constructor(
                         next_change_available_at = response.next_change_available_at,
                         renames_allowed_per_year = response.renames_allowed_per_year,
                         eligibility_failed = false,
+                        eligibility_checked = true,
                     )
                 }
                 .onFailure { throwable ->
                     if (throwable is CancellationException) throw throwable
                     _state.value = _state.value.copy(
                         eligible = false,
-                        eligibility_failed = throwable !is ApiError.NotFoundError,
+                        eligibility_failed = true,
+                        eligibility_checked = true,
                     )
                 }
         }
@@ -192,6 +196,7 @@ class PrimaryAddressViewModel @Inject constructor(
             next_change_available_at = kept.next_change_available_at,
             renames_allowed_per_year = kept.renames_allowed_per_year,
             eligibility_failed = kept.eligibility_failed,
+            eligibility_checked = kept.eligibility_checked,
         )
     }
 
@@ -570,7 +575,6 @@ class PrimaryAddressViewModel @Inject constructor(
     private fun is_indeterminate_failure(throwable: Throwable): Boolean = when (throwable) {
         is ApiError.InvalidCredentials,
         is ApiError.RateLimited,
-        is ApiError.NotFoundError,
         is ApiError.Conflict,
         is ApiError.PlanLimitExceeded,
         is ApiError.ForbiddenError,

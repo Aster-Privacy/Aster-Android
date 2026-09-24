@@ -1441,7 +1441,6 @@
     <string name="set_as_primary">تعيين كعنوان أساسي</string>
     <string name="primary_badge">أساسي</string>
     <string name="also_receives_at">يستقبل أيضًا على %1$s</string>
-    <string name="sends_from_address">يرسل من %1$s</string>
     <string name="badges">الشارات</string>
     <string name="no_badges_yet">لا توجد شارات بعد</string>
 
@@ -3554,7 +3553,7 @@
     <string name="address_change_keep_old_title">تحتفظ بـ %1$s</string>
     <string name="address_change_keep_old_body">يظل يستقبل البريد ويظل يتيح لك تسجيل الدخول على كل جهاز.</string>
     <string name="address_change_no_limit_title">يبقى عنوانك القديم مجانيًا</string>
-    <string name="address_change_no_limit_body">لا يُحتسب عنوانك القديم ضمن حد الأسماء المستعارة، ولا يمكن لأي شخص آخر أخذه.</string>
+    <string name="address_change_no_limit_body">لا يُحتسب عنوانك القديم ضمن حد الأسماء المستعارة، ولا يمكن لأي شخص آخر أخذه، ولا يمكنك حذفه.</string>
     <string name="address_change_once_title">مرة واحدة في السنة</string>
     <string name="address_change_once_body">بعد هذا التغيير، يصبح التغيير التالي متاحاً في %1$s.</string>
     <string name="address_change_permanent_title">لا يمكنك التراجع عن هذا</string>
@@ -3574,7 +3573,7 @@
     <string name="address_change_effect_signed_in">تبقى مسجّل الدخول في كل مكان.</string>
     <string name="address_change_same_as_current">هذا عنوانك بالفعل</string>
     <string name="address_change_effect_alias_title">%1$s لم يعد اسمًا مستعارًا</string>
-    <string name="address_change_effect_alias_body">تُزال القواعد وإعادة التوجيه التي أعددتها لهذا الاسم المستعار. وتظل الرسائل المرسلة إلى العنوان تصل إليك، الآن بوصفه عنوانك الأساسي.</string>
+    <string name="address_change_effect_alias_body">تُحذف أي قواعد وإعادة توجيه وتوقيعات وأسماء مستعارة عكسية أعددتها لهذا الاسم المستعار. تستمر الرسائل المرسلة إلى هذا العنوان في الوصول، بصفته عنوانك الأساسي الآن.</string>
     <string name="address_change_effect_final">التغيير نهائي. للمتابعة، اكتب عنوانك الجديد.</string>
     <string name="address_change_type_to_confirm">اكتب %1$s للتأكيد</string>
     <string name="address_change_password_title">أكّد أنك أنت</string>
@@ -3602,8 +3601,8 @@
     <string name="address_change_not_available">لا يمكنك تغيير عنوانك الآن.</string>
     <string name="address_change_check_failed">تعذّر على Aster Mail التحقق من هذا العنوان. حاول مرة أخرى بعد قليل.</string>
     <string name="address_change_eligibility_failed">تعذّر على Aster Mail التحقق مما إذا كان بإمكانك تغيير عنوانك.</string>
-    <string name="address_change_done_partial">تم تغيير عنوانك. لم تكتمل بعض التفاصيل في التحديث، لذا أعد تشغيل التطبيق.</string>
-    <string name="address_change_too_many_requests">حاولت مرات كثيرة جدًا. حاول مرة أخرى لاحقًا.</string>
+    <string name="address_change_done_partial">تغيّر عنوانك، لكن مفتاح التشفير لم يكمل التحديث. وإلى أن يكتمل، لن يظهر عنوانك الجديد في مفتاحك.</string>
+    <string name="address_change_too_many_requests">بدأت عمليات تغيير عنوان كثيرة. حاول مرة أخرى بعد ساعة.</string>
     <string name="address_change_resend_too_soon">انتظر قليلًا قبل أن تطلب رمزًا آخر.</string>
     <string name="address_change_send_failed">تعذر على Aster Mail إرسال الرمز. حاول مرة أخرى بعد قليل.</string>
     <string name="address_change_invalid_address">هذا العنوان غير صالح.</string>
