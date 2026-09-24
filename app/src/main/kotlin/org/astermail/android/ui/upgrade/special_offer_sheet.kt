@@ -46,6 +46,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -123,8 +124,9 @@ private val CARD_SHAPE = SquircleShape(24.dp)
 private val CARD_MAX_WIDTH = 420.dp
 private val CARD_PADDING = 20.dp
 private val COMPARISON_COLUMN_WIDTH = 84.dp
+private val COMPARISON_HIGHLIGHT_SHAPE = SquircleShape(16.dp)
 private val CTA_HEIGHT = 52.dp
-private val CTA_LIP = 3.dp
+private val CTA_LIP = 2.dp
 private val CTA_SHAPE = SquircleShape(999.dp)
 private val SCRIM_COLOR = Color(0xE6000000)
 private val CLOSE_BUTTON_FILL = Color(0xFF1C1C1E)
@@ -300,7 +302,12 @@ fun SpecialOfferHost() {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = CARD_PADDING, end = CARD_PADDING, bottom = CARD_PADDING),
+                            .padding(
+                                start = CARD_PADDING,
+                                top = CARD_PADDING,
+                                end = CARD_PADDING,
+                                bottom = 12.dp,
+                            ),
                     ) {
                         Text(
                             text = stringResource(R.string.special_offer_title),
@@ -311,7 +318,7 @@ fun SpecialOfferHost() {
                             fontWeight = FontWeight.SemiBold,
                         )
 
-                        Spacer(Modifier.height(14.dp))
+                        Spacer(Modifier.height(10.dp))
 
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -320,10 +327,10 @@ fun SpecialOfferHost() {
                             Text(
                                 text = offer_label,
                                 color = colors.text_primary,
-                                fontSize = 34.sp,
-                                lineHeight = 38.sp,
-                                letterSpacing = (-0.8).sp,
-                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 38.sp,
+                                lineHeight = 42.sp,
+                                letterSpacing = (-1).sp,
+                                fontWeight = FontWeight.Bold,
                                 modifier = Modifier.alignByBaseline(),
                             )
                             Text(
@@ -343,16 +350,21 @@ fun SpecialOfferHost() {
                             )
                         }
 
-                        Spacer(Modifier.height(6.dp))
+                        Spacer(Modifier.height(8.dp))
 
                         Text(
                             text = stringResource(R.string.special_offer_hero_duration, months),
-                            color = colors.text_secondary,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
+                            color = colors.accent_blue,
+                            fontSize = 12.sp,
+                            lineHeight = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(colors.accent_blue.copy(alpha = 0.12f))
+                                .padding(horizontal = 10.dp, vertical = 4.dp),
                         )
 
-                        Spacer(Modifier.height(18.dp))
+                        Spacer(Modifier.height(20.dp))
 
                         SpecialOfferComparison(rows = rows, included = included)
 
@@ -381,27 +393,19 @@ fun SpecialOfferHost() {
                             },
                         )
 
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(14.dp))
 
                         Text(
                             text = stringResource(R.string.special_offer_reassurance),
                             color = colors.text_secondary,
                             fontSize = 13.sp,
+                            lineHeight = 18.sp,
                             fontWeight = FontWeight.Medium,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth(),
                         )
 
-                        Spacer(Modifier.height(16.dp))
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .background(colors.border_secondary),
-                        )
-
-                        Spacer(Modifier.height(14.dp))
+                        Spacer(Modifier.height(4.dp))
 
                         Text(
                             text = stringResource(
@@ -417,18 +421,19 @@ fun SpecialOfferHost() {
                             modifier = Modifier.fillMaxWidth(),
                         )
 
-                        Spacer(Modifier.height(6.dp))
+                        Spacer(Modifier.height(8.dp))
 
                         Text(
                             text = stringResource(R.string.special_offer_dismiss),
                             color = colors.text_secondary,
-                            fontSize = 12.sp,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
                             textAlign = TextAlign.Center,
-                            textDecoration = TextDecoration.Underline,
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .clip(CircleShape)
                                 .clickable(enabled = !is_busy, role = Role.Button) { offer_vm.dismiss_forever() }
-                                .padding(vertical = 8.dp),
+                                .padding(vertical = 12.dp),
                         )
                     }
                 }
@@ -509,21 +514,15 @@ private fun SpecialOfferHero() {
         Image(
             painter = painterResource(R.drawable.special_offer_hero),
             contentDescription = null,
-            contentScale = ContentScale.FillBounds,
+            contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
         )
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .height(72.dp)
-                .background(
-                    Brush.verticalGradient(
-                        0f to colors.bg_card.copy(alpha = 0f),
-                        0.55f to colors.bg_card.copy(alpha = 0.72f),
-                        1f to colors.bg_card,
-                    ),
-                ),
+                .height(1.dp)
+                .background(colors.border_secondary),
         )
     }
 }
@@ -534,86 +533,89 @@ private fun SpecialOfferComparison(rows: List<SpecialOfferComparisonRow>, includ
     val column_width = COMPARISON_COLUMN_WIDTH *
         LocalDensity.current.fontScale.coerceIn(1f, COMPARISON_MAX_FONT_SCALE)
 
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Spacer(Modifier.weight(1f))
-            Text(
-                text = stringResource(R.string.plan_name_free),
-                color = colors.text_tertiary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                modifier = Modifier.width(column_width),
-            )
-            Text(
-                text = stringResource(R.string.plan_name_nova),
-                color = colors.accent_blue,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                modifier = Modifier.width(column_width),
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Box(modifier = Modifier.matchParentSize()) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .width(column_width)
+                    .fillMaxHeight()
+                    .clip(COMPARISON_HIGHLIGHT_SHAPE)
+                    .background(colors.accent_blue.copy(alpha = 0.08f))
+                    .border(1.dp, colors.accent_blue.copy(alpha = 0.22f), COMPARISON_HIGHLIGHT_SHAPE),
             )
         }
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(colors.border_primary),
-        )
-
-        rows.forEachIndexed { index, row ->
-            if (index > 0) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(colors.border_secondary),
-                )
-            }
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 46.dp)
-                    .padding(vertical = 6.dp),
+                    .padding(top = 10.dp, bottom = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                Spacer(Modifier.weight(1f))
                 Text(
-                    text = row.label,
-                    color = colors.text_secondary,
-                    fontSize = 14.sp,
-                    lineHeight = 19.sp,
+                    text = stringResource(R.string.plan_name_free),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
-                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    modifier = Modifier.width(column_width),
                 )
-                SpecialOfferComparisonValue(
-                    value = row.free_value,
-                    included = included,
-                    is_paid = false,
-                    column_width = column_width,
-                )
-                SpecialOfferComparisonValue(
-                    value = row.paid_value,
-                    included = included,
-                    is_paid = true,
-                    column_width = column_width,
+                Text(
+                    text = stringResource(R.string.plan_name_nova),
+                    color = colors.accent_blue,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    modifier = Modifier.width(column_width),
                 )
             }
-        }
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(colors.border_secondary),
-        )
+            rows.forEachIndexed { index, row ->
+                if (index > 0) {
+                    Box(
+                        modifier = Modifier
+                            .padding(end = column_width)
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(colors.border_secondary),
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 42.dp)
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = row.label,
+                        color = colors.text_primary,
+                        fontSize = 14.sp,
+                        lineHeight = 19.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.weight(1f),
+                    )
+                    SpecialOfferComparisonValue(
+                        value = row.free_value,
+                        included = included,
+                        is_paid = false,
+                        column_width = column_width,
+                    )
+                    SpecialOfferComparisonValue(
+                        value = row.paid_value,
+                        included = included,
+                        is_paid = true,
+                        column_width = column_width,
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(6.dp))
+        }
     }
 }
 
