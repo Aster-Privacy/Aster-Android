@@ -3282,6 +3282,11 @@
     <string name="special_offer_benefit_storage_title">500 GB şifreli depolama</string>
     <string name="special_offer_benefit_domains_title">30\'a kadar özel alan adı</string>
     <string name="special_offer_benefit_attachments_title">100 MB\'a kadar ekler</string>
+    <string name="special_offer_benefit_aliases_body">Her siteye ayrı bir adres verin.</string>
+    <string name="special_offer_benefit_storage_body">Yıllarca e-posta ve dosya için yer.</string>
+    <string name="special_offer_benefit_domains_body">Kendi alan adlarınızdaki adreslerden gönderin.</string>
+    <string name="special_offer_benefit_attachments_body">Büyük dosyaları ek olarak gönderin.</string>
+    <string name="special_offer_entry_title">Nova\'da %%%1$d indirim</string>
     <string name="special_offers">Özel teklifler</string>
     <string name="special_offers_description">Uygulamada ara sıra indirimli plan teklifleri gösterin. Bu ayar kapalıyken teklif görmezsiniz ve teklif sonuçlarına dahil edilmezsiniz.</string>
     <string name="special_offers_save_failed">Özel teklifler ayarınız kaydedilmedi. Tekrar deneyin.</string>

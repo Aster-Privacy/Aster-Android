@@ -24,4 +24,8 @@
         <item quantity="one">Planınız %1$d gün içinde, %2$s tarihinde sona eriyor.</item>
         <item quantity="other">Planınız %1$d gün içinde, %2$s tarihinde sona eriyor.</item>
     </plurals>
+    <plurals name="special_offer_entry_body">
+        <item quantity="one">İlk ayınız için</item>
+        <item quantity="other">İlk %1$d ayınız için</item>
+    </plurals>
 </resources>

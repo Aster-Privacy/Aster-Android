@@ -24,4 +24,8 @@
         <item quantity="one">आपका प्लान %1$d दिन में, %2$s को खत्म हो जाएगा।</item>
         <item quantity="other">आपका प्लान %1$d दिन में, %2$s को खत्म हो जाएगा।</item>
     </plurals>
+    <plurals name="special_offer_entry_body">
+        <item quantity="one">आपके पहले महीने के लिए</item>
+        <item quantity="other">आपके पहले %1$d महीनों के लिए</item>
+    </plurals>
 </resources>

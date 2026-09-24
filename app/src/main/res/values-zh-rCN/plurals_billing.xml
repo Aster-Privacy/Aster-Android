@@ -18,4 +18,7 @@
     <plurals name="crypto_renewal_days">
         <item quantity="other">您的套餐将在 %1$d 天后（%2$s）结束。</item>
     </plurals>
+    <plurals name="special_offer_entry_body">
+        <item quantity="other">前 %1$d 个月</item>
+    </plurals>
 </resources>

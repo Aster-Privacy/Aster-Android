@@ -3366,6 +3366,11 @@
     <string name="special_offer_benefit_storage_title">مساحة تخزين مشفرة بسعة 500 GB</string>
     <string name="special_offer_benefit_domains_title">حتى 30 نطاقًا مخصصًا</string>
     <string name="special_offer_benefit_attachments_title">مرفقات حتى 100 MB</string>
+    <string name="special_offer_benefit_aliases_body">امنح كل موقع عنوانًا خاصًا به.</string>
+    <string name="special_offer_benefit_storage_body">مساحة تكفي بريدك وملفاتك لسنوات.</string>
+    <string name="special_offer_benefit_domains_body">أرسل من عناوين على نطاقاتك الخاصة.</string>
+    <string name="special_offer_benefit_attachments_body">أرسل الملفات الكبيرة كمرفقات.</string>
+    <string name="special_offer_entry_title">خصم %1$d%% على Nova</string>
     <string name="special_offers">العروض الخاصة</string>
     <string name="special_offers_description">اعرض من حين لآخر عروضًا مخفّضة على الخطط داخل التطبيق. عند إيقاف هذا الخيار، لا تظهر لك العروض ولا تُحتسب ضمن نتائج العروض.</string>
     <string name="special_offers_save_failed">لم يُحفظ إعداد العروض الخاصة. حاول مرة أخرى.</string>

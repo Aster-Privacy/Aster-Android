@@ -48,4 +48,12 @@
         <item quantity="many">تنتهي خطتك خلال %1$d يومًا، في %2$s.</item>
         <item quantity="other">تنتهي خطتك خلال %1$d يوم، في %2$s.</item>
     </plurals>
+    <plurals name="special_offer_entry_body">
+        <item quantity="zero">لأول %1$d شهر</item>
+        <item quantity="one">لشهرك الأول</item>
+        <item quantity="two">لأول شهرين</item>
+        <item quantity="few">لأول %1$d أشهر</item>
+        <item quantity="many">لأول %1$d شهرًا</item>
+        <item quantity="other">لأول %1$d شهر</item>
+    </plurals>
 </resources>

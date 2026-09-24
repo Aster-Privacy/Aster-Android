@@ -3324,6 +3324,11 @@
     <string name="special_offer_benefit_storage_title">500 ГБ зашифрованного хранилища</string>
     <string name="special_offer_benefit_domains_title">До 30 собственных доменов</string>
     <string name="special_offer_benefit_attachments_title">Вложения до 100 МБ</string>
+    <string name="special_offer_benefit_aliases_body">Отдельный адрес для каждого сайта.</string>
+    <string name="special_offer_benefit_storage_body">Места хватит на годы писем и файлов.</string>
+    <string name="special_offer_benefit_domains_body">Отправляйте письма с адресов на своих доменах.</string>
+    <string name="special_offer_benefit_attachments_body">Отправляйте большие файлы во вложениях.</string>
+    <string name="special_offer_entry_title">Скидка %1$d%% на Nova</string>
     <string name="special_offers">Спецпредложения</string>
     <string name="special_offers_description">Время от времени показывать в приложении предложения тарифов со скидкой. Когда этот параметр выключен, вы не видите предложений и ваш аккаунт не учитывается в результатах предложений.</string>
     <string name="special_offers_save_failed">Настройка спецпредложений не сохранена. Повторите попытку.</string>

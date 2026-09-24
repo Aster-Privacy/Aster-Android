@@ -24,6 +24,7 @@ package org.astermail.android.ui.upgrade
 import compose.icons.TablerIcons
 import compose.icons.tablericons.AlertCircle
 import compose.icons.tablericons.Check
+import compose.icons.tablericons.Discount2
 import compose.icons.tablericons.X
 
 import android.content.Context
@@ -131,6 +132,7 @@ private val SCRIM_COLOR = Color(0xE6000000)
 private val CLOSE_BUTTON_FILL = Color(0xFF1C1C1E)
 private val CLOSE_BUTTON_SIZE = 32.dp
 private val CLOSE_TOUCH_TARGET = 48.dp
+private val BENEFIT_CHECK_SIZE = 20.dp
 
 internal fun special_offer_price_pair(
     list_cents: Long,
@@ -271,10 +273,10 @@ fun SpecialOfferHost() {
     }
 
     val benefits = listOf(
-        stringResource(R.string.special_offer_benefit_aliases_title),
-        stringResource(R.string.special_offer_benefit_storage_title),
-        stringResource(R.string.special_offer_benefit_domains_title),
-        stringResource(R.string.special_offer_benefit_attachments_title),
+        stringResource(R.string.special_offer_benefit_aliases_title) to stringResource(R.string.special_offer_benefit_aliases_body),
+        stringResource(R.string.special_offer_benefit_storage_title) to stringResource(R.string.special_offer_benefit_storage_body),
+        stringResource(R.string.special_offer_benefit_domains_title) to stringResource(R.string.special_offer_benefit_domains_body),
+        stringResource(R.string.special_offer_benefit_attachments_title) to stringResource(R.string.special_offer_benefit_attachments_body),
     )
 
     Dialog(
@@ -323,6 +325,10 @@ fun SpecialOfferHost() {
                                 bottom = 8.dp,
                             ),
                     ) {
+                        SpecialOfferBadge()
+
+                        Spacer(Modifier.height(10.dp))
+
                         Text(
                             text = stringResource(R.string.special_offer_title),
                             color = colors.text_primary,
@@ -375,7 +381,7 @@ fun SpecialOfferHost() {
 
                         Spacer(Modifier.height(gap))
 
-                        SpecialOfferBenefits(benefits = benefits)
+                        SpecialOfferBenefits(benefits = benefits, show_details = !compact)
 
                         Spacer(Modifier.height(gap + 4.dp))
 
@@ -551,31 +557,76 @@ private fun SpecialOfferHero(aspect_ratio: Float) {
 }
 
 @Composable
-private fun SpecialOfferBenefits(benefits: List<String>) {
+private fun SpecialOfferBadge() {
+    val colors = AsterMaterial.colors
+
+    Row(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(colors.accent_blue.copy(alpha = if (colors.is_dark) 0.2f else 0.1f))
+            .padding(start = 8.dp, end = 10.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = TablerIcons.Discount2,
+            contentDescription = null,
+            tint = colors.accent_blue,
+            modifier = Modifier.size(14.dp),
+        )
+        Spacer(Modifier.width(5.dp))
+        Text(
+            text = stringResource(R.string.special_offer_entry),
+            color = colors.accent_blue,
+            fontSize = 12.sp,
+            lineHeight = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+@Composable
+private fun SpecialOfferBenefits(benefits: List<Pair<String, String>>, show_details: Boolean) {
     val colors = AsterMaterial.colors
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(if (show_details) 12.dp else 9.dp),
     ) {
-        benefits.forEach { benefit ->
+        benefits.forEach { (title, body) ->
             Row(modifier = Modifier.fillMaxWidth()) {
-                Icon(
-                    imageVector = TablerIcons.Check,
-                    contentDescription = null,
-                    tint = colors.accent_blue,
+                Box(
                     modifier = Modifier
                         .padding(top = 1.dp)
-                        .size(18.dp),
-                )
+                        .size(BENEFIT_CHECK_SIZE)
+                        .clip(CircleShape)
+                        .background(colors.accent_blue),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = TablerIcons.Check,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(13.dp),
+                    )
+                }
                 Spacer(Modifier.width(12.dp))
-                Text(
-                    text = benefit,
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    lineHeight = 20.sp,
-                    modifier = Modifier.weight(1f),
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = title,
+                        color = colors.text_primary,
+                        fontSize = 15.sp,
+                        lineHeight = 20.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    if (show_details) {
+                        Text(
+                            text = body,
+                            color = colors.text_secondary,
+                            fontSize = 13.sp,
+                            lineHeight = 18.sp,
+                        )
+                    }
+                }
             }
         }
     }

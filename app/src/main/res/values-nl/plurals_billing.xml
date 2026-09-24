@@ -24,4 +24,8 @@
         <item quantity="one">Je abonnement eindigt over %1$d dag, op %2$s.</item>
         <item quantity="other">Je abonnement eindigt over %1$d dagen, op %2$s.</item>
     </plurals>
+    <plurals name="special_offer_entry_body">
+        <item quantity="one">Voor je eerste maand</item>
+        <item quantity="other">Voor je eerste %1$d maanden</item>
+    </plurals>
 </resources>

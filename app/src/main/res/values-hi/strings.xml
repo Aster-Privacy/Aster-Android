@@ -3172,6 +3172,11 @@
     <string name="special_offer_benefit_storage_title">500 GB एन्क्रिप्टेड स्टोरेज</string>
     <string name="special_offer_benefit_domains_title">30 तक कस्टम डोमेन</string>
     <string name="special_offer_benefit_attachments_title">100 MB तक अटैचमेंट</string>
+    <string name="special_offer_benefit_aliases_body">हर साइट को उसका अपना पता दें।</string>
+    <string name="special_offer_benefit_storage_body">सालों के मेल और फ़ाइलों के लिए जगह।</string>
+    <string name="special_offer_benefit_domains_body">अपने डोमेन के पतों से मेल भेजें।</string>
+    <string name="special_offer_benefit_attachments_body">बड़ी फ़ाइलें अटैचमेंट के रूप में भेजें।</string>
+    <string name="special_offer_entry_title">Nova पर %1$d%% छूट</string>
     <string name="special_offers">विशेष ऑफ़र</string>
     <string name="special_offers_description">ऐप में समय-समय पर छूट वाले प्लान ऑफ़र दिखाएं। इसे बंद करने पर आपको ऑफ़र नहीं दिखते और आपको ऑफ़र के नतीजों में नहीं गिना जाता।</string>
     <string name="special_offers_save_failed">आपकी विशेष ऑफ़र सेटिंग सहेजी नहीं गई। फिर से कोशिश करें।</string>

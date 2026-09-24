@@ -36,4 +36,10 @@
         <item quantity="many">Twój plan kończy się za %1$d dni, %2$s.</item>
         <item quantity="other">Twój plan kończy się za %1$d dni, %2$s.</item>
     </plurals>
+    <plurals name="special_offer_entry_body">
+        <item quantity="one">Przez pierwszy miesiąc</item>
+        <item quantity="few">Przez pierwsze %1$d miesiące</item>
+        <item quantity="many">Przez pierwsze %1$d miesięcy</item>
+        <item quantity="other">Przez pierwsze %1$d miesiąca</item>
+    </plurals>
 </resources>

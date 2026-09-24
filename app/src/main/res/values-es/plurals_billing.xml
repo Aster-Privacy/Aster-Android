@@ -24,4 +24,9 @@
         <item quantity="one">Tu plan termina en %1$d día, el %2$s.</item>
         <item quantity="other">Tu plan termina en %1$d días, el %2$s.</item>
     </plurals>
+    <plurals name="special_offer_entry_body">
+        <item quantity="one">Durante tu primer mes</item>
+        <item quantity="many">Durante tus primeros %1$d meses</item>
+        <item quantity="other">Durante tus primeros %1$d meses</item>
+    </plurals>
 </resources>

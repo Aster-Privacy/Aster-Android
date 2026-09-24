@@ -24,4 +24,9 @@
         <item quantity="one">Votre offre se termine dans %1$d jour, le %2$s.</item>
         <item quantity="other">Votre offre se termine dans %1$d jours, le %2$s.</item>
     </plurals>
+    <plurals name="special_offer_entry_body">
+        <item quantity="one">Pendant votre premier mois</item>
+        <item quantity="many">Pendant vos %1$d premiers mois</item>
+        <item quantity="other">Pendant vos %1$d premiers mois</item>
+    </plurals>
 </resources>

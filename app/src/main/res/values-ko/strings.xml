@@ -3264,6 +3264,11 @@
     <string name="special_offer_benefit_storage_title">500GB 암호화 저장공간</string>
     <string name="special_offer_benefit_domains_title">최대 30개의 사용자 지정 도메인</string>
     <string name="special_offer_benefit_attachments_title">최대 100MB 첨부파일</string>
+    <string name="special_offer_benefit_aliases_body">사이트마다 별도의 주소를 사용하세요.</string>
+    <string name="special_offer_benefit_storage_body">수년간의 메일과 파일을 담을 수 있는 공간입니다.</string>
+    <string name="special_offer_benefit_domains_body">내 도메인의 주소로 메일을 보내세요.</string>
+    <string name="special_offer_benefit_attachments_body">큰 파일도 첨부해 보낼 수 있습니다.</string>
+    <string name="special_offer_entry_title">Nova %1$d%% 할인</string>
     <string name="special_offers">특별 혜택</string>
     <string name="special_offers_description">할인된 요금제 혜택을 앱에서 가끔 표시합니다. 끄면 혜택이 표시되지 않으며 혜택 결과에도 포함되지 않습니다.</string>
     <string name="special_offers_save_failed">특별 혜택 설정을 저장하지 못했습니다. 다시 시도하세요.</string>

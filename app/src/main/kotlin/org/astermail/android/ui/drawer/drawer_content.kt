@@ -396,6 +396,19 @@ fun DrawerContent(
                 show_workspace_sheet = true
             },
         )
+        val offer_vm = org.astermail.android.ui.upgrade.special_offer_view_model()
+        val offer_state by offer_vm.state.collectAsStateWithLifecycle()
+        if (offer_state.available) {
+            Spacer(Modifier.height(AsterSpacing.xs))
+            special_offer_drawer_card(
+                percent_off = offer_state.percent_off,
+                duration_months = offer_state.duration_months,
+                on_click = {
+                    on_close()
+                    offer_vm.reopen()
+                },
+            )
+        }
 
         Column(
             modifier = Modifier
@@ -762,23 +775,6 @@ fun DrawerContent(
             }
 
             Spacer(Modifier.height(AsterSpacing.lg))
-            val offer_vm = org.astermail.android.ui.upgrade.special_offer_view_model()
-            val offer_state by offer_vm.state.collectAsStateWithLifecycle()
-            if (offer_state.available) {
-                drawer_row(
-                    icon = TablerIcons.Discount2,
-                    label = stringResource(R.string.special_offer_entry),
-                    count = 0,
-                    is_unread_count = false,
-                    selected = false,
-                    on_click = {
-                        on_close()
-                        offer_vm.reopen()
-                    },
-                    test_tag = "special_offer_entry",
-                    icon_tint = AsterMaterial.colors.accent_blue,
-                )
-            }
             drawer_row(
                 icon = TablerIcons.Settings,
                 label = stringResource(R.string.settings),
@@ -2501,6 +2497,59 @@ private fun folder_expand_toggle(
 }
 
 @OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun special_offer_drawer_card(percent_off: Int, duration_months: Int, on_click: () -> Unit) {
+    val colors = AsterMaterial.colors
+    val shape = RoundedCornerShape(16.dp)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp, vertical = 2.dp)
+            .clip(shape)
+            .background(colors.accent_blue.copy(alpha = if (colors.is_dark) 0.16f else 0.08f))
+            .border(1.dp, colors.accent_blue.copy(alpha = if (colors.is_dark) 0.32f else 0.22f), shape)
+            .clickable(onClick = on_click)
+            .testTag("special_offer_entry")
+            .padding(horizontal = 15.dp, vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = TablerIcons.Discount2,
+            contentDescription = null,
+            tint = colors.accent_blue,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.special_offer_entry_title, percent_off),
+                color = colors.text_primary,
+                fontSize = 14.sp,
+                lineHeight = 19.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            )
+            Text(
+                text = pluralStringResource(R.plurals.special_offer_entry_body, duration_months, duration_months),
+                color = colors.text_secondary,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        Icon(
+            imageVector = TablerIcons.ChevronRight,
+            contentDescription = null,
+            tint = colors.text_muted,
+            modifier = Modifier.size(16.dp),
+        )
+    }
+}
+
 @Composable
 private fun drawer_row(
     icon: ImageVector,

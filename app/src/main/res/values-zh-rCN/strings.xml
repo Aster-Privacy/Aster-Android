@@ -3264,6 +3264,11 @@
     <string name="special_offer_benefit_storage_title">500 GB 加密存储空间</string>
     <string name="special_offer_benefit_domains_title">最多 30 个自定义域名</string>
     <string name="special_offer_benefit_attachments_title">最大 100 MB 附件</string>
+    <string name="special_offer_benefit_aliases_body">为每个网站使用独立的地址。</string>
+    <string name="special_offer_benefit_storage_body">足以存放多年的邮件和文件。</string>
+    <string name="special_offer_benefit_domains_body">使用你自己域名下的地址发送邮件。</string>
+    <string name="special_offer_benefit_attachments_body">以附件形式发送大文件。</string>
+    <string name="special_offer_entry_title">Nova 享 %1$d%% 优惠</string>
     <string name="special_offers">特别优惠</string>
     <string name="special_offers_description">在应用中偶尔显示套餐折扣优惠。关闭后，你不会看到优惠，也不会被计入优惠结果。</string>
     <string name="special_offers_save_failed">特别优惠设置未保存。请重试。</string>
