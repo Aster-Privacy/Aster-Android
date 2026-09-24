@@ -298,7 +298,8 @@ fun ProfileScreen(
                 icon = TablerIcons.At,
                 on_click = {
                     when {
-                        !address_state.eligibility_loaded -> address_vm.load_eligibility()
+                        !address_state.eligibility_loaded || address_state.eligibility_failed ->
+                            address_vm.load_eligibility()
                         address_state.lock_reason == primary_address_reason_plan -> show_address_upsell = true
                         !address_state.eligible -> show_address_locked = true
                         else -> show_address_dialog = true
@@ -365,7 +366,7 @@ fun ProfileScreen(
         if (show_address_dialog) {
             change_primary_address_dialog(
                 current_address = email,
-                display_name = display_name,
+                display_name = live_account?.display_name ?: user?.display_name ?: "",
                 alias_addresses = state.aliases
                     .filter { it.is_enabled && !it.decryption_failed && !it.is_retained_primary }
                     .map { it.address },

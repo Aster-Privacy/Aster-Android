@@ -142,6 +142,9 @@ data class PrimaryAddressUiState(
 
     val can_resend_code: Boolean
         get() = !busy && resend_seconds <= 0 && !code_locked
+
+    override fun toString(): String =
+        "PrimaryAddressUiState(step=$step, eligible=$eligible, busy=$busy)"
 }
 
 @HiltViewModel
@@ -157,9 +160,11 @@ class PrimaryAddressViewModel @Inject constructor(
 
     private var availability_job: Job? = null
     private var resend_job: Job? = null
+    private var eligibility_job: Job? = null
 
     fun load_eligibility() {
-        viewModelScope.launch {
+        if (eligibility_job?.isActive == true) return
+        eligibility_job = viewModelScope.launch {
             runCatching { primary_address_api.get_eligibility() }
                 .onSuccess { response ->
                     _state.value = _state.value.copy(
@@ -297,6 +302,7 @@ class PrimaryAddressViewModel @Inject constructor(
     fun set_code(value: String) {
         _state.value = _state.value.copy(
             code = value.filter { it.isDigit() }.take(primary_address_code_length),
+            code_locked = false,
             error = null,
         )
     }
@@ -455,14 +461,14 @@ class PrimaryAddressViewModel @Inject constructor(
         val snapshot = _state.value
         if (!snapshot.can_submit_code) return
 
-        val at = snapshot.current_address.trim().lastIndexOf('@')
-        if (at <= 0 || at == snapshot.current_address.trim().length - 1) {
+        val normalized_current = snapshot.current_address.trim().lowercase(Locale.ROOT)
+        val at = normalized_current.lastIndexOf('@')
+        if (at <= 0 || at == normalized_current.length - 1) {
             _state.value = snapshot.copy(
                 error = context.getString(R.string.address_change_failed),
             )
             return
         }
-        val normalized_current = snapshot.current_address.trim().lowercase(Locale.ROOT)
         val retained_local_part = normalized_current.substring(0, at)
         val retained_domain = normalized_current.substring(at + 1)
 
