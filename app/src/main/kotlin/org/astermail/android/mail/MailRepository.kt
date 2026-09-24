@@ -201,7 +201,6 @@ val ASTER_INTERNAL_DOMAINS =
         "aster.cx",
         "astermail.me",
         "astermail.net",
-        "gs-cloud.space",
         ASTER_GHOST_ALIAS_DOMAIN,
     )
 
