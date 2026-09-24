@@ -766,7 +766,7 @@ fun DrawerContent(
             val offer_state by offer_vm.state.collectAsStateWithLifecycle()
             if (offer_state.available) {
                 drawer_row(
-                    icon = TablerIcons.Gift,
+                    icon = TablerIcons.Discount2,
                     label = stringResource(R.string.special_offer_entry),
                     count = 0,
                     is_unread_count = false,

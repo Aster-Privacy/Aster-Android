@@ -39,6 +39,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -80,6 +81,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -114,7 +116,9 @@ import org.astermail.android.ui.settings.detail.review_offer_price
 private const val SPECIAL_OFFER_INTERVAL = "month"
 private const val SPECIAL_OFFER_LIST_CENTS = 899L
 private const val SPECIAL_OFFER_YEARLY_CENTS = 8699L
-private const val HERO_ASPECT_RATIO = 2f
+private const val HERO_ASPECT_RATIO = 2.4f
+private const val HERO_ASPECT_RATIO_COMPACT = 3.2f
+private val COMPACT_HEIGHT = 780.dp
 
 private val CARD_SHAPE = SquircleShape(24.dp)
 private val CARD_MAX_WIDTH = 420.dp
@@ -278,7 +282,7 @@ fun SpecialOfferHost() {
         lock_dialog_window_effect()
         val colors = AsterMaterial.colors
 
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .background(SCRIM_COLOR)
@@ -287,6 +291,9 @@ fun SpecialOfferHost() {
                 .padding(16.dp),
             contentAlignment = Alignment.Center,
         ) {
+            val height_budget = maxHeight / LocalDensity.current.fontScale.coerceAtLeast(1f)
+            val compact = height_budget < COMPACT_HEIGHT
+            val gap = if (compact) 10.dp else 14.dp
             Box(
                 modifier = Modifier
                     .widthIn(max = CARD_MAX_WIDTH)
@@ -297,7 +304,7 @@ fun SpecialOfferHost() {
                     .border(1.dp, colors.border_secondary, CARD_SHAPE),
             ) {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    SpecialOfferHero()
+                    SpecialOfferHero(aspect_ratio = if (compact) HERO_ASPECT_RATIO_COMPACT else HERO_ASPECT_RATIO)
 
                     Column(
                         modifier = Modifier
@@ -306,7 +313,7 @@ fun SpecialOfferHost() {
                                 start = CARD_PADDING,
                                 top = CARD_PADDING,
                                 end = CARD_PADDING,
-                                bottom = 12.dp,
+                                bottom = 8.dp,
                             ),
                     ) {
                         galaxy_badge(
@@ -314,7 +321,7 @@ fun SpecialOfferHost() {
                             font_size = 11.sp,
                         )
 
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(10.dp))
 
                         Text(
                             text = stringResource(R.string.special_offer_title),
@@ -325,7 +332,7 @@ fun SpecialOfferHost() {
                             fontWeight = FontWeight.SemiBold,
                         )
 
-                        Spacer(Modifier.height(10.dp))
+                        Spacer(Modifier.height(6.dp))
 
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -367,7 +374,7 @@ fun SpecialOfferHost() {
                             fontWeight = FontWeight.SemiBold,
                         )
 
-                        Spacer(Modifier.height(18.dp))
+                        Spacer(Modifier.height(gap))
 
                         Box(
                             modifier = Modifier
@@ -376,11 +383,11 @@ fun SpecialOfferHost() {
                                 .background(colors.border_secondary),
                         )
 
-                        Spacer(Modifier.height(18.dp))
+                        Spacer(Modifier.height(gap))
 
-                        SpecialOfferBenefits(benefits = benefits)
+                        SpecialOfferBenefits(benefits = benefits, show_details = !compact)
 
-                        Spacer(Modifier.height(20.dp))
+                        Spacer(Modifier.height(gap + 4.dp))
 
                         if (error_text != null) {
                             Text(
@@ -405,7 +412,7 @@ fun SpecialOfferHost() {
                             },
                         )
 
-                        Spacer(Modifier.height(14.dp))
+                        Spacer(Modifier.height(12.dp))
 
                         Text(
                             text = stringResource(R.string.special_offer_reassurance),
@@ -433,7 +440,7 @@ fun SpecialOfferHost() {
                             modifier = Modifier.fillMaxWidth(),
                         )
 
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(2.dp))
 
                         Text(
                             text = stringResource(R.string.special_offer_dismiss),
@@ -445,7 +452,7 @@ fun SpecialOfferHost() {
                                 .fillMaxWidth()
                                 .clip(CircleShape)
                                 .clickable(enabled = !is_busy, role = Role.Button) { offer_vm.dismiss_forever() }
-                                .padding(vertical = 12.dp),
+                                .padding(vertical = 10.dp),
                         )
                     }
                 }
@@ -515,13 +522,13 @@ fun SpecialOfferHost() {
 }
 
 @Composable
-private fun SpecialOfferHero() {
+private fun SpecialOfferHero(aspect_ratio: Float) {
     val colors = AsterMaterial.colors
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(HERO_ASPECT_RATIO),
+            .aspectRatio(aspect_ratio),
     ) {
         Image(
             painter = painterResource(R.drawable.special_offer_hero),
@@ -540,12 +547,12 @@ private fun SpecialOfferHero() {
 }
 
 @Composable
-private fun SpecialOfferBenefits(benefits: List<SpecialOfferBenefit>) {
+private fun SpecialOfferBenefits(benefits: List<SpecialOfferBenefit>, show_details: Boolean) {
     val colors = AsterMaterial.colors
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        verticalArrangement = Arrangement.spacedBy(if (show_details) 12.dp else 10.dp),
     ) {
         benefits.forEach { benefit ->
             Row(modifier = Modifier.fillMaxWidth()) {
@@ -573,13 +580,15 @@ private fun SpecialOfferBenefits(benefits: List<SpecialOfferBenefit>) {
                         lineHeight = 20.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = benefit.detail,
-                        color = colors.text_secondary,
-                        fontSize = 13.sp,
-                        lineHeight = 18.sp,
-                    )
+                    if (show_details) {
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = benefit.detail,
+                            color = colors.text_secondary,
+                            fontSize = 13.sp,
+                            lineHeight = 18.sp,
+                        )
+                    }
                 }
             }
         }

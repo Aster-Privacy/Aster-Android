@@ -28,7 +28,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import compose.icons.TablerIcons
-import compose.icons.tablericons.Gift
+import compose.icons.tablericons.Discount2
 import org.astermail.android.R
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.AsterMaterial
@@ -39,7 +39,7 @@ fun special_offer_header_button() {
     val offer_state by offer_vm.state.collectAsStateWithLifecycle()
     if (!offer_state.available) return
     AsterIconButton(
-        icon = TablerIcons.Gift,
+        icon = TablerIcons.Discount2,
         content_description = stringResource(R.string.special_offer_entry),
         onClick = { offer_vm.reopen() },
         tint = AsterMaterial.colors.accent_blue,
