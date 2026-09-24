@@ -3432,6 +3432,7 @@
     <string name="profile_menu_greeting_comma">,</string>
     <string name="profile_menu_manage_account">Definições da conta</string>
     <string name="profile_menu_add_another_account">Adicionar outra conta</string>
+    <string name="profile_menu_resubscribe">Assinar o Aster novamente</string>
     <string name="profile_menu_sign_out_all">Terminar sessão em todas as contas</string>
     <string name="profile_menu_session_expired">Sessão expirada</string>
     <string name="profile_menu_default_account">Predefinida</string>

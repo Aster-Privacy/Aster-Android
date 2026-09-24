@@ -3474,6 +3474,7 @@
     <string name="profile_menu_greeting_comma">,</string>
     <string name="profile_menu_manage_account">Ustawienia konta</string>
     <string name="profile_menu_add_another_account">Dodaj kolejne konto</string>
+    <string name="profile_menu_resubscribe">Wznów subskrypcję Aster</string>
     <string name="profile_menu_sign_out_all">Wyloguj ze wszystkich kont</string>
     <string name="profile_menu_session_expired">Sesja wygasła</string>
     <string name="profile_menu_default_account">Domyślne</string>

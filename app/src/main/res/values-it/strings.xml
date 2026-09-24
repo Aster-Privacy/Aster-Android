@@ -3432,6 +3432,7 @@
     <string name="profile_menu_greeting_comma">,</string>
     <string name="profile_menu_manage_account">Impostazioni account</string>
     <string name="profile_menu_add_another_account">Aggiungi un altro account</string>
+    <string name="profile_menu_resubscribe">Riabbonati ad Aster</string>
     <string name="profile_menu_sign_out_all">Esci da tutti gli account</string>
     <string name="profile_menu_session_expired">Sessione scaduta</string>
     <string name="profile_menu_default_account">Predefinito</string>

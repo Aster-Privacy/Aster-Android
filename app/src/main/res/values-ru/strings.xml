@@ -3474,6 +3474,7 @@
     <string name="profile_menu_greeting_comma">,</string>
     <string name="profile_menu_manage_account">Настройки аккаунта</string>
     <string name="profile_menu_add_another_account">Добавить другой аккаунт</string>
+    <string name="profile_menu_resubscribe">Возобновить подписку на Aster</string>
     <string name="profile_menu_sign_out_all">Выйти из всех аккаунтов</string>
     <string name="profile_menu_session_expired">Сессия истекла</string>
     <string name="profile_menu_default_account">По умолчанию</string>

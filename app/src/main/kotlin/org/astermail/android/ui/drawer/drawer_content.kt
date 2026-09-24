@@ -73,6 +73,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.remember
@@ -789,6 +790,14 @@ fun DrawerContent(
         }
     }
 
+    val resubscribe_vm: org.astermail.android.billing.ResubscribeViewModel =
+        androidx.hilt.navigation.compose.hiltViewModel()
+    val resubscribe_kind by resubscribe_vm.kind.collectAsStateWithLifecycle()
+    val resubscribe_context = LocalContext.current
+    androidx.compose.runtime.LaunchedEffect(current_account_id, show_workspace_sheet) {
+        resubscribe_vm.load(current_account_id)
+    }
+
     if (show_workspace_sheet) {
         val sheet_account = accounts.firstOrNull { it.id == current_account_id }
         workspace_switcher_sheet(
@@ -804,8 +813,15 @@ fun DrawerContent(
             max_accounts = max_accounts,
             is_unlimited_accounts = is_unlimited_accounts,
             can_add = can_add_account,
+            can_resubscribe = resubscribe_kind != null,
             needs_sign_in = needs_sign_in,
             on_dismiss = { show_workspace_sheet = false },
+            on_resubscribe = {
+                show_workspace_sheet = false
+                resubscribe_vm.resubscribe { message ->
+                    android.widget.Toast.makeText(resubscribe_context, message, android.widget.Toast.LENGTH_SHORT).show()
+                }
+            },
             on_switch = { account ->
                 show_workspace_sheet = false
                 on_switch_account(account)
@@ -1952,8 +1968,10 @@ private fun workspace_switcher_sheet(
     max_accounts: Int,
     is_unlimited_accounts: Boolean,
     can_add: Boolean,
+    can_resubscribe: Boolean,
     needs_sign_in: (StoredAccount) -> Boolean,
     on_dismiss: () -> Unit,
+    on_resubscribe: () -> Unit,
     on_switch: (StoredAccount) -> Unit,
     on_add: () -> Unit,
     on_manage_account: () -> Unit,
@@ -2209,6 +2227,19 @@ private fun workspace_switcher_sheet(
                         profile_menu_account_badge(stringResource(R.string.profile_menu_default_account), muted = false)
                     }
                 }
+            }
+
+            if (can_resubscribe) {
+                profile_menu_tile(
+                    icon = TablerIcons.Refresh,
+                    label = stringResource(R.string.profile_menu_resubscribe),
+                    content_description = null,
+                    tint = colors.accent_blue,
+                    label_color = colors.accent_blue,
+                    background = card,
+                    modifier = Modifier.fillMaxWidth().testTag("profile_menu_resubscribe"),
+                    on_click = on_resubscribe,
+                )
             }
 
             profile_menu_tile(

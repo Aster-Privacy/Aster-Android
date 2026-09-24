@@ -3433,6 +3433,7 @@
     <string name="profile_menu_greeting_comma">,</string>
     <string name="profile_menu_manage_account">Kontoeinstellungen</string>
     <string name="profile_menu_add_another_account">Weiteres Konto hinzufügen</string>
+    <string name="profile_menu_resubscribe">Aster erneut abonnieren</string>
     <string name="profile_menu_sign_out_all">Von allen Konten abmelden</string>
     <string name="profile_menu_session_expired">Sitzung abgelaufen</string>
     <string name="profile_menu_default_account">Standard</string>

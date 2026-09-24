@@ -3322,6 +3322,7 @@
     <string name="profile_menu_greeting_comma">,</string>
     <string name="profile_menu_manage_account">खाता सेटिंग</string>
     <string name="profile_menu_add_another_account">दूसरा खाता जोड़ें</string>
+    <string name="profile_menu_resubscribe">Aster की सदस्यता फिर से लें</string>
     <string name="profile_menu_sign_out_all">सभी खातों से साइन आउट करें</string>
     <string name="profile_menu_session_expired">सेशन समाप्त हो गया</string>
     <string name="profile_menu_default_account">डिफ़ॉल्ट</string>
