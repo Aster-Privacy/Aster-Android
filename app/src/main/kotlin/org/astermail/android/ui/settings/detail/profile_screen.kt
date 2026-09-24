@@ -178,7 +178,7 @@ fun ProfileScreen(
     val plan_code = state.subscription?.plan?.code
     val plan_kind = remember(plan_code) { aster_plan_kind_of(plan_code) }
     val plan_label = state.subscription?.let {
-        it.effective_plan_name.takeIf { name -> name.isNotBlank() } ?: stringResource(R.string.plan_free)
+        it.effective_plan_name?.takeIf { name -> name.isNotBlank() } ?: stringResource(R.string.plan_free)
     } ?: ""
     val member_since = remember(user?.created_at) { format_settings_date(user?.created_at) }
     val is_supernova = plan_kind == aster_plan_kind.supernova
