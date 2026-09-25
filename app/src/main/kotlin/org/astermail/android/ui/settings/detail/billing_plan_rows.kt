@@ -299,7 +299,7 @@ internal fun billing_compare_sheet(
     val rows = if (plan_type == "family") family_compare_rows() else individual_compare_rows()
     val selected = options.firstOrNull { it.code == code } ?: options.firstOrNull() ?: return
     val is_yearly = billing_interval == "year"
-    val column_width: Dp = if (options.size > 2) 62.dp else 84.dp
+    val column_width: Dp = if (options.size > 2) 72.dp else 84.dp
     ModalBottomSheet(
         onDismissRequest = on_dismiss,
         sheetState = sheet_state,
@@ -417,7 +417,7 @@ private fun compare_header_cell(
         Text(
             text = option.name,
             color = if (highlighted) colors.accent_blue else colors.text_secondary,
-            fontSize = 13.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center,
             maxLines = 1,
