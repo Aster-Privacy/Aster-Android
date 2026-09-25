@@ -1111,7 +1111,7 @@
     <string name="billing_changed_to">청구가 %s로 변경되었습니다</string>
     <string name="default_payment_updated">기본 결제 수단이 업데이트되었습니다</string>
     <string name="payment_method_removed">결제 수단이 제거되었습니다</string>
-    <string name="session_expired_sign_in">세션이 만료되었습니다 - 다시 로그인하세요</string>
+    <string name="session_expired_sign_in">세션이 만료되었습니다. 다시 로그인해 주세요.</string>
     <string name="failed_load_subscription">구독을 불러오지 못했습니다</string>
     <string name="could_not_start_checkout">결제를 시작할 수 없습니다</string>
     <string name="could_not_open_portal">청구 포털을 열 수 없습니다</string>
@@ -3520,6 +3520,7 @@
     <string name="passkey_added_second_step_only">패스키를 추가했습니다. 비밀번호로 로그인할 때 두 번째 단계로 사용하세요.</string>
     <string name="passkey_already_registered">이 패스키는 이미 계정에 저장되어 있습니다.</string>
     <string name="passkey_create_unavailable">이 기기에는 패스키를 저장할 수 없습니다. 화면 잠금이 켜져 있고 비밀번호 관리자가 설정되어 있는지 확인하세요.</string>
+    <string name="passkey_app_not_verified">이 버전의 Aster Mail은 아직 패스키용으로 확인되지 않았으므로 이 기기에서는 Aster Mail 패스키를 저장하거나 사용할 수 없습니다.</string>
     <string name="passkey_create_failed">패스키를 추가하지 못했습니다. 다시 시도하세요.</string>
     <string name="error_passkey_timed_out">패스키 요청 시간이 초과되었습니다. 다시 시도하세요.</string>
     <string name="expiry_password_internal_removed">Aster 수신자는 비밀번호 없이 만료 이메일을 열 수 있으므로 비밀번호가 제거되었습니다. 메시지를 보내려면 보내기를 다시 탭하세요.</string>

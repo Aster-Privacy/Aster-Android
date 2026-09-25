@@ -389,6 +389,7 @@ class SettingsViewModel @Inject constructor(
         hydrate_cached_preferences()
         hydrate_cached_signatures()
         hydrate_cached_tags()
+        hydrate_cached_storage()
         load_preferences()
     }
 
@@ -415,6 +416,24 @@ class SettingsViewModel @Inject constructor(
             cached_preferences_json.encodeToString(UserPreferences.serializer(), prefs)
         }.getOrNull() ?: return
         preferences_cache.write(key, raw)
+    }
+
+    private fun hydrate_cached_storage() {
+        if (_state.value.storage != null) return
+        val raw = preferences_cache.read_storage(cache_account_key()) ?: return
+        val cached = runCatching {
+            cached_preferences_json.decodeFromString(StorageOverview.serializer(), raw)
+        }.getOrNull() ?: return
+        if (cached.total_bytes <= 0L) return
+        _state.update { if (it.storage == null) it.copy(storage = cached) else it }
+    }
+
+    private fun persist_cached_storage(overview: StorageOverview) {
+        val key = cache_account_key() ?: return
+        val raw = runCatching {
+            cached_preferences_json.encodeToString(StorageOverview.serializer(), overview)
+        }.getOrNull() ?: return
+        preferences_cache.write_storage(key, raw)
     }
 
     fun clear_cached_preferences(account_key: String?) {
@@ -921,6 +940,7 @@ class SettingsViewModel @Inject constructor(
         default_signature_is_html = false
         hydrate_cached_preferences()
         hydrate_cached_tags()
+        hydrate_cached_storage()
     }
 
     fun load_blocked_senders() {
@@ -3185,17 +3205,21 @@ class SettingsViewModel @Inject constructor(
         val now = System.currentTimeMillis()
         if (!force && _state.value.storage != null && now - last_storage_load_ms < LIST_TTL_MS) return
         last_storage_load_ms = now
+        val cold = _state.value.storage == null
         viewModelScope.launch {
-            _state.value = _state.value.copy(is_loading = true, error = null)
+            if (cold) _state.value = _state.value.copy(is_loading = true, error = null)
             try {
                 val overview = settings_api.get_storage_overview()
                 _state.value = _state.value.copy(storage = overview, is_loading = false)
+                persist_cached_storage(overview)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(
-                    is_loading = false,
-                    error = user_facing_error(t),
-                )
+                if (cold) {
+                    _state.value = _state.value.copy(
+                        is_loading = false,
+                        error = user_facing_error(t),
+                    )
+                }
             }
         }
     }

@@ -1111,7 +1111,7 @@
     <string name="billing_changed_to">Оплата изменена на %s</string>
     <string name="default_payment_updated">Способ оплаты по умолчанию обновлён</string>
     <string name="payment_method_removed">Способ оплаты удалён</string>
-    <string name="session_expired_sign_in">Сессия истекла - пожалуйста, войдите снова</string>
+    <string name="session_expired_sign_in">Ваша сессия истекла. Пожалуйста, войдите снова.</string>
     <string name="failed_load_subscription">Не удалось загрузить подписку</string>
     <string name="could_not_start_checkout">Не удалось начать оформление</string>
     <string name="could_not_open_portal">Не удалось открыть портал оплаты</string>
@@ -3580,6 +3580,7 @@
     <string name="passkey_added_second_step_only">Ключ доступа добавлен. Используйте его как второй шаг при входе с паролем.</string>
     <string name="passkey_already_registered">Этот ключ доступа уже сохранен в вашем аккаунте.</string>
     <string name="passkey_create_unavailable">Это устройство не может сохранять ключи доступа. Убедитесь, что блокировка экрана включена и настроен менеджер паролей.</string>
+    <string name="passkey_app_not_verified">Эта версия Aster Mail ещё не подтверждена для ключей доступа, поэтому это устройство не может сохранить или использовать ключ доступа Aster Mail.</string>
     <string name="passkey_create_failed">Не удалось добавить ключ доступа. Повторите попытку.</string>
     <string name="error_passkey_timed_out">Время запроса ключа доступа истекло. Попробуйте ещё раз.</string>
     <string name="expiry_password_internal_removed">Получатели Aster открывают письма с ограниченным сроком действия без пароля, поэтому пароль удален. Чтобы отправить сообщение, нажмите «Отправить» еще раз.</string>

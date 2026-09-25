@@ -1111,7 +1111,7 @@
     <string name="billing_changed_to">Fatturazione cambiata in %s</string>
     <string name="default_payment_updated">Metodo di pagamento predefinito aggiornato</string>
     <string name="payment_method_removed">Metodo di pagamento rimosso</string>
-    <string name="session_expired_sign_in">Sessione scaduta - accedi nuovamente</string>
+    <string name="session_expired_sign_in">La tua sessione è scaduta. Accedi di nuovo.</string>
     <string name="failed_load_subscription">Caricamento abbonamento non riuscito</string>
     <string name="could_not_start_checkout">Impossibile avviare il checkout</string>
     <string name="could_not_open_portal">Impossibile aprire il portale di fatturazione</string>
@@ -3538,6 +3538,7 @@
     <string name="passkey_added_second_step_only">Passkey aggiunta. Usala come secondo passaggio quando accedi con la password.</string>
     <string name="passkey_already_registered">Questa passkey è già salvata nel tuo account.</string>
     <string name="passkey_create_unavailable">Questo dispositivo non può salvare passkey. Verifica che il blocco schermo sia attivo e che sia configurato un gestore di password.</string>
+    <string name="passkey_app_not_verified">Questa versione di Aster Mail non è ancora verificata per le passkey, quindi questo dispositivo non può salvare o usare una passkey di Aster Mail.</string>
     <string name="passkey_create_failed">Impossibile aggiungere la passkey. Riprova.</string>
     <string name="error_passkey_timed_out">La richiesta della passkey è scaduta. Riprova.</string>
     <string name="expiry_password_internal_removed">I destinatari Aster aprono le email a scadenza senza password, quindi la password è stata rimossa. Per inviare il messaggio, tocca di nuovo Invia.</string>

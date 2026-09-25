@@ -1165,7 +1165,7 @@
     <string name="billing_changed_to">Facturation changée en %s</string>
     <string name="default_payment_updated">Moyen de paiement par défaut mis à jour</string>
     <string name="payment_method_removed">Moyen de paiement supprimé</string>
-    <string name="session_expired_sign_in">Session expirée - veuillez vous reconnecter</string>
+    <string name="session_expired_sign_in">Votre session a expiré. Veuillez vous reconnecter.</string>
     <string name="failed_load_subscription">Impossible de charger l\'abonnement</string>
     <string name="could_not_start_checkout">Impossible de démarrer le paiement</string>
     <string name="could_not_open_portal">Impossible d\'ouvrir le portail de facturation</string>
@@ -3565,6 +3565,7 @@
     <string name="passkey_added_second_step_only">Clé d\'accès ajoutée. Utilisez-la comme deuxième étape lorsque vous vous connectez avec votre mot de passe.</string>
     <string name="passkey_already_registered">Cette clé d\'accès est déjà enregistrée dans votre compte.</string>
     <string name="passkey_create_unavailable">Cet appareil ne peut pas enregistrer de clés d\'accès. Vérifiez que le verrouillage de l\'écran est activé et qu\'un gestionnaire de mots de passe est configuré.</string>
+    <string name="passkey_app_not_verified">Cette version d\'Aster Mail n\'est pas encore vérifiée pour les clés d\'accès, donc cet appareil ne peut ni enregistrer ni utiliser une clé d\'accès Aster Mail.</string>
     <string name="passkey_create_failed">Impossible d\'ajouter la clé d\'accès. Réessayez.</string>
     <string name="error_passkey_timed_out">La demande de clé d\'accès a expiré. Réessayez.</string>
     <string name="expiry_password_internal_removed">Les destinataires Aster ouvrent les e-mails éphémères sans mot de passe, le mot de passe a donc été retiré. Pour envoyer le message, touchez à nouveau Envoyer.</string>

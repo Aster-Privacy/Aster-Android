@@ -380,6 +380,58 @@ data class AcademicDiscountStatusResponse(
 )
 
 @Serializable
+data class CreditPackageItem(
+    val id: String,
+    val amount_cents: Long = 0,
+    val price_cents: Long = 0,
+    val bonus_cents: Long = 0,
+    val sort_order: Int = 0,
+)
+
+@Serializable
+data class CreditPackagesResponse(
+    val packages: List<CreditPackageItem> = emptyList(),
+)
+
+@Serializable
+data class PurchaseCreditsRequest(
+    val package_id: String,
+    val currency: String? = null,
+)
+
+@Serializable
+data class PurchaseCreditsResponse(
+    val url: String,
+)
+
+@Serializable
+data class CreditSettingsRequest(
+    val use_credits_for_renewals: Boolean,
+)
+
+@Serializable
+data class CreditSettingsResponse(
+    val use_credits_for_renewals: Boolean = false,
+    val balance_cents: Long = 0,
+)
+
+@Serializable
+data class AcademicDiscountRequest(
+    val academic_email: String,
+    val turnstile_token: String? = null,
+)
+
+@Serializable
+data class AcademicResendRequest(
+    val turnstile_token: String? = null,
+)
+
+@Serializable
+data class AcademicDiscountResponse(
+    val success: Boolean = false,
+)
+
+@Serializable
 data class OnboardingChecklistResponse(
     val dismissed_at: String? = null,
     val tasks: Map<String, Boolean> = emptyMap(),
@@ -483,6 +535,12 @@ interface BillingApi {
     suspend fun get_cancel_impact(): CancelImpactResponse
     suspend fun get_credit_balance(): CreditBalanceResponse
     suspend fun get_academic_discount_status(): AcademicDiscountStatusResponse
+    suspend fun get_credit_packages(): CreditPackagesResponse
+    suspend fun purchase_credits(request: PurchaseCreditsRequest): PurchaseCreditsResponse
+    suspend fun purchase_credits_crypto(request: PurchaseCreditsRequest): PurchaseCreditsResponse
+    suspend fun update_credit_settings(request: CreditSettingsRequest): CreditSettingsResponse
+    suspend fun request_academic_discount(request: AcademicDiscountRequest): AcademicDiscountResponse
+    suspend fun resend_academic_verification(request: AcademicResendRequest): AcademicDiscountResponse
     suspend fun get_onboarding_checklist(): OnboardingChecklistResponse
     suspend fun dismiss_onboarding_checklist()
     suspend fun get_available_plans(): AvailablePlansResponse
@@ -528,6 +586,54 @@ class BillingApiImpl(private val client: ApiClient) : BillingApi {
 
     override suspend fun get_academic_discount_status(): AcademicDiscountStatusResponse =
         decode_or_throw(client.http.get("${client.base_url}$base/discounts/academic/status"))
+
+    override suspend fun get_credit_packages(): CreditPackagesResponse =
+        decode_or_throw(client.http.get("${client.base_url}$base/credits/packages"))
+
+    override suspend fun purchase_credits(request: PurchaseCreditsRequest): PurchaseCreditsResponse {
+        val response = client.http.post("${client.base_url}$base/credits/purchase") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun purchase_credits_crypto(request: PurchaseCreditsRequest): PurchaseCreditsResponse {
+        val response = client.http.post("${client.base_url}$base/credits/crypto-purchase") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun update_credit_settings(request: CreditSettingsRequest): CreditSettingsResponse {
+        val response = client.http.post("${client.base_url}$base/credits/settings") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun request_academic_discount(request: AcademicDiscountRequest): AcademicDiscountResponse {
+        val response = client.http.post("${client.base_url}$base/discounts/academic/request") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun resend_academic_verification(request: AcademicResendRequest): AcademicDiscountResponse {
+        val response = client.http.post("${client.base_url}$base/discounts/academic/resend") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
 
     override suspend fun get_onboarding_checklist(): OnboardingChecklistResponse =
         decode_or_throw(client.http.get("${client.base_url}/api/core/v1/onboarding/checklist"))

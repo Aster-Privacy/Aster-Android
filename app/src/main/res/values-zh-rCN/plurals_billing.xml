@@ -18,4 +18,10 @@
     <plurals name="crypto_renewal_days">
         <item quantity="other">您的套餐将在 %1$d 天后（%2$s）结束。</item>
     </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="other">%d 张发票</item>
+    </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="other">比较全部 %d 项功能</item>
+    </plurals>
 </resources>

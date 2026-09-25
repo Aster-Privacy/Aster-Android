@@ -1740,7 +1740,7 @@
     <string name="downgrade_confirm_message">Your plan changes to %1$s at %2$s. Features above the %1$s plan stop working.</string>
     <string name="default_payment_updated">Default payment method updated</string>
     <string name="payment_method_removed">Payment method removed</string>
-    <string name="session_expired_sign_in">Session expired - please sign in again</string>
+    <string name="session_expired_sign_in">Your session has expired. Please sign in again.</string>
     <string name="failed_load_subscription">Failed to load subscription</string>
     <string name="could_not_start_checkout">Could not start checkout</string>
     <string name="could_not_open_portal">Could not open billing portal</string>
@@ -3583,6 +3583,7 @@
     <string name="passkey_added_second_step_only">Passkey added. Use it as a second step when you sign in with your password.</string>
     <string name="passkey_already_registered">This passkey is already saved to your account.</string>
     <string name="passkey_create_unavailable">This device can\'t save passkeys. Make sure screen lock is on and a password manager is set up.</string>
+    <string name="passkey_app_not_verified">This version of Aster Mail isn\'t verified for passkeys yet, so this device can\'t save or use an Aster Mail passkey.</string>
     <string name="passkey_create_failed">Couldn\'t add the passkey. Try again.</string>
     <string name="error_passkey_timed_out">The passkey request timed out. Try again.</string>
     <string name="expiry_password_internal_removed">Aster recipients open expiring email without a password, so the password was removed. To send the message, tap Send again.</string>

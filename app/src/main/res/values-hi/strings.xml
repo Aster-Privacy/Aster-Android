@@ -1564,7 +1564,7 @@
     <string name="downgrade_confirm_message">%2$s को आपका प्लान बदलकर %1$s हो जाएगा। %1$s प्लान से ऊपर की सुविधाएं काम करना बंद कर देंगी।</string>
     <string name="default_payment_updated">डिफ़ॉल्ट भुगतान तरीका अपडेट हो गया</string>
     <string name="payment_method_removed">भुगतान का तरीका हटा दिया गया</string>
-    <string name="session_expired_sign_in">सत्र खत्म हो गया - फिर से साइन इन करें</string>
+    <string name="session_expired_sign_in">आपका सत्र समाप्त हो गया है। कृपया फिर से साइन इन करें।</string>
     <string name="failed_load_subscription">सदस्यता लोड नहीं हो सकी</string>
     <string name="could_not_start_checkout">चेकआउट शुरू नहीं हो सका</string>
     <string name="could_not_open_portal">बिलिंग पोर्टल नहीं खुल सका</string>
@@ -3428,6 +3428,7 @@
     <string name="passkey_added_second_step_only">पासकी जोड़ी गई। पासवर्ड से साइन इन करते समय इसे दूसरे चरण के रूप में इस्तेमाल करें।</string>
     <string name="passkey_already_registered">यह पासकी पहले से आपके खाते में सेव है।</string>
     <string name="passkey_create_unavailable">यह डिवाइस पासकी सेव नहीं कर सकता। पक्का करें कि स्क्रीन लॉक चालू है और पासवर्ड मैनेजर सेट है।</string>
+    <string name="passkey_app_not_verified">Aster Mail का यह वर्शन अभी पासकी के लिए वेरिफ़ाई नहीं हुआ है, इसलिए यह डिवाइस Aster Mail पासकी सेव या इस्तेमाल नहीं कर सकता।</string>
     <string name="passkey_create_failed">पासकी नहीं जोड़ी जा सकी। फिर से कोशिश करें।</string>
     <string name="error_passkey_timed_out">पासकी अनुरोध का समय समाप्त हो गया। फिर से कोशिश करें।</string>
     <string name="expiry_password_internal_removed">Aster प्राप्तकर्ता समय-सीमा वाले ईमेल को बिना पासवर्ड के खोलते हैं, इसलिए पासवर्ड हटा दिया गया। संदेश भेजने के लिए, भेजें पर फिर से टैप करें।</string>

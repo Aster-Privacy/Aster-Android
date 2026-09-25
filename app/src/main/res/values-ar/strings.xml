@@ -1111,7 +1111,7 @@
     <string name="billing_changed_to">تم تغيير الفوترة إلى %s</string>
     <string name="default_payment_updated">تم تحديث طريقة الدفع الافتراضية</string>
     <string name="payment_method_removed">تم إزالة طريقة الدفع</string>
-    <string name="session_expired_sign_in">انتهت صلاحية الجلسة - يرجى تسجيل الدخول مرة أخرى</string>
+    <string name="session_expired_sign_in">انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى.</string>
     <string name="failed_load_subscription">فشل في تحميل الاشتراك</string>
     <string name="could_not_start_checkout">تعذر بدء عملية الدفع</string>
     <string name="could_not_open_portal">تعذر فتح بوابة الفوترة</string>
@@ -3622,6 +3622,7 @@
     <string name="passkey_added_second_step_only">تمت إضافة مفتاح المرور. استخدمه كخطوة ثانية عند تسجيل الدخول بكلمة المرور.</string>
     <string name="passkey_already_registered">مفتاح المرور هذا محفوظ بالفعل في حسابك.</string>
     <string name="passkey_create_unavailable">لا يمكن لهذا الجهاز حفظ مفاتيح المرور. تأكد من تفعيل قفل الشاشة وإعداد مدير كلمات مرور.</string>
+    <string name="passkey_app_not_verified">لم يتم التحقق من هذا الإصدار من Aster Mail لمفاتيح المرور بعد، لذا لا يمكن لهذا الجهاز حفظ مفتاح مرور Aster Mail أو استخدامه.</string>
     <string name="passkey_create_failed">تعذّرت إضافة مفتاح المرور. حاول مرة أخرى.</string>
     <string name="error_passkey_timed_out">انتهت مهلة طلب مفتاح المرور. حاول مرة أخرى.</string>
     <string name="expiry_password_internal_removed">يفتح مستلمو Aster البريد ذا الصلاحية المحدودة بدون كلمة مرور، لذلك تمت إزالة كلمة المرور. لإرسال الرسالة، اضغط على إرسال مرة أخرى.</string>

@@ -1111,7 +1111,7 @@
     <string name="billing_changed_to">计费方式已更改为 %s</string>
     <string name="default_payment_updated">默认支付方式已更新</string>
     <string name="payment_method_removed">支付方式已移除</string>
-    <string name="session_expired_sign_in">会话已过期 - 请重新登录</string>
+    <string name="session_expired_sign_in">您的会话已过期。请重新登录。</string>
     <string name="failed_load_subscription">加载订阅失败</string>
     <string name="could_not_start_checkout">无法开始结账</string>
     <string name="could_not_open_portal">无法打开账单门户</string>
@@ -3520,6 +3520,7 @@
     <string name="passkey_added_second_step_only">已添加通行密钥。使用密码登录时，可将它用作第二步验证。</string>
     <string name="passkey_already_registered">此通行密钥已保存到你的帐户。</string>
     <string name="passkey_create_unavailable">此设备无法保存通行密钥。请确认已开启屏幕锁定并设置了密码管理器。</string>
+    <string name="passkey_app_not_verified">此版本的 Aster Mail 尚未通过通行密钥验证，因此此设备无法保存或使用 Aster Mail 通行密钥。</string>
     <string name="passkey_create_failed">无法添加通行密钥。请重试。</string>
     <string name="error_passkey_timed_out">通行密钥请求已超时。请重试。</string>
     <string name="expiry_password_internal_removed">Aster 收件人无需密码即可打开限时邮件，因此已移除密码。要发送该邮件，请再次点按“发送”。</string>

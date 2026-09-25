@@ -24,4 +24,12 @@
         <item quantity="one">Il tuo piano termina tra %1$d giorno, il %2$s.</item>
         <item quantity="other">Il tuo piano termina tra %1$d giorni, il %2$s.</item>
     </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="one">%d fattura</item>
+        <item quantity="other">%d fatture</item>
+    </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="one">Confronta %d funzione</item>
+        <item quantity="other">Confronta tutte le %d funzioni</item>
+    </plurals>
 </resources>

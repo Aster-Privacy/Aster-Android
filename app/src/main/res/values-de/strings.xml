@@ -1112,7 +1112,7 @@
     <string name="billing_changed_to">Abrechnung geändert auf %s</string>
     <string name="default_payment_updated">Standard-Zahlungsmethode aktualisiert</string>
     <string name="payment_method_removed">Zahlungsmethode entfernt</string>
-    <string name="session_expired_sign_in">Sitzung abgelaufen - bitte erneut anmelden</string>
+    <string name="session_expired_sign_in">Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.</string>
     <string name="failed_load_subscription">Abonnement konnte nicht geladen werden</string>
     <string name="could_not_start_checkout">Bezahlvorgang konnte nicht gestartet werden</string>
     <string name="could_not_open_portal">Abrechnungsportal konnte nicht geöffnet werden</string>
@@ -3539,6 +3539,7 @@
     <string name="passkey_added_second_step_only">Passkey hinzugefügt. Verwende ihn als zweiten Schritt, wenn du dich mit deinem Passwort anmeldest.</string>
     <string name="passkey_already_registered">Dieser Passkey ist bereits in deinem Konto gespeichert.</string>
     <string name="passkey_create_unavailable">Dieses Gerät kann keine Passkeys speichern. Prüfe, ob die Displaysperre aktiv und ein Passwortmanager eingerichtet ist.</string>
+    <string name="passkey_app_not_verified">Diese Version von Aster Mail ist noch nicht für Passkeys verifiziert, deshalb kann dieses Gerät keinen Aster Mail-Passkey speichern oder verwenden.</string>
     <string name="passkey_create_failed">Der Passkey konnte nicht hinzugefügt werden. Versuche es erneut.</string>
     <string name="error_passkey_timed_out">Die Passkey-Anfrage ist abgelaufen. Versuche es erneut.</string>
     <string name="expiry_password_internal_removed">Aster-Empfänger öffnen ablaufende E-Mails ohne Passwort, deshalb wurde das Passwort entfernt. Tippe erneut auf Senden, um die Nachricht zu senden.</string>

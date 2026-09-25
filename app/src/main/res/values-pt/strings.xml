@@ -1111,7 +1111,7 @@
     <string name="billing_changed_to">Faturamento alterado para %s</string>
     <string name="default_payment_updated">Método de pagamento padrão atualizado</string>
     <string name="payment_method_removed">Método de pagamento removido</string>
-    <string name="session_expired_sign_in">Sessão expirada - entre novamente</string>
+    <string name="session_expired_sign_in">Sua sessão expirou. Entre novamente.</string>
     <string name="failed_load_subscription">Falha ao carregar assinatura</string>
     <string name="could_not_start_checkout">Não foi possível iniciar o checkout</string>
     <string name="could_not_open_portal">Não foi possível abrir o portal de faturamento</string>
@@ -3538,6 +3538,7 @@
     <string name="passkey_added_second_step_only">Chave de acesso adicionada. Use-a como segunda etapa ao iniciar sessão com sua senha.</string>
     <string name="passkey_already_registered">Esta chave de acesso já está salva na sua conta.</string>
     <string name="passkey_create_unavailable">Este dispositivo não pode salvar chaves de acesso. Verifique se o bloqueio de tela está ativado e se há um gerenciador de senhas configurado.</string>
+    <string name="passkey_app_not_verified">Esta versão do Aster Mail ainda não foi verificada para chaves de acesso, então este dispositivo não pode salvar nem usar uma chave de acesso do Aster Mail.</string>
     <string name="passkey_create_failed">Não foi possível adicionar a chave de acesso. Tente novamente.</string>
     <string name="error_passkey_timed_out">A solicitação da chave de acesso expirou. Tente novamente.</string>
     <string name="expiry_password_internal_removed">Os destinatários do Aster abrem e-mails com expiração sem senha, por isso a senha foi removida. Para enviar a mensagem, toque em Enviar novamente.</string>

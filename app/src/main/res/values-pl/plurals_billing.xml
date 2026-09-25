@@ -36,4 +36,16 @@
         <item quantity="many">Twój plan kończy się za %1$d dni, %2$s.</item>
         <item quantity="other">Twój plan kończy się za %1$d dni, %2$s.</item>
     </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="one">%d faktura</item>
+        <item quantity="few">%d faktury</item>
+        <item quantity="many">%d faktur</item>
+        <item quantity="other">%d faktur</item>
+    </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="one">Porównaj %d funkcję</item>
+        <item quantity="few">Porównaj wszystkie %d funkcje</item>
+        <item quantity="many">Porównaj wszystkie %d funkcji</item>
+        <item quantity="other">Porównaj wszystkie %d funkcji</item>
+    </plurals>
 </resources>

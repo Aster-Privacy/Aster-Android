@@ -1112,7 +1112,7 @@
     <string name="billing_changed_to">Facturación cambiada a %s</string>
     <string name="default_payment_updated">Método de pago predeterminado actualizado</string>
     <string name="payment_method_removed">Método de pago eliminado</string>
-    <string name="session_expired_sign_in">Sesión expirada - por favor inicia sesión de nuevo</string>
+    <string name="session_expired_sign_in">Tu sesión ha caducado. Inicia sesión de nuevo.</string>
     <string name="failed_load_subscription">Error al cargar la suscripción</string>
     <string name="could_not_start_checkout">No se pudo iniciar el proceso de pago</string>
     <string name="could_not_open_portal">No se pudo abrir el portal de facturación</string>
@@ -3539,6 +3539,7 @@
     <string name="passkey_added_second_step_only">Llave de acceso añadida. Úsala como segundo paso al iniciar sesión con tu contraseña.</string>
     <string name="passkey_already_registered">Esta llave de acceso ya está guardada en tu cuenta.</string>
     <string name="passkey_create_unavailable">Este dispositivo no puede guardar llaves de acceso. Comprueba que el bloqueo de pantalla esté activado y que haya un gestor de contraseñas configurado.</string>
+    <string name="passkey_app_not_verified">Esta versión de Aster Mail aún no está verificada para llaves de acceso, por lo que este dispositivo no puede guardar ni usar una llave de acceso de Aster Mail.</string>
     <string name="passkey_create_failed">No se pudo añadir la llave de acceso. Inténtalo de nuevo.</string>
     <string name="error_passkey_timed_out">La solicitud de la llave de acceso caducó. Inténtalo de nuevo.</string>
     <string name="expiry_password_internal_removed">Los destinatarios de Aster abren el correo con caducidad sin contraseña, así que se ha quitado la contraseña. Para enviar el mensaje, toca Enviar de nuevo.</string>

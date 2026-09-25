@@ -24,4 +24,12 @@
         <item quantity="one">आपका प्लान %1$d दिन में, %2$s को खत्म हो जाएगा।</item>
         <item quantity="other">आपका प्लान %1$d दिन में, %2$s को खत्म हो जाएगा।</item>
     </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="one">%d चालान</item>
+        <item quantity="other">%d चालान</item>
+    </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="one">%d सुविधा की तुलना करें</item>
+        <item quantity="other">सभी %d सुविधाओं की तुलना करें</item>
+    </plurals>
 </resources>
