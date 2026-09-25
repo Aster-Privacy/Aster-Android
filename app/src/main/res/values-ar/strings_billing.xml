@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">خطط فردية وعائلية، شهرية أو سنوية</string>
     <string name="billing_more_title">المزيد</string>
     <string name="billing_addons_subtitle">أضف مساحة واحتفظ بخطتك</string>
+    <string name="billing_addon_summary">%1$s مساحة تخزين إضافية</string>
+    <string name="billing_addon_pick_size">اختر المقدار الذي تريد إضافته</string>
     <string name="billing_support_subtitle">أرسل رسالة إلى الفريق</string>
     <string name="billing_trust_card">ألغِ في أي وقت من هذه الصفحة. تأتي مدفوعات البطاقة مع ضمان استرداد الأموال خلال 30 يومًا.</string>
     <string name="billing_trust_crypto">مدفوعات العملات الرقمية لا تتجدد تلقائيًا ولا تُسترد. يذكّرك Aster قبل انتهاء خطتك.</string>
@@ -112,7 +114,7 @@
     <string name="billing_credits_settings_failed">تعذر على Aster حفظ إعداد الرصيد.</string>
     <string name="billing_academic_request_failed">تعذر على Aster إرسال بريد التحقق.</string>
     <string name="billing_thanks_free_title">شكرًا لاستخدامك Aster</string>
-    <string name="billing_thanks_free_body">أنت جزء مما يجعل Aster ينمو. عندما تحتاج إلى مساحة تخزين أكبر أو عناوين بديلة أو نطاقات مخصصة، فإن الترقية تدعم أيضًا الفريق الصغير الذي يبنيه.</string>
+    <string name="billing_thanks_free_body">يبني فريق صغير Aster بعناية، وكل شخص يثق به في بريده يبقينا مستمرين. قم بالترقية متى احتجت إلى مساحة تخزين أو أسماء مستعارة أو نطاقات مخصصة إضافية.</string>
     <string name="billing_usage_of">%1$d من %2$d</string>
     <string name="billing_usage_in_use">%1$d قيد الاستخدام</string>
     <string name="billing_usage_upgrade_hint">قم بالترقية للحصول على مساحة أكبر</string>

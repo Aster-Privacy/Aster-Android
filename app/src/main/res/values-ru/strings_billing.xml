@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">Личные и семейные планы, помесячно или на год</string>
     <string name="billing_more_title">Ещё</string>
     <string name="billing_addons_subtitle">Добавьте место, оставьте план</string>
+    <string name="billing_addon_summary">%1$s дополнительного хранилища</string>
+    <string name="billing_addon_pick_size">Выберите, сколько добавить</string>
     <string name="billing_support_subtitle">Напишите команде</string>
     <string name="billing_trust_card">Отмените в любой момент на этой странице. На оплату картой действует 30-дневная гарантия возврата.</string>
     <string name="billing_trust_crypto">Криптоплатежи не продлеваются сами и не возвращаются. Aster напомнит вам до окончания плана.</string>
@@ -112,7 +114,7 @@
     <string name="billing_credits_settings_failed">Aster не удалось сохранить настройку кредитов.</string>
     <string name="billing_academic_request_failed">Aster не удалось отправить письмо для подтверждения.</string>
     <string name="billing_thanks_free_title">Спасибо, что пользуетесь Aster</string>
-    <string name="billing_thanks_free_body">Вы помогаете Aster расти. Когда вам понадобится больше места, псевдонимов или собственных доменов, переход на платный тариф также поддержит небольшую команду, которая создает Aster.</string>
+    <string name="billing_thanks_free_body">Небольшая команда бережно создаёт Aster, и каждый, кто доверяет ему свою почту, помогает нам двигаться дальше. Переходите на другой план, когда понадобится больше места, псевдонимов или собственных доменов.</string>
     <string name="billing_usage_of">%1$d из %2$d</string>
     <string name="billing_usage_in_use">%1$d в работе</string>
     <string name="billing_usage_upgrade_hint">Обновите план, чтобы получить больше места</string>

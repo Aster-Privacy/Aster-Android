@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">Forfaits individuels et familiaux, mensuels ou annuels</string>
     <string name="billing_more_title">Plus</string>
     <string name="billing_addons_subtitle">Ajoutez de l’espace, gardez votre forfait</string>
+    <string name="billing_addon_summary">%1$s de stockage supplémentaire</string>
+    <string name="billing_addon_pick_size">Choisissez la quantité à ajouter</string>
     <string name="billing_support_subtitle">Écrivez à l’équipe</string>
     <string name="billing_trust_card">Résiliez à tout moment depuis cette page. Les paiements par carte sont remboursables pendant 30 jours.</string>
     <string name="billing_trust_crypto">Les paiements en crypto ne se renouvellent pas seuls et ne sont pas remboursables. Aster vous prévient avant la fin de votre forfait.</string>
@@ -111,8 +113,8 @@
     <string name="billing_cancel_offer_body_missing">Un court message parvient aux personnes qui construisent Aster, et elles lisent chacun d’eux. Vous pourrez toujours résilier ensuite.</string>
     <string name="billing_credits_settings_failed">Aster n’a pas pu enregistrer votre réglage de crédit.</string>
     <string name="billing_academic_request_failed">Aster n’a pas pu envoyer l’e-mail de vérification.</string>
-    <string name="billing_thanks_free_title">Merci d’utiliser Aster</string>
-    <string name="billing_thanks_free_body">Vous contribuez à faire grandir Aster. Lorsque vous avez besoin de plus de stockage, d’alias ou de domaines personnalisés, passer à un forfait supérieur soutient aussi la petite équipe qui le développe.</string>
+    <string name="billing_thanks_free_title">Merci d\'utiliser Aster</string>
+    <string name="billing_thanks_free_body">Une petite équipe construit Aster avec soin, et chaque personne qui lui confie son courrier nous fait avancer. Passez à un forfait supérieur dès que vous avez besoin de plus de stockage, d\'alias ou de domaines personnalisés.</string>
     <string name="billing_usage_of">%1$d sur %2$d</string>
     <string name="billing_usage_in_use">%1$d utilisés</string>
     <string name="billing_usage_upgrade_hint">Passez à un forfait supérieur pour plus de place</string>

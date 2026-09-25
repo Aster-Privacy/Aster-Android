@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">个人与家庭套餐，按月或按年</string>
     <string name="billing_more_title">更多</string>
     <string name="billing_addons_subtitle">保留套餐，增加空间</string>
+    <string name="billing_addon_summary">%1$s 额外存储空间</string>
+    <string name="billing_addon_pick_size">选择要添加的容量</string>
     <string name="billing_support_subtitle">给团队发送消息</string>
     <string name="billing_trust_card">可随时在此页面取消。银行卡付款享有 30 天退款保证。</string>
     <string name="billing_trust_crypto">加密货币付款不会自动续订，也不可退款。Aster 会在套餐结束前提醒您。</string>
@@ -112,7 +114,7 @@
     <string name="billing_credits_settings_failed">Aster 无法保存您的积分设置。</string>
     <string name="billing_academic_request_failed">Aster 无法发送验证邮件。</string>
     <string name="billing_thanks_free_title">感谢你使用 Aster</string>
-    <string name="billing_thanks_free_body">你是 Aster 不断成长的一份力量。当你需要更多存储空间、别名或自定义域名时，升级也能支持打造 Aster 的小团队。</string>
+    <string name="billing_thanks_free_body">一个小团队用心打造 Aster，每一位把邮件托付给它的人都是我们前进的动力。需要更多存储空间、别名或自定义域名时，随时可以升级。</string>
     <string name="billing_usage_of">%1$d / %2$d</string>
     <string name="billing_usage_in_use">已使用 %1$d 个</string>
     <string name="billing_usage_upgrade_hint">升级以获得更多空间</string>

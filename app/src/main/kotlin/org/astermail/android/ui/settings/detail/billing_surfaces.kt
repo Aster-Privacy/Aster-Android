@@ -22,11 +22,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.offset
-import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -350,10 +346,12 @@ internal fun billing_option_row(
             .clip(RectangleShape)
             .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = on_click)
             .background(fill)
-            .heightIn(min = 54.dp)
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 38.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             billing_option_indicator(selected = selected, enabled = enabled)
             Spacer(Modifier.width(AsterSpacing.md))
             if (leading != null) {
@@ -509,56 +507,3 @@ internal fun billing_action_text(label: String, on_click: () -> Unit, color: Col
 }
 
 internal fun format_storage_short(bytes: Long): String = format_bytes(bytes).replace(".0 ", " ")
-
-@Composable
-internal fun billing_segmented(
-    value: String,
-    options: List<switcher_option>,
-    on_change: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colors = AsterMaterial.colors
-    val track_shape = SquircleShape(12.dp)
-    val thumb_shape = SquircleShape(9.dp)
-    val selected_index = options.indexOfFirst { it.id == value }.coerceAtLeast(0)
-    BoxWithConstraints(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(track_shape)
-            .acrylic(colors, track_shape, colors.bg_secondary)
-            .padding(3.dp),
-    ) {
-        val segment_width = maxWidth / options.size.coerceAtLeast(1)
-        val thumb_offset by animateDpAsState(targetValue = segment_width * selected_index, label = "billing_segment")
-        Box(
-            modifier = Modifier
-                .offset(x = thumb_offset)
-                .width(segment_width)
-                .height(36.dp)
-                .clip(thumb_shape)
-                .acrylic(colors, thumb_shape, colors.bg_card)
-                .border(1.dp, colors.border_primary, thumb_shape),
-        )
-        Row(modifier = Modifier.fillMaxWidth().selectableGroup()) {
-            options.forEach { option ->
-                val active = option.id == value
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(36.dp)
-                        .clip(thumb_shape)
-                        .selectable(selected = active, role = Role.Tab) { on_change(option.id) },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = option.label,
-                        color = if (active) colors.text_primary else colors.text_secondary,
-                        fontSize = 14.sp,
-                        fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
-                        maxLines = 1,
-                    )
-                }
-            }
-        }
-    }
-}

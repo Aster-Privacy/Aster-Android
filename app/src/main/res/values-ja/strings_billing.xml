@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">個人プランと家族プラン、月払いまたは年払い</string>
     <string name="billing_more_title">その他</string>
     <string name="billing_addons_subtitle">プランはそのまま、容量を追加</string>
+    <string name="billing_addon_summary">追加ストレージ %1$s</string>
+    <string name="billing_addon_pick_size">追加する容量を選択してください</string>
     <string name="billing_support_subtitle">チームにメッセージを送る</string>
     <string name="billing_trust_card">このページからいつでも解約できます。カード決済には 30 日間の返金保証があります。</string>
     <string name="billing_trust_crypto">暗号資産での支払いは自動更新されず、返金もできません。プラン終了前に Aster がお知らせします。</string>
@@ -112,7 +114,7 @@
     <string name="billing_credits_settings_failed">Aster はクレジット設定を保存できませんでした。</string>
     <string name="billing_academic_request_failed">Aster は確認メールを送信できませんでした。</string>
     <string name="billing_thanks_free_title">Aster をご利用いただきありがとうございます</string>
-    <string name="billing_thanks_free_body">Aster の成長を支えているのはあなたです。ストレージ、エイリアス、カスタムドメインがもっと必要になったら、アップグレードすることで Aster を作る小さなチームの支援にもなります。</string>
+    <string name="billing_thanks_free_body">小さなチームが Aster を丁寧に作っています。メールを託してくださる一人ひとりが私たちの支えです。ストレージ、エイリアス、カスタムドメインがもっと必要になったら、いつでもアップグレードできます。</string>
     <string name="billing_usage_of">%2$d 件中 %1$d 件</string>
     <string name="billing_usage_in_use">%1$d 件使用中</string>
     <string name="billing_usage_upgrade_hint">アップグレードして余裕を増やす</string>

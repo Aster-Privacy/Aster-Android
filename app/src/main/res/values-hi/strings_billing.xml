@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">व्यक्तिगत और परिवार प्लान, मासिक या सालाना</string>
     <string name="billing_more_title">और</string>
     <string name="billing_addons_subtitle">जगह जोड़ें, प्लान वही रखें</string>
+    <string name="billing_addon_summary">%1$s अतिरिक्त स्टोरेज</string>
+    <string name="billing_addon_pick_size">चुनें कि कितना जोड़ना है</string>
     <string name="billing_support_subtitle">टीम को संदेश भेजें</string>
     <string name="billing_trust_card">इस पेज से कभी भी रद्द करें। कार्ड भुगतान पर 30 दिन की मनी-बैक गारंटी है।</string>
     <string name="billing_trust_crypto">क्रिप्टो भुगतान अपने आप नवीनीकृत नहीं होते और वापस नहीं किए जाते। आपका प्लान समाप्त होने से पहले Aster आपको याद दिलाता है।</string>
@@ -112,7 +114,7 @@
     <string name="billing_credits_settings_failed">Aster आपकी क्रेडिट सेटिंग सेव नहीं कर सका।</string>
     <string name="billing_academic_request_failed">Aster सत्यापन ईमेल नहीं भेज सका।</string>
     <string name="billing_thanks_free_title">Aster इस्तेमाल करने के लिए धन्यवाद</string>
-    <string name="billing_thanks_free_body">आप Aster को आगे बढ़ाने का हिस्सा हैं। जब आपको ज़्यादा स्टोरेज, उपनाम या कस्टम डोमेन चाहिए, तो अपग्रेड करने से इसे बनाने वाली छोटी टीम को भी मदद मिलती है।</string>
+    <string name="billing_thanks_free_body">एक छोटी टीम Aster को सावधानी से बनाती है, और हर व्यक्ति जो अपने मेल के लिए इस पर भरोसा करता है, हमें आगे बढ़ाता है। जब भी आपको अधिक स्टोरेज, उपनाम या कस्टम डोमेन चाहिए, अपग्रेड करें।</string>
     <string name="billing_usage_of">%2$d में से %1$d</string>
     <string name="billing_usage_in_use">%1$d उपयोग में</string>
     <string name="billing_usage_upgrade_hint">अधिक जगह के लिए अपग्रेड करें</string>

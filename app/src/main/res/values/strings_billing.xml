@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">Individual and family plans, monthly or yearly</string>
     <string name="billing_more_title">More</string>
     <string name="billing_addons_subtitle">Add space, keep your plan</string>
+    <string name="billing_addon_summary">%1$s of extra storage</string>
+    <string name="billing_addon_pick_size">Choose how much to add</string>
     <string name="billing_support_subtitle">Send the team a message</string>
     <string name="billing_trust_card">Cancel anytime from this page. Card payments come with a 30-day money-back guarantee.</string>
     <string name="billing_trust_crypto">Crypto payments do not renew on their own and are not refundable. Aster reminds you before your plan ends.</string>
@@ -112,7 +114,7 @@
     <string name="billing_credits_settings_failed">Aster could not save your credit setting.</string>
     <string name="billing_academic_request_failed">Aster could not send the verification email.</string>
     <string name="billing_thanks_free_title">Thanks for using Aster</string>
-    <string name="billing_thanks_free_body">You\'re part of what keeps Aster growing. When you need more storage, aliases, or custom domains, upgrading also supports the small team that builds it.</string>
+    <string name="billing_thanks_free_body">A small team builds Aster with care, and every person who trusts it with their mail keeps us going. Upgrade whenever you need more storage, aliases, or custom domains.</string>
     <string name="billing_usage_of">%1$d of %2$d</string>
     <string name="billing_usage_in_use">%1$d in use</string>
     <string name="billing_usage_upgrade_hint">Upgrade for more room</string>

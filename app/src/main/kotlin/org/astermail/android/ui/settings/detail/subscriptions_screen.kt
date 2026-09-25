@@ -805,14 +805,16 @@ fun SubscriptionsScreen(
                 keep_action = stringResource(R.string.billing_keep_action, hero_plan_name),
                 keep_loading = reactivating,
                 on_keep = { if (!billing_state.is_acting) billing_vm.reactivate_subscription() },
-                primary_action = if (is_paid_plan) null else stringResource(R.string.fix_billing_get_plan, stringResource(free_teaser_tier.name_res)),
+                primary_action = if (is_paid_plan) null else stringResource(R.string.upgrade_view_plans),
                 primary_note = lowest_monthly_cents?.let {
                     stringResource(R.string.billing_free_upgrade_price_note, format_price(it, detected_currency))
                 },
                 on_primary = {
-                    pending_plan_code = free_teaser_tier.code
-                    pending_addon_id = null
-                    show_payment_picker = true
+                    show_plans = true
+                    coroutine_scope.launch {
+                        kotlinx.coroutines.delay(150)
+                        scroll_state.animateScrollTo(plans_section_offset.toInt().coerceAtLeast(0))
+                    }
                 },
                 actions = hero_actions,
                 danger_action = if (can_cancel && !ends_at_period_end) {
@@ -938,14 +940,16 @@ fun SubscriptionsScreen(
                 )
             }
         } else {
-            billing_segmented(
-                value = plan_type,
-                options = listOf(
-                    switcher_option(id = "individual", label = stringResource(R.string.billing_plan_type_individual)),
-                    switcher_option(id = "family", label = stringResource(R.string.billing_plan_type_family)),
-                ),
-                on_change = { plan_type = it },
-            )
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                aster_segmented(
+                    value = plan_type,
+                    options = listOf(
+                        switcher_option(id = "individual", label = stringResource(R.string.billing_plan_type_individual)),
+                        switcher_option(id = "family", label = stringResource(R.string.billing_plan_type_family)),
+                    ),
+                    on_change = { plan_type = it },
+                )
+            }
             v_gap(AsterSpacing.md)
             plan_recommendation_banner(
                 recommendation = recommendation,
@@ -1266,14 +1270,16 @@ fun SubscriptionsScreen(
             ),
             body = {
                 Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-                    billing_segmented(
-                        value = downgrade_interval,
-                        options = listOf(
-                            switcher_option(id = "month", label = stringResource(R.string.settings_billing_monthly)),
-                            switcher_option(id = "year", label = stringResource(R.string.settings_billing_yearly)),
-                        ),
-                        on_change = { downgrade_interval = it },
-                    )
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        aster_segmented(
+                            value = downgrade_interval,
+                            options = listOf(
+                                switcher_option(id = "month", label = stringResource(R.string.settings_billing_monthly)),
+                                switcher_option(id = "year", label = stringResource(R.string.settings_billing_yearly)),
+                            ),
+                            on_change = { downgrade_interval = it },
+                        )
+                    }
                     plan_change_preview_text(billing_state)
                 }
             },

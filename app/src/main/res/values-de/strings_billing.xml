@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">Einzel- und Familienpläne, monatlich oder jährlich</string>
     <string name="billing_more_title">Mehr</string>
     <string name="billing_addons_subtitle">Speicher hinzufügen, Plan behalten</string>
+    <string name="billing_addon_summary">%1$s zusätzlicher Speicher</string>
+    <string name="billing_addon_pick_size">Wähle aus, wie viel du hinzufügen möchtest</string>
     <string name="billing_support_subtitle">Schreib dem Team</string>
     <string name="billing_trust_card">Kündige jederzeit auf dieser Seite. Kartenzahlungen haben eine 30-Tage-Geld-zurück-Garantie.</string>
     <string name="billing_trust_crypto">Kryptozahlungen verlängern sich nicht von selbst und sind nicht erstattbar. Aster erinnert dich, bevor dein Plan endet.</string>
@@ -112,7 +114,7 @@
     <string name="billing_credits_settings_failed">Aster konnte deine Guthaben-Einstellung nicht speichern.</string>
     <string name="billing_academic_request_failed">Aster konnte die Bestätigungs-E-Mail nicht senden.</string>
     <string name="billing_thanks_free_title">Danke, dass du Aster nutzt</string>
-    <string name="billing_thanks_free_body">Du trägst dazu bei, dass Aster wächst. Wenn du mehr Speicher, Aliasse oder eigene Domains brauchst, unterstützt ein Upgrade auch das kleine Team, das Aster entwickelt.</string>
+    <string name="billing_thanks_free_body">Ein kleines Team entwickelt Aster mit Sorgfalt, und jede Person, die ihm ihre E-Mails anvertraut, hält uns am Laufen. Führe ein Upgrade durch, wann immer du mehr Speicher, Aliasse oder eigene Domains brauchst.</string>
     <string name="billing_usage_of">%1$d von %2$d</string>
     <string name="billing_usage_in_use">%1$d in Gebrauch</string>
     <string name="billing_usage_upgrade_hint">Upgrade für mehr Platz</string>

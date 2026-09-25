@@ -516,8 +516,8 @@ internal fun billing_advantages_card(
 
 private const val billing_wordmark_id = "aster_wordmark"
 private const val billing_wordmark_aspect = 4f
-private const val billing_title_size = 24f
-private const val billing_wordmark_cap_ratio = 0.72f
+private const val billing_title_size = 21f
+private const val billing_wordmark_cap_ratio = 0.76f
 
 @Composable
 internal fun billing_plan_title(plan_name: String, modifier: Modifier = Modifier) {
@@ -604,8 +604,8 @@ internal fun billing_expander_row(
         Icon(
             imageVector = if (expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
             contentDescription = null,
-            tint = colors.text_muted,
-            modifier = Modifier.size(18.dp),
+            tint = colors.text_tertiary,
+            modifier = Modifier.size(20.dp),
         )
     }
 }

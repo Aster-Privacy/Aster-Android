@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">Planes individuales y familiares, mensuales o anuales</string>
     <string name="billing_more_title">Más</string>
     <string name="billing_addons_subtitle">Añade espacio, conserva tu plan</string>
+    <string name="billing_addon_summary">%1$s de almacenamiento adicional</string>
+    <string name="billing_addon_pick_size">Elige cuánto quieres añadir</string>
     <string name="billing_support_subtitle">Escribe al equipo</string>
     <string name="billing_trust_card">Cancela cuando quieras desde esta página. Los pagos con tarjeta tienen una garantía de devolución de 30 días.</string>
     <string name="billing_trust_crypto">Los pagos con cripto no se renuevan solos y no son reembolsables. Aster te avisa antes de que termine tu plan.</string>
@@ -112,7 +114,7 @@
     <string name="billing_credits_settings_failed">Aster no pudo guardar tu ajuste de crédito.</string>
     <string name="billing_academic_request_failed">Aster no pudo enviar el correo de verificación.</string>
     <string name="billing_thanks_free_title">Gracias por usar Aster</string>
-    <string name="billing_thanks_free_body">Formas parte de lo que hace crecer a Aster. Cuando necesites más almacenamiento, alias o dominios personalizados, mejorar tu plan también apoya al pequeño equipo que lo crea.</string>
+    <string name="billing_thanks_free_body">Un equipo pequeño construye Aster con cuidado, y cada persona que le confía su correo nos mantiene en marcha. Mejora tu plan cuando necesites más almacenamiento, alias o dominios personalizados.</string>
     <string name="billing_usage_of">%1$d de %2$d</string>
     <string name="billing_usage_in_use">%1$d en uso</string>
     <string name="billing_usage_upgrade_hint">Mejora para tener más espacio</string>
