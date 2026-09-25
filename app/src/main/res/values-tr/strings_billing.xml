@@ -114,7 +114,7 @@
     <string name="billing_credits_settings_failed">Aster kredi ayarını kaydedemedi.</string>
     <string name="billing_academic_request_failed">Aster doğrulama e-postasını gönderemedi.</string>
     <string name="billing_thanks_free_title">Aster\'ı kullandığınız için teşekkürler</string>
-    <string name="billing_thanks_free_body">Aster\'ın büyümesine katkıda bulunuyorsunuz. Daha fazla depolama alanı, takma ad veya özel alan adı gerektiğinde yükseltme yapmak, Aster\'ı geliştiren küçük ekibe de destek olur.</string>
+    <string name="billing_thanks_free_body">Küçük bir ekip Aster\'ı özenle geliştiriyor ve postasını ona emanet eden herkes bizi ayakta tutuyor. Daha fazla depolama, takma ad veya özel alan adı gerektiğinde istediğiniz zaman yükseltin.</string>
     <string name="billing_usage_of">%2$d / %1$d</string>
     <string name="billing_usage_in_use">%1$d kullanımda</string>
     <string name="billing_usage_upgrade_hint">Daha fazla alan için yükselt</string>

@@ -114,7 +114,7 @@
     <string name="billing_credits_settings_failed">Aster nie mógł zapisać ustawienia środków.</string>
     <string name="billing_academic_request_failed">Aster nie mógł wysłać e-maila weryfikacyjnego.</string>
     <string name="billing_thanks_free_title">Dziękujemy, że korzystasz z Aster</string>
-    <string name="billing_thanks_free_body">Pomagasz Aster się rozwijać. Gdy potrzebujesz więcej miejsca, aliasów lub własnych domen, ulepszenie planu wspiera też mały zespół, który tworzy Aster.</string>
+    <string name="billing_thanks_free_body">Mały zespół z troską tworzy Aster, a każda osoba, która powierza mu swoją pocztę, pozwala nam działać dalej. Przejdź na wyższy plan, gdy potrzebujesz więcej miejsca, aliasów lub własnych domen.</string>
     <string name="billing_usage_of">%1$d z %2$d</string>
     <string name="billing_usage_in_use">%1$d w użyciu</string>
     <string name="billing_usage_upgrade_hint">Ulepsz plan, aby mieć więcej miejsca</string>

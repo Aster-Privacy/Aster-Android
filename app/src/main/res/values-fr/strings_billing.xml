@@ -113,8 +113,8 @@
     <string name="billing_cancel_offer_body_missing">Un court message parvient aux personnes qui construisent Aster, et elles lisent chacun d’eux. Vous pourrez toujours résilier ensuite.</string>
     <string name="billing_credits_settings_failed">Aster n’a pas pu enregistrer votre réglage de crédit.</string>
     <string name="billing_academic_request_failed">Aster n’a pas pu envoyer l’e-mail de vérification.</string>
-    <string name="billing_thanks_free_title">Merci d’utiliser Aster</string>
-    <string name="billing_thanks_free_body">Vous contribuez à faire grandir Aster. Lorsque vous avez besoin de plus de stockage, d’alias ou de domaines personnalisés, passer à un forfait supérieur soutient aussi la petite équipe qui le développe.</string>
+    <string name="billing_thanks_free_title">Merci d\'utiliser Aster</string>
+    <string name="billing_thanks_free_body">Une petite équipe construit Aster avec soin, et chaque personne qui lui confie son courrier nous fait avancer. Passez à un forfait supérieur dès que vous avez besoin de plus de stockage, d\'alias ou de domaines personnalisés.</string>
     <string name="billing_usage_of">%1$d sur %2$d</string>
     <string name="billing_usage_in_use">%1$d utilisés</string>
     <string name="billing_usage_upgrade_hint">Passez à un forfait supérieur pour plus de place</string>

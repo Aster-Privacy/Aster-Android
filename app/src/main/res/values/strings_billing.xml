@@ -114,7 +114,7 @@
     <string name="billing_credits_settings_failed">Aster could not save your credit setting.</string>
     <string name="billing_academic_request_failed">Aster could not send the verification email.</string>
     <string name="billing_thanks_free_title">Thanks for using Aster</string>
-    <string name="billing_thanks_free_body">You\'re part of what keeps Aster growing. When you need more storage, aliases, or custom domains, upgrading also supports the small team that builds it.</string>
+    <string name="billing_thanks_free_body">A small team builds Aster with care, and every person who trusts it with their mail keeps us going. Upgrade whenever you need more storage, aliases, or custom domains.</string>
     <string name="billing_usage_of">%1$d of %2$d</string>
     <string name="billing_usage_in_use">%1$d in use</string>
     <string name="billing_usage_upgrade_hint">Upgrade for more room</string>

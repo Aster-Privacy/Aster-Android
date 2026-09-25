@@ -114,7 +114,7 @@
     <string name="billing_credits_settings_failed">تعذر على Aster حفظ إعداد الرصيد.</string>
     <string name="billing_academic_request_failed">تعذر على Aster إرسال بريد التحقق.</string>
     <string name="billing_thanks_free_title">شكرًا لاستخدامك Aster</string>
-    <string name="billing_thanks_free_body">أنت جزء مما يجعل Aster ينمو. عندما تحتاج إلى مساحة تخزين أكبر أو عناوين بديلة أو نطاقات مخصصة، فإن الترقية تدعم أيضًا الفريق الصغير الذي يبنيه.</string>
+    <string name="billing_thanks_free_body">يبني فريق صغير Aster بعناية، وكل شخص يثق به في بريده يبقينا مستمرين. قم بالترقية متى احتجت إلى مساحة تخزين أو أسماء مستعارة أو نطاقات مخصصة إضافية.</string>
     <string name="billing_usage_of">%1$d من %2$d</string>
     <string name="billing_usage_in_use">%1$d قيد الاستخدام</string>
     <string name="billing_usage_upgrade_hint">قم بالترقية للحصول على مساحة أكبر</string>

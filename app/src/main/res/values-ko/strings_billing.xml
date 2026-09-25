@@ -113,8 +113,8 @@
     <string name="billing_cancel_offer_body_missing">짧은 메모는 Aster를 만드는 사람들에게 전달되며 모두 읽습니다. 그 후에도 취소할 수 있습니다.</string>
     <string name="billing_credits_settings_failed">Aster가 크레딧 설정을 저장하지 못했습니다.</string>
     <string name="billing_academic_request_failed">Aster가 인증 이메일을 보내지 못했습니다.</string>
-    <string name="billing_thanks_free_title">Aster를 이용해 주셔서 감사합니다</string>
-    <string name="billing_thanks_free_body">여러분 덕분에 Aster가 성장합니다. 더 많은 저장 공간, 별칭 또는 사용자 지정 도메인이 필요하면 업그레이드하세요. Aster를 만드는 작은 팀을 응원하는 방법이기도 합니다.</string>
+    <string name="billing_thanks_free_title">Aster를 사용해 주셔서 감사합니다</string>
+    <string name="billing_thanks_free_body">작은 팀이 정성껏 Aster를 만들고 있으며, 메일을 맡겨 주시는 모든 분이 저희의 원동력입니다. 더 많은 저장 공간, 별칭, 사용자 지정 도메인이 필요할 때 언제든 업그레이드하세요.</string>
     <string name="billing_usage_of">%2$d개 중 %1$d개</string>
     <string name="billing_usage_in_use">%1$d개 사용 중</string>
     <string name="billing_usage_upgrade_hint">업그레이드하고 여유 공간 확보</string>

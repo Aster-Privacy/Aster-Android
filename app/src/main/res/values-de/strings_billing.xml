@@ -114,7 +114,7 @@
     <string name="billing_credits_settings_failed">Aster konnte deine Guthaben-Einstellung nicht speichern.</string>
     <string name="billing_academic_request_failed">Aster konnte die Bestätigungs-E-Mail nicht senden.</string>
     <string name="billing_thanks_free_title">Danke, dass du Aster nutzt</string>
-    <string name="billing_thanks_free_body">Du trägst dazu bei, dass Aster wächst. Wenn du mehr Speicher, Aliasse oder eigene Domains brauchst, unterstützt ein Upgrade auch das kleine Team, das Aster entwickelt.</string>
+    <string name="billing_thanks_free_body">Ein kleines Team entwickelt Aster mit Sorgfalt, und jede Person, die ihm ihre E-Mails anvertraut, hält uns am Laufen. Führe ein Upgrade durch, wann immer du mehr Speicher, Aliasse oder eigene Domains brauchst.</string>
     <string name="billing_usage_of">%1$d von %2$d</string>
     <string name="billing_usage_in_use">%1$d in Gebrauch</string>
     <string name="billing_usage_upgrade_hint">Upgrade für mehr Platz</string>
