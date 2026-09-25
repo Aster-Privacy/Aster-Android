@@ -3370,10 +3370,8 @@ class SettingsViewModel @Inject constructor(
         if (_state.value.is_adding_passkey) return
         _state.update { it.copy(is_adding_passkey = true) }
         viewModelScope.launch {
-            var rp_id: String? = null
             try {
                 val options = security_api.initiate_passkey_registration()
-                rp_id = options.rp.id
                 val response_json = create_credential(org.astermail.android.auth.registration_request_json(options))
                 val registration = org.astermail.android.auth.registration_complete_request(
                     response_json = response_json,
@@ -3403,7 +3401,7 @@ class SettingsViewModel @Inject constructor(
                     is org.astermail.android.auth.PasskeyAlreadyRegisteredException ->
                         context.getString(R.string.passkey_already_registered)
                     is org.astermail.android.auth.PasskeyUnavailableException ->
-                        context.getString(passkey_unavailable_message(rp_id))
+                        context.getString(R.string.passkey_create_unavailable)
                     is org.astermail.android.auth.PasskeyFailedException ->
                         context.getString(R.string.passkey_create_failed)
                     else ->
@@ -3416,11 +3414,6 @@ class SettingsViewModel @Inject constructor(
                 _state.update { it.copy(is_adding_passkey = false, action_result = message ?: it.action_result) }
             }
         }
-    }
-
-    private suspend fun passkey_unavailable_message(rp_id: String?): Int {
-        val verified = rp_id?.let { org.astermail.android.auth.passkeys_verified_for_app(context, it) }
-        return if (verified == false) R.string.passkey_app_not_verified else R.string.passkey_create_unavailable
     }
 
     private suspend fun save_passkey_prf(
