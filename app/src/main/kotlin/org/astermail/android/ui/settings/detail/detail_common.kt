@@ -612,6 +612,7 @@ internal fun detail_row(
     icon_tint: androidx.compose.ui.graphics.Color? = null,
     value: String? = null,
     leading: (@Composable () -> Unit)? = null,
+    muted: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     Row(
@@ -638,7 +639,7 @@ internal fun detail_row(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = title,
-                    color = colors.text_primary,
+                    color = if (muted) colors.text_tertiary else colors.text_primary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,

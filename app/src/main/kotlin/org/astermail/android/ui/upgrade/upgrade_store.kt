@@ -25,7 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-enum class UpgradeReason { PlanLimit, StorageFull }
+enum class UpgradeReason { PlanLimit, StorageFull, Feature }
 
 enum class UpgradeLimitKey {
     MaxEmailAliases,
@@ -43,6 +43,7 @@ data class UpgradeState(
     val limit_key: UpgradeLimitKey = UpgradeLimitKey.Generic,
     val resource_label: String? = null,
     val server_message: String? = null,
+    val preferred_plan_code: String? = null,
 )
 
 object UpgradeStore {
@@ -86,6 +87,17 @@ object UpgradeStore {
             limit_key = key,
             resource_label = resource_label,
             server_message = null,
+        )
+    }
+
+    fun show_feature(plan_code: String?, message: String?) {
+        _state.value = UpgradeState(
+            is_open = true,
+            reason = UpgradeReason.Feature,
+            limit_key = UpgradeLimitKey.Generic,
+            resource_label = null,
+            server_message = message,
+            preferred_plan_code = plan_code,
         )
     }
 

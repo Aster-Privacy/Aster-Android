@@ -483,6 +483,9 @@ private fun aliases_tab(
         val current = alias_domain_filter
         if (current != null && !alias_domains.contains(current)) alias_domain_filter = null
     }
+    val counted_alias_total = remember(state.aliases) {
+        state.aliases.count { !it.is_retained_primary }
+    }
     val visible_aliases = remember(state.aliases, query, alias_filter, alias_domain_filter) {
         state.aliases.filter { alias ->
             matches_alias_query(
@@ -527,13 +530,13 @@ private fun aliases_tab(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = pluralStringResource(R.plurals.aliases_count, state.aliases.size, state.aliases.size),
+                    text = pluralStringResource(R.plurals.aliases_count, counted_alias_total, counted_alias_total),
                     color = colors.text_tertiary,
                     fontSize = 13.sp,
                 )
-                if (org.astermail.android.billing.alias_limit_near(state.aliases.size, alias_limit)) {
+                if (org.astermail.android.billing.alias_limit_near(counted_alias_total, alias_limit)) {
                     Text(
-                        text = stringResource(R.string.alias_limit_notice, state.aliases.size, alias_limit ?: 0),
+                        text = stringResource(R.string.alias_limit_notice, counted_alias_total, alias_limit ?: 0),
                         color = colors.accent_blue,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -1184,7 +1187,7 @@ internal fun alias_list_row(
             }
             AsterSwitch(
                 checked = alias.is_enabled,
-                enabled = grace_ends == null,
+                enabled = grace_ends == null && !alias.is_retained_primary,
                 onCheckedChange = { on_toggle() },
             )
             Box {
@@ -1246,16 +1249,18 @@ internal fun alias_list_row(
                             },
                         )
                     }
-                    aster_menu_item(
-                        label = stringResource(R.string.delete),
-                        icon = TablerIcons.Trash,
-                        destructive = true,
-                        test_tag = "alias_delete_${alias.id}",
-                        on_click = {
-                            row_menu_open = false
-                            on_delete()
-                        },
-                    )
+                    if (!alias.is_retained_primary) {
+                        aster_menu_item(
+                            label = stringResource(R.string.delete),
+                            icon = TablerIcons.Trash,
+                            destructive = true,
+                            test_tag = "alias_delete_${alias.id}",
+                            on_click = {
+                                row_menu_open = false
+                                on_delete()
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -1598,7 +1603,7 @@ internal fun deleted_aliases_screen(
                                     )
                                 }
                                 if (restore_locked) {
-                                    AsterGhostButton(
+                                    org.astermail.android.design.components.AsterCompactButton(
                                         label = stringResource(R.string.upgrade),
                                         onClick = on_upgrade,
                                     )

@@ -87,6 +87,8 @@ private val all_settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("profile", R.string.profile, R.string.display_name, false),
     settings_index_entry("profile", R.string.profile, R.string.email, false),
     settings_index_entry("profile", R.string.profile, R.string.primary_address, false),
+    settings_index_entry("profile", R.string.profile, R.string.change_address, false),
+    settings_index_entry("profile", R.string.profile, R.string.address_change_title, false),
     settings_index_entry("profile", R.string.profile, R.string.badges, false),
     settings_index_entry("profile", R.string.profile, R.string.badge_show_on_profile, false),
     settings_index_entry("profile", R.string.profile, R.string.badge_show_on_profile_description, false),
