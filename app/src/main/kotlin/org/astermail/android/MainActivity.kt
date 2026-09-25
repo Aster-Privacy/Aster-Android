@@ -39,7 +39,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import org.astermail.android.security.AppLockViewModel
 import org.astermail.android.ui.auth.mark_signed_up_now
-import org.astermail.android.ui.auth.within_sign_up_quiet_period
 import org.astermail.android.security.LockdownStore
 import org.astermail.android.ui.common.nav_anim_duration_ms
 import org.astermail.android.ui.security.AppLockScreen
@@ -1566,7 +1565,7 @@ composable(routes.settings_detail("family")) {
 
     if (is_signed_in_state) {
         val offer_route by nav_controller.currentBackStackEntryAsState()
-        if (!is_locked && offer_route?.destination?.route != routes.register && !within_sign_up_quiet_period(context)) {
+        if (!is_locked && offer_route?.destination?.route != routes.register) {
             org.astermail.android.ui.upgrade.SpecialOfferHost()
         }
     }

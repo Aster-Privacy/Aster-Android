@@ -121,6 +121,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
 import org.astermail.android.billing.BillingViewModel
+import org.astermail.android.billing.PlayOffer
+import org.astermail.android.billing.play_price_cents
 import org.astermail.android.billing.api_plan_price_cents
 import org.astermail.android.billing.billing_interval_per_label
 import org.astermail.android.billing.format_money
@@ -170,6 +172,19 @@ internal fun special_offer_price_pair(
     discounted = format_money(special_offer_price_cents(list_cents, percent_off), currency),
     badge = badge,
 )
+
+internal data class special_offer_labels(val original: String, val discounted: String)
+
+internal fun special_offer_play_labels(play_offer: PlayOffer?, percent_off: Int): special_offer_labels? {
+    if (play_offer == null) return null
+    val list_cents = play_price_cents(play_offer.price_micros).toLong()
+    val original = play_offer.formatted_price.takeIf { it.isNotBlank() }
+        ?: format_money(list_cents, play_offer.currency_code)
+    val discounted = play_offer.intro_formatted_price?.takeIf { it.isNotBlank() }
+        ?: play_offer.intro_price_micros?.let { format_money(play_price_cents(it).toLong(), play_offer.currency_code) }
+        ?: format_money(special_offer_price_cents(list_cents, percent_off), play_offer.currency_code)
+    return special_offer_labels(original = original, discounted = discounted)
+}
 
 internal fun special_offer_term_prices(
     offer: SpecialOfferState,
@@ -234,7 +249,7 @@ fun SpecialOfferHost() {
         null
     }
     val prices_pending = play_install && play_offer == null
-    val play_ready = billing_state.play_enabled && billing_state.play_special_offer_eligible && play_offer != null
+    val play_ready = special_offer_play_ready(billing_state)
 
     LaunchedEffect(offer_state.auto_show, play_install, play_ready) {
         if (offer_state.auto_show && (!play_install || play_ready)) offer_vm.claim_and_open()
@@ -318,10 +333,9 @@ fun SpecialOfferHost() {
         ?.toLong()
         ?: SPECIAL_OFFER_LIST_CENTS
     val offer_cents = special_offer_price_cents(list_cents, percent_off)
-    val offer_label = play_offer?.intro_formatted_price?.takeIf { it.isNotBlank() }
-        ?: format_money(offer_cents, SPECIAL_OFFER_CURRENCY)
-    val list_label = play_offer?.formatted_price?.takeIf { it.isNotBlank() }
-        ?: format_money(list_cents, SPECIAL_OFFER_CURRENCY)
+    val play_labels = special_offer_play_labels(play_offer, percent_off)
+    val offer_label = if (play_install) play_labels?.discounted.orEmpty() else format_money(offer_cents, SPECIAL_OFFER_CURRENCY)
+    val list_label = if (play_install) play_labels?.original.orEmpty() else format_money(list_cents, SPECIAL_OFFER_CURRENCY)
     val save_badge = stringResource(R.string.save_percent, percent_off)
     val yearly_cents = api_plan_price_cents(billing_state.available_plans, plan_code, "year")
         ?.toLong()
@@ -530,7 +544,7 @@ fun SpecialOfferHost() {
                         } else {
                             stringResource(R.string.special_offer_cta_claim, percent_off)
                         },
-                        is_loading = is_busy,
+                        is_loading = is_busy || (play_install && !play_ready && !offer_state.offer_expired),
                         onClick = {
                             if (offer_state.offer_expired) {
                                 offer_vm.close()

@@ -22,10 +22,14 @@
 package org.astermail.android.ui.upgrade
 
 import android.content.Context
+import android.content.SharedPreferences
+import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,12 +59,38 @@ class SpecialOfferViewModelTest {
     private var server_offers_enabled = true
     private val accounts = mutableMapOf<SpecialOfferViewModel, MutableStateFlow<String?>>()
 
-    private fun offer_vm(): SpecialOfferViewModel {
+    private fun offer_vm(context: Context = mockk(relaxed = true)): SpecialOfferViewModel {
         val account = MutableStateFlow<String?>(null)
         val auth = mockk<AuthRepository>(relaxed = true)
         every { auth.active_account_id } returns account
-        return SpecialOfferViewModel(billing_api, auth, store, mockk<Context>(relaxed = true)).also { accounts[it] = account }
+        return SpecialOfferViewModel(billing_api, auth, store, context).also { accounts[it] = account }
     }
+
+    private fun cache_context(cache: MutableMap<String, Any?>): Context {
+        val editor = mockk<SharedPreferences.Editor>()
+        every { editor.putBoolean(any(), any()) } answers { cache[firstArg()] = secondArg<Boolean>(); editor }
+        every { editor.putInt(any(), any()) } answers { cache[firstArg()] = secondArg<Int>(); editor }
+        every { editor.putLong(any(), any()) } answers { cache[firstArg()] = secondArg<Long>(); editor }
+        every { editor.putString(any(), any()) } answers { cache[firstArg()] = secondArg<String?>(); editor }
+        every { editor.apply() } just Runs
+        val prefs = mockk<SharedPreferences>()
+        every { prefs.edit() } returns editor
+        every { prefs.getBoolean(any(), any()) } answers { cache[firstArg()] as? Boolean ?: secondArg() }
+        every { prefs.getInt(any(), any()) } answers { cache[firstArg()] as? Int ?: secondArg() }
+        every { prefs.getLong(any(), any()) } answers { cache[firstArg()] as? Long ?: secondArg() }
+        every { prefs.getString(any(), any()) } answers { cache[firstArg()] as? String ?: secondArg() }
+        val context = mockk<Context>()
+        every { context.getSharedPreferences(any(), any()) } returns prefs
+        return context
+    }
+
+    private fun cached_offer(cached_at: Long): MutableMap<String, Any?> = mutableMapOf(
+        "account.available" to true,
+        "account.percent_off" to 50,
+        "account.duration_months" to 12,
+        "account.plan_code" to "nova",
+        "account.cached_at" to cached_at,
+    )
 
     private fun SpecialOfferViewModel.load() {
         accounts.getValue(this).value = "account"
@@ -256,5 +286,99 @@ class SpecialOfferViewModelTest {
 
         assertFalse(vm.state.value.available)
         assertFalse(vm.state.value.auto_show)
+    }
+
+    @Test
+    fun `sign up quiet period hides the offer and blocks the claim`() = runTest {
+        var quiet = true
+        vm.in_quiet_period = { quiet }
+
+        vm.load()
+        advanceUntilIdle()
+        vm.claim_and_open()
+        advanceUntilIdle()
+
+        assertFalse(vm.state.value.available)
+        assertFalse(vm.state.value.auto_show)
+        assertFalse(vm.state.value.is_open)
+        coVerify(exactly = 0) { billing_api.claim_special_offer() }
+
+        quiet = false
+        vm.retry_load()
+        advanceUntilIdle()
+
+        assertTrue(vm.state.value.available)
+        assertTrue(vm.state.value.auto_show)
+    }
+
+    @Test
+    fun `retry after a successful load outside the quiet period does not refetch`() = runTest {
+        vm.load()
+        advanceUntilIdle()
+
+        vm.retry_load()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { billing_api.get_special_offer() }
+    }
+
+    @Test
+    fun `fresh cached offer shows while the first load is in flight`() = runTest {
+        val now = 1_000_000_000L
+        val never = CompletableDeferred<SpecialOfferStatusResponse>()
+        coEvery { billing_api.get_special_offer() } coAnswers { never.await() }
+        val cached_vm = offer_vm(cache_context(cached_offer(now - 60_000L)))
+        cached_vm.now_ms = { now }
+        cached_vm.in_quiet_period = { false }
+
+        cached_vm.load()
+        advanceUntilIdle()
+
+        assertTrue(cached_vm.state.value.available)
+        never.cancel()
+    }
+
+    @Test
+    fun `expired cached offer is ignored`() = runTest {
+        val now = 1_000_000_000L
+        val never = CompletableDeferred<SpecialOfferStatusResponse>()
+        coEvery { billing_api.get_special_offer() } coAnswers { never.await() }
+        val cached_vm = offer_vm(cache_context(cached_offer(now - 13L * 60L * 60L * 1000L)))
+        cached_vm.now_ms = { now }
+        cached_vm.in_quiet_period = { false }
+
+        cached_vm.load()
+        advanceUntilIdle()
+
+        assertFalse(cached_vm.state.value.available)
+        never.cancel()
+    }
+
+    @Test
+    fun `failed first load drops the cached badge`() = runTest {
+        val now = 1_000_000_000L
+        coEvery { billing_api.get_special_offer() } throws java.io.IOException("offline")
+        val cached_vm = offer_vm(cache_context(cached_offer(now - 60_000L)))
+        cached_vm.now_ms = { now }
+        cached_vm.in_quiet_period = { false }
+
+        cached_vm.load()
+        advanceUntilIdle()
+
+        assertFalse(cached_vm.state.value.available)
+    }
+
+    @Test
+    fun `failed refresh after a good load keeps the offer`() = runTest {
+        vm.load()
+        advanceUntilIdle()
+        assertTrue(vm.state.value.available)
+        coEvery { billing_api.get_special_offer() } throws java.io.IOException("offline")
+
+        vm.on_plan_code("free")
+        vm.on_plan_code("nova")
+        advanceUntilIdle()
+
+        assertTrue(vm.state.value.available)
     }
 }

@@ -212,6 +212,9 @@ class BillingViewModel @Inject constructor(
 
     private val conflicted_play_tokens = java.util.Collections.synchronizedSet(mutableSetOf<String>())
 
+    @Volatile
+    private var awaiting_special_offer_product: String? = null
+
     private enum class PlayVerifyResult { Confirmed, Pending, Conflict, Ineligible, Failed }
 
     private fun priced_plans(plans: List<AvailablePlan>, s: BillingUiState = _state.value): List<AvailablePlan> = when {
@@ -235,6 +238,7 @@ class BillingViewModel @Inject constructor(
         play_redeem_force_requested = false
         redeemed_play_tokens.clear()
         conflicted_play_tokens.clear()
+        awaiting_special_offer_product = null
         _state.update {
             val next = it.copy(
                 play_enabled = false,
@@ -641,6 +645,9 @@ class BillingViewModel @Inject constructor(
                         return@launch
                     }
                     refresh_after_play_verify()
+                    if (result == PlayVerifyResult.Pending && request.special_offer) {
+                        awaiting_special_offer_product = request.offer.product_id
+                    }
                     if (result == PlayVerifyResult.Confirmed) {
                         _state.update {
                             it.copy(
@@ -656,9 +663,13 @@ class BillingViewModel @Inject constructor(
                     }
                     finish_play_verify(result, failed_is_error = false, success = success)
                 }
-                PlayPurchaseOutcome.Pending -> finish_play_action(info = R.string.billing_play_pending)
+                PlayPurchaseOutcome.Pending -> {
+                    if (request.special_offer) awaiting_special_offer_product = request.offer.product_id
+                    finish_play_action(info = R.string.billing_play_pending)
+                }
                 PlayPurchaseOutcome.Cancelled -> finish_play_action()
                 PlayPurchaseOutcome.AlreadyOwned -> {
+                    if (request.special_offer) awaiting_special_offer_product = request.offer.product_id
                     finish_play_action(info = R.string.billing_play_already_owned)
                     redeem_play_purchases(force = true)
                 }
@@ -762,9 +773,20 @@ class BillingViewModel @Inject constructor(
         }
         if (candidates.isEmpty()) return
         val before = redeemed_play_tokens.size
+        val unredeemed = candidates.filter { it.purchase_token !in redeemed_play_tokens }.map { it.purchase_token }.toSet()
         verify_play_purchases(candidates, force = force)
         if (generation != play_generation) return
         if (force || redeemed_play_tokens.size > before) refresh_after_play_verify()
+        if (generation != play_generation) return
+        val awaited = awaiting_special_offer_product ?: return
+        val offer_redeemed = candidates.any { purchase ->
+            awaited in purchase.product_ids &&
+                purchase.purchase_token in redeemed_play_tokens &&
+                (force || purchase.purchase_token in unredeemed)
+        }
+        if (!offer_redeemed) return
+        awaiting_special_offer_product = null
+        _state.update { it.copy(play_confirmed_product = awaited, play_confirmed_special_offer = true) }
     }
 
     private fun open_play_subscriptions() {

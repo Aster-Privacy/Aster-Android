@@ -30,14 +30,31 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Discount2
 import org.astermail.android.R
+import org.astermail.android.billing.BillingUiState
+import org.astermail.android.billing.billing_view_model
+import org.astermail.android.billing.play_special_offer_for
+import org.astermail.android.billing.remember_play_install
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.AsterMaterial
+
+internal fun special_offer_play_ready(billing_state: BillingUiState): Boolean =
+    billing_state.play_enabled &&
+        billing_state.play_special_offer_eligible &&
+        play_special_offer_for(billing_state.play_offers, billing_state.play_special_offer) != null
+
+@Composable
+fun special_offer_entry_visible(offer_state: SpecialOfferState): Boolean {
+    if (!offer_state.available) return false
+    if (!remember_play_install()) return true
+    val billing_state by billing_view_model().state.collectAsStateWithLifecycle()
+    return special_offer_play_ready(billing_state)
+}
 
 @Composable
 fun special_offer_header_button() {
     val offer_vm = special_offer_view_model()
     val offer_state by offer_vm.state.collectAsStateWithLifecycle()
-    if (!offer_state.available) return
+    if (!special_offer_entry_visible(offer_state)) return
     AsterIconButton(
         icon = TablerIcons.Discount2,
         content_description = stringResource(R.string.special_offer_entry),

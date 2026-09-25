@@ -451,6 +451,48 @@ class BillingViewModelPlayTest {
     }
 
     @Test
+    fun `a pending special offer purchase confirms the offer once play completes it`() = runTest {
+        use_full_catalog()
+        coEvery { billing_api.get_google_play_config() } returns full_config.copy(special_offer_eligible = true)
+        coEvery { billing_api.verify_google_play_purchase(any()) } returns confirmed.copy(plan_code = "nova")
+        store.outcome = PlayPurchaseOutcome.Pending
+        vm.start_play_special_offer()
+        advanceUntilIdle()
+        vm.launch_play_purchase(mockk(relaxed = true))
+        advanceUntilIdle()
+        assertNull(vm.state.value.play_confirmed_product)
+
+        store.owned = listOf(
+            PlayOwnedPurchase("purchase_offer", listOf("nova"), is_purchased = true, is_pending = false, is_acknowledged = false),
+        )
+        vm.redeem_play_purchases()
+        advanceUntilIdle()
+
+        assertEquals("nova", vm.state.value.play_confirmed_product)
+        assertTrue(vm.state.value.play_confirmed_special_offer)
+    }
+
+    @Test
+    fun `a pending plan purchase never confirms the special offer`() = runTest {
+        use_full_catalog()
+        coEvery { billing_api.get_google_play_config() } returns full_config.copy(special_offer_eligible = true)
+        coEvery { billing_api.verify_google_play_purchase(any()) } returns confirmed.copy(plan_code = "nova")
+        store.outcome = PlayPurchaseOutcome.Pending
+        vm.start_checkout("nova", "month")
+        advanceUntilIdle()
+        vm.launch_play_purchase(mockk(relaxed = true))
+        advanceUntilIdle()
+
+        store.owned = listOf(
+            PlayOwnedPurchase("purchase_plan", listOf("nova"), is_purchased = true, is_pending = false, is_acknowledged = false),
+        )
+        vm.redeem_play_purchases()
+        advanceUntilIdle()
+
+        assertFalse(vm.state.value.play_confirmed_special_offer)
+    }
+
+    @Test
     fun `plan purchases never use the special offer token`() = runTest {
         use_full_catalog()
         coEvery { billing_api.get_google_play_config() } returns full_config.copy(special_offer_eligible = true)

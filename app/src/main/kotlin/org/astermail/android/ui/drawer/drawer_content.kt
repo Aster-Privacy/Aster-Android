@@ -412,7 +412,7 @@ fun DrawerContent(
         val offer_vm = org.astermail.android.ui.upgrade.special_offer_view_model()
         val offer_state by offer_vm.state.collectAsStateWithLifecycle()
         special_offer_drawer_entry(
-            visible = offer_state.available,
+            visible = org.astermail.android.ui.upgrade.special_offer_entry_visible(offer_state),
             percent_off = offer_state.effective_percent_off,
             on_click = {
                 on_close()

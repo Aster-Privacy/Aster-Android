@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.astermail.android.api.billing.BillingApi
 import org.astermail.android.auth.AuthRepository
+import org.astermail.android.ui.auth.within_sign_up_quiet_period
 
 internal const val SPECIAL_OFFER_DEFAULT_PLAN_CODE = "nova"
 internal const val SPECIAL_OFFER_DEFAULT_PERCENT_OFF = 50
@@ -113,6 +114,10 @@ class SpecialOfferViewModel @Inject constructor(
     private var account_job = SupervisorJob(viewModelScope.coroutineContext[Job])
     private var auto_show_suppressed = false
     private var preference_fallback = false
+    private var quiet_blocked = false
+
+    internal var in_quiet_period: () -> Boolean = { within_sign_up_quiet_period(context) }
+    internal var now_ms: () -> Long = System::currentTimeMillis
 
     init {
         viewModelScope.launch {
@@ -154,13 +159,16 @@ class SpecialOfferViewModel @Inject constructor(
         last_plan_code = null
         auto_show_suppressed = false
         preference_fallback = false
+        quiet_blocked = false
         _state.value = if (id != null) cached_state(id) else SpecialOfferState()
         if (id != null) fetch()
     }
 
     private fun cached_state(id: String): SpecialOfferState {
-        if (!offer_preferences.state.value.enabled) return SpecialOfferState()
+        if (!offer_preferences.state.value.enabled || in_quiet_period()) return SpecialOfferState()
         if (!offer_cache.getBoolean("$id.available", false)) return SpecialOfferState()
+        val age_ms = now_ms() - offer_cache.getLong("$id.cached_at", 0L)
+        if (age_ms < 0L || age_ms > OFFER_CACHE_TTL_MS) return SpecialOfferState()
         return SpecialOfferState(
             available = true,
             percent_off = offer_cache.getInt("$id.percent_off", 0),
@@ -177,6 +185,7 @@ class SpecialOfferViewModel @Inject constructor(
             .putInt("$id.percent_off", current.percent_off)
             .putInt("$id.duration_months", current.duration_months)
             .putString("$id.plan_code", current.plan_code)
+            .putLong("$id.cached_at", now_ms())
             .apply()
     }
 
@@ -184,7 +193,8 @@ class SpecialOfferViewModel @Inject constructor(
         viewModelScope.launch(account_job, block = block)
 
     fun retry_load() {
-        if (account_id == null || load_succeeded || load_job?.isActive == true) return
+        if (account_id == null || load_job?.isActive == true) return
+        if (load_succeeded && !(quiet_blocked && !in_quiet_period())) return
         fetch()
     }
 
@@ -209,7 +219,8 @@ class SpecialOfferViewModel @Inject constructor(
                 load_succeeded = true
                 preference_fallback = !preference_loaded
                 if (preference_fallback) auto_show_suppressed = false
-                val enabled = offers_enabled()
+                quiet_blocked = in_quiet_period()
+                val enabled = offers_enabled() && !quiet_blocked
                 _state.update {
                     it.copy(
                         is_loaded = true,
@@ -225,14 +236,20 @@ class SpecialOfferViewModel @Inject constructor(
                 throw cancelled
             } catch (t: Throwable) {
                 if (expected != generation) return@launch_for_account
-                _state.update { it.copy(is_loaded = true, auto_show = false) }
+                _state.update {
+                    it.copy(
+                        is_loaded = true,
+                        available = it.available && load_succeeded,
+                        auto_show = false,
+                    )
+                }
             }
         }
     }
 
     fun claim_and_open() {
         val current = _state.value
-        if (!current.auto_show || current.is_claiming || current.is_open || !offers_enabled()) return
+        if (!current.auto_show || current.is_claiming || current.is_open || !offers_enabled() || in_quiet_period()) return
         val expected = generation
         _state.update { it.copy(is_claiming = true) }
         launch_for_account {
@@ -359,5 +376,6 @@ class SpecialOfferViewModel @Inject constructor(
 }
 
 private const val OFFER_CACHE_PREFS = "special_offer_cache"
+private const val OFFER_CACHE_TTL_MS = 12L * 60L * 60L * 1000L
 private const val DISMISS_ATTEMPTS = 4
 private const val DISMISS_RETRY_MS = 2000L
