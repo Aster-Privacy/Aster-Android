@@ -59,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.launch
 import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
@@ -89,6 +90,8 @@ fun SignatureScreen(
     var creating by remember { mutableStateOf(false) }
     var pending_delete by remember { mutableStateOf<DecryptedSignature?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
+    val save_scope = androidx.compose.runtime.rememberCoroutineScope()
+    var fitting_signature by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.save_status) {
         if (state.save_status == org.astermail.android.settings.SaveStatus.ERROR) {
@@ -110,33 +113,51 @@ fun SignatureScreen(
             aliases = state.aliases,
             all_signatures = signatures,
             on_cancel = { editing = null; creating = false },
-            on_save = { name, content, alias_id, placement, is_html, is_default ->
-                val target = editing
-                if (target != null) {
-                    vm.update_signature(
-                        id = target.id,
-                        name = name,
-                        content = content,
-                        is_html = is_html,
-                        alias_id = alias_id,
-                        placement = placement,
-                        clear_alias = alias_id == null,
-                    )
-                    if (is_default && !target.is_default && alias_id == null) {
-                        vm.set_default_signature(target.id)
+            on_save = save@{ name, raw_content, alias_id, placement, is_html, is_default ->
+                if (fitting_signature) return@save
+                fitting_signature = true
+                save_scope.launch {
+                    val content = if (is_html) {
+                        vm.fit_signature_for_save(raw_content)
+                    } else {
+                        raw_content.takeIf { org.astermail.android.settings.signature_fits(it) }
                     }
-                } else {
-                    vm.create_signature(
-                        name = name,
-                        content = content,
-                        is_default = is_default && alias_id == null,
-                        is_html = is_html,
-                        alias_id = alias_id,
-                        placement = placement,
-                    )
+                    fitting_signature = false
+                    if (content == null) {
+                        android.widget.Toast.makeText(
+                            context,
+                            context.getString(R.string.signature_too_large),
+                            android.widget.Toast.LENGTH_LONG,
+                        ).show()
+                        return@launch
+                    }
+                    val target = editing
+                    if (target != null) {
+                        vm.update_signature(
+                            id = target.id,
+                            name = name,
+                            content = content,
+                            is_html = is_html,
+                            alias_id = alias_id,
+                            placement = placement,
+                            clear_alias = alias_id == null,
+                        )
+                        if (is_default && !target.is_default && alias_id == null) {
+                            vm.set_default_signature(target.id)
+                        }
+                    } else {
+                        vm.create_signature(
+                            name = name,
+                            content = content,
+                            is_default = is_default && alias_id == null,
+                            is_html = is_html,
+                            alias_id = alias_id,
+                            placement = placement,
+                        )
+                    }
+                    editing = null
+                    creating = false
                 }
-                editing = null
-                creating = false
             },
             on_delete = { pending_delete = editing },
         )

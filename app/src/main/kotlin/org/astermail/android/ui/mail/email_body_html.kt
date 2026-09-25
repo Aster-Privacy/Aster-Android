@@ -53,6 +53,7 @@ internal fun build_email_html(
     forwarded_label: String,
     image_failed_label: String,
     force_dark_emails: Boolean,
+    forced_dark_canvas: Boolean = false,
     dyslexia_font: Boolean,
     translate_mode: String,
     email_font_id: String? = null,
@@ -158,8 +159,20 @@ html,body{background-color:#ffffff!important}
     val detail_border = if (simple_dark) "#374151" else "#e5e7eb"
     val detail_color = if (simple_dark) "#9ca3af" else "#6b7280"
 
+    val forced_dark_css = if (force_dark_emails) {
+        forced_dark_mode_css(
+            link_hex,
+            "#4b5563",
+            "#9ca3af",
+            if (forced_dark_canvas) FORCED_DARK_CANVAS else "transparent",
+        )
+    } else {
+        ""
+    }
+    val dark_ready_body = if (force_dark_emails) lighten_dark_email_text(render_body) else render_body
+
     val prepared_body = prepare_email_body(
-        body = render_body,
+        body = dark_ready_body,
         forwarded_label = forwarded_label,
         image_failed_label = image_failed_label,
         is_newsletter = has_newsletter_layout,
@@ -194,8 +207,9 @@ a.aster-email-button,#m a.aster-email-button{white-space:nowrap!important;word-b
 .aster-quoted-content .aster_quote,.aster-quoted-content .gmail_quote,.aster-quoted-content .protonmail_quote,.aster-quoted-content .yahoo_quoted,.aster-quoted-content .moz-cite-prefix,.aster-forwarded-content .aster_quote,.aster-forwarded-content .gmail_quote,.aster-forwarded-content .protonmail_quote{display:block;margin:0;padding:0}
 blockquote{margin:8px 0;padding-left:12px;border-left:2px solid $bq_border;color:$bq_color}
 details.aster-quoted-wrapper{margin-top:18px;margin-bottom:4px}
-.aster-quote-toggle{display:inline-flex;align-items:center;justify-content:center;min-height:${scaled_px(28f)};min-width:${scaled_px(44f)};padding:0 ${scaled_px(16f)};margin:0;border-radius:${scaled_px(14f)};border:none;outline:none;background:${if (chip_dark) "rgba(255,255,255,0.12)" else "rgba(0,0,0,0.08)"};color:${if (chip_dark) "rgba(255,255,255,0.65)" else "rgba(0,0,0,0.55)"};cursor:pointer;font-family:inherit;font-size:1.05em;letter-spacing:0.14em;line-height:1;vertical-align:middle;user-select:none;list-style:none;-webkit-tap-highlight-color:transparent;transition:background 0.12s ease}
+.aster-quote-toggle{display:inline-flex;align-items:center;justify-content:center;min-height:${scaled_px(28f)};min-width:${scaled_px(44f)};padding:0 ${scaled_px(16f)};margin:0;border-radius:${scaled_px(14f)};border:none;outline:none;background:${if (chip_dark) "rgba(255,255,255,0.12)" else "rgba(0,0,0,0.08)"};color:${if (chip_dark) "rgba(255,255,255,0.65)" else "rgba(0,0,0,0.55)"};cursor:pointer;font-family:inherit;font-size:0;letter-spacing:0;line-height:0;vertical-align:middle;user-select:none;list-style:none;-webkit-tap-highlight-color:transparent;transition:background 0.12s ease}
 .aster-quote-toggle::-webkit-details-marker{display:none}
+.aster-quote-toggle::before{content:'';display:block;flex:none;width:${scaled_px(4f)};height:${scaled_px(4f)};border-radius:50%;background:currentColor;box-shadow:${scaled_px(-6.4f)} 0 0 currentColor,${scaled_px(6.4f)} 0 0 currentColor}
 .aster-quote-toggle::marker{content:''}
 .aster-quote-toggle:active,details[open].aster-quoted-wrapper>.aster-quote-toggle{background:${if (chip_dark) "rgba(255,255,255,0.2)" else "rgba(0,0,0,0.16)"}}
 .aster-quoted-content{margin-top:14px;padding-top:14px;border-top:1px solid $detail_border;color:$bq_color;font-family:inherit;font-size:1em;line-height:1.45}
@@ -213,6 +227,7 @@ $user_font_css
 $underline_css
 $dyslexia_css
 $dark_css
+$forced_dark_css
 </style>
 </head><body style="$body_style"><div id="m"${if (seeded_background != null) " style=\"background-color:$seeded_background\"" else ""}>$prepared_body</div>
 </body></html>"""

@@ -137,6 +137,7 @@ import org.astermail.android.ui.settings.detail.AboutScreen
 import org.astermail.android.ui.settings.detail.AccessibilityScreen
 import org.astermail.android.ui.settings.detail.ApiKeysScreen
 import org.astermail.android.ui.settings.detail.ConnectionScreen
+import org.astermail.android.ui.settings.detail.DefaultSenderScreen
 import org.astermail.android.ui.settings.detail.SmtpTokensScreen
 import org.astermail.android.ui.settings.detail.DeveloperScreen
 import org.astermail.android.ui.settings.detail.FamilyScreen
@@ -167,10 +168,9 @@ import org.astermail.android.ui.settings.detail.ChangePasswordScreen
 import org.astermail.android.ui.settings.detail.DeleteAccountScreen
 import org.astermail.android.ui.settings.detail.DiagnosticsScreen
 import org.astermail.android.ui.settings.detail.EncryptionScreen
-import org.astermail.android.ui.settings.detail.ExportScreen
-import org.astermail.android.ui.settings.detail.ExternalAccountsScreen
 import org.astermail.android.ui.settings.detail.FeedbackScreen
-import org.astermail.android.ui.settings.detail.ImportScreen
+import org.astermail.android.ui.settings.detail.ImportGroupScreen
+import org.astermail.android.ui.settings.detail.import_group_tab_for_route
 import org.astermail.android.ui.settings.detail.NotificationsScreen
 import org.astermail.android.ui.settings.detail.ProfileScreen
 import org.astermail.android.ui.settings.detail.RecoveryCodesScreen
@@ -482,6 +482,7 @@ private object routes {
     const val contact_edit = "contact_edit/{contact_id}"
 
     const val domain_order = "domain_order/{order_id}"
+    const val domain_bimi = "settings_domain_bimi/{domain_id}"
 
     fun mail_detail_for(email_id: String) = "mail_detail/" + java.net.URLEncoder.encode(email_id, "UTF-8")
     fun settings_detail(id: String) = "settings_$id"
@@ -496,6 +497,8 @@ private object routes {
         "settings_accessibility?focus=" +
             org.astermail.android.ui.settings.detail.SETTINGS_FOCUS_LOW_NETWORK
     fun domain_order_for(order_id: String) = "domain_order/$order_id"
+    fun domain_bimi_for(domain_id: String) =
+        "settings_domain_bimi/" + java.net.URLEncoder.encode(domain_id, "UTF-8")
     fun contact_detail_for(contact_id: String) = "contact_detail/$contact_id"
     fun contact_edit_for(contact_id: String) = "contact_edit/$contact_id"
 }
@@ -550,6 +553,7 @@ private fun AsterNavHost() {
     val notification_prompt_route by nav_controller.currentBackStackEntryAsState()
     request_notification_permission(
         should_request = is_signed_in_state && !is_locked &&
+            notification_prompt_route != null &&
             notification_prompt_route?.destination?.route != routes.register,
     )
     val context = LocalContext.current
@@ -777,7 +781,7 @@ private fun AsterNavHost() {
                     mark_signed_up_now(context)
                     theme_vm.mark_first_run(setup_pending = false)
                     nav_controller.navigate(routes.inbox) {
-                        popUpTo(routes.welcome) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                     }
                     if (destination != null) {
                         nav_controller.navigate(routes.settings_detail(destination))
@@ -829,6 +833,12 @@ private fun AsterNavHost() {
             val email_id = entry.arguments?.getString("email_id").orEmpty()
             val inbox_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
+            }
+            val returns_to_inbox = remember(entry) {
+                nav_controller.previousBackStackEntry?.destination?.route == routes.inbox
+            }
+            androidx.compose.runtime.LaunchedEffect(entry, returns_to_inbox) {
+                if (returns_to_inbox) org.astermail.android.design.components.arm_menu_back_return_morph()
             }
             val shared_mail_vm: org.astermail.android.mail.MailViewModel =
                 if (inbox_entry != null) hiltViewModel(inbox_entry) else hiltViewModel()
@@ -1215,6 +1225,9 @@ private fun AsterNavHost() {
                 on_open = open_detail,
             )
         }
+        composable(routes.settings_detail("default_sender")) {
+            DefaultSenderScreen(on_back = { back(); Unit })
+        }
         composable(routes.settings_detail("signature")) {
             SignatureScreen(on_back = { back(); Unit }, on_open = open_detail)
         }
@@ -1324,6 +1337,17 @@ private fun AsterNavHost() {
                 on_back = { back(); Unit },
                 on_open_buy_domain = { nav_controller.navigate(routes.settings_detail("buy_domain")) },
                 on_open_domain_order = { id -> nav_controller.navigate(routes.domain_order_for(id)) },
+                on_open_bimi = { id -> nav_controller.navigate(routes.domain_bimi_for(id)) { launchSingleTop = true } },
+            )
+        }
+        composable(
+            route = routes.domain_bimi,
+            arguments = listOf(navArgument("domain_id") { type = NavType.StringType }),
+        ) { entry ->
+            val domain_id = entry.arguments?.getString("domain_id").orEmpty()
+            org.astermail.android.ui.settings.detail.bimi.bimi_setup_screen(
+                domain_id = domain_id,
+                on_back = { back(); Unit },
             )
         }
         composable(routes.settings_detail("buy_domain")) {
@@ -1407,10 +1431,14 @@ private fun AsterNavHost() {
             VacationReplyScreen(on_back = { back(); Unit }, on_open = open_detail)
         }
         composable(routes.settings_detail("import")) {
-            ImportScreen(on_back = { back(); Unit }, on_open = open_detail)
+            ImportGroupScreen(on_back = { back(); Unit }, on_open = open_detail)
         }
         composable(routes.settings_detail("export")) {
-            ExportScreen(on_back = { back(); Unit })
+            ImportGroupScreen(
+                on_back = { back(); Unit },
+                on_open = open_detail,
+                initial_tab = import_group_tab_for_route("export"),
+            )
         }
         composable(routes.settings_detail("diagnostics")) {
             DiagnosticsScreen(on_back = { back(); Unit })
@@ -1486,12 +1514,17 @@ private fun AsterNavHost() {
             FeedbackScreen(on_back = { back(); Unit })
         }
         composable(routes.settings_detail("external_accounts")) {
-            ExternalAccountsScreen(on_back = { back(); Unit }, on_open = open_detail)
-        }
-        composable(routes.settings_detail("external_accounts_gmail")) {
-            ExternalAccountsScreen(
+            ImportGroupScreen(
                 on_back = { back(); Unit },
                 on_open = open_detail,
+                initial_tab = import_group_tab_for_route("external_accounts"),
+            )
+        }
+        composable(routes.settings_detail("external_accounts_gmail")) {
+            ImportGroupScreen(
+                on_back = { back(); Unit },
+                on_open = open_detail,
+                initial_tab = import_group_tab_for_route("external_accounts_gmail"),
                 start_gmail_wizard = true,
             )
         }
@@ -1657,6 +1690,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         settings_vm.load_custom_domain_addresses()
         settings_vm.load_ghost_aliases()
         settings_vm.load_preferences()
+        settings_vm.load_signature()
         mail_vm.load_stats()
     }
 
@@ -1762,9 +1796,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     val category_unread = androidx.compose.runtime.remember(
         inbox_state.items,
         inbox_state.current_folder,
+        inbox_state.has_more,
         active_category_tabs,
     ) {
-        if (inbox_state.current_folder == "inbox") {
+        if (inbox_state.current_folder == "inbox" && !inbox_state.has_more) {
             org.astermail.android.mail.category_unread_counts(inbox_state.items, active_category_tabs)
         } else {
             emptyMap()
@@ -2133,6 +2168,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 },
                 inbox_unread = stats?.unread ?: 0,
                 drafts_count = stats?.drafts ?: 0,
+                scheduled_count = stats?.scheduled ?: 0,
+                snoozed_count = stats?.snoozed ?: 0,
                 spam_count = stats?.spam ?: 0,
                 trash_count = stats?.trash ?: 0,
                 categories_enabled = categories_enabled,
@@ -2162,6 +2199,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         accounts_vm.switch_account(account.id) { restored ->
                             if (restored) {
                                 settings_vm.load_preferences()
+                                settings_vm.load_signature()
                                 selected_folder = "inbox"
                                 filter_kind = null
                                 nav_controller.navigate(routes.inbox) {
@@ -2283,6 +2321,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             mail_vm.reset_for_account_switch()
                             settings_vm.reset_for_account_switch()
                             settings_vm.load_preferences()
+                            settings_vm.load_signature()
                             selected_folder = "inbox"
                             filter_kind = null
                             nav_controller.navigate(routes.inbox) {

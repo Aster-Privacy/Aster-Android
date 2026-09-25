@@ -68,6 +68,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -927,8 +928,14 @@ internal fun theme_swatch(
     on_click: () -> Unit,
     modifier: Modifier = Modifier,
     locked: Boolean = false,
+    label_color: Color = Color.Unspecified,
+    selected_label_color: Color = Color.Unspecified,
+    ring_gap_color: Color = Color.Unspecified,
+    accent_color: Color = Color.Unspecified,
+    on_accent_color: Color = Color.Unspecified,
 ) {
     val colors = AsterMaterial.colors
+    val ring = accent_color.takeOrElse { colors.accent_blue }
     Column(
         modifier = modifier.clickable(onClick = on_click),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -938,7 +945,7 @@ internal fun theme_swatch(
                 .size(66.dp)
                 .border(
                     width = if (selected) 2.dp else 0.dp,
-                    color = if (selected) colors.accent_blue else Color.Transparent,
+                    color = if (selected) ring else Color.Transparent,
                     shape = CircleShape,
                 )
                 .padding(5.dp),
@@ -973,14 +980,14 @@ internal fun theme_swatch(
                         .align(Alignment.BottomEnd)
                         .offset(x = 3.dp, y = 3.dp)
                         .size(23.dp)
-                        .background(colors.accent_blue, CircleShape)
-                        .border(2.dp, colors.bg_card, CircleShape),
+                        .background(ring, CircleShape)
+                        .border(2.dp, ring_gap_color.takeOrElse { colors.bg_card }, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = TablerIcons.Check,
                         contentDescription = null,
-                        tint = colors.on_accent,
+                        tint = on_accent_color.takeOrElse { colors.on_accent },
                         modifier = Modifier.size(14.dp),
                     )
                 }
@@ -989,7 +996,11 @@ internal fun theme_swatch(
         Spacer(Modifier.height(8.dp))
         Text(
             text = label,
-            color = if (selected) colors.text_primary else colors.text_secondary,
+            color = if (selected) {
+                selected_label_color.takeOrElse { colors.text_primary }
+            } else {
+                label_color.takeOrElse { colors.text_secondary }
+            },
             fontSize = 12.sp,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
             maxLines = 1,
@@ -1080,42 +1091,12 @@ private fun compose_choice_row(
     test_tag: String,
     on_click: () -> Unit,
 ) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = on_click)
-            .testTag(test_tag)
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(20.dp)
-                .border(
-                    width = 2.dp,
-                    color = if (selected) colors.accent_blue else colors.border_primary,
-                    shape = CircleShape,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (selected) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .background(colors.accent_blue, CircleShape),
-                )
-            }
-        }
-        Spacer(Modifier.width(AsterSpacing.md))
-        Text(
-            text = label,
-            color = colors.text_primary,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.weight(1f),
-        )
-    }
+    choice_option_row(
+        label = label,
+        selected = selected,
+        test_tag = test_tag,
+        on_click = on_click,
+    )
 }
 
 @Composable
@@ -1125,38 +1106,10 @@ private fun theme_option_row(
     selected: Boolean,
     on_click: () -> Unit,
 ) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = on_click)
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(20.dp)
-                .border(
-                    width = 2.dp,
-                    color = if (selected) colors.accent_blue else colors.border_primary,
-                    shape = CircleShape,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (selected) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .background(colors.accent_blue, CircleShape),
-                )
-            }
-        }
-        Spacer(Modifier.width(AsterSpacing.md))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, color = colors.text_primary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-            if (subtitle.isNotBlank()) {
-                Text(text = subtitle, color = colors.text_tertiary, fontSize = 13.sp)
-            }
-        }
-    }
+    choice_option_row(
+        label = title,
+        selected = selected,
+        subtitle = subtitle.ifBlank { null },
+        on_click = on_click,
+    )
 }

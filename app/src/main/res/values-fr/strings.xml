@@ -1380,9 +1380,19 @@
     <string name="scan_complete">Analyse terminée</string>
     <string name="current_password_incorrect">Le mot de passe actuel est incorrect</string>
     <string name="password_change_background_reencrypt_failed">Votre mot de passe a changé. Aster Mail rechiffre encore une partie de vos messages envoyés et termine en arrière-plan.</string>
+    <string name="locked_data_banner_message">Certaines de vos anciennes données chiffrées sont verrouillées.</string>
+    <string name="locked_data_banner_action">Récupérer les données</string>
+    <string name="locked_data_banner_dismiss">Ignorer</string>
+    <string name="recover_data_title">Récupérer les données</string>
+    <string name="recover_data_description">Pour déverrouiller les données antérieures à un changement ou à une réinitialisation du mot de passe, saisissez le mot de passe que vous utilisiez à ce moment-là.</string>
+    <string name="recover_data_previous_password">Ancien mot de passe</string>
+    <string name="recover_data_button">Récupérer</string>
+    <string name="recover_data_success">Vos anciennes données sont déverrouillées.</string>
+    <string name="recover_data_no_match">Ce mot de passe n\'a déverrouillé aucune donnée. Essayez un autre ancien mot de passe.</string>
+    <string name="recover_data_failed">Certaines données n\'ont pas pu être déverrouillées. Vérifiez votre connexion et réessayez.</string>
     <plurals name="password_change_sent_mail_locked">
-        <item quantity="one">Votre mot de passe a changé. %1$d messages envoyés ont été chiffrés avec un ancien mot de passe et restent verrouillés.</item>
-        <item quantity="other">Votre mot de passe a changé. %1$d messages envoyés ont été chiffrés avec un ancien mot de passe et restent verrouillés.</item>
+        <item quantity="one">Votre mot de passe a changé. %1$d messages envoyés ont été chiffrés avec un ancien mot de passe et restent verrouillés. Pour les déverrouiller, touchez Récupérer les données dans la bannière en haut de votre boîte de réception.</item>
+        <item quantity="other">Votre mot de passe a changé. %1$d messages envoyés ont été chiffrés avec un ancien mot de passe et restent verrouillés. Pour les déverrouiller, touchez Récupérer les données dans la bannière en haut de votre boîte de réception.</item>
     </plurals>
     <string name="compose_email_hint">Composer un e-mail</string>
     <string name="snooze_later_today">Plus tard aujourd\'hui</string>
@@ -1425,7 +1435,7 @@
     <string name="totp_passkey_subtitle">Confirmez avec la clé d’accès ou la clé de sécurité enregistrée pour ce compte</string>
     <string name="totp_passkey_button">Continuer avec une clé d’accès</string>
     <string name="totp_use_passkey">Utiliser une clé d’accès</string>
-    <string name="totp_backup_code_hint">Un code de secours comporte 8 caractères et provient de la configuration de votre application d’authentification. Un code de récupération commençant par ASTER restaure votre boîte mail et ne fonctionne pas ici.</string>
+    <string name="totp_backup_code_hint">Utilisez l’un des codes de secours enregistrés lors de la configuration de votre application d’authentification. Un code de récupération commençant par ASTER restaure votre boîte mail et ne fonctionne pas ici.</string>
     <string name="totp_trust_device">Faire confiance à cet appareil pendant 30 jours</string>
     <string name="failed_block_sender">Impossible de bloquer l\'expéditeur</string>
     <string name="failed_unblock_sender">Impossible de débloquer l\'expéditeur</string>
@@ -1512,6 +1522,10 @@
     <string name="section_advanced">Avancé</string>
     <string name="developer_mode_subtitle_behavior">Afficher l\'onglet Développeur avec les infos de build, l\'état crypto et les outils de débogage</string>
     <string name="auto_save_recipients_subtitle">Ajouter automatiquement les adresses auxquelles vous envoyez comme contacts</string>
+    <string name="reply_include_quoted">Inclure le texte cité</string>
+    <string name="reply_include_quoted_subtitle">Chaque réponse commence par le message d\'origine cité sous votre texte</string>
+    <string name="reply_prefix_subject">Ajouter Rép. : à l\'objet</string>
+    <string name="reply_prefix_subject_subtitle">Place Rép. : devant l\'objet d\'origine lorsque vous répondez</string>
 
     <!-- Security screen -->
     <string name="section_account_protection">Protection du compte</string>
@@ -1522,7 +1536,7 @@
     <string name="login_alerts_info_title">Alertes de connexion</string>
     <string name="login_alerts_info_desc">Vous envoie un e-mail chaque fois que votre compte est connecté depuis un nouvel appareil ou emplacement. Utile pour détecter rapidement les accès non autorisés.</string>
     <string name="passkeys_security_keys">Clés d\'accès &amp; clés de sécurité</string>
-    <string name="passkeys_none_subtitle">Aucune clé enregistrée. Enregistrez-en une sur ordinateur.</string>
+    <string name="passkeys_none_subtitle">Aucune clé d\'accès pour le moment</string>
     <string name="section_trusted_devices">Appareils de confiance</string>
     <string name="no_trusted_devices">Aucun appareil de confiance</string>
     <string name="no_trusted_devices_subtitle">Les appareils que vous approuvez pour contourner la 2FA apparaîtront ici</string>
@@ -2055,7 +2069,7 @@
     <string name="pick_template">Choisir un modèle</string>
     <string name="plan_desc_free">Tout ce dont vous avez besoin pour commencer avec un e-mail privé et chiffré.</string>
     <string name="plan_desc_nova">Plus de stockage, des domaines personnalisés et des alias illimités.</string>
-    <string name="plan_desc_star">Plus de stockage, plus d\'alias et votre premier domaine personnalisé.</string>
+    <string name="plan_desc_star">Plus de stockage, plus d\'alias et jusqu\'à 5 domaines personnalisés.</string>
     <string name="plan_desc_supernova">Stockage maximum, les limites les plus élevées et un support dédié.</string>
     <string name="plan_features_format_v2">%1$s stockage  -  %2$s  -  %3$s</string>
     <string name="plan_name_nova">Nova</string>
@@ -2117,7 +2131,7 @@
     <string name="storage_format_aster">Serveur Aster</string>
     <string name="storage_format_aster_sub">Stockage chiffré par défaut</string>
     <string name="storage_format_ipfs">IPFS</string>
-    <string name="storage_format_ipfs_sub">Stockage décentralisé</string>
+    <string name="storage_format_ipfs_sub">Stockage privé sur les serveurs d\'Aster</string>
     <string name="storage_locked_bounce_warning">Rejet permanent dans %1$s.</string>
     <string name="storage_locked_description">Le courrier entrant sera rejeté jusqu\'à ce que vous libériez de l\'espace ou ajoutiez du stockage.</string>
     <string name="storage_locked_title">Le stockage est plein</string>
@@ -3154,19 +3168,6 @@
     <string name="twin_address_reserved_description">%1$s est réservée à votre compte, donc personne d’autre ne peut l’enregistrer. Créez-la comme alias quand vous voulez envoyer et recevoir avec elle.</string>
     <string name="twin_address_available_description">%1$s est l’adresse correspondante sur l’autre domaine Aster. Créez-la comme alias pour envoyer et recevoir avec elle.</string>
     <string name="twin_address_create">Créer un alias</string>
-    <string name="recover_older_data_title">Récupérer les données antérieures</string>
-    <string name="recover_older_data_desc">Ce compte a été réinitialisé. Si vous vous souvenez du mot de passe utilisé avant la réinitialisation, vos données chiffrées antérieures peuvent être déverrouillées et récupérées.</string>
-    <string name="recover_older_data_button">Déverrouiller les données antérieures</string>
-    <string name="resurrection_old_password">Ancien mot de passe</string>
-    <string name="resurrection_old_password_prompt">Saisissez le mot de passe utilisé avant la réinitialisation</string>
-    <string name="resurrection_success">Vos données antérieures sont déverrouillées. Les messages et alias précédents s\'ouvrent de nouveau normalement.</string>
-    <string name="resurrection_failed">Cela n\'a pas déverrouillé les données antérieures. Vérifiez le mot de passe ou la phrase, puis réessayez.</string>
-    <string name="discard_older_data_button">Abandonner les données antérieures</string>
-    <string name="discard_older_data_title">Abandonner les données antérieures ?</string>
-    <string name="discard_older_data_desc">Cette action supprime définitivement la possibilité de déverrouiller les e-mails et les alias antérieurs à la réinitialisation. Vous ne pouvez pas annuler cette action.</string>
-    <string name="discard_older_data_confirm">Abandonner</string>
-    <string name="discard_older_data_success">Données antérieures abandonnées.</string>
-    <string name="discard_older_data_failed">Impossible d\'abandonner les données antérieures. Réessayez.</string>
     <string name="encrypted_pgp">Chiffré de bout en bout (OpenPGP)</string>
     <string name="pgp_signature_label">Signature numérique</string>
     <string name="pgp_signature_none">Non signé</string>
@@ -3458,6 +3459,7 @@
     <string name="profile_menu_greeting_comma">,</string>
     <string name="profile_menu_manage_account">Paramètres du compte</string>
     <string name="profile_menu_add_another_account">Ajouter un autre compte</string>
+    <string name="profile_menu_resubscribe">Se réabonner à Aster</string>
     <string name="profile_menu_sign_out_all">Se déconnecter de tous les comptes</string>
     <string name="profile_menu_session_expired">Session expirée</string>
     <string name="profile_menu_default_account">Par défaut</string>
@@ -3550,4 +3552,22 @@
     <string name="address_change_send_failed">Aster Mail n\'a pas pu envoyer le code. Réessayez dans un instant.</string>
     <string name="address_change_invalid_address">Cette adresse n\'est pas valide.</string>
     <string name="address_change_locked_custom_domain">Les adresses de votre propre domaine ne peuvent pas être modifiées ici.</string>
+    <string name="settings_default_sender">Expéditeur par défaut</string>
+    <string name="default_sender_description">Les nouveaux messages partent de cette adresse. Les réponses utilisent l’adresse à laquelle le message a été envoyé.</string>
+    <string name="default_sender_no_addresses">Aucune autre adresse</string>
+    <string name="default_sender_primary_note">Votre adresse principale</string>
+    <string name="passkey_add">Ajouter une clé d\'accès</string>
+    <string name="passkey_add_subtitle">Connectez-vous avec votre empreinte, votre visage ou le verrouillage de l\'écran</string>
+    <string name="passkey_adding">Ajout de la clé d\'accès…</string>
+    <string name="passkey_default_name">Clé d\'accès (%1$s)</string>
+    <string name="passkey_added">Clé d\'accès ajoutée</string>
+    <string name="passkey_added_sessions_revoked">Clé d\'accès ajoutée. Vous êtes déconnecté de vos autres appareils.</string>
+    <string name="passkey_added_second_step_only">Clé d\'accès ajoutée. Utilisez-la comme deuxième étape lorsque vous vous connectez avec votre mot de passe.</string>
+    <string name="passkey_already_registered">Cette clé d\'accès est déjà enregistrée dans votre compte.</string>
+    <string name="passkey_create_unavailable">Cet appareil ne peut pas enregistrer de clés d\'accès. Vérifiez que le verrouillage de l\'écran est activé et qu\'un gestionnaire de mots de passe est configuré.</string>
+    <string name="passkey_create_failed">Impossible d\'ajouter la clé d\'accès. Réessayez.</string>
+    <string name="error_passkey_timed_out">La demande de clé d\'accès a expiré. Réessayez.</string>
+    <string name="expiry_password_internal_removed">Les destinataires Aster ouvrent les e-mails éphémères sans mot de passe, le mot de passe a donc été retiré. Pour envoyer le message, touchez à nouveau Envoyer.</string>
+    <string name="expiring_requires_secure_message">Lorsque Chiffrement obligatoire est activé, vous ne pouvez pas envoyer d\'e-mails éphémères à des adresses externes depuis cette app. Pour envoyer, retirez l\'expiration ou désactivez Chiffrement obligatoire.</string>
+    <string name="signature_too_large">Cette signature est trop volumineuse pour être enregistrée. Pour l\'enregistrer, retirez une image ou raccourcissez le texte.</string>
 </resources>

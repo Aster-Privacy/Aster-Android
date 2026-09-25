@@ -45,6 +45,7 @@ object SentMailResealCrypto {
     private const val SALT_LENGTH = 16
     private const val NONCE_LENGTH = 12
     private const val PBKDF2_ITERATIONS = 310000
+    private const val PGP_MESSAGE_HEADER = "-----BEGIN PGP MESSAGE-----"
     private val INLINE_SENTINEL = byteArrayOf(1)
     private val random = SecureRandom()
 
@@ -81,6 +82,18 @@ object SentMailResealCrypto {
         } finally {
             key.fill(0)
         }
+    }
+
+    fun is_pgp_armored_b64(sealed_b64: String?): Boolean {
+        if (sealed_b64.isNullOrBlank()) return false
+        val decoded = runCatching { Base64.getDecoder().decode(sealed_b64.trim()) }.getOrNull() ?: return false
+        return String(decoded, Charsets.UTF_8).trimStart().startsWith(PGP_MESSAGE_HEADER)
+    }
+
+    fun opens_with(sealed_b64: String, passphrase: ByteArray): Boolean {
+        val plaintext = open(sealed_b64, passphrase) ?: return false
+        plaintext.fill(0)
+        return true
     }
 
     fun placeholder_meta_nonce_b64(existing_b64: String?): String {
@@ -147,7 +160,7 @@ class SentMailResealer @Inject constructor(
         if (sealed.isNullOrBlank() || !SentMailResealCrypto.is_sentinel_nonce(item.envelope_nonce)) return Outcome.SKIPPED
         val plaintext = SentMailResealCrypto.open(sealed, old_passphrase)
         if (plaintext == null) {
-            return if (SentMailResealCrypto.open(sealed, new_passphrase) != null) Outcome.SKIPPED else Outcome.UNREADABLE
+            return if (SentMailResealCrypto.opens_with(sealed, new_passphrase)) Outcome.SKIPPED else Outcome.UNREADABLE
         }
         val resealed = try {
             SentMailResealCrypto.seal(plaintext, new_passphrase)
@@ -176,7 +189,12 @@ class SentMailResealer @Inject constructor(
         return try {
             val attachments = mail_api.list_attachments(item_id).attachments
             for (attachment in attachments) {
-                val plaintext = SentMailResealCrypto.open(attachment.encrypted_meta, old_passphrase) ?: return false
+                if (SentMailResealCrypto.is_pgp_armored_b64(attachment.encrypted_meta)) continue
+                val plaintext = SentMailResealCrypto.open(attachment.encrypted_meta, old_passphrase)
+                if (plaintext == null) {
+                    if (SentMailResealCrypto.opens_with(attachment.encrypted_meta, new_passphrase)) continue
+                    return false
+                }
                 val resealed = try {
                     SentMailResealCrypto.seal(plaintext, new_passphrase)
                 } finally {

@@ -242,4 +242,14 @@ class FolderRowCacheTest {
             ),
         )
     }
+
+    @Test
+    fun `layout signature is stable and tracks every layout input`() {
+        val base = folder_cache_layout_signature(grouping = true, list_order = null, custom_categories = 0)
+        assertEquals(base, folder_cache_layout_signature(grouping = true, list_order = null, custom_categories = 0))
+        assertEquals(base, folder_cache_layout_signature(grouping = true, list_order = "desc", custom_categories = 0))
+        assertTrue(base != folder_cache_layout_signature(grouping = false, list_order = null, custom_categories = 0))
+        assertTrue(base != folder_cache_layout_signature(grouping = true, list_order = "asc", custom_categories = 0))
+        assertTrue(base != folder_cache_layout_signature(grouping = true, list_order = null, custom_categories = 1))
+    }
 }

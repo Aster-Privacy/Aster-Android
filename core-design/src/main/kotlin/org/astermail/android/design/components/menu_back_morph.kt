@@ -21,15 +21,55 @@
 
 package org.astermail.android.design.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.util.lerp
+import org.astermail.android.design.aster_reduce_motion
 
 private const val morph_grid = 24f
+
+const val menu_back_morph_ms = 320
+
+private var menu_back_return_armed = false
+
+fun arm_menu_back_return_morph() {
+    menu_back_return_armed = true
+}
+
+@Composable
+fun menu_back_return_morph_icon(
+    tint: Color,
+    modifier: Modifier = Modifier,
+) {
+    val reduce_motion = aster_reduce_motion()
+    val morph = remember { Animatable(if (menu_back_return_armed) 1f else 0f) }
+    LaunchedEffect(Unit) {
+        if (morph.value > 0f) {
+            if (reduce_motion) {
+                morph.snapTo(0f)
+            } else {
+                morph.animateTo(
+                    targetValue = 0f,
+                    animationSpec = tween(
+                        durationMillis = menu_back_morph_ms,
+                        easing = FastOutSlowInEasing,
+                    ),
+                )
+            }
+        }
+        menu_back_return_armed = false
+    }
+    menu_back_morph_icon(progress = morph.value, tint = tint, modifier = modifier)
+}
 
 @Composable
 fun menu_back_morph_icon(

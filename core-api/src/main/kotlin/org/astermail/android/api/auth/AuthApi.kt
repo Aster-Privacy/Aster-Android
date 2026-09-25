@@ -339,7 +339,7 @@ class AuthApiImpl(private val client: ApiClient) : AuthApi {
         return second_factor_outcome(response)
     }
 
-    private fun webauthn_origin(): String = client.base_url.trimEnd('/')
+    private fun webauthn_origin(): String = client.webauthn_origin.trimEnd('/')
 
     private suspend fun post_second_factor(path: String, request: TotpLoginVerifyRequest): TotpVerifyOutcome {
         val response = client.http.post("${client.base_url}$path") {

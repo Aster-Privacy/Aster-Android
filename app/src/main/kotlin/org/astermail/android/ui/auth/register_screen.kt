@@ -48,7 +48,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import org.astermail.android.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.auth.AuthUiState
@@ -92,6 +94,9 @@ fun RegisterScreen(
     }
 
     LaunchedEffect(Unit) {
+        if (state.step.value == RegisterStep.recovery_key && recovery_codes == null) {
+            state.step.value = RegisterStep.recovery_email
+        }
         val orphaned_generating = state.step.value == RegisterStep.generating &&
             auth_state !is AuthUiState.Loading &&
             recovery_codes == null
@@ -104,7 +109,8 @@ fun RegisterScreen(
 
     val is_loading = auth_state is AuthUiState.Loading
     val error_message = (auth_state as? AuthUiState.Error)?.message
-    val can_go_back = state.step.value == RegisterStep.email || state.step.value == RegisterStep.password
+    val previous_step = previous_register_step(state.step.value)
+    val can_go_back = state.step.value == RegisterStep.email || previous_step != null
 
     val handle_back: () -> Unit = {
         when (state.step.value) {
@@ -113,12 +119,12 @@ fun RegisterScreen(
                 view_model.reset_state()
                 state.step.value = RegisterStep.email
             }
-            else -> { }
+            else -> previous_register_step(state.step.value)?.let { state.step.value = it }
         }
     }
 
-    BackHandler(enabled = can_go_back) { handle_back() }
-    BackHandler(enabled = !can_go_back) { }
+    BackHandler(enabled = can_go_back && !is_loading) { handle_back() }
+    BackHandler(enabled = !can_go_back || is_loading) { }
 
     Box(
         modifier = Modifier
@@ -131,7 +137,7 @@ fun RegisterScreen(
             register_progress_header(
                 step = state.step.value,
                 on_back = handle_back,
-                show_back = can_go_back,
+                show_back = can_go_back && !is_loading,
             )
 
             Box(modifier = Modifier.fillMaxWidth().fillMaxHeight()) {
@@ -158,6 +164,7 @@ fun RegisterScreen(
                                 state.confirm_password.value,
                                 state.captcha_token.value,
                                 state.remember_me.value,
+                                state.display_name.value.trim().takeIf { it.isNotEmpty() },
                             )
                         },
                         on_sign_in = on_sign_in,
@@ -181,9 +188,15 @@ fun RegisterScreen(
                         error_message = recovery_email_error,
                         is_saving = is_saving_recovery_email,
                         on_continue = {
-                            view_model.save_recovery_email(state.recovery_email.value.trim()) {
-                                state.recovery_email_saved.value = true
+                            val recovery_email = state.recovery_email.value.trim()
+                            if (recovery_email == state.saved_recovery_email.value) {
+                                view_model.clear_recovery_email_error()
                                 state.step.value = RegisterStep.notifications
+                            } else {
+                                view_model.save_recovery_email(recovery_email) {
+                                    state.saved_recovery_email.value = recovery_email
+                                    state.step.value = RegisterStep.notifications
+                                }
                             }
                         },
                         on_skip = {
@@ -244,7 +257,7 @@ private fun register_progress_header(
             AsterIconButton(
                 icon = TablerIcons.ArrowLeft,
                 auto_mirror = true,
-                content_description = null,
+                content_description = stringResource(R.string.back),
                 onClick = on_back,
                 tint = colors.text_primary,
                 icon_size = 26,

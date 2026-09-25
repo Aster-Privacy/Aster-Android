@@ -24,6 +24,7 @@ package org.astermail.android.api.recovery
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
@@ -216,6 +217,38 @@ data class ConsumeInactiveKeySetResponse(
     val success: Boolean,
 )
 
+@Serializable
+data class PutDeviceSecretRequest(
+    val snapshot_id: String,
+    val secret: String,
+)
+
+@Serializable
+data class PutDeviceSecretResponse(
+    val success: Boolean = false,
+)
+
+@Serializable
+data class FetchDeviceSecretsRequest(
+    val snapshot_ids: List<String>,
+)
+
+@Serializable
+data class DeleteDeviceSecretsRequest(
+    val snapshot_ids: List<String>,
+)
+
+@Serializable
+data class DeviceSecretEntry(
+    val snapshot_id: String,
+    val secret: String,
+)
+
+@Serializable
+data class DeviceSecretsResponse(
+    val secrets: List<DeviceSecretEntry> = emptyList(),
+)
+
 interface RecoveryApi {
     suspend fun initiate(request: InitiateRecoveryRequest): InitiateRecoveryResponse
     suspend fun initiate_email(request: InitiateEmailRecoveryRequest): InitiateEmailRecoveryResponse
@@ -228,6 +261,9 @@ interface RecoveryApi {
     suspend fun list_inactive_key_sets(): ListInactiveKeySetsResponse
     suspend fun fetch_inactive_key_set(request: FetchInactiveKeySetRequest): FetchInactiveKeySetResponse
     suspend fun consume_inactive_key_set(request: ConsumeInactiveKeySetRequest): ConsumeInactiveKeySetResponse
+    suspend fun put_device_recovery_secret(request: PutDeviceSecretRequest): PutDeviceSecretResponse
+    suspend fun fetch_device_recovery_secrets(request: FetchDeviceSecretsRequest): DeviceSecretsResponse
+    suspend fun delete_device_recovery_secrets(request: DeleteDeviceSecretsRequest): PutDeviceSecretResponse
 }
 
 class RecoveryApiImpl(private val client: ApiClient) : RecoveryApi {
@@ -312,6 +348,36 @@ class RecoveryApiImpl(private val client: ApiClient) : RecoveryApi {
         request: ConsumeInactiveKeySetRequest,
     ): ConsumeInactiveKeySetResponse {
         val response = client.http.post("${client.base_url}$base/inactive/consume") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun put_device_recovery_secret(
+        request: PutDeviceSecretRequest,
+    ): PutDeviceSecretResponse {
+        val response = client.http.put("${client.base_url}$base/device-secrets") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun fetch_device_recovery_secrets(
+        request: FetchDeviceSecretsRequest,
+    ): DeviceSecretsResponse {
+        val response = client.http.post("${client.base_url}$base/device-secrets/fetch") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun delete_device_recovery_secrets(
+        request: DeleteDeviceSecretsRequest,
+    ): PutDeviceSecretResponse {
+        val response = client.http.post("${client.base_url}$base/device-secrets/delete") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }

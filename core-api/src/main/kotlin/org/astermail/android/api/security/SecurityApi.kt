@@ -30,6 +30,7 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -80,6 +81,73 @@ data class RenameHardwareKeyResponse(
 )
 
 @Serializable
+data class PasskeyRegistrationRp(
+    val name: String = "",
+    val id: String,
+)
+
+@Serializable
+data class PasskeyRegistrationUser(
+    val id: String,
+    val name: String,
+    val displayName: String,
+)
+
+@Serializable
+data class PasskeyRegistrationParam(
+    val type: String = "public-key",
+    val alg: Int,
+)
+
+@Serializable
+data class PasskeyCredentialDescriptor(
+    val type: String = "public-key",
+    val id: String,
+)
+
+@Serializable
+data class PasskeyRegistrationOptions(
+    val challenge: String,
+    val challenge_token: String,
+    val rp: PasskeyRegistrationRp,
+    val user: PasskeyRegistrationUser,
+    val pubKeyCredParams: List<PasskeyRegistrationParam> = emptyList(),
+    val timeout: Long = 60000,
+    val attestation: String = "none",
+    val excludeCredentials: List<PasskeyCredentialDescriptor> = emptyList(),
+)
+
+@Serializable
+data class PasskeyAttestationData(
+    val attestation_object: String,
+    val client_data_json: String,
+)
+
+@Serializable
+data class PasskeyRegistrationCompleteRequest(
+    val id: String,
+    val raw_id: String,
+    val response: PasskeyAttestationData,
+    val type: String = "public-key",
+    val name_encrypted: String? = null,
+    val challenge_token: String,
+    val is_passkey: Boolean = true,
+)
+
+@Serializable
+data class PasskeyRegistrationCompleteResponse(
+    val key_id: String,
+    val success: Boolean = false,
+    val other_sessions_revoked: Boolean = false,
+)
+
+@Serializable
+data class StorePasskeyPrfRequest(
+    val prf_encrypted_passphrase: String,
+    val prf_nonce: String,
+)
+
+@Serializable
 data class TrustedDevice(
     val id: String = "",
     val label: String = "",
@@ -125,6 +193,11 @@ interface SecurityApi {
         totp_code: String? = null,
     )
     suspend fun rename_hardware_key(key_id: String, name: String): RenameHardwareKeyResponse
+    suspend fun initiate_passkey_registration(): PasskeyRegistrationOptions
+    suspend fun complete_passkey_registration(
+        request: PasskeyRegistrationCompleteRequest,
+    ): PasskeyRegistrationCompleteResponse
+    suspend fun store_passkey_prf(key_id: String, request: StorePasskeyPrfRequest)
     suspend fun list_trusted_devices(): TrustedDevicesResponse
     suspend fun revoke_trusted_device(device_id: String)
     suspend fun revoke_all_trusted_devices()
@@ -182,6 +255,38 @@ class SecurityApiImpl(private val client: ApiClient) : SecurityApi {
             setBody(RenameHardwareKeyRequest(friendly_name = name))
         }
         return decode_or_throw(response)
+    }
+
+    override suspend fun initiate_passkey_registration(): PasskeyRegistrationOptions {
+        val response = client.http.post("${client.base_url}$base/auth/hardware-keys/register/initiate") {
+            header(HttpHeaders.Origin, client.webauthn_origin.trimEnd('/'))
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun complete_passkey_registration(
+        request: PasskeyRegistrationCompleteRequest,
+    ): PasskeyRegistrationCompleteResponse {
+        val response = client.http.post("${client.base_url}$base/auth/hardware-keys/register/complete") {
+            contentType(ContentType.Application.Json)
+            header(HttpHeaders.Origin, client.webauthn_origin.trimEnd('/'))
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun store_passkey_prf(key_id: String, request: StorePasskeyPrfRequest) {
+        val response = client.http.post("${client.base_url}$base/auth/hardware-keys/$key_id/prf") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        if (response.status.value !in 200..299) {
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
+        }
     }
 
     override suspend fun list_trusted_devices(): TrustedDevicesResponse =

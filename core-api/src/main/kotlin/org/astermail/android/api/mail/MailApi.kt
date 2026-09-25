@@ -129,6 +129,18 @@ interface MailApi {
 
     suspend fun list_attachments(mail_item_id: String): AttachmentListResponse
 
+    suspend fun list_encrypted_items(
+        limit: Int,
+        cursor: String?,
+        item_type: String,
+    ): MailItemsListResponse = list_messages(
+        limit = limit,
+        cursor = cursor,
+        item_type = item_type,
+        skip_total = true,
+        include_envelope = true,
+    )
+
     suspend fun update_attachment_meta(attachment_id: String, request: UpdateAttachmentMetaRequest)
 
     suspend fun create_attachment(
@@ -523,6 +535,21 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             setBody(request)
         }
         throw_if_error(response)
+    }
+
+    override suspend fun list_encrypted_items(
+        limit: Int,
+        cursor: String?,
+        item_type: String,
+    ): MailItemsListResponse {
+        val response = client.http.get("${client.base_url}$base/messages/encrypted") {
+            timeout { requestTimeoutMillis = large_payload_timeout_ms }
+            parameter("item_type", item_type)
+            parameter("limit", limit)
+            if (cursor != null) parameter("cursor", cursor)
+            parameter("include_reactions", true)
+        }
+        return decode_or_throw(response)
     }
 
     override suspend fun list_attachments(mail_item_id: String): AttachmentListResponse {

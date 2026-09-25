@@ -137,6 +137,7 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
             settings_row_item("behavior", R.string.settings_behavior, icon = TablerIcons.ArrowBackUp),
             settings_row_item("swipe_actions", R.string.settings_swipe_actions, icon = TablerIcons.ArrowsLeftRight),
             settings_row_item("customize_toolbar", R.string.customize_toolbar, icon = TablerIcons.LayoutBottombar),
+            settings_row_item("default_sender", R.string.settings_default_sender, icon = TablerIcons.Mailbox),
             settings_row_item("signature", R.string.settings_signature, icon = TablerIcons.Edit),
             settings_row_item("templates", R.string.settings_templates, icon = TablerIcons.FileText),
             settings_row_item("sender_filters", R.string.mail_management, icon = TablerIcons.Filter),
@@ -149,7 +150,6 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
         R.string.tools,
         listOf(
             settings_row_item("import", R.string.settings_import, icon = TablerIcons.CloudUpload),
-            settings_row_item("external_accounts", R.string.external_accounts, icon = TablerIcons.ArrowsRightLeft),
             settings_row_item("smtp_tokens", R.string.settings_smtp_tokens, icon = TablerIcons.Send),
         ),
     ),

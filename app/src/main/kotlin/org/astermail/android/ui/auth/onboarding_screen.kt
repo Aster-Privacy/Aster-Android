@@ -25,6 +25,7 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import android.provider.Settings
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -128,6 +129,18 @@ fun OnboardingScreen(
     val scope = rememberCoroutineScope()
     val is_last_page = pager_state.currentPage == page_count - 1
     val base_bg = if (colors.is_dark) colors.bg_primary else Color.White
+
+    BackHandler(enabled = pager_state.currentPage > 0) {
+        scope.launch {
+            pager_state.animateScrollToPage(
+                page = pager_state.currentPage - 1,
+                animationSpec = tween(
+                    durationMillis = AsterDuration.medium_3,
+                    easing = AsterEasing.standard_enter,
+                ),
+            )
+        }
+    }
 
     Column(
         modifier = Modifier

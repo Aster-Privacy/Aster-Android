@@ -1,0 +1,13 @@
+What's new
+- Sign in with a passkey, and add one in Settings.
+- Choose your default sender in Settings.
+- Choose whether replies quote the original and add Re:.
+- Force dark mode works with any theme.
+- A new pull to refresh indicator.
+
+Fixed
+- Select and copy text, links, and addresses in messages.
+- The sending countdown stays steady and centered.
+- Search results stay in place when you go back.
+- Placeholders match your theme.
+- New mail notifies you even with an older sent date.

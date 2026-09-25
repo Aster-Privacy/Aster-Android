@@ -67,6 +67,7 @@ fun DomainsScreen(
     on_back: () -> Unit,
     on_open_buy_domain: () -> Unit = {},
     on_open_domain_order: (String) -> Unit = {},
+    on_open_bimi: (String) -> Unit = {},
 ) {
     val vm: SettingsViewModel = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
@@ -194,6 +195,7 @@ fun DomainsScreen(
                 on_verify_result = { id, outcome -> domain_verify_results = domain_verify_results + (id to outcome) },
                 on_show_add = { show_add_domain = true },
                 catch_all_locked = catch_all_locked,
+                on_open_bimi = on_open_bimi,
             )
             domains_phase == domains_load_phase.loading -> {
                 domains_list_header(count = null, on_show_add = { show_add_domain = true })

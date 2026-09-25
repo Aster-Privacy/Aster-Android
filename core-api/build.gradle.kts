@@ -17,17 +17,22 @@ android {
         minSdk = 26
         buildConfigField("String", "API_BASE_URL", "\"https://app.astermail.org\"")
         buildConfigField("String", "VERSION_NAME", "\"0.1.0\"")
+        buildConfigField("String", "WEBAUTHN_ORIGIN", "\"https://app.astermail.org\"")
     }
 
     buildTypes {
         getByName("debug") {
             val localApi = providers.gradleProperty("astermail.localApi").orNull == "true"
-            val apiUrl = providers.gradleProperty("astermail.apiUrl").orNull
-            val debugUrl = apiUrl ?: if (localApi) "http://10.0.2.2:3000" else "https://app.astermail.org"
+            val localPort = providers.gradleProperty("astermail.localApiPort").orNull ?: "3000"
+            val debugUrl = if (localApi) "http://10.0.2.2:$localPort" else "https://app.astermail.org"
+            val webauthnOrigin = providers.gradleProperty("astermail.webauthnOrigin").orNull
+                ?: "https://app.astermail.org"
             buildConfigField("String", "API_BASE_URL", "\"$debugUrl\"")
+            buildConfigField("String", "WEBAUTHN_ORIGIN", "\"$webauthnOrigin\"")
         }
         getByName("release") {
             buildConfigField("String", "API_BASE_URL", "\"https://app.astermail.org\"")
+            buildConfigField("String", "WEBAUTHN_ORIGIN", "\"https://app.astermail.org\"")
         }
     }
 

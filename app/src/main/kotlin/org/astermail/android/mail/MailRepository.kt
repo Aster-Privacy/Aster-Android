@@ -96,6 +96,13 @@ enum class PendingSendOutcome { SENT, GONE, RETRY, FAILED, DEFERRED }
 
 class TransientSendException : Exception("send retry pending")
 
+class MixedRecipientsException : Exception("internal and external recipients in one send")
+
+fun has_mixed_recipients(recipients: List<String>): Boolean {
+    val addresses = recipients.filter { it.isNotBlank() }
+    return addresses.any { is_internal_recipient(it) } && addresses.any { !is_internal_recipient(it) }
+}
+
 class SentCopyAttachmentException(val failed_count: Int) :
     Exception("sent copy attachments not stored")
 
@@ -201,7 +208,6 @@ val ASTER_INTERNAL_DOMAINS =
         "aster.cx",
         "astermail.me",
         "astermail.net",
-        "gs-cloud.space",
         ASTER_GHOST_ALIAS_DOMAIN,
     )
 
@@ -518,6 +524,9 @@ class MailRepository @Inject constructor(
         return true
     }
 
+    val custom_categories_fingerprint: Int
+        get() = custom_categories.toString().hashCode()
+
     @Volatile
     private var conversation_grouping: Boolean = true
 
@@ -532,6 +541,13 @@ class MailRepository @Inject constructor(
 
     private val pbkdf2_key_cache = BoundedKeyCache(ENVELOPE_KEY_CACHE_MAX_ENTRIES)
     private val identity_key_cache = BoundedKeyCache(ENVELOPE_KEY_CACHE_MAX_ENTRIES)
+    private val account_key_capabilities = org.astermail.android.crypto.AccountKeyCapabilities(
+        { keys_api.get_account_key_format_writes() },
+    )
+    private val account_data_writer = org.astermail.android.crypto.AccountDataWriter(
+        session_key_store,
+        account_key_capabilities,
+    )
     private val ratchet_undecryptable_at = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val envelope_heal_mutex = kotlinx.coroutines.sync.Mutex()
     @Volatile private var last_envelope_heal_at = 0L
@@ -1145,7 +1161,9 @@ class MailRepository @Inject constructor(
             }
             if (is_permanent_send_failure(err) || attempt >= SEND_RETRY_MAX_ATTEMPTS) {
                 _send_problem.value = true
-                _send_result_events.tryEmit(Result.failure(err ?: IllegalStateException("send rejected")))
+                _send_result_events.tryEmit(
+                    Result.failure(server_rejection_cause(err) ?: err ?: IllegalStateException("send rejected")),
+                )
                 runCatching { pending_send_dao.mark_failed(pending_id) }
                 refresh_failed_send_count()
                 preserve_failed_send_draft(pending_id, row, recipients, attachments)
@@ -1534,7 +1552,7 @@ class MailRepository @Inject constructor(
     suspend fun fetch_starred(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
         val response = mail_api.list_messages(limit = limit, cursor = cursor, is_starred = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping)
         val batch = decrypt_items_batch(response.items)
-        InboxPage(batch.visible, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 }, batch.server_ids)
+        InboxPage(batch.visible.filterNot { it.is_spam }, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 }, batch.server_ids)
     }
 
     suspend fun fetch_trash(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
@@ -1771,12 +1789,14 @@ class MailRepository @Inject constructor(
             pages++
         }
         val found = draft ?: throw IllegalStateException("draft not found")
-        val envelope = try_decrypt_envelope(
-            found.encrypted_content,
-            found.content_nonce,
-            found.id,
-            include_draft_attachments = true,
-        )
+        val envelope = account_data_writer.retry_after_key_load {
+            try_decrypt_envelope(
+                found.encrypted_content,
+                found.content_nonce,
+                found.id,
+                include_draft_attachments = true,
+            )
+        }
         val item = decrypt_draft_item(found)
         Pair(item, envelope)
     }
@@ -2687,7 +2707,7 @@ class MailRepository @Inject constructor(
                     if (body_starts_with(text, "-----BEGIN PGP")) {
                         val armored_is_encrypted =
                             body_starts_with(text, PGP_ENCRYPTED_MESSAGE_HEADER)
-                        val pgp_result = try_pgp_decrypt_result(text)
+                        val pgp_result = try_pgp_decrypt_own_result(text)
                         val pgp_plaintext = pgp_result?.plaintext
                         if (pgp_plaintext != null) {
                             envelope_pgp_encrypted = armored_is_encrypted
@@ -2762,7 +2782,7 @@ class MailRepository @Inject constructor(
     }
 
     private fun kek_candidates(): List<ByteArray> {
-        val raw = session_key_store.get_legacy_keks().orEmpty()
+        val raw = session_key_store.get_decrypt_keks()
         val cached = cached_kek_candidates
         if (cached != null && cached_kek_source == raw) return cached
         val decoded = raw.mapNotNull { kek_b64 ->
@@ -2857,7 +2877,7 @@ class MailRepository @Inject constructor(
         }.getOrNull()
     }
 
-    private fun decrypt_envelope_identity_key(encrypted_b64: String, nonce: ByteArray): ByteArray {
+    internal fun decrypt_envelope_identity_key(encrypted_b64: String, nonce: ByteArray): ByteArray {
         val identity_key = session_key_store.get_identity_key()
             ?: throw IllegalStateException("no identity key")
         val ciphertext = android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
@@ -3645,6 +3665,29 @@ class MailRepository @Inject constructor(
         }
     }
 
+    private fun try_pgp_decrypt_own_result(
+        ciphertext: String,
+    ): org.astermail.android.crypto.PgpDecryptionResult? {
+        val identity_key = session_key_store.get_identity_key() ?: return null
+        if (!identity_key.contains("-----BEGIN PGP")) return null
+        val passphrase = session_key_store.get_passphrase() ?: return null
+        var chars: CharArray? = null
+        return try {
+            val decoded = org.astermail.android.util.passphrase_chars(passphrase)
+            chars = decoded
+            val keys_to_try = buildList {
+                add(identity_key)
+                session_key_store.get_previous_keys()?.let { addAll(it) }
+            }.filter { it.contains("-----BEGIN PGP") }
+            PgpDecryptor.decrypt_with_own_keys_status(ciphertext, keys_to_try, decoded)
+        } catch (_: Throwable) {
+            null
+        } finally {
+            passphrase.fill(0)
+            chars?.fill(' ')
+        }
+    }
+
     private val sender_pgp_key_cache = java.util.concurrent.ConcurrentHashMap<String, String>()
     private val sender_pgp_key_misses = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
@@ -3951,6 +3994,7 @@ class MailRepository @Inject constructor(
         suppress_branding: Boolean? = null,
         allow_non_post_quantum: Boolean = false,
     ): Result<SimpleSendResponse> = runCatching {
+        if (has_mixed_recipients(to + cc + bcc)) throw MixedRecipientsException()
         val envelope = build_envelope_json(
             subject = subject,
             body_html = body_html,
@@ -3959,7 +4003,7 @@ class MailRepository @Inject constructor(
             to = to,
             cc = cc,
         )
-        val (encrypted_envelope, envelope_nonce) = encrypt_envelope(envelope)
+        val (encrypted_envelope, envelope_nonce) = encrypt_sent_envelope(envelope)
 
         val sent_folder_token = resolve_sent_folder_token()
 
@@ -4126,9 +4170,13 @@ class MailRepository @Inject constructor(
             to = listOf(recipient),
             cc = emptyList(),
         )
-        val (encrypted_envelope, envelope_nonce) = encrypt_envelope(envelope)
+        val (encrypted_envelope, envelope_nonce) = encrypt_sent_envelope(envelope)
 
         val sent_folder_token = resolve_sent_folder_token()
+
+        if (sent_folder_token.isNullOrBlank()) {
+            throw IllegalStateException(context.getString(R.string.send_sent_folder_unavailable))
+        }
 
         val internal = is_internal_recipient(recipient)
         val resolved_group_id = message_group_id
@@ -4243,7 +4291,7 @@ class MailRepository @Inject constructor(
         return keys
     }
 
-    private suspend fun build_internal_attachments(
+    internal suspend fun build_internal_attachments(
         recipients: List<String>,
         attachments: List<ExternalAttachmentPayload>,
         sender_email: String? = null,
@@ -4253,6 +4301,19 @@ class MailRepository @Inject constructor(
         if (has_internal_recipients && recipient_keys.isEmpty()) {
             throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
         }
+        val own_seal = if (attachments.isEmpty()) null else own_seal_inputs()
+        try {
+            return build_attachment_payloads(attachments, recipient_keys, own_seal)
+        } finally {
+            own_seal?.second?.fill(' ')
+        }
+    }
+
+    private suspend fun build_attachment_payloads(
+        attachments: List<ExternalAttachmentPayload>,
+        recipient_keys: List<String>,
+        own_seal: Pair<String, CharArray>?,
+    ): List<SendAttachmentPayload> {
         return attachments.map { att ->
             try {
                 val raw = android.util.Base64.decode(att.data, android.util.Base64.DEFAULT)
@@ -4283,7 +4344,11 @@ class MailRepository @Inject constructor(
                     meta_json
                 }
 
-                val (sender_encrypted_meta, sender_meta_nonce) = encrypt_envelope(meta_json)
+                val (sender_encrypted_meta, sender_meta_nonce) = own_seal?.let { (key, chars) ->
+                    withContext(Dispatchers.Default) {
+                        org.astermail.android.crypto.SentCopySeal.seal(meta_json, key, chars)
+                    }
+                } ?: encrypt_envelope(meta_json)
 
                 SendAttachmentPayload(
                     encrypted_data = android.util.Base64.encodeToString(
@@ -4422,7 +4487,7 @@ class MailRepository @Inject constructor(
         val sealed_with_attachments = if (attachments.isNotEmpty() && draft_attachments_may_fit(attachments)) {
             try {
                 val with_attachments = envelope_for(attachments)
-                if (draft_envelope_fits(with_attachments)) encrypt_envelope(with_attachments) else null
+                if (draft_envelope_fits(with_attachments)) encrypt_draft_envelope(with_attachments) else null
             } catch (oom: OutOfMemoryError) {
                 null
             }
@@ -4430,7 +4495,7 @@ class MailRepository @Inject constructor(
             null
         }
         val stored_attachment_count = if (sealed_with_attachments != null) attachments.size else 0
-        val (encrypted_envelope, envelope_nonce) = sealed_with_attachments ?: encrypt_envelope(envelope_for(emptyList()))
+        val (encrypted_envelope, envelope_nonce) = sealed_with_attachments ?: encrypt_draft_envelope(envelope_for(emptyList()))
         val content_hash = content_hash_of(encrypted_envelope)
 
         draft_save_mutex.withLock {
@@ -4643,6 +4708,10 @@ class MailRepository @Inject constructor(
 
         val sent_folder_token = resolve_sent_folder_token()
 
+        if (sent_folder_token.isNullOrBlank()) {
+            throw IllegalStateException(context.getString(R.string.send_sent_folder_unavailable))
+        }
+
         val response = scheduled_api.create_scheduled(
             CreateScheduledRequest(
                 encrypted_envelope = encrypted_envelope,
@@ -4693,6 +4762,45 @@ class MailRepository @Inject constructor(
         ).apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }.format(java.util.Date()))
         if (attachments.isNotEmpty()) obj.put(DRAFT_ATTACHMENTS_KEY, draft_attachments_json(attachments))
         return obj.toString()
+    }
+
+    private suspend fun encrypt_sent_envelope(json: String): Pair<String, String> {
+        return seal_sent_envelope_when_enabled(json) ?: encrypt_envelope(json)
+    }
+
+    private suspend fun seal_sent_envelope_when_enabled(json: String): Pair<String, String>? {
+        val (identity_key, chars) = own_seal_inputs() ?: return null
+        return try {
+            withContext(Dispatchers.Default) {
+                org.astermail.android.crypto.SentCopySeal.seal(json, identity_key, chars)
+            }
+        } finally {
+            chars.fill(' ')
+        }
+    }
+
+    private suspend fun own_seal_inputs(): Pair<String, CharArray>? {
+        val identity_key = session_key_store.get_identity_key() ?: return null
+        if (!account_key_capabilities.format_writes()) return null
+        val passphrase = session_key_store.get_passphrase() ?: return null
+        val chars = org.astermail.android.util.passphrase_chars(passphrase)
+        passphrase.fill(0)
+        return Pair(identity_key, chars)
+    }
+
+    internal suspend fun encrypt_draft_envelope(json: String): Pair<String, String> {
+        val key = account_data_writer.write_key(org.astermail.android.crypto.AccountDataWriter.DRAFT_CONTEXT)
+            ?: return encrypt_envelope(json)
+        try {
+            val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+            val ciphertext = AesGcm.encrypt(key, nonce, json.toByteArray(Charsets.UTF_8))
+            return Pair(
+                android.util.Base64.encodeToString(ciphertext, android.util.Base64.NO_WRAP),
+                android.util.Base64.encodeToString(nonce, android.util.Base64.NO_WRAP),
+            )
+        } finally {
+            key.fill(0)
+        }
     }
 
     private fun encrypt_envelope(json: String): Pair<String, String> {
@@ -4943,7 +5051,33 @@ internal fun has_retryable_api_cause(err: Throwable?): Boolean {
     return false
 }
 
+private val retryable_forbidden_codes = setOf("CSRF_INVALID", "ORIGIN_NOT_ALLOWED")
+
+internal fun is_server_rejection(err: Throwable): Boolean = when (err) {
+    is org.astermail.android.api.ApiError.ValidationError -> true
+    is org.astermail.android.api.ApiError.AttachmentTooLarge -> true
+    is org.astermail.android.api.ApiError.PlanLimitExceeded -> true
+    is org.astermail.android.api.ApiError.PaymentRequired -> true
+    is org.astermail.android.api.ApiError.SendQuotaReached -> true
+    is org.astermail.android.api.ApiError.StorageQuotaExceeded -> true
+    is org.astermail.android.api.ApiError.ForbiddenError -> err.code !in retryable_forbidden_codes
+    is MixedRecipientsException -> true
+    else -> false
+}
+
+internal fun server_rejection_cause(err: Throwable?): Throwable? {
+    var cause = err
+    var depth = 0
+    while (cause != null && depth < 8) {
+        if (is_server_rejection(cause)) return cause
+        cause = cause.cause
+        depth++
+    }
+    return null
+}
+
 internal fun is_permanent_send_failure_cause(err: Throwable?): Boolean {
+    if (server_rejection_cause(err) != null) return true
     if (is_transient_send_cause(err)) return false
     var cause = err
     var depth = 0

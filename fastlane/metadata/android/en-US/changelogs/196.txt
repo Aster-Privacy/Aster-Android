@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- Import, external accounts, and export now share one screen with tabs.
+- Unread counts and folder totals no longer climb as you scroll.
+- New messages, replies, and forwards start one line above your signature.
+- View order on receipt cards opens your receipt.
+- Contact headers display clearly over photo wallpapers, and pull to refresh has no glow.

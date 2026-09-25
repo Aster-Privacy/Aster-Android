@@ -42,6 +42,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -70,13 +72,6 @@ import org.astermail.android.settings.shared_settings_view_model
 private val address_domains = listOf("astermail.org", "aster.cx")
 private const val alias_create_cooldown_ms = 10_500L
 
-private class address_slot(default_domain: String) {
-    var value by mutableStateOf("")
-    var domain by mutableStateOf(default_domain)
-    var error by mutableStateOf<String?>(null)
-    var added by mutableStateOf(false)
-}
-
 private fun starts_and_ends_alphanumeric(value: String): Boolean {
     if (value.isEmpty()) return false
     return value.first().isLetterOrDigit() && value.last().isLetterOrDigit()
@@ -91,7 +86,8 @@ fun RegisterAddressesStep(
     val colors = AsterMaterial.colors
     val scope = rememberCoroutineScope()
     val default_domain = state.email_domain.value.takeIf { it in address_domains } ?: address_domains.first()
-    val slots = remember { List(3) { address_slot(default_domain) } }
+    val slots = state.address_slots
+    val focus_requesters = remember { List(slots.size) { FocusRequester() } }
     var is_adding by remember { mutableStateOf(false) }
     var last_created_at by remember { mutableStateOf(0L) }
     val begin_end_error = stringResource(R.string.address_must_begin_end_alphanumeric)
@@ -118,7 +114,7 @@ fun RegisterAddressesStep(
                             if (last_created_at > 0L && since_last < alias_create_cooldown_ms) {
                                 delay(alias_create_cooldown_ms - since_last)
                             }
-                            val ok = view_model.create_alias_now(slot.value.trim(), slot.domain)
+                            val ok = view_model.create_alias_now(slot.value.trim(), slot.domain ?: default_domain)
                             if (ok) {
                                 last_created_at = System.currentTimeMillis()
                                 slot.added = true
@@ -166,9 +162,15 @@ fun RegisterAddressesStep(
         slots.forEachIndexed { index, slot ->
             address_slot_field(
                 slot = slot,
+                domain = slot.domain ?: default_domain,
                 index = index,
                 enabled = !is_adding,
                 is_last = index == slots.lastIndex,
+                focus_requester = focus_requesters[index],
+                on_next = {
+                    val next = (index + 1..slots.lastIndex).firstOrNull { !slots[it].added }
+                    if (next != null) focus_requesters[next].requestFocus()
+                },
                 on_submit = { if (pending_count > 0) add_pending() },
             )
             Spacer(Modifier.height(AsterSpacing.md))
@@ -196,10 +198,13 @@ fun RegisterAddressesStep(
 
 @Composable
 private fun address_slot_field(
-    slot: address_slot,
+    slot: register_address_slot,
+    domain: String,
     index: Int,
     enabled: Boolean,
     is_last: Boolean,
+    focus_requester: FocusRequester,
+    on_next: () -> Unit,
     on_submit: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -219,7 +224,8 @@ private fun address_slot_field(
                 keyboardType = KeyboardType.Email,
                 imeAction = if (is_last) ImeAction.Done else ImeAction.Next,
             ),
-            keyboard_actions = KeyboardActions(onDone = { on_submit() }),
+            keyboard_actions = KeyboardActions(onNext = { on_next() }, onDone = { on_submit() }),
+            modifier = Modifier.focusRequester(focus_requester),
             leading_icon = {
                 Icon(TablerIcons.At, null, tint = colors.text_muted)
             },
@@ -233,10 +239,10 @@ private fun address_slot_field(
                     )
                 } else {
                     address_domain_switch(
-                        selected = slot.domain,
+                        selected = domain,
                         enabled = field_enabled,
                         on_switch = {
-                            slot.domain = address_domains[(address_domains.indexOf(slot.domain) + 1) % address_domains.size]
+                            slot.domain = address_domains[(address_domains.indexOf(domain) + 1) % address_domains.size]
                         },
                     )
                 }

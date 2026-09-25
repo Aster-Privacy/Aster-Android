@@ -74,6 +74,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Arrangement
@@ -101,6 +102,23 @@ internal val settings_group_inset = 4.dp
 internal val settings_row_gap_height = 3.dp
 internal val settings_row_divider_inset = 20.dp
 internal val settings_row_divider_thickness = 1.dp
+
+internal fun absolute_date_time_label(iso: String?): String {
+    if (iso.isNullOrBlank()) return ""
+    val instant = try {
+        java.time.OffsetDateTime.parse(iso).toInstant()
+    } catch (_: Throwable) {
+        try {
+            java.time.Instant.parse(iso)
+        } catch (_: Throwable) {
+            null
+        }
+    } ?: return ""
+    return java.time.format.DateTimeFormatter
+        .ofLocalizedDateTime(java.time.format.FormatStyle.MEDIUM, java.time.format.FormatStyle.SHORT)
+        .withZone(org.astermail.android.ui.mail.AsterTimePreferences.account_zone_id())
+        .format(instant)
+}
 
 internal fun absolute_date_label(iso: String?): String {
     if (iso.isNullOrBlank()) return ""
@@ -189,6 +207,31 @@ internal fun detail_scaffold(
                 content = content,
             )
         }
+    }
+}
+
+@Composable
+internal fun embeddable_detail_scaffold(
+    embedded: Boolean,
+    title: String,
+    on_back: () -> Unit,
+    scrollable: Boolean = true,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    if (!embedded) {
+        detail_scaffold(title = title, on_back = on_back, scrollable = scrollable, content = content)
+        return
+    }
+    if (scrollable) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(AsterSpacing.lg),
+            content = content,
+        )
+    } else {
+        Column(modifier = Modifier.fillMaxSize(), content = content)
     }
 }
 
@@ -405,9 +448,9 @@ internal fun choice_group_title(text: String, subtitle: String? = null) {
 }
 
 private fun choice_row_fill(colors: AsterSemanticColors, selected: Boolean): Color = when {
-    !colors.is_glass -> if (selected) colors.bg_selected else colors.bg_card
-    selected -> colors.bg_selected.copy(alpha = 0.34f)
-    else -> Color.Transparent
+    !selected -> Color.Transparent
+    !colors.is_glass -> colors.bg_selected
+    else -> colors.bg_selected.copy(alpha = 0.34f)
 }
 
 @Composable
@@ -470,7 +513,7 @@ internal fun choice_option_row(
 private fun choice_indicator(selected: Boolean, enabled: Boolean, multi_select: Boolean) {
     val colors = AsterMaterial.colors
     val accent = if (enabled) colors.accent_blue else colors.accent_blue.copy(alpha = 0.4f)
-    val ring = if (enabled) colors.border_secondary else colors.border_secondary.copy(alpha = 0.5f)
+    val ring = if (enabled) colors.text_tertiary else colors.text_tertiary.copy(alpha = 0.4f)
     val shape = if (multi_select) RoundedCornerShape(6.dp) else CircleShape
     Box(
         modifier = Modifier
@@ -648,17 +691,31 @@ internal fun verified_badge(
     text: String = "Verified",
     icon: ImageVector? = TablerIcons.Check,
 ) {
+    tone_badge(
+        text = text,
+        tone = AsterMaterial.colors.success,
+        icon = icon,
+        modifier = Modifier.testTag("verified_badge"),
+    )
+}
+
+@Composable
+internal fun tone_badge(
+    text: String,
+    tone: Color,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    icon_size: Dp = 11.dp,
+) {
     val colors = AsterMaterial.colors
-    val tone = colors.success
     val background = org.astermail.android.ui.mail.chip_background(tone, colors.bg_primary, colors.is_dark)
     val content = org.astermail.android.ui.mail.chip_content(tone, background, colors.is_dark)
     val border = org.astermail.android.ui.mail.chip_border(tone, colors.bg_primary, colors.is_dark)
     Row(
-        modifier = Modifier
+        modifier = modifier
             .background(background, SquircleShape(8.dp))
             .border(1.dp, border, SquircleShape(8.dp))
-            .padding(horizontal = AsterSpacing.sm, vertical = 3.dp)
-            .testTag("verified_badge"),
+            .padding(horizontal = AsterSpacing.sm, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
@@ -666,7 +723,7 @@ internal fun verified_badge(
                 imageVector = icon,
                 contentDescription = null,
                 tint = content,
-                modifier = Modifier.size(11.dp),
+                modifier = Modifier.size(icon_size),
             )
             Spacer(Modifier.width(3.dp))
         }

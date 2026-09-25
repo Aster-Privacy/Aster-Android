@@ -28,11 +28,27 @@ import kotlinx.coroutines.withContext
 import org.astermail.android.storage.search.AsterDatabase
 import org.astermail.android.storage.search.FolderRowDao
 
+private const val folder_cache_meta_prefs = "aster_folder_cache_meta"
+private const val folder_cache_layout_key = "layout_signature"
+
 @Singleton
 class FolderCacheStore @Inject constructor(
     private val db_provider: dagger.Lazy<AsterDatabase>,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context,
 ) {
     private val dao: FolderRowDao by lazy { db_provider.get().folder_row_dao() }
+
+    private val meta: android.content.SharedPreferences? by lazy {
+        runCatching { context.getSharedPreferences(folder_cache_meta_prefs, android.content.Context.MODE_PRIVATE) }
+            .getOrNull()
+    }
+
+    fun layout_signature(): String? =
+        runCatching { meta?.getString(folder_cache_layout_key, null) }.getOrNull()
+
+    fun set_layout_signature(signature: String) {
+        runCatching { meta?.edit()?.putString(folder_cache_layout_key, signature)?.apply() }
+    }
 
     suspend fun rows(folder: String, limit: Int = folder_cache_row_limit): List<InboxItem> =
         withContext(Dispatchers.IO) {

@@ -24,6 +24,8 @@ const val UNDO_SEND_MIN_SECONDS = 1
 const val UNDO_SEND_MAX_SECONDS = 30
 const val UNDO_SEND_DEFAULT_SECONDS = 10
 
+val UNDO_SEND_PRESET_SECONDS = listOf(3, 5, 10, 15, 20, 30)
+
 fun clamp_undo_send_seconds(seconds: Int): Int {
     if (seconds < UNDO_SEND_MIN_SECONDS) {
         return UNDO_SEND_DEFAULT_SECONDS
@@ -47,3 +49,9 @@ fun resolve_undo_send_seconds(enabled: Boolean?, seconds: Int?): Int {
 
     return clamp_undo_send_seconds(seconds)
 }
+
+fun is_undo_send_active(enabled: Boolean?, seconds: Int?): Boolean =
+    resolve_undo_send_seconds(enabled, seconds) > 0
+
+fun undo_send_delay_options(current: Int): List<Int> =
+    (UNDO_SEND_PRESET_SECONDS + clamp_undo_send_seconds(current)).distinct().sorted()

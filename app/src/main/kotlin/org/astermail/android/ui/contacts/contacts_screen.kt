@@ -630,9 +630,9 @@ fun ContactsScreen(
                                 }
                             }
                         }
-                        grouped.forEach { (letter, group) ->
-                            stickyHeader {
-                                section_letter_header(letter = letter)
+                        grouped.entries.forEachIndexed { group_index, (letter, group) ->
+                            item(key = "letter_$letter", contentType = "letter_header") {
+                                section_letter_header(letter = letter, is_first_group = group_index == 0)
                             }
                             itemsIndexed(group, key = { _, c -> c.id }) { index, c ->
                                 ContactRow(
@@ -1554,7 +1554,7 @@ private fun merge_radio_dot(selected: Boolean) {
             .size(20.dp)
             .clip(CircleShape)
             .background(if (selected) colors.accent_blue else Color.Transparent)
-            .border(1.5.dp, if (selected) colors.accent_blue else colors.border_primary, CircleShape),
+            .border(1.5.dp, if (selected) colors.accent_blue else colors.text_tertiary, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         if (selected) {
@@ -1629,30 +1629,22 @@ private val contact_row_avatar_size = 44.dp
 private val contact_row_min_height = 72.dp
 
 @Composable
-private fun section_letter_header(letter: String) {
+private fun section_letter_header(letter: String, is_first_group: Boolean) {
     val colors = AsterMaterial.colors
-    val header_bg = if (colors.is_glass) colors.glass_surface(colors.bg_primary) else colors.solid_bg
-    Row(
+    Text(
+        text = letter,
+        color = colors.text_secondary,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.SemiBold,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = inbox_card_horizontal_margin)
-            .acrylic_backdrop(colors)
-            .drawBehind { drawRect(header_bg) }
             .padding(
-                start = inbox_card_content_padding,
+                start = inbox_card_horizontal_margin + inbox_card_content_padding,
                 end = AsterSpacing.lg,
-                top = AsterSpacing.sm,
+                top = if (is_first_group) AsterSpacing.sm else AsterSpacing.lg,
                 bottom = AsterSpacing.sm,
             ),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = letter,
-            color = colors.text_tertiary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
-    }
+    )
 }
 
 @Composable

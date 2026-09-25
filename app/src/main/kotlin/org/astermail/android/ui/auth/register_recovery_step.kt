@@ -244,7 +244,7 @@ private fun copy_recovery_codes(context: Context, codes: List<String>): Boolean 
         putBoolean("android.content.extra.IS_SENSITIVE", true)
     }
     if (!write_to_clipboard(context, clip)) return false
-    org.astermail.android.util.schedule_sensitive_clipboard_clear(context, text)
+    org.astermail.android.util.schedule_sensitive_clipboard_clear(context)
     return true
 }
 

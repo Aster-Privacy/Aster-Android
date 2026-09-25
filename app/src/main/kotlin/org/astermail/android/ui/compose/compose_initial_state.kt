@@ -40,6 +40,7 @@ data class compose_identity_snapshot(
     val primary_sender_email: String = "",
     val alias_display_names: Map<String, String> = emptyMap(),
     val ghost_addresses: List<String> = emptyList(),
+    val alias_ids: Map<String, String> = emptyMap(),
 ) {
     val is_ready: Boolean
         get() = user_email.isNotBlank() && alias_options.isNotEmpty()
@@ -95,11 +96,18 @@ data class compose_initial_state(
         get() = !identity_is_skeleton && !thread_is_skeleton
 }
 
-private fun apply_subject_prefix(original: String, mode: String): String {
+private fun apply_subject_prefix(
+    original: String,
+    mode: String,
+    prefix_reply_subject: Boolean,
+): String {
     val trimmed = original.trim()
-    return when (mode) {
-        "forward" -> if (trimmed.startsWith("Fwd:", ignoreCase = true)) trimmed else "Fwd: $trimmed"
-        else -> if (trimmed.startsWith("Re:", ignoreCase = true)) trimmed else "Re: $trimmed"
+    return when {
+        mode == "forward" ->
+            if (trimmed.startsWith("Fwd:", ignoreCase = true)) trimmed else "Fwd: $trimmed"
+        !prefix_reply_subject -> trimmed
+        trimmed.startsWith("Re:", ignoreCase = true) -> trimmed
+        else -> "Re: $trimmed"
     }
 }
 
@@ -146,6 +154,7 @@ fun build_compose_initial_state(
     identity: compose_identity_snapshot,
     thread: compose_thread_snapshot,
     effective_mode: String? = args.mode,
+    prefix_reply_subject: Boolean = true,
 ): compose_initial_state {
     val alias_options = identity.alias_options
     val user_email = identity.user_email
@@ -236,7 +245,7 @@ fun build_compose_initial_state(
     val subject = when {
         args.share_subject.isNotBlank() -> args.share_subject
         is_thread_mode && effective_mode != null && (target != null || original_subject.isNotBlank()) ->
-            apply_subject_prefix(original_subject, effective_mode)
+            apply_subject_prefix(original_subject, effective_mode, prefix_reply_subject)
         else -> ""
     }
 

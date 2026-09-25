@@ -299,12 +299,17 @@ fun AsterSecondaryButton(
         modifier = modifier
             .fillMaxWidth()
             .height(aster_button_height)
-            .graphicsLayer { scaleX = scale; scaleY = scale },
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                alpha = if (enabled && !is_loading) 1f else 0.5f
+            },
         shape = aster_button_shape,
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = colors.secondary_control_bg,
             contentColor = colors.text_primary,
-            disabledContentColor = colors.text_muted,
+            disabledContainerColor = colors.secondary_control_bg,
+            disabledContentColor = colors.text_primary,
         ),
         border = if (colors.secondary_control_border == Color.Transparent) null else BorderStroke(1.dp, colors.secondary_control_border),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = AsterSpacing.lg),

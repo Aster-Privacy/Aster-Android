@@ -98,7 +98,16 @@ class MailViewModelTest {
         identity_pins = mockk(relaxed = true)
         every { identity_pins.unacknowledged_changes } returns
             kotlinx.coroutines.flow.MutableStateFlow(emptyList())
-        vm = MailViewModel(context, repository, search_index_manager, folder_cache_store, identity_pins, mockk(relaxed = true))
+        vm = MailViewModel(
+            context,
+            repository,
+            search_index_manager,
+            folder_cache_store,
+            identity_pins,
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+        )
     }
 
     @After
@@ -280,6 +289,58 @@ class MailViewModelTest {
         assertFalse(state.is_loading)
         assertFalse(state.initial)
         assertFalse(state.is_refreshing)
+    }
+
+    @Test
+    fun `a refresh that supersedes a cold load clears cache_pending`() = runTest {
+        coEvery { folder_cache_store.rows(any(), any()) } coAnswers { kotlinx.coroutines.awaitCancellation() }
+        coEvery { repository.fetch_sent(any(), any()) } returns Result.success(fake_inbox_page(3))
+
+        vm.load_inbox("sent")
+        assertTrue(vm.inbox_state.value.cache_pending)
+        vm.refresh()
+        advanceUntilIdle()
+
+        val state = vm.inbox_state.value
+        assertEquals(3, state.items.size)
+        assertFalse(state.cache_pending)
+        assertFalse(state.is_loading)
+        assertFalse(state.initial)
+    }
+
+    @Test
+    fun `restoring the saved list layout at startup keeps the disk cache`() = runTest {
+        var clears = 0
+        coEvery { folder_cache_store.clear_all() } coAnswers { clears++ }
+        every { repository.set_conversation_grouping(false) } returns true
+        every { repository.is_conversation_grouping_enabled } returns false
+        every { repository.custom_categories_fingerprint } returns 7
+        every { folder_cache_store.layout_signature() } returns
+            folder_cache_layout_signature(grouping = false, list_order = null, custom_categories = 7)
+
+        vm.set_conversation_grouping(false)
+        advanceUntilIdle()
+
+        assertEquals(0, clears)
+    }
+
+    @Test
+    fun `changing the list layout clears the disk cache and records it`() = runTest {
+        var clears = 0
+        var recorded: String? = null
+        coEvery { folder_cache_store.clear_all() } coAnswers { clears++ }
+        every { folder_cache_store.set_layout_signature(any()) } answers { recorded = firstArg() }
+        every { repository.set_conversation_grouping(false) } returns true
+        every { repository.is_conversation_grouping_enabled } returns false
+        every { repository.custom_categories_fingerprint } returns 7
+        every { folder_cache_store.layout_signature() } returns
+            folder_cache_layout_signature(grouping = true, list_order = null, custom_categories = 7)
+
+        vm.set_conversation_grouping(false)
+        advanceUntilIdle()
+
+        assertEquals(1, clears)
+        assertEquals(folder_cache_layout_signature(grouping = false, list_order = null, custom_categories = 7), recorded)
     }
 
     @Test
@@ -2069,7 +2130,16 @@ class MailViewModelTest {
         every { repository.new_mail_events } returns new_mail
         coEvery { repository.fetch_inbox(any(), any(), any(), any(), any(), any()) } returns
             Result.success(InboxPage(items = emptyList(), has_more = false, next_cursor = null, total = 0))
-        vm = MailViewModel(context, repository, search_index_manager, folder_cache_store, identity_pins, mockk(relaxed = true))
+        vm = MailViewModel(
+            context,
+            repository,
+            search_index_manager,
+            folder_cache_store,
+            identity_pins,
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+        )
         vm.foreground_check = { true }
         advanceUntilIdle()
         io.mockk.clearMocks(repository, answers = false, recordedCalls = true, childMocks = false, verificationMarks = true, exclusionRules = false)

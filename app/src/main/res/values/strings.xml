@@ -1189,7 +1189,7 @@
     <string name="totp_passkey_subtitle">Confirm with the passkey or security key you saved for this account</string>
     <string name="totp_passkey_button">Continue with a passkey</string>
     <string name="totp_use_passkey">Use a passkey</string>
-    <string name="totp_backup_code_hint">A backup code has 8 characters and came with your authenticator app setup. A recovery code that starts with ASTER restores your mailbox and does not work here.</string>
+    <string name="totp_backup_code_hint">Use one of the backup codes you saved when you set up your authenticator app. A recovery code that starts with ASTER restores your mailbox and does not work here.</string>
     <string name="totp_trust_device">Trust this device for 30 days</string>
 
     <!-- Sessions -->
@@ -1927,9 +1927,19 @@
     <string name="scan_complete">Scan complete</string>
     <string name="current_password_incorrect">Current password is incorrect</string>
     <string name="password_change_background_reencrypt_failed">Your password changed. Aster Mail is still re-encrypting some of your sent mail and finishes that in the background.</string>
+    <string name="locked_data_banner_message">Some of your older encrypted data is locked.</string>
+    <string name="locked_data_banner_action">Recover data</string>
+    <string name="locked_data_banner_dismiss">Dismiss</string>
+    <string name="recover_data_title">Recover data</string>
+    <string name="recover_data_description">To unlock data from before a password change or reset, enter the password you used at that time.</string>
+    <string name="recover_data_previous_password">Previous password</string>
+    <string name="recover_data_button">Recover</string>
+    <string name="recover_data_success">Your older data is unlocked.</string>
+    <string name="recover_data_no_match">That password didn\'t unlock any data. Try another previous password.</string>
+    <string name="recover_data_failed">Some data couldn\'t be unlocked. Check your connection and try again.</string>
     <plurals name="password_change_sent_mail_locked">
-        <item quantity="one">Your password changed. %1$d sent emails were encrypted with an older password and stay locked.</item>
-        <item quantity="other">Your password changed. %1$d sent emails were encrypted with an older password and stay locked.</item>
+        <item quantity="one">Your password changed. %1$d sent emails were encrypted with an older password and stay locked. To unlock them, tap Recover data in the banner at the top of your inbox.</item>
+        <item quantity="other">Your password changed. %1$d sent emails were encrypted with an older password and stay locked. To unlock them, tap Recover data in the banner at the top of your inbox.</item>
     </plurals>
     <string name="compose_email_hint">Compose email</string>
     <string name="snooze_later_today">Later today</string>
@@ -1971,7 +1981,7 @@
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Supernova</string>
     <string name="plan_desc_free">Everything you need to get started with private, encrypted email.</string>
-    <string name="plan_desc_star">More storage, more aliases, and your first custom domain.</string>
+    <string name="plan_desc_star">More storage, more aliases, and up to 5 custom domains.</string>
     <string name="plan_desc_nova">More storage, custom domains, and unlimited aliases.</string>
     <string name="plan_desc_supernova">Maximum storage, the highest limits, and dedicated support.</string>
     <plurals name="aliases_count_plural">
@@ -2192,7 +2202,7 @@
     <string name="storage_format_aster">Aster Server</string>
     <string name="storage_format_aster_sub">Default encrypted storage</string>
     <string name="storage_format_ipfs">IPFS</string>
-    <string name="storage_format_ipfs_sub">Decentralized storage</string>
+    <string name="storage_format_ipfs_sub">Private store on Aster\'s servers</string>
     <string name="encryption_behavior">Encryption behavior</string>
     <string name="auto_discover_keys">Auto-discover keys</string>
     <string name="auto_discover_keys_sub">Automatically find encryption keys for contacts</string>
@@ -2302,6 +2312,10 @@
     <string name="section_advanced">Advanced</string>
     <string name="developer_mode_subtitle_behavior">Show the Developer tab with build info, crypto status, and debug tools</string>
     <string name="auto_save_recipients_subtitle">Automatically add addresses you send to as contacts</string>
+    <string name="reply_include_quoted">Include quoted text</string>
+    <string name="reply_include_quoted_subtitle">Start every reply with the original message quoted below your text</string>
+    <string name="reply_prefix_subject">Add Re: to the subject</string>
+    <string name="reply_prefix_subject_subtitle">Put Re: in front of the original subject when you reply</string>
 
     <!-- Security screen -->
     <string name="section_account_protection">Account Protection</string>
@@ -2312,7 +2326,7 @@
     <string name="login_alerts_info_title">Login Alerts</string>
     <string name="login_alerts_info_desc">Sends you an email whenever your account is signed in from a new device or location. Good for catching unauthorized access early.</string>
     <string name="passkeys_security_keys">Passkeys &amp; Security Keys</string>
-    <string name="passkeys_none_subtitle">No keys registered. Register on desktop.</string>
+    <string name="passkeys_none_subtitle">No passkeys yet</string>
     <string name="section_trusted_devices">Trusted Devices</string>
     <string name="no_trusted_devices">No trusted devices</string>
     <string name="no_trusted_devices_subtitle">Devices you trust for 2FA bypass will appear here</string>
@@ -3214,7 +3228,7 @@
     <string name="failed_to_move_items">Move failed</string>
     <string name="folder_name_taken">A folder with this name already exists.</string>
     <string name="generate_ghost_alias_message">Aster creates a random address that forwards to your inbox. Burn it at any time without affecting your other addresses.</string>
-    <string name="hardware_key_remove_confirm">You won\'t be able to sign in with this security key any more.</string>
+    <string name="hardware_key_remove_confirm">You won\'t be able to sign in with this security key anymore.</string>
     <string name="hardware_key_remove_last_title">Remove your last security key?</string>
     <string name="hardware_key_remove_last_description">This is the last second factor on your account. To remove it, enter your password.</string>
     <string name="image_insert_failed">That image could not be added. It may be too large or in an unsupported format.</string>
@@ -3303,19 +3317,6 @@
     <string name="twin_address_reserved_description">%1$s is reserved for your account, so no one else can register it. Create it as an alias whenever you want to send and receive from it.</string>
     <string name="twin_address_available_description">%1$s is the matching address on the other Aster domain. Create it as an alias to send and receive from it.</string>
     <string name="twin_address_create">Create alias</string>
-    <string name="recover_older_data_title">Recover older data</string>
-    <string name="recover_older_data_desc">This account was reset. If you remember the password you used before the reset, your older encrypted data can be unlocked and restored.</string>
-    <string name="recover_older_data_button">Unlock older data</string>
-    <string name="resurrection_old_password">Old password</string>
-    <string name="resurrection_old_password_prompt">Enter the password you used before the reset</string>
-    <string name="resurrection_success">Your older data is unlocked. Earlier mail and aliases open normally again.</string>
-    <string name="resurrection_failed">That did not unlock the older data. Check the password or phrase and try again.</string>
-    <string name="discard_older_data_button">Discard older data</string>
-    <string name="discard_older_data_title">Discard older data?</string>
-    <string name="discard_older_data_desc">This permanently removes the option to unlock mail and aliases from before the reset. You cannot undo this.</string>
-    <string name="discard_older_data_confirm">Discard</string>
-    <string name="discard_older_data_success">Older data discarded.</string>
-    <string name="discard_older_data_failed">Could not discard the older data. Try again.</string>
     <string name="checkout_review_title">Review and pay</string>
     <string name="checkout_term_title">Subscription length</string>
     <string name="checkout_term_save">Save %1$s</string>
@@ -3477,6 +3478,7 @@
     <string name="profile_menu_greeting_comma">,</string>
     <string name="profile_menu_manage_account">Account settings</string>
     <string name="profile_menu_add_another_account">Add another account</string>
+    <string name="profile_menu_resubscribe">Resubscribe to Aster</string>
     <string name="profile_menu_sign_out_all">Sign out of all accounts</string>
     <string name="profile_menu_session_expired">Session expired</string>
     <string name="profile_menu_default_account">Default</string>
@@ -3568,4 +3570,22 @@
     <string name="address_change_send_failed">Aster Mail could not send the code. Try again in a moment.</string>
     <string name="address_change_invalid_address">That address is not valid.</string>
     <string name="address_change_locked_custom_domain">Addresses on your own domain cannot be changed here.</string>
+    <string name="settings_default_sender">Default sender</string>
+    <string name="default_sender_description">New messages start from this address. Replies use the address the message was sent to.</string>
+    <string name="default_sender_no_addresses">No other addresses</string>
+    <string name="default_sender_primary_note">Your primary address</string>
+    <string name="passkey_add">Add a passkey</string>
+    <string name="passkey_add_subtitle">Sign in with your fingerprint, face, or screen lock</string>
+    <string name="passkey_adding">Adding passkey…</string>
+    <string name="passkey_default_name">Passkey (%1$s)</string>
+    <string name="passkey_added">Passkey added</string>
+    <string name="passkey_added_sessions_revoked">Passkey added. You\'re signed out on your other devices.</string>
+    <string name="passkey_added_second_step_only">Passkey added. Use it as a second step when you sign in with your password.</string>
+    <string name="passkey_already_registered">This passkey is already saved to your account.</string>
+    <string name="passkey_create_unavailable">This device can\'t save passkeys. Make sure screen lock is on and a password manager is set up.</string>
+    <string name="passkey_create_failed">Couldn\'t add the passkey. Try again.</string>
+    <string name="error_passkey_timed_out">The passkey request timed out. Try again.</string>
+    <string name="expiry_password_internal_removed">Aster recipients open expiring email without a password, so the password was removed. To send the message, tap Send again.</string>
+    <string name="expiring_requires_secure_message">While Require encryption is on, you can\'t send expiring email to outside addresses from this app. To send, remove the expiration or turn off Require encryption.</string>
+    <string name="signature_too_large">This signature is too large to save. To save it, remove an image or shorten the text.</string>
 </resources>

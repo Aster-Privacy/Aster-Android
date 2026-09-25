@@ -180,7 +180,6 @@ import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.billing.AttachmentLimits
 import org.astermail.android.util.meets_min_search_length
 import org.astermail.android.billing.PlanLimitsViewModel
-import org.astermail.android.mail.ASTER_INTERNAL_DOMAINS
 import org.astermail.android.mail.is_sendable_address
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.mail.is_sendable_address
@@ -508,6 +507,8 @@ fun ComposeScreen(
         primary_sender_email,
         alias_display_name_map,
         settings_state.ghost_aliases,
+        settings_state.aliases,
+        settings_state.custom_domain_addresses,
     ) {
         compose_identity_snapshot(
             user_email = user_email,
@@ -516,6 +517,7 @@ fun ComposeScreen(
             primary_sender_email = primary_sender_email,
             alias_display_names = alias_display_name_map,
             ghost_addresses = settings_state.ghost_aliases.map { it.address },
+            alias_ids = alias_id_map(settings_state),
         )
     }
     LaunchedEffect(live_identity) {
@@ -564,6 +566,7 @@ fun ComposeScreen(
             } else {
                 mode
             },
+            prefix_reply_subject = settings_state.preferences?.reply_prefix_subject != false,
         )
     }
 
@@ -773,6 +776,7 @@ fun ComposeScreen(
                 .firstOrNull { it.address == from_alias }?.id
                 ?: settings_state.custom_domain_addresses
                     .firstOrNull { it.address == from_alias }?.id
+                ?: seed_identity.alias_ids[from_alias]
             settings_vm.signature_for(preload_alias_id)
         }
     }
@@ -796,16 +800,16 @@ fun ComposeScreen(
         mutableStateOf(
             when {
                 prefill.body.isNotBlank() -> prefill.body
-                preloaded_signature.isNotBlank() ->
-                    share_body_prefix + "\n\n" + preloaded_signature + initial_watermark
-                else -> share_body_prefix + initial_watermark
+                else -> seeded_body_with_signature(share_body_prefix, preloaded_signature, initial_watermark)
             },
         )
     }
     val body_editor_ref = remember { androidx.compose.runtime.mutableStateOf<RichBodyEditText?>(null) }
     fun get_body_with_formatting(): String {
         val et = body_editor_ref.value ?: return body
-        val editable = et.text ?: return body
+        val live = et.text ?: return body
+        val editable = android.text.SpannableStringBuilder(live)
+        android.view.inputmethod.BaseInputConnection.removeComposingSpans(editable)
         val has_spans = editable.getSpans(0, editable.length, android.text.style.AbsoluteSizeSpan::class.java).isNotEmpty() ||
             editable.getSpans(0, editable.length, android.text.style.ForegroundColorSpan::class.java).isNotEmpty() ||
             editable.getSpans(0, editable.length, android.text.style.StyleSpan::class.java).isNotEmpty() ||
@@ -838,6 +842,7 @@ fun ComposeScreen(
     val current_alias_id = remember(from_alias, settings_state.aliases, settings_state.custom_domain_addresses) {
         settings_state.aliases.firstOrNull { it.address == from_alias }?.id
             ?: settings_state.custom_domain_addresses.firstOrNull { it.address == from_alias }?.id
+            ?: seed_identity.alias_ids[from_alias]
     }
     val signature_scope_allowed = when (mode) {
         "reply", "reply_all" -> settings_state.preferences?.signature_in_replies != false
@@ -857,13 +862,8 @@ fun ComposeScreen(
         )
         val show_branding = settings_state.preferences?.show_aster_branding == true
         val watermark = if (show_branding) "\n\n${context.getString(R.string.compose_footer_secured_by_plain)}" else ""
-        val new_body = share_body_prefix +
-            if (resolved.isNotBlank()) "\n\n${resolved}${watermark}" else watermark
-        val seeded_body = if (preloaded_signature.isNotBlank()) {
-            share_body_prefix + "\n\n" + preloaded_signature + initial_watermark
-        } else {
-            share_body_prefix + initial_watermark
-        }
+        val new_body = seeded_body_with_signature(share_body_prefix, resolved, watermark)
+        val seeded_body = seeded_body_with_signature(share_body_prefix, preloaded_signature, initial_watermark)
         if (body == seeded_body || body == share_body_prefix + initial_watermark || body.isBlank()) {
             body = new_body
             initial_body = new_body
@@ -876,7 +876,7 @@ fun ComposeScreen(
         applied_signature = resolved
         signature_applied = true
     }
-    LaunchedEffect(current_alias_id, signature_applied, auto_signature_enabled) {
+    LaunchedEffect(current_alias_id, signature_applied, auto_signature_enabled, signatures_list) {
         if (!signature_applied) return@LaunchedEffect
         if (mode == "draft") return@LaunchedEffect
         if (manual_signature_id != "auto") return@LaunchedEffect
@@ -900,7 +900,7 @@ fun ComposeScreen(
             val before = core.substring(0, core.length - applied_signature.length)
             if (resolved.isNotBlank()) before + resolved else before.trimEnd('\n')
         } else if (applied_signature.isBlank() && resolved.isNotBlank()) {
-            "${core}\n\n${resolved}"
+            append_signature(core, resolved)
         } else core
         body = new_core + kept_suffix
         applied_signature = resolved
@@ -939,8 +939,11 @@ fun ComposeScreen(
             )
         }
     }
-    val quoted_source = remember(reply_to, mode, thread_state, seeded_quoted_source) {
+    val quotes_replies = settings_state.preferences?.reply_include_quoted != false
+    val quoted_source = remember(reply_to, mode, thread_state, seeded_quoted_source, quotes_replies) {
         if (reply_to.isNullOrBlank() || mode.isNullOrBlank()) {
+            null
+        } else if (!quotes_replies && (mode == "reply" || mode == "reply_all")) {
             null
         } else {
             val msg = thread_state.messages.firstOrNull { it.id == reply_to }
@@ -1356,7 +1359,9 @@ fun ComposeScreen(
         val hi = if (s == e) (lo + 1).coerceAtMost(editable.length) else e
         format_bold.value = editable.getSpans(lo, hi, android.text.style.StyleSpan::class.java).any { it.style == android.graphics.Typeface.BOLD }
         format_italic.value = editable.getSpans(lo, hi, android.text.style.StyleSpan::class.java).any { it.style == android.graphics.Typeface.ITALIC }
-        format_underline.value = editable.getSpans(lo, hi, android.text.style.UnderlineSpan::class.java).isNotEmpty()
+        format_underline.value = editable.getSpans(lo, hi, android.text.style.UnderlineSpan::class.java).any {
+            editable.getSpanFlags(it) and android.text.Spanned.SPAN_COMPOSING == 0
+        }
         format_strike.value = editable.getSpans(lo, hi, android.text.style.StrikethroughSpan::class.java).isNotEmpty()
         format_quote.value = editable.getSpans(lo, hi, android.text.style.QuoteSpan::class.java).isNotEmpty()
     }
@@ -1824,6 +1829,33 @@ fun ComposeScreen(
             }
             return
         }
+        val send_blocker = send_blocker_for(
+            recipients = to_chips.toList() + cc_chips.toList() + bcc_chips.toList(),
+            via_connected_account = external_sender_tokens[from_alias] != null,
+            has_expiry = expires_at_iso != null,
+            has_expiry_password = !expiry_password.isNullOrBlank(),
+            expiration_locked = plan_vm.is_feature_locked("has_email_expiration") && !plan_state.is_loading,
+            expiry_password_locked = plan_vm.is_feature_locked("has_password_protected_messages") && !plan_state.is_loading,
+            require_encryption = settings_state.encryption_settings?.require_encryption
+                ?: settings_state.preferences?.require_encryption
+                ?: false,
+        )
+        if (send_blocker != null) {
+            send_lock.set(false)
+            when (send_blocker) {
+                SendBlocker.MIXED_RECIPIENTS ->
+                    send_error = context.getString(R.string.cannot_mix_recipients)
+                SendBlocker.EXPIRATION_LOCKED, SendBlocker.EXPIRY_PASSWORD_LOCKED ->
+                    org.astermail.android.ui.upgrade.UpgradeStore.show_plan_limit(null, null)
+                SendBlocker.EXPIRY_PASSWORD_INTERNAL -> {
+                    expiry_password = null
+                    send_error = context.getString(R.string.expiry_password_internal_removed)
+                }
+                SendBlocker.EXPIRY_NEEDS_SECURE_MESSAGE ->
+                    send_error = context.getString(R.string.expiring_requires_secure_message)
+            }
+            return
+        }
         if (is_sending) { send_lock.set(false); return }
         dismiss_keyboard()
         is_sending = true
@@ -1887,14 +1919,6 @@ fun ComposeScreen(
                 return@launch
             }
             val (body_html, attachment_payloads, suppress_branding) = prepared
-
-            val all_recipients = snap_to + snap_cc + snap_bcc
-            if (all_recipients.any { is_internal_email(it) } && all_recipients.any { !is_internal_email(it) }) {
-                is_sending = false
-                send_lock.set(false)
-                send_error = context.getString(R.string.cannot_mix_recipients)
-                return@launch
-            }
 
             val external_token = external_sender_tokens[snap_from]
             if (external_token != null) {
@@ -2547,13 +2571,12 @@ fun ComposeScreen(
                             })
                             setText(body)
                             text?.let { apply_compose_defaults(it) }
-                            val has_signature = body.startsWith("\n\n") && body.length > 2
-                            setSelection(if (has_signature) 0 else text?.length ?: 0)
+                            setSelection(if (caret_starts_above_signature(body)) 0 else text?.length ?: 0)
                             body_editor_ref.value = this
                         }
                     },
                     update = { et ->
-                        val target_min = ((if (quoted_html != null) 72 else 200) * et.resources.displayMetrics.density).toInt()
+                        val target_min = (compose_body_min_height_dp(signature_html.isNotBlank(), quoted_html != null) * et.resources.displayMetrics.density).toInt()
                         if (et.minHeight != target_min) et.minHeight = target_min
                         val current = et.text?.toString().orEmpty()
                         if (current != body) {
@@ -2567,7 +2590,7 @@ fun ComposeScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .defaultMinSize(minHeight = if (quoted_html != null) 72.dp else 200.dp),
+                        .defaultMinSize(minHeight = compose_body_min_height_dp(signature_html.isNotBlank(), quoted_html != null).dp),
                 )
 
             }
@@ -2618,10 +2641,11 @@ fun ComposeScreen(
                             .testTag("compose_quote_toggle"),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            text = "•••",
-                            color = colors.text_muted,
-                            fontSize = 15.sp,
+                        Icon(
+                            imageVector = TablerIcons.Dots,
+                            contentDescription = null,
+                            tint = colors.text_muted,
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                     AnimatedVisibility(
@@ -2867,6 +2891,9 @@ fun ComposeScreen(
                     expiry_password = null
                 } else if (scheduled_send) {
                     app_toast.show(context.getString(R.string.expiring_not_with_schedule))
+                } else if (plan_vm.is_feature_locked("has_email_expiration") && !plan_state.is_loading) {
+                    show_overflow_sheet = false
+                    org.astermail.android.ui.upgrade.UpgradeStore.show_plan_limit(null, null)
                 } else {
                     show_overflow_sheet = false
                     show_expiring_sheet = true
@@ -2928,7 +2955,7 @@ fun ComposeScreen(
                     val before = core.substring(0, core.length - applied_signature.length)
                     if (new_content.isNotBlank()) before + new_content else before.trimEnd('\n')
                 } else if (applied_signature.isBlank() && new_content.isNotBlank()) {
-                    "${core}\n\n${new_content}"
+                    append_signature(core, new_content)
                 } else core
                 body = new_core + kept_suffix
                 applied_signature = new_content
@@ -2960,7 +2987,16 @@ fun ComposeScreen(
     }
 
     if (show_expiring_sheet) {
+        val expiry_recipients = to_chips.toList() + cc_chips.toList() + bcc_chips.toList()
         ExpiringSheet(
+            password_mode = expiry_password_mode_for(
+                recipients = expiry_recipients,
+                password_locked = plan_vm.is_feature_locked("has_password_protected_messages") && !plan_state.is_loading,
+            ),
+            on_password_locked = {
+                show_expiring_sheet = false
+                org.astermail.android.ui.upgrade.UpgradeStore.show_plan_limit(null, null)
+            },
             on_close = { show_expiring_sheet = false },
             on_pick = { expires_epoch_ms, label, password ->
                 show_expiring_sheet = false
@@ -3644,8 +3680,6 @@ private class anchored_below_position_provider(
     }
 }
 
-private val internal_domains = ASTER_INTERNAL_DOMAINS
-
 private val pgp_provider_domains = listOf(
     "protonmail.com",
     "protonmail.ch",
@@ -3675,10 +3709,8 @@ private fun derive_contact_name(email: String): String {
     return derived.ifBlank { local_part }
 }
 
-private fun is_internal_email(email: String): Boolean {
-    val lower = email.lowercase()
-    return internal_domains.any { lower.endsWith("@$it") }
-}
+private fun is_internal_email(email: String): Boolean =
+    org.astermail.android.mail.is_internal_recipient(email)
 
 private fun email_domain(email: String): String {
     val at = email.lastIndexOf('@')
@@ -4435,8 +4467,74 @@ private fun TemplatePickerSheet(
     }
 }
 
+internal fun compose_body_min_height_dp(has_html_signature: Boolean, has_quote: Boolean): Int = when {
+    has_html_signature -> 48
+    has_quote -> 72
+    else -> 200
+}
+
+internal fun signature_html_has_images(html: String): Boolean =
+    html.contains("<img", ignoreCase = true) || html.contains("background-image", ignoreCase = true)
+
 @Composable
 internal fun signature_preview_card(html: String) {
+    if (signature_html_has_images(html)) {
+        signature_web_card(html)
+    } else {
+        signature_native_block(html)
+    }
+}
+
+@Composable
+private fun signature_native_block(html: String) {
+    val colors = AsterMaterial.colors
+    val text_color_argb = colors.text_primary.toArgb()
+    val link_color_argb = colors.accent_blue.toArgb()
+    val rendered = remember(html) {
+        val safe_html = org.astermail.android.ui.mail.EmailHtmlSanitizer.sanitize(
+            html,
+            org.astermail.android.ui.mail.EmailHtmlSanitizer.SanitizeOptions(
+                clean_tracking_links = false,
+                remove_tracking_pixels = false,
+                block_remote_fonts = false,
+                block_remote_css = false,
+            ),
+        )
+        val spanned = androidx.core.text.HtmlCompat.fromHtml(
+            safe_html,
+            androidx.core.text.HtmlCompat.FROM_HTML_MODE_COMPACT,
+        )
+        var end = spanned.length
+        while (end > 0 && spanned[end - 1].isWhitespace()) end--
+        spanned.subSequence(0, end)
+    }
+    androidx.compose.ui.viewinterop.AndroidView(
+        factory = { ctx ->
+            android.widget.TextView(ctx).apply {
+                textSize = 16f
+                includeFontPadding = false
+                setLineSpacing(0f, 1f)
+                isClickable = false
+                isFocusable = false
+            }
+        },
+        update = { tv ->
+            tv.setTextColor(text_color_argb)
+            tv.setLinkTextColor(link_color_argb)
+            if (tv.text?.toString() != rendered.toString() || tv.tag != html) {
+                tv.tag = html
+                tv.text = rendered
+            }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.lg)
+            .testTag("compose_signature_block"),
+    )
+}
+
+@Composable
+private fun signature_web_card(html: String) {
     val colors = AsterMaterial.colors
     Column(
         modifier = Modifier
@@ -4680,6 +4778,8 @@ private fun GhostAliasSheet(
 internal fun ExpiringSheet(
     on_close: () -> Unit,
     on_pick: (expires_epoch_ms: Long, label: String, password: String?) -> Unit,
+    password_mode: ExpiryPasswordMode = ExpiryPasswordMode.AVAILABLE,
+    on_password_locked: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
@@ -4690,6 +4790,7 @@ internal fun ExpiringSheet(
     var selected_hours by remember { mutableStateOf<Int?>(null) }
     var custom_epoch_ms by remember { mutableStateOf<Long?>(null) }
     val password_arg = password.trim().ifBlank { null }
+        ?.takeIf { password_mode == ExpiryPasswordMode.AVAILABLE }
     val one_hour_label_top = stringResource(R.string.duration_one_hour)
     val one_day_label_top = stringResource(R.string.duration_one_day)
     val seven_days_label_top = pluralStringResource(R.plurals.duration_n_days, 7, 7)
@@ -4802,73 +4903,83 @@ internal fun ExpiringSheet(
                 custom_epoch_ms?.let { stringResource(R.string.expires_custom_at, format_custom_label(it)) } ?: stringResource(R.string.expires_custom),
                 custom_epoch_ms != null,
             ) { open_custom_picker() }
-            Spacer(Modifier.height(AsterSpacing.md))
-            Text(
-                text = stringResource(R.string.expiry_password_label),
-                color = colors.text_primary,
-                fontWeight = FontWeight.Medium,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(start = AsterSpacing.sm),
-            )
-            Text(
-                text = stringResource(R.string.expiry_password_subtitle),
-                color = colors.text_muted,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(start = AsterSpacing.sm, end = AsterSpacing.sm, top = 2.dp, bottom = AsterSpacing.xs),
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.sm)
-                    .clip(SquircleShape(10.dp))
-                    .border(1.dp, colors.border_secondary, SquircleShape(10.dp))
-                    .acrylic(colors, RectangleShape, colors.bg_secondary)
-                    .padding(start = AsterSpacing.md, end = AsterSpacing.xs, top = 6.dp, bottom = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                BasicTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    singleLine = true,
-                    visualTransformation = if (password_visible) {
-                        VisualTransformation.None
-                    } else {
-                        PasswordVisualTransformation()
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        autoCorrectEnabled = false,
-                        capitalization = KeyboardCapitalization.None,
-                    ),
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.text_primary),
-                    cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.accent_blue),
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(vertical = 6.dp)
-                        .testTag("expiry_password_field"),
-                    decorationBox = { inner ->
-                        if (password.isEmpty()) {
-                            Text(
-                                text = stringResource(R.string.expiry_password_label),
-                                color = colors.text_muted,
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                        }
-                        inner()
-                    },
+            if (password_mode == ExpiryPasswordMode.LOCKED) {
+                Spacer(Modifier.height(AsterSpacing.md))
+                toggle_sheet_row(
+                    TablerIcons.Lock,
+                    stringResource(R.string.expiry_password_label),
+                    false,
+                ) { on_password_locked() }
+            }
+            if (password_mode == ExpiryPasswordMode.AVAILABLE) {
+                Spacer(Modifier.height(AsterSpacing.md))
+                Text(
+                    text = stringResource(R.string.expiry_password_label),
+                    color = colors.text_primary,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(start = AsterSpacing.sm),
                 )
-                Icon(
-                    imageVector = if (password_visible) TablerIcons.EyeOff else TablerIcons.Eye,
-                    contentDescription = stringResource(
-                        if (password_visible) R.string.hide_password else R.string.show_password,
-                    ),
-                    tint = colors.text_muted,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(SquircleShape(AsterRadius.sm))
-                        .clickable { password_visible = !password_visible }
-                        .padding(9.dp),
+                Text(
+                    text = stringResource(R.string.expiry_password_subtitle),
+                    color = colors.text_muted,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(start = AsterSpacing.sm, end = AsterSpacing.sm, top = 2.dp, bottom = AsterSpacing.xs),
                 )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AsterSpacing.sm)
+                        .clip(SquircleShape(10.dp))
+                        .border(1.dp, colors.border_secondary, SquircleShape(10.dp))
+                        .acrylic(colors, RectangleShape, colors.bg_secondary)
+                        .padding(start = AsterSpacing.md, end = AsterSpacing.xs, top = 6.dp, bottom = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    BasicTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        singleLine = true,
+                        visualTransformation = if (password_visible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            autoCorrectEnabled = false,
+                            capitalization = KeyboardCapitalization.None,
+                        ),
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.text_primary),
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.accent_blue),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(vertical = 6.dp)
+                            .testTag("expiry_password_field"),
+                        decorationBox = { inner ->
+                            if (password.isEmpty()) {
+                                Text(
+                                    text = stringResource(R.string.expiry_password_label),
+                                    color = colors.text_muted,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                )
+                            }
+                            inner()
+                        },
+                    )
+                    Icon(
+                        imageVector = if (password_visible) TablerIcons.EyeOff else TablerIcons.Eye,
+                        contentDescription = stringResource(
+                            if (password_visible) R.string.hide_password else R.string.show_password,
+                        ),
+                        tint = colors.text_muted,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(SquircleShape(AsterRadius.sm))
+                            .clickable { password_visible = !password_visible }
+                            .padding(9.dp),
+                    )
+                }
             }
             Spacer(Modifier.height(AsterSpacing.md))
             org.astermail.android.design.components.AsterButton(

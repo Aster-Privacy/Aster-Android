@@ -102,20 +102,26 @@ private fun MacrobenchmarkScope.find_scroll_container(): UiObject2? =
     device.wait(Until.findObject(By.scrollable(true)), settle_timeout_ms)
 
 private fun MacrobenchmarkScope.scroll_mail_list() {
-    val list = find_scroll_container() ?: return
-    list.setGestureMargin(list.visibleBounds.width() / 5)
     repeat(3) {
-        list.fling(Direction.DOWN)
-        device.waitForIdle(settle_timeout_ms)
+        fling_mail_list(Direction.DOWN)
     }
-    list.fling(Direction.UP)
+    fling_mail_list(Direction.UP)
+}
+
+private fun MacrobenchmarkScope.fling_mail_list(direction: Direction) {
+    val list = find_scroll_container() ?: return
+    runCatching {
+        list.setGestureMargin(list.visibleBounds.width() / 5)
+        list.fling(direction)
+    }
     device.waitForIdle(settle_timeout_ms)
 }
 
 private fun MacrobenchmarkScope.open_first_thread() {
-    val list = find_scroll_container() ?: return
-    val row = list.findObjects(By.clickable(true)).firstOrNull() ?: return
-    row.click()
+    val row = runCatching {
+        find_scroll_container()?.findObjects(By.clickable(true))?.firstOrNull()
+    }.getOrNull() ?: return
+    runCatching { row.click() }
     device.waitForIdle(settle_timeout_ms)
 }
 
@@ -131,9 +137,9 @@ private fun MacrobenchmarkScope.open_settings() {
 
 private fun MacrobenchmarkScope.tap_tag(tag: String): Boolean {
     val target = device.wait(Until.findObject(By.res(tag)), probe_timeout_ms) ?: return false
-    target.click()
+    val tapped = runCatching { target.click() }.isSuccess
     device.waitForIdle(settle_timeout_ms)
-    return true
+    return tapped
 }
 
 private fun MacrobenchmarkScope.go_back() {

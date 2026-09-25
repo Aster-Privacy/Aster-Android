@@ -35,8 +35,22 @@ fun split_trailing_signature(body: String, signature: String): Pair<String, Stri
     return before to signature
 }
 
-fun plain_signature_with_separator(content: String, preference: Boolean?): String =
-    if (content.isBlank() || preference == false) content else "--\n" + content
+fun plain_signature_with_separator(content: String, preference: Boolean?): String {
+    val trimmed = content.trim('\n', '\r')
+    return if (trimmed.isBlank() || preference == false) trimmed else "--\n" + trimmed
+}
+
+fun seeded_body_with_signature(prefix: String, signature: String, watermark: String): String = when {
+    signature.isBlank() -> prefix + watermark
+    prefix.isBlank() -> "\n\n" + signature + watermark
+    else -> prefix + signature + watermark
+}
+
+fun append_signature(core: String, signature: String): String =
+    if (core.isBlank()) "\n\n" + signature else core + "\n\n" + signature
+
+fun caret_starts_above_signature(body: String): Boolean =
+    body.startsWith("\n") && body.length > 1
 
 fun html_signature_with_separator(html: String, preference: Boolean?): String =
     if (html.isBlank() || preference == false) html else "--<br>" + html

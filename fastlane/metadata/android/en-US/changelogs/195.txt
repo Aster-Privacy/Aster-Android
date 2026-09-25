@@ -1,0 +1,5 @@
+Fixed
+- Your inbox and folders open without showing grayed-out old messages first.
+- Pulling to refresh while mail loads no longer hides your list.
+- Filtered folders no longer flash an empty message before your mail appears.
+- Message previews are no longer saved unencrypted on your device, and old copies are removed.
