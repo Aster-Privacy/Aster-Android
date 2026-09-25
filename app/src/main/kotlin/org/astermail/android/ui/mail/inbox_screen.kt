@@ -1862,6 +1862,7 @@ fun InboxScreen(
                                 if (refreshing_now) {
                                     CircularProgressIndicator(
                                         color = accent,
+                                        trackColor = Color.Transparent,
                                         strokeWidth = 2.dp,
                                         modifier = Modifier.size(pull_refresh_spinner_size),
                                     )
