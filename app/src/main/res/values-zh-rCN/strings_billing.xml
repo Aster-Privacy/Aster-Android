@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">个人与家庭套餐，按月或按年</string>
     <string name="billing_more_title">更多</string>
     <string name="billing_addons_subtitle">保留套餐，增加空间</string>
+    <string name="billing_addon_summary">%1$s 额外存储空间</string>
+    <string name="billing_addon_pick_size">选择要添加的容量</string>
     <string name="billing_support_subtitle">给团队发送消息</string>
     <string name="billing_trust_card">可随时在此页面取消。银行卡付款享有 30 天退款保证。</string>
     <string name="billing_trust_crypto">加密货币付款不会自动续订，也不可退款。Aster 会在套餐结束前提醒您。</string>

@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">個人プランと家族プラン、月払いまたは年払い</string>
     <string name="billing_more_title">その他</string>
     <string name="billing_addons_subtitle">プランはそのまま、容量を追加</string>
+    <string name="billing_addon_summary">追加ストレージ %1$s</string>
+    <string name="billing_addon_pick_size">追加する容量を選択してください</string>
     <string name="billing_support_subtitle">チームにメッセージを送る</string>
     <string name="billing_trust_card">このページからいつでも解約できます。カード決済には 30 日間の返金保証があります。</string>
     <string name="billing_trust_crypto">暗号資産での支払いは自動更新されず、返金もできません。プラン終了前に Aster がお知らせします。</string>

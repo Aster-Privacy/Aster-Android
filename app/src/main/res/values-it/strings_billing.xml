@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">Piani individuali e famiglia, mensili o annuali</string>
     <string name="billing_more_title">Altro</string>
     <string name="billing_addons_subtitle">Aggiungi spazio, mantieni il piano</string>
+    <string name="billing_addon_summary">%1$s di spazio aggiuntivo</string>
+    <string name="billing_addon_pick_size">Scegli quanto aggiungere</string>
     <string name="billing_support_subtitle">Scrivi al team</string>
     <string name="billing_trust_card">Annulla quando vuoi da questa pagina. I pagamenti con carta hanno una garanzia di rimborso di 30 giorni.</string>
     <string name="billing_trust_crypto">I pagamenti in cripto non si rinnovano da soli e non sono rimborsabili. Aster ti avvisa prima che il piano termini.</string>

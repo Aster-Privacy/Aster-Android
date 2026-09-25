@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">Individuele en gezinsabonnementen, per maand of per jaar</string>
     <string name="billing_more_title">Meer</string>
     <string name="billing_addons_subtitle">Ruimte toevoegen, abonnement houden</string>
+    <string name="billing_addon_summary">%1$s extra opslag</string>
+    <string name="billing_addon_pick_size">Kies hoeveel je wilt toevoegen</string>
     <string name="billing_support_subtitle">Stuur het team een bericht</string>
     <string name="billing_trust_card">Zeg op elk moment op vanaf deze pagina. Kaartbetalingen hebben een niet-goed-geld-teruggarantie van 30 dagen.</string>
     <string name="billing_trust_crypto">Cryptobetalingen verlengen niet vanzelf en zijn niet terugbetaalbaar. Aster herinnert je eraan voordat je abonnement afloopt.</string>

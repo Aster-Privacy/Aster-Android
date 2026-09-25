@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">Forfaits individuels et familiaux, mensuels ou annuels</string>
     <string name="billing_more_title">Plus</string>
     <string name="billing_addons_subtitle">Ajoutez de l’espace, gardez votre forfait</string>
+    <string name="billing_addon_summary">%1$s de stockage supplémentaire</string>
+    <string name="billing_addon_pick_size">Choisissez la quantité à ajouter</string>
     <string name="billing_support_subtitle">Écrivez à l’équipe</string>
     <string name="billing_trust_card">Résiliez à tout moment depuis cette page. Les paiements par carte sont remboursables pendant 30 jours.</string>
     <string name="billing_trust_crypto">Les paiements en crypto ne se renouvellent pas seuls et ne sont pas remboursables. Aster vous prévient avant la fin de votre forfait.</string>

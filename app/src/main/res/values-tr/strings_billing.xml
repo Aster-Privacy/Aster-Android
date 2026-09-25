@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">Bireysel ve aile planları, aylık veya yıllık</string>
     <string name="billing_more_title">Daha fazla</string>
     <string name="billing_addons_subtitle">Alan ekle, planını koru</string>
+    <string name="billing_addon_summary">%1$s ek depolama</string>
+    <string name="billing_addon_pick_size">Ne kadar ekleyeceğinizi seçin</string>
     <string name="billing_support_subtitle">Ekibe mesaj gönder</string>
     <string name="billing_trust_card">Bu sayfadan istediğin zaman iptal edebilirsin. Kart ödemelerinde 30 gün para iade garantisi vardır.</string>
     <string name="billing_trust_crypto">Kripto ödemeleri kendiliğinden yenilenmez ve iade edilmez. Planın bitmeden önce Aster sana hatırlatır.</string>

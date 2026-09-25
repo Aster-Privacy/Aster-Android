@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">Plany indywidualne i rodzinne, miesięczne lub roczne</string>
     <string name="billing_more_title">Więcej</string>
     <string name="billing_addons_subtitle">Dodaj miejsce, zachowaj plan</string>
+    <string name="billing_addon_summary">%1$s dodatkowej przestrzeni</string>
+    <string name="billing_addon_pick_size">Wybierz, ile chcesz dodać</string>
     <string name="billing_support_subtitle">Napisz do zespołu</string>
     <string name="billing_trust_card">Anuluj w każdej chwili na tej stronie. Płatności kartą mają 30-dniową gwarancję zwrotu pieniędzy.</string>
     <string name="billing_trust_crypto">Płatności kryptowalutą nie odnawiają się same i nie podlegają zwrotowi. Aster przypomni Ci przed końcem planu.</string>

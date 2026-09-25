@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">Einzel- und Familienpläne, monatlich oder jährlich</string>
     <string name="billing_more_title">Mehr</string>
     <string name="billing_addons_subtitle">Speicher hinzufügen, Plan behalten</string>
+    <string name="billing_addon_summary">%1$s zusätzlicher Speicher</string>
+    <string name="billing_addon_pick_size">Wähle aus, wie viel du hinzufügen möchtest</string>
     <string name="billing_support_subtitle">Schreib dem Team</string>
     <string name="billing_trust_card">Kündige jederzeit auf dieser Seite. Kartenzahlungen haben eine 30-Tage-Geld-zurück-Garantie.</string>
     <string name="billing_trust_crypto">Kryptozahlungen verlängern sich nicht von selbst und sind nicht erstattbar. Aster erinnert dich, bevor dein Plan endet.</string>

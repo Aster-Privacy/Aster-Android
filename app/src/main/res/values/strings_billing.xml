@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">Individual and family plans, monthly or yearly</string>
     <string name="billing_more_title">More</string>
     <string name="billing_addons_subtitle">Add space, keep your plan</string>
+    <string name="billing_addon_summary">%1$s of extra storage</string>
+    <string name="billing_addon_pick_size">Choose how much to add</string>
     <string name="billing_support_subtitle">Send the team a message</string>
     <string name="billing_trust_card">Cancel anytime from this page. Card payments come with a 30-day money-back guarantee.</string>
     <string name="billing_trust_crypto">Crypto payments do not renew on their own and are not refundable. Aster reminds you before your plan ends.</string>

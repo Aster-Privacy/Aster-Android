@@ -20,6 +20,12 @@ package org.astermail.android.ui.settings.detail
 
 import android.content.ClipData
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -87,6 +93,7 @@ import org.astermail.android.ui.auth.TurnstileWidget
 import org.astermail.android.ui.common.write_to_clipboard
 import java.util.Locale
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun billing_addons_panel(
     available: List<StorageAddonItem>,
@@ -123,26 +130,47 @@ internal fun billing_addons_panel(
             )
         }
         if (available.isNotEmpty()) {
-            Column(modifier = Modifier.selectableGroup()) {
-                available.forEach { addon ->
-                    settings_row_gap(modifier = Modifier)
-                    billing_option_row(
-                        title = if (addon.storage_bytes > 0) format_storage_short(addon.storage_bytes) else addon.name,
-                        selected = addon.id == selected_id,
-                        enabled = !is_acting,
-                        on_click = { on_select(addon.id) },
-                        trailing = {
-                            billing_price_column(
-                                amount = format_money(addon.price_cents.toLong(), currency),
-                                unit = per_month,
-                                note = null,
-                                enabled = !is_acting,
-                            )
-                        },
-                    )
-                }
-            }
+            settings_row_gap(modifier = Modifier)
+            val selected = available.firstOrNull { it.id == selected_id }
             Column(modifier = Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md)) {
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth().selectableGroup(),
+                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                    verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                ) {
+                    available.forEach { addon ->
+                        billing_size_chip(
+                            label = if (addon.storage_bytes > 0) format_storage_short(addon.storage_bytes) else addon.name,
+                            selected = addon.id == selected_id,
+                            enabled = !is_acting,
+                            on_click = { on_select(addon.id) },
+                        )
+                    }
+                }
+                Spacer(Modifier.height(AsterSpacing.lg))
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = if (selected != null) {
+                            stringResource(R.string.billing_addon_summary, format_storage_short(selected.storage_bytes))
+                        } else {
+                            stringResource(R.string.billing_addon_pick_size)
+                        },
+                        color = if (selected != null) colors.text_primary else colors.text_tertiary,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (selected != null) {
+                        Spacer(Modifier.width(AsterSpacing.md))
+                        billing_price_column(
+                            amount = format_money(selected.price_cents.toLong(), currency),
+                            unit = per_month,
+                            note = null,
+                            enabled = !is_acting,
+                        )
+                    }
+                }
+                Spacer(Modifier.height(AsterSpacing.md))
                 AsterButton(
                     label = stringResource(R.string.buy_more_storage),
                     onClick = on_buy,
@@ -160,6 +188,37 @@ internal fun billing_addons_panel(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun billing_size_chip(
+    label: String,
+    selected: Boolean,
+    enabled: Boolean,
+    on_click: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(if (selected) colors.accent_blue else Color.Transparent)
+            .border(1.dp, if (selected) colors.accent_blue else colors.border_secondary, CircleShape)
+            .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = on_click)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            color = when {
+                selected -> colors.on_accent
+                enabled -> colors.text_secondary
+                else -> colors.text_muted
+            },
+            fontSize = 13.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+            maxLines = 1,
+        )
     }
 }
 

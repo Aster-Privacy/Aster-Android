@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">व्यक्तिगत और परिवार प्लान, मासिक या सालाना</string>
     <string name="billing_more_title">और</string>
     <string name="billing_addons_subtitle">जगह जोड़ें, प्लान वही रखें</string>
+    <string name="billing_addon_summary">%1$s अतिरिक्त स्टोरेज</string>
+    <string name="billing_addon_pick_size">चुनें कि कितना जोड़ना है</string>
     <string name="billing_support_subtitle">टीम को संदेश भेजें</string>
     <string name="billing_trust_card">इस पेज से कभी भी रद्द करें। कार्ड भुगतान पर 30 दिन की मनी-बैक गारंटी है।</string>
     <string name="billing_trust_crypto">क्रिप्टो भुगतान अपने आप नवीनीकृत नहीं होते और वापस नहीं किए जाते। आपका प्लान समाप्त होने से पहले Aster आपको याद दिलाता है।</string>
