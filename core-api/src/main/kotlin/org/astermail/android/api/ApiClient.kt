@@ -147,16 +147,8 @@ interface TokenProvider {
 }
 
 fun build_user_agent(): String {
-    val manufacturer = (Build.MANUFACTURER ?: "unknown").replaceFirstChar { it.uppercase() }
-    val model = Build.MODEL ?: "device"
-    val device_name = if (model.startsWith(manufacturer, ignoreCase = true)) {
-        model
-    } else {
-        "$manufacturer $model"
-    }
     val android_version = Build.VERSION.RELEASE ?: "0"
-    val sdk = Build.VERSION.SDK_INT
-    return "AsterMail-Android/${BuildConfig.VERSION_NAME} (Android $android_version; SDK $sdk; $device_name)"
+    return "AsterMail-Android/${BuildConfig.VERSION_NAME} (Android $android_version)"
 }
 
 @OptIn(ExperimentalSerializationApi::class)
