@@ -118,7 +118,7 @@ internal fun billing_hero_card(
                 Image(
                     painter = painterResource(R.drawable.aster_wordmark),
                     contentDescription = null,
-                    modifier = Modifier.height(15.dp),
+                    modifier = Modifier.height(16.dp),
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(

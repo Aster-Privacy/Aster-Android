@@ -113,8 +113,8 @@
     <string name="billing_cancel_offer_body_missing">Una nota breve llega a las personas que construyen Aster, y leen todas. Después puedes cancelar igualmente.</string>
     <string name="billing_credits_settings_failed">Aster no pudo guardar tu ajuste de crédito.</string>
     <string name="billing_academic_request_failed">Aster no pudo enviar el correo de verificación.</string>
-    <string name="billing_thanks_free_title">Tu correo se mantiene privado</string>
-    <string name="billing_thanks_free_body">El cifrado de extremo a extremo está incluido en todos los planes. Mejora tu plan cuando necesites más almacenamiento, alias o dominios personalizados.</string>
+    <string name="billing_thanks_free_title">Gracias por usar Aster</string>
+    <string name="billing_thanks_free_body">Un equipo pequeño construye Aster con cuidado, y cada persona que le confía su correo nos mantiene en marcha. Mejora tu plan cuando necesites más almacenamiento, alias o dominios personalizados.</string>
     <string name="billing_usage_of">%1$d de %2$d</string>
     <string name="billing_usage_in_use">%1$d en uso</string>
     <string name="billing_usage_upgrade_hint">Mejora para tener más espacio</string>

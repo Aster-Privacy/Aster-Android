@@ -22,8 +22,6 @@ import android.content.ClipData
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
@@ -93,7 +91,6 @@ import org.astermail.android.ui.auth.TurnstileWidget
 import org.astermail.android.ui.common.write_to_clipboard
 import java.util.Locale
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun billing_addons_panel(
     available: List<StorageAddonItem>,
@@ -133,18 +130,26 @@ internal fun billing_addons_panel(
             settings_row_gap(modifier = Modifier)
             val selected = available.firstOrNull { it.id == selected_id }
             Column(modifier = Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md)) {
-                FlowRow(
+                Column(
                     modifier = Modifier.fillMaxWidth().selectableGroup(),
-                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
                     verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
                 ) {
-                    available.forEach { addon ->
-                        billing_size_chip(
-                            label = if (addon.storage_bytes > 0) format_storage_short(addon.storage_bytes) else addon.name,
-                            selected = addon.id == selected_id,
-                            enabled = !is_acting,
-                            on_click = { on_select(addon.id) },
-                        )
+                    available.chunked(4).forEach { row ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                        ) {
+                            row.forEach { addon ->
+                                billing_size_chip(
+                                    label = if (addon.storage_bytes > 0) format_storage_short(addon.storage_bytes) else addon.name,
+                                    selected = addon.id == selected_id,
+                                    enabled = !is_acting,
+                                    on_click = { on_select(addon.id) },
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                            repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
+                        }
                     }
                 }
                 Spacer(Modifier.height(AsterSpacing.lg))
@@ -197,15 +202,16 @@ private fun billing_size_chip(
     selected: Boolean,
     enabled: Boolean,
     on_click: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
     Box(
-        modifier = Modifier
+        modifier = modifier
             .clip(CircleShape)
             .background(if (selected) colors.accent_blue else Color.Transparent)
             .border(1.dp, if (selected) colors.accent_blue else colors.border_secondary, CircleShape)
             .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = on_click)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .padding(horizontal = AsterSpacing.sm, vertical = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(

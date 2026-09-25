@@ -113,8 +113,8 @@
     <string name="billing_cancel_offer_body_missing">Короткая заметка попадает к людям, которые создают Aster, и они читают каждую. После этого вы всё равно сможете отменить.</string>
     <string name="billing_credits_settings_failed">Aster не удалось сохранить настройку кредитов.</string>
     <string name="billing_academic_request_failed">Aster не удалось отправить письмо для подтверждения.</string>
-    <string name="billing_thanks_free_title">Ваша почта остаётся приватной</string>
-    <string name="billing_thanks_free_body">Сквозное шифрование включено в каждый тариф. Перейдите на другой тариф, когда понадобится больше места, псевдонимов или собственных доменов.</string>
+    <string name="billing_thanks_free_title">Спасибо, что пользуетесь Aster</string>
+    <string name="billing_thanks_free_body">Небольшая команда бережно создаёт Aster, и каждый, кто доверяет ему свою почту, помогает нам двигаться дальше. Переходите на другой план, когда понадобится больше места, псевдонимов или собственных доменов.</string>
     <string name="billing_usage_of">%1$d из %2$d</string>
     <string name="billing_usage_in_use">%1$d в работе</string>
     <string name="billing_usage_upgrade_hint">Обновите план, чтобы получить больше места</string>

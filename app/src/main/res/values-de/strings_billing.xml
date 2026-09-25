@@ -113,8 +113,8 @@
     <string name="billing_cancel_offer_body_missing">Eine kurze Nachricht erreicht die Leute, die Aster entwickeln, und sie lesen jede einzelne. Du kannst danach trotzdem kündigen.</string>
     <string name="billing_credits_settings_failed">Aster konnte deine Guthaben-Einstellung nicht speichern.</string>
     <string name="billing_academic_request_failed">Aster konnte die Bestätigungs-E-Mail nicht senden.</string>
-    <string name="billing_thanks_free_title">Deine E-Mails bleiben privat</string>
-    <string name="billing_thanks_free_body">Ende-zu-Ende-Verschlüsselung ist in jedem Tarif enthalten. Führe ein Upgrade durch, wenn du mehr Speicher, Aliasse oder eigene Domains brauchst.</string>
+    <string name="billing_thanks_free_title">Danke, dass du Aster nutzt</string>
+    <string name="billing_thanks_free_body">Ein kleines Team entwickelt Aster mit Sorgfalt, und jede Person, die ihm ihre E-Mails anvertraut, hält uns am Laufen. Führe ein Upgrade durch, wann immer du mehr Speicher, Aliasse oder eigene Domains brauchst.</string>
     <string name="billing_usage_of">%1$d von %2$d</string>
     <string name="billing_usage_in_use">%1$d in Gebrauch</string>
     <string name="billing_usage_upgrade_hint">Upgrade für mehr Platz</string>

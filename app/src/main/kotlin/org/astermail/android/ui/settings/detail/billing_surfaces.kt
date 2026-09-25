@@ -346,10 +346,12 @@ internal fun billing_option_row(
             .clip(RectangleShape)
             .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = on_click)
             .background(fill)
-            .heightIn(min = 54.dp)
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 38.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             billing_option_indicator(selected = selected, enabled = enabled)
             Spacer(Modifier.width(AsterSpacing.md))
             if (leading != null) {
