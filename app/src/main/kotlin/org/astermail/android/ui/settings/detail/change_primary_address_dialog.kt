@@ -124,10 +124,16 @@ internal fun change_primary_address_dialog(
                 primary_local_part_valid(address.substring(0, at).lowercase(Locale.ROOT))
         }
     }
-    val new_address_is_existing_alias = remember(alias_addresses, state.new_address) {
-        state.new_address.isNotEmpty() &&
-            alias_addresses.any { routing_form(it) == routing_form(state.new_address) }
-    }
+    val new_address_is_existing_alias =
+        remember(alias_addresses, state.new_address, state.consumes_alias) {
+            state.new_address.isNotEmpty() &&
+                (
+                    state.consumes_alias ||
+                        alias_addresses.any {
+                            routing_form(it) == routing_form(state.new_address)
+                        }
+                    )
+        }
     val next_change_label = remember(state.next_change_available_at) {
         format_settings_date(state.next_change_available_at)
     }
@@ -139,6 +145,7 @@ internal fun change_primary_address_dialog(
 
     AsterDialog(
         on_dismiss = { if (!state.busy) on_dismiss() },
+        is_busy = state.busy,
         title = when (state.step) {
             PrimaryAddressStep.INTRO -> stringResource(R.string.address_change_title)
             PrimaryAddressStep.PICK -> stringResource(R.string.address_change_pick_title)
@@ -187,9 +194,7 @@ internal fun change_primary_address_dialog(
                                 )
                             },
                         )
-                        address_change_point(
-                            icon = TablerIcons.AlertTriangle,
-                            tint = colors.warning,
+                        address_change_warning_card(
                             title = stringResource(R.string.address_change_permanent_title),
                             body = stringResource(
                                 R.string.address_change_permanent_body,
@@ -276,6 +281,13 @@ internal fun change_primary_address_dialog(
                         verdict?.let { (label, tint) ->
                             Text(text = label, color = tint, fontSize = 13.sp)
                         }
+                        address_change_warning_card(
+                            title = stringResource(R.string.address_change_permanent_title),
+                            body = stringResource(
+                                R.string.address_change_permanent_body,
+                                shown_current,
+                            ),
+                        )
                     }
 
                     PrimaryAddressStep.REVIEW -> {
@@ -596,6 +608,41 @@ private fun domain_picker(domain: String, on_select: (String) -> Unit) {
                     },
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun address_change_warning_card(title: String, body: String) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(SquircleShape(14.dp))
+            .background(colors.warning, SquircleShape(14.dp))
+            .padding(horizontal = AsterSpacing.md, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+    ) {
+        Icon(
+            imageVector = TablerIcons.AlertTriangle,
+            contentDescription = null,
+            tint = Color.Black,
+            modifier = Modifier
+                .padding(top = 1.dp)
+                .size(18.dp),
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                color = Color.Black,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = body,
+                color = Color.Black.copy(alpha = 0.8f),
+                fontSize = 12.sp,
+            )
         }
     }
 }

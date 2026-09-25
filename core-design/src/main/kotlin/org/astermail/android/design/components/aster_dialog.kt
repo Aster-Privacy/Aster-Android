@@ -202,6 +202,7 @@ fun AsterDialog(
     title: String,
     message: String? = null,
     body: @Composable (() -> Unit)? = null,
+    is_busy: Boolean = false,
     footer: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -221,7 +222,7 @@ fun AsterDialog(
     )
     val scale = dialog_scale(content_progress)
     val slide = dialog_slide(content_progress)
-    val start_dismiss: () -> Unit = { visible = false }
+    val start_dismiss: () -> Unit = { if (!is_busy) visible = false }
     Dialog(onDismissRequest = start_dismiss, properties = dialog_properties) {
         prepare_dialog_window()
         dialog_scrim(progress = scrim_progress, on_dismiss = start_dismiss) {

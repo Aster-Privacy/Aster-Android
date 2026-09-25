@@ -32,6 +32,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -75,7 +76,9 @@ import java.io.ByteArrayOutputStream
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.text.style.TextAlign
 import compose.icons.tablericons.At
+import compose.icons.tablericons.Lock
 import compose.icons.tablericons.Calendar
+import compose.icons.tablericons.Copy
 import compose.icons.tablericons.Rocket
 import org.astermail.android.design.components.AsterPlanTag
 import org.astermail.android.design.components.aster_plan_kind
@@ -84,6 +87,7 @@ import org.astermail.android.design.components.aster_plan_kind_of
 import org.astermail.android.R
 import compose.icons.TablerIcons
 import compose.icons.tablericons.ChevronDown
+import compose.icons.tablericons.Pencil
 import org.astermail.android.api.user.Badge
 import org.astermail.android.api.user.UpdateBadgePreferencesRequest
 import org.astermail.android.ui.common.current_user_avatar
@@ -91,6 +95,7 @@ import org.astermail.android.ui.common.plan_ring
 import org.astermail.android.ui.common.remember_has_paid_plan
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterCard
@@ -146,6 +151,8 @@ fun ProfileScreen(
     var show_address_dialog by remember { mutableStateOf(false) }
     var show_address_locked by remember { mutableStateOf(false) }
     var show_address_upsell by remember { mutableStateOf(false) }
+    var address_menu_open by remember { mutableStateOf(false) }
+    val copy_address_label = stringResource(R.string.copy_address)
     LaunchedEffect(Unit) { address_vm.load_eligibility() }
 
     var photo_uploading by remember { mutableStateOf(false) }
@@ -265,6 +272,14 @@ fun ProfileScreen(
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .clip(SquircleShape(10.dp))
+                    .combinedClickable(
+                        onClick = {},
+                        onLongClick = { copy_address(context, email) },
+                        onLongClickLabel = copy_address_label,
+                    )
+                    .padding(horizontal = AsterSpacing.sm, vertical = 2.dp),
             )
             v_gap(AsterSpacing.md)
             Box(
@@ -304,24 +319,70 @@ fun ProfileScreen(
             eligibility_failed = address_state.eligibility_failed,
             next_change_available_at = address_state.next_change_available_at,
         )
+        val address_plan_locked = address_state.eligibility_loaded &&
+            address_state.lock_reason == primary_address_reason_plan
         AsterCard(modifier = Modifier.fillMaxWidth()) {
-            detail_row(
-                title = email,
-                subtitle = stringResource(R.string.primary_address),
-                icon = TablerIcons.At,
-                on_click = {
-                    when {
-                        address_state.eligibility_failed -> {
-                            address_vm.load_eligibility()
-                            show_address_locked = true
+            Box {
+                val primary_address_label = stringResource(R.string.primary_address)
+                val address_cadence_label = stringResource(R.string.address_change_once_title)
+                detail_row(
+                    title = email,
+                    subtitle = if (address_state.eligibility_loaded && address_state.eligible) {
+                        "$primary_address_label · $address_cadence_label"
+                    } else {
+                        primary_address_label
+                    },
+                    icon = TablerIcons.At,
+                    icon_tint = if (address_plan_locked) colors.text_tertiary else null,
+                    muted = address_plan_locked,
+                    trailing = if (address_plan_locked) {
+                        {
+                            Icon(
+                                imageVector = TablerIcons.Lock,
+                                contentDescription = null,
+                                tint = colors.text_tertiary,
+                                modifier = Modifier.size(18.dp),
+                            )
                         }
-                        !address_state.eligibility_loaded -> address_vm.load_eligibility()
-                        address_state.lock_reason == primary_address_reason_plan -> show_address_upsell = true
-                        !address_state.eligible -> show_address_locked = true
-                        else -> show_address_dialog = true
-                    }
-                },
-            )
+                    } else {
+                        null
+                    },
+                    on_click = { address_menu_open = true },
+                )
+                aster_menu(
+                    expanded = address_menu_open,
+                    on_dismiss = { address_menu_open = false },
+                ) {
+                    aster_menu_item(
+                        label = copy_address_label,
+                        icon = TablerIcons.Copy,
+                        test_tag = "primary_address_copy",
+                        on_click = {
+                            address_menu_open = false
+                            copy_address(context, email)
+                        },
+                    )
+                    aster_menu_item(
+                        label = stringResource(R.string.change_address),
+                        icon = if (address_plan_locked) TablerIcons.Lock else TablerIcons.Pencil,
+                        test_tag = "primary_address_change",
+                        on_click = {
+                            address_menu_open = false
+                            when {
+                                address_state.eligibility_failed -> {
+                                    address_vm.load_eligibility()
+                                    show_address_locked = true
+                                }
+                                !address_state.eligibility_loaded -> address_vm.load_eligibility()
+                                address_state.lock_reason == primary_address_reason_plan ->
+                                    show_address_upsell = true
+                                !address_state.eligible -> show_address_locked = true
+                                else -> show_address_dialog = true
+                            }
+                        },
+                    )
+                }
+            }
             settings_row_gap()
             detail_row(
                 title = stringResource(R.string.current_plan),
@@ -391,8 +452,8 @@ fun ProfileScreen(
                     address_vm.reset()
                 },
                 on_changed = {
-                    vm.load_profile()
-                    vm.load_aliases()
+                    vm.load_profile(force = true)
+                    vm.load_aliases(force = true)
                     address_vm.load_eligibility()
                 },
                 vm = address_vm,

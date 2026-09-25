@@ -93,7 +93,7 @@ data class PrimaryAddressUiState(
     val eligible: Boolean = false,
     val lock_reason: String? = null,
     val next_change_available_at: String? = null,
-    val renames_allowed_per_year: Int = 0,
+    val renames_allowed: Int = 0,
     val eligibility_failed: Boolean = false,
     val eligibility_checked: Boolean = false,
     val local_part: String = "",
@@ -101,6 +101,7 @@ data class PrimaryAddressUiState(
     val checking: Boolean = false,
     val is_available: Boolean? = null,
     val availability_check_failed: Boolean = false,
+    val consumes_alias: Boolean = false,
     val confirm_text: String = "",
     val password: String = "",
     val show_password: Boolean = false,
@@ -109,6 +110,7 @@ data class PrimaryAddressUiState(
     val status: String? = null,
     val error: String? = null,
     val final_address: String = "",
+    val republish_address: String = "",
     val retained_address: String = "",
     val resend_seconds: Int = 0,
     val code_locked: Boolean = false,
@@ -169,7 +171,7 @@ class PrimaryAddressViewModel @Inject constructor(
                         lock_reason = response.reason,
                         current_address = response.current_address,
                         next_change_available_at = response.next_change_available_at,
-                        renames_allowed_per_year = response.renames_allowed_per_year,
+                        renames_allowed = response.renames_allowed,
                         eligibility_failed = false,
                         eligibility_checked = true,
                     )
@@ -196,7 +198,7 @@ class PrimaryAddressViewModel @Inject constructor(
             eligible = kept.eligible,
             lock_reason = kept.lock_reason,
             next_change_available_at = kept.next_change_available_at,
-            renames_allowed_per_year = kept.renames_allowed_per_year,
+            renames_allowed = kept.renames_allowed,
             eligibility_failed = kept.eligibility_failed,
             eligibility_checked = kept.eligibility_checked,
         )
@@ -253,6 +255,7 @@ class PrimaryAddressViewModel @Inject constructor(
             local_part = value.trim().lowercase(Locale.ROOT),
             is_available = null,
             availability_check_failed = false,
+            consumes_alias = false,
             checking = false,
             error = null,
         )
@@ -264,6 +267,7 @@ class PrimaryAddressViewModel @Inject constructor(
             domain = value,
             is_available = null,
             availability_check_failed = false,
+            consumes_alias = false,
             checking = false,
             error = null,
         )
@@ -278,6 +282,7 @@ class PrimaryAddressViewModel @Inject constructor(
             domain = address.substring(at + 1).lowercase(Locale.ROOT),
             is_available = null,
             availability_check_failed = false,
+            consumes_alias = false,
             checking = false,
             error = null,
         )
@@ -299,7 +304,6 @@ class PrimaryAddressViewModel @Inject constructor(
     fun set_code(value: String) {
         _state.value = _state.value.copy(
             code = value.filter { it.isDigit() }.take(primary_address_code_length),
-            code_locked = false,
             error = null,
         )
     }
@@ -314,17 +318,21 @@ class PrimaryAddressViewModel @Inject constructor(
 
         availability_job = viewModelScope.launch {
             delay(availability_debounce_ms)
-            _state.value = _state.value.copy(checking = true, availability_check_failed = false)
+            _state.value = _state.value.copy(
+                checking = true,
+                availability_check_failed = false,
+                consumes_alias = false,
+                is_available = null,
+            )
 
             val probe = try {
-                Result.success(
-                    primary_address_api.check_availability(
-                        PrimaryAddressAvailabilityRequest(
-                            local_part = local_part,
-                            domain = domain,
-                        ),
-                    ).available,
+                val response = primary_address_api.check_availability(
+                    PrimaryAddressAvailabilityRequest(
+                        local_part = local_part,
+                        domain = domain,
+                    ),
                 )
+                Result.success(response.available to response.consumes_alias)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Throwable) {
@@ -335,8 +343,9 @@ class PrimaryAddressViewModel @Inject constructor(
             if (latest.local_part != local_part || latest.domain != domain) return@launch
             _state.value = latest.copy(
                 checking = false,
-                is_available = probe.getOrNull(),
+                is_available = probe.getOrNull()?.first,
                 availability_check_failed = probe.isFailure,
+                consumes_alias = probe.getOrNull()?.second == true,
             )
         }
     }
@@ -481,11 +490,6 @@ class PrimaryAddressViewModel @Inject constructor(
                         new_user_hash = CryptoNative.hash_email(snapshot.new_address),
                         retained_encrypted_local_part = encrypted_local_part,
                         retained_local_part_nonce = local_part_nonce,
-                        retained_alias_address_hash = compute_alias_address_hash_with(
-                            session_key_store,
-                            retained_local_part,
-                            retained_domain,
-                        ),
                         retained_routing_address_hash = compute_routing_address_hash_for(
                             retained_local_part,
                             retained_domain,
@@ -495,8 +499,22 @@ class PrimaryAddressViewModel @Inject constructor(
             }
 
             result.onSuccess { response ->
+                val confirmed_address = response.new_address.takeIf {
+                    routing_form(it) == routing_form(snapshot.new_address)
+                } ?: settled_new_address(snapshot.new_address)?.current_address
+
+                if (confirmed_address == null) {
+                    _state.value = _state.value.copy(
+                        busy = false,
+                        status = null,
+                        error = context.getString(R.string.address_change_failed),
+                    )
+
+                    return@onSuccess
+                }
+
                 apply_confirmed_change(
-                    new_address = response.new_address,
+                    new_address = confirmed_address,
                     retained_address = snapshot.current_address,
                     next_change_available_at = response.next_change_available_at,
                     display_name = display_name,
@@ -537,7 +555,7 @@ class PrimaryAddressViewModel @Inject constructor(
         val snapshot = _state.value
 
         if (!snapshot.key_retry_available || snapshot.busy) return
-        if (snapshot.final_address.isBlank()) return
+        if (snapshot.republish_address.isBlank()) return
 
         viewModelScope.launch {
             _state.value = _state.value.copy(
@@ -548,7 +566,7 @@ class PrimaryAddressViewModel @Inject constructor(
             val republished = runCatching {
                 withTimeout(republish_timeout_ms) {
                     auth_repository.add_address_to_identity_key(
-                        snapshot.final_address,
+                        snapshot.republish_address,
                         display_name,
                     )
                 }
@@ -609,15 +627,15 @@ class PrimaryAddressViewModel @Inject constructor(
             status = context.getString(R.string.address_change_updating_key),
         )
 
+        var republished = false
         val follow_up = runCatching {
             withTimeout(republish_timeout_ms) {
                 session_key_store.put_user_email(new_address)
-                val republished = auth_repository.add_address_to_identity_key(
+                republished = auth_repository.add_address_to_identity_key(
                     new_address,
                     display_name,
                 )
                 auth_repository.refresh_profile()
-                republished
             }
         }
 
@@ -630,7 +648,6 @@ class PrimaryAddressViewModel @Inject constructor(
         }
 
         auth_repository.refresh_session_snapshot()
-        val republished = follow_up.getOrDefault(false)
         _state.value = _state.value.copy(
             busy = false,
             error = null,
@@ -646,6 +663,7 @@ class PrimaryAddressViewModel @Inject constructor(
             final_address = _state.value.new_address.takeIf {
                 routing_form(it) == routing_form(new_address)
             } ?: new_address,
+            republish_address = new_address,
             retained_address = retained_address,
             step = PrimaryAddressStep.DONE,
         )

@@ -39,7 +39,7 @@ data class PrimaryAddressEligibilityResponse(
     val reason: String? = null,
     val current_address: String = "",
     val next_change_available_at: String? = null,
-    val renames_allowed_per_year: Int = 0,
+    val renames_allowed: Int = 0,
 )
 
 @Serializable
@@ -51,6 +51,7 @@ data class PrimaryAddressAvailabilityRequest(
 @Serializable
 data class PrimaryAddressAvailabilityResponse(
     val available: Boolean = false,
+    val consumes_alias: Boolean = false,
 )
 
 @Serializable
@@ -71,14 +72,13 @@ data class PrimaryAddressConfirmRequest(
     val new_user_hash: String,
     val retained_encrypted_local_part: String,
     val retained_local_part_nonce: String,
-    val retained_alias_address_hash: String,
     val retained_routing_address_hash: String,
 )
 
 @Serializable
 data class PrimaryAddressConfirmResponse(
-    val new_address: String = "",
-    val retained_address: String = "",
+    val new_address: String,
+    val retained_address: String,
     val next_change_available_at: String? = null,
 )
 

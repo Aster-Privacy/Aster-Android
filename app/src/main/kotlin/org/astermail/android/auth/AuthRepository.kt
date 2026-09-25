@@ -1035,9 +1035,18 @@ class AuthRepository @Inject constructor(
 
     private var uid_update_attempted_for: String? = null
 
+    private fun uid_form(address: String): String {
+        val lowered = address.trim().lowercase(java.util.Locale.ROOT)
+        val at = lowered.lastIndexOf('@')
+
+        if (at <= 0) return lowered
+
+        return lowered.substring(0, at).replace(".", "") + lowered.substring(at)
+    }
+
     suspend fun refresh_profile(): Result<Unit> = runCatching {
         val profile = auth_api.me()
-        val email = adopt_server_email(profile)
+        val email = adopt_server_email(profile)?.let { uid_form(it) }
         absorb_profile(profile)
         if (profile.pgp_uid_update_required &&
             !email.isNullOrBlank() &&
@@ -1260,8 +1269,8 @@ class AuthRepository @Inject constructor(
         new_address: String,
         display_name: String,
     ): Boolean {
-        val identity_key = session_key_store.get_identity_key() ?: return false
-        if (!identity_key.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY")) return false
+        val identity_key = session_key_store.get_identity_key() ?: return true
+        if (!identity_key.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY")) return true
 
         val passphrase_bytes = session_key_store.get_passphrase() ?: return false
         try {
