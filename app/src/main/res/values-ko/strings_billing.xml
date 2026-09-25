@@ -80,7 +80,7 @@
     <string name="billing_status_ending">종료 예정</string>
     <string name="billing_status_payment_needed">결제 필요</string>
     <string name="billing_thanks_title">Aster를 지원해 주셔서 감사합니다</string>
-    <string name="billing_thanks_body">요금제는 Aster가 독립적이고 광고 없이 운영되도록 합니다. 여기에서 언제든지 변경하거나 해지할 수 있습니다.</string>
+    <string name="billing_thanks_body">여러분의 지원은 저희에게 큰 힘이 됩니다. 덕분에 작은 팀이 매일 정성껏 Aster를 계속 만들어 갈 수 있습니다.</string>
     <string name="billing_keep_title">%1$s 플랜이 %2$s에 종료됩니다</string>
     <string name="billing_keep_body">유지하면 아무것도 바뀌지 않습니다. 별칭, 도메인, 저장 공간이 그대로 남습니다.</string>
     <string name="billing_keep_action">%1$s 유지</string>

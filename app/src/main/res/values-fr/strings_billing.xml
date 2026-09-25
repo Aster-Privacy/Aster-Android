@@ -80,7 +80,7 @@
     <string name="billing_status_ending">Se termine</string>
     <string name="billing_status_payment_needed">Paiement requis</string>
     <string name="billing_thanks_title">Merci de soutenir Aster</string>
-    <string name="billing_thanks_body">Votre forfait garde Aster indépendant et sans publicité. Vous pouvez le modifier ou l’annuler ici à tout moment.</string>
+    <string name="billing_thanks_body">Votre soutien compte énormément pour nous. Il permet à une petite équipe de continuer à construire Aster avec soin, jour après jour.</string>
     <string name="billing_keep_title">Votre forfait %1$s se termine le %2$s</string>
     <string name="billing_keep_body">Gardez-le et rien ne change. Vos alias, vos domaines et votre stockage restent tels quels.</string>
     <string name="billing_keep_action">Garder %1$s</string>

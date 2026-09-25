@@ -80,7 +80,7 @@
     <string name="billing_status_ending">即将结束</string>
     <string name="billing_status_payment_needed">需要付款</string>
     <string name="billing_thanks_title">感谢你支持 Aster</string>
-    <string name="billing_thanks_body">您的方案让 Aster 保持独立且无广告。您可以随时在此更改或取消。</string>
+    <string name="billing_thanks_body">你的支持对我们意义重大。它让一个小团队能够每天用心地继续打造 Aster。</string>
     <string name="billing_keep_title">您的 %1$s 套餐将于 %2$s 结束</string>
     <string name="billing_keep_body">保留套餐，一切照旧。您的别名、域名和存储空间保持不变。</string>
     <string name="billing_keep_action">保留 %1$s</string>

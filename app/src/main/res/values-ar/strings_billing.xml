@@ -80,7 +80,7 @@
     <string name="billing_status_ending">ينتهي قريبًا</string>
     <string name="billing_status_payment_needed">الدفع مطلوب</string>
     <string name="billing_thanks_title">شكرًا لدعمك Aster</string>
-    <string name="billing_thanks_body">خطتك تُبقي Aster مستقلًا وخاليًا من الإعلانات. يمكنك تغييرها أو إلغاؤها هنا في أي وقت.</string>
+    <string name="billing_thanks_body">دعمك يعني لنا كل شيء. فهو يتيح لفريق صغير مواصلة بناء Aster بعناية، كل يوم.</string>
     <string name="billing_keep_title">تنتهي خطة %1$s في %2$s</string>
     <string name="billing_keep_body">احتفظ بها ولن يتغير شيء. تبقى أسماؤك المستعارة ونطاقاتك ومساحتك كما هي.</string>
     <string name="billing_keep_action">الاحتفاظ بخطة %1$s</string>

@@ -80,7 +80,7 @@
     <string name="billing_status_ending">समाप्त हो रहा है</string>
     <string name="billing_status_payment_needed">भुगतान ज़रूरी</string>
     <string name="billing_thanks_title">Aster को समर्थन देने के लिए धन्यवाद</string>
-    <string name="billing_thanks_body">आपका प्लान Aster को स्वतंत्र और विज्ञापन-मुक्त रखता है। आप इसे यहां कभी भी बदल या रद्द कर सकते हैं।</string>
+    <string name="billing_thanks_body">आपका समर्थन हमारे लिए सब कुछ है। इससे एक छोटी टीम हर दिन Aster को सावधानी से बनाती रहती है।</string>
     <string name="billing_keep_title">आपका %1$s प्लान %2$s को समाप्त होगा</string>
     <string name="billing_keep_body">इसे रखें और कुछ नहीं बदलेगा। आपके उपनाम, डोमेन और स्टोरेज वैसे ही रहेंगे।</string>
     <string name="billing_keep_action">%1$s रखें</string>

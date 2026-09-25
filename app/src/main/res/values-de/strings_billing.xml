@@ -80,7 +80,7 @@
     <string name="billing_status_ending">Endet</string>
     <string name="billing_status_payment_needed">Zahlung erforderlich</string>
     <string name="billing_thanks_title">Danke für deine Unterstützung</string>
-    <string name="billing_thanks_body">Dein Tarif hält Aster unabhängig und werbefrei. Du kannst ihn hier jederzeit ändern oder kündigen.</string>
+    <string name="billing_thanks_body">Deine Unterstützung bedeutet uns alles. Sie ermöglicht es einem kleinen Team, Aster jeden Tag mit Sorgfalt weiterzuentwickeln.</string>
     <string name="billing_keep_title">Dein %1$s-Plan endet am %2$s</string>
     <string name="billing_keep_body">Behalte ihn, und nichts ändert sich. Deine Aliasse, Domains und dein Speicher bleiben wie sie sind.</string>
     <string name="billing_keep_action">%1$s behalten</string>

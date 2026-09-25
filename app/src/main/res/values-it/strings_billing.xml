@@ -80,7 +80,7 @@
     <string name="billing_status_ending">In scadenza</string>
     <string name="billing_status_payment_needed">Pagamento richiesto</string>
     <string name="billing_thanks_title">Grazie per sostenere Aster</string>
-    <string name="billing_thanks_body">Il tuo piano mantiene Aster indipendente e senza pubblicità. Puoi modificarlo o annullarlo qui in qualsiasi momento.</string>
+    <string name="billing_thanks_body">Il tuo sostegno significa tutto per noi. Permette a un piccolo team di continuare a costruire Aster con cura, ogni giorno.</string>
     <string name="billing_keep_title">Il tuo piano %1$s termina il %2$s</string>
     <string name="billing_keep_body">Mantienilo e non cambia nulla. Alias, domini e spazio restano come sono.</string>
     <string name="billing_keep_action">Mantieni %1$s</string>

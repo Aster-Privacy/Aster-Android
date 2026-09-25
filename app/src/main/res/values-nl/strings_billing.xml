@@ -80,7 +80,7 @@
     <string name="billing_status_ending">Loopt af</string>
     <string name="billing_status_payment_needed">Betaling nodig</string>
     <string name="billing_thanks_title">Bedankt dat je Aster steunt</string>
-    <string name="billing_thanks_body">Je abonnement houdt Aster onafhankelijk en advertentievrij. Je kunt het hier op elk moment wijzigen of opzeggen.</string>
+    <string name="billing_thanks_body">Je steun betekent alles voor ons. Dankzij jou kan een klein team Aster elke dag met zorg blijven bouwen.</string>
     <string name="billing_keep_title">Je %1$s-abonnement eindigt op %2$s</string>
     <string name="billing_keep_body">Houd het en er verandert niets. Je aliassen, domeinen en opslag blijven zoals ze zijn.</string>
     <string name="billing_keep_action">%1$s houden</string>

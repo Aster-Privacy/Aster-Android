@@ -80,7 +80,7 @@
     <string name="billing_status_ending">終了予定</string>
     <string name="billing_status_payment_needed">支払いが必要</string>
     <string name="billing_thanks_title">Aster をご支援いただきありがとうございます</string>
-    <string name="billing_thanks_body">あなたのプランが Aster の独立と広告なしの運営を支えています。ここでいつでも変更または解約できます。</string>
+    <string name="billing_thanks_body">あなたのご支援は私たちにとってかけがえのないものです。小さなチームが毎日、心を込めて Aster を作り続けられるのはそのおかげです。</string>
     <string name="billing_keep_title">%1$s プランは %2$s に終了します</string>
     <string name="billing_keep_body">継続すれば何も変わりません。エイリアス、ドメイン、ストレージはそのままです。</string>
     <string name="billing_keep_action">%1$s を継続</string>

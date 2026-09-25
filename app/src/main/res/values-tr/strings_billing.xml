@@ -80,7 +80,7 @@
     <string name="billing_status_ending">Sona eriyor</string>
     <string name="billing_status_payment_needed">Ödeme gerekli</string>
     <string name="billing_thanks_title">Aster’ı desteklediğiniz için teşekkürler</string>
-    <string name="billing_thanks_body">Planınız Aster’ı bağımsız ve reklamsız tutar. Buradan istediğiniz zaman değiştirebilir veya iptal edebilirsiniz.</string>
+    <string name="billing_thanks_body">Desteğiniz bizim için her şey demek. Küçük bir ekibin Aster’ı her gün özenle geliştirmeye devam etmesini sağlıyor.</string>
     <string name="billing_keep_title">%1$s planın %2$s tarihinde sona eriyor</string>
     <string name="billing_keep_body">Planı koru, hiçbir şey değişmesin. Takma adların, alan adların ve depolaman olduğu gibi kalır.</string>
     <string name="billing_keep_action">%1$s planını koru</string>

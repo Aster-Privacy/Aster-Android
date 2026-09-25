@@ -80,7 +80,7 @@
     <string name="billing_status_ending">Wygasa</string>
     <string name="billing_status_payment_needed">Wymagana płatność</string>
     <string name="billing_thanks_title">Dziękujemy za wspieranie Aster</string>
-    <string name="billing_thanks_body">Twój plan pozwala Aster pozostać niezależnym i wolnym od reklam. Możesz go tu zmienić lub anulować w dowolnym momencie.</string>
+    <string name="billing_thanks_body">Twoje wsparcie znaczy dla nas wszystko. Dzięki niemu mały zespół może każdego dnia z troską rozwijać Aster.</string>
     <string name="billing_keep_title">Twój plan %1$s kończy się %2$s</string>
     <string name="billing_keep_body">Zachowaj go, a nic się nie zmieni. Aliasy, domeny i miejsce zostają bez zmian.</string>
     <string name="billing_keep_action">Zachowaj %1$s</string>
