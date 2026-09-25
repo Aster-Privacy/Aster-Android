@@ -28,4 +28,8 @@
         <item quantity="one">%d fattura</item>
         <item quantity="other">%d fatture</item>
     </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="one">Confronta %d funzione</item>
+        <item quantity="other">Confronta tutte le %d funzioni</item>
+    </plurals>
 </resources>

@@ -111,8 +111,8 @@
     <string name="billing_cancel_offer_body_missing">简短的留言会送达打造 Aster 的团队，他们会逐条阅读。之后您仍可以取消。</string>
     <string name="billing_credits_settings_failed">Aster 无法保存您的积分设置。</string>
     <string name="billing_academic_request_failed">Aster 无法发送验证邮件。</string>
-    <string name="billing_thanks_free_title">您的邮件保持私密</string>
-    <string name="billing_thanks_free_body">所有方案均包含端到端加密。需要更多存储空间、别名或自定义域名时再升级。</string>
+    <string name="billing_thanks_free_title">感谢你使用 Aster</string>
+    <string name="billing_thanks_free_body">你是 Aster 不断成长的一份力量。当你需要更多存储空间、别名或自定义域名时，升级也能支持打造 Aster 的小团队。</string>
     <string name="billing_usage_of">%1$d / %2$d</string>
     <string name="billing_usage_in_use">已使用 %1$d 个</string>
     <string name="billing_usage_upgrade_hint">升级以获得更多空间</string>
@@ -158,4 +158,8 @@
     <string name="billing_compare_members">成员</string>
     <string name="billing_up_to">最多 %1$d 人</string>
     <string name="billing_compare_shared_storage">共享存储空间</string>
+    <string name="billing_compare_differences_only">仅显示差异</string>
+    <string name="billing_compare_included">包含</string>
+    <string name="billing_compare_not_included">不包含</string>
+    <string name="billing_compare_yearly_save">按年 · 节省 %1$d%%</string>
 </resources>

@@ -28,4 +28,8 @@
         <item quantity="one">%d fatura</item>
         <item quantity="other">%d fatura</item>
     </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="one">%d özelliği karşılaştır</item>
+        <item quantity="other">%d özelliğin tümünü karşılaştır</item>
+    </plurals>
 </resources>

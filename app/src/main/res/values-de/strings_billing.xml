@@ -111,8 +111,8 @@
     <string name="billing_cancel_offer_body_missing">Eine kurze Nachricht erreicht die Leute, die Aster entwickeln, und sie lesen jede einzelne. Du kannst danach trotzdem kündigen.</string>
     <string name="billing_credits_settings_failed">Aster konnte deine Guthaben-Einstellung nicht speichern.</string>
     <string name="billing_academic_request_failed">Aster konnte die Bestätigungs-E-Mail nicht senden.</string>
-    <string name="billing_thanks_free_title">Deine E-Mails bleiben privat</string>
-    <string name="billing_thanks_free_body">Ende-zu-Ende-Verschlüsselung ist in jedem Tarif enthalten. Führe ein Upgrade durch, wenn du mehr Speicher, Aliasse oder eigene Domains brauchst.</string>
+    <string name="billing_thanks_free_title">Danke, dass du Aster nutzt</string>
+    <string name="billing_thanks_free_body">Du trägst dazu bei, dass Aster wächst. Wenn du mehr Speicher, Aliasse oder eigene Domains brauchst, unterstützt ein Upgrade auch das kleine Team, das Aster entwickelt.</string>
     <string name="billing_usage_of">%1$d von %2$d</string>
     <string name="billing_usage_in_use">%1$d in Gebrauch</string>
     <string name="billing_usage_upgrade_hint">Upgrade für mehr Platz</string>
@@ -158,4 +158,8 @@
     <string name="billing_compare_members">Mitglieder</string>
     <string name="billing_up_to">Bis zu %1$d</string>
     <string name="billing_compare_shared_storage">Gemeinsamer Speicher</string>
+    <string name="billing_compare_differences_only">Nur Unterschiede anzeigen</string>
+    <string name="billing_compare_included">Enthalten</string>
+    <string name="billing_compare_not_included">Nicht enthalten</string>
+    <string name="billing_compare_yearly_save">Jährlich · %1$d %% sparen</string>
 </resources>

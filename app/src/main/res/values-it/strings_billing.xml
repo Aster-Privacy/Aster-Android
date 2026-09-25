@@ -111,8 +111,8 @@
     <string name="billing_cancel_offer_body_missing">Una breve nota arriva alle persone che costruiscono Aster, e le leggono tutte. Dopo puoi comunque annullare.</string>
     <string name="billing_credits_settings_failed">Aster non è riuscito a salvare l’impostazione del credito.</string>
     <string name="billing_academic_request_failed">Aster non è riuscito a inviare l’email di verifica.</string>
-    <string name="billing_thanks_free_title">La tua posta resta privata</string>
-    <string name="billing_thanks_free_body">La crittografia end-to-end è inclusa in ogni piano. Passa a un piano superiore quando ti servono più spazio, alias o domini personalizzati.</string>
+    <string name="billing_thanks_free_title">Grazie per usare Aster</string>
+    <string name="billing_thanks_free_body">Fai parte di ciò che fa crescere Aster. Quando ti servono più spazio, alias o domini personalizzati, passare a un piano superiore sostiene anche il piccolo team che lo sviluppa.</string>
     <string name="billing_usage_of">%1$d di %2$d</string>
     <string name="billing_usage_in_use">%1$d in uso</string>
     <string name="billing_usage_upgrade_hint">Passa a un piano superiore per più spazio</string>
@@ -158,4 +158,8 @@
     <string name="billing_compare_members">Membri</string>
     <string name="billing_up_to">Fino a %1$d</string>
     <string name="billing_compare_shared_storage">Spazio condiviso</string>
+    <string name="billing_compare_differences_only">Mostra solo le differenze</string>
+    <string name="billing_compare_included">Incluso</string>
+    <string name="billing_compare_not_included">Non incluso</string>
+    <string name="billing_compare_yearly_save">Annuale · Risparmia il %1$d%%</string>
 </resources>

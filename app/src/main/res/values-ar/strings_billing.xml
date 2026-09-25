@@ -111,8 +111,8 @@
     <string name="billing_cancel_offer_body_missing">تصل ملاحظة قصيرة إلى من يبنون Aster، وهم يقرؤون كل واحدة. لا يزال بإمكانك الإلغاء بعد ذلك.</string>
     <string name="billing_credits_settings_failed">تعذر على Aster حفظ إعداد الرصيد.</string>
     <string name="billing_academic_request_failed">تعذر على Aster إرسال بريد التحقق.</string>
-    <string name="billing_thanks_free_title">بريدك يبقى خاصًا</string>
-    <string name="billing_thanks_free_body">التشفير التام بين الطرفين متوفر في كل الخطط. قم بالترقية عندما تحتاج إلى مساحة أكبر أو أسماء مستعارة أو نطاقات مخصصة إضافية.</string>
+    <string name="billing_thanks_free_title">شكرًا لاستخدامك Aster</string>
+    <string name="billing_thanks_free_body">أنت جزء مما يجعل Aster ينمو. عندما تحتاج إلى مساحة تخزين أكبر أو عناوين بديلة أو نطاقات مخصصة، فإن الترقية تدعم أيضًا الفريق الصغير الذي يبنيه.</string>
     <string name="billing_usage_of">%1$d من %2$d</string>
     <string name="billing_usage_in_use">%1$d قيد الاستخدام</string>
     <string name="billing_usage_upgrade_hint">قم بالترقية للحصول على مساحة أكبر</string>
@@ -158,4 +158,8 @@
     <string name="billing_compare_members">الأعضاء</string>
     <string name="billing_up_to">حتى %1$d</string>
     <string name="billing_compare_shared_storage">مساحة مشتركة</string>
+    <string name="billing_compare_differences_only">إظهار الاختلافات فقط</string>
+    <string name="billing_compare_included">مضمّن</string>
+    <string name="billing_compare_not_included">غير مضمّن</string>
+    <string name="billing_compare_yearly_save">سنويًا · وفّر %1$d%%</string>
 </resources>

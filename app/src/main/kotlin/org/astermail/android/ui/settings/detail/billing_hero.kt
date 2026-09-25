@@ -23,9 +23,12 @@ package org.astermail.android.ui.settings.detail
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -39,11 +42,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,6 +72,7 @@ import compose.icons.tablericons.Shield
 import compose.icons.tablericons.Users
 import compose.icons.tablericons.World
 import org.astermail.android.R
+import org.astermail.android.billing.plan_comparison_feed
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
@@ -115,22 +124,7 @@ internal fun billing_hero_card(
     AsterCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(R.drawable.aster_wordmark),
-                    contentDescription = null,
-                    modifier = Modifier.height(18.dp),
-                )
-                Spacer(Modifier.width(7.dp))
-                Text(
-                    text = plan_name,
-                    color = colors.text_primary,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = (-0.5).sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
+                billing_plan_title(plan_name = plan_name, modifier = Modifier.weight(1f, fill = false))
                 if (status != billing_hero_status.free) {
                     Spacer(Modifier.width(AsterSpacing.sm))
                     Text(
@@ -467,6 +461,7 @@ internal fun billing_advantages_card(
     rows: List<billing_advantage_row>,
     more_label: String?,
     on_more: (() -> Unit)?,
+    show_free_values: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     section_label(title)
@@ -477,13 +472,26 @@ internal fun billing_advantages_card(
                 title = row.label,
                 icon = row.icon,
                 trailing = {
-                    Text(
-                        text = row.paid_value.orEmpty(),
-                        color = colors.accent_blue,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        val free_value = row.free_value
+                        if (show_free_values && free_value != null && free_value != row.paid_value) {
+                            Text(
+                                text = free_value,
+                                color = colors.text_muted,
+                                fontSize = 13.sp,
+                                textDecoration = TextDecoration.LineThrough,
+                                maxLines = 1,
+                            )
+                            Spacer(Modifier.width(AsterSpacing.sm))
+                        }
+                        Text(
+                            text = row.paid_value.orEmpty(),
+                            color = colors.accent_blue,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                        )
+                    }
                 },
             )
         }
@@ -504,6 +512,46 @@ internal fun billing_advantages_card(
             )
         }
     }
+}
+
+private const val billing_wordmark_id = "aster_wordmark"
+private const val billing_wordmark_aspect = 4f
+private const val billing_title_size = 24f
+private const val billing_wordmark_cap_ratio = 0.72f
+
+@Composable
+internal fun billing_plan_title(plan_name: String, modifier: Modifier = Modifier) {
+    val colors = AsterMaterial.colors
+    val cap_height = billing_title_size * billing_wordmark_cap_ratio
+    val wordmark = InlineTextContent(
+        Placeholder(
+            width = (cap_height * billing_wordmark_aspect).sp,
+            height = cap_height.sp,
+            placeholderVerticalAlign = PlaceholderVerticalAlign.AboveBaseline,
+        ),
+    ) {
+        Image(
+            painter = painterResource(R.drawable.aster_wordmark),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+    Text(
+        text = buildAnnotatedString {
+            appendInlineContent(billing_wordmark_id, "Aster")
+            append(" ")
+            append(plan_name)
+        },
+        inlineContent = mapOf(billing_wordmark_id to wordmark),
+        color = colors.text_primary,
+        fontSize = billing_title_size.sp,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = (-0.5).sp,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier,
+    )
 }
 
 internal const val billing_included_marker = "✓"
@@ -568,8 +616,35 @@ internal val billing_icon_renew: ImageVector = TablerIcons.Refresh
 internal val billing_icon_storage: ImageVector = TablerIcons.Database
 internal val billing_icon_yearly: ImageVector = TablerIcons.Calendar
 
+private val billing_advantage_highlights = listOf(
+    "storage" to TablerIcons.Database,
+    "aliases" to TablerIcons.At,
+    "domains" to TablerIcons.World,
+    "attachment_size" to TablerIcons.Paperclip,
+    "external_accounts" to TablerIcons.Refresh,
+)
+
+internal fun billing_advantage_rows_from_feed(plan_code: String, feed: plan_comparison_feed): List<billing_advantage_row> =
+    billing_advantage_highlights.mapNotNull { (id, icon) ->
+        val row = feed.row(id) ?: return@mapNotNull null
+        val paid = row.value_for(plan_code).text ?: return@mapNotNull null
+        billing_advantage_row(
+            label = row.label,
+            free_value = row.value_for("free").text,
+            paid_value = paid,
+            icon = icon,
+        )
+    }
+
 @Composable
-internal fun billing_advantage_rows(plan_code: String): List<billing_advantage_row> {
+internal fun billing_advantage_rows(plan_code: String, feed: plan_comparison_feed?): List<billing_advantage_row> {
+    val from_feed = feed?.let { billing_advantage_rows_from_feed(plan_code, it) }.orEmpty()
+    if (from_feed.isNotEmpty()) return from_feed
+    return billing_advantage_fallback_rows(plan_code)
+}
+
+@Composable
+private fun billing_advantage_fallback_rows(plan_code: String): List<billing_advantage_row> {
     val unlimited = stringResource(R.string.usage_unlimited)
     val storage = when (plan_code) {
         "star" -> "50 GB"

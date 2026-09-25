@@ -42,4 +42,10 @@
         <item quantity="many">%d счетов</item>
         <item quantity="other">%d счетов</item>
     </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="one">Сравнить %d функцию</item>
+        <item quantity="few">Сравнить все %d функции</item>
+        <item quantity="many">Сравнить все %d функций</item>
+        <item quantity="other">Сравнить все %d функции</item>
+    </plurals>
 </resources>

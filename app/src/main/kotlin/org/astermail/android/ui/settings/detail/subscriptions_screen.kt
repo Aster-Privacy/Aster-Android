@@ -272,6 +272,11 @@ fun SubscriptionsScreen(
     val offer_state by offer_vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val context = LocalContext.current
+    val comparison_feed by org.astermail.android.billing.plan_comparison_store.feed.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        org.astermail.android.billing.plan_comparison_store.load(context.applicationContext)
+    }
 
     LaunchedEffect(Unit) {
         vm.load_subscription()
@@ -905,8 +910,9 @@ fun SubscriptionsScreen(
                 } else {
                     stringResource(R.string.billing_advantages_title_free, stringResource(advantages_tier.name_res))
                 },
-                rows = billing_advantage_rows(advantages_tier.code),
+                rows = billing_advantage_rows(advantages_tier.code, comparison_feed),
                 more_label = stringResource(R.string.billing_see_all_features, stringResource(advantages_tier.name_res)),
+                show_free_values = !is_paid_plan,
                 on_more = {
                     show_plans = true
                     plan_type = "individual"
@@ -994,6 +1000,9 @@ fun SubscriptionsScreen(
                 on_choose = choose_plan,
                 on_see_pricing = { org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.PRICING_URL) },
                 on_compare = { compare_code = it },
+                compare_label = comparison_feed?.let { feed ->
+                    pluralStringResource(R.plurals.billing_compare_all_features, feed.row_count, feed.row_count)
+                } ?: stringResource(R.string.billing_compare_title),
             )
             v_gap(AsterSpacing.sm)
             Text(
@@ -1009,17 +1018,21 @@ fun SubscriptionsScreen(
             )
             compare_code?.let { code ->
                 billing_compare_sheet(
+                    feed = comparison_feed,
                     individual_options = individual_plan_options,
                     family_options = family_plan_options,
                     initial_type = if (code in FAMILY_PLAN_CODES) "family" else "individual",
                     initial_code = code,
+                    current_code = if (sub != null) current_code else null,
                     currency = detected_currency,
                     billing_interval = billing_interval,
+                    on_interval_change = { billing_interval = it },
                     busy = billing_state.is_acting,
                     on_choose = { option ->
                         compare_code = null
                         choose_plan(option)
                     },
+                    on_see_pricing = { org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.PRICING_URL) },
                     on_dismiss = { compare_code = null },
                 )
             }

@@ -18,10 +18,15 @@
 
 package org.astermail.android.ui.settings.detail
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -29,12 +34,13 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -47,12 +53,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import compose.icons.TablerIcons
@@ -60,6 +69,8 @@ import compose.icons.tablericons.Check
 import compose.icons.tablericons.Minus
 import org.astermail.android.R
 import org.astermail.android.billing.format_money
+import org.astermail.android.billing.plan_comparison_feed
+import org.astermail.android.billing.plan_comparison_row
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
@@ -114,6 +125,7 @@ internal fun billing_plan_picker(
     on_choose: (billing_plan_option) -> Unit,
     on_see_pricing: () -> Unit,
     on_compare: (String) -> Unit,
+    compare_label: String,
 ) {
     val colors = AsterMaterial.colors
     val is_yearly = billing_interval == "year"
@@ -125,6 +137,7 @@ internal fun billing_plan_picker(
                 options.forEachIndexed { index, option ->
                     if (index > 0) settings_row_gap()
                     val per_month = per_month_cents(option, is_yearly)
+                    val option_save = yearly_save_percent(option)
                     billing_option_row(
                         title = option.name,
                         subtitle = option.tagline,
@@ -142,8 +155,13 @@ internal fun billing_plan_picker(
                                 billing_price_column(
                                     amount = money_short(per_month, currency),
                                     unit = per_month_unit,
-                                    note = null,
+                                    note = if (is_yearly && option_save > 0 && !option.is_current) {
+                                        stringResource(R.string.save_percent, option_save)
+                                    } else {
+                                        null
+                                    },
                                     enabled = !busy,
+                                    note_color = colors.success,
                                 )
                             } else {
                                 Text(
@@ -233,73 +251,62 @@ internal fun billing_plan_picker(
         }
         Spacer(Modifier.height(AsterSpacing.xs))
         billing_link_row(
-            text = stringResource(R.string.billing_compare_title),
+            text = compare_label,
             on_click = { on_compare(selected_code ?: options.firstOrNull()?.code.orEmpty()) },
         )
     }
 }
 
-private data class compare_row(val label: String, val values: List<String?>)
+internal data class compare_column(
+    val code: String,
+    val name: String,
+    val price: String?,
+    val option: billing_plan_option?,
+    val is_current: Boolean,
+)
 
-@Composable
-private fun individual_compare_rows(): List<compare_row> {
-    val on = billing_included_marker
-    val unlimited = stringResource(R.string.usage_unlimited)
-    return listOf(
-        compare_row(stringResource(R.string.special_offer_compare_storage), listOf("50 GB", "500 GB", "5 TB")),
-        compare_row(stringResource(R.string.special_offer_compare_aliases), listOf("15", unlimited, unlimited)),
-        compare_row(stringResource(R.string.special_offer_compare_domains), listOf("5", "30", unlimited)),
-        compare_row(stringResource(R.string.special_offer_compare_attachments), listOf("50 MB", "100 MB", "250 MB")),
-        compare_row(stringResource(R.string.settings_plan_bullet_tracker_protection), listOf(on, on, on)),
-        compare_row(stringResource(R.string.billing_compare_external_accounts), listOf(on, on, on)),
-        compare_row(stringResource(R.string.settings_plan_bullet_priority_support), listOf(on, on, on)),
-        compare_row(stringResource(R.string.settings_plan_bullet_encrypted_export), listOf(null, on, on)),
-        compare_row(stringResource(R.string.settings_plan_bullet_protected_folders), listOf(null, on, on)),
-        compare_row(stringResource(R.string.settings_plan_bullet_key_rotation), listOf(null, on, on)),
-        compare_row(stringResource(R.string.settings_plan_bullet_receipt_tracking), listOf(null, null, on)),
-        compare_row(stringResource(R.string.settings_plan_bullet_early_access), listOf(null, null, on)),
-        compare_row(stringResource(R.string.settings_plan_bullet_dedicated_support), listOf(null, null, on)),
-    )
+internal fun compare_columns_for(
+    feed: plan_comparison_feed,
+    options: List<billing_plan_option>,
+    include_free: Boolean,
+): List<String> = buildList {
+    if (include_free && feed.plan("free") != null) add("free")
+    options.forEach { option -> if (feed.plan(option.code) != null) add(option.code) }
 }
 
-@Composable
-private fun family_compare_rows(): List<compare_row> {
-    val on = billing_included_marker
-    val unlimited = stringResource(R.string.usage_unlimited)
-    return listOf(
-        compare_row(stringResource(R.string.billing_compare_shared_storage), listOf("1 TB", "3 TB")),
-        compare_row(stringResource(R.string.billing_compare_members), listOf("2", stringResource(R.string.billing_up_to, 6))),
-        compare_row(stringResource(R.string.special_offer_compare_aliases), listOf(unlimited, unlimited)),
-        compare_row(stringResource(R.string.settings_plan_bullet_shared_aliases), listOf(on, on)),
-        compare_row(stringResource(R.string.special_offer_compare_domains), listOf("30", "30")),
-        compare_row(stringResource(R.string.settings_plan_bullet_tracker_protection), listOf(on, on)),
-        compare_row(stringResource(R.string.billing_compare_external_accounts), listOf(on, on)),
-        compare_row(stringResource(R.string.settings_plan_bullet_priority_support), listOf(on, on)),
-    )
-}
+internal fun compare_row_differs(row: plan_comparison_row, codes: List<String>): Boolean =
+    codes.map { row.value_for(it) }.distinct().size > 1
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 internal fun billing_compare_sheet(
+    feed: plan_comparison_feed?,
     individual_options: List<billing_plan_option>,
     family_options: List<billing_plan_option>,
     initial_type: String,
     initial_code: String,
+    current_code: String?,
     currency: String,
     billing_interval: String,
+    on_interval_change: (String) -> Unit,
     busy: Boolean,
     on_choose: (billing_plan_option) -> Unit,
+    on_see_pricing: () -> Unit,
     on_dismiss: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val sheet_state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var plan_type by remember(initial_type) { mutableStateOf(initial_type) }
     var code by remember(initial_code) { mutableStateOf(initial_code) }
+    var differences_only by remember { mutableStateOf(false) }
     val options = if (plan_type == "family") family_options else individual_options
-    val rows = if (plan_type == "family") family_compare_rows() else individual_compare_rows()
-    val selected = options.firstOrNull { it.code == code } ?: options.firstOrNull() ?: return
+    val selected = options.firstOrNull { it.code == code }
+        ?: options.firstOrNull { it.is_recommended && !it.is_current }
+        ?: options.firstOrNull { !it.is_current }
+        ?: options.firstOrNull()
     val is_yearly = billing_interval == "year"
-    val column_width: Dp = if (options.size > 2) 72.dp else 84.dp
+    val per_month_unit = stringResource(R.string.fix_billing_per_month_short)
+    val free_price = money_short(0, currency)
     ModalBottomSheet(
         onDismissRequest = on_dismiss,
         sheetState = sheet_state,
@@ -311,153 +318,313 @@ internal fun billing_compare_sheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 760.dp)
-                .padding(horizontal = AsterSpacing.xl)
+                .fillMaxHeight(0.94f)
                 .navigationBarsPadding(),
         ) {
-            Text(
-                text = stringResource(R.string.billing_compare_title),
-                color = colors.text_primary,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(Modifier.height(AsterSpacing.lg))
-            billing_segmented(
-                value = plan_type,
-                options = listOf(
-                    switcher_option(id = "individual", label = stringResource(R.string.billing_plan_type_individual)),
-                    switcher_option(id = "family", label = stringResource(R.string.billing_plan_type_family)),
-                ),
-                on_change = { type ->
-                    plan_type = type
-                    val next = if (type == "family") family_options else individual_options
-                    code = next.firstOrNull { it.is_recommended && !it.is_current }?.code
-                        ?: next.firstOrNull { !it.is_current }?.code
-                        ?: next.firstOrNull()?.code.orEmpty()
-                },
-            )
-            Column(
-                modifier = Modifier
-                    .weight(1f, fill = false)
-                    .verticalScroll(rememberScrollState()),
-            ) {
-                Spacer(Modifier.height(AsterSpacing.lg))
-                Row(
-                    modifier = Modifier.fillMaxWidth().selectableGroup(),
-                    verticalAlignment = Alignment.Bottom,
-                ) {
-                    Spacer(Modifier.weight(1f))
-                    options.forEach { option ->
-                        compare_header_cell(
-                            option = option,
-                            per_month = per_month_cents(option, is_yearly)?.let { money_short(it, currency) },
-                            highlighted = option.code == selected.code,
-                            width = column_width,
-                            on_click = { code = option.code },
-                        )
-                    }
-                }
+            Column(modifier = Modifier.padding(horizontal = AsterSpacing.xl)) {
+                Text(
+                    text = stringResource(R.string.billing_compare_title),
+                    color = colors.text_primary,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 Spacer(Modifier.height(AsterSpacing.xs))
-                rows.forEach { row ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = row.label,
-                            color = colors.text_primary,
-                            fontSize = 14.sp,
-                            lineHeight = 18.sp,
-                            modifier = Modifier.weight(1f).padding(end = AsterSpacing.sm),
-                        )
-                        options.forEachIndexed { index, option ->
-                            compare_cell(
-                                value = row.values.getOrNull(index),
-                                highlighted = option.code == selected.code,
-                                width = column_width,
+                Text(
+                    text = stringResource(R.string.billing_compare_subtitle),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(AsterSpacing.lg))
+                billing_segmented(
+                    value = plan_type,
+                    options = listOf(
+                        switcher_option(id = "individual", label = stringResource(R.string.billing_plan_type_individual)),
+                        switcher_option(id = "family", label = stringResource(R.string.billing_plan_type_family)),
+                    ),
+                    on_change = { type ->
+                        plan_type = type
+                        val next = if (type == "family") family_options else individual_options
+                        code = next.firstOrNull { it.is_recommended && !it.is_current }?.code
+                            ?: next.firstOrNull { !it.is_current }?.code
+                            ?: next.firstOrNull()?.code.orEmpty()
+                    },
+                )
+            }
+            if (feed == null) {
+                Spacer(Modifier.height(AsterSpacing.xl))
+                billing_link_row(text = stringResource(R.string.see_pricing), on_click = on_see_pricing)
+                Spacer(Modifier.weight(1f))
+            } else {
+                val codes = compare_columns_for(feed, options, include_free = true)
+                val columns = codes.map { column_code ->
+                    val option = options.firstOrNull { it.code == column_code }
+                    compare_column(
+                        code = column_code,
+                        name = option?.name ?: feed.plan(column_code)?.name ?: column_code,
+                        price = if (column_code == "free") {
+                            free_price
+                        } else {
+                            option?.let { per_month_cents(it, is_yearly) }?.let { money_short(it, currency) }
+                        },
+                        option = option,
+                        is_current = column_code == (current_code ?: "free"),
+                    )
+                }
+                val groups = feed.groups_for(codes, include_family = plan_type == "family")
+                    .map { group ->
+                        if (differences_only) group.copy(rows = group.rows.filter { compare_row_differs(it, codes) }) else group
+                    }
+                    .filter { it.rows.isNotEmpty() }
+                Spacer(Modifier.height(AsterSpacing.md))
+                compare_header(
+                    columns = columns,
+                    selected_code = selected?.code,
+                    per_month_unit = per_month_unit,
+                    busy = busy,
+                    on_select = { code = it },
+                )
+                settings_toggle_row(
+                    title = stringResource(R.string.billing_compare_differences_only),
+                    checked = differences_only,
+                    on_change = { differences_only = it },
+                )
+                HorizontalDivider(color = colors.border_primary, thickness = 1.dp)
+                LazyColumn(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = AsterSpacing.xl, vertical = AsterSpacing.sm),
+                ) {
+                    groups.forEach { group ->
+                        item(key = "group_${group.id}") {
+                            Text(
+                                text = group.title.uppercase(),
+                                color = colors.text_tertiary,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 0.8.sp,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = AsterSpacing.lg, bottom = AsterSpacing.xs)
+                                    .semantics { heading() },
                             )
+                        }
+                        items(group.rows, key = { "row_${group.id}_${it.id}" }) { row ->
+                            compare_feature_row(row = row, columns = columns, selected_code = selected?.code)
                         }
                     }
                 }
-                Spacer(Modifier.height(AsterSpacing.md))
             }
-            Spacer(Modifier.height(AsterSpacing.sm))
-            val price_known = (if (is_yearly) selected.yearly_cents else selected.monthly_cents) != null
-            AsterButton(
-                label = plan_cta_label(selected),
-                onClick = { on_choose(selected) },
-                enabled = !busy && !selected.is_current && price_known,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(Modifier.height(AsterSpacing.lg))
+            HorizontalDivider(color = colors.border_primary, thickness = 1.dp)
+            if (selected != null) {
+                Column(modifier = Modifier.padding(horizontal = AsterSpacing.xl, vertical = AsterSpacing.md)) {
+                    val save = yearly_save_percent(selected)
+                    if (selected.monthly_cents != null && selected.yearly_cents != null) {
+                        billing_segmented(
+                            value = if (is_yearly) "year" else "month",
+                            options = listOf(
+                                switcher_option(
+                                    id = "year",
+                                    label = if (save > 0) {
+                                        stringResource(R.string.billing_compare_yearly_save, save)
+                                    } else {
+                                        stringResource(R.string.billing_pay_yearly)
+                                    },
+                                ),
+                                switcher_option(id = "month", label = stringResource(R.string.billing_pay_monthly)),
+                            ),
+                            on_change = on_interval_change,
+                        )
+                        Spacer(Modifier.height(AsterSpacing.sm))
+                    }
+                    val price_cents = if (is_yearly) selected.yearly_cents else selected.monthly_cents
+                    AsterButton(
+                        label = plan_cta_label(selected),
+                        onClick = { on_choose(selected) },
+                        enabled = !busy && !selected.is_current && price_cents != null,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    if (price_cents != null && !selected.is_current) {
+                        Spacer(Modifier.height(AsterSpacing.xs))
+                        Text(
+                            text = if (is_yearly) {
+                                stringResource(R.string.billing_billed_yearly_total, money_short(price_cents, currency))
+                            } else {
+                                stringResource(R.string.billing_billed_monthly)
+                            },
+                            color = colors.text_tertiary,
+                            fontSize = 12.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun compare_header_cell(
-    option: billing_plan_option,
-    per_month: String?,
-    highlighted: Boolean,
-    width: Dp,
-    on_click: () -> Unit,
+private fun compare_header(
+    columns: List<compare_column>,
+    selected_code: String?,
+    per_month_unit: String,
+    busy: Boolean,
+    on_select: (String) -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(10.dp)
-    Column(
+    val shape = SquircleShape(12.dp)
+    Row(
         modifier = Modifier
-            .width(width)
-            .clip(shape)
-            .selectable(selected = highlighted, role = Role.RadioButton, onClick = on_click)
-            .padding(vertical = AsterSpacing.xs),
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.xl)
+            .selectableGroup(),
+        horizontalArrangement = Arrangement.spacedBy(compare_column_gap),
     ) {
-        Text(
-            text = option.name,
-            color = if (highlighted) colors.accent_blue else colors.text_secondary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            text = per_month?.let { it + stringResource(R.string.fix_billing_per_month_short) } ?: "",
-            color = if (highlighted) colors.accent_blue else colors.text_tertiary,
-            fontSize = 11.sp,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-        )
+        columns.forEach { column ->
+            val highlighted = column.code == selected_code
+            val selectable = column.option != null && !busy
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(shape)
+                    .background(if (highlighted) colors.accent_blue.copy(alpha = 0.12f) else Color.Transparent)
+                    .border(1.dp, if (highlighted) colors.accent_blue else colors.border_primary, shape)
+                    .then(
+                        if (column.option != null) {
+                            Modifier.selectable(
+                                selected = highlighted,
+                                enabled = selectable,
+                                role = Role.RadioButton,
+                                onClick = { on_select(column.code) },
+                            )
+                        } else {
+                            Modifier
+                        },
+                    )
+                    .heightIn(min = 64.dp)
+                    .padding(horizontal = 4.dp, vertical = AsterSpacing.sm),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    text = column.name,
+                    color = if (highlighted) colors.accent_blue else colors.text_primary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = column.price?.let { it + per_month_unit } ?: "",
+                    color = if (highlighted) colors.accent_blue else colors.text_secondary,
+                    fontSize = 11.sp,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                val badge = when {
+                    column.is_current -> stringResource(R.string.current)
+                    column.option?.is_recommended == true -> stringResource(R.string.fix_billing_plan_recommended)
+                    else -> null
+                }
+                Text(
+                    text = badge ?: "",
+                    color = if (column.is_current) colors.text_tertiary else colors.success,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
     }
+    Spacer(Modifier.height(AsterSpacing.xs))
 }
 
+private val compare_column_gap = 6.dp
+
 @Composable
-private fun compare_cell(value: String?, highlighted: Boolean, width: Dp) {
+private fun compare_feature_row(
+    row: plan_comparison_row,
+    columns: List<compare_column>,
+    selected_code: String?,
+) {
     val colors = AsterMaterial.colors
-    Box(modifier = Modifier.width(width), contentAlignment = Alignment.Center) {
-        when (value) {
-            null -> Icon(
-                imageVector = TablerIcons.Minus,
-                contentDescription = null,
-                tint = colors.text_muted,
-                modifier = Modifier.size(16.dp),
+    val included_label = stringResource(R.string.billing_compare_included)
+    val excluded_label = stringResource(R.string.billing_compare_not_included)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = AsterSpacing.xs)
+            .semantics(mergeDescendants = true) {},
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.heightIn(min = 32.dp)) {
+            Text(
+                text = row.label,
+                color = colors.text_primary,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                lineHeight = 18.sp,
+                modifier = Modifier.weight(1f, fill = false),
             )
-            billing_included_marker -> Icon(
-                imageVector = TablerIcons.Check,
-                contentDescription = null,
-                tint = if (highlighted) colors.accent_blue else colors.text_secondary,
-                modifier = Modifier.size(18.dp),
-            )
-            else -> Text(
-                text = value,
-                color = if (highlighted) colors.accent_blue else colors.text_secondary,
-                fontSize = 13.sp,
-                fontWeight = if (highlighted) FontWeight.SemiBold else FontWeight.Normal,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-            )
+            if (row.tip != null) {
+                Spacer(Modifier.width(AsterSpacing.xs))
+                info_dialog_button(title = row.label, description = row.tip)
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(compare_column_gap),
+        ) {
+            columns.forEach { column ->
+                val value = row.value_for(column.code)
+                val highlighted = column.code == selected_code
+                val description = when {
+                    value.text != null -> "${column.name}: ${value.text}"
+                    value.included -> "${column.name}: $included_label"
+                    else -> "${column.name}: $excluded_label"
+                }
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 36.dp)
+                        .clip(SquircleShape(10.dp))
+                        .background(if (highlighted) colors.accent_blue.copy(alpha = 0.10f) else colors.bg_secondary.copy(alpha = 0.5f))
+                        .padding(horizontal = 2.dp, vertical = 6.dp)
+                        .semantics { contentDescription = description },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    when {
+                        value.text != null -> Text(
+                            text = value.text,
+                            color = if (highlighted) colors.accent_blue else colors.text_secondary,
+                            fontSize = 12.sp,
+                            lineHeight = 14.sp,
+                            fontWeight = if (highlighted) FontWeight.SemiBold else FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        value.included -> Icon(
+                            imageVector = TablerIcons.Check,
+                            contentDescription = null,
+                            tint = if (highlighted) colors.accent_blue else colors.success,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        else -> Icon(
+                            imageVector = TablerIcons.Minus,
+                            contentDescription = null,
+                            tint = colors.text_muted,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
+                }
+            }
         }
     }
 }

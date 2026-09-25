@@ -56,4 +56,12 @@
         <item quantity="many">%d فاتورة</item>
         <item quantity="other">%d فاتورة</item>
     </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="zero">قارن %d ميزة</item>
+        <item quantity="one">قارن %d ميزة</item>
+        <item quantity="two">قارن %d ميزتين</item>
+        <item quantity="few">قارن جميع الميزات الـ %d</item>
+        <item quantity="many">قارن جميع الميزات الـ %d</item>
+        <item quantity="other">قارن جميع الميزات الـ %d</item>
+    </plurals>
 </resources>

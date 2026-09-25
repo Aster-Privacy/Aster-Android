@@ -111,8 +111,8 @@
     <string name="billing_cancel_offer_body_missing">Kısa bir not, Aster’ı geliştiren kişilere ulaşır ve her birini okurlar. Sonrasında yine de iptal edebilirsin.</string>
     <string name="billing_credits_settings_failed">Aster kredi ayarını kaydedemedi.</string>
     <string name="billing_academic_request_failed">Aster doğrulama e-postasını gönderemedi.</string>
-    <string name="billing_thanks_free_title">Postanız gizli kalır</string>
-    <string name="billing_thanks_free_body">Uçtan uca şifreleme her planda bulunur. Daha fazla depolama alanı, takma ad veya özel alan adına ihtiyaç duyduğunuzda yükseltin.</string>
+    <string name="billing_thanks_free_title">Aster\'ı kullandığınız için teşekkürler</string>
+    <string name="billing_thanks_free_body">Aster\'ın büyümesine katkıda bulunuyorsunuz. Daha fazla depolama alanı, takma ad veya özel alan adı gerektiğinde yükseltme yapmak, Aster\'ı geliştiren küçük ekibe de destek olur.</string>
     <string name="billing_usage_of">%2$d / %1$d</string>
     <string name="billing_usage_in_use">%1$d kullanımda</string>
     <string name="billing_usage_upgrade_hint">Daha fazla alan için yükselt</string>
@@ -158,4 +158,8 @@
     <string name="billing_compare_members">Üyeler</string>
     <string name="billing_up_to">En fazla %1$d</string>
     <string name="billing_compare_shared_storage">Paylaşılan depolama</string>
+    <string name="billing_compare_differences_only">Yalnızca farkları göster</string>
+    <string name="billing_compare_included">Dahil</string>
+    <string name="billing_compare_not_included">Dahil değil</string>
+    <string name="billing_compare_yearly_save">Yıllık · %%%1$d tasarruf</string>
 </resources>

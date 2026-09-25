@@ -28,4 +28,8 @@
         <item quantity="one">%d invoice</item>
         <item quantity="other">%d invoices</item>
     </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="one">Compare %d feature</item>
+        <item quantity="other">Compare all %d features</item>
+    </plurals>
 </resources>

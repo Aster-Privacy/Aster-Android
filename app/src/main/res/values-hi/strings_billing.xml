@@ -111,8 +111,8 @@
     <string name="billing_cancel_offer_body_missing">एक छोटा सा नोट Aster बनाने वाले लोगों तक पहुँचता है, और वे हर एक को पढ़ते हैं। इसके बाद भी आप रद्द कर सकते हैं।</string>
     <string name="billing_credits_settings_failed">Aster आपकी क्रेडिट सेटिंग सेव नहीं कर सका।</string>
     <string name="billing_academic_request_failed">Aster सत्यापन ईमेल नहीं भेज सका।</string>
-    <string name="billing_thanks_free_title">आपका मेल निजी रहता है</string>
-    <string name="billing_thanks_free_body">एंड-टू-एंड एन्क्रिप्शन हर प्लान में शामिल है। जब आपको अधिक स्टोरेज, उपनाम या कस्टम डोमेन चाहिए, तब अपग्रेड करें।</string>
+    <string name="billing_thanks_free_title">Aster इस्तेमाल करने के लिए धन्यवाद</string>
+    <string name="billing_thanks_free_body">आप Aster को आगे बढ़ाने का हिस्सा हैं। जब आपको ज़्यादा स्टोरेज, उपनाम या कस्टम डोमेन चाहिए, तो अपग्रेड करने से इसे बनाने वाली छोटी टीम को भी मदद मिलती है।</string>
     <string name="billing_usage_of">%2$d में से %1$d</string>
     <string name="billing_usage_in_use">%1$d उपयोग में</string>
     <string name="billing_usage_upgrade_hint">अधिक जगह के लिए अपग्रेड करें</string>
@@ -158,4 +158,8 @@
     <string name="billing_compare_members">सदस्य</string>
     <string name="billing_up_to">%1$d तक</string>
     <string name="billing_compare_shared_storage">साझा स्टोरेज</string>
+    <string name="billing_compare_differences_only">केवल अंतर दिखाएं</string>
+    <string name="billing_compare_included">शामिल</string>
+    <string name="billing_compare_not_included">शामिल नहीं</string>
+    <string name="billing_compare_yearly_save">वार्षिक · %1$d%% बचाएं</string>
 </resources>

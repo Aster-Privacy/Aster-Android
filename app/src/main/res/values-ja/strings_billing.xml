@@ -111,8 +111,8 @@
     <string name="billing_cancel_offer_body_missing">短いメモは Aster を作る人たちに届き、すべて読まれます。その後でも解約できます。</string>
     <string name="billing_credits_settings_failed">Aster はクレジット設定を保存できませんでした。</string>
     <string name="billing_academic_request_failed">Aster は確認メールを送信できませんでした。</string>
-    <string name="billing_thanks_free_title">メールは非公開のままです</string>
-    <string name="billing_thanks_free_body">エンドツーエンド暗号化はすべてのプランに含まれています。ストレージ、エイリアス、カスタムドメインがもっと必要になったらアップグレードしてください。</string>
+    <string name="billing_thanks_free_title">Aster をご利用いただきありがとうございます</string>
+    <string name="billing_thanks_free_body">Aster の成長を支えているのはあなたです。ストレージ、エイリアス、カスタムドメインがもっと必要になったら、アップグレードすることで Aster を作る小さなチームの支援にもなります。</string>
     <string name="billing_usage_of">%2$d 件中 %1$d 件</string>
     <string name="billing_usage_in_use">%1$d 件使用中</string>
     <string name="billing_usage_upgrade_hint">アップグレードして余裕を増やす</string>
@@ -158,4 +158,8 @@
     <string name="billing_compare_members">メンバー</string>
     <string name="billing_up_to">最大 %1$d 人</string>
     <string name="billing_compare_shared_storage">共有ストレージ</string>
+    <string name="billing_compare_differences_only">違いのみ表示</string>
+    <string name="billing_compare_included">含まれる</string>
+    <string name="billing_compare_not_included">含まれない</string>
+    <string name="billing_compare_yearly_save">年払い · %1$d%% お得</string>
 </resources>

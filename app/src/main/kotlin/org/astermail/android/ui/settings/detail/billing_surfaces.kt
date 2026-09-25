@@ -411,6 +411,7 @@ internal fun billing_price_column(
     unit: String,
     note: String? = null,
     enabled: Boolean = true,
+    note_color: androidx.compose.ui.graphics.Color? = null,
 ) {
     val colors = AsterMaterial.colors
     Column(horizontalAlignment = Alignment.End) {
@@ -432,7 +433,7 @@ internal fun billing_price_column(
         if (note != null) {
             Text(
                 text = note,
-                color = colors.text_tertiary,
+                color = note_color ?: colors.text_tertiary,
                 fontSize = 11.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
