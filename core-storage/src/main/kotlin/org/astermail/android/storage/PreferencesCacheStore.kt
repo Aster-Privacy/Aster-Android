@@ -90,13 +90,35 @@ class PreferencesCacheStore(context: Context? = null) {
         runCatching { prefs?.edit()?.putString(key, payload)?.apply() }
     }
 
+    fun read_storage(account_key: String?): String? {
+        val key = storage_entry_key(account_key) ?: return null
+        return runCatching { prefs?.getString(key, null) }.getOrNull()
+    }
+
+    fun write_storage(account_key: String?, payload: String) {
+        val key = storage_entry_key(account_key) ?: return
+        runCatching { prefs?.edit()?.putString(key, payload)?.apply() }
+    }
+
+    fun read_limits(account_key: String?): String? {
+        val key = limits_entry_key(account_key) ?: return null
+        return runCatching { prefs?.getString(key, null) }.getOrNull()
+    }
+
+    fun write_limits(account_key: String?, payload: String) {
+        val key = limits_entry_key(account_key) ?: return
+        runCatching { prefs?.edit()?.putString(key, payload)?.apply() }
+    }
+
     fun clear(account_key: String?) {
         val key = entry_key(account_key) ?: return
+        val limits_key = limits_entry_key(account_key)
         val badge_key = badge_entry_key(account_key)
         val badge_prefs_key = badge_prefs_entry_key(account_key)
         val signature_key = signature_entry_key(account_key)
         val alias_key = alias_entry_key(account_key)
         val tag_key = tag_entry_key(account_key)
+        val storage_key = storage_entry_key(account_key)
         runCatching {
             prefs?.edit()?.apply {
                 remove(key)
@@ -105,6 +127,8 @@ class PreferencesCacheStore(context: Context? = null) {
                 if (signature_key != null) remove(signature_key)
                 if (alias_key != null) remove(alias_key)
                 if (tag_key != null) remove(tag_key)
+                if (storage_key != null) remove(storage_key)
+                if (limits_key != null) remove(limits_key)
             }?.commit()
         }
     }
@@ -149,6 +173,18 @@ class PreferencesCacheStore(context: Context? = null) {
         return "$alias_key_prefix$id"
     }
 
+    private fun limits_entry_key(account_key: String?): String? {
+        val id = account_key?.trim().orEmpty()
+        if (id.isEmpty()) return null
+        return "$limits_key_prefix$id"
+    }
+
+    private fun storage_entry_key(account_key: String?): String? {
+        val id = account_key?.trim().orEmpty()
+        if (id.isEmpty()) return null
+        return "$storage_key_prefix$id"
+    }
+
     private companion object {
         const val prefs_name = "aster_preferences_cache"
         const val key_prefix = "prefs_json_"
@@ -157,5 +193,7 @@ class PreferencesCacheStore(context: Context? = null) {
         const val signature_key_prefix = "signatures_json_"
         const val alias_key_prefix = "alias_prefs_json_"
         const val tag_key_prefix = "tags_json_"
+        const val storage_key_prefix = "storage_json_"
+        const val limits_key_prefix = "plan_limits_json_"
     }
 }

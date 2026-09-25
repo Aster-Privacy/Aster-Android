@@ -1111,7 +1111,7 @@
     <string name="billing_changed_to">Faturalandırma %s olarak değiştirildi</string>
     <string name="default_payment_updated">Varsayılan ödeme yöntemi güncellendi</string>
     <string name="payment_method_removed">Ödeme yöntemi kaldırıldı</string>
-    <string name="session_expired_sign_in">Oturum süresi doldu - lütfen tekrar giriş yapın</string>
+    <string name="session_expired_sign_in">Oturumunuzun süresi doldu. Lütfen tekrar giriş yapın.</string>
     <string name="failed_load_subscription">Abonelik yüklenemedi</string>
     <string name="could_not_start_checkout">Ödeme başlatılamadı</string>
     <string name="could_not_open_portal">Faturalandırma portalı açılamadı</string>
@@ -3478,6 +3478,7 @@
     <string name="passkey_added_second_step_only">Geçiş anahtarı eklendi. Parolanla oturum açarken ikinci adım olarak kullan.</string>
     <string name="passkey_already_registered">Bu geçiş anahtarı zaten hesabına kayıtlı.</string>
     <string name="passkey_create_unavailable">Bu cihaz geçiş anahtarı kaydedemiyor. Ekran kilidinin açık ve bir parola yöneticisinin kurulu olduğundan emin ol.</string>
+    <string name="passkey_app_not_verified">Aster Mail\'in bu sürümü henüz geçiş anahtarları için doğrulanmadı, bu yüzden bu cihaz bir Aster Mail geçiş anahtarı kaydedemez veya kullanamaz.</string>
     <string name="passkey_create_failed">Geçiş anahtarı eklenemedi. Tekrar dene.</string>
     <string name="error_passkey_timed_out">Geçiş anahtarı isteğinin süresi doldu. Tekrar deneyin.</string>
     <string name="expiry_password_internal_removed">Aster alıcıları süreli e-postaları parola olmadan açar, bu yüzden parola kaldırıldı. Mesajı göndermek için Gönder\'e yeniden dokunun.</string>

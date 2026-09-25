@@ -24,4 +24,8 @@
         <item quantity="one">Planınız %1$d gün içinde, %2$s tarihinde sona eriyor.</item>
         <item quantity="other">Planınız %1$d gün içinde, %2$s tarihinde sona eriyor.</item>
     </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="one">%d fatura</item>
+        <item quantity="other">%d fatura</item>
+    </plurals>
 </resources>

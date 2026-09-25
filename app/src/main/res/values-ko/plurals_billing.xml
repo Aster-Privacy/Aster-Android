@@ -18,4 +18,7 @@
     <plurals name="crypto_renewal_days">
         <item quantity="other">요금제가 %1$d일 뒤인 %2$s에 끝납니다.</item>
     </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="other">청구서 %d건</item>
+    </plurals>
 </resources>

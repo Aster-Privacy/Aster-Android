@@ -1111,7 +1111,7 @@
     <string name="billing_changed_to">Rozliczenie zmienione na %s</string>
     <string name="default_payment_updated">Domyślna metoda płatności zaktualizowana</string>
     <string name="payment_method_removed">Metoda płatności usunięta</string>
-    <string name="session_expired_sign_in">Sesja wygasła - zaloguj się ponownie</string>
+    <string name="session_expired_sign_in">Twoja sesja wygasła. Zaloguj się ponownie.</string>
     <string name="failed_load_subscription">Nie udało się załadować subskrypcji</string>
     <string name="could_not_start_checkout">Nie udało się rozpocząć procesu płatności</string>
     <string name="could_not_open_portal">Nie udało się otworzyć portalu rozliczeń</string>
@@ -3520,6 +3520,7 @@
     <string name="passkey_added_second_step_only">Dodano klucz dostępu. Używaj go jako drugiego kroku podczas logowania hasłem.</string>
     <string name="passkey_already_registered">Ten klucz dostępu jest już zapisany na Twoim koncie.</string>
     <string name="passkey_create_unavailable">To urządzenie nie może zapisywać kluczy dostępu. Sprawdź, czy blokada ekranu jest włączona i czy skonfigurowano menedżer haseł.</string>
+    <string name="passkey_app_not_verified">Ta wersja Aster Mail nie została jeszcze zweryfikowana dla kluczy dostępu, więc to urządzenie nie może zapisać ani użyć klucza dostępu Aster Mail.</string>
     <string name="passkey_create_failed">Nie udało się dodać klucza dostępu. Spróbuj ponownie.</string>
     <string name="error_passkey_timed_out">Żądanie klucza dostępu wygasło. Spróbuj ponownie.</string>
     <string name="expiry_password_internal_removed">Odbiorcy Aster otwierają wygasające wiadomości bez hasła, więc hasło zostało usunięte. Aby wysłać wiadomość, ponownie stuknij Wyślij.</string>

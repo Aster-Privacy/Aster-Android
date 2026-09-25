@@ -24,4 +24,8 @@
         <item quantity="one">Votre offre se termine dans %1$d jour, le %2$s.</item>
         <item quantity="other">Votre offre se termine dans %1$d jours, le %2$s.</item>
     </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="one">%d facture</item>
+        <item quantity="other">%d factures</item>
+    </plurals>
 </resources>

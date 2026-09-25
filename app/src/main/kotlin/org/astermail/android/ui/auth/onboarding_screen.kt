@@ -33,6 +33,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,7 +54,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -161,13 +162,18 @@ fun OnboardingScreen(
                 enter = fadeIn(),
                 exit = fadeOut(),
             ) {
-                TextButton(onClick = on_skip) {
-                    Text(
-                        text = stringResource(R.string.onboarding_skip),
-                        color = colors.text_tertiary,
-                        fontSize = 15.sp,
-                    )
-                }
+                Text(
+                    text = stringResource(R.string.onboarding_skip),
+                    color = colors.text_tertiary,
+                    fontSize = 15.sp,
+                    modifier = Modifier
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = on_skip,
+                        )
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                )
             }
         }
 

@@ -1111,7 +1111,7 @@
     <string name="billing_changed_to">請求を%sに変更しました</string>
     <string name="default_payment_updated">デフォルトの支払い方法を更新しました</string>
     <string name="payment_method_removed">支払い方法を削除しました</string>
-    <string name="session_expired_sign_in">セッションが期限切れです - 再度サインインしてください</string>
+    <string name="session_expired_sign_in">セッションの有効期限が切れました。もう一度サインインしてください。</string>
     <string name="failed_load_subscription">サブスクリプションの読み込みに失敗しました</string>
     <string name="could_not_start_checkout">チェックアウトを開始できませんでした</string>
     <string name="could_not_open_portal">請求ポータルを開けませんでした</string>
@@ -3460,6 +3460,7 @@
     <string name="passkey_added_second_step_only">パスキーを追加しました。パスワードでサインインするときの 2 段階目として使用できます。</string>
     <string name="passkey_already_registered">このパスキーはすでにアカウントに保存されています。</string>
     <string name="passkey_create_unavailable">このデバイスではパスキーを保存できません。画面ロックがオンで、パスワード マネージャーが設定されていることを確認してください。</string>
+    <string name="passkey_app_not_verified">このバージョンの Aster Mail はまだパスキー用に検証されていないため、このデバイスでは Aster Mail のパスキーを保存または使用できません。</string>
     <string name="passkey_create_failed">パスキーを追加できませんでした。もう一度お試しください。</string>
     <string name="error_passkey_timed_out">パスキーのリクエストがタイムアウトしました。もう一度お試しください。</string>
     <string name="expiry_password_internal_removed">Aster の受信者はパスワードなしで有効期限付きメールを開けるため、パスワードを削除しました。メッセージを送信するには、もう一度「送信」をタップしてください。</string>

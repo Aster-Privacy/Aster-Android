@@ -24,4 +24,8 @@
         <item quantity="one">Je abonnement eindigt over %1$d dag, op %2$s.</item>
         <item quantity="other">Je abonnement eindigt over %1$d dagen, op %2$s.</item>
     </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="one">%d factuur</item>
+        <item quantity="other">%d facturen</item>
+    </plurals>
 </resources>

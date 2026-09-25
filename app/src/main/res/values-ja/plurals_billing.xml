@@ -18,4 +18,7 @@
     <plurals name="crypto_renewal_days">
         <item quantity="other">プランは %1$d 日後の %2$s に終了します。</item>
     </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="other">%d 件の請求書</item>
+    </plurals>
 </resources>

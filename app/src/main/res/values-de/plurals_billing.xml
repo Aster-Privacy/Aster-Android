@@ -24,4 +24,8 @@
         <item quantity="one">Dein Tarif endet in %1$d Tag, am %2$s.</item>
         <item quantity="other">Dein Tarif endet in %1$d Tagen, am %2$s.</item>
     </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="one">%d Rechnung</item>
+        <item quantity="other">%d Rechnungen</item>
+    </plurals>
 </resources>

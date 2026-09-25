@@ -48,4 +48,12 @@
         <item quantity="many">تنتهي خطتك خلال %1$d يومًا، في %2$s.</item>
         <item quantity="other">تنتهي خطتك خلال %1$d يوم، في %2$s.</item>
     </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="zero">%d فواتير</item>
+        <item quantity="one">فاتورة واحدة</item>
+        <item quantity="two">فاتورتان</item>
+        <item quantity="few">%d فواتير</item>
+        <item quantity="many">%d فاتورة</item>
+        <item quantity="other">%d فاتورة</item>
+    </plurals>
 </resources>

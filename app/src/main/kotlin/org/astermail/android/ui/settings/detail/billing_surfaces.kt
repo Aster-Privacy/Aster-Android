@@ -18,18 +18,28 @@
 
 package org.astermail.android.ui.settings.detail
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.offset
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -38,20 +48,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import compose.icons.TablerIcons
+import compose.icons.tablericons.AlertCircle
+import compose.icons.tablericons.AlertTriangle
+import compose.icons.tablericons.Check
+import compose.icons.tablericons.ChevronRight
+import compose.icons.tablericons.CircleCheck
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic
 
-internal val billing_panel_shape: Shape = SquircleShape(18.dp)
 internal val billing_tile_shape: Shape = SquircleShape(14.dp)
 internal val billing_control_shape: Shape = SquircleShape(12.dp)
 
@@ -99,26 +115,38 @@ internal fun billing_pill(
     }
 }
 
+internal enum class billing_meter_status { none, ok, near, full }
+
 @Composable
-internal fun billing_feature_row(
-    @StringRes feature_res: Int,
-    icon: ImageVector = plan_feature_icon(feature_res),
-    tint: Color? = null,
-) {
+internal fun billing_status_mark(status: billing_meter_status, text: String) {
     val colors = AsterMaterial.colors
-    Row(verticalAlignment = Alignment.Top) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = tint ?: colors.accent_blue,
-            modifier = Modifier.padding(top = 1.dp).size(16.dp),
-        )
-        Spacer(Modifier.width(AsterSpacing.md))
+    val tint = when (status) {
+        billing_meter_status.ok -> colors.success
+        billing_meter_status.near -> colors.warning
+        billing_meter_status.full -> colors.danger
+        billing_meter_status.none -> colors.text_tertiary
+    }
+    val icon = when (status) {
+        billing_meter_status.ok -> TablerIcons.CircleCheck
+        billing_meter_status.near -> TablerIcons.AlertTriangle
+        billing_meter_status.full -> TablerIcons.AlertCircle
+        billing_meter_status.none -> null
+    }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = tint,
+                modifier = Modifier.size(15.dp),
+            )
+        }
         Text(
-            text = stringResource(feature_res),
-            color = colors.text_secondary,
-            fontSize = 13.sp,
-            lineHeight = 19.sp,
+            text = text,
+            color = tint,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
         )
     }
 }
@@ -127,13 +155,14 @@ internal fun billing_feature_row(
 internal fun billing_meter(
     label: String,
     value_text: String,
-    trailing_text: String,
     fraction: Float,
-    is_over: Boolean,
+    status: billing_meter_status,
+    status_text: String?,
     modifier: Modifier = Modifier,
     trailing_action: (@Composable () -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
+    val is_over = status == billing_meter_status.full
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -142,20 +171,17 @@ internal fun billing_meter(
         ) {
             Text(
                 text = label,
-                color = colors.text_secondary,
-                fontSize = 12.sp,
+                color = colors.text_primary,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
             )
-            Text(
-                text = trailing_text,
-                color = if (is_over) colors.danger else colors.text_tertiary,
-                fontSize = 12.sp,
-                fontWeight = if (is_over) FontWeight.SemiBold else FontWeight.Medium,
-            )
+            if (status_text != null) {
+                billing_status_mark(status = status, text = status_text)
+            }
         }
         Spacer(Modifier.height(AsterSpacing.sm))
-        solid_progress_bar(fraction = fraction, is_over = is_over, height = 8.dp)
-        Spacer(Modifier.height(AsterSpacing.sm))
+        solid_progress_bar(fraction = fraction, is_over = is_over, height = 6.dp)
+        Spacer(Modifier.height(6.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -163,15 +189,107 @@ internal fun billing_meter(
         ) {
             Text(
                 text = value_text,
-                color = if (is_over) colors.danger else colors.text_tertiary,
-                fontSize = 12.sp,
-                fontWeight = if (is_over) FontWeight.SemiBold else FontWeight.Normal,
+                color = colors.text_tertiary,
+                fontSize = 13.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
             if (trailing_action != null) {
                 Spacer(Modifier.width(AsterSpacing.sm))
                 trailing_action()
             }
+        }
+    }
+}
+
+internal data class billing_amount_tile(
+    val id: String,
+    val title: String,
+    val subtitle: String? = null,
+    val subtitle_color: Color? = null,
+)
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+internal fun billing_amount_tiles(
+    items: List<billing_amount_tile>,
+    selected_id: String?,
+    enabled: Boolean,
+    on_select: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    max_per_row: Int = 3,
+) {
+    val colors = AsterMaterial.colors
+    FlowRow(
+        modifier = modifier.fillMaxWidth().selectableGroup(),
+        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+        verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+        maxItemsInEachRow = max_per_row,
+    ) {
+        items.forEach { item ->
+            val selected = item.id == selected_id
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(billing_control_shape)
+                    .acrylic(colors, billing_control_shape, if (selected) colors.bg_selected else colors.bg_card)
+                    .border(
+                        width = if (selected) 1.5.dp else 1.dp,
+                        color = if (selected) colors.accent_blue else colors.border_primary,
+                        shape = billing_control_shape,
+                    )
+                    .selectable(selected = selected, enabled = enabled, role = Role.RadioButton) { on_select(item.id) }
+                    .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.md),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = item.title,
+                    color = when {
+                        !enabled -> colors.text_tertiary
+                        selected -> colors.accent_blue
+                        else -> colors.text_primary
+                    },
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (item.subtitle != null) {
+                    Text(
+                        text = item.subtitle,
+                        color = item.subtitle_color ?: colors.text_tertiary,
+                        fontSize = 12.sp,
+                        fontWeight = if (item.subtitle_color != null) FontWeight.SemiBold else FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun billing_select_mark(selected: Boolean, enabled: Boolean) {
+    val colors = AsterMaterial.colors
+    val accent = if (enabled) colors.accent_blue else colors.accent_blue.copy(alpha = 0.4f)
+    val ring = if (enabled) colors.text_muted else colors.text_muted.copy(alpha = 0.4f)
+    Box(
+        modifier = Modifier
+            .size(22.dp)
+            .clip(CircleShape)
+            .then(if (selected) Modifier.background(accent) else Modifier.border(1.5.dp, ring, CircleShape)),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (selected) {
+            Icon(
+                imageVector = TablerIcons.Check,
+                contentDescription = null,
+                tint = colors.on_accent,
+                modifier = Modifier.size(14.dp),
+            )
         }
     }
 }
@@ -186,4 +304,260 @@ internal fun billing_divider(modifier: Modifier = Modifier, inset: Dp = 0.dp) {
             .height(1.dp)
             .background(colors.border_primary),
     )
+}
+
+@Composable
+private fun billing_option_indicator(selected: Boolean, enabled: Boolean) {
+    val colors = AsterMaterial.colors
+    val accent = if (enabled) colors.accent_blue else colors.accent_blue.copy(alpha = 0.4f)
+    val ring = if (enabled) colors.text_tertiary else colors.text_tertiary.copy(alpha = 0.4f)
+    Box(
+        modifier = Modifier
+            .size(22.dp)
+            .clip(CircleShape)
+            .border(2.dp, if (selected) accent else ring, CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (selected) {
+            Box(modifier = Modifier.size(11.dp).background(accent, CircleShape))
+        }
+    }
+}
+
+@Composable
+internal fun billing_option_row(
+    title: String,
+    selected: Boolean,
+    on_click: () -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    enabled: Boolean = true,
+    title_note: String? = null,
+    title_note_color: Color? = null,
+    leading: (@Composable () -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null,
+    below: (@Composable () -> Unit)? = null,
+) {
+    val colors = AsterMaterial.colors
+    val fill = when {
+        !selected -> Color.Transparent
+        !colors.is_glass -> colors.bg_selected
+        else -> colors.bg_selected.copy(alpha = 0.34f)
+    }
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RectangleShape)
+            .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = on_click)
+            .background(fill)
+            .heightIn(min = 54.dp)
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            billing_option_indicator(selected = selected, enabled = enabled)
+            Spacer(Modifier.width(AsterSpacing.md))
+            if (leading != null) {
+                leading()
+                Spacer(Modifier.width(AsterSpacing.md))
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = title,
+                        color = if (enabled) colors.text_primary else colors.text_tertiary,
+                        fontSize = 15.sp,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    if (title_note != null) {
+                        Spacer(Modifier.width(AsterSpacing.sm))
+                        Text(
+                            text = title_note,
+                            color = title_note_color ?: colors.text_tertiary,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                        )
+                    }
+                }
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
+            }
+            if (trailing != null) {
+                Spacer(Modifier.width(AsterSpacing.md))
+                trailing()
+            }
+        }
+        if (below != null) {
+            Spacer(Modifier.height(AsterSpacing.xs))
+            Box(modifier = Modifier.padding(start = 34.dp)) { below() }
+        }
+    }
+}
+
+@Composable
+internal fun billing_price_column(
+    amount: String,
+    unit: String,
+    note: String? = null,
+    enabled: Boolean = true,
+) {
+    val colors = AsterMaterial.colors
+    Column(horizontalAlignment = Alignment.End) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                text = amount,
+                color = if (enabled) colors.text_primary else colors.text_tertiary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+            )
+            Text(
+                text = unit,
+                color = colors.text_tertiary,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(bottom = 1.dp),
+            )
+        }
+        if (note != null) {
+            Text(
+                text = note,
+                color = colors.text_tertiary,
+                fontSize = 11.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
+internal fun billing_chip(text: String, tint: Color = AsterMaterial.colors.accent_blue, solid: Boolean = false) {
+    val colors = AsterMaterial.colors
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .then(
+                if (solid) Modifier.background(tint) else Modifier.acrylic(colors, CircleShape, tint.copy(alpha = 0.14f)),
+            )
+            .padding(horizontal = 9.dp, vertical = 3.dp),
+    ) {
+        Text(
+            text = text,
+            color = if (solid) colors.on_accent else tint,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+internal fun billing_link_row(text: String, on_click: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 44.dp)
+            .clip(billing_control_shape)
+            .clickable(role = Role.Button, onClick = on_click)
+            .padding(horizontal = AsterSpacing.sm),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = text,
+            color = colors.accent_blue,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Spacer(Modifier.width(4.dp))
+        Icon(
+            imageVector = TablerIcons.ChevronRight,
+            contentDescription = null,
+            tint = colors.accent_blue,
+            modifier = Modifier.size(16.dp),
+        )
+    }
+}
+
+@Composable
+internal fun billing_action_text(label: String, on_click: () -> Unit, color: Color? = null) {
+    val colors = AsterMaterial.colors
+    Text(
+        text = label,
+        color = color ?: colors.accent_blue,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.SemiBold,
+        maxLines = 1,
+        modifier = Modifier
+            .clip(SquircleShape(6.dp))
+            .clickable(role = Role.Button, onClick = on_click)
+            .padding(horizontal = 4.dp, vertical = 2.dp),
+    )
+}
+
+internal fun format_storage_short(bytes: Long): String = format_bytes(bytes).replace(".0 ", " ")
+
+@Composable
+internal fun billing_segmented(
+    value: String,
+    options: List<switcher_option>,
+    on_change: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AsterMaterial.colors
+    val track_shape = SquircleShape(12.dp)
+    val thumb_shape = SquircleShape(9.dp)
+    val selected_index = options.indexOfFirst { it.id == value }.coerceAtLeast(0)
+    BoxWithConstraints(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(track_shape)
+            .acrylic(colors, track_shape, colors.bg_secondary)
+            .padding(3.dp),
+    ) {
+        val segment_width = maxWidth / options.size.coerceAtLeast(1)
+        val thumb_offset by animateDpAsState(targetValue = segment_width * selected_index, label = "billing_segment")
+        Box(
+            modifier = Modifier
+                .offset(x = thumb_offset)
+                .width(segment_width)
+                .height(36.dp)
+                .clip(thumb_shape)
+                .acrylic(colors, thumb_shape, colors.bg_card)
+                .border(1.dp, colors.border_primary, thumb_shape),
+        )
+        Row(modifier = Modifier.fillMaxWidth().selectableGroup()) {
+            options.forEach { option ->
+                val active = option.id == value
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(36.dp)
+                        .clip(thumb_shape)
+                        .selectable(selected = active, role = Role.Tab) { on_change(option.id) },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = option.label,
+                        color = if (active) colors.text_primary else colors.text_secondary,
+                        fontSize = 14.sp,
+                        fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
+                        maxLines = 1,
+                    )
+                }
+            }
+        }
+    }
 }

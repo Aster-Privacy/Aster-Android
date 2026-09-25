@@ -36,4 +36,10 @@
         <item quantity="many">Ваш тариф заканчивается через %1$d дней, %2$s.</item>
         <item quantity="other">Ваш тариф заканчивается через %1$d дней, %2$s.</item>
     </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="one">%d счёт</item>
+        <item quantity="few">%d счёта</item>
+        <item quantity="many">%d счетов</item>
+        <item quantity="other">%d счетов</item>
+    </plurals>
 </resources>
