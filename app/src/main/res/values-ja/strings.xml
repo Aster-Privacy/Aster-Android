@@ -3256,6 +3256,8 @@
     <string name="special_offer_title">プライベートなメールを半額で</string>
     <string name="special_offer_unavailable">このオファーは終了しました。</string>
     <string name="special_offer_price_period">/月</string>
+    <string name="special_offer_price_period_year">年額</string>
+    <string name="special_offer_fine_print_year">最初の1年間は%1$sです。その後は、設定で解約するまで年額%2$sで更新されます。</string>
     <string name="special_offer_dismiss">このオファーを今後表示しない</string>
     <string name="special_offer_success_title">ありがとうございます。Nova をご利用いただけます。</string>
     <string name="special_offer_success_body">ご登録ありがとうございます。皆さまのご支援が私たちの大きな励みです。</string>

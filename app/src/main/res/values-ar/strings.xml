@@ -3358,6 +3358,8 @@
     <string name="special_offer_title">بريد خاص بنصف السعر</string>
     <string name="special_offer_unavailable">لم يعد هذا العرض متاحًا.</string>
     <string name="special_offer_price_period">شهريًا</string>
+    <string name="special_offer_price_period_year">سنويًا</string>
+    <string name="special_offer_fine_print_year">تدفع %1$s للسنة الأولى. بعد ذلك تُجدَّد خطتك بسعر %2$s سنويًا حتى تلغيها من الإعدادات.</string>
     <string name="special_offer_dismiss">عدم عرض هذا العرض مرة أخرى</string>
     <string name="special_offer_success_title">شكرًا لك. أصبحت مشتركًا في Nova.</string>
     <string name="special_offer_success_body">شكرًا لاشتراكك. دعمك يعني لنا الكثير.</string>

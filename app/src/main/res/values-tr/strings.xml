@@ -3274,6 +3274,8 @@
     <string name="special_offer_title">Gizli e-posta, yarı fiyatına</string>
     <string name="special_offer_unavailable">Bu teklif artık geçerli değil.</string>
     <string name="special_offer_price_period">aylık</string>
+    <string name="special_offer_price_period_year">yıllık</string>
+    <string name="special_offer_fine_print_year">İlk yıl için %1$s ödersiniz. Ardından planınız, Ayarlar bölümünden iptal edene kadar yıllık %2$s olarak yenilenir.</string>
     <string name="special_offer_dismiss">Bu teklifi bir daha gösterme</string>
     <string name="special_offer_success_title">Teşekkürler. Artık Nova kullanıyorsunuz.</string>
     <string name="special_offer_success_body">Abone olduğunuz için teşekkürler. Desteğiniz bizim için çok değerli.</string>

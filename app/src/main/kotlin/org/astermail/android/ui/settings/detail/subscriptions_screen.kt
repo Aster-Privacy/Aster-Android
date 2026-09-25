@@ -1708,9 +1708,10 @@ internal fun crypto_term_dialog(
     on_dismiss: () -> Unit,
     on_confirm: (Int) -> Unit,
     offer_prices: Map<Int, review_offer_price> = emptyMap(),
+    initial_term: Int = 1,
 ) {
     val colors = AsterMaterial.colors
-    var selected_term by remember { mutableStateOf(1) }
+    var selected_term by remember { mutableStateOf(initial_term) }
     val terms = listOf(
         1 to stringResource(R.string.crypto_term_1_month),
         3 to stringResource(R.string.crypto_term_3_months),

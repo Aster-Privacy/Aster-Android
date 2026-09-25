@@ -3256,6 +3256,8 @@
     <string name="special_offer_title">私密邮箱，半价体验</string>
     <string name="special_offer_unavailable">此优惠已失效。</string>
     <string name="special_offer_price_period">每月</string>
+    <string name="special_offer_price_period_year">每年</string>
+    <string name="special_offer_fine_print_year">首年支付 %1$s。之后套餐将按每年 %2$s 续订，直到你在设置中取消。</string>
     <string name="special_offer_dismiss">不再显示此优惠</string>
     <string name="special_offer_success_title">谢谢。你已升级到 Nova。</string>
     <string name="special_offer_success_body">感谢你的订阅。你的支持对我们意义重大。</string>

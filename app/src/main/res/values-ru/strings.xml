@@ -3316,6 +3316,8 @@
     <string name="special_offer_title">Приватная почта за полцены</string>
     <string name="special_offer_unavailable">Это предложение больше не действует.</string>
     <string name="special_offer_price_period">в месяц</string>
+    <string name="special_offer_price_period_year">в год</string>
+    <string name="special_offer_fine_print_year">За первый год вы платите %1$s. Затем план продлевается за %2$s в год, пока вы не отмените его в Настройках.</string>
     <string name="special_offer_dismiss">Больше не показывать это предложение</string>
     <string name="special_offer_success_title">Спасибо. Теперь у вас Nova.</string>
     <string name="special_offer_success_body">Спасибо за подписку. Ваша поддержка очень много для нас значит.</string>

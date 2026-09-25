@@ -3256,6 +3256,8 @@
     <string name="special_offer_title">프라이빗 메일을 반값에</string>
     <string name="special_offer_unavailable">이 혜택은 더 이상 제공되지 않습니다.</string>
     <string name="special_offer_price_period">/월</string>
+    <string name="special_offer_price_period_year">연</string>
+    <string name="special_offer_fine_print_year">첫 1년 동안 %1$s을 결제합니다. 이후에는 설정에서 취소할 때까지 연 %2$s으로 갱신됩니다.</string>
     <string name="special_offer_dismiss">이 혜택 다시 보지 않기</string>
     <string name="special_offer_success_title">감사합니다. 이제 Nova를 이용하실 수 있습니다.</string>
     <string name="special_offer_success_body">구독해 주셔서 감사합니다. 보내주신 응원은 저희에게 큰 힘이 됩니다.</string>

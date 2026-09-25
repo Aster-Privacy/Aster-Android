@@ -2174,6 +2174,8 @@
     <string name="special_offer_title">Private mail, half the price</string>
     <string name="special_offer_unavailable">This offer is no longer available.</string>
     <string name="special_offer_price_period">per month</string>
+    <string name="special_offer_price_period_year">per year</string>
+    <string name="special_offer_fine_print_year">You pay %1$s for your first year. Your plan then renews at %2$s per year until you cancel it in Settings.</string>
     <string name="special_offer_dismiss">Don\'t show this offer again</string>
     <string name="special_offer_success_title">Thank you. You\'re on Nova.</string>
     <string name="special_offer_success_body">Thank you for subscribing. Your support means a lot to us.</string>

@@ -440,6 +440,42 @@ class BillingViewModelPlayTest {
     }
 
     @Test
+    fun `launches the yearly play offer token when yearly billing is chosen`() = runTest {
+        val nova_year_half = PlayOffer(
+            "nova", "yearly", "tok_nova_year_half", "$86.99", 86_990_000, "EUR", "year",
+            offer_id = "half-price-1y",
+            intro_formatted_price = "$43.49",
+            intro_price_micros = 43_490_000,
+        )
+        use_full_catalog()
+        store.offers = store.offers + nova_year_half
+        coEvery { billing_api.get_google_play_config() } returns full_config.copy(
+            special_offer_eligible = true,
+            special_offer_yearly = GooglePlaySpecialOffer("nova", "yearly", "half-price-1y", 50, 12),
+        )
+        vm.start_play_special_offer("year")
+        advanceUntilIdle()
+        val request = vm.state.value.play_purchase_request
+        assertNotNull(request)
+        assertEquals("tok_nova_year_half", request!!.offer.offer_token)
+        assertEquals("half-price-1y", request.offer.offer_id)
+        assertTrue(request.special_offer)
+    }
+
+    @Test
+    fun `does not launch a yearly special offer that play does not list`() = runTest {
+        use_full_catalog()
+        coEvery { billing_api.get_google_play_config() } returns full_config.copy(
+            special_offer_eligible = true,
+            special_offer_yearly = GooglePlaySpecialOffer("nova", "yearly", "half-price-1y", 50, 12),
+        )
+        vm.start_play_special_offer("year")
+        advanceUntilIdle()
+        assertNull(vm.state.value.play_purchase_request)
+        assertNotNull(vm.state.value.error)
+    }
+
+    @Test
     fun `does not launch the special offer when the account is not eligible`() = runTest {
         use_full_catalog()
         coEvery { billing_api.get_google_play_config() } returns full_config.copy(special_offer_eligible = false)

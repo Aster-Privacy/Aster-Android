@@ -3274,6 +3274,8 @@
     <string name="special_offer_title">Privé-e-mail voor de helft van de prijs</string>
     <string name="special_offer_unavailable">Deze aanbieding is niet meer beschikbaar.</string>
     <string name="special_offer_price_period">per maand</string>
+    <string name="special_offer_price_period_year">per jaar</string>
+    <string name="special_offer_fine_print_year">Je betaalt %1$s voor het eerste jaar. Daarna wordt je abonnement verlengd voor %2$s per jaar totdat je het opzegt in Instellingen.</string>
     <string name="special_offer_dismiss">Deze aanbieding niet meer tonen</string>
     <string name="special_offer_success_title">Bedankt. Je hebt nu Nova.</string>
     <string name="special_offer_success_body">Bedankt voor je abonnement. Je steun betekent veel voor ons.</string>

@@ -566,6 +566,7 @@ data class GooglePlayConfigResponse(
     val purchase_blocked_reason: String? = null,
     val special_offer_eligible: Boolean = false,
     val special_offer: GooglePlaySpecialOffer? = null,
+    val special_offer_yearly: GooglePlaySpecialOffer? = null,
     val active_google_play_plan: String? = null,
     val active_google_play_addons: List<GooglePlayActiveAddon> = emptyList(),
 )

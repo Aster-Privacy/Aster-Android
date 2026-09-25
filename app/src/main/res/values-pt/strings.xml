@@ -3274,6 +3274,8 @@
     <string name="special_offer_title">E-mail privado pela metade do preço</string>
     <string name="special_offer_unavailable">Esta oferta não está mais disponível.</string>
     <string name="special_offer_price_period">por mês</string>
+    <string name="special_offer_price_period_year">por ano</string>
+    <string name="special_offer_fine_print_year">Você paga %1$s pelo primeiro ano. Depois, seu plano é renovado por %2$s por ano até você cancelar em Configurações.</string>
     <string name="special_offer_dismiss">Não mostrar esta oferta novamente</string>
     <string name="special_offer_success_title">Obrigado. Agora você tem o Nova.</string>
     <string name="special_offer_success_body">Obrigado por assinar. Seu apoio significa muito para nós.</string>

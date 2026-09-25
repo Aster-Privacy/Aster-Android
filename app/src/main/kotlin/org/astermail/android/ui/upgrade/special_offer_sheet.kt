@@ -130,12 +130,15 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.components.AsterPlanTag
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic
+import org.astermail.android.ui.settings.detail.aster_segmented
 import org.astermail.android.ui.settings.detail.crypto_term_dialog
+import org.astermail.android.ui.settings.detail.switcher_option
 import org.astermail.android.ui.settings.detail.payment_method_crypto
 import org.astermail.android.ui.settings.detail.payment_review_dialog
 import org.astermail.android.ui.settings.detail.review_offer_price
 
 private const val SPECIAL_OFFER_INTERVAL = "month"
+private const val SPECIAL_OFFER_YEARLY_INTERVAL = "year"
 private const val SPECIAL_OFFER_LIST_CENTS = 899L
 private const val SPECIAL_OFFER_YEARLY_CENTS = 8699L
 private const val HERO_ASPECT_RATIO = 2.4f
@@ -243,11 +246,20 @@ fun SpecialOfferHost() {
         if (play_install) billing_vm.load_play_offers()
     }
 
-    val play_offer = if (play_install) {
-        org.astermail.android.billing.play_special_offer_for(billing_state.play_offers, billing_state.play_special_offer)
+    var interval by rememberSaveable { mutableStateOf(SPECIAL_OFFER_INTERVAL) }
+    val play_yearly_offer = if (play_install) {
+        org.astermail.android.billing.play_special_offer_for(billing_state.play_offers, billing_state.play_special_offer_yearly)
     } else {
         null
     }
+    val yearly_available = !play_install || play_yearly_offer != null
+    val is_yearly = interval == SPECIAL_OFFER_YEARLY_INTERVAL && yearly_available
+    val play_offer = when {
+        !play_install -> null
+        is_yearly -> play_yearly_offer
+        else -> org.astermail.android.billing.play_special_offer_for(billing_state.play_offers, billing_state.play_special_offer)
+    }
+    val checkout_interval = if (is_yearly) SPECIAL_OFFER_YEARLY_INTERVAL else SPECIAL_OFFER_INTERVAL
     val prices_pending = play_install && play_offer == null
     val play_ready = special_offer_play_ready(billing_state)
 
@@ -329,18 +341,19 @@ fun SpecialOfferHost() {
     val percent_off = play_special?.percent_off?.takeIf { it > 0 } ?: offer_state.effective_percent_off
     val months = play_special?.duration_months?.takeIf { it > 0 } ?: offer_state.effective_duration_months
     val plan_code = offer_state.plan_code
-    val list_cents = api_plan_price_cents(billing_state.available_plans, plan_code, SPECIAL_OFFER_INTERVAL)
+    val monthly_cents = api_plan_price_cents(billing_state.available_plans, plan_code, SPECIAL_OFFER_INTERVAL)
         ?.toLong()
         ?: SPECIAL_OFFER_LIST_CENTS
+    val yearly_cents = api_plan_price_cents(billing_state.available_plans, plan_code, SPECIAL_OFFER_YEARLY_INTERVAL)
+        ?.toLong()
+        ?: SPECIAL_OFFER_YEARLY_CENTS
+    val list_cents = if (is_yearly) yearly_cents else monthly_cents
     val offer_cents = special_offer_price_cents(list_cents, percent_off)
     val play_labels = special_offer_play_labels(play_offer, percent_off)
     val offer_label = if (play_install) play_labels?.discounted.orEmpty() else format_money(offer_cents, SPECIAL_OFFER_CURRENCY)
     val list_label = if (play_install) play_labels?.original.orEmpty() else format_money(list_cents, SPECIAL_OFFER_CURRENCY)
     val save_badge = stringResource(R.string.save_percent, percent_off)
-    val yearly_cents = api_plan_price_cents(billing_state.available_plans, plan_code, "year")
-        ?.toLong()
-        ?: SPECIAL_OFFER_YEARLY_CENTS
-    val term_prices = special_offer_term_prices(offer_state, plan_code, list_cents, yearly_cents, save_badge)
+    val term_prices = special_offer_term_prices(offer_state, plan_code, monthly_cents, yearly_cents, save_badge)
     val is_busy = offer_state.is_accepting || billing_state.is_acting || billing_state.play_purchase_request != null
     val checkout_error = billing_state.error?.takeIf { (offer_state.owns_checkout || play_cta_pressed) && it.isNotBlank() }
     val error_text = when {
@@ -432,7 +445,22 @@ fun SpecialOfferHost() {
                             fontWeight = FontWeight.SemiBold,
                         )
 
-                        Spacer(Modifier.height(6.dp))
+                        if (yearly_available && !offer_state.offer_expired) {
+                            Spacer(Modifier.height(12.dp))
+
+                            aster_segmented(
+                                value = checkout_interval,
+                                options = listOf(
+                                    switcher_option(SPECIAL_OFFER_INTERVAL, stringResource(R.string.settings_billing_monthly)),
+                                    switcher_option(SPECIAL_OFFER_YEARLY_INTERVAL, stringResource(R.string.settings_billing_yearly)),
+                                ),
+                                on_change = { next -> if (!is_busy) interval = next },
+                            )
+
+                            Spacer(Modifier.height(10.dp))
+                        } else {
+                            Spacer(Modifier.height(6.dp))
+                        }
 
                         FlowRow(
                             modifier = Modifier.alpha(if (prices_pending) 0f else 1f),
@@ -449,7 +477,9 @@ fun SpecialOfferHost() {
                                 modifier = Modifier.alignByBaseline(),
                             )
                             Text(
-                                text = stringResource(R.string.special_offer_price_period),
+                                text = stringResource(
+                                    if (is_yearly) R.string.special_offer_price_period_year else R.string.special_offer_price_period,
+                                ),
                                 color = colors.text_secondary,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Medium,
@@ -551,7 +581,7 @@ fun SpecialOfferHost() {
                             } else if (play_install) {
                                 billing_vm.clear_messages()
                                 play_cta_pressed = true
-                                billing_vm.start_play_special_offer()
+                                billing_vm.start_play_special_offer(checkout_interval)
                             } else {
                                 billing_vm.clear_messages()
                                 offer_vm.release_checkout()
@@ -563,13 +593,17 @@ fun SpecialOfferHost() {
                     Spacer(Modifier.height(10.dp))
 
                     Text(
-                        text = pluralStringResource(
-                            R.plurals.special_offer_fine_print,
-                            months,
-                            offer_label,
-                            months,
-                            list_label,
-                        ),
+                        text = if (is_yearly) {
+                            stringResource(R.string.special_offer_fine_print_year, offer_label, list_label)
+                        } else {
+                            pluralStringResource(
+                                R.plurals.special_offer_fine_print,
+                                months,
+                                offer_label,
+                                months,
+                                list_label,
+                            )
+                        },
                         color = colors.text_tertiary,
                         fontSize = 12.sp,
                         lineHeight = 17.sp,
@@ -627,7 +661,7 @@ fun SpecialOfferHost() {
         SpecialOfferStep.payment_method -> payment_review_dialog(
             title = stringResource(R.string.checkout_review_title),
             plan_name = stringResource(R.string.plan_name_nova),
-            interval_label = billing_interval_per_label(context, SPECIAL_OFFER_INTERVAL),
+            interval_label = billing_interval_per_label(context, checkout_interval),
             amount_text = offer_label,
             subtotal_text = null,
             save_text = null,
@@ -642,7 +676,7 @@ fun SpecialOfferHost() {
                 } else {
                     billing_vm.clear_messages()
                     offer_vm.begin_checkout()
-                    billing_vm.start_checkout(plan_code, SPECIAL_OFFER_INTERVAL, SPECIAL_OFFER_CURRENCY, special_offer = true)
+                    billing_vm.start_checkout(plan_code, checkout_interval, SPECIAL_OFFER_CURRENCY, special_offer = true)
                 }
             },
         )
@@ -654,6 +688,7 @@ fun SpecialOfferHost() {
                 billing_vm.start_crypto_checkout(plan_code, term, special_offer = true)
             },
             offer_prices = term_prices,
+            initial_term = if (is_yearly) 12 else 1,
         )
         SpecialOfferStep.offer -> Unit
     }

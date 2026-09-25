@@ -3275,6 +3275,8 @@
     <string name="special_offer_title">Private E-Mails zum halben Preis</string>
     <string name="special_offer_unavailable">Dieses Angebot ist nicht mehr verfügbar.</string>
     <string name="special_offer_price_period">pro Monat</string>
+    <string name="special_offer_price_period_year">pro Jahr</string>
+    <string name="special_offer_fine_print_year">Du zahlst %1$s für das erste Jahr. Danach verlängert sich dein Tarif für %2$s pro Jahr, bis du ihn in den Einstellungen kündigst.</string>
     <string name="special_offer_dismiss">Dieses Angebot nicht mehr anzeigen</string>
     <string name="special_offer_success_title">Danke. Du nutzt jetzt Nova.</string>
     <string name="special_offer_success_body">Danke für dein Abonnement. Deine Unterstützung bedeutet uns sehr viel.</string>

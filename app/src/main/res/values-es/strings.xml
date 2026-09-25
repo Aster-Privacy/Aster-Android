@@ -3275,6 +3275,8 @@
     <string name="special_offer_title">Correo privado a mitad de precio</string>
     <string name="special_offer_unavailable">Esta oferta ya no está disponible.</string>
     <string name="special_offer_price_period">al mes</string>
+    <string name="special_offer_price_period_year">al año</string>
+    <string name="special_offer_fine_print_year">Pagas %1$s por el primer año. Después, tu plan se renueva por %2$s al año hasta que lo canceles en Configuración.</string>
     <string name="special_offer_dismiss">No volver a mostrar esta oferta</string>
     <string name="special_offer_success_title">Gracias. Ya tienes Nova.</string>
     <string name="special_offer_success_body">Gracias por suscribirte. Tu apoyo significa mucho para nosotros.</string>

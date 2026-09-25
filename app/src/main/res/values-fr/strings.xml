@@ -3301,6 +3301,8 @@
     <string name="special_offer_title">La messagerie privée à moitié prix</string>
     <string name="special_offer_unavailable">Cette offre n\'est plus disponible.</string>
     <string name="special_offer_price_period">par mois</string>
+    <string name="special_offer_price_period_year">par an</string>
+    <string name="special_offer_fine_print_year">Vous payez %1$s pour la première année. Votre forfait est ensuite renouvelé à %2$s par an jusqu\'à ce que vous l\'annuliez dans Paramètres.</string>
     <string name="special_offer_dismiss">Ne plus afficher cette offre</string>
     <string name="special_offer_success_title">Merci. Vous êtes passé à Nova.</string>
     <string name="special_offer_success_body">Merci pour votre abonnement. Votre soutien compte beaucoup pour nous.</string>

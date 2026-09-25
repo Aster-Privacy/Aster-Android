@@ -102,6 +102,7 @@ data class BillingUiState(
     val play_confirmed_special_offer: Boolean = false,
     val play_addon_products: List<GooglePlayAddonProduct> = emptyList(),
     val play_special_offer: GooglePlaySpecialOffer? = null,
+    val play_special_offer_yearly: GooglePlaySpecialOffer? = null,
     val play_special_offer_eligible: Boolean = false,
     val play_active_plan: String? = null,
     val play_active_addons: List<GooglePlayActiveAddon> = emptyList(),
@@ -110,7 +111,7 @@ data class BillingUiState(
 internal sealed interface PlayTarget {
     data class Plan(val plan_code: String, val billing_interval: String) : PlayTarget
     data class Addon(val storage_bytes: Long, val billing_interval: String = "month") : PlayTarget
-    data object SpecialOffer : PlayTarget
+    data class SpecialOffer(val billing_interval: String = "month") : PlayTarget
 }
 
 object AvailablePlansCache {
@@ -250,6 +251,7 @@ class BillingViewModel @Inject constructor(
                 play_purchase_request = null,
                 play_addon_products = emptyList(),
                 play_special_offer = null,
+                play_special_offer_yearly = null,
                 play_special_offer_eligible = false,
                 play_active_plan = null,
                 play_active_addons = emptyList(),
@@ -296,6 +298,7 @@ class BillingViewModel @Inject constructor(
                     play_currency = null,
                     play_addon_products = emptyList(),
                     play_special_offer = null,
+                    play_special_offer_yearly = null,
                     play_special_offer_eligible = false,
                     play_active_plan = null,
                     play_active_addons = emptyList(),
@@ -318,6 +321,7 @@ class BillingViewModel @Inject constructor(
                 play_currency = play_currency_of(offers),
                 play_addon_products = config.addon_products,
                 play_special_offer = config.special_offer,
+                play_special_offer_yearly = config.special_offer_yearly,
                 play_special_offer_eligible = config.special_offer_eligible && config.special_offer != null,
                 play_active_plan = config.active_google_play_plan,
                 play_active_addons = config.active_google_play_addons,
@@ -510,7 +514,10 @@ class BillingViewModel @Inject constructor(
         return when (target) {
             is PlayTarget.Plan -> play_offer_for(s.play_offers, s.play_products, target.plan_code, target.billing_interval)
             is PlayTarget.Addon -> play_addon_offer_for(s.play_offers, s.play_addon_products, target.storage_bytes, target.billing_interval)
-            PlayTarget.SpecialOffer -> play_special_offer_for(s.play_offers, s.play_special_offer)
+            is PlayTarget.SpecialOffer -> play_special_offer_for(
+                s.play_offers,
+                if (target.billing_interval == "year") s.play_special_offer_yearly else s.play_special_offer,
+            )
         }
     }
 
@@ -529,9 +536,9 @@ class BillingViewModel @Inject constructor(
         }
     }
 
-    fun start_play_special_offer() {
+    fun start_play_special_offer(billing_interval: String = "month") {
         if (!play_install_check()) return
-        start_play_target("play_special_offer", PlayTarget.SpecialOffer)
+        start_play_target("play_special_offer", PlayTarget.SpecialOffer(billing_interval))
     }
 
     fun cancel_play_special_offer() {

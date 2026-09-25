@@ -3164,6 +3164,8 @@
     <string name="special_offer_title">निजी मेल, आधी कीमत में</string>
     <string name="special_offer_unavailable">यह ऑफ़र अब उपलब्ध नहीं है।</string>
     <string name="special_offer_price_period">प्रति माह</string>
+    <string name="special_offer_price_period_year">प्रति वर्ष</string>
+    <string name="special_offer_fine_print_year">पहले वर्ष के लिए आप %1$s चुकाते हैं। इसके बाद आपकी योजना %2$s प्रति वर्ष पर नवीनीकृत होती रहेगी, जब तक आप इसे सेटिंग में रद्द नहीं करते।</string>
     <string name="special_offer_dismiss">यह ऑफ़र दोबारा न दिखाएँ</string>
     <string name="special_offer_success_title">धन्यवाद। अब आप Nova पर हैं।</string>
     <string name="special_offer_success_body">सदस्यता लेने के लिए धन्यवाद। आपका समर्थन हमारे लिए बहुत मायने रखता है।</string>
