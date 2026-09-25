@@ -64,6 +64,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
+import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.ui.common.sheet_container_color
@@ -211,23 +212,25 @@ internal fun billing_plan_picker(
         } else {
             val price_known = (if (is_yearly) selected.yearly_cents else selected.monthly_cents) != null
             when {
-                selected.is_current -> billing_cta_button(
+                selected.is_current -> AsterSecondaryButton(
                     label = stringResource(R.string.current_plan),
                     enabled = false,
-                    filled = false,
-                    on_click = {},
+                    onClick = {},
                 )
-                !price_known -> billing_cta_button(
+                !price_known -> AsterSecondaryButton(
                     label = stringResource(R.string.see_pricing),
                     enabled = plans_failed,
-                    filled = false,
-                    on_click = on_see_pricing,
+                    onClick = on_see_pricing,
                 )
-                else -> billing_cta_button(
+                selected.is_downgrade -> AsterSecondaryButton(
                     label = plan_cta_label(selected),
                     enabled = !busy,
-                    filled = !selected.is_downgrade,
-                    on_click = { on_choose(selected) },
+                    onClick = { on_choose(selected) },
+                )
+                else -> AsterButton(
+                    label = plan_cta_label(selected),
+                    enabled = !busy,
+                    onClick = { on_choose(selected) },
                 )
             }
         }
@@ -324,20 +327,22 @@ internal fun billing_compare_sheet(
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(Modifier.height(AsterSpacing.lg))
-            billing_segmented(
-                value = plan_type,
-                options = listOf(
-                    switcher_option(id = "individual", label = stringResource(R.string.billing_plan_type_individual)),
-                    switcher_option(id = "family", label = stringResource(R.string.billing_plan_type_family)),
-                ),
-                on_change = { type ->
-                    plan_type = type
-                    val next = if (type == "family") family_options else individual_options
-                    code = next.firstOrNull { it.is_recommended && !it.is_current }?.code
-                        ?: next.firstOrNull { !it.is_current }?.code
-                        ?: next.firstOrNull()?.code.orEmpty()
-                },
-            )
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                aster_segmented(
+                    value = plan_type,
+                    options = listOf(
+                        switcher_option(id = "individual", label = stringResource(R.string.billing_plan_type_individual)),
+                        switcher_option(id = "family", label = stringResource(R.string.billing_plan_type_family)),
+                    ),
+                    on_change = { type ->
+                        plan_type = type
+                        val next = if (type == "family") family_options else individual_options
+                        code = next.firstOrNull { it.is_recommended && !it.is_current }?.code
+                            ?: next.firstOrNull { !it.is_current }?.code
+                            ?: next.firstOrNull()?.code.orEmpty()
+                    },
+                )
+            }
             Column(
                 modifier = Modifier
                     .weight(1f, fill = false)

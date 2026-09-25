@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">Личные и семейные планы, помесячно или на год</string>
     <string name="billing_more_title">Ещё</string>
     <string name="billing_addons_subtitle">Добавьте место, оставьте план</string>
+    <string name="billing_addon_summary">%1$s дополнительного хранилища</string>
+    <string name="billing_addon_pick_size">Выберите, сколько добавить</string>
     <string name="billing_support_subtitle">Напишите команде</string>
     <string name="billing_trust_card">Отмените в любой момент на этой странице. На оплату картой действует 30-дневная гарантия возврата.</string>
     <string name="billing_trust_crypto">Криптоплатежи не продлеваются сами и не возвращаются. Aster напомнит вам до окончания плана.</string>

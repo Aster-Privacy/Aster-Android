@@ -118,13 +118,13 @@ internal fun billing_hero_card(
                 Image(
                     painter = painterResource(R.drawable.aster_wordmark),
                     contentDescription = null,
-                    modifier = Modifier.height(18.dp),
+                    modifier = Modifier.height(15.dp),
                 )
-                Spacer(Modifier.width(7.dp))
+                Spacer(Modifier.width(6.dp))
                 Text(
                     text = plan_name,
                     color = colors.text_primary,
-                    fontSize = 24.sp,
+                    fontSize = 21.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = (-0.5).sp,
                     maxLines = 1,
@@ -556,8 +556,8 @@ internal fun billing_expander_row(
         Icon(
             imageVector = if (expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
             contentDescription = null,
-            tint = colors.text_muted,
-            modifier = Modifier.size(18.dp),
+            tint = colors.text_tertiary,
+            modifier = Modifier.size(20.dp),
         )
     }
 }

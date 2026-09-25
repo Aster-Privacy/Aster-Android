@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">خطط فردية وعائلية، شهرية أو سنوية</string>
     <string name="billing_more_title">المزيد</string>
     <string name="billing_addons_subtitle">أضف مساحة واحتفظ بخطتك</string>
+    <string name="billing_addon_summary">%1$s مساحة تخزين إضافية</string>
+    <string name="billing_addon_pick_size">اختر المقدار الذي تريد إضافته</string>
     <string name="billing_support_subtitle">أرسل رسالة إلى الفريق</string>
     <string name="billing_trust_card">ألغِ في أي وقت من هذه الصفحة. تأتي مدفوعات البطاقة مع ضمان استرداد الأموال خلال 30 يومًا.</string>
     <string name="billing_trust_crypto">مدفوعات العملات الرقمية لا تتجدد تلقائيًا ولا تُسترد. يذكّرك Aster قبل انتهاء خطتك.</string>

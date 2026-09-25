@@ -99,6 +99,8 @@
     <string name="billing_compare_all_plans_subtitle">Planos individuais e familiares, mensais ou anuais</string>
     <string name="billing_more_title">Mais</string>
     <string name="billing_addons_subtitle">Adiciona espaço, mantém o plano</string>
+    <string name="billing_addon_summary">%1$s de armazenamento extra</string>
+    <string name="billing_addon_pick_size">Escolha quanto quer adicionar</string>
     <string name="billing_support_subtitle">Envia uma mensagem à equipa</string>
     <string name="billing_trust_card">Cancela quando quiseres nesta página. Os pagamentos com cartão têm garantia de reembolso de 30 dias.</string>
     <string name="billing_trust_crypto">Os pagamentos em cripto não se renovam sozinhos e não são reembolsáveis. A Aster avisa-te antes de o plano terminar.</string>
