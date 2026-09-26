@@ -36,11 +36,14 @@ import kotlinx.coroutines.withContext
 import org.astermail.android.api.ACCOUNT_SUSPENDED_CODE
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.account.AccountApi
+import org.astermail.android.api.auth.AuthApi
+import org.astermail.android.api.auth.UserInfo
 import org.astermail.android.auth.AuthRepository
 
 @HiltViewModel
 class SuspendedAccountViewModel @Inject constructor(
     private val account_api: AccountApi,
+    private val auth_api: AuthApi,
     private val auth_repository: AuthRepository,
 ) : ViewModel() {
 
@@ -49,6 +52,7 @@ class SuspendedAccountViewModel @Inject constructor(
         val suspended_at: Instant? = null,
         val deletion_eligible_at: Instant? = null,
         val is_signing_out: Boolean = false,
+        val profile: UserInfo? = null,
     )
 
     private val _state = MutableStateFlow(UiState())
@@ -66,6 +70,7 @@ class SuspendedAccountViewModel @Inject constructor(
                             visible = true,
                             suspended_at = parse_instant(status.suspended_at),
                             deletion_eligible_at = parse_instant(status.deletion_eligible_at),
+                            profile = load_profile(),
                         )
                     } else {
                         UiState()
@@ -73,7 +78,7 @@ class SuspendedAccountViewModel @Inject constructor(
                 },
                 onFailure = { failure ->
                     if (is_suspended_error(failure)) {
-                        _state.value = _state.value.copy(visible = true)
+                        _state.value = _state.value.copy(visible = true, profile = load_profile())
                     }
                 },
             )
@@ -94,6 +99,8 @@ class SuspendedAccountViewModel @Inject constructor(
     fun reset() {
         _state.value = UiState()
     }
+
+    private suspend fun load_profile(): UserInfo? = runCatching { auth_api.me() }.getOrNull()
 
     private fun parse_instant(raw: String?): Instant? =
         raw?.let { value -> runCatching { OffsetDateTime.parse(value).toInstant() }.getOrNull() }

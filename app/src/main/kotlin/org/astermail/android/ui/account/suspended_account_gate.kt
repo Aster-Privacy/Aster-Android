@@ -24,7 +24,9 @@ package org.astermail.android.ui.account
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -54,10 +56,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -65,6 +72,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import compose.icons.TablerIcons
 import compose.icons.tablericons.AlertTriangle
 import compose.icons.tablericons.ChevronDown
+import compose.icons.tablericons.ChevronRight
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -74,8 +82,6 @@ import org.astermail.android.account.SuspendedAccountViewModel
 import org.astermail.android.accounts.AccountsViewModel
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.components.AsterButton
-import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.storage.StoredAccount
 import org.astermail.android.ui.common.page_surface
 import org.astermail.android.ui.common.plan_ring
@@ -113,9 +119,12 @@ fun SuspendedAccountGate(
     var show_switcher by remember { mutableStateOf(false) }
     var show_export by remember { mutableStateOf(false) }
 
-    val current_account = accounts_state.accounts.firstOrNull { it.id == accounts_state.current_account_id }
-    val account_email = current_account?.email.orEmpty()
-    val account_name = current_account?.display_name.orEmpty()
+    val profile = state.profile
+    val current_account = accounts_state.accounts.firstOrNull { it.id == (profile?.user_id ?: accounts_state.current_account_id) }
+    val account_email = profile?.email?.takeIf { it.isNotBlank() } ?: current_account?.email.orEmpty()
+    val account_name = profile?.display_name ?: current_account?.display_name.orEmpty()
+    val account_picture = profile?.profile_picture ?: current_account?.profile_picture
+    val account_color = profile?.profile_color ?: current_account?.profile_color
     val display_name = account_name.ifBlank { account_email.substringBefore('@') }
 
     BackHandler(enabled = !show_export) {}
@@ -131,175 +140,175 @@ fun SuspendedAccountGate(
             )
             .testTag("suspended_account_gate"),
     ) {
+        val card = lerp(colors.dropdown_bg, colors.text_primary, 0.09f)
+        val status_text = status_line(state)
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = AsterSpacing.xl)
+                .padding(top = 40.dp, bottom = AsterSpacing.xxxl),
         ) {
+            Image(
+                painter = painterResource(R.drawable.aster_wordmark),
+                contentDescription = null,
+                modifier = Modifier.height(28.dp),
+            )
+
+            Spacer(Modifier.height(24.dp))
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(card)
+                    .clickable {
+                        accounts_view_model.refresh_with_profile()
+                        show_switcher = true
+                    }
+                    .padding(horizontal = 16.dp, vertical = 14.dp)
+                    .testTag("workspace_switcher"),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = stringResource(R.string.app_name),
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(start = 12.dp),
-                )
-                Spacer(Modifier.weight(1f))
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(24.dp))
-                        .clickable {
-                            accounts_view_model.refresh_with_profile()
-                            show_switcher = true
-                        }
-                        .padding(start = 4.dp, end = 12.dp, top = 4.dp, bottom = 4.dp)
-                        .testTag("workspace_switcher"),
-                    verticalAlignment = Alignment.CenterVertically,
+                plan_ring(size = 48.dp, enabled = remember_has_paid_plan()) {
+                    SenderAvatar(
+                        email = account_email,
+                        name = account_name,
+                        size = 48.dp,
+                        profile_picture_url = account_picture,
+                        profile_color = account_color,
+                    )
+                }
+                Spacer(Modifier.width(14.dp))
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
-                    plan_ring(size = 36.dp, enabled = remember_has_paid_plan()) {
-                        SenderAvatar(
-                            email = account_email,
-                            name = account_name,
-                            size = 36.dp,
-                            profile_picture_url = current_account?.profile_picture,
-                            profile_color = current_account?.profile_color,
-                        )
-                    }
-                    Spacer(Modifier.width(10.dp))
-                    Column {
-                        Text(
-                            text = display_name,
-                            color = colors.text_primary,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 1,
-                        )
-                        Text(
-                            text = account_email,
-                            color = colors.text_muted,
-                            fontSize = 12.sp,
-                            maxLines = 1,
-                        )
-                    }
-                    Spacer(Modifier.width(6.dp))
-                    Icon(
-                        imageVector = TablerIcons.ChevronDown,
-                        contentDescription = null,
-                        tint = colors.text_muted,
-                        modifier = Modifier.size(16.dp),
+                    Text(
+                        text = display_name,
+                        color = colors.text_primary,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = account_email,
+                        color = colors.text_muted,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Spacer(Modifier.width(10.dp))
+                Icon(
+                    imageVector = TablerIcons.ChevronDown,
+                    contentDescription = null,
+                    tint = colors.text_muted,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            Text(
+                text = stringResource(R.string.suspended_title),
+                color = colors.text_primary,
+                fontSize = 16.sp,
+                lineHeight = 22.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            if (status_text.isNotEmpty()) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = status_text,
+                    color = colors.text_tertiary,
+                    fontSize = 14.sp,
+                    lineHeight = 21.sp,
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(colors.warning.copy(alpha = 0.14f))
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Icon(
+                    imageVector = TablerIcons.AlertTriangle,
+                    contentDescription = null,
+                    tint = colors.warning,
+                    modifier = Modifier
+                        .padding(top = 1.dp)
+                        .size(20.dp),
+                )
+                Spacer(Modifier.width(10.dp))
+                Column {
+                    Text(
+                        text = stringResource(R.string.suspended_alert),
+                        color = colors.text_primary,
+                        fontSize = 14.sp,
+                        lineHeight = 21.sp,
+                    )
+                    Text(
+                        text = stringResource(R.string.suspended_alert_terms),
+                        color = colors.text_primary,
+                        fontSize = 14.sp,
+                        lineHeight = 21.sp,
+                        fontWeight = FontWeight.Medium,
+                        textDecoration = TextDecoration.Underline,
+                        modifier = Modifier.clickable { open_url(context, TERMS_URL) },
                     )
                 }
             }
 
-            Column(
+            Spacer(Modifier.height(24.dp))
+
+            action_row(
+                title = stringResource(R.string.suspended_start_appeal),
+                hint = stringResource(R.string.suspended_appeal_hint),
+                background = card,
+                enabled = !state.is_signing_out,
+                tag = "suspended_start_appeal",
+                onClick = { open_url(context, appeal_url_for(account_email)) },
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            action_row(
+                title = stringResource(R.string.suspended_download),
+                hint = stringResource(R.string.suspended_download_hint),
+                background = card,
+                enabled = !state.is_signing_out,
+                tag = "suspended_download",
+                onClick = { show_export = true },
+            )
+
+            Spacer(Modifier.height(24.dp))
+
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.xl)
-                    .padding(top = AsterSpacing.lg, bottom = AsterSpacing.xxxl),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(colors.warning.copy(alpha = 0.16f))
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.Top,
-                ) {
-                    Icon(
-                        imageVector = TablerIcons.AlertTriangle,
-                        contentDescription = null,
-                        tint = colors.warning,
-                        modifier = Modifier
-                            .padding(top = 2.dp)
-                            .size(20.dp),
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = stringResource(R.string.suspended_alert),
-                            color = colors.text_primary,
-                            fontSize = 15.sp,
-                            lineHeight = 21.sp,
-                        )
-                        Text(
-                            text = stringResource(R.string.suspended_alert_terms),
-                            color = colors.text_primary,
-                            fontSize = 15.sp,
-                            lineHeight = 21.sp,
-                            fontWeight = FontWeight.Medium,
-                            textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
-                            modifier = Modifier.clickable { open_url(context, TERMS_URL) },
-                        )
+                    .height(36.dp)
+                    .clip(RoundedCornerShape(999.dp))
+                    .border(1.dp, colors.text_primary.copy(alpha = 0.22f), RoundedCornerShape(999.dp))
+                    .clickable(enabled = !state.is_signing_out) {
+                        view_model.sign_out(on_signed_out)
                     }
-                }
-
-                Spacer(Modifier.height(28.dp))
-
-                Text(
-                    text = status_line(state),
-                    color = colors.text_primary,
-                    fontSize = 17.sp,
-                    lineHeight = 24.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-
-                Spacer(Modifier.height(AsterSpacing.lg))
-
-                Text(
-                    text = stringResource(R.string.suspended_appeal_hint),
-                    color = colors.text_secondary,
-                    fontSize = 15.sp,
-                    lineHeight = 23.sp,
-                )
-
-                Spacer(Modifier.height(AsterSpacing.lg))
-
-                Text(
-                    text = stringResource(R.string.suspended_download_hint),
-                    color = colors.text_secondary,
-                    fontSize = 15.sp,
-                    lineHeight = 23.sp,
-                )
-
-                Spacer(Modifier.height(36.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    AsterGhostButton(
-                        label = stringResource(R.string.suspended_download),
-                        onClick = { show_export = true },
-                        enabled = !state.is_signing_out,
-                    )
-                    AsterButton(
-                        label = stringResource(R.string.suspended_start_appeal),
-                        onClick = { open_url(context, appeal_url_for(account_email)) },
-                        enabled = !state.is_signing_out,
-                    )
-                }
-
-                Spacer(Modifier.height(32.dp))
-
+                    .testTag("suspended_sign_out"),
+                contentAlignment = Alignment.Center,
+            ) {
                 Text(
                     text = stringResource(R.string.pending_deletion_sign_out),
-                    color = colors.text_muted,
-                    fontSize = 14.sp,
+                    color = colors.text_primary,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .clickable(enabled = !state.is_signing_out) {
-                            view_model.sign_out(on_signed_out)
-                        }
-                        .padding(vertical = 8.dp),
                 )
             }
         }
@@ -321,8 +330,8 @@ fun SuspendedAccountGate(
             current_account_id = accounts_state.current_account_id,
             current_email = account_email,
             current_name = account_name,
-            current_picture = current_account?.profile_picture,
-            current_color = current_account?.profile_color,
+            current_picture = account_picture,
+            current_color = account_color,
             plan_code = null,
             storage_used_fraction = 0f,
             storage_used_label = "",
@@ -363,6 +372,53 @@ fun SuspendedAccountGate(
 }
 
 @Composable
+private fun action_row(
+    title: String,
+    hint: String,
+    background: Color,
+    enabled: Boolean,
+    tag: String,
+    onClick: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(background)
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 14.dp)
+            .testTag(tag),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = title,
+                color = colors.text_primary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            Text(
+                text = hint,
+                color = colors.text_muted,
+                fontSize = 12.sp,
+                lineHeight = 17.sp,
+            )
+        }
+        Spacer(Modifier.width(14.dp))
+        Icon(
+            imageVector = TablerIcons.ChevronRight,
+            contentDescription = null,
+            tint = colors.text_muted,
+            modifier = Modifier.size(16.dp),
+        )
+    }
+}
+
+@Composable
 private fun status_line(state: SuspendedAccountViewModel.UiState): String {
     val suspended_at = state.suspended_at
     val deletion_at = state.deletion_eligible_at
@@ -373,7 +429,7 @@ private fun status_line(state: SuspendedAccountViewModel.UiState): String {
             format_date(deletion_at),
         )
         suspended_at != null -> stringResource(R.string.suspended_since, format_date(suspended_at))
-        else -> stringResource(R.string.suspended_title)
+        else -> ""
     }
 }
 
