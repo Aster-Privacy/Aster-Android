@@ -1,9 +1,9 @@
 What's new:
 
 - Buy and manage every plan and storage add-on through Google Play.
+- Storage add-ons now come in monthly or yearly terms.
 - A redesigned billing page with a full plan comparison.
-- Change your primary address in Settings.
-- Add a brand logo to your custom domains.
+- Resubscribe from the account menu.
 
 Fixed:
 
