@@ -3576,4 +3576,11 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Inbegrepen</string>
     <string name="special_offer_compare_not_included">Niet inbegrepen</string>
+    <string name="pdf_password_title">Deze pdf is beveiligd met een wachtwoord</string>
+    <string name="pdf_password_description">Voer het wachtwoord in om deze pdf te bekijken. Het wachtwoord blijft op dit apparaat.</string>
+    <string name="pdf_password_hint">Pdf-wachtwoord</string>
+    <string name="pdf_password_incorrect">Dat wachtwoord is onjuist. Probeer het opnieuw.</string>
+    <string name="pdf_preview_failed">Deze pdf kan hier niet worden getoond. Download de pdf om hem te openen.</string>
+    <string name="pdf_page_of_total">Pagina %1$d van %2$d</string>
+    <string name="pdf_password_unsupported">Deze pdf is beveiligd met een wachtwoord. Open de pdf in een andere app om hem te bekijken.</string>
 </resources>

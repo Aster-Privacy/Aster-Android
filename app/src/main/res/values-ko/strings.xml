@@ -3558,4 +3558,11 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">포함</string>
     <string name="special_offer_compare_not_included">포함되지 않음</string>
+    <string name="pdf_password_title">이 PDF는 암호로 보호되어 있습니다</string>
+    <string name="pdf_password_description">이 PDF를 보려면 암호를 입력하세요. 암호는 이 기기에만 남습니다.</string>
+    <string name="pdf_password_hint">PDF 암호</string>
+    <string name="pdf_password_incorrect">암호가 올바르지 않습니다. 다시 시도하세요.</string>
+    <string name="pdf_preview_failed">이 PDF는 여기에 표시할 수 없습니다. 열려면 다운로드하세요.</string>
+    <string name="pdf_page_of_total">%2$d 중 %1$d 페이지</string>
+    <string name="pdf_password_unsupported">이 PDF는 암호로 보호되어 있습니다. 보려면 다른 앱에서 여세요.</string>
 </resources>

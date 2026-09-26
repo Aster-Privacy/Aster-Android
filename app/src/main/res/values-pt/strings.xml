@@ -3576,4 +3576,11 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Incluído</string>
     <string name="special_offer_compare_not_included">Não incluído</string>
+    <string name="pdf_password_title">Este PDF está protegido por senha</string>
+    <string name="pdf_password_description">Para ver este PDF, digite a senha dele. A senha fica neste dispositivo.</string>
+    <string name="pdf_password_hint">Senha do PDF</string>
+    <string name="pdf_password_incorrect">A senha está incorreta. Tente novamente.</string>
+    <string name="pdf_preview_failed">Este PDF não pode ser exibido aqui. Para abri-lo, faça o download.</string>
+    <string name="pdf_page_of_total">Página %1$d de %2$d</string>
+    <string name="pdf_password_unsupported">Este PDF está protegido por senha. Para vê-lo, abra-o em outro app.</string>
 </resources>

@@ -3466,4 +3466,11 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">शामिल है</string>
     <string name="special_offer_compare_not_included">शामिल नहीं है</string>
+    <string name="pdf_password_title">यह PDF पासवर्ड से सुरक्षित है</string>
+    <string name="pdf_password_description">इस PDF को देखने के लिए, इसका पासवर्ड डालें। पासवर्ड इसी डिवाइस पर रहता है।</string>
+    <string name="pdf_password_hint">PDF पासवर्ड</string>
+    <string name="pdf_password_incorrect">यह पासवर्ड गलत है। फिर से कोशिश करें।</string>
+    <string name="pdf_preview_failed">यह PDF यहां नहीं दिखाई जा सकती। इसे खोलने के लिए, इसे डाउनलोड करें।</string>
+    <string name="pdf_page_of_total">पेज %1$d, कुल %2$d में से</string>
+    <string name="pdf_password_unsupported">यह PDF पासवर्ड से सुरक्षित है। इसे देखने के लिए, इसे किसी दूसरे ऐप में खोलें।</string>
 </resources>

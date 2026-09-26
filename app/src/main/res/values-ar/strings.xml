@@ -3660,4 +3660,11 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">مُضمَّن</string>
     <string name="special_offer_compare_not_included">غير مُضمَّن</string>
+    <string name="pdf_password_title">ملف PDF هذا محمي بكلمة مرور</string>
+    <string name="pdf_password_description">لعرض ملف PDF هذا، أدخل كلمة المرور الخاصة به. تبقى كلمة المرور على هذا الجهاز.</string>
+    <string name="pdf_password_hint">كلمة مرور PDF</string>
+    <string name="pdf_password_incorrect">كلمة المرور غير صحيحة. حاول مرة أخرى.</string>
+    <string name="pdf_preview_failed">لا يمكن عرض ملف PDF هذا هنا. لفتحه، قم بتنزيله.</string>
+    <string name="pdf_page_of_total">صفحة %1$d من %2$d</string>
+    <string name="pdf_password_unsupported">ملف PDF هذا محمي بكلمة مرور. لعرضه، افتحه في تطبيق آخر.</string>
 </resources>

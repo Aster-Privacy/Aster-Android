@@ -3618,4 +3618,11 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Включено</string>
     <string name="special_offer_compare_not_included">Не включено</string>
+    <string name="pdf_password_title">Этот PDF защищен паролем</string>
+    <string name="pdf_password_description">Чтобы просмотреть этот PDF, введите его пароль. Пароль остается на этом устройстве.</string>
+    <string name="pdf_password_hint">Пароль PDF</string>
+    <string name="pdf_password_incorrect">Неверный пароль. Попробуйте еще раз.</string>
+    <string name="pdf_preview_failed">Этот PDF нельзя показать здесь. Чтобы открыть его, скачайте файл.</string>
+    <string name="pdf_page_of_total">Страница %1$d из %2$d</string>
+    <string name="pdf_password_unsupported">Этот PDF защищен паролем. Чтобы просмотреть его, откройте его в другом приложении.</string>
 </resources>
