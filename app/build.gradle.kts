@@ -180,6 +180,7 @@ dependencies {
     "fullImplementation"(libs.kotlinx.coroutines.play.services)
     "fullImplementation"(libs.unifiedpush.efcmd)
     "fullImplementation"("com.google.android.play:review-ktx:2.0.2")
+    "fullImplementation"(libs.play.integrity)
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.lifecycle.process)

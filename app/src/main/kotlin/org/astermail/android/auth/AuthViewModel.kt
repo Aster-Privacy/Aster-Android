@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.astermail.android.R
 import org.astermail.android.api.ApiError
+import org.astermail.android.api.CAPTCHA_FAILED_CODE
 import org.astermail.android.api.recovery_email.RecoveryEmailApiImpl
 import org.astermail.android.api.recovery_email.RecoveryEmailError
 
@@ -56,6 +57,13 @@ class AuthViewModel @Inject constructor(
 
     private val _ui_state = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
     val ui_state: StateFlow<AuthUiState> = _ui_state.asStateFlow()
+
+    private val _login_captcha_required = MutableStateFlow(false)
+    val login_captcha_required: StateFlow<Boolean> = _login_captcha_required.asStateFlow()
+
+    init {
+        viewModelScope.launch(Dispatchers.IO) { PlayIntegrityLogin.warm_up(ctx) }
+    }
 
     private val _recovery_codes = MutableStateFlow<List<String>?>(null)
     val recovery_codes: StateFlow<List<String>?> = _recovery_codes.asStateFlow()
@@ -96,10 +104,20 @@ class AuthViewModel @Inject constructor(
                         is LoginOutcome.NeedsTotp -> AuthUiState.TotpChallenge(outcome.challenge)
                     }
                 },
-                onFailure = { failure_state(it) },
+                onFailure = { cause ->
+                    if (is_captcha_failure(cause)) {
+                        _login_captcha_required.value = true
+                        if (captcha_token == null) AuthUiState.Idle else failure_state(cause)
+                    } else {
+                        failure_state(cause)
+                    }
+                },
             )
         }
     }
+
+    private fun is_captcha_failure(cause: Throwable): Boolean =
+        cause is ApiError.ForbiddenError && cause.code == CAPTCHA_FAILED_CODE
 
     fun submit_totp(
         code: String,

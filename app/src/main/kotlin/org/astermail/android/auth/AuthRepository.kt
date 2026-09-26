@@ -303,6 +303,7 @@ class AuthRepository @Inject constructor(
         val password_hash_b64 = base64_encode(password_hash_bytes)
 
         val remember_me = true
+        val integrity = PlayIntegrityLogin.fetch(context, user_hash)
 
         val login_result = auth_api.login(
             LoginRequest(
@@ -310,6 +311,8 @@ class AuthRepository @Inject constructor(
                 password_hash = password_hash_b64,
                 captcha_token = captcha_token,
                 remember_me = remember_me,
+                integrity_token = integrity?.token,
+                integrity_nonce = integrity?.nonce,
             ),
             trusted_device_token = trusted_token,
         )
