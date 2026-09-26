@@ -639,7 +639,7 @@ internal fun detail_row(
                     color = colors.text_primary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),
                 )
@@ -685,7 +685,7 @@ internal fun detail_row(
 
 @Composable
 internal fun verified_badge(
-    text: String = "Verified",
+    text: String = stringResource(R.string.verified),
     icon: ImageVector? = TablerIcons.Check,
 ) {
     tone_badge(

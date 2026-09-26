@@ -529,7 +529,7 @@ fun ImportScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(SquircleShape(18.dp))
+                            .clip(AsterShapes.control)
                             .background(colors.accent_blue)
                             .clickable {
                                 launcher.launch("*/*")

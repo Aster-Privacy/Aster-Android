@@ -201,7 +201,7 @@ internal fun aster_segmented(
     Row(
         modifier = modifier
             .clip(CircleShape)
-            .border(1.dp, colors.border_secondary, CircleShape)
+            .background(field_surface_color(colors))
             .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,

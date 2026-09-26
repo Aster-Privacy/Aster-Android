@@ -42,7 +42,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -99,6 +99,8 @@ import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
+import org.astermail.android.design.disabled_surface_color
+import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.parse_hex_color_safe
 import org.astermail.android.design.components.AsterActionRow
@@ -383,26 +385,24 @@ internal fun revoke_pill_button(
             .height(36.dp)
             .widthIn(min = 72.dp)
             .clip(shape)
-            .border(1.dp, colors.border_secondary, shape)
+            .background(if (in_flight) disabled_surface_color(colors) else field_surface_color(colors))
             .clickable(enabled = !in_flight, onClick = on_click)
             .padding(horizontal = AsterSpacing.md),
         contentAlignment = Alignment.Center,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = label,
-                color = colors.text_primary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
+        Text(
+            text = label,
+            color = colors.text_primary,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.alpha(if (in_flight) 0f else 1f),
+        )
+        if (in_flight) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(16.dp),
+                color = colors.text_secondary,
+                strokeWidth = 2.dp,
             )
-            if (in_flight) {
-                Spacer(Modifier.width(AsterSpacing.xs))
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    color = colors.text_secondary,
-                    strokeWidth = 2.dp,
-                )
-            }
         }
     }
 }
