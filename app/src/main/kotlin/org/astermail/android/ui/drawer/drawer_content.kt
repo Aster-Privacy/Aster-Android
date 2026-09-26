@@ -106,6 +106,8 @@ import androidx.compose.ui.focus.focusRequester
 import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.island_surface_color
+import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.parse_hex_color_safe
 import androidx.compose.animation.core.tween
@@ -1391,8 +1393,8 @@ private fun folder_move_dialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .border(1.dp, colors.border_secondary, RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(AsterRadius.item))
+                        .background(island_surface_color(colors))
                         .clickable { menu_open = true }
                         .testTag("folder_move_selector")
                         .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
@@ -1654,8 +1656,8 @@ internal fun create_folder_dialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .border(1.dp, colors.border_secondary, RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(AsterRadius.item))
+                            .background(island_surface_color(colors))
                             .clickable { parent_menu_open = true }
                             .testTag("parent_folder_selector")
                             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
@@ -1878,12 +1880,11 @@ private fun profile_menu_plan_badge(plan_code: String?) {
 private fun profile_menu_account_badge(text: String, muted: Boolean) {
     val colors = AsterMaterial.colors
     val bg = if (muted) {
-        colors.text_primary.copy(alpha = 0.10f)
+        androidx.compose.ui.graphics.lerp(colors.dropdown_bg, colors.text_primary, 0.12f)
     } else {
         androidx.compose.ui.graphics.lerp(colors.dropdown_bg, colors.accent_blue, 0.72f)
     }
     val fg = if (muted) colors.text_secondary else colors.on_accent
-    val ring = if (muted) colors.text_primary.copy(alpha = 0.16f) else colors.accent_blue.copy(alpha = 0.45f)
     Text(
         text = text,
         color = fg,
@@ -1893,7 +1894,6 @@ private fun profile_menu_account_badge(text: String, muted: Boolean) {
         modifier = Modifier
             .clip(RoundedCornerShape(5.dp))
             .background(bg)
-            .border(1.dp, ring, RoundedCornerShape(5.dp))
             .padding(horizontal = 8.dp, vertical = 2.dp),
     )
 }
@@ -1914,8 +1914,8 @@ private fun profile_menu_tile(
     val colors = AsterMaterial.colors
     Row(
         modifier = modifier
-            .heightIn(min = 54.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .heightIn(min = AsterSpacing.row_min_height)
+            .clip(RoundedCornerShape(AsterRadius.island))
             .background(background)
             .clickable(onClick = on_click)
             .alpha(enabled_alpha)
@@ -2014,9 +2014,9 @@ private fun workspace_switcher_sheet(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
+                    .clip(RoundedCornerShape(AsterRadius.island))
                     .background(card)
-                    .padding(16.dp)
+                    .padding(AsterSpacing.lg)
                     .testTag("profile_menu_card"),
             ) {
                 val identity_text = remember(current_name, current_email) {
@@ -2112,7 +2112,7 @@ private fun workspace_switcher_sheet(
                         .fillMaxWidth()
                         .height(36.dp)
                         .clip(RoundedCornerShape(999.dp))
-                        .border(1.dp, colors.text_primary.copy(alpha = 0.22f), RoundedCornerShape(999.dp))
+                        .background(androidx.compose.ui.graphics.lerp(card, colors.text_primary, 0.10f))
                         .clickable(onClick = on_manage_account)
                         .testTag("profile_menu_manage"),
                     contentAlignment = Alignment.Center,
@@ -2128,7 +2128,7 @@ private fun workspace_switcher_sheet(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(AsterRadius.field))
                         .clickable(onClick = on_open_storage)
                         .testTag("profile_menu_storage_row"),
                     verticalAlignment = Alignment.CenterVertically,
@@ -2162,7 +2162,7 @@ private fun workspace_switcher_sheet(
                         .fillMaxWidth()
                         .height(6.dp)
                         .clip(RoundedCornerShape(999.dp))
-                        .background(colors.text_primary.copy(alpha = 0.18f)),
+                        .background(androidx.compose.ui.graphics.lerp(card, colors.text_primary, 0.18f)),
                 ) {
                     if (storage_used_label.isNotBlank()) {
                         val fill_width = maxOf(maxWidth * bar_fraction, 10.dp)
@@ -2185,7 +2185,7 @@ private fun workspace_switcher_sheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(60.dp)
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(AsterRadius.island))
                         .background(card)
                         .clickable { on_switch(account) }
                         .padding(horizontal = 14.dp),
@@ -2306,7 +2306,7 @@ private fun workspace_header(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp, vertical = 8.dp)
-                .clip(RoundedCornerShape(20.dp))
+                .clip(RoundedCornerShape(AsterRadius.island))
                 .clickable(onClick = on_click)
                 .padding(horizontal = 12.dp, vertical = 10.dp)
                 .testTag("workspace_switcher"),
