@@ -27,6 +27,7 @@ import android.graphics.Color
 import android.graphics.pdf.LoadParams
 import android.graphics.pdf.PdfRenderer
 import android.graphics.pdf.PdfRendererPreV
+import android.graphics.pdf.RenderParams
 import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.os.ext.SdkExtensions
@@ -165,7 +166,7 @@ private class pre_v_page_renderer(private val renderer: PdfRendererPreV) : page_
     override fun render(index: Int, target_width_px: Int): Bitmap =
         renderer.openPage(index).use { page ->
             render_into_bitmap(page.width, page.height, target_width_px) {
-                page.render(it, null, null, PdfRendererPreV.Page.RENDER_MODE_FOR_DISPLAY)
+                page.render(it, null, null, RenderParams.Builder(RenderParams.RENDER_MODE_FOR_DISPLAY).build())
             }
         }
 
