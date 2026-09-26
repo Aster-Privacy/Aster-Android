@@ -117,7 +117,17 @@ fun aster_theme_root(content: @Composable () -> Unit) {
     }
 
     val custom_image_meta by org.astermail.android.ui.theme.custom_theme_image.meta.collectAsState()
-    val active_backdrop = remember(background_image, custom_image_meta) {
+    val manifest_catalog by org.astermail.android.ui.theme.theme_manifest.catalog.collectAsState()
+    val manifest_context = androidx.compose.ui.platform.LocalContext.current
+    androidx.compose.runtime.LaunchedEffect(background_image, manifest_catalog.size) {
+        val needs_manifest = background_image != org.astermail.android.ui.theme.no_theme_background &&
+            background_image != org.astermail.android.ui.theme.custom_theme_background &&
+            org.astermail.android.ui.theme.theme_background_for(background_image) == null
+        if (needs_manifest) {
+            runCatching { org.astermail.android.ui.theme.theme_manifest.load(manifest_context) }
+        }
+    }
+    val active_backdrop = remember(background_image, custom_image_meta, manifest_catalog) {
         org.astermail.android.ui.theme.theme_background_for(background_image)
     }?.takeIf { !reduce_transparency }
     AsterTheme(

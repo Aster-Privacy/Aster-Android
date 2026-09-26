@@ -70,6 +70,15 @@ object theme_manifest {
         grouped_state.value = group(items)
     }
 
+    suspend fun load_cached(context: Context) {
+        withContext(Dispatchers.IO) {
+            val cached = cache_file(context)
+            if (cached.isFile) {
+                runCatching { parse(cached.readText()) }.getOrNull()?.let(::publish)
+            }
+        }
+    }
+
     suspend fun load(context: Context) {
         if (loaded) return
         loaded = true

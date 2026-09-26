@@ -90,7 +90,7 @@ class AsterApplication : Application(), ImageLoaderFactory {
         start_secure_prefs_warm()
         org.astermail.android.ui.theme.custom_theme_image.init(this)
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-            runCatching { org.astermail.android.ui.theme.theme_manifest.load(this@AsterApplication) }
+            runCatching { org.astermail.android.ui.theme.theme_manifest.load_cached(this@AsterApplication) }
         }
         org.astermail.android.ui.mail.AsterTimePreferences.set_use_24h(
             android.text.format.DateFormat.is24HourFormat(this),
