@@ -186,6 +186,8 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.tonal_surface_color
+import org.astermail.android.design.field_surface_color
+import org.astermail.android.design.disabled_surface_color
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.AsterSpacing
@@ -2893,7 +2895,7 @@ private fun reply_action_row(
         reply_action_button(
             icon = TablerIcons.MailForward,
             label = stringResource(R.string.forward),
-            bg = androidx.compose.ui.graphics.Color.Transparent,
+            bg = field_surface_color(colors),
             fg = colors.text_primary,
             label_size = label_size,
             on_label_overflow = on_label_overflow,
@@ -2901,24 +2903,19 @@ private fun reply_action_row(
             modifier = Modifier.weight(1f),
         )
         if (show_react) {
-            val react_alpha = if (react_enabled) 1f else 0.4f
             Box(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(SquircleShape(999.dp))
-                    .border(
-                        1.dp,
-                        colors.text_secondary.copy(alpha = 0.35f * react_alpha),
-                        SquircleShape(999.dp),
-                    )
-                    .clickable(onClick = on_react)
+                    .background(if (react_enabled) field_surface_color(colors) else disabled_surface_color(colors))
+                    .clickable(enabled = react_enabled, onClick = on_react)
                     .testTag("detail_react"),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = TablerIcons.MoodSmile,
                     contentDescription = stringResource(R.string.add_reaction),
-                    tint = colors.text_secondary.copy(alpha = react_alpha),
+                    tint = if (react_enabled) colors.text_secondary else colors.text_tertiary,
                     modifier = Modifier.size(20.dp),
                 )
             }
@@ -3296,18 +3293,11 @@ internal fun reply_action_button(
     on_click: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = AsterMaterial.colors
-    val border_color = if (bg == colors.accent_blue) {
-        androidx.compose.ui.graphics.Color.Transparent
-    } else {
-        colors.text_secondary.copy(alpha = 0.35f)
-    }
     Row(
         modifier = modifier
             .heightIn(min = 48.dp)
             .clip(SquircleShape(999.dp))
             .background(bg)
-            .border(1.dp, border_color, SquircleShape(999.dp))
             .clickable(onClick = on_click)
             .padding(vertical = 10.dp, horizontal = 6.dp),
         horizontalArrangement = Arrangement.Center,
@@ -4314,8 +4304,7 @@ private fun hidden_group_indicator(
             modifier = Modifier
                 .padding(start = AsterSpacing.md)
                 .height(40.dp)
-                .acrylic(colors, CircleShape, colors.bg_secondary)
-                .border(1.dp, colors.border_secondary, CircleShape)
+                .acrylic(colors, CircleShape, field_surface_color(colors))
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -6607,8 +6596,7 @@ private fun attachment_chip(
 
     Row(
         modifier = modifier
-            .acrylic(colors, SquircleShape(18.dp), colors.bg_secondary)
-            .border(1.dp, colors.border_secondary, SquircleShape(18.dp))
+            .acrylic(colors, AsterShapes.island_lg, field_surface_color(colors))
             .padding(start = 10.dp, end = 6.dp, top = 10.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

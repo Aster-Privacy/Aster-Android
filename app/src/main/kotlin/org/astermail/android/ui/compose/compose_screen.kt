@@ -175,6 +175,7 @@ import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.island_surface_color
+import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.tonal_surface_color
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
@@ -3751,8 +3752,7 @@ private fun recipient_chip(text: String, show_encryption_indicator: Boolean = tr
         Row(
             modifier = Modifier
                 .clip(SquircleShape(AsterRadius.pill))
-                .acrylic(colors, SquircleShape(AsterRadius.pill), colors.bg_card)
-                .border(1.dp, colors.border_secondary, SquircleShape(AsterRadius.pill))
+                .acrylic(colors, SquircleShape(AsterRadius.pill), field_surface_color(colors))
                 .clickable { menu_open = true }
                 .padding(start = 6.dp, end = 2.dp, top = 2.dp, bottom = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -4931,9 +4931,8 @@ internal fun ExpiringSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = AsterSpacing.sm)
-                        .clip(SquircleShape(10.dp))
-                        .border(1.dp, colors.border_secondary, SquircleShape(10.dp))
-                        .acrylic(colors, RectangleShape, colors.bg_secondary)
+                        .clip(AsterShapes.control)
+                        .acrylic(colors, RectangleShape, field_surface_color(colors))
                         .padding(start = AsterSpacing.md, end = AsterSpacing.xs, top = 6.dp, bottom = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
