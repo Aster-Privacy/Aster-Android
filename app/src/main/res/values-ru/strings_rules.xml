@@ -14,6 +14,7 @@
     <string name="rules_op_ends_with">заканчивается на</string>
     <string name="rules_op_is_empty">пусто</string>
     <string name="rules_op_matches_domain">совпадает с доменом</string>
+    <string name="rules_op_does_not_match_domain">не совпадает с доменом</string>
     <string name="rules_op_matches_regex">соответствует регулярному выражению</string>
     <string name="rules_op_greater_than">больше чем</string>
     <string name="rules_op_less_than">меньше чем</string>

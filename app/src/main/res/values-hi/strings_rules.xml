@@ -13,6 +13,7 @@
     <string name="rules_op_ends_with">इससे खत्म होता है</string>
     <string name="rules_op_is_empty">खाली है</string>
     <string name="rules_op_matches_domain">डोमेन से मेल खाता है</string>
+    <string name="rules_op_does_not_match_domain">डोमेन से मेल नहीं खाता है</string>
     <string name="rules_op_matches_regex">regex से मेल खाता है</string>
     <string name="rules_op_greater_than">इससे बड़ा</string>
     <string name="rules_op_less_than">इससे छोटा</string>

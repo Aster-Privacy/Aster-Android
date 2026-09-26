@@ -14,6 +14,7 @@
     <string name="rules_op_ends_with">ينتهي بـ</string>
     <string name="rules_op_is_empty">فارغ</string>
     <string name="rules_op_matches_domain">يطابق النطاق</string>
+    <string name="rules_op_does_not_match_domain">لا يطابق النطاق</string>
     <string name="rules_op_matches_regex">يطابق التعبير النمطي</string>
     <string name="rules_op_greater_than">أكبر من</string>
     <string name="rules_op_less_than">أصغر من</string>

@@ -41,17 +41,23 @@ import org.astermail.android.api.ApiError
 @Serializable
 enum class AddressOp {
     @SerialName("is") IS,
-    @SerialName("contains") CONTAINS,
     @SerialName("is_not") IS_NOT,
+    @SerialName("contains") CONTAINS,
+    @SerialName("does_not_contain") DOES_NOT_CONTAIN,
+    @SerialName("starts_with") STARTS_WITH,
+    @SerialName("ends_with") ENDS_WITH,
     @SerialName("matches_domain") MATCHES_DOMAIN,
+    @SerialName("does_not_match_domain") DOES_NOT_MATCH_DOMAIN,
+    @SerialName("is_empty") IS_EMPTY,
     @SerialName("matches_regex") MATCHES_REGEX,
 }
 
 @Serializable
 enum class TextOp {
+    @SerialName("is") IS,
+    @SerialName("is_not") IS_NOT,
     @SerialName("contains") CONTAINS,
     @SerialName("does_not_contain") DOES_NOT_CONTAIN,
-    @SerialName("is") IS,
     @SerialName("starts_with") STARTS_WITH,
     @SerialName("ends_with") ENDS_WITH,
     @SerialName("is_empty") IS_EMPTY,
@@ -120,27 +126,27 @@ sealed class Condition {
 
     @Serializable
     @SerialName("from")
-    data class From(val op: AddressOp, val value: String, val case_sensitive: Boolean? = null) : Condition()
+    data class From(val op: AddressOp, val value: String = "", val case_sensitive: Boolean? = null) : Condition()
 
     @Serializable
     @SerialName("reply_to")
-    data class ReplyTo(val op: AddressOp, val value: String, val case_sensitive: Boolean? = null) : Condition()
+    data class ReplyTo(val op: AddressOp, val value: String = "", val case_sensitive: Boolean? = null) : Condition()
 
     @Serializable
     @SerialName("to")
-    data class To(val op: AddressOp, val value: String, val case_sensitive: Boolean? = null) : Condition()
+    data class To(val op: AddressOp, val value: String = "", val case_sensitive: Boolean? = null) : Condition()
 
     @Serializable
     @SerialName("cc")
-    data class Cc(val op: AddressOp, val value: String, val case_sensitive: Boolean? = null) : Condition()
+    data class Cc(val op: AddressOp, val value: String = "", val case_sensitive: Boolean? = null) : Condition()
 
     @Serializable
     @SerialName("bcc")
-    data class Bcc(val op: AddressOp, val value: String, val case_sensitive: Boolean? = null) : Condition()
+    data class Bcc(val op: AddressOp, val value: String = "", val case_sensitive: Boolean? = null) : Condition()
 
     @Serializable
     @SerialName("any_recipient")
-    data class AnyRecipient(val op: AddressOp, val value: String, val case_sensitive: Boolean? = null) : Condition()
+    data class AnyRecipient(val op: AddressOp, val value: String = "", val case_sensitive: Boolean? = null) : Condition()
 
     @Serializable
     @SerialName("subject")
@@ -334,11 +340,14 @@ interface MailRulesApi {
     suspend fun run_on_existing(rule_id: String)
 }
 
+const val OPERATOR_VERSION = 2
+
 class MailRulesApiImpl(private val client: ApiClient) : MailRulesApi {
     private val base = "/api/mail/v1/mail-rules"
+    private val operator_version_query = "?ops=$OPERATOR_VERSION"
 
     override suspend fun list(): MailRulesListResponse {
-        val response = client.http.get("${client.base_url}$base")
+        val response = client.http.get("${client.base_url}$base$operator_version_query")
         return decode_or_throw(response)
     }
 
@@ -354,7 +363,7 @@ class MailRulesApiImpl(private val client: ApiClient) : MailRulesApi {
 
     override suspend fun update(rule_id: String, request: UpdateRuleRequest): MailRule {
         val csrf = client.fetch_csrf_if_needed()
-        val response = client.http.patch("${client.base_url}$base/$rule_id") {
+        val response = client.http.patch("${client.base_url}$base/$rule_id$operator_version_query") {
             contentType(ContentType.Application.Json)
             csrf?.let { header("X-CSRF-Token", it) }
             setBody(request)

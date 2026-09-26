@@ -14,6 +14,7 @@
     <string name="rules_op_ends_with">ends with</string>
     <string name="rules_op_is_empty">is empty</string>
     <string name="rules_op_matches_domain">matches domain</string>
+    <string name="rules_op_does_not_match_domain">does not match domain</string>
     <string name="rules_op_matches_regex">matches regex</string>
     <string name="rules_op_greater_than">greater than</string>
     <string name="rules_op_less_than">less than</string>
