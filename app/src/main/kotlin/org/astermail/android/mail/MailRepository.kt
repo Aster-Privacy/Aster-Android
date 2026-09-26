@@ -1408,13 +1408,13 @@ class MailRepository @Inject constructor(
         encrypted_envelope: String?,
         envelope_nonce: String?,
         message_id: String? = null,
-    ): HealingEnvelopeResult {
+    ): HealingEnvelopeResult = withContext(Dispatchers.IO) {
         val envelope = try_decrypt_envelope(encrypted_envelope, envelope_nonce, message_id)
         if (envelope != null || !is_sealed_inbound_nonce(envelope_nonce)) {
-            return HealingEnvelopeResult(envelope, false)
+            return@withContext HealingEnvelopeResult(envelope, false)
         }
-        if (!heal_envelope_keys()) return HealingEnvelopeResult(null, true)
-        return HealingEnvelopeResult(
+        if (!heal_envelope_keys()) return@withContext HealingEnvelopeResult(null, true)
+        HealingEnvelopeResult(
             try_decrypt_envelope(encrypted_envelope, envelope_nonce, message_id),
             false,
         )
@@ -1541,9 +1541,11 @@ class MailRepository @Inject constructor(
         val response = mail_api.list_drafts(limit = limit, cursor = cursor)
         val hidden = hidden_draft_ids()
         response.items.forEach { draft -> draft_item_cache[draft.id] = draft }
-        val items = response.items
-            .filterNot { hidden.contains(it.id) }
-            .map { draft -> decrypt_draft_item(draft) }
+        val items = withContext(Dispatchers.IO) {
+            response.items
+                .filterNot { hidden.contains(it.id) }
+                .map { draft -> decrypt_draft_item(draft) }
+        }
         InboxPage(
             items = items,
             has_more = response.has_more,
@@ -1767,7 +1769,7 @@ class MailRepository @Inject constructor(
         val draft = probe.getOrNull() ?: return null
         if (is_draft_leaving_thread(draft.id)) return null
         draft_item_cache[draft.id] = draft
-        return decrypt_draft_item(draft)
+        return withContext(Dispatchers.IO) { decrypt_draft_item(draft) }
     }
 
     private suspend fun is_draft_leaving_thread(draft_id: String): Boolean {
@@ -1794,14 +1796,16 @@ class MailRepository @Inject constructor(
         }
         val found = draft ?: throw IllegalStateException("draft not found")
         val envelope = account_data_writer.retry_after_key_load {
-            try_decrypt_envelope(
-                found.encrypted_content,
-                found.content_nonce,
-                found.id,
-                include_draft_attachments = true,
-            )
+            withContext(Dispatchers.IO) {
+                try_decrypt_envelope(
+                    found.encrypted_content,
+                    found.content_nonce,
+                    found.id,
+                    include_draft_attachments = true,
+                )
+            }
         }
-        val item = decrypt_draft_item(found)
+        val item = withContext(Dispatchers.IO) { decrypt_draft_item(found) }
         Pair(item, envelope)
     }
 
@@ -1849,9 +1853,9 @@ class MailRepository @Inject constructor(
         } else {
             unique
         }
-        coroutineScope {
+        withContext(Dispatchers.IO) {
             val decrypted = capped.map { msg ->
-                async(Dispatchers.IO) { decrypt_thread_message(msg) }
+                async { decrypt_thread_message(msg) }
             }.awaitAll()
             val healed = heal_undecryptable_thread_messages(decrypted)
             store_message_bodies(healed)
@@ -1910,11 +1914,13 @@ class MailRepository @Inject constructor(
 
     suspend fun fetch_single_message(item_id: String): Result<InboxItem> = runCatching {
         val item = mail_api.get_message(item_id)
-        val decrypted = decrypt_inbox_item(item)
-        if (decrypted.is_undecryptable && is_sealed_inbound_nonce(item.envelope_nonce) && heal_envelope_keys()) {
-            runCatching { decrypt_inbox_item(item) }.getOrElse { decrypted }
-        } else {
-            decrypted
+        withContext(Dispatchers.IO) {
+            val decrypted = decrypt_inbox_item(item)
+            if (decrypted.is_undecryptable && is_sealed_inbound_nonce(item.envelope_nonce) && heal_envelope_keys()) {
+                runCatching { decrypt_inbox_item(item) }.getOrElse { decrypted }
+            } else {
+                decrypted
+            }
         }
     }
 
@@ -2495,7 +2501,7 @@ class MailRepository @Inject constructor(
     )
 
     private suspend fun decrypt_items_batch(items: List<MailItem>): DecryptBatch =
-        coroutineScope {
+        withContext(Dispatchers.IO) {
             val overrides = prefetch_ratchet_plaintexts(items)
             val decrypted = items.map { item ->
                 async(Dispatchers.IO) {

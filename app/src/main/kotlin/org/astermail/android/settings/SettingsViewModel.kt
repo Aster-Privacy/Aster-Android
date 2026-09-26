@@ -4272,13 +4272,13 @@ class SettingsViewModel @Inject constructor(
             try {
                 val response = labels_api.list_labels(include_counts = true, folder_type = folder_type)
                 last_labels_load_ms[labels_key] = System.currentTimeMillis()
-                var decrypted = response.labels.map { decrypt_label(it) }
+                var decrypted = withContext(default_dispatcher) { response.labels.map { decrypt_label(it) } }
                 val any_decryption_failed = response.labels.indices.any { i ->
                     !response.labels[i].encrypted_name.isNullOrBlank() &&
                         decrypted[i].encrypted_name.isNullOrBlank()
                 }
                 if (any_decryption_failed && auth_repository.try_refresh_vault_keys()) {
-                    decrypted = response.labels.map { decrypt_label(it) }
+                    decrypted = withContext(default_dispatcher) { response.labels.map { decrypt_label(it) } }
                 }
                 val still_all_failed = response.labels.any { !it.encrypted_name.isNullOrBlank() } &&
                     decrypted.all { it.encrypted_name.isNullOrBlank() }
@@ -4493,11 +4493,11 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = tags_api.list_tags(include_counts = true)
-                var decrypted = response.tags.map { decrypt_tag(it) }
+                var decrypted = withContext(default_dispatcher) { response.tags.map { decrypt_tag(it) } }
                 val all_decryption_failed = response.tags.any { it.encrypted_name.isNotBlank() } &&
                     decrypted.all { it.encrypted_name.isBlank() }
                 if (all_decryption_failed && auth_repository.try_refresh_vault_keys()) {
-                    decrypted = response.tags.map { decrypt_tag(it) }
+                    decrypted = withContext(default_dispatcher) { response.tags.map { decrypt_tag(it) } }
                 }
                 val merged = org.astermail.android.labels.merge_tag_snapshot(_state.value.tags, decrypted)
                 _state.value = _state.value.copy(tags = merged)
@@ -5073,7 +5073,9 @@ class SettingsViewModel @Inject constructor(
                         )
                         return@launch
                     }
-                    val decrypted = decrypt_preferences_after_key_load(enc, nonce, identity_key, _state.value.preferences)
+                    val decrypted = withContext(default_dispatcher) {
+                        decrypt_preferences_after_key_load(enc, nonce, identity_key, _state.value.preferences)
+                    }
                     if (decrypted != null) {
                         prefs_load_succeeded = true
                         last_preferences_load_ms = System.currentTimeMillis()
@@ -5951,18 +5953,20 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = developer_api.list_webhooks()
-                val decrypted = response.webhooks.map { hook ->
-                    val url = if (hook.url_encrypted.isNotBlank() && hook.url_nonce.isNotBlank()) {
-                        try {
-                            decrypt_alias_field(hook.url_encrypted, hook.url_nonce)
-                        } catch (t: Throwable) {
-                            if (t is kotlinx.coroutines.CancellationException) throw t
+                val decrypted = withContext(default_dispatcher) {
+                    response.webhooks.map { hook ->
+                        val url = if (hook.url_encrypted.isNotBlank() && hook.url_nonce.isNotBlank()) {
+                            try {
+                                decrypt_alias_field(hook.url_encrypted, hook.url_nonce)
+                            } catch (t: Throwable) {
+                                if (t is kotlinx.coroutines.CancellationException) throw t
+                                ""
+                            }
+                        } else {
                             ""
                         }
-                    } else {
-                        ""
+                        hook.copy(decrypted_url = url)
                     }
-                    hook.copy(decrypted_url = url)
                 }
                 _state.value = _state.value.copy(webhooks = decrypted)
             } catch (t: Throwable) {
