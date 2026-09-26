@@ -22,7 +22,6 @@
 package org.astermail.android.ui.settings.detail
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -82,8 +81,9 @@ import org.astermail.android.R
 import org.astermail.android.api.preferences.CustomCategoryRule
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogDestructiveButton
 import org.astermail.android.design.components.AsterDialogOutlineButton
@@ -303,7 +303,8 @@ fun category_settings_section(
             Spacer(Modifier.width(AsterSpacing.sm))
             Row(
                 modifier = Modifier
-                    .border(1.dp, colors.border_primary, SquircleShape(14.dp))
+                    .clip(AsterShapes.control)
+                    .background(field_surface_color(colors), AsterShapes.control)
                     .clickable {
                         if (!can_add_custom || at_limit ||
                             custom_categories.size >= MAX_CUSTOM_CATEGORY_RULES

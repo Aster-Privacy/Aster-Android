@@ -52,9 +52,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
-import org.astermail.android.design.acrylic
+import org.astermail.android.design.field_surface_color
+import org.astermail.android.design.island_surface_color
 
 @Composable
 internal fun illustrated_option_card(
@@ -66,15 +67,12 @@ internal fun illustrated_option_card(
     on_click: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(16.dp)
+    val shape = AsterShapes.island
     Column(
         modifier = modifier
-            .acrylic(colors, shape)
-            .border(
-                width = if (selected) 2.dp else 1.dp,
-                color = if (selected) colors.accent_blue else colors.border_primary,
-                shape = shape,
-            )
+            .clip(shape)
+            .background(island_surface_color(colors), shape)
+            .then(if (selected) Modifier.border(2.dp, colors.accent_blue, shape) else Modifier)
             .clickable(onClick = on_click)
             .padding(AsterSpacing.sm),
     ) {
@@ -82,8 +80,8 @@ internal fun illustrated_option_card(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .clip(SquircleShape(12.dp))
-                .acrylic(colors, SquircleShape(12.dp), colors.bg_secondary),
+                .clip(AsterShapes.control)
+                .background(field_surface_color(colors), AsterShapes.control),
         ) {
             Image(
                 painter = painterResource(image),

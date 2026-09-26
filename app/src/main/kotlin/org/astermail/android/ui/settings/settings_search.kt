@@ -21,56 +21,62 @@
 
 package org.astermail.android.ui.settings
 
-import androidx.compose.animation.core.TweenSpec
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import compose.icons.TablerIcons
 import compose.icons.tablericons.ArrowLeft
 import compose.icons.tablericons.Ban
@@ -94,19 +100,28 @@ import compose.icons.tablericons.Tag
 import compose.icons.tablericons.Trash
 import compose.icons.tablericons.X
 import org.astermail.android.R
-import org.astermail.android.design.AsterDuration
-import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
-import org.astermail.android.design.AsterScale
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
-import org.astermail.android.design.aster_reduce_motion
-import org.astermail.android.design.components.AsterIconButton
-import org.astermail.android.ui.mail.search_field_bg_color
 import org.astermail.android.design.acrylic
-import org.astermail.android.ui.common.theme_page_fill
+import org.astermail.android.design.acrylic_backdrop
+import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.design.components.AsterIconButton
+import org.astermail.android.settings.optional_shared_settings_view_model
+import org.astermail.android.ui.common.page_surface
+import org.astermail.android.ui.mail.inbox_card_content_padding
+import org.astermail.android.ui.mail.inbox_card_horizontal_margin
+import org.astermail.android.ui.mail.inbox_card_read_color
+import org.astermail.android.ui.mail.inbox_group_shape
+import org.astermail.android.ui.mail.inbox_group_split
+import org.astermail.android.ui.mail.inbox_preview_color
+import org.astermail.android.ui.mail.inbox_preview_text_style
+import org.astermail.android.ui.mail.inbox_row_metrics
+import org.astermail.android.ui.mail.inbox_sender_color
+import org.astermail.android.ui.mail.inbox_sender_text_style
+import org.astermail.android.ui.mail.search_field_bg_color
 
-val local_settings_navigator = staticCompositionLocalOf<(String) -> Unit> { {} }
+val local_settings_search_opener = staticCompositionLocalOf<() -> Unit> { {} }
 
 private data class settings_search_match(
     val screen_id: String,
@@ -121,28 +136,6 @@ private data class settings_search_row_text(
     val label: String,
     val parent: String,
 )
-
-private fun search_overlay_spec(visible: Boolean, reduce_motion: Boolean): TweenSpec<Float> = tween(
-    durationMillis = when {
-        reduce_motion -> AsterDuration.instant
-        visible -> AsterDuration.dialog_enter
-        else -> AsterDuration.dialog_exit
-    },
-    easing = if (visible) AsterEasing.dialog_enter else AsterEasing.dialog_exit,
-)
-
-private fun search_overlay_scale(progress: Float): Float =
-    AsterScale.dialog_enter_from + (1f - AsterScale.dialog_enter_from) * progress
-
-@Composable
-private fun prepare_search_overlay_window() {
-    val view = androidx.compose.ui.platform.LocalView.current
-    androidx.compose.runtime.SideEffect {
-        val window = (view.parent as? androidx.compose.ui.window.DialogWindowProvider)?.window ?: return@SideEffect
-        window.setWindowAnimations(0)
-        window.setDimAmount(0f)
-    }
-}
 
 private val extra_screen_icons = mapOf(
     "change_password" to TablerIcons.Lock,
@@ -168,139 +161,146 @@ private val extra_screen_icons = mapOf(
 
 @Composable
 fun settings_search_action() {
-    var open by remember { mutableStateOf(false) }
+    val open_search = local_settings_search_opener.current
     AsterIconButton(
         icon = TablerIcons.Search,
         content_description = stringResource(R.string.settings_search_placeholder),
-        onClick = { open = true },
+        onClick = open_search,
     )
-    if (open) {
-        settings_search_overlay(on_dismiss = { open = false })
-    }
 }
 
 @Composable
-private fun settings_search_overlay(on_dismiss: () -> Unit) {
+fun settings_search_screen(
+    on_back: () -> Unit,
+    on_open: (String) -> Unit,
+) {
     val colors = AsterMaterial.colors
-    val navigate = local_settings_navigator.current
-    var query by remember { mutableStateOf("") }
+    var query by rememberSaveable { mutableStateOf("") }
     val focus_requester = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focus_requester.requestFocus() }
-    val reduce_motion = aster_reduce_motion()
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { visible = true }
-    val overlay_progress by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = search_overlay_spec(visible, reduce_motion),
-        finishedListener = { if (!visible) on_dismiss() },
-        label = "settings_search_progress",
-    )
-    val start_dismiss: () -> Unit = { visible = false }
-    Dialog(
-        onDismissRequest = start_dismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-        prepare_search_overlay_window()
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer(
-                    scaleX = search_overlay_scale(overlay_progress),
-                    scaleY = search_overlay_scale(overlay_progress),
-                    alpha = overlay_progress,
-                )
-                .theme_page_fill(colors)
-                .systemBarsPadding(),
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.sm),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                AsterIconButton(
-                    icon = TablerIcons.ArrowLeft,
-                    auto_mirror = true,
-                    content_description = stringResource(R.string.back),
-                    onClick = start_dismiss,
-                )
-                settings_search_field(
-                    query = query,
-                    on_query_change = { query = it },
-                    focus_requester = focus_requester,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-
-            settings_search_results(
-                query = query.trim(),
-                on_open = { id ->
-                    query = ""
-                    start_dismiss()
-                    navigate(id)
-                },
-            )
+    val keyboard = LocalSoftwareKeyboardController.current
+    val focus_manager = LocalFocusManager.current
+    val dismiss_and_back = remember(on_back) {
+        {
+            focus_manager.clearFocus(force = true)
+            keyboard?.hide()
+            on_back()
         }
     }
+    BackHandler { dismiss_and_back() }
+    LaunchedEffect(Unit) {
+        androidx.compose.runtime.withFrameNanos {}
+        if (query.isEmpty()) focus_requester.requestFocus()
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .page_surface(colors)
+            .systemBarsPadding()
+            .imePadding(),
+    ) {
+        settings_search_input_bar(
+            query = query,
+            on_query_change = { query = it },
+            on_back = dismiss_and_back,
+            focus_requester = focus_requester,
+        )
+        AsterDivider()
+        settings_search_results(
+            query = query.trim(),
+            on_open = { id ->
+                focus_manager.clearFocus(force = true)
+                keyboard?.hide()
+                on_open(id)
+            },
+        )
+    }
 }
 
 @Composable
-private fun settings_search_field(
+private fun settings_search_input_bar(
     query: String,
     on_query_change: (String) -> Unit,
+    on_back: () -> Unit,
     focus_requester: FocusRequester,
-    modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
     val keyboard = LocalSoftwareKeyboardController.current
     Row(
-        modifier = modifier
-            .padding(end = AsterSpacing.sm)
-            .height(48.dp)
-            .acrylic(colors, SquircleShape(24.dp), search_field_bg_color(colors))
-            .padding(horizontal = AsterSpacing.md),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.sm)
+            .padding(top = AsterSpacing.sm, bottom = AsterSpacing.xs)
+            .height(52.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = TablerIcons.Search,
-            contentDescription = null,
-            tint = colors.text_secondary,
-            modifier = Modifier.size(20.dp),
+        AsterIconButton(
+            icon = TablerIcons.ArrowLeft,
+            auto_mirror = true,
+            content_description = stringResource(R.string.back),
+            onClick = on_back,
+            modifier = Modifier.testTag("back"),
         )
-        Spacer(Modifier.width(AsterSpacing.sm))
-        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-            if (query.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.settings_search_placeholder),
-                    color = colors.text_tertiary,
-                    fontSize = 15.sp,
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .height(52.dp)
+                .padding(horizontal = AsterSpacing.sm)
+                .acrylic(colors, SquircleShape(26.dp), search_field_bg_color(colors))
+                .padding(horizontal = AsterSpacing.lg),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (query.isNotEmpty()) {
+                Spacer(Modifier.width(28.dp + AsterSpacing.sm))
+            }
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                if (query.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.settings_search_placeholder),
+                        color = colors.text_muted,
+                        fontSize = 16.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                BasicTextField(
+                    value = query,
+                    onValueChange = on_query_change,
+                    singleLine = true,
+                    textStyle = TextStyle(
+                        color = colors.text_primary,
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Center,
+                    ),
+                    cursorBrush = SolidColor(colors.accent_blue),
+                    keyboardOptions = KeyboardOptions(
+                        autoCorrect = false,
+                        imeAction = ImeAction.Search,
+                    ),
+                    keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focus_requester),
                 )
             }
-            BasicTextField(
-                value = query,
-                onValueChange = on_query_change,
-                singleLine = true,
-                textStyle = TextStyle(color = colors.text_primary, fontSize = 15.sp),
-                cursorBrush = SolidColor(colors.accent_blue),
-                keyboardOptions = KeyboardOptions(
-                    autoCorrect = false,
-                    imeAction = ImeAction.Search,
-                ),
-                keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(focus_requester),
-            )
-        }
-        if (query.isNotEmpty()) {
-            Icon(
-                imageVector = TablerIcons.X,
-                contentDescription = stringResource(R.string.clear),
-                tint = colors.text_secondary,
-                modifier = Modifier
-                    .size(20.dp)
-                    .clickable { on_query_change("") },
-            )
+            if (query.isNotEmpty()) {
+                Spacer(Modifier.width(AsterSpacing.sm))
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(SquircleShape(999.dp))
+                        .clickable { on_query_change("") }
+                        .testTag("settings_search_clear"),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = TablerIcons.X,
+                        contentDescription = stringResource(R.string.clear),
+                        tint = colors.text_secondary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
         }
     }
 }
@@ -335,27 +335,38 @@ private fun settings_search_results(query: String, on_open: (String) -> Unit) {
         return
     }
 
-    Column(
+    val settings_vm = optional_shared_settings_view_model()
+    val settings_state = settings_vm?.state?.collectAsStateWithLifecycle()?.value
+    val row_density = settings_state?.preferences?.mail_list_density
+    val metrics = remember(row_density) { inbox_row_metrics(row_density) }
+
+    Text(
+        text = pluralStringResource(R.plurals.search_results_count, matched.size, matched.size),
+        color = colors.text_muted,
+        fontSize = 12.sp,
+        modifier = Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+    )
+    LazyColumn(
+        state = rememberLazyListState(),
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+            .testTag("settings_search_results"),
+        contentPadding = PaddingValues(top = AsterSpacing.sm, bottom = AsterSpacing.lg),
     ) {
-        Spacer(Modifier.size(AsterSpacing.md))
-        Column(
-            modifier = Modifier
-                .padding(horizontal = AsterSpacing.md)
-                .fillMaxWidth()
-                .acrylic(colors, SquircleShape(18.dp))
-                .border(1.dp, colors.border_secondary, SquircleShape(18.dp)),
-        ) {
-            matched.forEachIndexed { idx, hit ->
-                settings_search_result_row(hit) { on_open(hit.screen_id) }
-                if (idx < matched.lastIndex) {
-                    org.astermail.android.ui.settings.detail.settings_row_gap()
-                }
-            }
+        itemsIndexed(
+            items = matched,
+            key = { _, hit -> hit.screen_id + "|" + hit.label },
+            contentType = { _, _ -> "settings_search_row" },
+        ) { index, hit ->
+            settings_search_result_row(
+                hit = hit,
+                is_first = index == 0,
+                is_last = index == matched.lastIndex,
+                min_height = metrics.min_height,
+                vertical_padding = metrics.vertical_padding,
+                on_click = { on_open(hit.screen_id) },
+            )
         }
-        Spacer(Modifier.size(AsterSpacing.xxl))
     }
 }
 
@@ -365,47 +376,95 @@ private fun settings_search_message(text: String) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(AsterSpacing.xl),
-        contentAlignment = Alignment.TopCenter,
+            .padding(AsterSpacing.xxl),
+        contentAlignment = Alignment.Center,
     ) {
-        Text(text = text, color = colors.text_tertiary, fontSize = 14.sp)
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = TablerIcons.Search,
+                contentDescription = null,
+                tint = colors.text_muted,
+                modifier = Modifier.size(40.dp),
+            )
+            Spacer(Modifier.height(AsterSpacing.md))
+            Text(
+                text = text,
+                color = colors.text_muted,
+                fontSize = 15.sp,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }
 
 @Composable
-private fun settings_search_result_row(hit: settings_search_match, on_click: () -> Unit) {
+private fun settings_search_result_row(
+    hit: settings_search_match,
+    is_first: Boolean,
+    is_last: Boolean,
+    min_height: androidx.compose.ui.unit.Dp,
+    vertical_padding: androidx.compose.ui.unit.Dp,
+    on_click: () -> Unit,
+) {
     val colors = AsterMaterial.colors
-    Row(
+    val group_shape = remember(is_first, is_last) { inbox_group_shape(is_first, is_last) }
+    val card_color = inbox_card_read_color(colors)
+    val interaction_source = remember { MutableInteractionSource() }
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = on_click)
-            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            imageVector = hit.icon,
-            contentDescription = null,
-            tint = colors.text_secondary,
-            modifier = Modifier.size(20.dp),
-        )
-        Spacer(Modifier.width(AsterSpacing.md))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = hit.label,
-                color = colors.text_primary,
-                fontSize = 15.sp,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
+            .padding(
+                start = inbox_card_horizontal_margin,
+                end = inbox_card_horizontal_margin,
+                bottom = if (is_last) 0.dp else inbox_group_split,
             )
-            if (hit.parent != hit.label) {
-                Spacer(Modifier.size(2.dp))
+            .clip(group_shape)
+            .acrylic_backdrop(colors)
+            .drawBehind { drawRect(card_color) }
+            .testTag("settings_search_row_${hit.screen_id}"),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = interaction_source,
+                    indication = ripple(),
+                    onClick = on_click,
+                )
+                .defaultMinSize(minHeight = min_height)
+                .padding(
+                    start = inbox_card_content_padding,
+                    end = inbox_card_content_padding,
+                    top = vertical_padding,
+                    bottom = vertical_padding,
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = hit.icon,
+                contentDescription = null,
+                tint = colors.text_secondary,
+                modifier = Modifier.size(22.dp),
+            )
+            Spacer(Modifier.width(AsterSpacing.md))
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = hit.parent,
-                    color = colors.text_tertiary,
-                    fontSize = 12.sp,
-                    maxLines = 1,
+                    text = hit.label,
+                    style = inbox_sender_text_style(),
+                    color = inbox_sender_color(colors, unread = true),
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
+                if (hit.parent != hit.label) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = hit.parent,
+                        style = inbox_preview_text_style(),
+                        color = inbox_preview_color(colors, unread = false),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
     }

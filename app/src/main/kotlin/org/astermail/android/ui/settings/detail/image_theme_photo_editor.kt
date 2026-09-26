@@ -49,6 +49,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import org.astermail.android.design.AsterRadius
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.animation.AnimatedVisibility
@@ -103,7 +104,7 @@ private val editor_control_bg = Color(0xFF26262B)
 private val editor_chrome_bg = Color(0xFF1C1C20)
 private val editor_chrome_line = Color(0xFF3A3A41)
 private val editor_hint = Color(0xFFA1A1AA)
-private val editor_frame_shape = RoundedCornerShape(30.dp)
+private val editor_frame_shape = RoundedCornerShape(AsterRadius.island)
 private const val editor_max_zoom = 4f
 private const val editor_double_tap_zoom = 2.5f
 
@@ -388,7 +389,7 @@ private fun editor_chrome_preview(accent: Color) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(40.dp)
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(AsterRadius.panel))
                     .background(editor_chrome_bg),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
@@ -419,7 +420,7 @@ private fun editor_button(
     Box(
         modifier = modifier
             .height(50.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(AsterRadius.panel))
             .background(fill)
             .clickable(enabled = enabled, onClick = on_click),
         contentAlignment = Alignment.Center,

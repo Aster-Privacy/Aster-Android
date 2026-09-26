@@ -62,7 +62,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.CircularProgressIndicator
@@ -84,11 +83,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -108,6 +105,7 @@ import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterSwitch
@@ -130,26 +128,14 @@ private fun toggle_row(title: String, subtitle: String?, checked: Boolean, on_ch
 
 @Composable
 private fun text_area(value: String, placeholder: String, on_change: (String) -> Unit, min_height: Int = 140) {
-    val colors = AsterMaterial.colors
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = min_height.dp)
-            .background(colors.input_bg, SquircleShape(18.dp))
-            .border(1.dp, colors.input_border, SquircleShape(18.dp))
-            .padding(AsterSpacing.lg),
-    ) {
-        if (value.isEmpty()) {
-            Text(text = placeholder, color = colors.text_muted, fontSize = 14.sp)
-        }
-        BasicTextField(
-            value = value,
-            onValueChange = on_change,
-            textStyle = TextStyle(color = colors.text_primary, fontSize = 14.sp),
-            cursorBrush = SolidColor(colors.accent_blue),
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
+    AsterTextField(
+        value = value,
+        onValueChange = on_change,
+        placeholder = placeholder,
+        singleLine = false,
+        min_height = min_height.dp,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 @Composable

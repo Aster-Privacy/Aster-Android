@@ -22,7 +22,6 @@
 package org.astermail.android.ui.settings.detail
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,8 +60,9 @@ import org.astermail.android.api.aliases.SENDER_PIN_MODE_LOCK_FIRST
 import org.astermail.android.api.aliases.SENDER_PIN_MODE_OFF
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.acrylic
+import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.keep_visible_above_keyboard
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSwitch
@@ -185,9 +185,8 @@ internal fun alias_sender_pinning_section(
         Box {
             Row(
                 modifier = Modifier
-                    .clip(SquircleShape(12.dp))
-                    .background(colors.input_bg, SquircleShape(12.dp))
-                    .border(1.dp, colors.input_border, SquircleShape(12.dp))
+                    .clip(AsterShapes.control)
+                    .background(field_surface_color(colors), AsterShapes.control)
                     .clickable { menu_open = true }
                     .padding(horizontal = 12.dp, vertical = 10.dp)
                     .testTag("alias_pin_mode_selector"),

@@ -89,7 +89,9 @@ import org.astermail.android.api.security.HardwareKey
 import org.astermail.android.api.security.TrustedDevice
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.shimmer
@@ -1805,7 +1807,7 @@ private fun remote_image_loading_row(
         "always" to stringResource(R.string.remote_images_always),
     )
     val selected_label = options.firstOrNull { it.first == selected_id }?.second ?: options.first().second
-    val shape = SquircleShape(12.dp)
+    val shape = AsterShapes.control
     detail_row(
         title = stringResource(R.string.remote_image_loading_title),
         subtitle = stringResource(R.string.remote_image_loading_subtitle),
@@ -1815,8 +1817,7 @@ private fun remote_image_loading_row(
                 Row(
                     modifier = Modifier
                         .clip(shape)
-                        .background(colors.input_bg)
-                        .border(1.dp, colors.input_border, shape)
+                        .background(field_surface_color(colors), shape)
                         .clickable { menu_open = true }
                         .testTag("remote_image_loading_select")
                         .padding(start = AsterSpacing.md, end = AsterSpacing.sm, top = 8.dp, bottom = 8.dp),

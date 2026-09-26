@@ -93,9 +93,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
 import org.astermail.android.api.domains.DomainSearchResult
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
-import org.astermail.android.design.acrylic
+import org.astermail.android.design.island_surface_color
+import org.astermail.android.design.tonal_surface_color
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.readable_on
@@ -423,7 +425,7 @@ private fun search_rate_limit_banner() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(colors.warning.copy(alpha = 0.10f), SquircleShape(10.dp))
+            .background(tonal_surface_color(colors, colors.warning), AsterShapes.control)
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.Top,
     ) {
@@ -566,7 +568,7 @@ private fun domain_discount_badge(percent: Int, renewal_label: String) {
     Box(
         modifier = Modifier
             .semantics { contentDescription = description }
-            .background(colors.success.copy(alpha = 0.14f), CircleShape)
+            .background(tonal_surface_color(colors, colors.success), CircleShape)
             .padding(horizontal = 7.dp, vertical = 2.dp),
     ) {
         Text(
@@ -787,12 +789,11 @@ private fun purchase_confirm_content(vm: DomainPurchaseViewModel, state: DomainP
 @Composable
 private fun checkout_error_box(message: String) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(12.dp)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, colors.warning.copy(alpha = 0.30f), shape)
-            .background(colors.warning.copy(alpha = 0.05f), shape)
+            .clip(AsterShapes.island)
+            .background(tonal_surface_color(colors, colors.warning), AsterShapes.island)
             .padding(12.dp),
         verticalAlignment = Alignment.Top,
     ) {
@@ -887,7 +888,7 @@ private fun purchase_summary_card(
 ) {
     val colors = AsterMaterial.colors
     val selected = state.selected ?: return
-    val shape = SquircleShape(16.dp)
+    val shape = AsterShapes.island
     Image(
         painter = painterResource(R.drawable.aster_wordmark),
         contentDescription = null,
@@ -901,8 +902,7 @@ private fun purchase_summary_card(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .acrylic(colors, shape, colors.bg_secondary)
-            .border(1.dp, colors.border_secondary, shape),
+            .background(island_surface_color(colors), shape),
     ) {
         Column(modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = AsterSpacing.lg)) {
             Text(

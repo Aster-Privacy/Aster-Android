@@ -1054,8 +1054,8 @@ private fun image_theme_entry_card(
                                 scaleX = 1f - index * 0.06f
                                 scaleY = 1f - index * 0.06f
                             }
-                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
-                            .border(1.5.dp, colors.bg_card.copy(alpha = 1f), androidx.compose.foundation.shape.RoundedCornerShape(10.dp)),
+                            .clip(RoundedCornerShape(AsterRadius.field))
+                            .border(1.5.dp, colors.bg_card.copy(alpha = 1f), RoundedCornerShape(AsterRadius.field)),
                     )
                 }
             }

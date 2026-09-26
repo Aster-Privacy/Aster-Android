@@ -28,7 +28,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,7 +37,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.ui.res.painterResource
@@ -81,7 +79,9 @@ import org.astermail.android.api.imports.JobDetails
 import org.astermail.android.api.imports.JobSummary
 import org.astermail.android.api.imports.UploadChunkRequest
 import org.astermail.android.api.imports.UploadInitRequest
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterActionRow
@@ -333,8 +333,8 @@ private fun provider_row(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(SquircleShape(18.dp))
-            .border(1.dp, colors.border_secondary, SquircleShape(18.dp))
+            .clip(AsterShapes.control)
+            .background(field_surface_color(colors))
             .clickable(onClick = on_click)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,

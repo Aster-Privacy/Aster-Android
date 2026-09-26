@@ -47,8 +47,9 @@ import compose.icons.tablericons.CircleCheck
 import compose.icons.tablericons.X
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.tonal_surface_color
 
 val onboarding_checklist_order = listOf("recovery_method", "import_mail", "install_app", "first_email")
 
@@ -78,8 +79,8 @@ fun onboarding_checklist_card(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(SquircleShape(14.dp))
-            .background(colors.accent_blue.copy(alpha = 0.08f))
+            .clip(AsterShapes.island)
+            .background(tonal_surface_color(colors, colors.accent_blue))
             .padding(AsterSpacing.md),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

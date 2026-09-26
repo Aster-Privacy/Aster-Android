@@ -113,6 +113,8 @@ import compose.icons.tablericons.Refresh
 import kotlin.math.roundToInt
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterRadius
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterColorThemes
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.ui.common.nav_anim_duration_ms
@@ -214,7 +216,7 @@ private val disabled_icon = Color(0xFF55555C)
 private val library_veil_ink = Color(0xFF0A0A0C)
 private val error_text = Color(0xFFFF8A8A)
 
-private val shelf_tile_shape = RoundedCornerShape(22.dp)
+private val shelf_tile_shape = RoundedCornerShape(AsterRadius.island)
 
 private val default_accent = Color(0xFF3B82F6)
 
@@ -527,13 +529,9 @@ private fun no_photo_row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 10.dp)
-            .clip(SquircleShape(16.dp))
-            .background(palette.raised_bg)
-            .border(
-                width = if (selected) 2.dp else 1.dp,
-                color = if (selected) accent else palette.hairline,
-                shape = SquircleShape(16.dp),
-            )
+            .clip(AsterShapes.island)
+            .background(palette.raised_bg, AsterShapes.island)
+            .then(if (selected) Modifier.border(2.dp, accent, AsterShapes.island) else Modifier)
             .clickable(onClick = on_click)
             .padding(horizontal = 16.dp, vertical = 14.dp)
             .testTag("image_theme_no_photo"),
@@ -822,7 +820,7 @@ private fun choose_photo_row(
         modifier = Modifier
             .padding(horizontal = 20.dp)
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(AsterRadius.island))
             .background(local_library_palette.current.raised_bg)
             .drawBehind {
                 val stroke = 1.5.dp.toPx()
@@ -927,8 +925,8 @@ private fun photo_privacy_note(message: String, message_color: Color, is_error: 
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
-            .clip(SquircleShape(16.dp))
-            .background(local_library_palette.current.raised_bg)
+            .clip(AsterShapes.island)
+            .background(local_library_palette.current.raised_bg, AsterShapes.island)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),

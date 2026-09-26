@@ -22,7 +22,6 @@
 package org.astermail.android.ui.settings.detail
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,7 +52,8 @@ import org.astermail.android.R
 import org.astermail.android.api.aliases.AliasRuleActions
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.AsterShapes
+import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDialogPrimaryButton
@@ -175,9 +175,8 @@ private fun rule_dropdown(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(SquircleShape(12.dp))
-                .background(colors.input_bg, SquircleShape(12.dp))
-                .border(1.dp, colors.input_border, SquircleShape(12.dp))
+                .clip(AsterShapes.control)
+                .background(field_surface_color(colors), AsterShapes.control)
                 .clickable { open = true }
                 .padding(horizontal = 12.dp, vertical = 12.dp)
                 .testTag(test_tag),

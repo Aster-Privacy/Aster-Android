@@ -117,6 +117,11 @@ import org.astermail.android.api.settings.UpdateAliasPreferencesRequest
 import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterRadius
+import org.astermail.android.design.AsterShapes
+import org.astermail.android.design.field_surface_color
+import org.astermail.android.design.island_surface_color
+import org.astermail.android.design.tonal_surface_color
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
@@ -430,9 +435,9 @@ private fun tab_scroll(
 }
 
 internal fun list_item_shape(idx: Int, last_index: Int): RoundedCornerShape = when {
-    last_index == 0 -> RoundedCornerShape(14.dp)
-    idx == 0 -> RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp)
-    idx == last_index -> RoundedCornerShape(bottomStart = 14.dp, bottomEnd = 14.dp)
+    last_index == 0 -> RoundedCornerShape(AsterRadius.island)
+    idx == 0 -> RoundedCornerShape(topStart = AsterRadius.island, topEnd = AsterRadius.island)
+    idx == last_index -> RoundedCornerShape(bottomStart = AsterRadius.island, bottomEnd = AsterRadius.island)
     else -> RoundedCornerShape(0.dp)
 }
 
@@ -912,8 +917,7 @@ private fun alias_filter_chip(
         modifier = Modifier
             .height(34.dp)
             .clip(CircleShape)
-            .background(if (active) colors.accent_blue else colors.bg_card)
-            .border(1.dp, if (active) colors.accent_blue else colors.border_primary, CircleShape)
+            .background(if (active) colors.accent_blue else field_surface_color(colors))
             .clickable(onClick = on_click)
             .padding(start = 14.dp, end = if (trailing_icon != null) 10.dp else 14.dp)
             .testTag(test_tag),
@@ -1060,8 +1064,7 @@ internal fun alias_list_row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .acrylic(colors, shape, colors.bg_card)
-            .border(1.dp, colors.border_secondary, shape)
+            .acrylic(colors, shape, island_surface_color(colors))
             .testTag("alias_row_${alias.id}")
             .combinedClickable(
                 hapticFeedbackEnabled = false,
@@ -1408,8 +1411,7 @@ private fun custom_domain_address_row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .acrylic(colors, shape, colors.bg_card)
-            .border(1.dp, colors.border_secondary, shape)
+            .acrylic(colors, shape, island_surface_color(colors))
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
     ) {
         Row(
@@ -1836,9 +1838,8 @@ private fun directories_tab(
             Row(
                 modifier = Modifier
                     .height(52.dp)
-                    .clip(SquircleShape(18.dp))
-                    .background(colors.input_bg, SquircleShape(18.dp))
-                    .border(1.5.dp, colors.input_border, SquircleShape(18.dp))
+                    .clip(AsterShapes.control)
+                    .background(field_surface_color(colors), AsterShapes.control)
                     .clickable { domain_menu_open = true }
                     .padding(horizontal = AsterSpacing.md),
                 verticalAlignment = Alignment.CenterVertically,
@@ -2544,8 +2545,7 @@ private fun pref_segment_toggle(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(colors.input_bg, SquircleShape(12.dp))
-            .border(1.dp, colors.input_border, SquircleShape(12.dp))
+            .background(field_surface_color(colors), AsterShapes.control)
             .padding(3.dp),
         horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {
@@ -2555,7 +2555,7 @@ private fun pref_segment_toggle(
                 modifier = Modifier
                     .weight(1f)
                     .height(36.dp)
-                    .clip(SquircleShape(9.dp))
+                    .clip(AsterShapes.item)
                     .background(if (active) colors.accent_blue else Color.Transparent)
                     .clickable { on_select(value) },
                 contentAlignment = Alignment.Center,
@@ -2576,9 +2576,8 @@ private fun preference_chip(label: String) {
     val colors = AsterMaterial.colors
     Box(
         modifier = Modifier
-            .clip(SquircleShape(999.dp))
-            .acrylic(colors, SquircleShape(999.dp), colors.bg_secondary)
-            .border(1.dp, colors.border_primary, SquircleShape(999.dp))
+            .clip(AsterShapes.pill)
+            .background(field_surface_color(colors), AsterShapes.pill)
             .padding(horizontal = 10.dp, vertical = 4.dp),
     ) {
         Text(label, color = colors.text_primary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
@@ -2593,17 +2592,12 @@ private fun preference_option(
     onClick: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(14.dp)
+    val shape = AsterShapes.control
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(if (selected) colors.bg_card else colors.bg_secondary)
-            .border(
-                if (selected) 2.dp else 1.dp,
-                if (selected) colors.accent_blue else colors.border_secondary,
-                shape,
-            )
+            .background(if (selected) tonal_surface_color(colors, colors.accent_blue) else field_surface_color(colors))
             .clickable(onClick = onClick)
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
@@ -2942,7 +2936,7 @@ private fun dns_record_detail(record: DnsRecord, on_copy: (String, String) -> Un
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .acrylic(colors, SquircleShape(14.dp), colors.bg_secondary)
+            .background(field_surface_color(colors), AsterShapes.control)
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -3071,13 +3065,11 @@ private fun twin_address_card(
     on_claim: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val shape = RoundedCornerShape(12.dp)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(shape)
-            .acrylic(colors, shape, colors.bg_secondary)
-            .border(1.dp, colors.border_secondary, shape)
+            .clip(AsterShapes.island)
+            .background(island_surface_color(colors), AsterShapes.island)
             .padding(AsterSpacing.md)
             .testTag("twin_address_card"),
     ) {
@@ -3221,11 +3213,11 @@ private fun create_alias_dialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(SquircleShape(18.dp))
-                            .background(colors.input_bg, SquircleShape(18.dp))
-                            .border(1.dp, colors.input_border, SquircleShape(18.dp))
+                            .height(52.dp)
+                            .clip(AsterShapes.control)
+                            .background(field_surface_color(colors), AsterShapes.control)
                             .clickable { domain_menu_open = true }
-                            .padding(horizontal = AsterSpacing.lg, vertical = 12.dp),
+                            .padding(horizontal = AsterSpacing.lg),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
@@ -3290,8 +3282,8 @@ private fun create_alias_dialog(
                 }
                 Box(
                     modifier = Modifier
-                        .clip(SquircleShape(8.dp))
-                        .border(1.dp, colors.border_primary, SquircleShape(8.dp))
+                        .clip(AsterShapes.control)
+                        .background(field_surface_color(colors), AsterShapes.control)
                         .clickable {
                             local_part = generate_random_local_part()
                         }

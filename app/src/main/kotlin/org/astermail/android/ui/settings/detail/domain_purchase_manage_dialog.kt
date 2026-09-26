@@ -26,7 +26,6 @@ import compose.icons.tablericons.Check
 import compose.icons.tablericons.Clock
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,9 +53,10 @@ import org.astermail.android.api.domains.DomainOrder
 import org.astermail.android.api.settings.CustomDomain
 import org.astermail.android.api.settings.DnsRecord
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
-import org.astermail.android.design.acrylic
+import org.astermail.android.design.island_surface_color
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDialogPrimaryButton
@@ -143,13 +143,11 @@ internal fun domain_purchase_manage_dialog(
         message = stringResource(R.string.domain_purchase_manage_description),
         body = {
             Column(modifier = Modifier.fillMaxWidth()) {
-                val details_shape = SquircleShape(12.dp)
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(details_shape)
-                        .acrylic(colors, details_shape, colors.bg_secondary)
-                        .border(1.dp, colors.border_secondary, details_shape),
+                        .clip(AsterShapes.island)
+                        .background(island_surface_color(colors), AsterShapes.island),
                 ) {
                     manage_row(
                         label = stringResource(R.string.domain_purchase_manage_status),

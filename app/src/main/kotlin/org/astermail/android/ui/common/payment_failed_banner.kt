@@ -43,9 +43,10 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.AlertTriangle
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterSecondaryButton
+import org.astermail.android.design.tonal_surface_color
 
 @Composable
 fun payment_failed_banner(
@@ -70,8 +71,8 @@ fun payment_failed_banner(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(SquircleShape(12.dp))
-            .background(colors.danger.copy(alpha = 0.12f))
+            .clip(AsterShapes.island)
+            .background(tonal_surface_color(colors, colors.danger))
             .padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 12.dp),
     ) {
         Row(
