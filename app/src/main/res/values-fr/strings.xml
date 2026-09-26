@@ -2955,6 +2955,15 @@
     <string name="account_suspended_appeal">Si vous pensez qu\'il s\'agit d\'une erreur, vous pouvez contester cette décision.</string>
     <string name="account_suspended_appeal_action">Contester cette décision</string>
     <string name="account_suspended_back">Retour à la connexion</string>
+    <string name="suspended_alert">Ce compte a été utilisé d\'une manière contraire aux</string>
+    <string name="suspended_alert_terms">Conditions d\'utilisation d\'Aster.</string>
+    <string name="suspended_since_with_deletion">Ce compte est indisponible depuis le %1$s. À partir du %2$s, il pourra être supprimé.</string>
+    <string name="suspended_since">Ce compte est indisponible depuis le %1$s.</string>
+    <string name="suspended_title">Ce compte est suspendu</string>
+    <string name="suspended_appeal_hint">Si vous pensez qu\'il s\'agit d\'une erreur, vous pouvez faire appel. Aster examine chaque appel et répond par e-mail.</string>
+    <string name="suspended_download_hint">Vous pouvez toujours télécharger une copie de vos données. Vos e-mails sont déchiffrés uniquement sur cet appareil, donc personne d\'autre ne peut lire l\'export.</string>
+    <string name="suspended_download">Télécharger vos données</string>
+    <string name="suspended_start_appeal">Faire appel</string>
     <string name="default_payment_settled">Moyen de paiement par défaut mis à jour. Votre solde impayé est réglé.</string>
     <string name="default_payment_still_due">Votre carte est enregistrée, mais votre solde impayé n\'a pas été réglé. Essayez une autre carte pour conserver votre offre.</string>
     <string name="alias_grace_ends">Se termine le %1$s</string>

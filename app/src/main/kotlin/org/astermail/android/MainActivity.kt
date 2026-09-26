@@ -1585,6 +1585,25 @@ composable(routes.settings_detail("family")) {
     }
 
     if (is_signed_in_state && !is_locked) {
+        val gate_settings_vm = org.astermail.android.settings.shared_settings_view_model()
+        org.astermail.android.ui.account.SuspendedAccountGate(
+            on_switched = { account, restored ->
+                gate_settings_vm.reset_for_account_switch()
+                val destination = if (restored) routes.inbox else routes.sign_in_for(account.email)
+                nav_controller.navigate(destination) {
+                    popUpTo(0) { inclusive = true }
+                }
+            },
+            on_add_account = {
+                nav_controller.navigate(routes.sign_in_for(""))
+            },
+            on_signed_out = { switched_account ->
+                val destination = if (switched_account) routes.inbox else routes.welcome
+                nav_controller.navigate(destination) {
+                    popUpTo(0) { inclusive = true }
+                }
+            },
+        )
         org.astermail.android.ui.account.PendingDeletionGate(
             on_reactivated = {
                 nav_controller.navigate(routes.inbox) {

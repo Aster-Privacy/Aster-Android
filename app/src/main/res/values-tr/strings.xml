@@ -2928,6 +2928,15 @@
     <string name="account_suspended_appeal">Bunun bir hata olduğunu düşünüyorsanız karara itiraz edebilirsiniz.</string>
     <string name="account_suspended_appeal_action">Karara itiraz et</string>
     <string name="account_suspended_back">Girişe dön</string>
+    <string name="suspended_alert">Bu hesap, aşağıdaki şartları ihlal edecek şekilde kullanıldı:</string>
+    <string name="suspended_alert_terms">Aster Hizmet Şartları.</string>
+    <string name="suspended_since_with_deletion">Bu hesap %1$s tarihinden itibaren kullanılamıyor. %2$s tarihinden itibaren silinmek üzere değerlendirilebilir.</string>
+    <string name="suspended_since">Bu hesap %1$s tarihinden itibaren kullanılamıyor.</string>
+    <string name="suspended_title">Bu hesap askıya alındı</string>
+    <string name="suspended_appeal_hint">Bunun bir hata olduğunu düşünüyorsanız itiraz gönderebilirsiniz. Aster her itirazı inceler ve e-postayla yanıt verir.</string>
+    <string name="suspended_download_hint">Verilerinizin bir kopyasını yine de indirebilirsiniz. Postanızın şifresi yalnızca bu cihazda çözülür, bu nedenle dışa aktarılan dosyayı başka kimse okuyamaz.</string>
+    <string name="suspended_download">Verilerinizi indirin</string>
+    <string name="suspended_start_appeal">İtiraz başlat</string>
     <string name="default_payment_settled">Varsayılan ödeme yöntemi güncellendi. Ödenmemiş tutarınız ödendi.</string>
     <string name="default_payment_still_due">Kartınız kaydedildi ancak ödenmemiş tutarınız ödenmedi. Planınızı korumak için başka bir kart deneyin.</string>
     <string name="alias_grace_ends">%1$s tarihinde sona erer</string>

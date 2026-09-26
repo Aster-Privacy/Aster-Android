@@ -2856,6 +2856,15 @@
     <string name="account_suspended_appeal">अगर आपको लगता है कि यह गलती है, तो आप फ़ैसले के ख़िलाफ़ अपील कर सकते हैं।</string>
     <string name="account_suspended_appeal_action">इस फ़ैसले के ख़िलाफ़ अपील करें</string>
     <string name="account_suspended_back">साइन इन पर वापस जाएं</string>
+    <string name="suspended_alert">इस खाते का उपयोग इन शर्तों के विरुद्ध तरीके से किया गया था:</string>
+    <string name="suspended_alert_terms">Aster सेवा की शर्तें</string>
+    <string name="suspended_since_with_deletion">यह खाता %1$s से उपलब्ध नहीं है। %2$s से इसे हटाने पर विचार किया जा सकता है।</string>
+    <string name="suspended_since">यह खाता %1$s से उपलब्ध नहीं है।</string>
+    <string name="suspended_title">यह खाता निलंबित है</string>
+    <string name="suspended_appeal_hint">अगर आपको लगता है कि यह गलती है, तो आप अपील भेज सकते हैं। Aster हर अपील की समीक्षा करता है और ईमेल से जवाब देता है।</string>
+    <string name="suspended_download_hint">आप अब भी अपने डेटा की एक प्रति डाउनलोड कर सकते हैं। आपका मेल केवल इसी डिवाइस पर डिक्रिप्ट होता है, इसलिए कोई और निर्यात नहीं पढ़ सकता।</string>
+    <string name="suspended_download">अपना डेटा डाउनलोड करें</string>
+    <string name="suspended_start_appeal">अपील शुरू करें</string>
     <string name="default_payment_settled">डिफ़ॉल्ट भुगतान तरीका अपडेट हो गया। आपका बकाया चुक गया।</string>
     <string name="default_payment_still_due">आपका कार्ड सहेज लिया गया, पर आपका बकाया नहीं चुका। अपना प्लान बनाए रखने के लिए कोई दूसरा कार्ड आज़माएं।</string>
     <string name="alias_grace_ends">%1$s को खत्म</string>

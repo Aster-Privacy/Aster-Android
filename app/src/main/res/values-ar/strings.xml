@@ -2972,6 +2972,15 @@
     <string name="account_suspended_appeal">إذا كنت تعتقد أن هذا خطأ، يمكنك تقديم اعتراض.</string>
     <string name="account_suspended_appeal_action">تقديم اعتراض</string>
     <string name="account_suspended_back">العودة إلى تسجيل الدخول</string>
+    <string name="suspended_alert">استُخدم هذا الحساب بطريقة تخالف</string>
+    <string name="suspended_alert_terms">شروط خدمة Aster.</string>
+    <string name="suspended_since_with_deletion">أصبح هذا الحساب غير متاح في %1$s. اعتبارًا من %2$s، قد يُنظر في حذفه.</string>
+    <string name="suspended_since">أصبح هذا الحساب غير متاح في %1$s.</string>
+    <string name="suspended_title">هذا الحساب معلّق</string>
+    <string name="suspended_appeal_hint">إذا كنت تعتقد أن هذا خطأ، يمكنك تقديم طعن. تراجع Aster كل طعن وترد عبر البريد الإلكتروني.</string>
+    <string name="suspended_download_hint">لا يزال بإمكانك تنزيل نسخة من بياناتك. يُفك تشفير بريدك على هذا الجهاز فقط، لذا لا يمكن لأي شخص آخر قراءة الملف المُصدَّر.</string>
+    <string name="suspended_download">تنزيل بياناتك</string>
+    <string name="suspended_start_appeal">بدء الطعن</string>
     <string name="default_payment_settled">تم تحديث طريقة الدفع الافتراضية. تم سداد المبلغ المستحق.</string>
     <string name="default_payment_still_due">تم حفظ بطاقتك، لكن لم يتم سداد المبلغ المستحق. جرّب بطاقة أخرى للاحتفاظ بخطتك.</string>
     <string name="alias_grace_ends">ينتهي في %1$s</string>
