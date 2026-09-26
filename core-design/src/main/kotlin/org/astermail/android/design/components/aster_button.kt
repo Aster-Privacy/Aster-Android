@@ -54,6 +54,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.aster_ripple
+import org.astermail.android.design.control_surface_color
 import org.astermail.android.design.disabled_surface_color
 import org.astermail.android.design.darken
 
@@ -215,7 +216,7 @@ fun AsterSecondaryButton(
         modifier = modifier,
         enabled = enabled,
         is_loading = is_loading,
-        fill = colors.secondary_control_bg.copy(alpha = 1f),
+        fill = control_surface_color(colors),
         content_color = colors.text_primary,
     )
 }

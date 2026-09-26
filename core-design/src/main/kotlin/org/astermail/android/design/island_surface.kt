@@ -41,6 +41,11 @@ private fun island_shift_lightness(base: Color, delta: Float): Color {
 fun field_surface_color(colors: AsterSemanticColors): Color =
     lerp(colors.bg_primary, colors.text_primary, if (colors.is_dark) 0.10f else 0.07f)
 
+fun control_surface_color(colors: AsterSemanticColors): Color = when {
+    colors.is_glass -> colors.secondary_control_bg.copy(alpha = 1f)
+    else -> lerp(colors.bg_primary, colors.text_primary, if (colors.is_dark) 0.16f else 0.06f)
+}
+
 fun tonal_surface_color(colors: AsterSemanticColors, tone: Color): Color =
     lerp(island_surface_color(colors), tone, if (colors.is_dark) 0.22f else 0.12f)
 
