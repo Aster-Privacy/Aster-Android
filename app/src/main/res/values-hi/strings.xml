@@ -1261,7 +1261,6 @@
     <string name="resend_verification_email">पुष्टि ईमेल फिर से भेजें</string>
     <string name="forwarding_awaiting_verification">जांच बाकी है: %1$s</string>
     <string name="forwarding_verification_sent">जांच वाली ईमेल %1$s पर भेजी गई। पुष्टि होते ही फ़ॉरवर्ड करना शुरू हो जाएगा।</string>
-    <string name="forwarding_internal_active">फ़ॉरवर्डिंग चालू है। Aster से Aster गंतव्यों के लिए पुष्टि ज़रूरी नहीं है।</string>
     <string name="forwarding_verification_resent">जांच वाली ईमेल %1$s पर दोबारा भेजी गई</string>
     <string name="forwarding_failed_badge">डिलीवर नहीं हो रहा</string>
     <string name="forwarding_failed_encryption">एन्क्रिप्शन ज़रूरी करें चालू है, लेकिन %1$s के पास PGP कुंजी नहीं है, इसलिए संदेश फ़ॉरवर्ड नहीं होते। एन्क्रिप्शन सेटिंग में एन्क्रिप्शन ज़रूरी करें बंद करें, या प्राप्तकर्ता की सार्वजनिक कुंजी जोड़ें।</string>

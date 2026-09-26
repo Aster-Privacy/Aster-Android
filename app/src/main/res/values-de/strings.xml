@@ -903,7 +903,6 @@
     <string name="resend_verification_email">Bestätigungs-E-Mail erneut senden</string>
     <string name="forwarding_awaiting_verification">Bestätigung ausstehend: %1$s</string>
     <string name="forwarding_verification_sent">Bestätigungs-E-Mail an %1$s gesendet. Die Weiterleitung startet nach der Bestätigung.</string>
-    <string name="forwarding_internal_active">Die Weiterleitung ist aktiv. Ziele von Aster zu Aster benötigen keine Bestätigung.</string>
     <string name="forwarding_verification_resent">Bestätigungs-E-Mail erneut an %1$s gesendet</string>
     <string name="forwarding_failed_badge">Wird nicht zugestellt</string>
     <string name="forwarding_failed_encryption">Verschlüsselung erforderlich ist aktiviert, aber für %1$s gibt es keinen PGP-Schlüssel. Nachrichten werden deshalb nicht weitergeleitet. Deaktiviere Verschlüsselung erforderlich in den Verschlüsselungseinstellungen oder füge den öffentlichen Schlüssel des Empfängers hinzu.</string>
