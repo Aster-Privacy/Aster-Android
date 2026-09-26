@@ -2679,6 +2679,8 @@
     <string name="advanced_date_within">期間</string>
     <string name="advanced_search_scope">検索対象</string>
     <string name="create_subfolder">サブフォルダを作成</string>
+    <string name="expand_all_folders">すべて展開</string>
+    <string name="collapse_all_folders">すべて折りたたむ</string>
     <string name="rename_folder">フォルダ名を変更</string>
     <string name="rename">名前を変更</string>
     <string name="change_folder_color">色を変更</string>

@@ -2688,6 +2688,8 @@
     <string name="advanced_date_within">Zeitraum</string>
     <string name="advanced_search_scope">Suchen in</string>
     <string name="create_subfolder">Unterordner erstellen</string>
+    <string name="expand_all_folders">Alle erweitern</string>
+    <string name="collapse_all_folders">Alle einklappen</string>
     <string name="rename_folder">Ordner umbenennen</string>
     <string name="rename">Umbenennen</string>
     <string name="change_folder_color">Farbe ändern</string>

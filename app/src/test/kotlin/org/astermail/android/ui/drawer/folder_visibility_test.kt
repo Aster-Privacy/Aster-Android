@@ -89,4 +89,30 @@ class folder_visibility_test {
     fun empty_input_yields_empty_output() {
         assertEquals(emptyList<String>(), visible_folder_items(emptyList(), setOf("root")).map { it.id })
     }
+
+    @Test
+    fun subtree_tokens_cover_a_parent_and_its_nested_parents() {
+        assertEquals(setOf("root", "child_a"), expandable_subtree_tokens(tree, "root"))
+    }
+
+    @Test
+    fun subtree_tokens_stop_at_the_next_sibling() {
+        assertEquals(setOf("child_a"), expandable_subtree_tokens(tree, "child_a"))
+    }
+
+    @Test
+    fun subtree_tokens_are_empty_for_leaves_and_unknown_folders() {
+        assertEquals(emptySet<String>(), expandable_subtree_tokens(tree, "other_root"))
+        assertEquals(emptySet<String>(), expandable_subtree_tokens(tree, "missing"))
+    }
+
+    @Test
+    fun expand_all_then_collapse_all_round_trips_visibility() {
+        val expanded = expandable_subtree_tokens(tree, "root")
+        assertEquals(
+            listOf("root", "child_a", "grandchild", "child_b", "other_root"),
+            visible(expanded),
+        )
+        assertEquals(listOf("root", "other_root"), visible(expanded - expandable_subtree_tokens(tree, "root")))
+    }
 }

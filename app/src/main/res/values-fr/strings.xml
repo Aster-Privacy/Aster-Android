@@ -2714,6 +2714,8 @@
     <string name="advanced_date_within">Période</string>
     <string name="advanced_search_scope">Rechercher dans</string>
     <string name="create_subfolder">Créer un sous-dossier</string>
+    <string name="expand_all_folders">Tout développer</string>
+    <string name="collapse_all_folders">Tout réduire</string>
     <string name="rename_folder">Renommer le dossier</string>
     <string name="rename">Renommer</string>
     <string name="change_folder_color">Changer la couleur</string>

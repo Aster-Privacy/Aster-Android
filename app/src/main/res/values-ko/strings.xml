@@ -2679,6 +2679,8 @@
     <string name="advanced_date_within">기간</string>
     <string name="advanced_search_scope">검색 범위</string>
     <string name="create_subfolder">하위 폴더 만들기</string>
+    <string name="expand_all_folders">모두 펼치기</string>
+    <string name="collapse_all_folders">모두 접기</string>
     <string name="rename_folder">폴더 이름 바꾸기</string>
     <string name="rename">이름 바꾸기</string>
     <string name="change_folder_color">색상 변경</string>

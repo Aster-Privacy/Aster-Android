@@ -54,3 +54,16 @@ fun visible_folder_items(
     }
     return visible
 }
+
+fun expandable_subtree_tokens(items: List<drawer_folder_item>, root_id: String): Set<String> {
+    val start = items.indexOfFirst { it.id == root_id }
+    if (start < 0) return emptySet()
+    val root_depth = items[start].depth
+    val tokens = LinkedHashSet<String>()
+    for (index in start until items.size) {
+        val item = items[index]
+        if (index > start && item.depth <= root_depth) break
+        if (item.has_children) tokens.add(item.id)
+    }
+    return tokens
+}

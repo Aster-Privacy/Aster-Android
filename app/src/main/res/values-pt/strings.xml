@@ -2687,6 +2687,8 @@
     <string name="advanced_date_within">Intervalo de datas</string>
     <string name="advanced_search_scope">Pesquisar em</string>
     <string name="create_subfolder">Criar subpasta</string>
+    <string name="expand_all_folders">Expandir tudo</string>
+    <string name="collapse_all_folders">Recolher tudo</string>
     <string name="rename_folder">Renomear pasta</string>
     <string name="rename">Renomear</string>
     <string name="change_folder_color">Alterar cor</string>

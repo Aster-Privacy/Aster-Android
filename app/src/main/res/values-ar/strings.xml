@@ -2723,6 +2723,8 @@
     <string name="advanced_date_within">نطاق التاريخ</string>
     <string name="advanced_search_scope">البحث في</string>
     <string name="create_subfolder">إنشاء مجلد فرعي</string>
+    <string name="expand_all_folders">توسيع الكل</string>
+    <string name="collapse_all_folders">طي الكل</string>
     <string name="rename_folder">إعادة تسمية المجلد</string>
     <string name="rename">إعادة تسمية</string>
     <string name="change_folder_color">تغيير اللون</string>

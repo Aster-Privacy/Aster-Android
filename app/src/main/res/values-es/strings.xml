@@ -2688,6 +2688,8 @@
     <string name="advanced_date_within">Intervalo de fechas</string>
     <string name="advanced_search_scope">Buscar en</string>
     <string name="create_subfolder">Crear subcarpeta</string>
+    <string name="expand_all_folders">Expandir todo</string>
+    <string name="collapse_all_folders">Contraer todo</string>
     <string name="rename_folder">Renombrar carpeta</string>
     <string name="rename">Renombrar</string>
     <string name="change_folder_color">Cambiar color</string>

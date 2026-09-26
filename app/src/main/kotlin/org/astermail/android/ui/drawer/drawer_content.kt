@@ -226,7 +226,6 @@ private const val key_more_collapsed = "more_collapsed"
 private const val key_folders_collapsed = "folders_collapsed"
 private const val key_labels_collapsed = "labels_collapsed"
 private const val key_aliases_collapsed = "aliases_collapsed"
-private const val key_expanded_folders = "expanded_folders"
 private const val key_categories_collapsed = "categories_collapsed"
 
 
@@ -311,8 +310,12 @@ fun DrawerContent(
     var aliases_show_all by remember { mutableStateOf(false) }
     val aliases_collapsed_count = 5
     var folders_show_all by rememberSaveable { mutableStateOf(false) }
-    var expanded_folder_tokens by remember {
-        mutableStateOf<Set<String>>(sidebar_prefs.getStringSet(key_expanded_folders, emptySet())?.toSet().orEmpty())
+    var expanded_folder_tokens by remember(current_account_id) {
+        mutableStateOf(folder_expansion_store.load(sidebar_prefs_context, current_account_id))
+    }
+    val update_expanded_folders: (Set<String>) -> Unit = { next ->
+        expanded_folder_tokens = next
+        folder_expansion_store.save(sidebar_prefs_context, current_account_id, next)
     }
     var prefs_synced by rememberSaveable { mutableStateOf(false) }
 
@@ -601,8 +604,7 @@ fun DrawerContent(
                                     on_toggle_expand = {
                                         val next = expanded_folder_tokens.toMutableSet()
                                         if (!next.add(item.id)) next.remove(item.id)
-                                        expanded_folder_tokens = next
-                                        sidebar_prefs.edit().putStringSet(key_expanded_folders, next).apply()
+                                        update_expanded_folders(next)
                                     },
                                     on_long_click = if (item.label_id.isBlank()) null else {
                                         {
@@ -617,6 +619,16 @@ fun DrawerContent(
                                     expanded = menu_open,
                                     on_dismiss = { menu_open = false },
                                     on_create_subfolder = { pending_subfolder = item },
+                                    on_expand_all = {
+                                        update_expanded_folders(
+                                            expanded_folder_tokens + expandable_subtree_tokens(folder_items, item.id),
+                                        )
+                                    },
+                                    on_collapse_all = {
+                                        update_expanded_folders(
+                                            expanded_folder_tokens - expandable_subtree_tokens(folder_items, item.id),
+                                        )
+                                    },
                                     on_rename = { pending_rename = item },
                                     on_recolor = { pending_recolor = item },
                                     on_move_to = { pending_move = item },
@@ -1072,6 +1084,8 @@ private fun folder_actions_menu(
     expanded: Boolean,
     on_dismiss: () -> Unit,
     on_create_subfolder: () -> Unit,
+    on_expand_all: () -> Unit,
+    on_collapse_all: () -> Unit,
     on_rename: () -> Unit,
     on_recolor: () -> Unit,
     on_move_to: () -> Unit,
@@ -1095,6 +1109,26 @@ private fun folder_actions_menu(
                 on_click = {
                     on_dismiss()
                     on_create_subfolder()
+                },
+            )
+        }
+        if (item.has_children) {
+            aster_menu_item(
+                label = stringResource(R.string.expand_all_folders),
+                icon = TablerIcons.ChevronsDown,
+                test_tag = "folder_action_expand_all",
+                on_click = {
+                    on_dismiss()
+                    on_expand_all()
+                },
+            )
+            aster_menu_item(
+                label = stringResource(R.string.collapse_all_folders),
+                icon = TablerIcons.ChevronsUp,
+                test_tag = "folder_action_collapse_all",
+                on_click = {
+                    on_dismiss()
+                    on_collapse_all()
                 },
             )
         }

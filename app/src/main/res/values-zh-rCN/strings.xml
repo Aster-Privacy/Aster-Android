@@ -2679,6 +2679,8 @@
     <string name="advanced_date_within">时间范围</string>
     <string name="advanced_search_scope">搜索范围</string>
     <string name="create_subfolder">新建子文件夹</string>
+    <string name="expand_all_folders">全部展开</string>
+    <string name="collapse_all_folders">全部折叠</string>
     <string name="rename_folder">重命名文件夹</string>
     <string name="rename">重命名</string>
     <string name="change_folder_color">更改颜色</string>

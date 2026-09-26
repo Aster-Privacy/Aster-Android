@@ -1039,6 +1039,9 @@ class AuthRepository @Inject constructor(
         if (current_id != null) {
             runCatching { session_snapshot_store.remove(current_id) }
             if (remove_account) runCatching { account_store.remove(current_id) }
+            if (remove_account) {
+                runCatching { org.astermail.android.ui.drawer.folder_expansion_store.clear(context, current_id) }
+            }
         }
         val next_account = runCatching {
             account_store.get_all()

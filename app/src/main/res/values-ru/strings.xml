@@ -2705,6 +2705,8 @@
     <string name="advanced_date_within">Диапазон даты</string>
     <string name="advanced_search_scope">Искать в</string>
     <string name="create_subfolder">Создать подпапку</string>
+    <string name="expand_all_folders">Развернуть все</string>
+    <string name="collapse_all_folders">Свернуть все</string>
     <string name="rename_folder">Переименовать папку</string>
     <string name="rename">Переименовать</string>
     <string name="change_folder_color">Изменить цвет</string>

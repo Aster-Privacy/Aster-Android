@@ -2705,6 +2705,8 @@
     <string name="advanced_date_within">Zakres dat</string>
     <string name="advanced_search_scope">Szukaj w</string>
     <string name="create_subfolder">Utwórz podfolder</string>
+    <string name="expand_all_folders">Rozwiń wszystko</string>
+    <string name="collapse_all_folders">Zwiń wszystko</string>
     <string name="rename_folder">Zmień nazwę folderu</string>
     <string name="rename">Zmień nazwę</string>
     <string name="change_folder_color">Zmień kolor</string>

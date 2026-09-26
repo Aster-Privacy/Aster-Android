@@ -2687,6 +2687,8 @@
     <string name="advanced_date_within">Tarih aralığı</string>
     <string name="advanced_search_scope">Şurada ara</string>
     <string name="create_subfolder">Alt klasör oluştur</string>
+    <string name="expand_all_folders">Tümünü genişlet</string>
+    <string name="collapse_all_folders">Tümünü daralt</string>
     <string name="rename_folder">Klasörü yeniden adlandır</string>
     <string name="rename">Yeniden adlandır</string>
     <string name="change_folder_color">Rengi değiştir</string>

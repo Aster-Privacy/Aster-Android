@@ -807,6 +807,8 @@
     <string name="move_folder_up">Move up</string>
     <string name="move_folder_down">Move down</string>
     <string name="create_subfolder">Create subfolder</string>
+    <string name="expand_all_folders">Expand all</string>
+    <string name="collapse_all_folders">Collapse all</string>
     <string name="rename_folder">Rename folder</string>
     <string name="rename">Rename</string>
     <string name="change_folder_color">Change color</string>

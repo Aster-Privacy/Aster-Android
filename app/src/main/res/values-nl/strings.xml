@@ -2687,6 +2687,8 @@
     <string name="advanced_date_within">Periode</string>
     <string name="advanced_search_scope">Zoeken in</string>
     <string name="create_subfolder">Submap maken</string>
+    <string name="expand_all_folders">Alles uitklappen</string>
+    <string name="collapse_all_folders">Alles inklappen</string>
     <string name="rename_folder">Map hernoemen</string>
     <string name="rename">Hernoemen</string>
     <string name="change_folder_color">Kleur wijzigen</string>

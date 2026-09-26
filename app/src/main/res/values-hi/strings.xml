@@ -692,6 +692,8 @@
     <string name="move_folder_up">ऊपर ले जाएं</string>
     <string name="move_folder_down">नीचे ले जाएं</string>
     <string name="create_subfolder">उप-फ़ोल्डर बनाएं</string>
+    <string name="expand_all_folders">सब फैलाएं</string>
+    <string name="collapse_all_folders">सब समेटें</string>
     <string name="rename_folder">फ़ोल्डर का नाम बदलें</string>
     <string name="rename">नाम बदलें</string>
     <string name="change_folder_color">रंग बदलें</string>
