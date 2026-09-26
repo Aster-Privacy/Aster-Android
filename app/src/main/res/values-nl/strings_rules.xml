@@ -14,6 +14,7 @@
     <string name="rules_op_ends_with">eindigt op</string>
     <string name="rules_op_is_empty">is leeg</string>
     <string name="rules_op_matches_domain">komt overeen met domein</string>
+    <string name="rules_op_does_not_match_domain">komt niet overeen met domein</string>
     <string name="rules_op_matches_regex">komt overeen met reguliere expressie</string>
     <string name="rules_op_greater_than">groter dan</string>
     <string name="rules_op_less_than">kleiner dan</string>

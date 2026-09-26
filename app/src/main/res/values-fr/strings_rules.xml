@@ -14,6 +14,7 @@
     <string name="rules_op_ends_with">se termine par</string>
     <string name="rules_op_is_empty">est vide</string>
     <string name="rules_op_matches_domain">correspond au domaine</string>
+    <string name="rules_op_does_not_match_domain">ne correspond pas au domaine</string>
     <string name="rules_op_matches_regex">correspond à l\'expression régulière</string>
     <string name="rules_op_greater_than">supérieur à</string>
     <string name="rules_op_less_than">inférieur à</string>

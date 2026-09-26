@@ -255,12 +255,12 @@ fun is_condition_complete(c: Condition): Boolean =
 
 private fun has_condition_value(c: Condition): Boolean = when (c) {
     is Condition.And, is Condition.Or, is Condition.Not, Condition.Unsupported -> false
-    is Condition.From -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT
-    is Condition.ReplyTo -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT
-    is Condition.To -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT
-    is Condition.Cc -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT
-    is Condition.Bcc -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT
-    is Condition.AnyRecipient -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT
+    is Condition.From -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT || c.op == AddressOp.IS_EMPTY
+    is Condition.ReplyTo -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT || c.op == AddressOp.IS_EMPTY
+    is Condition.To -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT || c.op == AddressOp.IS_EMPTY
+    is Condition.Cc -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT || c.op == AddressOp.IS_EMPTY
+    is Condition.Bcc -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT || c.op == AddressOp.IS_EMPTY
+    is Condition.AnyRecipient -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT || c.op == AddressOp.IS_EMPTY
     is Condition.Subject -> c.op == TextOp.IS_EMPTY || c.value.isNotBlank()
     is Condition.Body -> c.op == TextOp.IS_EMPTY || c.value.isNotBlank()
     is Condition.ListId -> c.op == TextOp.IS_EMPTY || c.value.isNotBlank()
@@ -342,6 +342,12 @@ fun address_op_of(c: Condition): AddressOp? = when (c) {
     is Condition.AnyRecipient -> c.op
     else -> null
 }
+
+fun value_for_address_op(op: AddressOp, value: String): String =
+    if (op == AddressOp.IS_EMPTY) "" else value
+
+fun value_for_text_op(op: TextOp, value: String): String =
+    if (op == TextOp.IS_EMPTY) "" else value
 
 fun condition_offers_alias_picker(c: Condition): Boolean = when (address_op_of(c)) {
     AddressOp.IS, AddressOp.IS_NOT, AddressOp.CONTAINS -> true

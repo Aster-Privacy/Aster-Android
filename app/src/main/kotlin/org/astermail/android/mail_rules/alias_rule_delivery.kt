@@ -66,6 +66,8 @@ private fun address_condition_matches(op: AddressOp, value: String, address: Str
     return when (op) {
         AddressOp.IS -> needle.equals(address, ignoreCase = true)
         AddressOp.CONTAINS -> address.contains(needle, ignoreCase = true)
+        AddressOp.STARTS_WITH -> address.startsWith(needle, ignoreCase = true)
+        AddressOp.ENDS_WITH -> address.endsWith(needle, ignoreCase = true)
         AddressOp.MATCHES_DOMAIN -> address.substringAfterLast('@').equals(needle.removePrefix("@"), ignoreCase = true)
         else -> false
     }

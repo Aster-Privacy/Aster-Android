@@ -14,6 +14,7 @@
     <string name="rules_op_ends_with">结尾为</string>
     <string name="rules_op_is_empty">为空</string>
     <string name="rules_op_matches_domain">匹配域名</string>
+    <string name="rules_op_does_not_match_domain">不匹配域名</string>
     <string name="rules_op_matches_regex">匹配正则表达式</string>
     <string name="rules_op_greater_than">大于</string>
     <string name="rules_op_less_than">小于</string>

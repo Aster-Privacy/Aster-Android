@@ -14,6 +14,7 @@
     <string name="rules_op_ends_with">다음으로 끝남</string>
     <string name="rules_op_is_empty">비어 있음</string>
     <string name="rules_op_matches_domain">도메인 일치</string>
+    <string name="rules_op_does_not_match_domain">도메인 불일치</string>
     <string name="rules_op_matches_regex">정규식 일치</string>
     <string name="rules_op_greater_than">보다 큼</string>
     <string name="rules_op_less_than">보다 작음</string>

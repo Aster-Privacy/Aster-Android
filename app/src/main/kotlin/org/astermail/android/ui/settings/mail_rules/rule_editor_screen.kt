@@ -1070,9 +1070,14 @@ internal fun operator_display(c: Condition): String? = when (c) {
 private fun address_op_label(op: AddressOp): String = stringResource(
     when (op) {
         AddressOp.IS -> R.string.rules_op_is
-        AddressOp.CONTAINS -> R.string.rules_op_contains
         AddressOp.IS_NOT -> R.string.rules_op_is_not
+        AddressOp.CONTAINS -> R.string.rules_op_contains
+        AddressOp.DOES_NOT_CONTAIN -> R.string.rules_op_does_not_contain
+        AddressOp.STARTS_WITH -> R.string.rules_op_starts_with
+        AddressOp.ENDS_WITH -> R.string.rules_op_ends_with
         AddressOp.MATCHES_DOMAIN -> R.string.rules_op_matches_domain
+        AddressOp.DOES_NOT_MATCH_DOMAIN -> R.string.rules_op_does_not_match_domain
+        AddressOp.IS_EMPTY -> R.string.rules_op_is_empty
         AddressOp.MATCHES_REGEX -> R.string.rules_op_matches_regex
     },
 )
@@ -1080,9 +1085,10 @@ private fun address_op_label(op: AddressOp): String = stringResource(
 @Composable
 private fun text_op_label(op: TextOp): String = stringResource(
     when (op) {
+        TextOp.IS -> R.string.rules_op_is
+        TextOp.IS_NOT -> R.string.rules_op_is_not
         TextOp.CONTAINS -> R.string.rules_op_contains
         TextOp.DOES_NOT_CONTAIN -> R.string.rules_op_does_not_contain
-        TextOp.IS -> R.string.rules_op_is
         TextOp.STARTS_WITH -> R.string.rules_op_starts_with
         TextOp.ENDS_WITH -> R.string.rules_op_ends_with
         TextOp.IS_EMPTY -> R.string.rules_op_is_empty
@@ -1121,15 +1127,15 @@ internal fun value_display(c: Condition): String? {
     val yes = stringResource(R.string.rules_value_yes)
     val no = stringResource(R.string.rules_value_no)
     return when (c) {
-        is Condition.From -> c.value
-        is Condition.ReplyTo -> c.value
-        is Condition.To -> c.value
-        is Condition.Cc -> c.value
-        is Condition.Bcc -> c.value
-        is Condition.AnyRecipient -> c.value
-        is Condition.Subject -> if (c.op == TextOp.IS_EMPTY) "" else c.value
-        is Condition.Body -> if (c.op == TextOp.IS_EMPTY) "" else c.value
-        is Condition.ListId -> if (c.op == TextOp.IS_EMPTY) "" else c.value
+        is Condition.From -> if (c.op == AddressOp.IS_EMPTY) null else c.value
+        is Condition.ReplyTo -> if (c.op == AddressOp.IS_EMPTY) null else c.value
+        is Condition.To -> if (c.op == AddressOp.IS_EMPTY) null else c.value
+        is Condition.Cc -> if (c.op == AddressOp.IS_EMPTY) null else c.value
+        is Condition.Bcc -> if (c.op == AddressOp.IS_EMPTY) null else c.value
+        is Condition.AnyRecipient -> if (c.op == AddressOp.IS_EMPTY) null else c.value
+        is Condition.Subject -> if (c.op == TextOp.IS_EMPTY) null else c.value
+        is Condition.Body -> if (c.op == TextOp.IS_EMPTY) null else c.value
+        is Condition.ListId -> if (c.op == TextOp.IS_EMPTY) null else c.value
         is Condition.Header -> "${c.name}: ${c.value}"
         is Condition.AttachmentName -> c.value
         is Condition.HasAttachment -> if (c.`is`) yes else no
@@ -1196,7 +1202,7 @@ private fun needs_value(c: Condition): Boolean = when (c) {
     is Condition.Subject -> c.op != TextOp.IS_EMPTY
     is Condition.Body -> c.op != TextOp.IS_EMPTY
     is Condition.ListId -> c.op != TextOp.IS_EMPTY
-    else -> true
+    else -> address_op_of(c) != AddressOp.IS_EMPTY
 }
 
 @Composable
@@ -1250,16 +1256,16 @@ private fun address_or_text_operators(c: Condition): List<picker_item> = when (c
 }
 
 private fun apply_operator(c: Condition, op_id: String): Condition = when (c) {
-    is Condition.From -> c.copy(op = AddressOp.valueOf(op_id))
-    is Condition.ReplyTo -> c.copy(op = AddressOp.valueOf(op_id))
-    is Condition.To -> c.copy(op = AddressOp.valueOf(op_id))
-    is Condition.Cc -> c.copy(op = AddressOp.valueOf(op_id))
-    is Condition.Bcc -> c.copy(op = AddressOp.valueOf(op_id))
-    is Condition.AnyRecipient -> c.copy(op = AddressOp.valueOf(op_id))
-    is Condition.Subject -> c.copy(op = TextOp.valueOf(op_id))
-    is Condition.Body -> c.copy(op = TextOp.valueOf(op_id))
-    is Condition.ListId -> c.copy(op = TextOp.valueOf(op_id))
-    is Condition.Header -> c.copy(op = TextOp.valueOf(op_id))
+    is Condition.From -> AddressOp.valueOf(op_id).let { c.copy(op = it, value = value_for_address_op(it, c.value)) }
+    is Condition.ReplyTo -> AddressOp.valueOf(op_id).let { c.copy(op = it, value = value_for_address_op(it, c.value)) }
+    is Condition.To -> AddressOp.valueOf(op_id).let { c.copy(op = it, value = value_for_address_op(it, c.value)) }
+    is Condition.Cc -> AddressOp.valueOf(op_id).let { c.copy(op = it, value = value_for_address_op(it, c.value)) }
+    is Condition.Bcc -> AddressOp.valueOf(op_id).let { c.copy(op = it, value = value_for_address_op(it, c.value)) }
+    is Condition.AnyRecipient -> AddressOp.valueOf(op_id).let { c.copy(op = it, value = value_for_address_op(it, c.value)) }
+    is Condition.Subject -> TextOp.valueOf(op_id).let { c.copy(op = it, value = value_for_text_op(it, c.value)) }
+    is Condition.Body -> TextOp.valueOf(op_id).let { c.copy(op = it, value = value_for_text_op(it, c.value)) }
+    is Condition.ListId -> TextOp.valueOf(op_id).let { c.copy(op = it, value = value_for_text_op(it, c.value)) }
+    is Condition.Header -> TextOp.valueOf(op_id).let { c.copy(op = it, value = value_for_text_op(it, c.value)) }
     is Condition.AttachmentName -> c.copy(op = AttachmentNameOp.valueOf(op_id))
     is Condition.AttachmentSize -> c.copy(op = NumericOp.valueOf(op_id))
     is Condition.TotalSize -> c.copy(op = NumericOp.valueOf(op_id))

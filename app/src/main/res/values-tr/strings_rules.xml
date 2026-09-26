@@ -14,6 +14,7 @@
     <string name="rules_op_ends_with">ile biter</string>
     <string name="rules_op_is_empty">boştur</string>
     <string name="rules_op_matches_domain">alan adıyla eşleşir</string>
+    <string name="rules_op_does_not_match_domain">alan adıyla eşleşmiyor</string>
     <string name="rules_op_matches_regex">düzenli ifadeyle eşleşir</string>
     <string name="rules_op_greater_than">şundan büyük</string>
     <string name="rules_op_less_than">şundan küçük</string>
