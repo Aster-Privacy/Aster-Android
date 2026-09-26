@@ -219,7 +219,7 @@ internal fun fitted_viewport_width(document: String): Int? =
 private val MEASURE_PROBE_HEIGHT = 24.dp
 
 private fun estimated_body_height(html: String, width_dp: Int): androidx.compose.ui.unit.Dp {
-    val sample = if (html.length > 200000) html.substring(0, 200000) else html
+    val sample = if (html.length > 40000) html.substring(0, 40000) else html
     val text_length = body_tag_regex.replace(sample, " ").trim().length
     val chars_per_line = (width_dp / 7).coerceAtLeast(24)
     val lines = (text_length + chars_per_line - 1) / chars_per_line + 2
@@ -2298,7 +2298,14 @@ internal fun expanded_message(
             },
         )
     }
-    val tracker_report = remember(msg.body_html) { EmailHtmlSanitizer.analyze_trackers(msg.body_html) }
+    val tracker_report by androidx.compose.runtime.produceState(
+        initialValue = EmailHtmlSanitizer.TrackerReport(),
+        msg.body_html,
+    ) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            EmailHtmlSanitizer.analyze_trackers(msg.body_html)
+        }
+    }
     val tracker_count = remember(tracker_report, msg.trackers_blocked) {
         maxOf(msg.trackers_blocked, tracker_report.total)
     }
@@ -5546,17 +5553,23 @@ internal fun email_html_view(
     }
     val source_body_ref = remember(html) { arrayOfNulls<String>(1) }
     var translated_body by remember(html) { mutableStateOf<String?>(null) }
+    val translation_scope = androidx.compose.runtime.rememberCoroutineScope()
 
     fun run_translation(from: String) {
-        val engine = translation_engine_ref[0] ?: return
         val source = source_body_ref[0] ?: return
-        val segments = extract_translatable_segments(source)
-        if (segments.isEmpty()) {
-            set_translation_state[0]?.invoke(TranslationBannerState.Hidden)
-            return
+        translation_scope.launch {
+            val segments = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                extract_translatable_segments(source)
+            }
+            if (source_body_ref[0] !== source) return@launch
+            val engine = translation_engine_ref[0] ?: return@launch
+            if (segments.isEmpty()) {
+                set_translation_state[0]?.invoke(TranslationBannerState.Hidden)
+                return@launch
+            }
+            set_translation_state[0]?.invoke(TranslationBannerState.Translating)
+            engine.translate(segments, from, translate_target_ref[0])
         }
-        set_translation_state[0]?.invoke(TranslationBannerState.Translating)
-        engine.translate(segments, from, translate_target_ref[0])
     }
 
     fun show_original() {
@@ -5598,8 +5611,12 @@ internal fun email_html_view(
     fun handle_translation_result(json: String) {
         val segments = org.astermail.android.translation.translated_segments_of(json) ?: return
         val source = source_body_ref[0] ?: return
-        val applied = apply_translated_segments(source, segments)
-        if (applied != source) translated_body = applied
+        translation_scope.launch {
+            val applied = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                apply_translated_segments(source, segments)
+            }
+            if (source_body_ref[0] === source && applied != source) translated_body = applied
+        }
     }
 
     DisposableEffect(translate_active_early) {
