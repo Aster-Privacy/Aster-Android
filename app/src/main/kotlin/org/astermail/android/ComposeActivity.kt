@@ -54,6 +54,7 @@ import androidx.lifecycle.lifecycleScope
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Lock
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.security.AppLockViewModel
@@ -102,6 +103,10 @@ class ComposeActivity :
     @javax.inject.Inject
     lateinit var app_lock_store: org.astermail.android.security.AppLockStore
 
+    private val secure_storage_ready = androidx.compose.runtime.mutableStateOf(
+        org.astermail.android.storage.SecurePrefs.warm_complete.value,
+    )
+
     private val lockdown_listener =
         android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
             runOnUiThread { enforce_secure_flag() }
@@ -118,6 +123,14 @@ class ComposeActivity :
         lifecycleScope.launch {
             app_lock_store.config_version.collect { enforce_secure_flag() }
         }
+        if (!secure_storage_ready.value) {
+            lifecycleScope.launch {
+                org.astermail.android.storage.SecurePrefs.warm_complete.first { it }
+                runCatching { app_lock_store.check_on_foreground() }
+                enforce_secure_flag()
+                secure_storage_ready.value = true
+            }
+        }
         val reply_to = intent?.getStringExtra(extra_reply_to)?.takeIf { it.isNotBlank() }
         val mode = intent?.getStringExtra(extra_mode)?.takeIf { it.isNotBlank() }
         val draft_id = intent?.getStringExtra(extra_draft_id)?.takeIf { it.isNotBlank() }
@@ -125,6 +138,7 @@ class ComposeActivity :
         val thread_ghost_email = intent?.getStringExtra(extra_thread_ghost)?.takeIf { it.isNotBlank() }
         enableEdgeToEdge()
         setContent {
+            if (!secure_storage_ready.value) return@setContent
             aster_theme_root {
                 val lock_vm: AppLockViewModel = hiltViewModel()
                 val is_locked by lock_vm.store.is_locked.collectAsStateWithLifecycle()
@@ -193,7 +207,8 @@ class ComposeActivity :
     }
 
     override fun enforce_secure_flag() {
-        val app_lock_configured = runCatching { app_lock_store.is_configured() }.getOrDefault(true)
+        val app_lock_configured = !app_lock_store.is_store_open() ||
+            runCatching { app_lock_store.is_configured() }.getOrDefault(true)
         if (org.astermail.android.ui.common.SecureScreenGuard.is_active() ||
             LockdownStore.is_enabled(applicationContext) ||
             app_lock_configured

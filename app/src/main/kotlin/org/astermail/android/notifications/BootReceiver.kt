@@ -31,8 +31,16 @@ class BootReceiver : BroadcastReceiver() {
             intent.action == Intent.ACTION_MY_PACKAGE_REPLACED
         ) {
             MailPollingWorker.enqueue(context)
-            UnifiedPushState.sync_registration(context)
             PersistentPushService.start_if_enabled(context)
+            val app = context.applicationContext
+            val pending = goAsync()
+            Thread {
+                try {
+                    runCatching { UnifiedPushState.sync_registration(app) }
+                } finally {
+                    pending.finish()
+                }
+            }.apply { name = "aster-boot-sync" }.start()
         }
     }
 }

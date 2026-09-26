@@ -87,7 +87,7 @@ object app_language {
 
         if (!prefs.getBoolean(KEY_EXPLICIT, false)) editor.remove(KEY_CODE)
 
-        editor.commit()
+        editor.apply()
     }
 
     fun synced_code_to_store(language: String?, explicit: Boolean, stored: String?): String? {
