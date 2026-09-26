@@ -1580,7 +1580,7 @@ composable(routes.settings_detail("family")) {
     if (is_signed_in_state) {
         val offer_route by nav_controller.currentBackStackEntryAsState()
         if (!is_locked && offer_route?.destination?.route != routes.register) {
-            org.astermail.android.ui.upgrade.SpecialOfferHost()
+            if (BuildConfig.SPECIAL_OFFER) org.astermail.android.ui.upgrade.SpecialOfferHost()
         }
     }
 

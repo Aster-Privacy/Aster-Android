@@ -1,0 +1,8 @@
+What's new:
+
+- If your account is suspended, the app tells you why and lets you appeal.
+
+Fixed:
+
+- Messages you mark as read or unread keep that state instead of switching back.
+- Messages open even when a thread fails to load or Android System WebView is missing.

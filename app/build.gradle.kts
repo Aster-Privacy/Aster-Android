@@ -28,9 +28,11 @@ android {
     productFlavors {
         create("full") {
             dimension = "distribution"
+            buildConfigField("boolean", "SPECIAL_OFFER", "true")
         }
         create("fdroid") {
             dimension = "distribution"
+            buildConfigField("boolean", "SPECIAL_OFFER", "false")
         }
     }
 

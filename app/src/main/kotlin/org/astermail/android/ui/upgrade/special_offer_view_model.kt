@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.astermail.android.BuildConfig
 import org.astermail.android.api.billing.BillingApi
 import org.astermail.android.auth.AuthRepository
 import org.astermail.android.ui.auth.within_sign_up_quiet_period
@@ -165,6 +166,7 @@ class SpecialOfferViewModel @Inject constructor(
     }
 
     private fun cached_state(id: String): SpecialOfferState {
+        if (!BuildConfig.SPECIAL_OFFER) return SpecialOfferState()
         if (!offer_preferences.state.value.enabled || in_quiet_period()) return SpecialOfferState()
         if (!offer_cache.getBoolean("$id.available", false)) return SpecialOfferState()
         val age_ms = now_ms() - offer_cache.getLong("$id.cached_at", 0L)
@@ -207,6 +209,7 @@ class SpecialOfferViewModel @Inject constructor(
     }
 
     private fun fetch() {
+        if (!BuildConfig.SPECIAL_OFFER) return
         val expected = generation
         load_job = launch_for_account {
             try {

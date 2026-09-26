@@ -362,7 +362,7 @@ fun NotificationsScreen(
                         stringResource(R.string.product_updates_info),
                     ) { vm.set_product_updates(it) }
                 }
-                if (offer_prefs.available) {
+                if (org.astermail.android.BuildConfig.SPECIAL_OFFER && offer_prefs.available) {
                     settings_row_gap(modifier = Modifier)
                     switch_row(
                         stringResource(R.string.special_offers),
