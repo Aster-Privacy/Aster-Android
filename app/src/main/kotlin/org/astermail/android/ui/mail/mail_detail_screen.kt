@@ -5049,6 +5049,20 @@ private const val height_watch_exact_stable_ms = 48L
 private const val height_watch_settle_ms = 2000L
 private const val height_watch_budget_ms = 15000L
 
+internal object web_view_support {
+    @Volatile
+    private var known_available = false
+
+    fun is_available(ctx: android.content.Context): Boolean {
+        if (known_available) return true
+        val available = runCatching {
+            android.webkit.WebSettings.getDefaultUserAgent(ctx.applicationContext)
+        }.isSuccess
+        if (available) known_available = true
+        return available
+    }
+}
+
 internal class mail_body_web_view(
     ctx: android.content.Context,
 ) : android.webkit.WebView(ctx) {
@@ -5590,12 +5604,14 @@ internal fun email_html_view(
 
     DisposableEffect(translate_active_early) {
         if (translate_active_early && translation_engine_ref[0] == null) {
-            translation_engine_ref[0] = org.astermail.android.translation.translation_engine(
-                translate_context,
-                on_detect = { json -> handle_translation_detect(json) },
-                on_status = { json -> handle_translation_status(json) },
-                on_result = { json -> handle_translation_result(json) },
-            )
+            translation_engine_ref[0] = runCatching {
+                org.astermail.android.translation.translation_engine(
+                    translate_context,
+                    on_detect = { json -> handle_translation_detect(json) },
+                    on_status = { json -> handle_translation_status(json) },
+                    on_result = { json -> handle_translation_result(json) },
+                )
+            }.getOrNull()
         }
         onDispose {
             translation_engine_ref[0]?.destroy()
@@ -5640,7 +5656,9 @@ internal fun email_html_view(
     val last_window_y = remember { floatArrayOf(Float.NaN) }
     val has_toggles_ref = remember { booleanArrayOf(true) }
     val reload_policy = remember(height_cache_key) { body_reload_policy() }
-    val renderer_exhausted = remember(height_cache_key) { mutableStateOf(false) }
+    val web_view_context = androidx.compose.ui.platform.LocalContext.current
+    val web_view_missing = remember(height_cache_key) { !web_view_support.is_available(web_view_context) }
+    val renderer_exhausted = remember(height_cache_key) { mutableStateOf(web_view_missing) }
 
     LaunchedEffect(height_cache_key, page_painted.value) {
         if (page_painted.value) return@LaunchedEffect
@@ -5954,6 +5972,14 @@ internal fun email_html_view(
             probe_height_dp.value = MEASURE_PROBE_HEIGHT
             remeasure_active[0] = false
         }
+    }
+
+    LaunchedEffect(height_cache_key, web_view_missing) {
+        if (!web_view_missing) return@LaunchedEffect
+        has_measured = true
+        height_settled = true
+        page_painted.value = true
+        on_ready()
     }
 
     LaunchedEffect(renderer_gone.value) {

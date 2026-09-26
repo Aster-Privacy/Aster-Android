@@ -22,6 +22,7 @@
 package org.astermail.android.mail
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
 import org.astermail.android.BuildConfig
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -1597,7 +1598,7 @@ class MailViewModel @Inject constructor(
         thread_open_started_at = android.os.SystemClock.elapsedRealtime()
         thread_open_painted.clear()
         val thread_gen = ++thread_load_generation
-        thread_load_job = viewModelScope.launch(Dispatchers.IO) {
+        thread_load_job = viewModelScope.launch(Dispatchers.IO + thread_load_failure_handler(thread_gen)) {
                 val seed_token = (cur_thread.item?.takeIf { it.id == item_id } ?: seed)?.thread_token
                 ?.takeIf { it.isNotBlank() }
             if (!paint_cached_thread(item_id, seed_token, thread_gen)) {
@@ -1708,6 +1709,18 @@ class MailViewModel @Inject constructor(
                 if (thread_gen == thread_load_generation) {
                     _thread_state.update { if (it.is_loading) it.copy(is_loading = false) else it }
                 }
+            }
+        }
+    }
+
+    private fun thread_load_failure_handler(thread_gen: Long) = CoroutineExceptionHandler { _, error ->
+        android.util.Log.w("MailViewModel", "thread load failed: ${error.javaClass.simpleName}")
+        if (thread_gen != thread_load_generation) return@CoroutineExceptionHandler
+        _thread_state.update { state ->
+            if (state.messages.isNotEmpty()) {
+                state.copy(is_loading = false)
+            } else {
+                state.copy(is_loading = false, error = context.getString(R.string.something_went_wrong))
             }
         }
     }
