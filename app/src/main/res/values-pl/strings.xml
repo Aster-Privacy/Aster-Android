@@ -3627,4 +3627,11 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">W zestawie</string>
     <string name="special_offer_compare_not_included">Brak w zestawie</string>
+    <string name="pdf_password_title">Ten plik PDF jest chroniony hasłem</string>
+    <string name="pdf_password_description">Aby wyświetlić ten plik PDF, wpisz jego hasło. Hasło pozostaje na tym urządzeniu.</string>
+    <string name="pdf_password_hint">Hasło do pliku PDF</string>
+    <string name="pdf_password_incorrect">To hasło jest nieprawidłowe. Spróbuj ponownie.</string>
+    <string name="pdf_preview_failed">Tego pliku PDF nie można tu wyświetlić. Aby go otworzyć, pobierz go.</string>
+    <string name="pdf_page_of_total">Strona %1$d z %2$d</string>
+    <string name="pdf_password_unsupported">Ten plik PDF jest chroniony hasłem. Aby go wyświetlić, otwórz go w innej aplikacji.</string>
 </resources>

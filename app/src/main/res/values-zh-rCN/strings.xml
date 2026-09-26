@@ -3567,4 +3567,11 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">已包含</string>
     <string name="special_offer_compare_not_included">不包含</string>
+    <string name="pdf_password_title">此 PDF 受密码保护</string>
+    <string name="pdf_password_description">要查看此 PDF，请输入其密码。密码只保留在此设备上。</string>
+    <string name="pdf_password_hint">PDF 密码</string>
+    <string name="pdf_password_incorrect">密码不正确。请重试。</string>
+    <string name="pdf_preview_failed">无法在此处显示此 PDF。要打开它，请下载文件。</string>
+    <string name="pdf_page_of_total">第%1$d页，共%2$d页</string>
+    <string name="pdf_password_unsupported">此 PDF 受密码保护。要查看它，请在其他应用中打开。</string>
 </resources>

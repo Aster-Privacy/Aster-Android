@@ -3585,4 +3585,11 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Dahil</string>
     <string name="special_offer_compare_not_included">Dahil değil</string>
+    <string name="pdf_password_title">Bu PDF parola korumalı</string>
+    <string name="pdf_password_description">Bu PDF\'yi görüntülemek için parolasını girin. Parola bu cihazda kalır.</string>
+    <string name="pdf_password_hint">PDF parolası</string>
+    <string name="pdf_password_incorrect">Parola yanlış. Tekrar deneyin.</string>
+    <string name="pdf_preview_failed">Bu PDF burada gösterilemiyor. Açmak için indirin.</string>
+    <string name="pdf_page_of_total">Sayfa %1$d / %2$d</string>
+    <string name="pdf_password_unsupported">Bu PDF parola korumalı. Görüntülemek için başka bir uygulamada açın.</string>
 </resources>

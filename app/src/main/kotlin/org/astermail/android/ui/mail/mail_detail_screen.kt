@@ -7185,77 +7185,97 @@ private fun attachment_preview_dialog(
                             )
                         }
                     }
-                    else -> {
-                        val type_color = attachment_type_color(ct)
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            Icon(
-                                imageVector = attachment_icon(ct),
-                                contentDescription = null,
-                                tint = type_color,
-                                modifier = Modifier.size(72.dp),
+                    is_pdf_attachment(ct, attachment.filename) -> pdf_attachment_viewer(
+                        bytes = bytes,
+                        filename = attachment.filename,
+                    ) { message ->
+                        attachment_fallback_panel(attachment, ct, bytes, on_download, message)
+                    }
+                    else -> attachment_fallback_panel(attachment, ct, bytes, on_download)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun attachment_fallback_panel(
+    attachment: MessageAttachment,
+    ct: String,
+    bytes: ByteArray,
+    on_download: () -> Unit,
+    message: String? = null,
+) {
+    val context = LocalContext.current
+    val type_color = attachment_type_color(ct)
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            imageVector = attachment_icon(ct),
+            contentDescription = null,
+            tint = type_color,
+            modifier = Modifier.size(72.dp),
+        )
+        Spacer(Modifier.height(20.dp))
+        Text(
+            text = display_filename(attachment.filename),
+            color = Color.White,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 32.dp),
+            style = androidx.compose.material3.LocalTextStyle.current.copy(
+                textDirection = androidx.compose.ui.text.style.TextDirection.Ltr,
+            ),
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = "${attachment_type_label(ct, attachment.filename)} - ${format_file_size(bytes.size.toLong())}",
+            color = Color.White.copy(alpha = 0.6f),
+            fontSize = 14.sp,
+        )
+        if (message != null) {
+            Spacer(Modifier.height(16.dp))
+            pdf_fallback_message(message)
+        }
+        Spacer(Modifier.height(32.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(
+                modifier = Modifier
+                    .clip(SquircleShape(18.dp))
+                    .background(Color.White.copy(alpha = 0.15f))
+                    .clickable(onClick = on_download)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+            ) {
+                Text(stringResource(R.string.download), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            }
+            Box(
+                modifier = Modifier
+                    .clip(SquircleShape(18.dp))
+                    .background(Color.White.copy(alpha = 0.15f))
+                    .clickable {
+                        try {
+                            val opened = open_attachment_externally(
+                                context,
+                                attachment.filename,
+                                attachment.content_type,
+                                bytes,
                             )
-                            Spacer(Modifier.height(20.dp))
-                            Text(
-                                text = display_filename(attachment.filename),
-                                color = Color.White,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                modifier = Modifier.padding(horizontal = 32.dp),
-                                style = androidx.compose.material3.LocalTextStyle.current.copy(
-                                    textDirection = androidx.compose.ui.text.style.TextDirection.Ltr,
-                                ),
-                            )
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                text = "${attachment_type_label(ct, attachment.filename)} - ${format_file_size(bytes.size.toLong())}",
-                                color = Color.White.copy(alpha = 0.6f),
-                                fontSize = 14.sp,
-                            )
-                            Spacer(Modifier.height(32.dp))
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(SquircleShape(18.dp))
-                                        .background(Color.White.copy(alpha = 0.15f))
-                                        .clickable(onClick = on_download)
-                                        .padding(horizontal = 20.dp, vertical = 12.dp),
-                                ) {
-                                    Text(stringResource(R.string.download), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .clip(SquircleShape(18.dp))
-                                        .background(Color.White.copy(alpha = 0.15f))
-                                        .clickable {
-                                            try {
-                                                val opened = open_attachment_externally(
-                                                    context,
-                                                    attachment.filename,
-                                                    attachment.content_type,
-                                                    bytes,
-                                                )
-                                                if (!opened) {
-                                                    Toast.makeText(context, context.getString(R.string.no_app_to_open), Toast.LENGTH_SHORT).show()
-                                                }
-                                            } catch (cancelled: CancellationException) {
-                                                throw cancelled
-                                            } catch (_: Throwable) {
-                                                Toast.makeText(context, context.getString(R.string.no_app_to_open), Toast.LENGTH_SHORT).show()
-                                            }
-                                        }
-                                        .padding(horizontal = 20.dp, vertical = 12.dp),
-                                ) {
-                                    Text(stringResource(R.string.open_with), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-                                }
+                            if (!opened) {
+                                Toast.makeText(context, context.getString(R.string.no_app_to_open), Toast.LENGTH_SHORT).show()
                             }
+                        } catch (cancelled: CancellationException) {
+                            throw cancelled
+                        } catch (_: Throwable) {
+                            Toast.makeText(context, context.getString(R.string.no_app_to_open), Toast.LENGTH_SHORT).show()
                         }
                     }
-                }
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+            ) {
+                Text(stringResource(R.string.open_with), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium)
             }
         }
     }
