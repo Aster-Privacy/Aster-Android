@@ -56,4 +56,20 @@
         <item quantity="many">تدفع %1$s شهريًا لأول %2$d شهرًا. بعد ذلك تُجدَّد خطتك بسعر %3$s شهريًا حتى تلغيها من الإعدادات.</item>
         <item quantity="other">تدفع %1$s شهريًا لأول %2$d شهر. بعد ذلك تُجدَّد خطتك بسعر %3$s شهريًا حتى تلغيها من الإعدادات.</item>
     </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="zero">%d فواتير</item>
+        <item quantity="one">فاتورة واحدة</item>
+        <item quantity="two">فاتورتان</item>
+        <item quantity="few">%d فواتير</item>
+        <item quantity="many">%d فاتورة</item>
+        <item quantity="other">%d فاتورة</item>
+    </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="zero">قارن %d ميزة</item>
+        <item quantity="one">قارن %d ميزة</item>
+        <item quantity="two">قارن %d ميزتين</item>
+        <item quantity="few">قارن جميع الميزات الـ %d</item>
+        <item quantity="many">قارن جميع الميزات الـ %d</item>
+        <item quantity="other">قارن جميع الميزات الـ %d</item>
+    </plurals>
 </resources>

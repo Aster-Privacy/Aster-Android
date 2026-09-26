@@ -481,6 +481,7 @@ private object routes {
     const val contact_edit = "contact_edit/{contact_id}"
 
     const val domain_order = "domain_order/{order_id}"
+    const val domain_bimi = "settings_domain_bimi/{domain_id}"
 
     fun mail_detail_for(email_id: String) = "mail_detail/" + java.net.URLEncoder.encode(email_id, "UTF-8")
     fun settings_detail(id: String) = "settings_$id"
@@ -495,6 +496,8 @@ private object routes {
         "settings_accessibility?focus=" +
             org.astermail.android.ui.settings.detail.SETTINGS_FOCUS_LOW_NETWORK
     fun domain_order_for(order_id: String) = "domain_order/$order_id"
+    fun domain_bimi_for(domain_id: String) =
+        "settings_domain_bimi/" + java.net.URLEncoder.encode(domain_id, "UTF-8")
     fun contact_detail_for(contact_id: String) = "contact_detail/$contact_id"
     fun contact_edit_for(contact_id: String) = "contact_edit/$contact_id"
 }
@@ -1330,6 +1333,17 @@ private fun AsterNavHost() {
                 on_back = { back(); Unit },
                 on_open_buy_domain = { nav_controller.navigate(routes.settings_detail("buy_domain")) },
                 on_open_domain_order = { id -> nav_controller.navigate(routes.domain_order_for(id)) },
+                on_open_bimi = { id -> nav_controller.navigate(routes.domain_bimi_for(id)) { launchSingleTop = true } },
+            )
+        }
+        composable(
+            route = routes.domain_bimi,
+            arguments = listOf(navArgument("domain_id") { type = NavType.StringType }),
+        ) { entry ->
+            val domain_id = entry.arguments?.getString("domain_id").orEmpty()
+            org.astermail.android.ui.settings.detail.bimi.bimi_setup_screen(
+                domain_id = domain_id,
+                on_back = { back(); Unit },
             )
         }
         composable(routes.settings_detail("buy_domain")) {

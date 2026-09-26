@@ -28,4 +28,12 @@
         <item quantity="one">Du zahlst %1$s pro Monat für den ersten Monat. Danach verlängert sich dein Tarif für %3$s pro Monat, bis du ihn in den Einstellungen kündigst.</item>
         <item quantity="other">Du zahlst %1$s pro Monat für die ersten %2$d Monate. Danach verlängert sich dein Tarif für %3$s pro Monat, bis du ihn in den Einstellungen kündigst.</item>
     </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="one">%d Rechnung</item>
+        <item quantity="other">%d Rechnungen</item>
+    </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="one">%d Funktion vergleichen</item>
+        <item quantity="other">Alle %d Funktionen vergleichen</item>
+    </plurals>
 </resources>

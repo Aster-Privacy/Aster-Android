@@ -188,6 +188,8 @@ data class AliasInfo(
     val updated_at: String = "",
     val downgrade_grace_expires_at: String? = null,
     val decryption_failed: Boolean = false,
+    val is_retained_primary: Boolean = false,
+    val retained_local_part: String? = null,
 ) {
     val address: String get() = when {
         decryption_failed -> if (domain.isNotBlank()) "@$domain" else id
@@ -546,6 +548,9 @@ data class CustomDomain(
     val is_shared: Boolean = false,
     val shared_from: String? = null,
     val can_create_aliases: Boolean = true,
+    val bimi_available: Boolean = false,
+    val bimi_state: String? = null,
+    val purchased: Boolean = false,
 )
 
 @Serializable

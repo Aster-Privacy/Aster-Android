@@ -33,6 +33,8 @@ import org.astermail.android.api.BuildConfig
 import org.astermail.android.api.TokenProvider
 import org.astermail.android.api.account.AccountApi
 import org.astermail.android.api.account.AccountApiImpl
+import org.astermail.android.api.account.PrimaryAddressApi
+import org.astermail.android.api.account.PrimaryAddressApiImpl
 import org.astermail.android.api.aliases.AliasDetailApi
 import org.astermail.android.api.aliases.AliasDetailApiImpl
 import org.astermail.android.api.auth.AuthApi
@@ -82,6 +84,8 @@ import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.api.ratchet.RatchetApiImpl
 import org.astermail.android.api.mail.MailApi
 import org.astermail.android.api.mail.MailApiImpl
+import org.astermail.android.api.domains.BimiApi
+import org.astermail.android.api.domains.BimiApiImpl
 import org.astermail.android.api.domains.DomainPurchaseApi
 import org.astermail.android.api.domains.DomainPurchaseApiImpl
 import org.astermail.android.api.preferences.PreferencesApi
@@ -183,6 +187,11 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provide_primary_address_api(client: ApiClient): PrimaryAddressApi =
+        PrimaryAddressApiImpl(client)
+
+    @Provides
+    @Singleton
     fun provide_user_api(client: ApiClient): UserApi = UserApiImpl(client)
 
     @Provides
@@ -208,6 +217,10 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provide_domain_purchase_api(client: ApiClient): DomainPurchaseApi = DomainPurchaseApiImpl(client)
+
+    @Provides
+    @Singleton
+    fun provide_bimi_api(client: ApiClient): BimiApi = BimiApiImpl(client)
 
     @Provides
     @Singleton

@@ -46,6 +46,8 @@ import org.astermail.android.api.billing.PlanInfo
 import org.astermail.android.api.billing.PortalSessionResponse
 import org.astermail.android.api.billing.SubscriptionResponse
 import org.astermail.android.auth.AuthRepository
+import org.astermail.android.storage.PreferencesCacheStore
+import org.astermail.android.storage.SessionKeyStore
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -75,7 +77,7 @@ class BillingViewModelTest {
         auth_repository = mockk(relaxed = true)
         coEvery { auth_repository.stored_password_hash_b64() } returns "cached_hash"
         io.mockk.every { auth_repository.active_account_id } returns kotlinx.coroutines.flow.MutableStateFlow("user1")
-        vm = BillingViewModel(application, billing_api, auth_repository)
+        vm = BillingViewModel(application, billing_api, auth_repository, PreferencesCacheStore(null), SessionKeyStore(null))
     }
 
     @After

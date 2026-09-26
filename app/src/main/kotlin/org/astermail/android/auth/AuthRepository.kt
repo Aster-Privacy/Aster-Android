@@ -33,6 +33,7 @@ import org.astermail.android.util.passphrase_chars
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -723,6 +724,10 @@ class AuthRepository @Inject constructor(
         RegisterSuccess(recovery_codes = recovery_codes, recovery_backup_saved = recovery_backup_saved)
     }
 
+    fun refresh_session_snapshot() {
+        runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
+    }
+
     private fun save_session_snapshot(account_id: String) {
         runCatching {
             session_snapshot_store.save(
@@ -1048,13 +1053,60 @@ class AuthRepository @Inject constructor(
         _is_signed_in.value = false
     }
 
+    private var uid_update_attempted_for: String? = null
+
+    private fun uid_form(address: String): String {
+        val lowered = address.trim().lowercase(java.util.Locale.ROOT)
+        val at = lowered.lastIndexOf('@')
+
+        if (at <= 0) return lowered
+
+        return lowered.substring(0, at).replace(".", "") + lowered.substring(at)
+    }
+
     suspend fun refresh_profile(): Result<Unit> = runCatching {
-        absorb_profile(auth_api.me())
+        val profile = auth_api.me()
+        val email = adopt_server_email(profile)?.let { uid_form(it) }
+        absorb_profile(profile)
+        if (profile.pgp_uid_update_required &&
+            !email.isNullOrBlank() &&
+            uid_update_attempted_for != email
+        ) {
+            uid_update_attempted_for = email
+            val uid_updated = runCatching {
+                add_address_to_identity_key(email, profile.display_name.orEmpty())
+            }.getOrDefault(false)
+            if (!uid_updated) uid_update_attempted_for = null
+        }
+    }
+
+    private fun profile_matches_session(
+        profile: org.astermail.android.api.auth.UserInfo,
+    ): Boolean {
+        val session_id = session_key_store.get_user_id() ?: return true
+
+        return profile.user_id.isBlank() || profile.user_id == session_id
+    }
+
+    private fun adopt_server_email(profile: org.astermail.android.api.auth.UserInfo): String? {
+        val server_email = profile.email?.trim()?.takeIf { it.isNotBlank() }
+        val stored_email = session_key_store.get_user_email()
+
+        if (server_email == null) return stored_email
+        if (server_email.equals(stored_email, ignoreCase = true)) return stored_email
+        if (!profile_matches_session(profile)) return stored_email
+
+        session_key_store.put_user_email(server_email)
+        refresh_session_snapshot()
+
+        return server_email
     }
 
     fun absorb_profile(profile: org.astermail.android.api.auth.UserInfo) {
         val current_id = session_key_store.get_user_id() ?: profile.user_id
-        val email = session_key_store.get_user_email() ?: profile.email ?: return
+        val server_email = profile.email?.trim()
+            ?.takeIf { it.isNotBlank() && profile_matches_session(profile) }
+        val email = server_email ?: session_key_store.get_user_email() ?: return
         account_store.add_or_update(
             StoredAccount(
                 id = current_id,
@@ -1276,6 +1328,104 @@ class AuthRepository @Inject constructor(
         if (!current.contains(data_kek)) {
             session_key_store.put_legacy_keks(listOf(data_kek) + current)
         }
+    }
+
+    suspend fun add_address_to_identity_key(new_address: String, display_name: String): Boolean =
+        withContext(Dispatchers.Default) {
+            add_address_to_identity_key_blocking(new_address, display_name)
+        }
+
+    private suspend fun add_address_to_identity_key_blocking(
+        new_address: String,
+        display_name: String,
+    ): Boolean {
+        val identity_key = session_key_store.get_identity_key() ?: return true
+        if (!identity_key.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY")) return true
+
+        val passphrase_bytes = session_key_store.get_passphrase() ?: return false
+        try {
+            val passphrase = passphrase_chars(passphrase_bytes)
+            try {
+                val updated = org.astermail.android.crypto.add_address_to_pgp_key(
+                    identity_key,
+                    passphrase,
+                    display_name,
+                    new_address,
+                ) ?: run {
+                    if (!org.astermail.android.crypto.pgp_key_covers_address(
+                            identity_key,
+                            new_address,
+                        )
+                    ) {
+                        return false
+                    }
+
+                    republish_pgp_key_with_password(identity_key, passphrase)
+
+                    return true
+                }
+
+                val stored = withContext(NonCancellable) {
+                    if (!store_identity_key_in_vault(updated, passphrase_bytes)) {
+                        return@withContext false
+                    }
+                    session_key_store.put_identity_key(updated)
+                    true
+                }
+
+                if (!stored) return false
+
+                republish_pgp_key_with_password(updated, passphrase)
+                return true
+            } finally {
+                passphrase.fill(' ')
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            return false
+        } finally {
+            passphrase_bytes.fill(0)
+        }
+    }
+
+    private suspend fun store_identity_key_in_vault(
+        identity_key: String,
+        passphrase: ByteArray,
+    ): Boolean {
+        val (encrypted_vault_b64, vault_nonce_b64) = session_key_store.get_encrypted_vault() ?: return false
+
+        val vault_plain = CryptoNative.decrypt_vault_with_password(
+            base64_decode(encrypted_vault_b64),
+            base64_decode(vault_nonce_b64),
+            passphrase,
+        )
+        val vault_obj = try {
+            org.json.JSONObject(String(vault_plain, Charsets.UTF_8))
+        } finally {
+            vault_plain.fill(0)
+        }
+        vault_obj.put("identity_key", identity_key)
+
+        val updated_plain = vault_obj.toString().toByteArray(Charsets.UTF_8)
+        val sealed = try {
+            CryptoNative.encrypt_vault_with_password(updated_plain, passphrase)
+        } finally {
+            updated_plain.fill(0)
+        }
+
+        val encrypted_vault = base64_encode(sealed.encrypted_vault)
+        val vault_nonce = base64_encode(sealed.vault_nonce)
+        val pushed = keys_api.update_vault(
+            encrypted_vault,
+            vault_nonce,
+            session_key_store.get_user_id(),
+            org.astermail.android.mail.ratchet.collect_vault_key_fingerprints(vault_obj),
+        )
+        if (!pushed) return false
+
+        session_key_store.put_encrypted_vault(encrypted_vault, vault_nonce)
+        return true
     }
 
     fun identity_keys_present(): Boolean =

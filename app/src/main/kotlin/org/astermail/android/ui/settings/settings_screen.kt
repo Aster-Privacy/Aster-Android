@@ -24,7 +24,6 @@ package org.astermail.android.ui.settings
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -332,25 +331,15 @@ private fun profile_header(
             Box(
                 modifier = Modifier
                     .width(112.dp)
-                    .height(33.dp)
+                    .height(40.dp)
                     .shimmer(shimmer_state(), SquircleShape(999.dp)),
             )
         } else if (is_free) {
             Spacer(Modifier.size(12.dp))
-            Box(
-                modifier = Modifier
-                    .clip(SquircleShape(999.dp))
-                    .background(colors.accent_blue)
-                    .clickable(onClick = on_upgrade)
-                    .padding(horizontal = 18.dp, vertical = 8.dp),
-            ) {
-                Text(
-                    text = stringResource(R.string.settings_upgrade_cta),
-                    color = colors.on_accent,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
+            org.astermail.android.design.components.AsterCompactButton(
+                label = stringResource(R.string.settings_upgrade_cta),
+                onClick = on_upgrade,
+            )
         }
     }
 }

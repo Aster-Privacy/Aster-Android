@@ -24,13 +24,9 @@ package org.astermail.android.ui.settings.detail
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
-import android.content.Context
 import androidx.annotation.StringRes
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
@@ -43,12 +39,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.AlertDialog as M3AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -75,15 +69,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.astermail.android.R
-import kotlin.math.roundToInt
 import org.astermail.android.billing.BillingViewModel
 import org.astermail.android.billing.is_resumable_crypto_invoice
 import java.util.Locale
 import org.astermail.android.design.AsterMaterial
-import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
-import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
@@ -91,8 +82,6 @@ import org.astermail.android.ui.common.open_external_url
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTextField
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.text.style.TextAlign
 import kotlinx.coroutines.launch
@@ -125,6 +114,19 @@ private fun detect_currency(): String {
 
 private fun format_price(cents: Int, currency: String): String =
     org.astermail.android.billing.format_money(cents.toLong(), currency)
+
+private fun fallback_alias_limit(plan_code: String?): Int = when (plan_code) {
+    "star" -> 15
+    "nova", "supernova", "duo", "family" -> 0
+    else -> 5
+}
+
+private fun fallback_domain_limit(plan_code: String?): Int = when (plan_code) {
+    "star" -> 5
+    "nova", "duo", "family" -> 30
+    "supernova" -> 0
+    else -> 1
+}
 
 private data class plan_tier(
     val code: String,
@@ -271,6 +273,11 @@ fun SubscriptionsScreen(
     val context = LocalContext.current
     val play_install = org.astermail.android.billing.remember_play_install()
     val play_mode = play_install && billing_state.play_enabled
+    val comparison_feed by org.astermail.android.billing.plan_comparison_store.feed.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        org.astermail.android.billing.plan_comparison_store.load(context.applicationContext)
+    }
 
     LaunchedEffect(Unit) {
         vm.load_subscription()
@@ -282,6 +289,10 @@ fun SubscriptionsScreen(
         billing_vm.load_crypto_native_coins()
         billing_vm.load_pending_crypto_invoices()
         billing_vm.load_credits_and_discounts()
+        billing_vm.load_limits()
+        billing_vm.load_credit_packages()
+        vm.load_aliases()
+        vm.load_domains()
     }
 
     LaunchedEffect(billing_state.created_crypto_invoice_id) {
@@ -339,6 +350,9 @@ fun SubscriptionsScreen(
     var pending_term_months by remember { mutableStateOf(1) }
     var picker_method by remember { mutableStateOf(payment_method_card) }
     var show_switch_yearly by remember { mutableStateOf(false) }
+    var show_credits by remember { mutableStateOf(false) }
+    var show_academic by remember { mutableStateOf(false) }
+    var compare_code by remember { mutableStateOf<String?>(null) }
     var resume_cancel_flow by remember { mutableStateOf(false) }
 
     LaunchedEffect(billing_state.error, show_cancel_flow) {
@@ -418,6 +432,7 @@ fun SubscriptionsScreen(
         has_stripe_subscription = sub.has_stripe_subscription,
     )
     val offer_yearly_switch = plan_alternatives_allowed &&
+        (!play_install || is_play_sub) &&
         current_interval == "month" &&
         yearly_savings != null &&
         api_yearly_cents != null
@@ -494,11 +509,10 @@ fun SubscriptionsScreen(
     val ends_at_period_end = sub?.cancel_at_period_end == true
     val free_teaser_tier = plan_tiers.firstOrNull { it.code == recommendation.recommended_plan_code }
         ?: plan_tiers.first { it.code == "nova" }
-    val free_teaser_monthly_cents = org.astermail.android.billing.api_plan_price_cents(
-        billing_state.available_plans,
-        free_teaser_tier.code,
-        "month",
-    )
+    val lowest_monthly_cents = plan_tiers
+        .filter { it.code !in FAMILY_PLAN_CODES }
+        .mapNotNull { org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, it.code, "month") }
+        .minOrNull()
     val yearly_badge_percent = org.astermail.android.billing.yearly_savings_percent(
         org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, "nova", "month"),
         org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, "nova", "year"),
@@ -642,8 +656,108 @@ fun SubscriptionsScreen(
             storage_limit_notice()
             v_gap(AsterSpacing.md)
         }
+        val history_count = billing_state.history.size
+        val addons = billing_state.storage_addons
+        val available_addons = if (play_install) {
+            org.astermail.android.billing.apply_play_addon_prices(
+                addons?.available_addons.orEmpty(),
+                billing_state.play_offers,
+                billing_state.play_addon_products,
+                addon_interval,
+            )
+        } else {
+            addons?.available_addons.orEmpty()
+        }
+        val active_addons = addons?.active_addons.orEmpty()
+        val has_addons = (!play_install || play_mode) && (available_addons.isNotEmpty() || active_addons.isNotEmpty())
+        val play_active_addon_ids = billing_state.play_active_addons.map { it.product_id }.toSet()
+        val play_yearly_addon_ids = billing_state.play_active_addons.filter { it.term_months == 12 }.map { it.product_id }.toSet()
+        val addons_sell_yearly = play_install &&
+            org.astermail.android.billing.play_addon_sells_yearly(billing_state.play_offers, billing_state.play_addon_products)
+        val addon_yearly_badge = if (addons_sell_yearly) {
+            org.astermail.android.billing.play_addon_yearly_savings_percent(billing_state.play_offers, billing_state.play_addon_products)
+                ?.takeIf { it > 0 }
+                ?.let { stringResource(R.string.save_percent, it) }
+        } else {
+            null
+        }
+        var show_plans by remember(is_paid_plan) { mutableStateOf(!is_paid_plan) }
+        var show_addons by remember(scroll_to_addons) { mutableStateOf(scroll_to_addons) }
+        var show_history by remember { mutableStateOf(false) }
+        val member_since_text = state.user?.created_at
+            ?.let { absolute_date_label(it) }
+            ?.takeIf { it.isNotBlank() }
+            ?.let { stringResource(R.string.billing_member_since_date, it) }
+        val period_end_label = absolute_date_label(billing_sub?.paid_until ?: sub?.current_period_end)
+        val price_text = if (sub != null && sub.effective_price_cents > 0) {
+            format_price(sub.effective_price_cents, detected_currency)
+        } else {
+            null
+        }
+        val hero_status = when {
+            !is_paid_plan -> billing_hero_status.free
+            payment_failed_due != null -> billing_hero_status.attention
+            ends_at_period_end -> billing_hero_status.ending
+            else -> billing_hero_status.active
+        }
+        val schedule_text = when {
+            !is_paid_plan || period_end_label.isBlank() -> null
+            is_crypto_sub && !play_install -> stringResource(R.string.billing_crypto_paid_until, period_end_label)
+            ends_at_period_end -> stringResource(R.string.ends_date, period_end_label)
+            else -> stringResource(R.string.renews_format, period_end_label)
+        }
+        val hero_plan_name = sub?.effective_plan_name
+            ?: if (state.error != null) stringResource(R.string.failed_to_load) else plan_free_label
+        val reactivating = billing_state.is_acting && billing_state.acting_action == "reactivate"
+        val hero_actions = buildList {
+            if (is_paid_plan && !ends_at_period_end) {
+                if (is_crypto_sub && !play_install) {
+                    add(
+                        billing_hero_action(
+                            label = stringResource(R.string.billing_crypto_renew_link),
+                            icon = billing_icon_renew,
+                            enabled = !billing_state.is_acting,
+                            on_click = {
+                                pending_plan_code = current_code
+                                pending_addon_id = null
+                                show_crypto_terms = true
+                            },
+                        ),
+                    )
+                }
+                if (current_code in FAMILY_PLAN_CODES && !play_install) {
+                    add(
+                        billing_hero_action(
+                            label = stringResource(R.string.manage_family),
+                            subtitle = stringResource(R.string.family_manage_web),
+                            icon = billing_icon_family,
+                            on_click = {
+                                org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.FAMILY_MANAGE_URL)
+                            },
+                        ),
+                    )
+                }
+                if (!is_crypto_sub && (!play_install || is_play_sub)) {
+                    add(
+                        billing_hero_action(
+                            label = stringResource(R.string.billing_manage_payment),
+                            icon = billing_icon_payment,
+                            loading = billing_state.is_acting && billing_state.acting_action == "portal",
+                            enabled = !billing_state.is_acting,
+                            on_click = { billing_vm.open_portal() },
+                        ),
+                    )
+                }
+            }
+        }
+        val yearly_monthly_equivalent = api_yearly_cents?.let { format_price(it / 12, detected_currency) }
+        val yearly_saved_cents = if (api_monthly_cents != null && api_yearly_cents != null) {
+            api_monthly_cents * 12 - api_yearly_cents
+        } else {
+            null
+        }
         if (sub == null && (state.is_loading || !plan_load_settled)) {
-            skeleton_hero_card(lines = 2)
+            skeleton_hero_card(lines = 3)
             v_gap(AsterSpacing.lg)
             skeleton_section_label()
             skeleton_card_list(rows = 3, trailing_width = 64.dp)
@@ -651,102 +765,111 @@ fun SubscriptionsScreen(
             skeleton_section_label()
             skeleton_card_list(rows = 2, trailing_width = 64.dp)
         } else {
-            section_label(stringResource(R.string.current_plan))
-            current_plan_card(
-                plan_name = sub?.effective_plan_name
-                    ?: if (state.error != null) stringResource(R.string.failed_to_load) else plan_free_label,
-                description = if (is_paid_plan) {
-                    current_tier?.let { stringResource(it.tagline_res) }
-                } else {
-                    stringResource(R.string.fix_billing_free_plan_description)
+            billing_hero_card(
+                plan_name = hero_plan_name,
+                status = hero_status,
+                status_text = when (hero_status) {
+                    billing_hero_status.free -> stringResource(R.string.free)
+                    billing_hero_status.active -> stringResource(R.string.active)
+                    billing_hero_status.ending -> stringResource(R.string.billing_status_ending)
+                    billing_hero_status.attention -> stringResource(R.string.billing_status_payment_needed)
                 },
-                discount = billing_sub?.active_discount_description?.takeIf { is_paid_plan && it.isNotBlank() },
-                is_paid = is_paid_plan,
-                price_text = if (sub != null && sub.effective_price_cents > 0) {
-                    format_price(sub.effective_price_cents, detected_currency)
-                } else {
+                member_since = member_since_text,
+                thanks_title = stringResource(if (is_paid_plan) R.string.billing_thanks_title else R.string.billing_thanks_free_title),
+                thanks_body = stringResource(if (is_paid_plan) R.string.billing_thanks_body else R.string.billing_thanks_free_body),
+                price_text = price_text,
+                interval_short = if (price_text == null) {
                     null
-                },
-                interval_short = if (current_interval == "year") {
+                } else if (current_interval == "year") {
                     stringResource(R.string.fix_billing_per_year_short)
                 } else {
                     stringResource(R.string.fix_billing_per_month_short)
                 },
-                billed_note = if (current_interval == "year") {
-                    stringResource(R.string.fix_billing_billed_yearly)
-                } else {
-                    stringResource(R.string.fix_billing_billed_monthly)
-                },
-                period_end = sub?.current_period_end,
-                ends_at_period_end = ends_at_period_end,
-                is_crypto = is_crypto_sub && !play_install,
-                paid_until = billing_sub?.paid_until ?: sub?.current_period_end,
+                schedule_text = schedule_text,
+                discount = billing_sub?.active_discount_description?.takeIf { is_paid_plan && it.isNotBlank() },
                 storage_used_bytes = storage_used_bytes,
                 storage_limit_bytes = storage_limit_bytes,
                 storage_over_limit = storage_over_limit,
-                is_acting = billing_state.is_acting,
-                acting_action = billing_state.acting_action,
-                show_yearly_switch = offer_yearly_switch && (!play_install || is_play_sub),
-                yearly_savings = yearly_savings ?: 0,
-                show_family_link = current_code in FAMILY_PLAN_CODES && !play_install,
-                show_manage_payment = is_paid_plan && !is_crypto_sub && (!play_install || is_play_sub),
-                show_cancel = can_cancel,
-                free_teaser = if (is_paid_plan) {
+                storage_action_label = if (has_addons && is_paid_plan) stringResource(R.string.billing_add_storage_link) else null,
+                on_storage_action = {
+                    show_addons = true
+                    coroutine_scope.launch {
+                        kotlinx.coroutines.delay(150)
+                        scroll_state.animateScrollTo(addons_section_offset.toInt().coerceAtLeast(0))
+                    }
+                },
+                usage = listOf(
+                    billing_usage_item(
+                        label = stringResource(R.string.aliases),
+                        current = maxOf(state.aliases.size, billing_state.limits?.limits?.get("max_email_aliases")?.current ?: 0),
+                        limit = billing_state.limits?.limits?.get("max_email_aliases")?.limit
+                            ?: fallback_alias_limit(current_code),
+                        loaded = billing_state.limits != null || sub != null,
+                    ),
+                    billing_usage_item(
+                        label = stringResource(R.string.custom_domains),
+                        current = maxOf(state.domains.size, billing_state.limits?.limits?.get("max_custom_domains")?.current ?: 0),
+                        limit = billing_state.limits?.limits?.get("max_custom_domains")?.limit
+                            ?: fallback_domain_limit(current_code),
+                        loaded = billing_state.limits != null || sub != null,
+                    ),
+                ),
+                on_usage_upgrade = if (is_paid_plan) {
                     null
                 } else {
-                    free_plan_teaser(
-                        plan_name = stringResource(free_teaser_tier.name_res),
-                        features = free_teaser_tier.features.take(3),
-                        price_note = free_teaser_monthly_cents?.let {
-                            stringResource(R.string.billing_free_upgrade_price_note, format_price(it, detected_currency))
-                        },
-                    )
+                    {
+                        show_plans = true
+                        coroutine_scope.launch {
+                            kotlinx.coroutines.delay(150)
+                            scroll_state.animateScrollTo(plans_section_offset.toInt().coerceAtLeast(0))
+                        }
+                    }
                 },
-                on_manage_payment = { if (!billing_state.is_acting) billing_vm.open_portal() },
-                on_reactivate = {
+                keep_title = if (ends_at_period_end && is_paid_plan) {
+                    stringResource(R.string.billing_keep_title, hero_plan_name, period_end_label)
+                } else {
+                    null
+                },
+                keep_body = stringResource(R.string.billing_keep_body),
+                keep_action = stringResource(R.string.billing_keep_action, hero_plan_name),
+                keep_loading = reactivating,
+                on_keep = {
                     if (!billing_state.is_acting) {
                         if (is_play_sub) billing_vm.open_portal() else billing_vm.reactivate_subscription()
                     }
                 },
-                on_cancel = {
-                    if (is_play_sub) {
-                        if (!billing_state.is_acting) billing_vm.open_portal()
-                    } else {
-                        show_cancel_flow = true
-                    }
+                primary_action = if (is_paid_plan) null else stringResource(R.string.upgrade_view_plans),
+                primary_note = lowest_monthly_cents?.let {
+                    stringResource(R.string.billing_free_upgrade_price_note, format_price(it, detected_currency))
                 },
-                on_switch_yearly = {
-                    if (is_play_sub) {
-                        if (!billing_state.is_acting) billing_vm.switch_billing("year")
-                    } else {
-                        show_switch_yearly = true
-                    }
-                },
-                on_family_manage = {
-                    org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.FAMILY_MANAGE_URL)
-                },
-                on_crypto_renew = {
-                    if (!billing_state.is_acting && !play_install) {
-                        pending_plan_code = current_code
-                        pending_addon_id = null
-                        show_crypto_terms = true
-                    }
-                },
-                on_upgrade = {
+                on_primary = {
+                    show_plans = true
                     coroutine_scope.launch {
+                        kotlinx.coroutines.delay(150)
                         scroll_state.animateScrollTo(plans_section_offset.toInt().coerceAtLeast(0))
                     }
                 },
-                on_add_storage = {
-                    coroutine_scope.launch {
-                        scroll_state.animateScrollTo(addons_section_offset.toInt().coerceAtLeast(0))
-                    }
+                actions = hero_actions,
+                danger_action = if (can_cancel && !ends_at_period_end) {
+                    billing_hero_action(
+                        label = stringResource(R.string.billing_cancel_plan),
+                        icon = TablerIcons.CircleX,
+                        color = colors.danger,
+                        on_click = {
+                            if (is_play_sub) {
+                                if (!billing_state.is_acting) billing_vm.open_portal()
+                            } else {
+                                show_cancel_flow = true
+                            }
+                        },
+                    )
+                } else {
+                    null
                 },
-                show_add_storage = !play_install || play_mode,
             )
         }
         if (lapsed != null && !lapsed_dismissed) {
-            v_gap(AsterSpacing.lg)
+            v_gap(AsterSpacing.md)
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(AsterSpacing.lg)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -803,102 +926,44 @@ fun SubscriptionsScreen(
             is_resumable_crypto_invoice(it, System.currentTimeMillis())
         }
         if (pending_invoice != null && !play_install) {
-            v_gap(AsterSpacing.lg)
+            v_gap(AsterSpacing.md)
             crypto_resume_card(
                 invoice = pending_invoice,
                 on_resume = { on_open_crypto_invoice(pending_invoice.id) },
             )
         }
-
-        val addons = billing_state.storage_addons
-        val available_addons = if (play_install) {
-            org.astermail.android.billing.apply_play_addon_prices(
-                addons?.available_addons.orEmpty(),
-                billing_state.play_offers,
-                billing_state.play_addon_products,
-                addon_interval,
+        if (offer_yearly_switch && !ends_at_period_end && yearly_monthly_equivalent != null && api_yearly_cents != null && api_monthly_cents != null && yearly_saved_cents != null && yearly_saved_cents > 0) {
+            v_gap(AsterSpacing.md)
+            billing_yearly_nudge_card(
+                monthly_equivalent = yearly_monthly_equivalent,
+                yearly_total = format_price(api_yearly_cents, detected_currency),
+                save_text = stringResource(R.string.billing_yearly_save_both, format_price(yearly_saved_cents, detected_currency), yearly_savings ?: 0),
+                on_switch = {
+                    if (is_play_sub) {
+                        if (!billing_state.is_acting) billing_vm.switch_billing("year")
+                    } else {
+                        show_switch_yearly = true
+                    }
+                },
+                enabled = !billing_state.is_acting,
             )
-        } else {
-            addons?.available_addons.orEmpty()
         }
-        val active_addons = addons?.active_addons.orEmpty()
-        val play_active_addon_ids = billing_state.play_active_addons.map { it.product_id }.toSet()
-        val play_yearly_addon_ids = billing_state.play_active_addons.filter { it.term_months == 12 }.map { it.product_id }.toSet()
-        val addons_sell_yearly = play_install &&
-            org.astermail.android.billing.play_addon_sells_yearly(billing_state.play_offers, billing_state.play_addon_products)
-        val addon_yearly_badge = if (addons_sell_yearly) {
-            org.astermail.android.billing.play_addon_yearly_savings_percent(billing_state.play_offers, billing_state.play_addon_products)
-                ?.takeIf { it > 0 }
-                ?.let { stringResource(R.string.save_percent, it) }
-        } else {
-            null
-        }
-        if ((!play_install || play_mode) && (available_addons.isNotEmpty() || active_addons.isNotEmpty())) {
-            v_gap(AsterSpacing.lg)
-            Box(
-                modifier = Modifier.onGloballyPositioned { coords ->
-                    addons_section_offset = coords.positionInParent().y
-                },
-            ) { section_label(stringResource(R.string.storage_addons_title)) }
-            storage_addons_card(
-                available = available_addons,
-                active = active_addons,
-                selected_id = selected_addon_id,
-                currency = detected_currency,
-                is_acting = billing_state.is_acting,
-                is_buying = billing_state.is_acting && billing_state.acting_action?.startsWith("addon_") == true,
-                interval = if (addons_sell_yearly) addon_interval else "month",
-                yearly_badge = addon_yearly_badge,
-                on_interval = if (addons_sell_yearly) {
-                    { next ->
-                        if (next != addon_interval) {
-                            addon_interval = next
-                            selected_addon_id = null
-                        }
-                    }
+        val advantages_tier = if (is_paid_plan) current_tier?.takeIf { it.code !in FAMILY_PLAN_CODES } else free_teaser_tier
+        if (advantages_tier != null && (sub != null || state.error == null)) {
+            v_gap(AsterSpacing.md)
+            billing_advantages_card(
+                title = if (is_paid_plan) {
+                    stringResource(R.string.billing_advantages_title_paid)
                 } else {
-                    null
+                    stringResource(R.string.billing_advantages_title_free, stringResource(advantages_tier.name_res))
                 },
-                price_label_for = { bytes, interval ->
-                    if (play_install) {
-                        org.astermail.android.billing.play_addon_price_label(
-                            billing_state.play_offers,
-                            billing_state.play_addon_products,
-                            bytes,
-                            interval,
-                        )
-                    } else {
-                        null
-                    }
-                },
-                active_interval_for = { bytes ->
-                    val product_id = if (play_install) {
-                        org.astermail.android.billing.play_addon_product_for(billing_state.play_addon_products, bytes)?.product_id
-                    } else {
-                        null
-                    }
-                    if (product_id != null && product_id in play_yearly_addon_ids) "year" else "month"
-                },
-                play_product_for = { bytes ->
-                    if (play_install) {
-                        org.astermail.android.billing.play_addon_product_for(billing_state.play_addon_products, bytes)
-                            ?.product_id
-                            ?.takeIf { it in play_active_addon_ids }
-                    } else {
-                        null
-                    }
-                },
-                on_manage_play = { product_id -> billing_vm.manage_play_addon(product_id) },
-                on_select = { id -> selected_addon_id = if (selected_addon_id == id) null else id },
-                on_buy = {
-                    val id = selected_addon_id
-                    if (id == null) {
-                        android.widget.Toast.makeText(context, select_addon_first, android.widget.Toast.LENGTH_SHORT).show()
-                    } else if (!billing_state.is_acting) {
-                        pending_addon_id = id
-                        pending_plan_code = null
-                        show_payment_picker = true
-                    }
+                rows = billing_advantage_rows(advantages_tier.code, comparison_feed),
+                more_label = stringResource(R.string.billing_see_all_features, stringResource(advantages_tier.name_res)),
+                show_free_values = !is_paid_plan,
+                on_more = {
+                    show_plans = true
+                    plan_type = "individual"
+                    compare_code = advantages_tier.code
                 },
             )
         }
@@ -909,247 +974,305 @@ fun SubscriptionsScreen(
                 plans_section_offset = coords.positionInParent().y
             },
         ) { section_label(stringResource(R.string.fix_billing_available_plans)) }
-        if (!play_install || play_mode) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                aster_tabs(
-                    value = plan_type,
-                    options = listOf(
-                        switcher_option(id = "individual", label = stringResource(R.string.billing_plan_type_individual)),
-                        switcher_option(id = "family", label = stringResource(R.string.billing_plan_type_family)),
-                    ),
-                    on_change = { plan_type = it },
+        if (!show_plans) {
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                billing_expander_row(
+                    title = stringResource(R.string.billing_compare_all_plans),
+                    subtitle = stringResource(R.string.billing_compare_all_plans_subtitle),
+                    icon = TablerIcons.LayoutGrid,
+                    expanded = false,
+                    on_toggle = { show_plans = true },
                 )
             }
-            v_gap(AsterSpacing.sm)
-        }
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            billing_interval_toggle(
-                selected = billing_interval,
-                on_select = { billing_interval = it },
-                yearly_badge = yearly_badge_percent?.takeIf { it > 0 }?.let { stringResource(R.string.save_percent, it) },
+        } else {
+            if (!play_install || play_mode) {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    aster_segmented(
+                        value = plan_type,
+                        options = listOf(
+                            switcher_option(id = "individual", label = stringResource(R.string.billing_plan_type_individual)),
+                            switcher_option(id = "family", label = stringResource(R.string.billing_plan_type_family)),
+                        ),
+                        on_change = { plan_type = it },
+                    )
+                }
+                v_gap(AsterSpacing.md)
+            }
+            plan_recommendation_banner(
+                recommendation = recommendation,
+                current_plan_name = current_plan_name,
+                recommended_tier_name = recommended_tier_name,
             )
-        }
-        v_gap(AsterSpacing.sm)
-        Text(
-            text = if (detected_currency.equals("usd", ignoreCase = true)) {
-                stringResource(R.string.settings_prices_usd_note)
-            } else {
-                stringResource(R.string.settings_prices_currency_note, detected_currency.uppercase())
-            },
-            color = colors.text_tertiary,
-            fontSize = 12.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        v_gap(AsterSpacing.md)
-        plan_recommendation_banner(
-            recommendation = recommendation,
-            current_plan_name = current_plan_name,
-            recommended_tier_name = recommended_tier_name,
-        )
-        val current_rank = tier_rank(current_code)
-        val paid_stripe_current = current_rank >= 0 && (sub?.effective_price_cents ?: 0) > 0
-        val effective_plan_type = if (play_install && !play_mode) "individual" else plan_type
-        val visible_tiers = plan_tiers.filter { (it.code in FAMILY_PLAN_CODES) == (effective_plan_type == "family") }
-        visible_tiers.forEach { tier ->
-            val is_downgrade = paid_stripe_current && !play_install && tier_rank(tier.code) < current_rank
-            val is_interval_switch = tier.code == current_code &&
-                offer_yearly_switch &&
-                (!play_install || is_play_sub) &&
-                billing_interval == "year"
-            plan_tier_card(
-                tier = tier,
+            val current_rank = tier_rank(current_code)
+            val paid_stripe_current = current_rank >= 0 && (sub?.effective_price_cents ?: 0) > 0
+            val all_plan_options = plan_tiers.map { tier ->
+                val is_interval_switch = tier.code == current_code && offer_yearly_switch && billing_interval == "year"
+                billing_plan_option(
+                    code = tier.code,
+                    name = stringResource(tier.name_res),
+                    tagline = stringResource(tier.tagline_res),
+                    monthly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, tier.code, "month"),
+                    yearly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, tier.code, "year"),
+                    is_current = tier.code == current_code && !is_interval_switch,
+                    is_recommended = recommendation.recommended_plan_code == tier.code,
+                    is_downgrade = paid_stripe_current && !play_install && tier_rank(tier.code) < current_rank,
+                    is_interval_switch = is_interval_switch,
+                )
+            }
+            val individual_plan_options = all_plan_options.filter { it.code !in FAMILY_PLAN_CODES }
+            val family_plan_options = all_plan_options.filter { it.code in FAMILY_PLAN_CODES }
+            val effective_plan_type = if (play_install && !play_mode) "individual" else plan_type
+            val plan_options = if (effective_plan_type == "family") family_plan_options else individual_plan_options
+            var selected_plan_code by remember(effective_plan_type) {
+                mutableStateOf(
+                    plan_options.firstOrNull { it.is_recommended && !it.is_current }?.code
+                        ?: plan_options.firstOrNull { !it.is_current }?.code,
+                )
+            }
+            val see_pricing: () -> Unit = {
+                if (play_install) {
+                    billing_vm.load_plans()
+                } else {
+                    org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.PRICING_URL)
+                }
+            }
+            val choose_plan: (billing_plan_option) -> Unit = { option ->
+                if (option.is_interval_switch && is_play_sub) {
+                    if (!billing_state.is_acting) billing_vm.switch_billing("year")
+                } else if (option.is_interval_switch) {
+                    show_switch_yearly = true
+                } else if (option.is_downgrade) {
+                    pending_downgrade_code = option.code
+                } else {
+                    pending_plan_code = option.code
+                    pending_addon_id = null
+                    show_payment_picker = true
+                }
+            }
+            billing_plan_picker(
+                options = plan_options,
                 billing_interval = billing_interval,
-                is_current = tier.code == current_code && !is_interval_switch,
-                is_interval_switch = is_interval_switch,
-                is_downgrade = is_downgrade,
-                is_recommended = recommendation.recommended_plan_code == tier.code,
-                is_free_user = current_code == "free",
-                monthly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, tier.code, "month"),
-                yearly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, tier.code, "year"),
+                on_interval_change = { billing_interval = it },
                 currency = detected_currency,
-                price_label = if (play_install && billing_interval != "year") {
-                    org.astermail.android.billing.play_price_label(
-                        billing_state.play_offers,
-                        billing_state.play_products,
-                        tier.code,
-                        "month",
-                    )
-                } else {
-                    null
-                },
-                yearly_total_label = if (play_install) {
-                    org.astermail.android.billing.play_price_label(
-                        billing_state.play_offers,
-                        billing_state.play_products,
-                        tier.code,
-                        "year",
-                    )
-                } else {
-                    null
-                },
+                selected_code = selected_plan_code,
+                on_select = { selected_plan_code = it },
+                busy = billing_state.is_acting,
                 plans_failed = billing_state.plans_failed,
-                on_see_pricing = {
-                    if (play_install) {
-                        billing_vm.load_plans()
-                    } else {
-                        org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.PRICING_URL)
-                    }
-                },
-                on_choose = {
-                    if (is_interval_switch && is_play_sub) {
-                        if (!billing_state.is_acting) billing_vm.switch_billing("year")
-                    } else if (is_interval_switch) {
-                        show_switch_yearly = true
-                    } else if (is_downgrade) {
-                        pending_downgrade_code = tier.code
-                    } else {
-                        pending_plan_code = tier.code
-                        pending_addon_id = null
-                        show_payment_picker = true
-                    }
-                },
+                on_choose = choose_plan,
+                on_see_pricing = see_pricing,
+                on_compare = { compare_code = it },
+                compare_label = comparison_feed?.let { feed ->
+                    pluralStringResource(R.plurals.billing_compare_all_features, feed.row_count, feed.row_count)
+                } ?: stringResource(R.string.billing_compare_title),
             )
-            v_gap(AsterSpacing.md)
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = TablerIcons.ShieldCheck,
-                contentDescription = null,
-                tint = colors.text_tertiary,
-                modifier = Modifier.size(14.dp),
-            )
-            Spacer(Modifier.width(6.dp))
+            v_gap(AsterSpacing.sm)
             Text(
-                text = if (play_install) {
-                    stringResource(R.string.billing_cancel_anytime)
+                text = if (detected_currency.equals("usd", ignoreCase = true)) {
+                    stringResource(R.string.settings_prices_usd_note)
                 } else {
-                    stringResource(R.string.billing_money_back_guarantee) + "  ·  " + stringResource(R.string.billing_cancel_anytime)
+                    stringResource(R.string.settings_prices_currency_note, detected_currency.uppercase())
                 },
                 color = colors.text_tertiary,
                 fontSize = 12.sp,
-            )
-        }
-        if (play_install) {
-            v_gap(AsterSpacing.sm)
-            Text(
-                text = stringResource(R.string.billing_play_restore_purchases),
-                color = colors.accent_blue,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp)
-                    .clip(SquircleShape(10.dp))
-                    .clickable(role = Role.Button, enabled = !billing_state.is_acting) {
-                        billing_vm.restore_play_purchases()
-                    }
-                    .padding(vertical = 14.dp),
+                modifier = Modifier.fillMaxWidth(),
             )
-        }
-        if (!play_install) {
-            v_gap(AsterSpacing.sm)
-            Text(
-                text = stringResource(R.string.view_all_features),
-                color = colors.accent_blue,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp)
-                    .clip(SquircleShape(10.dp))
-                    .clickable(role = Role.Button) {
-                        org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.PRICING_URL)
-                    }
-                    .padding(vertical = 14.dp),
-            )
+            compare_code?.let { code ->
+                billing_compare_sheet(
+                    feed = comparison_feed,
+                    individual_options = individual_plan_options,
+                    family_options = family_plan_options,
+                    initial_type = if (code in FAMILY_PLAN_CODES) "family" else "individual",
+                    initial_code = code,
+                    current_code = if (sub != null) current_code else null,
+                    currency = detected_currency,
+                    billing_interval = billing_interval,
+                    on_interval_change = { billing_interval = it },
+                    busy = billing_state.is_acting,
+                    on_choose = { option ->
+                        compare_code = null
+                        choose_plan(option)
+                    },
+                    on_see_pricing = see_pricing,
+                    on_dismiss = { compare_code = null },
+                )
+            }
         }
 
         v_gap(AsterSpacing.lg)
-        section_label(stringResource(R.string.billing_history))
-        billing_history_card(
-            history = billing_state.history,
-            on_open_pdf = { open_external_url(context, it) },
-        )
-
-        if (!play_install) {
-            v_gap(AsterSpacing.lg)
-            section_label(stringResource(R.string.credits_title))
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.CREDITS_URL) },
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.credits_balance_label),
-                            color = colors.text_primary,
-                            fontSize = 15.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Spacer(Modifier.width(AsterSpacing.sm))
-                        Text(
-                            text = billing_state.credits?.let { format_price(it.balance_cents.toInt(), detected_currency) }
-                                ?: stringResource(R.string.credits_unavailable),
-                            color = colors.text_tertiary,
-                            fontSize = 13.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    Spacer(Modifier.height(AsterSpacing.md))
-                    settings_row_gap()
-                    Spacer(Modifier.height(AsterSpacing.md))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.ACADEMIC_URL) },
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.academic_discount_label),
-                            color = colors.text_primary,
-                            fontSize = 15.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Spacer(Modifier.width(AsterSpacing.sm))
-                        Text(
-                            text = when (billing_state.academic?.status) {
-                                "verified" -> stringResource(R.string.academic_status_verified)
-                                "pending" -> stringResource(R.string.academic_status_pending)
-                                null -> stringResource(R.string.credits_unavailable)
-                                else -> stringResource(R.string.academic_status_none)
+        Box(
+            modifier = Modifier.onGloballyPositioned { coords ->
+                addons_section_offset = coords.positionInParent().y
+            },
+        ) { section_label(stringResource(R.string.billing_more_title)) }
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            if (has_addons) {
+                billing_expander_row(
+                    title = stringResource(R.string.billing_add_storage_link),
+                    subtitle = stringResource(R.string.billing_addons_subtitle),
+                    icon = billing_icon_storage,
+                    expanded = show_addons,
+                    on_toggle = { show_addons = !show_addons },
+                )
+                if (show_addons) {
+                    Column(modifier = Modifier.padding(bottom = AsterSpacing.xs)) {
+                        billing_addons_panel(
+                            available = available_addons,
+                            active = active_addons,
+                            selected_id = selected_addon_id,
+                            currency = detected_currency,
+                            is_acting = billing_state.is_acting,
+                            is_buying = billing_state.is_acting && billing_state.acting_action?.startsWith("addon_") == true,
+                            interval = if (addons_sell_yearly) addon_interval else "month",
+                            yearly_badge = addon_yearly_badge,
+                            on_interval = if (addons_sell_yearly) {
+                                { next ->
+                                    if (next != addon_interval) {
+                                        addon_interval = next
+                                        selected_addon_id = null
+                                    }
+                                }
+                            } else {
+                                null
                             },
-                            color = colors.text_tertiary,
-                            fontSize = 13.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                            price_label_for = { bytes, interval ->
+                                if (play_install) {
+                                    org.astermail.android.billing.play_addon_price_label(
+                                        billing_state.play_offers,
+                                        billing_state.play_addon_products,
+                                        bytes,
+                                        interval,
+                                    )
+                                } else {
+                                    null
+                                }
+                            },
+                            active_interval_for = { bytes ->
+                                val product_id = if (play_install) {
+                                    org.astermail.android.billing.play_addon_product_for(billing_state.play_addon_products, bytes)?.product_id
+                                } else {
+                                    null
+                                }
+                                if (product_id != null && product_id in play_yearly_addon_ids) "year" else "month"
+                            },
+                            play_product_for = { bytes ->
+                                if (play_install) {
+                                    org.astermail.android.billing.play_addon_product_for(billing_state.play_addon_products, bytes)
+                                        ?.product_id
+                                        ?.takeIf { it in play_active_addon_ids }
+                                } else {
+                                    null
+                                }
+                            },
+                            on_manage_play = { product_id -> billing_vm.manage_play_addon(product_id) },
+                            on_select = { id -> selected_addon_id = if (selected_addon_id == id) null else id },
+                            on_buy = {
+                                val id = selected_addon_id
+                                if (id == null) {
+                                    android.widget.Toast.makeText(context, select_addon_first, android.widget.Toast.LENGTH_SHORT).show()
+                                } else if (!billing_state.is_acting) {
+                                    pending_addon_id = id
+                                    pending_plan_code = null
+                                    show_payment_picker = true
+                                }
+                            },
                         )
                     }
-                    Spacer(Modifier.height(AsterSpacing.sm))
-                    Text(
-                        text = stringResource(R.string.credits_manage_web),
-                        color = colors.text_muted,
-                        fontSize = 12.sp,
+                }
+                settings_row_gap()
+            }
+            billing_expander_row(
+                title = stringResource(R.string.billing_history),
+                subtitle = if (history_count == 0) {
+                    stringResource(R.string.fix_billing_history_empty)
+                } else {
+                    pluralStringResource(R.plurals.billing_invoice_count, history_count, history_count)
+                },
+                icon = TablerIcons.Receipt,
+                expanded = show_history,
+                on_toggle = { show_history = !show_history },
+            )
+            if (show_history) {
+                Column(modifier = Modifier.padding(bottom = AsterSpacing.xs)) {
+                    billing_history_list(
+                        history = billing_state.history,
+                        on_open_pdf = { open_external_url(context, it) },
                     )
                 }
             }
+            if (play_install) {
+                settings_row_gap()
+                detail_row(
+                    title = stringResource(R.string.billing_play_restore_purchases),
+                    icon = billing_icon_renew,
+                    on_click = { if (!billing_state.is_acting) billing_vm.restore_play_purchases() },
+                )
+            }
+            if (!play_install) {
+            settings_row_gap()
+            detail_row(
+                title = stringResource(R.string.credits_balance_label),
+                subtitle = stringResource(R.string.billing_credits_subtitle),
+                icon = TablerIcons.Coin,
+                value = billing_state.credits?.let { format_price(it.balance_cents.toInt(), detected_currency) }
+                    ?: stringResource(R.string.credits_unavailable),
+                on_click = { show_credits = true },
+            )
+            settings_row_gap()
+            detail_row(
+                title = stringResource(R.string.academic_discount_label),
+                subtitle = stringResource(R.string.billing_academic_subtitle),
+                icon = TablerIcons.School,
+                value = when (billing_state.academic?.status) {
+                    "verified" -> stringResource(R.string.academic_status_verified)
+                    "pending" -> stringResource(R.string.academic_status_pending)
+                    null -> stringResource(R.string.credits_unavailable)
+                    else -> stringResource(R.string.academic_status_none)
+                },
+                on_click = { show_academic = true },
+            )
+            }
+            settings_row_gap()
+            detail_row(
+                title = stringResource(R.string.contact_support),
+                subtitle = stringResource(R.string.billing_support_subtitle),
+                icon = TablerIcons.Messages,
+                on_click = { on_open("feedback") },
+            )
         }
         v_gap(AsterSpacing.xxl)
+    }
+
+    if (show_credits) {
+        billing_credits_sheet(
+            balance_cents = billing_state.credits?.balance_cents,
+            currency = detected_currency,
+            use_for_renewals = billing_state.credits?.use_credits_for_renewals == true,
+            settings_saving = billing_state.credit_settings_saving,
+            packages = billing_state.credit_packages,
+            busy = billing_state.is_acting,
+            acting_action = billing_state.acting_action,
+            on_toggle_renewals = { billing_vm.set_use_credits_for_renewals(it) },
+            on_buy = { package_id, crypto -> billing_vm.purchase_credits(package_id, detected_currency, crypto) },
+            on_dismiss = { show_credits = false },
+        )
+    }
+
+    if (show_academic) {
+        billing_academic_dialog(
+            status = billing_state.academic?.status,
+            promo_code = billing_state.academic?.promo_code,
+            code_expires_at = billing_state.academic?.code_expires_at,
+            submitting = billing_state.academic_submitting,
+            sent = billing_state.academic_sent,
+            error = billing_state.academic_error,
+            on_send = { email, token -> billing_vm.request_academic_discount(email, token) },
+            on_resend = { token -> billing_vm.resend_academic_verification(token) },
+            on_dismiss = {
+                show_academic = false
+                billing_vm.reset_academic_form()
+            },
+        )
     }
 
     LaunchedEffect(show_payment_picker, play_install) {
@@ -1250,10 +1373,16 @@ fun SubscriptionsScreen(
             ),
             body = {
                 Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-                    billing_interval_toggle(
-                        selected = downgrade_interval,
-                        on_select = { downgrade_interval = it },
-                    )
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        aster_segmented(
+                            value = downgrade_interval,
+                            options = listOf(
+                                switcher_option(id = "month", label = stringResource(R.string.settings_billing_monthly)),
+                                switcher_option(id = "year", label = stringResource(R.string.settings_billing_yearly)),
+                            ),
+                            on_change = { downgrade_interval = it },
+                        )
+                    }
                     plan_change_preview_text(billing_state)
                 }
             },
@@ -1287,7 +1416,7 @@ fun SubscriptionsScreen(
         LaunchedEffect(Unit) { billing_vm.load_cancel_impact() }
         cancel_subscription_flow(
             billing_state = billing_state,
-            yearly_savings = if (offer_yearly_switch && (!play_install || is_play_sub)) yearly_savings else null,
+            yearly_savings = if (offer_yearly_switch) yearly_savings else null,
             downgrade_offer_label = cancel_offer_label.takeIf { !play_install },
             on_switch_plan = {
                 show_cancel_flow = false
@@ -1298,6 +1427,12 @@ fun SubscriptionsScreen(
                 show_cancel_flow = false
                 resume_cancel_flow = true
                 show_switch_yearly = true
+            },
+            on_contact_support = {
+                show_cancel_flow = false
+                resume_cancel_flow = false
+                billing_vm.clear_messages()
+                on_open("feedback")
             },
             on_dismiss = {
                 show_cancel_flow = false
@@ -1409,7 +1544,75 @@ private fun cancel_reason_label(reason: String): Int = when (reason) {
     else -> R.string.cancel_reason_other
 }
 
-private enum class CancelStep { reason, impact, confirm }
+private enum class CancelStep { reason, offer, impact, confirm }
+
+private enum class CancelOffer { price, unused, missing, none }
+
+private fun cancel_offer_for(reason: String?): CancelOffer = when (reason) {
+    "too_expensive" -> CancelOffer.price
+    "not_using" -> CancelOffer.unused
+    "missing_feature", "bugs" -> CancelOffer.missing
+    else -> CancelOffer.none
+}
+
+@Composable
+private fun cancel_offer_row(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, on_click: () -> Unit) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clip(SquircleShape(12.dp))
+            .clickable(role = Role.Button, onClick = on_click)
+            .padding(horizontal = AsterSpacing.sm, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = colors.accent_blue,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(AsterSpacing.sm))
+        Text(
+            text = label,
+            color = colors.accent_blue,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f),
+        )
+        Icon(
+            imageVector = TablerIcons.ChevronRight,
+            contentDescription = null,
+            tint = colors.accent_blue,
+            modifier = Modifier.size(16.dp),
+        )
+    }
+}
+
+@Composable
+private fun cancel_impact_lines(impact: org.astermail.android.api.billing.CancelImpactResponse?): List<String> {
+    val context = LocalContext.current
+    return buildList {
+        if (impact != null) {
+            if (impact.aliases_to_disable > 0) add(pluralStringResource(R.plurals.cancel_impact_aliases, impact.aliases_to_disable, impact.aliases_to_disable))
+            if (impact.domains_to_suspend > 0) add(pluralStringResource(R.plurals.cancel_impact_domains, impact.domains_to_suspend, impact.domains_to_suspend))
+            if (impact.storage_over_limit) {
+                add(
+                    stringResource(
+                        R.string.cancel_impact_storage,
+                        android.text.format.Formatter.formatShortFileSize(context, impact.storage_used_bytes),
+                        android.text.format.Formatter.formatShortFileSize(context, impact.storage_limit_after_bytes),
+                    ),
+                )
+            }
+            if (impact.templates_to_disable > 0) add(pluralStringResource(R.plurals.cancel_impact_templates, impact.templates_to_disable, impact.templates_to_disable))
+            if (impact.signatures_to_disable > 0) add(pluralStringResource(R.plurals.cancel_impact_signatures, impact.signatures_to_disable, impact.signatures_to_disable))
+            if (impact.catch_all_to_revoke > 0) add(stringResource(R.string.cancel_impact_catch_all))
+            if (impact.family_members_affected > 0) add(pluralStringResource(R.plurals.cancel_impact_family, impact.family_members_affected, impact.family_members_affected))
+        }
+    }
+}
 
 @Composable
 private fun cancel_subscription_flow(
@@ -1418,6 +1621,7 @@ private fun cancel_subscription_flow(
     downgrade_offer_label: String?,
     on_switch_plan: () -> Unit,
     on_switch_yearly: () -> Unit,
+    on_contact_support: () -> Unit,
     on_dismiss: () -> Unit,
     on_confirm: (reason: String?, reason_text: String?) -> Boolean,
 ) {
@@ -1432,27 +1636,73 @@ private fun cancel_subscription_flow(
             if (billing_state.error == null) on_dismiss() else submitted = false
         }
     }
-    if (step == CancelStep.impact) {
-        val impact = billing_state.cancel_impact
-        val lines = buildList {
-            if (impact != null) {
-                if (impact.aliases_to_disable > 0) add(androidx.compose.ui.res.pluralStringResource(R.plurals.cancel_impact_aliases, impact.aliases_to_disable, impact.aliases_to_disable))
-                if (impact.domains_to_suspend > 0) add(androidx.compose.ui.res.pluralStringResource(R.plurals.cancel_impact_domains, impact.domains_to_suspend, impact.domains_to_suspend))
-                if (impact.storage_over_limit) {
-                    add(
-                        stringResource(
-                            R.string.cancel_impact_storage,
-                            android.text.format.Formatter.formatShortFileSize(LocalContext.current, impact.storage_used_bytes),
-                            android.text.format.Formatter.formatShortFileSize(LocalContext.current, impact.storage_limit_after_bytes),
-                        ),
-                    )
+    val impact = billing_state.cancel_impact
+    val lines = cancel_impact_lines(impact)
+    val offer = cancel_offer_for(reason)
+    val offer_available = when (offer) {
+        CancelOffer.price -> downgrade_offer_label != null || yearly_savings != null
+        CancelOffer.unused -> lines.isNotEmpty()
+        CancelOffer.missing -> true
+        CancelOffer.none -> false
+    }
+    val continue_label = stringResource(R.string.billing_cancel_continue)
+    if (step == CancelStep.offer) {
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = on_dismiss,
+            title = when (offer) {
+                CancelOffer.price -> stringResource(R.string.billing_cancel_offer_title_price)
+                CancelOffer.unused -> stringResource(R.string.billing_cancel_offer_title_unused)
+                else -> stringResource(R.string.billing_cancel_offer_title_missing)
+            },
+            message = when (offer) {
+                CancelOffer.price -> stringResource(R.string.billing_cancel_offer_body_price)
+                CancelOffer.unused -> stringResource(R.string.billing_cancel_offer_body_unused)
+                else -> stringResource(R.string.billing_cancel_offer_body_missing)
+            },
+            body = {
+                Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
+                    when (offer) {
+                        CancelOffer.price -> {
+                            if (downgrade_offer_label != null) {
+                                cancel_offer_row(downgrade_offer_label, TablerIcons.ArrowDown, on_switch_plan)
+                            }
+                            if (yearly_savings != null) {
+                                cancel_offer_row(stringResource(R.string.switch_yearly_save, yearly_savings), TablerIcons.Calendar, on_switch_yearly)
+                            }
+                        }
+                        CancelOffer.unused -> {
+                            lines.forEach { line ->
+                                Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
+                                    Icon(
+                                        imageVector = TablerIcons.Check,
+                                        contentDescription = null,
+                                        tint = colors.success,
+                                        modifier = Modifier.size(16.dp),
+                                    )
+                                    Text(text = line, color = colors.text_primary, fontSize = 13.sp)
+                                }
+                            }
+                        }
+                        else -> {
+                            cancel_offer_row(stringResource(R.string.contact_support), TablerIcons.Messages, on_contact_support)
+                        }
+                    }
                 }
-                if (impact.templates_to_disable > 0) add(androidx.compose.ui.res.pluralStringResource(R.plurals.cancel_impact_templates, impact.templates_to_disable, impact.templates_to_disable))
-                if (impact.signatures_to_disable > 0) add(androidx.compose.ui.res.pluralStringResource(R.plurals.cancel_impact_signatures, impact.signatures_to_disable, impact.signatures_to_disable))
-                if (impact.catch_all_to_revoke > 0) add(stringResource(R.string.cancel_impact_catch_all))
-                if (impact.family_members_affected > 0) add(androidx.compose.ui.res.pluralStringResource(R.plurals.cancel_impact_family, impact.family_members_affected, impact.family_members_affected))
-            }
-        }
+            },
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = continue_label,
+                    onClick = { step = CancelStep.impact },
+                    modifier = Modifier.weight(1f),
+                )
+                org.astermail.android.design.components.AsterDialogPrimaryButton(
+                    label = stringResource(R.string.keep_plan),
+                    onClick = on_dismiss,
+                    modifier = Modifier.weight(1f),
+                )
+            },
+        )
+    } else if (step == CancelStep.impact) {
         org.astermail.android.design.components.AsterDialog(
             on_dismiss = on_dismiss,
             title = stringResource(R.string.cancel_impact_title),
@@ -1462,87 +1712,35 @@ private fun cancel_subscription_flow(
                 lines.isEmpty() -> stringResource(R.string.cancel_impact_none)
                 else -> stringResource(R.string.cancel_impact_intro)
             },
-            body = {
-                Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs)) {
-                    lines.forEach { line ->
-                        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-                            Icon(
-                                imageVector = TablerIcons.AlertTriangle,
-                                contentDescription = null,
-                                tint = colors.danger,
-                                modifier = Modifier.size(16.dp),
-                            )
-                            Text(text = line, color = colors.text_primary, fontSize = 13.sp)
-                        }
-                    }
-                    if (downgrade_offer_label != null) {
-                        Spacer(Modifier.height(AsterSpacing.xs))
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 48.dp)
-                                .clip(SquircleShape(10.dp))
-                                .acrylic(colors, SquircleShape(10.dp), colors.bg_secondary)
-                                .border(1.dp, colors.border_primary, SquircleShape(10.dp))
-                                .clickable(role = Role.Button, onClick = on_switch_plan)
-                                .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = downgrade_offer_label,
-                                color = colors.accent_blue,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.weight(1f),
-                            )
-                            Icon(
-                                imageVector = TablerIcons.ChevronRight,
-                                contentDescription = null,
-                                tint = colors.accent_blue,
-                                modifier = Modifier.size(16.dp),
-                            )
-                        }
-                    }
-                    if (yearly_savings != null) {
-                        Spacer(Modifier.height(AsterSpacing.xs))
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 48.dp)
-                                .clip(SquircleShape(10.dp))
-                                .acrylic(colors, SquircleShape(10.dp), colors.bg_secondary)
-                                .border(1.dp, colors.border_primary, SquircleShape(10.dp))
-                                .clickable(role = Role.Button, onClick = on_switch_yearly)
-                                .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = stringResource(R.string.switch_yearly_save, yearly_savings),
-                                color = colors.accent_blue,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.weight(1f),
-                            )
-                            Icon(
-                                imageVector = TablerIcons.ChevronRight,
-                                contentDescription = null,
-                                tint = colors.accent_blue,
-                                modifier = Modifier.size(16.dp),
-                            )
+            body = if (lines.isEmpty()) {
+                null
+            } else {
+                {
+                    Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs)) {
+                        lines.forEach { line ->
+                            Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
+                                Icon(
+                                    imageVector = TablerIcons.AlertTriangle,
+                                    contentDescription = null,
+                                    tint = colors.danger,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                                Text(text = line, color = colors.text_primary, fontSize = 13.sp)
+                            }
                         }
                     }
                 }
             },
             footer = {
                 org.astermail.android.design.components.AsterDialogOutlineButton(
-                    label = stringResource(R.string.back),
-                    onClick = { step = CancelStep.reason },
+                    label = continue_label,
+                    onClick = { step = CancelStep.confirm },
+                    enabled = !billing_state.cancel_impact_loading,
                     modifier = Modifier.weight(1f),
                 )
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
-                    label = stringResource(R.string.next),
-                    onClick = { step = CancelStep.confirm },
-                    enabled = !billing_state.cancel_impact_loading,
+                    label = stringResource(R.string.keep_plan),
+                    onClick = on_dismiss,
                     modifier = Modifier.weight(1f),
                 )
             },
@@ -1559,34 +1757,12 @@ private fun cancel_subscription_flow(
                 ) {
                     org.astermail.android.billing.CANCEL_REASONS.forEach { option ->
                         val active = reason == option
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 48.dp)
-                                .clip(SquircleShape(10.dp))
-                                .background(if (active) colors.bg_secondary else Color.Transparent)
-                                .selectable(
-                                    selected = active,
-                                    role = Role.RadioButton,
-                                    onClick = { reason = if (active) null else option },
-                                )
-                                .padding(horizontal = AsterSpacing.sm, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(18.dp)
-                                    .clip(CircleShape)
-                                    .border(if (active) 6.dp else 1.5.dp, if (active) colors.accent_blue else colors.input_border, CircleShape),
-                            )
-                            Text(
-                                text = stringResource(cancel_reason_label(option)),
-                                color = colors.text_primary,
-                                fontSize = 14.sp,
-                                fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
-                            )
-                        }
+                        billing_option_row(
+                            title = stringResource(cancel_reason_label(option)),
+                            selected = active,
+                            on_click = { reason = if (active) null else option },
+                            modifier = Modifier.clip(billing_control_shape),
+                        )
                     }
                     Spacer(Modifier.height(AsterSpacing.xs))
                     AsterTextField(
@@ -1607,7 +1783,7 @@ private fun cancel_subscription_flow(
                 )
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
                     label = stringResource(R.string.next),
-                    onClick = { step = CancelStep.impact },
+                    onClick = { step = if (offer_available) CancelStep.offer else CancelStep.impact },
                     modifier = Modifier.weight(1f),
                 )
             },
@@ -1668,38 +1844,22 @@ private fun crypto_resume_card(
     invoice: org.astermail.android.api.billing.CryptoNativePendingInvoice,
     on_resume: () -> Unit,
 ) {
-    val colors = AsterMaterial.colors
     val coin_label = invoice.display_name.ifBlank { invoice.currency.uppercase() }
+    val expires = invoice.expires_at.takeIf { it.isNotBlank() }?.let { absolute_date_label(it) }
+    val pay_with = stringResource(R.string.crypto_native_invoice_title, coin_label)
     AsterCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = TablerIcons.Clock,
-                    contentDescription = null,
-                    tint = colors.accent_blue,
-                    modifier = Modifier.size(20.dp),
+        detail_row(
+            title = stringResource(R.string.billing_crypto_resume_title),
+            subtitle = if (expires == null) pay_with else pay_with + "  ·  " + stringResource(R.string.billing_crypto_resume_expires, expires),
+            icon = TablerIcons.Clock,
+            on_click = on_resume,
+            trailing = {
+                billing_action_text(
+                    label = stringResource(R.string.crypto_native_pending_banner_action),
+                    on_click = on_resume,
                 )
-                Spacer(Modifier.width(AsterSpacing.md))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.crypto_native_pending_banner),
-                        color = colors.text_primary,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        text = stringResource(R.string.crypto_native_invoice_title, coin_label),
-                        color = colors.text_tertiary,
-                        fontSize = 12.sp,
-                    )
-                }
-            }
-            Spacer(Modifier.height(AsterSpacing.md))
-            AsterButton(
-                label = stringResource(R.string.crypto_native_pending_banner_action),
-                onClick = on_resume,
-            )
-        }
+            },
+        )
     }
 }
 
@@ -1724,39 +1884,19 @@ internal fun crypto_term_dialog(
         on_dismiss = on_dismiss,
         title = stringResource(R.string.crypto_term_title),
         body = {
-            Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+                modifier = Modifier.selectableGroup(),
+            ) {
                 terms.forEach { (months, label) ->
                     val term_active = selected_term == months
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(SquircleShape(10.dp))
-                            .background(if (term_active) colors.accent_blue else colors.bg_secondary)
-                            .border(1.dp, if (term_active) colors.accent_blue else colors.border_secondary, SquircleShape(10.dp))
-                            .clickable { selected_term = months }
-                            .padding(AsterSpacing.md),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                label,
-                                color = if (term_active) colors.on_accent else colors.text_primary,
-                                fontSize = 14.sp,
-                                fontWeight = if (term_active) FontWeight.SemiBold else FontWeight.Normal,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            offer_prices[months]?.let { term_offer ->
-                                Spacer(Modifier.height(AsterSpacing.xs))
-                                offer_price_line(term_offer, on_accent = term_active)
-                            }
-                        }
-                        if (term_active) {
-                            Spacer(Modifier.width(AsterSpacing.sm))
-                            Icon(TablerIcons.Check, null, tint = colors.on_accent, modifier = Modifier.size(18.dp))
-                        }
-                    }
+                    billing_option_row(
+                        title = label,
+                        selected = term_active,
+                        on_click = { selected_term = months },
+                        modifier = Modifier.clip(billing_control_shape),
+                        below = offer_prices[months]?.let { term_offer -> { offer_price_line(term_offer) } },
+                    )
                 }
             }
         },
@@ -1786,16 +1926,15 @@ private fun crypto_coin_dialog(
         on_dismiss = on_dismiss,
         title = stringResource(R.string.crypto_native_choose_coin),
         body = {
-            Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 ordered.forEach { coin ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(SquircleShape(14.dp))
-                            .acrylic(colors, SquircleShape(14.dp), colors.bg_secondary)
-                            .border(1.dp, colors.border_secondary, SquircleShape(14.dp))
-                            .clickable { on_select(coin) }
-                            .padding(AsterSpacing.md),
+                            .heightIn(min = 54.dp)
+                            .clip(billing_control_shape)
+                            .clickable(role = Role.Button) { on_select(coin) }
+                            .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.sm),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
                     ) {
@@ -1846,25 +1985,6 @@ private fun crypto_coin_dialog(
 }
 
 @Composable
-private fun billing_interval_toggle(
-    selected: String,
-    on_select: (String) -> Unit,
-    yearly_badge: String? = null,
-) {
-    val options = listOf(
-        switcher_option(id = "month", label = stringResource(R.string.settings_billing_monthly)),
-        switcher_option(id = "year", label = stringResource(R.string.settings_billing_yearly), badge = yearly_badge),
-    )
-    aster_segmented(value = selected, options = options, on_change = on_select)
-}
-
-private data class free_plan_teaser(
-    val plan_name: String,
-    val features: List<Int>,
-    val price_note: String?,
-)
-
-@Composable
 private fun storage_limit_notice() {
     val colors = AsterMaterial.colors
     Row(
@@ -1896,814 +2016,6 @@ private fun storage_limit_notice() {
                 fontSize = 13.sp,
             )
         }
-    }
-}
-
-@Composable
-private fun current_plan_card(
-    plan_name: String,
-    description: String?,
-    discount: String?,
-    is_paid: Boolean,
-    price_text: String?,
-    interval_short: String,
-    billed_note: String,
-    period_end: String?,
-    ends_at_period_end: Boolean,
-    is_crypto: Boolean,
-    paid_until: String?,
-    storage_used_bytes: Long,
-    storage_limit_bytes: Long,
-    storage_over_limit: Boolean,
-    is_acting: Boolean,
-    acting_action: String?,
-    show_yearly_switch: Boolean,
-    yearly_savings: Int,
-    show_family_link: Boolean,
-    show_manage_payment: Boolean,
-    show_cancel: Boolean,
-    free_teaser: free_plan_teaser?,
-    on_manage_payment: () -> Unit,
-    on_reactivate: () -> Unit,
-    on_cancel: () -> Unit,
-    on_switch_yearly: () -> Unit,
-    on_family_manage: () -> Unit,
-    on_crypto_renew: () -> Unit,
-    on_upgrade: () -> Unit,
-    on_add_storage: () -> Unit,
-    show_add_storage: Boolean = true,
-) {
-    val colors = AsterMaterial.colors
-    val show_crypto_notice = is_paid && is_crypto && paid_until != null
-    val show_action_rows = free_teaser == null && (show_manage_payment || ends_at_period_end || show_cancel)
-    AsterCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-            Row(verticalAlignment = Alignment.Top) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                    ) {
-                        Text(
-                            text = plan_name,
-                            color = colors.text_primary,
-                            fontSize = 19.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false),
-                        )
-                        if (is_paid && !ends_at_period_end) {
-                            billing_pill(
-                                text = stringResource(R.string.active),
-                                foreground = colors.accent_blue,
-                            )
-                        }
-                    }
-                    if (description != null) {
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            text = description,
-                            color = colors.text_secondary,
-                            fontSize = 13.sp,
-                        )
-                    }
-                    if (discount != null) {
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            text = discount,
-                            color = colors.accent_blue,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    }
-                }
-                if (price_text != null) {
-                    Spacer(Modifier.width(AsterSpacing.md))
-                    Column(horizontalAlignment = Alignment.End) {
-                        Row(verticalAlignment = Alignment.Bottom) {
-                            Text(
-                                text = price_text,
-                                color = colors.text_primary,
-                                fontSize = 19.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                maxLines = 1,
-                            )
-                            Text(
-                                text = interval_short,
-                                color = colors.text_secondary,
-                                fontSize = 13.sp,
-                                modifier = Modifier.padding(bottom = 2.dp),
-                            )
-                        }
-                        Text(
-                            text = billed_note,
-                            color = colors.text_secondary,
-                            fontSize = 12.sp,
-                        )
-                    }
-                }
-            }
-            if (show_crypto_notice) {
-                Spacer(Modifier.height(AsterSpacing.sm))
-                Text(
-                    text = stringResource(R.string.billing_crypto_paid_until, absolute_date_label(paid_until.orEmpty())),
-                    color = colors.text_secondary,
-                    fontSize = 13.sp,
-                )
-            } else if (is_paid && period_end != null) {
-                Spacer(Modifier.height(AsterSpacing.sm))
-                Text(
-                    text = if (ends_at_period_end) {
-                        stringResource(R.string.ends_date, absolute_date_label(period_end))
-                    } else {
-                        stringResource(R.string.renews_format, absolute_date_label(period_end))
-                    },
-                    color = colors.text_secondary,
-                    fontSize = 13.sp,
-                )
-            }
-            if (storage_limit_bytes > 0) {
-                val storage_fraction = storage_used_bytes.toFloat() / storage_limit_bytes.toFloat()
-                val storage_percent = (storage_fraction * 100f).roundToInt().coerceIn(0, if (storage_over_limit) 999 else 100)
-                Spacer(Modifier.height(AsterSpacing.lg))
-                billing_meter(
-                    label = stringResource(R.string.storage),
-                    value_text = stringResource(
-                        R.string.storage_used_format,
-                        format_bytes(storage_used_bytes),
-                        format_bytes(storage_limit_bytes),
-                    ),
-                    trailing_text = java.text.NumberFormat.getPercentInstance().format(storage_percent / 100.0),
-                    fraction = storage_fraction,
-                    is_over = storage_over_limit,
-                    trailing_action = if (free_teaser == null) {
-                        null
-                    } else {
-                        {
-                            Text(
-                                text = stringResource(R.string.billing_add_storage_link),
-                                color = colors.accent_blue,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier
-                                    .clip(SquircleShape(6.dp))
-                                    .clickable(role = Role.Button) { on_add_storage() }
-                                    .padding(horizontal = 4.dp, vertical = 2.dp),
-                            )
-                        }
-                    },
-                )
-            }
-        }
-        if (show_crypto_notice) {
-            settings_row_gap()
-            plan_note_row(
-                icon = TablerIcons.AlertTriangle,
-                icon_tint = colors.warning,
-                text = stringResource(R.string.billing_crypto_no_renew_notice),
-            )
-        }
-        if (free_teaser != null && storage_limit_bytes > 0) {
-            val storage_fraction = storage_used_bytes.toFloat() / storage_limit_bytes.toFloat()
-            if (storage_over_limit || storage_fraction >= 0.7f) {
-                val storage_percent = (storage_fraction * 100f).roundToInt().coerceIn(0, if (storage_over_limit) 999 else 100)
-                settings_row_gap()
-                plan_note_row(
-                    icon = TablerIcons.AlertTriangle,
-                    icon_tint = if (storage_over_limit) colors.danger else colors.warning,
-                    text = stringResource(R.string.settings_plan_storage_tight_note, storage_percent, free_teaser.plan_name),
-                )
-            }
-        }
-        if (is_paid && is_crypto) {
-            settings_row_gap()
-            plan_action_row(
-                label = stringResource(R.string.billing_crypto_renew_link),
-                color = colors.accent_blue,
-                enabled = !is_acting,
-                leading_icon = TablerIcons.Refresh,
-                show_chevron = true,
-                on_click = on_crypto_renew,
-            )
-        }
-        if (show_yearly_switch) {
-            settings_row_gap()
-            plan_action_row(
-                label = stringResource(R.string.switch_yearly_save, yearly_savings),
-                color = colors.accent_blue,
-                enabled = !is_acting,
-                leading_icon = TablerIcons.Calendar,
-                show_chevron = true,
-                on_click = on_switch_yearly,
-            )
-        }
-        if (show_family_link) {
-            settings_row_gap()
-            plan_action_row(
-                label = stringResource(R.string.family_manage_web),
-                color = colors.accent_blue,
-                enabled = true,
-                leading_icon = TablerIcons.Users,
-                show_chevron = true,
-                on_click = on_family_manage,
-            )
-        }
-        if (free_teaser != null) {
-            settings_row_gap()
-            Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = TablerIcons.Crown,
-                        contentDescription = null,
-                        tint = colors.accent_blue,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(Modifier.width(AsterSpacing.sm))
-                    Text(
-                        text = stringResource(R.string.billing_free_upgrade_title, free_teaser.plan_name),
-                        color = colors.text_primary,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Spacer(Modifier.width(AsterSpacing.sm))
-                    Text(
-                        text = stringResource(R.string.fix_billing_plan_recommended),
-                        color = colors.accent_blue,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                    )
-                }
-                Spacer(Modifier.height(AsterSpacing.md))
-                Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-                    free_teaser.features.forEach { feature_row(it, icon = TablerIcons.CircleCheck) }
-                }
-                if (free_teaser.price_note != null) {
-                    Spacer(Modifier.height(AsterSpacing.md))
-                    Text(
-                        text = free_teaser.price_note,
-                        color = colors.text_secondary,
-                        fontSize = 13.sp,
-                    )
-                }
-                Spacer(Modifier.height(AsterSpacing.lg))
-                AsterButton(
-                    label = stringResource(R.string.fix_billing_get_plan, free_teaser.plan_name),
-                    onClick = on_upgrade,
-                )
-            }
-        } else if (show_action_rows) {
-            if (show_manage_payment) {
-                settings_row_gap()
-                plan_action_row(
-                    label = stringResource(R.string.billing_manage_payment),
-                    color = colors.text_primary,
-                    enabled = !is_acting,
-                    loading = is_acting && acting_action == "portal",
-                    leading_icon = TablerIcons.CreditCard,
-                    show_chevron = true,
-                    on_click = on_manage_payment,
-                )
-            }
-            if (ends_at_period_end) {
-                settings_row_gap()
-                plan_action_row(
-                    label = stringResource(R.string.reactivate),
-                    color = colors.accent_blue,
-                    enabled = !is_acting,
-                    loading = is_acting && acting_action == "reactivate",
-                    on_click = on_reactivate,
-                )
-            } else if (show_cancel) {
-                settings_row_gap()
-                plan_action_row(
-                    label = stringResource(R.string.billing_cancel_plan),
-                    color = colors.danger,
-                    enabled = !is_acting,
-                    on_click = on_cancel,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun plan_note_row(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    icon_tint: Color,
-    text: String,
-) {
-    val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = icon_tint,
-            modifier = Modifier.padding(top = 1.dp).size(16.dp),
-        )
-        Spacer(Modifier.width(AsterSpacing.md))
-        Text(
-            text = text,
-            color = colors.text_secondary,
-            fontSize = 13.sp,
-            lineHeight = 18.sp,
-            modifier = Modifier.weight(1f),
-        )
-    }
-}
-
-@Composable
-private fun plan_action_row(
-    label: String,
-    color: Color,
-    enabled: Boolean,
-    on_click: () -> Unit,
-    loading: Boolean = false,
-    leading_icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
-    show_chevron: Boolean = false,
-) {
-    val colors = AsterMaterial.colors
-    val text_color = if (enabled || loading) color else colors.text_muted
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 52.dp)
-            .clickable(enabled = enabled, role = Role.Button, onClick = on_click)
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (leading_icon != null) {
-            Icon(
-                imageVector = leading_icon,
-                contentDescription = null,
-                tint = colors.text_secondary,
-                modifier = Modifier.size(18.dp),
-            )
-            Spacer(Modifier.width(AsterSpacing.md))
-        }
-        Text(
-            text = label,
-            color = text_color,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Medium,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        if (loading) {
-            Spacer(Modifier.width(AsterSpacing.sm))
-            androidx.compose.material3.CircularProgressIndicator(
-                color = colors.accent_blue,
-                strokeWidth = 2.dp,
-                modifier = Modifier.size(16.dp),
-            )
-        } else if (show_chevron) {
-            Spacer(Modifier.width(AsterSpacing.sm))
-            Icon(
-                imageVector = TablerIcons.ChevronRight,
-                contentDescription = null,
-                tint = colors.text_tertiary,
-                modifier = Modifier.size(18.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun storage_addons_card(
-    available: List<org.astermail.android.api.billing.StorageAddonItem>,
-    active: List<org.astermail.android.api.billing.UserActiveAddon>,
-    selected_id: String?,
-    currency: String,
-    is_acting: Boolean,
-    is_buying: Boolean,
-    interval: String = "month",
-    yearly_badge: String? = null,
-    on_interval: ((String) -> Unit)? = null,
-    price_label_for: (Long, String) -> String? = { _, _ -> null },
-    active_interval_for: (Long) -> String = { "month" },
-    play_product_for: (Long) -> String? = { null },
-    on_manage_play: (String) -> Unit = {},
-    on_select: (String) -> Unit,
-    on_buy: () -> Unit,
-) {
-    val colors = AsterMaterial.colors
-    val per_month = stringResource(R.string.fix_billing_per_month_short)
-    val per_year = stringResource(R.string.fix_billing_per_year_short)
-    val suffix_for = { value: String -> if (value == "year") per_year else per_month }
-    AsterCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-            Text(
-                text = stringResource(R.string.storage_addons_description),
-                color = colors.text_secondary,
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
-            )
-            if (active.isNotEmpty()) {
-                Spacer(Modifier.height(AsterSpacing.lg))
-                Text(
-                    text = stringResource(R.string.billing_active_addons),
-                    color = colors.text_secondary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                )
-                Spacer(Modifier.height(AsterSpacing.sm))
-                Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-                    active.forEach { addon ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(SquircleShape(14.dp))
-                                .acrylic(colors, SquircleShape(14.dp), colors.bg_secondary)
-                                .padding(AsterSpacing.md),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = addon.size_label.ifBlank { format_bytes(addon.size_bytes) },
-                                    color = colors.text_primary,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                )
-                                val active_interval = active_interval_for(addon.size_bytes)
-                                Text(
-                                    text = (price_label_for(addon.size_bytes, active_interval) ?: format_price(addon.price_cents, currency)) +
-                                        suffix_for(active_interval),
-                                    color = colors.text_tertiary,
-                                    fontSize = 12.sp,
-                                )
-                                val play_product_id = play_product_for(addon.size_bytes)
-                                if (play_product_id != null) {
-                                    Text(
-                                        text = stringResource(R.string.billing_play_manage),
-                                        color = colors.accent_blue,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        modifier = Modifier
-                                            .heightIn(min = 48.dp)
-                                            .clickable(role = Role.Button, enabled = !is_acting) {
-                                                on_manage_play(play_product_id)
-                                            }
-                                            .padding(vertical = 14.dp),
-                                    )
-                                }
-                                if (addon.cancel_at_period_end && addon.current_period_end != null) {
-                                    Spacer(Modifier.height(2.dp))
-                                    Text(
-                                        text = stringResource(R.string.ends_date, absolute_date_label(addon.current_period_end)),
-                                        color = colors.text_secondary,
-                                        fontSize = 12.sp,
-                                    )
-                                }
-                            }
-                            Spacer(Modifier.width(AsterSpacing.sm))
-                            Icon(
-                                imageVector = TablerIcons.CircleCheck,
-                                contentDescription = null,
-                                tint = colors.accent_blue,
-                                modifier = Modifier.size(18.dp),
-                            )
-                        }
-                    }
-                }
-            }
-            if (on_interval != null) {
-                Spacer(Modifier.height(AsterSpacing.lg))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                    billing_interval_toggle(selected = interval, on_select = on_interval, yearly_badge = yearly_badge)
-                }
-            }
-            if (available.isNotEmpty()) {
-                Spacer(Modifier.height(AsterSpacing.lg))
-                Column(
-                    modifier = Modifier.selectableGroup(),
-                    verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                ) {
-                    available.chunked(2).forEach { pair ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                        ) {
-                            pair.forEach { addon ->
-                                addon_tile(
-                                    addon = addon,
-                                    selected = addon.id == selected_id,
-                                    currency = currency,
-                                    price_label = price_label_for(addon.storage_bytes, interval),
-                                    period_suffix = suffix_for(interval),
-                                    enabled = !is_acting,
-                                    on_click = { on_select(addon.id) },
-                                    modifier = Modifier.weight(1f).fillMaxHeight(),
-                                )
-                            }
-                            if (pair.size == 1) Spacer(Modifier.weight(1f))
-                        }
-                    }
-                }
-                Spacer(Modifier.height(AsterSpacing.md))
-                AsterButton(
-                    label = stringResource(R.string.buy_more_storage),
-                    onClick = on_buy,
-                    enabled = !is_acting,
-                    is_loading = is_buying,
-                )
-                Spacer(Modifier.height(AsterSpacing.sm))
-                Text(
-                    text = stringResource(
-                        if (interval == "year") R.string.settings_storage_addons_yearly_note else R.string.settings_storage_addons_monthly_note,
-                    ),
-                    color = colors.text_tertiary,
-                    fontSize = 11.sp,
-                    lineHeight = 15.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun addon_tile(
-    addon: org.astermail.android.api.billing.StorageAddonItem,
-    selected: Boolean,
-    currency: String,
-    price_label: String? = null,
-    period_suffix: String,
-    enabled: Boolean,
-    on_click: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colors = AsterMaterial.colors
-    val shape = billing_tile_shape
-    val outline by animateColorAsState(
-        targetValue = if (selected) colors.accent_blue else colors.border_primary,
-        label = "addon_border",
-    )
-    val fill by animateColorAsState(
-        targetValue = if (selected) colors.accent_blue.copy(alpha = 0.08f) else colors.bg_secondary,
-        label = "addon_fill",
-    )
-    Column(
-        modifier = modifier
-            .clip(shape)
-            .background(fill)
-            .border(width = if (selected) 2.dp else 1.dp, color = outline, shape = shape)
-            .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = on_click)
-            .padding(AsterSpacing.md),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = addon.name,
-                color = colors.text_primary,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
-            Icon(
-                imageVector = if (selected) TablerIcons.CircleCheck else TablerIcons.Database,
-                contentDescription = null,
-                tint = if (selected) colors.accent_blue else colors.text_muted,
-                modifier = Modifier.size(16.dp),
-            )
-        }
-        Spacer(Modifier.height(2.dp))
-        Text(
-            text = (price_label ?: format_price(addon.price_cents, currency)) + period_suffix,
-            color = colors.text_tertiary,
-            fontSize = 12.sp,
-        )
-    }
-}
-
-@Composable
-private fun invoice_status_label(status: String): String = when (status.lowercase(Locale.ROOT)) {
-    "paid", "succeeded" -> stringResource(R.string.fix_billing_invoice_status_paid)
-    "failed", "payment_failed" -> stringResource(R.string.fix_billing_invoice_status_failed)
-    "open" -> stringResource(R.string.fix_billing_invoice_status_open)
-    "pending", "processing" -> stringResource(R.string.fix_billing_invoice_status_pending)
-    "draft" -> stringResource(R.string.fix_billing_invoice_status_draft)
-    "void", "canceled", "cancelled" -> stringResource(R.string.fix_billing_invoice_status_void)
-    "uncollectible" -> stringResource(R.string.fix_billing_invoice_status_uncollectible)
-    "refunded" -> stringResource(R.string.fix_billing_invoice_status_refunded)
-    else -> status.replaceFirstChar { it.uppercase() }
-}
-
-private fun invoice_status_accent(status: String, colors: org.astermail.android.design.AsterSemanticColors): Color =
-    when (status.lowercase(Locale.ROOT)) {
-        "paid", "succeeded" -> colors.success
-        "failed", "payment_failed", "uncollectible", "void", "canceled", "cancelled" -> colors.danger
-        else -> colors.warning
-    }
-
-@Composable
-private fun billing_history_card(
-    history: List<org.astermail.android.api.billing.BillingHistoryItem>,
-    on_open_pdf: (String) -> Unit,
-) {
-    val colors = AsterMaterial.colors
-    AsterCard(modifier = Modifier.fillMaxWidth()) {
-        if (history.isEmpty()) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xl),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.Receipt,
-                    contentDescription = null,
-                    tint = colors.text_muted,
-                    modifier = Modifier.size(22.dp),
-                )
-                Spacer(Modifier.height(AsterSpacing.sm))
-                Text(
-                    text = stringResource(R.string.fix_billing_history_empty),
-                    color = colors.text_tertiary,
-                    fontSize = 13.sp,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        } else {
-            Column(modifier = Modifier.padding(vertical = AsterSpacing.xs)) {
-                history.forEachIndexed { idx, item ->
-                    if (idx > 0) settings_row_gap(modifier = Modifier.padding(horizontal = AsterSpacing.lg))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = item.description?.takeIf { it.isNotBlank() }
-                                    ?: item.plan_name?.takeIf { it.isNotBlank() }
-                                    ?: stringResource(R.string.fix_billing_invoice_payment),
-                                color = colors.text_primary,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            Spacer(Modifier.height(2.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = absolute_date_label(item.created_at),
-                                    color = colors.text_tertiary,
-                                    fontSize = 12.sp,
-                                )
-                                val pdf_url = item.invoice_pdf_url
-                                if (pdf_url != null) {
-                                    Spacer(Modifier.width(AsterSpacing.sm))
-                                    Text(
-                                        text = stringResource(R.string.fix_billing_invoice_pdf),
-                                        color = colors.accent_blue,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        modifier = Modifier
-                                            .clip(SquircleShape(6.dp))
-                                            .clickable(role = Role.Button) { on_open_pdf(pdf_url) }
-                                            .padding(horizontal = 4.dp, vertical = 2.dp),
-                                    )
-                                }
-                            }
-                        }
-                        Spacer(Modifier.width(AsterSpacing.md))
-                        Column(horizontalAlignment = Alignment.End) {
-                            billing_pill(
-                                text = invoice_status_label(item.status),
-                                foreground = invoice_status_accent(item.status, colors),
-                            )
-                            Spacer(Modifier.height(AsterSpacing.xs))
-                            Text(
-                                text = org.astermail.android.billing.format_money(item.amount_cents.toLong(), item.currency),
-                                color = colors.text_primary,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                maxLines = 1,
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun plan_tier_card(
-    tier: plan_tier,
-    billing_interval: String,
-    is_current: Boolean,
-    is_interval_switch: Boolean = false,
-    is_downgrade: Boolean = false,
-    is_recommended: Boolean = false,
-    is_free_user: Boolean = false,
-    monthly_cents: Int? = null,
-    yearly_cents: Int? = null,
-    currency: String,
-    price_label: String? = null,
-    yearly_total_label: String? = null,
-    plans_failed: Boolean = false,
-    on_see_pricing: () -> Unit = {},
-    on_choose: () -> Unit,
-) {
-    val is_yearly = billing_interval == "year"
-    val shown_cents = if (is_yearly) yearly_cents else monthly_cents
-    val price_known = shown_cents != null
-    val per_month_cents = if (is_yearly) yearly_cents?.let { it / 12 } else monthly_cents
-    val savings_percent = if (monthly_cents != null && monthly_cents > 0 && yearly_cents != null) {
-        (((monthly_cents * 12 - yearly_cents).toFloat() / (monthly_cents * 12).toFloat()) * 100f).toInt()
-    } else {
-        0
-    }
-    val show_savings = is_yearly && price_known && savings_percent > 0
-    val show_recommended = is_recommended && !is_current && !is_interval_switch && !is_downgrade
-    val plan_name = stringResource(tier.name_res)
-    billing_plan_card(
-        name = plan_name,
-        tagline = stringResource(tier.tagline_res),
-        price_label = if (price_known) price_label ?: format_price(per_month_cents ?: 0, currency) else null,
-        period_label = stringResource(R.string.fix_billing_per_month_short),
-        anchor_label = if (show_savings && monthly_cents != null) format_price(monthly_cents, currency) else null,
-        save_label = if (show_savings) stringResource(R.string.save_percent, savings_percent) else null,
-        billed_note = if (is_yearly && yearly_cents != null) {
-            stringResource(R.string.billing_billed_yearly_total, yearly_total_label ?: format_price(yearly_cents, currency))
-        } else {
-            null
-        },
-        badge_label = when {
-            is_current -> stringResource(R.string.current_plan)
-            show_recommended -> stringResource(R.string.fix_billing_plan_recommended)
-            else -> null
-        },
-        is_current = is_current,
-        is_featured = show_recommended,
-        lead_in = tier.lead_res?.let { stringResource(it) },
-        features = tier.features,
-        show_trust_note = show_recommended,
-    ) {
-        when {
-            is_current -> billing_cta_button(
-                label = stringResource(R.string.current_plan),
-                enabled = false,
-                filled = false,
-                on_click = {},
-            )
-            !price_known -> billing_cta_button(
-                label = stringResource(R.string.see_pricing),
-                enabled = plans_failed,
-                filled = false,
-                on_click = on_see_pricing,
-            )
-            show_recommended -> billing_cta_button(
-                label = stringResource(R.string.fix_billing_get_plan, plan_name),
-                enabled = true,
-                filled = true,
-                on_click = on_choose,
-            )
-            else -> billing_cta_button(
-                label = when {
-                    is_interval_switch -> stringResource(R.string.switch_to_yearly)
-                    is_downgrade -> stringResource(R.string.downgrade)
-                    else -> stringResource(R.string.billing_subscribe)
-                },
-                enabled = true,
-                filled = false,
-                on_click = on_choose,
-            )
-        }
-    }
-}
-
-@Composable
-private fun feature_row(
-    @StringRes feature_res: Int,
-    icon: androidx.compose.ui.graphics.vector.ImageVector = plan_feature_icon(feature_res),
-) {
-    val colors = AsterMaterial.colors
-    Row(verticalAlignment = Alignment.Top) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = colors.accent_blue,
-            modifier = Modifier.padding(top = 1.dp).size(16.dp),
-        )
-        Spacer(Modifier.width(AsterSpacing.md))
-        Text(
-            text = stringResource(feature_res),
-            color = colors.text_secondary,
-            fontSize = 13.sp,
-            lineHeight = 18.sp,
-        )
     }
 }
 

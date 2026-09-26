@@ -42,4 +42,16 @@
         <item quantity="many">Przez pierwsze %2$d miesięcy płacisz %1$s miesięcznie. Potem plan odnawia się za %3$s miesięcznie, dopóki nie anulujesz go w Ustawieniach.</item>
         <item quantity="other">Przez pierwsze %2$d miesiąca płacisz %1$s miesięcznie. Potem plan odnawia się za %3$s miesięcznie, dopóki nie anulujesz go w Ustawieniach.</item>
     </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="one">%d faktura</item>
+        <item quantity="few">%d faktury</item>
+        <item quantity="many">%d faktur</item>
+        <item quantity="other">%d faktur</item>
+    </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="one">Porównaj %d funkcję</item>
+        <item quantity="few">Porównaj wszystkie %d funkcje</item>
+        <item quantity="many">Porównaj wszystkie %d funkcji</item>
+        <item quantity="other">Porównaj wszystkie %d funkcji</item>
+    </plurals>
 </resources>

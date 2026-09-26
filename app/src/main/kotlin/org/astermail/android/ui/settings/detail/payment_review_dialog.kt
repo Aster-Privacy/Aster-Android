@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -48,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -374,11 +376,10 @@ internal fun payment_review_dialog(
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Medium,
                             )
-                            Text(
-                                text = stringResource(R.string.app_name),
-                                color = colors.text_primary,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
+                            Image(
+                                painter = painterResource(R.drawable.aster_wordmark),
+                                contentDescription = null,
+                                modifier = Modifier.height(16.dp),
                             )
                         }
                         Spacer(Modifier.height(AsterSpacing.md))

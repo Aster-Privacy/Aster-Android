@@ -149,7 +149,11 @@ fun StorageScreen(
     val lifecycle_owner = LocalLifecycleOwner.current
     DisposableEffect(lifecycle_owner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) billing_vm.on_resume()
+            if (event == Lifecycle.Event.ON_RESUME) {
+                billing_vm.on_resume()
+                vm.load_storage()
+                mail_vm.load_stats(force = false)
+            }
         }
         lifecycle_owner.lifecycle.addObserver(observer)
         onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }

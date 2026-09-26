@@ -140,7 +140,13 @@ class BillingViewModelPlayTest {
         every { auth_repository.is_signed_in } returns MutableStateFlow(true)
         every { auth_repository.active_account_id } returns active_account
         store = fake_play_store().apply { offers = listOf(star_month, star_year) }
-        vm = BillingViewModel(application, billing_api, auth_repository)
+        vm = BillingViewModel(
+            application,
+            billing_api,
+            auth_repository,
+            org.astermail.android.storage.PreferencesCacheStore(null),
+            org.astermail.android.storage.SessionKeyStore(null),
+        )
         vm.play_store = store
         vm.play_install_check = { true }
     }

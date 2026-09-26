@@ -483,6 +483,9 @@ private fun aliases_tab(
         val current = alias_domain_filter
         if (current != null && !alias_domains.contains(current)) alias_domain_filter = null
     }
+    val counted_alias_total = remember(state.aliases) {
+        state.aliases.count { !it.is_retained_primary }
+    }
     val visible_aliases = remember(state.aliases, query, alias_filter, alias_domain_filter) {
         state.aliases.filter { alias ->
             matches_alias_query(
@@ -527,13 +530,13 @@ private fun aliases_tab(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = pluralStringResource(R.plurals.aliases_count, state.aliases.size, state.aliases.size),
+                    text = pluralStringResource(R.plurals.aliases_count, counted_alias_total, counted_alias_total),
                     color = colors.text_tertiary,
                     fontSize = 13.sp,
                 )
-                if (org.astermail.android.billing.alias_limit_near(state.aliases.size, alias_limit)) {
+                if (org.astermail.android.billing.alias_limit_near(counted_alias_total, alias_limit)) {
                     Text(
-                        text = stringResource(R.string.alias_limit_notice, state.aliases.size, alias_limit ?: 0),
+                        text = stringResource(R.string.alias_limit_notice, counted_alias_total, alias_limit ?: 0),
                         color = colors.accent_blue,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -1176,7 +1179,7 @@ internal fun alias_list_row(
             }
             AsterSwitch(
                 checked = alias.is_enabled,
-                enabled = grace_ends == null,
+                enabled = grace_ends == null && !alias.is_retained_primary,
                 onCheckedChange = { on_toggle() },
             )
             Box {
@@ -1238,16 +1241,18 @@ internal fun alias_list_row(
                             },
                         )
                     }
-                    aster_menu_item(
-                        label = stringResource(R.string.delete),
-                        icon = TablerIcons.Trash,
-                        destructive = true,
-                        test_tag = "alias_delete_${alias.id}",
-                        on_click = {
-                            row_menu_open = false
-                            on_delete()
-                        },
-                    )
+                    if (!alias.is_retained_primary) {
+                        aster_menu_item(
+                            label = stringResource(R.string.delete),
+                            icon = TablerIcons.Trash,
+                            destructive = true,
+                            test_tag = "alias_delete_${alias.id}",
+                            on_click = {
+                                row_menu_open = false
+                                on_delete()
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -1590,7 +1595,7 @@ internal fun deleted_aliases_screen(
                                     )
                                 }
                                 if (restore_locked) {
-                                    AsterGhostButton(
+                                    org.astermail.android.design.components.AsterCompactButton(
                                         label = stringResource(R.string.upgrade),
                                         onClick = on_upgrade,
                                     )
@@ -1681,6 +1686,7 @@ internal fun domains_tab(
     on_verify_result: (String, SettingsViewModel.DomainVerifyOutcome) -> Unit,
     on_show_add: () -> Unit,
     catch_all_locked: Boolean = false,
+    on_open_bimi: (String) -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
 
@@ -1750,6 +1756,7 @@ internal fun domains_tab(
                     }
                 },
                 on_delete = { vm.delete_domain(domain.id) },
+                on_open_bimi = { on_open_bimi(domain.id) },
             )
             v_gap(AsterSpacing.md)
         }
@@ -2639,7 +2646,7 @@ private fun preference_option(
 }
 
 @Composable
-private fun domain_status_badge(text: String, tint: Color) {
+internal fun domain_status_badge(text: String, tint: Color) {
     val colors = AsterMaterial.colors
     val background = org.astermail.android.ui.mail.chip_background(tint, colors.bg_card, colors.is_dark)
     Box(
@@ -2700,6 +2707,7 @@ private fun domain_card(
     on_verify: () -> Unit,
     on_delete: () -> Unit,
     catch_all_locked: Boolean = false,
+    on_open_bimi: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
@@ -2899,12 +2907,21 @@ private fun domain_card(
                         enabled = !is_verifying,
                     )
                 }
+
+                if (domain.bimi_available) {
+                    v_gap(AsterSpacing.md)
+                    org.astermail.android.ui.settings.detail.bimi.bimi_row(
+                        domain = domain,
+                        is_active = is_active,
+                        on_open = on_open_bimi,
+                    )
+                }
             }
         }
     }
 }
 
-private fun copy_dns_value(context: Context, label: String, value: String) {
+internal fun copy_dns_value(context: Context, label: String, value: String) {
     if (write_to_clipboard(context, ClipData.newPlainText(label, value))) {
         android.widget.Toast.makeText(
             context,
@@ -2959,7 +2976,7 @@ private fun dns_record_detail(record: DnsRecord, on_copy: (String, String) -> Un
 }
 
 @Composable
-private fun dns_record_field(label: String, value: String, on_copy: () -> Unit) {
+internal fun dns_record_field(label: String, value: String, on_copy: () -> Unit) {
     val colors = AsterMaterial.colors
     var value_expanded by remember(value) { mutableStateOf(false) }
     Row(

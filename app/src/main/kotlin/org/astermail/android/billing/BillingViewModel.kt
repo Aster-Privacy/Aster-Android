@@ -57,6 +57,8 @@ import org.astermail.android.api.billing.SetDefaultPaymentMethodRequest
 import org.astermail.android.api.billing.SubscriptionResponse
 import org.astermail.android.api.billing.SwitchBillingRequest
 import org.astermail.android.auth.AuthRepository
+import org.astermail.android.storage.PreferencesCacheStore
+import org.astermail.android.storage.SessionKeyStore
 
 data class BillingUiState(
     val subscription: SubscriptionResponse? = null,
@@ -90,6 +92,11 @@ data class BillingUiState(
     val cancel_impact_loading: Boolean = false,
     val credits: org.astermail.android.api.billing.CreditBalanceResponse? = null,
     val academic: org.astermail.android.api.billing.AcademicDiscountStatusResponse? = null,
+    val credit_packages: List<org.astermail.android.api.billing.CreditPackageItem> = emptyList(),
+    val credit_settings_saving: Boolean = false,
+    val academic_submitting: Boolean = false,
+    val academic_sent: Boolean = false,
+    val academic_error: String? = null,
     val onboarding: org.astermail.android.api.billing.OnboardingChecklistResponse? = null,
     val play_enabled: Boolean = false,
     val play_account_id: String? = null,
@@ -146,13 +153,41 @@ class BillingViewModel @Inject constructor(
     application: Application,
     private val billing_api: BillingApi,
     private val auth_repository: AuthRepository,
+    private val preferences_cache: PreferencesCacheStore,
+    private val session_key_store: SessionKeyStore,
 ) : AndroidViewModel(application) {
 
     private val ctx get() = getApplication<Application>()
 
+    private val cached_limits_json = kotlinx.serialization.json.Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+    }
+
+    private fun cache_account_key(): String? = session_key_store.get_user_id()?.takeIf { it.isNotBlank() }
+
+    private fun hydrate_cached_limits() {
+        val raw = preferences_cache.read_limits(cache_account_key()) ?: return
+        val cached = runCatching {
+            cached_limits_json.decodeFromString(PlanLimitsResponse.serializer(), raw)
+        }.getOrNull() ?: return
+        _state.update { if (it.limits == null) it.copy(limits = cached) else it }
+    }
+
+    private fun persist_cached_limits(limits: PlanLimitsResponse) {
+        val key = cache_account_key() ?: return
+        val raw = runCatching {
+            cached_limits_json.encodeToString(PlanLimitsResponse.serializer(), limits)
+        }.getOrNull() ?: return
+        preferences_cache.write_limits(key, raw)
+    }
+
     private val _state = MutableStateFlow(BillingUiState(available_plans = AvailablePlansCache.plans()))
     val state: StateFlow<BillingUiState> = _state.asStateFlow()
 
+    init {
+        hydrate_cached_limits()
+    }
 
 
     private var pending_crypto_invoices_in_flight = false
@@ -908,6 +943,7 @@ class BillingViewModel @Inject constructor(
             try {
                 val limits = billing_api.get_plan_limits()
                 _state.update { it.copy(limits = limits) }
+                persist_cached_limits(limits)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_plan_limits failed", t)
@@ -1185,6 +1221,112 @@ class BillingViewModel @Inject constructor(
                 if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_academic_discount_status failed", t)
             }
         }
+    }
+
+    fun load_credit_packages() {
+        viewModelScope.launch {
+            try {
+                val packages = billing_api.get_credit_packages().packages.sortedBy { item -> item.sort_order }
+                _state.update { it.copy(credit_packages = packages) }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_credit_packages failed", t)
+            }
+        }
+    }
+
+    fun set_use_credits_for_renewals(enabled: Boolean) {
+        val current = _state.value.credits ?: return
+        _state.update { it.copy(credits = current.copy(use_credits_for_renewals = enabled), credit_settings_saving = true) }
+        viewModelScope.launch {
+            try {
+                val saved = billing_api.update_credit_settings(
+                    org.astermail.android.api.billing.CreditSettingsRequest(use_credits_for_renewals = enabled)
+                )
+                _state.update {
+                    it.copy(
+                        credits = current.copy(use_credits_for_renewals = saved.use_credits_for_renewals, balance_cents = saved.balance_cents),
+                        credit_settings_saving = false,
+                    )
+                }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update {
+                    it.copy(
+                        credits = current,
+                        credit_settings_saving = false,
+                        error = billing_error(t, ctx.getString(R.string.billing_credits_settings_failed)),
+                    )
+                }
+            }
+        }
+    }
+
+    fun purchase_credits(package_id: String, currency: String?, crypto: Boolean) {
+        if (_state.value.is_acting) {
+            _state.value = _state.value.copy(error = ctx.getString(R.string.billing_action_in_progress), info = null)
+            return
+        }
+        viewModelScope.launch {
+            _state.value = _state.value.copy(is_acting = true, acting_action = "credits_$package_id", error = null, checkout_url = null)
+            try {
+                val request = org.astermail.android.api.billing.PurchaseCreditsRequest(package_id = package_id, currency = currency)
+                val response = if (crypto) billing_api.purchase_credits_crypto(request) else billing_api.purchase_credits(request)
+                _state.value = _state.value.copy(is_acting = false, acting_action = null, checkout_url = response.url)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (t: Throwable) {
+                _state.value = _state.value.copy(
+                    is_acting = false,
+                    acting_action = null,
+                    error = billing_error(t, ctx.getString(R.string.could_not_start_checkout)),
+                )
+            }
+        }
+    }
+
+    fun request_academic_discount(email: String, turnstile_token: String?) {
+        viewModelScope.launch {
+            _state.update { it.copy(academic_submitting = true, academic_error = null) }
+            try {
+                billing_api.request_academic_discount(
+                    org.astermail.android.api.billing.AcademicDiscountRequest(academic_email = email.trim(), turnstile_token = turnstile_token)
+                )
+                val status = try {
+                    billing_api.get_academic_discount_status()
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException) throw t
+                    null
+                }
+                _state.update { it.copy(academic_submitting = false, academic_sent = true, academic = status ?: it.academic) }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update {
+                    it.copy(academic_submitting = false, academic_error = billing_error(t, ctx.getString(R.string.billing_academic_request_failed)))
+                }
+            }
+        }
+    }
+
+    fun resend_academic_verification(turnstile_token: String?) {
+        viewModelScope.launch {
+            _state.update { it.copy(academic_submitting = true, academic_error = null) }
+            try {
+                billing_api.resend_academic_verification(
+                    org.astermail.android.api.billing.AcademicResendRequest(turnstile_token = turnstile_token)
+                )
+                _state.update { it.copy(academic_submitting = false, academic_sent = true) }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update {
+                    it.copy(academic_submitting = false, academic_error = billing_error(t, ctx.getString(R.string.billing_academic_request_failed)))
+                }
+            }
+        }
+    }
+
+    fun reset_academic_form() {
+        _state.update { it.copy(academic_sent = false, academic_error = null) }
     }
 
     fun load_onboarding_checklist() {

@@ -183,7 +183,10 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
         ?: "usd"
     val save_percent = upgrade_yearly_save_percent(plans)
     var selected_code by remember { mutableStateOf<String?>(null) }
-    val recommended_code = plan_options.firstOrNull { it.code.lowercase() == "nova" }?.code
+    val preferred_code = state.preferred_plan_code?.lowercase()
+    val recommended_code = preferred_code
+        ?.let { wanted -> plan_options.firstOrNull { it.code.lowercase() == wanted }?.code }
+        ?: plan_options.firstOrNull { it.code.lowercase() == "nova" }?.code
         ?: plan_options.firstOrNull()?.code
     val active_code = selected_code?.takeIf { code -> plan_options.any { it.code == code } }
         ?: recommended_code
@@ -227,6 +230,8 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
             val resource_label = resource_label_for(state.limit_key, state.resource_label)
             val plan_name = plan_state.limits?.plan_name ?: stringResource(R.string.plan_name_free)
             val description = when {
+                state.reason == UpgradeReason.Feature ->
+                    state.server_message ?: stringResource(R.string.upgrade_modal_description_generic)
                 state.reason == UpgradeReason.StorageFull ->
                     stringResource(R.string.storage_locked_description)
                 state.limit_key != UpgradeLimitKey.Generic ->

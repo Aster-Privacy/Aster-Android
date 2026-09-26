@@ -79,6 +79,7 @@ class MailViewModelTest {
         repository = mockk(relaxed = true)
         search_index_manager = mockk(relaxed = true)
         folder_cache_store = mockk(relaxed = true)
+        every { folder_cache_store.cached_stats(any()) } returns null
         every { repository.durable_async<Any?>(any()) } answers {
             kotlinx.coroutines.CompletableDeferred(
                 kotlinx.coroutines.runBlocking { firstArg<suspend () -> Any?>().invoke() },

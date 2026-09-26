@@ -29,4 +29,12 @@
         <item quantity="many">Você paga %1$s por mês nos primeiros %2$d meses. Depois, seu plano é renovado por %3$s por mês até que você o cancele em Configurações.</item>
         <item quantity="other">Você paga %1$s por mês nos primeiros %2$d meses. Depois, seu plano é renovado por %3$s por mês até que você o cancele em Configurações.</item>
     </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="one">%d fatura</item>
+        <item quantity="other">%d faturas</item>
+    </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="one">Comparar %d recurso</item>
+        <item quantity="other">Comparar todos os %d recursos</item>
+    </plurals>
 </resources>
