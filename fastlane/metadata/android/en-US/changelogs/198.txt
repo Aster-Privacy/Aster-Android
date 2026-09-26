@@ -1,0 +1,13 @@
+What's new:
+
+- Buy and manage every plan and storage add-on through Google Play.
+- A redesigned billing page with a full plan comparison.
+- Change your primary address in Settings.
+- Add a brand logo to your custom domains.
+
+Fixed:
+
+- AMP emails display instead of showing a blank message.
+- Drafts are kept if a send is refused.
+- The sidebar shows Scheduled and Snoozed totals.
+- Large images in signatures shrink to fit.
