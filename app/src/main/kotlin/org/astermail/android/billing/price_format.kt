@@ -31,6 +31,12 @@ fun format_money(cents: Long, currency: String?, locale: Locale = Locale.getDefa
     val resolved = currency?.trim()?.takeIf { it.length == 3 }?.let { code ->
         try { Currency.getInstance(code.uppercase(Locale.ROOT)) } catch (_: Throwable) { null }
     }
-    if (resolved != null) fmt.currency = resolved
+    if (resolved != null) {
+        fmt.currency = resolved
+        resolved.defaultFractionDigits.takeIf { it >= 0 }?.let { digits ->
+            fmt.minimumFractionDigits = digits
+            fmt.maximumFractionDigits = digits
+        }
+    }
     return fmt.format(amount)
 }

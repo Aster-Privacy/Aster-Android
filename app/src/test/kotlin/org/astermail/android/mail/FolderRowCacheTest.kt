@@ -252,4 +252,49 @@ class FolderRowCacheTest {
         assertTrue(base != folder_cache_layout_signature(grouping = true, list_order = "asc", custom_categories = 0))
         assertTrue(base != folder_cache_layout_signature(grouping = true, list_order = null, custom_categories = 1))
     }
+
+    @Test
+    fun `an undecryptable refresh keeps the previously decrypted content`() {
+        val previous = item(id = "m1", subject = "Real subject")
+        val placeholder = item(id = "m1", subject = "Message couldn't be decrypted").copy(
+            sender_name = "Encrypted",
+            preview = "placeholder",
+            category = "updates",
+            is_undecryptable = true,
+            is_decrypt_pending = true,
+            is_read = true,
+        )
+        val merged = folder_cache_carry_decrypted(listOf(placeholder), listOf(previous)).single()
+        assertEquals("Real subject", merged.subject)
+        assertEquals("Sender", merged.sender_name)
+        assertEquals("Preview", merged.preview)
+        assertEquals("primary", merged.category)
+        assertFalse(merged.is_undecryptable)
+        assertFalse(merged.is_decrypt_pending)
+        assertTrue(merged.is_read)
+    }
+
+    @Test
+    fun `an undecryptable row without decrypted history is left alone`() {
+        val placeholder = item(id = "m2").copy(is_undecryptable = true)
+        val earlier_placeholder = item(id = "m2").copy(is_undecryptable = true, subject = "Old")
+        assertEquals(placeholder, folder_cache_carry_decrypted(listOf(placeholder), emptyList()).single())
+        assertEquals(placeholder, folder_cache_carry_decrypted(listOf(placeholder), listOf(earlier_placeholder)).single())
+        val decrypted = item(id = "m3", subject = "Fresh")
+        assertEquals(decrypted, folder_cache_carry_decrypted(listOf(decrypted), listOf(item(id = "m3", subject = "Stale"))).single())
+    }
+
+    @Test
+    fun `placeholder rows loaded from disk are flagged undecryptable`() {
+        val placeholder = item(id = "m4", subject = "Message couldn't be decrypted").copy(sender_name = "Encrypted")
+        val normal = item(id = "m5")
+        val marked = folder_cache_mark_placeholders(
+            listOf(placeholder, normal),
+            placeholder_sender = "Encrypted",
+            placeholder_subject = "Message couldn't be decrypted",
+        )
+        assertTrue(marked[0].is_undecryptable)
+        assertFalse(marked[1].is_undecryptable)
+        assertEquals(placeholder, marked[0].copy(is_undecryptable = false))
+    }
 }

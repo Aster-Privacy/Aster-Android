@@ -96,18 +96,22 @@ internal fun domain_purchase_area(
     on_load_dns: (String) -> Unit = {},
     on_verify_domain: (String) -> Unit = {},
     on_toggle_catch_all: (String) -> Unit = {},
+    can_buy: Boolean = true,
 ) {
     var manage_order_id by remember { mutableStateOf<String?>(null) }
     val manage_order = state.orders.firstOrNull { it.id == manage_order_id }
-    purchased_domains_section(
-        state = state,
-        on_buy = on_buy,
-        on_open_order = on_open_order,
-        on_cancel = on_cancel,
-        on_complete_purchase = on_complete_purchase,
-        on_manage = { manage_order_id = it },
-    )
-    v_gap(AsterSpacing.md)
+    if (can_buy || state.orders.isNotEmpty()) {
+        purchased_domains_section(
+            state = state,
+            can_buy = can_buy,
+            on_buy = on_buy,
+            on_open_order = on_open_order,
+            on_cancel = on_cancel,
+            on_complete_purchase = if (can_buy) on_complete_purchase else null,
+            on_manage = { manage_order_id = it },
+        )
+        v_gap(AsterSpacing.md)
+    }
     if (manage_order != null) {
         val linked_domain = custom_domains.firstOrNull {
             it.domain_name.equals(manage_order.domain, ignoreCase = true)
@@ -124,7 +128,11 @@ internal fun domain_purchase_area(
             on_load_dns = { linked_domain?.let { on_load_dns(it.id) } },
             on_verify = { linked_domain?.let { on_verify_domain(it.id) } },
             on_toggle_catch_all = { linked_domain?.let { on_toggle_catch_all(it.id) } },
-            on_renew = { on_renew(manage_order.id) },
+            on_renew = if (can_buy) {
+                { on_renew(manage_order.id) }
+            } else {
+                null
+            },
             on_dismiss = { manage_order_id = null },
         )
     }
@@ -163,10 +171,11 @@ private fun purchased_empty_box() {
 @Composable
 private fun purchased_domains_section(
     state: DomainPurchaseUiState,
+    can_buy: Boolean,
     on_buy: () -> Unit,
     on_open_order: (DomainOrder) -> Unit,
     on_cancel: (String) -> Unit,
-    on_complete_purchase: (DomainOrder) -> Unit,
+    on_complete_purchase: ((DomainOrder) -> Unit)?,
     on_manage: (String) -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -205,12 +214,14 @@ private fun purchased_domains_section(
         lineHeight = 21.sp,
     )
     v_gap(AsterSpacing.md)
-    AsterButton(
-        label = stringResource(R.string.domain_purchase_buy_new),
-        onClick = on_buy,
-        modifier = Modifier.fillMaxWidth(),
-    )
-    v_gap(AsterSpacing.md)
+    if (can_buy) {
+        AsterButton(
+            label = stringResource(R.string.domain_purchase_buy_new),
+            onClick = on_buy,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        v_gap(AsterSpacing.md)
+    }
     if (state.orders.isEmpty()) {
         purchased_empty_box()
     } else {
@@ -240,7 +251,7 @@ private fun purchased_domain_row(
     state: DomainPurchaseUiState,
     on_open_order: (DomainOrder) -> Unit,
     on_cancel: (String) -> Unit,
-    on_complete_purchase: (DomainOrder) -> Unit,
+    on_complete_purchase: ((DomainOrder) -> Unit)?,
     on_manage: (String) -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -316,13 +327,15 @@ private fun purchased_domain_row(
                 horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                domain_pill_button(
-                    label = stringResource(R.string.domain_purchase_complete_purchase),
-                    on_click = { on_complete_purchase(order) },
-                    filled = true,
-                    enabled = !state.buying,
-                    is_loading = state.buying,
-                )
+                if (on_complete_purchase != null) {
+                    domain_pill_button(
+                        label = stringResource(R.string.domain_purchase_complete_purchase),
+                        on_click = { on_complete_purchase(order) },
+                        filled = true,
+                        enabled = !state.buying,
+                        is_loading = state.buying,
+                    )
+                }
                 domain_pill_button(
                     label = stringResource(R.string.cancel),
                     on_click = { show_cancel_confirm = true },

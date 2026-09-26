@@ -62,7 +62,7 @@ import org.astermail.android.design.components.AsterGhostButton
 @Composable
 fun RegisterCustomDomainStep(
     on_own_domain: () -> Unit,
-    on_new_domain: () -> Unit,
+    on_new_domain: (() -> Unit)?,
     on_skip: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -102,14 +102,16 @@ fun RegisterCustomDomainStep(
             onClick = on_own_domain,
         )
 
-        Spacer(Modifier.height(AsterSpacing.md))
+        if (on_new_domain != null) {
+            Spacer(Modifier.height(AsterSpacing.md))
 
-        custom_domain_option_card(
-            icon = TablerIcons.ShoppingCart,
-            title = stringResource(R.string.custom_domain_new),
-            description = stringResource(R.string.custom_domain_new_desc),
-            onClick = on_new_domain,
-        )
+            custom_domain_option_card(
+                icon = TablerIcons.ShoppingCart,
+                title = stringResource(R.string.custom_domain_new),
+                description = stringResource(R.string.custom_domain_new_desc),
+                onClick = on_new_domain,
+            )
+        }
 
         Spacer(Modifier.height(AsterSpacing.xxl))
 

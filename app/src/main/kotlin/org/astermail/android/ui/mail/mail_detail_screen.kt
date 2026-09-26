@@ -219,7 +219,7 @@ internal fun fitted_viewport_width(document: String): Int? =
 private val MEASURE_PROBE_HEIGHT = 24.dp
 
 private fun estimated_body_height(html: String, width_dp: Int): androidx.compose.ui.unit.Dp {
-    val sample = if (html.length > 200000) html.substring(0, 200000) else html
+    val sample = if (html.length > 40000) html.substring(0, 40000) else html
     val text_length = body_tag_regex.replace(sample, " ").trim().length
     val chars_per_line = (width_dp / 7).coerceAtLeast(24)
     val lines = (text_length + chars_per_line - 1) / chars_per_line + 2
@@ -2298,7 +2298,14 @@ internal fun expanded_message(
             },
         )
     }
-    val tracker_report = remember(msg.body_html) { EmailHtmlSanitizer.analyze_trackers(msg.body_html) }
+    val tracker_report by androidx.compose.runtime.produceState(
+        initialValue = EmailHtmlSanitizer.TrackerReport(),
+        msg.body_html,
+    ) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            EmailHtmlSanitizer.analyze_trackers(msg.body_html)
+        }
+    }
     val tracker_count = remember(tracker_report, msg.trackers_blocked) {
         maxOf(msg.trackers_blocked, tracker_report.total)
     }
@@ -5049,6 +5056,20 @@ private const val height_watch_exact_stable_ms = 48L
 private const val height_watch_settle_ms = 2000L
 private const val height_watch_budget_ms = 15000L
 
+internal object web_view_support {
+    @Volatile
+    private var known_available = false
+
+    fun is_available(ctx: android.content.Context): Boolean {
+        if (known_available) return true
+        val available = runCatching {
+            android.webkit.WebSettings.getDefaultUserAgent(ctx.applicationContext)
+        }.isSuccess
+        if (available) known_available = true
+        return available
+    }
+}
+
 internal class mail_body_web_view(
     ctx: android.content.Context,
 ) : android.webkit.WebView(ctx) {
@@ -5532,17 +5553,23 @@ internal fun email_html_view(
     }
     val source_body_ref = remember(html) { arrayOfNulls<String>(1) }
     var translated_body by remember(html) { mutableStateOf<String?>(null) }
+    val translation_scope = androidx.compose.runtime.rememberCoroutineScope()
 
     fun run_translation(from: String) {
-        val engine = translation_engine_ref[0] ?: return
         val source = source_body_ref[0] ?: return
-        val segments = extract_translatable_segments(source)
-        if (segments.isEmpty()) {
-            set_translation_state[0]?.invoke(TranslationBannerState.Hidden)
-            return
+        translation_scope.launch {
+            val segments = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                extract_translatable_segments(source)
+            }
+            if (source_body_ref[0] !== source) return@launch
+            val engine = translation_engine_ref[0] ?: return@launch
+            if (segments.isEmpty()) {
+                set_translation_state[0]?.invoke(TranslationBannerState.Hidden)
+                return@launch
+            }
+            set_translation_state[0]?.invoke(TranslationBannerState.Translating)
+            engine.translate(segments, from, translate_target_ref[0])
         }
-        set_translation_state[0]?.invoke(TranslationBannerState.Translating)
-        engine.translate(segments, from, translate_target_ref[0])
     }
 
     fun show_original() {
@@ -5584,18 +5611,24 @@ internal fun email_html_view(
     fun handle_translation_result(json: String) {
         val segments = org.astermail.android.translation.translated_segments_of(json) ?: return
         val source = source_body_ref[0] ?: return
-        val applied = apply_translated_segments(source, segments)
-        if (applied != source) translated_body = applied
+        translation_scope.launch {
+            val applied = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                apply_translated_segments(source, segments)
+            }
+            if (source_body_ref[0] === source && applied != source) translated_body = applied
+        }
     }
 
     DisposableEffect(translate_active_early) {
         if (translate_active_early && translation_engine_ref[0] == null) {
-            translation_engine_ref[0] = org.astermail.android.translation.translation_engine(
-                translate_context,
-                on_detect = { json -> handle_translation_detect(json) },
-                on_status = { json -> handle_translation_status(json) },
-                on_result = { json -> handle_translation_result(json) },
-            )
+            translation_engine_ref[0] = runCatching {
+                org.astermail.android.translation.translation_engine(
+                    translate_context,
+                    on_detect = { json -> handle_translation_detect(json) },
+                    on_status = { json -> handle_translation_status(json) },
+                    on_result = { json -> handle_translation_result(json) },
+                )
+            }.getOrNull()
         }
         onDispose {
             translation_engine_ref[0]?.destroy()
@@ -5640,7 +5673,9 @@ internal fun email_html_view(
     val last_window_y = remember { floatArrayOf(Float.NaN) }
     val has_toggles_ref = remember { booleanArrayOf(true) }
     val reload_policy = remember(height_cache_key) { body_reload_policy() }
-    val renderer_exhausted = remember(height_cache_key) { mutableStateOf(false) }
+    val web_view_context = androidx.compose.ui.platform.LocalContext.current
+    val web_view_missing = remember(height_cache_key) { !web_view_support.is_available(web_view_context) }
+    val renderer_exhausted = remember(height_cache_key) { mutableStateOf(web_view_missing) }
 
     LaunchedEffect(height_cache_key, page_painted.value) {
         if (page_painted.value) return@LaunchedEffect
@@ -5954,6 +5989,14 @@ internal fun email_html_view(
             probe_height_dp.value = MEASURE_PROBE_HEIGHT
             remeasure_active[0] = false
         }
+    }
+
+    LaunchedEffect(height_cache_key, web_view_missing) {
+        if (!web_view_missing) return@LaunchedEffect
+        has_measured = true
+        height_settled = true
+        page_painted.value = true
+        on_ready()
     }
 
     LaunchedEffect(renderer_gone.value) {

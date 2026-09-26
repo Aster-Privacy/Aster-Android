@@ -24,4 +24,16 @@
         <item quantity="one">Your plan ends in %1$d day, on %2$s.</item>
         <item quantity="other">Your plan ends in %1$d days, on %2$s.</item>
     </plurals>
+    <plurals name="special_offer_fine_print">
+        <item quantity="one">You pay %1$s per month for the first month. Your plan then renews at %3$s per month until you cancel it in Settings.</item>
+        <item quantity="other">You pay %1$s per month for the first %2$d months. Your plan then renews at %3$s per month until you cancel it in Settings.</item>
+    </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="one">%d invoice</item>
+        <item quantity="other">%d invoices</item>
+    </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="one">Compare %d feature</item>
+        <item quantity="other">Compare all %d features</item>
+    </plurals>
 </resources>

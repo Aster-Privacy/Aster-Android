@@ -26,6 +26,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
@@ -105,6 +106,7 @@ data class CheckoutSessionRequest(
     val test_mode: Boolean = false,
     val success_url: String? = null,
     val cancel_url: String? = null,
+    val special_offer: Boolean = false,
 )
 
 @Serializable
@@ -126,6 +128,11 @@ data class SpecialOfferClaimResponse(
 @Serializable
 data class SpecialOfferAckResponse(
     val ok: Boolean = false,
+)
+
+@Serializable
+data class OfferPreferences(
+    val in_app_offers_enabled: Boolean = true,
 )
 
 @Serializable
@@ -335,6 +342,7 @@ data class CryptoCheckoutRequest(
     val term_months: Int,
     val success_url: String? = null,
     val cancel_url: String? = null,
+    val special_offer: Boolean = false,
 )
 
 @Serializable
@@ -377,6 +385,58 @@ data class AcademicDiscountStatusResponse(
     val status: String = "none",
     val promo_code: String? = null,
     val code_expires_at: String? = null,
+)
+
+@Serializable
+data class CreditPackageItem(
+    val id: String,
+    val amount_cents: Long = 0,
+    val price_cents: Long = 0,
+    val bonus_cents: Long = 0,
+    val sort_order: Int = 0,
+)
+
+@Serializable
+data class CreditPackagesResponse(
+    val packages: List<CreditPackageItem> = emptyList(),
+)
+
+@Serializable
+data class PurchaseCreditsRequest(
+    val package_id: String,
+    val currency: String? = null,
+)
+
+@Serializable
+data class PurchaseCreditsResponse(
+    val url: String,
+)
+
+@Serializable
+data class CreditSettingsRequest(
+    val use_credits_for_renewals: Boolean,
+)
+
+@Serializable
+data class CreditSettingsResponse(
+    val use_credits_for_renewals: Boolean = false,
+    val balance_cents: Long = 0,
+)
+
+@Serializable
+data class AcademicDiscountRequest(
+    val academic_email: String,
+    val turnstile_token: String? = null,
+)
+
+@Serializable
+data class AcademicResendRequest(
+    val turnstile_token: String? = null,
+)
+
+@Serializable
+data class AcademicDiscountResponse(
+    val success: Boolean = false,
 )
 
 @Serializable
@@ -483,6 +543,12 @@ interface BillingApi {
     suspend fun get_cancel_impact(): CancelImpactResponse
     suspend fun get_credit_balance(): CreditBalanceResponse
     suspend fun get_academic_discount_status(): AcademicDiscountStatusResponse
+    suspend fun get_credit_packages(): CreditPackagesResponse
+    suspend fun purchase_credits(request: PurchaseCreditsRequest): PurchaseCreditsResponse
+    suspend fun purchase_credits_crypto(request: PurchaseCreditsRequest): PurchaseCreditsResponse
+    suspend fun update_credit_settings(request: CreditSettingsRequest): CreditSettingsResponse
+    suspend fun request_academic_discount(request: AcademicDiscountRequest): AcademicDiscountResponse
+    suspend fun resend_academic_verification(request: AcademicResendRequest): AcademicDiscountResponse
     suspend fun get_onboarding_checklist(): OnboardingChecklistResponse
     suspend fun dismiss_onboarding_checklist()
     suspend fun get_available_plans(): AvailablePlansResponse
@@ -492,6 +558,8 @@ interface BillingApi {
     suspend fun claim_special_offer(): SpecialOfferClaimResponse
     suspend fun accept_special_offer(): SpecialOfferAckResponse
     suspend fun dismiss_special_offer(): SpecialOfferAckResponse
+    suspend fun get_offer_preferences(): OfferPreferences
+    suspend fun set_offer_preferences(request: OfferPreferences): OfferPreferences
     suspend fun create_portal_session(): PortalSessionResponse
     suspend fun get_billing_history(page: Int = 1, per_page: Int = 20): BillingHistoryResponse
     suspend fun cancel_subscription(request: CancelSubscriptionRequest): CancelSubscriptionResponse
@@ -512,7 +580,68 @@ interface BillingApi {
     suspend fun get_crypto_native_invoice(invoice_id: String): CryptoNativeInvoiceStatus
     suspend fun cancel_crypto_native_invoice(invoice_id: String): CryptoNativeCancelResponse
     suspend fun list_pending_crypto_invoices(): CryptoNativePendingInvoicesResponse
+    suspend fun get_google_play_config(): GooglePlayConfigResponse
+    suspend fun verify_google_play_purchase(request: GooglePlayVerifyRequest): GooglePlayVerifyResponse
 }
+
+@Serializable
+data class GooglePlayProduct(
+    val product_id: String = "",
+    val plan_code: String = "",
+    val base_plan_ids: List<String> = emptyList(),
+)
+
+@Serializable
+data class GooglePlayAddonProduct(
+    val product_id: String = "",
+    val size_label: String = "",
+    val size_bytes: Long = 0,
+    val base_plan_ids: List<String> = emptyList(),
+)
+
+@Serializable
+data class GooglePlaySpecialOffer(
+    val product_id: String = "",
+    val base_plan_id: String = "",
+    val offer_id: String = "",
+    val percent_off: Int = 0,
+    val duration_months: Int = 0,
+)
+
+@Serializable
+data class GooglePlayActiveAddon(
+    val product_id: String = "",
+    val paid_until: String? = null,
+    val term_months: Int = 1,
+)
+
+@Serializable
+data class GooglePlayConfigResponse(
+    val enabled: Boolean = false,
+    val obfuscated_account_id: String? = null,
+    val products: List<GooglePlayProduct> = emptyList(),
+    val addon_products: List<GooglePlayAddonProduct> = emptyList(),
+    val purchase_blocked_reason: String? = null,
+    val special_offer_eligible: Boolean = false,
+    val special_offer: GooglePlaySpecialOffer? = null,
+    val special_offer_yearly: GooglePlaySpecialOffer? = null,
+    val active_google_play_plan: String? = null,
+    val active_google_play_addons: List<GooglePlayActiveAddon> = emptyList(),
+)
+
+@Serializable
+data class GooglePlayVerifyRequest(
+    val product_id: String,
+    val purchase_token: String,
+)
+
+@Serializable
+data class GooglePlayVerifyResponse(
+    val plan_code: String? = null,
+    val product_kind: String? = null,
+    val paid_until: String? = null,
+    val pending: Boolean = false,
+)
 
 class BillingApiImpl(private val client: ApiClient) : BillingApi {
     private val base = "/api/payments/v1"
@@ -528,6 +657,54 @@ class BillingApiImpl(private val client: ApiClient) : BillingApi {
 
     override suspend fun get_academic_discount_status(): AcademicDiscountStatusResponse =
         decode_or_throw(client.http.get("${client.base_url}$base/discounts/academic/status"))
+
+    override suspend fun get_credit_packages(): CreditPackagesResponse =
+        decode_or_throw(client.http.get("${client.base_url}$base/credits/packages"))
+
+    override suspend fun purchase_credits(request: PurchaseCreditsRequest): PurchaseCreditsResponse {
+        val response = client.http.post("${client.base_url}$base/credits/purchase") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun purchase_credits_crypto(request: PurchaseCreditsRequest): PurchaseCreditsResponse {
+        val response = client.http.post("${client.base_url}$base/credits/crypto-purchase") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun update_credit_settings(request: CreditSettingsRequest): CreditSettingsResponse {
+        val response = client.http.post("${client.base_url}$base/credits/settings") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun request_academic_discount(request: AcademicDiscountRequest): AcademicDiscountResponse {
+        val response = client.http.post("${client.base_url}$base/discounts/academic/request") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun resend_academic_verification(request: AcademicResendRequest): AcademicDiscountResponse {
+        val response = client.http.post("${client.base_url}$base/discounts/academic/resend") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
 
     override suspend fun get_onboarding_checklist(): OnboardingChecklistResponse =
         decode_or_throw(client.http.get("${client.base_url}/api/core/v1/onboarding/checklist"))
@@ -572,6 +749,18 @@ class BillingApiImpl(private val client: ApiClient) : BillingApi {
     override suspend fun accept_special_offer(): SpecialOfferAckResponse = post_special_offer("accept")
 
     override suspend fun dismiss_special_offer(): SpecialOfferAckResponse = post_special_offer("dismiss")
+
+    override suspend fun get_offer_preferences(): OfferPreferences =
+        decode_or_throw(client.http.get("${client.base_url}/api/core/v1/offers/preferences"))
+
+    override suspend fun set_offer_preferences(request: OfferPreferences): OfferPreferences {
+        val response = client.http.put("${client.base_url}/api/core/v1/offers/preferences") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
 
     override suspend fun create_checkout_session(request: CheckoutSessionRequest): CheckoutSessionResponse {
         val response = client.http.post("${client.base_url}$base/checkout-session") {
@@ -725,6 +914,18 @@ class BillingApiImpl(private val client: ApiClient) : BillingApi {
 
     override suspend fun list_pending_crypto_invoices(): CryptoNativePendingInvoicesResponse =
         decode_or_throw(client.http.get("${client.base_url}$base/crypto-native/invoices/pending"))
+
+    override suspend fun get_google_play_config(): GooglePlayConfigResponse =
+        decode_or_throw(client.http.get("${client.base_url}$base/google-play/config"))
+
+    override suspend fun verify_google_play_purchase(request: GooglePlayVerifyRequest): GooglePlayVerifyResponse {
+        val response = client.http.post("${client.base_url}$base/google-play/verify") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
 
     private suspend inline fun <reified T> decode_or_throw(response: HttpResponse): T {
         if (response.status.value !in 200..299) {

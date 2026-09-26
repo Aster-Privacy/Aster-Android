@@ -18,4 +18,13 @@
     <plurals name="crypto_renewal_days">
         <item quantity="other">요금제가 %1$d일 뒤인 %2$s에 끝납니다.</item>
     </plurals>
+    <plurals name="special_offer_fine_print">
+        <item quantity="other">처음 %2$d개월 동안은 월 %1$s만 결제하면 됩니다. 이후에는 설정에서 취소할 때까지 월 %3$s 요금으로 갱신됩니다.</item>
+    </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="other">청구서 %d건</item>
+    </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="other">%d개 기능 모두 비교</item>
+    </plurals>
 </resources>

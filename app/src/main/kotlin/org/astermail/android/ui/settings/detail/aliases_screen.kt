@@ -483,6 +483,9 @@ private fun aliases_tab(
         val current = alias_domain_filter
         if (current != null && !alias_domains.contains(current)) alias_domain_filter = null
     }
+    val counted_alias_total = remember(state.aliases) {
+        state.aliases.count { !it.is_retained_primary }
+    }
     val visible_aliases = remember(state.aliases, query, alias_filter, alias_domain_filter) {
         state.aliases.filter { alias ->
             matches_alias_query(
@@ -527,13 +530,13 @@ private fun aliases_tab(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = pluralStringResource(R.plurals.aliases_count, state.aliases.size, state.aliases.size),
+                    text = pluralStringResource(R.plurals.aliases_count, counted_alias_total, counted_alias_total),
                     color = colors.text_tertiary,
                     fontSize = 13.sp,
                 )
-                if (org.astermail.android.billing.alias_limit_near(state.aliases.size, alias_limit)) {
+                if (org.astermail.android.billing.alias_limit_near(counted_alias_total, alias_limit)) {
                     Text(
-                        text = stringResource(R.string.alias_limit_notice, state.aliases.size, alias_limit ?: 0),
+                        text = stringResource(R.string.alias_limit_notice, counted_alias_total, alias_limit ?: 0),
                         color = colors.accent_blue,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -622,28 +625,20 @@ private fun aliases_tab(
                 }
             }
             val twin = state.twin_address
-            val twin_siblings = remember(twin, premium_domains_allowed) {
-                val all = if (twin == null) {
-                    emptyList()
-                } else if (twin.siblings.isNotEmpty()) {
-                    twin.siblings
-                } else {
-                    listOf(
-                        org.astermail.android.api.settings.TwinSibling(
-                            address = twin.address,
-                            domain = twin.domain,
-                            local_part = twin.local_part,
-                            state = twin.state,
-                        ),
-                    )
-                }
-                all.filter {
-                    org.astermail.android.settings.twin_domain_offerable(
-                        it.domain,
-                        it.state,
-                        premium_domains_allowed,
-                    )
-                }
+            val twin_siblings = remember(
+                twin,
+                state.twin_address_verified,
+                state.aliases_loaded,
+                state.aliases,
+                state.custom_domain_addresses,
+            ) {
+                org.astermail.android.settings.twin_offer_siblings(
+                    twin = twin,
+                    owned_addresses = state.aliases.map { it.address } +
+                        state.custom_domain_addresses.map { it.address },
+                    verified = state.twin_address_verified,
+                    owned_loaded = state.aliases_loaded,
+                )
             }
             twin_siblings.forEach { sibling ->
                 v_gap(AsterSpacing.sm)
@@ -1184,7 +1179,7 @@ internal fun alias_list_row(
             }
             AsterSwitch(
                 checked = alias.is_enabled,
-                enabled = grace_ends == null,
+                enabled = grace_ends == null && !alias.is_retained_primary,
                 onCheckedChange = { on_toggle() },
             )
             Box {
@@ -1246,16 +1241,18 @@ internal fun alias_list_row(
                             },
                         )
                     }
-                    aster_menu_item(
-                        label = stringResource(R.string.delete),
-                        icon = TablerIcons.Trash,
-                        destructive = true,
-                        test_tag = "alias_delete_${alias.id}",
-                        on_click = {
-                            row_menu_open = false
-                            on_delete()
-                        },
-                    )
+                    if (!alias.is_retained_primary) {
+                        aster_menu_item(
+                            label = stringResource(R.string.delete),
+                            icon = TablerIcons.Trash,
+                            destructive = true,
+                            test_tag = "alias_delete_${alias.id}",
+                            on_click = {
+                                row_menu_open = false
+                                on_delete()
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -1598,7 +1595,7 @@ internal fun deleted_aliases_screen(
                                     )
                                 }
                                 if (restore_locked) {
-                                    AsterGhostButton(
+                                    org.astermail.android.design.components.AsterCompactButton(
                                         label = stringResource(R.string.upgrade),
                                         onClick = on_upgrade,
                                     )

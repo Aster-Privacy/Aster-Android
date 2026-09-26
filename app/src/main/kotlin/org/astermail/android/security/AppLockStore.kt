@@ -42,6 +42,7 @@ data class AppLockConfig(
 class AppLockStore @Inject constructor(@ApplicationContext private val context: Context) {
 
     private companion object {
+        const val PREFS_NAME = "aster_app_lock"
         const val KEY_PIN_HASH = "pin_hash"
         const val KEY_PIN_SALT = "pin_salt"
         const val KEY_PIN_TYPE = "pin_type"
@@ -57,7 +58,7 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
     }
 
     private val prefs: SharedPreferences by lazy {
-        org.astermail.android.storage.SecurePrefs.open(context, "aster_app_lock")
+        org.astermail.android.storage.SecurePrefs.open(context, PREFS_NAME)
     }
 
     @Volatile private var session_unlocked = false
@@ -69,6 +70,8 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
     val config_version: StateFlow<Int> = _config_version.asStateFlow()
 
     fun is_configured(): Boolean = prefs.contains(KEY_PIN_HASH)
+
+    fun is_store_open(): Boolean = org.astermail.android.storage.SecurePrefs.is_open(PREFS_NAME)
 
     fun get_config(): AppLockConfig? {
         if (!is_configured()) return null

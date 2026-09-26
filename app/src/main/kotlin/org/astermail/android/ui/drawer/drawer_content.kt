@@ -24,6 +24,7 @@ package org.astermail.android.ui.drawer
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import org.astermail.android.design.components.AsterPlanTag
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu
 import org.astermail.android.BuildConfig
@@ -32,6 +33,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
@@ -221,6 +229,8 @@ private const val key_aliases_collapsed = "aliases_collapsed"
 private const val key_expanded_folders = "expanded_folders"
 private const val key_categories_collapsed = "categories_collapsed"
 
+
+private const val OFFER_ENTRY_ENTER_MS = 260
 @Composable
 fun DrawerContent(
     selected_id: String,
@@ -396,6 +406,17 @@ fun DrawerContent(
             on_click = {
                 on_open_workspace_sheet()
                 show_workspace_sheet = true
+            },
+        )
+
+        val offer_vm = org.astermail.android.ui.upgrade.special_offer_view_model()
+        val offer_state by offer_vm.state.collectAsStateWithLifecycle()
+        special_offer_drawer_entry(
+            visible = org.astermail.android.ui.upgrade.special_offer_entry_visible(offer_state),
+            percent_off = offer_state.effective_percent_off,
+            on_click = {
+                on_close()
+                offer_vm.reopen()
             },
         )
 
@@ -1955,7 +1976,7 @@ private fun profile_menu_tile(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun workspace_switcher_sheet(
+internal fun workspace_switcher_sheet(
     accounts: List<StoredAccount>,
     current_account_id: String?,
     current_email: String,
@@ -2515,7 +2536,57 @@ private fun folder_expand_toggle(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun special_offer_drawer_entry(
+    visible: Boolean,
+    percent_off: Int,
+    on_click: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(tween(OFFER_ENTRY_ENTER_MS, easing = FastOutSlowInEasing)) +
+            expandVertically(tween(OFFER_ENTRY_ENTER_MS, easing = FastOutSlowInEasing)),
+        exit = fadeOut(tween(160)) + shrinkVertically(tween(200, easing = FastOutSlowInEasing)),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 10.dp, end = 10.dp, top = 6.dp, bottom = 2.dp)
+                .height(48.dp)
+                .clip(RoundedCornerShape(999.dp))
+                .clickable(onClick = on_click)
+                .testTag("special_offer_entry")
+                .padding(start = 15.dp, end = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = TablerIcons.Discount2,
+                contentDescription = null,
+                tint = colors.accent_blue,
+                modifier = Modifier.size(22.dp),
+            )
+            Spacer(Modifier.width(16.dp))
+            Text(
+                text = stringResource(R.string.special_offer_entry),
+                color = colors.text_secondary,
+                fontSize = 15.5.sp,
+                letterSpacing = (-0.15).sp,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(8.dp))
+            AsterPlanTag(
+                text = stringResource(R.string.save_percent, percent_off),
+                font_size = 12.sp,
+                horizontal_padding = 9.dp,
+                vertical_padding = 3.dp,
+            )
+        }
+    }
+}
+
 @Composable
 private fun drawer_row(
     icon: ImageVector,

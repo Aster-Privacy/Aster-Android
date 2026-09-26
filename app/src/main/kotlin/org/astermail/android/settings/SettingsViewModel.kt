@@ -227,6 +227,8 @@ data class SettingsUiState(
     val alias_preferences: AliasPreferences? = null,
     val alias_preferences_load_failed: Boolean = false,
     val twin_address: org.astermail.android.api.settings.TwinAddressResponse? = null,
+    val twin_address_verified: Boolean = false,
+    val aliases_loaded: Boolean = false,
     val expanded_alias_ids: Set<String> = emptySet(),
     val alias_details: Map<String, AliasDetailState> = emptyMap(),
     val mail_rules: List<org.astermail.android.api.mail_rules.MailRule> = emptyList(),
@@ -261,6 +263,7 @@ data class SettingsUiState(
     val keyserver_status: org.astermail.android.api.encryption.KeyserverStatusResponse? = null,
     val badges: List<Badge> = emptyList(),
     val badge_preferences: org.astermail.android.api.user.BadgePreferences? = null,
+    val badges_loaded: Boolean = false,
     val is_loading: Boolean = false,
     val aliases_loading: Boolean = false,
     val error: String? = null,
@@ -377,6 +380,8 @@ class SettingsViewModel @Inject constructor(
     private val last_labels_load_ms = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private var save_preferences_job: kotlinx.coroutines.Job? = null
     private var prefs_load_succeeded = false
+    private var twin_address_job: kotlinx.coroutines.Job? = null
+    private var twin_address_generation = 0
 
     private val account_data_writer = org.astermail.android.crypto.AccountDataWriter(
         session_key_store,
@@ -388,7 +393,12 @@ class SettingsViewModel @Inject constructor(
         hydrate_cached_preferences()
         hydrate_cached_signatures()
         hydrate_cached_tags()
+        hydrate_twin_address()
+        hydrate_cached_storage()
         load_preferences()
+        viewModelScope.launch {
+            org.astermail.android.billing.SubscriptionEvents.changed.collect { load_subscription(force = true) }
+        }
     }
 
     private fun cache_account_key(): String? =
@@ -414,6 +424,24 @@ class SettingsViewModel @Inject constructor(
             cached_preferences_json.encodeToString(UserPreferences.serializer(), prefs)
         }.getOrNull() ?: return
         preferences_cache.write(key, raw)
+    }
+
+    private fun hydrate_cached_storage() {
+        if (_state.value.storage != null) return
+        val raw = preferences_cache.read_storage(cache_account_key()) ?: return
+        val cached = runCatching {
+            cached_preferences_json.decodeFromString(StorageOverview.serializer(), raw)
+        }.getOrNull() ?: return
+        if (cached.total_bytes <= 0L) return
+        _state.update { if (it.storage == null) it.copy(storage = cached) else it }
+    }
+
+    private fun persist_cached_storage(overview: StorageOverview) {
+        val key = cache_account_key() ?: return
+        val raw = runCatching {
+            cached_preferences_json.encodeToString(StorageOverview.serializer(), overview)
+        }.getOrNull() ?: return
+        preferences_cache.write_storage(key, raw)
     }
 
     fun clear_cached_preferences(account_key: String?) {
@@ -516,12 +544,11 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val result = user_api.fetch_badges()
-                if (result != _state.value.badges) {
-                    _state.value = _state.value.copy(badges = result)
-                }
+                _state.value = _state.value.copy(badges = result, badges_loaded = true)
                 persist_cached_badges(result)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(badges_loaded = true)
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_badges", t)
             }
         }
@@ -532,6 +559,10 @@ class SettingsViewModel @Inject constructor(
                 persist_cached_badge_preferences(prefs)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(
+                    badge_preferences = _state.value.badge_preferences
+                        ?: org.astermail.android.api.user.BadgePreferences(),
+                )
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_badge_preferences", t)
             }
         }
@@ -894,6 +925,9 @@ class SettingsViewModel @Inject constructor(
         org.astermail.android.folders.folder_lock_store.lock_all()
         load_preferences_job?.cancel()
         save_preferences_job?.cancel()
+        twin_address_generation++
+        twin_address_job?.cancel()
+        twin_address_job = null
         prefs_load_succeeded = false
         account_uses_encrypted_prefs = false
         last_preferences_raw_json = null
@@ -917,6 +951,7 @@ class SettingsViewModel @Inject constructor(
         default_signature_is_html = false
         hydrate_cached_preferences()
         hydrate_cached_tags()
+        hydrate_cached_storage()
     }
 
     fun load_blocked_senders() {
@@ -1333,6 +1368,7 @@ class SettingsViewModel @Inject constructor(
                 prime_own_alias_avatars(decrypted)
                 _state.value = _state.value.copy(
                     aliases = decrypted,
+                    aliases_loaded = true,
                     max_aliases = max_aliases,
                     is_loading = false,
                     aliases_loading = false,
@@ -2843,16 +2879,64 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun load_twin_address() {
-        viewModelScope.launch {
+        hydrate_twin_address()
+        val key = cache_account_key()
+        val gen = twin_address_generation
+        twin_address_job?.cancel()
+        twin_address_job = viewModelScope.launch {
             try {
                 val twin_address = settings_api.get_twin_address()
-                _state.update { it.copy(twin_address = twin_address) }
+                if (gen != twin_address_generation || cache_account_key() != key) return@launch
+                _state.update { it.copy(twin_address = twin_address, twin_address_verified = true) }
+                persist_cached_twin_address(key, twin_address)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_twin_address", t)
-                _state.update { it.copy(twin_address = null) }
+                if (gen == twin_address_generation) hydrate_twin_address()
             }
         }
+    }
+
+    private fun hydrate_twin_address() {
+        val key = cache_account_key()
+        if (key == null) {
+            _state.update { it.copy(twin_address = null, twin_address_verified = false) }
+            return
+        }
+        val cached = preferences_cache.read_twin_address(key)?.let { raw ->
+            runCatching {
+                cached_preferences_json.decodeFromString(
+                    org.astermail.android.api.settings.TwinAddressResponse.serializer(),
+                    raw,
+                )
+            }.getOrNull()
+        }
+        if (cached != null) {
+            _state.update { it.copy(twin_address = cached, twin_address_verified = true) }
+            return
+        }
+        val seeded = runCatching {
+            val current = _state.value
+            seed_twin_address(
+                account_store.get_current()?.email,
+                current.aliases.map { it.address } + current.custom_domain_addresses.map { it.address },
+            )
+        }.getOrNull()
+        _state.update { it.copy(twin_address = seeded, twin_address_verified = false) }
+    }
+
+    private fun persist_cached_twin_address(
+        key: String?,
+        twin_address: org.astermail.android.api.settings.TwinAddressResponse,
+    ) {
+        if (key == null) return
+        val raw = runCatching {
+            cached_preferences_json.encodeToString(
+                org.astermail.android.api.settings.TwinAddressResponse.serializer(),
+                twin_address,
+            )
+        }.getOrNull() ?: return
+        preferences_cache.write_twin_address(key, raw)
     }
 
     private fun hydrate_cached_alias_preferences() {
@@ -3181,17 +3265,21 @@ class SettingsViewModel @Inject constructor(
         val now = System.currentTimeMillis()
         if (!force && _state.value.storage != null && now - last_storage_load_ms < LIST_TTL_MS) return
         last_storage_load_ms = now
+        val cold = _state.value.storage == null
         viewModelScope.launch {
-            _state.value = _state.value.copy(is_loading = true, error = null)
+            if (cold) _state.value = _state.value.copy(is_loading = true, error = null)
             try {
                 val overview = settings_api.get_storage_overview()
                 _state.value = _state.value.copy(storage = overview, is_loading = false)
+                persist_cached_storage(overview)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(
-                    is_loading = false,
-                    error = user_facing_error(t),
-                )
+                if (cold) {
+                    _state.value = _state.value.copy(
+                        is_loading = false,
+                        error = user_facing_error(t),
+                    )
+                }
             }
         }
     }
@@ -4184,13 +4272,13 @@ class SettingsViewModel @Inject constructor(
             try {
                 val response = labels_api.list_labels(include_counts = true, folder_type = folder_type)
                 last_labels_load_ms[labels_key] = System.currentTimeMillis()
-                var decrypted = response.labels.map { decrypt_label(it) }
+                var decrypted = withContext(default_dispatcher) { response.labels.map { decrypt_label(it) } }
                 val any_decryption_failed = response.labels.indices.any { i ->
                     !response.labels[i].encrypted_name.isNullOrBlank() &&
                         decrypted[i].encrypted_name.isNullOrBlank()
                 }
                 if (any_decryption_failed && auth_repository.try_refresh_vault_keys()) {
-                    decrypted = response.labels.map { decrypt_label(it) }
+                    decrypted = withContext(default_dispatcher) { response.labels.map { decrypt_label(it) } }
                 }
                 val still_all_failed = response.labels.any { !it.encrypted_name.isNullOrBlank() } &&
                     decrypted.all { it.encrypted_name.isNullOrBlank() }
@@ -4405,11 +4493,11 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = tags_api.list_tags(include_counts = true)
-                var decrypted = response.tags.map { decrypt_tag(it) }
+                var decrypted = withContext(default_dispatcher) { response.tags.map { decrypt_tag(it) } }
                 val all_decryption_failed = response.tags.any { it.encrypted_name.isNotBlank() } &&
                     decrypted.all { it.encrypted_name.isBlank() }
                 if (all_decryption_failed && auth_repository.try_refresh_vault_keys()) {
-                    decrypted = response.tags.map { decrypt_tag(it) }
+                    decrypted = withContext(default_dispatcher) { response.tags.map { decrypt_tag(it) } }
                 }
                 val merged = org.astermail.android.labels.merge_tag_snapshot(_state.value.tags, decrypted)
                 _state.value = _state.value.copy(tags = merged)
@@ -4985,7 +5073,9 @@ class SettingsViewModel @Inject constructor(
                         )
                         return@launch
                     }
-                    val decrypted = decrypt_preferences_after_key_load(enc, nonce, identity_key, _state.value.preferences)
+                    val decrypted = withContext(default_dispatcher) {
+                        decrypt_preferences_after_key_load(enc, nonce, identity_key, _state.value.preferences)
+                    }
                     if (decrypted != null) {
                         prefs_load_succeeded = true
                         last_preferences_load_ms = System.currentTimeMillis()
@@ -5863,18 +5953,20 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = developer_api.list_webhooks()
-                val decrypted = response.webhooks.map { hook ->
-                    val url = if (hook.url_encrypted.isNotBlank() && hook.url_nonce.isNotBlank()) {
-                        try {
-                            decrypt_alias_field(hook.url_encrypted, hook.url_nonce)
-                        } catch (t: Throwable) {
-                            if (t is kotlinx.coroutines.CancellationException) throw t
+                val decrypted = withContext(default_dispatcher) {
+                    response.webhooks.map { hook ->
+                        val url = if (hook.url_encrypted.isNotBlank() && hook.url_nonce.isNotBlank()) {
+                            try {
+                                decrypt_alias_field(hook.url_encrypted, hook.url_nonce)
+                            } catch (t: Throwable) {
+                                if (t is kotlinx.coroutines.CancellationException) throw t
+                                ""
+                            }
+                        } else {
                             ""
                         }
-                    } else {
-                        ""
+                        hook.copy(decrypted_url = url)
                     }
-                    hook.copy(decrypted_url = url)
                 }
                 _state.value = _state.value.copy(webhooks = decrypted)
             } catch (t: Throwable) {
@@ -6190,11 +6282,16 @@ class SettingsViewModel @Inject constructor(
             }
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
+            val retained = if (alias.is_retained_primary) {
+                alias.retained_local_part.orEmpty()
+            } else {
+                ""
+            }
             return alias.copy(
-                encrypted_local_part = "",
+                encrypted_local_part = retained,
                 encrypted_display_name = null,
                 encrypted_note = null,
-                decryption_failed = true,
+                decryption_failed = retained.isEmpty(),
             )
         }
         val enc_name = alias.encrypted_display_name
@@ -6300,44 +6397,18 @@ class SettingsViewModel @Inject constructor(
         throw IllegalStateException("alias decryption failed")
     }
 
-    private fun encrypt_alias_field(plaintext: String): Pair<String, String> {
-        val key = derive_encryption_key()
-        try {
-            val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
-            val ciphertext = AesGcm.encrypt(key, nonce, plaintext.toByteArray(Charsets.UTF_8))
-            return android.util.Base64.encodeToString(ciphertext, android.util.Base64.NO_WRAP) to
-                android.util.Base64.encodeToString(nonce, android.util.Base64.NO_WRAP)
-        } finally {
-            key.fill(0)
-        }
-    }
+    private fun encrypt_alias_field(plaintext: String): Pair<String, String> =
+        encrypt_alias_field_with(session_key_store, plaintext)
 
     private fun normalize_alias_local_part(local_part: String): String {
         return local_part.lowercase(java.util.Locale.ROOT).replace(".", "")
     }
 
-    private fun compute_alias_address_hash(local_part: String, domain: String): String {
-        val enc_key = derive_encryption_key()
-        try {
-            val info = "astermail-alias-hmac-v1".toByteArray(Charsets.UTF_8)
-            val combined = enc_key + info
-            val hmac_key_bytes = MessageDigest.getInstance("SHA-256").digest(combined)
-            combined.fill(0)
-            val mac = Mac.getInstance("HmacSHA256")
-            mac.init(SecretKeySpec(hmac_key_bytes, "HmacSHA256"))
-            val sig = mac.doFinal("${normalize_alias_local_part(local_part)}@$domain".toByteArray(Charsets.UTF_8))
-            hmac_key_bytes.fill(0)
-            return android.util.Base64.encodeToString(sig, android.util.Base64.NO_WRAP)
-        } finally {
-            enc_key.fill(0)
-        }
-    }
+    private fun compute_alias_address_hash(local_part: String, domain: String): String =
+        compute_alias_address_hash_with(session_key_store, local_part, domain)
 
-    private fun compute_routing_address_hash(local_part: String, domain: String): String {
-        val data = "${normalize_alias_local_part(local_part)}@$domain".toByteArray(Charsets.UTF_8)
-        val hash = MessageDigest.getInstance("SHA-256").digest(data)
-        return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
-    }
+    private fun compute_routing_address_hash(local_part: String, domain: String): String =
+        compute_routing_address_hash_for(local_part, domain)
 
     private fun compute_domain_address_hash(local_part: String, domain: String): String {
         val enc_key = derive_encryption_key()

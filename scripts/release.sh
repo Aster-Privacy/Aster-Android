@@ -32,6 +32,7 @@ dry_run=0
 for a in "$@"; do
   if [ "$a" = "--dry-run" ]; then dry_run=1; fi
 done
+skip_fdroid="${ASTER_SKIP_FDROID:-0}"
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 work="${ASTER_RELEASE_WORKDIR:-$repo_root/../.release_work}"
@@ -57,8 +58,10 @@ for bt in 35.0.0 34.0.0; do
 done
 [ -n "$apksigner" ] || die "apksigner not found under $sdk/build-tools"
 command -v gh >/dev/null || die "gh CLI not found"
-command -v docker >/dev/null || die "docker not found, the fdroid flavor builds inside the F-Droid buildserver image"
-docker info >/dev/null 2>&1 || die "docker is not running"
+if [ "$skip_fdroid" != "1" ]; then
+  command -v docker >/dev/null || die "docker not found, the fdroid flavor builds inside the F-Droid buildserver image"
+  docker info >/dev/null 2>&1 || die "docker is not running"
+fi
 gh auth status >/dev/null 2>&1 || die "gh is not authenticated"
 [ -f "$repo_root/app/google-services.json" ] || die "app/google-services.json missing (gitignored build input)"
 [ -f "$repo_root/keystore/aster-mail-upload-v3.jks" ] || die "signing keystore missing"
@@ -143,19 +146,24 @@ say "build full flavor (signed)"
 
 # The fdroid flavor is built on Linux inside the F-Droid buildserver image, from the
 # tag, the way F-Droid builds it, so the published APK matches their rebuild.
-say "build fdroid flavor (unsigned, F-Droid buildserver container)"
-bash scripts/build_fdroid_in_container.sh "v$ver" "$work/fdroid-$ver"
+if [ "$skip_fdroid" = "1" ]; then
+  say "fdroid flavor skipped (ASTER_SKIP_FDROID=1)"
+else
+  say "build fdroid flavor (unsigned, F-Droid buildserver container)"
+  bash scripts/build_fdroid_in_container.sh "v$ver" "$work/fdroid-$ver"
+fi
 
 full_apk="app/build/outputs/apk/full/release/app-full-release.apk"
 fdroid_unsigned="$work/fdroid-$ver/app-fdroid-release-unsigned.apk"
 aab="app/build/outputs/bundle/fullRelease/app-full-release.aab"
 [ -f "$full_apk" ] || die "full APK not produced at $full_apk"
-[ -f "$fdroid_unsigned" ] || die "fdroid APK not produced at $fdroid_unsigned"
+[ "$skip_fdroid" = "1" ] || [ -f "$fdroid_unsigned" ] || die "fdroid APK not produced at $fdroid_unsigned"
 [ -f "$aab" ] || die "AAB not produced at $aab"
 
-say "sign fdroid APK"
 rm -rf "$out_dir"
 mkdir -p "$out_dir"
+if [ "$skip_fdroid" != "1" ]; then
+say "sign fdroid APK"
 # Never zipalign the fdroid APK. Build-tools 35 and newer re-align during signing by
 # default, which rewrites zip padding into 0xd935 extra fields that F-Droid's rebuild
 # does not have, so the signature no longer covers identical bytes and verification
@@ -165,6 +173,7 @@ if [ "$bt_ver" != "34.0.0" ]; then align_flag="--alignment-preserved"; fi
 "$apksigner" sign --ks keystore/aster-mail-upload-v3.jks --ks-key-alias aster-mail \
   --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEYSTORE_PASSWORD \
   $align_flag --out "$out_dir/Aster-Mail-fdroid-$ver.apk" "$fdroid_unsigned"
+fi
 
 # Asset names say which build they are. Aster-Mail.apk is the fixed name the website
 # resolves, the -full copy pins this version, and Aster-Mail-fdroid-<ver>.apk is the
@@ -174,12 +183,15 @@ cp "$full_apk" "$out_dir/Aster-Mail-$ver-full.apk"
 cp "$aab" "$out_dir/Aster-Mail-$ver-full.aab"
 
 say "verify signatures"
-for f in "$out_dir/Aster-Mail.apk" "$out_dir/Aster-Mail-fdroid-$ver.apk"; do
+signed=("$out_dir/Aster-Mail.apk")
+if [ "$skip_fdroid" != "1" ]; then signed+=("$out_dir/Aster-Mail-fdroid-$ver.apk"); fi
+for f in "${signed[@]}"; do
   got=$("$apksigner" verify --print-certs "$f" | grep -i "SHA-256 digest" | head -1 | grep -oE '[0-9a-f]{64}')
   [ "$got" = "$cert_sha" ] || die "$(basename "$f") signer is $got, expected $cert_sha"
   echo "  OK $(basename "$f") signed by $cert_sha"
 done
 
+if [ "$skip_fdroid" != "1" ]; then
 bad=$(python - "$out_dir/Aster-Mail-fdroid-$ver.apk" <<'PY'
 import struct, sys, zipfile
 data = open(sys.argv[1], "rb").read()
@@ -225,6 +237,7 @@ PYEOL
 )
 [ "$crlf" = "0" ] || die "$crlf text assets in the fdroid APK carry CRLF line endings"
 echo "  OK fdroid APK text assets use LF line endings"
+fi
 
 if [ "$dry_run" = 1 ]; then
   say "dry run complete"
@@ -241,9 +254,10 @@ say "GitHub release"
 # Aster-Mail-fdroid-<ver>.apk is what the F-Droid recipe's Binaries: line fetches. The
 # recipe is on AutoUpdateMode: Version / UpdateCheckMode: Tags, so their bot adds a
 # build entry for this tag on its own cycle and 404s if the asset is missing.
+assets=("$out_dir/Aster-Mail.apk" "$out_dir/Aster-Mail-$ver-full.apk")
+if [ "$skip_fdroid" != "1" ]; then assets+=("$out_dir/Aster-Mail-fdroid-$ver.apk"); fi
 gh release create "v$ver" --repo Aster-Privacy/Aster-Android --title "v$ver" \
-  --notes-file "$notes" \
-  "$out_dir/Aster-Mail.apk" "$out_dir/Aster-Mail-$ver-full.apk" "$out_dir/Aster-Mail-fdroid-$ver.apk"
+  --notes-file "$notes" "${assets[@]}"
 
 say "carry APK to the site download target"
 mail_tag=$(gh api repos/Aster-Privacy/Aster-Mail/releases/latest -q .tag_name)
@@ -269,4 +283,8 @@ say "channel audit"
 bash "$repo_root/../Claude/scripts/audit_android_channels.sh" "$ver" || true
 echo
 echo "Release $ver published."
-echo "F-Droid picks the tag up on its own build cycle and verifies Aster-Mail-fdroid-$ver.apk against their rebuild."
+if [ "$skip_fdroid" = "1" ]; then
+  echo "F-Droid skipped: no Aster-Mail-fdroid-$ver.apk on the tag, so F-Droid cannot publish this version."
+else
+  echo "F-Droid picks the tag up on its own build cycle and verifies Aster-Mail-fdroid-$ver.apk against their rebuild."
+fi

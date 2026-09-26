@@ -67,7 +67,16 @@ fun ContactAvatar(
 ) {
     val (background_color, text_color) = avatar_colors_for(avatar_key_for(email, name), profile_color)
     val initial = initial_for(name, email)
-    val bitmap = remember(avatar_url) { decode_contact_photo(avatar_url) }
+    val bitmap by androidx.compose.runtime.produceState(
+        initialValue = contact_photo_cache.get(avatar_url),
+        avatar_url,
+    ) {
+        if (value == null && is_inline_contact_photo(avatar_url)) {
+            value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                decode_contact_photo(avatar_url)
+            }?.also { contact_photo_cache.put(avatar_url, it) }
+        }
+    }
     val remote_url = remember(avatar_url) {
         avatar_url.takeIf { it.startsWith("http://", ignoreCase = true) || it.startsWith("https://", ignoreCase = true) }
     }
@@ -126,8 +135,17 @@ fun ContactAvatar(
 
 private const val contact_photo_min_bytes = 64
 
+private const val contact_photo_max_px = 256
+
+private val contact_photo_cache = object : android.util.LruCache<String, ImageBitmap>(8 * 1024 * 1024) {
+    override fun sizeOf(key: String, value: ImageBitmap): Int = value.width * value.height * 4
+}
+
+private fun is_inline_contact_photo(avatar_url: String): Boolean =
+    avatar_url.startsWith("data:image", ignoreCase = true)
+
 private fun decode_contact_photo(avatar_url: String): ImageBitmap? {
-    if (!avatar_url.startsWith("data:image", ignoreCase = true)) return null
+    if (!is_inline_contact_photo(avatar_url)) return null
     val payload = avatar_url.substringAfter("base64,", "")
     if (payload.length < contact_photo_min_bytes) return null
 
@@ -137,7 +155,14 @@ private fun decode_contact_photo(avatar_url: String): ImageBitmap? {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return@runCatching null
-        val decoded: Bitmap? = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+        var sample = 1
+        while (bounds.outWidth / (sample * 2) >= contact_photo_max_px &&
+            bounds.outHeight / (sample * 2) >= contact_photo_max_px
+        ) {
+            sample *= 2
+        }
+        val options = BitmapFactory.Options().apply { inSampleSize = sample }
+        val decoded: Bitmap? = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
         decoded?.takeIf { it.width > 0 && it.height > 0 }?.asImageBitmap()
     }.getOrNull()
 }

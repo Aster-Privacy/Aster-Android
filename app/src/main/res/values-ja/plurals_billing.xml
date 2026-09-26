@@ -18,4 +18,13 @@
     <plurals name="crypto_renewal_days">
         <item quantity="other">プランは %1$d 日後の %2$s に終了します。</item>
     </plurals>
+    <plurals name="special_offer_fine_print">
+        <item quantity="other">最初の%2$dか月は月額%1$sです。その後は、設定で解約するまで月額%3$sで更新されます。</item>
+    </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="other">%d 件の請求書</item>
+    </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="other">全 %d 機能を比較</item>
+    </plurals>
 </resources>

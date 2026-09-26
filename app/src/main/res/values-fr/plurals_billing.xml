@@ -24,4 +24,17 @@
         <item quantity="one">Votre offre se termine dans %1$d jour, le %2$s.</item>
         <item quantity="other">Votre offre se termine dans %1$d jours, le %2$s.</item>
     </plurals>
+    <plurals name="special_offer_fine_print">
+        <item quantity="one">Vous payez %1$s par mois pendant le premier mois. Votre forfait est ensuite renouvelé à %3$s par mois jusqu\'à ce que vous l\'annuliez dans Paramètres.</item>
+        <item quantity="many">Vous payez %1$s par mois pendant les %2$d premiers mois. Votre forfait est ensuite renouvelé à %3$s par mois jusqu\'à ce que vous l\'annuliez dans Paramètres.</item>
+        <item quantity="other">Vous payez %1$s par mois pendant les %2$d premiers mois. Votre forfait est ensuite renouvelé à %3$s par mois jusqu\'à ce que vous l\'annuliez dans Paramètres.</item>
+    </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="one">%d facture</item>
+        <item quantity="other">%d factures</item>
+    </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="one">Comparer %d fonctionnalité</item>
+        <item quantity="other">Comparer les %d fonctionnalités</item>
+    </plurals>
 </resources>

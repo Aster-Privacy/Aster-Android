@@ -24,4 +24,16 @@
         <item quantity="one">Planınız %1$d gün içinde, %2$s tarihinde sona eriyor.</item>
         <item quantity="other">Planınız %1$d gün içinde, %2$s tarihinde sona eriyor.</item>
     </plurals>
+    <plurals name="special_offer_fine_print">
+        <item quantity="one">İlk %2$d ay boyunca aylık %1$s ödersiniz. Ardından planınız, Ayarlar bölümünden iptal edene kadar aylık %3$s olarak yenilenir.</item>
+        <item quantity="other">İlk %2$d ay boyunca aylık %1$s ödersiniz. Ardından planınız, Ayarlar bölümünden iptal edene kadar aylık %3$s olarak yenilenir.</item>
+    </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="one">%d fatura</item>
+        <item quantity="other">%d fatura</item>
+    </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="one">%d özelliği karşılaştır</item>
+        <item quantity="other">%d özelliğin tümünü karşılaştır</item>
+    </plurals>
 </resources>

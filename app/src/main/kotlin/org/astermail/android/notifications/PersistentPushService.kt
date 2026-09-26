@@ -149,7 +149,10 @@ class PersistentPushService : Service() {
             stop_cleanly()
             return START_NOT_STICKY
         }
-        runCatching { enter_foreground() }
+        if (runCatching { enter_foreground() }.isFailure) {
+            stop_cleanly()
+            return START_NOT_STICKY
+        }
         connect()
         return START_STICKY
     }

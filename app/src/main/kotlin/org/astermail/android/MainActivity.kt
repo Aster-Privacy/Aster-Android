@@ -39,7 +39,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import org.astermail.android.security.AppLockViewModel
 import org.astermail.android.ui.auth.mark_signed_up_now
-import org.astermail.android.ui.auth.within_sign_up_quiet_period
 import org.astermail.android.security.LockdownStore
 import org.astermail.android.ui.common.nav_anim_duration_ms
 import org.astermail.android.ui.security.AppLockScreen
@@ -101,6 +100,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.astermail.android.auth.AuthGateViewModel
 import org.astermail.android.design.AsterMaterial
@@ -205,6 +205,10 @@ class MainActivity :
 
     private val insets_applied = java.util.concurrent.atomic.AtomicBoolean(false)
 
+    private val secure_storage_ready = androidx.compose.runtime.mutableStateOf(
+        org.astermail.android.storage.SecurePrefs.warm_complete.value,
+    )
+
     val pending_launch = pending_launch_state()
 
     @javax.inject.Inject
@@ -225,6 +229,14 @@ class MainActivity :
         LockdownStore.register_listener(applicationContext, lockdown_listener)
         lifecycleScope.launch {
             app_lock_store.config_version.collect { enforce_secure_flag() }
+        }
+        if (!secure_storage_ready.value) {
+            lifecycleScope.launch {
+                org.astermail.android.storage.SecurePrefs.warm_complete.first { it }
+                runCatching { app_lock_store.check_on_foreground() }
+                enforce_secure_flag()
+                secure_storage_ready.value = true
+            }
         }
         consume_open_email_extra(intent)
         consume_share_intent(intent)
@@ -247,7 +259,9 @@ class MainActivity :
                         .semantics { testTagsAsResourceId = true }
                         .graphicsLayer { alpha = if (insets_ready.value) 1f else 0f },
                 ) {
-                    AsterRoot()
+                    if (secure_storage_ready.value) {
+                        AsterRoot()
+                    }
                 }
             }
         }
@@ -337,7 +351,8 @@ class MainActivity :
     }
 
     override fun enforce_secure_flag() {
-        val app_lock_configured = runCatching { app_lock_store.is_configured() }.getOrDefault(true)
+        val app_lock_configured = !app_lock_store.is_store_open() ||
+            runCatching { app_lock_store.is_configured() }.getOrDefault(true)
         if (org.astermail.android.ui.common.SecureScreenGuard.is_active() ||
             LockdownStore.is_enabled(applicationContext) ||
             app_lock_configured
@@ -630,10 +645,7 @@ private fun AsterNavHost() {
                 nav_controller.navigate(routes.settings_detail("billing"))
             },
         )
-        val offer_route by nav_controller.currentBackStackEntryAsState()
-        if (!is_locked && offer_route?.destination?.route != routes.register && !within_sign_up_quiet_period(context)) {
-            org.astermail.android.ui.upgrade.SpecialOfferHost()
-        }
+        org.astermail.android.billing.PlayBillingHost()
         androidx.compose.runtime.LaunchedEffect(Unit) {
             org.astermail.android.api.AuthEventBus.unauthorized.collect {
                 auth_gate.auth_repository.handle_unauthorized_signal()
@@ -1581,7 +1593,33 @@ composable(routes.settings_detail("family")) {
         }
     }
 
+    if (is_signed_in_state) {
+        val offer_route by nav_controller.currentBackStackEntryAsState()
+        if (!is_locked && offer_route?.destination?.route != routes.register) {
+            if (BuildConfig.SPECIAL_OFFER) org.astermail.android.ui.upgrade.SpecialOfferHost()
+        }
+    }
+
     if (is_signed_in_state && !is_locked) {
+        val gate_settings_vm = org.astermail.android.settings.shared_settings_view_model()
+        org.astermail.android.ui.account.SuspendedAccountGate(
+            on_switched = { account, restored ->
+                gate_settings_vm.reset_for_account_switch()
+                val destination = if (restored) routes.inbox else routes.sign_in_for(account.email)
+                nav_controller.navigate(destination) {
+                    popUpTo(0) { inclusive = true }
+                }
+            },
+            on_add_account = {
+                nav_controller.navigate(routes.sign_in_for(""))
+            },
+            on_signed_out = { switched_account ->
+                val destination = if (switched_account) routes.inbox else routes.welcome
+                nav_controller.navigate(destination) {
+                    popUpTo(0) { inclusive = true }
+                }
+            },
+        )
         org.astermail.android.ui.account.PendingDeletionGate(
             on_reactivated = {
                 nav_controller.navigate(routes.inbox) {

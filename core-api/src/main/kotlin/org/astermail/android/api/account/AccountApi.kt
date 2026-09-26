@@ -35,6 +35,9 @@ data class AccountStatusResponse(
     val status: String = "active",
     val deletion_scheduled_at: String? = null,
     val days_until_deletion: Long? = null,
+    val suspended_at: String? = null,
+    val suspension_reason: String? = null,
+    val deletion_eligible_at: String? = null,
 )
 
 @Serializable

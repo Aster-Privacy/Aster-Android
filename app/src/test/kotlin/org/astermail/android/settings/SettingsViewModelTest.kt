@@ -2006,7 +2006,7 @@ class SettingsViewModelTest {
             preferences_cache = preferences_cache,
             theme_store = theme_store,
             context = context,
-        )
+        ).also { it.default_dispatcher = dispatcher }
         advanceUntilIdle()
 
         assertNotNull(fresh_vm.state.value.preferences)
@@ -2049,7 +2049,7 @@ class SettingsViewModelTest {
             preferences_cache = preferences_cache,
             theme_store = theme_store,
             context = context,
-        )
+        ).also { it.default_dispatcher = dispatcher }
         advanceUntilIdle()
 
         fresh_vm.save_preferences(UserPreferences(load_remote_images = "always"))
@@ -2125,7 +2125,7 @@ class SettingsViewModelTest {
             preferences_cache = preferences_cache,
             theme_store = theme_store,
             context = context,
-        )
+        ).also { it.default_dispatcher = dispatcher }
         advanceUntilIdle()
 
         every { session_key_store.get_identity_key() } returns identity_key
@@ -2177,7 +2177,7 @@ class SettingsViewModelTest {
         preferences_cache = preferences_cache,
         theme_store = theme_store,
         context = context,
-    )
+    ).also { it.default_dispatcher = dispatcher }
 
     private fun aes_gcm(mode: Int, key: ByteArray, nonce: ByteArray, input: ByteArray): ByteArray {
         val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
@@ -2401,7 +2401,7 @@ class SettingsViewModelTest {
             preferences_cache = preferences_cache,
             theme_store = theme_store,
             context = context,
-        )
+        ).also { it.default_dispatcher = dispatcher }
         advanceUntilIdle()
         assertEquals("dark", vm.state.value.preferences?.theme)
 
@@ -2452,7 +2452,7 @@ class SettingsViewModelTest {
             preferences_cache = preferences_cache,
             theme_store = theme_store,
             context = context,
-        )
+        ).also { it.default_dispatcher = dispatcher }
         advanceUntilIdle()
 
         fresh_vm.save_preferences(UserPreferences(load_remote_images = "always"))
@@ -2512,7 +2512,7 @@ class SettingsViewModelTest {
             preferences_cache = preferences_cache,
             theme_store = theme_store,
             context = context,
-        )
+        ).also { it.default_dispatcher = dispatcher }
         advanceUntilIdle()
 
         assertNotNull(fresh_vm.state.value.preferences)

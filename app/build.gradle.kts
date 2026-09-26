@@ -28,9 +28,11 @@ android {
     productFlavors {
         create("full") {
             dimension = "distribution"
+            buildConfigField("boolean", "SPECIAL_OFFER", "true")
         }
         create("fdroid") {
             dimension = "distribution"
+            buildConfigField("boolean", "SPECIAL_OFFER", "false")
         }
     }
 
@@ -38,8 +40,8 @@ android {
         applicationId = "org.astermail.android"
         minSdk = 26
         targetSdk = 36
-        versionCode = 197
-        versionName = "0.6.188"
+        versionCode = 198
+        versionName = "0.6.189"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -180,6 +182,7 @@ dependencies {
     "fullImplementation"(libs.kotlinx.coroutines.play.services)
     "fullImplementation"(libs.unifiedpush.efcmd)
     "fullImplementation"("com.google.android.play:review-ktx:2.0.2")
+    "fullImplementation"("com.android.billingclient:billing:9.1.0")
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.lifecycle.process)

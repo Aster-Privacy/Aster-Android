@@ -4589,6 +4589,7 @@ internal fun signature_html_web_preview(html: String, modifier: Modifier = Modif
             }
         },
         update = { wv ->
+            if (wv.tag == html) return@AndroidView
             val safe_html = org.astermail.android.ui.mail.EmailHtmlSanitizer.sanitize(
                 html,
                 org.astermail.android.ui.mail.EmailHtmlSanitizer.SanitizeOptions(
@@ -4602,10 +4603,8 @@ internal fun signature_html_web_preview(html: String, modifier: Modifier = Modif
                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">" +
                 "<style>body{margin:10px;font-family:sans-serif;font-size:14px;color:#222222;background:#ffffff;}img{max-width:100%;height:auto;}</style>" +
                 "</head><body>" + safe_html + "</body></html>"
-            if (wv.tag != html) {
-                wv.tag = html
-                wv.loadDataWithBaseURL(null, doc, "text/html", "utf-8", null)
-            }
+            wv.tag = html
+            wv.loadDataWithBaseURL(null, doc, "text/html", "utf-8", null)
         },
         modifier = modifier,
     )

@@ -34,10 +34,11 @@ object LockdownStore {
     }
 
     fun set_enabled(context: Context, enabled: Boolean) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        if (prefs.contains(KEY_ENABLED) && prefs.getBoolean(KEY_ENABLED, false) == enabled) return
+        prefs.edit()
             .putBoolean(KEY_ENABLED, enabled)
-            .commit()
+            .apply()
     }
 
     fun register_listener(

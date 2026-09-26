@@ -26,6 +26,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.webkit.JavascriptInterface
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
@@ -60,6 +61,8 @@ internal fun translated_segments_of(json: String): List<String>? = try {
 } catch (_: Throwable) {
     null
 }
+
+private const val RENDERER_GONE_STATUS = "{\"state\":\"error\"}"
 
 internal fun translation_engine_nonce(): String {
     val bytes = ByteArray(16)
@@ -128,6 +131,18 @@ internal class translation_engine(
                 if (uri.host != TranslationAssets.CONTENT_HOST) return denied()
                 return TranslationAssets.serve(app_context, uri.host, uri.path, true) ?: denied()
             }
+
+            override fun onRenderProcessGone(
+                view: WebView?,
+                detail: RenderProcessGoneDetail?,
+            ): Boolean {
+                main_handler.post {
+                    if (destroyed) return@post
+                    this@translation_engine.on_status(RENDERER_GONE_STATUS)
+                    destroy()
+                }
+                return true
+            }
         }
         addJavascriptInterface(bridge, "AsterTranslateBridge")
     }
@@ -162,9 +177,11 @@ internal class translation_engine(
         if (destroyed) return
         destroyed = true
         pending.clear()
-        web.removeJavascriptInterface("AsterTranslateBridge")
-        web.stopLoading()
-        web.destroy()
+        runCatching {
+            web.removeJavascriptInterface("AsterTranslateBridge")
+            web.stopLoading()
+            web.destroy()
+        }
     }
 
     private fun enqueue(script: String) {

@@ -32,12 +32,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -57,10 +59,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -72,9 +73,21 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.text.style.TextAlign
+import compose.icons.tablericons.At
+import compose.icons.tablericons.Lock
+import compose.icons.tablericons.Calendar
+import compose.icons.tablericons.Copy
+import compose.icons.tablericons.Rocket
+import org.astermail.android.design.components.AsterPlanTag
+import org.astermail.android.design.components.aster_plan_kind
+import org.astermail.android.ui.upgrade.UpgradeStore
+import org.astermail.android.design.components.aster_plan_kind_of
 import org.astermail.android.R
 import compose.icons.TablerIcons
 import compose.icons.tablericons.ChevronDown
+import compose.icons.tablericons.Pencil
 import org.astermail.android.api.user.Badge
 import org.astermail.android.api.user.UpdateBadgePreferencesRequest
 import org.astermail.android.ui.common.current_user_avatar
@@ -82,16 +95,20 @@ import org.astermail.android.ui.common.plan_ring
 import org.astermail.android.ui.common.remember_has_paid_plan
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
+import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.components.shimmer
+import org.astermail.android.design.components.shimmer_state
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu
 import org.astermail.android.settings.SaveStatus
+import org.astermail.android.settings.PrimaryAddressViewModel
+import org.astermail.android.settings.primary_address_reason_plan
 import org.astermail.android.settings.SettingsViewModel
-import org.astermail.android.ui.common.resolve_primary_sender_email
-import org.astermail.android.ui.mail.SenderAvatar
 import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
@@ -108,8 +125,8 @@ fun ProfileScreen(
     LaunchedEffect(Unit) {
         vm.load_profile()
         vm.load_aliases()
-        vm.load_ghost_aliases()
         vm.load_badges()
+        vm.load_subscription(force = false)
     }
 
     LaunchedEffect(state.action_result) {
@@ -123,17 +140,20 @@ fun ProfileScreen(
     )
     val user = state.user
     val email = user?.email ?: live_account?.email ?: ""
-    val primary_email = resolve_primary_sender_email(
-        state.default_sender_id,
-        email,
-        state.aliases,
-        state.ghost_aliases,
-    )
     var display_name by remember { mutableStateOf(live_account?.display_name ?: user?.display_name ?: "") }
     LaunchedEffect(live_account?.display_name, user?.display_name) {
         val incoming = user?.display_name ?: live_account?.display_name ?: return@LaunchedEffect
         if (incoming != display_name) display_name = incoming
     }
+
+    val address_vm: PrimaryAddressViewModel = hiltViewModel()
+    val address_state by address_vm.state.collectAsStateWithLifecycle()
+    var show_address_dialog by remember { mutableStateOf(false) }
+    var show_address_locked by remember { mutableStateOf(false) }
+    var show_address_upsell by remember { mutableStateOf(false) }
+    var address_menu_open by remember { mutableStateOf(false) }
+    val copy_address_label = stringResource(R.string.copy_address)
+    LaunchedEffect(Unit) { address_vm.load_eligibility() }
 
     var photo_uploading by remember { mutableStateOf(false) }
     var photo_failed by remember { mutableStateOf(false) }
@@ -165,68 +185,243 @@ fun ProfileScreen(
     }
     val is_name_saving = state.save_status == SaveStatus.SAVING
 
+    val plan_code = state.subscription?.plan?.code
+    val plan_kind = remember(plan_code) { aster_plan_kind_of(plan_code) }
+    val plan_label = state.subscription?.let {
+        it.effective_plan_name?.takeIf { name -> name.isNotBlank() } ?: stringResource(R.string.plan_free)
+    } ?: ""
+    val member_since = remember(user?.created_at) { format_settings_date(user?.created_at) }
+    val is_supernova = plan_kind == aster_plan_kind.supernova
+    val resolved_name = listOfNotNull(
+        display_name.takeIf { it.isNotBlank() },
+        live_account?.display_name?.takeIf { it.isNotBlank() },
+        user?.display_name?.takeIf { it.isNotBlank() },
+        user?.username?.takeIf { it.isNotBlank() },
+        live_account?.email?.substringBefore("@")?.takeIf { it.isNotBlank() },
+    ).firstOrNull() ?: stringResource(R.string.your_name)
+
+    val profile_loaded = user != null &&
+        (state.subscription != null || state.subscription_load_failed) &&
+        state.badge_preferences != null &&
+        state.badges_loaded
+    val load_settled = remember_load_settled(!profile_loaded)
+
     detail_scaffold(title = stringResource(R.string.profile), on_back = on_back) {
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(AsterSpacing.lg),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                plan_ring(size = 60.dp, enabled = remember_has_paid_plan()) {
-                    current_user_avatar(
-                        account_store = vm.account_store,
-                        size = 60.dp,
-                        profile_picture_url = user?.profile_picture,
-                    )
-                }
-                Spacer(Modifier.width(AsterSpacing.lg))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = listOfNotNull(
-                            display_name.takeIf { it.isNotBlank() },
-                            live_account?.display_name?.takeIf { it.isNotBlank() },
-                            user?.display_name?.takeIf { it.isNotBlank() },
-                            user?.username?.takeIf { it.isNotBlank() },
-                            live_account?.email?.substringBefore("@")?.takeIf { it.isNotBlank() },
-                        ).firstOrNull() ?: stringResource(R.string.your_name),
-                        color = colors.text_primary,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        text = primary_email,
-                        color = colors.text_tertiary,
-                        fontSize = 13.sp,
-                    )
-                    if (primary_email != email && email.isNotBlank()) {
-                        Text(
-                            text = stringResource(R.string.also_receives_at, email),
-                            color = colors.text_muted,
-                            fontSize = 12.sp,
+        if (!profile_loaded && !load_settled) {
+            profile_pulse_skeleton()
+            return@detail_scaffold
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.lg),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable(enabled = !photo_uploading) {
+                            photo_failed = false
+                            image_picker.launch(
+                                androidx.activity.result.PickVisualMediaRequest(
+                                    ActivityResultContracts.PickVisualMedia.ImageOnly,
+                                ),
+                            )
+                        },
+                ) {
+                    plan_ring(size = 112.dp, enabled = remember_has_paid_plan()) {
+                        current_user_avatar(
+                            account_store = vm.account_store,
+                            size = 112.dp,
+                            profile_picture_url = user?.profile_picture,
                         )
                     }
-}
+                }
+                if (photo_uploading) {
+                    Box(
+                        modifier = Modifier
+                            .size(112.dp)
+                            .clip(CircleShape)
+                            .background(colors.bg_primary.copy(alpha = 0.60f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp,
+                            color = colors.accent_blue,
+                        )
+                    }
+                }
+            }
+            v_gap(AsterSpacing.lg)
+            Text(
+                text = resolved_name,
+                color = colors.text_primary,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            v_gap(AsterSpacing.xs)
+            Text(
+                text = email,
+                color = colors.text_secondary,
+                fontSize = 15.sp,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .clip(SquircleShape(10.dp))
+                    .combinedClickable(
+                        onClick = {},
+                        onLongClick = { copy_address(context, email) },
+                        onLongClickLabel = copy_address_label,
+                    )
+                    .padding(horizontal = AsterSpacing.sm, vertical = 2.dp),
+            )
+            v_gap(AsterSpacing.md)
+            Box(
+                modifier = Modifier.height(48.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (plan_kind != null) {
+                    AsterPlanTag(
+                        text = plan_label,
+                        plan = plan_kind,
+                        font_size = 12.sp,
+                        horizontal_padding = 12.dp,
+                        vertical_padding = 5.dp,
+                    )
+                } else if (state.subscription != null) {
+                    org.astermail.android.design.components.AsterCompactButton(
+                        label = stringResource(R.string.upgrade),
+                        onClick = { UpgradeStore.show_feature(null, null) },
+                        modifier = Modifier.widthIn(min = 160.dp),
+                    )
+                }
+            }
+            if (photo_failed) {
+                v_gap(AsterSpacing.sm)
+                Text(
+                    text = stringResource(R.string.error_try_again),
+                    color = colors.danger,
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                )
             }
         }
-        v_gap(AsterSpacing.sm)
-        AsterButton(
-            label = when {
-                photo_uploading -> stringResource(R.string.saving)
-                photo_failed -> stringResource(R.string.error_try_again)
-                else -> stringResource(R.string.change_photo)
-            },
-            onClick = {
-                image_picker.launch(
-                    androidx.activity.result.PickVisualMediaRequest(
-                        ActivityResultContracts.PickVisualMedia.ImageOnly,
-                    ),
-                )
-                photo_failed = false
-            },
-            enabled = !photo_uploading && !is_name_saving,
-            is_loading = photo_uploading,
+        v_gap(AsterSpacing.lg)
+        section_label(stringResource(R.string.account))
+        val lock_message = address_change_lock_message(
+            reason = address_state.lock_reason,
+            eligibility_failed = address_state.eligibility_failed,
+            next_change_available_at = address_state.next_change_available_at,
         )
+        val address_plan_locked = address_state.eligibility_loaded &&
+            address_state.lock_reason == primary_address_reason_plan
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            Box {
+                val primary_address_label = stringResource(R.string.primary_address)
+                val address_cadence_label = stringResource(R.string.address_change_once_title)
+                detail_row(
+                    title = email,
+                    subtitle = if (address_state.eligibility_loaded && address_state.eligible) {
+                        "$primary_address_label · $address_cadence_label"
+                    } else {
+                        primary_address_label
+                    },
+                    icon = TablerIcons.At,
+                    icon_tint = if (address_plan_locked) colors.text_tertiary else null,
+                    muted = address_plan_locked,
+                    trailing = if (address_plan_locked) {
+                        {
+                            Icon(
+                                imageVector = TablerIcons.Lock,
+                                contentDescription = null,
+                                tint = colors.text_tertiary,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    } else {
+                        null
+                    },
+                    on_click = { address_menu_open = true },
+                )
+                aster_menu(
+                    expanded = address_menu_open,
+                    on_dismiss = { address_menu_open = false },
+                ) {
+                    aster_menu_item(
+                        label = copy_address_label,
+                        icon = TablerIcons.Copy,
+                        test_tag = "primary_address_copy",
+                        on_click = {
+                            address_menu_open = false
+                            copy_address(context, email)
+                        },
+                    )
+                    aster_menu_item(
+                        label = stringResource(R.string.change_address),
+                        icon = if (address_plan_locked) TablerIcons.Lock else TablerIcons.Pencil,
+                        test_tag = "primary_address_change",
+                        on_click = {
+                            address_menu_open = false
+                            when {
+                                address_state.eligibility_failed -> {
+                                    address_vm.load_eligibility()
+                                    show_address_locked = true
+                                }
+                                !address_state.eligibility_loaded -> address_vm.load_eligibility()
+                                address_state.lock_reason == primary_address_reason_plan ->
+                                    show_address_upsell = true
+                                !address_state.eligible -> show_address_locked = true
+                                else -> show_address_dialog = true
+                            }
+                        },
+                    )
+                }
+            }
+            settings_row_gap()
+            detail_row(
+                title = stringResource(R.string.current_plan),
+                subtitle = plan_label,
+                icon = TablerIcons.Rocket,
+                on_click = { on_open("billing") },
+            )
+            if (member_since.isNotEmpty()) {
+                settings_row_gap()
+                detail_row(
+                    title = stringResource(R.string.member_since),
+                    subtitle = member_since,
+                    icon = TablerIcons.Calendar,
+                )
+            }
+        }
+        val address_upsell_message = stringResource(R.string.address_change_locked_plan)
+        if (show_address_upsell) {
+            AsterAlertDialog(
+                on_dismiss = { show_address_upsell = false },
+                title = stringResource(R.string.address_change_title),
+                message = stringResource(R.string.address_change_locked_plan),
+                confirm_label = stringResource(R.string.upgrade),
+                cancel_label = stringResource(R.string.cancel),
+                on_confirm = {
+                    show_address_upsell = false
+                    UpgradeStore.show_feature("supernova", address_upsell_message)
+                },
+            )
+        }
+        if (show_address_locked) {
+            AsterAlertDialog(
+                on_dismiss = { show_address_locked = false },
+                title = stringResource(R.string.address_change_title),
+                message = lock_message ?: stringResource(R.string.address_change_not_available),
+                confirm_label = stringResource(R.string.got_it),
+                on_confirm = { show_address_locked = false },
+            )
+        }
         v_gap(AsterSpacing.lg)
         section_label(stringResource(R.string.display_name))
         AsterTextField(
@@ -245,26 +440,24 @@ fun ProfileScreen(
             enabled = display_name.isNotBlank() && !is_name_saving && state.save_status != SaveStatus.SAVED,
             is_loading = is_name_saving,
         )
-        v_gap(AsterSpacing.lg)
-        section_label(stringResource(R.string.email))
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            detail_row(title = email, subtitle = stringResource(R.string.primary_address))
-        }
-        val member_since = remember(user?.created_at) { format_member_since(user?.created_at) }
-        if (member_since.isNotEmpty()) {
-            v_gap(AsterSpacing.lg)
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                detail_row(
-                    title = stringResource(R.string.member_since),
-                    trailing = {
-                        Text(
-                            text = member_since,
-                            color = colors.text_tertiary,
-                            fontSize = 14.sp,
-                        )
-                    },
-                )
-            }
+        if (show_address_dialog) {
+            change_primary_address_dialog(
+                current_address = email,
+                display_name = live_account?.display_name ?: user?.display_name ?: "",
+                alias_addresses = state.aliases
+                    .filter { it.is_enabled && !it.decryption_failed && !it.is_retained_primary }
+                    .map { it.address },
+                on_dismiss = {
+                    show_address_dialog = false
+                    address_vm.reset()
+                },
+                on_changed = {
+                    vm.load_profile(force = true)
+                    vm.load_aliases(force = true)
+                    address_vm.load_eligibility()
+                },
+                vm = address_vm,
+            )
         }
         if (state.badges.isNotEmpty()) {
             v_gap(AsterSpacing.lg)
@@ -323,6 +516,41 @@ fun ProfileScreen(
 }
 
 @Composable
+private fun profile_pulse_skeleton() {
+    val tone = shimmer_state()
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clearAndSetSemantics {},
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.lg),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(modifier = Modifier.size(112.dp).shimmer(tone, CircleShape))
+            v_gap(AsterSpacing.lg)
+            skeleton_block(tone, 184.dp, 26.dp, corner = 8.dp)
+            v_gap(AsterSpacing.xs)
+            skeleton_block(tone, 212.dp, 14.dp)
+            v_gap(AsterSpacing.md)
+            Box(modifier = Modifier.height(48.dp), contentAlignment = Alignment.Center) {
+                skeleton_block(tone, 132.dp, 26.dp, corner = 13.dp)
+            }
+        }
+        v_gap(AsterSpacing.lg)
+        skeleton_section_label()
+        skeleton_card_list(rows = 3, leading_circle = true)
+        v_gap(AsterSpacing.lg)
+        skeleton_section_label()
+        skeleton_block_fill(tone, 52.dp, corner = 12.dp)
+        v_gap(AsterSpacing.sm)
+        skeleton_block_fill(tone, 48.dp, corner = 12.dp)
+    }
+}
+
+@Composable
 private fun badge_chip(badge: Badge) {
     val colors = AsterMaterial.colors
     val visual = remember(badge.slug) { badge_visual_for(badge.slug) }
@@ -362,19 +590,6 @@ private fun badge_chip(badge: Badge) {
                 fontWeight = FontWeight.Medium,
             )
         }
-    }
-}
-
-private fun format_member_since(raw: String?): String {
-    if (raw.isNullOrBlank()) return ""
-    return try {
-        val instant = java.time.OffsetDateTime.parse(raw).toInstant()
-        java.time.format.DateTimeFormatter
-            .ofLocalizedDate(java.time.format.FormatStyle.MEDIUM)
-            .withZone(org.astermail.android.ui.mail.AsterTimePreferences.account_zone_id())
-            .format(instant)
-    } catch (_: Throwable) {
-        ""
     }
 }
 

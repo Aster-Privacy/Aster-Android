@@ -24,4 +24,16 @@
         <item quantity="one">आपका प्लान %1$d दिन में, %2$s को खत्म हो जाएगा।</item>
         <item quantity="other">आपका प्लान %1$d दिन में, %2$s को खत्म हो जाएगा।</item>
     </plurals>
+    <plurals name="special_offer_fine_print">
+        <item quantity="one">पहले महीने के लिए आप %1$s प्रति माह चुकाते हैं। इसके बाद आपका प्लान %3$s प्रति माह पर नवीनीकृत होता रहेगा, जब तक आप इसे सेटिंग में रद्द नहीं करते।</item>
+        <item quantity="other">पहले %2$d महीनों के लिए आप %1$s प्रति माह चुकाते हैं। इसके बाद आपका प्लान %3$s प्रति माह पर नवीनीकृत होता रहेगा, जब तक आप इसे सेटिंग में रद्द नहीं करते।</item>
+    </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="one">%d चालान</item>
+        <item quantity="other">%d चालान</item>
+    </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="one">%d सुविधा की तुलना करें</item>
+        <item quantity="other">सभी %d सुविधाओं की तुलना करें</item>
+    </plurals>
 </resources>

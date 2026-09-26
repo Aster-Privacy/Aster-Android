@@ -24,4 +24,16 @@
         <item quantity="one">Je abonnement eindigt over %1$d dag, op %2$s.</item>
         <item quantity="other">Je abonnement eindigt over %1$d dagen, op %2$s.</item>
     </plurals>
+    <plurals name="special_offer_fine_print">
+        <item quantity="one">Je betaalt %1$s per maand voor de eerste maand. Daarna wordt je abonnement verlengd voor %3$s per maand totdat je het opzegt in Instellingen.</item>
+        <item quantity="other">Je betaalt %1$s per maand voor de eerste %2$d maanden. Daarna wordt je abonnement verlengd voor %3$s per maand totdat je het opzegt in Instellingen.</item>
+    </plurals>
+    <plurals name="billing_invoice_count">
+        <item quantity="one">%d factuur</item>
+        <item quantity="other">%d facturen</item>
+    </plurals>
+    <plurals name="billing_compare_all_features">
+        <item quantity="one">%d functie vergelijken</item>
+        <item quantity="other">Alle %d functies vergelijken</item>
+    </plurals>
 </resources>

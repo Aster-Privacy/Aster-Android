@@ -2012,11 +2012,18 @@ fun InboxScreen(
                                     plan_name = settings_state.subscription?.effective_plan_name.orEmpty(),
                                     due_date = payment_failed_due.orEmpty(),
                                     is_loading = billing_state.is_acting && billing_state.acting_action == "portal",
-                                    on_update_card = {
-                                        if (org.astermail.android.billing.is_crypto_provider(settings_state.subscription?.payment_provider)) {
-                                            org.astermail.android.billing.open_billing_in_app(banner_context)
-                                        } else if (!billing_state.is_acting) {
-                                            billing_vm.open_portal()
+                                    on_update_card = if (
+                                        org.astermail.android.billing.remember_play_install() &&
+                                        !org.astermail.android.billing.is_google_play_provider(settings_state.subscription?.payment_provider)
+                                    ) {
+                                        null
+                                    } else {
+                                        {
+                                            if (org.astermail.android.billing.is_crypto_provider(settings_state.subscription?.payment_provider)) {
+                                                org.astermail.android.billing.open_billing_in_app(banner_context)
+                                            } else if (!billing_state.is_acting) {
+                                                billing_vm.open_portal()
+                                            }
                                         }
                                     },
                                     modifier = Modifier.padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs),
@@ -2868,8 +2875,8 @@ internal fun inbox_top_bar(
     var folder_menu_open by remember { mutableStateOf(false) }
     var overflow_menu_open by remember { mutableStateOf(false) }
 
-    val folder_switcher: @Composable () -> Unit = {
-            Box {
+    val folder_switcher: @Composable (Modifier) -> Unit = { switcher_modifier ->
+            Box(modifier = switcher_modifier) {
                 Row(
                     modifier = Modifier
                         .clip(SquircleShape(12.dp))
@@ -2884,7 +2891,9 @@ internal fun inbox_top_bar(
                         fontSize = 16.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.widthIn(max = 180.dp),
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .widthIn(max = 180.dp),
                     )
                     if (unread_count > 0) {
                         Spacer(Modifier.width(6.dp))
@@ -3188,28 +3197,35 @@ internal fun inbox_top_bar(
                 .padding(top = AsterSpacing.sm, bottom = AsterSpacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            folder_switcher()
             Row(
-                modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (is_all_mail_folder(current_folder)) {
-                    Spacer(Modifier.width(AsterSpacing.sm))
-                    all_mail_scope_chip(
-                        label = stringResource(R.string.include_spam),
-                        active = all_mail_include_spam,
-                        on_click = { on_all_mail_scope_change(!all_mail_include_spam, all_mail_include_trash) },
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    all_mail_scope_chip(
-                        label = stringResource(R.string.include_trash),
-                        active = all_mail_include_trash,
-                        on_click = { on_all_mail_scope_change(all_mail_include_spam, !all_mail_include_trash) },
-                    )
-                    Spacer(Modifier.width(AsterSpacing.sm))
+                val show_scope_chips = is_all_mail_folder(current_folder)
+                folder_switcher(if (show_scope_chips) Modifier else Modifier.weight(1f, fill = false))
+                if (show_scope_chips) {
+                    Row(
+                        modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Spacer(Modifier.width(AsterSpacing.sm))
+                        all_mail_scope_chip(
+                            label = stringResource(R.string.include_spam),
+                            active = all_mail_include_spam,
+                            on_click = { on_all_mail_scope_change(!all_mail_include_spam, all_mail_include_trash) },
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        all_mail_scope_chip(
+                            label = stringResource(R.string.include_trash),
+                            active = all_mail_include_trash,
+                            on_click = { on_all_mail_scope_change(all_mail_include_spam, !all_mail_include_trash) },
+                        )
+                        Spacer(Modifier.width(AsterSpacing.sm))
+                    }
                 }
             }
             debug_build_pill_inline()
+            org.astermail.android.ui.upgrade.special_offer_header_button()
             if (show_tools) {
                 filter_button()
                 quick_actions_button()
