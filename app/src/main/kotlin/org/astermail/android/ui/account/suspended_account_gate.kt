@@ -44,6 +44,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -62,9 +63,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -249,23 +254,35 @@ fun SuspendedAccountGate(
                         .size(20.dp),
                 )
                 Spacer(Modifier.width(10.dp))
-                Column {
-                    Text(
-                        text = stringResource(R.string.suspended_alert),
-                        color = colors.text_primary,
-                        fontSize = 14.sp,
-                        lineHeight = 21.sp,
-                    )
-                    Text(
-                        text = stringResource(R.string.suspended_alert_terms),
-                        color = colors.text_primary,
-                        fontSize = 14.sp,
-                        lineHeight = 21.sp,
-                        fontWeight = FontWeight.Medium,
-                        textDecoration = TextDecoration.Underline,
-                        modifier = Modifier.clickable { open_url(context, TERMS_URL) },
-                    )
+                val alert_text = buildAnnotatedString {
+                    append(stringResource(R.string.suspended_alert))
+                    append(" ")
+                    pushStringAnnotation(tag = "terms", annotation = TERMS_URL)
+                    withStyle(
+                        SpanStyle(
+                            fontWeight = FontWeight.Medium,
+                            textDecoration = TextDecoration.Underline,
+                        ),
+                    ) {
+                        append(stringResource(R.string.suspended_alert_terms))
+                    }
+                    pop()
                 }
+                @Suppress("DEPRECATION")
+                ClickableText(
+                    text = alert_text,
+                    style = TextStyle(
+                        color = colors.text_primary,
+                        fontSize = 14.sp,
+                        lineHeight = 21.sp,
+                    ),
+                    modifier = Modifier.weight(1f),
+                    onClick = { offset ->
+                        alert_text.getStringAnnotations("terms", offset, offset).firstOrNull()?.let {
+                            open_url(context, it.item)
+                        }
+                    },
+                )
             }
 
             Spacer(Modifier.height(24.dp))
