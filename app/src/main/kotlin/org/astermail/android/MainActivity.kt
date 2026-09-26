@@ -1834,10 +1834,9 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     val category_unread = androidx.compose.runtime.remember(
         inbox_state.items,
         inbox_state.current_folder,
-        inbox_state.has_more,
         active_category_tabs,
     ) {
-        if (inbox_state.current_folder == "inbox" && !inbox_state.has_more) {
+        if (inbox_state.current_folder == "inbox") {
             org.astermail.android.mail.category_unread_counts(inbox_state.items, active_category_tabs)
         } else {
             emptyMap()
