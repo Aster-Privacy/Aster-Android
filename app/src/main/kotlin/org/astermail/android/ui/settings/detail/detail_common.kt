@@ -82,7 +82,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.R
-import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.aster_haptic
@@ -98,10 +98,8 @@ import org.astermail.android.ui.common.page_surface
 import org.astermail.android.design.acrylic
 
 internal val settings_row_min_height = 56.dp
-internal val settings_group_inset = 4.dp
-internal val settings_row_gap_height = 3.dp
-internal val settings_row_divider_inset = 20.dp
-internal val settings_row_divider_thickness = 1.dp
+internal val settings_group_inset = AsterSpacing.xs
+internal val settings_row_gap_height = AsterSpacing.row_gap
 
 internal fun absolute_date_time_label(iso: String?): String {
     if (iso.isNullOrBlank()) return ""
@@ -564,7 +562,7 @@ internal fun section_header_action(
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
-                .clip(SquircleShape(10.dp))
+                .clip(AsterShapes.control)
                 .then(if (enabled) Modifier.clickable(onClick = on_click) else Modifier)
                 .padding(horizontal = AsterSpacing.sm, vertical = 3.dp),
         )
@@ -709,11 +707,9 @@ internal fun tone_badge(
     val colors = AsterMaterial.colors
     val background = org.astermail.android.ui.mail.chip_background(tone, colors.bg_primary, colors.is_dark)
     val content = org.astermail.android.ui.mail.chip_content(tone, background, colors.is_dark)
-    val border = org.astermail.android.ui.mail.chip_border(tone, colors.bg_primary, colors.is_dark)
     Row(
         modifier = modifier
-            .background(background, SquircleShape(8.dp))
-            .border(1.dp, border, SquircleShape(8.dp))
+            .background(background, AsterShapes.item)
             .padding(horizontal = AsterSpacing.sm, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

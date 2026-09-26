@@ -82,6 +82,7 @@ import org.astermail.android.ui.common.remember_has_paid_plan
 import org.astermail.android.ui.mail.search_field_bg_color
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
+import org.astermail.android.ui.settings.detail.settings_row_gap
 import org.astermail.android.ui.common.page_surface
 
 private const val support_address = "hello@astermail.org"
@@ -176,6 +177,7 @@ fun SettingsScreen(
     LaunchedEffect(Unit) {
         if (settings_state.user == null) settings_vm.load_profile()
         if (settings_state.subscription == null) settings_vm.load_subscription()
+        settings_vm.load_storage()
     }
 
     Column(
@@ -227,7 +229,8 @@ fun SettingsScreen(
                         .fillMaxWidth(),
                 ) {
                     Column(modifier = Modifier.padding(vertical = AsterSpacing.xs)) {
-                        section.rows.forEach { row ->
+                        section.rows.forEachIndexed { index, row ->
+                            if (index > 0) settings_row_gap()
                             settings_row(row) {
                                 if (row.id == "contact_support") {
                                     context.startActivity(
@@ -405,17 +408,19 @@ internal fun settings_row(row: settings_row_item, on_click: () -> Unit) {
                 Text(
                     text = stringResource(row.subtitle_res),
                     color = colors.text_tertiary,
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 2.dp),
                 )
             }
         }
+        Spacer(Modifier.width(AsterSpacing.sm))
         Icon(
             imageVector = TablerIcons.ChevronRight,
             contentDescription = null,
-            tint = colors.text_tertiary,
-            modifier = Modifier.size(18.dp).mirror_in_rtl(),
+            tint = colors.text_muted,
+            modifier = Modifier.size(20.dp).mirror_in_rtl(),
         )
     }
 }

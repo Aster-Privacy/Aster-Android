@@ -61,11 +61,13 @@ import compose.icons.tablericons.ChevronRight
 import compose.icons.tablericons.CircleCheck
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.AsterShapes
+import org.astermail.android.design.field_surface_color
+import org.astermail.android.design.tonal_surface_color
 import org.astermail.android.design.acrylic
 
-internal val billing_tile_shape: Shape = SquircleShape(14.dp)
-internal val billing_control_shape: Shape = SquircleShape(12.dp)
+internal val billing_tile_shape: Shape = AsterShapes.island
+internal val billing_control_shape: Shape = AsterShapes.control
 
 @Composable
 internal fun Modifier.billing_surface(shape: Shape, tint: Color? = null): Modifier {
@@ -83,7 +85,7 @@ internal fun billing_pill(
 ) {
     val colors = AsterMaterial.colors
     val fg = foreground ?: colors.accent_blue
-    val bg = background ?: fg.copy(alpha = 0.14f)
+    val bg = background ?: tonal_surface_color(colors, fg)
     Row(
         modifier = modifier
             .clip(CircleShape)
@@ -229,11 +231,9 @@ internal fun billing_amount_tiles(
                 modifier = Modifier
                     .weight(1f)
                     .clip(billing_control_shape)
-                    .acrylic(colors, billing_control_shape, if (selected) colors.bg_selected else colors.bg_card)
-                    .border(
-                        width = if (selected) 1.5.dp else 1.dp,
-                        color = if (selected) colors.accent_blue else colors.border_primary,
-                        shape = billing_control_shape,
+                    .background(
+                        if (selected) tonal_surface_color(colors, colors.accent_blue) else field_surface_color(colors),
+                        billing_control_shape,
                     )
                     .selectable(selected = selected, enabled = enabled, role = Role.RadioButton) { on_select(item.id) }
                     .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.md),
@@ -335,11 +335,7 @@ internal fun billing_option_row(
     below: (@Composable () -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
-    val fill = when {
-        !selected -> Color.Transparent
-        !colors.is_glass -> colors.bg_selected
-        else -> colors.bg_selected.copy(alpha = 0.34f)
-    }
+    val fill = if (selected) colors.bg_selected else Color.Transparent
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -446,7 +442,7 @@ internal fun billing_chip(text: String, tint: Color = AsterMaterial.colors.accen
         modifier = Modifier
             .clip(CircleShape)
             .then(
-                if (solid) Modifier.background(tint) else Modifier.acrylic(colors, CircleShape, tint.copy(alpha = 0.14f)),
+                if (solid) Modifier.background(tint) else Modifier.background(tonal_surface_color(colors, tint)),
             )
             .padding(horizontal = 9.dp, vertical = 3.dp),
     ) {
@@ -499,7 +495,7 @@ internal fun billing_action_text(label: String, on_click: () -> Unit, color: Col
         fontWeight = FontWeight.SemiBold,
         maxLines = 1,
         modifier = Modifier
-            .clip(SquircleShape(6.dp))
+            .clip(AsterShapes.item)
             .clickable(role = Role.Button, onClick = on_click)
             .padding(horizontal = 4.dp, vertical = 2.dp),
     )

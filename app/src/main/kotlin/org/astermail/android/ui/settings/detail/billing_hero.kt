@@ -71,6 +71,17 @@ import org.astermail.android.design.components.AsterCard
 
 internal enum class billing_hero_status { free, active, ending, attention }
 
+@Composable
+internal fun billing_wordmark() {
+    Image(
+        painter = painterResource(R.drawable.aster_wordmark),
+        contentDescription = null,
+        modifier = Modifier
+            .padding(start = AsterSpacing.xs, top = AsterSpacing.xs, bottom = AsterSpacing.lg)
+            .height(26.dp),
+    )
+}
+
 internal data class billing_hero_action(
     val label: String,
     val icon: ImageVector,
@@ -115,12 +126,6 @@ internal fun billing_hero_card(
     AsterCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(R.drawable.aster_wordmark),
-                    contentDescription = null,
-                    modifier = Modifier.height(16.dp),
-                )
-                Spacer(Modifier.width(6.dp))
                 Text(
                     text = plan_name,
                     color = colors.text_primary,
@@ -360,41 +365,6 @@ private fun billing_hero_row(action: billing_hero_action) {
                 modifier = Modifier.size(18.dp),
             )
         }
-    }
-}
-
-@Composable
-internal fun billing_yearly_nudge_card(
-    monthly_equivalent: String,
-    yearly_total: String,
-    save_text: String,
-    on_switch: () -> Unit,
-    enabled: Boolean,
-) {
-    val colors = AsterMaterial.colors
-    AsterCard(modifier = Modifier.fillMaxWidth()) {
-        detail_row(
-            title = stringResource(R.string.billing_yearly_nudge_title),
-            subtitle = stringResource(R.string.billing_yearly_nudge_body, monthly_equivalent, yearly_total),
-            icon = TablerIcons.Calendar,
-            on_click = if (enabled) on_switch else null,
-            trailing = {
-                Text(
-                    text = save_text,
-                    color = colors.success,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                )
-                Spacer(Modifier.width(AsterSpacing.sm))
-                Icon(
-                    imageVector = TablerIcons.ChevronRight,
-                    contentDescription = null,
-                    tint = colors.text_muted,
-                    modifier = Modifier.size(18.dp),
-                )
-            },
-        )
     }
 }
 
