@@ -146,6 +146,28 @@ data class SuccessResponse(
     val success: Boolean = false,
 )
 
+@Serializable
+data class ImportContactItem(
+    val contact_token: String,
+    val encrypted_data: String,
+    val data_nonce: String,
+    val name_search_token: String? = null,
+    val email_search_token: String? = null,
+)
+
+@Serializable
+data class ImportContactsRequest(
+    val contacts: List<ImportContactItem>,
+)
+
+@Serializable
+data class ImportContactsResponse(
+    val imported: Long = 0,
+    val updated: Long = 0,
+    val skipped: Long = 0,
+    val errors: List<String> = emptyList(),
+)
+
 interface ContactsApi {
     suspend fun list_contacts(limit: Int? = null, cursor: String? = null, group_id: String? = null): ListContactsResponse
     suspend fun get_contacts_count(): ContactsCountResponse
@@ -161,6 +183,7 @@ interface ContactsApi {
     suspend fun delete_contact_group(group_id: String): SuccessResponse
     suspend fun add_contact_to_group(contact_id: String, group_id: String): SuccessResponse
     suspend fun remove_contact_from_group(contact_id: String, group_id: String): SuccessResponse
+    suspend fun import_contacts(request: ImportContactsRequest): ImportContactsResponse
 }
 
 class ContactsApiImpl(private val client: ApiClient) : ContactsApi {
@@ -182,6 +205,15 @@ class ContactsApiImpl(private val client: ApiClient) : ContactsApi {
 
     override suspend fun get_contact(contact_id: String): ContactItem {
         val response = client.http.get("${client.base_url}$base/$contact_id")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun import_contacts(request: ImportContactsRequest): ImportContactsResponse {
+        val response = client.http.post("${client.base_url}$base/import/csv") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
         return decode_or_throw(response)
     }
 

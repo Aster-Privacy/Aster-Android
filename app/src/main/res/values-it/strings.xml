@@ -1123,6 +1123,7 @@
     <string name="remove_payment_failed">Impossibile rimuovere il metodo di pagamento</string>
     <string name="no_device_contacts">Nessun contatto trovato sul dispositivo</string>
     <string name="no_new_contacts">Nessun nuovo contatto da importare</string>
+    <string name="contact_limit_reached">Hai raggiunto il limite di contatti. Passa a un piano superiore per importare il resto.</string>
 
     <string name="privacy">Privacy</string>
     <string name="tracking">Tracciamento</string>

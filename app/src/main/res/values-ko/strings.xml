@@ -1123,6 +1123,7 @@
     <string name="remove_payment_failed">결제 수단을 제거할 수 없습니다</string>
     <string name="no_device_contacts">기기에서 연락처를 찾을 수 없습니다</string>
     <string name="no_new_contacts">가져올 새 연락처가 없습니다</string>
+    <string name="contact_limit_reached">연락처 한도에 도달했습니다. 나머지를 가져오려면 요금제를 업그레이드하세요.</string>
 
     <string name="privacy">개인정보</string>
     <string name="tracking">추적</string>

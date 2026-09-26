@@ -208,4 +208,146 @@ class ContactTransferTest {
         assertTrue(parse_csv_contacts("").isEmpty())
         assertTrue(parse_contacts_file("empty.csv", "\r\n").isEmpty())
     }
+
+    @Test
+    fun `csv import reads the indexed contacts export format`() {
+        val csv = listOf(
+            "Name,Given Name,Additional Name,Family Name,Name Prefix,Name Suffix,Nickname,Birthday,Notes,Group Membership,E-mail 1 - Type,E-mail 1 - Value,E-mail 2 - Type,E-mail 2 - Value,Phone 1 - Type,Phone 1 - Value,Phone 2 - Type,Phone 2 - Value,Address 1 - Type,Address 1 - Formatted,Address 1 - Street,Address 1 - City,Address 1 - PO Box,Address 1 - Region,Address 1 - Postal Code,Address 1 - Country,Organization 1 - Name,Organization 1 - Title,Organization 1 - Department,Website 1 - Type,Website 1 - Value,Event 1 - Type,Event 1 - Value,Relation 1 - Type,Relation 1 - Value,Custom Field 1 - Type,Custom Field 1 - Value",
+            "Ada King Lovelace,Ada,King,Lovelace,Dr.,PhD,Addie,1815-12-10,Poet of numbers,* myContacts ::: * Starred ::: Family ::: * Work,* Home,ada@home.example,* Work,ada@work.example,Mobile,+44 20 7946 0100,Work,+44 20 7946 0200,Home,\"12 Bridge St\nLondon\",12 Bridge St,London,,Greater London,SW1A 1AA,United Kingdom,Analytical Engines,Engineer,Research,Profile,https://linkedin.com/in/ada,Anniversary,1835-07-08,Spouse,William King,Pronouns,she/her",
+        ).joinToString("\r\n") + "\r\n"
+
+        val parsed = parse_csv_contacts(csv)
+
+        assertEquals(1, parsed.size)
+        val result = parsed.first()
+        assertEquals("Ada Lovelace", result.name)
+        assertEquals("ada@home.example", result.email)
+        assertEquals("ada@work.example", result.work_email)
+        assertEquals("+44 20 7946 0100", result.phone)
+        assertEquals("+44 20 7946 0200", result.work_phone)
+        assertEquals("Analytical Engines", result.company)
+        assertEquals("Engineer", result.title)
+        assertEquals("12 Bridge St", result.address)
+        assertEquals("London", result.city)
+        assertEquals("Greater London", result.region)
+        assertEquals("SW1A 1AA", result.postal_code)
+        assertEquals("United Kingdom", result.country)
+        assertEquals("https://linkedin.com/in/ada", result.linkedin)
+        assertEquals("1815-12-10", result.birthday)
+        assertEquals("Poet of numbers\nPronouns: she/her", result.notes)
+        assertTrue(result.is_favorite)
+        assertEquals(listOf("Family", "Work"), result.groups)
+
+        val raw = org.json.JSONObject(result.raw_json)
+        assertEquals("King", raw.getString("middle_name"))
+        assertEquals("Dr.", raw.getString("title"))
+        assertEquals("PhD", raw.getString("name_suffix"))
+        assertEquals("Addie", raw.getString("nickname"))
+        assertEquals("Research", raw.getString("department"))
+        assertEquals("home", raw.getJSONArray("email_entries").getJSONObject(0).getString("type"))
+        assertEquals("work", raw.getJSONArray("email_entries").getJSONObject(1).getString("type"))
+        assertEquals("mobile", raw.getJSONArray("phone_entries").getJSONObject(0).getString("type"))
+        assertEquals("1835-07-08", raw.getJSONArray("date_entries").getJSONObject(0).getString("value"))
+        assertEquals("spouse", raw.getJSONArray("related_people").getJSONObject(0).getString("type"))
+        assertEquals("home", raw.getJSONArray("address_entries").getJSONObject(0).getString("type"))
+    }
+
+    @Test
+    fun `csv import reads the labeled contacts export format`() {
+        val csv = listOf(
+            "First Name,Middle Name,Last Name,Phonetic First Name,Phonetic Middle Name,Phonetic Last Name,Name Prefix,Name Suffix,Nickname,File As,Organization Name,Organization Title,Organization Department,Birthday,Notes,Photo,Labels,E-mail 1 - Label,E-mail 1 - Value,E-mail 2 - Label,E-mail 2 - Value,Phone 1 - Label,Phone 1 - Value,Address 1 - Label,Address 1 - Formatted,Address 1 - Street,Address 1 - City,Address 1 - PO Box,Address 1 - Region,Address 1 - Postal Code,Address 1 - Country,Address 1 - Extended Address,Website 1 - Label,Website 1 - Value",
+            "Grace,Brewster,Hopper,,,,,,Amazing Grace,,US Navy,Rear Admiral,,1906-12-09,,,* myContacts ::: Navy,* Work,grace@navy.example,Other,grace@example.com,Mobile,+1 555 0199,Work,,1 Main St,Arlington,,VA,22201,USA,Suite 4,,https://example.com/grace",
+        ).joinToString("\n") + "\n"
+
+        val parsed = parse_csv_contacts(csv)
+
+        assertEquals(1, parsed.size)
+        val result = parsed.first()
+        assertEquals("Grace Hopper", result.name)
+        assertEquals("grace@example.com", result.email)
+        assertEquals("grace@navy.example", result.work_email)
+        assertEquals("+1 555 0199", result.phone)
+        assertEquals("US Navy", result.company)
+        assertEquals("Rear Admiral", result.title)
+        assertEquals("1 Main St, Suite 4", result.address)
+        assertEquals("VA", result.region)
+        assertEquals("https://example.com/grace", result.website)
+        assertEquals(listOf("Navy"), result.groups)
+        assertFalse(result.is_favorite)
+        val raw = org.json.JSONObject(result.raw_json)
+        assertEquals("Brewster", raw.getString("middle_name"))
+        assertEquals("other", raw.getJSONArray("email_entries").getJSONObject(0).getString("type"))
+        assertEquals("work", raw.getJSONArray("email_entries").getJSONObject(1).getString("type"))
+        assertEquals("work", raw.getJSONArray("address_entries").getJSONObject(0).getString("type"))
+    }
+
+    @Test
+    fun `csv import reads a desktop mail client export`() {
+        val csv = listOf(
+            "First Name,Middle Name,Last Name,Title,Suffix,Nickname,E-mail Address,E-mail 2 Address,E-mail 3 Address,Home Phone,Business Phone,Mobile Phone,Business Fax,Company,Job Title,Department,Home Street,Home City,Home State,Home Postal Code,Home Country/Region,Business Street,Business City,Business State,Business Postal Code,Business Country/Region,Web Page,Birthday,Anniversary,Spouse,Notes,Categories",
+            "Linus,,Torvalds,Mr.,,,linus@example.com,linus@work.example,,+358 9 000 0001,+358 9 000 0002,+358 40 000 0003,+358 9 000 0004,Kernel Inc,Maintainer,Core,1 Home Rd,Helsinki,Uusimaa,00100,Finland,2 Office St,Espoo,Uusimaa,02100,Finland,https://example.com,12/28/1969,1/1/2000,Tove,Likes penguins,Friends;Open source",
+        ).joinToString("\r\n") + "\r\n"
+
+        val parsed = parse_csv_contacts(csv)
+
+        assertEquals(1, parsed.size)
+        val result = parsed.first()
+        assertEquals("Linus Torvalds", result.name)
+        assertEquals("Maintainer", result.title)
+        assertEquals("linus@example.com", result.email)
+        assertEquals("linus@work.example", result.work_email)
+        assertEquals("+358 9 000 0001", result.phone)
+        assertEquals("+358 9 000 0002", result.work_phone)
+        assertEquals("1 Home Rd", result.address)
+        assertEquals("Helsinki", result.city)
+        assertEquals("Finland", result.country)
+        assertEquals("https://example.com", result.website)
+        assertEquals("12/28/1969", result.birthday)
+        assertEquals("Likes penguins", result.notes)
+        assertEquals(listOf("Friends", "Open source"), result.groups)
+        val raw = org.json.JSONObject(result.raw_json)
+        assertEquals("Mr.", raw.getString("title"))
+        assertEquals("Core", raw.getString("department"))
+        assertEquals(4, raw.getJSONArray("phone_entries").length())
+        assertEquals("fax", raw.getJSONArray("phone_entries").getJSONObject(3).getString("type"))
+        assertEquals(2, raw.getJSONArray("address_entries").length())
+        assertEquals("Espoo", raw.getJSONArray("address_entries").getJSONObject(1).getString("city"))
+        assertEquals("anniversary", raw.getJSONArray("date_entries").getJSONObject(0).getString("type"))
+        assertEquals("Tove", raw.getJSONArray("related_people").getJSONObject(0).getString("value"))
+    }
+
+    @Test
+    fun `csv import keeps every row of a large export`() {
+        val header = "Name,E-mail 1 - Value\n"
+        val rows = (1..700).joinToString("") { "Person $it,person$it@example.com\n" }
+
+        val parsed = parse_csv_contacts(header + rows)
+
+        assertEquals(700, parsed.size)
+        assertEquals("person700@example.com", parsed.last().email)
+    }
+
+    @Test
+    fun `csv import keeps rows that only have an email`() {
+        val parsed = parse_csv_contacts("Name,E-mail 1 - Value\n,only@example.com\n")
+
+        assertEquals(1, parsed.size)
+        assertEquals("only@example.com", parsed.first().name)
+    }
+
+    @Test
+    fun `csv import keeps the work email in the work slot when it comes first`() {
+        val csv = "Name,E-mail 1 - Type,E-mail 1 - Value,E-mail 2 - Type,E-mail 2 - Value,Phone 1 - Type,Phone 1 - Value,Phone 2 - Type,Phone 2 - Value\n" +
+            "Work First,* Work,first@work.example,* Home,first@home.example,Work,+1 555 0001,Mobile,+1 555 0002\n"
+
+        val result = parse_csv_contacts(csv).single()
+
+        assertEquals("first@home.example", result.email)
+        assertEquals("first@work.example", result.work_email)
+        assertEquals("+1 555 0002", result.phone)
+        assertEquals("+1 555 0001", result.work_phone)
+        val raw = org.json.JSONObject(result.raw_json)
+        assertEquals("home", raw.getJSONArray("email_entries").getJSONObject(0).getString("type"))
+        assertEquals("work", raw.getJSONArray("email_entries").getJSONObject(1).getString("type"))
+    }
 }

@@ -1123,6 +1123,7 @@
     <string name="remove_payment_failed">Не удалось удалить способ оплаты</string>
     <string name="no_device_contacts">Контакты на устройстве не найдены</string>
     <string name="no_new_contacts">Нет новых контактов для импорта</string>
+    <string name="contact_limit_reached">Достигнут лимит контактов. Перейдите на другой тариф, чтобы импортировать остальные.</string>
 
     <string name="privacy">Конфиденциальность</string>
     <string name="tracking">Отслеживание</string>

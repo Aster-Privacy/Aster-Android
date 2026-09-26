@@ -1124,6 +1124,7 @@
     <string name="remove_payment_failed">Zahlungsmethode konnte nicht entfernt werden</string>
     <string name="no_device_contacts">Keine Kontakte auf dem Gerät gefunden</string>
     <string name="no_new_contacts">Keine neuen Kontakte zum Importieren</string>
+    <string name="contact_limit_reached">Du hast dein Kontaktlimit erreicht. Führe ein Upgrade durch, um den Rest zu importieren.</string>
 
     <string name="privacy">Datenschutz</string>
     <string name="tracking">Tracking</string>

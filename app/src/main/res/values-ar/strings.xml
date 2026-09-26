@@ -1123,6 +1123,7 @@
     <string name="remove_payment_failed">تعذر إزالة طريقة الدفع</string>
     <string name="no_device_contacts">لم يتم العثور على جهات اتصال على الجهاز</string>
     <string name="no_new_contacts">لا جهات اتصال جديدة للاستيراد</string>
+    <string name="contact_limit_reached">لقد وصلت إلى الحد الأقصى لجهات الاتصال. قم بترقية خطتك لاستيراد البقية.</string>
 
     <string name="privacy">الخصوصية</string>
     <string name="tracking">التتبع</string>

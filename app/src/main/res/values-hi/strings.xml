@@ -1576,6 +1576,7 @@
     <string name="remove_payment_failed">भुगतान का तरीका हटाया नहीं जा सका</string>
     <string name="no_device_contacts">डिवाइस पर कोई संपर्क नहीं मिला</string>
     <string name="no_new_contacts">इंपोर्ट करने के लिए कोई नया संपर्क नहीं</string>
+    <string name="contact_limit_reached">आप अपनी संपर्क सीमा तक पहुँच गए हैं। बाकी आयात करने के लिए अपना प्लान अपग्रेड करें।</string>
     <string name="privacy">निजता</string>
     <string name="tracking">ट्रैकिंग</string>
     <string name="block_tracking_pixels_privacy">ट्रैकिंग पिक्सेल रोकें</string>

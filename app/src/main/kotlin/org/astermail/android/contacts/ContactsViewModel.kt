@@ -335,15 +335,16 @@ class ContactsViewModel @Inject constructor(
                 val new_contacts = candidates.filterNot {
                     matches_any(it, trashed_emails, trashed_names)
                 }
-                var imported = 0
-                var last_failure: Throwable? = null
-                for (contact in new_contacts) {
-                    repository.create_contact(contact).fold(
-                        onSuccess = { imported++ },
-                        onFailure = { t -> last_failure = t },
+                val summary = if (new_contacts.isEmpty()) null else repository.import_contacts(new_contacts)
+                val imported = ((summary?.imported ?: 0L) + (summary?.updated ?: 0L)).toInt()
+                val failure = summary?.last_failure
+                if (imported == 0 && summary != null && summary.limit_reached) {
+                    _state.value = _state.value.copy(
+                        is_transferring = false,
+                        error = context.getString(R.string.contact_limit_reached),
                     )
+                    return@launch
                 }
-                val failure = last_failure
                 if (imported == 0 && failure != null) {
                     _state.value = _state.value.copy(
                         is_transferring = false,
@@ -363,6 +364,11 @@ class ContactsViewModel @Inject constructor(
                         context.getString(R.string.contacts_already_in_trash)
                     } else {
                         context.getString(R.string.no_new_contacts)
+                    },
+                    error = if (summary != null && summary.limit_reached) {
+                        context.getString(R.string.contact_limit_reached)
+                    } else {
+                        null
                     },
                 )
                 load_contacts()

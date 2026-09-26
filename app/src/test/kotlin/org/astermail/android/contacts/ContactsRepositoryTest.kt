@@ -29,7 +29,9 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.test.runTest
+import org.astermail.android.api.ApiError
 import org.astermail.android.api.contacts.ContactItem
+import org.astermail.android.api.contacts.ImportContactsResponse
 import org.astermail.android.api.contacts.ContactsApi
 import org.astermail.android.api.contacts.ContactsCountResponse
 import org.astermail.android.api.contacts.CreateContactResponse
@@ -432,5 +434,76 @@ class ContactsRepositoryTest {
         val contact = result.getOrThrow()[0]
         assertEquals("only@astermail.org", contact.name)
         assertEquals("only@astermail.org", contact.email)
+    }
+
+    @Test
+    fun `import_contacts sends contacts in chunks and sums the results`() = runTest {
+        val sizes = mutableListOf<Int>()
+        coEvery { contacts_api.import_contacts(any()) } answers {
+            val request = firstArg<org.astermail.android.api.contacts.ImportContactsRequest>()
+            sizes.add(request.contacts.size)
+            ImportContactsResponse(imported = request.contacts.size.toLong() - 1, updated = 1, skipped = 0)
+        }
+        val contacts = (1..1201).map { Contact(id = "", name = "Person $it", email = "p$it@astermail.org") }
+
+        val summary = repo.import_contacts(contacts)
+
+        assertEquals(listOf(500, 500, 201), sizes)
+        assertEquals(1198L, summary.imported)
+        assertEquals(3L, summary.updated)
+        assertEquals(0, summary.failed)
+        assertFalse(summary.limit_reached)
+        coVerify(exactly = 3) { contacts_api.import_contacts(match { r ->
+            r.contacts.all { it.encrypted_data.isNotBlank() && it.data_nonce.isNotBlank() && it.contact_token.isNotBlank() }
+        }) }
+    }
+
+    @Test
+    fun `import_contacts stops at the contact limit`() = runTest {
+        coEvery { contacts_api.import_contacts(any()) } returns
+            ImportContactsResponse(imported = 10, updated = 0, skipped = 0, errors = listOf("Contact limit reached at index 10"))
+        val contacts = (1..900).map { Contact(id = "", name = "Person $it", email = "p$it@astermail.org") }
+
+        val summary = repo.import_contacts(contacts)
+
+        assertEquals(10L, summary.imported)
+        assertTrue(summary.limit_reached)
+        coVerify(exactly = 1) { contacts_api.import_contacts(any()) }
+    }
+
+    @Test
+    fun `import_contacts retries a rate limited chunk`() = runTest {
+        var calls = 0
+        coEvery { contacts_api.import_contacts(any()) } answers {
+            calls += 1
+            if (calls == 1) throw ApiError.RateLimited() else ImportContactsResponse(imported = 2)
+        }
+        val contacts = listOf(
+            Contact(id = "", name = "A", email = "a@astermail.org"),
+            Contact(id = "", name = "B", email = "b@astermail.org"),
+        )
+
+        val summary = repo.import_contacts(contacts)
+
+        assertEquals(2, calls)
+        assertEquals(2L, summary.imported)
+        assertEquals(0, summary.failed)
+    }
+
+    @Test
+    fun `import_contacts reports a failed chunk without stopping`() = runTest {
+        var calls = 0
+        coEvery { contacts_api.import_contacts(any()) } answers {
+            calls += 1
+            if (calls == 1) throw ApiError.NotFoundError else ImportContactsResponse(imported = 1)
+        }
+        val contacts = (1..501).map { Contact(id = "", name = "Person $it", email = "p$it@astermail.org") }
+
+        val summary = repo.import_contacts(contacts)
+
+        assertEquals(2, calls)
+        assertEquals(1L, summary.imported)
+        assertEquals(500, summary.failed)
+        assertTrue(summary.last_failure is ApiError.NotFoundError)
     }
 }

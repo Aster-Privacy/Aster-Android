@@ -1123,6 +1123,7 @@
     <string name="remove_payment_failed">Kon betaalmethode niet verwijderen</string>
     <string name="no_device_contacts">Geen contacten gevonden op apparaat</string>
     <string name="no_new_contacts">Geen nieuwe contacten om te importeren</string>
+    <string name="contact_limit_reached">Je hebt je contactlimiet bereikt. Upgrade je abonnement om de rest te importeren.</string>
 
     <string name="privacy">Privacy</string>
     <string name="tracking">Tracking</string>

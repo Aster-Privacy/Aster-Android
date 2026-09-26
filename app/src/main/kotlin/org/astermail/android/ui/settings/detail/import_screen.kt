@@ -81,6 +81,8 @@ import org.astermail.android.api.imports.JobDetails
 import org.astermail.android.api.imports.JobSummary
 import org.astermail.android.api.imports.UploadChunkRequest
 import org.astermail.android.api.imports.UploadInitRequest
+import org.astermail.android.mail.ImportFolderResolver
+import org.astermail.android.mail.scan_mbox_labels
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
@@ -109,6 +111,7 @@ data class ImportUiState(
 @HiltViewModel
 class ImportViewModel @Inject constructor(
     private val api: ImportApi,
+    private val folder_resolver: ImportFolderResolver,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context,
 ) : ViewModel() {
 
@@ -197,7 +200,13 @@ class ImportViewModel @Inject constructor(
         }
     }
 
-    fun start_import(uri: Uri, file_name: String, total_size: Long, read_bytes: suspend (offset: Long, len: Int) -> ByteArray) {
+    fun start_import(
+        uri: Uri,
+        file_name: String,
+        total_size: Long,
+        read_bytes: suspend (offset: Long, len: Int) -> ByteArray,
+        open_stream: (() -> java.io.InputStream?)? = null,
+    ) {
         val kind = when {
             file_name.endsWith(".mbox", ignoreCase = true) -> "mbox"
             file_name.endsWith(".eml", ignoreCase = true) -> "eml"
@@ -218,6 +227,11 @@ class ImportViewModel @Inject constructor(
         )
         viewModelScope.launch {
             try {
+                val folder_label_map = if (kind == "mbox" && open_stream != null) {
+                    withContext(Dispatchers.IO) { resolve_import_folders(open_stream) }
+                } else {
+                    null
+                }
                 val init = withContext(Dispatchers.IO) {
                     api.upload_init(UploadInitRequest(
                         kind = kind,
@@ -248,7 +262,13 @@ class ImportViewModel @Inject constructor(
                 }
                 withContext(Dispatchers.IO) { api.upload_finalize(token) }
                 withContext(Dispatchers.IO) {
-                    api.create_job(CreateJobRequest(kind = kind, upload_token = token))
+                    api.create_job(
+                        CreateJobRequest(
+                            kind = kind,
+                            upload_token = token,
+                            folder_label_map = folder_label_map?.takeIf { it.isNotEmpty() },
+                        ),
+                    )
                 }
                 _state.value = _state.value.copy(is_uploading = false, job_created = true)
                 load_jobs()
@@ -262,6 +282,12 @@ class ImportViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    private suspend fun resolve_import_folders(open_stream: () -> java.io.InputStream?): Map<String, String>? {
+        val names = open_stream()?.use { scan_mbox_labels(it) } ?: return null
+        if (names.isEmpty()) return null
+        return folder_resolver.resolve(names)
     }
 }
 
@@ -417,7 +443,7 @@ fun ImportScreen(
         val final_size = size
         val final_name = file_name
         scope.launch {
-            vm.start_import(uri, final_name, final_size) { offset, len ->
+            vm.start_import(uri, final_name, final_size, { offset, len ->
                 val bytes = ByteArray(len)
                 val stream = resolver.openInputStream(uri)
                     ?: throw java.io.IOException("cannot open import stream")
@@ -438,7 +464,7 @@ fun ImportScreen(
                 }
                 if (read < len) throw java.io.IOException("short read: expected $len, got $read")
                 bytes
-            }
+            }, { resolver.openInputStream(uri) })
         }
     }
 
