@@ -77,6 +77,8 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterTextField
+import org.astermail.android.design.AsterShapes
+import org.astermail.android.design.field_surface_color
 
 private const val display_name_max_length = 100
 
@@ -213,7 +215,7 @@ fun RegisterUsernameStep(
 }
 
 private val domain_toggle_height = 40.dp
-private val domain_toggle_shape = SquircleShape(12.dp)
+private val domain_toggle_shape = AsterShapes.control
 
 @Composable
 internal fun domain_toggle(
@@ -228,7 +230,7 @@ internal fun domain_toggle(
         modifier = Modifier
             .fillMaxWidth()
             .height(domain_toggle_height)
-            .acrylic(colors, domain_toggle_shape, colors.bg_secondary)
+            .acrylic(colors, domain_toggle_shape, field_surface_color(colors))
             .padding(3.dp),
     ) {
         val pill_width = ((maxWidth - 6.dp) / options.size).coerceAtLeast(0.dp)
@@ -246,7 +248,7 @@ internal fun domain_toggle(
                 .offset(x = pill_offset)
                 .width(pill_width)
                 .fillMaxHeight()
-                .background(colors.accent_blue, SquircleShape(9.dp)),
+                .background(colors.accent_blue, SquircleShape(11.dp)),
         )
 
         Row(modifier = Modifier.fillMaxSize()) {

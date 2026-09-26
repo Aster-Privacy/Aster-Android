@@ -28,7 +28,6 @@ import compose.icons.tablericons.World
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,9 +54,11 @@ import androidx.compose.ui.unit.sp
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterGhostButton
+import org.astermail.android.design.AsterShapes
+import org.astermail.android.design.field_surface_color
+import org.astermail.android.design.island_surface_color
 
 @Composable
 fun RegisterCustomDomainStep(
@@ -129,13 +130,12 @@ private fun custom_domain_option_card(
     onClick: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(16.dp)
+    val shape = AsterShapes.island
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .acrylic(colors, shape, colors.bg_card)
-            .border(1.dp, colors.border_primary, shape)
+            .acrylic(colors, shape, island_surface_color(colors))
             .clickable(onClick = onClick)
             .padding(AsterSpacing.lg),
         verticalAlignment = Alignment.CenterVertically,
@@ -143,8 +143,7 @@ private fun custom_domain_option_card(
         Box(
             modifier = Modifier
                 .size(44.dp)
-                .acrylic(colors, SquircleShape(12.dp), colors.bg_secondary)
-                .border(1.dp, colors.border_secondary, SquircleShape(12.dp)),
+                .background(field_surface_color(colors), AsterShapes.control),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
