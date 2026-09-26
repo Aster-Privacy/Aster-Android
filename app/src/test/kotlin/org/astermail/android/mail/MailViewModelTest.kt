@@ -29,8 +29,10 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.astermail.android.api.mail.BulkScopeResponse
@@ -2599,5 +2601,222 @@ class MailViewModelTest {
         advanceUntilIdle()
 
         assertTrue("id_2" in vm.inbox_state.value.items.map { it.id })
+    }
+
+    private fun read_state_message(id: String, is_read: Boolean) = ThreadMessageDecrypted(
+        id = id,
+        sender_name = "Alice",
+        sender_email = "alice@example.com",
+        to_label = "me",
+        timestamp = "2026-04-26T10:00:00Z",
+        body_text = "Hello",
+        body_html = "<p>Hello</p>",
+        is_encrypted = true,
+        is_read = is_read,
+        raw_item = mockk(relaxed = true),
+    )
+
+    @Test
+    fun `a thread fetch that started before mark_unread keeps the message unread`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        coEvery { repository.mark_read("id_2", false, any()) } returns Result.success(Unit)
+        val stale_item = page.items[1].copy(is_read = true)
+        coEvery { repository.fetch_single_message("id_2") } coAnswers {
+            kotlinx.coroutines.delay(1_000)
+            Result.success(stale_item)
+        }
+        coEvery { repository.fetch_thread("thread_2") } returns
+            Result.success(listOf(read_state_message("id_2", true)))
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        vm.load_thread("id_2")
+        vm.mark_unread("id_2")
+        advanceUntilIdle()
+
+        val thread = vm.thread_state.value
+        assertEquals(false, thread.item?.is_read)
+        assertFalse(thread.messages.single { it.id == "id_2" }.is_read)
+        assertFalse(vm.inbox_state.value.items.single { it.id == "id_2" }.is_read)
+    }
+
+    @Test
+    fun `a thread fetch that started before mark_read keeps the message read`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        coEvery { repository.mark_read("id_1", true, any()) } returns Result.success(Unit)
+        val stale_item = page.items[0].copy(is_read = false)
+        coEvery { repository.fetch_single_message("id_1") } coAnswers {
+            kotlinx.coroutines.delay(1_000)
+            Result.success(stale_item)
+        }
+        coEvery { repository.fetch_thread("thread_1") } returns
+            Result.success(listOf(read_state_message("id_1", false)))
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        vm.load_thread("id_1")
+        vm.mark_read("id_1")
+        advanceUntilIdle()
+
+        val thread = vm.thread_state.value
+        assertEquals(true, thread.item?.is_read)
+        assertTrue(thread.messages.single { it.id == "id_1" }.is_read)
+    }
+
+    @Test
+    fun `a superseded single read write is skipped and the latest toggle wins`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        coEvery { repository.mark_read("id_1", true, any()) } coAnswers {
+            kotlinx.coroutines.delay(1_000)
+            Result.success(Unit)
+        }
+        coEvery { repository.mark_read("id_1", false, any()) } returns Result.success(Unit)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        vm.mark_read("id_1")
+        runCurrent()
+        vm.mark_unread("id_1")
+        vm.mark_read("id_1")
+        advanceUntilIdle()
+
+        assertTrue(vm.inbox_state.value.items.single { it.id == "id_1" }.is_read)
+        io.mockk.unmockkStatic(Dispatchers::class)
+        coVerify(exactly = 0) { repository.mark_read("id_1", false, any()) }
+        coVerify(exactly = 2) { repository.mark_read("id_1", true, any()) }
+    }
+
+    @Test
+    fun `a failed single write does not revert a newer toggle`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        var unread_calls = 0
+        coEvery { repository.mark_read("id_2", false, any()) } coAnswers {
+            unread_calls += 1
+            kotlinx.coroutines.delay(1_000)
+            if (unread_calls == 1) Result.failure(RuntimeException("offline")) else Result.success(Unit)
+        }
+        coEvery { repository.mark_read("id_2", true, any()) } returns Result.success(Unit)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        vm.mark_unread("id_2")
+        runCurrent()
+        advanceTimeBy(1_100)
+        vm.mark_read("id_2")
+        vm.mark_unread("id_2")
+        advanceUntilIdle()
+
+        assertFalse(vm.inbox_state.value.items.single { it.id == "id_2" }.is_read)
+    }
+
+    @Test
+    fun `a superseded bulk failure does not revert the newest bulk toggle`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        var unread_calls = 0
+        coEvery { repository.mark_unread_bulk(any()) } coAnswers {
+            unread_calls += 1
+            if (unread_calls == 1) {
+                kotlinx.coroutines.delay(1_000)
+                Result.failure(RuntimeException("offline"))
+            } else {
+                Result.success(BulkScopeResponse(affected_count = 1))
+            }
+        }
+        coEvery { repository.mark_read_bulk(any()) } returns
+            Result.success(BulkScopeResponse(affected_count = 1))
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        vm.mark_unread_bulk(listOf("id_2"))
+        runCurrent()
+        vm.mark_read_bulk(listOf("id_2"))
+        vm.mark_unread_bulk(listOf("id_2"))
+        advanceUntilIdle()
+
+        assertFalse(vm.inbox_state.value.items.single { it.id == "id_2" }.is_read)
+        io.mockk.unmockkStatic(Dispatchers::class)
+        coVerify(exactly = 0) { repository.mark_read_bulk(any()) }
+        coVerify(exactly = 2) { repository.mark_unread_bulk(listOf("id_2")) }
+    }
+
+    @Test
+    fun `a failed bulk write still reverts when nothing newer happened`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        coEvery { repository.mark_unread_bulk(any()) } returns Result.failure(RuntimeException("offline"))
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        vm.mark_unread_bulk(listOf("id_2"))
+        advanceUntilIdle()
+
+        assertTrue(vm.inbox_state.value.items.single { it.id == "id_2" }.is_read)
+    }
+
+    @Test
+    fun `bulk mark unread cancels a pending mark as read from opening the message`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        coEvery { repository.mark_unread_bulk(any()) } returns
+            Result.success(BulkScopeResponse(affected_count = 1))
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        vm.on_user_opened_mail("id_1", "3_seconds")
+        vm.mark_unread_bulk(listOf("id_1"))
+        advanceUntilIdle()
+
+        assertFalse(vm.inbox_state.value.items.single { it.id == "id_1" }.is_read)
+        io.mockk.unmockkStatic(Dispatchers::class)
+        coVerify(exactly = 0) { repository.mark_read("id_1", true, any()) }
+    }
+
+    @Test
+    fun `mark_unread right after opening skips the thread wide read`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        coEvery { repository.mark_read("id_1", true, any()) } coAnswers {
+            kotlinx.coroutines.delay(1_000)
+            Result.success(Unit)
+        }
+        coEvery { repository.mark_read("id_1", false, any()) } returns Result.success(Unit)
+        coEvery { repository.mark_thread_read_all(any()) } returns Result.success(Unit)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        vm.on_user_opened_mail("id_1", "immediate")
+        runCurrent()
+        vm.mark_unread("id_1")
+        advanceUntilIdle()
+
+        assertFalse(vm.inbox_state.value.items.single { it.id == "id_1" }.is_read)
+        io.mockk.unmockkStatic(Dispatchers::class)
+        coVerify(exactly = 0) { repository.mark_thread_read_all(any()) }
+        coVerify(exactly = 1) { repository.mark_read("id_1", true, any()) }
+        coVerify(exactly = 1) { repository.mark_read("id_1", false, any()) }
+    }
+
+    @Test
+    fun `mark all unread cancels a pending mark as read and wins over it`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        every { repository.folder_supports_bulk_scope(any()) } returns true
+        coEvery { repository.mark_all_unread_scope(any()) } returns
+            Result.success(BulkScopeResponse(affected_count = 3))
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        vm.on_user_opened_mail("id_1", "3_seconds")
+        vm.mark_all_unread_scope("inbox")
+        advanceUntilIdle()
+
+        assertTrue(vm.inbox_state.value.items.none { it.is_read })
+        io.mockk.unmockkStatic(Dispatchers::class)
+        coVerify(exactly = 0) { repository.mark_read("id_1", true, any()) }
     }
 }
