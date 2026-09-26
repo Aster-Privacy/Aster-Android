@@ -3612,4 +3612,7 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Inclus</string>
     <string name="special_offer_compare_not_included">Non inclus</string>
+    <string name="sort_a_to_z">Trier de A à Z</string>
+    <string name="folders_sorted_a_to_z">Dossiers triés de A à Z</string>
+    <string name="plan_f_sort_folders">Trier les dossiers de A à Z</string>
 </resources>

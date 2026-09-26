@@ -89,7 +89,6 @@ import org.astermail.android.mail_rules.AliasDeliverySetting
 import org.astermail.android.mail_rules.rule_alias_delivery_conflict
 import org.astermail.android.mail_rules.rule_alias_label_conflict
 import org.astermail.android.folders.folder_path
-import org.astermail.android.folders.is_custom_folder
 import org.astermail.android.folders.is_folder_protected
 import org.astermail.android.folders.max_folder_depth
 import org.astermail.android.ui.drawer.create_folder_dialog
@@ -879,13 +878,9 @@ fun RuleEditorScreen(
             parent_options = folder_parent_options,
             on_dismiss = { create_target = null; create_for_action = null },
             on_create = { folder_name, parent_token ->
-                val sibling_count = settings_state.labels.count {
-                    is_custom_folder(it) && it.parent_token.orEmpty() == parent_token.orEmpty()
-                }
                 val action_index = create_for_action
                 settings_vm.create_folder(
                     name = folder_name,
-                    sort_order = sibling_count,
                     parent_token = parent_token,
                     on_created = { token ->
                         if (action_index != null) {

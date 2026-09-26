@@ -3585,4 +3585,7 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Dahil</string>
     <string name="special_offer_compare_not_included">Dahil değil</string>
+    <string name="sort_a_to_z">A\'dan Z\'ye sırala</string>
+    <string name="folders_sorted_a_to_z">Klasörler A\'dan Z\'ye sıralandı</string>
+    <string name="plan_f_sort_folders">Klasörleri A\'dan Z\'ye sıralama</string>
 </resources>

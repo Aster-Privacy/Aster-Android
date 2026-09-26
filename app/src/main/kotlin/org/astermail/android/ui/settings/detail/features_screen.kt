@@ -127,6 +127,7 @@ private fun build_features(): List<feature_row> = listOf(
 
     category(R.string.settings_cat_organization),
     row(R.string.settings_feat_folders, count(10), unlimited, unlimited, unlimited),
+    row(R.string.plan_f_sort_folders, yes_cell, yes_cell, yes_cell, yes_cell),
     row(R.string.settings_feat_labels, count(15), unlimited, unlimited, unlimited),
     row(R.string.settings_feat_smart_folders, no_cell, no_cell, yes_cell, yes_cell),
     row(R.string.settings_feat_advanced_search, yes_cell, yes_cell, yes_cell, yes_cell),

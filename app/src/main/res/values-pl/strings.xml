@@ -3627,4 +3627,7 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">W zestawie</string>
     <string name="special_offer_compare_not_included">Brak w zestawie</string>
+    <string name="sort_a_to_z">Sortuj od A do Z</string>
+    <string name="folders_sorted_a_to_z">Foldery posortowane od A do Z</string>
+    <string name="plan_f_sort_folders">Sortowanie folderów od A do Z</string>
 </resources>

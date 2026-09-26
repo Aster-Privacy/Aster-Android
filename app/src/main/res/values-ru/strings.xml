@@ -3627,4 +3627,7 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Включено</string>
     <string name="special_offer_compare_not_included">Не включено</string>
+    <string name="sort_a_to_z">Сортировать от А до Я</string>
+    <string name="folders_sorted_a_to_z">Папки отсортированы от А до Я</string>
+    <string name="plan_f_sort_folders">Сортировка папок от А до Я</string>
 </resources>

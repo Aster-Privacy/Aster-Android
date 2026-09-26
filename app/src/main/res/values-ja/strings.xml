@@ -3567,4 +3567,7 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">含まれます</string>
     <string name="special_offer_compare_not_included">含まれません</string>
+    <string name="sort_a_to_z">名前順で並べ替え</string>
+    <string name="folders_sorted_a_to_z">フォルダを名前順に並べ替えました</string>
+    <string name="plan_f_sort_folders">フォルダを名前順に並べ替え</string>
 </resources>

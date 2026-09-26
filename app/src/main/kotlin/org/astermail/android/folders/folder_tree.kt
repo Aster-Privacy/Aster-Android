@@ -36,7 +36,7 @@ data class folder_node(
 fun is_custom_folder(label: LabelItem): Boolean =
     !label.is_system && (label.folder_type == "folder" || label.folder_type == "custom")
 
-private val sibling_comparator = compareBy<LabelItem>(
+internal val sibling_comparator = compareBy<LabelItem>(
     { it.sort_order },
     { it.created_at ?: "" },
     { it.label_token },

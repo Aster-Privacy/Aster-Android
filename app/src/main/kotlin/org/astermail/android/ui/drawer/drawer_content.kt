@@ -264,6 +264,7 @@ fun DrawerContent(
     on_open_workspace_sheet: () -> Unit = {},
     on_create_label: (name: String, color: String, icon: String?) -> Unit = { _, _, _ -> },
     on_create_folder: (name: String, parent_token: String?) -> Unit = { _, _ -> },
+    on_sort_folders: (() -> Unit)? = null,
     folder_parent_options: List<folder_parent_option> = emptyList(),
     folder_actions: folder_menu_actions = folder_menu_actions(),
     label_actions: label_menu_actions = label_menu_actions(),
@@ -561,6 +562,7 @@ fun DrawerContent(
                 on_add = { show_create_folder = true },
                 add_test_tag = "create_folder",
                 add_description = stringResource(R.string.create_folder),
+                on_sort = on_sort_folders,
             )
             androidx.compose.animation.AnimatedVisibility(
                 visible = folders_expanded,
@@ -626,6 +628,7 @@ fun DrawerContent(
                                     on_toggle_mute = { folder_actions.on_toggle_mute(item) },
                                     on_move_up = { folder_actions.on_move_order(item, -1) },
                                     on_move_down = { folder_actions.on_move_order(item, 1) },
+                                    on_sort_a_to_z = on_sort_folders,
                                     on_lock_now = if (item.password_set) {
                                         { folder_actions.on_lock_now(item) }
                                     } else {
@@ -1080,6 +1083,7 @@ private fun folder_actions_menu(
     on_toggle_mute: () -> Unit,
     on_move_up: () -> Unit,
     on_move_down: () -> Unit,
+    on_sort_a_to_z: (() -> Unit)?,
     on_delete: () -> Unit,
 ) {
     aster_menu(
@@ -1178,6 +1182,17 @@ private fun folder_actions_menu(
                 on_move_down()
             },
         )
+        if (on_sort_a_to_z != null) {
+            aster_menu_item(
+                label = stringResource(R.string.sort_a_to_z),
+                icon = TablerIcons.SortAscending,
+                test_tag = "folder_action_sort_a_z",
+                on_click = {
+                    on_dismiss()
+                    on_sort_a_to_z()
+                },
+            )
+        }
         aster_menu_item(
             label = stringResource(R.string.delete),
             icon = TablerIcons.Trash,
@@ -2381,6 +2396,7 @@ private fun collapsible_section_header(
     on_add: () -> Unit = {},
     add_test_tag: String? = null,
     add_description: String? = null,
+    on_sort: (() -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     val chevron_rotation by animateFloatAsState(
@@ -2415,7 +2431,24 @@ private fun collapsible_section_header(
                 .size(16.dp)
                 .graphicsLayer { rotationZ = chevron_rotation },
         )
-        Spacer(Modifier.width(if (show_add) 8.dp else 0.dp))
+        Spacer(Modifier.width(if (show_add || on_sort != null) 8.dp else 0.dp))
+        if (on_sort != null) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(onClick = on_sort)
+                    .testTag("sort_folders_a_z"),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = TablerIcons.SortAscending,
+                    contentDescription = stringResource(R.string.sort_a_to_z),
+                    tint = colors.text_muted,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+        }
         if (show_add) {
             Box(
                 modifier = Modifier

@@ -2269,15 +2269,15 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     settings_vm.create_tag(name = name, color = color, icon = icon)
                 },
                 on_create_folder = { name, parent_token ->
-                    val sibling_count = settings_state.labels.count {
-                        org.astermail.android.folders.is_custom_folder(it) &&
-                            it.parent_token.orEmpty() == parent_token.orEmpty()
-                    }
                     settings_vm.create_folder(
                         name = name,
-                        sort_order = sibling_count,
                         parent_token = parent_token,
                     )
+                },
+                on_sort_folders = if (org.astermail.android.folders.can_sort_folders_a_z(settings_state.labels)) {
+                    { settings_vm.sort_folders_a_z() }
+                } else {
+                    null
                 },
                 folder_parent_options = folder_parent_options,
                 folder_actions = org.astermail.android.ui.drawer.folder_menu_actions(

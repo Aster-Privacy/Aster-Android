@@ -90,7 +90,16 @@ import org.astermail.android.api.labels.RemoveFolderPasswordRequest
 import org.astermail.android.api.labels.SetFolderPasswordRequest
 import org.astermail.android.api.labels.UpdateLabelRequest
 import org.astermail.android.api.labels.VerifyFolderPasswordRequest
+import org.astermail.android.folders.append_sort_order
+import org.astermail.android.folders.apply_folder_orders
+import org.astermail.android.folders.folder_children
 import org.astermail.android.folders.folder_sibling_group
+import org.astermail.android.folders.is_custom_folder
+import org.astermail.android.folders.place_folder_among_siblings
+import org.astermail.android.folders.previous_folder_orders
+import org.astermail.android.folders.resort_after_rename
+import org.astermail.android.folders.restore_folder_orders
+import org.astermail.android.folders.sort_folder_tree_a_z
 import org.astermail.android.api.tags.CreateTagRequest
 import org.astermail.android.api.tags.TagItem
 import org.astermail.android.api.tags.TagsApi
@@ -4567,6 +4576,19 @@ class SettingsViewModel @Inject constructor(
                     return@launch
                 }
                 val token = generate_token_b64()
+                val siblings = folder_children(_state.value.labels, parent_token)
+                val placement = if (sort_order == null) {
+                    place_folder_among_siblings(
+                        siblings,
+                        LabelItem(id = token, label_token = token, encrypted_name = name, folder_type = "folder"),
+                    )
+                } else {
+                    emptyList()
+                }
+                val resolved_order = sort_order
+                    ?: placement.firstOrNull { it.id == token }?.sort_order
+                    ?: append_sort_order(siblings)
+                val sibling_entries = placement.filter { it.id != token }
                 val name_field = encrypt_field_with_version(name, identity_key, FOLDER_VERSION_CURRENT)
                 val color_field = color?.let { encrypt_field_with_version(it, identity_key, FOLDER_VERSION_CURRENT) }
                 val created = labels_api.create_label(
@@ -4577,7 +4599,7 @@ class SettingsViewModel @Inject constructor(
                         encrypted_color = color_field?.ciphertext_b64,
                         color_nonce = color_field?.nonce_b64,
                         folder_type = "folder",
-                        sort_order = sort_order,
+                        sort_order = resolved_order,
                         parent_token = parent_token,
                     ),
                 )
@@ -4587,16 +4609,23 @@ class SettingsViewModel @Inject constructor(
                     encrypted_name = name,
                     encrypted_color = color,
                     folder_type = "folder",
-                    sort_order = sort_order ?: 0,
+                    sort_order = resolved_order,
                     parent_token = parent_token,
                     item_count = 0,
                 )
                 optimistic_label_tokens.add(token)
                 _state.value = _state.value.copy(
-                    labels = _state.value.labels + optimistic,
+                    labels = apply_folder_orders(_state.value.labels, sibling_entries) + optimistic,
                     action_result = context.getString(R.string.folder_created),
                 )
                 on_created?.invoke(token)
+                if (sibling_entries.isNotEmpty()) {
+                    try {
+                        labels_api.bulk_reorder_labels(BulkReorderLabelsRequest(labels = sibling_entries))
+                    } catch (t: Throwable) {
+                        if (t is kotlinx.coroutines.CancellationException) throw t
+                    }
+                }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
@@ -4611,8 +4640,16 @@ class SettingsViewModel @Inject constructor(
         if (trimmed.isBlank()) return
         viewModelScope.launch {
             val previous = _state.value.labels
+            val old_name = previous.firstOrNull { it.id == label_id }?.encrypted_name
+            val order_entries = if (old_name?.trim() != trimmed) {
+                resort_after_rename(previous, label_id, trimmed)
+            } else {
+                emptyList()
+            }
+            val previous_orders = previous_folder_orders(previous, order_entries)
             _state.value = _state.value.copy(
-                labels = previous.map { if (it.id == label_id) it.copy(encrypted_name = trimmed) else it },
+                labels = apply_folder_orders(previous, order_entries)
+                    .map { if (it.id == label_id) it.copy(encrypted_name = trimmed) else it },
             )
             try {
                 val identity_key = session_key_store.get_identity_key() ?: throw IllegalStateException("no identity key")
@@ -4630,8 +4667,43 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
-                    labels = previous,
+                    labels = restore_folder_orders(_state.value.labels, previous_orders)
+                        .map { if (it.id == label_id) it.copy(encrypted_name = old_name) else it },
                     action_result = localized_api_error(context, t, context.getString(R.string.failed_update_folder)),
+                )
+                return@launch
+            }
+            if (order_entries.isEmpty()) return@launch
+            try {
+                labels_api.bulk_reorder_labels(BulkReorderLabelsRequest(labels = order_entries))
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(
+                    labels = restore_folder_orders(_state.value.labels, previous_orders),
+                )
+            }
+        }
+    }
+
+    fun sort_folders_a_z() {
+        viewModelScope.launch {
+            val current = _state.value.labels
+            val entries = sort_folder_tree_a_z(current)
+            if (entries.isEmpty()) return@launch
+            val previous_orders = previous_folder_orders(current, entries)
+            _state.value = _state.value.copy(
+                labels = apply_folder_orders(current, entries),
+            )
+            try {
+                labels_api.bulk_reorder_labels(BulkReorderLabelsRequest(labels = entries))
+                _state.value = _state.value.copy(
+                    action_result = context.getString(R.string.folders_sorted_a_to_z),
+                )
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(
+                    labels = restore_folder_orders(_state.value.labels, previous_orders),
+                    action_result = context.getString(R.string.something_went_wrong),
                 )
             }
         }
@@ -4669,22 +4741,40 @@ class SettingsViewModel @Inject constructor(
     fun set_folder_parent(label_id: String, parent_token: String?) {
         viewModelScope.launch {
             val previous = _state.value.labels
+            val moving = previous.firstOrNull { it.id == label_id }
+            val old_parent = moving?.parent_token
+            val order_entries = if (moving != null && is_custom_folder(moving)) {
+                place_folder_among_siblings(folder_children(previous, parent_token), moving)
+            } else {
+                emptyList()
+            }
+            val previous_orders = previous_folder_orders(previous, order_entries)
             _state.value = _state.value.copy(
-                labels = previous.map { if (it.id == label_id) it.copy(parent_token = parent_token) else it },
+                labels = apply_folder_orders(previous, order_entries)
+                    .map { if (it.id == label_id) it.copy(parent_token = parent_token) else it },
             )
             try {
                 labels_api.update_label(
                     label_id,
                     UpdateLabelRequest(parent_token = parent_token.orEmpty()),
                 )
-                load_labels(force = true)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
-                    labels = previous,
+                    labels = restore_folder_orders(_state.value.labels, previous_orders)
+                        .map { if (it.id == label_id) it.copy(parent_token = old_parent) else it },
                     action_result = localized_api_error(context, t, context.getString(R.string.failed_update_folder)),
                 )
+                return@launch
             }
+            if (order_entries.isNotEmpty()) {
+                try {
+                    labels_api.bulk_reorder_labels(BulkReorderLabelsRequest(labels = order_entries))
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException) throw t
+                }
+            }
+            load_labels(force = true)
         }
     }
 

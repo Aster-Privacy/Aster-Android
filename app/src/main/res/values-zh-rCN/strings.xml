@@ -3567,4 +3567,7 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">已包含</string>
     <string name="special_offer_compare_not_included">不包含</string>
+    <string name="sort_a_to_z">按名称排序</string>
+    <string name="folders_sorted_a_to_z">文件夹已按名称排序</string>
+    <string name="plan_f_sort_folders">文件夹按名称排序</string>
 </resources>

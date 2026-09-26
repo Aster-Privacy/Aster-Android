@@ -3669,4 +3669,7 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">مُضمَّن</string>
     <string name="special_offer_compare_not_included">غير مُضمَّن</string>
+    <string name="sort_a_to_z">ترتيب من أ إلى ي</string>
+    <string name="folders_sorted_a_to_z">تم ترتيب المجلدات من أ إلى ي</string>
+    <string name="plan_f_sort_folders">ترتيب المجلدات من أ إلى ي</string>
 </resources>
