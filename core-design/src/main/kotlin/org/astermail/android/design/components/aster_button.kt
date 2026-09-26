@@ -25,26 +25,17 @@ import org.astermail.android.design.remember_click_interaction
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -52,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -60,18 +52,20 @@ import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.AsterShapes
+import org.astermail.android.design.aster_ripple
+import org.astermail.android.design.disabled_surface_color
 import org.astermail.android.design.darken
 
 private val aster_button_height = 54.dp
-private val aster_button_shape = SquircleShape(999.dp)
+private val aster_button_shape = AsterShapes.control
 private val aster_button_label_size = 16.sp
 private val aster_button_spinner_size = 20.dp
 
 private val depth_red = Color(0xFFDC2626)
 
 @Composable
-private fun aster_button_label(label: String, content_color: Color) {
+private fun aster_button_label(label: String, content_color: Color, modifier: Modifier = Modifier) {
     Text(
         text = label,
         fontSize = aster_button_label_size,
@@ -79,6 +73,7 @@ private fun aster_button_label(label: String, content_color: Color) {
         color = content_color,
         maxLines = 1,
         softWrap = false,
+        modifier = modifier,
     )
 }
 
@@ -96,36 +91,28 @@ private fun aster_button_content(
     label: String,
     is_loading: Boolean,
     content_color: Color,
+    modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         contentAlignment = Alignment.Center,
     ) {
-        aster_button_label(label, content_color)
-        if (is_loading) {
-            Box(modifier = Modifier.align(Alignment.CenterEnd)) {
-                aster_button_spinner(content_color)
-            }
-        }
+        aster_button_label(label, content_color, Modifier.alpha(if (is_loading) 0f else 1f))
+        if (is_loading) aster_button_spinner(content_color)
     }
 }
 
 @Composable
-private fun aster_button_trailing_content(
-    label: String,
-    is_loading: Boolean,
-    content_color: Color,
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        aster_button_label(label, content_color)
-        if (is_loading) {
-            Spacer(modifier = Modifier.width(AsterSpacing.sm))
-            aster_button_spinner(content_color)
-        }
-    }
+private fun press_scale(pressed: Boolean, interactive: Boolean, label: String): Float {
+    val scale by animateFloatAsState(
+        targetValue = if (pressed && interactive) 0.965f else 1f,
+        animationSpec = tween(
+            durationMillis = if (pressed) AsterDuration.tap_down else AsterDuration.tap_up,
+            easing = AsterEasing.tap_down,
+        ),
+        label = label,
+    )
+    return scale
 }
 
 @Composable
@@ -178,20 +165,15 @@ private fun depth_button(
     fill: Color,
     content_color: Color = Color.White,
 ) {
+    val colors = AsterMaterial.colors
     val interactive = enabled && !is_loading
     val interaction = remember_click_interaction()
     val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (pressed && interactive) 0.965f else 1f,
-        animationSpec = tween(
-            durationMillis = if (pressed) AsterDuration.tap_down else AsterDuration.tap_up,
-            easing = AsterEasing.tap_down,
-        ),
-        label = "btn_scale",
-    )
-    val alpha = if (interactive) 1f else 0.5f
+    val scale = press_scale(pressed, interactive, "btn_scale")
+    val resting_fill = if (enabled) fill else disabled_surface_color(colors)
+    val resolved_content = if (enabled) content_color else colors.text_muted
     val press_color by animateColorAsState(
-        targetValue = if (pressed && interactive) fill.darken(0.12f) else fill,
+        targetValue = if (pressed && interactive) resting_fill.darken(0.12f) else resting_fill,
         animationSpec = tween(
             durationMillis = if (pressed) AsterDuration.tap_down else AsterDuration.tap_up,
             easing = AsterEasing.tap_down,
@@ -204,8 +186,7 @@ private fun depth_button(
             .height(aster_button_height)
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .clip(aster_button_shape)
-            .background(press_color.copy(alpha = alpha), aster_button_shape)
-            .border(1.dp, content_color.copy(alpha = 0.10f * alpha), aster_button_shape)
+            .background(press_color, aster_button_shape)
             .clickable(
                 enabled = interactive,
                 interactionSource = interaction,
@@ -215,7 +196,7 @@ private fun depth_button(
             .padding(horizontal = AsterSpacing.lg),
         contentAlignment = Alignment.Center,
     ) {
-        aster_button_content(label, is_loading, content_color.copy(alpha = if (interactive) 1f else 0.8f))
+        aster_button_content(label, is_loading, resolved_content, Modifier.fillMaxWidth())
     }
 }
 
@@ -228,40 +209,15 @@ fun AsterSecondaryButton(
     is_loading: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
-    val interaction = remember_click_interaction()
-    val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (pressed && enabled && !is_loading) 0.965f else 1f,
-        animationSpec = tween(
-            durationMillis = if (pressed) AsterDuration.tap_down else AsterDuration.tap_up,
-            easing = AsterEasing.tap_down,
-        ),
-        label = "sec_btn_scale",
-    )
-    OutlinedButton(
+    depth_button(
+        label = label,
         onClick = onClick,
-        enabled = enabled && !is_loading,
-        interactionSource = interaction,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(aster_button_height)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-                alpha = if (enabled && !is_loading) 1f else 0.5f
-            },
-        shape = aster_button_shape,
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = colors.secondary_control_bg,
-            contentColor = colors.text_primary,
-            disabledContainerColor = colors.secondary_control_bg,
-            disabledContentColor = colors.text_primary,
-        ),
-        border = if (colors.secondary_control_border == Color.Transparent) null else BorderStroke(1.dp, colors.secondary_control_border),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = AsterSpacing.lg),
-    ) {
-        aster_button_content(label, is_loading, colors.text_primary)
-    }
+        modifier = modifier,
+        enabled = enabled,
+        is_loading = is_loading,
+        fill = colors.secondary_control_bg.copy(alpha = 1f),
+        content_color = colors.text_primary,
+    )
 }
 
 @Composable
@@ -273,31 +229,26 @@ fun AsterGhostButton(
     is_loading: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
+    val interactive = enabled && !is_loading
     val interaction = remember_click_interaction()
     val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (pressed && enabled && !is_loading) 0.965f else 1f,
-        animationSpec = tween(
-            durationMillis = if (pressed) AsterDuration.tap_down else AsterDuration.tap_up,
-            easing = AsterEasing.tap_down,
-        ),
-        label = "ghost_btn_scale",
-    )
-    TextButton(
-        onClick = onClick,
-        enabled = enabled && !is_loading,
-        interactionSource = interaction,
+    val scale = press_scale(pressed, interactive, "ghost_btn_scale")
+    val content_color = if (enabled) colors.accent_blue else colors.text_muted
+    Box(
         modifier = modifier
             .height(aster_button_height)
-            .graphicsLayer { scaleX = scale; scaleY = scale },
-        shape = aster_button_shape,
-        colors = ButtonDefaults.textButtonColors(
-            contentColor = colors.accent_blue,
-            disabledContentColor = colors.text_muted,
-        ),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = AsterSpacing.lg),
+            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .clip(aster_button_shape)
+            .clickable(
+                enabled = interactive,
+                interactionSource = interaction,
+                indication = aster_ripple(color = colors.accent_blue),
+                onClick = onClick,
+            )
+            .padding(horizontal = AsterSpacing.lg),
+        contentAlignment = Alignment.Center,
     ) {
-        aster_button_trailing_content(label, is_loading, colors.accent_blue)
+        aster_button_content(label, is_loading, content_color)
     }
 }
 

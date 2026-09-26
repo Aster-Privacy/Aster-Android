@@ -22,6 +22,7 @@
 package org.astermail.android.design
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 
 fun island_surface_color(colors: AsterSemanticColors): Color = when {
@@ -36,3 +37,12 @@ private fun island_shift_lightness(base: Color, delta: Float): Color {
     hsl[2] = (hsl[2] + delta).coerceIn(0f, 1f)
     return Color(androidx.core.graphics.ColorUtils.HSLToColor(hsl))
 }
+
+fun field_surface_color(colors: AsterSemanticColors): Color =
+    lerp(colors.bg_primary, colors.text_primary, if (colors.is_dark) 0.10f else 0.07f)
+
+fun tonal_surface_color(colors: AsterSemanticColors, tone: Color): Color =
+    lerp(island_surface_color(colors), tone, if (colors.is_dark) 0.22f else 0.12f)
+
+fun disabled_surface_color(colors: AsterSemanticColors): Color =
+    lerp(colors.bg_primary, colors.text_primary, 0.12f)

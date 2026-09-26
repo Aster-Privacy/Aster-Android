@@ -27,7 +27,6 @@ import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -93,12 +92,12 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.Check
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.acrylic
-import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.aster_ripple
 
-private val menu_surface_shape = SquircleShape(22.dp)
-private val menu_item_shape = SquircleShape(14.dp)
+private val menu_surface_shape = AsterShapes.island
+private val menu_item_shape = AsterShapes.control
 private val menu_screen_margin = 12.dp
 private val menu_surface_padding = 6.dp
 private val menu_surface_elevation = 18.dp
@@ -166,7 +165,6 @@ fun aster_menu_surface(
         modifier = modifier
             .shadow(menu_surface_elevation, menu_surface_shape, clip = false)
             .acrylic(AsterMaterial.colors, menu_surface_shape, aster_menu_surface_color())
-            .border(1.dp, aster_menu_border_color(), menu_surface_shape)
             .defaultMinSize(minWidth = min_width)
             .widthIn(max = max_width)
             .width(IntrinsicSize.Max)
@@ -247,7 +245,6 @@ fun aster_menu(
 
     val menu_colors = AsterMaterial.colors
     val surface_color = aster_menu_surface_color()
-    val border_color = aster_menu_border_color()
     val scrim_color = Color.Black.copy(alpha = if (menu_colors.is_dark) 0.34f else 0.16f)
     val surface_tap = remember { MutableInteractionSource() }
 
@@ -275,7 +272,6 @@ fun aster_menu(
                     Column(
                         modifier = modifier
                             .acrylic(menu_colors, menu_surface_shape, surface_color)
-                            .border(1.dp, border_color, menu_surface_shape)
                             .clickable(interactionSource = surface_tap, indication = null) {}
                             .defaultMinSize(minWidth = min_width)
                             .widthIn(max = max_width)
