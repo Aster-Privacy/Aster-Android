@@ -2929,6 +2929,15 @@
     <string name="account_suspended_appeal">Wenn Sie glauben, dass dies ein Fehler ist, können Sie Einspruch einlegen.</string>
     <string name="account_suspended_appeal_action">Einspruch einlegen</string>
     <string name="account_suspended_back">Zurück zur Anmeldung</string>
+    <string name="suspended_alert">Dieses Konto wurde auf eine Weise verwendet, die gegen die</string>
+    <string name="suspended_alert_terms">Nutzungsbedingungen von Aster verstößt.</string>
+    <string name="suspended_since_with_deletion">Dieses Konto ist seit dem %1$s nicht mehr verfügbar. Ab dem %2$s kann es zur Löschung vorgesehen werden.</string>
+    <string name="suspended_since">Dieses Konto ist seit dem %1$s nicht mehr verfügbar.</string>
+    <string name="suspended_title">Dieses Konto ist gesperrt</string>
+    <string name="suspended_appeal_hint">Wenn Sie glauben, dass es sich um einen Fehler handelt, können Sie Einspruch einlegen. Aster prüft jeden Einspruch und antwortet per E-Mail.</string>
+    <string name="suspended_download_hint">Sie können weiterhin eine Kopie Ihrer Daten herunterladen. Ihre E-Mails werden nur auf diesem Gerät entschlüsselt, sodass niemand sonst den Export lesen kann.</string>
+    <string name="suspended_download">Ihre Daten herunterladen</string>
+    <string name="suspended_start_appeal">Einspruch einlegen</string>
     <string name="default_payment_settled">Standard-Zahlungsmethode aktualisiert. Ihr offener Betrag ist bezahlt.</string>
     <string name="default_payment_still_due">Ihre Karte ist gespeichert, aber Ihr offener Betrag wurde nicht bezahlt. Versuchen Sie es mit einer anderen Karte, um Ihren Tarif zu behalten.</string>
     <string name="alias_grace_ends">Endet am %1$s</string>

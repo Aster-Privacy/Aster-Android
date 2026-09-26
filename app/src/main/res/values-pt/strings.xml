@@ -2928,6 +2928,15 @@
     <string name="account_suspended_appeal">Se você acha que isso é um engano, pode recorrer da decisão.</string>
     <string name="account_suspended_appeal_action">Recorrer da decisão</string>
     <string name="account_suspended_back">Voltar ao login</string>
+    <string name="suspended_alert">Esta conta foi usada de uma forma que viola os</string>
+    <string name="suspended_alert_terms">Termos de Serviço da Aster.</string>
+    <string name="suspended_since_with_deletion">Esta conta ficou indisponível em %1$s. A partir de %2$s, ela pode ser considerada para exclusão.</string>
+    <string name="suspended_since">Esta conta ficou indisponível em %1$s.</string>
+    <string name="suspended_title">Esta conta está suspensa</string>
+    <string name="suspended_appeal_hint">Se você acha que isso é um engano, pode enviar um recurso. A Aster analisa todos os recursos e responde por e-mail.</string>
+    <string name="suspended_download_hint">Você ainda pode baixar uma cópia dos seus dados. Seus e-mails são descriptografados apenas neste dispositivo, então ninguém mais pode ler a exportação.</string>
+    <string name="suspended_download">Baixar seus dados</string>
+    <string name="suspended_start_appeal">Enviar recurso</string>
     <string name="default_payment_settled">Método de pagamento padrão atualizado. O seu saldo pendente está pago.</string>
     <string name="default_payment_still_due">O seu cartão foi salvo, mas o seu saldo pendente não foi pago. Tente outro cartão para manter o seu plano.</string>
     <string name="alias_grace_ends">Termina em %1$s</string>

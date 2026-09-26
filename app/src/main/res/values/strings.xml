@@ -3157,6 +3157,15 @@
     <string name="account_suspended_appeal">If you think this is a mistake, you can appeal the decision.</string>
     <string name="account_suspended_appeal_action">Appeal this decision</string>
     <string name="account_suspended_back">Back to sign in</string>
+    <string name="suspended_alert">This account was used in a way that goes against the</string>
+    <string name="suspended_alert_terms">Aster Terms of Service.</string>
+    <string name="suspended_since_with_deletion">This account became unavailable on %1$s. Starting on %2$s, it may be considered for deletion.</string>
+    <string name="suspended_since">This account became unavailable on %1$s.</string>
+    <string name="suspended_title">This account is suspended</string>
+    <string name="suspended_appeal_hint">If you think this is a mistake, you can submit an appeal. Aster reviews every appeal and replies by email.</string>
+    <string name="suspended_download_hint">You can still download a copy of your data. Your mail is decrypted on this device only, so nobody else can read the export.</string>
+    <string name="suspended_download">Download your data</string>
+    <string name="suspended_start_appeal">Start appeal</string>
     <string name="default_payment_settled">Default payment method updated. Your outstanding balance is paid.</string>
     <string name="default_payment_still_due">Your card is saved, but your outstanding balance was not paid. Try a different card to keep your plan.</string>
     <string name="alias_grace_ends">Ends %1$s</string>

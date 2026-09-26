@@ -2928,6 +2928,15 @@
     <string name="account_suspended_appeal">Als je denkt dat dit een vergissing is, kun je bezwaar maken.</string>
     <string name="account_suspended_appeal_action">Bezwaar maken</string>
     <string name="account_suspended_back">Terug naar inloggen</string>
+    <string name="suspended_alert">Dit account is gebruikt op een manier die in strijd is met de</string>
+    <string name="suspended_alert_terms">Servicevoorwaarden van Aster.</string>
+    <string name="suspended_since_with_deletion">Dit account is sinds %1$s niet meer beschikbaar. Vanaf %2$s kan het in aanmerking komen voor verwijdering.</string>
+    <string name="suspended_since">Dit account is sinds %1$s niet meer beschikbaar.</string>
+    <string name="suspended_title">Dit account is opgeschort</string>
+    <string name="suspended_appeal_hint">Als u denkt dat dit een vergissing is, kunt u bezwaar maken. Aster beoordeelt elk bezwaar en antwoordt per e-mail.</string>
+    <string name="suspended_download_hint">U kunt nog steeds een kopie van uw gegevens downloaden. Uw e-mail wordt alleen op dit apparaat ontsleuteld, dus niemand anders kan de export lezen.</string>
+    <string name="suspended_download">Uw gegevens downloaden</string>
+    <string name="suspended_start_appeal">Bezwaar maken</string>
     <string name="default_payment_settled">Standaard betaalmethode bijgewerkt. Je openstaande bedrag is betaald.</string>
     <string name="default_payment_still_due">Je kaart is opgeslagen, maar je openstaande bedrag is niet betaald. Probeer een andere kaart om je abonnement te behouden.</string>
     <string name="alias_grace_ends">Eindigt op %1$s</string>

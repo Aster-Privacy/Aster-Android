@@ -2950,6 +2950,15 @@
     <string name="account_suspended_appeal">Jeśli uważasz, że to pomyłka, możesz odwołać się od tej decyzji.</string>
     <string name="account_suspended_appeal_action">Odwołaj się od decyzji</string>
     <string name="account_suspended_back">Powrót do logowania</string>
+    <string name="suspended_alert">To konto było używane w sposób niezgodny z</string>
+    <string name="suspended_alert_terms">Warunkami korzystania z usługi Aster.</string>
+    <string name="suspended_since_with_deletion">To konto jest niedostępne od %1$s. Od %2$s może zostać zakwalifikowane do usunięcia.</string>
+    <string name="suspended_since">To konto jest niedostępne od %1$s.</string>
+    <string name="suspended_title">To konto jest zawieszone</string>
+    <string name="suspended_appeal_hint">Jeśli uważasz, że to pomyłka, możesz złożyć odwołanie. Aster rozpatruje każde odwołanie i odpowiada e-mailem.</string>
+    <string name="suspended_download_hint">Nadal możesz pobrać kopię swoich danych. Twoja poczta jest odszyfrowywana tylko na tym urządzeniu, więc nikt inny nie może odczytać eksportu.</string>
+    <string name="suspended_download">Pobierz swoje dane</string>
+    <string name="suspended_start_appeal">Złóż odwołanie</string>
     <string name="default_payment_settled">Domyślna metoda płatności zaktualizowana. Zaległa należność została opłacona.</string>
     <string name="default_payment_still_due">Twoja karta została zapisana, ale zaległa należność nie została opłacona. Wypróbuj inną kartę, aby zachować swój plan.</string>
     <string name="alias_grace_ends">Kończy się %1$s</string>

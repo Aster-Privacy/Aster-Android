@@ -2920,6 +2920,15 @@
     <string name="account_suspended_appeal">如果你认为这是误判，可以提出申诉。</string>
     <string name="account_suspended_appeal_action">提出申诉</string>
     <string name="account_suspended_back">返回登录</string>
+    <string name="suspended_alert">此账户的使用方式违反了以下条款。</string>
+    <string name="suspended_alert_terms">Aster 服务条款</string>
+    <string name="suspended_since_with_deletion">此账户自 %1$s 起不可用。从 %2$s 起，此账户可能会被删除。</string>
+    <string name="suspended_since">此账户自 %1$s 起不可用。</string>
+    <string name="suspended_title">此账户已被暂停</string>
+    <string name="suspended_appeal_hint">如果您认为这是误判，可以提交申诉。Aster 会审核每一份申诉并通过电子邮件回复。</string>
+    <string name="suspended_download_hint">您仍然可以下载数据副本。您的邮件仅在此设备上解密，因此其他人无法读取导出的内容。</string>
+    <string name="suspended_download">下载您的数据</string>
+    <string name="suspended_start_appeal">开始申诉</string>
     <string name="default_payment_settled">默认支付方式已更新。未付款项已结清。</string>
     <string name="default_payment_still_due">您的银行卡已保存，但未付款项尚未结清。请更换其他银行卡以保留您的套餐。</string>
     <string name="alias_grace_ends">%1$s 结束</string>

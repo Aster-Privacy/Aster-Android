@@ -1976,7 +1976,7 @@ private fun profile_menu_tile(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun workspace_switcher_sheet(
+internal fun workspace_switcher_sheet(
     accounts: List<StoredAccount>,
     current_account_id: String?,
     current_email: String,
