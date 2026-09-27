@@ -4,7 +4,7 @@
         <item quantity="other">첨부 파일 %d개</item>
     </plurals>
     <plurals name="archived_conversations">
-        <item quantity="other">대화 %d개를 보관함으로 이동</item>
+        <item quantity="other">대화 %d개를 보관했습니다</item>
     </plurals>
     <plurals name="moved_to_trash">
         <item quantity="other">대화 %d개를 휴지통으로 이동했습니다</item>
@@ -16,10 +16,10 @@
         <item quantity="other">대화 %d개의 별표를 제거했습니다</item>
     </plurals>
     <plurals name="unsnoozed_count">
-        <item quantity="other">대화 %d개의 다시 알림 해제</item>
+        <item quantity="other">대화 %d개의 다시 알림을 해제했습니다</item>
     </plurals>
     <plurals name="draft_deleted">
-        <item quantity="other">임시보관 %d개를 삭제했습니다</item>
+        <item quantity="other">초안 %d개를 삭제했습니다</item>
     </plurals>
     <plurals name="marked_read_count">
         <item quantity="other">메시지 %d개를 읽음으로 표시했습니다</item>
@@ -44,6 +44,6 @@
         <item quantity="other">사용 가능한 좌석 %1$d개</item>
     </plurals>
     <plurals name="trackers_blocked_count">
-        <item quantity="other">트래커 %1$d개 차단됨</item>
+        <item quantity="other">추적기 %1$d개 차단됨</item>
     </plurals>
 </resources>

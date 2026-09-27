@@ -14,13 +14,13 @@
     <string name="settings_feat_daily_send">일일 전송 제한</string>
     <string name="settings_feat_email_retention">메일 보관 기간</string>
     <string name="settings_feat_e2ee">종단 간 암호화</string>
-    <string name="settings_feat_zero_knowledge">서버가 내용을 볼 수 없는 구조</string>
+    <string name="settings_feat_zero_knowledge">제로 액세스 아키텍처</string>
     <string name="settings_feat_aliases">메일 별칭</string>
-    <string name="settings_feat_custom_domains">커스텀 도메인</string>
-    <string name="settings_feat_scheduled_send">예약 발송</string>
+    <string name="settings_feat_custom_domains">사용자 지정 도메인</string>
+    <string name="settings_feat_scheduled_send">예약 전송</string>
     <string name="settings_feat_undo_send">보내기 취소</string>
     <string name="settings_feat_read_receipts">읽음 확인</string>
-    <string name="settings_feat_email_templates">메일 서식</string>
+    <string name="settings_feat_email_templates">이메일 템플릿</string>
     <string name="settings_feat_auto_responder">자동 응답</string>
     <string name="settings_feat_alias_avatars">별칭 이미지</string>
     <string name="settings_feat_instant_alias_delete">별칭 즉시 삭제</string>
@@ -45,7 +45,7 @@
     <string name="settings_feat_anonymous_signup">익명 가입</string>
     <string name="settings_feat_tor_support">Tor 지원</string>
     <string name="settings_feat_link_tracking">링크 추적 보호</string>
-    <string name="settings_feat_tracker_protection">트래커 차단</string>
+    <string name="settings_feat_tracker_protection">추적기 차단</string>
     <string name="settings_feat_remote_image_blocking">원격 이미지 차단</string>
     <string name="settings_feat_import_gmail">Gmail에서 가져오기</string>
     <string name="settings_feat_import_outlook">Outlook에서 가져오기</string>
@@ -87,6 +87,6 @@
     <string name="settings_diagnostics_storage_degraded">성능 저하됨, 로그아웃한 후 다시 로그인하세요</string>
     <string name="revoke_session_confirm_message">이 기기를 계정에서 로그아웃할까요?</string>
     <string name="sign_out_all_other_confirm_message">이 기기만 남기고 모두 로그아웃할까요?</string>
-    <string name="alias_forward_limit_reached">현재 요금제에서 쓸 수 있는 별칭 수를 모두 채웠습니다</string>
+    <string name="alias_forward_limit_reached">현재 요금제의 활성 별칭 최대 개수에 도달했습니다</string>
     <string name="settings_plan_bullet_daily_emails">하루 1,000통</string>
 </resources>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="detail_show_details">상세 보기</string>
-    <string name="detail_hide_details">상세 숨기기</string>
+    <string name="detail_show_details">세부 정보 표시</string>
+    <string name="detail_hide_details">세부 정보 숨기기</string>
     <string name="detail_show_quoted_text">인용문 표시</string>
     <string name="detail_hide_quoted_text">인용문 숨기기</string>
     <string name="detail_external_images_blocked">이 메일에는 외부 콘텐츠가 있습니다. 불러오면 보낸 사람에게 열람 사실이 알려질 수 있습니다.</string>
@@ -22,7 +22,7 @@
     <string name="detail_raw_source_unavailable">이 메시지의 원본 소스는 볼 수 없습니다.</string>
     <string name="detail_star_action">메일에 별표 표시</string>
     <string name="detail_unstar_action">별표 해제</string>
-    <string name="message_details">메시지 정보</string>
+    <string name="message_details">메시지 세부 정보</string>
     <string name="from_label">보낸 사람</string>
     <string name="to_label">받는 사람</string>
     <string name="subject_label">제목</string>

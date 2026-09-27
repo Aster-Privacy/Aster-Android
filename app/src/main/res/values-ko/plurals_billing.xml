@@ -4,10 +4,10 @@
         <item quantity="other">별칭 %d개가 메일을 받지 못합니다.</item>
     </plurals>
     <plurals name="cancel_impact_domains">
-        <item quantity="other">내 도메인 %d개가 정지됩니다.</item>
+        <item quantity="other">사용자 지정 도메인 %d개가 정지됩니다.</item>
     </plurals>
     <plurals name="cancel_impact_templates">
-        <item quantity="other">서식 %d개를 쓸 수 없게 됩니다.</item>
+        <item quantity="other">템플릿 %d개를 쓸 수 없게 됩니다.</item>
     </plurals>
     <plurals name="cancel_impact_signatures">
         <item quantity="other">서명 %d개를 쓸 수 없게 됩니다.</item>

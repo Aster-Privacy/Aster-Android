@@ -12,9 +12,9 @@
     <string name="search_recent_clear">지우기</string>
     <string name="search_quick_all">전체</string>
     <string name="search_quick_unread">안 읽음</string>
-    <string name="search_quick_attachments">첨부</string>
+    <string name="search_quick_attachments">첨부 파일</string>
     <string name="search_quick_flagged">표시함</string>
-    <string name="search_filter_has_attachment">첨부 있음</string>
+    <string name="search_filter_has_attachment">첨부 파일 있음</string>
     <string name="search_filter_unread">안 읽음</string>
     <string name="search_filter_starred">별표</string>
     <string name="search_filter_encrypted">암호화됨</string>
