@@ -2,26 +2,32 @@
 <resources>
     <plurals name="cancel_impact_aliases">
         <item quantity="one">%d alias deixa de receber mensagens.</item>
+        <item quantity="many">%d aliases deixam de receber mensagens.</item>
         <item quantity="other">%d aliases deixam de receber mensagens.</item>
     </plurals>
     <plurals name="cancel_impact_domains">
-        <item quantity="one">%d domínio próprio fica suspenso.</item>
-        <item quantity="other">%d domínios próprios ficam suspensos.</item>
+        <item quantity="one">%d domínio personalizado fica suspenso.</item>
+        <item quantity="many">%d domínios personalizados ficam suspensos.</item>
+        <item quantity="other">%d domínios personalizados ficam suspensos.</item>
     </plurals>
     <plurals name="cancel_impact_templates">
         <item quantity="one">%d modelo deixa de funcionar.</item>
+        <item quantity="many">%d modelos deixam de funcionar.</item>
         <item quantity="other">%d modelos deixam de funcionar.</item>
     </plurals>
     <plurals name="cancel_impact_signatures">
         <item quantity="one">%d assinatura deixa de funcionar.</item>
+        <item quantity="many">%d assinaturas deixam de funcionar.</item>
         <item quantity="other">%d assinaturas deixam de funcionar.</item>
     </plurals>
     <plurals name="cancel_impact_family">
         <item quantity="one">%d membro perde a conta.</item>
+        <item quantity="many">%d membros perdem as contas.</item>
         <item quantity="other">%d membros perdem as contas.</item>
     </plurals>
     <plurals name="crypto_renewal_days">
         <item quantity="one">Seu plano termina em %1$d dia, em %2$s.</item>
+        <item quantity="many">Seu plano termina em %1$d dias, em %2$s.</item>
         <item quantity="other">Seu plano termina em %1$d dias, em %2$s.</item>
     </plurals>
     <plurals name="special_offer_fine_print">
@@ -31,10 +37,12 @@
     </plurals>
     <plurals name="billing_invoice_count">
         <item quantity="one">%d fatura</item>
+        <item quantity="many">%d faturas</item>
         <item quantity="other">%d faturas</item>
     </plurals>
     <plurals name="billing_compare_all_features">
         <item quantity="one">Comparar %d recurso</item>
+        <item quantity="many">Comparar todos os %d recursos</item>
         <item quantity="other">Comparar todos os %d recursos</item>
     </plurals>
 </resources>

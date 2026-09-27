@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="domains_load_timeout">O carregamento dos seus domínios está demorando mais do que o esperado. Verifique sua conexão e tente novamente.</string>
-    <string name="domain_manage_mail_setup">Configuração do email</string>
-    <string name="domain_manage_dns_unavailable">Os detalhes da configuração do email aparecem aqui depois de este domínio ser adicionado à sua conta.</string>
+    <string name="domain_manage_mail_setup">Configuração de e-mail</string>
+    <string name="domain_manage_dns_unavailable">Os detalhes da configuração de e-mail aparecem aqui depois que este domínio for adicionado à sua conta.</string>
     <string name="domain_manage_verification">Verificação</string>
     <string name="domain_manage_last_verified">Última verificação</string>
     <string name="domain_manage_never_verified">Ainda não verificado</string>
@@ -11,16 +11,16 @@
     <string name="domain_manage_recheck">Verificar os registros DNS novamente</string>
     <string name="domain_manage_rechecking">Verificando os registros DNS</string>
     <string name="domain_purchase_search_rate_limited">Muitas pesquisas. Tente novamente em um minuto.</string>
-    <string name="domain_purchase_results_for">Veja o que encontramos para %1$s</string>
+    <string name="domain_purchase_results_for">Resultados para %1$s</string>
     <string name="domain_purchase_change_name">Alterar nome</string>
     <string name="domain_purchase_show_more">Mostrar mais resultados</string>
     <string name="domain_purchase_empty_included">Todo domínio inclui privacidade WHOIS, DNS configurado para você e endereços ilimitados.</string>
     <string name="domain_purchase_retry">Tentar novamente</string>
-    <string name="domain_purchase_progress_note">Aguarde enquanto registramos seu domínio e configuramos suas caixas de correio. Isso geralmente leva cerca de um minuto.</string>
-    <string name="domain_purchase_awaiting_note">Ainda não recebemos seu pagamento. Conclua o checkout para finalizar seu pedido, ou feche esta janela e pague mais tarde em Domínios comprados.</string>
-    <string name="domain_purchase_purchased_desc">Os domínios comprados pelo Aster aparecem aqui e funcionam automaticamente como domínios personalizados. Escolha um nome, pague e comece a usar na hora.</string>
+    <string name="domain_purchase_progress_note">O Aster Mail está registrando seu domínio e configurando suas caixas de correio. Isso geralmente leva cerca de um minuto.</string>
+    <string name="domain_purchase_awaiting_note">Seu pagamento ainda não chegou. Para concluir seu pedido, finalize o checkout. Você também pode fechar esta janela e pagar mais tarde em Domínios comprados.</string>
+    <string name="domain_purchase_purchased_desc">Os domínios que você compra pelo Aster Mail aparecem aqui e funcionam automaticamente como domínios personalizados.</string>
     <string name="domain_purchase_buy_new">Comprar um novo domínio</string>
-    <string name="domain_purchase_discount_tooltip">Preço promocional do primeiro ano do nosso registrador. Depois renova por %1$s ao ano.</string>
+    <string name="domain_purchase_discount_tooltip">Preço promocional do primeiro ano. Depois disso, renova por %1$s ao ano.</string>
     <string name="domain_bimi_title">Logotipo da marca</string>
     <string name="domain_bimi_search_keyword">BIMI</string>
     <string name="domain_bimi_row_off">Mostre seu logotipo ao lado dos seus e-mails nas caixas de entrada que aceitam logotipos de marca.</string>

@@ -29,7 +29,7 @@
     <string name="image_theme_photo_unsupported">Este tipo de arquivo não é compatível. Escolha uma foto JPEG, PNG, GIF, WebP ou HEIC.</string>
     <string name="image_theme_photo_unreadable">Não foi possível abrir esta foto. Tente outra.</string>
     <string name="image_theme_credit_modified">Foto: %1$s. Recortada e redimensionada.</string>
-    <string name="image_theme_credit_generated">Criado pela Aster</string>
+    <string name="image_theme_credit_generated">Criado pelo Aster</string>
     <string name="image_theme_adjust_photo">Ajustar</string>
     <string name="image_theme_editor_title">Mover e redimensionar</string>
     <string name="image_theme_editor_hint">Faça o gesto de pinça para ampliar e arraste para mover a foto. Toque duas vezes para ampliar ou reduzir.</string>

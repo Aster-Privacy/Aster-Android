@@ -32,7 +32,7 @@
     <string name="notif_persistent_push_stop">Desativar</string>
     <string name="persistent_push_title">Manter uma conexão aberta</string>
     <string name="persistent_push_subtitle">O Aster Mail fica conectado ao servidor para que os novos e-mails cheguem na hora. Ative esta opção se as notificações push nunca chegarem ao seu celular. Adiciona uma notificação permanente e consome mais bateria.</string>
-    <string name="persistent_push_autostart_title">Permitir o arranque automático</string>
+    <string name="persistent_push_autostart_title">Permitir a inicialização automática</string>
     <string name="persistent_push_autostart_subtitle">Alguns celulares fecham as conexões em segundo plano. Nas configurações do sistema, permita que o Aster Mail inicie automaticamente e desative as restrições de bateria.</string>
     <string name="notif_delivery_section">Entrega</string>
 </resources>
