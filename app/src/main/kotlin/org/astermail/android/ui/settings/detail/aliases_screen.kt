@@ -1505,7 +1505,7 @@ internal fun recently_deleted_entry_row(count: Int, on_click: () -> Unit) {
             imageVector = TablerIcons.ChevronRight,
             contentDescription = null,
             tint = colors.text_muted,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(20.dp).mirror_in_rtl(),
         )
     }
 }

@@ -70,6 +70,7 @@ fun AsterTopBar(
                     onClick = on_back,
                     tint = colors.text_primary,
                     icon_size = 24,
+                    auto_mirror = true,
                     modifier = Modifier.testTag("back"),
                 )
             } else {

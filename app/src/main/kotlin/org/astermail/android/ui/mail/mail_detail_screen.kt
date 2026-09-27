@@ -2466,7 +2466,7 @@ internal fun expanded_message(
                                 imageVector = TablerIcons.ArrowBackUp,
                                 contentDescription = stringResource(R.string.reply),
                                 tint = colors.text_secondary,
-                                modifier = Modifier.size(22.dp),
+                                modifier = Modifier.size(22.dp).mirror_in_rtl(),
                             )
                         }
                     }

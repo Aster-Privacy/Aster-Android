@@ -87,6 +87,7 @@ import androidx.compose.ui.text.style.TextAlign
 import kotlinx.coroutines.launch
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.design.mirror_in_rtl
 
 private val LOCALE_CURRENCY_MAP = mapOf(
     "en_us" to "usd", "en_gb" to "gbp", "en_au" to "aud", "en_ca" to "cad", "en_in" to "inr",
@@ -1585,7 +1586,7 @@ private fun cancel_offer_row(label: String, icon: androidx.compose.ui.graphics.v
             imageVector = TablerIcons.ChevronRight,
             contentDescription = null,
             tint = colors.accent_blue,
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(16.dp).mirror_in_rtl(),
         )
     }
 }

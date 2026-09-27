@@ -75,6 +75,7 @@ import org.astermail.android.api.settings.AliasRun
 import org.astermail.android.settings.AliasDetailState
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.is_alias_run_active
+import org.astermail.android.design.mirror_in_rtl
 
 @Composable
 internal fun alias_detail_panel(
@@ -306,7 +307,7 @@ private fun alias_details_section(
                     imageVector = TablerIcons.Send,
                     contentDescription = null,
                     tint = colors.text_muted,
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(18.dp).mirror_in_rtl(),
                 )
                 Spacer(Modifier.width(AsterSpacing.sm))
                 Column(modifier = Modifier.weight(1f)) {

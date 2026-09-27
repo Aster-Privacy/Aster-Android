@@ -77,6 +77,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.mirror_in_rtl
 
 internal enum class billing_hero_status { free, active, ending, attention }
 
@@ -351,7 +352,7 @@ private fun billing_hero_row(action: billing_hero_action) {
                 imageVector = TablerIcons.ChevronRight,
                 contentDescription = null,
                 tint = colors.text_muted,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(18.dp).mirror_in_rtl(),
             )
         }
     }
@@ -385,7 +386,7 @@ internal fun billing_yearly_nudge_card(
                     imageVector = TablerIcons.ChevronRight,
                     contentDescription = null,
                     tint = colors.text_muted,
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(18.dp).mirror_in_rtl(),
                 )
             },
         )
@@ -506,7 +507,7 @@ internal fun billing_advantages_card(
                         imageVector = TablerIcons.ChevronRight,
                         contentDescription = null,
                         tint = colors.text_muted,
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(18.dp).mirror_in_rtl(),
                     )
                 },
             )

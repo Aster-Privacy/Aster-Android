@@ -198,6 +198,7 @@ import org.astermail.android.ui.mail.thread_message_to_mock
 import org.astermail.android.util.strip_metadata
 import org.astermail.android.util.strip_status
 import org.astermail.android.ui.common.page_surface
+import org.astermail.android.design.mirror_in_rtl
 
 data class AttachmentItem(
     val uri: Uri,
@@ -3387,7 +3388,8 @@ private fun send_fab(enabled: Boolean, on_click: () -> Unit) {
             tint = tint,
             modifier = Modifier
                 .size(18.dp)
-                .offset(x = (-1).dp, y = 1.dp),
+                .offset(x = (-1).dp, y = 1.dp)
+                .mirror_in_rtl(),
         )
     }
 }

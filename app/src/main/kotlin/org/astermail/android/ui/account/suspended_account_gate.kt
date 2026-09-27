@@ -94,6 +94,7 @@ import org.astermail.android.ui.common.remember_has_paid_plan
 import org.astermail.android.ui.drawer.workspace_switcher_sheet
 import org.astermail.android.ui.mail.SenderAvatar
 import org.astermail.android.ui.settings.detail.ExportScreen
+import org.astermail.android.design.mirror_in_rtl
 
 private const val TERMS_URL = "https://astermail.org/terms"
 private const val APPEAL_URL = "https://astermail.org/appeal"
@@ -430,7 +431,7 @@ private fun action_row(
             imageVector = TablerIcons.ChevronRight,
             contentDescription = null,
             tint = colors.text_muted,
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(16.dp).mirror_in_rtl(),
         )
     }
 }

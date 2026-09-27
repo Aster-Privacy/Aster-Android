@@ -108,6 +108,7 @@ import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.ui.common.page_surface
+import org.astermail.android.design.mirror_in_rtl
 
 private const val SUPPORT_MAIL_URL = "mailto:support@astermail.org"
 private const val HELP_CENTER_URL = "https://astermail.org/help"
@@ -482,7 +483,7 @@ private fun recovery_option_row(
             imageVector = TablerIcons.ChevronRight,
             contentDescription = null,
             tint = colors.text_muted,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(18.dp).mirror_in_rtl(),
         )
     }
 }
