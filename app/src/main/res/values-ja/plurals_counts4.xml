@@ -9,13 +9,13 @@
         <item quantity="other">%d 個のファイル</item>
     </plurals>
     <plurals name="alias_import_existing">
-        <item quantity="other">%d 既に存在します</item>
+        <item quantity="other">%d 件は既に存在します</item>
     </plurals>
     <plurals name="alias_import_invalid">
-        <item quantity="other">%d 無効</item>
+        <item quantity="other">%d 件が無効</item>
     </plurals>
     <plurals name="alias_import_to_import">
-        <item quantity="other">%d インポート対象</item>
+        <item quantity="other">インポート対象 %d 件</item>
     </plurals>
     <plurals name="kids_seats_invitations">
         <item quantity="other">招待 %d 件</item>

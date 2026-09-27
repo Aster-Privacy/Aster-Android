@@ -3,7 +3,7 @@
     <string name="image_themes">画像テーマ</string>
     <string name="image_themes_subtitle">アプリの背景に写真を表示します。</string>
     <string name="image_theme_browse">写真を見る</string>
-    <string name="image_theme_credit">写真: %1$s</string>
+    <string name="image_theme_credit">写真：%1$s</string>
     <string name="image_theme_category_space">宇宙</string>
     <string name="image_theme_category_planets">惑星</string>
     <string name="image_theme_category_night_sky">夜空</string>
@@ -28,7 +28,7 @@
     <string name="image_theme_photo_too_large">この写真は大きすぎます。40 MB 未満の写真を選択してください。</string>
     <string name="image_theme_photo_unsupported">このファイル形式には対応していません。JPEG、PNG、GIF、WebP、HEIC の写真を選択してください。</string>
     <string name="image_theme_photo_unreadable">この写真を開けません。別の写真をお試しください。</string>
-    <string name="image_theme_credit_modified">写真: %1$s。トリミングとサイズ変更を行っています。</string>
+    <string name="image_theme_credit_modified">写真：%1$s。トリミングとサイズ変更を行っています。</string>
     <string name="image_theme_credit_generated">Aster が作成</string>
     <string name="image_theme_adjust_photo">調整</string>
     <string name="image_theme_editor_title">移動と拡大縮小</string>

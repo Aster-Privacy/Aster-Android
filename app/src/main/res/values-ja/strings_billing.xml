@@ -38,7 +38,7 @@
     <string name="onboarding_task_first_email">最初のメッセージを送信する</string>
     <string name="onboarding_task_import">古いメールをインポート</string>
     <string name="onboarding_task_install">パソコンに Aster をインストールする</string>
-    <string name="onboarding_task_recovery">リカバリー用のメールアドレスを追加する</string>
+    <string name="onboarding_task_recovery">復旧用メールアドレスを追加する</string>
     <string name="payment_confirmed">お支払いを確認しました</string>
     <string name="payment_processing_delayed">お支払いを処理中です。有効化には少し時間がかかることがあります。</string>
     <string name="payment_failed_notification_body">%1$s プランを継続するには、カード情報を更新してください。</string>
@@ -90,7 +90,7 @@
     <string name="billing_recap_title">登録してから</string>
     <string name="billing_recap_body">現在のプランの内容です。Aster はこれをデバイス上で数え、送信することはありません。</string>
     <string name="billing_recap_aliases">使用中のエイリアス</string>
-    <string name="billing_recap_domains">独自ドメイン</string>
+    <string name="billing_recap_domains">カスタムドメイン</string>
     <string name="billing_recap_storage">暗号化されたメール</string>
     <string name="billing_advantages_title_free">%1$s で得られるもの</string>
     <string name="billing_advantages_title_paid">プランに含まれるもの</string>
@@ -144,7 +144,7 @@
     <string name="billing_money_back_line">30 日間お試しください。Aster が合わなければ返金します。</string>
     <string name="billing_addon_choose">追加オプションを選択</string>
     <string name="billing_plan_choose_hint">プランを選ぶと内容が表示されます。</string>
-    <string name="billing_free_has">無料プラン: %1$s</string>
+    <string name="billing_free_has">無料プラン：%1$s</string>
     <string name="billing_crypto_resume_title">暗号資産での支払いを完了する</string>
     <string name="billing_crypto_resume_expires">%1$s まで有効</string>
     <string name="billing_status_ok">問題なし</string>

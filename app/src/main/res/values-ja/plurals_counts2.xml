@@ -13,7 +13,7 @@
         <item quantity="other">%d個のラベル</item>
     </plurals>
     <plurals name="ghosts_count">
-        <item quantity="other">%d個のゴースト</item>
+        <item quantity="other">%d個のゴーストエイリアス</item>
     </plurals>
     <plurals name="recovery_codes_count">
         <item quantity="other">%d個のリカバリーコード</item>
@@ -38,7 +38,7 @@
         <item quantity="other">他 %1$d 件のエイリアスを表示</item>
     </plurals>
     <plurals name="show_n_more_folders">
-        <item quantity="other">他 %1$d 件のフォルダーを表示</item>
+        <item quantity="other">他 %1$d 件のフォルダを表示</item>
     </plurals>
     <plurals name="rules_emails_count">
         <item quantity="one">%1$d 件のメール</item>
@@ -48,7 +48,7 @@
         <item quantity="other">ラベル %1$d 件</item>
     </plurals>
     <plurals name="stop_senders_title">
-        <item quantity="other">%1$d件の送信者からのメールを止めますか？</item>
+        <item quantity="other">%1$d人の送信者からのメールを止めますか？</item>
     </plurals>
     <plurals name="participants_and_others">
         <item quantity="other">%1$s 他%2$d名</item>
