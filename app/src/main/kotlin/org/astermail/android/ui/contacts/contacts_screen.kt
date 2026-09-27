@@ -91,6 +91,9 @@ import org.astermail.android.contacts.ContactsTab
 import org.astermail.android.contacts.ContactsViewModel
 import org.astermail.android.contacts.DuplicateCluster
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.tonal_surface_color
+import org.astermail.android.design.island_surface_color
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.acrylic_backdrop
@@ -944,8 +947,8 @@ private fun duplicate_banner(count: Int, on_review: () -> Unit, on_dismiss: () -
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = inbox_card_horizontal_margin, vertical = AsterSpacing.sm)
-            .clip(SquircleShape(AsterRadius.xl))
-            .acrylic(colors, SquircleShape(AsterRadius.xl), colors.bg_card)
+            .clip(AsterShapes.island)
+            .acrylic(colors, AsterShapes.island, island_surface_color(colors))
             .padding(AsterSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1451,7 +1454,7 @@ private fun merge_dialog(
                             .fillMaxWidth()
                             .clip(SquircleShape(AsterRadius.lg))
                             .background(
-                                if (is_primary) colors.accent_blue.copy(alpha = 0.08f) else colors.bg_secondary,
+                                if (is_primary) tonal_surface_color(colors, colors.accent_blue) else colors.bg_secondary,
                             )
                             .border(
                                 1.5.dp,
