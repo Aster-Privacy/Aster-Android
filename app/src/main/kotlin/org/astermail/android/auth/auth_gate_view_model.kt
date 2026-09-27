@@ -64,6 +64,7 @@ class AuthGateViewModel @Inject constructor(
     fun recheck_session() {
         if (!auth_repository.is_signed_in.value) return
         viewModelScope.launch {
+            runCatching { auth_repository.refresh_session_if_expiring() }
             runCatching { auth_repository.handle_unauthorized_signal() }
         }
     }
@@ -79,6 +80,9 @@ class AuthGateViewModel @Inject constructor(
             }
         }
         if (auth_repository.is_signed_in.value) {
+            viewModelScope.launch {
+                runCatching { auth_repository.refresh_session_if_expiring() }
+            }
             viewModelScope.launch {
                 val csrf_ok = auth_repository.ensure_csrf_ready()
                 if (!csrf_ok) {
