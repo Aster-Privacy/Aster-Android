@@ -946,7 +946,6 @@ private fun duplicate_banner(count: Int, on_review: () -> Unit, on_dismiss: () -
             .padding(horizontal = inbox_card_horizontal_margin, vertical = AsterSpacing.sm)
             .clip(SquircleShape(AsterRadius.xl))
             .acrylic(colors, SquircleShape(AsterRadius.xl), colors.bg_card)
-            .border(1.dp, colors.border_secondary, SquircleShape(AsterRadius.xl))
             .padding(AsterSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1455,8 +1454,8 @@ private fun merge_dialog(
                                 if (is_primary) colors.accent_blue.copy(alpha = 0.08f) else colors.bg_secondary,
                             )
                             .border(
-                                1.dp,
-                                if (is_primary) colors.accent_blue else colors.border_secondary,
+                                1.5.dp,
+                                if (is_primary) colors.accent_blue else Color.Transparent,
                                 SquircleShape(AsterRadius.lg),
                             )
                             .clickable { primary_id = contact.id }

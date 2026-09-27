@@ -26,7 +26,6 @@ import compose.icons.tablericons.Adjustments
 import compose.icons.tablericons.ChevronDown
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -101,7 +100,6 @@ internal fun quick_chip(
                     Modifier.acrylic(colors, shape, colors.bg_card)
                 },
             )
-            .border(1.dp, if (active) colors.accent_blue else colors.border_primary, shape)
             .clickable(onClick = on_click)
             .padding(start = 14.dp, end = if (show_caret) 10.dp else 14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -450,7 +448,6 @@ internal fun search_chip_row(
                 .height(chip_height)
                 .clip(CircleShape)
                 .acrylic(colors, CircleShape, colors.bg_card)
-                .border(1.dp, colors.border_primary, CircleShape)
                 .clickable(onClick = on_advanced_click)
                 .padding(start = 12.dp, end = 14.dp),
             verticalAlignment = Alignment.CenterVertically,

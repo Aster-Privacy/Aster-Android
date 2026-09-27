@@ -25,7 +25,6 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -99,8 +98,7 @@ fun chip_pill_row(
         modifier = modifier
             .height(32.dp)
             .clip(SquircleShape(999.dp))
-            .acrylic(colors, SquircleShape(999.dp), colors.bg_tertiary)
-            .border(1.dp, colors.border_secondary, SquircleShape(999.dp)),
+            .acrylic(colors, SquircleShape(999.dp), colors.bg_tertiary),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         segments.forEachIndexed { index, spec ->
@@ -152,12 +150,7 @@ fun add_chip_pill(label: String, on_click: () -> Unit, modifier: Modifier = Modi
         modifier = modifier
             .height(32.dp)
             .clip(SquircleShape(999.dp))
-            .acrylic(colors, SquircleShape(999.dp), colors.bg_card)
-            .border(
-                1.dp,
-                org.astermail.android.ui.mail.chip_subtle_border(colors.accent_blue, colors.bg_card, colors.is_dark),
-                SquircleShape(999.dp),
-            )
+            .acrylic(colors, SquircleShape(999.dp), colors.bg_tertiary)
             .clickable(onClick = on_click)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,

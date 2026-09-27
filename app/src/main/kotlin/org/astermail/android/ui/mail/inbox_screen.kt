@@ -27,7 +27,6 @@ import compose.icons.tablericons.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.scrollBy
@@ -2790,12 +2789,7 @@ private fun all_mail_scope_chip(
     Row(
         modifier = Modifier
             .clip(SquircleShape(14.dp))
-            .background(if (active) colors.accent_blue.copy(alpha = 0.16f) else Color.Transparent)
-            .border(
-                1.dp,
-                if (active) colors.accent_blue.copy(alpha = 0.5f) else colors.border_primary,
-                SquircleShape(14.dp),
-            )
+            .background(if (active) colors.accent_blue.copy(alpha = 0.16f) else colors.bg_tertiary)
             .clickable(onClick = on_click)
             .padding(horizontal = 10.dp, vertical = 5.dp)
             .testTag("all_mail_chip_$label"),
