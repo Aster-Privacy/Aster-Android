@@ -50,7 +50,7 @@
     <string name="theme_opacity_solid">Dekkend</string>
     <string name="theme_opacity_solid_subtitle">Vlakken zijn volledig dekkend en je foto blijft erachter.</string>
     <string name="glass_mode">Glas</string>
-    <string name="glass_mode_subtitle">Je foto schijnt door de oppervlakken heen. Zet dit uit voor dichte oppervlakken.</string>
+    <string name="glass_mode_subtitle">Je foto schijnt door de vlakken heen. Zet dit uit voor dekkende vlakken.</string>
     <string name="theme_transparency">Transparantie</string>
     <string name="image_theme_animation">Achtergrond animeren</string>
     <string name="image_theme_animation_subtitle">Speelt je geanimeerde achtergrond af. Hij stopt in de batterijbesparing en wanneer animaties op je apparaat uitstaan.</string>

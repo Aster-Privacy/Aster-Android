@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="first_run_title">Welkom bij Aster Mail</string>
-    <string name="first_run_subtitle">Neem je bestaande mail mee of begin opnieuw. Je kunt later importeren via Instellingen.</string>
+    <string name="first_run_subtitle">Neem je bestaande mail mee of begin helemaal nieuw. Je kunt later importeren via Instellingen.</string>
     <string name="first_run_import">Je mail importeren</string>
     <string name="first_run_skip">Niet nu</string>
     <string name="first_run_privacy_note">Je mail wordt versleuteld voordat die je apparaat verlaat.</string>
@@ -14,7 +14,7 @@
     <string name="plan_prompt_action">Abonnementen bekijken</string>
     <string name="plan_prompt_dismiss">Niet nu</string>
     <string name="recovery_codes_reminder_title">Sla je herstelcodes op</string>
-    <string name="recovery_codes_reminder_body">Aster versleutelt je mail met je wachtwoord, dus niemand kan het voor je herstellen. Herstelcodes zijn de enige weg terug naar je versleutelde mail.</string>
+    <string name="recovery_codes_reminder_body">Aster versleutelt je mail met je wachtwoord, dus niemand kan dat wachtwoord voor je opnieuw instellen. Herstelcodes zijn de enige weg terug naar je versleutelde mail.</string>
     <string name="recovery_codes_reminder_action">Herstelcodes ophalen</string>
     <string name="recovery_phrase_migrate_title">Overstappen op herstelcodes</string>
     <string name="recovery_phrase_migrate_body">Herstelzinnen verdwijnen. Haal nu herstelcodes op zodat je je account nog kunt herstellen.</string>

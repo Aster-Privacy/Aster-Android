@@ -17,8 +17,8 @@
         <item quantity="other">%d labels</item>
     </plurals>
     <plurals name="ghosts_count">
-        <item quantity="one">%d ghost</item>
-        <item quantity="other">%d ghosts</item>
+        <item quantity="one">%d ghost-alias</item>
+        <item quantity="other">%d ghost-aliassen</item>
     </plurals>
     <plurals name="recovery_codes_count">
         <item quantity="one">%d herstelcode</item>
@@ -73,8 +73,8 @@
         <item quantity="other">%1$d berichten in %2$s</item>
     </plurals>
     <plurals name="exported_contacts">
-        <item quantity="one">%d contactpersoon geëxporteerd</item>
-        <item quantity="other">%d contactpersonen geëxporteerd</item>
+        <item quantity="one">%d contact geëxporteerd</item>
+        <item quantity="other">%d contacten geëxporteerd</item>
     </plurals>
     <plurals name="lockout_minutes">
         <item quantity="one">%1$d minuut</item>

@@ -33,11 +33,11 @@
     <string name="fix_billing_payment_failed_warning">De laatste betaling op uw betaalmethode is niet doorgegaan. Deze bijwerken in Instellingen, Facturering houdt uw abonnement draaiende. Uw post wordt niet getroffen.</string>
     <string name="fix_billing_update_payment_method">Betaalmethode bijwerken</string>
     <string name="fix_billing_card_expires">Verloopt %1$s</string>
-    <string name="fix_billing_status_trialing">Proef</string>
+    <string name="fix_billing_status_trialing">Proefperiode</string>
     <string name="fix_billing_status_past_due">Achterstallig</string>
-    <string name="fix_billing_status_canceled">Geannuleerd</string>
+    <string name="fix_billing_status_canceled">Opgezegd</string>
     <string name="fix_billing_billed_monthly">Maandelijks gefactureerd</string>
     <string name="fix_billing_billed_yearly">Jaarlijks gefactureerd</string>
-    <string name="fix_billing_history_empty">Nog geen facturen. Uw betalingen verschijnen hier na de eerste afschrijving.</string>
+    <string name="fix_billing_history_empty">Nog geen facturen. Je betalingen verschijnen hier na de eerste afschrijving.</string>
     <string name="fix_billing_quota_count">%1$d / %2$d</string>
 </resources>

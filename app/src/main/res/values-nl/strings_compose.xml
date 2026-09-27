@@ -11,12 +11,12 @@
     <string name="compose_quote_header_date">Datum:</string>
     <string name="compose_quote_header_subject">Onderwerp:</string>
     <string name="compose_attachment_remove">Bijlage verwijderen</string>
-    <string name="compose_attachment_uploading">Bijlage %1$s uploaden</string>
+    <string name="compose_attachment_uploading">Bijlage %1$s wordt geüpload</string>
     <string name="schedule_time_in_past">Het geplande tijdstip moet in de toekomst liggen</string>
-    <string name="signature_none">Geen ondertekening</string>
-    <string name="signature_select">Ondertekening kiezen</string>
-    <string name="compose_metadata_strip_failed">Kon verborgen metadata niet verwijderen uit: %1$s</string>
-    <string name="compose_inline_image_failed">Kon deze afbeeldingen niet toevoegen: %1$s</string>
+    <string name="signature_none">Geen handtekening</string>
+    <string name="signature_select">Handtekening kiezen</string>
+    <string name="compose_metadata_strip_failed">Verborgen metadata kon niet worden verwijderd uit: %1$s</string>
+    <string name="compose_inline_image_failed">Deze afbeeldingen konden niet worden toegevoegd: %1$s</string>
     <string name="compose_attachment_read_failed">\"%1$s\" kon niet worden bijgevoegd. Je e-mail is niet verzonden. Verwijder het bestand of voeg het opnieuw toe en probeer het nog eens.</string>
     <string name="schedule_in_one_hour">Over een uur</string>
     <string name="schedule_tonight">Vanavond</string>

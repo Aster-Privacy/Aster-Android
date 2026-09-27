@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="compose_discard_draft_title">Dit concept verwijderen?</string>
-    <string name="compose_discard_draft_message">Als je dit concept verwijdert, worden de tekst en eventuele bijlagen verwijderd. Je kunt dit niet ongedaan maken.</string>
+    <string name="compose_discard_draft_title">Dit concept weggooien?</string>
+    <string name="compose_discard_draft_message">Als je dit concept weggooit, worden de tekst en eventuele bijlagen verwijderd. Je kunt dit niet ongedaan maken.</string>
 </resources>

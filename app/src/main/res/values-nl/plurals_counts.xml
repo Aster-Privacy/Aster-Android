@@ -45,8 +45,8 @@
         <item quantity="other">%d actieve eindpunten</item>
     </plurals>
     <plurals name="storage_addons_active_count">
-        <item quantity="one">%1$d actief pakket</item>
-        <item quantity="other">%1$d actieve pakketten</item>
+        <item quantity="one">%1$d actieve add-on</item>
+        <item quantity="other">%1$d actieve add-ons</item>
     </plurals>
     <plurals name="backup_codes_remaining">
         <item quantity="one">%d back-upcode resterend</item>

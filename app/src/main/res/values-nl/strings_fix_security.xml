@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="two_step_verification_title">Verificatie in twee stappen</string>
+    <string name="two_step_verification_title">Tweestapsverificatie</string>
     <string name="two_step_verification_on_description">Voor uw account is naast uw wachtwoord ook een verificatiecode vereist.</string>
     <string name="two_step_verification_off_description">Vraag voor extra bescherming naast je wachtwoord ook om een verificatiecode.</string>
     <string name="security_activity_filter_all">Alles</string>
-    <string name="security_activity_filter_sign_ins">Aanmeldingen</string>
+    <string name="security_activity_filter_sign_ins">Inlogactiviteit</string>
     <string name="security_activity_filter_security">Beveiligingswijzigingen</string>
     <string name="security_activity_filter_failures">Mislukt</string>
     <string name="security_activity_today">Vandaag</string>
     <string name="security_activity_yesterday">Gisteren</string>
-    <string name="security_activity_show_more">Meer weergeven</string>
-    <string name="security_activity_show_less">Minder weergeven</string>
-    <string name="security_activity_empty_filter">Geen activiteit komt overeen met dit filter.</string>
+    <string name="security_activity_show_more">Meer tonen</string>
+    <string name="security_activity_show_less">Minder tonen</string>
+    <string name="security_activity_empty_filter">Er is geen activiteit die overeenkomt met dit filter.</string>
 </resources>
