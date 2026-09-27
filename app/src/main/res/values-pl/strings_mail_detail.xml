@@ -4,7 +4,7 @@
     <string name="detail_hide_details">Ukryj szczegóły</string>
     <string name="detail_show_quoted_text">Pokaż cytowany tekst</string>
     <string name="detail_hide_quoted_text">Ukryj cytowany tekst</string>
-    <string name="detail_external_images_blocked">Ta wiadomość zawiera treści zewnętrzne. Ich wczytanie może zdradzić nadawcy, że ją otworzyłeś.</string>
+    <string name="detail_external_images_blocked">Ta wiadomość zawiera treści zewnętrzne. Ich wczytanie może zdradzić nadawcy Twoją aktywność.</string>
     <string name="detail_external_allow_once">Wczytaj raz</string>
     <string name="detail_external_always_allow">Zawsze zezwalaj</string>
     <string name="detail_external_images_traffic_blocked">Zewnętrzne obrazy są blokowane, aby oszczędzać transfer.</string>

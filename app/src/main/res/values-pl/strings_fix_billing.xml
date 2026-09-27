@@ -6,7 +6,7 @@
     <string name="fix_billing_upgrade_for_more">Ulepsz, aby odblokować więcej miejsca, aliasów i funkcji</string>
     <string name="fix_billing_manage_plan">Zarządzaj planem</string>
     <string name="fix_billing_quota_aliases">Aliasy e-mail</string>
-    <string name="fix_billing_quota_domains">Domeny własne</string>
+    <string name="fix_billing_quota_domains">Własne domeny</string>
     <string name="fix_billing_per_month_short">/mies.</string>
     <string name="fix_billing_per_year_short">/rok</string>
     <string name="fix_billing_billed_annually">rozliczane rocznie</string>
@@ -35,7 +35,7 @@
     <string name="fix_billing_card_expires">Wygasa %1$s</string>
     <string name="fix_billing_status_trialing">Okres próbny</string>
     <string name="fix_billing_status_past_due">Zaległa płatność</string>
-    <string name="fix_billing_status_canceled">Anulowano</string>
+    <string name="fix_billing_status_canceled">Anulowany</string>
     <string name="fix_billing_billed_monthly">Rozliczenie miesięczne</string>
     <string name="fix_billing_billed_yearly">Rozliczenie roczne</string>
     <string name="fix_billing_history_empty">Brak faktur. Twoje płatności pojawią się tutaj po pierwszym obciążeniu.</string>

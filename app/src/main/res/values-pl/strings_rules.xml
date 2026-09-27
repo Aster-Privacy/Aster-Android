@@ -16,9 +16,9 @@
     <string name="rules_op_matches_domain">pasuje do domeny</string>
     <string name="rules_op_does_not_match_domain">nie pasuje do domeny</string>
     <string name="rules_op_matches_regex">pasuje do wyrażenia regularnego</string>
-    <string name="rules_op_greater_than">większe niż</string>
-    <string name="rules_op_less_than">mniejsze niż</string>
-    <string name="rules_op_equals">równe</string>
+    <string name="rules_op_greater_than">większy niż</string>
+    <string name="rules_op_less_than">mniejszy niż</string>
+    <string name="rules_op_equals">równa się</string>
     <string name="rules_op_older_than">starsze niż</string>
     <string name="rules_op_newer_than">nowsze niż</string>
 
@@ -40,7 +40,7 @@
     <string name="rules_category_newsletters">Newslettery</string>
     <string name="rules_category_social">Społecznościowe</string>
     <string name="rules_category_updates">Powiadomienia</string>
-    <string name="rules_category_transactions">Transakcje</string>
+    <string name="rules_category_transactions">Zakupy</string>
     <string name="rules_category_forums">Dyskusje</string>
 
     <string name="rules_no_labels">Brak etykiet</string>
@@ -75,7 +75,7 @@
     <string name="category_info_shopping">Potwierdzenia zamówień, aktualizacje wysyłki i powiadomienia o dostawie.</string>
     <string name="custom_categories_title">Własne kategorie</string>
     <string name="custom_categories_tutorial">Utwórz własną kategorię. Dopasuj wiadomości według domeny nadawcy lub słowa kluczowego w temacie.</string>
-    <string name="custom_category_locked_badge">Płatne</string>
+    <string name="custom_category_locked_badge">Zablokowane</string>
     <string name="add_category">Dodaj kategorię</string>
     <string name="no_custom_categories">Brak kategorii niestandardowych.</string>
     <string name="category_name_required">Podaj nazwę tej kategorii.</string>
@@ -83,13 +83,13 @@
     <string name="category_domains_invalid">Nieprawidłowe domeny: %1$s. Użyj prawdziwej domeny, np. example.com.</string>
     <string name="category_keywords_invalid">Nieprawidłowe słowa kluczowe: %1$s. Używaj tylko zwykłych słów.</string>
     <string name="delete_category_title">Usunąć kategorię?</string>
-    <string name="delete_category_description">\"%1$s\" zostanie usunięta, a jej wiadomości wrócą do pierwotnych kategorii.</string>
-    <string name="custom_categories_locked">Własne kategorie są dostępne w planach płatnych.</string>
-    <string name="custom_categories_limit_reached">Osiągnięto maksymalną liczbę własnych kategorii.</string>
+    <string name="delete_category_description">Czy na pewno chcesz usunąć „%1$s”? Tej operacji nie można cofnąć.</string>
+    <string name="custom_categories_locked">Własne kategorie nie są dostępne w Twoim obecnym planie.</string>
+    <string name="custom_categories_limit_reached">Osiągnięto limit własnych kategorii w Twoim planie. Przejdź na wyższy plan, aby mieć więcej.</string>
     <string name="edit_custom_category">Edytuj kategorię</string>
     <string name="new_custom_category">Nowa kategoria</string>
-    <string name="category_name">Nazwa kategorii</string>
-    <string name="category_name_placeholder">Newslettery</string>
+    <string name="category_name">Nazwa</string>
+    <string name="category_name_placeholder">np. Newslettery</string>
     <string name="category_icon">Ikona</string>
     <string name="category_match_domains">Dopasuj domeny nadawcy</string>
     <string name="category_match_domains_placeholder">example.com, news.example.org</string>
@@ -97,7 +97,7 @@
     <string name="category_match_keywords">Dopasuj słowa kluczowe w temacie</string>
     <string name="category_match_keywords_placeholder">newsletter, podsumowanie</string>
     <string name="category_match_keywords_help">Słowa oddzielone przecinkami. Jeśli którekolwiek pojawi się w temacie, wiadomość trafi do tej kategorii.</string>
-    <string name="category_tutorial_text">Wiadomość trafia do twojej kategorii, gdy pasuje do dowolnej podanej domeny albo słowa kluczowego. Własne kategorie mają pierwszeństwo przed wbudowanymi, a całe dopasowanie odbywa się na twoim urządzeniu.</string>
+    <string name="category_tutorial_text">Wskazówka: wiadomość trafia do własnej kategorii, jeśli domena nadawcy LUB temat zawiera dowolne z Twoich słów kluczowych. Własne kategorie są sprawdzane przed wbudowanymi, więc zawsze mają pierwszeństwo.</string>
     <string name="rules_create_first_folder_hint">Utwórz folder, a ta reguła będzie mogła przenosić do niego pasujące wiadomości.</string>
     <string name="rules_create_first_label_hint">Utwórz etykietę, a ta reguła będzie mogła stosować ją do pasujących wiadomości.</string>
     <string name="muted_categories">Wyciszone kategorie</string>
