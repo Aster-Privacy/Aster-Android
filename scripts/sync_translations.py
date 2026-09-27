@@ -11,20 +11,21 @@ repo_root = Path(__file__).resolve().parent.parent
 res_root = repo_root / "app" / "src" / "main" / "res"
 
 locale_dirs = {
-    "es": "values-es",
-    "fr": "values-fr",
-    "de": "values-de",
-    "it": "values-it",
-    "pt": "values-pt",
-    "zh-CN": "values-zh-rCN",
-    "ja": "values-ja",
-    "ko": "values-ko",
-    "ar": "values-ar",
-    "ru": "values-ru",
-    "nl": "values-nl",
-    "pl": "values-pl",
-    "tr": "values-tr",
-    "hi": "values-hi",
+    "es": ("es", "values-es"),
+    "fr": ("fr", "values-fr"),
+    "de": ("de", "values-de"),
+    "it": ("it", "values-it"),
+    "pt": ("pt", "values-pt"),
+    "pt-BR": ("pt", "values-pt-rBR"),
+    "zh-CN": ("zh-CN", "values-zh-rCN"),
+    "ja": ("ja", "values-ja"),
+    "ko": ("ko", "values-ko"),
+    "ar": ("ar", "values-ar"),
+    "ru": ("ru", "values-ru"),
+    "nl": ("nl", "values-nl"),
+    "pl": ("pl", "values-pl"),
+    "tr": ("tr", "values-tr"),
+    "hi": ("hi", "values-hi"),
 }
 
 short_word_limit = 2
@@ -418,8 +419,8 @@ def with_edges(english_raw, text):
     return f"{lead}{text}{trail}"
 
 
-def render_string(name, value):
-    return f"<string name=\"{name}\">{value}</string>"
+def render_string(name, value, attrs=""):
+    return f"<string name=\"{name}\"{attrs}>{value}</string>"
 
 
 def render_plural(name, items):
@@ -479,8 +480,11 @@ def sync(web_root, ref, write):
 
     edits = defaultdict(list)
     appends = defaultdict(list)
-    for code, directory in locale_dirs.items():
-        web_locale = load_web(web_root, ref, code)
+    web_cache = {}
+    for code, (web_code, directory) in locale_dirs.items():
+        if web_code not in web_cache:
+            web_cache[web_code] = load_web(web_root, ref, web_code)
+        web_locale = web_cache[web_code]
         locale_groups = web_plural_groups(web_locale)
         locale_path = res_root / directory
         existing = {}
@@ -512,7 +516,7 @@ def sync(web_root, ref, write):
                         if chosen is not None:
                             value = escape_android(with_edges(e.raw, chosen.strip()))
                             result.synced[code] += 1
-                            rendered = render_string(e.name, value)
+                            rendered = render_string(e.name, value, current.attrs if current else e.attrs)
                     if value is None and current is not None:
                         result.kept[code] += 1
                     elif value is None:
