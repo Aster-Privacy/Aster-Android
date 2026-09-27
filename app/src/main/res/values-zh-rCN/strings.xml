@@ -1123,6 +1123,7 @@
     <string name="remove_payment_failed">无法移除支付方式</string>
     <string name="no_device_contacts">设备上未找到联系人</string>
     <string name="no_new_contacts">没有新联系人可导入</string>
+    <string name="contact_limit_reached">已达到联系人数量上限。升级套餐以导入其余联系人。</string>
 
     <string name="privacy">隐私</string>
     <string name="tracking">跟踪</string>

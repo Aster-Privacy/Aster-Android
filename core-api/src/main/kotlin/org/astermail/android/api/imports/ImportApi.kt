@@ -63,6 +63,7 @@ data class CreateJobRequest(
     val kind: String,
     val upload_token: String? = null,
     val account_id: String? = null,
+    val folder_label_map: Map<String, String>? = null,
 )
 
 @Serializable

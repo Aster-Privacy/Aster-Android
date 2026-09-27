@@ -1123,6 +1123,7 @@
     <string name="remove_payment_failed">Ödeme yöntemi kaldırılamadı</string>
     <string name="no_device_contacts">Cihazda kişi bulunamadı</string>
     <string name="no_new_contacts">İçe aktarılacak yeni kişi yok</string>
+    <string name="contact_limit_reached">Kişi sınırına ulaştınız. Kalanları içe aktarmak için planınızı yükseltin.</string>
 
     <string name="privacy">Gizlilik</string>
     <string name="tracking">İzleme</string>

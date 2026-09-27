@@ -45,6 +45,10 @@ import org.astermail.android.api.contacts.CreateContactGroupResponse
 import org.astermail.android.api.contacts.CreateContactRequest
 import org.astermail.android.api.contacts.CreateContactResponse
 import org.astermail.android.api.contacts.DeleteContactResponse
+import org.astermail.android.api.ApiError
+import org.astermail.android.api.contacts.ImportContactItem
+import org.astermail.android.api.contacts.ImportContactsRequest
+import org.astermail.android.api.contacts.ImportContactsResponse
 import org.astermail.android.api.contacts.SuccessResponse
 import org.astermail.android.api.contacts.UpdateContactRequest
 import org.astermail.android.storage.SessionKeyStore
@@ -105,6 +109,83 @@ class ContactsRepository @Inject constructor(
         } finally {
             key.fill(0)
         }
+    }
+
+    suspend fun import_contacts(contacts: List<Contact>): ContactImportSummary {
+        var imported = 0L
+        var updated = 0L
+        var skipped = 0L
+        var failed = 0
+        var limit_reached = false
+        var last_failure: Throwable? = null
+        val key = derive_contacts_key()
+        try {
+            for (chunk in contacts.chunked(IMPORT_CHUNK_SIZE)) {
+                if (limit_reached) {
+                    failed += chunk.size
+                    continue
+                }
+                val request = ImportContactsRequest(chunk.map { build_import_item(it, key) })
+                val outcome = post_import_with_retry(request)
+                outcome.fold(
+                    onSuccess = { response ->
+                        imported += response.imported
+                        updated += response.updated
+                        skipped += response.skipped
+                        val limit_errors = response.errors.count { it.contains("Contact limit reached") }
+                        if (limit_errors > 0) limit_reached = true
+                        failed += (chunk.size - response.imported - response.updated - response.skipped)
+                            .toInt().coerceAtLeast(0)
+                    },
+                    onFailure = { t ->
+                        failed += chunk.size
+                        last_failure = t
+                        if (t is ApiError.PlanLimitExceeded) limit_reached = true
+                    },
+                )
+            }
+        } finally {
+            key.fill(0)
+        }
+        return ContactImportSummary(
+            imported = imported,
+            updated = updated,
+            skipped = skipped,
+            failed = failed,
+            limit_reached = limit_reached,
+            last_failure = last_failure,
+        )
+    }
+
+    private suspend fun post_import_with_retry(request: ImportContactsRequest): Result<ImportContactsResponse> {
+        var delay_ms = 1_000L
+        var attempt = 0
+        while (true) {
+            val outcome = runCatching { contacts_api.import_contacts(request) }
+            val failure = outcome.exceptionOrNull() ?: return outcome
+            if (failure is kotlinx.coroutines.CancellationException) throw failure
+            val retryable = failure is ApiError.RateLimited ||
+                failure is ApiError.NetworkError ||
+                failure is java.io.IOException ||
+                (failure is ApiError.ServerError && failure.code >= 500)
+            if (!retryable || attempt >= IMPORT_MAX_RETRIES) return outcome
+            attempt += 1
+            kotlinx.coroutines.delay(delay_ms)
+            delay_ms = (delay_ms * 2).coerceAtMost(16_000L)
+        }
+    }
+
+    private fun build_import_item(contact: Contact, key: ByteArray): ImportContactItem {
+        val payload = encode_contact_json(contact, include_envelope = true)
+        val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
+        val ciphertext = aes_gcm_encrypt(payload.toByteArray(Charsets.UTF_8), key, nonce)
+        return ImportContactItem(
+            contact_token = generate_contact_token(contact, key),
+            encrypted_data = b64(ciphertext),
+            data_nonce = b64(nonce),
+            name_search_token = generate_name_token(contact, key),
+            email_search_token = generate_email_token(contact, key),
+        )
     }
 
     suspend fun update_contact(contact_id: String, contact: Contact): Result<Unit> = runCatching {
@@ -522,7 +603,7 @@ class ContactsRepository @Inject constructor(
         return ""
     }
 
-    private fun put_typed_entry(obj: org.json.JSONObject, key: String, type: String, value: String) {
+    private fun put_typed_entry(obj: org.json.JSONObject, key: String, type: String, value: String, primary: String) {
         val arr = obj.optJSONArray(key)
         if (arr == null) {
             if (value.isBlank()) return
@@ -534,10 +615,10 @@ class ContactsRepository @Inject constructor(
         var index = -1
         for (i in 0 until arr.length()) {
             val entry = arr.optJSONObject(i) ?: continue
-            if (entry.optString("type", "") == type) {
-                index = i
-                break
-            }
+            if (entry.optString("type", "") != type) continue
+            if (primary.isNotBlank() && entry.optString("value", "").equals(primary, ignoreCase = true)) continue
+            index = i
+            break
         }
         if (value.isBlank()) {
             if (index >= 0) arr.remove(index)
@@ -625,14 +706,15 @@ class ContactsRepository @Inject constructor(
         if (contact.email.isNotBlank()) emails.put(contact.email)
         if (contact.work_email.isNotBlank()) emails.put(contact.work_email)
         if (previous_emails != null) {
-            for (i in 2 until previous_emails.length()) {
+            val seen = mutableSetOf(contact.email.lowercase(), contact.work_email.lowercase())
+            for (i in 1 until previous_emails.length()) {
                 val extra = previous_emails.optString(i, "")
-                if (extra.isNotBlank()) emails.put(extra)
+                if (extra.isNotBlank() && seen.add(extra.lowercase())) emails.put(extra)
             }
         }
         obj.put("emails", emails)
-        put_typed_entry(obj, "email_entries", "work", contact.work_email)
-        put_typed_entry(obj, "phone_entries", "work", contact.work_phone)
+        put_typed_entry(obj, "email_entries", "work", contact.work_email, contact.email)
+        put_typed_entry(obj, "phone_entries", "work", contact.work_phone, contact.phone)
 
         if (contact.phone.isNotBlank()) obj.put("phone", contact.phone) else obj.remove("phone")
         if (contact.company.isNotBlank()) obj.put("company", contact.company) else obj.remove("company")
@@ -695,6 +777,8 @@ class ContactsRepository @Inject constructor(
     }
 
     companion object {
+        private const val IMPORT_CHUNK_SIZE = 500
+        private const val IMPORT_MAX_RETRIES = 3
         private const val SALT_PREFIX = "aster-hkdf-salt-v1:"
         private const val DERIVED_KEY_INFO = "aster-storage-encryption-key-v1"
         private const val HMAC_INFO = "contacts-hmac-v2"
@@ -702,3 +786,12 @@ class ContactsRepository @Inject constructor(
         private val ENVELOPE_VERSIONS = listOf("astermail-envelope-v1", "astermail-import-v1")
     }
 }
+
+data class ContactImportSummary(
+    val imported: Long,
+    val updated: Long,
+    val skipped: Long,
+    val failed: Int,
+    val limit_reached: Boolean,
+    val last_failure: Throwable?,
+)
