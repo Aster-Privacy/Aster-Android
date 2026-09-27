@@ -1664,7 +1664,7 @@
     <string name="recovery_step_up_description">Por tu seguridad, confirma tu contraseña para continuar.</string>
     <string name="settings_upgrade_cta">Mejorar plan</string>
     <string name="unlock_aster_premium">Desbloquea Aster premium</string>
-    <string name="save_percent">Ahorra %1$d%%</string>
+    <string name="save_percent">Ahorra un %1$d %%</string>
     <string name="free">Gratis</string>
     <string name="popular">Populares</string>
     <string name="feature_storage">%1$s de almacenamiento cifrado</string>
@@ -3295,7 +3295,7 @@
     <string name="special_offer_why_label">¿Por qué esta oferta?</string>
     <string name="special_offer_why_body">Aster es una empresa independiente con un equipo pequeño, y tu apoyo significa mucho para nosotros. Las suscripciones mantienen el servicio en funcionamiento y nos permiten seguir desarrollando Aster con cuidado cada día. Esta oferta te facilita empezar.</string>
     <string name="special_offer_entry">Oferta especial</string>
-    <string name="special_offer_cta_claim">Obtener un %1$d%% de descuento</string>
+    <string name="special_offer_cta_claim">Obtener un %1$d %% de descuento</string>
     <string name="special_offer_benefit_aliases_title">Alias ilimitados</string>
     <string name="special_offer_benefit_storage_title">500 GB de almacenamiento cifrado</string>
     <string name="special_offer_benefit_domains_title">Hasta 30 dominios personalizados</string>
