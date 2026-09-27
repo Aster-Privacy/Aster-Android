@@ -73,7 +73,7 @@
     <string name="settings_plan_free_tagline">निजी, एन्क्रिप्टेड ईमेल शुरू करने के लिए ज़रूरी हर चीज़।</string>
     <string name="settings_plan_star_tagline">अधिक स्टोरेज, अधिक उपनाम, और अधिकतम 5 कस्टम डोमेन।</string>
     <string name="settings_plan_nova_tagline">ज़्यादा स्टोरेज, कस्टम डोमेन और असीमित एलियास।</string>
-    <string name="settings_plan_supernova_tagline">सबसे ज़्यादा स्टोरेज, बिना सीमा एलियास और डोमेन, और समर्पित सहायता।</string>
+    <string name="settings_plan_supernova_tagline">सबसे ज़्यादा स्टोरेज, असीमित एलियास और डोमेन, और समर्पित सहायता।</string>
     <string name="settings_plan_lead_star">Star का सब कुछ, साथ में:</string>
     <string name="settings_plan_lead_nova">Nova का सब कुछ, साथ में:</string>
     <string name="settings_plan_bullet_e2ee">एंड-टू-एंड एन्क्रिप्शन</string>
@@ -98,8 +98,8 @@
     <string name="settings_plan_bullet_nova_attachments">100 MB तक के अटैचमेंट</string>
     <string name="settings_plan_bullet_unlimited_aliases">असीमित ईमेल एलियास</string>
     <string name="settings_plan_bullet_nova_domains">30 कस्टम डोमेन</string>
-    <string name="settings_plan_bullet_unlimited_templates">बिना सीमा ईमेल टेम्पलेट</string>
-    <string name="settings_plan_bullet_unlimited_signatures">बिना सीमा HTML हस्ताक्षर</string>
+    <string name="settings_plan_bullet_unlimited_templates">असीमित ईमेल टेम्पलेट</string>
+    <string name="settings_plan_bullet_unlimited_signatures">असीमित HTML हस्ताक्षर</string>
     <string name="settings_plan_bullet_carddav_import">CardDAV संपर्क इंपोर्ट</string>
     <string name="settings_plan_bullet_contact_merge">संपर्क मिलाने का विज़ार्ड</string>
     <string name="settings_plan_bullet_encrypted_export">एन्क्रिप्टेड एक्सपोर्ट</string>

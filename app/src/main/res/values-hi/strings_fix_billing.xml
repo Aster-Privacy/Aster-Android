@@ -32,7 +32,7 @@
     <string name="fix_billing_storage_limit_exceeded">आपका स्टोरेज भर गया है।</string>
     <string name="fix_billing_payment_failed_warning">आपके भुगतान के तरीके से पिछला शुल्क नहीं लिया जा सका। सेटिंग, बिलिंग में इसे अपडेट करने से आपका प्लान चलता रहेगा। आपकी मेल पर कोई असर नहीं पड़ा।</string>
     <string name="fix_billing_update_payment_method">भुगतान का तरीका अपडेट करें</string>
-    <string name="fix_billing_card_expires">%1$s को खत्म</string>
+    <string name="fix_billing_card_expires">%1$s को खत्म होगा</string>
     <string name="fix_billing_status_trialing">ट्रायल</string>
     <string name="fix_billing_status_past_due">बकाया</string>
     <string name="fix_billing_status_canceled">रद्द किया गया</string>

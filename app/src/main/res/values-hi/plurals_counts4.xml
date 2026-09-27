@@ -29,8 +29,8 @@
         <item quantity="other">%d सदस्य</item>
     </plurals>
     <plurals name="kids_seats_reserved">
-        <item quantity="one">%d सुरक्षित पता</item>
-        <item quantity="other">%d सुरक्षित पते</item>
+        <item quantity="one">%d आरक्षित पता</item>
+        <item quantity="other">%d आरक्षित पते</item>
     </plurals>
     <plurals name="replies_sent_count">
         <item quantity="one">अब तक %d जवाब भेजा गया।</item>

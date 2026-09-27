@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <plurals name="cancel_impact_aliases">
-        <item quantity="one">%d एलियास पर मेल आना बंद हो जाएगी।</item>
-        <item quantity="other">%d एलियास पर मेल आना बंद हो जाएगी।</item>
+        <item quantity="one">%d एलियास पर मेल आना बंद हो जाएगा।</item>
+        <item quantity="other">%d एलियास पर मेल आना बंद हो जाएगा।</item>
     </plurals>
     <plurals name="cancel_impact_domains">
         <item quantity="one">%d कस्टम डोमेन निलंबित हो जाएगा।</item>
