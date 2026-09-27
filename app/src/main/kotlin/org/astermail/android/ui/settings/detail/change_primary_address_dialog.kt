@@ -73,6 +73,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.auto_mirrored
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.design.components.AsterDialogPrimaryButton
@@ -309,7 +310,7 @@ internal fun change_primary_address_dialog(
                             body = stringResource(R.string.address_change_keep_old_body),
                         )
                         address_change_point(
-                            icon = TablerIcons.Send,
+                            icon = TablerIcons.Send.auto_mirrored(),
                             title = stringResource(
                                 R.string.address_change_effect_sending,
                                 state.new_address,

@@ -90,6 +90,7 @@ import org.astermail.android.api.security.TrustedDevice
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.auto_mirrored
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.shimmer
@@ -144,8 +145,8 @@ private fun format_audit_event(type: String): String {
 }
 
 private fun audit_icon(event_type: String): ImageVector = when {
-    event_type.contains("login") || event_type.contains("sign_in") -> TablerIcons.Login
-    event_type.contains("logout") || event_type.contains("sign_out") -> TablerIcons.Logout
+    event_type.contains("login") || event_type.contains("sign_in") -> TablerIcons.Login.auto_mirrored()
+    event_type.contains("logout") || event_type.contains("sign_out") -> TablerIcons.Logout.auto_mirrored()
     event_type.contains("password") -> TablerIcons.Lock
     event_type.contains("two_factor") || event_type.contains("totp") || event_type.contains("2fa") -> TablerIcons.ShieldCheck
     event_type.contains("key") || event_type.contains("passkey") -> TablerIcons.Key
@@ -720,7 +721,7 @@ fun SecurityScreen(
                 }
                 devices_list_action_row(
                     label = stringResource(R.string.revoke_all_action),
-                    icon = TablerIcons.Logout,
+                    icon = TablerIcons.Logout.auto_mirrored(),
                     tint = colors.danger,
                     test_tag = "trusted_devices_revoke_all",
                     on_click = { show_revoke_all_confirm = true },

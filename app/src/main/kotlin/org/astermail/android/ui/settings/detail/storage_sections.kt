@@ -65,6 +65,7 @@ import compose.icons.tablericons.Send
 import compose.icons.tablericons.Trash
 import org.astermail.android.R
 import org.astermail.android.api.mail.MailUserStatsResponse
+import org.astermail.android.design.auto_mirrored
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.AsterMaterial
@@ -304,7 +305,7 @@ internal fun storage_segments(stats: MailUserStatsResponse): List<storage_segmen
         ),
         storage_segment(
             stringResource(R.string.sent), distribution.sent, segment_sent,
-            "sent", TablerIcons.Send,
+            "sent", TablerIcons.Send.auto_mirrored(),
         ),
         storage_segment(
             stringResource(R.string.folder_drafts), distribution.drafts, segment_drafts,

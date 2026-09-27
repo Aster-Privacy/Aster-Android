@@ -96,6 +96,7 @@ import org.astermail.android.design.acrylic
 import org.astermail.android.design.acrylic_backdrop
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.auto_mirrored
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
@@ -1106,7 +1107,7 @@ private fun trash_pane(
                         )
                     }
                     AsterIconButton(
-                        icon = TablerIcons.ArrowBackUp,
+                        icon = TablerIcons.ArrowBackUp.auto_mirrored(),
                         content_description = stringResource(R.string.restore),
                         onClick = { on_restore(contact) },
                         enabled = !is_busy,

@@ -24,8 +24,12 @@ package org.astermail.android.design
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.VectorGroup
+import androidx.compose.ui.graphics.vector.VectorPath
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
+import java.util.concurrent.ConcurrentHashMap
 
 @Composable
 fun Modifier.mirror_in_rtl(): Modifier =
@@ -34,3 +38,61 @@ fun Modifier.mirror_in_rtl(): Modifier =
     } else {
         this
     }
+
+private val auto_mirrored_cache = ConcurrentHashMap<ImageVector, ImageVector>()
+
+fun ImageVector.auto_mirrored(): ImageVector {
+    if (autoMirror) return this
+    return auto_mirrored_cache.getOrPut(this) {
+        val builder = ImageVector.Builder(
+            name = name,
+            defaultWidth = defaultWidth,
+            defaultHeight = defaultHeight,
+            viewportWidth = viewportWidth,
+            viewportHeight = viewportHeight,
+            tintColor = tintColor,
+            tintBlendMode = tintBlendMode,
+            autoMirror = true,
+        )
+        copy_group_children(builder, root)
+        builder.build()
+    }
+}
+
+private fun copy_group_children(builder: ImageVector.Builder, group: VectorGroup) {
+    for (node in group) {
+        when (node) {
+            is VectorGroup -> {
+                builder.addGroup(
+                    name = node.name,
+                    rotate = node.rotation,
+                    pivotX = node.pivotX,
+                    pivotY = node.pivotY,
+                    scaleX = node.scaleX,
+                    scaleY = node.scaleY,
+                    translationX = node.translationX,
+                    translationY = node.translationY,
+                    clipPathData = node.clipPathData,
+                )
+                copy_group_children(builder, node)
+                builder.clearGroup()
+            }
+            is VectorPath -> builder.addPath(
+                pathData = node.pathData,
+                pathFillType = node.pathFillType,
+                name = node.name,
+                fill = node.fill,
+                fillAlpha = node.fillAlpha,
+                stroke = node.stroke,
+                strokeAlpha = node.strokeAlpha,
+                strokeLineWidth = node.strokeLineWidth,
+                strokeLineCap = node.strokeLineCap,
+                strokeLineJoin = node.strokeLineJoin,
+                strokeLineMiter = node.strokeLineMiter,
+                trimPathStart = node.trimPathStart,
+                trimPathEnd = node.trimPathEnd,
+                trimPathOffset = node.trimPathOffset,
+            )
+        }
+    }
+}

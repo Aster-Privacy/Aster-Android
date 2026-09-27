@@ -24,6 +24,7 @@ package org.astermail.android.ui.settings.detail
 import compose.icons.TablerIcons
 import kotlinx.coroutines.CancellationException
 import org.astermail.android.design.acrylic
+import org.astermail.android.design.auto_mirrored
 import org.astermail.android.ui.common.show_copy_result_toast
 import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
@@ -314,7 +315,7 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
                     }
                     devices_list_action_row(
                         label = stringResource(R.string.revoke_all_other),
-                        icon = TablerIcons.Logout,
+                        icon = TablerIcons.Logout.auto_mirrored(),
                         tint = colors.danger,
                         test_tag = "revoke_all_devices",
                         enabled = other_live_count > 0,

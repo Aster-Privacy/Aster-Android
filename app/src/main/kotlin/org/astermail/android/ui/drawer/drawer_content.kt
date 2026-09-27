@@ -24,6 +24,7 @@ package org.astermail.android.ui.drawer
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import org.astermail.android.design.auto_mirrored
 import org.astermail.android.design.components.AsterPlanTag
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu
@@ -374,7 +375,7 @@ fun DrawerContent(
     val core_items = remember(categories_enabled, inbox_unread, drafts_count, spam_count, trash_count, label_inbox, label_sent, label_drafts, label_starred, label_archive, label_spam, label_trash, label_all_mail) {
         listOfNotNull(
             drawer_folder_item("inbox", label_inbox, TablerIcons.Inbox, inbox_unread),
-            drawer_folder_item("sent", label_sent, TablerIcons.Send),
+            drawer_folder_item("sent", label_sent, TablerIcons.Send.auto_mirrored()),
             drawer_folder_item("drafts", label_drafts, TablerIcons.FileText, drafts_count),
             drawer_folder_item("starred", label_starred, TablerIcons.Star),
             drawer_folder_item("archive", label_archive, TablerIcons.Archive),
@@ -2315,7 +2316,7 @@ internal fun workspace_switcher_sheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 profile_menu_tile(
-                    icon = TablerIcons.Logout,
+                    icon = TablerIcons.Logout.auto_mirrored(),
                     label = stringResource(R.string.sign_out),
                     content_description = null,
                     tint = colors.danger,

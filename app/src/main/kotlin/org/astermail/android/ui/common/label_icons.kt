@@ -94,6 +94,7 @@ import compose.icons.tablericons.Wallet
 import compose.icons.tablericons.Wand
 import compose.icons.tablericons.World
 import org.astermail.android.R
+import org.astermail.android.design.auto_mirrored
 
 data class LabelIconGroup(
     @StringRes val title: Int,
@@ -182,7 +183,7 @@ val label_icon_catalog: List<Pair<String, ImageVector>> = listOf(
     "envelope" to TablerIcons.Mail,
     "at" to TablerIcons.At,
     "chat" to TablerIcons.MessageDots,
-    "send" to TablerIcons.Send,
+    "send" to TablerIcons.Send.auto_mirrored(),
     "draft" to TablerIcons.Edit,
     "document" to TablerIcons.FileText,
     "archive" to TablerIcons.Archive,

@@ -56,6 +56,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
+import org.astermail.android.design.auto_mirrored
 import org.astermail.android.ui.common.sheet_container_color
 import org.astermail.android.ui.theme.draw_theme_background
 import org.astermail.android.ui.theme.draw_theme_veil
@@ -2690,7 +2691,7 @@ internal data class quick_switch_folder(
 
 internal val quick_switch_folders = listOf(
     quick_switch_folder("inbox", R.string.folder_inbox, TablerIcons.Inbox),
-    quick_switch_folder("sent", R.string.folder_sent, TablerIcons.Send),
+    quick_switch_folder("sent", R.string.folder_sent, TablerIcons.Send.auto_mirrored()),
     quick_switch_folder("drafts", R.string.folder_drafts, TablerIcons.FileText),
     quick_switch_folder("archive", R.string.folder_archive, TablerIcons.Archive),
     quick_switch_folder("starred", R.string.folder_starred, TablerIcons.Star),
@@ -3739,7 +3740,7 @@ internal fun scheduled_actions_sheet(
                 }
             }
             AsterDivider()
-            overflow_sheet_row("scheduled_send_now", TablerIcons.Send, stringResource(R.string.scheduled_send_now), colors.text_primary, on_send_now)
+            overflow_sheet_row("scheduled_send_now", TablerIcons.Send.auto_mirrored(), stringResource(R.string.scheduled_send_now), colors.text_primary, on_send_now)
             overflow_sheet_row("scheduled_reschedule", TablerIcons.Clock, stringResource(R.string.scheduled_reschedule), colors.text_primary, on_reschedule)
             AsterDivider()
             overflow_sheet_row("scheduled_delete", TablerIcons.Trash, stringResource(R.string.scheduled_delete), colors.danger, on_delete)
@@ -4152,7 +4153,7 @@ private fun empty_inbox_state(folder: String = "inbox") {
     val icon = remember(folder) {
         when (folder) {
             "inbox" -> TablerIcons.Inbox
-            "sent" -> TablerIcons.Send
+            "sent" -> TablerIcons.Send.auto_mirrored()
             "drafts" -> TablerIcons.Edit
             "starred" -> TablerIcons.Star
             "trash" -> TablerIcons.Trash

@@ -24,6 +24,7 @@ package org.astermail.android.ui.compose
 import androidx.compose.ui.graphics.RectangleShape
 import compose.icons.TablerIcons
 import kotlinx.coroutines.CancellationException
+import org.astermail.android.design.auto_mirrored
 import org.astermail.android.ui.common.sheet_container_color
 import org.astermail.android.ui.common.app_toast
 import org.astermail.android.ui.common.show_copy_result_toast
@@ -3397,7 +3398,7 @@ private fun send_fab(enabled: Boolean, on_click: () -> Unit) {
 private data class chip_parse_result(val new_chips: List<String>, val remaining: String)
 
 private val compose_mode_options = listOf(
-    "reply" to Pair(TablerIcons.ArrowBackUp, R.string.reply),
+    "reply" to Pair(TablerIcons.ArrowBackUp.auto_mirrored(), R.string.reply),
     "reply_all" to Pair(TablerIcons.ArrowsLeft, R.string.reply_all),
     "forward" to Pair(TablerIcons.MailForward, R.string.forward),
 )

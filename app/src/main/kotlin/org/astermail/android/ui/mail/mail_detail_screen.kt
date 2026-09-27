@@ -23,6 +23,7 @@ package org.astermail.android.ui.mail
 
 import compose.icons.TablerIcons
 import kotlinx.coroutines.CancellationException
+import org.astermail.android.design.auto_mirrored
 import org.astermail.android.ui.common.sheet_container_color
 import org.astermail.android.ui.common.show_copy_result_toast
 import org.astermail.android.ui.common.show_copy_failed_toast
@@ -1808,7 +1809,7 @@ fun MailDetailScreen(
                                     }
                                     on_back()
                                 }
-                                "reply" -> bottom_action(TablerIcons.ArrowBackUp, stringResource(R.string.reply), test_tag = "toolbar_reply") {
+                                "reply" -> bottom_action(TablerIcons.ArrowBackUp.auto_mirrored(), stringResource(R.string.reply), test_tag = "toolbar_reply") {
                                     on_reply(latest_msg.id, thread_ghost_email)
                                 }
                                 "forward" -> bottom_action(TablerIcons.MailForward, stringResource(R.string.forward), test_tag = "toolbar_forward") {
@@ -2885,7 +2886,7 @@ private fun reply_action_row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         reply_action_button(
-            icon = TablerIcons.ArrowBackUp,
+            icon = TablerIcons.ArrowBackUp.auto_mirrored(),
             label = stringResource(R.string.reply),
             bg = colors.accent_blue,
             fg = colors.on_accent,
@@ -4475,7 +4476,7 @@ internal fun action_menu_sheet(
                     max_width = 320.dp,
                     max_height = 460.dp,
                 ) {
-                    aster_menu_item(stringResource(R.string.reply), on_reply, icon = TablerIcons.ArrowBackUp)
+                    aster_menu_item(stringResource(R.string.reply), on_reply, icon = TablerIcons.ArrowBackUp.auto_mirrored())
                     aster_menu_item(stringResource(R.string.reply_all), on_reply_all, icon = TablerIcons.ArrowsLeft)
                     aster_menu_item(stringResource(R.string.forward), on_forward, icon = TablerIcons.MailForward)
                     aster_menu_item(

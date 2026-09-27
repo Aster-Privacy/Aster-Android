@@ -66,6 +66,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.auto_mirrored
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.ui.common.page_surface
@@ -224,7 +225,7 @@ fun pending_send_preview_screen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 reply_action_button(
-                    icon = TablerIcons.ArrowBackUp,
+                    icon = TablerIcons.ArrowBackUp.auto_mirrored(),
                     label = stringResource(R.string.undo),
                     bg = colors.accent_blue,
                     fg = colors.on_accent,

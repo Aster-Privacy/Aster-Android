@@ -117,6 +117,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic_backdrop
+import org.astermail.android.design.auto_mirrored
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
@@ -439,7 +440,7 @@ fun MailingListsScreen(
                         on_action = {
                             if (show_unsubscribed) vm.reactivate(item.id) else confirm_single = item
                         },
-                        action_icon = if (show_unsubscribed) TablerIcons.ArrowBackUp else TablerIcons.Ban,
+                        action_icon = if (show_unsubscribed) TablerIcons.ArrowBackUp.auto_mirrored() else TablerIcons.Ban,
                         action_label = if (show_unsubscribed) {
                             stringResource(R.string.reactivate)
                         } else {
@@ -1089,7 +1090,7 @@ private fun subscription_select_bar(
                     on_click = on_select_all,
                 )
                 select_bar_action(
-                    icon = if (is_unsubscribed_tab) TablerIcons.ArrowBackUp else TablerIcons.Ban,
+                    icon = if (is_unsubscribed_tab) TablerIcons.ArrowBackUp.auto_mirrored() else TablerIcons.Ban,
                     label = if (is_unsubscribed_tab) {
                         stringResource(R.string.reactivate_selected, count)
                     } else {
