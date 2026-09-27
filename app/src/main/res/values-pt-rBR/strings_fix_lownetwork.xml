@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="low_network_mode_active_banner">O modo de rede limitada está ativado</string>
+    <string name="low_network_mode_banner_action">Configurações</string>
+    <string name="low_network_mode_info_desc_v2">Mantém o Aster utilizável em conexões lentas ou com dados limitados. O Aster ignora fotos de perfil, logotipos de remetentes e imagens externas nos e-mails, mostra cada mensagem como texto simples, carrega páginas mais curtas da caixa de entrada e mostra no máximo 4 mensagens em uma conversa. As verificações de e-mail em segundo plano ficam menos frequentes, as animações são desativadas e os anexos só são carregados quando você os abre.</string>
+</resources>

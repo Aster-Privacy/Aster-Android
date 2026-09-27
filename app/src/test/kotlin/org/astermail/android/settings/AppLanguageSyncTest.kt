@@ -116,4 +116,20 @@ class AppLanguageSyncTest {
 
         assertEquals(app_language.supported.map { it.code }, declared)
     }
+
+    @Test
+    fun every_supported_language_has_its_own_resources() {
+        var root = java.io.File("src/main/res")
+        if (!root.isDirectory) root = java.io.File("app/src/main/res")
+        val missing = app_language.supported
+            .map { it.code }
+            .filter { it != "en" }
+            .map { code ->
+                val parts = code.split("-")
+                if (parts.size == 1) "values-${parts[0]}" else "values-${parts[0]}-r${parts[1]}"
+            }
+            .filter { !java.io.File(root, "$it/strings.xml").isFile }
+
+        assertEquals(emptyList<String>(), missing)
+    }
 }
