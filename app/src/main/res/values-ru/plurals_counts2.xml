@@ -25,10 +25,10 @@
         <item quantity="other">%d меток</item>
     </plurals>
     <plurals name="ghosts_count">
-        <item quantity="one">%d ghost-псевдоним</item>
-        <item quantity="few">%d ghost-псевдонима</item>
-        <item quantity="many">%d ghost-псевдонимов</item>
-        <item quantity="other">%d ghost-псевдонимов</item>
+        <item quantity="one">%d призрачный псевдоним</item>
+        <item quantity="few">%d призрачных псевдонима</item>
+        <item quantity="many">%d призрачных псевдонимов</item>
+        <item quantity="other">%d призрачных псевдонима</item>
     </plurals>
     <plurals name="recovery_codes_count">
         <item quantity="one">%d код восстановления</item>

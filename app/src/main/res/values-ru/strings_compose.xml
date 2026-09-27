@@ -17,7 +17,7 @@
     <string name="signature_select">Выбрать подпись</string>
     <string name="compose_metadata_strip_failed">Не удалось убрать скрытые метаданные из: %1$s</string>
     <string name="compose_inline_image_failed">Не удалось добавить эти изображения: %1$s</string>
-    <string name="compose_attachment_read_failed">Не удалось прикрепить \"%1$s\". Письмо не отправлено. Уберите файл или добавьте его заново и попробуйте ещё раз.</string>
+    <string name="compose_attachment_read_failed">Не удалось прикрепить «%1$s». Письмо не отправлено. Уберите файл или добавьте его заново и попробуйте ещё раз.</string>
     <string name="schedule_in_one_hour">Через час</string>
     <string name="schedule_tonight">Сегодня вечером</string>
     <string name="schedule_tomorrow_morning">Завтра утром</string>

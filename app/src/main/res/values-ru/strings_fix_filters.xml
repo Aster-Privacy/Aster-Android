@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="fix_filters_search_blocked">Поиск заблокированных отправителей</string>
-    <string name="fix_filters_search_allowed">Поиск разрешенных отправителей</string>
+    <string name="fix_filters_search_allowed">Поиск разрешённых отправителей</string>
     <string name="fix_filters_search">Поиск</string>
     <string name="fix_filters_clear_search">Очистить поиск</string>
     <string name="fix_filters_no_results_title">Ничего не найдено</string>

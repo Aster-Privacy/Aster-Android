@@ -15,8 +15,8 @@
     <plurals name="alias_import_existing">
         <item quantity="one">%d уже существует</item>
         <item quantity="few">%d уже существуют</item>
-        <item quantity="many">%d уже существует</item>
-        <item quantity="other">%d уже существует</item>
+        <item quantity="many">%d уже существуют</item>
+        <item quantity="other">%d уже существуют</item>
     </plurals>
     <plurals name="alias_import_invalid">
         <item quantity="one">%d недействительный</item>

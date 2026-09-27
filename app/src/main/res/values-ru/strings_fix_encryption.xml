@@ -8,8 +8,8 @@
     <string name="fix_enc_never_expires">Не истекает</string>
     <string name="fix_enc_save_codes">Сохранить в файл</string>
     <string name="fix_enc_codes_share_title">Коды восстановления</string>
-    <string name="fix_enc_codes_file_note">Каждый код работает один раз. Храните этот файл в надежном месте.</string>
-    <string name="fix_enc_codes_save_failed">Сейчас не удается сохранить файл. Скопируйте коды.</string>
-    <string name="fix_enc_codes_confirm_saved">Я сохранил коды восстановления</string>
+    <string name="fix_enc_codes_file_note">Каждый код работает один раз. Храните этот файл в надёжном месте.</string>
+    <string name="fix_enc_codes_save_failed">Сейчас не удаётся сохранить файл. Скопируйте коды.</string>
+    <string name="fix_enc_codes_confirm_saved">Коды восстановления сохранены</string>
     <string name="fix_enc_codes_used">Использовано: %1$d</string>
 </resources>

@@ -49,10 +49,10 @@
         <item quantity="other">Отмечено как прочитанные: %d</item>
     </plurals>
     <plurals name="marked_unread_count">
-        <item quantity="one">Помечено как непрочитанные: %d</item>
-        <item quantity="few">Помечено как непрочитанные: %d</item>
-        <item quantity="many">Помечено как непрочитанные: %d</item>
-        <item quantity="other">Помечено как непрочитанные: %d</item>
+        <item quantity="one">Отмечено как непрочитанные: %d</item>
+        <item quantity="few">Отмечено как непрочитанные: %d</item>
+        <item quantity="many">Отмечено как непрочитанные: %d</item>
+        <item quantity="other">Отмечено как непрочитанные: %d</item>
     </plurals>
     <plurals name="results_count">
         <item quantity="one">%d результат</item>

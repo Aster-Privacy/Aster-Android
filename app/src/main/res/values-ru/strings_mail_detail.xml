@@ -20,8 +20,8 @@
     <string name="detail_raw_source_copied">Скопировано в буфер обмена</string>
     <string name="detail_raw_source_close">Закрыть</string>
     <string name="detail_raw_source_unavailable">Исходный код этого письма недоступен.</string>
-    <string name="detail_star_action">Отметить письмо звёздочкой</string>
-    <string name="detail_unstar_action">Снять звёздочку с письма</string>
+    <string name="detail_star_action">Добавить письмо в избранное</string>
+    <string name="detail_unstar_action">Убрать письмо из избранного</string>
     <string name="message_details">Сведения о письме</string>
     <string name="from_label">От</string>
     <string name="to_label">Кому</string>

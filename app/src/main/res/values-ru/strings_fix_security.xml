@@ -6,7 +6,7 @@
     <string name="security_activity_filter_all">Все</string>
     <string name="security_activity_filter_sign_ins">Входы</string>
     <string name="security_activity_filter_security">Изменения безопасности</string>
-    <string name="security_activity_filter_failures">Сбои</string>
+    <string name="security_activity_filter_failures">Неудачные попытки</string>
     <string name="security_activity_today">Сегодня</string>
     <string name="security_activity_yesterday">Вчера</string>
     <string name="security_activity_show_more">Показать больше</string>
