@@ -29,33 +29,47 @@ import kotlinx.coroutines.flow.asStateFlow
 
 data class Tokens(val access_token: String, val refresh_token: String)
 
-class TokenStore(context: Context) {
+class TokenStore(private val prefs: SharedPreferences) {
 
-    private val prefs: SharedPreferences = SecurePrefs.open(context, prefs_name)
+    constructor(context: Context) : this(SecurePrefs.open(context, prefs_name))
 
     private val _tokens = MutableStateFlow<Tokens?>(load_current())
     val tokens: StateFlow<Tokens?> = _tokens.asStateFlow()
 
     val access_token: String?
-        get() = runCatching { prefs.getString(key_access, null) }.getOrNull()
+        get() = unsaved?.access_token ?: runCatching { prefs.getString(key_access, null) }.getOrNull()
 
     val refresh_token: String?
-        get() = runCatching { prefs.getString(key_refresh, null) }.getOrNull()
+        get() = unsaved?.refresh_token ?: runCatching { prefs.getString(key_refresh, null) }.getOrNull()
 
     val csrf_token: String?
         get() = runCatching { prefs.getString(key_csrf, null) }.getOrNull()
 
-    suspend fun save(access: String, refresh: String) {
-        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            runCatching {
-                prefs.edit()
-                    .putString(key_access, access)
-                    .putString(key_refresh, refresh)
-                    .commit()
-            }
+    val has_unsaved_tokens: Boolean
+        get() = unsaved != null
+
+    private var unsaved: Tokens?
+        get() = unsaved_by_prefs[prefs]
+        set(value) {
+            if (value == null) unsaved_by_prefs.remove(prefs) else unsaved_by_prefs[prefs] = value
         }
-        _tokens.value = Tokens(access, refresh)
+
+    suspend fun save(access: String, refresh: String) {
+        val tokens = Tokens(access, refresh)
+        unsaved = tokens
+        val stored = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            persist(tokens) || persist(tokens)
+        }
+        if (stored) unsaved_by_prefs.remove(prefs, tokens)
+        _tokens.value = tokens
     }
+
+    private fun persist(tokens: Tokens): Boolean = runCatching {
+        prefs.edit()
+            .putString(key_access, tokens.access_token)
+            .putString(key_refresh, tokens.refresh_token)
+            .commit()
+    }.getOrDefault(false)
 
     fun save_csrf(csrf: String?) {
         runCatching {
@@ -66,6 +80,7 @@ class TokenStore(context: Context) {
     }
 
     suspend fun clear() {
+        unsaved = null
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             runCatching {
                 prefs.edit()
@@ -85,6 +100,9 @@ class TokenStore(context: Context) {
     }
 
     companion object {
+        private val unsaved_by_prefs: MutableMap<SharedPreferences, Tokens> =
+            java.util.Collections.synchronizedMap(java.util.WeakHashMap())
+
         private const val prefs_name = "aster_tokens_v1"
         private const val key_access = "access_token"
         private const val key_refresh = "refresh_token"
