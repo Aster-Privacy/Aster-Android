@@ -90,6 +90,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDirection
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -243,7 +247,7 @@ fun EmailRow(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = displayed_sender_name(email.display_sender_name, email.sender_name),
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyLarge.merge(inbox_bidi_line_style()),
                     color = sender_color,
                     fontSize = 16.sp,
                     fontWeight = if (is_unread) FontWeight.Bold else FontWeight.Normal,
@@ -306,7 +310,7 @@ fun EmailRow(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = email.subject.ifBlank { stringResource(R.string.inbox_no_subject) },
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium.merge(inbox_bidi_line_style()),
                     color = subject_color,
                     fontSize = 15.sp,
                     fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
@@ -321,7 +325,7 @@ fun EmailRow(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = low_network_preview(email.preview),
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodySmall.merge(inbox_bidi_line_style()),
                         color = preview_color,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Normal,
@@ -761,8 +765,14 @@ fun ThreadInboxRow(
 }
 
 @Composable
+internal fun inbox_bidi_line_style(): TextStyle = TextStyle(
+    textDirection = TextDirection.Content,
+    textAlign = if (LocalLayoutDirection.current == LayoutDirection.Rtl) TextAlign.Right else TextAlign.Left,
+)
+
+@Composable
 internal fun inbox_sender_text_style(): TextStyle =
-    MaterialTheme.typography.bodyLarge.merge(TextStyle(fontSize = 16.sp))
+    MaterialTheme.typography.bodyLarge.merge(TextStyle(fontSize = 16.sp)).merge(inbox_bidi_line_style())
 
 @Composable
 internal fun inbox_time_text_style(): TextStyle =
@@ -770,11 +780,11 @@ internal fun inbox_time_text_style(): TextStyle =
 
 @Composable
 internal fun inbox_subject_text_style(): TextStyle =
-    MaterialTheme.typography.bodyMedium.merge(TextStyle(fontSize = 15.sp))
+    MaterialTheme.typography.bodyMedium.merge(TextStyle(fontSize = 15.sp)).merge(inbox_bidi_line_style())
 
 @Composable
 internal fun inbox_preview_text_style(): TextStyle =
-    MaterialTheme.typography.bodySmall.merge(TextStyle(fontSize = 14.sp))
+    MaterialTheme.typography.bodySmall.merge(TextStyle(fontSize = 14.sp)).merge(inbox_bidi_line_style())
 
 internal val inbox_star_slot_size = 32.dp
 
