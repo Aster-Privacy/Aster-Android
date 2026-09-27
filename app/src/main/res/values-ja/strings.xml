@@ -322,6 +322,7 @@
     <string name="add_recipient">宛先を追加</string>
     <string name="add_another_recipient">追加</string>
     <string name="compose_attachments">添付ファイル</string>
+    <string name="compose_total_size">合計サイズ</string>
     <string name="draft_discarded">下書きを破棄しました</string>
     <string name="draft_saved">下書きを保存しました</string>
     <string name="e2e_recipient_description">この受信者へのメッセージは相手のIDキーで暗号化されます。相手だけが読めます。</string>

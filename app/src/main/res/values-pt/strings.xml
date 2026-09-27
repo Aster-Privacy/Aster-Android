@@ -322,6 +322,7 @@
     <string name="add_recipient">Adicionar destinatário</string>
     <string name="add_another_recipient">Adicionar outro</string>
     <string name="compose_attachments">Anexos</string>
+    <string name="compose_total_size">Tamanho total</string>
     <string name="draft_discarded">Rascunho descartado</string>
     <string name="draft_saved">Rascunho salvo</string>
     <string name="e2e_recipient_description">Mensagens para este destinatário são criptografadas com a chave de identidade dele. Somente ele pode lê-las.</string>

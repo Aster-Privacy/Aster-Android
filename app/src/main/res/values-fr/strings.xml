@@ -342,6 +342,7 @@
     <string name="add_recipient">Ajouter un destinataire</string>
     <string name="add_another_recipient">Ajouter un autre</string>
     <string name="compose_attachments">Pièces jointes</string>
+    <string name="compose_total_size">Taille totale</string>
     <string name="draft_discarded">Brouillon supprimé</string>
     <string name="draft_saved">Brouillon enregistré</string>
     <string name="e2e_recipient_description">Les messages à ce destinataire sont chiffrés avec sa clé d\'identité. Seul lui peut les lire.</string>

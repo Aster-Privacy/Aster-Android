@@ -322,6 +322,7 @@
     <string name="add_recipient">Dodaj odbiorcę</string>
     <string name="add_another_recipient">Dodaj kolejnego</string>
     <string name="compose_attachments">Załączniki</string>
+    <string name="compose_total_size">Rozmiar całkowity</string>
     <string name="draft_discarded">Szkic odrzucony</string>
     <string name="draft_saved">Szkic zapisany</string>
     <string name="e2e_recipient_description">Wiadomości do tego odbiorcy są szyfrowane jego kluczem tożsamości. Tylko on może je przeczytać.</string>

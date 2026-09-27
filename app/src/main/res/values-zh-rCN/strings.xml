@@ -322,6 +322,7 @@
     <string name="add_recipient">添加收件人</string>
     <string name="add_another_recipient">添加其他收件人</string>
     <string name="compose_attachments">附件</string>
+    <string name="compose_total_size">总大小</string>
     <string name="draft_discarded">草稿已丢弃</string>
     <string name="draft_saved">草稿已保存</string>
     <string name="e2e_recipient_description">发送给此收件人的消息将使用其身份密钥加密。只有对方可以阅读。</string>

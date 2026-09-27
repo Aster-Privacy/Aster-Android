@@ -322,6 +322,7 @@
     <string name="add_recipient">Ontvanger toevoegen</string>
     <string name="add_another_recipient">Nog een toevoegen</string>
     <string name="compose_attachments">Bijlagen</string>
+    <string name="compose_total_size">Totale grootte</string>
     <string name="draft_discarded">Concept verwijderd</string>
     <string name="draft_saved">Concept opgeslagen</string>
     <string name="e2e_recipient_description">Berichten aan deze ontvanger worden versleuteld met hun identiteitssleutel. Alleen zij kunnen ze lezen.</string>

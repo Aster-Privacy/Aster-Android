@@ -323,6 +323,7 @@
     <string name="add_recipient">Empfänger hinzufügen</string>
     <string name="add_another_recipient">Weitere hinzufügen</string>
     <string name="compose_attachments">Anhänge</string>
+    <string name="compose_total_size">Gesamtgröße</string>
     <string name="draft_discarded">Entwurf verworfen</string>
     <string name="draft_saved">Entwurf gespeichert</string>
     <string name="e2e_recipient_description">Nachrichten an diesen Empfänger werden mit dessen Identitätsschlüssel verschlüsselt. Nur er kann sie lesen.</string>

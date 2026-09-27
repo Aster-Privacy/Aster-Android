@@ -322,6 +322,7 @@
     <string name="add_recipient">수신자 추가</string>
     <string name="add_another_recipient">수신자 추가</string>
     <string name="compose_attachments">첨부 파일</string>
+    <string name="compose_total_size">전체 크기</string>
     <string name="draft_discarded">임시 보관 메일을 삭제했습니다</string>
     <string name="draft_saved">임시 저장했습니다</string>
     <string name="e2e_recipient_description">이 수신자에게 보내는 메시지는 상대방의 ID 키로 암호화됩니다. 상대방만 읽을 수 있습니다.</string>

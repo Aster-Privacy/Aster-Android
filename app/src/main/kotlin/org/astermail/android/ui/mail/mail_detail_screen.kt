@@ -2536,6 +2536,11 @@ internal fun expanded_message(
                 on_show_trackers = if (tracker_report.total > 0) ({ show_tracker_details = true }) else null,
                 raw_headers = msg.raw_headers,
                 show_raw_headers = show_raw_headers,
+                to_recipients = msg.to_addresses.ifEmpty {
+                    listOfNotNull(msg.to_label.takeIf { it.isNotBlank() })
+                },
+                cc_recipients = msg.cc_addresses,
+                bcc_recipients = msg.bcc_addresses,
             )
         }
 
@@ -2817,18 +2822,7 @@ internal fun expanded_message(
             )
         }
 
-        val visible_attachments = remember(msg.attachments, msg.body_html, inline_images) {
-            val body = msg.body_html.orEmpty()
-            msg.attachments.filter { att ->
-                val cid = inline_reference_key(att.content_id)
-                val filename = att.filename.trim().lowercase()
-                val aliases = listOf(cid, cid.substringBefore('@'), filename)
-                    .filter { it.isNotBlank() }
-                if (aliases.isEmpty()) return@filter true
-                if (aliases.none { body.contains("cid:$it", ignoreCase = true) }) return@filter true
-                aliases.none { inline_images.containsKey(it) }
-            }
-        }
+        val visible_attachments = msg.attachments
         if (visible_attachments.isNotEmpty()) {
             attachment_section(
                 attachments = visible_attachments,
@@ -3894,6 +3888,9 @@ internal fun message_details_panel(
     pgp_encrypted: Boolean = false,
     pgp_signature: org.astermail.android.crypto.PgpSignatureStatus =
         org.astermail.android.crypto.PgpSignatureStatus.NONE,
+    to_recipients: List<String> = emptyList(),
+    cc_recipients: List<String> = emptyList(),
+    bcc_recipients: List<String> = emptyList(),
 ) {
     val colors = AsterMaterial.colors
     val panel_context = LocalContext.current
@@ -3943,6 +3940,21 @@ internal fun message_details_panel(
                 value = reply_to,
                 on_long_click = { copy_address(reply_to) },
             )
+        }
+        listOf(
+            Triple("to", R.string.to, to_recipients),
+            Triple("cc", R.string.cc, cc_recipients),
+            Triple("bcc", R.string.bcc, bcc_recipients),
+        ).forEach { (field, label_res, recipients) ->
+            if (recipients.isNotEmpty()) {
+                val joined = recipients.joinToString(", ")
+                detail_meta_row(
+                    label = stringResource(label_res),
+                    value = joined,
+                    on_long_click = { copy_address(joined) },
+                    modifier = Modifier.testTag("details_$field"),
+                )
+            }
         }
         detail_meta_row(label = stringResource(R.string.date), value = date_text)
         detail_meta_row(
@@ -6606,6 +6618,16 @@ private fun attachment_section(
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
             )
+            val total_bytes = remember(attachments) { attachments.sumOf { it.size_bytes.coerceAtLeast(0L) } }
+            if (total_bytes > 0) {
+                val size_ctx = LocalContext.current
+                Text(
+                    text = android.text.format.Formatter.formatShortFileSize(size_ctx, total_bytes),
+                    color = colors.text_muted,
+                    fontSize = 13.sp,
+                    modifier = Modifier.testTag("attachments_total_size"),
+                )
+            }
         }
 
         Spacer(Modifier.height(AsterSpacing.sm))
