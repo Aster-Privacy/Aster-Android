@@ -1831,15 +1831,26 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             )
         }
     }
+    var last_inbox_category_unread by androidx.compose.runtime.remember(accounts_state.current_account_id) {
+        mutableStateOf<Map<String, Int>>(emptyMap())
+    }
+    val inbox_counts_ready = inbox_state.current_folder == "inbox" &&
+        (inbox_state.items.isNotEmpty() || !inbox_state.is_loading)
     val category_unread = androidx.compose.runtime.remember(
         inbox_state.items,
-        inbox_state.current_folder,
+        inbox_counts_ready,
         active_category_tabs,
+        last_inbox_category_unread,
     ) {
-        if (inbox_state.current_folder == "inbox") {
+        if (inbox_counts_ready) {
             org.astermail.android.mail.category_unread_counts(inbox_state.items, active_category_tabs)
         } else {
-            emptyMap()
+            last_inbox_category_unread.filterKeys { it in active_category_tabs }
+        }
+    }
+    androidx.compose.runtime.LaunchedEffect(category_unread, inbox_counts_ready) {
+        if (inbox_counts_ready && category_unread != last_inbox_category_unread) {
+            last_inbox_category_unread = category_unread
         }
     }
     val category_entries = org.astermail.android.mail.category_entries(

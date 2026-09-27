@@ -2708,12 +2708,13 @@ fun ComposeScreen(
             Spacer(Modifier.height(AsterSpacing.lg))
 
             AnimatedVisibility(
-                visible = attachments.isNotEmpty(),
+                visible = attachments.isNotEmpty() || inline_images.isNotEmpty(),
                 enter = androidx.compose.animation.expandVertically() + fadeIn(),
                 exit = androidx.compose.animation.shrinkVertically() + fadeOut(),
             ) {
                 Column {
                 AsterDivider()
+                if (attachments.isNotEmpty()) {
                 Text(
                     text = stringResource(R.string.compose_attachments),
                     style = MaterialTheme.typography.labelMedium,
@@ -2783,6 +2784,38 @@ fun ComposeScreen(
                             }
                         }
                     }
+                }
+                }
+                val total_bytes = attachments.sumOf { it.size } + inline_images.sumOf { it.size }
+                val max_bytes = AttachmentLimits.total_max_bytes()
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = AsterSpacing.lg,
+                            end = AsterSpacing.lg,
+                            top = if (attachments.isEmpty()) AsterSpacing.md else 0.dp,
+                            bottom = AsterSpacing.md,
+                        )
+                        .testTag("compose_total_size"),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.compose_total_size),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = colors.text_tertiary,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        text = stringResource(
+                            R.string.usage_of,
+                            format_file_size(total_bytes),
+                            format_file_size(max_bytes),
+                        ),
+                        color = if (total_bytes > max_bytes) colors.danger else colors.text_muted,
+                        fontSize = 12.sp,
+                    )
                 }
                 }
             }

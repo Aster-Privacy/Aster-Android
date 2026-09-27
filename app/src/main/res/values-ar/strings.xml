@@ -322,6 +322,7 @@
     <string name="add_recipient">إضافة مستلم</string>
     <string name="add_another_recipient">إضافة مستلم آخر</string>
     <string name="compose_attachments">المرفقات</string>
+    <string name="compose_total_size">الحجم الإجمالي</string>
     <string name="draft_discarded">تم تجاهل المسودة</string>
     <string name="draft_saved">تم حفظ المسودة</string>
     <string name="e2e_recipient_description">الرسائل إلى هذا المستلم مشفرة بمفتاح هويته. هو فقط يمكنه قراءتها.</string>

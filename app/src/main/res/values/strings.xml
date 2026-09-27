@@ -616,6 +616,7 @@
     <string name="add_recipient">Add recipient</string>
     <string name="add_another_recipient">Add another</string>
     <string name="compose_attachments">Attachments</string>
+    <string name="compose_total_size">Total size</string>
     <string name="draft_discarded">Draft discarded</string>
     <string name="draft_saved">Draft saved</string>
     <string name="recipients_required">Add at least one recipient</string>

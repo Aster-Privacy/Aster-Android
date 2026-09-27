@@ -322,6 +322,7 @@
     <string name="add_recipient">Добавить получателя</string>
     <string name="add_another_recipient">Добавить ещё</string>
     <string name="compose_attachments">Вложения</string>
+    <string name="compose_total_size">Общий размер</string>
     <string name="draft_discarded">Черновик удалён</string>
     <string name="draft_saved">Черновик сохранён</string>
     <string name="e2e_recipient_description">Сообщения этому получателю зашифрованы его ключом. Только он может их прочитать.</string>
