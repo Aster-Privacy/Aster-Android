@@ -22,7 +22,8 @@
         <item quantity="other">%d件の連絡先をインポートしました</item>
     </plurals>
     <plurals name="n_images">
-        <item quantity="other">%1$d個の画像</item>
+        <item quantity="one">%1$d 件の画像</item>
+        <item quantity="other">%1$d 件の画像</item>
     </plurals>
     <plurals name="n_trackers">
         <item quantity="other">%1$d個のトラッカー</item>
@@ -40,6 +41,7 @@
         <item quantity="other">他 %1$d 件のフォルダーを表示</item>
     </plurals>
     <plurals name="rules_emails_count">
+        <item quantity="one">%1$d 件のメール</item>
         <item quantity="other">%1$d 件のメール</item>
     </plurals>
     <plurals name="rules_value_label_count">

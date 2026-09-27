@@ -36,16 +36,16 @@
     <string name="notif_channel_billing_name">Facturering</string>
     <string name="onboarding_checklist_title">Aster instellen (%1$d van %2$d)</string>
     <string name="onboarding_task_first_email">Verstuur je eerste bericht</string>
-    <string name="onboarding_task_import">Importeer je oude mail</string>
+    <string name="onboarding_task_import">Importeer je e-mail</string>
     <string name="onboarding_task_install">Installeer Aster op je computer</string>
     <string name="onboarding_task_recovery">Voeg een herstel-e-mailadres toe</string>
     <string name="payment_confirmed">Betaling bevestigd</string>
-    <string name="payment_processing_delayed">Je betaling wordt verwerkt. Het kan even duren voordat die actief is.</string>
+    <string name="payment_processing_delayed">Betaalverwerking wordt vertraagd. Controleer uw betaalmethode.</string>
     <string name="payment_failed_notification_body">Werk je kaart bij om je %1$s-abonnement te behouden.</string>
     <string name="payment_failed_notification_body_generic">Werk je kaart bij om je abonnement te behouden.</string>
     <string name="payment_failed_notification_title">Je betaling is niet gelukt</string>
     <string name="plan_name_duo">Duo</string>
-    <string name="plan_name_family">Family</string>
+    <string name="plan_name_family">Gezin</string>
     <string name="plan_price_per_period">per factureringsperiode</string>
     <string name="plans_unavailable">Aster kon de abonnementen nu niet laden.</string>
     <string name="see_pricing">Prijzen bekijken</string>
@@ -123,7 +123,7 @@
     <string name="billing_see_all_features">Alle functies van %1$s bekijken</string>
     <string name="billing_plan_highlights">Wat je krijgt</string>
     <string name="billing_credits_subtitle">Saldo en opwaarderen</string>
-    <string name="billing_credits_body">Tegoed betaalt verlengingen en add-ons voordat je kaart wordt belast.</string>
+    <string name="billing_credits_body">Tegoed betaalt verlengingen en extra\'s voordat je kaart wordt belast.</string>
     <string name="billing_credits_use_for_renewals">Tegoed gebruiken voor verlengingen</string>
     <string name="billing_credits_use_for_renewals_body">Als je abonnement verlengt, gebruikt Aster eerst je saldo.</string>
     <string name="billing_credits_add_funds">Tegoed toevoegen</string>
@@ -150,7 +150,7 @@
     <string name="billing_status_ok">Alles in orde</string>
     <string name="billing_status_almost_full">Bijna vol</string>
     <string name="billing_status_action_required">Actie vereist</string>
-    <string name="billing_status_near_limit">Bijna bij de limiet</string>
+    <string name="billing_status_near_limit">Bijna aan de limiet</string>
     <string name="billing_status_limit_reached">Limiet bereikt</string>
     <string name="billing_or_yearly">of %1$s per jaar</string>
     <string name="billing_credits_title">Tegoed</string>

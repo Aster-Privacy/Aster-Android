@@ -1312,7 +1312,7 @@
     <string name="credit_task_ios_title">Download the Aster app for iOS</string>
     <string name="credit_task_ios_hint_coming">Coming soon</string>
     <string name="credit_task_earned">Earned</string>
-    <string name="reward_recurring">You also get 5% of every payment they make for as long as they\'re subscribed.</string>
+    <string name="reward_recurring" formatted="false">You also get 5% of every payment they make for as long as they\'re subscribed.</string>
     <string name="share_invite_link">Share invite link</string>
     <string name="share_text">Try Aster, it\'s private email that actually works.</string>
     <string name="share_referral">Share referral</string>

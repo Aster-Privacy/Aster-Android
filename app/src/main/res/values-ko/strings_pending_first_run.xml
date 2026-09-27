@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="first_run_title">Aster Mail을 시작합니다</string>
+    <string name="first_run_title">Aster Mail에 오신 것을 환영합니다</string>
     <string name="first_run_subtitle">기존 메일을 가져오거나 새로 시작하세요. 나중에 설정에서 가져올 수 있습니다.</string>
     <string name="first_run_import">메일 가져오기</string>
     <string name="first_run_skip">나중에</string>

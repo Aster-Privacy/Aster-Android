@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <plurals name="alias_export_entries">
-        <item quantity="other">%d 条</item>
+        <item quantity="one">%d 条记录</item>
+        <item quantity="other">%d 条记录</item>
     </plurals>
     <plurals name="alias_export_files">
+        <item quantity="one">%d 个文件</item>
         <item quantity="other">%d 个文件</item>
     </plurals>
     <plurals name="alias_import_existing">

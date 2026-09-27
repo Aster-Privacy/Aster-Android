@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="two_step_verification_title">两步验证</string>
-    <string name="two_step_verification_on_description">你的账号除密码外还需要验证码。</string>
+    <string name="two_step_verification_on_description">您的账户在密码之外还需要验证码。</string>
     <string name="two_step_verification_off_description">为增强保护，除密码外还要求输入验证码。</string>
     <string name="security_activity_filter_all">全部</string>
     <string name="security_activity_filter_sign_ins">登录</string>

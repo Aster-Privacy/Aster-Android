@@ -24,6 +24,6 @@
     <string name="schedule_tomorrow_afternoon">कल दोपहर</string>
     <string name="schedule_monday_morning">सोमवार सुबह</string>
     <string name="schedule_pick_date_time">तारीख और समय चुनें</string>
-    <string name="too_many_recipients_in_field">To, Cc और Bcc में से हर फ़ील्ड में ज़्यादा से ज़्यादा %1$d पते आते हैं। इसे भेजने के लिए कुछ पते दूसरे संदेश में ले जाएं।</string>
-    <string name="too_many_recipients_in_message">एक संदेश To, Cc और Bcc मिलाकर ज़्यादा से ज़्यादा %1$d पतों तक पहुंचता है। सूची को छोटे संदेशों में बांटने पर यह भेजा जा सकेगा।</string>
+    <string name="too_many_recipients_in_field">To, Cc और Bcc में से हर फ़ील्ड में अधिकतम %1$d पते आते हैं। यह संदेश भेजने के लिए कुछ पते दूसरे संदेश में ले जाएं।</string>
+    <string name="too_many_recipients_in_message">एक संदेश To, Cc और Bcc मिलाकर अधिकतम %1$d पतों तक पहुंचता है। सूची को छोटे संदेशों में बांटने पर यह भेजा जाएगा।</string>
 </resources>

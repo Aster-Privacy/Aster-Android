@@ -79,10 +79,10 @@
         <item quantity="other">Осталось %d резервных кодов</item>
     </plurals>
     <plurals name="kids_seats_free">
-        <item quantity="one">доступно мест: %1$d</item>
-        <item quantity="few">доступно мест: %1$d</item>
-        <item quantity="many">доступно мест: %1$d</item>
-        <item quantity="other">доступно мест: %1$d</item>
+        <item quantity="one">Доступно %1$d место</item>
+        <item quantity="few">Доступно %1$d места</item>
+        <item quantity="many">Доступно %1$d мест</item>
+        <item quantity="other">Доступно %1$d места</item>
     </plurals>
     <plurals name="trackers_blocked_count">
         <item quantity="one">Заблокировано трекеров: %1$d</item>

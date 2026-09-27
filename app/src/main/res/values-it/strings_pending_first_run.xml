@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="first_run_title">Ti diamo il benvenuto in Aster Mail</string>
+    <string name="first_run_title">Benvenuto su Aster Mail</string>
     <string name="first_run_subtitle">Porta con te la tua posta attuale oppure inizia da zero. Puoi importarla più tardi da Impostazioni.</string>
     <string name="first_run_import">Importa la tua posta</string>
     <string name="first_run_skip">Non ora</string>

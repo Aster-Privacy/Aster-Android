@@ -53,8 +53,8 @@
         <item quantity="other">%d yedek kod kaldı</item>
     </plurals>
     <plurals name="kids_seats_free">
-        <item quantity="one">%1$d yer müsait</item>
-        <item quantity="other">%1$d yer müsait</item>
+        <item quantity="one">%1$d kullanılabilir yer</item>
+        <item quantity="other">%1$d kullanılabilir yer</item>
     </plurals>
     <plurals name="trackers_blocked_count">
         <item quantity="one">%1$d izleyici engellendi</item>

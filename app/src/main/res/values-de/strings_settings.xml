@@ -10,7 +10,7 @@
     <string name="settings_cat_support">Hilfe</string>
     <string name="settings_cat_apps_integrations">Apps und Anbindungen</string>
     <string name="settings_feat_secure_storage">Sicherer Speicher</string>
-    <string name="settings_feat_max_attachment">Maximale Anhanggröße</string>
+    <string name="settings_feat_max_attachment">Maximale Anhangsgröße</string>
     <string name="settings_feat_daily_send">Tägliches Sendelimit</string>
     <string name="settings_feat_email_retention">Aufbewahrung von Mails</string>
     <string name="settings_feat_e2ee">Ende-zu-Ende-Verschlüsselung</string>
@@ -24,8 +24,8 @@
     <string name="settings_feat_auto_responder">Abwesenheitsantwort</string>
     <string name="settings_feat_alias_avatars">Alias-Bilder</string>
     <string name="settings_feat_instant_alias_delete">Sofortiges Löschen von Aliassen</string>
-    <string name="alias_too_new_title">Dieser Alias ist zu neu zum Löschen</string>
-    <string name="alias_too_new_message">Neue Aliase bleiben 30 Tage aktiv, bevor sie gelöscht werden können. Dieser lässt sich ab %1$s entfernen. Mit Supernova lassen sich Aliase sofort löschen.</string>
+    <string name="alias_too_new_title">Dieses Alias ist zu neu zum Löschen</string>
+    <string name="alias_too_new_message">Neue Aliase bleiben 30 Tage aktiv, bevor sie gelöscht werden können. Dieses lässt sich ab %1$s entfernen. Mit Supernova lassen sich Aliase sofort löschen.</string>
     <string name="settings_feat_folders">Ordner</string>
     <string name="settings_feat_labels">Labels</string>
     <string name="settings_feat_smart_folders">Intelligente Ordner</string>
@@ -44,11 +44,11 @@
     <string name="settings_feat_no_tracking">Kein Tracking</string>
     <string name="settings_feat_anonymous_signup">Anonyme Registrierung</string>
     <string name="settings_feat_tor_support">Tor-Unterstützung</string>
-    <string name="settings_feat_link_tracking">Schutz vor Link-Tracking</string>
+    <string name="settings_feat_link_tracking">Linktracking-Schutz</string>
     <string name="settings_feat_tracker_protection">Tracker-Schutz</string>
-    <string name="settings_feat_remote_image_blocking">Externe Bilder blockieren</string>
-    <string name="settings_feat_import_gmail">Import aus Gmail</string>
-    <string name="settings_feat_import_outlook">Import aus Outlook</string>
+    <string name="settings_feat_remote_image_blocking">Blockierung externer Bilder</string>
+    <string name="settings_feat_import_gmail">Import von Gmail</string>
+    <string name="settings_feat_import_outlook">Import von Outlook</string>
     <string name="settings_feat_mbox_import">MBOX-Import</string>
     <string name="settings_feat_export_emails">Mails exportieren</string>
     <string name="settings_feat_export_contacts">Kontakte exportieren</string>

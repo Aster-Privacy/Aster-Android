@@ -10,7 +10,7 @@
     <string name="settings_cat_support">Поддержка</string>
     <string name="settings_cat_apps_integrations">Приложения и интеграции</string>
     <string name="settings_feat_secure_storage">Защищённое хранилище</string>
-    <string name="settings_feat_max_attachment">Максимальный размер вложения</string>
+    <string name="settings_feat_max_attachment">Макс. размер вложения</string>
     <string name="settings_feat_daily_send">Дневной лимит отправки</string>
     <string name="settings_feat_email_retention">Срок хранения писем</string>
     <string name="settings_feat_e2ee">Сквозное шифрование</string>
@@ -44,9 +44,9 @@
     <string name="settings_feat_no_tracking">Без слежки</string>
     <string name="settings_feat_anonymous_signup">Анонимная регистрация</string>
     <string name="settings_feat_tor_support">Поддержка Tor</string>
-    <string name="settings_feat_link_tracking">Защита от отслеживающих ссылок</string>
+    <string name="settings_feat_link_tracking">Защита от отслеживания ссылок</string>
     <string name="settings_feat_tracker_protection">Защита от трекеров</string>
-    <string name="settings_feat_remote_image_blocking">Блокировка внешних изображений</string>
+    <string name="settings_feat_remote_image_blocking">Блокировка удалённых изображений</string>
     <string name="settings_feat_import_gmail">Импорт из Gmail</string>
     <string name="settings_feat_import_outlook">Импорт из Outlook</string>
     <string name="settings_feat_mbox_import">Импорт MBOX</string>

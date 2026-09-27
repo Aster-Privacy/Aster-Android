@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <plurals name="alias_export_entries">
-        <item quantity="other">%d 件</item>
+        <item quantity="one">%d 件のエントリ</item>
+        <item quantity="other">%d 件のエントリ</item>
     </plurals>
     <plurals name="alias_export_files">
+        <item quantity="one">%d 個のファイル</item>
         <item quantity="other">%d 個のファイル</item>
     </plurals>
     <plurals name="alias_import_existing">

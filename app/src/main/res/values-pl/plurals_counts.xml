@@ -79,10 +79,10 @@
         <item quantity="other">Pozostało %d kodów zapasowych</item>
     </plurals>
     <plurals name="kids_seats_free">
-        <item quantity="one">dostępne miejsca: %1$d</item>
-        <item quantity="few">dostępne miejsca: %1$d</item>
-        <item quantity="many">dostępne miejsca: %1$d</item>
-        <item quantity="other">dostępne miejsca: %1$d</item>
+        <item quantity="one">%1$d dostępne miejsce</item>
+        <item quantity="few">%1$d dostępne miejsca</item>
+        <item quantity="many">%1$d dostępnych miejsc</item>
+        <item quantity="other">%1$d dostępne miejsca</item>
     </plurals>
     <plurals name="trackers_blocked_count">
         <item quantity="one">Zablokowano %1$d element śledzący</item>

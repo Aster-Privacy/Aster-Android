@@ -40,7 +40,8 @@
         <item quantity="other">剩余 %d 个备用代码</item>
     </plurals>
     <plurals name="kids_seats_free">
-        <item quantity="other">剩余 %1$d 个名额</item>
+        <item quantity="one">%1$d 个可用席位</item>
+        <item quantity="other">%1$d 个可用席位</item>
     </plurals>
     <plurals name="trackers_blocked_count">
         <item quantity="other">已拦截 %1$d 个追踪器</item>

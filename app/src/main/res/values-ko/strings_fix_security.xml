@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="two_step_verification_title">2단계 인증</string>
-    <string name="two_step_verification_on_description">계정에 비밀번호와 함께 인증 코드가 필요합니다.</string>
+    <string name="two_step_verification_on_description">계정에 비밀번호 외에 인증 코드가 필요합니다.</string>
     <string name="two_step_verification_off_description">보호를 강화하려면 비밀번호와 함께 인증 코드를 요구하세요.</string>
     <string name="security_activity_filter_all">전체</string>
     <string name="security_activity_filter_sign_ins">로그인</string>

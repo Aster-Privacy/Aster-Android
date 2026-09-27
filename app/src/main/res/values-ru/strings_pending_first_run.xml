@@ -5,7 +5,7 @@
     <string name="first_run_import">Импортировать почту</string>
     <string name="first_run_skip">Не сейчас</string>
     <string name="first_run_privacy_note">Ваша почта шифруется до того, как покинет устройство.</string>
-    <string name="recovery_reminder_title">Добавьте резервный адрес</string>
+    <string name="recovery_reminder_title">Добавить резервный email</string>
     <string name="recovery_reminder_body">Резервный адрес поможет вернуться в аккаунт, если вы забудете пароль.</string>
     <string name="recovery_reminder_action">Добавить резервный адрес</string>
     <string name="recovery_reminder_later">Позже</string>

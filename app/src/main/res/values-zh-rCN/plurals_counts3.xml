@@ -19,7 +19,8 @@
         <item quantity="other">%1$d 小时</item>
     </plurals>
     <plurals name="settings_val_emails_per_day">
-        <item quantity="other">%1$d 封</item>
+        <item quantity="one">%1$d 封邮件</item>
+        <item quantity="other">%1$d 封邮件</item>
     </plurals>
     <plurals name="spam_auto_delete_notice">
         <item quantity="other">垃圾邮件中的内容将在 %1$d 天后自动删除。</item>

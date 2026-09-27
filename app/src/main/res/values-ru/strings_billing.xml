@@ -40,12 +40,12 @@
     <string name="onboarding_task_install">Установите Aster на компьютер</string>
     <string name="onboarding_task_recovery">Добавьте адрес для восстановления</string>
     <string name="payment_confirmed">Платёж подтверждён</string>
-    <string name="payment_processing_delayed">Ваш платеж обрабатывается. Активация может занять некоторое время.</string>
+    <string name="payment_processing_delayed">Ваш платёж обрабатывается. Активация может занять немного времени.</string>
     <string name="payment_failed_notification_body">Обновите данные карты, чтобы сохранить тариф %1$s.</string>
     <string name="payment_failed_notification_body_generic">Обновите данные карты, чтобы сохранить тариф.</string>
     <string name="payment_failed_notification_title">Платёж не прошёл</string>
     <string name="plan_name_duo">Duo</string>
-    <string name="plan_name_family">Family</string>
+    <string name="plan_name_family">Семья</string>
     <string name="plan_price_per_period">за расчётный период</string>
     <string name="plans_unavailable">Aster не удалось загрузить тарифы.</string>
     <string name="see_pricing">Посмотреть цены</string>
@@ -95,7 +95,7 @@
     <string name="billing_advantages_title_free">Что даёт %1$s</string>
     <string name="billing_advantages_title_paid">Что входит в ваш план</string>
     <string name="billing_compare_external_accounts">Внешние аккаунты</string>
-    <string name="billing_compare_all_plans">Сравнить все планы</string>
+    <string name="billing_compare_all_plans">Сравнить все тарифы</string>
     <string name="billing_compare_all_plans_subtitle">Личные и семейные планы, помесячно или на год</string>
     <string name="billing_more_title">Ещё</string>
     <string name="billing_addons_subtitle">Добавьте место, оставьте план</string>
@@ -123,8 +123,8 @@
     <string name="billing_see_all_features">Все возможности %1$s</string>
     <string name="billing_plan_highlights">Что вы получаете</string>
     <string name="billing_credits_subtitle">Баланс и пополнения</string>
-    <string name="billing_credits_body">Кредиты оплачивают продления и дополнения до списания с карты.</string>
-    <string name="billing_credits_use_for_renewals">Использовать кредиты для продлений</string>
+    <string name="billing_credits_body">Баланс оплачивает продления и дополнения до списания с вашей карты.</string>
+    <string name="billing_credits_use_for_renewals">Использовать баланс для продлений</string>
     <string name="billing_credits_use_for_renewals_body">При продлении плана Aster сначала тратит ваш баланс.</string>
     <string name="billing_credits_add_funds">Пополнить</string>
     <string name="billing_credits_add_funds_body">Выберите сумму. Оплата откроется в браузере.</string>
@@ -150,7 +150,7 @@
     <string name="billing_status_ok">Всё в порядке</string>
     <string name="billing_status_almost_full">Почти заполнено</string>
     <string name="billing_status_action_required">Требуется действие</string>
-    <string name="billing_status_near_limit">Близко к лимиту</string>
+    <string name="billing_status_near_limit">Почти достигнут лимит</string>
     <string name="billing_status_limit_reached">Лимит достигнут</string>
     <string name="billing_or_yearly">или %1$s в год</string>
     <string name="billing_credits_title">Баланс</string>

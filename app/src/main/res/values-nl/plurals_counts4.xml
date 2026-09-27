@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <plurals name="alias_export_entries">
-        <item quantity="one">%d item</item>
-        <item quantity="other">%d items</item>
+        <item quantity="one">%d vermelding</item>
+        <item quantity="other">%d vermeldingen</item>
     </plurals>
     <plurals name="alias_export_files">
         <item quantity="one">%d bestand</item>

@@ -2,8 +2,8 @@
 <resources>
     <string name="detail_show_details">显示详情</string>
     <string name="detail_hide_details">隐藏详情</string>
-    <string name="detail_show_quoted_text">显示引用内容</string>
-    <string name="detail_hide_quoted_text">隐藏引用内容</string>
+    <string name="detail_show_quoted_text">显示引用文本</string>
+    <string name="detail_hide_quoted_text">隐藏引用文本</string>
     <string name="detail_external_images_blocked">这封邮件包含外部内容。加载后发件人可能会知道你打开了邮件。</string>
     <string name="detail_external_allow_once">加载一次</string>
     <string name="detail_external_always_allow">始终允许</string>

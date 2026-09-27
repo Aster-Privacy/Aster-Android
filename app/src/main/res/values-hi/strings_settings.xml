@@ -25,7 +25,7 @@
     <string name="settings_feat_alias_avatars">एलियास के अवतार</string>
     <string name="settings_feat_instant_alias_delete">एलियास तुरंत हटाना</string>
     <string name="alias_too_new_title">यह एलियास हटाने के लिए बहुत नया है</string>
-    <string name="alias_too_new_message">नए एलियास हटाए जा सकने से पहले 30 दिन तक चालू रहते हैं। इसे %1$s से हटाया जा सकता है। एलियास तुरंत हटाने के लिए Supernova पर अपग्रेड करें।</string>
+    <string name="alias_too_new_message">नए एलियास हटाए जाने से पहले 30 दिन तक चालू रहते हैं। इसे %1$s से हटाया जा सकेगा। एलियास तुरंत हटाने के लिए Supernova पर जाएं।</string>
     <string name="settings_feat_folders">फ़ोल्डर</string>
     <string name="settings_feat_labels">लेबल</string>
     <string name="settings_feat_smart_folders">स्मार्ट फ़ोल्डर</string>

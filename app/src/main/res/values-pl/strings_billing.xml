@@ -45,7 +45,7 @@
     <string name="payment_failed_notification_body_generic">Zaktualizuj kartę, aby zachować swój plan.</string>
     <string name="payment_failed_notification_title">Twoja płatność nie powiodła się</string>
     <string name="plan_name_duo">Duo</string>
-    <string name="plan_name_family">Family</string>
+    <string name="plan_name_family">Rodzina</string>
     <string name="plan_price_per_period">za okres rozliczeniowy</string>
     <string name="plans_unavailable">Aster nie może teraz wczytać planów.</string>
     <string name="see_pricing">Zobacz cennik</string>
@@ -121,9 +121,9 @@
     <string name="billing_compare_title">Porównaj plany</string>
     <string name="billing_compare_subtitle">Wszystko, co zawiera każdy plan, obok tego, co daje Free.</string>
     <string name="billing_see_all_features">Zobacz wszystkie funkcje planu %1$s</string>
-    <string name="billing_plan_highlights">Co zyskujesz</string>
+    <string name="billing_plan_highlights">Co otrzymujesz</string>
     <string name="billing_credits_subtitle">Saldo i doładowania</string>
-    <string name="billing_credits_body">Środki opłacają odnowienia i dodatki, zanim obciążymy Twoją kartę.</string>
+    <string name="billing_credits_body">Środki pokrywają odnowienia i dodatki, zanim obciążymy Twoją kartę.</string>
     <string name="billing_credits_use_for_renewals">Używaj środków do odnowień</string>
     <string name="billing_credits_use_for_renewals_body">Gdy plan się odnawia, Aster najpierw wykorzystuje Twoje saldo.</string>
     <string name="billing_credits_add_funds">Dodaj środki</string>

@@ -4,13 +4,13 @@
         <item quantity="one">%d wpis</item>
         <item quantity="few">%d wpisy</item>
         <item quantity="many">%d wpisów</item>
-        <item quantity="other">%d wpisów</item>
+        <item quantity="other">%d wpisy</item>
     </plurals>
     <plurals name="alias_export_files">
-        <item quantity="one">%d pliku</item>
-        <item quantity="few">%d plikach</item>
-        <item quantity="many">%d plikach</item>
-        <item quantity="other">%d plikach</item>
+        <item quantity="one">%d plik</item>
+        <item quantity="few">%d pliki</item>
+        <item quantity="many">%d plików</item>
+        <item quantity="other">%d pliki</item>
     </plurals>
     <plurals name="alias_import_existing">
         <item quantity="one">%d już istnieje</item>

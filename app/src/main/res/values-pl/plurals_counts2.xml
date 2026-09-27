@@ -46,7 +46,7 @@
         <item quantity="one">%1$d obraz</item>
         <item quantity="few">%1$d obrazy</item>
         <item quantity="many">%1$d obrazów</item>
-        <item quantity="other">%1$d obrazów</item>
+        <item quantity="other">%1$d obrazy</item>
     </plurals>
     <plurals name="n_trackers">
         <item quantity="one">%1$d tracker</item>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="two_step_verification_title">Verificação em duas etapas</string>
-    <string name="two_step_verification_on_description">Sua conta exige um código de verificação além da senha.</string>
+    <string name="two_step_verification_on_description">Sua conta requer um código de verificação além da sua senha.</string>
     <string name="two_step_verification_off_description">Para mais proteção, exija um código de verificação além da senha.</string>
     <string name="security_activity_filter_all">Tudo</string>
     <string name="security_activity_filter_sign_ins">Logins</string>

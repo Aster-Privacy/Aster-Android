@@ -36,7 +36,7 @@
     <string name="notif_channel_billing_name">Faturalandırma</string>
     <string name="onboarding_checklist_title">Aster kurulumu (%1$d / %2$d)</string>
     <string name="onboarding_task_first_email">İlk mesajınızı gönderin</string>
-    <string name="onboarding_task_import">Eski postalarınızı içe aktarın</string>
+    <string name="onboarding_task_import">Eski postanızı içe aktarın</string>
     <string name="onboarding_task_install">Aster\'i bilgisayarınıza kurun</string>
     <string name="onboarding_task_recovery">Bir kurtarma e-posta adresi ekleyin</string>
     <string name="payment_confirmed">Ödeme onaylandı</string>
@@ -45,7 +45,7 @@
     <string name="payment_failed_notification_body_generic">Planınızı sürdürmek için kartınızı güncelleyin.</string>
     <string name="payment_failed_notification_title">Ödemeniz gerçekleşmedi</string>
     <string name="plan_name_duo">Duo</string>
-    <string name="plan_name_family">Family</string>
+    <string name="plan_name_family">Aile</string>
     <string name="plan_price_per_period">faturalandırma dönemi başına</string>
     <string name="plans_unavailable">Aster şu anda planları yükleyemedi.</string>
     <string name="see_pricing">Fiyatlandırmayı gör</string>
@@ -121,16 +121,16 @@
     <string name="billing_compare_title">Planları karşılaştır</string>
     <string name="billing_compare_subtitle">Her planın içerdiği her şey, Free’nin sunduklarının yanında.</string>
     <string name="billing_see_all_features">Tüm %1$s özelliklerini gör</string>
-    <string name="billing_plan_highlights">Neler kazanırsın</string>
+    <string name="billing_plan_highlights">Neler elde edersiniz</string>
     <string name="billing_credits_subtitle">Bakiye ve yüklemeler</string>
-    <string name="billing_credits_body">Kredi, kartından çekim yapılmadan önce yenilemeleri ve ek paketleri öder.</string>
+    <string name="billing_credits_body">Kartınızdan çekim yapılmadan önce yenilemeler ve eklentiler krediyle ödenir.</string>
     <string name="billing_credits_use_for_renewals">Yenilemelerde kredi kullan</string>
     <string name="billing_credits_use_for_renewals_body">Planın yenilendiğinde Aster önce bakiyeni harcar.</string>
     <string name="billing_credits_add_funds">Bakiye ekle</string>
     <string name="billing_credits_add_funds_body">Bir tutar seç. Ödeme tarayıcında açılır.</string>
     <string name="billing_credits_bonus">+%1$s bonus</string>
     <string name="billing_credits_pay_card">Kartla öde</string>
-    <string name="billing_credits_pay_crypto">Kriptoyla öde</string>
+    <string name="billing_credits_pay_crypto">Kripto ile öde</string>
     <string name="billing_credits_packages_unavailable">Yüklemeler şu anda kullanılamıyor.</string>
     <string name="billing_academic_subtitle">Okul e-postasıyla tasarruf et</string>
     <string name="billing_academic_body">Okul e-posta adresi olan öğrenciler ve personel her planda indirim alır. Adresi gir, Aster sana bir doğrulama bağlantısı göndersin.</string>

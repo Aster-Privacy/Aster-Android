@@ -10,7 +10,7 @@
     <string name="domain_manage_catch_all_description">Receba as mensagens enviadas para qualquer endereço deste domínio.</string>
     <string name="domain_manage_recheck">Verificar novamente os registos DNS</string>
     <string name="domain_manage_rechecking">A verificar os registos DNS</string>
-    <string name="domain_purchase_search_rate_limited">Demasiadas pesquisas. Tente novamente dentro de um minuto.</string>
+    <string name="domain_purchase_search_rate_limited">Muitas pesquisas. Tente novamente em um minuto.</string>
     <string name="domain_purchase_results_for">Veja o que encontramos para %1$s</string>
     <string name="domain_purchase_change_name">Alterar nome</string>
     <string name="domain_purchase_show_more">Mostrar mais resultados</string>
@@ -63,7 +63,7 @@
     <string name="domain_bimi_last_checked">Última verificação: %1$s</string>
     <string name="domain_bimi_record_title">Adicione este registro no seu provedor de DNS</string>
     <string name="domain_bimi_record_type">Tipo</string>
-    <string name="domain_bimi_record_host">Host</string>
+    <string name="domain_bimi_record_host">Servidor</string>
     <string name="domain_bimi_record_value">Valor</string>
     <string name="domain_bimi_managed_note">Seu domínio foi comprado pelo Aster, então o registro DNS é adicionado para você.</string>
     <string name="domain_bimi_verified_mark_note">Algumas caixas de entrada só mostram logotipos de marca para domínios com um certificado de marca verificada.</string>

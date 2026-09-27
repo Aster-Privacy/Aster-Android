@@ -2,8 +2,8 @@
 <resources>
     <string name="detail_show_details">詳細を表示</string>
     <string name="detail_hide_details">詳細を隠す</string>
-    <string name="detail_show_quoted_text">引用文を表示</string>
-    <string name="detail_hide_quoted_text">引用文を隠す</string>
+    <string name="detail_show_quoted_text">引用テキストを表示</string>
+    <string name="detail_hide_quoted_text">引用テキストを非表示</string>
     <string name="detail_external_images_blocked">このメッセージには外部コンテンツが含まれます。読み込むと、あなたの行動が差出人に伝わることがあります。</string>
     <string name="detail_external_allow_once">1 回だけ読み込む</string>
     <string name="detail_external_always_allow">常に許可</string>

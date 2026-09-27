@@ -7,13 +7,13 @@
     <string name="first_run_privacy_note">Deine E-Mails werden verschlüsselt, bevor sie dein Gerät verlassen.</string>
     <string name="recovery_reminder_title">Wiederherstellungs-E-Mail hinzufügen</string>
     <string name="recovery_reminder_body">Mit einer Wiederherstellungs-E-Mail kommst du wieder in dein Konto, wenn du dein Passwort vergisst.</string>
-    <string name="recovery_reminder_action">Wiederherstellungs-E-Mail hinzufügen</string>
+    <string name="recovery_reminder_action">Wiederherstellungsadresse hinzufügen</string>
     <string name="recovery_reminder_later">Später</string>
     <string name="plan_prompt_title">Hol mehr aus Aster Mail heraus</string>
     <string name="plan_prompt_body">Führe ein Upgrade durch für mehr Speicher, eigene Domains und unbegrenzte Aliasse.</string>
     <string name="plan_prompt_action">Tarife ansehen</string>
     <string name="plan_prompt_dismiss">Jetzt nicht</string>
-    <string name="recovery_codes_reminder_title">Sichere deine Wiederherstellungscodes</string>
+    <string name="recovery_codes_reminder_title">Speichern Sie Ihre Wiederherstellungscodes</string>
     <string name="recovery_codes_reminder_body">Aster verschlüsselt deine Mail mit deinem Passwort, deshalb kann es niemand für dich zurücksetzen. Wiederherstellungscodes sind der einzige Weg zurück zu deiner verschlüsselten Mail.</string>
     <string name="recovery_codes_reminder_action">Wiederherstellungscodes holen</string>
     <string name="recovery_phrase_migrate_title">Zu Wiederherstellungscodes wechseln</string>

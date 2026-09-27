@@ -40,7 +40,8 @@
         <item quantity="other">백업 코드 %d개 남음</item>
     </plurals>
     <plurals name="kids_seats_free">
-        <item quantity="other">%1$d개 사용 가능</item>
+        <item quantity="one">사용 가능한 좌석 %1$d개</item>
+        <item quantity="other">사용 가능한 좌석 %1$d개</item>
     </plurals>
     <plurals name="trackers_blocked_count">
         <item quantity="other">트래커 %1$d개 차단됨</item>

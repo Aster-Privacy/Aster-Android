@@ -10,8 +10,8 @@
     <string name="settings_cat_support">지원</string>
     <string name="settings_cat_apps_integrations">앱과 연동</string>
     <string name="settings_feat_secure_storage">안전한 저장 공간</string>
-    <string name="settings_feat_max_attachment">첨부 파일 최대 크기</string>
-    <string name="settings_feat_daily_send">하루 발송 한도</string>
+    <string name="settings_feat_max_attachment">최대 첨부 파일 크기</string>
+    <string name="settings_feat_daily_send">일일 전송 제한</string>
     <string name="settings_feat_email_retention">메일 보관 기간</string>
     <string name="settings_feat_e2ee">종단 간 암호화</string>
     <string name="settings_feat_zero_knowledge">서버가 내용을 볼 수 없는 구조</string>
@@ -25,7 +25,7 @@
     <string name="settings_feat_alias_avatars">별칭 이미지</string>
     <string name="settings_feat_instant_alias_delete">별칭 즉시 삭제</string>
     <string name="alias_too_new_title">이 별칭은 삭제하기에 너무 최근에 만들어졌습니다</string>
-    <string name="alias_too_new_message">새로 만든 별칭은 30일이 지나야 삭제할 수 있습니다. 이 별칭은 %1$s부터 삭제할 수 있습니다. Supernova로 업그레이드하면 별칭을 즉시 삭제할 수 있습니다.</string>
+    <string name="alias_too_new_message">새로 만든 별칭은 30일이 지나야 삭제할 수 있습니다. 이 별칭은 %1$s부터 제거할 수 있습니다. Supernova로 업그레이드하면 별칭을 즉시 삭제할 수 있습니다.</string>
     <string name="settings_feat_folders">폴더</string>
     <string name="settings_feat_labels">라벨</string>
     <string name="settings_feat_smart_folders">스마트 폴더</string>
@@ -44,9 +44,9 @@
     <string name="settings_feat_no_tracking">추적 없음</string>
     <string name="settings_feat_anonymous_signup">익명 가입</string>
     <string name="settings_feat_tor_support">Tor 지원</string>
-    <string name="settings_feat_link_tracking">링크 추적 차단</string>
+    <string name="settings_feat_link_tracking">링크 추적 보호</string>
     <string name="settings_feat_tracker_protection">트래커 차단</string>
-    <string name="settings_feat_remote_image_blocking">외부 이미지 차단</string>
+    <string name="settings_feat_remote_image_blocking">원격 이미지 차단</string>
     <string name="settings_feat_import_gmail">Gmail에서 가져오기</string>
     <string name="settings_feat_import_outlook">Outlook에서 가져오기</string>
     <string name="settings_feat_mbox_import">MBOX 가져오기</string>
@@ -71,10 +71,10 @@
     <string name="settings_val_one_year">1년</string>
     <string name="settings_val_count">%1$d</string>
     <string name="settings_plan_bullet_duo_storage">공유 암호화 저장 공간 1 TB</string>
-    <string name="settings_plan_bullet_duo_members">구성원 2명, 계정은 각자 따로</string>
+    <string name="settings_plan_bullet_duo_members">구성원 2명, 개별 계정</string>
     <string name="settings_plan_bullet_family_storage">공유 암호화 저장 공간 3 TB</string>
-    <string name="settings_plan_bullet_family_members">구성원 최대 6명, 계정은 각자 따로</string>
-    <string name="settings_plan_bullet_shared_aliases">가족이 함께 쓰는 별칭</string>
+    <string name="settings_plan_bullet_family_members">최대 6명, 개별 계정</string>
+    <string name="settings_plan_bullet_shared_aliases">공유 가족 별칭</string>
     <string name="settings_price_per_month">$%1$.2f / 월</string>
     <string name="settings_price_per_interval">%1$s / %2$s</string>
     <string name="settings_price_per_mo">$%1$.2f</string>

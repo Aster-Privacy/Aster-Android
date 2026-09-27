@@ -40,7 +40,8 @@
         <item quantity="other">%d個のバックアップコードが残っています</item>
     </plurals>
     <plurals name="kids_seats_free">
-        <item quantity="other">空き %1$d 件</item>
+        <item quantity="one">%1$d 席の空き</item>
+        <item quantity="other">%1$d 席の空き</item>
     </plurals>
     <plurals name="trackers_blocked_count">
         <item quantity="other">%1$d件のトラッカーをブロック</item>

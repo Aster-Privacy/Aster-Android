@@ -5,8 +5,8 @@
         <item quantity="other">%d entradas</item>
     </plurals>
     <plurals name="alias_export_files">
-        <item quantity="one">%d ficheiro</item>
-        <item quantity="other">%d ficheiros</item>
+        <item quantity="one">%d arquivo</item>
+        <item quantity="other">%d arquivos</item>
     </plurals>
     <plurals name="alias_import_existing">
         <item quantity="one">%d já existe</item>

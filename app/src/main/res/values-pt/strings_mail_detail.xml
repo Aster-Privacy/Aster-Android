@@ -2,8 +2,8 @@
 <resources>
     <string name="detail_show_details">Ver detalhes</string>
     <string name="detail_hide_details">Ocultar detalhes</string>
-    <string name="detail_show_quoted_text">Mostrar o texto citado</string>
-    <string name="detail_hide_quoted_text">Ocultar o texto citado</string>
+    <string name="detail_show_quoted_text">Mostrar texto citado</string>
+    <string name="detail_hide_quoted_text">Ocultar texto citado</string>
     <string name="detail_external_images_blocked">Esta mensagem tem conteúdo externo. Ao carregá-lo, o remetente pode ver sua atividade.</string>
     <string name="detail_external_allow_once">Carregar uma vez</string>
     <string name="detail_external_always_allow">Permitir sempre</string>

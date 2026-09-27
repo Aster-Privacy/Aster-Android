@@ -25,8 +25,8 @@
         <item quantity="other">%1$d uur</item>
     </plurals>
     <plurals name="settings_val_emails_per_day">
-        <item quantity="one">%1$d mail</item>
-        <item quantity="other">%1$d mails</item>
+        <item quantity="one">%1$d e-mail</item>
+        <item quantity="other">%1$d e-mails</item>
     </plurals>
     <plurals name="spam_auto_delete_notice">
         <item quantity="one">Items in spam worden na %1$d dag automatisch verwijderd.</item>

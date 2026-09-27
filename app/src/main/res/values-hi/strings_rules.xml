@@ -60,10 +60,10 @@
     <string name="categories_description">चुनें कि आपके इनबॉक्स में कौन से श्रेणी टैब दिखें, और अपने टैब बनाएं। सारी छंटाई आपके डिवाइस पर ही होती है।</string>
     <string name="category_info_primary">वह सब कुछ जो किसी और श्रेणी से मेल नहीं खाता। हमेशा चालू।</string>
     <string name="category_info_promotions">मार्केटिंग ईमेल, ऑफ़र और डील।</string>
-    <string name="category_info_newsletters">आपने जिन न्यूज़लेटर और मेलिंग सूचियों की सदस्यता ली है।</string>
+    <string name="category_info_newsletters">आपके द्वारा सब्सक्राइब किए गए डाइजेस्ट और मेलिंग सूचियाँ।</string>
     <string name="category_info_social">सोशल नेटवर्क और समुदायों से आई सूचनाएं।</string>
     <string name="category_info_updates">रसीदें, पुष्टियां और सेवा सूचनाएं।</string>
-    <string name="category_info_transactions">स्टोर और सेवाओं से आए ऑर्डर, भुगतान और रसीदें।</string>
+    <string name="category_info_transactions">स्टोर और सेवाओं से ऑर्डर, भुगतान और रसीदें।</string>
     <string name="category_info_forums">मेलिंग सूचियों, फ़ोरम और चर्चा समूहों से आए संदेश।</string>
     <string name="category_info_finance">बैंकों और वित्तीय सेवाओं से आए स्टेटमेंट, इनवॉइस और अलर्ट।</string>
     <string name="category_info_travel">एयरलाइन, होटल और राइडशेयर से आई बुकिंग, यात्रा योजनाएं और पुष्टियां।</string>
@@ -75,8 +75,8 @@
     <string name="no_custom_categories">अभी कोई अपनी श्रेणी नहीं।</string>
     <string name="category_name_required">इस श्रेणी के लिए नाम डालें।</string>
     <string name="category_rule_required">मिलान के लिए कम से कम एक डोमेन या कीवर्ड जोड़ें।</string>
-    <string name="category_domains_invalid">ये डोमेन मान्य नहीं हैं: %1$s। example.com जैसा असली डोमेन इस्तेमाल करें।</string>
-    <string name="category_keywords_invalid">ये कीवर्ड मान्य नहीं हैं: %1$s। सिर्फ़ सादे शब्द इस्तेमाल करें।</string>
+    <string name="category_domains_invalid">ये डोमेन मान्य नहीं हैं: %1$s. example.com जैसा असली डोमेन डालें।</string>
+    <string name="category_keywords_invalid">ये कीवर्ड मान्य नहीं हैं: %1$s. सिर्फ़ सामान्य शब्द इस्तेमाल करें।</string>
     <string name="delete_category_title">श्रेणी हटाएं?</string>
     <string name="delete_category_description">क्या आप वाकई \"%1$s\" हटाना चाहते हैं? इसे पहले जैसा नहीं किया जा सकता।</string>
     <string name="custom_categories_locked">आपके मौजूदा प्लान पर कस्टम श्रेणियां उपलब्ध नहीं हैं।</string>

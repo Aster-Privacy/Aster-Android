@@ -25,8 +25,8 @@
         <item quantity="other">%1$d Stunden</item>
     </plurals>
     <plurals name="settings_val_emails_per_day">
-        <item quantity="one">%1$d Mail</item>
-        <item quantity="other">%1$d Mails</item>
+        <item quantity="one">%1$d E-Mail</item>
+        <item quantity="other">%1$d E-Mails</item>
     </plurals>
     <plurals name="spam_auto_delete_notice">
         <item quantity="one">Elemente im Spam werden nach %1$d Tag automatisch gelöscht.</item>

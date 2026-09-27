@@ -22,6 +22,7 @@
         <item quantity="other">연락처 %d개 가져옴</item>
     </plurals>
     <plurals name="n_images">
+        <item quantity="one">이미지 %1$d개</item>
         <item quantity="other">이미지 %1$d개</item>
     </plurals>
     <plurals name="n_trackers">
@@ -40,6 +41,7 @@
         <item quantity="other">폴더 %1$d개 더 보기</item>
     </plurals>
     <plurals name="rules_emails_count">
+        <item quantity="one">메일 %1$d개</item>
         <item quantity="other">메일 %1$d개</item>
     </plurals>
     <plurals name="rules_value_label_count">

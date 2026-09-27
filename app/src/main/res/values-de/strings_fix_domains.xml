@@ -10,7 +10,7 @@
     <string name="domain_manage_catch_all_description">Nachrichten an jede Adresse dieser Domain zustellen.</string>
     <string name="domain_manage_recheck">DNS-Einträge erneut prüfen</string>
     <string name="domain_manage_rechecking">DNS-Einträge werden geprüft</string>
-    <string name="domain_purchase_search_rate_limited">Zu viele Suchanfragen. Versuche es in einer Minute erneut.</string>
+    <string name="domain_purchase_search_rate_limited">Zu viele Suchanfragen. Versuchen Sie es in einer Minute erneut.</string>
     <string name="domain_purchase_results_for">Das haben wir für %1$s gefunden</string>
     <string name="domain_purchase_change_name">Namen ändern</string>
     <string name="domain_purchase_show_more">Weitere Ergebnisse anzeigen</string>

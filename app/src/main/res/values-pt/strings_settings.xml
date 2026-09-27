@@ -24,7 +24,7 @@
     <string name="settings_feat_auto_responder">Resposta automática</string>
     <string name="settings_feat_alias_avatars">Imagens dos apelidos</string>
     <string name="settings_feat_instant_alias_delete">Exclusão instantânea de aliases</string>
-    <string name="alias_too_new_title">Este alias é novo demais para ser excluído</string>
+    <string name="alias_too_new_title">Este alias é muito recente para ser excluído</string>
     <string name="alias_too_new_message">Aliases novos ficam ativos por 30 dias antes de poderem ser excluídos. Este pode ser removido a partir de %1$s. Mude para Supernova para excluir aliases instantaneamente.</string>
     <string name="settings_feat_folders">Pastas</string>
     <string name="settings_feat_labels">Etiquetas</string>
@@ -44,9 +44,9 @@
     <string name="settings_feat_no_tracking">Sem rastreamento</string>
     <string name="settings_feat_anonymous_signup">Cadastro anônimo</string>
     <string name="settings_feat_tor_support">Suporte a Tor</string>
-    <string name="settings_feat_link_tracking">Proteção contra links de rastreio</string>
+    <string name="settings_feat_link_tracking">Proteção contra rastreamento de links</string>
     <string name="settings_feat_tracker_protection">Proteção contra rastreadores</string>
-    <string name="settings_feat_remote_image_blocking">Bloqueio de imagens externas</string>
+    <string name="settings_feat_remote_image_blocking">Bloqueio de imagens remotas</string>
     <string name="settings_feat_import_gmail">Importar do Gmail</string>
     <string name="settings_feat_import_outlook">Importar do Outlook</string>
     <string name="settings_feat_mbox_import">Importação MBOX</string>
@@ -69,12 +69,12 @@
     <string name="settings_val_tb">%1$d TB</string>
     <string name="settings_val_mb">%1$d MB</string>
     <string name="settings_val_one_year">1 ano</string>
-    <string name="settings_val_count">%1$d</string>
+    <string name="settings_val_count">Preço: %1$d</string>
     <string name="settings_plan_bullet_duo_storage">1 TB de armazenamento criptografado compartilhado</string>
     <string name="settings_plan_bullet_duo_members">2 membros, contas separadas</string>
     <string name="settings_plan_bullet_family_storage">3 TB de armazenamento criptografado compartilhado</string>
     <string name="settings_plan_bullet_family_members">Até 6 membros, contas separadas</string>
-    <string name="settings_plan_bullet_shared_aliases">Apelidos compartilhados da família</string>
+    <string name="settings_plan_bullet_shared_aliases">Aliases compartilhados da família</string>
     <string name="settings_price_per_month">$%1$.2f / mês</string>
     <string name="settings_price_per_interval">%1$s / %2$s</string>
     <string name="settings_price_per_mo">$%1$.2f</string>

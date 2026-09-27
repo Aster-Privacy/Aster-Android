@@ -12,7 +12,7 @@
     <string name="fix_billing_billed_annually">सालाना बिल</string>
     <string name="fix_billing_plan_recommended">अनुशंसित</string>
     <string name="fix_billing_get_plan">%1$s लें</string>
-    <string name="fix_billing_autorenew_notice">जब तक आप रद्द नहीं करते, आपकी सदस्यता %1$s पर अपने आप नवीनीकृत होती रहती है। अगला शुल्क टालने के लिए अपनी नवीनीकरण तारीख से पहले सेटिंग में जाकर रद्द करें।</string>
+    <string name="fix_billing_autorenew_notice">आपकी सदस्यता रद्द करने तक %1$s पर अपने आप नवीनीकृत होती रहती है। अगला शुल्क टालने के लिए, नवीनीकरण की तारीख से पहले सेटिंग में जाकर इसे रद्द करें।</string>
     <string name="fix_billing_autorenew_notice_short">कार्ड से भुगतान करने पर आपका प्लान अपने आप नवीनीकृत होता है। अगला शुल्क टालने के लिए, नवीनीकरण की तारीख से पहले सेटिंग में जाकर इसे रद्द करें।</string>
     <string name="fix_billing_payment_methods_title">भुगतान के तरीके</string>
     <string name="fix_billing_payment_methods_description">अपने सहेजे गए भुगतान तरीके प्रबंधित करें</string>

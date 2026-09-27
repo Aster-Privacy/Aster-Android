@@ -10,8 +10,8 @@
     <string name="settings_cat_support">Pomoc</string>
     <string name="settings_cat_apps_integrations">Aplikacje i integracje</string>
     <string name="settings_feat_secure_storage">Bezpieczne miejsce</string>
-    <string name="settings_feat_max_attachment">Maksymalny rozmiar załącznika</string>
-    <string name="settings_feat_daily_send">Dzienny limit wysyłki</string>
+    <string name="settings_feat_max_attachment">Maks. rozmiar załącznika</string>
+    <string name="settings_feat_daily_send">Dzienny limit wysyłania</string>
     <string name="settings_feat_email_retention">Czas przechowywania wiadomości</string>
     <string name="settings_feat_e2ee">Szyfrowanie end-to-end</string>
     <string name="settings_feat_zero_knowledge">Architektura bez dostępu serwera</string>
@@ -24,7 +24,7 @@
     <string name="settings_feat_auto_responder">Autoodpowiedź</string>
     <string name="settings_feat_alias_avatars">Obrazki aliasów</string>
     <string name="settings_feat_instant_alias_delete">Natychmiastowe usuwanie aliasów</string>
-    <string name="alias_too_new_title">Ten alias jest zbyt nowy, aby go usunąć</string>
+    <string name="alias_too_new_title">Ten alias jest za nowy, aby go usunąć</string>
     <string name="alias_too_new_message">Nowe aliasy pozostają aktywne przez 30 dni, zanim będzie można je usunąć. Ten można usunąć od %1$s. Przejdź na Supernova, aby natychmiast usuwać aliasy.</string>
     <string name="settings_feat_folders">Foldery</string>
     <string name="settings_feat_labels">Etykiety</string>
@@ -44,11 +44,11 @@
     <string name="settings_feat_no_tracking">Bez śledzenia</string>
     <string name="settings_feat_anonymous_signup">Anonimowa rejestracja</string>
     <string name="settings_feat_tor_support">Obsługa Tor</string>
-    <string name="settings_feat_link_tracking">Ochrona przed śledzącymi linkami</string>
+    <string name="settings_feat_link_tracking">Ochrona przed śledzeniem linków</string>
     <string name="settings_feat_tracker_protection">Ochrona przed trackerami</string>
     <string name="settings_feat_remote_image_blocking">Blokowanie zdalnych obrazów</string>
-    <string name="settings_feat_import_gmail">Import z Gmaila</string>
-    <string name="settings_feat_import_outlook">Import z Outlooka</string>
+    <string name="settings_feat_import_gmail">Import z Gmail</string>
+    <string name="settings_feat_import_outlook">Import z Outlook</string>
     <string name="settings_feat_mbox_import">Import MBOX</string>
     <string name="settings_feat_export_emails">Eksport wiadomości</string>
     <string name="settings_feat_export_contacts">Eksport kontaktów</string>
@@ -71,9 +71,9 @@
     <string name="settings_val_one_year">1 rok</string>
     <string name="settings_val_count">%1$d</string>
     <string name="settings_plan_bullet_duo_storage">1 TB wspólnego zaszyfrowanego miejsca</string>
-    <string name="settings_plan_bullet_duo_members">2 osoby, osobne konta</string>
+    <string name="settings_plan_bullet_duo_members">2 członków, osobne konta</string>
     <string name="settings_plan_bullet_family_storage">3 TB wspólnego zaszyfrowanego miejsca</string>
-    <string name="settings_plan_bullet_family_members">Do 6 osób, osobne konta</string>
+    <string name="settings_plan_bullet_family_members">Do 6 członków, osobne konta</string>
     <string name="settings_plan_bullet_shared_aliases">Wspólne aliasy rodzinne</string>
     <string name="settings_price_per_month">$%1$.2f / mies.</string>
     <string name="settings_price_per_interval">%1$s / %2$s</string>

@@ -17,7 +17,7 @@
     <string name="detail_raw_source_headers">Headers</string>
     <string name="detail_raw_source_body">Inhoud</string>
     <string name="detail_raw_source_copy">Kopiëren</string>
-    <string name="detail_raw_source_copied">Naar het klembord gekopieerd</string>
+    <string name="detail_raw_source_copied">Naar klembord gekopieerd</string>
     <string name="detail_raw_source_close">Sluiten</string>
     <string name="detail_raw_source_unavailable">Voor dit bericht is geen ruwe bron beschikbaar.</string>
     <string name="detail_star_action">Bericht met ster markeren</string>

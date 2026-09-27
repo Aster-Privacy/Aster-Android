@@ -36,16 +36,16 @@
     <string name="notif_channel_billing_name">お支払い</string>
     <string name="onboarding_checklist_title">Aster の設定（%1$d／%2$d）</string>
     <string name="onboarding_task_first_email">最初のメッセージを送信する</string>
-    <string name="onboarding_task_import">これまでのメールをインポートする</string>
+    <string name="onboarding_task_import">古いメールをインポート</string>
     <string name="onboarding_task_install">パソコンに Aster をインストールする</string>
     <string name="onboarding_task_recovery">リカバリー用のメールアドレスを追加する</string>
     <string name="payment_confirmed">お支払いを確認しました</string>
-    <string name="payment_processing_delayed">お支払いを処理しています。反映まで少し時間がかかることがあります。</string>
+    <string name="payment_processing_delayed">お支払いを処理中です。有効化には少し時間がかかることがあります。</string>
     <string name="payment_failed_notification_body">%1$s プランを継続するには、カード情報を更新してください。</string>
     <string name="payment_failed_notification_body_generic">プランを継続するには、カード情報を更新してください。</string>
     <string name="payment_failed_notification_title">お支払いを処理できませんでした</string>
     <string name="plan_name_duo">Duo</string>
-    <string name="plan_name_family">Family</string>
+    <string name="plan_name_family">ファミリー</string>
     <string name="plan_price_per_period">請求期間あたり</string>
     <string name="plans_unavailable">現在プランを読み込めません。</string>
     <string name="see_pricing">料金を見る</string>
@@ -104,7 +104,7 @@
     <string name="billing_support_subtitle">チームにメッセージを送る</string>
     <string name="billing_trust_card">このページからいつでも解約できます。カード決済には 30 日間の返金保証があります。</string>
     <string name="billing_trust_crypto">暗号資産での支払いは自動更新されず、返金もできません。プラン終了前に Aster がお知らせします。</string>
-    <string name="billing_cancel_continue">解約を続ける</string>
+    <string name="billing_cancel_continue">解約に進む</string>
     <string name="billing_cancel_offer_title_price">もっと安く続ける方法</string>
     <string name="billing_cancel_offer_body_price">アドレス、エイリアス、メールはそのままです。変わるのは料金だけです。</string>
     <string name="billing_cancel_offer_title_unused">プランがあなたのためにしていること</string>
@@ -123,7 +123,7 @@
     <string name="billing_see_all_features">%1$s の全機能を見る</string>
     <string name="billing_plan_highlights">含まれるもの</string>
     <string name="billing_credits_subtitle">残高とチャージ</string>
-    <string name="billing_credits_body">クレジットは、カードに請求される前に更新と追加オプションの支払いに使われます。</string>
+    <string name="billing_credits_body">カードに請求される前に、クレジットで更新料と追加オプションを支払います。</string>
     <string name="billing_credits_use_for_renewals">更新にクレジットを使う</string>
     <string name="billing_credits_use_for_renewals_body">プランの更新時に、Aster は先に残高を使います。</string>
     <string name="billing_credits_add_funds">チャージする</string>
@@ -150,7 +150,7 @@
     <string name="billing_status_ok">問題なし</string>
     <string name="billing_status_almost_full">もうすぐ上限</string>
     <string name="billing_status_action_required">対応が必要</string>
-    <string name="billing_status_near_limit">上限に近づいています</string>
+    <string name="billing_status_near_limit">上限間近</string>
     <string name="billing_status_limit_reached">上限に達しました</string>
     <string name="billing_or_yearly">または年額 %1$s</string>
     <string name="billing_credits_title">クレジット</string>
