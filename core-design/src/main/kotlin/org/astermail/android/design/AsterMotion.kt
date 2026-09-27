@@ -43,7 +43,7 @@ object AsterEasing {
     val dialog_enter = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
     val dialog_exit = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)
     val scrim = CubicBezierEasing(0.4f, 0f, 0.2f, 1f)
-    val island = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+    val island = AsterIslandMotion.ease
 }
 
 object AsterDuration {

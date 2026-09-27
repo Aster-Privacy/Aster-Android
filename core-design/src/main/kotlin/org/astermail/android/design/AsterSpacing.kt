@@ -31,25 +31,25 @@ object AsterSpacing {
     val xl = 20.dp
     val xxl = 24.dp
     val xxxl = 32.dp
-    val row_min_height = 56.dp
-    val row_pad_x = 16.dp
-    val row_pad_y = 12.dp
-    val section_gap = 24.dp
-    val island_gap = 8.dp
-    val row_gap = 3.dp
+    val row_min_height = AsterIslandSpacing.row_min_height
+    val row_pad_x = AsterIslandSpacing.row_pad_x
+    val row_pad_y = AsterIslandSpacing.row_pad_y
+    val section_gap = AsterIslandSpacing.section_gap
+    val island_gap = AsterIslandSpacing.island_gap
+    val row_gap = AsterIslandSpacing.stack_gap
 }
 
 object AsterRadius {
-    val island = 16.dp
-    val island_lg = 18.dp
-    val control = 16.dp
-    val item = 8.dp
-    val pill = 999.dp
+    val island = AsterIslandRadius.island
+    val island_lg = AsterIslandRadius.island_lg
+    val control = AsterIslandRadius.control
+    val item = AsterIslandRadius.item
+    val pill = AsterIslandRadius.pill
     val sm = item
     val md = control
     val lg = control
     val xl = control
     val xxl = island_lg
-    val panel = control
-    val field = control
+    val panel = AsterIslandRadius.panel
+    val field = AsterIslandRadius.field
 }
