@@ -383,7 +383,6 @@
     <string name="op_negate_desc">نفي أي عامل</string>
     <string name="search_privacy_note">جميع عمليات البحث مشفرة من طرف إلى طرف. يتم فك تشفير بريدك محلياً على هذا الجهاز - لا يتم إرسال شيء إلى الخادم.</string>
     <string name="no_results_found">لم يتم العثور على نتائج</string>
-    <string name="results_count">النتائج: %d</string>
 
     <string name="contacts">جهات الاتصال</string>
     <string name="syncing">جارٍ المزامنة</string>
@@ -1561,7 +1560,6 @@
     <string name="mail_rules_duplicate">تكرار</string>
     <string name="mail_rules_delete">حذف</string>
     <string name="mail_rules_run_on_existing">تشغيل على البريد الموجود</string>
-    <string name="mail_rules_applied_count">طُبّقت %1$d مرة</string>
     <string name="mail_rules_more">المزيد</string>
     <string name="mail_rules_field_from">من</string>
     <string name="mail_rules_field_reply_to">الرد إلى</string>

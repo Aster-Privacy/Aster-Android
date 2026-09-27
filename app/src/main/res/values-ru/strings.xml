@@ -383,7 +383,6 @@
     <string name="op_negate_desc">Отрицание любого оператора</string>
     <string name="search_privacy_note">Все поисковые запросы зашифрованы сквозным шифрованием. Ваша почта расшифровывается локально на этом устройстве - ничего не отправляется на сервер.</string>
     <string name="no_results_found">Результаты не найдены</string>
-    <string name="results_count">%d результат(ов)</string>
 
     <string name="contacts">Контакты</string>
     <string name="syncing">Синхронизация</string>
@@ -1555,7 +1554,6 @@
     <string name="mail_rules_duplicate">Дублировать</string>
     <string name="mail_rules_delete">Удалить</string>
     <string name="mail_rules_run_on_existing">Применить к существующей почте</string>
-    <string name="mail_rules_applied_count">Применено %1$d раз</string>
     <string name="mail_rules_more">Ещё</string>
     <string name="mail_rules_field_from">От кого</string>
     <string name="mail_rules_field_reply_to">Обратный адрес</string>

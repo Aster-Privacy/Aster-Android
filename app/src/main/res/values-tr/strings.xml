@@ -383,7 +383,6 @@
     <string name="op_negate_desc">Herhangi bir operatörü olumsuzla</string>
     <string name="search_privacy_note">Tüm aramalar uçtan uca şifrelidir. E-postanız bu cihazda yerel olarak çözülür - sunucuya hiçbir şey gönderilmez.</string>
     <string name="no_results_found">Sonuç bulunamadı</string>
-    <string name="results_count">%d sonuç</string>
 
     <string name="contacts">Kişiler</string>
     <string name="syncing">Eşitleniyor</string>
@@ -1549,7 +1548,6 @@
     <string name="mail_rules_duplicate">Çoğalt</string>
     <string name="mail_rules_delete">Sil</string>
     <string name="mail_rules_run_on_existing">Mevcut postada çalıştır</string>
-    <string name="mail_rules_applied_count">%1$d kez uygulandı</string>
     <string name="mail_rules_more">Daha fazla</string>
     <string name="mail_rules_field_from">Kimden</string>
     <string name="mail_rules_field_reply_to">Yanıt adresi</string>

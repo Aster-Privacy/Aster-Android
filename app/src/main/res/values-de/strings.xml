@@ -384,7 +384,6 @@
     <string name="op_negate_desc">Operator negieren</string>
     <string name="search_privacy_note">Alle Suchen sind Ende-zu-Ende-verschlüsselt. Ihre E-Mails werden lokal auf diesem Gerät entschlüsselt - nichts wird an den Server gesendet.</string>
     <string name="no_results_found">Keine Ergebnisse gefunden</string>
-    <string name="results_count">%d Ergebnis(se)</string>
 
     <string name="contacts">Kontakte</string>
     <string name="syncing">Wird synchronisiert</string>
@@ -1550,7 +1549,6 @@
     <string name="mail_rules_duplicate">Duplizieren</string>
     <string name="mail_rules_delete">Löschen</string>
     <string name="mail_rules_run_on_existing">Auf vorhandene E-Mails anwenden</string>
-    <string name="mail_rules_applied_count">%1$d mal angewendet</string>
     <string name="mail_rules_more">Mehr</string>
     <string name="mail_rules_field_from">Von</string>
     <string name="mail_rules_field_reply_to">Antwort an</string>

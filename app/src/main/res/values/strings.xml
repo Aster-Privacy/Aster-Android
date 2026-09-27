@@ -709,7 +709,6 @@
     <string name="op_negate_desc">Negate any operator</string>
     <string name="search_privacy_note">All searches are encrypted end-to-end. Your mail is decrypted locally on this device - nothing is sent to the server.</string>
     <string name="no_results_found">No results found</string>
-    <string name="results_count">%d result(s)</string>
 
     <!-- Contacts -->
     <string name="contacts">Contacts</string>
@@ -2106,7 +2105,6 @@
     <string name="mail_rules_duplicate">Duplicate</string>
     <string name="mail_rules_delete">Delete</string>
     <string name="mail_rules_run_on_existing">Run on existing mail</string>
-    <string name="mail_rules_applied_count">Applied %1$d times</string>
     <string name="mail_rules_more">More</string>
 
     <string name="mail_rules_field_from">From</string>

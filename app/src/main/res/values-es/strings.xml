@@ -384,7 +384,6 @@
     <string name="op_negate_desc">Negar cualquier operador</string>
     <string name="search_privacy_note">Todas las búsquedas están cifradas de extremo a extremo. Tus correos se descifran localmente en este dispositivo - nada se envía al servidor.</string>
     <string name="no_results_found">No se encontraron resultados</string>
-    <string name="results_count">%d resultado(s)</string>
 
     <string name="contacts">Contactos</string>
     <string name="syncing">Sincronizando</string>
@@ -1553,7 +1552,6 @@
     <string name="mail_rules_duplicate">Duplicar</string>
     <string name="mail_rules_delete">Eliminar</string>
     <string name="mail_rules_run_on_existing">Aplicar al correo existente</string>
-    <string name="mail_rules_applied_count">Aplicada %1$d veces</string>
     <string name="mail_rules_more">Más</string>
     <string name="mail_rules_field_from">De</string>
     <string name="mail_rules_field_reply_to">Responder a</string>

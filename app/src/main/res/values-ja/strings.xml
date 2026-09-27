@@ -383,7 +383,6 @@
     <string name="op_negate_desc">演算子の否定</string>
     <string name="search_privacy_note">すべての検索はエンドツーエンドで暗号化されています。メールはこのデバイスでローカルに復号されます - サーバーには何も送信されません。</string>
     <string name="no_results_found">結果が見つかりません</string>
-    <string name="results_count">%d件の結果</string>
 
     <string name="contacts">連絡先</string>
     <string name="syncing">同期中</string>
@@ -1547,7 +1546,6 @@
     <string name="mail_rules_duplicate">複製</string>
     <string name="mail_rules_delete">削除</string>
     <string name="mail_rules_run_on_existing">既存のメールに実行</string>
-    <string name="mail_rules_applied_count">%1$d 回適用</string>
     <string name="mail_rules_more">その他</string>
     <string name="mail_rules_field_from">送信者</string>
     <string name="mail_rules_field_reply_to">返信先</string>

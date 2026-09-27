@@ -383,7 +383,6 @@
     <string name="op_negate_desc">Nega qualsiasi operatore</string>
     <string name="search_privacy_note">Tutte le ricerche sono crittografate end-to-end. La tua posta viene decrittata localmente su questo dispositivo - niente viene inviato al server.</string>
     <string name="no_results_found">Nessun risultato trovato</string>
-    <string name="results_count">Risultati: %d</string>
 
     <string name="contacts">Contatti</string>
     <string name="syncing">Sincronizzazione</string>
@@ -1552,7 +1551,6 @@
     <string name="mail_rules_duplicate">Duplica</string>
     <string name="mail_rules_delete">Elimina</string>
     <string name="mail_rules_run_on_existing">Esegui sulla posta esistente</string>
-    <string name="mail_rules_applied_count">Applicata %1$d volte</string>
     <string name="mail_rules_more">Altro</string>
     <string name="mail_rules_field_from">Da</string>
     <string name="mail_rules_field_reply_to">Rispondi a</string>

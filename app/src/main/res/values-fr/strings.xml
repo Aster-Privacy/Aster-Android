@@ -407,7 +407,6 @@
     <string name="op_negate_desc">Négation de tout opérateur</string>
     <string name="search_privacy_note">Toutes les recherches sont chiffrées de bout en bout. Vos e-mails sont déchiffrés localement sur cet appareil - rien n\'est envoyé au serveur.</string>
     <string name="no_results_found">Aucun résultat trouvé</string>
-    <string name="results_count">%d résultat(s)</string>
 
     <!-- Contacts -->
     <string name="contacts">contacts</string>
@@ -1974,7 +1973,6 @@
     <string name="mail_rules_add_action">Ajouter une action</string>
     <string name="mail_rules_add_condition">Ajouter une condition</string>
     <string name="mail_rules_and">et</string>
-    <string name="mail_rules_applied_count">Appliquée %1$d fois</string>
     <string name="mail_rules_color">Couleur</string>
     <string name="mail_rules_confirm">Terminé</string>
     <string name="mail_rules_create">Créer une règle</string>

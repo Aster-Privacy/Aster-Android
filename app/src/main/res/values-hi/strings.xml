@@ -618,7 +618,6 @@
     <string name="op_negate_desc">किसी भी ऑपरेटर को उलट दें</string>
     <string name="search_privacy_note">सारी खोजें एंड-टू-एंड एन्क्रिप्टेड हैं। आपकी मेल इसी डिवाइस पर डिक्रिप्ट होती है - सर्वर पर कुछ नहीं भेजा जाता।</string>
     <string name="no_results_found">कोई नतीजा नहीं मिला</string>
-    <string name="results_count">%d नतीजे</string>
     <string name="contacts">संपर्क</string>
     <string name="syncing">सिंक हो रहा है</string>
     <string name="sync_contacts">संपर्क सिंक करें</string>
@@ -1867,7 +1866,6 @@
     <string name="mail_rules_duplicate">प्रतिलिपि बनाएं</string>
     <string name="mail_rules_delete">हटाएं</string>
     <string name="mail_rules_run_on_existing">मौजूदा मेल पर चलाएं</string>
-    <string name="mail_rules_applied_count">%1$d बार लागू हुआ</string>
     <string name="mail_rules_more">और</string>
     <string name="mail_rules_field_from">प्रेषक</string>
     <string name="mail_rules_field_reply_to">Reply-To</string>

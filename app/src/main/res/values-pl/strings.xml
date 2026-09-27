@@ -383,7 +383,6 @@
     <string name="op_negate_desc">Negacja dowolnego operatora</string>
     <string name="search_privacy_note">Wszystkie wyszukiwania są szyfrowane end-to-end. Twoja poczta jest odszyfrowywana lokalnie na tym urządzeniu - nic nie jest wysyłane na serwer.</string>
     <string name="no_results_found">Nie znaleziono wyników</string>
-    <string name="results_count">Wyniki: %d</string>
 
     <string name="contacts">Kontakty</string>
     <string name="syncing">Synchronizacja</string>
@@ -1555,7 +1554,6 @@
     <string name="mail_rules_duplicate">Duplikuj</string>
     <string name="mail_rules_delete">Usuń</string>
     <string name="mail_rules_run_on_existing">Uruchom na istniejącej poczcie</string>
-    <string name="mail_rules_applied_count">Zastosowano %1$d razy</string>
     <string name="mail_rules_more">Więcej</string>
     <string name="mail_rules_field_from">Od</string>
     <string name="mail_rules_field_reply_to">Odpowiedz do</string>

@@ -383,7 +383,6 @@
     <string name="op_negate_desc">Keer een operator om</string>
     <string name="search_privacy_note">Alle zoekopdrachten zijn end-to-end versleuteld. Je e-mail wordt lokaal op dit apparaat ontsleuteld - er wordt niets naar de server gestuurd.</string>
     <string name="no_results_found">Geen resultaten gevonden</string>
-    <string name="results_count">%d resultaat/resultaten</string>
 
     <string name="contacts">Contacten</string>
     <string name="syncing">Synchroniseren</string>
@@ -1549,7 +1548,6 @@
     <string name="mail_rules_duplicate">Dupliceren</string>
     <string name="mail_rules_delete">Verwijderen</string>
     <string name="mail_rules_run_on_existing">Uitvoeren op bestaande e-mail</string>
-    <string name="mail_rules_applied_count">%1$d keer toegepast</string>
     <string name="mail_rules_more">Meer</string>
     <string name="mail_rules_field_from">Van</string>
     <string name="mail_rules_field_reply_to">Antwoord aan</string>
