@@ -48,7 +48,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class FromAliasInstrumentedTest {
 
-    private val user_email = "adam@astermail.org"
+    private val user_email = "account.owner@astermail.org"
     private val pinned = "shopping@astermail.org"
     private val received = "support@astermail.org"
     private val ghost = "ghost@realiased.me"
