@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="count_selected">
+        <item quantity="one">%1$d ausgewählt</item>
+        <item quantity="other">%1$d ausgewählt</item>
+    </plurals>
+    <plurals name="inbox_selected_count">
+        <item quantity="one">%1$d ausgewählt</item>
+        <item quantity="other">%1$d ausgewählt</item>
+    </plurals>
+    <plurals name="contacts_bulk_progress">
+        <item quantity="one">%1$d von %2$d Kontakten werden gelöscht</item>
+        <item quantity="other">%1$d von %2$d Kontakten werden gelöscht</item>
+    </plurals>
+    <plurals name="recovery_codes_remaining">
+        <item quantity="one">Noch %1$d von %2$d Codes</item>
+        <item quantity="other">Noch %1$d von %2$d Codes</item>
+    </plurals>
+    <plurals name="export_progress_emails">
+        <item quantity="one">%1$d / %2$d E-Mails</item>
+        <item quantity="other">%1$d / %2$d E-Mails</item>
+    </plurals>
+    <plurals name="crypto_native_status_confirming">
+        <item quantity="one">%1$d von %2$d Bestätigungen</item>
+        <item quantity="other">%1$d von %2$d Bestätigungen</item>
+    </plurals>
+    <plurals name="kids_seats_used">
+        <item quantity="one">%1$d von %2$d Familienplätzen belegt</item>
+        <item quantity="other">%1$d von %2$d Familienplätzen belegt</item>
+    </plurals>
+    <plurals name="domain_records_verified">
+        <item quantity="one">%1$d von %2$d Einträgen bestätigt</item>
+        <item quantity="other">%1$d von %2$d Einträgen bestätigt</item>
+    </plurals>
+    <plurals name="alias_limit_notice">
+        <item quantity="one">%1$d von %2$d Aliassen belegt. Führen Sie ein Upgrade durch, um mehr zu erhalten.</item>
+        <item quantity="other">%1$d von %2$d Aliassen belegt. Führen Sie ein Upgrade durch, um mehr zu erhalten.</item>
+    </plurals>
+    <plurals name="score_steps_left">
+        <item quantity="one">Noch %1$d</item>
+        <item quantity="other">Noch %1$d</item>
+    </plurals>
+    <plurals name="alias_import_summary_created">
+        <item quantity="one">%1$d importiert</item>
+        <item quantity="other">%1$d importiert</item>
+    </plurals>
+    <plurals name="alias_import_summary_skipped">
+        <item quantity="one">%1$d existierte bereits</item>
+        <item quantity="other">%1$d existierten bereits</item>
+    </plurals>
+    <plurals name="alias_import_summary_failed">
+        <item quantity="one">%1$d fehlgeschlagen</item>
+        <item quantity="other">%1$d fehlgeschlagen</item>
+    </plurals>
+    <plurals name="alias_apply_existing_canceled">
+        <item quantity="one">Gestoppt: %1$d aktualisiert</item>
+        <item quantity="other">Gestoppt: %1$d aktualisiert</item>
+    </plurals>
+    <plurals name="fix_enc_codes_used">
+        <item quantity="one">%1$d verwendet</item>
+        <item quantity="other">%1$d verwendet</item>
+    </plurals>
+    <plurals name="payment_failed_days_left">
+        <item quantity="one">Zugriff wird in %1$d Tag eingeschränkt.</item>
+        <item quantity="other">Zugriff wird in %1$d Tagen eingeschränkt.</item>
+    </plurals>
+    <plurals name="templates_decrypt_failed_count">
+        <item quantity="one">%1$d Vorlage konnte auf diesem Gerät nicht gelesen werden. Sie wurde mit einem Schlüssel gespeichert, den dieses Gerät derzeit nicht besitzt.</item>
+        <item quantity="other">%1$d Vorlagen konnten auf diesem Gerät nicht gelesen werden. Sie wurden mit einem Schlüssel gespeichert, den dieses Gerät derzeit nicht besitzt.</item>
+    </plurals>
+    <plurals name="contact_trash_days_left">
+        <item quantity="one">Noch %1$d Tag</item>
+        <item quantity="other">Noch %1$d Tage</item>
+    </plurals>
+    <plurals name="quick_action_delete_old_confirm">
+        <item quantity="one">%1$d Unterhaltung, die älter als 30 Tage ist, in den Papierkorb verschieben?</item>
+        <item quantity="other">%1$d Unterhaltungen, die älter als 30 Tage sind, in den Papierkorb verschieben?</item>
+    </plurals>
+    <plurals name="undo_send_delay_seconds">
+        <item quantity="one">%1$d Sekunde</item>
+        <item quantity="other">%1$d Sekunden</item>
+    </plurals>
+</resources>

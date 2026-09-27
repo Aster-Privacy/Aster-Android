@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Aster Mail</string>
     <string name="generate_ghost_alias">Generate ghost alias</string>
     <string name="ghost_alias_subtitle">Create a temporary @realiased.me address that auto-expires.</string>
@@ -304,7 +304,6 @@
     <string name="standard">Standard</string>
     <string name="end_to_end_encrypted">End-to-end encrypted</string>
     <string name="protected_in_transit">Protected in transit</string>
-    <string name="trackers_blocked">%d tracker(s) blocked</string>
     <string name="unstar">Unstar</string>
     <string name="star">Star</string>
     <string name="react">React</string>
@@ -517,8 +516,6 @@
     <string name="risky">Risky</string>
     <string name="scan_inbox">Scan inbox</string>
     <string name="deselect_all">Deselect all</string>
-    <string name="count_selected">%1$d selected</string>
-    <string name="contacts_bulk_progress">Deleting %1$d of %2$d contacts</string>
     <string name="unsubscribe_selected">Unsubscribe (%1$d)</string>
     <string name="reactivate_selected">Reactivate (%1$d)</string>
     <string name="open_unsubscribe_page">Open unsubscribe page</string>
@@ -854,7 +851,7 @@
     <string name="attachment_too_large">\"%1$s\" is over the %2$s single-file limit</string>
     <string name="attachment_too_large_upgradable">\"%1$s\" is over the %2$s single-file limit on your plan. Upgrading raises it to %3$s.</string>
     <string name="attachment_total_too_large">Your attachments are over the %1$s total limit</string>
-    <string name="attachment_too_many">You can attach up to %1$d files to one email</string>
+    <string name="attachment_too_many" tools:ignore="PluralsCandidate">You can attach up to %1$d files to one email</string>
     <string name="attachment_already_attached">\"%1$s\" is already attached</string>
     <string name="attachment_read_failed">\"%1$s\" could not be read</string>
     <string name="scheduled_send_no_attachments">Scheduled emails can\'t include attachments yet. Remove them or send now.</string>
@@ -959,7 +956,6 @@
     <string name="send">Send</string>
     <string name="auto_save_recipients">Auto-save recipients to contacts</string>
     <string name="undo_send">Undo send</string>
-    <string name="undo_send_delay_seconds">%1$d seconds</string>
     <string name="change_photo">Change photo</string>
     <string name="confirmations">Confirmations</string>
     <string name="confirm_before_delete">Confirm before delete</string>
@@ -1955,7 +1951,6 @@
     <string name="upgrade_inline_card_description">You\'ve hit the free plan limit. Unlock more on a paid plan.</string>
     <string name="your_key">Your key</string>
     <string name="recovery_codes">Recovery codes</string>
-    <string name="recovery_codes_remaining">%1$d of %2$d codes left</string>
     <string name="low">Low</string>
     <string name="ok">OK</string>
     <string name="recovery_codes_low_warning">You\'re running low on recovery codes. Get new codes so you don\'t get locked out.</string>
@@ -2275,7 +2270,6 @@
     <string name="export_format_eml_subtitle">One .eml file per message, organized in a folder</string>
     <string name="export_start">Start Export</string>
     <string name="export_in_progress">Exporting your data</string>
-    <string name="export_progress_emails">%1$d / %2$d emails</string>
     <string name="export_complete">Export complete</string>
     <string name="export_emails_exported">Emails exported</string>
     <string name="export_file_size">File size</string>
@@ -2313,7 +2307,6 @@
     <string name="crypto_native_status_awaiting">Awaiting payment</string>
     <string name="crypto_native_status_detected">Payment detected</string>
     <string name="crypto_native_status_confirming_short">Confirming</string>
-    <string name="crypto_native_status_confirming">%1$d of %2$d confirmations</string>
     <string name="crypto_native_status_credited">Plan credited</string>
     <string name="crypto_native_usd_value_label">Amount due</string>
     <string name="crypto_native_expires_in">Expires in %1$s</string>
@@ -2427,7 +2420,6 @@
     <string name="view_plans">View Plans</string>
     <string name="kids_reserved_addresses">Reserved addresses for kids</string>
     <string name="kids_reserved_subtitle">Hold an address for your child. Share the claim link so they can finish setup with their own password.</string>
-    <string name="kids_seats_used">%1$d of %2$d family seats used</string>
     <string name="kids_seats_breakdown">%1$s, %2$s, %3$s</string>
     <string name="kids_no_reservations">No reserved addresses yet. Reserve one on astermail.org.</string>
     <string name="kids_reserve_on_web">Reserve on web</string>
@@ -2529,7 +2521,6 @@
     <string name="score_partial">Partial</string>
     <string name="score_strong">Strong</string>
     <string name="score_complete">All set</string>
-    <string name="score_steps_left">%1$d left</string>
     <string name="check_passkey_registered">Passkey registered</string>
     <string name="check_verified_recovery_email">Verified recovery email</string>
     <plurals name="passkeys_registered_count">
@@ -2614,10 +2605,9 @@
     <string name="alias_apply_existing_failed">Could not start applying these settings.</string>
     <string name="alias_apply_existing_cancel_failed">Could not stop this run.</string>
     <string name="alias_apply_existing_queued">Queued...</string>
-    <string name="alias_apply_existing_progress">Applying: %1$d scanned, %2$d updated</string>
-    <string name="alias_apply_existing_progress_total">Applying: %1$d of %2$d scanned, %3$d updated</string>
-    <string name="alias_apply_existing_done">Done: %1$d scanned, %2$d updated</string>
-    <string name="alias_apply_existing_canceled">Stopped: %1$d updated</string>
+    <string name="alias_apply_existing_progress" tools:ignore="PluralsCandidate">Applying: %1$d scanned, %2$d updated</string>
+    <string name="alias_apply_existing_progress_total" tools:ignore="PluralsCandidate">Applying: %1$d of %2$d scanned, %3$d updated</string>
+    <string name="alias_apply_existing_done" tools:ignore="PluralsCandidate">Done: %1$d scanned, %2$d updated</string>
     <string name="alias_apply_existing_error">Applying to existing mail failed. Try again.</string>
     <string name="alias_apply_existing_unavailable">Mail already in your account can\'t be moved to Spam.</string>
     <string name="alias_delivery_label_rule_note">Mail rule \"%1$s\" already labels mail for this alias %2$s.</string>
@@ -2660,11 +2650,7 @@
     <string name="alias_import_target_domain">Import to</string>
     <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">Re-enable if disabled</string>
-    <string name="alias_import_confirm">Import %1$d aliases</string>
     <string name="alias_import_progress">Importing %1$d of %2$d...</string>
-    <string name="alias_import_summary_created">%1$d imported</string>
-    <string name="alias_import_summary_skipped">%1$d already existed</string>
-    <string name="alias_import_summary_failed">%1$d failed</string>
     <string name="alias_import_error_no_aliases">No importable aliases found in this file.</string>
     <string name="alias_import_error_encrypted">This export is encrypted. Export it again without encryption, then import it.</string>
     <string name="alias_export_failed">Export failed. Nothing was saved.</string>
@@ -2672,7 +2658,6 @@
     <string name="alias_export_source_domain_addresses">Custom domain addresses</string>
     <string name="alias_export_source_directories">Directories</string>
     <string name="alias_export_source_ghost">Ghost aliases</string>
-    <string name="alias_export_source_count">%1$d entries</string>
     <string name="alias_export_warning_title">This file is not encrypted</string>
     <string name="alias_export_warning_body">Anyone who opens it can read every alias, note and website it contains. Keep it in your password manager or on an encrypted drive.</string>
     <string name="alias_export_summary">%1$s across %2$s.</string>
@@ -2703,7 +2688,7 @@
     <string name="density_compact_subtitle">Tighter rows to fit more emails on screen</string>
     <string name="density_comfortable">Comfortable</string>
     <string name="density_comfortable_subtitle">More breathing room around each email</string>
-    <string name="message_download_status">Message download status: %1$d out of %2$d</string>
+    <string name="message_download_status" tools:ignore="PluralsCandidate">Message download status: %1$d out of %2$d</string>
     <string name="index_download_paused">Message download paused</string>
     <string name="index_time_remaining_min">About %1$d min remaining</string>
     <string name="index_time_remaining_less_min">Less than a minute remaining</string>
@@ -2781,7 +2766,6 @@
         <item quantity="other">Moved %d messages to trash</item>
     </plurals>
     <string name="domain_verify_slow">Aster couldn\'t finish the DNS check. Your records may still be verifying, so try again in a few minutes.</string>
-    <string name="domain_records_verified">%1$d of %2$d records verified</string>
     <string name="ext_sync_started">Sync started</string>
     <string name="ext_account_removed">Account removed</string>
     <string name="folder_created">Folder created</string>
@@ -2851,7 +2835,6 @@
     <string name="plan_change_due_today">Due today: %1$s</string>
     <string name="plan_change_preview_failed">The amount due today could not be calculated. The full price is shown.</string>
     <string name="payment_failed_banner_overdue">Your payment did not go through. Access to your %1$s plan is limited soon.</string>
-    <string name="payment_failed_days_left">Access limited in %1$d days.</string>
     <string name="payment_failed_one_day_left">Access limited in 1 day.</string>
     <string name="device_verification_failed">This device could not be verified for that change. Sign in again on this device, then try again.</string>
     <string name="cancel_reason_title">Before you go</string>
@@ -2998,7 +2981,7 @@
     <string name="send_refusal_attachments_too_large">These attachments add up to more than %1$s, which is the most one message can carry on your plan. Removing or shrinking a file will let this send, and your draft is saved.</string>
     <string name="send_refusal_recipient_concentration">You have sent to as many addresses at %1$s as we allow in one hour. Sending this many at once to a single provider gets our mail servers blocked. Try again later, and your draft is saved.</string>
     <string name="send_refusal_that_provider">that provider</string>
-    <string name="send_refusal_too_many_attachments">This message has more than %1$d attachments, which is the most one message can carry. Removing a few will let this send, and your draft is saved.</string>
+    <string name="send_refusal_too_many_attachments" tools:ignore="PluralsCandidate">This message has more than %1$d attachments, which is the most one message can carry. Removing a few will let this send, and your draft is saved.</string>
     <string name="send_refusal_too_many_recipients">This message has more recipients than one message can reach. Your account can send to %1$d at a time, and that limit rises over your first week. Sending it in smaller batches will work, and your draft is saved.</string>
     <string name="settings_save_failed_banner">Your changes didn\'t save. Check your connection, then try again.</string>
     <string name="show_email_preview">Preview text</string>
@@ -3007,7 +2990,6 @@
     <string name="signature_set_default">Use as default signature</string>
     <string name="star_failed">Failed to star</string>
     <string name="tab_label_with_count">%1$s (%2$d)</string>
-    <string name="templates_decrypt_failed_count">%1$d templates could not be read on this device. They were saved with a key this device does not currently hold.</string>
     <string name="time_format">Time format</string>
     <string name="time_format_12h">12-hour (1:30 PM)</string>
     <string name="time_format_24h">24-hour (13:30)</string>
@@ -3050,7 +3032,6 @@
     <string name="domain_purchase_manage_paid">Paid</string>
     <string name="domain_purchase_manage_auto_renew_note">This domain doesn\'t renew automatically. To keep it, renew it before the expiration date.</string>
     <string name="domain_purchase_manage_support_note">To transfer this domain to another registrar or ask about a refund, contact support.</string>
-    <string name="domain_purchase_n_years">%1$d years</string>
     <string name="twin_address_title">Your matching address</string>
     <string name="twin_address_reserved_description">%1$s is reserved for your account, so no one else can register it. Create it as an alias whenever you want to send and receive from it.</string>
     <string name="twin_address_available_description">%1$s is the matching address on the other Aster domain. Create it as an alias to send and receive from it.</string>
@@ -3091,7 +3072,6 @@
     <string name="empty_contacts_trash_confirm_message">Permanently delete all contacts in Trash? This can’t be undone.</string>
     <string name="contact_restored">Contact restored</string>
     <string name="contact_moved_to_trash">Contact moved to Trash</string>
-    <string name="contact_trash_days_left">%1$d days left</string>
     <string name="contacts_in_trash_notice">Contacts in Trash are deleted permanently after 30 days.</string>
     <string name="contacts_import_empty">No contacts found in that file</string>
     <string name="contacts_import_failed">Couldn\'t import contacts</string>
@@ -3239,7 +3219,6 @@
     <string name="quick_action_no_unread">Nothing to mark as read here</string>
     <string name="quick_action_no_read">No read emails to archive here</string>
     <string name="quick_action_no_old">No emails older than 30 days here</string>
-    <string name="quick_action_delete_old_confirm">Move %1$d conversations older than 30 days to Trash?</string>
     <string name="inbox_tools">Filters and quick actions</string>
     <string name="inbox_tools_subtitle">Show the filter and quick action buttons in the inbox header</string>
     <string name="change_address">Change address</string>

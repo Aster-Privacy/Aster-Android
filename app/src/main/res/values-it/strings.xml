@@ -199,7 +199,6 @@
     <string name="encrypted">Crittografato</string>
     <string name="end_to_end_encrypted">Crittografato end-to-end</string>
     <string name="protected_in_transit">Protetto in transito</string>
-    <string name="trackers_blocked">%d tracker bloccati</string>
     <string name="unstar">Rimuovi speciale</string>
     <string name="star">Speciale</string>
     <string name="more">altro</string>
@@ -569,7 +568,6 @@
     <string name="send">Invia</string>
     <string name="auto_save_recipients">Salva automaticamente destinatari nei contatti</string>
     <string name="undo_send">Annulla invio</string>
-    <string name="undo_send_delay_seconds">%1$d secondi</string>
     <string name="change_photo">Cambia foto</string>
     <string name="confirmations">Conferme</string>
     <string name="confirm_before_delete">Conferma prima di eliminare</string>
@@ -1085,8 +1083,8 @@
     <string name="error_too_many_attempts">Troppi tentativi. Attendi un momento e riprova.</string>
 
     <string name="error_send_recovery">Invio email di recupero non riuscito</string>
-    <string name="error_invalid_recovery_code">I codici di recupero iniziano con \'ASTER-\'</string>
-    <string name="error_invalid_code">Quel codice di recupero non corrispondeva. Un altro dalla sua lista salvata dovrebbe funzionare.</string>
+    <string name="error_invalid_recovery_code">Un codice di recupero ha questo formato: ASTER-XXXX-XXXX-XXXX-XXXX. Controlla il codice e inseriscilo di nuovo.</string>
+    <string name="error_invalid_code">Questo codice non corrisponde a questo account. Confrontalo con l\'elenco salvato e inseriscilo di nuovo. Spazi e maiuscole non contano.</string>
     <string name="error_recovery_failed">Recupero non riuscito</string>
     <string name="error_recovery_too_many_attempts">Questo account ha registrato troppi tentativi di recupero. Puoi riprovare tra circa 30 minuti. Nessuno dei tuoi codici è stato usato, quindi li hai ancora tutti.</string>
     <string name="status_deriving_key">Derivazione nuova chiave password</string>
@@ -1339,7 +1337,7 @@
     <string name="translation_translated">Tradotta da %1$s sul tuo dispositivo</string>
     <string name="translation_show_original">Mostra originale</string>
     <string name="translation_failed">Traduzione non riuscita</string>
-    <string name="customize_toolbar">Personalizza barra degli strumenti</string>
+    <string name="customize_toolbar">Personalizza barra strumenti</string>
     <string name="customize_toolbar_subtitle">Scegli quali azioni mostrare nella barra inferiore durante la lettura o la selezione delle email.</string>
     <string name="reading_toolbar">Lettura email</string>
     <string name="selection_toolbar">Selezione email</string>
@@ -1467,7 +1465,6 @@
     <string name="score_partial">Parziale</string>
     <string name="score_strong">Forte</string>
     <string name="score_complete">Tutto pronto</string>
-    <string name="score_steps_left">Ne mancano %1$d</string>
     <string name="check_passkey_registered">Passkey registrata</string>
     <string name="check_verified_recovery_email">E-mail di recupero verificata</string>
     <plurals name="passkeys_registered_count">
@@ -1579,7 +1576,6 @@
     <string name="failed_purge_alias">Impossibile eliminare l\'alias</string>
     <string name="scan_inbox">Analizza posta in arrivo</string>
     <string name="deselect_all">Deseleziona tutto</string>
-    <string name="count_selected">%1$d selezionati</string>
     <string name="unsubscribe_selected">Annulla iscrizione (%1$d)</string>
     <string name="reactivate_selected">Riattiva (%1$d)</string>
     <string name="open_unsubscribe_page">Apri pagina annullamento iscrizione</string>
@@ -1763,7 +1759,7 @@
     <string name="totp_code_required_label">Codice dell’autenticatore o di backup</string>
     <string name="totp_code_required_error">Inserisci il codice a 6 cifre della tua app di autenticazione o uno dei codici di backup</string>
     <string name="preferences_locked_retry">Non è stato possibile sbloccare le impostazioni adesso. Mostriamo i valori predefiniti, torna indietro e riapri.</string>
-    <string name="plan_name_star">Star</string>
+    <string name="plan_name_star">Speciale</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Supernova</string>
     <string name="ghost_alias_limit_reached">Limite di alias ghost raggiunto per questo mese</string>
@@ -1802,7 +1798,6 @@
     <string name="upgrade_inline_card_description">Hai raggiunto il limite del piano gratuito. Sblocca di più con un piano a pagamento.</string>
     <string name="your_key">La tua chiave</string>
     <string name="recovery_codes">Codici di recupero</string>
-    <string name="recovery_codes_remaining">Restano %1$d codici su %2$d</string>
     <string name="low">Bassa</string>
     <string name="ok">OK</string>
     <string name="recovery_codes_low_warning">Ti restano pochi codici di recupero. Ottieni nuovi codici per non perdere l\'accesso.</string>
@@ -2096,7 +2091,6 @@
     <string name="export_format_eml_subtitle">Un file .eml per messaggio, raccolti in una cartella</string>
     <string name="export_start">Avvia esportazione</string>
     <string name="export_in_progress">Esportazione dei dati in corso</string>
-    <string name="export_progress_emails">%1$d / %2$d email</string>
     <string name="export_complete">Esportazione completata</string>
     <string name="export_emails_exported">Email esportate</string>
     <string name="export_file_size">Dimensione del file</string>
@@ -2129,7 +2123,6 @@
     <string name="crypto_native_status_awaiting">In attesa del pagamento</string>
     <string name="crypto_native_status_detected">Pagamento rilevato</string>
     <string name="crypto_native_status_confirming_short">In conferma</string>
-    <string name="crypto_native_status_confirming">%1$d di %2$d conferme</string>
     <string name="crypto_native_status_credited">Piano accreditato</string>
     <string name="crypto_native_usd_value_label">Importo dovuto</string>
     <string name="crypto_native_expires_in">Scade tra %1$s</string>
@@ -2182,7 +2175,7 @@
     <string name="vanguard_enable">Attiva Vanguard</string>
     <string name="vanguard_active">Attivo</string>
     <string name="vanguard_description">Protezione avanzata dell\'app con blocco e sicurezza rafforzata.</string>
-    <string name="vanguard_upgrade_cta">Passa a un piano superiore</string>
+    <string name="vanguard_upgrade_cta">Aggiorna piano</string>
     <string name="vanguard_confirm_disable_title">Disattivare Vanguard?</string>
     <string name="vanguard_confirm_disable_desc">Il blocco dell\'app e le altre protezioni di Vanguard verranno disattivati.</string>
     <string name="vanguard_disable">Disattiva</string>
@@ -2228,7 +2221,6 @@
     <string name="view_plans">Vedi i piani</string>
     <string name="kids_reserved_addresses">Indirizzi riservati per i bambini</string>
     <string name="kids_reserved_subtitle">Riserva un indirizzo per tuo figlio. Condividi il link di attivazione così potrà completare la configurazione con una password sua.</string>
-    <string name="kids_seats_used">%1$d di %2$d posti famiglia in uso</string>
     <string name="kids_seats_breakdown">%1$s, %2$s, %3$s</string>
     <string name="kids_no_reservations">Ancora nessun indirizzo riservato. Riservane uno su astermail.org.</string>
     <string name="kids_reserve_on_web">Riserva sul web</string>
@@ -2294,7 +2286,6 @@
     <string name="alias_apply_existing_progress">Applicazione: %1$d analizzati, %2$d aggiornati</string>
     <string name="alias_apply_existing_progress_total">Applicazione: %1$d di %2$d analizzati, %3$d aggiornati</string>
     <string name="alias_apply_existing_done">Fatto: %1$d analizzati, %2$d aggiornati</string>
-    <string name="alias_apply_existing_canceled">Interrotto: %1$d aggiornati</string>
     <string name="alias_apply_existing_error">Applicazione alla posta esistente non riuscita. Riprova.</string>
     <string name="alias_apply_existing_unavailable">La posta già presente nel tuo account non può essere spostata in Spam.</string>
     <string name="alias_delivery_label_rule_note">La regola \"%1$s\" etichetta già la posta di questo alias con %2$s.</string>
@@ -2392,11 +2383,7 @@
     <string name="alias_import_target_domain">Importa in</string>
     <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">Riabilita se disabilitato</string>
-    <string name="alias_import_confirm">Importa %1$d alias</string>
     <string name="alias_import_progress">Importazione di %1$d di %2$d...</string>
-    <string name="alias_import_summary_created">%1$d importati</string>
-    <string name="alias_import_summary_skipped">%1$d già esistenti</string>
-    <string name="alias_import_summary_failed">%1$d non riusciti</string>
     <string name="alias_import_error_no_aliases">Nessun alias importabile trovato in questo file.</string>
     <string name="alias_import_error_encrypted">Questa esportazione è crittografata. Esportala di nuovo senza crittografia, poi importala.</string>
     <string name="alias_export_title">Esporta alias</string>
@@ -2406,7 +2393,6 @@
     <string name="alias_export_source_domain_addresses">Indirizzi di dominio personalizzato</string>
     <string name="alias_export_source_directories">Directory</string>
     <string name="alias_export_source_ghost">Alias fantasma</string>
-    <string name="alias_export_source_count">%1$d voci</string>
     <string name="alias_export_warning_title">Questo file non è cifrato</string>
     <string name="alias_export_warning_body">Chiunque lo apra può leggere ogni alias, nota e sito web contenuto. Conservalo nel tuo gestore di password o su un disco cifrato.</string>
     <string name="alias_export_summary">%1$s in %2$s.</string>
@@ -2561,7 +2547,6 @@
     <string name="couldnt_remove_label">Impossibile rimuovere l\'etichetta</string>
     <string name="couldnt_unsnooze">Impossibile annullare il posticipo</string>
     <string name="domain_verify_slow">Aster non è riuscito a completare il controllo DNS. I tuoi record potrebbero essere ancora in verifica, quindi riprova tra qualche minuto.</string>
-    <string name="domain_records_verified">%1$d record su %2$d verificati</string>
     <string name="ext_sync_started">Sincronizzazione avviata</string>
     <string name="ext_account_removed">Account rimosso</string>
     <string name="folder_created">Cartella creata</string>
@@ -2630,7 +2615,6 @@
     <string name="plan_change_due_today">Dovuto oggi: %1$s</string>
     <string name="plan_change_preview_failed">Impossibile calcolare l’importo dovuto oggi. Viene mostrato il prezzo completo.</string>
     <string name="payment_failed_banner_overdue">Il tuo pagamento non è andato a buon fine. L\'accesso al piano %1$s sarà presto limitato.</string>
-    <string name="payment_failed_days_left">L\'accesso sarà limitato tra %1$d giorni.</string>
     <string name="payment_failed_one_day_left">L\'accesso sarà limitato tra 1 giorno.</string>
     <string name="device_verification_failed">Non è stato possibile verificare questo dispositivo per la modifica. Accedi di nuovo da questo dispositivo e riprova.</string>
     <string name="cancel_reason_title">Prima di andare</string>
@@ -2784,7 +2768,6 @@
     <string name="signature_set_default">Usa come firma predefinita</string>
     <string name="star_failed">Impossibile contrassegnare come speciale</string>
     <string name="tab_label_with_count">%1$s (%2$d)</string>
-    <string name="templates_decrypt_failed_count">Non è stato possibile leggere %1$d modelli su questo dispositivo. Sono stati salvati con una chiave che questo dispositivo al momento non possiede.</string>
     <string name="time_format">Formato orario</string>
     <string name="time_format_12h">12 ore (1:30 PM)</string>
     <string name="time_format_24h">24 ore (13:30)</string>
@@ -2892,7 +2875,6 @@
     <string name="domain_purchase_manage_paid">Pagato</string>
     <string name="domain_purchase_manage_auto_renew_note">Questo dominio non si rinnova automaticamente. Per conservarlo, rinnovalo prima della data di scadenza.</string>
     <string name="domain_purchase_manage_support_note">Per trasferire questo dominio a un altro registrar o chiedere un rimborso, contatta l\'assistenza.</string>
-    <string name="domain_purchase_n_years">%1$d anni</string>
     <string name="twin_address_title">Il tuo indirizzo corrispondente</string>
     <string name="twin_address_reserved_description">%1$s è riservato al tuo account, quindi nessun altro può registrarlo. Crealo come alias quando vuoi inviare e ricevere da questo indirizzo.</string>
     <string name="twin_address_available_description">%1$s è l’indirizzo corrispondente sull’altro dominio Aster. Crealo come alias per inviare e ricevere da questo indirizzo.</string>
@@ -2984,7 +2966,6 @@
     <string name="empty_contacts_trash_confirm_message">Eliminare definitivamente tutti i contatti nel cestino? L’operazione è irreversibile.</string>
     <string name="contact_restored">Contatto ripristinato</string>
     <string name="contact_moved_to_trash">Contatto spostato nel cestino</string>
-    <string name="contact_trash_days_left">%1$d giorni rimasti</string>
     <string name="contacts_in_trash_notice">I contatti nel cestino vengono eliminati definitivamente dopo 30 giorni.</string>
     <string name="contacts_import_empty">Nessun contatto trovato in quel file</string>
     <string name="contacts_import_failed">Impossibile importare i contatti</string>
@@ -3205,13 +3186,11 @@
     <string name="delete_emails_older_than_30_days">Elimina email più vecchie di 30 giorni</string>
     <string name="inbox_tools">Filtri e azioni rapide</string>
     <string name="inbox_tools_subtitle">Mostra i pulsanti di filtro e azioni rapide nell\'intestazione della posta in arrivo</string>
-    <string name="contacts_bulk_progress">Eliminazione di %1$d contatti su %2$d</string>
     <string name="plan_badge_thanks">Grazie per il tuo abbonamento %1$s.</string>
     <string name="quick_action_unavailable">Questa azione rapida non è disponibile in questa cartella</string>
     <string name="quick_action_no_unread">Qui non c\'è niente da segnare come letto</string>
     <string name="quick_action_no_read">Qui non ci sono email lette da archiviare</string>
     <string name="quick_action_no_old">Qui non ci sono email più vecchie di 30 giorni</string>
-    <string name="quick_action_delete_old_confirm">Spostare %1$d conversazioni più vecchie di 30 giorni nel cestino?</string>
     <string name="change_address">Cambia indirizzo</string>
     <string name="address_change_title">Cambia il tuo indirizzo</string>
     <string name="address_change_intro_lead">Leggi che cosa cambia prima di continuare.</string>
@@ -3256,7 +3235,7 @@
     <string name="address_change_code_invalid">Il codice non è corretto.</string>
     <string name="address_change_code_too_many">Troppi codici errati. Per ricevere un nuovo codice, riavvia la modifica.</string>
     <string name="address_change_code_expired">Il codice è scaduto. Per riceverne uno nuovo, riavvia la modifica.</string>
-    <string name="address_change_taken_now">Qualcuno ha gia preso quell\'indirizzo. Scegline un altro.</string>
+    <string name="address_change_taken_now">Qualcuno ha già preso quell\'indirizzo. Scegline un altro.</string>
     <string name="address_change_locked_plan">Cambiare indirizzo è una funzione di Supernova.</string>
     <string name="address_change_locked_cooldown">Puoi cambiare di nuovo indirizzo il %1$s.</string>
     <string name="address_change_password_wrong">Questa password non è corretta.</string>

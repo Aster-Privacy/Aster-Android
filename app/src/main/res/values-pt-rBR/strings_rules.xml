@@ -74,7 +74,7 @@
     <string name="category_info_travel">Reservas, itinerários e confirmações de companhias aéreas, hotéis e serviços de transporte.</string>
     <string name="category_info_shopping">Confirmações de pedidos, atualizações de envio e avisos de entrega.</string>
     <string name="custom_categories_title">Categorias personalizadas</string>
-    <string name="custom_categories_tutorial">Crie sua própria categoria. Combine e-mails pelo domínio do remetente ou por uma palavra-chave do assunto.</string>
+    <string name="custom_categories_tutorial">Crie sua própria categoria. Classifique e-mails pelo domínio do remetente ou por uma palavra-chave do assunto.</string>
     <string name="custom_category_locked_badge">Bloqueado</string>
     <string name="add_category">Adicionar categoria</string>
     <string name="no_custom_categories">Ainda não há categorias personalizadas.</string>
@@ -101,8 +101,8 @@
     <string name="rules_create_first_folder_hint">Crie uma pasta e esta regra poderá mover os e-mails correspondentes para ela.</string>
     <string name="rules_create_first_label_hint">Crie uma etiqueta e esta regra poderá aplicá-la aos e-mails correspondentes.</string>
     <string name="muted_categories">Categorias silenciadas</string>
-    <string name="muted_categories_description">Ativa uma categoria para silenciar as notificações dela. As categorias silenciadas continuam a receber correio e aparecem na tua caixa de entrada.</string>
-    <string name="muted_categories_empty">Ativa as categorias da caixa de entrada para escolheres quais silenciar.</string>
+    <string name="muted_categories_description">Ative uma categoria para silenciar as notificações dela. As categorias silenciadas continuam recebendo e-mails e aparecem na sua caixa de entrada.</string>
+    <string name="muted_categories_empty">Ative as categorias da caixa de entrada para escolher quais silenciar.</string>
     <string name="rules_hint_name">Digite um nome para esta regra.</string>
     <string name="rules_hint_add_condition">Adicione pelo menos uma condição.</string>
     <string name="rules_hint_finish_condition">Preencha um valor para cada condição.</string>

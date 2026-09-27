@@ -536,7 +536,7 @@ private fun aliases_tab(
                 )
                 if (org.astermail.android.billing.alias_limit_near(counted_alias_total, alias_limit)) {
                     Text(
-                        text = stringResource(R.string.alias_limit_notice, counted_alias_total, alias_limit ?: 0),
+                        text = pluralStringResource(R.plurals.alias_limit_notice, alias_limit ?: 0, counted_alias_total, alias_limit ?: 0),
                         color = colors.accent_blue,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -2686,7 +2686,7 @@ private fun domain_setup_progress(done: Int, total: Int) {
         }
         Spacer(Modifier.width(AsterSpacing.sm))
         Text(
-            text = stringResource(R.string.domain_records_verified, done, total),
+            text = pluralStringResource(R.plurals.domain_records_verified, total, done, total),
             color = if (complete) colors.success else colors.text_tertiary,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,

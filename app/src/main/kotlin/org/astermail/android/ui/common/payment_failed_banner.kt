@@ -36,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,7 +66,7 @@ fun payment_failed_banner(
     val days_text = when {
         days_left == null -> null
         days_left == 1 -> stringResource(R.string.payment_failed_one_day_left)
-        else -> stringResource(R.string.payment_failed_days_left, days_left)
+        else -> pluralStringResource(R.plurals.payment_failed_days_left, days_left, days_left)
     }
     Column(
         modifier = modifier

@@ -4,7 +4,6 @@
     <string name="academic_status_none">लागू नहीं</string>
     <string name="academic_status_pending">सत्यापन का इंतज़ार है</string>
     <string name="academic_status_verified">सत्यापित</string>
-    <string name="alias_limit_notice">%2$d में से %1$d एलियास इस्तेमाल हुए। ज़्यादा के लिए अपग्रेड करें।</string>
     <string name="cancel_impact_catch_all">कैच-ऑल पते मेल पाना बंद कर देते हैं।</string>
     <string name="cancel_impact_intro">आपका प्लान खत्म होने पर यह बदलता है:</string>
     <string name="cancel_impact_none">आपके खाते में तुरंत कुछ नहीं बदलता।</string>

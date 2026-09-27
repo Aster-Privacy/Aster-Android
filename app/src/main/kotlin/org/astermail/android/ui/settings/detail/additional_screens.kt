@@ -1927,7 +1927,7 @@ fun KidsReservedScreen(on_back: () -> Unit) {
         val seats = state.family_seats
         if (seats != null && seats.max_members > 0) {
             Text(
-                text = stringResource(R.string.kids_seats_used, seats.seats_used, seats.max_members) +
+                text = pluralStringResource(R.plurals.kids_seats_used, seats.max_members, seats.seats_used, seats.max_members) +
                     " · " +
                     pluralStringResource(R.plurals.kids_seats_free, seats.seats_remaining, seats.seats_remaining),
                 color = colors.text_tertiary,

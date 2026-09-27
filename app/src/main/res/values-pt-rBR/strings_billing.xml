@@ -4,7 +4,6 @@
     <string name="academic_status_none">Não aplicado</string>
     <string name="academic_status_pending">Aguardando verificação</string>
     <string name="academic_status_verified">Verificado</string>
-    <string name="alias_limit_notice">%1$d de %2$d aliases em uso. Faça upgrade para ter mais.</string>
     <string name="cancel_impact_catch_all">Os endereços catch-all deixam de receber mensagens.</string>
     <string name="cancel_impact_intro">Quando seu plano terminar, isto muda:</string>
     <string name="cancel_impact_none">Nada na sua conta muda de imediato.</string>
@@ -27,7 +26,7 @@
     <string name="error_send_quota_reached">Você atingiu o limite diário desta conta para mensagens a endereços fora do Aster. As mensagens para outros endereços Aster não são afetadas.</string>
     <string name="family_manage_web">Gerenciar membros na web</string>
     <string name="finish_plan_setup_action">Concluir configuração</string>
-    <string name="finish_plan_setup_message">Você fechou o checkout antes de pagar. A sua conta permanece no plano gratuito até você concluir.</string>
+    <string name="finish_plan_setup_message">Você fechou o checkout antes de pagar. Sua conta permanece no plano gratuito até você concluir.</string>
     <string name="finish_plan_setup_title">Conclua a configuração do seu plano %1$s</string>
     <string name="interval_generic">período de cobrança</string>
     <string name="interval_month">mês</string>
@@ -96,7 +95,7 @@
     <string name="billing_credits_settings_failed">O Aster não conseguiu salvar a configuração de crédito.</string>
     <string name="billing_academic_request_failed">O Aster não conseguiu enviar o e-mail de verificação.</string>
     <string name="billing_thanks_free_title">Obrigado por usar o Aster</string>
-    <string name="billing_thanks_free_body">Uma equipe pequena constrói o Aster com cuidado, e cada pessoa que confia a ele o seu e-mail nos mantém em frente. Faça upgrade sempre que precisar de mais armazenamento, aliases ou domínios personalizados.</string>
+    <string name="billing_thanks_free_body">Uma equipe pequena desenvolve o Aster com cuidado, e cada pessoa que confia seus e-mails a ele nos motiva a continuar. Faça upgrade sempre que precisar de mais armazenamento, aliases ou domínios personalizados.</string>
     <string name="billing_usage_of">%1$d de %2$d</string>
     <string name="billing_usage_in_use">%1$d em uso</string>
     <string name="billing_usage_upgrade_hint">Faça upgrade para ter mais espaço</string>

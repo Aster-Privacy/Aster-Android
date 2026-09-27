@@ -90,7 +90,7 @@
     <string name="category_match_domains_placeholder">example.com, news.example.org</string>
     <string name="category_match_domains_help">कॉमा से अलग किए गए प्रेषक डोमेन की सूची। इन डोमेन से आए ईमेल इस श्रेणी में जाते हैं।</string>
     <string name="category_match_keywords">विषय के कीवर्ड से मिलान करें</string>
-    <string name="category_match_keywords_placeholder">newsletter, digest</string>
+    <string name="category_match_keywords_placeholder">न्यूज़लेटर, सारांश</string>
     <string name="category_match_keywords_help">कॉमा से अलग किए गए शब्द। इनमें से कोई भी विषय पंक्ति में दिखे तो ईमेल इस श्रेणी में जाता है।</string>
     <string name="category_tutorial_text">सुझाव: कोई कस्टम श्रेणी तब मेल खाती है जब प्रेषक के डोमेन या विषय में आपका कोई भी कीवर्ड हो। कस्टम श्रेणियां पहले से मौजूद श्रेणियों से पहले जांची जाती हैं, इसलिए उन्हें हमेशा प्राथमिकता मिलती है।</string>
     <string name="rules_create_first_folder_hint">कोई फ़ोल्डर बनाएं, ताकि यह नियम मेल खाती ईमेल उसमें ले जा सके।</string>

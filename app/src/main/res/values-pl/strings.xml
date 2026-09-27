@@ -79,7 +79,7 @@
     <string name="recovery_email_status_unverified">Oczekuje na weryfikację</string>
     <string name="skip_for_now">Pomiń na razie</string>
     <string name="copy_to_clipboard">Kopiuj do schowka</string>
-    <string name="choose_your_plan">Wybierz swój plan</string>
+    <string name="choose_your_plan">Wybierz plan</string>
     <string name="plan_subtitle">Zacznij za darmo lub odblokuj więcej dzięki płatnemu planowi. Możesz to zmienić w dowolnym momencie.</string>
     <string name="loading_plans">Ładowanie planów...</string>
     <string name="plan_free">Darmowy</string>
@@ -199,7 +199,6 @@
     <string name="encrypted">Zaszyfrowane</string>
     <string name="end_to_end_encrypted">Szyfrowanie end-to-end</string>
     <string name="protected_in_transit">Chronione w tranzycie</string>
-    <string name="trackers_blocked">Zablokowane elementy śledzące: %d</string>
     <string name="unstar">Usuń gwiazdkę</string>
     <string name="star">Oznacz gwiazdką</string>
     <string name="more">więcej</string>
@@ -569,7 +568,6 @@
     <string name="send">Wyślij</string>
     <string name="auto_save_recipients">Automatycznie zapisuj odbiorców w kontaktach</string>
     <string name="undo_send">Cofnij wysyłanie</string>
-    <string name="undo_send_delay_seconds">%1$d s</string>
     <string name="change_photo">Zmień zdjęcie</string>
     <string name="confirmations">Potwierdzenia</string>
     <string name="confirm_before_delete">Potwierdzaj przed usunięciem</string>
@@ -1085,8 +1083,8 @@
     <string name="error_too_many_attempts">Zbyt wiele prób. Poczekaj chwilę i spróbuj ponownie.</string>
 
     <string name="error_send_recovery">Nie udało się wysłać e-maila do odzyskiwania</string>
-    <string name="error_invalid_recovery_code">Kody odzyskiwania zaczynają się od \'ASTER-\'</string>
-    <string name="error_invalid_code">Ten kod odzyskiwania nie pasuje. Inny z zapisanej listy powinien zadziałać.</string>
+    <string name="error_invalid_recovery_code">Kod odzyskiwania wygląda tak: ASTER-XXXX-XXXX-XXXX-XXXX. Sprawdź kod i wpisz go ponownie.</string>
+    <string name="error_invalid_code">Ten kod nie pasuje do tego konta. Porównaj go z zapisaną listą i wpisz ponownie. Spacje i wielkość liter nie mają znaczenia.</string>
     <string name="error_recovery_failed">Odzyskiwanie nie powiodło się</string>
     <string name="error_recovery_too_many_attempts">To konto miało zbyt wiele prób odzyskiwania. Możesz spróbować ponownie za około 30 minut. Żaden z Twoich kodów nie został użyty, więc nadal masz je wszystkie.</string>
     <string name="status_deriving_key">Tworzenie nowego klucza z hasła</string>
@@ -1470,7 +1468,6 @@
     <string name="score_partial">Częściowy</string>
     <string name="score_strong">Silny</string>
     <string name="score_complete">Wszystko gotowe</string>
-    <string name="score_steps_left">Pozostało %1$d</string>
     <string name="check_passkey_registered">Zarejestrowany klucz dostępu</string>
     <string name="check_verified_recovery_email">Zweryfikowany e-mail odzyskiwania</string>
     <plurals name="passkeys_registered_count">
@@ -1583,7 +1580,6 @@
     <string name="failed_purge_alias">Nie udało się usunąć aliasu</string>
     <string name="scan_inbox">Skanuj skrzynkę</string>
     <string name="deselect_all">Odznacz wszystko</string>
-    <string name="count_selected">Zaznaczono %1$d</string>
     <string name="unsubscribe_selected">Wypisz się (%1$d)</string>
     <string name="reactivate_selected">Aktywuj ponownie (%1$d)</string>
     <string name="open_unsubscribe_page">Otwórz stronę wypisania</string>
@@ -1654,7 +1650,7 @@
     <string name="attachment_already_attached">\"%1$s\" jest już załączony</string>
     <string name="attachment_read_failed">Nie udało się odczytać \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">Zaplanowane wiadomości nie obsługują jeszcze załączników. Usuń je albo wyślij teraz.</string>
-    <string name="cannot_mix_recipients">Użytkownicy Aster i adresy zewnętrzne nie mogą znaleźć się w tej samej wiadomości. Wysłanie ich jako dwóch oddzielnych wiadomości zadziała.</string>
+    <string name="cannot_mix_recipients">Użytkownicy Aster i adresy zewnętrzne nie mogą być w tej samej wiadomości. Wyślij do nich dwie osobne wiadomości.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>
@@ -1767,7 +1763,7 @@
     <string name="totp_code_required_label">Kod z aplikacji lub kod zapasowy</string>
     <string name="totp_code_required_error">Wpisz 6-cyfrowy kod z aplikacji uwierzytelniającej albo jeden z kodów zapasowych</string>
     <string name="preferences_locked_retry">Nie udało się teraz odblokować ustawień. Wyświetlane są ustawienia domyślne. Wróć i otwórz je ponownie, aby spróbować jeszcze raz.</string>
-    <string name="plan_name_star">Star</string>
+    <string name="plan_name_star">Gwiazdka</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Supernowa</string>
     <string name="ghost_alias_limit_reached">Osiągnięto limit aliasów widmo w tym miesiącu</string>
@@ -1806,7 +1802,6 @@
     <string name="upgrade_inline_card_description">Osiągnięto limit darmowego planu. Płatny plan daje więcej.</string>
     <string name="your_key">Twój klucz</string>
     <string name="recovery_codes">Kody odzyskiwania</string>
-    <string name="recovery_codes_remaining">Pozostało %1$d z %2$d kodów</string>
     <string name="low">Mało</string>
     <string name="ok">OK</string>
     <string name="recovery_codes_low_warning">Zostało Ci mało kodów odzyskiwania. Wygeneruj nowe kody, aby nie stracić dostępu.</string>
@@ -2101,7 +2096,6 @@
     <string name="export_format_eml_subtitle">Jeden plik .eml na wiadomość, wszystkie w jednym folderze</string>
     <string name="export_start">Rozpocznij eksport</string>
     <string name="export_in_progress">Eksportowanie danych</string>
-    <string name="export_progress_emails">%1$d / %2$d wiadomości</string>
     <string name="export_complete">Eksport zakończony</string>
     <string name="export_emails_exported">Wyeksportowane wiadomości</string>
     <string name="export_file_size">Rozmiar pliku</string>
@@ -2134,7 +2128,6 @@
     <string name="crypto_native_status_awaiting">Oczekiwanie na płatność</string>
     <string name="crypto_native_status_detected">Wykryto płatność</string>
     <string name="crypto_native_status_confirming_short">Potwierdzanie</string>
-    <string name="crypto_native_status_confirming">%1$d z %2$d potwierdzeń</string>
     <string name="crypto_native_status_credited">Plan aktywowany</string>
     <string name="crypto_native_usd_value_label">Kwota do zapłaty</string>
     <string name="crypto_native_expires_in">Wygasa za %1$s</string>
@@ -2233,7 +2226,6 @@
     <string name="view_plans">Zobacz plany</string>
     <string name="kids_reserved_addresses">Zarezerwowane adresy dla dzieci</string>
     <string name="kids_reserved_subtitle">Zarezerwuj adres dla dziecka. Przekaż link aktywacyjny, aby dokończyło konfigurację własnym hasłem.</string>
-    <string name="kids_seats_used">Wykorzystano %1$d z %2$d miejsc w rodzinie</string>
     <string name="kids_seats_breakdown">%1$s, %2$s, %3$s</string>
     <string name="kids_no_reservations">Nie ma jeszcze zarezerwowanych adresów. Zarezerwuj jeden na astermail.org.</string>
     <string name="kids_reserve_on_web">Zarezerwuj w przeglądarce</string>
@@ -2302,7 +2294,6 @@
     <string name="alias_apply_existing_progress">Stosowanie: przeskanowano %1$d, zaktualizowano %2$d</string>
     <string name="alias_apply_existing_progress_total">Stosowanie: przeskanowano %1$d z %2$d, zaktualizowano %3$d</string>
     <string name="alias_apply_existing_done">Gotowe: przeskanowano %1$d, zaktualizowano %2$d</string>
-    <string name="alias_apply_existing_canceled">Zatrzymano: zaktualizowano %1$d</string>
     <string name="alias_apply_existing_error">Zastosowanie do istniejącej poczty nie powiodło się. Spróbuj ponownie.</string>
     <string name="alias_apply_existing_unavailable">Poczty, która już jest na Twoim koncie, nie można przenieść do folderu Spam.</string>
     <string name="alias_delivery_label_rule_note">Reguła \"%1$s\" już oznacza pocztę tego aliasu etykietą %2$s.</string>
@@ -2400,11 +2391,7 @@
     <string name="alias_import_target_domain">Importuj do</string>
     <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">Włącz ponownie, jeśli wyłączone</string>
-    <string name="alias_import_confirm">Importuj %1$d aliasów</string>
     <string name="alias_import_progress">Importowanie %1$d z %2$d...</string>
-    <string name="alias_import_summary_created">Zaimportowano: %1$d</string>
-    <string name="alias_import_summary_skipped">Już istniało: %1$d</string>
-    <string name="alias_import_summary_failed">Nie powiodło się: %1$d</string>
     <string name="alias_import_error_no_aliases">Nie znaleziono aliasów do zaimportowania w tym pliku.</string>
     <string name="alias_import_error_encrypted">Ten plik eksportu jest zaszyfrowany. Wyeksportuj go ponownie bez szyfrowania, a potem zaimportuj.</string>
     <string name="alias_export_title">Eksport aliasów</string>
@@ -2414,7 +2401,6 @@
     <string name="alias_export_source_domain_addresses">Adresy własnej domeny</string>
     <string name="alias_export_source_directories">Katalogi</string>
     <string name="alias_export_source_ghost">Aliasy ghost</string>
-    <string name="alias_export_source_count">%1$d wpisów</string>
     <string name="alias_export_warning_title">Ten plik nie jest zaszyfrowany</string>
     <string name="alias_export_warning_body">Każdy, kto go otworzy, zobaczy wszystkie aliasy, notatki i strony. Przechowuj go w menedżerze haseł lub na zaszyfrowanym dysku.</string>
     <string name="alias_export_summary">%1$s w %2$s.</string>
@@ -2551,7 +2537,7 @@
     <string name="alias_websites_limit_reached">Możesz dodać maksymalnie 10 stron</string>
     <string name="alias_website_add">Dodaj stronę</string>
     <string name="alias_website_remove">Usuń stronę</string>
-    <string name="alias_website_input_placeholder">example.com</string>
+    <string name="alias_website_input_placeholder">przyklad.com</string>
     <string name="undecryptable_message_preview">To urządzenie nie ma klucza do tej wiadomości.</string>
     <plurals name="archived_messages">
         <item quantity="one">Zarchiwizowano %d wiadomość</item>
@@ -2571,7 +2557,6 @@
     <string name="couldnt_remove_label">Nie udało się usunąć etykiety</string>
     <string name="couldnt_unsnooze">Nie udało się anulować odłożenia</string>
     <string name="domain_verify_slow">Aster nie mógł zakończyć sprawdzania DNS. Twoje rekordy mogą być nadal weryfikowane, więc spróbuj ponownie za kilka minut.</string>
-    <string name="domain_records_verified">Zweryfikowano %1$d z %2$d rekordów</string>
     <string name="ext_sync_started">Rozpoczęto synchronizację</string>
     <string name="ext_account_removed">Konto usunięte</string>
     <string name="folder_created">Folder utworzony</string>
@@ -2640,7 +2625,6 @@
     <string name="plan_change_due_today">Do zapłaty dziś: %1$s</string>
     <string name="plan_change_preview_failed">Nie udało się obliczyć kwoty do zapłaty dziś. Wyświetlana jest pełna cena.</string>
     <string name="payment_failed_banner_overdue">Twoja płatność się nie powiodła. Dostęp do planu %1$s wkrótce zostanie ograniczony.</string>
-    <string name="payment_failed_days_left">Dostęp zostanie ograniczony za %1$d dni.</string>
     <string name="payment_failed_one_day_left">Dostęp zostanie ograniczony za 1 dzień.</string>
     <string name="device_verification_failed">Nie udało się zweryfikować tego urządzenia dla tej zmiany. Zaloguj się ponownie na tym urządzeniu i spróbuj jeszcze raz.</string>
     <string name="cancel_reason_title">Zanim odejdziesz</string>
@@ -2797,7 +2781,6 @@
     <string name="signature_set_default">Użyj jako domyślnego podpisu</string>
     <string name="star_failed">Nie udało się oznaczyć gwiazdką</string>
     <string name="tab_label_with_count">%1$s (%2$d)</string>
-    <string name="templates_decrypt_failed_count">Nie udało się odczytać niektórych szablonów na tym urządzeniu (%1$d). Zapisano je kluczem, którego to urządzenie obecnie nie ma.</string>
     <string name="time_format">Format czasu</string>
     <string name="time_format_12h">12-godzinny (1:30 PM)</string>
     <string name="time_format_24h">24-godzinny (13:30)</string>
@@ -2907,7 +2890,6 @@
     <string name="domain_purchase_manage_paid">Zapłacono</string>
     <string name="domain_purchase_manage_auto_renew_note">Ta domena nie odnawia się automatycznie. Aby ją zachować, odnów ją przed datą wygaśnięcia.</string>
     <string name="domain_purchase_manage_support_note">Aby przenieść tę domenę do innego rejestratora lub zapytać o zwrot pieniędzy, skontaktuj się z pomocą.</string>
-    <string name="domain_purchase_n_years">%1$d lata</string>
     <string name="twin_address_title">Twój adres bliźniaczy</string>
     <string name="twin_address_reserved_description">%1$s jest zarezerwowany dla Twojego konta, więc nikt inny nie może go zarejestrować. Utwórz go jako alias, gdy zechcesz z niego wysyłać i odbierać.</string>
     <string name="twin_address_available_description">%1$s to odpowiadający adres w drugiej domenie Aster. Utwórz go jako alias, aby z niego wysyłać i odbierać.</string>
@@ -3002,7 +2984,6 @@
     <string name="empty_contacts_trash_confirm_message">Trwale usunąć wszystkie kontakty z kosza? Tej operacji nie można cofnąć.</string>
     <string name="contact_restored">Przywrócono kontakt</string>
     <string name="contact_moved_to_trash">Kontakt przeniesiony do kosza</string>
-    <string name="contact_trash_days_left">Pozostało dni: %1$d</string>
     <string name="contacts_in_trash_notice">Kontakty w koszu są trwale usuwane po 30 dniach.</string>
     <string name="contacts_import_empty">Nie znaleziono kontaktów w tym pliku</string>
     <string name="contacts_import_failed">Nie udało się zaimportować kontaktów</string>
@@ -3224,13 +3205,11 @@
     <string name="delete_emails_older_than_30_days">Usuń e-maile starsze niż 30 dni</string>
     <string name="inbox_tools">Filtry i szybkie akcje</string>
     <string name="inbox_tools_subtitle">Pokazuje przyciski filtrów i szybkich akcji w nagłówku skrzynki odbiorczej</string>
-    <string name="contacts_bulk_progress">Usuwanie %1$d z %2$d kontaktów</string>
     <string name="plan_badge_thanks">Dziękujemy za subskrypcję %1$s.</string>
     <string name="quick_action_unavailable">Ta szybka akcja jest niedostępna w tym folderze</string>
     <string name="quick_action_no_unread">Nie ma tu nic do oznaczenia jako przeczytane</string>
     <string name="quick_action_no_read">Nie ma tu przeczytanych wiadomości do zarchiwizowania</string>
     <string name="quick_action_no_old">Nie ma tu wiadomości starszych niż 30 dni</string>
-    <string name="quick_action_delete_old_confirm">Przenieść do Kosza konwersacje starsze niż 30 dni (%1$d)?</string>
     <string name="change_address">Zmień adres</string>
     <string name="address_change_title">Zmień swój adres</string>
     <string name="address_change_intro_lead">Przeczytaj, co się zmieni, przed kontynuowaniem.</string>

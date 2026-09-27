@@ -2,4 +2,10 @@
 <resources>
     <string name="common_storage_used_of_total">%1$s من %2$s</string>
     <string name="common_storage_used_only">%1$s مستخدمة</string>
+    <string name="auth_previous_account_data_not_cleared">تعذّرت إزالة بريد الحساب السابق من هذا الجهاز. حاول تسجيل الدخول مرة أخرى.</string>
+    <string name="export_readme_title">تصدير Aster Mail</string>
+    <string name="export_readme_mbox">جميع الرسائل بتنسيق MBOX ‏(RFC 4155)</string>
+    <string name="export_readme_eml">ملفات ‎.eml‎ منفصلة</string>
+    <string name="export_readme_contacts">تفاصيل جهات الاتصال</string>
+    <string name="export_readme_warning">الرسائل في هذا التصدير غير مشفّرة. احفظ هذا الملف في مكان آمن.</string>
 </resources>

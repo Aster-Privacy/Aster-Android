@@ -3,5 +3,4 @@
     <string name="fix_enc_codes_share_title">رموز الاسترداد</string>
     <string name="fix_enc_codes_file_note">يعمل كل رمز مرة واحدة. احتفظ بهذا الملف في مكان آمن.</string>
     <string name="fix_enc_codes_save_failed">لا يمكنك حفظ الملف الآن. انسخ الرموز بدلاً من ذلك.</string>
-    <string name="fix_enc_codes_used">%1$d مستخدم</string>
 </resources>

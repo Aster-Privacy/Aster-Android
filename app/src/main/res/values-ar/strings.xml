@@ -199,7 +199,6 @@
     <string name="encrypted">مشفر</string>
     <string name="end_to_end_encrypted">مشفر من طرف إلى طرف</string>
     <string name="protected_in_transit">محمي أثناء النقل</string>
-    <string name="trackers_blocked">المتعقّبات المحظورة: %d</string>
     <string name="unstar">إزالة النجمة</string>
     <string name="star">نجمة</string>
     <string name="more">المزيد</string>
@@ -569,7 +568,6 @@
     <string name="send">إرسال</string>
     <string name="auto_save_recipients">حفظ المستلمين تلقائياً في جهات الاتصال</string>
     <string name="undo_send">التراجع عن الإرسال</string>
-    <string name="undo_send_delay_seconds">%1$d ث</string>
     <string name="change_photo">تغيير الصورة</string>
     <string name="confirmations">التأكيدات</string>
     <string name="confirm_before_delete">التأكيد قبل الحذف</string>
@@ -1085,8 +1083,8 @@
     <string name="error_too_many_attempts">محاولات كثيرة جدًا. يرجى الانتظار قليلاً والمحاولة مرة أخرى.</string>
 
     <string name="error_send_recovery">فشل في إرسال بريد الاسترداد</string>
-    <string name="error_invalid_recovery_code">تبدأ رموز الاسترداد بـ \'ASTER-\'</string>
-    <string name="error_invalid_code">رمز الاسترداد هذا غير مطابق. رمز آخر من قائمتك المحفوظة ينبغي أن يعمل.</string>
+    <string name="error_invalid_recovery_code">يبدو رمز الاسترداد هكذا: ASTER-XXXX-XXXX-XXXX-XXXX. تحقق من الرمز وأدخله مجددًا.</string>
+    <string name="error_invalid_code">هذا الرمز لا يطابق هذا الحساب. قارنه بقائمتك المحفوظة وأدخله مجددًا. المسافات وحالة الأحرف لا تهم.</string>
     <string name="error_recovery_failed">فشل الاسترداد</string>
     <string name="error_recovery_too_many_attempts">أُجريت محاولات استرداد كثيرة جدًا على هذا الحساب. يمكنك المحاولة مرة أخرى بعد نحو 30 دقيقة. لم يُستخدم أي من رموزك، لذا ما زالت جميعها لديك.</string>
     <string name="status_deriving_key">استخراج مفتاح كلمة المرور الجديد</string>
@@ -1476,7 +1474,6 @@
     <string name="score_partial">جزئي</string>
     <string name="score_strong">قوي</string>
     <string name="score_complete">كل شيء جاهز</string>
-    <string name="score_steps_left">بقي %1$d</string>
     <string name="check_passkey_registered">مفتاح مرور مُسجّل</string>
     <string name="check_verified_recovery_email">بريد الاسترداد المُحقَّق</string>
     <plurals name="passkeys_registered_count">
@@ -1591,7 +1588,6 @@
     <string name="failed_purge_alias">تعذّر حذف الاسم المستعار</string>
     <string name="scan_inbox">فحص البريد الوارد</string>
     <string name="deselect_all">إلغاء تحديد الكل</string>
-    <string name="count_selected">تم تحديد %1$d</string>
     <string name="unsubscribe_selected">إلغاء الاشتراك (%1$d)</string>
     <string name="reactivate_selected">إعادة التفعيل (%1$d)</string>
     <string name="open_unsubscribe_page">فتح صفحة إلغاء الاشتراك</string>
@@ -1775,7 +1771,7 @@
     <string name="totp_code_required_label">رمز المصادقة أو رمز احتياطي</string>
     <string name="totp_code_required_error">أدخل الرمز المكوّن من 6 أرقام من تطبيق المصادقة، أو أحد رموزك الاحتياطية</string>
     <string name="preferences_locked_retry">تعذّر فتح إعداداتك الآن. يتم عرض الإعدادات الافتراضية، ارجع ثم افتح مجددًا للمحاولة.</string>
-    <string name="plan_name_star">Star</string>
+    <string name="plan_name_star">تمييز بنجمة</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">المستعر الأعظم</string>
     <string name="ghost_alias_limit_reached">بلغت الحد الشهري للأسماء المستعارة الشبحية</string>
@@ -1814,7 +1810,6 @@
     <string name="upgrade_inline_card_description">بلغت حد الخطة المجانية. افتح المزيد بخطة مدفوعة.</string>
     <string name="your_key">مفتاحك</string>
     <string name="recovery_codes">رموز الاسترداد</string>
-    <string name="recovery_codes_remaining">الرموز المتبقية: %1$d من %2$d</string>
     <string name="low">منخفض</string>
     <string name="ok">حسنًا</string>
     <string name="recovery_codes_low_warning">لم يتبقّ لديك سوى عدد قليل من رموز الاسترداد. احصل على رموز جديدة حتى لا تفقد الوصول إلى حسابك.</string>
@@ -2111,7 +2106,6 @@
     <string name="export_format_eml_subtitle">ملف .eml لكل رسالة، وتُنظَّم الملفات داخل مجلد</string>
     <string name="export_start">بدء التصدير</string>
     <string name="export_in_progress">جارٍ تصدير بياناتك</string>
-    <string name="export_progress_emails">الرسائل: %1$d / %2$d</string>
     <string name="export_complete">اكتمل التصدير</string>
     <string name="export_emails_exported">الرسائل المُصدَّرة</string>
     <string name="export_file_size">حجم الملف</string>
@@ -2144,7 +2138,6 @@
     <string name="crypto_native_status_awaiting">في انتظار الدفع</string>
     <string name="crypto_native_status_detected">تم رصد الدفعة</string>
     <string name="crypto_native_status_confirming_short">جارٍ التأكيد</string>
-    <string name="crypto_native_status_confirming">التأكيدات: %1$d من %2$d</string>
     <string name="crypto_native_status_credited">تم تفعيل الخطة</string>
     <string name="crypto_native_usd_value_label">المبلغ المستحق</string>
     <string name="crypto_native_expires_in">تنتهي خلال %1$s</string>
@@ -2243,7 +2236,6 @@
     <string name="view_plans">عرض الخطط</string>
     <string name="kids_reserved_addresses">عناوين محجوزة للأطفال</string>
     <string name="kids_reserved_subtitle">احجز عنوانًا لطفلك. شارك رابط المطالبة ليكمل الإعداد بكلمة مرور خاصة به.</string>
-    <string name="kids_seats_used">%1$d من %2$d من مقاعد العائلة مستخدَمة</string>
     <string name="kids_seats_breakdown">%1$s، %2$s، %3$s</string>
     <string name="kids_no_reservations">لا توجد عناوين محجوزة بعد. احجز واحدًا على astermail.org.</string>
     <string name="kids_reserve_on_web">الحجز عبر الويب</string>
@@ -2318,7 +2310,6 @@
     <string name="alias_apply_existing_progress">جارٍ التطبيق: تم فحص %1$d، وتحديث %2$d</string>
     <string name="alias_apply_existing_progress_total">جارٍ التطبيق: تم فحص %1$d من %2$d، وتحديث %3$d</string>
     <string name="alias_apply_existing_done">تم: فحص %1$d، وتحديث %2$d</string>
-    <string name="alias_apply_existing_canceled">تم الإيقاف: تحديث %1$d</string>
     <string name="alias_apply_existing_error">فشل التطبيق على البريد الحالي. حاول مرة أخرى.</string>
     <string name="alias_apply_existing_unavailable">لا يمكن نقل البريد الموجود في حسابك بالفعل إلى البريد العشوائي.</string>
     <string name="alias_delivery_label_rule_note">قاعدة البريد \"%1$s\" تضع بالفعل التصنيف %2$s على بريد هذا الاسم المستعار.</string>
@@ -2416,11 +2407,7 @@
     <string name="alias_import_target_domain">الاستيراد إلى</string>
     <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">إعادة التفعيل إذا كان معطّلًا</string>
-    <string name="alias_import_confirm">استيراد %1$d اسمًا مستعارًا</string>
     <string name="alias_import_progress">جارٍ استيراد %1$d من %2$d...</string>
-    <string name="alias_import_summary_created">%1$d مستورَد</string>
-    <string name="alias_import_summary_skipped">%1$d موجود بالفعل</string>
-    <string name="alias_import_summary_failed">%1$d فشل</string>
     <string name="alias_import_error_no_aliases">لم يُعثر على أسماء مستعارة قابلة للاستيراد في هذا الملف.</string>
     <string name="alias_import_error_encrypted">هذا الملف المصدَّر مشفَّر. صدّره مرة أخرى بدون تشفير ثم استورده.</string>
     <string name="alias_export_title">تصدير الأسماء المستعارة</string>
@@ -2430,7 +2417,6 @@
     <string name="alias_export_source_domain_addresses">عناوين النطاق المخصص</string>
     <string name="alias_export_source_directories">الأدلة</string>
     <string name="alias_export_source_ghost">الأسماء المستعارة الشبحية</string>
-    <string name="alias_export_source_count">%1$d إدخالات</string>
     <string name="alias_export_warning_title">هذا الملف غير مشفّر</string>
     <string name="alias_export_warning_body">يمكن لأي شخص يفتحه قراءة كل اسم مستعار وملاحظة وموقع بداخله. احتفظ به في مدير كلمات المرور أو على قرص مشفّر.</string>
     <string name="alias_export_summary">%1$s في %2$s.</string>
@@ -2591,7 +2577,6 @@
     <string name="couldnt_remove_label">تعذر إزالة التصنيف</string>
     <string name="couldnt_unsnooze">تعذر إلغاء التأجيل</string>
     <string name="domain_verify_slow">تعذّر على Aster إكمال فحص DNS. قد تكون سجلاتك قيد التحقق، لذا حاول مرة أخرى بعد بضع دقائق.</string>
-    <string name="domain_records_verified">السجلات التي تم التحقق منها: %1$d من %2$d</string>
     <string name="ext_sync_started">بدأت المزامنة</string>
     <string name="ext_account_removed">تمت إزالة الحساب</string>
     <string name="folder_created">تم إنشاء المجلد</string>
@@ -2660,7 +2645,6 @@
     <string name="plan_change_due_today">المستحق اليوم: %1$s</string>
     <string name="plan_change_preview_failed">تعذر حساب المبلغ المستحق اليوم. يُعرض السعر الكامل.</string>
     <string name="payment_failed_banner_overdue">لم تتم عملية الدفع. سيتم تقييد الوصول إلى خطة %1$s قريباً.</string>
-    <string name="payment_failed_days_left">الأيام المتبقية قبل تقييد الوصول: %1$d</string>
     <string name="payment_failed_one_day_left">سيتم تقييد الوصول خلال يوم واحد.</string>
     <string name="device_verification_failed">تعذر التحقق من هذا الجهاز لإجراء هذا التغيير. سجّل الدخول مرة أخرى على هذا الجهاز، ثم أعد المحاولة.</string>
     <string name="cancel_reason_title">قبل أن تغادر</string>
@@ -2823,7 +2807,6 @@
     <string name="signature_set_default">استخدامه كتوقيع افتراضي</string>
     <string name="star_failed">تعذر إضافة النجمة</string>
     <string name="tab_label_with_count">%1$s (%2$d)</string>
-    <string name="templates_decrypt_failed_count">تعذّرت قراءة %1$d من القوالب على هذا الجهاز. فقد حُفظت بمفتاح لا يمتلكه هذا الجهاز حاليًا.</string>
     <string name="time_format">تنسيق الوقت</string>
     <string name="time_format_12h">12 ساعة (1:30 م)</string>
     <string name="time_format_24h">24 ساعة (13:30)</string>
@@ -2937,7 +2920,6 @@
     <string name="domain_purchase_manage_paid">المدفوع</string>
     <string name="domain_purchase_manage_auto_renew_note">لا يتجدد هذا النطاق تلقائيًا. للاحتفاظ به، جدّده قبل تاريخ الانتهاء.</string>
     <string name="domain_purchase_manage_support_note">لنقل هذا النطاق إلى مسجّل آخر أو للسؤال عن استرداد المبلغ، تواصل مع الدعم.</string>
-    <string name="domain_purchase_n_years">%1$d سنوات</string>
     <string name="twin_address_title">عنوانك المطابق</string>
     <string name="twin_address_reserved_description">‏%1$s محجوز لحسابك، لذا لا يمكن لأي شخص آخر تسجيله. أنشئه كاسم مستعار متى أردت الإرسال والاستقبال منه.</string>
     <string name="twin_address_available_description">‏%1$s هو العنوان المطابق على نطاق Aster الآخر. أنشئه كاسم مستعار للإرسال والاستقبال منه.</string>
@@ -3038,7 +3020,6 @@
     <string name="empty_contacts_trash_confirm_message">هل تريد حذف جميع جهات الاتصال في سلة المهملات نهائيًا؟ لا يمكن التراجع عن ذلك.</string>
     <string name="contact_restored">تمت استعادة جهة الاتصال</string>
     <string name="contact_moved_to_trash">تم نقل جهة الاتصال إلى المهملات</string>
-    <string name="contact_trash_days_left">بقي %1$d يوم</string>
     <string name="contacts_in_trash_notice">تُحذف جهات الاتصال الموجودة في المهملات نهائيًا بعد 30 يومًا.</string>
     <string name="contacts_import_empty">لم يتم العثور على جهات اتصال في هذا الملف</string>
     <string name="contacts_import_failed">تعذّر استيراد جهات الاتصال</string>
@@ -3262,13 +3243,11 @@
     <string name="delete_emails_older_than_30_days">حذف الرسائل الأقدم من 30 يومًا</string>
     <string name="inbox_tools">عوامل التصفية والإجراءات السريعة</string>
     <string name="inbox_tools_subtitle">إظهار زري التصفية والإجراءات السريعة في رأس البريد الوارد</string>
-    <string name="contacts_bulk_progress">جارٍ حذف %1$d من أصل %2$d جهة اتصال</string>
     <string name="plan_badge_thanks">شكرًا لاشتراكك في %1$s.</string>
     <string name="quick_action_unavailable">هذا الإجراء السريع غير متاح في هذا المجلد</string>
     <string name="quick_action_no_unread">لا يوجد شيء لتعليمه كمقروء هنا</string>
     <string name="quick_action_no_read">لا توجد رسائل مقروءة لأرشفتها هنا</string>
     <string name="quick_action_no_old">لا توجد رسائل أقدم من 30 يومًا هنا</string>
-    <string name="quick_action_delete_old_confirm">هل تريد نقل المحادثات الأقدم من 30 يومًا (%1$d) إلى المهملات؟</string>
     <string name="change_address">تغيير العنوان</string>
     <string name="address_change_title">غيّر عنوانك</string>
     <string name="address_change_intro_lead">اقرأ ما سيتغير قبل المتابعة.</string>

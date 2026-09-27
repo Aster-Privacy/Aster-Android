@@ -16,7 +16,7 @@ locale_dirs = {
     "de": ("de", "values-de"),
     "it": ("it", "values-it"),
     "pt": ("pt", "values-pt"),
-    "pt-BR": ("pt", "values-pt-rBR"),
+    "pt-BR": ("pt-BR", "values-pt-rBR"),
     "zh-CN": ("zh-CN", "values-zh-rCN"),
     "ja": ("ja", "values-ja"),
     "ko": ("ko", "values-ko"),

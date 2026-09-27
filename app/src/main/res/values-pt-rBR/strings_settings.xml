@@ -25,7 +25,7 @@
     <string name="settings_feat_alias_avatars">Avatares de alias</string>
     <string name="settings_feat_instant_alias_delete">Exclusão instantânea de aliases</string>
     <string name="alias_too_new_title">Este alias é muito recente para ser excluído</string>
-    <string name="alias_too_new_message">Aliases novos ficam ativos por 30 dias antes de poderem ser excluídos. Este pode ser removido a partir de %1$s. Mude para Supernova para excluir aliases instantaneamente.</string>
+    <string name="alias_too_new_message">Aliases novos ficam ativos por 30 dias antes de poderem ser excluídos. Este pode ser removido a partir de %1$s. Faça upgrade para o Supernova para excluir aliases na hora.</string>
     <string name="settings_feat_folders">Pastas</string>
     <string name="settings_feat_labels">Etiquetas</string>
     <string name="settings_feat_smart_folders">Pastas inteligentes</string>

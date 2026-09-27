@@ -3,5 +3,4 @@
     <string name="fix_enc_codes_share_title">リカバリーコード</string>
     <string name="fix_enc_codes_file_note">各コードは 1 回だけ使えます。このファイルは安全な場所に保管してください。</string>
     <string name="fix_enc_codes_save_failed">今はファイルを保存できません。代わりにコードをコピーしてください。</string>
-    <string name="fix_enc_codes_used">%1$d 個使用済み</string>
 </resources>

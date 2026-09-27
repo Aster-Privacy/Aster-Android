@@ -243,7 +243,6 @@
     <string name="standard">मानक</string>
     <string name="end_to_end_encrypted">एंड-टू-एंड एन्क्रिप्टेड</string>
     <string name="protected_in_transit">रास्ते में सुरक्षित</string>
-    <string name="trackers_blocked">%d ट्रैकर रोके गए</string>
     <string name="unstar">तारा हटाएं</string>
     <string name="star">तारा</string>
     <string name="react">प्रतिक्रिया दें</string>
@@ -435,7 +434,6 @@
     <string name="risky">जोखिम भरा</string>
     <string name="scan_inbox">इनबॉक्स जांचें</string>
     <string name="deselect_all">सबका चुनाव हटाएं</string>
-    <string name="count_selected">%1$d चुने गए</string>
     <string name="unsubscribe_selected">सदस्यता छोड़ें (%1$d)</string>
     <string name="reactivate_selected">फिर से चालू करें (%1$d)</string>
     <string name="open_unsubscribe_page">सदस्यता छोड़ने का पेज खोलें</string>
@@ -840,7 +838,6 @@
     <string name="send">भेजें</string>
     <string name="auto_save_recipients">प्राप्तकर्ताओं को अपने आप संपर्कों में सहेजें</string>
     <string name="undo_send">भेजना पहले जैसा करें</string>
-    <string name="undo_send_delay_seconds">%1$d सेकंड</string>
     <string name="change_photo">फ़ोटो बदलें</string>
     <string name="confirmations">पुष्टियां</string>
     <string name="confirm_before_delete">हटाने से पहले पुष्टि करें</string>
@@ -1456,7 +1453,7 @@
     <string name="error_generic">कुछ गड़बड़ हो गई। फिर से कोशिश करें।</string>
     <string name="error_too_many_attempts">बहुत ज़्यादा कोशिशें हो गईं। थोड़ी देर रुककर फिर से कोशिश करें।</string>
     <string name="error_send_recovery">रिकवरी ईमेल नहीं भेजी जा सकी</string>
-    <string name="error_invalid_recovery_code">रिकवरी कोड \'ASTER-\' से शुरू होते हैं</string>
+    <string name="error_invalid_recovery_code">रिकवरी कोड ASTER-XXXX-XXXX-XXXX-XXXX जैसा दिखता है। कोड जांचें और उसे फिर से डालें।</string>
     <string name="error_invalid_code">वह रिकवरी कोड मेल नहीं खाया। आपकी सहेजी गई सूची से कोई दूसरा कोड काम करना चाहिए।</string>
     <string name="error_recovery_failed">रिकवरी नहीं हो सकी</string>
     <string name="error_recovery_too_many_attempts">इस खाते पर बहुत अधिक रिकवरी प्रयास हो चुके हैं। आप लगभग 30 मिनट में दोबारा कोशिश कर सकते हैं। आपका कोई भी कोड इस्तेमाल नहीं हुआ, इसलिए वे सभी अब भी आपके पास हैं।</string>
@@ -1541,7 +1538,7 @@
     <string name="reply_body_required">जवाब का मुख्य भाग ज़रूरी है</string>
     <string name="removed">हटाया गया</string>
     <string name="plan_name_free">मुफ़्त</string>
-    <string name="plan_name_star">Star</string>
+    <string name="plan_name_star">तारा</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Supernova</string>
     <string name="plan_desc_free">निजी, एन्क्रिप्टेड ईमेल शुरू करने के लिए ज़रूरी हर चीज़।</string>
@@ -1703,7 +1700,6 @@
     <string name="upgrade_inline_card_description">आप मुफ़्त प्लान की सीमा तक पहुंच गए हैं। पेड प्लान पर और सुविधाएं खोलें।</string>
     <string name="your_key">आपकी कुंजी</string>
     <string name="recovery_codes">रिकवरी कोड</string>
-    <string name="recovery_codes_remaining">%2$d में से %1$d कोड बचे</string>
     <string name="low">कम</string>
     <string name="ok">ठीक है</string>
     <string name="recovery_codes_low_warning">आपके रिकवरी कोड कम रह गए हैं। खाते से बाहर होने से बचने के लिए नए कोड पाएं।</string>
@@ -2011,7 +2007,6 @@
     <string name="export_format_eml_subtitle">हर संदेश के लिए एक .eml फ़ाइल, एक फ़ोल्डर में व्यवस्थित</string>
     <string name="export_start">एक्सपोर्ट शुरू करें</string>
     <string name="export_in_progress">आपका डेटा एक्सपोर्ट हो रहा है</string>
-    <string name="export_progress_emails">%1$d / %2$d ईमेल</string>
     <string name="export_complete">एक्सपोर्ट पूरा हुआ</string>
     <string name="export_emails_exported">ईमेल एक्सपोर्ट हुईं</string>
     <string name="export_file_size">फ़ाइल का आकार</string>
@@ -2043,7 +2038,6 @@
     <string name="crypto_native_status_awaiting">भुगतान का इंतज़ार है</string>
     <string name="crypto_native_status_detected">भुगतान का पता चला</string>
     <string name="crypto_native_status_confirming_short">पुष्टि हो रही है</string>
-    <string name="crypto_native_status_confirming">%2$d में से %1$d पुष्टियां</string>
     <string name="crypto_native_status_credited">प्लान में रकम जुड़ी</string>
     <string name="crypto_native_usd_value_label">देय राशि</string>
     <string name="crypto_native_expires_in">%1$s में खत्म</string>
@@ -2143,7 +2137,6 @@
     <string name="view_plans">प्लान देखें</string>
     <string name="kids_reserved_addresses">बच्चों के लिए आरक्षित पते</string>
     <string name="kids_reserved_subtitle">अपने बच्चे के लिए कोई पता आरक्षित करें। दावे का लिंक साझा करें, ताकि वे अपने पासवर्ड से सेटअप पूरा कर सकें।</string>
-    <string name="kids_seats_used">%2$d में से %1$d परिवार जगहें इस्तेमाल हुईं</string>
     <string name="kids_seats_breakdown">%1$s, %2$s, %3$s</string>
     <string name="kids_no_reservations">अभी तक कोई पता आरक्षित नहीं किया गया। astermail.org पर एक आरक्षित करें।</string>
     <string name="kids_reserve_on_web">वेब पर आरक्षित करें</string>
@@ -2242,7 +2235,6 @@
     <string name="score_partial">आंशिक</string>
     <string name="score_strong">मज़बूत</string>
     <string name="score_complete">सब तैयार है</string>
-    <string name="score_steps_left">%1$d बाकी</string>
     <string name="check_passkey_registered">पासकी दर्ज हो गई</string>
     <string name="check_verified_recovery_email">पुष्ट रिकवरी ईमेल</string>
     <plurals name="passkeys_registered_count">
@@ -2329,7 +2321,6 @@
     <string name="alias_apply_existing_progress">लागू किया जा रहा है: %1$d जांचे गए, %2$d अपडेट हुए</string>
     <string name="alias_apply_existing_progress_total">लागू किया जा रहा है: %2$d में से %1$d जांचे गए, %3$d अपडेट हुए</string>
     <string name="alias_apply_existing_done">पूरा हुआ: %1$d जांचे गए, %2$d अपडेट हुए</string>
-    <string name="alias_apply_existing_canceled">रोका गया: %1$d अपडेट हुए</string>
     <string name="alias_apply_existing_error">मौजूदा मेल पर लागू करना विफल रहा। फिर से कोशिश करें।</string>
     <string name="alias_apply_existing_unavailable">आपके खाते में पहले से मौजूद मेल को स्पैम में नहीं ले जाया जा सकता।</string>
     <string name="alias_delivery_label_rule_note">मेल नियम \"%1$s\" इस एलियास की मेल पर पहले से %2$s लेबल लगाता है।</string>
@@ -2372,11 +2363,7 @@
     <string name="alias_import_target_domain">यहां इंपोर्ट करें</string>
     <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">बंद हो तो दोबारा चालू करें</string>
-    <string name="alias_import_confirm">%1$d एलियास इंपोर्ट करें</string>
     <string name="alias_import_progress">%2$d में से %1$d इंपोर्ट किया जा रहा है...</string>
-    <string name="alias_import_summary_created">%1$d इंपोर्ट हुए</string>
-    <string name="alias_import_summary_skipped">%1$d पहले से मौजूद थे</string>
-    <string name="alias_import_summary_failed">%1$d विफल</string>
     <string name="alias_import_error_no_aliases">इस फ़ाइल में इंपोर्ट करने लायक कोई एलियास नहीं मिला।</string>
     <string name="alias_import_error_encrypted">यह एक्सपोर्ट एन्क्रिप्टेड है। इसे बिना एन्क्रिप्शन के दोबारा एक्सपोर्ट करें, फिर इंपोर्ट करें।</string>
     <string name="alias_export_failed">एक्सपोर्ट नहीं हो सका। कुछ भी सहेजा नहीं गया।</string>
@@ -2384,7 +2371,6 @@
     <string name="alias_export_source_domain_addresses">कस्टम डोमेन के पते</string>
     <string name="alias_export_source_directories">डायरेक्टरी</string>
     <string name="alias_export_source_ghost">घोस्ट एलियास</string>
-    <string name="alias_export_source_count">%1$d प्रविष्टियां</string>
     <string name="alias_export_warning_title">यह फ़ाइल एन्क्रिप्टेड नहीं है</string>
     <string name="alias_export_warning_body">इसे खोलने वाला कोई भी व्यक्ति इसमें मौजूद हर एलियास, नोट और वेबसाइट पढ़ सकता है। इसे अपने पासवर्ड मैनेजर में या किसी एन्क्रिप्टेड ड्राइव पर रखें।</string>
     <string name="alias_export_summary">%2$s में %1$s।</string>
@@ -2493,7 +2479,6 @@
         <item quantity="other">%d संदेश ट्रैश में डाले गए</item>
     </plurals>
     <string name="domain_verify_slow">Aster DNS जांच पूरी नहीं कर सका। आपके रिकॉर्ड अभी जांचे जा रहे हो सकते हैं, इसलिए कुछ मिनट बाद फिर कोशिश करें।</string>
-    <string name="domain_records_verified">%2$d में से %1$d रिकॉर्ड जांचे गए</string>
     <string name="ext_sync_started">सिंक शुरू हुआ</string>
     <string name="ext_account_removed">खाता हटाया गया</string>
     <string name="folder_created">फ़ोल्डर बन गया</string>
@@ -2562,7 +2547,6 @@
     <string name="plan_change_due_today">आज देना है: %1$s</string>
     <string name="plan_change_preview_failed">आज देय रकम का हिसाब नहीं लगाया जा सका। पूरी कीमत दिखाई गई है।</string>
     <string name="payment_failed_banner_overdue">आपका भुगतान नहीं हो सका। आपके %1$s प्लान तक पहुंच जल्द ही सीमित हो जाएगी।</string>
-    <string name="payment_failed_days_left">%1$d दिन में पहुंच सीमित हो जाएगी।</string>
     <string name="payment_failed_one_day_left">1 दिन में पहुंच सीमित हो जाएगी।</string>
     <string name="device_verification_failed">उस बदलाव के लिए इस डिवाइस की पुष्टि नहीं हो सकी। इस डिवाइस पर दोबारा साइन इन करें, फिर कोशिश करें।</string>
     <string name="cancel_reason_title">जाने से पहले</string>
@@ -2723,7 +2707,6 @@
     <string name="snooze_next_month">अगले महीने</string>
     <string name="star_failed">तारांकित नहीं किया जा सका</string>
     <string name="tab_label_with_count">%1$s (%2$d)</string>
-    <string name="templates_decrypt_failed_count">%1$d टेम्पलेट इस डिवाइस पर पढ़े नहीं जा सके। वे ऐसी कुंजी से सहेजे गए थे जो अभी इस डिवाइस के पास नहीं है।</string>
     <string name="time_format">समय का प्रारूप</string>
     <string name="time_format_12h">12 घंटे (1:30 PM)</string>
     <string name="time_format_24h">24 घंटे (13:30)</string>
@@ -2766,7 +2749,6 @@
     <string name="domain_purchase_manage_paid">भुगतान हो गया</string>
     <string name="domain_purchase_manage_auto_renew_note">यह डोमेन अपने आप नवीनीकृत नहीं होता। इसे बनाए रखने के लिए समाप्ति तारीख से पहले नवीनीकृत करें।</string>
     <string name="domain_purchase_manage_support_note">इस डोमेन को दूसरे रजिस्ट्रार पर ले जाने या रिफ़ंड के बारे में पूछने के लिए सहायता टीम से संपर्क करें।</string>
-    <string name="domain_purchase_n_years">%1$d साल</string>
     <string name="twin_address_title">आपका मेल खाता पता</string>
     <string name="twin_address_reserved_description">%1$s आपके खाते के लिए सुरक्षित है, इसलिए इसे कोई और पंजीकृत नहीं कर सकता। जब भी आप इससे भेजना और पाना चाहें, इसे एलियास के रूप में बनाएं।</string>
     <string name="twin_address_available_description">दूसरे Aster डोमेन पर %1$s आपका मेल खाता पता है। इससे भेजने और पाने के लिए इसे एलियास के रूप में बनाएं।</string>
@@ -2856,7 +2838,6 @@
     <string name="empty_contacts_trash_confirm_message">ट्रैश के सभी संपर्क हमेशा के लिए हटाएं? इसे वापस नहीं लिया जा सकता।</string>
     <string name="contact_restored">संपर्क वापस लाया गया</string>
     <string name="contact_moved_to_trash">संपर्क ट्रैश में ले जाया गया</string>
-    <string name="contact_trash_days_left">%1$d दिन शेष</string>
     <string name="contacts_in_trash_notice">ट्रैश में मौजूद संपर्क 30 दिनों बाद स्थायी रूप से हटा दिए जाते हैं।</string>
     <string name="contacts_import_empty">उस फ़ाइल में कोई संपर्क नहीं मिला</string>
     <string name="contacts_import_failed">संपर्क इंपोर्ट नहीं हो सके</string>
@@ -2959,7 +2940,7 @@
     <string name="address_must_begin_end_alphanumeric">ईमेल पता किसी अक्षर या अंक से शुरू और खत्म होना चाहिए।</string>
     <string name="address_create_failed">यह पता नहीं बनाया जा सका।</string>
     <string name="switch_domain">डोमेन बदलें</string>
-    <string name="custom_domain_step_title">अपने पते को कस्टम डोमेन से निजी बनाएं</string>
+    <string name="custom_domain_step_title">अपने पते को कस्टम डोमेन से पर्सनलाइज़ करें</string>
     <string name="custom_domain_step_desc">ऐसे डोमेन के पते से मेल भेजें और पाएं जो आपका अपना है।</string>
     <string name="custom_domain_own">पहले से मौजूद डोमेन सेट करें</string>
     <string name="custom_domain_own_desc">किसी भी रजिस्ट्रार का डोमेन कुछ ही मिनटों में जोड़ें।</string>
@@ -3076,13 +3057,11 @@
     <string name="delete_emails_older_than_30_days">30 दिन से पुराने ईमेल हटाएं</string>
     <string name="inbox_tools">फ़िल्टर और त्वरित कार्रवाई</string>
     <string name="inbox_tools_subtitle">इनबॉक्स हेडर में फ़िल्टर और त्वरित कार्रवाई बटन दिखाएं</string>
-    <string name="contacts_bulk_progress">%2$d में से %1$d संपर्क हटाए जा रहे हैं</string>
     <string name="plan_badge_thanks">%1$s की सदस्यता लेने के लिए धन्यवाद।</string>
     <string name="quick_action_unavailable">यह त्वरित कार्रवाई इस फ़ोल्डर में उपलब्ध नहीं है</string>
     <string name="quick_action_no_unread">यहाँ पढ़ा हुआ चिह्नित करने के लिए कुछ नहीं है</string>
     <string name="quick_action_no_read">यहां आर्काइव करने के लिए कोई पढ़ा गया ईमेल नहीं है</string>
     <string name="quick_action_no_old">यहाँ 30 दिनों से पुराना कोई ईमेल नहीं है</string>
-    <string name="quick_action_delete_old_confirm">30 दिनों से पुरानी %1$d बातचीत को ट्रैश में ले जाएँ?</string>
     <string name="change_address">पता बदलें</string>
     <string name="address_change_title">अपना पता बदलें</string>
     <string name="address_change_intro_lead">जारी रखने से पहले पढ़ें कि क्या बदलता है.</string>

@@ -199,7 +199,6 @@
     <string name="encrypted">Şifreli</string>
     <string name="end_to_end_encrypted">Uçtan uca şifreli</string>
     <string name="protected_in_transit">Aktarımda korumalı</string>
-    <string name="trackers_blocked">%d izleyici engellendi</string>
     <string name="unstar">Yıldızı kaldır</string>
     <string name="star">Yıldızla</string>
     <string name="more">daha fazla</string>
@@ -569,7 +568,6 @@
     <string name="send">Gönder</string>
     <string name="auto_save_recipients">Alıcıları kişilere otomatik kaydet</string>
     <string name="undo_send">Göndermeyi geri al</string>
-    <string name="undo_send_delay_seconds">%1$d saniye</string>
     <string name="change_photo">Fotoğrafı değiştir</string>
     <string name="confirmations">Onaylar</string>
     <string name="confirm_before_delete">Silmeden önce onayla</string>
@@ -1085,8 +1083,8 @@
     <string name="error_too_many_attempts">Çok fazla deneme yapıldı. Lütfen biraz bekleyip tekrar deneyin.</string>
 
     <string name="error_send_recovery">Kurtarma e-postası gönderilemedi</string>
-    <string name="error_invalid_recovery_code">Kurtarma kodları \'ASTER-\' ile başlar</string>
-    <string name="error_invalid_code">Bu kurtarma kodu örtüşmedi. Kayıtlı listenizdeki başka biri işe yarar.</string>
+    <string name="error_invalid_recovery_code">Kurtarma kodları ASTER-XXXX-XXXX-XXXX-XXXX biçimindedir. Kodu kontrol edip yeniden girin.</string>
+    <string name="error_invalid_code">Bu kod bu hesapla eşleşmiyor. Kayıtlı listenizle karşılaştırıp yeniden girin. Boşluklar ve büyük harfler önemli değildir.</string>
     <string name="error_recovery_failed">Kurtarma başarısız oldu</string>
     <string name="error_recovery_too_many_attempts">Bu hesapta çok fazla kurtarma denemesi yapıldı. Yaklaşık 30 dakika sonra yeniden deneyebilirsiniz. Kodlarınızın hiçbiri kullanılmadı, hepsi hâlâ sizde.</string>
     <string name="status_deriving_key">Yeni parola anahtarı türetiliyor</string>
@@ -1464,7 +1462,6 @@
     <string name="score_partial">Kısmi</string>
     <string name="score_strong">Güçlü</string>
     <string name="score_complete">Her şey hazır</string>
-    <string name="score_steps_left">%1$d kaldı</string>
     <string name="check_passkey_registered">Geçiş anahtarı kayıtlı</string>
     <string name="check_verified_recovery_email">Doğrulanmış kurtarma e-postası</string>
     <plurals name="passkeys_registered_count">
@@ -1575,7 +1572,6 @@
     <string name="failed_purge_alias">Takma ad silinemedi</string>
     <string name="scan_inbox">Gelen kutusunu tara</string>
     <string name="deselect_all">Seçimi kaldır</string>
-    <string name="count_selected">%1$d seçildi</string>
     <string name="unsubscribe_selected">Abonelikten çık (%1$d)</string>
     <string name="reactivate_selected">Yeniden etkinleştir (%1$d)</string>
     <string name="open_unsubscribe_page">Abonelik iptal sayfasını aç</string>
@@ -1759,7 +1755,7 @@
     <string name="totp_code_required_label">Doğrulayıcı ya da yedek kod</string>
     <string name="totp_code_required_error">Doğrulayıcı uygulamanızdaki 6 haneli kodu ya da yedek kodlarınızdan birini girin</string>
     <string name="preferences_locked_retry">Ayarlarınız şu anda açılamadı. Varsayılanlar gösteriliyor, yeniden denemek için geri dönüp tekrar açın.</string>
-    <string name="plan_name_star">Star</string>
+    <string name="plan_name_star">Yıldızla</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Süpernova</string>
     <string name="ghost_alias_limit_reached">Bu ayki hayalet takma ad sınırına ulaştınız</string>
@@ -1798,7 +1794,6 @@
     <string name="upgrade_inline_card_description">Ücretsiz planın sınırına ulaştınız. Ücretli bir planla daha fazlasının kilidini açın.</string>
     <string name="your_key">Anahtarınız</string>
     <string name="recovery_codes">Kurtarma kodları</string>
-    <string name="recovery_codes_remaining">%2$d kodun %1$d tanesi kaldı</string>
     <string name="low">Az</string>
     <string name="ok">Tamam</string>
     <string name="recovery_codes_low_warning">Kurtarma kodlarınız azalıyor. Hesabınızdan kilitlenmemek için yeni kod alın.</string>
@@ -1934,7 +1929,7 @@
     <string name="block_remote_images_subtitle_security">E-postaların harici sunucularda barındırılan görselleri yüklemesini engelle</string>
     <string name="block_remote_images_info_title">Uzak Görselleri Engelle</string>
     <string name="block_remote_images_info_desc">E-postalar dış sunuculardan görsel yükleyebilir. Görseller yüklendiğinde gönderenin sunucusu IP adresinizi görür ve iletiyi açtığınızı anlar. Bu ayar bu görsellerin yüklenmesini engeller.</string>
-    <string name="block_tracking_pixels_subtitle_security">Bir e-posta açtığınızda göndericilere haber veren görünmez izleme piksellerini engelle</string>
+    <string name="block_tracking_pixels_subtitle_security">Bir e-posta açtığınızda göndericilere haber veren görünmez izleme piksellerini engeller</string>
     <string name="block_tracking_pixels_info_title">Casus Pikseller Nedir?</string>
     <string name="block_tracking_pixels_info_desc">E-postalardaki görünmez 1x1 görüntüler. Yüklendiğinde gönderen IP\'nizi, açma zamanınızı ve cihaz türünüzü görür. Aster bunları yüklenmeden önce kaldırır.</string>
     <string name="block_tracking_links_subtitle">E-postalardaki bağlantılardan izleme parametrelerini kaldır</string>
@@ -2091,7 +2086,6 @@
     <string name="export_format_eml_subtitle">İleti başına bir .eml dosyası, bir klasörde düzenli</string>
     <string name="export_start">Dışa aktarmayı başlat</string>
     <string name="export_in_progress">Verileriniz dışa aktarılıyor</string>
-    <string name="export_progress_emails">%1$d / %2$d e-posta</string>
     <string name="export_complete">Dışa aktarma tamamlandı</string>
     <string name="export_emails_exported">Dışa aktarılan e-postalar</string>
     <string name="export_file_size">Dosya boyutu</string>
@@ -2124,7 +2118,6 @@
     <string name="crypto_native_status_awaiting">Ödeme bekleniyor</string>
     <string name="crypto_native_status_detected">Ödeme algılandı</string>
     <string name="crypto_native_status_confirming_short">Onaylanıyor</string>
-    <string name="crypto_native_status_confirming">%1$d / %2$d onay</string>
     <string name="crypto_native_status_credited">Plan tanımlandı</string>
     <string name="crypto_native_usd_value_label">Ödenecek tutar</string>
     <string name="crypto_native_expires_in">%1$s içinde sona erer</string>
@@ -2223,7 +2216,6 @@
     <string name="view_plans">Planları gör</string>
     <string name="kids_reserved_addresses">Çocuklar için ayrılmış adresler</string>
     <string name="kids_reserved_subtitle">Çocuğunuz için bir adres ayırın. Kurulumu kendi parolasıyla tamamlayabilmesi için devralma bağlantısını paylaşın.</string>
-    <string name="kids_seats_used">%2$d aile koltuğundan %1$d tanesi kullanılıyor</string>
     <string name="kids_seats_breakdown">%1$s, %2$s, %3$s</string>
     <string name="kids_no_reservations">Henüz ayrılmış adres yok. astermail.org üzerinden bir adres ayırın.</string>
     <string name="kids_reserve_on_web">Web\'de ayır</string>
@@ -2286,7 +2278,6 @@
     <string name="alias_apply_existing_progress">Uygulanıyor: %1$d tarandı, %2$d güncellendi</string>
     <string name="alias_apply_existing_progress_total">Uygulanıyor: %2$d içinden %1$d tarandı, %3$d güncellendi</string>
     <string name="alias_apply_existing_done">Tamamlandı: %1$d tarandı, %2$d güncellendi</string>
-    <string name="alias_apply_existing_canceled">Durduruldu: %1$d güncellendi</string>
     <string name="alias_apply_existing_error">Mevcut postaya uygulama başarısız oldu. Yeniden deneyin.</string>
     <string name="alias_apply_existing_unavailable">Hesabınızda zaten bulunan postalar Spam klasörüne taşınamaz.</string>
     <string name="alias_delivery_label_rule_note">\"%1$s\" posta kuralı bu takma adın postasını zaten %2$s ile etiketliyor.</string>
@@ -2384,11 +2375,7 @@
     <string name="alias_import_target_domain">Şuraya aktar</string>
     <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">Devre dışıysa yeniden etkinleştir</string>
-    <string name="alias_import_confirm">%1$d takma adı içe aktar</string>
     <string name="alias_import_progress">%2$d rumuzdan %1$d içe aktarılıyor...</string>
-    <string name="alias_import_summary_created">%1$d içe aktarıldı</string>
-    <string name="alias_import_summary_skipped">%1$d zaten mevcuttu</string>
-    <string name="alias_import_summary_failed">%1$d başarısız</string>
     <string name="alias_import_error_no_aliases">Bu dosyada içe aktarılabilir rumuz bulunamadı.</string>
     <string name="alias_import_error_encrypted">Bu dışa aktarma şifreli. Şifrelemeden yeniden dışa aktarın, sonra içe aktarın.</string>
     <string name="alias_export_title">Takma adları dışa aktar</string>
@@ -2398,7 +2385,6 @@
     <string name="alias_export_source_domain_addresses">Özel alan adı adresleri</string>
     <string name="alias_export_source_directories">Dizinler</string>
     <string name="alias_export_source_ghost">Ghost takma adlar</string>
-    <string name="alias_export_source_count">%1$d kayıt</string>
     <string name="alias_export_warning_title">Bu dosya şifreli değil</string>
     <string name="alias_export_warning_body">Dosyayı açan herkes içindeki tüm takma adları, notları ve web sitelerini okuyabilir. Parola yöneticinizde veya şifreli bir diskte saklayın.</string>
     <string name="alias_export_summary">%2$s içinde %1$s.</string>
@@ -2551,7 +2537,6 @@
     <string name="couldnt_remove_label">Etiket kaldırılamadı</string>
     <string name="couldnt_unsnooze">Erteleme kaldırılamadı</string>
     <string name="domain_verify_slow">Aster DNS kontrolünü tamamlayamadı. Kayıtlarınız hâlâ doğrulanıyor olabilir, birkaç dakika sonra tekrar deneyin.</string>
-    <string name="domain_records_verified">%2$d kaydın %1$d tanesi doğrulandı</string>
     <string name="ext_sync_started">Eşitleme başlatıldı</string>
     <string name="ext_account_removed">Hesap kaldırıldı</string>
     <string name="folder_created">Klasör oluşturuldu</string>
@@ -2620,7 +2605,6 @@
     <string name="plan_change_due_today">Bugün ödenecek: %1$s</string>
     <string name="plan_change_preview_failed">Bugün ödenecek tutar hesaplanamadı. Tam fiyat gösteriliyor.</string>
     <string name="payment_failed_banner_overdue">Ödemeniz alınamadı. %1$s planınıza erişim yakında kısıtlanacak.</string>
-    <string name="payment_failed_days_left">Erişim %1$d gün içinde kısıtlanacak.</string>
     <string name="payment_failed_one_day_left">Erişim 1 gün içinde kısıtlanacak.</string>
     <string name="device_verification_failed">Bu değişiklik için bu cihaz doğrulanamadı. Bu cihazda yeniden oturum açıp tekrar deneyin.</string>
     <string name="cancel_reason_title">Gitmeden önce</string>
@@ -2771,7 +2755,6 @@
     <string name="signature_set_default">Varsayılan imza olarak kullan</string>
     <string name="star_failed">Yıldız eklenemedi</string>
     <string name="tab_label_with_count">%1$s (%2$d)</string>
-    <string name="templates_decrypt_failed_count">%1$d şablon bu cihazda okunamadı. Bu cihazda şu anda bulunmayan bir anahtarla kaydedilmişler.</string>
     <string name="time_format">Saat formatı</string>
     <string name="time_format_12h">12 saatlik (1:30 ÖS)</string>
     <string name="time_format_24h">24 saatlik (13:30)</string>
@@ -2867,7 +2850,7 @@
     <string name="domain_purchase_cancel_payment_message">Özel alan adı için bu ödemeyi iptal etmek istediğinden emin misin?</string>
     <string name="domain_purchase_cancel_payment_confirm">Ödemeyi iptal et</string>
     <string name="domain_purchase_cancel_payment_keep">Ödemeyi koru</string>
-    <string name="domain_purchase_manage_description">Bu kaydı gözden geçir ve süresi dolmadan yenile.</string>
+    <string name="domain_purchase_manage_description">Bu kaydı gözden geçirin ve süresi dolmadan yenileyin.</string>
     <string name="domain_purchase_manage_status">Durum</string>
     <string name="domain_purchase_manage_status_active">Etkin</string>
     <string name="domain_purchase_manage_status_expiring">Yakında sona eriyor</string>
@@ -2877,7 +2860,6 @@
     <string name="domain_purchase_manage_paid">Ödenen</string>
     <string name="domain_purchase_manage_auto_renew_note">Bu alan adı otomatik olarak yenilenmez. Elinde tutmak için bitiş tarihinden önce yenile.</string>
     <string name="domain_purchase_manage_support_note">Bu alan adını başka bir kayıt kuruluşuna taşımak ya da geri ödeme sormak için destek ile iletişime geç.</string>
-    <string name="domain_purchase_n_years">%1$d yıl</string>
     <string name="twin_address_title">Eşleşen adresiniz</string>
     <string name="twin_address_reserved_description">%1$s hesabınız için ayrıldı, bu yüzden başka kimse kaydedemez. Bu adresten gönderip almak istediğinizde takma ad olarak oluşturun.</string>
     <string name="twin_address_available_description">%1$s, diğer Aster alan adındaki eşleşen adrestir. Bu adresten gönderip almak için takma ad olarak oluşturun.</string>
@@ -2966,7 +2948,6 @@
     <string name="empty_contacts_trash_confirm_message">Çöp kutusundaki tüm kişiler kalıcı olarak silinsin mi? Bu işlem geri alınamaz.</string>
     <string name="contact_restored">Kişi geri yüklendi</string>
     <string name="contact_moved_to_trash">Kişi çöp kutusuna taşındı</string>
-    <string name="contact_trash_days_left">%1$d gün kaldı</string>
     <string name="contacts_in_trash_notice">Çöp kutusundaki kişiler 30 gün sonra kalıcı olarak silinir.</string>
     <string name="contacts_import_empty">Bu dosyada kişi bulunamadı</string>
     <string name="contacts_import_failed">Kişiler içe aktarılamadı</string>
@@ -3186,13 +3167,11 @@
     <string name="delete_emails_older_than_30_days">30 günden eski e-postaları sil</string>
     <string name="inbox_tools">Filtreler ve hızlı işlemler</string>
     <string name="inbox_tools_subtitle">Gelen kutusu başlığında filtre ve hızlı işlem düğmelerini gösterir</string>
-    <string name="contacts_bulk_progress">%2$d kişiden %1$d tanesi siliniyor</string>
     <string name="plan_badge_thanks">%1$s aboneliğiniz için teşekkürler.</string>
     <string name="quick_action_unavailable">Bu hızlı işlem bu klasörde kullanılamaz</string>
     <string name="quick_action_no_unread">Burada okundu olarak işaretlenecek bir şey yok</string>
     <string name="quick_action_no_read">Burada arşivlenecek okunmuş e-posta yok</string>
     <string name="quick_action_no_old">Burada 30 günden eski e-posta yok</string>
-    <string name="quick_action_delete_old_confirm">30 günden eski %1$d konuşma çöp kutusuna taşınsın mı?</string>
     <string name="change_address">Adresi değiştir</string>
     <string name="address_change_title">Adresini değiştir</string>
     <string name="address_change_intro_lead">Devam etmeden önce nelerin değiştiğini okuyun.</string>

@@ -264,7 +264,7 @@ fun SecurityScreen(
     val score_label = when {
         score == null -> "…"
         score >= security_score_max -> stringResource(R.string.score_complete)
-        else -> stringResource(R.string.score_steps_left, security_score_max - score)
+        else -> pluralStringResource(R.plurals.score_steps_left, security_score_max - score, security_score_max - score)
     }
     val score_color = when (score) {
         null -> colors.text_muted
@@ -346,8 +346,9 @@ fun SecurityScreen(
     }
     val codes_status = state.recovery_codes_status
     val recovery_codes_sub = if (codes_status != null && codes_status.total_codes > 0) {
-        stringResource(
-            R.string.recovery_codes_remaining,
+        pluralStringResource(
+            R.plurals.recovery_codes_remaining,
+            codes_status.total_codes,
             codes_status.available_codes,
             codes_status.total_codes,
         )

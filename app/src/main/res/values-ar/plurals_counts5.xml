@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="count_selected">
+        <item quantity="zero">تم تحديد %1$d</item>
+        <item quantity="one">تم تحديد %1$d</item>
+        <item quantity="two">تم تحديد %1$d</item>
+        <item quantity="few">تم تحديد %1$d</item>
+        <item quantity="many">تم تحديد %1$d</item>
+        <item quantity="other">تم تحديد %1$d</item>
+    </plurals>
+    <plurals name="inbox_selected_count">
+        <item quantity="zero">تم تحديد %1$d</item>
+        <item quantity="one">تم تحديد %1$d</item>
+        <item quantity="two">تم تحديد %1$d</item>
+        <item quantity="few">تم تحديد %1$d</item>
+        <item quantity="many">تم تحديد %1$d</item>
+        <item quantity="other">تم تحديد %1$d</item>
+    </plurals>
+    <plurals name="contacts_bulk_progress">
+        <item quantity="zero">جارٍ حذف %1$d من أصل %2$d جهة اتصال</item>
+        <item quantity="one">جارٍ حذف %1$d من أصل %2$d جهة اتصال</item>
+        <item quantity="two">جارٍ حذف %1$d من أصل %2$d جهة اتصال</item>
+        <item quantity="few">جارٍ حذف %1$d من أصل %2$d جهة اتصال</item>
+        <item quantity="many">جارٍ حذف %1$d من أصل %2$d جهة اتصال</item>
+        <item quantity="other">جارٍ حذف %1$d من أصل %2$d جهة اتصال</item>
+    </plurals>
+    <plurals name="recovery_codes_remaining">
+        <item quantity="zero">الرموز المتبقية: %1$d من %2$d</item>
+        <item quantity="one">الرموز المتبقية: %1$d من %2$d</item>
+        <item quantity="two">الرموز المتبقية: %1$d من %2$d</item>
+        <item quantity="few">الرموز المتبقية: %1$d من %2$d</item>
+        <item quantity="many">الرموز المتبقية: %1$d من %2$d</item>
+        <item quantity="other">الرموز المتبقية: %1$d من %2$d</item>
+    </plurals>
+    <plurals name="export_progress_emails">
+        <item quantity="zero">الرسائل: %1$d / %2$d</item>
+        <item quantity="one">الرسائل: %1$d / %2$d</item>
+        <item quantity="two">الرسائل: %1$d / %2$d</item>
+        <item quantity="few">الرسائل: %1$d / %2$d</item>
+        <item quantity="many">الرسائل: %1$d / %2$d</item>
+        <item quantity="other">الرسائل: %1$d / %2$d</item>
+    </plurals>
+    <plurals name="crypto_native_status_confirming">
+        <item quantity="zero">التأكيدات: %1$d من %2$d</item>
+        <item quantity="one">التأكيدات: %1$d من %2$d</item>
+        <item quantity="two">التأكيدات: %1$d من %2$d</item>
+        <item quantity="few">التأكيدات: %1$d من %2$d</item>
+        <item quantity="many">التأكيدات: %1$d من %2$d</item>
+        <item quantity="other">التأكيدات: %1$d من %2$d</item>
+    </plurals>
+    <plurals name="kids_seats_used">
+        <item quantity="zero">%1$d من %2$d من مقاعد العائلة مستخدَمة</item>
+        <item quantity="one">%1$d من %2$d من مقاعد العائلة مستخدَمة</item>
+        <item quantity="two">%1$d من %2$d من مقاعد العائلة مستخدَمة</item>
+        <item quantity="few">%1$d من %2$d من مقاعد العائلة مستخدَمة</item>
+        <item quantity="many">%1$d من %2$d من مقاعد العائلة مستخدَمة</item>
+        <item quantity="other">%1$d من %2$d من مقاعد العائلة مستخدَمة</item>
+    </plurals>
+    <plurals name="domain_records_verified">
+        <item quantity="zero">السجلات التي تم التحقق منها: %1$d من %2$d</item>
+        <item quantity="one">السجلات التي تم التحقق منها: %1$d من %2$d</item>
+        <item quantity="two">السجلات التي تم التحقق منها: %1$d من %2$d</item>
+        <item quantity="few">السجلات التي تم التحقق منها: %1$d من %2$d</item>
+        <item quantity="many">السجلات التي تم التحقق منها: %1$d من %2$d</item>
+        <item quantity="other">السجلات التي تم التحقق منها: %1$d من %2$d</item>
+    </plurals>
+    <plurals name="alias_limit_notice">
+        <item quantity="zero">استُخدم %1$d من %2$d من الأسماء المستعارة. قم بالترقية للمزيد.</item>
+        <item quantity="one">استُخدم %1$d من %2$d من الأسماء المستعارة. قم بالترقية للمزيد.</item>
+        <item quantity="two">استُخدم %1$d من %2$d من الأسماء المستعارة. قم بالترقية للمزيد.</item>
+        <item quantity="few">استُخدم %1$d من %2$d من الأسماء المستعارة. قم بالترقية للمزيد.</item>
+        <item quantity="many">استُخدم %1$d من %2$d من الأسماء المستعارة. قم بالترقية للمزيد.</item>
+        <item quantity="other">استُخدم %1$d من %2$d من الأسماء المستعارة. قم بالترقية للمزيد.</item>
+    </plurals>
+    <plurals name="score_steps_left">
+        <item quantity="zero">بقي %1$d</item>
+        <item quantity="one">بقي %1$d</item>
+        <item quantity="two">بقي %1$d</item>
+        <item quantity="few">بقي %1$d</item>
+        <item quantity="many">بقي %1$d</item>
+        <item quantity="other">بقي %1$d</item>
+    </plurals>
+    <plurals name="alias_import_summary_created">
+        <item quantity="zero">%1$d مستورَد</item>
+        <item quantity="one">%1$d مستورَد</item>
+        <item quantity="two">%1$d مستورَد</item>
+        <item quantity="few">%1$d مستورَد</item>
+        <item quantity="many">%1$d مستورَد</item>
+        <item quantity="other">%1$d مستورَد</item>
+    </plurals>
+    <plurals name="alias_import_summary_skipped">
+        <item quantity="zero">%1$d موجود بالفعل</item>
+        <item quantity="one">%1$d موجود بالفعل</item>
+        <item quantity="two">%1$d موجود بالفعل</item>
+        <item quantity="few">%1$d موجود بالفعل</item>
+        <item quantity="many">%1$d موجود بالفعل</item>
+        <item quantity="other">%1$d موجود بالفعل</item>
+    </plurals>
+    <plurals name="alias_import_summary_failed">
+        <item quantity="zero">%1$d فشل</item>
+        <item quantity="one">%1$d فشل</item>
+        <item quantity="two">%1$d فشل</item>
+        <item quantity="few">%1$d فشل</item>
+        <item quantity="many">%1$d فشل</item>
+        <item quantity="other">%1$d فشل</item>
+    </plurals>
+    <plurals name="alias_apply_existing_canceled">
+        <item quantity="zero">تم الإيقاف: تحديث %1$d</item>
+        <item quantity="one">تم الإيقاف: تحديث %1$d</item>
+        <item quantity="two">تم الإيقاف: تحديث %1$d</item>
+        <item quantity="few">تم الإيقاف: تحديث %1$d</item>
+        <item quantity="many">تم الإيقاف: تحديث %1$d</item>
+        <item quantity="other">تم الإيقاف: تحديث %1$d</item>
+    </plurals>
+    <plurals name="fix_enc_codes_used">
+        <item quantity="zero">%1$d مستخدم</item>
+        <item quantity="one">%1$d مستخدم</item>
+        <item quantity="two">%1$d مستخدم</item>
+        <item quantity="few">%1$d مستخدم</item>
+        <item quantity="many">%1$d مستخدم</item>
+        <item quantity="other">%1$d مستخدم</item>
+    </plurals>
+    <plurals name="payment_failed_days_left">
+        <item quantity="zero">الأيام المتبقية قبل تقييد الوصول: %1$d</item>
+        <item quantity="one">الأيام المتبقية قبل تقييد الوصول: %1$d</item>
+        <item quantity="two">الأيام المتبقية قبل تقييد الوصول: %1$d</item>
+        <item quantity="few">الأيام المتبقية قبل تقييد الوصول: %1$d</item>
+        <item quantity="many">الأيام المتبقية قبل تقييد الوصول: %1$d</item>
+        <item quantity="other">الأيام المتبقية قبل تقييد الوصول: %1$d</item>
+    </plurals>
+    <plurals name="templates_decrypt_failed_count">
+        <item quantity="zero">تعذّرت قراءة %1$d من القوالب على هذا الجهاز. فقد حُفظت بمفتاح لا يمتلكه هذا الجهاز حاليًا.</item>
+        <item quantity="one">تعذّرت قراءة %1$d من القوالب على هذا الجهاز. فقد حُفظت بمفتاح لا يمتلكه هذا الجهاز حاليًا.</item>
+        <item quantity="two">تعذّرت قراءة %1$d من القوالب على هذا الجهاز. فقد حُفظت بمفتاح لا يمتلكه هذا الجهاز حاليًا.</item>
+        <item quantity="few">تعذّرت قراءة %1$d من القوالب على هذا الجهاز. فقد حُفظت بمفتاح لا يمتلكه هذا الجهاز حاليًا.</item>
+        <item quantity="many">تعذّرت قراءة %1$d من القوالب على هذا الجهاز. فقد حُفظت بمفتاح لا يمتلكه هذا الجهاز حاليًا.</item>
+        <item quantity="other">تعذّرت قراءة %1$d من القوالب على هذا الجهاز. فقد حُفظت بمفتاح لا يمتلكه هذا الجهاز حاليًا.</item>
+    </plurals>
+    <plurals name="contact_trash_days_left">
+        <item quantity="zero">بقي %1$d يوم</item>
+        <item quantity="one">بقي %1$d يوم</item>
+        <item quantity="two">بقي %1$d يوم</item>
+        <item quantity="few">بقي %1$d يوم</item>
+        <item quantity="many">بقي %1$d يوم</item>
+        <item quantity="other">بقي %1$d يوم</item>
+    </plurals>
+    <plurals name="quick_action_delete_old_confirm">
+        <item quantity="zero">هل تريد نقل المحادثات الأقدم من 30 يومًا (%1$d) إلى المهملات؟</item>
+        <item quantity="one">هل تريد نقل المحادثات الأقدم من 30 يومًا (%1$d) إلى المهملات؟</item>
+        <item quantity="two">هل تريد نقل المحادثات الأقدم من 30 يومًا (%1$d) إلى المهملات؟</item>
+        <item quantity="few">هل تريد نقل المحادثات الأقدم من 30 يومًا (%1$d) إلى المهملات؟</item>
+        <item quantity="many">هل تريد نقل المحادثات الأقدم من 30 يومًا (%1$d) إلى المهملات؟</item>
+        <item quantity="other">هل تريد نقل المحادثات الأقدم من 30 يومًا (%1$d) إلى المهملات؟</item>
+    </plurals>
+    <plurals name="undo_send_delay_seconds">
+        <item quantity="zero">%1$d ث</item>
+        <item quantity="one">%1$d ث</item>
+        <item quantity="two">%1$d ث</item>
+        <item quantity="few">%1$d ث</item>
+        <item quantity="many">%1$d ث</item>
+        <item quantity="other">%1$d ث</item>
+    </plurals>
+</resources>

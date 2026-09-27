@@ -2603,8 +2603,9 @@ fun InboxScreen(
             org.astermail.android.design.components.AsterAlertDialog(
                 on_dismiss = { quick_delete_old_pending = null },
                 title = stringResource(R.string.delete_emails_older_than_30_days),
-                message = stringResource(
-                    R.string.quick_action_delete_old_confirm,
+                message = pluralStringResource(
+                    R.plurals.quick_action_delete_old_confirm,
+                    pending_delete_old.thread_ids.size,
                     pending_delete_old.thread_ids.size,
                 ),
                 confirm_label = stringResource(R.string.delete),
@@ -3293,7 +3294,7 @@ private fun select_mode_top_bar(
         )
         Spacer(Modifier.width(AsterSpacing.xs))
         Text(
-            text = if (selected_count == 0) stringResource(R.string.select) else stringResource(R.string.inbox_selected_count, selected_count),
+            text = if (selected_count == 0) stringResource(R.string.select) else pluralStringResource(R.plurals.inbox_selected_count, selected_count, selected_count),
             style = MaterialTheme.typography.titleMedium,
             color = colors.text_primary,
             fontWeight = FontWeight.SemiBold,

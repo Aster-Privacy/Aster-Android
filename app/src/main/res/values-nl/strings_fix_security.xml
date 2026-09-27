@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="two_step_verification_title">Tweestapsverificatie</string>
-    <string name="two_step_verification_on_description">Voor uw account is naast uw wachtwoord ook een verificatiecode vereist.</string>
+    <string name="two_step_verification_on_description">Voor je account is naast je wachtwoord ook een verificatiecode vereist.</string>
     <string name="two_step_verification_off_description">Vraag voor extra bescherming naast je wachtwoord ook om een verificatiecode.</string>
     <string name="security_activity_filter_all">Alles</string>
     <string name="security_activity_filter_sign_ins">Inlogactiviteit</string>

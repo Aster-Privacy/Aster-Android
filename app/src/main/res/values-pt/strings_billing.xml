@@ -4,7 +4,6 @@
     <string name="academic_status_none">Não aplicado</string>
     <string name="academic_status_pending">A aguardar verificação</string>
     <string name="academic_status_verified">Verificado</string>
-    <string name="alias_limit_notice">%1$d de %2$d aliases em uso. Atualize o plano para ter mais.</string>
     <string name="cancel_impact_catch_all">Os endereços catch-all deixam de receber correio.</string>
     <string name="cancel_impact_intro">Quando o seu plano terminar, isto muda:</string>
     <string name="cancel_impact_none">Nada na sua conta muda de imediato.</string>
@@ -27,7 +26,7 @@
     <string name="error_send_quota_reached">Atingiu o limite diário desta conta para mensagens para endereços fora do Aster. As mensagens para outros endereços Aster não são afetadas.</string>
     <string name="family_manage_web">Gerir membros na web</string>
     <string name="finish_plan_setup_action">Concluir configuração</string>
-    <string name="finish_plan_setup_message">Você fechou o checkout antes de pagar. A sua conta permanece no plano gratuito até você concluir.</string>
+    <string name="finish_plan_setup_message">Fechou o checkout antes de pagar. A sua conta permanece no plano gratuito até concluir.</string>
     <string name="finish_plan_setup_title">Conclua a configuração do seu plano %1$s</string>
     <string name="interval_generic">período de faturação</string>
     <string name="interval_month">mês</string>
@@ -36,11 +35,11 @@
     <string name="notif_channel_billing_name">Faturação</string>
     <string name="onboarding_checklist_title">Configurar o Aster (%1$d de %2$d)</string>
     <string name="onboarding_task_first_email">Envie a sua primeira mensagem</string>
-    <string name="onboarding_task_import">Importe seus e-mails antigos</string>
+    <string name="onboarding_task_import">Importe o seu correio antigo</string>
     <string name="onboarding_task_install">Instale o Aster no seu computador</string>
     <string name="onboarding_task_recovery">Adicione um e-mail de recuperação</string>
     <string name="payment_confirmed">Pagamento confirmado</string>
-    <string name="payment_processing_delayed">Seu pagamento está sendo processado. Isso pode levar alguns minutos.</string>
+    <string name="payment_processing_delayed">O seu pagamento está a ser processado. Isso pode demorar alguns minutos.</string>
     <string name="payment_failed_notification_body">Atualize o seu cartão para manter o plano %1$s.</string>
     <string name="payment_failed_notification_body_generic">Atualize o seu cartão para manter o seu plano.</string>
     <string name="payment_failed_notification_title">O seu pagamento não foi concluído</string>
@@ -56,10 +55,10 @@
     <string name="billing_plan_type_family">Família</string>
     <string name="billing_storage_select_option_first">Para comprar mais armazenamento, selecione primeiro uma opção.</string>
     <string name="billing_manage_payment">Gerir pagamento</string>
-    <string name="billing_storage_limit_description">Novos e-mails ficam pausados até você liberar espaço. Limpar alguns e-mails, ou fazer upgrade do plano, vai liberar o fluxo. O correio existente está seguro.</string>
+    <string name="billing_storage_limit_description">O correio novo fica em pausa até libertar espaço. Para voltar a recebê-lo, apague alguns e-mails ou atualize o seu plano. O correio existente está seguro.</string>
     <string name="billing_crypto_paid_until">Pago até %1$s (cripto)</string>
     <string name="billing_crypto_no_renew_notice">Pagamentos cripto não renovam automaticamente.</string>
-    <string name="billing_crypto_renew_link">Renovar agora</string>
+    <string name="billing_crypto_renew_link">Renovar com cripto</string>
     <string name="billing_add_storage_link">Adicionar mais armazenamento</string>
     <string name="billing_free_upgrade_price_note">Os planos começam em %1$s por mês.</string>
     <string name="billing_cancel_plan">Cancelar plano</string>
@@ -68,7 +67,7 @@
     <string name="billing_status_ending">A terminar</string>
     <string name="billing_status_payment_needed">Pagamento necessário</string>
     <string name="billing_thanks_title">Obrigado por apoiar o Aster</string>
-    <string name="billing_thanks_body">Seu apoio significa tudo para nós. Ele permite que uma equipe pequena continue construindo o Aster com cuidado, todos os dias.</string>
+    <string name="billing_thanks_body">O seu apoio significa tudo para nós. Permite que uma equipa pequena continue a desenvolver o Aster com cuidado, todos os dias.</string>
     <string name="billing_keep_title">O seu plano %1$s termina a %2$s</string>
     <string name="billing_keep_body">Mantenha-o e nada muda. Os seus aliases, domínios e armazenamento ficam como estão.</string>
     <string name="billing_keep_action">Manter %1$s</string>
@@ -95,8 +94,8 @@
     <string name="billing_cancel_offer_body_missing">Uma nota curta chega às pessoas que desenvolvem o Aster, e elas leem todas. Depois, pode cancelar na mesma.</string>
     <string name="billing_credits_settings_failed">O Aster não conseguiu guardar a definição de crédito.</string>
     <string name="billing_academic_request_failed">O Aster não conseguiu enviar o e-mail de verificação.</string>
-    <string name="billing_thanks_free_title">Obrigado por usar o Aster</string>
-    <string name="billing_thanks_free_body">Uma equipe pequena constrói o Aster com cuidado, e cada pessoa que confia a ele o seu e-mail nos mantém em frente. Faça upgrade sempre que precisar de mais armazenamento, aliases ou domínios personalizados.</string>
+    <string name="billing_thanks_free_title">Obrigado por utilizar o Aster</string>
+    <string name="billing_thanks_free_body">Uma equipa pequena desenvolve o Aster com cuidado, e cada pessoa que lhe confia o seu correio dá-nos força para continuar. Atualize o plano sempre que precisar de mais armazenamento, aliases ou domínios personalizados.</string>
     <string name="billing_usage_of">%1$d de %2$d</string>
     <string name="billing_usage_in_use">%1$d em uso</string>
     <string name="billing_usage_upgrade_hint">Atualize o plano para ter mais espaço</string>

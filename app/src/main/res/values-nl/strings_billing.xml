@@ -4,7 +4,6 @@
     <string name="academic_status_none">Niet toegepast</string>
     <string name="academic_status_pending">Wachten op verificatie</string>
     <string name="academic_status_verified">Geverifieerd</string>
-    <string name="alias_limit_notice">%1$d van %2$d aliassen gebruikt. Upgrade voor meer.</string>
     <string name="cancel_impact_catch_all">Catch-all-adressen ontvangen geen mail meer.</string>
     <string name="cancel_impact_intro">Wanneer je abonnement eindigt, verandert dit:</string>
     <string name="cancel_impact_none">Er verandert direct niets aan je account.</string>
@@ -40,7 +39,7 @@
     <string name="onboarding_task_install">Installeer Aster op je computer</string>
     <string name="onboarding_task_recovery">Voeg een herstel-e-mailadres toe</string>
     <string name="payment_confirmed">Betaling bevestigd</string>
-    <string name="payment_processing_delayed">Betaalverwerking wordt vertraagd. Controleer uw betaalmethode.</string>
+    <string name="payment_processing_delayed">Betaalverwerking wordt vertraagd. Controleer je betaalmethode.</string>
     <string name="payment_failed_notification_body">Werk je kaart bij om je %1$s-abonnement te behouden.</string>
     <string name="payment_failed_notification_body_generic">Werk je kaart bij om je abonnement te behouden.</string>
     <string name="payment_failed_notification_title">Je betaling is niet gelukt</string>
@@ -56,7 +55,7 @@
     <string name="billing_plan_type_family">Gezin</string>
     <string name="billing_storage_select_option_first">Selecteer eerst een optie om meer opslag te kopen.</string>
     <string name="billing_manage_payment">Betaling beheren</string>
-    <string name="billing_storage_limit_description">Nieuwe post is gepauzeerd tot u ruimte vrijmaakt. Wat e-mails wissen of uw abonnement upgraden laat het weer stromen. Bestaande post is veilig.</string>
+    <string name="billing_storage_limit_description">Nieuwe post is gepauzeerd tot je ruimte vrijmaakt. Wat e-mails wissen of je abonnement upgraden laat het weer stromen. Bestaande post is veilig.</string>
     <string name="billing_crypto_paid_until">Betaald tot %1$s (crypto)</string>
     <string name="billing_crypto_no_renew_notice">Dit abonnement wordt niet automatisch verlengd</string>
     <string name="billing_crypto_renew_link">Handmatig verlengen</string>

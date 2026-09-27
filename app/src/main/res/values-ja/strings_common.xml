@@ -2,4 +2,10 @@
 <resources>
     <string name="common_storage_used_of_total">%2$s 中 %1$s</string>
     <string name="common_storage_used_only">%1$s 使用中</string>
+    <string name="auth_previous_account_data_not_cleared">以前のアカウントのメールをこのデバイスから削除できませんでした。もう一度サインインしてください。</string>
+    <string name="export_readme_title">Aster Mail エクスポート</string>
+    <string name="export_readme_mbox">すべてのメール（MBOX 形式、RFC 4155）</string>
+    <string name="export_readme_eml">個別の .eml ファイル</string>
+    <string name="export_readme_contacts">連絡先の詳細</string>
+    <string name="export_readme_warning">このエクスポート内のメールは暗号化されていません。このファイルは安全な場所に保管してください。</string>
 </resources>

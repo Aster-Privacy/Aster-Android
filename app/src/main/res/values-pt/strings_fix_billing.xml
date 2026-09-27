@@ -15,6 +15,6 @@
     <string name="fix_billing_invoice_status_refunded">Reembolsado</string>
     <string name="fix_billing_invoice_pdf">PDF</string>
     <string name="fix_billing_invoice_payment">Pagamento</string>
-    <string name="fix_billing_storage_limit_exceeded">Seu armazenamento está cheio.</string>
+    <string name="fix_billing_storage_limit_exceeded">O seu armazenamento está cheio.</string>
     <string name="fix_billing_history_empty">Ainda não há faturas. Os seus pagamentos aparecem aqui após a primeira cobrança.</string>
 </resources>

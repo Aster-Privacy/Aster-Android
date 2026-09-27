@@ -15,6 +15,6 @@
     <string name="fix_billing_invoice_status_refunded">Terugbetaald</string>
     <string name="fix_billing_invoice_pdf">PDF</string>
     <string name="fix_billing_invoice_payment">Betaling</string>
-    <string name="fix_billing_storage_limit_exceeded">Uw opslag is vol.</string>
+    <string name="fix_billing_storage_limit_exceeded">Je opslag is vol.</string>
     <string name="fix_billing_history_empty">Nog geen facturen. Je betalingen verschijnen hier na de eerste afschrijving.</string>
 </resources>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="count_selected">
+        <item quantity="other">%1$d개 선택됨</item>
+    </plurals>
+    <plurals name="inbox_selected_count">
+        <item quantity="other">%1$d개 선택됨</item>
+    </plurals>
+    <plurals name="contacts_bulk_progress">
+        <item quantity="other">연락처 %2$d개 중 %1$d개 삭제 중</item>
+    </plurals>
+    <plurals name="recovery_codes_remaining">
+        <item quantity="other">%2$d개 중 %1$d개 남음</item>
+    </plurals>
+    <plurals name="export_progress_emails">
+        <item quantity="other">%1$d / %2$d통</item>
+    </plurals>
+    <plurals name="crypto_native_status_confirming">
+        <item quantity="other">%2$d회 중 %1$d회 승인</item>
+    </plurals>
+    <plurals name="kids_seats_used">
+        <item quantity="other">가족 좌석 %2$d개 중 %1$d개 사용 중</item>
+    </plurals>
+    <plurals name="domain_records_verified">
+        <item quantity="other">%2$d개 중 %1$d개 레코드 확인됨</item>
+    </plurals>
+    <plurals name="alias_limit_notice">
+        <item quantity="other">별칭 %2$d개 중 %1$d개를 사용 중입니다. 업그레이드하면 더 쓸 수 있습니다.</item>
+    </plurals>
+    <plurals name="score_steps_left">
+        <item quantity="other">%1$d개 남음</item>
+    </plurals>
+    <plurals name="alias_import_summary_created">
+        <item quantity="other">%1$d개 가져옴</item>
+    </plurals>
+    <plurals name="alias_import_summary_skipped">
+        <item quantity="other">%1$d개 이미 존재함</item>
+    </plurals>
+    <plurals name="alias_import_summary_failed">
+        <item quantity="other">%1$d개 실패</item>
+    </plurals>
+    <plurals name="alias_apply_existing_canceled">
+        <item quantity="other">중지됨: %1$d개 업데이트</item>
+    </plurals>
+    <plurals name="fix_enc_codes_used">
+        <item quantity="other">%1$d개 사용됨</item>
+    </plurals>
+    <plurals name="payment_failed_days_left">
+        <item quantity="other">%1$d일 후에 액세스가 제한됩니다.</item>
+    </plurals>
+    <plurals name="templates_decrypt_failed_count">
+        <item quantity="other">이 기기에서 템플릿 %1$d개를 읽지 못했습니다. 현재 이 기기에 없는 키로 저장되었습니다.</item>
+    </plurals>
+    <plurals name="contact_trash_days_left">
+        <item quantity="other">%1$d일 남음</item>
+    </plurals>
+    <plurals name="quick_action_delete_old_confirm">
+        <item quantity="other">30일이 지난 대화 %1$d개를 휴지통으로 옮길까요?</item>
+    </plurals>
+    <plurals name="undo_send_delay_seconds">
+        <item quantity="other">%1$d초</item>
+    </plurals>
+</resources>

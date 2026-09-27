@@ -199,7 +199,6 @@
     <string name="encrypted">暗号化済み</string>
     <string name="end_to_end_encrypted">エンドツーエンド暗号化</string>
     <string name="protected_in_transit">転送中は保護されています</string>
-    <string name="trackers_blocked">%d個のトラッカーをブロックしました</string>
     <string name="unstar">スターを外す</string>
     <string name="star">スター</string>
     <string name="more">その他</string>
@@ -569,7 +568,6 @@
     <string name="send">送信</string>
     <string name="auto_save_recipients">受信者を連絡先に自動保存</string>
     <string name="undo_send">送信取り消し</string>
-    <string name="undo_send_delay_seconds">%1$d秒</string>
     <string name="change_photo">写真を変更</string>
     <string name="confirmations">確認</string>
     <string name="confirm_before_delete">削除前に確認</string>
@@ -1085,8 +1083,8 @@
     <string name="error_too_many_attempts">試行回数が多すぎます。しばらく待ってからもう一度お試しください。</string>
 
     <string name="error_send_recovery">復旧用メールを送信できませんでした</string>
-    <string name="error_invalid_recovery_code">リカバリーコードは\'ASTER-\'で始まります</string>
-    <string name="error_invalid_code">そのリカバリーコードは一致しませんでした。保存している一覧の中の別のコードでしたら通ります。</string>
+    <string name="error_invalid_recovery_code">リカバリーコードは ASTER-XXXX-XXXX-XXXX-XXXX の形式です。コードを確認して、もう一度入力してください。</string>
+    <string name="error_invalid_code">そのコードはこのアカウントと一致しません。保存した一覧と照らし合わせて、もう一度入力してください。スペースや大文字・小文字は区別されません。</string>
     <string name="error_recovery_failed">復旧に失敗しました</string>
     <string name="error_recovery_too_many_attempts">このアカウントで復旧の試行回数が多すぎます。約30分後にもう一度お試しください。コードは1つも使用されていないため、すべてそのまま残っています。</string>
     <string name="status_deriving_key">新しいパスワードキーを導出中</string>
@@ -1461,7 +1459,6 @@
     <string name="score_partial">一部</string>
     <string name="score_strong">強力</string>
     <string name="score_complete">設定完了</string>
-    <string name="score_steps_left">残り %1$d</string>
     <string name="check_passkey_registered">パスキー登録済み</string>
     <string name="check_verified_recovery_email">確認済みの回復メール</string>
     <plurals name="passkeys_registered_count">
@@ -1571,7 +1568,6 @@
     <string name="failed_purge_alias">エイリアスを削除できませんでした</string>
     <string name="scan_inbox">受信トレイをスキャン</string>
     <string name="deselect_all">選択を解除</string>
-    <string name="count_selected">%1$d件を選択中</string>
     <string name="unsubscribe_selected">購読解除 (%1$d)</string>
     <string name="reactivate_selected">再開 (%1$d)</string>
     <string name="open_unsubscribe_page">購読解除ページを開く</string>
@@ -1755,7 +1751,7 @@
     <string name="totp_code_required_label">認証アプリのコードまたはバックアップコード</string>
     <string name="totp_code_required_error">認証アプリの 6 桁のコード、またはバックアップコードのいずれかを入力してください</string>
     <string name="preferences_locked_retry">いま設定を復号できませんでした。既定値を表示しています。戻ってから開き直してください。</string>
-    <string name="plan_name_star">Star</string>
+    <string name="plan_name_star">スターを付ける</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">超新星</string>
     <string name="ghost_alias_limit_reached">今月のゴーストエイリアスの上限に達しました</string>
@@ -1794,7 +1790,6 @@
     <string name="upgrade_inline_card_description">無料プランの上限に達しました。有料プランでさらに使えます。</string>
     <string name="your_key">あなたの鍵</string>
     <string name="recovery_codes">リカバリーコード</string>
-    <string name="recovery_codes_remaining">%2$d 個中 %1$d 個が残っています</string>
     <string name="low">残りわずか</string>
     <string name="ok">OK</string>
     <string name="recovery_codes_low_warning">リカバリーコードが残りわずかです。ロックアウトされないよう新しいコードを取得してください。</string>
@@ -2086,7 +2081,6 @@
     <string name="export_format_eml_subtitle">メッセージごとに .eml ファイルを作り、フォルダにまとめます</string>
     <string name="export_start">エクスポートを開始</string>
     <string name="export_in_progress">データを書き出しています</string>
-    <string name="export_progress_emails">%1$d / %2$d 件</string>
     <string name="export_complete">エクスポートが完了しました</string>
     <string name="export_emails_exported">書き出したメール</string>
     <string name="export_file_size">ファイルサイズ</string>
@@ -2119,7 +2113,6 @@
     <string name="crypto_native_status_awaiting">支払い待ち</string>
     <string name="crypto_native_status_detected">支払いを検出しました</string>
     <string name="crypto_native_status_confirming_short">確認中</string>
-    <string name="crypto_native_status_confirming">%2$d 件中 %1$d 件の承認</string>
     <string name="crypto_native_status_credited">プランを反映しました</string>
     <string name="crypto_native_usd_value_label">お支払い金額</string>
     <string name="crypto_native_expires_in">有効期限まで %1$s</string>
@@ -2218,7 +2211,6 @@
     <string name="view_plans">プランを見る</string>
     <string name="kids_reserved_addresses">子ども用に予約したアドレス</string>
     <string name="kids_reserved_subtitle">お子さま用のアドレスを確保できます。受け取りリンクを渡せば、本人のパスワードで設定を終えられます。</string>
-    <string name="kids_seats_used">ファミリー枠 %2$d 件中 %1$d 件を使用中</string>
     <string name="kids_seats_breakdown">%1$s、%2$s、%3$s</string>
     <string name="kids_no_reservations">確保したアドレスはまだありません。astermail.org で確保してください。</string>
     <string name="kids_reserve_on_web">ウェブで確保</string>
@@ -2279,7 +2271,6 @@
     <string name="alias_apply_existing_progress">適用中: %1$d 件をスキャン、%2$d 件を更新</string>
     <string name="alias_apply_existing_progress_total">適用中: %2$d 件中 %1$d 件をスキャン、%3$d 件を更新</string>
     <string name="alias_apply_existing_done">完了: %1$d 件をスキャン、%2$d 件を更新</string>
-    <string name="alias_apply_existing_canceled">停止しました: %1$d 件を更新</string>
     <string name="alias_apply_existing_error">既存のメールへの適用に失敗しました。もう一度お試しください。</string>
     <string name="alias_apply_existing_unavailable">アカウント内にあるメールは迷惑メールに移動できません。</string>
     <string name="alias_delivery_label_rule_note">メールルール「%1$s」はこのエイリアスのメールに既に %2$s を付けています。</string>
@@ -2377,11 +2368,7 @@
     <string name="alias_import_target_domain">インポート先</string>
     <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">無効な場合は再度有効化</string>
-    <string name="alias_import_confirm">%1$d件のエイリアスをインポート</string>
     <string name="alias_import_progress">%2$d件中%1$d件をインポート中...</string>
-    <string name="alias_import_summary_created">%1$d件インポート済み</string>
-    <string name="alias_import_summary_skipped">%1$d件は既に存在しました</string>
-    <string name="alias_import_summary_failed">%1$d件失敗しました</string>
     <string name="alias_import_error_no_aliases">このファイルにインポート可能なエイリアスが見つかりませんでした。</string>
     <string name="alias_import_error_encrypted">このエクスポートは暗号化されています。暗号化せずに書き出してから、もう一度インポートしてください。</string>
     <string name="alias_export_title">エイリアスをエクスポート</string>
@@ -2391,7 +2378,6 @@
     <string name="alias_export_source_domain_addresses">カスタムドメインのアドレス</string>
     <string name="alias_export_source_directories">ディレクトリ</string>
     <string name="alias_export_source_ghost">ゴーストエイリアス</string>
-    <string name="alias_export_source_count">%1$d 件</string>
     <string name="alias_export_warning_title">このファイルは暗号化されていません</string>
     <string name="alias_export_warning_body">開いた人は、含まれるすべてのエイリアス、メモ、ウェブサイトを読むことができます。パスワードマネージャーか暗号化されたドライブに保管してください。</string>
     <string name="alias_export_summary">%2$s に %1$s。</string>
@@ -2544,7 +2530,6 @@
     <string name="couldnt_remove_label">ラベルを削除できませんでした</string>
     <string name="couldnt_unsnooze">スヌーズを解除できませんでした</string>
     <string name="domain_verify_slow">Aster は DNS チェックを完了できませんでした。レコードがまだ確認中の可能性があるため、数分後にもう一度お試しください。</string>
-    <string name="domain_records_verified">%2$d 件中 %1$d 件のレコードを確認しました</string>
     <string name="ext_sync_started">同期を開始しました</string>
     <string name="ext_account_removed">アカウントを削除しました</string>
     <string name="folder_created">フォルダを作成しました</string>
@@ -2613,7 +2598,6 @@
     <string name="plan_change_due_today">本日のお支払い：%1$s</string>
     <string name="plan_change_preview_failed">本日のお支払い額を計算できませんでした。通常価格を表示しています。</string>
     <string name="payment_failed_banner_overdue">お支払いが完了しませんでした。まもなく%1$sプランへのアクセスが制限されます。</string>
-    <string name="payment_failed_days_left">%1$d日後にアクセスが制限されます。</string>
     <string name="payment_failed_one_day_left">1日後にアクセスが制限されます。</string>
     <string name="device_verification_failed">この変更のためにこのデバイスを確認できませんでした。このデバイスでもう一度サインインしてから、再試行してください。</string>
     <string name="cancel_reason_title">ご解約の前に</string>
@@ -2762,7 +2746,6 @@
     <string name="signature_set_default">既定の署名として使用</string>
     <string name="star_failed">スターを付けられませんでした</string>
     <string name="tab_label_with_count">%1$s（%2$d）</string>
-    <string name="templates_decrypt_failed_count">このデバイスでは %1$d 件のテンプレートを読み取れませんでした。現在このデバイスにない鍵で保存されています。</string>
     <string name="time_format">時刻形式</string>
     <string name="time_format_12h">12時間制（午後1:30）</string>
     <string name="time_format_24h">24時間制（13:30）</string>
@@ -2866,7 +2849,6 @@
     <string name="domain_purchase_manage_paid">支払い済み</string>
     <string name="domain_purchase_manage_auto_renew_note">このドメインは自動更新されません。使い続けるには、有効期限までに更新してください。</string>
     <string name="domain_purchase_manage_support_note">このドメインを他のレジストラに移管する場合や返金について確認する場合は、サポートに問い合わせてください。</string>
-    <string name="domain_purchase_n_years">%1$d年</string>
     <string name="twin_address_title">対応するアドレス</string>
     <string name="twin_address_reserved_description">%1$s はあなたのアカウント用に予約されているため、他の人は登録できません。このアドレスで送受信したくなったら、エイリアスとして作成してください。</string>
     <string name="twin_address_available_description">%1$s はもう一方の Aster ドメインで対応するアドレスです。このアドレスで送受信するには、エイリアスとして作成してください。</string>
@@ -2952,7 +2934,6 @@
     <string name="empty_contacts_trash_confirm_message">ゴミ箱内の連絡先をすべて完全に削除しますか？この操作は元に戻せません。</string>
     <string name="contact_restored">連絡先を復元しました</string>
     <string name="contact_moved_to_trash">連絡先をゴミ箱に移動しました</string>
-    <string name="contact_trash_days_left">残り %1$d 日</string>
     <string name="contacts_in_trash_notice">ゴミ箱の連絡先は 30 日後に完全に削除されます。</string>
     <string name="contacts_import_empty">そのファイルに連絡先が見つかりません</string>
     <string name="contacts_import_failed">連絡先を読み込めませんでした</string>
@@ -3152,7 +3133,7 @@
     <string name="profile_menu_manage_account">アカウント設定</string>
     <string name="profile_menu_add_another_account">別のアカウントを追加</string>
     <string name="profile_menu_resubscribe">Asterに再登録</string>
-    <string name="profile_menu_sign_out_all">すべてのアカウントからログアウト</string>
+    <string name="profile_menu_sign_out_all">すべてのアカウントからサインアウト</string>
     <string name="profile_menu_session_expired">セッション期限切れ</string>
     <string name="profile_menu_default_account">既定</string>
     <string name="profile_menu_storage_of_used">%2$s 中 %1$s を使用</string>
@@ -3176,13 +3157,11 @@
     <string name="delete_emails_older_than_30_days">30日以上前のメールを削除</string>
     <string name="inbox_tools">フィルタとクイック操作</string>
     <string name="inbox_tools_subtitle">受信トレイのヘッダーにフィルタとクイック操作のボタンを表示します</string>
-    <string name="contacts_bulk_progress">%2$d件中%1$d件の連絡先を削除しています</string>
     <string name="plan_badge_thanks">%1$s をご利用いただきありがとうございます。</string>
     <string name="quick_action_unavailable">このクイック操作はこのフォルダでは使用できません</string>
     <string name="quick_action_no_unread">既読にする項目がありません</string>
     <string name="quick_action_no_read">アーカイブできる既読メールがありません</string>
     <string name="quick_action_no_old">30日より前のメールはありません</string>
-    <string name="quick_action_delete_old_confirm">30日より前の会話 %1$d 件をゴミ箱に移動しますか？</string>
     <string name="change_address">アドレスを変更</string>
     <string name="address_change_title">アドレスを変更する</string>
     <string name="address_change_intro_lead">続ける前に、何が変わるかをお読みください。</string>

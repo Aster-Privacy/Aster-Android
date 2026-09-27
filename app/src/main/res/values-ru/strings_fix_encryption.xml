@@ -3,5 +3,4 @@
     <string name="fix_enc_codes_share_title">Коды восстановления</string>
     <string name="fix_enc_codes_file_note">Каждый код работает один раз. Храните этот файл в надёжном месте.</string>
     <string name="fix_enc_codes_save_failed">Сейчас не удаётся сохранить файл. Скопируйте коды.</string>
-    <string name="fix_enc_codes_used">Использовано: %1$d</string>
 </resources>

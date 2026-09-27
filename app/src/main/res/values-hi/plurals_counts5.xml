@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="count_selected">
+        <item quantity="one">%1$d चुना गया</item>
+        <item quantity="other">%1$d चुने गए</item>
+    </plurals>
+    <plurals name="inbox_selected_count">
+        <item quantity="one">%1$d चुना गया</item>
+        <item quantity="other">%1$d चुने गए</item>
+    </plurals>
+    <plurals name="contacts_bulk_progress">
+        <item quantity="one">%2$d में से %1$d संपर्क हटाए जा रहे हैं</item>
+        <item quantity="other">%2$d में से %1$d संपर्क हटाए जा रहे हैं</item>
+    </plurals>
+    <plurals name="recovery_codes_remaining">
+        <item quantity="one">%2$d में से %1$d कोड बचे</item>
+        <item quantity="other">%2$d में से %1$d कोड बचे</item>
+    </plurals>
+    <plurals name="export_progress_emails">
+        <item quantity="one">%1$d / %2$d ईमेल</item>
+        <item quantity="other">%1$d / %2$d ईमेल</item>
+    </plurals>
+    <plurals name="crypto_native_status_confirming">
+        <item quantity="one">%2$d में से %1$d पुष्टियां</item>
+        <item quantity="other">%2$d में से %1$d पुष्टियां</item>
+    </plurals>
+    <plurals name="kids_seats_used">
+        <item quantity="one">%2$d में से %1$d परिवार जगहें इस्तेमाल हुईं</item>
+        <item quantity="other">%2$d में से %1$d परिवार जगहें इस्तेमाल हुईं</item>
+    </plurals>
+    <plurals name="domain_records_verified">
+        <item quantity="one">%2$d में से %1$d रिकॉर्ड जांचे गए</item>
+        <item quantity="other">%2$d में से %1$d रिकॉर्ड जांचे गए</item>
+    </plurals>
+    <plurals name="alias_limit_notice">
+        <item quantity="one">%2$d में से %1$d एलियास इस्तेमाल हुए। ज़्यादा के लिए अपग्रेड करें।</item>
+        <item quantity="other">%2$d में से %1$d एलियास इस्तेमाल हुए। ज़्यादा के लिए अपग्रेड करें।</item>
+    </plurals>
+    <plurals name="score_steps_left">
+        <item quantity="one">%1$d बाकी</item>
+        <item quantity="other">%1$d बाकी</item>
+    </plurals>
+    <plurals name="alias_import_summary_created">
+        <item quantity="one">%1$d इंपोर्ट हुआ</item>
+        <item quantity="other">%1$d इंपोर्ट हुए</item>
+    </plurals>
+    <plurals name="alias_import_summary_skipped">
+        <item quantity="one">%1$d पहले से मौजूद था</item>
+        <item quantity="other">%1$d पहले से मौजूद थे</item>
+    </plurals>
+    <plurals name="alias_import_summary_failed">
+        <item quantity="one">%1$d विफल</item>
+        <item quantity="other">%1$d विफल</item>
+    </plurals>
+    <plurals name="alias_apply_existing_canceled">
+        <item quantity="one">रोका गया: %1$d अपडेट हुआ</item>
+        <item quantity="other">रोका गया: %1$d अपडेट हुए</item>
+    </plurals>
+    <plurals name="fix_enc_codes_used">
+        <item quantity="one">%1$d इस्तेमाल हुआ</item>
+        <item quantity="other">%1$d इस्तेमाल हुए</item>
+    </plurals>
+    <plurals name="payment_failed_days_left">
+        <item quantity="one">%1$d दिन में पहुंच सीमित हो जाएगी।</item>
+        <item quantity="other">%1$d दिन में पहुंच सीमित हो जाएगी।</item>
+    </plurals>
+    <plurals name="templates_decrypt_failed_count">
+        <item quantity="one">%1$d टेम्पलेट इस डिवाइस पर पढ़ा नहीं जा सका। वह ऐसी कुंजी से सहेजा गया था जो अभी इस डिवाइस के पास नहीं है।</item>
+        <item quantity="other">%1$d टेम्पलेट इस डिवाइस पर पढ़े नहीं जा सके। वे ऐसी कुंजी से सहेजे गए थे जो अभी इस डिवाइस के पास नहीं है।</item>
+    </plurals>
+    <plurals name="contact_trash_days_left">
+        <item quantity="one">%1$d दिन शेष</item>
+        <item quantity="other">%1$d दिन शेष</item>
+    </plurals>
+    <plurals name="quick_action_delete_old_confirm">
+        <item quantity="one">30 दिनों से पुरानी %1$d बातचीत को ट्रैश में ले जाएँ?</item>
+        <item quantity="other">30 दिनों से पुरानी %1$d बातचीत को ट्रैश में ले जाएँ?</item>
+    </plurals>
+    <plurals name="undo_send_delay_seconds">
+        <item quantity="one">%1$d सेकंड</item>
+        <item quantity="other">%1$d सेकंड</item>
+    </plurals>
+</resources>

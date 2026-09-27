@@ -76,6 +76,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -282,7 +283,7 @@ fun ContactsScreen(
                     )
                     Spacer(Modifier.width(AsterSpacing.sm))
                     Text(
-                        text = stringResource(R.string.count_selected, ui_state.selected_ids.size),
+                        text = pluralStringResource(R.plurals.count_selected, ui_state.selected_ids.size, ui_state.selected_ids.size),
                         style = MaterialTheme.typography.titleMedium,
                         color = colors.text_primary,
                         fontWeight = FontWeight.SemiBold,
@@ -1096,8 +1097,9 @@ private fun trash_pane(
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
-                            text = stringResource(
-                                R.string.contact_trash_days_left,
+                            text = pluralStringResource(
+                                R.plurals.contact_trash_days_left,
+                                org.astermail.android.contacts.contact_trash_days_left(contact.deleted_at),
                                 org.astermail.android.contacts.contact_trash_days_left(contact.deleted_at),
                             ),
                             color = colors.text_muted,
@@ -1777,7 +1779,7 @@ private fun bulk_progress_banner(done: Int, total: Int) {
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
     ) {
         Text(
-            text = stringResource(R.string.contacts_bulk_progress, done.coerceAtMost(total), total),
+            text = pluralStringResource(R.plurals.contacts_bulk_progress, total, done.coerceAtMost(total), total),
             color = colors.text_secondary,
             fontSize = 12.sp,
         )

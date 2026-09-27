@@ -688,7 +688,7 @@ internal fun detail_row(
 
 @Composable
 internal fun verified_badge(
-    text: String = "Verified",
+    text: String = stringResource(R.string.verified),
     icon: ImageVector? = TablerIcons.Check,
 ) {
     tone_badge(

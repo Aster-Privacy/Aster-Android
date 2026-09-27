@@ -2,4 +2,10 @@
 <resources>
     <string name="common_storage_used_of_total">%1$s z %2$s</string>
     <string name="common_storage_used_only">Wykorzystano %1$s</string>
+    <string name="auth_previous_account_data_not_cleared">Nie udało się usunąć poczty poprzedniego konta z tego urządzenia. Spróbuj zalogować się ponownie.</string>
+    <string name="export_readme_title">Eksport Aster Mail</string>
+    <string name="export_readme_mbox">Wszystkie e-maile w formacie MBOX (RFC 4155)</string>
+    <string name="export_readme_eml">Pojedyncze pliki .eml</string>
+    <string name="export_readme_contacts">Dane kontaktów</string>
+    <string name="export_readme_warning">E-maile w tym eksporcie nie są zaszyfrowane. Przechowuj ten plik w bezpiecznym miejscu.</string>
 </resources>

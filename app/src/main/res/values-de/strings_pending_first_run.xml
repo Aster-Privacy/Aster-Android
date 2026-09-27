@@ -15,7 +15,7 @@
     <string name="plan_prompt_dismiss">Jetzt nicht</string>
     <string name="recovery_codes_reminder_title">Speichern Sie Ihre Wiederherstellungscodes</string>
     <string name="recovery_codes_reminder_body">Aster verschlüsselt Ihre E-Mails mit Ihrem Passwort, deshalb kann es niemand für Sie zurücksetzen. Wiederherstellungscodes sind der einzige Weg zurück zu Ihren verschlüsselten E-Mails.</string>
-    <string name="recovery_codes_reminder_action">Wiederherstellungscodes holen</string>
+    <string name="recovery_codes_reminder_action">Codes abrufen</string>
     <string name="recovery_phrase_migrate_title">Zu Wiederherstellungscodes wechseln</string>
     <string name="recovery_phrase_migrate_body">Wiederherstellungsphrasen werden abgeschafft. Holen Sie sich jetzt Wiederherstellungscodes, damit Sie Ihr Konto weiterhin wiederherstellen können.</string>
     <string name="recovery_phrase_migrate_action">Codes holen</string>

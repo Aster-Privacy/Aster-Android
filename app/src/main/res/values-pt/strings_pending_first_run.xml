@@ -7,13 +7,13 @@
     <string name="first_run_privacy_note">O seu correio é encriptado antes de sair do seu dispositivo.</string>
     <string name="recovery_reminder_title">Adicionar um e-mail de recuperação</string>
     <string name="recovery_reminder_body">Um e-mail de recuperação permite-lhe voltar a entrar na sua conta se se esquecer da palavra-passe.</string>
-    <string name="recovery_reminder_action">Adicionar email de recuperação</string>
+    <string name="recovery_reminder_action">Adicionar e-mail de recuperação</string>
     <string name="recovery_reminder_later">Depois</string>
     <string name="plan_prompt_title">Tire mais partido do Aster Mail</string>
     <string name="plan_prompt_body">Atualize o plano para ter mais armazenamento, domínios personalizados e aliases ilimitados.</string>
     <string name="plan_prompt_action">Ver planos</string>
     <string name="plan_prompt_dismiss">Agora não</string>
-    <string name="recovery_codes_reminder_title">Salve seus códigos de recuperação</string>
+    <string name="recovery_codes_reminder_title">Guarde os seus códigos de recuperação</string>
     <string name="recovery_codes_reminder_body">O Aster encripta o seu correio com a sua palavra-passe, por isso ninguém a pode repor por si. Os códigos de recuperação são a única forma de voltar a aceder ao seu correio encriptado.</string>
     <string name="recovery_codes_reminder_action">Obter códigos de recuperação</string>
     <string name="recovery_phrase_migrate_title">Mude para códigos de recuperação</string>

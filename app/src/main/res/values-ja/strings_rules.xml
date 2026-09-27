@@ -95,7 +95,7 @@
     <string name="category_match_domains_placeholder">example.com, news.example.org</string>
     <string name="category_match_domains_help">送信者ドメインをカンマ区切りで入力してください。これらのドメインからのメールはこのカテゴリに分類されます。</string>
     <string name="category_match_keywords">件名のキーワードを一致させる</string>
-    <string name="category_match_keywords_placeholder">newsletter, digest</string>
+    <string name="category_match_keywords_placeholder">ニュースレター, ダイジェスト</string>
     <string name="category_match_keywords_help">カンマ区切りの単語を入力してください。件名にいずれかが含まれる場合、そのメールはこのカテゴリに分類されます。</string>
     <string name="category_tutorial_text">ヒント：送信者のドメインまたは件名にいずれかのキーワードが含まれると、カスタムカテゴリに一致します。カスタムカテゴリは標準のカテゴリより先に判定されるため、常に優先されます。</string>
     <string name="rules_create_first_folder_hint">フォルダを作成すると、このルールで一致するメールを移動できます。</string>

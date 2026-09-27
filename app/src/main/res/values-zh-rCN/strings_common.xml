@@ -2,4 +2,10 @@
 <resources>
     <string name="common_storage_used_of_total">%2$s 中的 %1$s</string>
     <string name="common_storage_used_only">已用 %1$s</string>
+    <string name="auth_previous_account_data_not_cleared">无法从此设备移除上一个帐户的邮件。请尝试重新登录。</string>
+    <string name="export_readme_title">Aster Mail 导出</string>
+    <string name="export_readme_mbox">所有邮件，MBOX 格式（RFC 4155）</string>
+    <string name="export_readme_eml">单独的 .eml 文件</string>
+    <string name="export_readme_contacts">联系人详细信息</string>
+    <string name="export_readme_warning">此导出中的邮件未加密。请将此文件保存在安全的位置。</string>
 </resources>

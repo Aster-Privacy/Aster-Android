@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="count_selected">
+        <item quantity="one">Выбрано: %1$d</item>
+        <item quantity="few">Выбрано: %1$d</item>
+        <item quantity="many">Выбрано: %1$d</item>
+        <item quantity="other">Выбрано: %1$d</item>
+    </plurals>
+    <plurals name="inbox_selected_count">
+        <item quantity="one">Выбрано: %1$d</item>
+        <item quantity="few">Выбрано: %1$d</item>
+        <item quantity="many">Выбрано: %1$d</item>
+        <item quantity="other">Выбрано: %1$d</item>
+    </plurals>
+    <plurals name="contacts_bulk_progress">
+        <item quantity="one">Удаление %1$d из %2$d контактов</item>
+        <item quantity="few">Удаление %1$d из %2$d контактов</item>
+        <item quantity="many">Удаление %1$d из %2$d контактов</item>
+        <item quantity="other">Удаление %1$d из %2$d контактов</item>
+    </plurals>
+    <plurals name="recovery_codes_remaining">
+        <item quantity="one">Осталось %1$d из %2$d кодов</item>
+        <item quantity="few">Осталось %1$d из %2$d кодов</item>
+        <item quantity="many">Осталось %1$d из %2$d кодов</item>
+        <item quantity="other">Осталось %1$d из %2$d кодов</item>
+    </plurals>
+    <plurals name="export_progress_emails">
+        <item quantity="one">Писем: %1$d из %2$d</item>
+        <item quantity="few">Писем: %1$d из %2$d</item>
+        <item quantity="many">Писем: %1$d из %2$d</item>
+        <item quantity="other">Писем: %1$d из %2$d</item>
+    </plurals>
+    <plurals name="crypto_native_status_confirming">
+        <item quantity="one">%1$d из %2$d подтверждений</item>
+        <item quantity="few">%1$d из %2$d подтверждений</item>
+        <item quantity="many">%1$d из %2$d подтверждений</item>
+        <item quantity="other">%1$d из %2$d подтверждений</item>
+    </plurals>
+    <plurals name="kids_seats_used">
+        <item quantity="one">Использовано %1$d из %2$d семейных мест</item>
+        <item quantity="few">Использовано %1$d из %2$d семейных мест</item>
+        <item quantity="many">Использовано %1$d из %2$d семейных мест</item>
+        <item quantity="other">Использовано %1$d из %2$d семейных мест</item>
+    </plurals>
+    <plurals name="domain_records_verified">
+        <item quantity="one">Проверено записей: %1$d из %2$d</item>
+        <item quantity="few">Проверено записей: %1$d из %2$d</item>
+        <item quantity="many">Проверено записей: %1$d из %2$d</item>
+        <item quantity="other">Проверено записей: %1$d из %2$d</item>
+    </plurals>
+    <plurals name="alias_limit_notice">
+        <item quantity="one">Использовано псевдонимов: %1$d из %2$d. Перейдите на более высокий тариф, чтобы получить больше.</item>
+        <item quantity="few">Использовано псевдонимов: %1$d из %2$d. Перейдите на более высокий тариф, чтобы получить больше.</item>
+        <item quantity="many">Использовано псевдонимов: %1$d из %2$d. Перейдите на более высокий тариф, чтобы получить больше.</item>
+        <item quantity="other">Использовано псевдонимов: %1$d из %2$d. Перейдите на более высокий тариф, чтобы получить больше.</item>
+    </plurals>
+    <plurals name="score_steps_left">
+        <item quantity="one">Осталось %1$d</item>
+        <item quantity="few">Осталось %1$d</item>
+        <item quantity="many">Осталось %1$d</item>
+        <item quantity="other">Осталось %1$d</item>
+    </plurals>
+    <plurals name="alias_import_summary_created">
+        <item quantity="one">Импортировано: %1$d</item>
+        <item quantity="few">Импортировано: %1$d</item>
+        <item quantity="many">Импортировано: %1$d</item>
+        <item quantity="other">Импортировано: %1$d</item>
+    </plurals>
+    <plurals name="alias_import_summary_skipped">
+        <item quantity="one">Уже существовало: %1$d</item>
+        <item quantity="few">Уже существовало: %1$d</item>
+        <item quantity="many">Уже существовало: %1$d</item>
+        <item quantity="other">Уже существовало: %1$d</item>
+    </plurals>
+    <plurals name="alias_import_summary_failed">
+        <item quantity="one">Не удалось: %1$d</item>
+        <item quantity="few">Не удалось: %1$d</item>
+        <item quantity="many">Не удалось: %1$d</item>
+        <item quantity="other">Не удалось: %1$d</item>
+    </plurals>
+    <plurals name="alias_apply_existing_canceled">
+        <item quantity="one">Остановлено: обновлено %1$d</item>
+        <item quantity="few">Остановлено: обновлено %1$d</item>
+        <item quantity="many">Остановлено: обновлено %1$d</item>
+        <item quantity="other">Остановлено: обновлено %1$d</item>
+    </plurals>
+    <plurals name="fix_enc_codes_used">
+        <item quantity="one">Использовано: %1$d</item>
+        <item quantity="few">Использовано: %1$d</item>
+        <item quantity="many">Использовано: %1$d</item>
+        <item quantity="other">Использовано: %1$d</item>
+    </plurals>
+    <plurals name="payment_failed_days_left">
+        <item quantity="one">Доступ будет ограничен через %1$d дн.</item>
+        <item quantity="few">Доступ будет ограничен через %1$d дн.</item>
+        <item quantity="many">Доступ будет ограничен через %1$d дн.</item>
+        <item quantity="other">Доступ будет ограничен через %1$d дн.</item>
+    </plurals>
+    <plurals name="templates_decrypt_failed_count">
+        <item quantity="one">Не удалось прочитать шаблоны на этом устройстве: %1$d. Они сохранены с ключом, которого сейчас нет на этом устройстве.</item>
+        <item quantity="few">Не удалось прочитать шаблоны на этом устройстве: %1$d. Они сохранены с ключом, которого сейчас нет на этом устройстве.</item>
+        <item quantity="many">Не удалось прочитать шаблоны на этом устройстве: %1$d. Они сохранены с ключом, которого сейчас нет на этом устройстве.</item>
+        <item quantity="other">Не удалось прочитать шаблоны на этом устройстве: %1$d. Они сохранены с ключом, которого сейчас нет на этом устройстве.</item>
+    </plurals>
+    <plurals name="contact_trash_days_left">
+        <item quantity="one">Осталось дней: %1$d</item>
+        <item quantity="few">Осталось дней: %1$d</item>
+        <item quantity="many">Осталось дней: %1$d</item>
+        <item quantity="other">Осталось дней: %1$d</item>
+    </plurals>
+    <plurals name="quick_action_delete_old_confirm">
+        <item quantity="one">Переместить в корзину беседы старше 30 дней (%1$d)?</item>
+        <item quantity="few">Переместить в корзину беседы старше 30 дней (%1$d)?</item>
+        <item quantity="many">Переместить в корзину беседы старше 30 дней (%1$d)?</item>
+        <item quantity="other">Переместить в корзину беседы старше 30 дней (%1$d)?</item>
+    </plurals>
+    <plurals name="undo_send_delay_seconds">
+        <item quantity="one">%1$d с</item>
+        <item quantity="few">%1$d с</item>
+        <item quantity="many">%1$d с</item>
+        <item quantity="other">%1$d с</item>
+    </plurals>
+</resources>

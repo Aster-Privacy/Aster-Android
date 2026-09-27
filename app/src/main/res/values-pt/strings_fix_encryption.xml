@@ -3,5 +3,4 @@
     <string name="fix_enc_codes_share_title">Códigos de recuperação</string>
     <string name="fix_enc_codes_file_note">Cada código funciona uma única vez. Guarde este ficheiro num local seguro.</string>
     <string name="fix_enc_codes_save_failed">Não é possível guardar o ficheiro agora. Copie os códigos em vez disso.</string>
-    <string name="fix_enc_codes_used">%1$d usados</string>
 </resources>

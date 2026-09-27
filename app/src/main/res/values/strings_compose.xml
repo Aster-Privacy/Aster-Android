@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="compose_footer_secured_by_plain">Secured by Aster Mail</string>
     <string name="compose_quote_forwarded_message">Forwarded message</string>
     <string name="compose_quote_original_message">Original message</string>
@@ -19,6 +19,6 @@
     <string name="schedule_tomorrow_afternoon">Tomorrow afternoon</string>
     <string name="schedule_monday_morning">Monday morning</string>
     <string name="schedule_pick_date_time">Pick date &amp; time</string>
-    <string name="too_many_recipients_in_field">Each of the To, Cc, and Bcc fields holds at most %1$d addresses. Move some of them to a second message to send this one.</string>
-    <string name="too_many_recipients_in_message">One message reaches at most %1$d addresses across To, Cc, and Bcc. Splitting the list into smaller messages will send.</string>
+    <string name="too_many_recipients_in_field" tools:ignore="PluralsCandidate">Each of the To, Cc, and Bcc fields holds at most %1$d addresses. Move some of them to a second message to send this one.</string>
+    <string name="too_many_recipients_in_message" tools:ignore="PluralsCandidate">One message reaches at most %1$d addresses across To, Cc, and Bcc. Splitting the list into smaller messages will send.</string>
 </resources>

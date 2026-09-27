@@ -7,7 +7,7 @@
     <string name="first_run_privacy_note">Seus e-mails são criptografados antes de sair do seu dispositivo.</string>
     <string name="recovery_reminder_title">Adicionar um e-mail de recuperação</string>
     <string name="recovery_reminder_body">Um e-mail de recuperação permite que você volte à sua conta se esquecer a senha.</string>
-    <string name="recovery_reminder_action">Adicionar email de recuperação</string>
+    <string name="recovery_reminder_action">Adicionar e-mail de recuperação</string>
     <string name="recovery_reminder_later">Depois</string>
     <string name="plan_prompt_title">Aproveite mais o Aster Mail</string>
     <string name="plan_prompt_body">Faça upgrade para ter mais armazenamento, domínios personalizados e aliases ilimitados.</string>

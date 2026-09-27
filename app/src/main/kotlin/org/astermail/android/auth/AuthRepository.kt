@@ -430,13 +430,13 @@ class AuthRepository @Inject constructor(
         password_hash_bytes: ByteArray,
         salt_bytes: ByteArray,
     ) {
-        val access = login_resp.access_token ?: throw ApiError.UnknownError("missing access_token")
+        val access = login_resp.access_token ?: throw ApiError.UnknownError(context.getString(R.string.error_generic))
         val previous_user_id = session_key_store.get_user_id()
         if (previous_user_id != null && previous_user_id != login_resp.user_id) {
             store_current_session_tokens()
             session_key_store.clear()
             if (!clear_decrypted_mail_cache_blocking()) {
-                throw ApiError.UnknownError("could not clear the previous account's local mail cache")
+                throw ApiError.UnknownError(context.getString(R.string.auth_previous_account_data_not_cleared))
             }
             mail_repository.clear_account_data()
             cancel_all_notifications()
@@ -646,7 +646,7 @@ class AuthRepository @Inject constructor(
         )
 
         val access = register_resp.access_token
-            ?: throw ApiError.UnknownError("missing access_token on register")
+            ?: throw ApiError.UnknownError(context.getString(R.string.error_generic))
         val previous_user_id = session_key_store.get_user_id()
         if (previous_user_id != null && previous_user_id != register_resp.user_id) {
             store_current_session_tokens()
@@ -819,14 +819,14 @@ class AuthRepository @Inject constructor(
         }
         val stored_salt = server_salt
             ?: session_key_store.get_password_salt()
-            ?: throw ApiError.UnknownError("session expired - please sign in again")
+            ?: throw ApiError.UnknownError(context.getString(R.string.session_expired_sign_in))
 
         val current_password_hash = CryptoNative.derive_pbkdf2_hash(
             current_password_bytes, stored_salt, pbkdf2_iterations,
         )
 
         val (encrypted_vault_b64, vault_nonce_b64) = session_key_store.get_encrypted_vault()
-            ?: throw ApiError.UnknownError("vault unavailable - please sign in again")
+            ?: throw ApiError.UnknownError(context.getString(R.string.session_unavailable_sign_in_again))
 
         val vault_plain = try {
             CryptoNative.decrypt_vault_with_password(
@@ -1503,7 +1503,7 @@ class AuthRepository @Inject constructor(
     suspend fun delete_account(password: String, totp_code: String? = null): Result<Unit> = runCatching {
         require(password.isNotBlank()) { "password required" }
         val password_hash = derive_password_hash_b64(password)
-            ?: throw ApiError.UnknownError("session expired - please sign in again")
+            ?: throw ApiError.UnknownError(context.getString(R.string.session_expired_sign_in))
         auth_api.delete_account(
             DeleteAccountRequest(
                 password_hash = password_hash,
@@ -1830,9 +1830,9 @@ class AuthRepository @Inject constructor(
 
     suspend fun rotate_recovery_codes(step_up_token: String): List<String> {
         val stored_vault = session_key_store.get_encrypted_vault()
-            ?: throw ApiError.UnknownError("vault unavailable")
+            ?: throw ApiError.UnknownError(context.getString(R.string.session_unavailable_sign_in_again))
         val passphrase = session_key_store.get_passphrase()
-            ?: throw ApiError.UnknownError("vault unavailable")
+            ?: throw ApiError.UnknownError(context.getString(R.string.session_unavailable_sign_in_again))
 
         try {
             val vault_plain = CryptoNative.decrypt_vault_with_password(

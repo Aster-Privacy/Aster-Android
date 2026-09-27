@@ -44,7 +44,7 @@
     <string name="domain_bimi_choose_file">Escolher arquivo</string>
     <string name="domain_bimi_uploading">Enviando</string>
     <string name="domain_bimi_replace_logo">Substituir logotipo</string>
-    <string name="domain_bimi_preview_inbox_subject">Nossas novidades mais recentes</string>
+    <string name="domain_bimi_preview_inbox_subject">Suas novidades mais recentes</string>
     <string name="domain_bimi_adjustments_title">O Aster ajustou seu arquivo para atender aos requisitos:</string>
     <string name="domain_bimi_errors_title">Este arquivo não pode ser usado como logotipo da marca:</string>
     <string name="domain_bimi_requirements_title">Requisitos</string>

@@ -2,4 +2,10 @@
 <resources>
     <string name="common_storage_used_of_total">%1$s van %2$s</string>
     <string name="common_storage_used_only">%1$s gebruikt</string>
+    <string name="auth_previous_account_data_not_cleared">Kan de e-mail van het vorige account niet van dit apparaat verwijderen. Probeer opnieuw in te loggen.</string>
+    <string name="export_readme_title">Aster Mail-export</string>
+    <string name="export_readme_mbox">Alle e-mails in MBOX-indeling (RFC 4155)</string>
+    <string name="export_readme_eml">Afzonderlijke .eml-bestanden</string>
+    <string name="export_readme_contacts">Contactgegevens</string>
+    <string name="export_readme_warning">De e-mails in deze export zijn niet versleuteld. Bewaar dit bestand op een veilige plek.</string>
 </resources>

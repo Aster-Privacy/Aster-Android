@@ -3,5 +3,4 @@
     <string name="fix_enc_codes_share_title">रिकवरी कोड</string>
     <string name="fix_enc_codes_file_note">हर कोड एक बार काम करता है। इस फ़ाइल को किसी सुरक्षित जगह रखें।</string>
     <string name="fix_enc_codes_save_failed">आप अभी फ़ाइल नहीं सहेज सकते। इसके बजाय कोड कॉपी कर लें।</string>
-    <string name="fix_enc_codes_used">%1$d इस्तेमाल हुए</string>
 </resources>

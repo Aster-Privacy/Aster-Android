@@ -79,7 +79,7 @@
     <string name="recovery_email_status_unverified">Ожидает подтверждения</string>
     <string name="skip_for_now">Пропустить пока</string>
     <string name="copy_to_clipboard">Копировать в буфер обмена</string>
-    <string name="choose_your_plan">Выберите ваш тариф</string>
+    <string name="choose_your_plan">Выберите тарифный план</string>
     <string name="plan_subtitle">Начните бесплатно или получите больше с платным тарифом. Изменить тариф можно в любое время.</string>
     <string name="loading_plans">Загрузка тарифов...</string>
     <string name="plan_free">Бесплатный</string>
@@ -199,7 +199,6 @@
     <string name="encrypted">Зашифровано</string>
     <string name="end_to_end_encrypted">Сквозное шифрование</string>
     <string name="protected_in_transit">Защищено при передаче</string>
-    <string name="trackers_blocked">Заблокировано трекеров: %d</string>
     <string name="unstar">Убрать из избранного</string>
     <string name="star">В избранное</string>
     <string name="more">ещё</string>
@@ -569,7 +568,6 @@
     <string name="send">Отправить</string>
     <string name="auto_save_recipients">Автосохранение получателей в контакты</string>
     <string name="undo_send">Отмена отправки</string>
-    <string name="undo_send_delay_seconds">%1$d с</string>
     <string name="change_photo">Изменить фото</string>
     <string name="confirmations">Подтверждения</string>
     <string name="confirm_before_delete">Подтверждать перед удалением</string>
@@ -1085,8 +1083,8 @@
     <string name="error_too_many_attempts">Слишком много попыток. Подождите немного и повторите попытку.</string>
 
     <string name="error_send_recovery">Не удалось отправить письмо для восстановления</string>
-    <string name="error_invalid_recovery_code">Коды восстановления начинаются с \'ASTER-\'</string>
-    <string name="error_invalid_code">Этот код восстановления не совпал. Другой из сохранённого списка обычно подходит.</string>
+    <string name="error_invalid_recovery_code">Код восстановления выглядит так: ASTER-XXXX-XXXX-XXXX-XXXX. Проверьте код и введите его снова.</string>
+    <string name="error_invalid_code">Этот код не подходит для этого аккаунта. Сверьте его с сохранённым списком и введите снова. Пробелы и регистр букв не важны.</string>
     <string name="error_recovery_failed">Восстановление не удалось</string>
     <string name="error_recovery_too_many_attempts">На этом аккаунте слишком много попыток восстановления. Повторите примерно через 30 минут. Ни один из ваших кодов не использован, поэтому все они по-прежнему у вас.</string>
     <string name="status_deriving_key">Вычисление нового ключа пароля</string>
@@ -1245,7 +1243,7 @@
     <string name="settings_plan_bullet_star_storage">50 ГБ зашифрованного хранилища</string>
     <string name="settings_plan_bullet_star_attachments">Вложения до 50 МБ</string>
     <string name="settings_plan_bullet_star_aliases">15 псевдонимов эл. почты</string>
-    <string name="settings_plan_bullet_star_domains">5 пользовательских доменов</string>
+    <string name="settings_plan_bullet_star_domains">5 собственных доменов</string>
     <string name="settings_plan_bullet_daily_send_limits">Более высокие суточные лимиты отправки</string>
     <string name="settings_plan_bullet_star_templates">10 шаблонов писем</string>
     <string name="settings_plan_bullet_tracker_protection">Защита от трекеров</string>
@@ -1470,7 +1468,6 @@
     <string name="score_partial">Частичная</string>
     <string name="score_strong">Надёжная</string>
     <string name="score_complete">Всё готово</string>
-    <string name="score_steps_left">Осталось %1$d</string>
     <string name="check_passkey_registered">Ключ доступа добавлен</string>
     <string name="check_verified_recovery_email">Подтверждённый резервный email</string>
     <plurals name="passkeys_registered_count">
@@ -1583,7 +1580,6 @@
     <string name="failed_purge_alias">Не удалось удалить псевдоним</string>
     <string name="scan_inbox">Сканировать входящие</string>
     <string name="deselect_all">Снять выделение</string>
-    <string name="count_selected">Выбрано: %1$d</string>
     <string name="unsubscribe_selected">Отписаться (%1$d)</string>
     <string name="reactivate_selected">Включить снова (%1$d)</string>
     <string name="open_unsubscribe_page">Открыть страницу отписки</string>
@@ -1767,7 +1763,7 @@
     <string name="totp_code_required_label">Код из приложения или резервный код</string>
     <string name="totp_code_required_error">Введите 6-значный код из приложения аутентификации или один из резервных кодов</string>
     <string name="preferences_locked_retry">Сейчас не удалось разблокировать ваши настройки. Показаны значения по умолчанию. Вернитесь назад и откройте их снова.</string>
-    <string name="plan_name_star">Star</string>
+    <string name="plan_name_star">Отметить звёздочкой</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Сверхновая</string>
     <string name="ghost_alias_limit_reached">Достигнут лимит призрачных псевдонимов на этот месяц</string>
@@ -1806,7 +1802,6 @@
     <string name="upgrade_inline_card_description">Достигнут предел бесплатного тарифа. Платный тариф снимает ограничения.</string>
     <string name="your_key">Ваш ключ</string>
     <string name="recovery_codes">Коды восстановления</string>
-    <string name="recovery_codes_remaining">Осталось %1$d из %2$d кодов</string>
     <string name="low">Мало</string>
     <string name="ok">ОК</string>
     <string name="recovery_codes_low_warning">У вас заканчиваются коды восстановления. Получите новые коды, чтобы не потерять доступ.</string>
@@ -2101,7 +2096,6 @@
     <string name="export_format_eml_subtitle">По одному файлу .eml на письмо, разложены по папке</string>
     <string name="export_start">Начать экспорт</string>
     <string name="export_in_progress">Экспортируем ваши данные</string>
-    <string name="export_progress_emails">Писем: %1$d из %2$d</string>
     <string name="export_complete">Экспорт завершён</string>
     <string name="export_emails_exported">Экспортировано писем</string>
     <string name="export_file_size">Размер файла</string>
@@ -2134,7 +2128,6 @@
     <string name="crypto_native_status_awaiting">Ожидание оплаты</string>
     <string name="crypto_native_status_detected">Платёж обнаружен</string>
     <string name="crypto_native_status_confirming_short">Подтверждение</string>
-    <string name="crypto_native_status_confirming">%1$d из %2$d подтверждений</string>
     <string name="crypto_native_status_credited">Тариф зачислен</string>
     <string name="crypto_native_usd_value_label">К оплате</string>
     <string name="crypto_native_expires_in">Истекает через %1$s</string>
@@ -2233,7 +2226,6 @@
     <string name="view_plans">Посмотреть тарифы</string>
     <string name="kids_reserved_addresses">Зарезервированные адреса для детей</string>
     <string name="kids_reserved_subtitle">Забронируйте адрес для ребёнка. Передайте ссылку активации, чтобы он завершил настройку со своим паролем.</string>
-    <string name="kids_seats_used">Использовано %1$d из %2$d семейных мест</string>
     <string name="kids_seats_breakdown">%1$s, %2$s, %3$s</string>
     <string name="kids_no_reservations">Забронированных адресов пока нет. Забронируйте на astermail.org.</string>
     <string name="kids_reserve_on_web">Забронировать на сайте</string>
@@ -2302,7 +2294,6 @@
     <string name="alias_apply_existing_progress">Применение: проверено %1$d, обновлено %2$d</string>
     <string name="alias_apply_existing_progress_total">Применение: проверено %1$d из %2$d, обновлено %3$d</string>
     <string name="alias_apply_existing_done">Готово: проверено %1$d, обновлено %2$d</string>
-    <string name="alias_apply_existing_canceled">Остановлено: обновлено %1$d</string>
     <string name="alias_apply_existing_error">Не удалось применить к имеющейся почте. Повторите попытку.</string>
     <string name="alias_apply_existing_unavailable">Письма, которые уже есть в вашем аккаунте, нельзя переместить в спам.</string>
     <string name="alias_delivery_label_rule_note">Правило «%1$s» уже помечает письма этого псевдонима меткой %2$s.</string>
@@ -2400,11 +2391,7 @@
     <string name="alias_import_target_domain">Импортировать в</string>
     <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">Снова включить, если отключён</string>
-    <string name="alias_import_confirm">Импортировать %1$d псевдонимов</string>
     <string name="alias_import_progress">Импорт %1$d из %2$d...</string>
-    <string name="alias_import_summary_created">Импортировано: %1$d</string>
-    <string name="alias_import_summary_skipped">Уже существовало: %1$d</string>
-    <string name="alias_import_summary_failed">Не удалось: %1$d</string>
     <string name="alias_import_error_no_aliases">В этом файле не найдено псевдонимов для импорта.</string>
     <string name="alias_import_error_encrypted">Этот файл экспорта зашифрован. Экспортируйте его без шифрования, а затем импортируйте.</string>
     <string name="alias_export_title">Экспорт псевдонимов</string>
@@ -2414,7 +2401,6 @@
     <string name="alias_export_source_domain_addresses">Адреса собственного домена</string>
     <string name="alias_export_source_directories">Каталоги</string>
     <string name="alias_export_source_ghost">Ghost-псевдонимы</string>
-    <string name="alias_export_source_count">Записей: %1$d</string>
     <string name="alias_export_warning_title">Этот файл не зашифрован</string>
     <string name="alias_export_warning_body">Любой, кто его откроет, увидит все псевдонимы, заметки и сайты. Храните его в менеджере паролей или на зашифрованном диске.</string>
     <string name="alias_export_summary">%1$s, %2$s.</string>
@@ -2538,7 +2524,7 @@
     <string name="block_remote_css_subtitle">Запретить письмам загружать таблицы стилей с внешних серверов</string>
     <string name="block_html_rendering">Блокировать отображение HTML</string>
     <string name="block_html_rendering_subtitle">Показывать входящие письма как обычный текст, чтобы предотвратить отслеживание, подмену вёрстки и визуальный фишинг</string>
-    <string name="allow_a_sender">Добавить в белый список</string>
+    <string name="allow_a_sender">Добавить в список разрешённых</string>
     <string name="add_to_allowlist">Добавить в список разрешённых</string>
     <string name="add_to_allowlist_hint">Письма от этого отправителя или домена никогда не будут отмечены как спам и всегда будут попадать во входящие.</string>
     <string name="allowlist_entire_domain">Весь домен</string>
@@ -2571,7 +2557,6 @@
     <string name="couldnt_remove_label">Не удалось удалить метку</string>
     <string name="couldnt_unsnooze">Не удалось вернуть во входящие</string>
     <string name="domain_verify_slow">Aster не смог завершить проверку DNS. Записи, возможно, ещё проверяются, поэтому повторите попытку через несколько минут.</string>
-    <string name="domain_records_verified">Проверено записей: %1$d из %2$d</string>
     <string name="ext_sync_started">Синхронизация запущена</string>
     <string name="ext_account_removed">Аккаунт удалён</string>
     <string name="folder_created">Папка создана</string>
@@ -2640,7 +2625,6 @@
     <string name="plan_change_due_today">К оплате сегодня: %1$s</string>
     <string name="plan_change_preview_failed">Не удалось рассчитать сумму к оплате сегодня. Показана полная цена.</string>
     <string name="payment_failed_banner_overdue">Платёж не прошёл. Доступ к тарифу %1$s скоро будет ограничен.</string>
-    <string name="payment_failed_days_left">Доступ будет ограничен через %1$d дн.</string>
     <string name="payment_failed_one_day_left">Доступ будет ограничен через 1 день.</string>
     <string name="device_verification_failed">Не удалось подтвердить это устройство для этого изменения. Войдите снова на этом устройстве и повторите попытку.</string>
     <string name="cancel_reason_title">Перед уходом</string>
@@ -2797,7 +2781,6 @@
     <string name="signature_set_default">Использовать как подпись по умолчанию</string>
     <string name="star_failed">Не удалось добавить в избранное</string>
     <string name="tab_label_with_count">%1$s (%2$d)</string>
-    <string name="templates_decrypt_failed_count">Не удалось прочитать шаблоны на этом устройстве: %1$d. Они сохранены с ключом, которого сейчас нет на этом устройстве.</string>
     <string name="time_format">Формат времени</string>
     <string name="time_format_12h">12-часовой (1:30 PM)</string>
     <string name="time_format_24h">24-часовой (13:30)</string>
@@ -2907,7 +2890,6 @@
     <string name="domain_purchase_manage_paid">Оплачено</string>
     <string name="domain_purchase_manage_auto_renew_note">Этот домен не продлевается автоматически. Чтобы сохранить его, продлите его до даты окончания срока.</string>
     <string name="domain_purchase_manage_support_note">Чтобы перенести домен к другому регистратору или спросить о возврате средств, свяжитесь с поддержкой.</string>
-    <string name="domain_purchase_n_years">%1$d года</string>
     <string name="twin_address_title">Ваш парный адрес</string>
     <string name="twin_address_reserved_description">%1$s зарезервирован за вашей учетной записью, поэтому никто другой не сможет его занять. Создайте его как псевдоним, когда захотите отправлять и получать письма с него.</string>
     <string name="twin_address_available_description">%1$s - это соответствующий адрес в другом домене Aster. Создайте его как псевдоним, чтобы отправлять и получать письма с него.</string>
@@ -3002,7 +2984,6 @@
     <string name="empty_contacts_trash_confirm_message">Удалить все контакты из корзины навсегда? Отменить это нельзя.</string>
     <string name="contact_restored">Контакт восстановлен</string>
     <string name="contact_moved_to_trash">Контакт перемещен в корзину</string>
-    <string name="contact_trash_days_left">Осталось дней: %1$d</string>
     <string name="contacts_in_trash_notice">Контакты в корзине удаляются безвозвратно через 30 дней.</string>
     <string name="contacts_import_empty">В этом файле нет контактов</string>
     <string name="contacts_import_failed">Не удалось импортировать контакты</string>
@@ -3224,13 +3205,11 @@
     <string name="delete_emails_older_than_30_days">Удалить письма старше 30 дней</string>
     <string name="inbox_tools">Фильтры и быстрые действия</string>
     <string name="inbox_tools_subtitle">Показывает кнопки фильтров и быстрых действий в заголовке входящих</string>
-    <string name="contacts_bulk_progress">Удаление %1$d из %2$d контактов</string>
     <string name="plan_badge_thanks">Спасибо, что пользуетесь подпиской %1$s.</string>
     <string name="quick_action_unavailable">Это быстрое действие недоступно в этой папке</string>
     <string name="quick_action_no_unread">Здесь нечего отмечать как прочитанное</string>
     <string name="quick_action_no_read">Здесь нет прочитанных писем для архивации</string>
     <string name="quick_action_no_old">Здесь нет писем старше 30 дней</string>
-    <string name="quick_action_delete_old_confirm">Переместить в корзину беседы старше 30 дней (%1$d)?</string>
     <string name="change_address">Изменить адрес</string>
     <string name="address_change_title">Измените свой адрес</string>
     <string name="address_change_intro_lead">Прочитайте, что изменится, прежде чем продолжить.</string>

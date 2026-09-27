@@ -199,7 +199,6 @@
     <string name="encrypted">Versleuteld</string>
     <string name="end_to_end_encrypted">End-to-end versleuteld</string>
     <string name="protected_in_transit">Beschermd tijdens verzending</string>
-    <string name="trackers_blocked">%d tracker(s) geblokkeerd</string>
     <string name="unstar">Ster verwijderen</string>
     <string name="star">Ster</string>
     <string name="more">meer</string>
@@ -569,7 +568,6 @@
     <string name="send">Verzenden</string>
     <string name="auto_save_recipients">Ontvangers automatisch opslaan bij contacten</string>
     <string name="undo_send">Verzenden ongedaan maken</string>
-    <string name="undo_send_delay_seconds">%1$d seconden</string>
     <string name="change_photo">Foto wijzigen</string>
     <string name="confirmations">Bevestigingen</string>
     <string name="confirm_before_delete">Bevestigen vóór verwijderen</string>
@@ -710,7 +708,7 @@
     <string name="credits_title">Tegoed</string>
     <string name="credits_subtitle">Verdien credits door de app te installeren en vrienden door te verwijzen</string>
     <string name="credits_balance_label">Beschikbaar saldo</string>
-    <string name="credits_balance_note">Credits worden automatisch toegepast bij uw volgende verlenging</string>
+    <string name="credits_balance_note">Credits worden automatisch toegepast bij je volgende verlenging</string>
     <string name="credits_shop_plans">Abonnementen bekijken</string>
     <string name="stats">Statistieken</string>
     <string name="total_referrals">Totaal aantal verwijzingen</string>
@@ -926,7 +924,7 @@
     <string name="ext_sync_now">Nu synchroniseren</string>
     <string name="ext_delete">Verwijderen</string>
     <string name="ext_disconnect_title">Verbinding verbreken</string>
-    <string name="ext_disconnect_confirm">Weet u zeker dat u de verbinding met dit account wilt verbreken?</string>
+    <string name="ext_disconnect_confirm">Weet je zeker dat je de verbinding met dit account wilt verbreken? Alle gesynchroniseerde e-mails van dit account blijven in je inbox, tenzij je ervoor kiest ze te verwijderen.</string>
     <string name="ext_disconnect_button">Verbinding verbreken</string>
     <string name="ext_disconnect_delete_messages">Alle gesynchroniseerde berichten verwijderen</string>
     <string name="ext_error_load_failed">Gekoppelde accounts konden niet worden geladen. Trek omlaag om het opnieuw te proberen.</string>
@@ -997,7 +995,7 @@
     <string name="protection">Bescherming</string>
     <string name="warn_suspicious_links">Waarschuwingen voor externe links</string>
     <string name="strip_exif">Afbeeldingsmetadata verwijderen</string>
-    <string name="strip_exif_subtitle">Verwijder EXIF- en andere metadata uit afbeeldingen voor het verzenden om uw locatie en apparaatinformatie te beschermen</string>
+    <string name="strip_exif_subtitle">Verwijder EXIF- en andere metadata uit afbeeldingen voor het verzenden om je locatie en apparaatinformatie te beschermen</string>
     <string name="ghost_mode">Ghostmodus</string>
     <string name="privacy_policy">Privacybeleid</string>
 
@@ -1085,8 +1083,8 @@
     <string name="error_too_many_attempts">Te veel pogingen. Wacht even en probeer het opnieuw.</string>
 
     <string name="error_send_recovery">Herstel-e-mail verzenden mislukt</string>
-    <string name="error_invalid_recovery_code">Herstelcodes beginnen met \'ASTER-\'</string>
-    <string name="error_invalid_code">Die herstelcode kwam niet overeen. Een andere uit uw opgeslagen lijst zou moeten werken.</string>
+    <string name="error_invalid_recovery_code">Een herstelcode ziet er zo uit: ASTER-XXXX-XXXX-XXXX-XXXX. Controleer de code en voer hem opnieuw in.</string>
+    <string name="error_invalid_code">Die code hoort niet bij dit account. Vergelijk hem met je opgeslagen lijst en voer hem opnieuw in. Spaties en hoofdletters maken niet uit.</string>
     <string name="error_recovery_failed">Herstel mislukt</string>
     <string name="error_recovery_too_many_attempts">Dit account heeft te veel herstelpogingen gehad. Je kunt het over ongeveer 30 minuten opnieuw proberen. Geen van je codes is gebruikt, dus je hebt ze nog allemaal.</string>
     <string name="status_deriving_key">Nieuwe wachtwoordsleutel afleiden</string>
@@ -1247,7 +1245,7 @@
     <string name="settings_plan_bullet_catch_all">Catch-all e-mailadres</string>
     <string name="settings_plan_bullet_auto_forwarding">Automatisch doorsturen</string>
     <string name="settings_plan_bullet_quiet_hours">Stille uren</string>
-    <string name="settings_plan_bullet_custom_avatars">Aangepaste alias- en domein-avatars</string>
+    <string name="settings_plan_bullet_custom_avatars">Alias-avatars</string>
     <string name="settings_plan_bullet_external_accounts">Externe accounts (IMAP &amp; POP3)</string>
     <string name="settings_plan_bullet_bridge_access">Toegang via je mailclient (IMAP en SMTP) met Aster Bridge</string>
     <string name="settings_plan_bullet_priority_support">Prioriteitsondersteuning</string>
@@ -1448,7 +1446,7 @@
     <string name="badges_description">Laat je verdiende badges zien.</string>
     <string name="vacation_reply_short">Automatisch antwoord tijdens afwezigheid</string>
     <string name="info_auto_discover_title">Sleutels automatisch vinden</string>
-    <string name="info_auto_discover_desc">Haalt automatisch versleutelingssleutels op voor uw contacten zodat u hen versleutelde mail kunt sturen zonder handmatige installatie.</string>
+    <string name="info_auto_discover_desc">Haalt automatisch versleutelingssleutels op voor je contacten zodat je hen versleutelde mail kunt sturen zonder handmatige installatie.</string>
     <string name="info_encrypt_default_title">Standaard versleutelen</string>
     <string name="info_encrypt_default_desc">Versleutelt uitgaande mail automatisch zodra de ontvanger een publieke sleutel heeft, zodat je versleuteling niet per bericht hoeft aan te zetten.</string>
     <string name="info_require_encryption_title">Versleuteling vereisen</string>
@@ -1464,7 +1462,6 @@
     <string name="score_partial">Gedeeltelijk</string>
     <string name="score_strong">Sterk</string>
     <string name="score_complete">Alles in orde</string>
-    <string name="score_steps_left">Nog %1$d</string>
     <string name="check_passkey_registered">Toegangssleutel geregistreerd</string>
     <string name="check_verified_recovery_email">Geverifieerd herstel-e-mailadres</string>
     <plurals name="passkeys_registered_count">
@@ -1488,7 +1485,7 @@
     <string name="onboarding_slide3_body">We bewaren alleen versleutelde tekst - nooit platte tekst, nooit metadata. Je gegevens blijven van jou.</string>
     <string name="onboarding_slide4_title">Bescherm je identiteit</string>
     <string name="onboarding_slide4_body">Maak wegwerpaliassen die doorsturen naar je echte inbox. Verwijder er een zonder de rest te raken.</string>
-    <string name="recovery_step_up_description">Bevestig voor uw veiligheid uw wachtwoord om door te gaan.</string>
+    <string name="recovery_step_up_description">Bevestig voor je veiligheid je wachtwoord om door te gaan.</string>
     <string name="settings_upgrade_cta">Upgraden</string>
     <string name="save_percent">Bespaar %1$d%%</string>
     <string name="free">Gratis</string>
@@ -1575,7 +1572,6 @@
     <string name="failed_purge_alias">Alias kon niet worden verwijderd</string>
     <string name="scan_inbox">Inbox scannen</string>
     <string name="deselect_all">Selectie opheffen</string>
-    <string name="count_selected">%1$d geselecteerd</string>
     <string name="unsubscribe_selected">Uitschrijven (%1$d)</string>
     <string name="reactivate_selected">Opnieuw activeren (%1$d)</string>
     <string name="open_unsubscribe_page">Uitschrijfpagina openen</string>
@@ -1680,7 +1676,7 @@
     <string name="add_signature">Handtekening toevoegen</string>
     <string name="delete_signature">Handtekening verwijderen</string>
     <string name="show_aster_branding">Aster-branding tonen</string>
-    <string name="show_aster_branding_description">Toon Verzonden met Aster Mail in uw e-mails</string>
+    <string name="show_aster_branding_description">Toon Verzonden met Aster Mail in je e-mails</string>
     <string name="show_aster_branding_free_note">Aster-branding is vereist voor gratis accounts</string>
     <string name="use_template">Sjabloon gebruiken</string>
     <string name="pick_template">Kies een sjabloon</string>
@@ -1759,7 +1755,7 @@
     <string name="totp_code_required_label">Authenticator- of back-upcode</string>
     <string name="totp_code_required_error">Voer de 6-cijferige code uit je authenticator-app in, of een van je back-upcodes</string>
     <string name="preferences_locked_retry">Je instellingen konden nu niet worden ontgrendeld. We tonen standaardwaarden, ga terug en open opnieuw.</string>
-    <string name="plan_name_star">Star</string>
+    <string name="plan_name_star">Ster</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Supernova</string>
     <string name="ghost_alias_limit_reached">Limiet voor ghost-aliassen deze maand bereikt</string>
@@ -1798,7 +1794,6 @@
     <string name="upgrade_inline_card_description">Je hebt de limiet van het gratis abonnement bereikt. Met een betaald abonnement ontgrendel je meer.</string>
     <string name="your_key">Jouw sleutel</string>
     <string name="recovery_codes">Herstelcodes</string>
-    <string name="recovery_codes_remaining">Nog %1$d van %2$d codes over</string>
     <string name="low">Laag</string>
     <string name="ok">OK</string>
     <string name="recovery_codes_low_warning">Je hebt nog maar weinig herstelcodes. Haal nieuwe codes op zodat je niet buitengesloten raakt.</string>
@@ -1915,7 +1910,7 @@
     <string name="login_alerts">Inlogwaarschuwingen</string>
     <string name="login_alerts_subtitle">Krijg een melding als er met een nieuw apparaat op je account wordt ingelogd</string>
     <string name="login_alerts_info_title">Inlogwaarschuwingen</string>
-    <string name="login_alerts_info_desc">Stuurt u een e-mail wanneer uw account wordt ingelogd vanaf een nieuw apparaat of locatie. Goed voor het vroeg detecteren van onbevoegde toegang.</string>
+    <string name="login_alerts_info_desc">Stuurt je een e-mail wanneer je account wordt ingelogd vanaf een nieuw apparaat of locatie. Goed voor het vroeg detecteren van onbevoegde toegang.</string>
     <string name="passkeys_security_keys">Toegangssleutels en beveiligingssleutels</string>
     <string name="passkeys_none_subtitle">Nog geen toegangssleutels</string>
     <string name="section_trusted_devices">Vertrouwde apparaten</string>
@@ -1936,7 +1931,7 @@
     <string name="block_remote_images_info_desc">E-mails kunnen afbeeldingen van externe servers laden. Bij het laden ziet de server van de afzender je IP-adres en weet die dat je het bericht hebt geopend. Dit blokkeert dat laden.</string>
     <string name="block_tracking_pixels_subtitle_security">Blokkeer onzichtbare tracking-pixels in e-mails</string>
     <string name="block_tracking_pixels_info_title">Wat zijn spionagepixels?</string>
-    <string name="block_tracking_pixels_info_desc">Onzichtbare 1x1-afbeeldingen in e-mails. Bij het laden ziet de afzender uw IP, wanneer u het bericht opende en uw apparaattype. Aster verwijdert ze voordat ze kunnen laden.</string>
+    <string name="block_tracking_pixels_info_desc">Onzichtbare 1x1-afbeeldingen in e-mails. Bij het laden ziet de afzender je IP, wanneer je het bericht opende en je apparaattype. Aster verwijdert ze voordat ze kunnen laden.</string>
     <string name="block_tracking_links_subtitle">Verwijder tracking-parameters uit links in e-mails</string>
     <string name="block_tracking_links_info_title">Volglinks</string>
     <string name="block_tracking_links_info_desc">Links in e-mail lopen vaak eerst via de server van de afzender, zodat die kan vastleggen of je klikte. Dit haalt die omleidingen weg, zodat links direct naar de bestemming gaan.</string>
@@ -2091,7 +2086,6 @@
     <string name="export_format_eml_subtitle">Eén .eml-bestand per bericht, netjes in een map</string>
     <string name="export_start">Export starten</string>
     <string name="export_in_progress">Je gegevens worden geëxporteerd</string>
-    <string name="export_progress_emails">%1$d / %2$d e-mails</string>
     <string name="export_complete">Export voltooid</string>
     <string name="export_emails_exported">Geëxporteerde e-mails</string>
     <string name="export_file_size">Bestandsgrootte</string>
@@ -2124,7 +2118,6 @@
     <string name="crypto_native_status_awaiting">Wachten op betaling</string>
     <string name="crypto_native_status_detected">Betaling gedetecteerd</string>
     <string name="crypto_native_status_confirming_short">Bevestigen</string>
-    <string name="crypto_native_status_confirming">%1$d van %2$d bevestigingen</string>
     <string name="crypto_native_status_credited">Abonnement bijgeschreven</string>
     <string name="crypto_native_usd_value_label">Te betalen bedrag</string>
     <string name="crypto_native_expires_in">Verloopt over %1$s</string>
@@ -2165,7 +2158,7 @@
     <string name="crypto_native_pending_banner">Je hebt een cryptobetaling die nog loopt</string>
     <string name="crypto_native_pending_banner_action">Betaling hervatten</string>
     <string name="crypto_native_received_title">Betaling ontvangen</string>
-    <string name="crypto_native_received_body">Het volledige bedrag is ontvangen en wordt verwerkt. U hoeft niets meer te betalen.</string>
+    <string name="crypto_native_received_body">Het volledige bedrag is ontvangen en wordt verwerkt. Je hoeft niets meer te betalen.</string>
     <string name="crypto_native_usd_total_label">Totaalbedrag</string>
     <string name="crypto_native_expired_do_not_send">Stuur niets meer naar het adres van deze betaling. Geld dat je nu verstuurt, moet eerst handmatig worden gecontroleerd voordat het kan worden bijgeschreven.</string>
     <string name="crypto_native_connection_lost">Verbinding verbroken. Controleer je netwerk en probeer het opnieuw.</string>
@@ -2223,7 +2216,6 @@
     <string name="view_plans">Abonnementen bekijken</string>
     <string name="kids_reserved_addresses">Gereserveerde adressen voor kinderen</string>
     <string name="kids_reserved_subtitle">Reserveer een adres voor je kind. Deel de activatielink, zodat je kind het account met een eigen wachtwoord kan instellen.</string>
-    <string name="kids_seats_used">%1$d van %2$d gezinsplekken in gebruik</string>
     <string name="kids_seats_breakdown">%1$s, %2$s, %3$s</string>
     <string name="kids_no_reservations">Nog geen gereserveerde adressen. Reserveer er een op astermail.org.</string>
     <string name="kids_reserve_on_web">Reserveren op het web</string>
@@ -2286,7 +2278,6 @@
     <string name="alias_apply_existing_progress">Bezig: %1$d gescand, %2$d bijgewerkt</string>
     <string name="alias_apply_existing_progress_total">Bezig: %1$d van %2$d gescand, %3$d bijgewerkt</string>
     <string name="alias_apply_existing_done">Klaar: %1$d gescand, %2$d bijgewerkt</string>
-    <string name="alias_apply_existing_canceled">Gestopt: %1$d bijgewerkt</string>
     <string name="alias_apply_existing_error">Toepassen op bestaande e-mail is mislukt. Probeer het opnieuw.</string>
     <string name="alias_apply_existing_unavailable">E-mail die al in je account staat, kan niet naar Spam worden verplaatst.</string>
     <string name="alias_delivery_label_rule_note">Mailregel \"%1$s\" geeft mail voor deze alias al het label %2$s.</string>
@@ -2384,11 +2375,7 @@
     <string name="alias_import_target_domain">Importeren naar</string>
     <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">Opnieuw inschakelen indien uitgeschakeld</string>
-    <string name="alias_import_confirm">%1$d aliassen importeren</string>
     <string name="alias_import_progress">%1$d van %2$d importeren...</string>
-    <string name="alias_import_summary_created">%1$d geïmporteerd</string>
-    <string name="alias_import_summary_skipped">%1$d bestonden al</string>
-    <string name="alias_import_summary_failed">%1$d mislukt</string>
     <string name="alias_import_error_no_aliases">Geen importeerbare aliassen gevonden in dit bestand.</string>
     <string name="alias_import_error_encrypted">Deze export is versleuteld. Exporteer opnieuw zonder versleuteling en importeer daarna.</string>
     <string name="alias_export_title">Aliassen exporteren</string>
@@ -2398,9 +2385,8 @@
     <string name="alias_export_source_domain_addresses">Adressen van eigen domein</string>
     <string name="alias_export_source_directories">Mappen</string>
     <string name="alias_export_source_ghost">Ghost-aliassen</string>
-    <string name="alias_export_source_count">%1$d items</string>
     <string name="alias_export_warning_title">Dit bestand is niet versleuteld</string>
-    <string name="alias_export_warning_body">Iedereen die het opent kan elke alias, notitie en website erin lezen. Bewaar het in uw wachtwoordmanager of op een versleutelde schijf.</string>
+    <string name="alias_export_warning_body">Iedereen die het opent kan elke alias, notitie en website erin lezen. Bewaar het in je wachtwoordmanager of op een versleutelde schijf.</string>
     <string name="alias_export_summary">%1$s verdeeld over %2$s.</string>
     <string name="alias_export_download">Opslaan</string>
     <string name="alias_export_failed">Export mislukt. Er is niets opgeslagen.</string>
@@ -2551,7 +2537,6 @@
     <string name="couldnt_remove_label">Kan label niet verwijderen</string>
     <string name="couldnt_unsnooze">Uitstel kon niet worden opgeheven</string>
     <string name="domain_verify_slow">Aster kon de DNS-controle niet voltooien. Je records worden mogelijk nog geverifieerd, probeer het over een paar minuten opnieuw.</string>
-    <string name="domain_records_verified">%1$d van %2$d records geverifieerd</string>
     <string name="ext_sync_started">Synchronisatie gestart</string>
     <string name="ext_account_removed">Account verwijderd</string>
     <string name="folder_created">Map aangemaakt</string>
@@ -2565,8 +2550,8 @@
     <string name="item_renamed">Hernoemd</string>
     <string name="item_color_updated">Kleur bijgewerkt</string>
     <string name="sessions_active_section">Actieve sessies</string>
-    <string name="sign_out_others_action">Andere apparaten uitloggen</string>
-    <string name="revoke_all_action">Alle apparaten intrekken</string>
+    <string name="sign_out_others_action">Anderen uitloggen</string>
+    <string name="revoke_all_action">Alles intrekken</string>
     <string name="revoke_all_trusted_devices_confirm">Elk vertrouwd apparaat moet zich de volgende keer dat het inlogt opnieuw verifiëren.</string>
     <string name="plan_price_per_month">per maand</string>
     <string name="plan_price_per_year">per jaar</string>
@@ -2620,7 +2605,6 @@
     <string name="plan_change_due_today">Vandaag te betalen: %1$s</string>
     <string name="plan_change_preview_failed">Het bedrag dat je vandaag betaalt kon niet worden berekend. De volledige prijs wordt getoond.</string>
     <string name="payment_failed_banner_overdue">Je betaling is niet gelukt. De toegang tot je %1$s-abonnement wordt binnenkort beperkt.</string>
-    <string name="payment_failed_days_left">De toegang wordt over %1$d dagen beperkt.</string>
     <string name="payment_failed_one_day_left">De toegang wordt over 1 dag beperkt.</string>
     <string name="device_verification_failed">Dit apparaat kon niet worden geverifieerd voor die wijziging. Log opnieuw in op dit apparaat en probeer het dan opnieuw.</string>
     <string name="cancel_reason_title">Voordat je gaat</string>
@@ -2666,9 +2650,9 @@
     <string name="suspended_since_with_deletion">Dit account is sinds %1$s niet meer beschikbaar. Vanaf %2$s kan het in aanmerking komen voor verwijdering.</string>
     <string name="suspended_since">Dit account is sinds %1$s niet meer beschikbaar.</string>
     <string name="suspended_title">Dit account is opgeschort</string>
-    <string name="suspended_appeal_hint">Als u denkt dat dit een vergissing is, kunt u bezwaar maken. Aster beoordeelt elk bezwaar en antwoordt per e-mail.</string>
-    <string name="suspended_download_hint">U kunt nog steeds een kopie van uw gegevens downloaden. Uw e-mail wordt alleen op dit apparaat ontsleuteld, dus niemand anders kan de export lezen.</string>
-    <string name="suspended_download">Uw gegevens downloaden</string>
+    <string name="suspended_appeal_hint">Als je denkt dat dit een vergissing is, kun je bezwaar maken. Aster beoordeelt elk bezwaar en antwoordt per e-mail.</string>
+    <string name="suspended_download_hint">Je kunt nog steeds een kopie van je gegevens downloaden. Je e-mail wordt alleen op dit apparaat ontsleuteld, dus niemand anders kan de export lezen.</string>
+    <string name="suspended_download">Je gegevens downloaden</string>
     <string name="suspended_start_appeal">Bezwaar maken</string>
     <string name="default_payment_settled">Standaard betaalmethode bijgewerkt. Je openstaande bedrag is betaald.</string>
     <string name="default_payment_still_due">Je kaart is opgeslagen, maar je openstaande bedrag is niet betaald. Probeer een andere kaart om je abonnement te behouden.</string>
@@ -2709,7 +2693,7 @@
     <string name="delete_signature_message">“%1$s” wordt definitief verwijderd en je kunt dit niet ongedaan maken.</string>
     <string name="delete_vacation_reply_confirm">Je afwezigheidsbericht en de bijbehorende datums worden verwijderd. Dit kan niet ongedaan worden gemaakt.</string>
     <string name="error_2fa_code_required">Voer de code uit je authenticator-app in.</string>
-    <string name="error_account_password_required">Voer uw accountwachtwoord in.</string>
+    <string name="error_account_password_required">Voer je accountwachtwoord in.</string>
     <string name="error_enter_full_email_address">Voer je volledige e-mailadres in, inclusief het deel na het apenstaartje.</string>
     <string name="error_folder_password_already_set">Deze map heeft al een wachtwoord.</string>
     <string name="error_folder_password_not_set">Deze map heeft geen wachtwoord.</string>
@@ -2721,8 +2705,8 @@
     <string name="error_invalid_recovery_phrase">Deze herstelzin komt niet overeen. Controleer de volgorde van de woorden en de spelling en probeer het opnieuw.</string>
     <string name="error_plan_limit_reached">Je hebt de limiet van je huidige abonnement bereikt. Upgrade of verwijder wat items om ruimte te maken, dan kun je weer verder.</string>
     <string name="error_sign_in_code_invalid">Deze code is niet meer geldig. Vraag een nieuwe aan om verder te gaan met inloggen.</string>
-    <string name="error_sign_in_domain_unsupported">Meld u aan met het astermail.org- of aster.cx-adres waarmee u zich hebt geregistreerd. Adressen op uw eigen domein komen op hetzelfde account uit.</string>
-    <string name="error_storage_full">Uw opslag is vol. Upgrade uw abonnement of verwijder wat e-mails om ruimte te maken.</string>
+    <string name="error_sign_in_domain_unsupported">Meld je aan met het astermail.org- of aster.cx-adres waarmee je je hebt geregistreerd. Adressen op je eigen domein komen op hetzelfde account uit.</string>
+    <string name="error_storage_full">Je opslag is vol. Upgrade je abonnement of verwijder wat e-mails om ruimte te maken.</string>
     <string name="error_unsupported_email_domain">Voer een adres in dat eindigt op astermail.org of aster.cx.</string>
     <string name="error_upload_too_large">De upload is te groot. Verwijder of verklein een bestand om verder te gaan.</string>
     <string name="expiring_not_with_schedule">Je kunt een bericht plannen of laten verlopen, maar niet allebei. Schakel een optie uit om door te gaan.</string>
@@ -2744,7 +2728,7 @@
     <string name="are_you_sure">Weet je het zeker?</string>
     <string name="go_back">Ga terug</string>
     <string name="continue_anyway">Toch doorgaan</string>
-    <string name="recovery_codes_skip_warning">Zonder herstelcodes kan niemand u terug in dit account helpen als u uw wachtwoord vergeet, en uw versleutelde gegevens zouden voorgoed verloren zijn. Doorgaan zonder ze op te slaan?</string>
+    <string name="recovery_codes_skip_warning">Zonder herstelcodes kan niemand je terug in dit account helpen als je je wachtwoord vergeet, en je versleutelde gegevens zouden voorgoed verloren zijn. Doorgaan zonder ze op te slaan?</string>
     <string name="revoke_session_confirm">Dit apparaat wordt meteen uitgelogd en moet opnieuw inloggen.</string>
     <string name="scheduled_action_failed">Het geplande bericht kon niet worden bijgewerkt</string>
     <string name="scheduled_cancelled">Gepland bericht geannuleerd</string>
@@ -2771,7 +2755,6 @@
     <string name="signature_set_default">Gebruiken als standaardhandtekening</string>
     <string name="star_failed">Ster toevoegen mislukt</string>
     <string name="tab_label_with_count">%1$s (%2$d)</string>
-    <string name="templates_decrypt_failed_count">%1$d sjablonen konden niet worden gelezen op dit apparaat. Ze zijn opgeslagen met een sleutel die dit apparaat momenteel niet heeft.</string>
     <string name="time_format">Tijdnotatie</string>
     <string name="time_format_12h">12-uursindeling (AM/PM)</string>
     <string name="time_format_24h">24-uursindeling</string>
@@ -2877,7 +2860,6 @@
     <string name="domain_purchase_manage_paid">Betaald</string>
     <string name="domain_purchase_manage_auto_renew_note">Dit domein wordt niet automatisch verlengd. Verleng het voor de vervaldatum om het te behouden.</string>
     <string name="domain_purchase_manage_support_note">Neem contact op met support om dit domein naar een andere registrar te verhuizen of naar een terugbetaling te vragen.</string>
-    <string name="domain_purchase_n_years">%1$d jaar</string>
     <string name="twin_address_title">Je bijpassende adres</string>
     <string name="twin_address_reserved_description">%1$s is gereserveerd voor je account, dus niemand anders kan het registreren. Maak het als alias aan wanneer je ermee wilt verzenden en ontvangen.</string>
     <string name="twin_address_available_description">%1$s is het bijpassende adres op het andere Aster-domein. Maak het als alias aan om ermee te verzenden en ontvangen.</string>
@@ -2966,7 +2948,6 @@
     <string name="empty_contacts_trash_confirm_message">Alle contacten in de prullenbak definitief verwijderen? Dit kan niet ongedaan worden gemaakt.</string>
     <string name="contact_restored">Contact hersteld</string>
     <string name="contact_moved_to_trash">Contact naar de prullenmand verplaatst</string>
-    <string name="contact_trash_days_left">Nog %1$d dagen</string>
     <string name="contacts_in_trash_notice">Contacten in de prullenmand worden na 30 dagen definitief verwijderd.</string>
     <string name="contacts_import_empty">Geen contacten gevonden in dat bestand</string>
     <string name="contacts_import_failed">Contacten konden niet worden geïmporteerd</string>
@@ -3186,13 +3167,11 @@
     <string name="delete_emails_older_than_30_days">E-mails ouder dan 30 dagen verwijderen</string>
     <string name="inbox_tools">Filters en snelle acties</string>
     <string name="inbox_tools_subtitle">Toont de knoppen voor filters en snelle acties in de koptekst van het Postvak IN</string>
-    <string name="contacts_bulk_progress">%1$d van %2$d contacten worden verwijderd</string>
     <string name="plan_badge_thanks">Bedankt voor je %1$s-abonnement.</string>
     <string name="quick_action_unavailable">Die snelle actie is niet beschikbaar in deze map</string>
     <string name="quick_action_no_unread">Hier is niets om als gelezen te markeren</string>
     <string name="quick_action_no_read">Hier zijn geen gelezen e-mails om te archiveren</string>
     <string name="quick_action_no_old">Hier zijn geen e-mails ouder dan 30 dagen</string>
-    <string name="quick_action_delete_old_confirm">%1$d gesprekken ouder dan 30 dagen naar de prullenbak verplaatsen?</string>
     <string name="change_address">Adres wijzigen</string>
     <string name="address_change_title">Wijzig je adres</string>
     <string name="address_change_intro_lead">Lees wat er verandert voordat je doorgaat.</string>

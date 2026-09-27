@@ -74,6 +74,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -498,7 +499,7 @@ fun EncryptionScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = stringResource(R.string.recovery_codes_remaining, available, total),
+                            text = pluralStringResource(R.plurals.recovery_codes_remaining, total, available, total),
                             color = colors.text_primary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
@@ -512,7 +513,7 @@ fun EncryptionScreen(
                                     .padding(horizontal = 10.dp, vertical = 3.dp),
                             ) {
                                 Text(
-                                    text = stringResource(R.string.fix_enc_codes_used, used),
+                                    text = pluralStringResource(R.plurals.fix_enc_codes_used, used, used),
                                     color = readable_on(used_pill),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Medium,

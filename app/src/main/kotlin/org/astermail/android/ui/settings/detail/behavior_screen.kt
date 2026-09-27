@@ -61,6 +61,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -529,7 +530,7 @@ fun BehaviorScreen(
                             org.astermail.android.mail.undo_send_delay_options(undo_send_secs)
                         }
                         undo_send_options.forEachIndexed { i, secs ->
-                            choice_option_row(stringResource(R.string.undo_send_delay_seconds, secs), undo_send_secs == secs) { undo_send_secs = secs; save_trigger++ }
+                            choice_option_row(pluralStringResource(R.plurals.undo_send_delay_seconds, secs, secs), undo_send_secs == secs) { undo_send_secs = secs; save_trigger++ }
                             if (i < undo_send_options.lastIndex) settings_row_gap(modifier = Modifier)
                         }
                     }
