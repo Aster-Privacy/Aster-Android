@@ -167,7 +167,7 @@ class SearchSelectionDeleteTest {
 
     private fun assert_selected_count(n: Int) {
         compose_rule.onNodeWithTag("search_selected_count")
-            .assertTextEquals(context.getString(R.string.inbox_selected_count, n))
+            .assertTextEquals(context.resources.getQuantityString(R.plurals.inbox_selected_count, n, n))
     }
 
     @Test

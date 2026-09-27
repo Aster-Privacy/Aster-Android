@@ -380,12 +380,18 @@ private fun declares_background(element: Element): Boolean {
     return false
 }
 
+private fun contains_background(element: Element): Boolean {
+    if (element.selectFirst("[bgcolor],[background]") != null) return true
+    return element.select("[style]").any { it !== element && INLINE_BACKGROUND.containsMatchIn(it.attr("style")) }
+}
+
 private fun repair_dark_text_contrast(root: Element) {
     for (element in root.select("[style]")) {
         val style = element.attr("style")
         val match = INLINE_COLOR.find(style) ?: continue
         if (!element.hasText()) continue
         if (declares_background(element)) continue
+        if (contains_background(element)) continue
         val luminance = relative_luminance(match.groupValues[2]) ?: continue
         if (luminance >= 0.35) continue
         element.attr("style", style.replaceRange(match.range, "${match.groupValues[1]}color:#e8e8e8"))

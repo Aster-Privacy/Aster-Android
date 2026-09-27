@@ -110,6 +110,8 @@ object app_language {
     fun migrate_to_platform(context: Context) {
         if (!platform_managed) return
 
+        reset_legacy_pin(context)
+
         val store = prefs(context)
 
         if (store.getBoolean(KEY_PLATFORM_MIGRATED, false)) return

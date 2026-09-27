@@ -110,6 +110,17 @@ class EmailBodyNativeTest {
     }
 
     @Test
+    fun simple_dark_keeps_dark_wrapper_text_around_a_light_box() {
+        val prepared = prepare(
+            "<div style=\"color:#333\"><div style=\"background:#f4f4f4\">hello</div></div>",
+            simple_dark = true,
+        )
+
+        assertTrue(prepared.contains("color:#333"))
+        assertFalse(prepared.contains("#e8e8e8"))
+    }
+
+    @Test
     fun malformed_markup_falls_back_to_the_original_body() {
         val body = "plain text with no markup at all"
 

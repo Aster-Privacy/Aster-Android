@@ -81,7 +81,7 @@ class DomainPurchaseManageDialogInstrumentedTest {
         compose.onNodeWithText(context.getString(R.string.domain_purchase_manage_expires)).assertExists()
         compose.onNodeWithText(context.getString(R.string.domain_purchase_manage_term)).assertExists()
         compose.onNodeWithText(context.getString(R.string.domain_purchase_manage_paid)).assertExists()
-        compose.onNodeWithText(context.getString(R.string.domain_purchase_n_years, 2)).assertExists()
+        compose.onNodeWithText(context.resources.getQuantityString(R.plurals.domain_purchase_n_years, 2, 2)).assertExists()
         compose.onNodeWithText(context.getString(R.string.domain_purchase_manage_auto_renew_note)).assertExists()
         compose.onNodeWithText(context.getString(R.string.domain_purchase_manage_support_note)).assertExists()
         compose.onNodeWithText(context.getString(R.string.contact_support)).assertExists()
