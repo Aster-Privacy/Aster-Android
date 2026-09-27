@@ -89,6 +89,13 @@ class MailPollingWorker(
         val token_store = TokenStore(context)
         if (token_store.access_token == null) return Result.success()
 
+        runCatching {
+            val refresher = EntryPointAccessors
+                .fromApplication(applicationContext, PersistentPushService.SessionEntryPoint::class.java)
+                .session_refresher()
+            org.astermail.android.api.auth.refresh_if_expiring(token_store.access_token, refresher)
+        }
+
         if (UnifiedPushState.has_pending_registration(context)) {
             UnifiedPushState.sync_registration(context)
         } else if (UnifiedPushState.subscription_stale(context)) {

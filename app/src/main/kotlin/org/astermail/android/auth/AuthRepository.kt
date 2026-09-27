@@ -237,6 +237,8 @@ class AuthRepository @Inject constructor(
 
     private suspend fun handle_refresh_auth_failure(presented: String?) {
         if (presented.isNullOrEmpty()) return
+        if (!_is_signed_in.value || presented != token_store.refresh_token) return
+        if (!org.astermail.android.api.auth.confirm_session_rejected { auth_api.me() }) return
         sign_out_dead_session(presented)
     }
 
@@ -273,6 +275,12 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun refresh_session(): RefreshOutcome = try_refresh_session()
+
+    suspend fun refresh_session_if_expiring() {
+        if (!_is_signed_in.value) return
+        if (!org.astermail.android.api.auth.access_token_needs_refresh(token_store.access_token, System.currentTimeMillis() / 1000L)) return
+        try_refresh_session()
+    }
 
     private suspend fun try_refresh_session(): RefreshOutcome {
         if (token_store.refresh_token == null) return RefreshOutcome.AuthFailed
@@ -781,6 +789,7 @@ class AuthRepository @Inject constructor(
         _is_signed_in.value = true
         _session_expired.value = false
         background_scope.launch { runCatching { ensure_csrf_ready() } }
+        background_scope.launch { runCatching { refresh_session_if_expiring() } }
         background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
         load_account_keks()
         background_scope.launch { runCatching { system_folder_bootstrap.ensure_system_folders() } }

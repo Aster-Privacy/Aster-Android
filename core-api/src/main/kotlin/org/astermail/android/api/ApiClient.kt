@@ -146,9 +146,9 @@ interface TokenProvider {
     suspend fun clear()
 }
 
-fun build_user_agent(): String {
+fun build_user_agent(app_version: String = BuildConfig.VERSION_NAME): String {
     val android_version = Build.VERSION.RELEASE ?: "0"
-    return "AsterMail-Android/${BuildConfig.VERSION_NAME} (Android $android_version)"
+    return "AsterMail-Android/$app_version (Android $android_version)"
 }
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -277,7 +277,7 @@ class ApiClient(
         defaultRequest {
             url.takeFrom(base_url)
             contentType(ContentType.Application.Json)
-            header(HttpHeaders.UserAgent, build_user_agent())
+            header(HttpHeaders.UserAgent, build_user_agent(release_name))
             header(HttpHeaders.Referrer, "${base_url.trimEnd('/')}/")
             device_id?.let { header(DEVICE_ID_HEADER, it) }
         }

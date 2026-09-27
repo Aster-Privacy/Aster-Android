@@ -31,7 +31,9 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.astermail.android.api.auth.RefreshOutcome
 import org.astermail.android.api.auth.SessionRefresher
+import org.astermail.android.api.auth.confirm_session_rejected
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
@@ -238,5 +240,21 @@ class session_refresher_test {
         refresher.refresh()
 
         assertEquals(listOf<String?>("refresh_0", "refresh_1"), seen)
+    }
+
+    @Test
+    fun only_a_definitive_me_401_confirms_a_dead_session() = runBlocking {
+        assertTrue(confirm_session_rejected { throw ApiError.UnauthorizedError })
+        assertFalse(confirm_session_rejected { })
+        assertFalse(confirm_session_rejected { throw ApiError.NetworkError })
+        assertFalse(confirm_session_rejected { throw ApiError.ServerError(503) })
+        assertFalse(confirm_session_rejected { throw java.io.IOException("timeout") })
+    }
+
+    @Test(expected = kotlinx.coroutines.CancellationException::class)
+    fun cancellation_is_not_treated_as_a_verdict() {
+        runBlocking {
+            confirm_session_rejected { throw kotlinx.coroutines.CancellationException("left") }
+        }
     }
 }

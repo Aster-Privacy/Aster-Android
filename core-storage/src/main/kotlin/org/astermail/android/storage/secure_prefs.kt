@@ -41,6 +41,8 @@ const val rekey_max_attempts = 3
 
 private const val warm_join_timeout_ms = 5_000L
 
+internal val create_retry_delays_ms = longArrayOf(150L, 450L)
+
 internal const val rekeyed_suffix = "_v2"
 
 object SecurePrefs {
@@ -97,7 +99,8 @@ object SecurePrefs {
         runCatching { rekey_legacy_prefs(app, name) }
         val file = name + rekeyed_suffix
         return try {
-            create_encrypted(app, file).also { clear_failure_record(app, file) }
+            with_create_retries(create_retry_delays_ms) { create_encrypted(app, file) }
+                .also { clear_failure_record(app, file) }
         } catch (failure: Throwable) {
             open_after_failure(app, file)
         }
@@ -298,6 +301,24 @@ object SecurePrefs {
         }
         return editor.commit()
     }
+}
+
+fun <T> with_create_retries(
+    delays_ms: LongArray,
+    sleep: (Long) -> Unit = { Thread.sleep(it) },
+    create: () -> T,
+): T {
+    var last: Throwable? = null
+    for (attempt in 0..delays_ms.size) {
+        if (attempt > 0) sleep(delays_ms[attempt - 1])
+        try {
+            return create()
+        } catch (failure: Throwable) {
+            if (failure is InterruptedException) throw failure
+            last = failure
+        }
+    }
+    throw last ?: IllegalStateException("secure prefs create failed")
 }
 
 internal fun quarantine_prefs_file(prefs_dir: java.io.File, name: String, now_ms: Long): java.io.File? {

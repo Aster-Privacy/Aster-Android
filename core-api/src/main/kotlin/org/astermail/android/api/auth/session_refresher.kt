@@ -21,6 +21,7 @@
 
 package org.astermail.android.api.auth
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -29,9 +30,22 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import org.astermail.android.api.ApiError
 import java.util.concurrent.CopyOnWriteArrayList
 
 enum class RefreshOutcome { Success, AuthFailed, Transient }
+
+suspend fun confirm_session_rejected(me: suspend () -> Unit): Boolean =
+    try {
+        me()
+        false
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (_: ApiError.UnauthorizedError) {
+        true
+    } catch (_: Throwable) {
+        false
+    }
 
 class SessionRefresher(
     private val read_refresh_token: () -> String?,
