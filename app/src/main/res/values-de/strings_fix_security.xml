@@ -10,6 +10,5 @@
     <string name="security_activity_today">Heute</string>
     <string name="security_activity_yesterday">Gestern</string>
     <string name="security_activity_show_more">Mehr anzeigen</string>
-    <string name="security_activity_show_less">Weniger anzeigen</string>
     <string name="security_activity_empty_filter">Keine Aktivität entspricht diesem Filter.</string>
 </resources>

@@ -42,7 +42,6 @@
     <string name="log_in">登录</string>
     <string name="create_account">创建账户</string>
     <string name="sign_in_title">登录 Aster</string>
-    <string name="sign_in_subtitle">输入凭据以访问您的账户</string>
     <string name="username_placeholder">yourname</string>
     <string name="password_placeholder">输入您的密码</string>
     <string name="forgot_password">忘记密码？</string>
@@ -50,14 +49,11 @@
     <string name="sign_up">注册</string>
     <string name="no_account_prompt">没有账户？</string>
     <string name="have_account_prompt">已有账户？ </string>
-    <string name="domain_astermail">@astermail.org</string>
-    <string name="domain_astercx">@aster.cx</string>
 
     <string name="register_title">创建你的账户</string>
     <string name="register_subtitle">几秒钟内获得私密加密邮箱</string>
     <string name="display_name_optional">显示名称（可选）</string>
     <string name="secure_your_account">保护您的账户</string>
-    <string name="create_strong_password">创建强密码以保护您的账户</string>
     <string name="new_password">新密码</string>
     <string name="confirm_password">确认密码</string>
     <string name="confirm_password_label">确认密码</string>
@@ -66,7 +62,6 @@
     <string name="requirement_uppercase">一个大写字母</string>
     <string name="requirement_lowercase">一个小写字母</string>
     <string name="requirement_number">一个数字</string>
-    <string name="add_backup_email">添加备份邮箱</string>
     <string name="backup_email_description">添加来自其他提供商的恢复邮箱。这是可选的，但建议用于账户恢复。</string>
     <string name="recovery_email">恢复邮箱</string>
     <string name="recovery_email_placeholder">backup@email.com</string>
@@ -76,7 +71,6 @@
     <string name="recovery_email_remove">移除恢复邮箱</string>
     <string name="recovery_email_resend">重新发送验证邮件</string>
     <string name="recovery_email_resent">验证邮件已发送</string>
-    <string name="recovery_email_resend_failed">无法发送验证邮件</string>
     <string name="recovery_email_resend_cooldown">请稍候再重新发送</string>
     <string name="recovery_email_already_in_use">此地址已作为恢复邮箱保护了 10 个 Aster 账户，已达上限。请使用其他地址。</string>
     <string name="recovery_email_saved">恢复邮箱已保存</string>
@@ -84,35 +78,25 @@
     <string name="recovery_email_hidden">已保存在此账户</string>
     <string name="recovery_email_status_unverified">等待验证</string>
     <string name="skip_for_now">暂时跳过</string>
-    <string name="tap_to_copy">点击复制</string>
     <string name="copy_to_clipboard">复制到剪贴板</string>
     <string name="choose_your_plan">选择您的套餐</string>
     <string name="plan_subtitle">免费开始使用，或通过付费套餐解锁更多功能。您可以随时更改。</string>
     <string name="loading_plans">正在加载套餐...</string>
     <string name="plan_free">免费</string>
-    <string name="plan_starter">入门版</string>
-    <string name="free_tagline">开始使用 Aster</string>
-    <string name="starter_tagline">满足日常隐私需求</string>
-    <string name="professional_tagline">为高级用户和企业打造</string>
     <string name="continue_with_free">继续使用免费版</string>
     <string name="continue_with_upgrade">升级并继续</string>
     <string name="monthly">月付</string>
     <string name="yearly">年付</string>
     <string name="free_forever">永久免费</string>
-    <string name="plan_features_format">%1$s 存储空间  -  %2$s 别名  -  %3$s 域名</string>
     <string name="setting_up_account">正在设置您的账户</string>
     <string name="creating_encryption_keys">正在创建加密密钥...</string>
     <string name="encryption_keys_local_only">您的加密密钥存储在本设备上，永远不会发送到我们的服务器。</string>
 
-    <string name="save_recovery_key">保存恢复密钥</string>
-    <string name="recovery_key_description">请安全保存此密钥。这是忘记密码后恢复账户的唯一方式。</string>
-    <string name="saved_recovery_key_checkbox">我已将恢复密钥保存在安全的地方</string>
 
     <string name="recover_your_account">恢复您的账户</string>
     <string name="enter_email_for_recovery">输入与您的账户关联的电子邮件地址</string>
     <string name="email_address">邮箱地址</string>
     <string name="back_to_sign_in">返回登录</string>
-    <string name="use_recovery_code">使用恢复代码</string>
     <string name="recovery_email_sent">恢复邮件已发送</string>
     <string name="recovery_email_sent_description">我们已将密码重置链接发送到您的恢复邮箱。请查看您的收件箱并点击链接继续。</string>
     <string name="use_recovery_code_instead">改用恢复代码</string>
@@ -136,9 +120,6 @@
     <string name="old_codes_invalidated">您以前的恢复代码已失效。请将新代码保存在安全的地方，例如密码管理器或打印副本。每个代码只能使用一次。</string>
     <string name="show_codes">显示代码</string>
     <string name="hide_codes">隐藏代码</string>
-    <string name="copy_codes">复制代码</string>
-    <string name="password_reset_successful">密码重置成功</string>
-    <string name="password_reset_success_description">您的账户已恢复。请使用新密码登录。</string>
 
     <string name="folder_inbox">收件箱</string>
     <string name="folder_sent">已发送</string>
@@ -202,12 +183,10 @@
     <string name="swipe_delete_forever">永久删除</string>
     <string name="swipe_not_spam">非垃圾邮件</string>
     <string name="swipe_read">已读</string>
-    <string name="swipe_unread">未读</string>
     <string name="swipe_star">星标</string>
     <string name="swipe_spam">垃圾邮件</string>
     <string name="swipe_inbox">收件箱</string>
     <string name="swipe_mark_as_read">标为已读</string>
-    <string name="swipe_mark_as_unread">标记为未读</string>
     <string name="swipe_report_spam">举报垃圾邮件</string>
     <string name="swipe_move_to_inbox">移至收件箱</string>
     <string name="swipe_none">无</string>
@@ -219,12 +198,8 @@
 
     <string name="encrypted">已加密</string>
     <string name="end_to_end_encrypted">端到端加密</string>
-    <string name="e2e_description">只有您和发件人可以阅读此邮件。</string>
-    <string name="e2e_cipher">AES-256-GCM · ML-KEM-768</string>
     <string name="protected_in_transit">传输中受保护</string>
-    <string name="transit_description">传输中加密，安全存储在 Aster 服务器上。</string>
     <string name="trackers_blocked">已拦截 %d 个跟踪器</string>
-    <string name="trackers_blocked_description">跟踪像素和外部请求已被移除。</string>
     <string name="unstar">取消星标</string>
     <string name="star">加星标</string>
     <string name="more">更多</string>
@@ -235,15 +210,12 @@
     <string name="snooze">暂停提醒</string>
     <string name="snooze_not_available">暂停提醒功能尚不可用</string>
     <string name="move_to_folder">移至文件夹</string>
-    <string name="no_folders_created">尚未创建文件夹</string>
     <string name="add_label">添加标签</string>
-    <string name="no_labels_created">尚未创建标签</string>
     <string name="print">打印</string>
     <string name="print_not_available">打印功能尚不可用</string>
     <string name="report_spam">举报垃圾邮件</string>
     <string name="reported_as_spam">已举报为垃圾邮件</string>
     <string name="block_sender">屏蔽发件人</string>
-    <string name="sender_blocked">已屏蔽发件人</string>
     <string name="message_unavailable">邮件不可用</string>
     <string name="no_subject">（无主题）</string>
     <string name="open_external_link">打开外部链接？</string>
@@ -251,9 +223,6 @@
     <string name="reply">回复</string>
     <string name="reply_all">回复全部</string>
     <string name="forward">转发</string>
-    <string name="load_content">加载内容</string>
-    <string name="stop_receiving_from">停止接收</string>
-    <string name="external_content_blocked">外部图片、字体和跟踪器已拦截</string>
     <string name="e2e_encrypted_message">端到端加密邮件</string>
     <string name="decrypt_failed_title">无法解密此邮件</string>
     <string name="decrypt_failed_body">该邮件使用了本设备当前没有的密钥加密。请重试，或在 Aster 网页版中打开。</string>
@@ -269,7 +238,6 @@
     <string name="no_app_to_open">没有可以打开此文件的应用</string>
     <string name="download">下载</string>
     <string name="open_with">选择打开方式...</string>
-    <string name="opening_unsubscribe">正在打开取消订阅页面</string>
     <string name="could_not_unsubscribe">无法取消订阅</string>
     <string name="failed_to_load_preview">预览加载失败</string>
     <string name="downloading_file">正在下载 %s...</string>
@@ -280,7 +248,6 @@
     <string name="move_to_trash">移至回收站</string>
     <string name="archived">已归档</string>
     <string name="unstarred">已取消星标</string>
-    <string name="stop_receiving_domain">停止接收来自 %s 的邮件</string>
     <string name="dismiss">关闭</string>
 
     <string name="no_messages_in">%s 中没有邮件</string>
@@ -309,13 +276,9 @@
     <string name="cc">抄送</string>
     <string name="bcc">密送</string>
     <string name="subject">主题</string>
-    <string name="compose_email">撰写邮件</string>
-    <string name="secured_by">安全保障：</string>
     <string name="sending_in_countdown">%d 秒后发送</string>
     <string name="view_message">查看邮件</string>
     <string name="undo">撤销</string>
-    <string name="discard_draft">要丢弃草稿吗？</string>
-    <string name="discard_draft_description">如果返回，您的邮件将保存为草稿；否则将被永久丢弃。</string>
     <string name="save_draft">保存草稿</string>
     <string name="discard">丢弃</string>
     <string name="toggle_cc_bcc">切换抄送/密送</string>
@@ -348,8 +311,6 @@
     <string name="send_problem_message">您的邮件尚未发送成功。应用将在后台继续重试。</string>
     <string name="send_problem_failed_message">无法发送您的邮件。您可以重试或丢弃它。</string>
     <string name="search_aliases">搜索别名</string>
-    <string name="filter_from">发件人</string>
-    <string name="filter_to">收件人</string>
     <string name="filter_has_attachment">有附件</string>
     <string name="filter_unread">未读</string>
     <string name="filter_unread_only">仅未读</string>
@@ -393,10 +354,7 @@
     <string name="alias_note_placeholder">此别名的用途、注册日期等任何有用信息</string>
     <string name="alias_note_add">添加备注</string>
     <string name="alias_note_updated">备注已更新</string>
-    <string name="tab_all">全部</string>
     <string name="tab_favorites">收藏</string>
-    <string name="contacts_count">%d 个联系人</string>
-    <string name="no_contacts_found">未找到联系人</string>
     <string name="sync_contacts_description">这将从您的设备读取联系人并导入到 Aster。联系人在存储前会被加密。</string>
     <string name="sync">同步</string>
     <string name="new_contact">新建联系人</string>
@@ -423,10 +381,6 @@
     <string name="delete_contact">删除联系人</string>
     <string name="edit_contact">编辑联系人</string>
     <string name="unnamed_contact">未命名联系人</string>
-    <string name="tab_basic">基本</string>
-    <string name="tab_details">详情</string>
-    <string name="tab_address">地址</string>
-    <string name="tab_social">社交</string>
     <string name="name">姓名</string>
     <string name="work_email">工作邮箱</string>
     <string name="work_phone">工作电话</string>
@@ -436,7 +390,6 @@
     <string name="postal_code">邮政编码</string>
     <string name="country">国家</string>
 
-    <string name="drawer_mail">邮件</string>
     <string name="drawer_more">更多</string>
     <string name="drawer_folders">文件夹</string>
     <string name="drawer_labels">标签</string>
@@ -456,9 +409,6 @@
     <string name="create_alias_invalid_chars">允许使用字母、数字、点、下划线和连字符。</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">账户</string>
-    <string name="add_account">添加账户</string>
-    <string name="account_limit_reached">已达账户上限</string>
-    <string name="log_out">退出登录</string>
     <string name="switch_workspace">切换工作区</string>
     <string name="collapse">折叠</string>
     <string name="expand">展开</string>
@@ -491,11 +441,9 @@
     <string name="smtp_tokens_no_domain_description">SMTP 令牌只能绑定到已验证的自定义域名地址。添加并验证一个自定义域名即可开始使用。</string>
     <string name="smtp_token_generate">生成令牌</string>
     <string name="smtp_token_create_title">生成 SMTP 令牌</string>
-    <string name="smtp_token_create_description">为此令牌命名，并选择它可以从哪个已验证地址发送邮件。</string>
     <string name="smtp_token_name_label">名称</string>
     <string name="smtp_token_name_placeholder">例如：通讯邮件发送器</string>
     <string name="smtp_token_address_label">发件地址</string>
-    <string name="smtp_token_address_hint">使用此令牌发送的邮件将显示为来自该地址。</string>
     <string name="smtp_token_ready_title">令牌已创建</string>
     <string name="smtp_token_ready_description">请立即将这些设置复制到您的邮件客户端或应用中。密码仅显示一次，无法再次获取。</string>
     <string name="smtp_token_host">主机</string>
@@ -504,7 +452,6 @@
     <string name="smtp_token_username">用户名</string>
     <string name="smtp_token_password">密码</string>
     <string name="smtp_token_copy_all">全部复制</string>
-    <string name="smtp_token_last_used">上次使用</string>
     <string name="smtp_token_never_used">从未</string>
     <string name="smtp_token_revoke_title">撤销令牌？</string>
     <string name="smtp_token_revoke_message">此操作将永久撤销 %1$s。任何使用它的应用都将无法再发送邮件。</string>
@@ -567,7 +514,6 @@
     <string name="custom_theme_upgrade_title">自定义主题</string>
     <string name="custom_theme_upgrade_description">使用任意基础颜色打造专属配色主题。升级即可解锁。</string>
     <string name="font">字体</string>
-    <string name="font_subtitle">选择整个应用中使用的字体</string>
     <string name="font_option_default">Aster 默认字体</string>
     <string name="font_option_system">系统界面字体</string>
     <string name="font_option_system_mono">系统等宽字体</string>
@@ -600,11 +546,6 @@
     <string name="reduce_transparency">降低透明度</string>
     <string name="underline_links">链接加下划线</string>
     <string name="color_vision">色觉</string>
-    <string name="color_vision_none">无</string>
-    <string name="color_vision_protanopia">红色盲</string>
-    <string name="color_vision_deuteranopia">绿色盲</string>
-    <string name="color_vision_tritanopia">蓝色盲</string>
-    <string name="color_vision_achromatopsia">全色盲</string>
     <string name="reading">阅读</string>
     <string name="dyslexia_font">阅读障碍友好字体</string>
     <string name="text_spacing">文字间距</string>
@@ -621,16 +562,13 @@
     <string name="default_reply">默认回复</string>
     <string name="reply_to_sender">回复发件人</string>
     <string name="reply_to_all">回复所有人</string>
-    <string name="images_tracking">图片和跟踪</string>
     <string name="block_remote_images">屏蔽远程图片</string>
-    <string name="block_remote_images_subtitle">保护您的 IP 不被发件人获取</string>
     <string name="block_tracking_pixels">屏蔽间谍像素</string>
     <string name="block_tracking_links">屏蔽追踪链接</string>
     <string name="sending">发送</string>
     <string name="send">发送</string>
     <string name="auto_save_recipients">自动将收件人保存到联系人</string>
     <string name="undo_send">撤销发送</string>
-    <string name="undo_send_subtitle">可在 %1$d 秒内取消发送</string>
     <string name="undo_send_delay_seconds">%1$d 秒</string>
     <string name="change_photo">更换照片</string>
     <string name="confirmations">确认</string>
@@ -658,7 +596,6 @@
     <string name="new_emails">新邮件</string>
     <string name="replies">回复</string>
     <string name="quiet_hours">免打扰时段</string>
-    <string name="quiet_hours_subtitle">22:00 - 07:00 静音通知</string>
 
     <string name="profile">个人资料</string>
     <string name="saving">保存中...</string>
@@ -729,34 +666,22 @@
     <string name="days_ago">%d 天前</string>
 
     <string name="encryption_title">加密</string>
-    <string name="encryption_status_label">端到端加密</string>
-    <string name="encryption_status_description">每封邮件在离开此设备前都会使用您的身份密钥加密。Aster 服务器仅存储密文。</string>
-    <string name="encryption_status">加密状态</string>
     <string name="identity_key">身份密钥</string>
-    <string name="identity_key_active">已启用 - 存储在此设备上</string>
-    <string name="encryption_protocol">加密协议</string>
-    <string name="encryption_protocol_value">AES-256-GCM 与 HKDF-SHA256</string>
-    <string name="zero_access">零访问</string>
-    <string name="zero_access_subtitle">服务器永远看不到明文</string>
     <string name="account">账户</string>
     <string name="identity_key_fingerprint">身份密钥指纹</string>
     <string name="fingerprint_description">通过可信渠道将此指纹与收件人看到的指纹进行比对，以确认确实是您本人。</string>
-    <string name="copy_fingerprint">复制指纹</string>
     <string name="show_public_key">显示公钥</string>
     <string name="hide_public_key">隐藏公钥</string>
     <string name="copy_public_key">复制公钥</string>
     <string name="identity_key_unavailable">此设备上身份密钥不可用。请重新登录以刷新本地密钥材料。</string>
     <string name="recovery">恢复</string>
-    <string name="view_recovery_codes">查看恢复代码</string>
     <string name="key_rotation">密钥轮换</string>
     <string name="key_rotation_description">每次更改密码时，身份密钥都会轮换。旧密钥保留在本地，因此旧邮件仍可解密。</string>
     <string name="key_management">密钥管理</string>
     <string name="key_management_description">密钥轮换、PGP 密钥管理和联系人密钥验证可在网页版使用。</string>
-    <string name="open_encryption_settings">打开加密设置</string>
 
     <string name="enter_your_password">输入密码</string>
     <string name="incorrect_password">密码不正确</string>
-    <string name="no_recovery_key_found">未找到恢复密钥。恢复代码在创建账户时设置并存储在加密保险库中。请尝试退出登录后重新登录以刷新保险库。</string>
 
     <string name="aliases">别名</string>
     <string name="no_aliases">没有别名</string>
@@ -765,16 +690,12 @@
     <string name="delete_alias">删除别名</string>
     <string name="custom_domains">自定义域名</string>
     <string name="alias_view_custom">自定义别名</string>
-    <string name="custom_domains_desktop_only">自定义域名需在桌面端管理</string>
-    <string name="custom_domains_description">添加和配置自定义域名需要进行 DNS 设置，仅可在桌面应用中完成。</string>
-    <string name="open_on_desktop">在桌面端打开</string>
 
     <string name="ghost_aliases">幽灵别名</string>
     <string name="ghost_aliases_about">关于</string>
     <string name="ghost_aliases_description">转发到收件箱的一次性地址。可以随时销毁任何一个而不影响其他。</string>
     <string name="no_ghost_aliases">没有幽灵别名</string>
     <string name="no_ghost_aliases_subtitle">写邮件时选择幽灵别名作为发件人即可生成一个</string>
-    <string name="forwarded_count">已转发 %d 封</string>
     <string name="expired">已过期</string>
     <string name="expire">设为过期</string>
 
@@ -791,12 +712,6 @@
     <string name="credits_balance_label">可用余额</string>
     <string name="credits_balance_note">1 积分 = $0.01 美元</string>
     <string name="credits_shop_plans">浏览套餐</string>
-    <string name="credit_task_refer_title">推荐朋友</string>
-    <string name="credit_task_refer_hint">好友注册 Aster 后，您和好友各获得 $10。</string>
-    <string name="credit_task_refer_cta">邀请</string>
-    <string name="credit_task_ios_title">安装 iOS 应用</string>
-    <string name="credit_task_ios_hint_coming">即将推出</string>
-    <string name="credit_task_earned">已获得</string>
     <string name="stats">统计</string>
     <string name="total_referrals">总推荐数</string>
     <string name="pending">待处理</string>
@@ -807,8 +722,6 @@
     <string name="referral_step_2">他们通过您的链接注册并订阅付费套餐。</string>
     <string name="referral_step_3">对方每次付款您都能获得分成，自动计入您的余额。</string>
     <string name="rewards">奖励</string>
-    <string name="reward_recurring" formatted="false">此外，好友订阅期间每次付款您可获得 5%。</string>
-    <string name="share_invite_link">分享邀请链接</string>
     <string name="share_text">试试 Aster，真正好用的隐私邮箱。</string>
     <string name="share_referral">分享推荐</string>
     <string name="referral_history">推荐记录</string>
@@ -818,22 +731,15 @@
     <string name="referral_max_credits">已获得 %2$s 推荐赠金中的 %1$s</string>
     <string name="referral_program_description">邀请朋友使用 Aster，他们每次付款您都能获得积分。</string>
     <string name="referral_reward_info">您的朋友首次付款可享折扣，而您可从他们的每笔付款中获得收益。</string>
-    <string name="referral_gauge_earned_label">已获得</string>
 
     <string name="billing">账单</string>
-    <string name="billing_load_error">无法加载账单信息。请检查网络连接后重试。</string>
     <string name="aster_plan">Aster 套餐</string>
     <string name="cancels">取消时间</string>
-    <string name="billed_yearly">按年计费</string>
-    <string name="billed_monthly">按月计费</string>
     <string name="ends_date">%s 到期</string>
-    <string name="renews_date">%s 续订</string>
     <string name="storage">存储空间</string>
     <string name="storage_used_format">已使用 %2$s 中的 %1$s</string>
     <string name="subscription">订阅</string>
-    <string name="add_payment_method">添加支付方式</string>
     <string name="switch_to_yearly">改用年付</string>
-    <string name="switch_to_monthly">切换为月付</string>
     <string name="reactivate_subscription">重新激活订阅</string>
     <string name="cancel_subscription">取消订阅</string>
     <string name="plans">套餐</string>
@@ -844,18 +750,14 @@
     <string name="unlimited_aliases">无限别名</string>
     <string name="alias_page_indicator">第 %1$d 页，共 %2$d 页</string>
     <string name="unlimited_domains">无限域名</string>
-    <string name="domains_count">%d 个域名</string>
     <string name="cancel_subscription_title">取消订阅</string>
     <string name="cancel_subscription_description">您的套餐将在当前计费周期结束前保持有效，之后转为免费套餐。</string>
     <string name="keep_plan">保留套餐</string>
-    <string name="unable_to_load">无法加载</string>
-    <string name="default_label">默认</string>
     <string name="expires_format">%s 到期</string>
 
     <string name="blocked_senders">已屏蔽的发件人</string>
     <string name="no_blocked_senders">没有已屏蔽的发件人</string>
     <string name="no_blocked_senders_subtitle">您还没有屏蔽任何人</string>
-    <string name="blocked_count">已屏蔽 %d 个</string>
     <string name="unblock">取消屏蔽</string>
     <string name="block_a_sender">屏蔽发件人</string>
     <string name="block_sender_hint">输入邮箱地址或域名。之后来自对方的新邮件将直接进入垃圾邮件。</string>
@@ -872,7 +774,6 @@
     <string name="mail_management">邮件管理</string>
     <string name="filters_rules">过滤器和规则</string>
     <string name="filters">过滤器</string>
-    <string name="rules_sort_mail">用于整理收到的邮件的规则</string>
     <string name="auto_forward">自动转发</string>
     <string name="forward_matching">转发匹配的邮件</string>
     <string name="block_allow">屏蔽和允许</string>
@@ -881,12 +782,7 @@
     <string name="always_allow">始终允许这些发件人</string>
     <string name="subscriptions_label">订阅</string>
     <string name="mailing_lists_on">您订阅的邮件列表</string>
-    <string name="storage_data">存储和数据</string>
-    <string name="see_using_space">查看空间使用情况</string>
-    <string name="import_label">导入</string>
-    <string name="import_from_providers">从 Gmail、Outlook、mbox 导入</string>
     <string name="export_label">导出</string>
-    <string name="export_your_mail">导出邮件</string>
 
     <string name="auto_forward_title">自动转发</string>
     <string name="auto_forward_description">将收到的邮件转发到另一个地址，同时在收件箱中保留副本。</string>
@@ -912,7 +808,6 @@
     <string name="your_signature">您的签名</string>
     <string name="signature_placeholder">添加一个签名，它将显示在您发送的每封邮件的底部。</string>
     <string name="preview">预览</string>
-    <string name="no_signature">（无签名）</string>
 
     <string name="templates">模板</string>
     <string name="new_template">新建模板</string>
@@ -976,32 +871,14 @@
     <string name="import_title">导入</string>
     <string name="mail_import">邮件导入</string>
     <string name="import_description">从其他服务商导入邮件的功能目前在所有 Aster 客户端上均不可用。请将旧邮件转发到您的 Aster 地址，或在原邮箱中设置自动转发。</string>
-    <string name="export_title">导出</string>
-    <string name="mail_export">邮件导出</string>
-    <string name="export_description">批量导出邮件归档的功能目前在所有 Aster 客户端上均不可用。您的邮件在服务器上保持端到端加密，可随时获取。</string>
-    <string name="filters_title">过滤器</string>
-    <string name="mail_filters">邮件过滤器</string>
     <string name="filters_description">服务器端邮件规则目前在所有 Aster 客户端上均不可用。请使用“已屏蔽的发件人”、“自动转发”和“订阅”进行相关控制。</string>
     <string name="external_accounts">外部账户</string>
     <string name="connect_external">连接外部账户</string>
     <string name="external_description">关联 Gmail、Outlook、Yahoo 或任意 IMAP 账户。Aster 会获取邮件，在本设备上加密，服务器上仅保存密文。</string>
-    <string name="ext_provider_google">Google</string>
-    <string name="ext_provider_microsoft">Microsoft</string>
-    <string name="ext_provider_yahoo">Yahoo</string>
-    <string name="ext_connect_with_google">连接 Gmail</string>
-    <string name="ext_connect_with_microsoft">连接 Outlook</string>
-    <string name="ext_connect_with_yahoo">连接 Yahoo</string>
-    <string name="ext_email_for_oauth">邮箱地址</string>
-    <string name="ext_continue_to_provider">前往提供商</string>
-    <string name="ext_waiting_for_authorize">等待提供商授权…</string>
-    <string name="ext_cancel_connect">取消</string>
     <string name="ext_add_manual_imap">添加 IMAP 账户</string>
-    <string name="ext_imap_email">邮箱</string>
     <string name="ext_imap_host">IMAP 主机</string>
     <string name="ext_imap_port">IMAP 端口</string>
     <string name="ext_imap_username">IMAP 用户名</string>
-    <string name="ext_imap_password">IMAP 密码</string>
-    <string name="ext_imap_use_tls">使用 TLS</string>
     <string name="ext_smtp_host">SMTP 主机</string>
     <string name="ext_smtp_port">SMTP 端口</string>
     <string name="ext_smtp_username">SMTP 用户名</string>
@@ -1014,13 +891,9 @@
     <string name="ext_server_settings_hint">对于已知的提供商，Aster 会自动填写。仅当您的提供商使用其他服务器时才需要更改。</string>
     <string name="ext_smtp_same_as_incoming">发送时使用相同的登录信息</string>
     <string name="ext_status_paused">已暂停</string>
-    <string name="ext_pause_syncing">暂停同步</string>
-    <string name="ext_resume_syncing">恢复同步</string>
     <string name="ext_edit_account">编辑设置</string>
     <string name="ext_remove_account">断开账户连接</string>
     <string name="ext_never_synced">从未同步</string>
-    <string name="ext_not_synced">未同步</string>
-    <string name="ext_sync_ok">上次同步成功</string>
     <string name="ext_sync_error_short">上次同步失败</string>
     <string name="ext_password_reauth">登录失败。请编辑账户以更新密码。</string>
     <string name="ext_edit_title">编辑账户</string>
@@ -1056,7 +929,6 @@
     <string name="ext_disconnect_confirm">确定要断开此账户的连接吗？</string>
     <string name="ext_disconnect_button">断开连接</string>
     <string name="ext_disconnect_delete_messages">同时删除从此账户导入的邮件</string>
-    <string name="ext_connect_failed">连接失败</string>
     <string name="ext_error_load_failed">无法加载已链接的账户。下拉以重试。</string>
     <string name="ext_error_oauth_failed">无法开始登录。请检查网络连接后重试。</string>
     <string name="ext_error_manual_failed">无法保存账户。请检查主机、端口和凭据。</string>
@@ -1066,11 +938,8 @@
     <string name="ext_last_sync">上次同步：%1$s</string>
     <string name="ext_section_oauth">快速切换</string>
     <string name="ext_oauth_body">使用您的提供商登录，一步即可连接账户。</string>
-    <string name="ext_oauth_connect_google">使用 Google 登录</string>
     <string name="ext_oauth_connect_microsoft">使用 Microsoft 登录</string>
     <string name="ext_oauth_connect_yahoo">使用 Yahoo 登录</string>
-    <string name="import_provider_coming_soon">即将推出</string>
-    <string name="import_connect_manual_cta">通过 IMAP 连接</string>
     <string name="ext_section_manual">手动设置</string>
     <string name="ext_section_accounts">已关联账户</string>
     <string name="import_job_state">状态：%1$s</string>
@@ -1088,21 +957,16 @@
     <string name="storage_unavailable">存储空间不可用</string>
     <string name="storage_load_error">无法加载存储信息</string>
     <string name="storage_used_of_total">%2$s 中已使用 %1$s</string>
-    <string name="storage_percent_of_plan">占套餐的 %s</string>
 
     <string name="plan_billing">套餐和账单</string>
     <string name="current_plan">当前套餐</string>
     <string name="renews_format">%s 续订</string>
     <string name="manage_subscription">管理订阅</string>
     <string name="plan_includes">套餐包含</string>
-    <string name="free_tagline_short">端到端加密邮件，免费使用。</string>
-    <string name="plus_tagline">更大容量、更多别名、无广告。</string>
-    <string name="pro_tagline">为高级用户和小型团队打造。</string>
     <string name="most_popular">最受欢迎</string>
     <string name="upgrade">升级</string>
     <string name="requires_plan">需要 %s</string>
     <string name="downgrade_to">降级到 %s</string>
-    <string name="upgrade_to">升级到 %s</string>
     <string name="manage_billing_browser">在浏览器中管理账单</string>
     <string name="subscription_will_end">订阅将在下个计费日终止</string>
     <string name="subscription_cancelled">订阅已取消</string>
@@ -1111,7 +975,6 @@
     <string name="default_payment_updated">默认支付方式已更新</string>
     <string name="payment_method_removed">支付方式已移除</string>
     <string name="session_expired_sign_in">您的会话已过期。请重新登录。</string>
-    <string name="failed_load_subscription">加载订阅失败</string>
     <string name="could_not_start_checkout">无法开始结账</string>
     <string name="could_not_open_portal">无法打开账单门户</string>
     <string name="cancel_failed">无法取消订阅</string>
@@ -1131,25 +994,19 @@
     <string name="load_remote_images">加载远程图片</string>
     <string name="load_remote_images_subtitle">关闭更私密</string>
     <string name="send_read_receipts">发送已读回执</string>
-    <string name="send_read_receipts_subtitle">让发件人知道您已阅读邮件</string>
     <string name="protection">保护</string>
     <string name="warn_suspicious_links">外部链接警告</string>
     <string name="strip_exif">清除图片元数据</string>
     <string name="strip_exif_subtitle">发送前自动清除图片的 EXIF 及其他元数据，保护您的位置和设备信息</string>
     <string name="ghost_mode">幽灵模式</string>
-    <string name="ghost_mode_subtitle">隐藏在线状态和输入指示器</string>
     <string name="privacy_policy">隐私政策</string>
 
     <string name="developer">开发者</string>
     <string name="mode">模式</string>
-    <string name="developer_mode">开发者模式</string>
-    <string name="developer_mode_subtitle">启用高级工具和不安全操作</string>
     <string name="show_raw_headers">显示原始头信息</string>
     <string name="show_raw_headers_subtitle">在每封邮件上显示完整的 SMTP 头信息</string>
     <string name="allow_insecure">允许不安全连接</string>
-    <string name="allow_insecure_subtitle">跳过本地服务器的 TLS 验证</string>
     <string name="verbose_logs">详细日志</string>
-    <string name="verbose_logs_subtitle">记录每个网络请求</string>
     <string name="tools">工具</string>
     <string name="clear_local_cache">清除本地缓存</string>
     <string name="cache_cleared">缓存已清除</string>
@@ -1159,12 +1016,10 @@
     <string name="labels">标签</string>
     <string name="no_labels">没有标签</string>
     <string name="no_labels_subtitle">您还没有创建任何标签</string>
-    <string name="messages_count">%d 条消息</string>
     <string name="delete_label">删除标签</string>
     <string name="folders">文件夹</string>
     <string name="no_folders">没有文件夹</string>
     <string name="no_folders_subtitle">您还没有创建任何文件夹</string>
-    <string name="folders_count">%d 个文件夹</string>
     <string name="delete_folder">删除文件夹</string>
     <string name="delete_folder_confirm_title">要删除文件夹吗？</string>
     <string name="delete_folder_confirm_message">“%1$s”将被移除，且无法撤销。其中的邮件会保留在您的账户里，只是不再归在这个文件夹之下。</string>
@@ -1246,7 +1101,6 @@
     <string name="couldnt_apply_label">无法应用标签</string>
     <string name="couldnt_snooze">无法暂停提醒</string>
     <string name="create">创建</string>
-    <string name="danger_zone">危险区域</string>
     <string name="deleted_permanently">已永久删除</string>
     <string name="duration_one_day">1 天</string>
     <string name="expires_in_day">1 天后过期</string>
@@ -1270,24 +1124,16 @@
     <string name="ghost_alias_created">已创建幽灵别名：%s</string>
     <string name="ghost_alias_subtitle">创建一个自动过期的临时 @realiased.me 地址。</string>
     <string name="icon_label">图标</string>
-    <string name="load_external_content">加载外部内容</string>
     <string name="loading_identity_key">正在加载身份密钥...</string>
     <string name="message_expires_in">邮件将在 %s 后过期</string>
     <string name="message_expiry_subtitle">收件人将在所选期限后失去访问权限。</string>
     <string name="moved_to_inbox">已移至收件箱</string>
     <string name="nothing_to_print">没有可打印的内容</string>
-    <string name="notification_channel_description">新邮件通知</string>
-    <string name="notification_channel_new_mail">新邮件</string>
-    <string name="one_font">1 个字体</string>
-    <string name="one_image">1 张图片</string>
-    <string name="one_stylesheet">1 个样式表</string>
-    <string name="one_tracker">1 个跟踪器</string>
     <string name="pgp_identity_fingerprint">PGP 身份指纹</string>
     <string name="pin_failed">置顶失败</string>
     <string name="pinned">已置顶</string>
     <string name="quiet_hours_subtitle_range">在 %1$s - %2$s 期间静音通知</string>
     <string name="restored_to_inbox">已恢复到收件箱</string>
-    <string name="set_default">设为默认</string>
     <string name="set_message_expiry">设置邮件过期时间</string>
     <string name="snooze_until">暂停提醒至</string>
     <string name="snoozed_until">已暂停提醒至 %s</string>
@@ -1319,7 +1165,6 @@
     <string name="failed_revoke_session">撤销会话失败</string>
     <string name="all_other_sessions_signed_out">所有其他会话均已退出登录</string>
     <string name="failed_sign_out_other_sessions">退出其他会话失败</string>
-    <string name="server_returned_no_address">服务器未返回地址</string>
     <string name="scan_complete">扫描完成</string>
     <string name="current_password_incorrect">当前密码不正确</string>
     <string name="password_change_background_reencrypt_failed">密码已更改。Aster Mail 仍在重新加密部分已发送邮件，并会在后台完成。</string>
@@ -1435,9 +1280,7 @@
     <string name="plan_desc_supernova">最大存储空间、最高的额度上限，以及专属支持。</string>
     <string name="set_as_primary">设为主地址</string>
     <string name="primary_badge">主地址</string>
-    <string name="also_receives_at">同时在 %1$s 接收</string>
     <string name="badges">徽章</string>
-    <string name="no_badges_yet">暂无徽章</string>
 
 
     <!-- Pending account deletion -->
@@ -1447,13 +1290,11 @@
     <string name="pending_deletion_sign_out">退出登录</string>
     <string name="pending_deletion_restoring">正在恢复…</string>
     <string name="pending_deletion_error">无法恢复您的账户。请重试。</string>
-    <string name="pending_deletion_restored">欢迎回来。您的账户已恢复。</string>
     <string name="image_blocked_placeholder">[图片已被拦截]</string>
     <string name="alias_available">此别名可用。</string>
     <string name="alias_not_available">此别名已被占用。</string>
     <string name="alias_check_failed">无法检查可用性。您仍然可以尝试创建。</string>
     <string name="csrf_unavailable">此会话已失效。请重新登录。</string>
-    <string name="received_on_prefix">通过 %s 接收</string>
     <string name="received_on_label">接收地址</string>
     <string name="auto_advance_label">归档或删除后</string>
     <string name="auto_advance_next">转到下一封邮件</string>
@@ -1496,7 +1337,6 @@
     <string name="customize_toolbar_subtitle">选择阅读或选中邮件时底部栏中显示的操作。</string>
     <string name="reading_toolbar">阅读邮件时</string>
     <string name="selection_toolbar">选中邮件时</string>
-    <string name="toolbar_slots">工具栏位置</string>
     <string name="choose_action">选择操作</string>
     <string name="change">更改</string>
     <string name="unset">未设置</string>
@@ -1538,14 +1378,9 @@
     <string name="mail_rules_no">否</string>
     <string name="mail_rules_header_name">邮件头名称</string>
     <string name="mail_rules_header_value">邮件头值</string>
-    <string name="mail_rules_enabled">已启用</string>
-    <string name="mail_rules_disabled">已停用</string>
-    <string name="mail_rules_enable">启用</string>
-    <string name="mail_rules_disable">停用</string>
     <string name="mail_rules_duplicate">复制</string>
     <string name="mail_rules_delete">删除</string>
     <string name="mail_rules_run_on_existing">对现有邮件运行</string>
-    <string name="mail_rules_more">更多</string>
     <string name="mail_rules_field_from">发件人</string>
     <string name="mail_rules_field_reply_to">回复地址</string>
     <string name="mail_rules_field_to">收件人</string>
@@ -1592,7 +1427,6 @@
     <string name="mail_rules_regex_backreference">不支持 \1 这类反向引用。请改写不使用它们的模式。</string>
     <string name="mail_rules_regex_lookaround">不支持先行断言和后行断言。请改写不使用它们的模式。</string>
     <string name="tap_again_to_exit">再按一次退出应用</string>
-    <string name="search_action">搜索</string>
     <string name="action_failed">操作失败。请重试。</string>
     <string name="version_copied">已复制版本</string>
     <string name="hold_to_copy_version">长按复制</string>
@@ -1630,19 +1464,15 @@
     <string name="score_steps_left">还剩 %1$d 项</string>
     <string name="check_passkey_registered">已注册通行密钥</string>
     <string name="check_verified_recovery_email">已验证的恢复邮箱</string>
-    <string name="check_read_receipts_off">已关闭已读回执</string>
     <plurals name="passkeys_registered_count">
         <item quantity="other">已注册 %d 个通行密钥</item>
     </plurals>
     <string name="archive">归档</string>
-    <string name="share_attachment_failed">部分文件无法添加为附件</string>
     <string name="accept">接受</string>
     <string name="expiry_password_label">密码保护（可选）</string>
     <string name="expiry_password_subtitle">外部收件人必须输入此密码才能打开邮件。</string>
     <string name="expires_in_hour">1 小时后过期</string>
-    <string name="expires_in_hours">%1$d 小时后过期</string>
     <string name="duration_one_hour">1 小时</string>
-    <string name="duration_n_hours">%1$d 小时</string>
     <string name="sort_by">排序方式</string>
     <string name="yesterday">昨天</string>
     <string name="onboarding_skip">跳过</string>
@@ -1656,19 +1486,10 @@
     <string name="onboarding_slide4_body">创建转发到真实收件箱的一次性别名。删除其中一个不会影响其他。</string>
     <string name="recovery_step_up_description">为了您的安全，请确认密码以继续。</string>
     <string name="settings_upgrade_cta">升级</string>
-    <string name="unlock_aster_premium">解锁 Aster 高级版</string>
     <string name="save_percent">省 %1$d%%</string>
     <string name="free">免费</string>
     <string name="popular">热门</string>
-    <string name="feature_storage">%1$s 加密存储空间</string>
-    <string name="feature_e2e_encryption">端到端加密</string>
-    <string name="feature_zero_knowledge">零访问架构</string>
-    <string name="feature_priority_support">优先支持</string>
-    <string name="feature_custom_domain_signing">自定义域名 DKIM 签名</string>
     <string name="message_info">邮件信息</string>
-    <string name="add_recipients">添加收件人</string>
-    <string name="aster_free">Aster Free</string>
-    <string name="free_tier_description">您正在使用免费套餐。升级即可获得更多存储空间、自定义域名和优先支持。</string>
     <string name="plan_features_format_v2">%1$s 存储空间  -  %2$s  -  %3$s</string>
     <string name="confirm_archive_title">要归档吗？</string>
     <string name="confirm_archive_message">要归档这封邮件吗？</string>
@@ -1728,7 +1549,6 @@
     <string name="delete_draft">删除草稿</string>
     <string name="delete_draft_question">要删除草稿吗？</string>
     <string name="delete_draft_confirm_description">此草稿将被永久删除，无法恢复。</string>
-    <string name="attach_files">添加附件</string>
     <string name="to_label_prefix">发给 %s</string>
     <string name="failed_to_delete_draft">无法删除草稿</string>
     <string name="trash_already_empty">回收站已清空</string>
@@ -1745,20 +1565,16 @@
     <string name="alias_deleted_at">删除于 %1$s</string>
     <string name="purge_alias_confirm_title">永久删除此别名？</string>
     <string name="purge_alias_confirm_message">要永久删除 %1$s 吗？此操作无法撤销。</string>
-    <string name="empty_trash_confirm_title">清空回收站？</string>
-    <string name="empty_trash_confirm_message">要永久删除所有已删除的别名吗？此操作无法撤销。</string>
     <string name="alias_restored">别名已恢复</string>
     <string name="alias_purged">别名已永久删除</string>
     <string name="failed_restore_alias">无法恢复别名</string>
     <string name="failed_purge_alias">无法删除别名</string>
     <string name="scan_inbox">扫描收件箱</string>
-    <string name="search_senders">搜索发件人</string>
     <string name="deselect_all">取消全选</string>
     <string name="count_selected">已选择 %1$d 项</string>
     <string name="unsubscribe_selected">退订 (%1$d)</string>
     <string name="reactivate_selected">重新启用 (%1$d)</string>
     <string name="open_unsubscribe_page">打开退订页面</string>
-    <string name="stat_active">活跃</string>
     <string name="stat_unsubscribed">已退订</string>
     <string name="stat_emails">邮件</string>
     <string name="no_unsubscribed_senders">暂无已取消订阅的发件人</string>
@@ -1767,16 +1583,7 @@
     <string name="stop_sender_body">Aster 会请求 %1$s 将您从名单中移除。处理期间邮件可能还会继续送达几天，您随时可以在“已退订”标签页重新启用该发件人。</string>
     <string name="stop_sender_confirm">发送请求</string>
     <string name="stop_senders_body">Aster 会请求这些发件人分别将您从名单中移除。处理期间邮件可能还会继续送达几天，您随时可以在“已退订”标签页重新启用其中任意一位。</string>
-    <string name="to_recipients_inline">发给 %1$s</string>
-    <string name="cc_recipients_inline">抄送 %1$s</string>
-    <string name="bcc_recipients_inline">密送 %1$s</string>
     <string name="recipients_required">请至少添加一位收件人</string>
-    <string name="e2e_point_device">发送前在本设备上加密</string>
-    <string name="e2e_point_keys">只有收件人的身份密钥才能解开</string>
-    <string name="e2e_point_quantum">可抵御未来的量子攻击</string>
-    <string name="standard_point_tls">使用 TLS 在传输中加密</string>
-    <string name="standard_point_server">接收方邮件服务器可以读取内容</string>
-    <string name="standard_point_storage">到达 Aster 后即加密存储</string>
     <string name="phishing_signal_authentication_failed">%1$s 未通过发件人身份验证</string>
     <string name="send_failed_title">此邮件未送达</string>
     <string name="send_failed_help">请检查地址，然后重新发送邮件。</string>
@@ -1815,16 +1622,6 @@
     <string name="settings_section_other">其他</string>
     <string name="phishing_warning_title">这封邮件看起来可疑</string>
     <string name="phishing_dangerous_title">已拦截危险邮件</string>
-    <string name="phishing_signal_dkim_fail">DKIM 签名验证失败</string>
-    <string name="phishing_signal_spf_fail">SPF 检查未通过</string>
-    <string name="phishing_signal_dmarc_fail">DMARC 检查未通过</string>
-    <string name="phishing_signal_reply_to_mismatch">回复地址与发件人不一致</string>
-    <string name="phishing_signal_display_name_spoof">显示名称冒充知名品牌</string>
-    <string name="phishing_signal_homoglyph">发件域名使用了形近字符</string>
-    <string name="phishing_signal_urgency">语气紧迫或带有威胁</string>
-    <string name="phishing_signal_link_mismatch">链接文字与实际地址不符</string>
-    <string name="phishing_signal_credential_request">索要密码或敏感信息</string>
-    <string name="phishing_signal_blocklist">包含已知的钓鱼网址</string>
     <string name="phishing_signal_sender_domain_mimics">发件域名“%1$s”用形近字符冒充“%2$s”</string>
     <string name="phishing_signal_sender_domain_resembles">发件域名“%1$s”与替换字符后的“%2$s”相似</string>
     <string name="phishing_signal_display_name_brand">显示名称含有“%1$s”，但邮件来自 %2$s</string>
@@ -1833,17 +1630,8 @@
     <string name="phishing_hide_details">收起详情</string>
     <string name="phishing_privacy_note">在您的设备上检测。Aster 从不读取您的邮件。</string>
     <string name="phishing_signals_heading">本设备发现的风险信号：</string>
-    <string name="phishing_links_disabled">链接已禁用。输入“trust”即可启用。</string>
-    <string name="phishing_trust_placeholder">输入“trust”启用链接</string>
-    <string name="phishing_trust_button">信任这封邮件</string>
     <string name="import_pick_file">选择 .mbox 或 .eml 文件</string>
-    <string name="import_provider_label">来源服务</string>
-    <string name="import_start">开始导入</string>
-    <string name="import_uploading">正在上传…</string>
-    <string name="import_upload_complete">上传完成，正在服务器处理。</string>
     <string name="import_upload_failed">上传失败</string>
-    <string name="import_pick_provider">选择来源</string>
-    <string name="import_jobs_title">最近的导入</string>
     <string name="import_no_jobs">还没有导入记录</string>
     <string name="import_chunk_progress">正在上传第 %1$d 块，共 %2$d 块</string>
     <string name="import_job_created">已开始导入</string>
@@ -1858,10 +1646,7 @@
     <string name="import_provider_gmail">Google</string>
     <string name="import_provider_outlook">Microsoft</string>
     <string name="import_provider_yahoo">Yahoo</string>
-    <string name="import_provider_icloud">iCloud</string>
-    <string name="import_provider_proton">Proton Mail</string>
     <string name="import_provider_mbox">MBOX 文件</string>
-    <string name="import_provider_eml">EML 文件</string>
     <string name="theme_dynamic">壁纸取色</string>
     <string name="theme_dynamic_subtitle">跟随设备配色</string>
     <string name="delete_alias_confirm_message">要永久删除 %1$s 吗？发往该别名的邮件将被退回。</string>
@@ -1886,7 +1671,6 @@
     <string name="signature_placement_below">引用文本下方</string>
     <string name="signature_placement_inherit">跟随全局设置</string>
     <string name="signature_alias_conflict">该别名已经有签名。</string>
-    <string name="signature_rich_preview_note">此签名包含富文本格式，将按显示的样子发送。</string>
     <string name="signature_edit_as_plain">以纯文本编辑</string>
     <string name="signature_placement">位置</string>
     <string name="add_signature">添加签名</string>
@@ -1923,7 +1707,6 @@
     <string name="import_state_failed">失败</string>
     <string name="import_state_cancelled">已取消</string>
     <string name="storage_used_label">已用 %1$s</string>
-    <string name="storage_free_label">可用 %1$s</string>
     <string name="storage_plan_section">您的套餐</string>
     <string name="storage_plan_row">套餐</string>
     <string name="storage_included_row">套餐自带容量</string>
@@ -1936,7 +1719,6 @@
     <string name="storage_almost_full_body">请在新邮件被退回前清理空间或扩容。</string>
     <string name="storage_where_section">邮件分布</string>
     <string name="storage_where_note">每封邮件只计一次，归入它当前所在的文件夹。</string>
-    <string name="storage_donut_caption">封邮件</string>
     <string name="storage_mailbox_section">邮箱统计</string>
     <string name="storage_total_messages">邮件总数</string>
     <string name="storage_unread_messages">未读</string>
@@ -1944,26 +1726,16 @@
     <string name="storage_scheduled_messages">定时发送</string>
     <string name="storage_average_size">邮件平均大小</string>
     <string name="storage_free_up_section">释放空间</string>
-    <string name="storage_messages_count">%1$s 封邮件</string>
     <string name="storage_empty_action">清空</string>
     <string name="storage_trash_hint">已删除的邮件在清空回收站之前仍占用容量。</string>
     <string name="storage_spam_hint">垃圾邮件会在 30 天后自动清除。</string>
     <string name="storage_nothing_to_clean">目前没有需要清理的内容。</string>
     <string name="storage_share_of_mail">占全部邮件的 %1$s</string>
-    <string name="storage_messages_total">共 %1$s 封邮件</string>
     <string name="storage_cleanup_title">%1$s（%2$s）</string>
     <string name="storage_free_up_note">清空文件夹会永久删除其中的邮件并释放占用的空间。</string>
-    <string name="schedule_send_paywall_description">在指定日期和时间发送邮件。Star 及以上套餐可用。</string>
     <string name="quiet_hours_paywall_description">在每天的免打扰时段静音通知。Star 及以上套餐可用。</string>
-    <string name="email_expiration_title">邮件到期</string>
-    <string name="email_expiration_paywall_description">让邮件在设定时间后自动销毁。Nova 及以上套餐可用。</string>
     <string name="snooze_limit_reached">免费套餐最多可暂停提醒 15 封邮件。升级即可不限数量。</string>
     <string name="external_accounts_paywall_description">连接 Gmail、Outlook、Yahoo 等 IMAP 账户。Star 及以上套餐可用。</string>
-    <string name="custom_domains_paywall_description">使用您自己的域名收发邮件。Star 及以上套餐可用。</string>
-    <string name="catch_all_paywall_description">接收发往您域名下任意地址的邮件。Nova 及以上套餐可用。</string>
-    <string name="bridge_pairing_paywall_description">配对 Thunderbird、Apple Mail 等桌面客户端。Star 及以上套餐可用。</string>
-    <string name="pgp_custom_keys_paywall_description">上传并轮换您自己的 PGP 密钥。Nova 及以上套餐可用。</string>
-    <string name="label_password_paywall_description">为标签设置密码保护。Nova 及以上套餐可用。</string>
     <string name="upgrade_in_browser_note">请在浏览器中管理您的套餐。</string>
     <string name="buy_more_storage">购买更多容量</string>
     <string name="buy_more_storage_note">容量升级需在浏览器中购买。</string>
@@ -1983,7 +1755,6 @@
     <string name="totp_code_required_label">验证器代码或备份代码</string>
     <string name="totp_code_required_error">请输入验证器应用中的 6 位验证码，或任一备份代码</string>
     <string name="preferences_locked_retry">暂时无法解锁您的设置。当前显示默认值，返回后重新打开可再试。</string>
-    <string name="preferences_decrypt_failed">本设备无法读取您保存的设置。当前显示默认值，您在这里的更改仍会保存。</string>
     <string name="plan_name_star">Star</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">超新星</string>
@@ -1993,11 +1764,6 @@
     <string name="ghost_extended">已延长幽灵别名</string>
     <string name="ghost_expired_toast">幽灵别名已失效</string>
     <string name="ghost_action_failed">无法更新幽灵别名</string>
-    <string name="auth_fail_banner_body">这封邮件未通过其域名的身份验证要求，可能被伪造或转发方式有问题。</string>
-    <string name="auth_fail_tooltip_intro">邮件身份验证用于确认邮件确实来自它声称的域名。验证失败时，邮件可能被伪造、被篡改，或以破坏签名的方式转发。</string>
-    <string name="auth_fail_tooltip_spf">SPF 检查发送服务器是否获得域名所有者授权。失败表示邮件来自未获批准的服务器。</string>
-    <string name="auth_fail_tooltip_dkim">DKIM 校验发送域名添加的加密签名。失败表示签名缺失、无效，或邮件被改动过。</string>
-    <string name="auth_fail_tooltip_dmarc">DMARC 告诉收件方在 SPF 或 DKIM 失败时如何处理。失败表示该域名明确不授权这封邮件。</string>
     <string name="upgrade_modal_title">升级您的套餐</string>
     <string name="upgrade_modal_description_generic">您已达到当前套餐的上限。升级即可继续使用。</string>
     <string name="upgrade_modal_description_specific">您在 %2$s 套餐中的%1$s已达上限。升级即可获得更多。</string>
@@ -2061,12 +1827,6 @@
     <string name="export_private_key_label">导出私钥</string>
     <string name="copy_fingerprint_action">复制指纹</string>
     <string name="copy_public_key_action">复制公钥</string>
-    <string name="encryption_feature_client_side">客户端加密</string>
-    <string name="encryption_feature_client_side_sub">只有您能读到自己的邮件</string>
-    <string name="encryption_feature_zero_knowledge">零访问存储</string>
-    <string name="encryption_feature_zero_knowledge_sub">服务器永远看不到明文</string>
-    <string name="encryption_feature_openpgp">兼容 OpenPGP</string>
-    <string name="encryption_feature_openpgp_sub">可与常见的 PGP 客户端配合使用</string>
     <string name="copied">已复制</string>
     <string name="high_contrast_subtitle">增强文字与边框的对比</string>
     <string name="high_contrast_info_title">高对比度</string>
@@ -2093,7 +1853,6 @@
     <string name="low_network_mode">弱网模式</string>
     <string name="low_network_mode_subtitle">在网速较慢时减少流量消耗</string>
     <string name="low_network_mode_info_title">低网络模式</string>
-    <string name="low_network_mode_info_desc">屏蔽所有非必要的网络请求，让 Aster 在慢速或按量计费的网络下仍可使用。会关闭头像、发件人标识、邮件中的外部图片、附件预览和自定义字体，所有邮件都以纯文本显示。</string>
     <string name="section_reading_conversations">阅读与会话</string>
     <string name="conversation_grouping_subtitle">将同一对话中的邮件归为一组</string>
     <string name="inbox_categories">收件箱分类</string>
@@ -2141,7 +1900,6 @@
     <string name="delete_protected_folder_keep_note">此文件夹中的邮件会保留在您的账户中，并移至“所有邮件”。</string>
     <string name="delete_protected_folder_acknowledge">我明白这些邮件无法恢复。</string>
     <string name="section_advanced">高级</string>
-    <string name="developer_mode_subtitle_behavior">显示包含构建信息、加密状态和调试工具的开发者选项卡</string>
     <string name="auto_save_recipients_subtitle">自动把您发送过的地址加入联系人</string>
     <string name="reply_include_quoted">包含引用的文本</string>
     <string name="reply_include_quoted_subtitle">每条回复都会在您的正文下方引用原始邮件</string>
@@ -2160,7 +1918,6 @@
     <string name="no_trusted_devices">没有受信任的设备</string>
     <string name="no_trusted_devices_subtitle">可跳过两步验证的设备会显示在这里</string>
     <string name="revoke_all_trusted_devices">撤销全部</string>
-    <string name="section_content_protection">内容保护</string>
     <string name="section_tracking_protection">追踪保护</string>
     <string name="section_images">图片</string>
     <string name="section_html_content">HTML 内容</string>
@@ -2235,12 +1992,7 @@
     <string name="create_directory">创建目录</string>
     <string name="no_directories_yet">还没有目录</string>
     <string name="no_directories_subtitle">创建一个目录即可自动生成别名。</string>
-    <string name="directory_key_label">目录关键词</string>
-    <string name="directory_separators_note">支持 . + # 分隔符</string>
-    <string name="note_optional">备注（可选）</string>
-    <string name="ghost_alias_note_placeholder">例如：订阅邮件列表</string>
     <string name="create_alias_placeholder">例如：shopping</string>
-    <string name="add_custom_domain">添加自定义域名</string>
     <string name="domain_placeholder">例如：example.com</string>
     <string name="alias_status_active">启用中</string>
     <string name="alias_status_disabled_badge">已停用</string>
@@ -2308,8 +2060,6 @@
     <string name="add_custom_domain_dialog_title">添加自定义域名</string>
     <string name="domain_name_label">域名</string>
     <string name="ghost_alias_creating">正在创建...</string>
-    <string name="ghost_alias_note_label">备注（可选）</string>
-    <string name="ghost_forwarded_count">已转发 %d 封</string>
     <string name="ghost_expires_in_days">%d 天后失效</string>
     <string name="ghost_expires_in_hours">%d 小时后失效</string>
     <string name="ghost_expires_in_minutes">%d 分钟后失效</string>
@@ -2350,7 +2100,6 @@
     <string name="error_private_key_export">密码不正确或导出失败</string>
     <string name="storage_addons_title">存储附加项</string>
     <string name="storage_addons_description">可为任何套餐增加额外存储空间。这些附加项可以叠加。</string>
-    <string name="storage_addon_add">添加 %1$s</string>
     <string name="payment_method_card">信用卡 / 借记卡</string>
     <string name="payment_method_card_subtitle">使用 Stripe 付款</string>
     <string name="payment_method_crypto">加密货币</string>
@@ -2446,7 +2195,6 @@
     <string name="app_lock_passphrase_hint">输入口令</string>
     <string name="app_lock_pin_mismatch">两次输入的 PIN 码不一致，请重试。</string>
     <string name="app_lock_passphrase_too_short">口令至少要 4 个字符。</string>
-    <string name="app_lock_passphrase_mismatch">两次输入的口令不一致，请重试。</string>
     <string name="app_lock_title">Aster Mail 已锁定</string>
     <string name="app_lock_wrong_pin">PIN 码不正确，请重试。</string>
     <string name="app_lock_locked_out">尝试次数过多，请稍候再试。</string>
@@ -2461,10 +2209,6 @@
     <string name="settings_alias_directories">别名目录</string>
     <string name="alias_directories">别名目录</string>
     <string name="alias_directories_description">别名目录让您可以使用共享的前缀，在任意地址收信。分享您的目录，任何人都能联系到您，而无需暴露您的真实地址。</string>
-    <string name="no_alias_directories">还没有别名目录</string>
-    <string name="no_alias_directories_subtitle">在 astermail.org 创建别名目录后即可在这里使用</string>
-    <string name="directories_count">%1$d 个目录</string>
-    <string name="auto_create_on">已开启自动创建</string>
     <string name="settings_family">家庭套餐</string>
     <string name="family_plan">家庭套餐</string>
     <string name="manage_family">管理家庭成员</string>
@@ -2488,7 +2232,6 @@
     <string name="kids_link_copied">设置链接已复制</string>
     <string name="kids_link_regenerated">已生成新链接</string>
     <string name="kids_released">已释放预留</string>
-    <string name="kids_load_failed">无法加载保留记录</string>
     <string name="kids_action_failed">操作失败，请重试。</string>
     <string name="settings_connection">连接</string>
     <string name="image_failed_placeholder">[图片加载失败]</string>
@@ -2503,10 +2246,6 @@
     </plurals>
     <plurals name="subscriptions_found_count">
         <item quantity="other">找到 %d 个新订阅</item>
-    </plurals>
-    <plurals name="contacts_count_plural">
-        <item quantity="one">%d 个联系人</item>
-        <item quantity="other">%d 位联系人</item>
     </plurals>
     <string name="reaction_info_title">回应</string>
     <string name="reaction_info_you">您使用 %1$s 回应了</string>
@@ -2706,9 +2445,6 @@
     <string name="index_time_remaining_less_min">剩余不到一分钟</string>
     <string name="pause">暂停</string>
     <string name="resume">继续</string>
-    <string name="domain_purchase_banner_title">获取您自己的邮箱域名</string>
-    <string name="domain_purchase_banner_subtitle">搜索、购买,几秒钟内即可开始收信。DNS 自动配置。</string>
-    <string name="domain_purchase_banner_cta">购买域名</string>
     <string name="domain_purchase_title">购买域名</string>
     <string name="domain_purchase_search_placeholder">搜索域名</string>
     <string name="domain_purchase_per_year">%1$s/年</string>
@@ -2739,7 +2475,6 @@
     <string name="domain_purchase_order_expired">该订单在付款前已过期。请重新发起购买以获取该域名。</string>
     <string name="domain_purchase_order_lapsed">该域名已到期，目前已停用。重新购买即可找回。</string>
     <string name="domain_purchase_try_instead">不妨试试这些</string>
-    <string name="domain_purchase_empty_title">输入内容即可开始</string>
     <string name="domain_purchase_empty_subtitle">输入一个词、一个名称或完整域名。我们会检查所有在售后缀，并显示哪些还没有被注册。</string>
     <string name="domain_purchase_search_failed">搜索失败,请重试。</string>
     <string name="domain_purchase_more_suggestions">生成更多建议</string>
@@ -2767,7 +2502,6 @@
     <string name="domain_purchase_awaiting_payment">等待付款</string>
     <string name="domain_purchase_complete_purchase">完成购买</string>
     <string name="domain_purchase_create_first_address">创建您的第一个地址</string>
-    <string name="domain_purchase_please_wait">这只需片刻，请保持应用打开。</string>
     <string name="domain_purchase_warmup_note">全新域名需要一段时间建立发信信誉。在此期间，您最初的部分邮件可能会进入垃圾邮件。</string>
     <string name="rename_label">重命名标签</string>
     <string name="change_label_color">更改颜色</string>
@@ -2788,7 +2522,6 @@
     <string name="allowlist_email_placeholder">输入邮箱地址…</string>
     <string name="allowlist_domain_placeholder">输入域名…</string>
     <string name="allowlist_domain_label">整个域名</string>
-    <string name="allowed_senders_load_failed">无法加载允许列表</string>
     <string name="sender_added_to_allowlist">已添加到允许列表</string>
     <string name="failed_allow_sender">无法添加到允许列表</string>
     <string name="failed_remove_allowed_sender">无法从允许列表移除</string>
@@ -2828,7 +2561,6 @@
     <string name="revoke_all_trusted_devices_confirm">每台受信任的设备在下次登录时都需要重新验证。</string>
     <string name="plan_price_per_month">每月</string>
     <string name="plan_price_per_year">每年</string>
-    <string name="plan_save_per_year">每年节省 %1$s</string>
     <string name="section_compose_text">撰写文字</string>
     <string name="compose_text_size">文字大小</string>
     <string name="compose_text_size_subtitle">选择新邮件的默认文字大小。</string>
@@ -2958,7 +2690,6 @@
     <string name="alias_delete_directory_confirm">要删除 %1$s 吗？发往该目录中新地址的邮件将不再投递，已创建的别名仍可继续使用。此操作无法撤销。</string>
     <string name="attachment_too_many">一封邮件最多可携带 %1$d 个附件</string>
     <string name="auto_forward_setup_hint">输入要转发到的地址，然后创建规则。该地址确认请求后，转发才会开始。</string>
-    <string name="cancels_format">于 %s 取消</string>
     <string name="check_for_older_messages">查看更早的邮件</string>
     <string name="contact_add_failed">无法将 %1$s 保存到联系人</string>
     <string name="contact_remove_failed">无法从联系人中移除 %1$s</string>
@@ -2997,7 +2728,6 @@
     <string name="marked_as_read">已标记为已读</string>
     <string name="moved_to_folder">已移动到 %s</string>
     <string name="no_more_messages">没有更多邮件</string>
-    <string name="price_per_interval">%1$s / %2$s</string>
     <string name="purge_all_aliases_message">这会永久移除此列表中的所有别名。此操作无法撤销。</string>
     <string name="recovery_backup_not_saved">这些代码尚未保存到您的账户，因此无法用于恢复账户。请检查网络连接并重试。</string>
     <string name="are_you_sure">确定吗？</string>
@@ -3152,12 +2882,8 @@
     <string name="error_alias_reencryption_incomplete">部分别名未完成重新加密，因此未做任何更改。请重试。</string>
     <string name="error_client_upgrade_required">此版本的应用无法进行此更改。请更新到最新版本后重试。</string>
     <string name="error_verification_required">若要继续使用此账户，请验证您的恢复邮箱。</string>
-    <string name="no_recipients">无收件人</string>
     <string name="scheduled_already_sending">此邮件正在发送，无法再更改。</string>
-    <string name="scheduled_cancel_send">取消发送</string>
     <string name="scheduled_for">已安排在 %1$s 发送</string>
-    <string name="scheduled_recipients">收件人：%1$s</string>
-    <string name="scheduled_time_in_past">请选择将来的时间</string>
     <string name="contact_groups">群组</string>
     <string name="new_group">新建群组</string>
     <string name="group_name">群组名称</string>
@@ -3177,10 +2903,6 @@
     <string name="review_duplicates">查看</string>
     <string name="delete_contacts_message">所选联系人会从所有已登录您账户的设备上删除。</string>
     <string name="clear_selection">清除选择</string>
-    <string name="select_contacts_hint">点击头像即可选择联系人。</string>
-    <plurals name="groups_count_plural">
-        <item quantity="other">%d 个群组</item>
-    </plurals>
     <plurals name="group_members_plural">
         <item quantity="other">%d 位成员</item>
     </plurals>
@@ -3189,10 +2911,6 @@
     </plurals>
     <plurals name="delete_contacts_title">
         <item quantity="other">要删除 %d 位联系人吗？</item>
-    </plurals>
-    <plurals name="contacts_deleted_plural">
-        <item quantity="one">已删除 %d 个联系人</item>
-        <item quantity="other">已删除 %d 个联系人</item>
     </plurals>
     <string name="checkout_review_title">确认并付款</string>
     <string name="checkout_term_title">订阅时长</string>
@@ -3238,9 +2956,6 @@
     <string name="contacts_import_failed">无法导入联系人</string>
     <string name="contacts_export_failed">无法导出联系人</string>
     <string name="import_contacts_file">从文件导入</string>
-    <string name="export_contacts_action">导出联系人</string>
-    <string name="export_all_contacts">导出全部联系人</string>
-    <string name="export_selection">导出所选项</string>
     <string name="export_as_vcard">导出为 vCard</string>
     <string name="export_as_csv">导出为 CSV</string>
     <string name="contact_photo">联系人照片</string>
@@ -3346,7 +3061,6 @@
     <string name="custom_domain_new_desc">无需离开 Aster 即可搜索并购买域名。</string>
     <string name="import_mail_step_title">把邮件一起带过来</string>
     <string name="import_mail_step_desc">将其他账户中的邮件迁移到 Aster。所有内容都会先在你的设备上加密，再进行存储。</string>
-    <string name="import_mail_action">导入邮件</string>
     <string name="import_mail_skip">从空收件箱开始</string>
     <string name="import_mail_privacy_note">你也可以稍后在设置中导入。</string>
     <string name="import_provider_gmail_desc">来自 Google Takeout 的 MBOX</string>
@@ -3359,7 +3073,6 @@
     <plurals name="devices_show_more">
         <item quantity="other">再显示 %d 个</item>
     </plurals>
-    <string name="enc_key_fingerprint_label">密钥指纹</string>
     <string name="category_notifications_muted_toast">已将 %1$s 的通知设为静音</string>
     <string name="category_notifications_unmuted_toast">已开启 %1$s 的通知</string>
     <string name="settings_section_support">支持</string>
@@ -3440,7 +3153,6 @@
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">超新星</string>
     <string name="connection_relay_connected">中继已开启。连接可能会变慢。</string>
-    <string name="connection_relay_restored">已恢复正常</string>
     <string name="connection_relay_disconnected">已断开连接</string>
     <string name="search_groups">搜索群组</string>
     <string name="search_trash">搜索回收站</string>
@@ -3537,7 +3249,6 @@
     <string name="passkey_added_second_step_only">已添加通行密钥。使用密码登录时，可将它用作第二步验证。</string>
     <string name="passkey_already_registered">此通行密钥已保存到您的账户。</string>
     <string name="passkey_create_unavailable">此设备无法保存通行密钥。请确认已开启屏幕锁定并设置了密码管理器。</string>
-    <string name="passkey_app_not_verified">此版本的 Aster Mail 尚未通过通行密钥验证，因此此设备无法保存或使用 Aster Mail 通行密钥。</string>
     <string name="passkey_create_failed">无法添加通行密钥。请重试。</string>
     <string name="error_passkey_timed_out">通行密钥请求已超时。请重试。</string>
     <string name="billing_play_unavailable">目前无法通过 Google Play 购买。请稍后再试。</string>

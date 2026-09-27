@@ -2,14 +2,10 @@
 <resources>
     <string name="detail_show_details">Afficher les détails</string>
     <string name="detail_hide_details">Masquer les détails</string>
-    <string name="detail_show_quoted_text">Afficher le texte cité</string>
-    <string name="detail_hide_quoted_text">Masquer le texte cité</string>
     <string name="detail_external_images_blocked">Ce message contient du contenu distant. Le charger peut révéler votre activité à l\'expéditeur.</string>
     <string name="detail_external_allow_once">Charger une fois</string>
     <string name="detail_external_always_allow">Toujours autoriser</string>
-    <string name="detail_external_dismiss">Pas maintenant</string>
     <string name="detail_unsubscribe_title">Cet expéditeur prend en charge le désabonnement en un clic.</string>
-    <string name="detail_unsubscribe_subtitle">Vous ne recevrez plus de messages de cette adresse.</string>
     <string name="detail_view_raw_source">Voir la source brute</string>
     <string name="detail_raw_source_title">Source brute du message</string>
     <string name="detail_raw_source_headers">En-têtes</string>
@@ -18,8 +14,6 @@
     <string name="detail_raw_source_copied">Copié dans le presse-papiers</string>
     <string name="detail_raw_source_close">Fermer</string>
     <string name="detail_raw_source_unavailable">La source brute n\'est pas disponible pour ce message.</string>
-    <string name="detail_star_action">Ajouter une étoile</string>
-    <string name="detail_unstar_action">Retirer l\'étoile</string>
     <string name="detail_external_images_traffic_blocked">Les images distantes sont bloquées pour économiser des données.</string>
     <string name="detail_disable_traffic_saving">Désactiver l\'économie de données</string>
     <string name="message_details">Détails du message</string>

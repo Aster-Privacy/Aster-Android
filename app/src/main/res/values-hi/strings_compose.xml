@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="compose_footer_secured_by_plain">Aster Mail से सुरक्षित</string>
-    <string name="compose_footer_secured_by_label">इसके द्वारा सुरक्षित</string>
-    <string name="compose_footer_brand">Aster Mail</string>
     <string name="compose_quote_forwarded_message">फ़ॉरवर्ड किया गया संदेश</string>
     <string name="compose_quote_original_message">मूल संदेश</string>
     <string name="compose_quote_show_label">%1$s दिखाएं</string>
@@ -10,8 +8,6 @@
     <string name="compose_quote_header_from">प्रेषक:</string>
     <string name="compose_quote_header_date">तारीख:</string>
     <string name="compose_quote_header_subject">विषय:</string>
-    <string name="compose_attachment_remove">अटैचमेंट हटाएं</string>
-    <string name="compose_attachment_uploading">अटैचमेंट %1$s अपलोड हो रहा है</string>
     <string name="schedule_time_in_past">शेड्यूल किया गया समय भविष्य में होना चाहिए</string>
     <string name="signature_none">कोई हस्ताक्षर नहीं</string>
     <string name="signature_select">हस्ताक्षर चुनें</string>

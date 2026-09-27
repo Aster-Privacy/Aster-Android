@@ -16,14 +16,6 @@
         <item quantity="many">%d مفتاحًا</item>
         <item quantity="other">%d مفتاح</item>
     </plurals>
-    <plurals name="devices_count">
-        <item quantity="zero">%d جهاز</item>
-        <item quantity="one">جهاز واحد</item>
-        <item quantity="two">جهازان</item>
-        <item quantity="few">%d أجهزة</item>
-        <item quantity="many">%d جهازًا</item>
-        <item quantity="other">%d جهاز</item>
-    </plurals>
     <plurals name="labels_count">
         <item quantity="zero">%d تصنيف</item>
         <item quantity="one">تصنيف واحد</item>

@@ -40,7 +40,6 @@
     <string name="image_theme_reset_short">Herstellen</string>
     <string name="image_theme_reset_confirm_title">Afbeeldingsthema herstellen?</string>
     <string name="image_theme_reset_confirm_message">Hiermee verwijder je de achtergrondfoto en keren de kleuren terug naar het standaardthema.</string>
-    <string name="theme_opacity">Dekking van het thema</string>
     <string name="theme_opacity_clear">Helder</string>
     <string name="theme_opacity_clear_subtitle">Je foto is het best zichtbaar.</string>
     <string name="theme_opacity_glass">Glas</string>

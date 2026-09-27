@@ -10,6 +10,5 @@
     <string name="security_activity_today">오늘</string>
     <string name="security_activity_yesterday">어제</string>
     <string name="security_activity_show_more">더 보기</string>
-    <string name="security_activity_show_less">간략히 보기</string>
     <string name="security_activity_empty_filter">이 필터와 일치하는 활동이 없습니다.</string>
 </resources>

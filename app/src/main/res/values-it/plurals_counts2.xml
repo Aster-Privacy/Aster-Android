@@ -10,11 +10,6 @@
         <item quantity="many">%d chiavi</item>
         <item quantity="other">%d chiavi</item>
     </plurals>
-    <plurals name="devices_count">
-        <item quantity="one">%d dispositivo</item>
-        <item quantity="many">%d dispositivi</item>
-        <item quantity="other">%d dispositivi</item>
-    </plurals>
     <plurals name="labels_count">
         <item quantity="one">%d etichetta</item>
         <item quantity="many">%d etichette</item>

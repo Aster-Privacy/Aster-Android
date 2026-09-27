@@ -6,7 +6,6 @@
     <string name="domain_manage_verification">验证</string>
     <string name="domain_manage_last_verified">上次验证</string>
     <string name="domain_manage_never_verified">尚未验证</string>
-    <string name="domain_manage_records">DNS 记录</string>
     <string name="domain_manage_catch_all_description">接收发送到此域名下任意地址的邮件。</string>
     <string name="domain_manage_recheck">重新检查 DNS 记录</string>
     <string name="domain_manage_rechecking">正在检查 DNS 记录</string>

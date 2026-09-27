@@ -6,9 +6,6 @@
     <plurals name="api_keys_count">
         <item quantity="other">%d 个密钥</item>
     </plurals>
-    <plurals name="devices_count">
-        <item quantity="other">%d 个设备</item>
-    </plurals>
     <plurals name="labels_count">
         <item quantity="other">%d 个标签</item>
     </plurals>

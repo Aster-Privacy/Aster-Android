@@ -10,6 +10,5 @@
     <string name="security_activity_today">今天</string>
     <string name="security_activity_yesterday">昨天</string>
     <string name="security_activity_show_more">显示更多</string>
-    <string name="security_activity_show_less">收起</string>
     <string name="security_activity_empty_filter">没有活动符合此筛选条件。</string>
 </resources>

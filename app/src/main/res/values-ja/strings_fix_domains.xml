@@ -6,7 +6,6 @@
     <string name="domain_manage_verification">確認</string>
     <string name="domain_manage_last_verified">最終確認</string>
     <string name="domain_manage_never_verified">未確認</string>
-    <string name="domain_manage_records">DNS レコード</string>
     <string name="domain_manage_catch_all_description">このドメインのすべてのアドレス宛のメールを受信します。</string>
     <string name="domain_manage_recheck">DNS レコードを再確認</string>
     <string name="domain_manage_rechecking">DNS レコードを確認中</string>

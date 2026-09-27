@@ -27,14 +27,8 @@
     <plurals name="marked_unread_count">
         <item quantity="other">已将 %d 封邮件标记为未读</item>
     </plurals>
-    <plurals name="results_count">
-        <item quantity="other">%d 条结果</item>
-    </plurals>
     <plurals name="active_endpoints">
         <item quantity="other">%d 个活跃端点</item>
-    </plurals>
-    <plurals name="storage_addons_active_count">
-        <item quantity="other">%1$d 个已生效的附加项</item>
     </plurals>
     <plurals name="backup_codes_remaining">
         <item quantity="other">剩余 %d 个备份代码</item>

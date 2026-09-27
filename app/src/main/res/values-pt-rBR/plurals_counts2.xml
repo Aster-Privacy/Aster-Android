@@ -10,11 +10,6 @@
         <item quantity="many">%d chaves</item>
         <item quantity="other">%d chaves</item>
     </plurals>
-    <plurals name="devices_count">
-        <item quantity="one">%d dispositivo</item>
-        <item quantity="many">%d dispositivos</item>
-        <item quantity="other">%d dispositivos</item>
-    </plurals>
     <plurals name="labels_count">
         <item quantity="one">%d etiqueta</item>
         <item quantity="many">%d etiquetas</item>

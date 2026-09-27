@@ -1,23 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="search_placeholder">Rechercher des e-mails</string>
-    <string name="search_clear_cd">Effacer la recherche</string>
-    <string name="search_back_cd">Retour</string>
-    <string name="search_remove_filter_cd">Supprimer le filtre</string>
-    <string name="search_empty_initial_title">Rechercher dans vos e-mails</string>
-    <string name="search_empty_initial_subtitle">Trouvez des messages par expéditeur, objet ou contenu. Toutes les recherches s\'effectuent sur cet appareil.</string>
-    <string name="search_empty_no_results_title">Aucun résultat</string>
-    <string name="search_empty_no_results_subtitle">Essayez un autre mot-clé ou supprimez des filtres.</string>
-    <string name="search_recent_header">Récent</string>
-    <string name="search_recent_clear">Effacer</string>
-    <string name="search_quick_all">Tous</string>
-    <string name="search_quick_unread">Non lus</string>
-    <string name="search_quick_attachments">Pièces jointes</string>
-    <string name="search_quick_flagged">Marqués</string>
-    <string name="search_filter_has_attachment">Avec pièce jointe</string>
-    <string name="search_filter_unread">Non lu</string>
-    <string name="search_filter_starred">Suivis</string>
-    <string name="search_filter_encrypted">Chiffré</string>
     <string name="search_chip_from">De</string>
     <string name="search_chip_to">À</string>
     <string name="search_chip_contact">Contact</string>

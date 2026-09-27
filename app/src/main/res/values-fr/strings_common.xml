@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="common_back">Retour</string>
     <string name="common_storage_used_of_total">%1$s sur %2$s</string>
     <string name="common_storage_used_only">%1$s utilisé</string>
-    <string name="common_snackbar_dismiss">Fermer</string>
-    <string name="common_snackbar_undo">Annuler</string>
 </resources>

@@ -45,20 +45,10 @@
         <item quantity="many">%d messages marqués comme non lus</item>
         <item quantity="other">%d messages marqués comme non lus</item>
     </plurals>
-    <plurals name="results_count">
-        <item quantity="one">%d résultat</item>
-        <item quantity="many">%d résultats</item>
-        <item quantity="other">%d résultats</item>
-    </plurals>
     <plurals name="active_endpoints">
         <item quantity="one">%d point d\'accès actif</item>
         <item quantity="many">%d points d\'accès actifs</item>
         <item quantity="other">%d points d\'accès actifs</item>
-    </plurals>
-    <plurals name="storage_addons_active_count">
-        <item quantity="one">%1$d extension active</item>
-        <item quantity="many">%1$d extensions actives</item>
-        <item quantity="other">%1$d extensions actives</item>
     </plurals>
     <plurals name="backup_codes_remaining">
         <item quantity="one">%d code de secours restant</item>

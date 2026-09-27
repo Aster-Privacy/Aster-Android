@@ -27,14 +27,8 @@
     <plurals name="marked_unread_count">
         <item quantity="other">메시지 %d개를 읽지 않음으로 표시했습니다</item>
     </plurals>
-    <plurals name="results_count">
-        <item quantity="other">%d개의 결과</item>
-    </plurals>
     <plurals name="active_endpoints">
         <item quantity="other">활성 엔드포인트 %d개</item>
-    </plurals>
-    <plurals name="storage_addons_active_count">
-        <item quantity="other">사용 중인 추가 항목 %1$d개</item>
     </plurals>
     <plurals name="backup_codes_remaining">
         <item quantity="other">백업 코드 %d개 남음</item>

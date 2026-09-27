@@ -42,7 +42,6 @@
     <string name="log_in">ログイン</string>
     <string name="create_account">アカウントを作成</string>
     <string name="sign_in_title">Aster にサインイン</string>
-    <string name="sign_in_subtitle">アカウントにアクセスするための認証情報を入力してください</string>
     <string name="username_placeholder">ユーザー名</string>
     <string name="password_placeholder">パスワードを入力</string>
     <string name="forgot_password">パスワードをお忘れですか？</string>
@@ -50,14 +49,11 @@
     <string name="sign_up">サインアップ</string>
     <string name="no_account_prompt">アカウントをお持ちでないですか？ </string>
     <string name="have_account_prompt">既にアカウントをお持ちですか？</string>
-    <string name="domain_astermail">@astermail.org</string>
-    <string name="domain_astercx">@aster.cx</string>
 
     <string name="register_title">アカウントを作成</string>
     <string name="register_subtitle">数秒でプライベートな暗号化メールを</string>
     <string name="display_name_optional">表示名（任意）</string>
     <string name="secure_your_account">アカウントを保護する</string>
-    <string name="create_strong_password">アカウントを保護するための強力なパスワードを作成してください</string>
     <string name="new_password">新しいパスワード</string>
     <string name="confirm_password">パスワードの確認</string>
     <string name="confirm_password_label">パスワードの確認</string>
@@ -66,7 +62,6 @@
     <string name="requirement_uppercase">大文字1文字</string>
     <string name="requirement_lowercase">小文字1文字</string>
     <string name="requirement_number">数字1文字</string>
-    <string name="add_backup_email">バックアップメールを追加</string>
     <string name="backup_email_description">他のプロバイダーの復旧用メールを追加してください。これは任意ですが、アカウント復旧のために推奨されます。</string>
     <string name="recovery_email">復旧用メールアドレス</string>
     <string name="recovery_email_placeholder">backup@email.com</string>
@@ -76,7 +71,6 @@
     <string name="recovery_email_remove">復旧用メールアドレスを削除</string>
     <string name="recovery_email_resend">確認メールを再送信</string>
     <string name="recovery_email_resent">確認メールを送信しました</string>
-    <string name="recovery_email_resend_failed">確認メールを送信できませんでした</string>
     <string name="recovery_email_resend_cooldown">再送信まで少しお待ちください</string>
     <string name="recovery_email_already_in_use">このアドレスはすでに上限の10件のAsterアカウントで使われています。別のアドレスを使ってください。</string>
     <string name="recovery_email_saved">復旧用メールを保存しました</string>
@@ -84,35 +78,25 @@
     <string name="recovery_email_hidden">このアカウントに保存済み</string>
     <string name="recovery_email_status_unverified">確認待ち</string>
     <string name="skip_for_now">今はスキップ</string>
-    <string name="tap_to_copy">タップしてコピー</string>
     <string name="copy_to_clipboard">クリップボードにコピー</string>
     <string name="choose_your_plan">プランを選択</string>
     <string name="plan_subtitle">無料で始めるか、有料プランでさらに多くの機能を。いつでも変更できます。</string>
     <string name="loading_plans">プランを読み込み中...</string>
     <string name="plan_free">無料</string>
-    <string name="plan_starter">スターター</string>
-    <string name="free_tagline">Asterを始めましょう</string>
-    <string name="starter_tagline">日常のプライバシーのために</string>
-    <string name="professional_tagline">パワーユーザーとビジネス向け</string>
     <string name="continue_with_free">無料で続ける</string>
     <string name="continue_with_upgrade">アップグレードして続行</string>
     <string name="monthly">月払い</string>
     <string name="yearly">年払い</string>
     <string name="free_forever">永久無料</string>
-    <string name="plan_features_format">%1$s ストレージ  -  %2$s エイリアス  -  %3$s ドメイン</string>
     <string name="setting_up_account">アカウントを設定中</string>
     <string name="creating_encryption_keys">暗号化キーを作成中...</string>
     <string name="encryption_keys_local_only">暗号化キーはこのデバイスにローカル保存され、サーバーに送信されることはありません。</string>
 
-    <string name="save_recovery_key">リカバリーキーを保存</string>
-    <string name="recovery_key_description">このキーを安全に保管してください。パスワードを忘れた場合にアカウントを復旧する唯一の方法です。</string>
-    <string name="saved_recovery_key_checkbox">リカバリーキーを安全な場所に保存しました</string>
 
     <string name="recover_your_account">アカウントの復旧</string>
     <string name="enter_email_for_recovery">アカウントに関連付けられたメールアドレスを入力してください</string>
     <string name="email_address">メールアドレス</string>
     <string name="back_to_sign_in">サインインに戻る</string>
-    <string name="use_recovery_code">リカバリーコードを使用</string>
     <string name="recovery_email_sent">復旧用メールを送信しました</string>
     <string name="recovery_email_sent_description">パスワードリセット用のリンクを復旧用メールアドレスに送信しました。受信トレイを確認し、リンクをクリックして続行してください。</string>
     <string name="use_recovery_code_instead">代わりにリカバリーコードを使用</string>
@@ -136,9 +120,6 @@
     <string name="old_codes_invalidated">以前のリカバリーコードは使用できなくなりました。パスワードマネージャーや印刷したコピーなど、安全な場所に保管してください。各コードは一度だけ使用できます。</string>
     <string name="show_codes">コードを表示</string>
     <string name="hide_codes">コードを非表示</string>
-    <string name="copy_codes">コードをコピー</string>
-    <string name="password_reset_successful">パスワードのリセットに成功しました</string>
-    <string name="password_reset_success_description">アカウントが復旧されました。新しいパスワードでサインインしてください。</string>
 
     <string name="folder_inbox">受信トレイ</string>
     <string name="folder_sent">送信済み</string>
@@ -202,12 +183,10 @@
     <string name="swipe_delete_forever">完全に削除</string>
     <string name="swipe_not_spam">スパムではない</string>
     <string name="swipe_read">既読</string>
-    <string name="swipe_unread">未読</string>
     <string name="swipe_star">スター</string>
     <string name="swipe_spam">スパム</string>
     <string name="swipe_inbox">受信トレイ</string>
     <string name="swipe_mark_as_read">既読にする</string>
-    <string name="swipe_mark_as_unread">未読にする</string>
     <string name="swipe_report_spam">スパムを報告</string>
     <string name="swipe_move_to_inbox">受信トレイに移動</string>
     <string name="swipe_none">なし</string>
@@ -219,12 +198,8 @@
 
     <string name="encrypted">暗号化済み</string>
     <string name="end_to_end_encrypted">エンドツーエンド暗号化</string>
-    <string name="e2e_description">あなたと送信者だけがこのメッセージを読めます。</string>
-    <string name="e2e_cipher">AES-256-GCM · ML-KEM-768</string>
     <string name="protected_in_transit">転送中は保護されています</string>
-    <string name="transit_description">転送中に暗号化され、Asterサーバーに安全に保存されています。</string>
     <string name="trackers_blocked">%d個のトラッカーをブロックしました</string>
-    <string name="trackers_blocked_description">トラッキングピクセルと外部リクエストが削除されました。</string>
     <string name="unstar">スターを外す</string>
     <string name="star">スター</string>
     <string name="more">その他</string>
@@ -235,15 +210,12 @@
     <string name="snooze">スヌーズ</string>
     <string name="snooze_not_available">スヌーズはまだ利用できません</string>
     <string name="move_to_folder">フォルダに移動</string>
-    <string name="no_folders_created">まだフォルダが作成されていません</string>
     <string name="add_label">ラベルを追加</string>
-    <string name="no_labels_created">まだラベルが作成されていません</string>
     <string name="print">印刷</string>
     <string name="print_not_available">印刷はまだ利用できません</string>
     <string name="report_spam">スパムを報告</string>
     <string name="reported_as_spam">スパムとして報告しました</string>
     <string name="block_sender">送信者をブロック</string>
-    <string name="sender_blocked">送信者をブロックしました</string>
     <string name="message_unavailable">メッセージは利用できません</string>
     <string name="no_subject">(件名なし)</string>
     <string name="open_external_link">外部リンクを開きますか？</string>
@@ -251,9 +223,6 @@
     <string name="reply">返信</string>
     <string name="reply_all">全員に返信</string>
     <string name="forward">転送</string>
-    <string name="load_content">コンテンツを読み込む</string>
-    <string name="stop_receiving_from">受信を停止</string>
-    <string name="external_content_blocked">外部画像、フォント、トラッカーをブロックしました</string>
     <string name="e2e_encrypted_message">エンドツーエンド暗号化メッセージ</string>
     <string name="decrypt_failed_title">メッセージを復号できませんでした</string>
     <string name="decrypt_failed_body">このメッセージは、この端末が現在保持していない鍵で暗号化されています。もう一度試すか、Aster のウェブアプリで開いてください。</string>
@@ -269,7 +238,6 @@
     <string name="no_app_to_open">このファイルを開くアプリがありません</string>
     <string name="download">ダウンロード</string>
     <string name="open_with">アプリで開く...</string>
-    <string name="opening_unsubscribe">購読解除ページを開いています</string>
     <string name="could_not_unsubscribe">購読解除できませんでした</string>
     <string name="failed_to_load_preview">プレビューの読み込みに失敗しました</string>
     <string name="downloading_file">%sをダウンロード中...</string>
@@ -280,7 +248,6 @@
     <string name="move_to_trash">ゴミ箱に移動</string>
     <string name="archived">アーカイブしました</string>
     <string name="unstarred">スターを外しました</string>
-    <string name="stop_receiving_domain">%sからの受信を停止</string>
     <string name="dismiss">閉じる</string>
 
     <string name="no_messages_in">%sにメッセージはありません</string>
@@ -309,13 +276,9 @@
     <string name="cc">Cc</string>
     <string name="bcc">Bcc</string>
     <string name="subject">件名</string>
-    <string name="compose_email">メールを作成</string>
-    <string name="secured_by">セキュリティ提供元</string>
     <string name="sending_in_countdown">%d秒後に送信</string>
     <string name="view_message">メッセージを表示</string>
     <string name="undo">元に戻す</string>
-    <string name="discard_draft">下書きを破棄しますか？</string>
-    <string name="discard_draft_description">戻ると下書きとして保存されるか、完全に破棄されます。</string>
     <string name="save_draft">下書きを保存</string>
     <string name="discard">破棄</string>
     <string name="toggle_cc_bcc">Cc/Bccを切り替え</string>
@@ -348,8 +311,6 @@
     <string name="send_problem_message">メッセージをまだ送信できていません。アプリはバックグラウンドで再試行を続けます。</string>
     <string name="send_problem_failed_message">メッセージを送信できませんでした。再試行するか破棄できます。</string>
     <string name="search_aliases">エイリアスを検索</string>
-    <string name="filter_from">差出人</string>
-    <string name="filter_to">宛先</string>
     <string name="filter_has_attachment">添付ファイルあり</string>
     <string name="filter_unread">未読</string>
     <string name="filter_unread_only">未読のみ</string>
@@ -393,10 +354,7 @@
     <string name="alias_note_placeholder">このエイリアスの用途、登録日など役立つ情報</string>
     <string name="alias_note_add">メモを追加</string>
     <string name="alias_note_updated">メモを更新しました</string>
-    <string name="tab_all">すべて</string>
     <string name="tab_favorites">お気に入り</string>
-    <string name="contacts_count">%d件の連絡先</string>
-    <string name="no_contacts_found">連絡先が見つかりません</string>
     <string name="sync_contacts_description">デバイスから連絡先を読み取り、Asterにインポートします。連絡先は保存前に暗号化されます。</string>
     <string name="sync">同期</string>
     <string name="new_contact">新しい連絡先</string>
@@ -423,10 +381,6 @@
     <string name="delete_contact">連絡先を削除</string>
     <string name="edit_contact">連絡先を編集</string>
     <string name="unnamed_contact">名前なしの連絡先</string>
-    <string name="tab_basic">基本</string>
-    <string name="tab_details">詳細</string>
-    <string name="tab_address">住所</string>
-    <string name="tab_social">ソーシャル</string>
     <string name="name">名前</string>
     <string name="work_email">仕事用メール</string>
     <string name="work_phone">仕事用電話</string>
@@ -436,7 +390,6 @@
     <string name="postal_code">郵便番号</string>
     <string name="country">国</string>
 
-    <string name="drawer_mail">メール</string>
     <string name="drawer_more">その他</string>
     <string name="drawer_folders">フォルダ</string>
     <string name="drawer_labels">ラベル</string>
@@ -456,9 +409,6 @@
     <string name="create_alias_invalid_chars">使用できるのは英字、数字、ドット、アンダースコア、ハイフンです。</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">アカウント</string>
-    <string name="add_account">アカウントを追加</string>
-    <string name="account_limit_reached">アカウント上限に達しました</string>
-    <string name="log_out">ログアウト</string>
     <string name="switch_workspace">ワークスペースを切り替え</string>
     <string name="collapse">折りたたむ</string>
     <string name="expand">展開する</string>
@@ -491,11 +441,9 @@
     <string name="smtp_tokens_no_domain_description">SMTP トークンは、認証済みのカスタムドメインアドレスにのみ紐づけられます。カスタムドメインを追加して認証すると、ご利用を開始できます。</string>
     <string name="smtp_token_generate">トークンを生成</string>
     <string name="smtp_token_create_title">SMTP トークンを生成</string>
-    <string name="smtp_token_create_description">このトークンに名前を付け、メールの送信元として使用する認証済みのアドレスを選択してください。</string>
     <string name="smtp_token_name_label">名前</string>
     <string name="smtp_token_name_placeholder">例：ニュースレター送信用</string>
     <string name="smtp_token_address_label">送信元</string>
-    <string name="smtp_token_address_hint">このトークンで送信したメールは、このアドレスから送られたものとして表示されます。</string>
     <string name="smtp_token_ready_title">トークンを作成しました</string>
     <string name="smtp_token_ready_description">今すぐ、これらの設定をメールクライアントまたはアプリにコピーしてください。パスワードは一度しか表示されず、後から再度取得することはできません。</string>
     <string name="smtp_token_host">ホスト</string>
@@ -504,7 +452,6 @@
     <string name="smtp_token_username">ユーザー名</string>
     <string name="smtp_token_password">パスワード</string>
     <string name="smtp_token_copy_all">すべてコピー</string>
-    <string name="smtp_token_last_used">最終使用</string>
     <string name="smtp_token_never_used">なし</string>
     <string name="smtp_token_revoke_title">トークンを取り消しますか？</string>
     <string name="smtp_token_revoke_message">これにより %1$s が完全に取り消されます。このトークンを使用しているアプリは、以後メールを送信できなくなります。</string>
@@ -567,7 +514,6 @@
     <string name="custom_theme_upgrade_title">カスタムテーマ</string>
     <string name="custom_theme_upgrade_description">好きなベースカラーからオリジナルのカラーテーマを作成できます。アップグレードしてロックを解除しましょう。</string>
     <string name="font">フォント</string>
-    <string name="font_subtitle">アプリ全体で使用するフォントを選択します</string>
     <string name="font_option_default">Asterデフォルト</string>
     <string name="font_option_system">システムUI</string>
     <string name="font_option_system_mono">システム等幅</string>
@@ -600,11 +546,6 @@
     <string name="reduce_transparency">透明度を下げる</string>
     <string name="underline_links">リンクに下線を付ける</string>
     <string name="color_vision">色覚</string>
-    <string name="color_vision_none">なし</string>
-    <string name="color_vision_protanopia">1型色覚異常</string>
-    <string name="color_vision_deuteranopia">2型色覚異常</string>
-    <string name="color_vision_tritanopia">3型色覚異常</string>
-    <string name="color_vision_achromatopsia">全色盲</string>
     <string name="reading">読みやすさ</string>
     <string name="dyslexia_font">ディスレクシア対応フォント</string>
     <string name="text_spacing">文字間隔</string>
@@ -621,16 +562,13 @@
     <string name="default_reply">デフォルトの返信</string>
     <string name="reply_to_sender">送信者に返信</string>
     <string name="reply_to_all">全員に返信</string>
-    <string name="images_tracking">画像とトラッキング</string>
     <string name="block_remote_images">リモート画像をブロック</string>
-    <string name="block_remote_images_subtitle">送信者からIPアドレスを保護</string>
     <string name="block_tracking_pixels">スパイピクセルをブロック</string>
     <string name="block_tracking_links">トラッキングリンクを削除</string>
     <string name="sending">送信</string>
     <string name="send">送信</string>
     <string name="auto_save_recipients">受信者を連絡先に自動保存</string>
     <string name="undo_send">送信取り消し</string>
-    <string name="undo_send_subtitle">%1$d秒間は送信を取り消せます</string>
     <string name="undo_send_delay_seconds">%1$d秒</string>
     <string name="change_photo">写真を変更</string>
     <string name="confirmations">確認</string>
@@ -658,7 +596,6 @@
     <string name="new_emails">新着メール</string>
     <string name="replies">返信</string>
     <string name="quiet_hours">おやすみ時間</string>
-    <string name="quiet_hours_subtitle">22:00～07:00は通知をミュート</string>
 
     <string name="profile">プロフィール</string>
     <string name="saving">保存中...</string>
@@ -729,34 +666,22 @@
     <string name="days_ago">%d日前</string>
 
     <string name="encryption_title">暗号化</string>
-    <string name="encryption_status_label">エンドツーエンド暗号化</string>
-    <string name="encryption_status_description">すべてのメッセージは、このデバイスを離れる前にIDキーで暗号化されます。Asterサーバーは暗号文のみを保存します。</string>
-    <string name="encryption_status">暗号化ステータス</string>
     <string name="identity_key">IDキー</string>
-    <string name="identity_key_active">有効（このデバイスに保存）</string>
-    <string name="encryption_protocol">暗号化プロトコル</string>
-    <string name="encryption_protocol_value">AES-256-GCM with HKDF-SHA256</string>
-    <string name="zero_access">ゼロアクセス</string>
-    <string name="zero_access_subtitle">サーバーは平文を見ることがありません</string>
     <string name="account">アカウント</string>
     <string name="identity_key_fingerprint">IDキーのフィンガープリント</string>
     <string name="fingerprint_description">信頼できるチャネルで受信者のフィンガープリントと比較して、本人であることを確認してください。</string>
-    <string name="copy_fingerprint">フィンガープリントをコピー</string>
     <string name="show_public_key">公開鍵を表示</string>
     <string name="hide_public_key">公開鍵を非表示</string>
     <string name="copy_public_key">公開鍵をコピー</string>
     <string name="identity_key_unavailable">このデバイスではIDキーを利用できません。再度サインインしてローカルの鍵素材を更新してください。</string>
     <string name="recovery">リカバリー</string>
-    <string name="view_recovery_codes">リカバリーコードを表示</string>
     <string name="key_rotation">キーローテーション</string>
     <string name="key_rotation_description">パスワードを変更するたびにIDキーがローテーションされます。古いメッセージが復号できるよう過去のキーはローカルに保持されます。</string>
     <string name="key_management">キー管理</string>
     <string name="key_management_description">キーローテーション、PGPキー管理、連絡先キーの確認はウェブアプリで利用できます。</string>
-    <string name="open_encryption_settings">暗号化設定を開く</string>
 
     <string name="enter_your_password">パスワードを入力</string>
     <string name="incorrect_password">パスワードが正しくありません</string>
-    <string name="no_recovery_key_found">リカバリーキーが見つかりません。リカバリーコードはアカウント作成時に設定され、暗号化されたボルトに保存されます。サインアウトしてもう一度サインインし、ボルトを更新してください。</string>
 
     <string name="aliases">エイリアス</string>
     <string name="no_aliases">エイリアスはありません</string>
@@ -765,16 +690,12 @@
     <string name="delete_alias">エイリアスを削除</string>
     <string name="custom_domains">カスタムドメイン</string>
     <string name="alias_view_custom">カスタムエイリアス</string>
-    <string name="custom_domains_desktop_only">カスタムドメインはデスクトップで管理する必要があります</string>
-    <string name="custom_domains_description">カスタムドメインの追加と設定にはDNS設定が必要で、デスクトップアプリからのみ利用できます。</string>
-    <string name="open_on_desktop">デスクトップで開く</string>
 
     <string name="ghost_aliases">ゴーストエイリアス</string>
     <string name="ghost_aliases_about">概要</string>
     <string name="ghost_aliases_description">受信トレイに転送される使い捨てアドレス。他に影響を与えずにいつでも無効化できます。</string>
     <string name="no_ghost_aliases">ゴーストエイリアスはありません</string>
     <string name="no_ghost_aliases_subtitle">メッセージを作成してゴーストエイリアスを送信者として選択すると生成されます</string>
-    <string name="forwarded_count">%d件転送済み</string>
     <string name="expired">期限切れ</string>
     <string name="expire">期限切れにする</string>
 
@@ -791,12 +712,6 @@
     <string name="credits_balance_label">利用可能残高</string>
     <string name="credits_balance_note">クレジットは有料プランの購入と更新に自動的に適用されます。</string>
     <string name="credits_shop_plans">プランを見る</string>
-    <string name="credit_task_refer_title">友達をAsterに紹介する</string>
-    <string name="credit_task_refer_hint">友達がAsterに登録すると、あなたと友達の両方に$10が付与されます。</string>
-    <string name="credit_task_refer_cta">招待</string>
-    <string name="credit_task_ios_title">iOS用Asterアプリをダウンロード</string>
-    <string name="credit_task_ios_hint_coming">近日公開</string>
-    <string name="credit_task_earned">獲得済み</string>
     <string name="stats">統計</string>
     <string name="total_referrals">総紹介数</string>
     <string name="pending">保留中</string>
@@ -807,8 +722,6 @@
     <string name="referral_step_2">相手があなたのリンクからサインアップし、有料プランに登録します。</string>
     <string name="referral_step_3">相手が支払うたびに報酬を獲得し、自動的に残高に加算されます。</string>
     <string name="rewards">報酬</string>
-    <string name="reward_recurring" formatted="false">さらに、友達が購読している間のすべての支払いの5%を獲得できます。</string>
-    <string name="share_invite_link">招待リンクを共有</string>
     <string name="share_text">Asterを試してみてください。本当に使えるプライベートメールです。</string>
     <string name="share_referral">紹介を共有</string>
     <string name="referral_history">紹介履歴</string>
@@ -818,22 +731,15 @@
     <string name="referral_max_credits">紹介クレジット %2$s のうち %1$s を獲得</string>
     <string name="referral_program_description">友達をAsterに招待して、友達が支払うたびにクレジットを獲得できます。</string>
     <string name="referral_reward_info">友達は初回のお支払いが割引になり、あなたは友達のすべてのお支払いから収益を得られます。</string>
-    <string name="referral_gauge_earned_label">獲得額</string>
 
     <string name="billing">請求</string>
-    <string name="billing_load_error">請求情報を読み込めませんでした。接続を確認してもう一度お試しください。</string>
     <string name="aster_plan">Asterプラン</string>
     <string name="cancels">キャンセル日</string>
-    <string name="billed_yearly">年額請求</string>
-    <string name="billed_monthly">月額請求</string>
     <string name="ends_date">%sに終了</string>
-    <string name="renews_date">%sに更新</string>
     <string name="storage">ストレージ</string>
     <string name="storage_used_format">%2$sのうち%1$s使用中</string>
     <string name="subscription">サブスクリプション</string>
-    <string name="add_payment_method">支払い方法を追加</string>
     <string name="switch_to_yearly">年額プランに切り替える</string>
-    <string name="switch_to_monthly">月払いに切り替え</string>
     <string name="reactivate_subscription">サブスクリプションを再有効化</string>
     <string name="cancel_subscription">サブスクリプションをキャンセル</string>
     <string name="plans">プラン</string>
@@ -844,18 +750,14 @@
     <string name="unlimited_aliases">無制限のエイリアス</string>
     <string name="alias_page_indicator">%1$d / %2$d ページ</string>
     <string name="unlimited_domains">無制限のドメイン</string>
-    <string name="domains_count">%d個のドメイン</string>
     <string name="cancel_subscription_title">サブスクリプションをキャンセル</string>
     <string name="cancel_subscription_description">現在の請求期間の終了までプランは有効です。その後は無料プランに切り替わります。</string>
     <string name="keep_plan">プランを維持</string>
-    <string name="unable_to_load">読み込めません</string>
-    <string name="default_label">デフォルト</string>
     <string name="expires_format">%sに期限切れ</string>
 
     <string name="blocked_senders">ブロックした送信者</string>
     <string name="no_blocked_senders">ブロックした送信者はいません</string>
     <string name="no_blocked_senders_subtitle">まだ誰もブロックしていません</string>
-    <string name="blocked_count">%d件ブロック中</string>
     <string name="unblock">ブロック解除</string>
     <string name="block_a_sender">送信者をブロック</string>
     <string name="block_sender_hint">メールアドレスまたはドメインを入力してください。以降のメールはスパムに直接振り分けられます。</string>
@@ -872,7 +774,6 @@
     <string name="mail_management">メール管理</string>
     <string name="filters_rules">フィルターとルール</string>
     <string name="filters">フィルター</string>
-    <string name="rules_sort_mail">受信メールを仕分けるルール</string>
     <string name="auto_forward">自動転送</string>
     <string name="forward_matching">一致するメッセージを転送</string>
     <string name="block_allow">ブロックと許可</string>
@@ -881,12 +782,7 @@
     <string name="always_allow">常にこれらの送信者を許可</string>
     <string name="subscriptions_label">購読管理</string>
     <string name="mailing_lists_on">購読中のメーリングリスト</string>
-    <string name="storage_data">ストレージとデータ</string>
-    <string name="see_using_space">使用状況を確認</string>
-    <string name="import_label">インポート</string>
-    <string name="import_from_providers">Gmail、Outlook、mboxからインポート</string>
     <string name="export_label">エクスポート</string>
-    <string name="export_your_mail">メールをエクスポート</string>
 
     <string name="auto_forward_title">自動転送</string>
     <string name="auto_forward_description">受信メールを別のアドレスに転送し、受信トレイにコピーを保持します。</string>
@@ -912,7 +808,6 @@
     <string name="your_signature">あなたの署名</string>
     <string name="signature_placeholder">送信するすべてのメールの末尾に表示される署名を追加してください。</string>
     <string name="preview">プレビュー</string>
-    <string name="no_signature">(署名なし)</string>
 
     <string name="templates">テンプレート</string>
     <string name="new_template">新しいテンプレート</string>
@@ -976,32 +871,14 @@
     <string name="import_title">インポート</string>
     <string name="mail_import">メールインポート</string>
     <string name="import_description">他のプロバイダーからのメールインポートはまだどのAsterクライアントでも利用できません。古いメールをAsterアドレスに転送するか、送信元で自動転送を設定してください。</string>
-    <string name="export_title">エクスポート</string>
-    <string name="mail_export">メールエクスポート</string>
-    <string name="export_description">メールアーカイブの一括エクスポートはまだどのAsterクライアントでも利用できません。メッセージはサーバー上でエンドツーエンド暗号化されたまま、いつでも取得できます。</string>
-    <string name="filters_title">フィルター</string>
-    <string name="mail_filters">メールフィルター</string>
     <string name="filters_description">サーバーサイドのメールルールはまだどのAsterクライアントでも利用できません。関連する操作にはブロックした送信者、自動転送、購読管理を使用してください。</string>
     <string name="external_accounts">外部アカウント</string>
     <string name="connect_external">外部アカウントを接続</string>
     <string name="external_description">Gmail、Outlook、Yahoo、または任意の IMAP アカウントをリンクします。Aster がメールを取得し、この端末で暗号化し、当社サーバーには暗号文のみを保存します。</string>
-    <string name="ext_provider_google">Gmail</string>
-    <string name="ext_provider_microsoft">Outlook</string>
-    <string name="ext_provider_yahoo">Yahoo</string>
-    <string name="ext_connect_with_google">Gmail を接続</string>
-    <string name="ext_connect_with_microsoft">Outlook を接続</string>
-    <string name="ext_connect_with_yahoo">Yahoo を接続</string>
-    <string name="ext_email_for_oauth">メールアドレス</string>
-    <string name="ext_continue_to_provider">プロバイダへ続行</string>
-    <string name="ext_waiting_for_authorize">プロバイダの承認を待っています…</string>
-    <string name="ext_cancel_connect">キャンセル</string>
     <string name="ext_add_manual_imap">IMAP アカウントを追加</string>
-    <string name="ext_imap_email">メール</string>
     <string name="ext_imap_host">IMAP ホスト</string>
     <string name="ext_imap_port">IMAP ポート</string>
     <string name="ext_imap_username">IMAP ユーザー名</string>
-    <string name="ext_imap_password">IMAP パスワード</string>
-    <string name="ext_imap_use_tls">TLS を使用</string>
     <string name="ext_smtp_host">SMTP ホスト</string>
     <string name="ext_smtp_port">SMTP ポート</string>
     <string name="ext_smtp_username">SMTP ユーザー名</string>
@@ -1014,13 +891,9 @@
     <string name="ext_server_settings_hint">既知のプロバイダでは Aster が自動で入力します。プロバイダが別のサーバーを使う場合のみ変更してください。</string>
     <string name="ext_smtp_same_as_incoming">送信にも同じサインインを使う</string>
     <string name="ext_status_paused">一時停止中</string>
-    <string name="ext_pause_syncing">同期を一時停止</string>
-    <string name="ext_resume_syncing">同期を再開</string>
     <string name="ext_edit_account">設定を編集</string>
     <string name="ext_remove_account">アカウントの接続を解除</string>
     <string name="ext_never_synced">未同期</string>
-    <string name="ext_not_synced">同期していません</string>
-    <string name="ext_sync_ok">前回の同期に成功しました</string>
     <string name="ext_sync_error_short">前回の同期に失敗しました</string>
     <string name="ext_password_reauth">サインインできませんでした。アカウントを編集してパスワードを更新してください。</string>
     <string name="ext_edit_title">アカウントを編集</string>
@@ -1056,7 +929,6 @@
     <string name="ext_disconnect_confirm">このアカウントを切断してもよろしいですか？このアカウントから同期済みのメールは、削除を選択しない限り受信トレイに残ります。</string>
     <string name="ext_disconnect_button">切断</string>
     <string name="ext_disconnect_delete_messages">インポートしたメッセージも削除する</string>
-    <string name="ext_connect_failed">接続に失敗しました</string>
     <string name="ext_error_load_failed">リンク済みアカウントを読み込めませんでした。下に引いて再読み込みしてください。</string>
     <string name="ext_error_oauth_failed">サインインを開始できませんでした。接続を確認して再試行してください。</string>
     <string name="ext_error_manual_failed">アカウントを保存できませんでした。ホスト、ポート、資格情報を確認してください。</string>
@@ -1066,11 +938,8 @@
     <string name="ext_last_sync">最終同期：%1$s</string>
     <string name="ext_section_oauth">クイックスイッチ</string>
     <string name="ext_oauth_body">プロバイダーでサインインして、アカウントを1ステップで連携します。</string>
-    <string name="ext_oauth_connect_google">Googleでサインイン</string>
     <string name="ext_oauth_connect_microsoft">Microsoftでサインイン</string>
     <string name="ext_oauth_connect_yahoo">Yahooでサインイン</string>
-    <string name="import_provider_coming_soon">近日対応</string>
-    <string name="import_connect_manual_cta">IMAP で接続</string>
     <string name="ext_section_manual">手動セットアップ</string>
     <string name="ext_section_accounts">リンク済みアカウント</string>
     <string name="import_job_state">状態: %1$s</string>
@@ -1088,21 +957,16 @@
     <string name="storage_unavailable">ストレージは利用できません</string>
     <string name="storage_load_error">ストレージ情報を読み込めませんでした</string>
     <string name="storage_used_of_total">%2$sのうち%1$s使用中</string>
-    <string name="storage_percent_of_plan">プランの%s</string>
 
     <string name="plan_billing">プランと請求</string>
     <string name="current_plan">現在のプラン</string>
     <string name="renews_format">%sに更新</string>
     <string name="manage_subscription">サブスクリプションを管理</string>
     <string name="plan_includes">プランに含まれるもの</string>
-    <string name="free_tagline_short">エンドツーエンド暗号化メール、無料で。</string>
-    <string name="plus_tagline">より多くの容量、より多くのエイリアス、広告なし。</string>
-    <string name="pro_tagline">パワーユーザーと小規模チーム向け。</string>
     <string name="most_popular">一番人気</string>
     <string name="upgrade">アップグレード</string>
     <string name="requires_plan">%sが必要です</string>
     <string name="downgrade_to">%sにダウングレード</string>
-    <string name="upgrade_to">%sにアップグレード</string>
     <string name="manage_billing_browser">ブラウザで請求を管理</string>
     <string name="subscription_will_end">次の請求日にサブスクリプションが終了します</string>
     <string name="subscription_cancelled">サブスクリプションをキャンセルしました</string>
@@ -1111,7 +975,6 @@
     <string name="default_payment_updated">デフォルトのお支払い方法を更新しました</string>
     <string name="payment_method_removed">お支払い方法を削除しました</string>
     <string name="session_expired_sign_in">セッションの有効期限が切れました。もう一度サインインしてください。</string>
-    <string name="failed_load_subscription">サブスクリプションの読み込みに失敗しました</string>
     <string name="could_not_start_checkout">チェックアウトを開始できませんでした</string>
     <string name="could_not_open_portal">請求ポータルを開けませんでした</string>
     <string name="cancel_failed">サブスクリプションをキャンセルできませんでした</string>
@@ -1131,25 +994,19 @@
     <string name="load_remote_images">リモート画像を読み込む</string>
     <string name="load_remote_images_subtitle">オフの方がプライベートです</string>
     <string name="send_read_receipts">開封確認を送信</string>
-    <string name="send_read_receipts_subtitle">送信者にメールを読んだことを知らせる</string>
     <string name="protection">保護</string>
     <string name="warn_suspicious_links">外部リンクの警告</string>
     <string name="strip_exif">画像メタデータを削除</string>
     <string name="strip_exif_subtitle">送信前に画像から EXIF などのメタデータを削除し、位置情報やデバイス情報を保護します</string>
     <string name="ghost_mode">ゴーストモード</string>
-    <string name="ghost_mode_subtitle">オンラインステータスと入力中インジケーターを非表示</string>
     <string name="privacy_policy">プライバシーポリシー</string>
 
     <string name="developer">開発者</string>
     <string name="mode">モード</string>
-    <string name="developer_mode">開発者モード</string>
-    <string name="developer_mode_subtitle">高度なツールと安全でない操作を有効化</string>
     <string name="show_raw_headers">生のヘッダーを表示</string>
     <string name="show_raw_headers_subtitle">すべてのメッセージにSMTPヘッダーを完全表示</string>
     <string name="allow_insecure">安全でない接続を許可</string>
-    <string name="allow_insecure_subtitle">ローカルサーバーのTLS検証をスキップ</string>
     <string name="verbose_logs">詳細ログ</string>
-    <string name="verbose_logs_subtitle">すべてのネットワークリクエストを記録</string>
     <string name="tools">ツール</string>
     <string name="clear_local_cache">ローカルキャッシュをクリア</string>
     <string name="cache_cleared">キャッシュをクリアしました</string>
@@ -1159,12 +1016,10 @@
     <string name="labels">ラベル</string>
     <string name="no_labels">ラベルはありません</string>
     <string name="no_labels_subtitle">まだラベルを作成していません</string>
-    <string name="messages_count">%d件のメッセージ</string>
     <string name="delete_label">ラベルを削除</string>
     <string name="folders">フォルダ</string>
     <string name="no_folders">フォルダはありません</string>
     <string name="no_folders_subtitle">まだフォルダを作成していません</string>
-    <string name="folders_count">%d個のフォルダ</string>
     <string name="delete_folder">フォルダを削除</string>
     <string name="delete_folder_confirm_title">フォルダを削除しますか？</string>
     <string name="delete_folder_confirm_message">「%1$s」は削除され、元に戻せません。中のメールはアカウントに残りますが、このフォルダには紐付かなくなります。</string>
@@ -1246,7 +1101,6 @@
     <string name="couldnt_apply_label">ラベルを適用できませんでした</string>
     <string name="couldnt_snooze">スヌーズできませんでした</string>
     <string name="create">作成</string>
-    <string name="danger_zone">危険な操作</string>
     <string name="deleted_permanently">完全に削除しました</string>
     <string name="duration_one_day">1日間</string>
     <string name="expires_in_day">1日で期限切れ</string>
@@ -1270,24 +1124,16 @@
     <string name="ghost_alias_created">ゴーストエイリアスを作成しました：%s</string>
     <string name="ghost_alias_subtitle">自動的に期限切れになる一時的な@realiased.meアドレスを作成します。</string>
     <string name="icon_label">アイコン</string>
-    <string name="load_external_content">外部コンテンツを読み込む</string>
     <string name="loading_identity_key">ID キーを読み込み中...</string>
     <string name="message_expires_in">メッセージは%sで期限切れになります</string>
     <string name="message_expiry_subtitle">受信者は選択した期間後にアクセスできなくなります。</string>
     <string name="moved_to_inbox">受信トレイに移動しました</string>
     <string name="nothing_to_print">印刷するものがありません</string>
-    <string name="notification_channel_description">新着メールの通知</string>
-    <string name="notification_channel_new_mail">新着メール</string>
-    <string name="one_font">1個のフォント</string>
-    <string name="one_image">1個の画像</string>
-    <string name="one_stylesheet">1個のスタイルシート</string>
-    <string name="one_tracker">1個のトラッカー</string>
     <string name="pgp_identity_fingerprint">PGP ID フィンガープリント</string>
     <string name="pin_failed">ピン留めできませんでした</string>
     <string name="pinned">ピン留め済み</string>
     <string name="quiet_hours_subtitle_range">%1$s～%2$sは通知をミュート</string>
     <string name="restored_to_inbox">受信トレイに復元しました</string>
-    <string name="set_default">デフォルトに設定</string>
     <string name="set_message_expiry">メッセージ有効期限を設定</string>
     <string name="snooze_until">スヌーズ期限</string>
     <string name="snoozed_until">%sまでスヌーズ中</string>
@@ -1319,7 +1165,6 @@
     <string name="failed_revoke_session">セッションの取り消しに失敗しました</string>
     <string name="all_other_sessions_signed_out">他のすべてのセッションをサインアウトしました</string>
     <string name="failed_sign_out_other_sessions">他のセッションのサインアウトに失敗しました</string>
-    <string name="server_returned_no_address">サーバーがアドレスを返しませんでした</string>
     <string name="scan_complete">スキャン完了</string>
     <string name="current_password_incorrect">現在のパスワードが正しくありません</string>
     <string name="password_change_background_reencrypt_failed">パスワードが変更されました。Aster Mail は送信済みメールの一部を再暗号化中で、バックグラウンドで完了します。</string>
@@ -1435,9 +1280,7 @@
     <string name="plan_desc_supernova">最大ストレージ、最も高い上限、専任サポート。</string>
     <string name="set_as_primary">プライマリアドレスに設定</string>
     <string name="primary_badge">プライマリ</string>
-    <string name="also_receives_at">%1$s でも受信します</string>
     <string name="badges">バッジ</string>
-    <string name="no_badges_yet">まだバッジはありません</string>
 
 
     <!-- Pending account deletion -->
@@ -1447,13 +1290,11 @@
     <string name="pending_deletion_sign_out">サインアウト</string>
     <string name="pending_deletion_restoring">復元中…</string>
     <string name="pending_deletion_error">アカウントを復元できませんでした。もう一度お試しください。</string>
-    <string name="pending_deletion_restored">おかえりなさい。アカウントが復元されました。</string>
     <string name="image_blocked_placeholder">[画像はブロックされました]</string>
     <string name="alias_available">このエイリアスは使用可能です。</string>
     <string name="alias_not_available">このエイリアスは既に使用されています。</string>
     <string name="alias_check_failed">空き状況を確認できませんでした。作成を試すことはできます。</string>
     <string name="csrf_unavailable">このセッションは無効です。もう一度サインインしてください。</string>
-    <string name="received_on_prefix">%s で受信</string>
     <string name="received_on_label">受信アドレス</string>
     <string name="auto_advance_label">アーカイブまたは削除後</string>
     <string name="auto_advance_next">次のメールへ移動</string>
@@ -1496,7 +1337,6 @@
     <string name="customize_toolbar_subtitle">メールの閲覧時や選択時に下部バーに表示する操作を選べます。</string>
     <string name="reading_toolbar">メール閲覧時</string>
     <string name="selection_toolbar">メール選択時</string>
-    <string name="toolbar_slots">ツールバーのスロット</string>
     <string name="choose_action">操作を選択</string>
     <string name="change">変更</string>
     <string name="unset">未設定</string>
@@ -1538,14 +1378,9 @@
     <string name="mail_rules_no">いいえ</string>
     <string name="mail_rules_header_name">ヘッダー名</string>
     <string name="mail_rules_header_value">ヘッダー値</string>
-    <string name="mail_rules_enabled">有効</string>
-    <string name="mail_rules_disabled">無効</string>
-    <string name="mail_rules_enable">有効にする</string>
-    <string name="mail_rules_disable">無効にする</string>
     <string name="mail_rules_duplicate">複製</string>
     <string name="mail_rules_delete">削除</string>
     <string name="mail_rules_run_on_existing">既存のメールに実行</string>
-    <string name="mail_rules_more">その他</string>
     <string name="mail_rules_field_from">送信者</string>
     <string name="mail_rules_field_reply_to">返信先</string>
     <string name="mail_rules_field_to">宛先</string>
@@ -1592,7 +1427,6 @@
     <string name="mail_rules_regex_backreference">\1 のような後方参照はサポートされていません。使わずにパターンを書き直してください。</string>
     <string name="mail_rules_regex_lookaround">先読みと後読みはサポートされていません。使わずにパターンを書き直してください。</string>
     <string name="tap_again_to_exit">もう一度タップしてアプリを終了</string>
-    <string name="search_action">検索</string>
     <string name="action_failed">操作に失敗しました。もう一度お試しください。</string>
     <string name="version_copied">バージョンをコピーしました</string>
     <string name="hold_to_copy_version">長押しでコピー</string>
@@ -1630,19 +1464,15 @@
     <string name="score_steps_left">残り %1$d</string>
     <string name="check_passkey_registered">パスキー登録済み</string>
     <string name="check_verified_recovery_email">確認済みの回復メール</string>
-    <string name="check_read_receipts_off">開封確認オフ</string>
     <plurals name="passkeys_registered_count">
         <item quantity="other">パスキー %d 件登録済み</item>
     </plurals>
     <string name="archive">アーカイブ</string>
-    <string name="share_attachment_failed">一部のファイルを添付できませんでした</string>
     <string name="accept">承認</string>
     <string name="expiry_password_label">パスワードで保護（任意）</string>
     <string name="expiry_password_subtitle">外部の受信者はこのパスワードを入力しないとメッセージを開けません。</string>
     <string name="expires_in_hour">1時間後に期限切れ</string>
-    <string name="expires_in_hours">%1$d時間後に期限切れ</string>
     <string name="duration_one_hour">1時間</string>
-    <string name="duration_n_hours">%1$d時間</string>
     <string name="sort_by">並べ替え</string>
     <string name="yesterday">昨日</string>
     <string name="onboarding_skip">スキップ</string>
@@ -1656,19 +1486,10 @@
     <string name="onboarding_slide4_body">実際の受信トレイに転送される使い捨てエイリアスを作成できます。ひとつ削除しても他には影響しません。</string>
     <string name="recovery_step_up_description">セキュリティのため、続行するにはパスワードを確認してください。</string>
     <string name="settings_upgrade_cta">アップグレード</string>
-    <string name="unlock_aster_premium">Asterプレミアムを利用する</string>
     <string name="save_percent">%1$d%%お得</string>
     <string name="free">無料</string>
     <string name="popular">人気</string>
-    <string name="feature_storage">暗号化ストレージ%1$s</string>
-    <string name="feature_e2e_encryption">エンドツーエンド暗号化</string>
-    <string name="feature_zero_knowledge">ゼロアクセスアーキテクチャ</string>
-    <string name="feature_priority_support">優先サポート</string>
-    <string name="feature_custom_domain_signing">カスタムドメインのDKIM署名</string>
     <string name="message_info">メッセージ情報</string>
-    <string name="add_recipients">宛先を追加</string>
-    <string name="aster_free">Aster Free</string>
-    <string name="free_tier_description">現在は無料プランです。アップグレードすると容量、カスタムドメイン、優先サポートを利用できます。</string>
     <string name="plan_features_format_v2">%1$s ストレージ  -  %2$s  -  %3$s</string>
     <string name="confirm_archive_title">アーカイブしますか？</string>
     <string name="confirm_archive_message">このメールをアーカイブしますか？</string>
@@ -1728,7 +1549,6 @@
     <string name="delete_draft">下書きを削除</string>
     <string name="delete_draft_question">下書きを削除しますか？</string>
     <string name="delete_draft_confirm_description">この下書きは完全に削除され、元に戻すことはできません。</string>
-    <string name="attach_files">ファイルを添付</string>
     <string name="to_label_prefix">宛先 %s</string>
     <string name="failed_to_delete_draft">下書きを削除できませんでした</string>
     <string name="trash_already_empty">ゴミ箱は既に空です</string>
@@ -1745,20 +1565,16 @@
     <string name="alias_deleted_at">削除日 %1$s</string>
     <string name="purge_alias_confirm_title">エイリアスを完全に削除しますか？</string>
     <string name="purge_alias_confirm_message">%1$sを完全に削除しますか？元に戻せません。</string>
-    <string name="empty_trash_confirm_title">ゴミ箱を空にしますか？</string>
-    <string name="empty_trash_confirm_message">削除済みのエイリアスをすべて完全に削除しますか？元に戻せません。</string>
     <string name="alias_restored">エイリアスを復元しました</string>
     <string name="alias_purged">エイリアスを完全に削除しました</string>
     <string name="failed_restore_alias">エイリアスを復元できませんでした</string>
     <string name="failed_purge_alias">エイリアスを削除できませんでした</string>
     <string name="scan_inbox">受信トレイをスキャン</string>
-    <string name="search_senders">送信者を検索</string>
     <string name="deselect_all">選択を解除</string>
     <string name="count_selected">%1$d件を選択中</string>
     <string name="unsubscribe_selected">購読解除 (%1$d)</string>
     <string name="reactivate_selected">再開 (%1$d)</string>
     <string name="open_unsubscribe_page">購読解除ページを開く</string>
-    <string name="stat_active">有効</string>
     <string name="stat_unsubscribed">購読解除済み</string>
     <string name="stat_emails">メール</string>
     <string name="no_unsubscribed_senders">購読解除した送信者はいません</string>
@@ -1767,16 +1583,7 @@
     <string name="stop_sender_body">Asterが%1$sにリストからの削除を依頼します。処理中は数日間メールが届くことがあります。「購読解除済み」タブからいつでも再開できます。</string>
     <string name="stop_sender_confirm">リクエストを送信</string>
     <string name="stop_senders_body">Asterが各送信者にリストからの削除を依頼します。処理中は数日間メールが届くことがあります。「購読解除済み」タブからいつでも再開できます。</string>
-    <string name="to_recipients_inline">宛先 %1$s</string>
-    <string name="cc_recipients_inline">CC %1$s</string>
-    <string name="bcc_recipients_inline">BCC %1$s</string>
     <string name="recipients_required">宛先を1件以上追加してください</string>
-    <string name="e2e_point_device">送信前にこの端末で暗号化されます</string>
-    <string name="e2e_point_keys">受信者のIDキーだけが開けます</string>
-    <string name="e2e_point_quantum">将来の量子攻撃にも耐えられる設計</string>
-    <string name="standard_point_tls">TLSで転送中に暗号化</string>
-    <string name="standard_point_server">受信側のメールサーバーは内容を読めます</string>
-    <string name="standard_point_storage">Asterに届くと暗号化して保存されます</string>
     <string name="phishing_signal_authentication_failed">%1$sは送信者認証に合格しませんでした</string>
     <string name="send_failed_title">このメッセージは配送されませんでした</string>
     <string name="send_failed_help">アドレスを確認してから、メッセージをもう一度送信してください。</string>
@@ -1815,16 +1622,6 @@
     <string name="settings_section_other">その他</string>
     <string name="phishing_warning_title">このメッセージは疑わしいようです</string>
     <string name="phishing_dangerous_title">危険なメールをブロックしました</string>
-    <string name="phishing_signal_dkim_fail">DKIM 署名の検証に失敗</string>
-    <string name="phishing_signal_spf_fail">SPF チェックに失敗</string>
-    <string name="phishing_signal_dmarc_fail">DMARC チェックに失敗</string>
-    <string name="phishing_signal_reply_to_mismatch">返信先が差出人と異なります</string>
-    <string name="phishing_signal_display_name_spoof">表示名が既知のブランドを装っています</string>
-    <string name="phishing_signal_homoglyph">差出人ドメインに酷似した文字が使われています</string>
-    <string name="phishing_signal_urgency">緊急または脅迫的な表現</string>
-    <string name="phishing_signal_link_mismatch">リンクの文字列とリンク先が異なります</string>
-    <string name="phishing_signal_credential_request">パスワードや機密情報を求めています</string>
-    <string name="phishing_signal_blocklist">既知のフィッシング URL を含みます</string>
     <string name="phishing_signal_sender_domain_mimics">差出人ドメイン「%1$s」が酷似した文字で「%2$s」を装っています</string>
     <string name="phishing_signal_sender_domain_resembles">差出人ドメイン「%1$s」は文字を置き換えた「%2$s」に似ています</string>
     <string name="phishing_signal_display_name_brand">表示名に「%1$s」が含まれますが、メールの送信元は %2$s です</string>
@@ -1833,17 +1630,8 @@
     <string name="phishing_hide_details">詳細を非表示</string>
     <string name="phishing_privacy_note">端末上で検出しました。Aster がメールを読むことはありません。</string>
     <string name="phishing_signals_heading">この端末で見つかった警告サイン：</string>
-    <string name="phishing_links_disabled">リンクは無効です。「trust」と入力すると有効になります。</string>
-    <string name="phishing_trust_placeholder">「trust」と入力してリンクを有効化</string>
-    <string name="phishing_trust_button">このメールを信頼する</string>
     <string name="import_pick_file">.mbox または .eml ファイルを選択</string>
-    <string name="import_provider_label">取り込み元</string>
-    <string name="import_start">インポートを開始</string>
-    <string name="import_uploading">アップロード中…</string>
-    <string name="import_upload_complete">アップロード完了。サーバーで処理中です。</string>
     <string name="import_upload_failed">アップロードに失敗しました</string>
-    <string name="import_pick_provider">提供元を選択</string>
-    <string name="import_jobs_title">最近のインポート</string>
     <string name="import_no_jobs">インポートはまだありません</string>
     <string name="import_chunk_progress">%2$d 個中 %1$d 個目をアップロード中</string>
     <string name="import_job_created">インポートを開始しました</string>
@@ -1858,10 +1646,7 @@
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>
-    <string name="import_provider_icloud">iCloud</string>
-    <string name="import_provider_proton">Proton Mail</string>
     <string name="import_provider_mbox">MBOX ファイル</string>
-    <string name="import_provider_eml">EML ファイル</string>
     <string name="theme_dynamic">壁紙の色</string>
     <string name="theme_dynamic_subtitle">端末の配色に合わせる</string>
     <string name="delete_alias_confirm_message">%1$s を完全に削除しますか？このエイリアス宛のメールは差し戻されます。</string>
@@ -1886,7 +1671,6 @@
     <string name="signature_placement_below">引用テキストの下</string>
     <string name="signature_placement_inherit">全体設定に従う</string>
     <string name="signature_alias_conflict">このエイリアスにはすでに署名があります。</string>
-    <string name="signature_rich_preview_note">この署名はリッチフォーマットを含み、表示どおりに送信されます。</string>
     <string name="signature_edit_as_plain">プレーンテキストとして編集</string>
     <string name="signature_placement">配置</string>
     <string name="add_signature">署名を追加</string>
@@ -1923,7 +1707,6 @@
     <string name="import_state_failed">失敗</string>
     <string name="import_state_cancelled">キャンセル済み</string>
     <string name="storage_used_label">%1$s 使用中</string>
-    <string name="storage_free_label">%1$s 空き</string>
     <string name="storage_plan_section">ご利用のプラン</string>
     <string name="storage_plan_row">プラン</string>
     <string name="storage_included_row">プランに含まれる容量</string>
@@ -1936,7 +1719,6 @@
     <string name="storage_almost_full_body">新着メールが差し戻される前に、空き容量を作るか容量を追加してください。</string>
     <string name="storage_where_section">メッセージの内訳</string>
     <string name="storage_where_note">各メッセージは、現在あるフォルダで1回だけカウントされます。</string>
-    <string name="storage_donut_caption">件のメッセージ</string>
     <string name="storage_mailbox_section">メールボックスの統計</string>
     <string name="storage_total_messages">メッセージ総数</string>
     <string name="storage_unread_messages">未読</string>
@@ -1944,26 +1726,16 @@
     <string name="storage_scheduled_messages">予約済み</string>
     <string name="storage_average_size">メッセージの平均サイズ</string>
     <string name="storage_free_up_section">空き容量を作る</string>
-    <string name="storage_messages_count">%1$s 件</string>
     <string name="storage_empty_action">空にする</string>
     <string name="storage_trash_hint">削除したメールはゴミ箱を空にするまで容量を使い続けます。</string>
     <string name="storage_spam_hint">スパムは 30 日後に自動で削除されます。</string>
     <string name="storage_nothing_to_clean">いま整理できるものはありません。</string>
     <string name="storage_share_of_mail">メール全体の %1$s</string>
-    <string name="storage_messages_total">合計 %1$s 件</string>
     <string name="storage_cleanup_title">%1$s (%2$s)</string>
     <string name="storage_free_up_note">フォルダを空にすると、そのメールは完全に削除され容量が解放されます。</string>
-    <string name="schedule_send_paywall_description">指定した日時にメールを送信できます。Star 以上で利用できます。</string>
     <string name="quiet_hours_paywall_description">毎日決めた時間帯だけ通知をオフにします。Star 以上で利用できます。</string>
-    <string name="email_expiration_title">メールの有効期限</string>
-    <string name="email_expiration_paywall_description">一定時間後にメッセージを自動で消せます。Nova 以上で利用できます。</string>
     <string name="snooze_limit_reached">無料プランのスヌーズは 15 件までです。無制限にするにはアップグレードしてください。</string>
     <string name="external_accounts_paywall_description">Gmail、Outlook、Yahoo などの IMAP アカウントを接続できます。Star 以上で利用できます。</string>
-    <string name="custom_domains_paywall_description">カスタムドメインで送受信できます。Star 以上のプランで利用できます。</string>
-    <string name="catch_all_paywall_description">自分のドメインの任意のアドレス宛のメールを受け取れます。Nova 以上で利用できます。</string>
-    <string name="bridge_pairing_paywall_description">Thunderbird や Apple Mail などのデスクトップクライアントと連携できます。Star 以上で利用できます。</string>
-    <string name="pgp_custom_keys_paywall_description">自分の PGP 鍵をアップロードして入れ替えられます。Nova 以上で利用できます。</string>
-    <string name="label_password_paywall_description">ラベルをパスワードで保護できます。Nova 以上で利用できます。</string>
     <string name="upgrade_in_browser_note">プランの管理はブラウザで行えます。</string>
     <string name="buy_more_storage">容量を追加購入</string>
     <string name="buy_more_storage_note">容量の追加はブラウザから購入します。</string>
@@ -1983,7 +1755,6 @@
     <string name="totp_code_required_label">認証アプリのコードまたはバックアップコード</string>
     <string name="totp_code_required_error">認証アプリの 6 桁のコード、またはバックアップコードのいずれかを入力してください</string>
     <string name="preferences_locked_retry">いま設定を復号できませんでした。既定値を表示しています。戻ってから開き直してください。</string>
-    <string name="preferences_decrypt_failed">保存された設定をこの端末で読み取れませんでした。既定値を表示しています。ここでの変更は保存されます。</string>
     <string name="plan_name_star">Star</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">超新星</string>
@@ -1993,11 +1764,6 @@
     <string name="ghost_extended">ゴーストエイリアスを延長しました</string>
     <string name="ghost_expired_toast">ゴーストエイリアスを失効させました</string>
     <string name="ghost_action_failed">ゴーストエイリアスを更新できませんでした</string>
-    <string name="auth_fail_banner_body">このメールは送信元ドメインの認証要件を満たしませんでした。なりすましや不適切な転送の可能性があります。</string>
-    <string name="auth_fail_tooltip_intro">メール認証は、メッセージが本当に名乗ったドメインから来たかを確認します。チェックに失敗した場合、なりすまし、改ざん、または署名が壊れる形で転送された可能性があります。</string>
-    <string name="auth_fail_tooltip_spf">SPF は送信サーバーがドメイン所有者に許可されているかを確認します。失敗は、許可されていないサーバーから届いたことを意味します。</string>
-    <string name="auth_fail_tooltip_dkim">DKIM は送信ドメインが付けた暗号署名を検証します。失敗は、署名がない、無効、またはメッセージが変更されたことを意味します。</string>
-    <string name="auth_fail_tooltip_dmarc">DMARC は SPF や DKIM が失敗したときの扱いを受信側に伝えます。失敗は、そのドメインがこのメッセージを明確に許可していないことを意味します。</string>
     <string name="upgrade_modal_title">プランをアップグレード</string>
     <string name="upgrade_modal_description_generic">現在のプランの上限に達しました。アップグレードすると続けられます。</string>
     <string name="upgrade_modal_description_specific">%2$s プランの %1$s の上限に達しました。アップグレードするとさらに使えます。</string>
@@ -2061,12 +1827,6 @@
     <string name="export_private_key_label">秘密鍵をエクスポート</string>
     <string name="copy_fingerprint_action">フィンガープリントをコピー</string>
     <string name="copy_public_key_action">公開鍵をコピー</string>
-    <string name="encryption_feature_client_side">端末側での暗号化</string>
-    <string name="encryption_feature_client_side_sub">メールを読めるのはあなただけです</string>
-    <string name="encryption_feature_zero_knowledge">アクセス不能な保管</string>
-    <string name="encryption_feature_zero_knowledge_sub">サーバーが平文を見ることはありません</string>
-    <string name="encryption_feature_openpgp">OpenPGP 対応</string>
-    <string name="encryption_feature_openpgp_sub">一般的な PGP クライアントと連携します</string>
     <string name="copied">コピーしました</string>
     <string name="high_contrast_subtitle">文字と枠線のコントラストを強める</string>
     <string name="high_contrast_info_title">ハイコントラスト</string>
@@ -2093,7 +1853,6 @@
     <string name="low_network_mode">低速回線モード</string>
     <string name="low_network_mode_subtitle">遅い回線でのデータ使用量を抑えます</string>
     <string name="low_network_mode_info_title">低ネットワークモード</string>
-    <string name="low_network_mode_info_desc">必須ではない通信をすべて止め、遅い回線や従量制の回線でも Aster を使えるようにします。プロフィール画像、送信者ロゴ、メール内の外部画像、添付のプレビュー、カスタムフォントを無効にします。メールはすべてプレーンテキストで表示されます。</string>
     <string name="section_reading_conversations">閲覧とスレッド</string>
     <string name="conversation_grouping_subtitle">同じ会話のメールをまとめて表示します</string>
     <string name="inbox_categories">受信トレイの分類</string>
@@ -2141,7 +1900,6 @@
     <string name="delete_protected_folder_keep_note">このフォルダのメールはアカウントに残り、「すべてのメール」に移動します。</string>
     <string name="delete_protected_folder_acknowledge">このメールを復元できないことを理解しました。</string>
     <string name="section_advanced">詳細設定</string>
-    <string name="developer_mode_subtitle_behavior">ビルド情報、暗号化ステータス、デバッグツールを含む開発者タブを表示します</string>
     <string name="auto_save_recipients_subtitle">送信した相手のアドレスを自動で連絡先に追加します</string>
     <string name="reply_include_quoted">引用文を含める</string>
     <string name="reply_include_quoted_subtitle">すべての返信が、入力欄の下に引用された元のメッセージで始まります</string>
@@ -2160,7 +1918,6 @@
     <string name="no_trusted_devices">信頼済みの端末はありません</string>
     <string name="no_trusted_devices_subtitle">二要素認証を省略できるデバイスがここに表示されます</string>
     <string name="revoke_all_trusted_devices">すべての信頼済みデバイスを取り消す</string>
-    <string name="section_content_protection">コンテンツの保護</string>
     <string name="section_tracking_protection">トラッキング保護</string>
     <string name="section_images">画像</string>
     <string name="section_html_content">HTMLコンテンツ</string>
@@ -2235,12 +1992,7 @@
     <string name="create_directory">ディレクトリを作成</string>
     <string name="no_directories_yet">ディレクトリはまだありません</string>
     <string name="no_directories_subtitle">ディレクトリを作るとエイリアスを自動生成できます。</string>
-    <string name="directory_key_label">ディレクトリキー</string>
-    <string name="directory_separators_note">区切り文字 . + # が使えます</string>
-    <string name="note_optional">メモ（任意）</string>
-    <string name="ghost_alias_note_placeholder">例: ニュースレター登録</string>
     <string name="create_alias_placeholder">例: shopping</string>
-    <string name="add_custom_domain">カスタムドメインを追加</string>
     <string name="domain_placeholder">例: example.com</string>
     <string name="alias_status_active">有効</string>
     <string name="alias_status_disabled_badge">無効</string>
@@ -2308,8 +2060,6 @@
     <string name="add_custom_domain_dialog_title">カスタムドメインを追加</string>
     <string name="domain_name_label">ドメイン名</string>
     <string name="ghost_alias_creating">作成中...</string>
-    <string name="ghost_alias_note_label">メモ（任意）</string>
-    <string name="ghost_forwarded_count">%d 件を転送</string>
     <string name="ghost_expires_in_days">あと %d 日で失効</string>
     <string name="ghost_expires_in_hours">あと %d 時間で失効</string>
     <string name="ghost_expires_in_minutes">あと %d 分で失効</string>
@@ -2350,7 +2100,6 @@
     <string name="error_private_key_export">パスワードが違うか、書き出しに失敗しました</string>
     <string name="storage_addons_title">容量アドオン</string>
     <string name="storage_addons_description">どのプランにも容量を追加できます。アドオンは重ねて使えます。</string>
-    <string name="storage_addon_add">%1$s を追加</string>
     <string name="payment_method_card">クレジット / デビットカード</string>
     <string name="payment_method_card_subtitle">Stripe で支払う</string>
     <string name="payment_method_crypto">暗号資産</string>
@@ -2446,7 +2195,6 @@
     <string name="app_lock_passphrase_hint">パスフレーズを入力</string>
     <string name="app_lock_pin_mismatch">PIN が一致しません。もう一度お試しください。</string>
     <string name="app_lock_passphrase_too_short">パスフレーズは 4 文字以上にしてください。</string>
-    <string name="app_lock_passphrase_mismatch">パスフレーズが一致しません。もう一度お試しください。</string>
     <string name="app_lock_title">Aster Mailはロックされています</string>
     <string name="app_lock_wrong_pin">PIN が違います。もう一度お試しください。</string>
     <string name="app_lock_locked_out">試行回数が多すぎます。しばらく待ってからお試しください。</string>
@@ -2461,10 +2209,6 @@
     <string name="settings_alias_directories">エイリアスディレクトリ</string>
     <string name="alias_directories">エイリアスディレクトリ</string>
     <string name="alias_directories_description">エイリアスディレクトリを使うと、共通のキーで始まるどのアドレス宛のメールも受け取れます。ディレクトリを教えれば、本当のアドレスを知られずに連絡してもらえます。</string>
-    <string name="no_alias_directories">エイリアスディレクトリがありません</string>
-    <string name="no_alias_directories_subtitle">astermail.org でエイリアスディレクトリを作るとここで使えます</string>
-    <string name="directories_count">%1$d 件のディレクトリ</string>
-    <string name="auto_create_on">自動作成オン</string>
     <string name="settings_family">ファミリープラン</string>
     <string name="family_plan">ファミリープラン</string>
     <string name="manage_family">ファミリーを管理</string>
@@ -2488,7 +2232,6 @@
     <string name="kids_link_copied">設定リンクをコピーしました</string>
     <string name="kids_link_regenerated">新しいリンクを生成しました</string>
     <string name="kids_released">確保を解除しました</string>
-    <string name="kids_load_failed">予約を読み込めませんでした</string>
     <string name="kids_action_failed">実行できませんでした。もう一度お試しください。</string>
     <string name="settings_connection">接続</string>
     <string name="image_failed_placeholder">[画像を読み込めませんでした]</string>
@@ -2503,10 +2246,6 @@
     </plurals>
     <plurals name="subscriptions_found_count">
         <item quantity="other">新しい購読が %d 件見つかりました</item>
-    </plurals>
-    <plurals name="contacts_count_plural">
-        <item quantity="one">%d 件の連絡先</item>
-        <item quantity="other">%d 件の連絡先</item>
     </plurals>
     <string name="reaction_info_title">リアクション</string>
     <string name="reaction_info_you">%1$s でリアクションしました</string>
@@ -2706,9 +2445,6 @@
     <string name="index_time_remaining_less_min">残り1分未満</string>
     <string name="pause">一時停止</string>
     <string name="resume">再開</string>
-    <string name="domain_purchase_banner_title">独自のメールドメインを取得</string>
-    <string name="domain_purchase_banner_subtitle">検索して購入すれば数秒でメール受信を開始。DNSは自動で設定されます。</string>
-    <string name="domain_purchase_banner_cta">ドメインを購入</string>
     <string name="domain_purchase_title">ドメインを購入</string>
     <string name="domain_purchase_search_placeholder">ドメイン名を検索</string>
     <string name="domain_purchase_per_year">%1$s/年</string>
@@ -2739,7 +2475,6 @@
     <string name="domain_purchase_order_expired">この注文は支払い前に期限切れになりました。新しく購入手続きを開始してください。</string>
     <string name="domain_purchase_order_lapsed">このドメインは有効期限を迎え、現在は無効です。もう一度購入すると復活できます。</string>
     <string name="domain_purchase_try_instead">代わりにこちらはいかがですか</string>
-    <string name="domain_purchase_empty_title">何か入力して始めましょう</string>
     <string name="domain_purchase_empty_subtitle">単語、名前、またはドメイン全体を入力してください。販売しているすべての末尾を調べて、空いているものを表示します。</string>
     <string name="domain_purchase_search_failed">検索できませんでした。もう一度お試しください。</string>
     <string name="domain_purchase_more_suggestions">他の候補を生成</string>
@@ -2767,7 +2502,6 @@
     <string name="domain_purchase_awaiting_payment">支払い待ち</string>
     <string name="domain_purchase_complete_purchase">購入を完了</string>
     <string name="domain_purchase_create_first_address">最初のアドレスを作成</string>
-    <string name="domain_purchase_please_wait">少々お待ちください。アプリを開いたままにしてください。</string>
     <string name="domain_purchase_warmup_note">新しいドメインは、送信の信頼性が築かれるまで時間がかかります。その間は、最初に送ったメッセージの一部がスパムに振り分けられることがあります。</string>
     <string name="rename_label">ラベル名を変更</string>
     <string name="change_label_color">色を変更</string>
@@ -2788,7 +2522,6 @@
     <string name="allowlist_email_placeholder">メールアドレスを入力…</string>
     <string name="allowlist_domain_placeholder">ドメインを入力…</string>
     <string name="allowlist_domain_label">ドメイン全体</string>
-    <string name="allowed_senders_load_failed">許可リストを読み込めませんでした</string>
     <string name="sender_added_to_allowlist">許可リストに追加しました</string>
     <string name="failed_allow_sender">許可リストに追加できませんでした</string>
     <string name="failed_remove_allowed_sender">許可リストから削除できませんでした</string>
@@ -2830,7 +2563,6 @@
     <string name="revoke_all_trusted_devices_confirm">信頼済みデバイスは次回サインインするときに再度確認が必要になります。</string>
     <string name="plan_price_per_month">月額</string>
     <string name="plan_price_per_year">年額</string>
-    <string name="plan_save_per_year">年間 %1$s の節約</string>
     <string name="section_compose_text">作成時のテキスト</string>
     <string name="compose_text_size">文字サイズ</string>
     <string name="compose_text_size_subtitle">新しいメッセージの初期文字サイズを選択します。</string>
@@ -2960,7 +2692,6 @@
     <string name="alias_delete_directory_confirm">%1$s を削除しますか？このディレクトリの新しいアドレス宛のメールは配信されなくなります。すでに作成されたエイリアスは引き続き使用できます。この操作は元に戻せません。</string>
     <string name="attachment_too_many">1 通のメールに添付できるのは %1$d 件です</string>
     <string name="auto_forward_setup_hint">転送先のアドレスを入力してルールを作成してください。転送が始まる前に、そのアドレスで要求を承認する必要があります。</string>
-    <string name="cancels_format">%s に解約</string>
     <string name="check_for_older_messages">以前のメールを確認</string>
     <string name="contact_add_failed">%1$s を連絡先に保存できませんでした</string>
     <string name="contact_remove_failed">%1$s を連絡先から削除できませんでした</string>
@@ -2999,7 +2730,6 @@
     <string name="marked_as_read">既読にしました</string>
     <string name="moved_to_folder">%s に移動しました</string>
     <string name="no_more_messages">これ以上メッセージはありません</string>
-    <string name="price_per_interval">%1$s / %2$s</string>
     <string name="purge_all_aliases_message">このリストのエイリアスがすべて完全に削除されます。この操作は元に戻せません。</string>
     <string name="recovery_backup_not_saved">これらのコードはまだアカウントに保存されていないため、復旧に使用できません。接続を確認して再実行してください。</string>
     <string name="are_you_sure">よろしいですか？</string>
@@ -3154,12 +2884,8 @@
     <string name="error_alias_reencryption_incomplete">一部のエイリアスの再暗号化が完了しなかったため、変更は適用されていません。やり直してください。</string>
     <string name="error_client_upgrade_required">このバージョンのアプリではこの変更を行えません。最新バージョンにアップデートしてからやり直してください。</string>
     <string name="error_verification_required">このアカウントを引き続き使用するには、復旧用メールアドレスを確認してください。</string>
-    <string name="no_recipients">宛先なし</string>
     <string name="scheduled_already_sending">このメールは送信中のため、変更できません。</string>
-    <string name="scheduled_cancel_send">送信を取り消す</string>
     <string name="scheduled_for">%1$s に送信予定</string>
-    <string name="scheduled_recipients">宛先：%1$s</string>
-    <string name="scheduled_time_in_past">未来の時刻を選択してください</string>
     <string name="contact_groups">グループ</string>
     <string name="new_group">新しいグループ</string>
     <string name="group_name">グループ名</string>
@@ -3179,10 +2905,6 @@
     <string name="review_duplicates">確認</string>
     <string name="delete_contacts_message">選択した連絡先は、アカウントにサインインしているすべてのデバイスから削除されます。</string>
     <string name="clear_selection">選択を解除</string>
-    <string name="select_contacts_hint">プロフィール写真をタップして連絡先を選択します。</string>
-    <plurals name="groups_count_plural">
-        <item quantity="other">%d 件のグループ</item>
-    </plurals>
     <plurals name="group_members_plural">
         <item quantity="other">メンバー %d 人</item>
     </plurals>
@@ -3191,10 +2913,6 @@
     </plurals>
     <plurals name="delete_contacts_title">
         <item quantity="other">%d 件の連絡先を削除しますか？</item>
-    </plurals>
-    <plurals name="contacts_deleted_plural">
-        <item quantity="one">%d 件の連絡先を削除しました</item>
-        <item quantity="other">%d 件の連絡先を削除しました</item>
     </plurals>
     <string name="checkout_review_title">確認して支払う</string>
     <string name="checkout_term_title">契約期間</string>
@@ -3240,9 +2958,6 @@
     <string name="contacts_import_failed">連絡先を読み込めませんでした</string>
     <string name="contacts_export_failed">連絡先を書き出せませんでした</string>
     <string name="import_contacts_file">ファイルから読み込む</string>
-    <string name="export_contacts_action">連絡先を書き出す</string>
-    <string name="export_all_contacts">すべての連絡先をエクスポート</string>
-    <string name="export_selection">選択項目を書き出す</string>
     <string name="export_as_vcard">vCard として書き出す</string>
     <string name="export_as_csv">CSV として書き出す</string>
     <string name="contact_photo">連絡先の写真</string>
@@ -3348,7 +3063,6 @@
     <string name="custom_domain_new_desc">Asterを離れずにドメインを検索して購入できます。</string>
     <string name="import_mail_step_title">メールを一緒に持ってくる</string>
     <string name="import_mail_step_desc">別のアカウントのメッセージを Aster に移行します。すべて保存前にお使いのデバイスで暗号化されます。</string>
-    <string name="import_mail_action">メールを取り込む</string>
     <string name="import_mail_skip">空の受信トレイで始める</string>
     <string name="import_mail_privacy_note">後から設定で取り込むこともできます。</string>
     <string name="import_provider_gmail_desc">Google TakeoutからのMBOX</string>
@@ -3366,7 +3080,6 @@
         <item quantity="many">さらに %d 件を表示</item>
         <item quantity="other">さらに %d 件を表示</item>
     </plurals>
-    <string name="enc_key_fingerprint_label">鍵のフィンガープリント</string>
     <string name="category_notifications_muted_toast">%1$s の通知をミュートしました</string>
     <string name="category_notifications_unmuted_toast">%1$s の通知をオンにしました</string>
     <string name="settings_section_support">サポート</string>
@@ -3447,7 +3160,6 @@
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">超新星</string>
     <string name="connection_relay_connected">リレーが有効です。通信が遅くなることがあります。</string>
-    <string name="connection_relay_restored">通常の状態に戻りました</string>
     <string name="connection_relay_disconnected">切断しました</string>
     <string name="search_groups">グループを検索</string>
     <string name="search_trash">ゴミ箱を検索</string>
@@ -3544,7 +3256,6 @@
     <string name="passkey_added_second_step_only">パスキーを追加しました。パスワードでサインインするときの 2 段階目として使用できます。</string>
     <string name="passkey_already_registered">このパスキーはすでにアカウントに保存されています。</string>
     <string name="passkey_create_unavailable">このデバイスではパスキーを保存できません。画面ロックがオンで、パスワード マネージャーが設定されていることを確認してください。</string>
-    <string name="passkey_app_not_verified">このバージョンの Aster Mail はまだパスキー用に検証されていないため、このデバイスでは Aster Mail のパスキーを保存または使用できません。</string>
     <string name="passkey_create_failed">パスキーを追加できませんでした。もう一度お試しください。</string>
     <string name="error_passkey_timed_out">パスキーのリクエストがタイムアウトしました。もう一度お試しください。</string>
     <string name="billing_play_unavailable">現在 Google Play での購入はご利用いただけません。しばらくしてからもう一度お試しください。</string>

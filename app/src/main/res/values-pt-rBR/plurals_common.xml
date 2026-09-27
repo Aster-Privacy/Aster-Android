@@ -1,15 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <plurals name="common_unread_count">
-        <item quantity="one">%d não lida</item>
-        <item quantity="many">%d não lidas</item>
-        <item quantity="other">%d não lidas</item>
-    </plurals>
-    <plurals name="common_new_messages">
-        <item quantity="one">%d mensagem nova</item>
-        <item quantity="many">%d mensagens novas</item>
-        <item quantity="other">%d mensagens novas</item>
-    </plurals>
     <plurals name="common_folders_count">
         <item quantity="one">%d pasta</item>
         <item quantity="many">%d pastas</item>

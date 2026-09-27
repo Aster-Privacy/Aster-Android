@@ -16,9 +16,6 @@
     <string name="notif_channel_new_mail_name">Yeni posta</string>
     <string name="notif_channel_new_mail_description">Yeni gelen e-postalar için bildirimler</string>
     <string name="notif_new_message">Yeni ileti</string>
-    <string name="notif_action_reply">Yanıtla</string>
-    <string name="notif_action_mark_read">Okundu olarak işaretle</string>
-    <string name="notif_action_archive">Arşivle</string>
     <string name="notif_group_summary_new_mail">Yeni posta</string>
     <string name="notif_battery_opt_title">Sınırsız arka plan etkinliği</string>
     <string name="notif_battery_opt_subtitle">Güvenilir bildirimler için gereklidir. Sistem ayarlarında etkinleştirmek için dokunun.</string>

@@ -40,7 +40,6 @@
     <string name="image_theme_reset_short">リセット</string>
     <string name="image_theme_reset_confirm_title">画像テーマをリセットしますか？</string>
     <string name="image_theme_reset_confirm_message">背景の写真が削除され、色がデフォルトのテーマに戻ります。</string>
-    <string name="theme_opacity">テーマの不透明度</string>
     <string name="theme_opacity_clear">クリア</string>
     <string name="theme_opacity_clear_subtitle">写真が最もよく見えます。</string>
     <string name="theme_opacity_glass">ガラス</string>

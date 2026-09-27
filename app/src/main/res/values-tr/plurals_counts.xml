@@ -36,17 +36,9 @@
         <item quantity="one">%d ileti okunmadı olarak işaretlendi</item>
         <item quantity="other">%d ileti okunmadı olarak işaretlendi</item>
     </plurals>
-    <plurals name="results_count">
-        <item quantity="one">%d sonuç</item>
-        <item quantity="other">%d sonuç</item>
-    </plurals>
     <plurals name="active_endpoints">
         <item quantity="one">%d aktif uç nokta</item>
         <item quantity="other">%d aktif uç nokta</item>
-    </plurals>
-    <plurals name="storage_addons_active_count">
-        <item quantity="one">%1$d etkin ek</item>
-        <item quantity="other">%1$d etkin ek</item>
     </plurals>
     <plurals name="backup_codes_remaining">
         <item quantity="one">%d yedek kod kaldı</item>

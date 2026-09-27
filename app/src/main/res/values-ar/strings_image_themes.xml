@@ -40,7 +40,6 @@
     <string name="image_theme_reset_short">إعادة تعيين</string>
     <string name="image_theme_reset_confirm_title">هل تريد إعادة تعيين سمة الصورة؟</string>
     <string name="image_theme_reset_confirm_message">يؤدي هذا إلى إزالة صورة الخلفية وإعادة الألوان إلى السمة الافتراضية.</string>
-    <string name="theme_opacity">عتامة السمة</string>
     <string name="theme_opacity_clear">شفاف</string>
     <string name="theme_opacity_clear_subtitle">تظهر صورتك بأوضح شكل.</string>
     <string name="theme_opacity_glass">زجاجي</string>

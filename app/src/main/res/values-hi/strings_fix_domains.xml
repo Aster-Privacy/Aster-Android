@@ -6,7 +6,6 @@
     <string name="domain_manage_verification">सत्यापन</string>
     <string name="domain_manage_last_verified">पिछली बार सत्यापित</string>
     <string name="domain_manage_never_verified">अभी सत्यापित नहीं</string>
-    <string name="domain_manage_records">DNS रिकॉर्ड</string>
     <string name="domain_manage_catch_all_description">इस डोमेन के किसी भी पते पर भेजी गई मेल पहुंचाएं।</string>
     <string name="domain_manage_recheck">DNS रिकॉर्ड दोबारा जांचें</string>
     <string name="domain_manage_rechecking">DNS रिकॉर्ड जांचे जा रहे हैं</string>

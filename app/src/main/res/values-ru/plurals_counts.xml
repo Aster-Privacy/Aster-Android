@@ -54,23 +54,11 @@
         <item quantity="many">Отмечено как непрочитанные: %d</item>
         <item quantity="other">Отмечено как непрочитанные: %d</item>
     </plurals>
-    <plurals name="results_count">
-        <item quantity="one">%d результат</item>
-        <item quantity="few">%d результата</item>
-        <item quantity="many">%d результатов</item>
-        <item quantity="other">%d результатов</item>
-    </plurals>
     <plurals name="active_endpoints">
         <item quantity="one">%d активная точка подключения</item>
         <item quantity="few">%d активные точки подключения</item>
         <item quantity="many">%d активных точек подключения</item>
         <item quantity="other">%d активных точек подключения</item>
-    </plurals>
-    <plurals name="storage_addons_active_count">
-        <item quantity="one">активных дополнений: %1$d</item>
-        <item quantity="few">активных дополнений: %1$d</item>
-        <item quantity="many">активных дополнений: %1$d</item>
-        <item quantity="other">активных дополнений: %1$d</item>
     </plurals>
     <plurals name="backup_codes_remaining">
         <item quantity="one">Остался %d резервный код</item>

@@ -40,7 +40,6 @@
     <string name="image_theme_reset_short">रीसेट करें</string>
     <string name="image_theme_reset_confirm_title">फ़ोटो थीम रीसेट करें?</string>
     <string name="image_theme_reset_confirm_message">इससे बैकग्राउंड फ़ोटो हट जाती है और रंग डिफ़ॉल्ट थीम पर लौट आते हैं।</string>
-    <string name="theme_opacity">थीम अपारदर्शिता</string>
     <string name="theme_opacity_clear">पारदर्शी</string>
     <string name="theme_opacity_clear_subtitle">आपकी फ़ोटो सबसे ज़्यादा दिखती है।</string>
     <string name="theme_opacity_glass">ग्लास</string>

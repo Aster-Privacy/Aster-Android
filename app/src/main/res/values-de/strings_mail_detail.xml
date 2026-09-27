@@ -2,16 +2,12 @@
 <resources>
     <string name="detail_show_details">Details anzeigen</string>
     <string name="detail_hide_details">Details ausblenden</string>
-    <string name="detail_show_quoted_text">Zitierten Text anzeigen</string>
-    <string name="detail_hide_quoted_text">Zitierten Text ausblenden</string>
     <string name="detail_external_images_blocked">Diese Nachricht enthält externe Inhalte. Beim Laden kann der Absender Ihre Aktivität sehen.</string>
     <string name="detail_external_allow_once">Einmal laden</string>
     <string name="detail_external_always_allow">Immer erlauben</string>
     <string name="detail_external_images_traffic_blocked">Externe Bilder sind blockiert, um Daten zu sparen.</string>
     <string name="detail_disable_traffic_saving">Datensparen abschalten</string>
-    <string name="detail_external_dismiss">Jetzt nicht</string>
     <string name="detail_unsubscribe_title">Dieser Absender unterstützt Abmelden mit einem Klick.</string>
-    <string name="detail_unsubscribe_subtitle">Sie erhalten keine Nachrichten mehr von dieser Adresse.</string>
     <string name="detail_view_raw_source">Rohquelltext ansehen</string>
     <string name="detail_raw_source_title">Rohquelltext der Nachricht</string>
     <string name="detail_raw_source_headers">Kopfzeilen</string>
@@ -20,8 +16,6 @@
     <string name="detail_raw_source_copied">In die Zwischenablage kopiert</string>
     <string name="detail_raw_source_close">Schließen</string>
     <string name="detail_raw_source_unavailable">Für diese Nachricht ist kein Rohquelltext verfügbar.</string>
-    <string name="detail_star_action">Nachricht mit Stern markieren</string>
-    <string name="detail_unstar_action">Stern entfernen</string>
     <string name="message_details">Nachrichtendetails</string>
     <string name="from_label">Von</string>
     <string name="to_label">An</string>

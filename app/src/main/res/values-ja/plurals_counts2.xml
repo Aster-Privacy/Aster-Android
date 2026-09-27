@@ -6,9 +6,6 @@
     <plurals name="api_keys_count">
         <item quantity="other">%d個のキー</item>
     </plurals>
-    <plurals name="devices_count">
-        <item quantity="other">%d台のデバイス</item>
-    </plurals>
     <plurals name="labels_count">
         <item quantity="other">%d個のラベル</item>
     </plurals>

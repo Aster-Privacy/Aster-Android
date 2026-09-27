@@ -2,16 +2,12 @@
 <resources>
     <string name="detail_show_details">Mostra i dettagli</string>
     <string name="detail_hide_details">Nascondi i dettagli</string>
-    <string name="detail_show_quoted_text">Mostra testo citato</string>
-    <string name="detail_hide_quoted_text">Nascondi testo citato</string>
     <string name="detail_external_images_blocked">Questo messaggio contiene contenuti remoti. Caricandoli, il mittente può vedere la tua attività.</string>
     <string name="detail_external_allow_once">Carica una volta</string>
     <string name="detail_external_always_allow">Consenti sempre</string>
     <string name="detail_external_images_traffic_blocked">Le immagini remote sono bloccate per risparmiare dati.</string>
     <string name="detail_disable_traffic_saving">Disattiva il risparmio dati</string>
-    <string name="detail_external_dismiss">Non ora</string>
     <string name="detail_unsubscribe_title">Questo mittente permette di disiscriversi con un tocco.</string>
-    <string name="detail_unsubscribe_subtitle">Non riceverai più messaggi da questo indirizzo.</string>
     <string name="detail_view_raw_source">Vedi il sorgente grezzo</string>
     <string name="detail_raw_source_title">Sorgente grezzo del messaggio</string>
     <string name="detail_raw_source_headers">Intestazioni</string>
@@ -20,8 +16,6 @@
     <string name="detail_raw_source_copied">Copiato negli appunti</string>
     <string name="detail_raw_source_close">Chiudi</string>
     <string name="detail_raw_source_unavailable">Il sorgente grezzo non è disponibile per questo messaggio.</string>
-    <string name="detail_star_action">Contrassegna come speciale</string>
-    <string name="detail_unstar_action">Rimuovi da Speciali</string>
     <string name="message_details">Dettagli del messaggio</string>
     <string name="from_label">Da</string>
     <string name="to_label">A</string>

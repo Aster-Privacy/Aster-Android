@@ -40,7 +40,6 @@
     <string name="image_theme_reset_short">초기화</string>
     <string name="image_theme_reset_confirm_title">이미지 테마를 재설정할까요?</string>
     <string name="image_theme_reset_confirm_message">배경 사진이 삭제되고 색상이 기본 테마로 돌아갑니다.</string>
-    <string name="theme_opacity">테마 불투명도</string>
     <string name="theme_opacity_clear">투명</string>
     <string name="theme_opacity_clear_subtitle">사진이 가장 잘 보입니다.</string>
     <string name="theme_opacity_glass">글래스</string>

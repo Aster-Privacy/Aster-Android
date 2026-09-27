@@ -6,7 +6,6 @@
     <string name="domain_manage_verification">التحقق</string>
     <string name="domain_manage_last_verified">آخر تحقق</string>
     <string name="domain_manage_never_verified">لم يتم التحقق بعد</string>
-    <string name="domain_manage_records">سجلات DNS</string>
     <string name="domain_manage_catch_all_description">تسليم الرسائل المُرسلة إلى أي عنوان على هذا النطاق.</string>
     <string name="domain_manage_recheck">إعادة فحص سجلات DNS</string>
     <string name="domain_manage_rechecking">جارٍ فحص سجلات DNS</string>

@@ -12,12 +12,6 @@
         <item quantity="many">%d kluczy</item>
         <item quantity="other">%d klucza</item>
     </plurals>
-    <plurals name="devices_count">
-        <item quantity="one">%d urządzenie</item>
-        <item quantity="few">%d urządzenia</item>
-        <item quantity="many">%d urządzeń</item>
-        <item quantity="other">%d urządzenia</item>
-    </plurals>
     <plurals name="labels_count">
         <item quantity="one">%d etykieta</item>
         <item quantity="few">%d etykiety</item>

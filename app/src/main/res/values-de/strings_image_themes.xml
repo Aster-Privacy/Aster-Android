@@ -40,7 +40,6 @@
     <string name="image_theme_reset_short">Zurücksetzen</string>
     <string name="image_theme_reset_confirm_title">Bildthema zurücksetzen?</string>
     <string name="image_theme_reset_confirm_message">Dadurch wird das Hintergrundfoto entfernt und die Farben kehren zum Standardthema zurück.</string>
-    <string name="theme_opacity">Deckkraft des Themas</string>
     <string name="theme_opacity_clear">Klar</string>
     <string name="theme_opacity_clear_subtitle">Ihr Foto ist am stärksten sichtbar.</string>
     <string name="theme_opacity_glass">Glas</string>

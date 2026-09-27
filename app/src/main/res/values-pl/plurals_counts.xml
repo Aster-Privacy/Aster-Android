@@ -54,23 +54,11 @@
         <item quantity="many">Oznaczono %d wiadomości jako nieprzeczytane</item>
         <item quantity="other">Oznaczono %d wiadomości jako nieprzeczytane</item>
     </plurals>
-    <plurals name="results_count">
-        <item quantity="one">%d wynik</item>
-        <item quantity="few">%d wyniki</item>
-        <item quantity="many">%d wyników</item>
-        <item quantity="other">%d wyników</item>
-    </plurals>
     <plurals name="active_endpoints">
         <item quantity="one">%d aktywny punkt końcowy</item>
         <item quantity="few">%d aktywne punkty końcowe</item>
         <item quantity="many">%d aktywnych punktów końcowych</item>
         <item quantity="other">%d aktywnego punktu końcowego</item>
-    </plurals>
-    <plurals name="storage_addons_active_count">
-        <item quantity="one">Aktywne dodatki: %1$d</item>
-        <item quantity="few">Aktywne dodatki: %1$d</item>
-        <item quantity="many">Aktywne dodatki: %1$d</item>
-        <item quantity="other">Aktywne dodatki: %1$d</item>
     </plurals>
     <plurals name="backup_codes_remaining">
         <item quantity="one">Pozostał %d kod zapasowy</item>

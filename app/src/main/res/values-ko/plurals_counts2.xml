@@ -6,9 +6,6 @@
     <plurals name="api_keys_count">
         <item quantity="other">키 %d개</item>
     </plurals>
-    <plurals name="devices_count">
-        <item quantity="other">기기 %d대</item>
-    </plurals>
     <plurals name="labels_count">
         <item quantity="other">라벨 %d개</item>
     </plurals>

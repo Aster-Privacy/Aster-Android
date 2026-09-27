@@ -6,7 +6,6 @@
     <string name="domain_manage_verification">Проверка</string>
     <string name="domain_manage_last_verified">Последняя проверка</string>
     <string name="domain_manage_never_verified">Ещё не проверен</string>
-    <string name="domain_manage_records">Записи DNS</string>
     <string name="domain_manage_catch_all_description">Доставлять письма, отправленные на любой адрес в этом домене.</string>
     <string name="domain_manage_recheck">Проверить записи DNS ещё раз</string>
     <string name="domain_manage_rechecking">Проверка записей DNS</string>

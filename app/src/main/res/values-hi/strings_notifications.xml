@@ -3,9 +3,6 @@
     <string name="notif_channel_new_mail_name">नई मेल</string>
     <string name="notif_channel_new_mail_description">आने वाली नई ईमेल की सूचनाएं</string>
     <string name="notif_new_message">नया संदेश</string>
-    <string name="notif_action_reply">जवाब दें</string>
-    <string name="notif_action_mark_read">पढ़ा हुआ चिह्नित करें</string>
-    <string name="notif_action_archive">आर्काइव</string>
     <string name="notif_group_summary_new_mail">नई मेल</string>
     <string name="notif_channel_login_alerts_name">साइन इन अलर्ट</string>
     <string name="notif_channel_login_alerts_description">आपके खाते में किसी नए डिवाइस पर साइन इन होने की सूचनाएं</string>

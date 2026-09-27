@@ -1,23 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="search_placeholder">Postada ara</string>
-    <string name="search_clear_cd">Aramayı temizle</string>
-    <string name="search_back_cd">Geri</string>
-    <string name="search_remove_filter_cd">Filtreyi kaldır</string>
-    <string name="search_empty_initial_title">Postanızda arayın</string>
-    <string name="search_empty_initial_subtitle">İletileri gönderene, konuya veya içeriğe göre bulun. Tüm aramalar bu cihazda yapılır.</string>
-    <string name="search_empty_no_results_title">Sonuç yok</string>
-    <string name="search_empty_no_results_subtitle">Başka bir sözcük deneyin veya filtreleri kaldırın.</string>
-    <string name="search_recent_header">Son aramalar</string>
-    <string name="search_recent_clear">Temizle</string>
-    <string name="search_quick_all">Tümü</string>
-    <string name="search_quick_unread">Okunmamış</string>
-    <string name="search_quick_attachments">Ekler</string>
-    <string name="search_quick_flagged">İşaretli</string>
-    <string name="search_filter_has_attachment">Eki var</string>
-    <string name="search_filter_unread">Okunmamış</string>
-    <string name="search_filter_starred">Yıldızlı</string>
-    <string name="search_filter_encrypted">Şifreli</string>
     <string name="search_chip_from">Kimden</string>
     <string name="search_chip_to">Kime</string>
     <string name="search_chip_contact">Kişi</string>

@@ -6,7 +6,6 @@
     <string name="domain_manage_verification">Verificación</string>
     <string name="domain_manage_last_verified">Última verificación</string>
     <string name="domain_manage_never_verified">Sin verificar todavía</string>
-    <string name="domain_manage_records">Registros DNS</string>
     <string name="domain_manage_catch_all_description">Recibe el correo enviado a cualquier dirección de este dominio.</string>
     <string name="domain_manage_recheck">Volver a comprobar los registros DNS</string>
     <string name="domain_manage_rechecking">Comprobando los registros DNS</string>

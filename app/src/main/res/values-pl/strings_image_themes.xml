@@ -40,7 +40,6 @@
     <string name="image_theme_reset_short">Resetuj</string>
     <string name="image_theme_reset_confirm_title">Zresetować motyw ze zdjęciem?</string>
     <string name="image_theme_reset_confirm_message">Ta czynność usuwa zdjęcie w tle i przywraca kolory motywu domyślnego.</string>
-    <string name="theme_opacity">Krycie motywu</string>
     <string name="theme_opacity_clear">Przezroczyste</string>
     <string name="theme_opacity_clear_subtitle">Twoje zdjęcie jest najlepiej widoczne.</string>
     <string name="theme_opacity_glass">Szkło</string>

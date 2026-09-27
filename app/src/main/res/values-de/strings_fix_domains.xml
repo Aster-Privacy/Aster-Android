@@ -6,7 +6,6 @@
     <string name="domain_manage_verification">Überprüfung</string>
     <string name="domain_manage_last_verified">Zuletzt überprüft</string>
     <string name="domain_manage_never_verified">Noch nicht überprüft</string>
-    <string name="domain_manage_records">DNS-Einträge</string>
     <string name="domain_manage_catch_all_description">Nachrichten an jede Adresse dieser Domain zustellen.</string>
     <string name="domain_manage_recheck">DNS-Einträge erneut prüfen</string>
     <string name="domain_manage_rechecking">DNS-Einträge werden geprüft</string>

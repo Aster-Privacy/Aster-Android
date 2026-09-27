@@ -45,20 +45,10 @@
         <item quantity="many">%d messaggi contrassegnati come non letti</item>
         <item quantity="other">%d messaggi contrassegnati come non letti</item>
     </plurals>
-    <plurals name="results_count">
-        <item quantity="one">%d risultato</item>
-        <item quantity="many">%d risultati</item>
-        <item quantity="other">%d risultati</item>
-    </plurals>
     <plurals name="active_endpoints">
         <item quantity="one">%d endpoint attivo</item>
         <item quantity="many">%d endpoint attivi</item>
         <item quantity="other">%d endpoint attivi</item>
-    </plurals>
-    <plurals name="storage_addons_active_count">
-        <item quantity="one">%1$d componente attivo</item>
-        <item quantity="many">%1$d componenti attivi</item>
-        <item quantity="other">%1$d componenti attivi</item>
     </plurals>
     <plurals name="backup_codes_remaining">
         <item quantity="one">%d codice di backup rimanente</item>

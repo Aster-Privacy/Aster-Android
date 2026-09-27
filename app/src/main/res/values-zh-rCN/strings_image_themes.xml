@@ -40,7 +40,6 @@
     <string name="image_theme_reset_short">重置</string>
     <string name="image_theme_reset_confirm_title">要重置图片主题吗？</string>
     <string name="image_theme_reset_confirm_message">此操作会移除背景照片，并将颜色恢复为默认主题。</string>
-    <string name="theme_opacity">主题不透明度</string>
     <string name="theme_opacity_clear">通透</string>
     <string name="theme_opacity_clear_subtitle">照片显示得最清楚。</string>
     <string name="theme_opacity_glass">玻璃</string>

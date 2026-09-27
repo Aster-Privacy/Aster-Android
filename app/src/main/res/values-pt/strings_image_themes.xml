@@ -40,7 +40,6 @@
     <string name="image_theme_reset_short">Redefinir</string>
     <string name="image_theme_reset_confirm_title">Repor o tema de imagem?</string>
     <string name="image_theme_reset_confirm_message">Esta ação remove a fotografia de fundo e repõe as cores do tema predefinido.</string>
-    <string name="theme_opacity">Opacidade do tema</string>
     <string name="theme_opacity_clear">Transparente</string>
     <string name="theme_opacity_clear_subtitle">A sua fotografia fica o mais visível possível.</string>
     <string name="theme_opacity_glass">Vidro</string>

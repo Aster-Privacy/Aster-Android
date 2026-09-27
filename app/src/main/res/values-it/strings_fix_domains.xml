@@ -6,7 +6,6 @@
     <string name="domain_manage_verification">Verifica</string>
     <string name="domain_manage_last_verified">Ultima verifica</string>
     <string name="domain_manage_never_verified">Non ancora verificato</string>
-    <string name="domain_manage_records">Record DNS</string>
     <string name="domain_manage_catch_all_description">Ricevi i messaggi inviati a qualsiasi indirizzo di questo dominio.</string>
     <string name="domain_manage_recheck">Ricontrolla i record DNS</string>
     <string name="domain_manage_rechecking">Controllo dei record DNS</string>

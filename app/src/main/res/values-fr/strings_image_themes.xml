@@ -40,7 +40,6 @@
     <string name="image_theme_reset_short">Réinitialiser</string>
     <string name="image_theme_reset_confirm_title">Réinitialiser le thème d\'image ?</string>
     <string name="image_theme_reset_confirm_message">Cette action supprime la photo d\'arrière-plan et rétablit les couleurs du thème par défaut.</string>
-    <string name="theme_opacity">Opacité du thème</string>
     <string name="theme_opacity_clear">Transparent</string>
     <string name="theme_opacity_clear_subtitle">Votre photo est la plus visible.</string>
     <string name="theme_opacity_glass">Verre</string>

@@ -12,12 +12,6 @@
         <item quantity="many">%d ключей</item>
         <item quantity="other">%d ключей</item>
     </plurals>
-    <plurals name="devices_count">
-        <item quantity="one">%d устройство</item>
-        <item quantity="few">%d устройства</item>
-        <item quantity="many">%d устройств</item>
-        <item quantity="other">%d устройств</item>
-    </plurals>
     <plurals name="labels_count">
         <item quantity="one">%d метка</item>
         <item quantity="few">%d метки</item>

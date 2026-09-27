@@ -8,10 +8,6 @@
         <item quantity="one">%d anahtar</item>
         <item quantity="other">%d anahtar</item>
     </plurals>
-    <plurals name="devices_count">
-        <item quantity="one">%d cihaz</item>
-        <item quantity="other">%d cihaz</item>
-    </plurals>
     <plurals name="labels_count">
         <item quantity="one">%d etiket</item>
         <item quantity="other">%d etiket</item>

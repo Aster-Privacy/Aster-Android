@@ -40,7 +40,6 @@
     <string name="image_theme_reset_short">Reimposta</string>
     <string name="image_theme_reset_confirm_title">Reimpostare il tema immagine?</string>
     <string name="image_theme_reset_confirm_message">Questa azione rimuove la foto di sfondo e riporta i colori al tema predefinito.</string>
-    <string name="theme_opacity">Opacità del tema</string>
     <string name="theme_opacity_clear">Trasparente</string>
     <string name="theme_opacity_clear_subtitle">La tua foto è visibile al massimo.</string>
     <string name="theme_opacity_glass">Vetro</string>

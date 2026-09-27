@@ -10,6 +10,5 @@
     <string name="security_activity_today">Сегодня</string>
     <string name="security_activity_yesterday">Вчера</string>
     <string name="security_activity_show_more">Показать больше</string>
-    <string name="security_activity_show_less">Показать меньше</string>
     <string name="security_activity_empty_filter">Нет активности, соответствующей этому фильтру.</string>
 </resources>

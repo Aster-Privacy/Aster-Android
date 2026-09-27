@@ -36,17 +36,9 @@
         <item quantity="one">%d Nachricht als ungelesen markiert</item>
         <item quantity="other">%d Nachrichten als ungelesen markiert</item>
     </plurals>
-    <plurals name="results_count">
-        <item quantity="one">%d Ergebnis</item>
-        <item quantity="other">%d Ergebnisse</item>
-    </plurals>
     <plurals name="active_endpoints">
         <item quantity="one">%d aktiver Endpunkt</item>
         <item quantity="other">%d aktive Endpunkte</item>
-    </plurals>
-    <plurals name="storage_addons_active_count">
-        <item quantity="one">%1$d aktives Add-on</item>
-        <item quantity="other">%1$d aktive Add-ons</item>
     </plurals>
     <plurals name="backup_codes_remaining">
         <item quantity="one">%d Backup-Code verbleibend</item>

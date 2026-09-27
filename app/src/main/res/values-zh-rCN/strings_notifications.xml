@@ -16,9 +16,6 @@
     <string name="notif_channel_new_mail_name">新邮件</string>
     <string name="notif_channel_new_mail_description">新收到邮件的通知</string>
     <string name="notif_new_message">新消息</string>
-    <string name="notif_action_reply">回复</string>
-    <string name="notif_action_mark_read">标记为已读</string>
-    <string name="notif_action_archive">归档</string>
     <string name="notif_group_summary_new_mail">新邮件</string>
     <string name="notif_battery_opt_title">不受限制的后台活动</string>
     <string name="notif_battery_opt_subtitle">可靠接收通知所必需。点击即可在系统设置中开启。</string>

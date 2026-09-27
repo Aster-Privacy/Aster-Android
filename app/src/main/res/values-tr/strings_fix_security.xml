@@ -10,6 +10,5 @@
     <string name="security_activity_today">Bugün</string>
     <string name="security_activity_yesterday">Dün</string>
     <string name="security_activity_show_more">Daha fazla göster</string>
-    <string name="security_activity_show_less">Daha az göster</string>
     <string name="security_activity_empty_filter">Bu filtreyle eşleşen etkinlik yok.</string>
 </resources>
