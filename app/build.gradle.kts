@@ -101,6 +101,13 @@ android {
         unitTests.isReturnDefaultValues = true
     }
 
+    androidResources {
+        localeFilters += listOf(
+            "en", "es", "fr", "de", "it", "pt", "pt-rBR", "nl", "pl",
+            "tr", "ru", "zh-rCN", "ja", "ko", "ar", "hi",
+        )
+    }
+
     bundle {
         language {
             enableSplit = false
