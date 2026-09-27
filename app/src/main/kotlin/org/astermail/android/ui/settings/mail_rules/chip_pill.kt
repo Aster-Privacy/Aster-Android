@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.acrylic
 
 @Composable
@@ -98,7 +99,7 @@ fun chip_pill_row(
         modifier = modifier
             .height(32.dp)
             .clip(SquircleShape(999.dp))
-            .acrylic(colors, SquircleShape(999.dp), colors.bg_tertiary),
+            .acrylic(colors, SquircleShape(999.dp), field_surface_color(colors)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         segments.forEachIndexed { index, spec ->
@@ -150,7 +151,7 @@ fun add_chip_pill(label: String, on_click: () -> Unit, modifier: Modifier = Modi
         modifier = modifier
             .height(32.dp)
             .clip(SquircleShape(999.dp))
-            .acrylic(colors, SquircleShape(999.dp), colors.bg_tertiary)
+            .acrylic(colors, SquircleShape(999.dp), field_surface_color(colors))
             .clickable(onClick = on_click)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -171,7 +172,7 @@ fun and_or_pill(label: String, on_click: () -> Unit, modifier: Modifier = Modifi
         modifier = modifier
             .height(24.dp)
             .clip(SquircleShape(999.dp))
-            .acrylic(colors, SquircleShape(999.dp), colors.bg_tertiary)
+            .acrylic(colors, SquircleShape(999.dp), field_surface_color(colors))
             .clickable(onClick = on_click)
             .padding(horizontal = 10.dp),
         contentAlignment = Alignment.Center,

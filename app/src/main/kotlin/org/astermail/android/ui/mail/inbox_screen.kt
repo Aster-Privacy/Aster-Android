@@ -152,6 +152,9 @@ import org.astermail.android.debugtools.debug_build_pill_inline
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.tonal_surface_color
+import org.astermail.android.design.field_surface_color
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
@@ -2788,8 +2791,8 @@ private fun all_mail_scope_chip(
     val colors = AsterMaterial.colors
     Row(
         modifier = Modifier
-            .clip(SquircleShape(14.dp))
-            .background(if (active) colors.accent_blue.copy(alpha = 0.16f) else colors.bg_tertiary)
+            .clip(AsterShapes.control)
+            .background(if (active) tonal_surface_color(colors, colors.accent_blue) else field_surface_color(colors))
             .clickable(onClick = on_click)
             .padding(horizontal = 10.dp, vertical = 5.dp)
             .testTag("all_mail_chip_$label"),

@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.design.components.AsterTextField
@@ -97,7 +98,7 @@ internal fun quick_chip(
                 if (active) {
                     Modifier.background(colors.accent_blue)
                 } else {
-                    Modifier.acrylic(colors, shape, colors.bg_card)
+                    Modifier.acrylic(colors, shape, field_surface_color(colors))
                 },
             )
             .clickable(onClick = on_click)
@@ -447,7 +448,7 @@ internal fun search_chip_row(
             modifier = Modifier
                 .height(chip_height)
                 .clip(CircleShape)
-                .acrylic(colors, CircleShape, colors.bg_card)
+                .acrylic(colors, CircleShape, field_surface_color(colors))
                 .clickable(onClick = on_advanced_click)
                 .padding(start = 12.dp, end = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
