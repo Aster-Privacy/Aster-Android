@@ -172,6 +172,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.looks_encrypted
@@ -2456,24 +2457,24 @@ internal fun expanded_message(
                     if (show_header_reply) {
                         Box(
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(40.dp)
                                 .clip(CircleShape)
-                                .clickable(onClick = on_reply),
+                                .clickable(role = Role.Button, onClick = on_reply),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 imageVector = TablerIcons.ArrowBackUp,
                                 contentDescription = stringResource(R.string.reply),
                                 tint = colors.text_secondary,
-                                modifier = Modifier.size(20.dp),
+                                modifier = Modifier.size(22.dp),
                             )
                         }
                     }
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(40.dp)
                             .clip(CircleShape)
-                            .clickable(onClick = on_more)
+                            .clickable(role = Role.Button, onClick = on_more)
                             .testTag("message_more_$message_index"),
                         contentAlignment = Alignment.Center,
                     ) {
