@@ -7,12 +7,12 @@
     <string name="rules_section_numeric_date_auth">Sayı, tarih ve kimlik doğrulama</string>
 
     <string name="rules_op_is">eşittir</string>
-    <string name="rules_op_is_not">eşit değildir</string>
+    <string name="rules_op_is_not">eşit değil</string>
     <string name="rules_op_contains">içerir</string>
     <string name="rules_op_does_not_contain">içermiyor</string>
     <string name="rules_op_starts_with">ile başlar</string>
     <string name="rules_op_ends_with">ile biter</string>
-    <string name="rules_op_is_empty">boştur</string>
+    <string name="rules_op_is_empty">boş</string>
     <string name="rules_op_matches_domain">alan adıyla eşleşir</string>
     <string name="rules_op_does_not_match_domain">alan adıyla eşleşmiyor</string>
     <string name="rules_op_matches_regex">düzenli ifadeyle eşleşir</string>
@@ -73,9 +73,9 @@
     <string name="category_info_finance">Bankalardan ve finansal hizmetlerden gelen ekstreler, faturalar ve uyarılar.</string>
     <string name="category_info_travel">Havayollarından, otellerden ve yolculuk hizmetlerinden gelen rezervasyonlar, seyahat planları ve onaylar.</string>
     <string name="category_info_shopping">Sipariş onayları, kargo güncellemeleri ve teslimat bildirimleri.</string>
-    <string name="custom_categories_title">Kendi Kategorileriniz</string>
+    <string name="custom_categories_title">Özel kategoriler</string>
     <string name="custom_categories_tutorial">Kendi kategorinizi oluşturun. E-postaları gönderen alan adına veya konu anahtar kelimesine göre eşleştirin.</string>
-    <string name="custom_category_locked_badge">Ücretli</string>
+    <string name="custom_category_locked_badge">Kilitli</string>
     <string name="add_category">Kategori ekle</string>
     <string name="no_custom_categories">Henüz özel kategori yok.</string>
     <string name="category_name_required">Bu kategori için bir ad girin.</string>
@@ -83,13 +83,13 @@
     <string name="category_domains_invalid">Geçersiz alan adları: %1$s. example.com gibi gerçek bir alan adı kullanın.</string>
     <string name="category_keywords_invalid">Geçersiz anahtar kelimeler: %1$s. Yalnızca düz kelimeler kullanın.</string>
     <string name="delete_category_title">Kategori silinsin mi?</string>
-    <string name="delete_category_description">\"%1$s\" silinir ve içindeki e-postalar eski kategorilerine döner.</string>
-    <string name="custom_categories_locked">Kendi kategorileriniz ücretli planlarda bulunur.</string>
-    <string name="custom_categories_limit_reached">Kendi kategorileriniz için üst sınıra ulaştınız.</string>
+    <string name="delete_category_description">\"%1$s\" silinsin mi? Bu işlem geri alınamaz.</string>
+    <string name="custom_categories_locked">Özel kategoriler mevcut planınızda kullanılamıyor.</string>
+    <string name="custom_categories_limit_reached">Planınızın özel kategori sınırına ulaştınız. Daha fazlası için yükseltin.</string>
     <string name="edit_custom_category">Kategoriyi düzenle</string>
     <string name="new_custom_category">Yeni kategori</string>
-    <string name="category_name">Kategori adı</string>
-    <string name="category_name_placeholder">Bültenler</string>
+    <string name="category_name">Ad</string>
+    <string name="category_name_placeholder">örn. Bültenler</string>
     <string name="category_icon">Simge</string>
     <string name="category_match_domains">Gönderen alan adlarını eşleştir</string>
     <string name="category_match_domains_placeholder">example.com, news.example.org</string>
@@ -97,7 +97,7 @@
     <string name="category_match_keywords">Konu anahtar kelimelerini eşleştir</string>
     <string name="category_match_keywords_placeholder">bülten, özet</string>
     <string name="category_match_keywords_help">Virgülle ayrılmış kelimeler. Herhangi biri konu satırında görünürse, e-posta bu kategoriye girer.</string>
-    <string name="category_tutorial_text">Bir e-posta, girdiğiniz alan adlarından ya da anahtar sözcüklerden birine uyduğu anda kendi kategorinize düşer. Kendi kategorileriniz hazır kategorilerin önüne geçer ve tüm eşleştirme cihazınızda yapılır.</string>
+    <string name="category_tutorial_text">İpucu: Gönderenin alan adı veya konu, anahtar sözcüklerinizden herhangi birini içeriyorsa özel kategori eşleşir. Özel kategoriler yerleşik kategorilerden önce denetlenir, bu yüzden her zaman önceliklidir.</string>
     <string name="rules_create_first_folder_hint">Bir klasör oluşturun, bu kural eşleşen e-postaları oraya taşıyabilsin.</string>
     <string name="rules_create_first_label_hint">Bir etiket oluşturun, bu kural eşleşen e-postalara uygulayabilsin.</string>
     <string name="muted_categories">Sessize alınan kategoriler</string>

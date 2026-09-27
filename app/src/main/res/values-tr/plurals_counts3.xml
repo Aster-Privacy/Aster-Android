@@ -29,8 +29,8 @@
         <item quantity="other">%1$d e-posta</item>
     </plurals>
     <plurals name="spam_auto_delete_notice">
-        <item quantity="one">Spamdaki öğeler %1$d gün sonra otomatik olarak silinir.</item>
-        <item quantity="other">Spamdaki öğeler %1$d gün sonra otomatik olarak silinir.</item>
+        <item quantity="one">Spam klasöründeki öğeler %1$d gün sonra otomatik olarak silinir.</item>
+        <item quantity="other">Spam klasöründeki öğeler %1$d gün sonra otomatik olarak silinir.</item>
     </plurals>
     <plurals name="trash_auto_delete_notice">
         <item quantity="one">Çöp kutusundaki öğeler %1$d gün sonra otomatik olarak silinir.</item>
@@ -49,8 +49,8 @@
         <item quantity="other">%1$d yıllık kayıt</item>
     </plurals>
     <plurals name="app_lock_try_again_in">
-        <item quantity="one">%d saniye sonra yeniden dene</item>
-        <item quantity="other">%d saniye sonra yeniden dene</item>
+        <item quantity="one">%d saniye sonra yeniden deneyin</item>
+        <item quantity="other">%d saniye sonra yeniden deneyin</item>
     </plurals>
     <plurals name="export_undecryptable_skipped">
         <item quantity="one">%1$d mesajın şifresi çözülemedi ve dışa aktarıma dahil edilmedi.</item>

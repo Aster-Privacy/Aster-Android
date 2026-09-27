@@ -14,14 +14,14 @@
     <string name="settings_feat_daily_send">Günlük gönderim sınırı</string>
     <string name="settings_feat_email_retention">E-posta saklama süresi</string>
     <string name="settings_feat_e2ee">Uçtan uca şifreleme</string>
-    <string name="settings_feat_zero_knowledge">Sunucunun erişemediği mimari</string>
+    <string name="settings_feat_zero_knowledge">Sıfır erişim mimarisi</string>
     <string name="settings_feat_aliases">E-posta takma adları</string>
-    <string name="settings_feat_custom_domains">Kendi alan adların</string>
+    <string name="settings_feat_custom_domains">Özel alan adları</string>
     <string name="settings_feat_scheduled_send">Zamanlanmış gönderim</string>
     <string name="settings_feat_undo_send">Göndermeyi geri al</string>
     <string name="settings_feat_read_receipts">Okundu bilgisi</string>
     <string name="settings_feat_email_templates">E-posta şablonları</string>
-    <string name="settings_feat_auto_responder">Otomatik yanıt</string>
+    <string name="settings_feat_auto_responder">Otomatik yanıtlayıcı</string>
     <string name="settings_feat_alias_avatars">Takma ad görselleri</string>
     <string name="settings_feat_instant_alias_delete">Anında rumuz silme</string>
     <string name="alias_too_new_title">Bu takma ad silinemeyecek kadar yeni</string>
@@ -33,7 +33,7 @@
     <string name="settings_feat_search_history">Arama geçmişi</string>
     <string name="settings_feat_contacts">Kişiler</string>
     <string name="settings_feat_contact_groups">Kişi grupları</string>
-    <string name="settings_feat_two_factor">İki adımlı doğrulama</string>
+    <string name="settings_feat_two_factor">İki faktörlü kimlik doğrulama</string>
     <string name="settings_feat_recovery_codes">Kurtarma kodları</string>
     <string name="settings_feat_password_folders">Parola korumalı klasörler</string>
     <string name="settings_feat_session_mgmt">Oturum yönetimi</string>
@@ -85,8 +85,8 @@
     <string name="settings_diagnostics_secure_storage">Güvenli depolama</string>
     <string name="settings_diagnostics_storage_ok">Sağlıklı</string>
     <string name="settings_diagnostics_storage_degraded">Bozulmuş, oturumu kapatıp yeniden açın</string>
-    <string name="revoke_session_confirm_message">Bu cihaz hesabından çıkarılsın mı?</string>
+    <string name="revoke_session_confirm_message">Bu cihazın hesabınızdaki oturumu kapatılsın mı?</string>
     <string name="sign_out_all_other_confirm_message">Bu cihaz dışındaki tüm cihazlardan çıkılsın mı?</string>
-    <string name="alias_forward_limit_reached">Planındaki etkin takma ad sayısının üst sınırına ulaştın</string>
+    <string name="alias_forward_limit_reached">Planınızdaki etkin takma ad sayısının üst sınırına ulaştınız</string>
     <string name="settings_plan_bullet_daily_emails">Günde 1.000 e-posta</string>
 </resources>

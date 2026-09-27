@@ -4,14 +4,14 @@
     <string name="detail_hide_details">Ayrıntıları gizle</string>
     <string name="detail_show_quoted_text">Alıntılanan metni göster</string>
     <string name="detail_hide_quoted_text">Alıntılanan metni gizle</string>
-    <string name="detail_external_images_blocked">Bu iletide dış içerik var. Yüklersen gönderen, iletiyi açtığını görebilir.</string>
+    <string name="detail_external_images_blocked">Bu ileti uzak içerik barındırıyor. Yüklerseniz gönderen, etkinliğinizi görebilir.</string>
     <string name="detail_external_allow_once">Bir kez yükle</string>
     <string name="detail_external_always_allow">Her zaman izin ver</string>
     <string name="detail_external_images_traffic_blocked">Veri tasarrufu için dış görseller engellendi.</string>
     <string name="detail_disable_traffic_saving">Veri tasarrufunu kapat</string>
     <string name="detail_external_dismiss">Şimdi değil</string>
     <string name="detail_unsubscribe_title">Bu gönderen tek dokunuşla abonelikten çıkmayı destekliyor.</string>
-    <string name="detail_unsubscribe_subtitle">Bu adresten artık ileti almayacaksın.</string>
+    <string name="detail_unsubscribe_subtitle">Bu adresten artık ileti almayacaksınız.</string>
     <string name="detail_view_raw_source">Ham kaynağı gör</string>
     <string name="detail_raw_source_title">İletinin ham kaynağı</string>
     <string name="detail_raw_source_headers">Başlıklar</string>
@@ -31,5 +31,5 @@
     <string name="no_raw_headers">Bu iletinin ham başlıkları yok.</string>
     <string name="copy_headers">Başlıkları kopyala</string>
     <string name="headers_copied">Başlıklar kopyalandı</string>
-    <string name="print_failed">Bu e-posta yazdırılamıyor. Yeniden dene.</string>
+    <string name="print_failed">Bu e-posta yazdırılamıyor. Yeniden deneyin.</string>
 </resources>

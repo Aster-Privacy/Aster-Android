@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="compose_footer_secured_by_plain">Aster Mail tarafından korunuyor</string>
-    <string name="compose_footer_secured_by_label">Koruyan:</string>
+    <string name="compose_footer_secured_by_label">Güvence altında:</string>
     <string name="compose_footer_brand">Aster Mail</string>
     <string name="compose_quote_forwarded_message">İletilen ileti</string>
     <string name="compose_quote_original_message">Özgün ileti</string>

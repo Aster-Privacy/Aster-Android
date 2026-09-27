@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="notif_channel_login_alerts_name">Oturum açma uyarıları</string>
+    <string name="notif_channel_login_alerts_name">Giriş uyarıları</string>
     <string name="notif_channel_login_alerts_description">Hesabınızda yeni bir cihazdan oturum açıldığında uyarılar</string>
     <string name="notif_login_alert_title">Hesabınızda yeni oturum açıldı</string>
     <string name="notif_login_alert_public_body">Hesabınızda yeni bir cihazdan oturum açıldı</string>
@@ -34,5 +34,5 @@
     <string name="persistent_push_subtitle">Aster Mail sunucuya bağlı kalır, böylece yeni posta hemen gelir. Anında bildirimler telefonunuza hiç ulaşmıyorsa bunu açın. Kalıcı bir bildirim ekler ve daha fazla pil harcar.</string>
     <string name="persistent_push_autostart_title">Otomatik başlatmaya izin ver</string>
     <string name="persistent_push_autostart_subtitle">Bazı telefonlar arka plan bağlantılarını kapatır. Sistem ayarlarında Aster Mail\'in otomatik başlamasına izin verin ve pil kısıtlamalarını kapatın.</string>
-    <string name="notif_delivery_section">Teslim</string>
+    <string name="notif_delivery_section">Teslimat</string>
 </resources>
