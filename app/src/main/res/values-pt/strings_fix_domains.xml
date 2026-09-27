@@ -41,7 +41,7 @@
     <string name="domain_bimi_step_publish">Publicar</string>
     <string name="domain_bimi_step_of">Etapa %1$d de %2$d</string>
     <string name="domain_bimi_logo_public_note">O seu logótipo é público. Qualquer pessoa que receba o seu correio pode vê-lo.</string>
-    <string name="domain_bimi_choose_file">Escolher arquivo</string>
+    <string name="domain_bimi_choose_file">Escolher ficheiro</string>
     <string name="domain_bimi_uploading">Enviando</string>
     <string name="domain_bimi_replace_logo">Substituir logotipo</string>
     <string name="domain_bimi_preview_inbox_subject">As suas novidades mais recentes</string>
@@ -114,7 +114,7 @@
     <string name="domain_bimi_adj_removed_editor_data">Dados do editor removidos.</string>
     <string name="domain_bimi_adj_converted_inline_styles">Estilos inline convertidos em atributos.</string>
     <string name="domain_bimi_adj_removed_unsupported_attributes">Atributos não suportados removidos.</string>
-    <string name="domain_bimi_rules_title">Requisitos do arquivo</string>
+    <string name="domain_bimi_rules_title">Requisitos do ficheiro</string>
     <string name="domain_bimi_rule_svg">Arquivo SVG</string>
     <string name="domain_bimi_rule_square">Quadrado, com largura e altura iguais</string>
     <string name="domain_bimi_rule_size">32 KB ou menos depois de o Aster o otimizar</string>

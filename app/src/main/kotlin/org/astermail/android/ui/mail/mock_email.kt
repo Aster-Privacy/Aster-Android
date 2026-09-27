@@ -677,30 +677,6 @@ fun Long.format_long_date(): String {
     return long_date_format().format(Date(this))
 }
 
-private fun html_to_plain_text(html: String): String {
-    return android.text.Html.fromHtml(html, android.text.Html.FROM_HTML_MODE_LEGACY).toString().trim()
-}
-
-fun build_quoted_body(msg: ThreadMessage, mode: String): String {
-    val plain_body = if (msg.body_html != null) html_to_plain_text(msg.body_html) else msg.body
-    val quoted_name = displayed_sender_name(msg.display_sender_name, msg.sender_name)
-    val quoted_email = displayed_sender_email(msg.display_sender_email, msg.sender_email)
-    return when (mode) {
-        "forward" -> buildString {
-            append("\n\n")
-            append("---------- Forwarded message ----------\n")
-            append("From: $quoted_name <$quoted_email>\n")
-            append("Date: ${msg.timestamp.format_full_datetime()}\n\n")
-            plain_body.lines().forEach { append("> $it\n") }
-        }
-        else -> buildString {
-            append("\n\n")
-            append("On ${msg.timestamp.format_full_datetime()}, $quoted_name <$quoted_email> wrote:\n")
-            plain_body.lines().forEach { append("> $it\n") }
-        }
-    }
-}
-
 fun subject_prefix(original: String, mode: String): String {
     val trimmed = original.trim()
     return when (mode) {

@@ -20,6 +20,6 @@
     <string name="schedule_tomorrow_afternoon">Jutro po południu</string>
     <string name="schedule_monday_morning">W poniedziałek rano</string>
     <string name="schedule_pick_date_time">Wybierz datę i czas</string>
-    <string name="too_many_recipients_in_field">Każde pole Do, DW i UDW mieści maksymalnie %1$d adresów. Przenieś część do drugiej wiadomości, aby wysłać tę.</string>
+    <string name="too_many_recipients_in_field">Limit adresów w każdym z pól Do, DW i UDW wynosi %1$d. Aby wysłać tę wiadomość, przenieś część adresów do drugiej.</string>
     <string name="too_many_recipients_in_message">Jedna wiadomość dociera maksymalnie do %1$d adresów w polach Do, DW i UDW. Podzielenie listy na mniejsze wiadomości pozwoli ją wysłać.</string>
 </resources>

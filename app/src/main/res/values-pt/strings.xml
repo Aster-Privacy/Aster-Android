@@ -18,7 +18,7 @@
     <string name="confirm">Confirmar</string>
     <string name="search">Pesquisar</string>
     <string name="clear">Limpar</string>
-    <string name="settings">Configurações</string>
+    <string name="settings">Definições</string>
     <string name="refresh">Atualizar</string>
     <string name="loading">Carregando...</string>
     <string name="copied_to_clipboard">Copiado para a área de transferência</string>
@@ -457,7 +457,7 @@
     <string name="smtp_token_revoked_toast">Token SMTP revogado</string>
     <string name="smtp_token_not_e2e_title">As mensagens enviadas com tokens SMTP não têm encriptação de ponta a ponta</string>
     <string name="smtp_token_not_e2e_body">O correio enviado através de um token SMTP é protegido por TLS em trânsito e armazenado com encriptação de acesso zero nos nossos servidores, mas não tem encriptação de ponta a ponta. O Aster não pode aplicar encriptação de ponta a ponta a correio originado fora das aplicações Aster. Utilize tokens SMTP apenas para correio automatizado ou transacional em que a encriptação de ponta a ponta não seja necessária.</string>
-    <string name="clipboard_label_smtp_token">Configurações de SMTP</string>
+    <string name="clipboard_label_smtp_token">Definições de SMTP</string>
     <string name="settings_aliases_subtitle">Gerir endereços</string>
     <string name="settings_billing">Faturação</string>
     <string name="settings_billing_subtitle">Plano, faturas, métodos de pagamento</string>
@@ -667,7 +667,7 @@
     <string name="identity_key">Chave de identidade</string>
     <string name="account">Conta</string>
     <string name="identity_key_fingerprint">Impressão digital da chave de identidade</string>
-    <string name="fingerprint_description">Compare-a com a impressão digital do destinatário através de um canal fidedigno para confirmar que é mesmo você.</string>
+    <string name="fingerprint_description">Compare-a com a impressão digital do destinatário através de um canal fidedigno para confirmar a identidade.</string>
     <string name="show_public_key">Mostrar chave pública</string>
     <string name="hide_public_key">Ocultar chave pública</string>
     <string name="copy_public_key">Copiar chave pública</string>
@@ -728,7 +728,7 @@
     <string name="referral_commission_info">Também ganha %1$d%% de cada pagamento que fizerem enquanto mantiverem a subscrição.</string>
     <string name="referral_max_credits">%1$s de %2$s em crédito de recomendação obtido</string>
     <string name="referral_program_description">Convide amigos para o Aster e ganhe crédito em cada pagamento que fizerem.</string>
-    <string name="referral_reward_info">O seu amigo recebe um desconto no primeiro pagamento, e você ganha em cada pagamento que ele fizer.</string>
+    <string name="referral_reward_info">O seu amigo recebe um desconto no primeiro pagamento, e ganha em cada pagamento que ele fizer.</string>
 
     <string name="billing">Faturação</string>
     <string name="aster_plan">Plano Aster</string>
@@ -1284,7 +1284,7 @@
     <string name="plan_desc_supernova">Armazenamento máximo, os limites mais altos e suporte dedicado.</string>
     <string name="set_as_primary">Definir como endereço principal</string>
     <string name="primary_badge">Principal</string>
-    <string name="badges">Selos</string>
+    <string name="badges">Medalhas</string>
 
 
     <!-- Pending account deletion -->
@@ -1440,12 +1440,12 @@
     <string name="color_theme_show_all">Mostrar todas as cores</string>
     <string name="expand_folder">Expandir %1$s</string>
     <string name="collapse_folder">Recolher %1$s</string>
-    <string name="badge_active">Distintivo ativo</string>
+    <string name="badge_active">Medalha ativa</string>
     <string name="badge_none">Nenhum</string>
     <string name="badge_show_on_profile">Mostrar no perfil</string>
-    <string name="badge_show_on_profile_description">Mostrar o seu distintivo ativo a outros utilizadores do Aster.</string>
+    <string name="badge_show_on_profile_description">Mostrar a sua medalha ativa a outros utilizadores do Aster.</string>
     <string name="badge_show_in_signature">Mostrar na assinatura</string>
-    <string name="badge_show_in_signature_description">Incluir o seu distintivo ativo nas assinaturas dos e-mails enviados.</string>
+    <string name="badge_show_in_signature_description">Incluir a sua medalha ativa nas assinaturas dos e-mails enviados.</string>
     <string name="badges_description">Mostre as medalhas que conquistou.</string>
     <string name="vacation_reply_short">Resposta automática enquanto está ausente</string>
     <string name="info_auto_discover_title">Descobrir chaves automaticamente</string>
@@ -2283,9 +2283,9 @@
     <string name="alias_apply_existing_failed">Não foi possível começar a aplicar estas definições.</string>
     <string name="alias_apply_existing_cancel_failed">Não foi possível parar esta execução.</string>
     <string name="alias_apply_existing_queued">Em fila...</string>
-    <string name="alias_apply_existing_progress">A aplicar: %1$d analisados, %2$d atualizados</string>
-    <string name="alias_apply_existing_progress_total">A aplicar: %1$d de %2$d analisados, %3$d atualizados</string>
-    <string name="alias_apply_existing_done">Concluído: %1$d analisados, %2$d atualizados</string>
+    <string name="alias_apply_existing_progress">A aplicar. Analisados: %1$d, atualizados: %2$d</string>
+    <string name="alias_apply_existing_progress_total">A aplicar. Analisados: %1$d de %2$d, atualizados: %3$d</string>
+    <string name="alias_apply_existing_done">Concluído. Analisados: %1$d, atualizados: %2$d</string>
     <string name="alias_apply_existing_error">Não foi possível aplicar ao correio existente. Tente novamente.</string>
     <string name="alias_apply_existing_unavailable">O correio que já está na sua conta não pode ser movido para Spam.</string>
     <string name="alias_delivery_label_rule_note">A regra \"%1$s\" já etiqueta o correio deste alias com %2$s.</string>
@@ -2379,7 +2379,7 @@
     <string name="alias_import_action">Importar</string>
     <string name="alias_import_title">Importar aliases</string>
     <string name="alias_import_description">Escolha um ficheiro CSV ou JSON com a lista dos seus aliases.</string>
-    <string name="alias_import_choose_file">Escolher arquivo</string>
+    <string name="alias_import_choose_file">Escolher ficheiro</string>
     <string name="alias_import_target_domain">Importar para</string>
     <string name="alias_import_counts">%1$s / %2$s / %3$s</string>
     <string name="alias_import_update_existing">Reativar se desativado</string>
@@ -2644,7 +2644,7 @@
     <string name="switch_yearly_title">Mudar para faturação anual</string>
     <string name="settings_plan_top_tier_title">Está no plano mais alto</string>
     <string name="settings_plan_top_tier_note">%1$s inclui o maior armazenamento de todos os planos. Se precisar de mais espaço, pode adicionar armazenamento extra.</string>
-    <string name="settings_plan_current_title">Você está no %1$s</string>
+    <string name="settings_plan_current_title">Está no %1$s</string>
     <string name="settings_plan_current_note">Usou %1$d%% do seu armazenamento, por isso ainda tem espaço de sobra.</string>
     <string name="settings_plan_storage_tight_note">Usou %1$d%% do seu armazenamento. %2$s oferece mais espaço.</string>
     <string name="settings_storage_addons_monthly_note">O armazenamento adicional é cobrado mensalmente, mesmo que o seu plano seja cobrado anualmente.</string>
@@ -2994,27 +2994,27 @@
     <string name="emoji_group_symbols">Símbolos</string>
     <string name="emoji_group_flags">Bandeiras</string>
     <string name="domain_catch_all_hint">Receba o correio enviado para qualquer endereço deste domínio.</string>
-    <string name="special_offer_title">E-mail privado pela metade do preço</string>
-    <string name="special_offer_unavailable">Esta oferta não está mais disponível.</string>
+    <string name="special_offer_title">E-mail privado a metade do preço</string>
+    <string name="special_offer_unavailable">Esta oferta já não está disponível.</string>
     <string name="special_offer_price_period">por mês</string>
     <string name="special_offer_price_period_year">por ano</string>
-    <string name="special_offer_fine_print_year">Você paga %1$s pelo primeiro ano. Depois, seu plano é renovado por %2$s por ano até você cancelar em Configurações.</string>
+    <string name="special_offer_fine_print_year">Paga %1$s pelo primeiro ano. Depois, o seu plano é renovado a %2$s por ano até o cancelar em Definições.</string>
     <string name="special_offer_dismiss">Não mostrar esta oferta novamente</string>
-    <string name="special_offer_success_title">Obrigado. Agora você tem o Nova.</string>
-    <string name="special_offer_success_body">Obrigado por assinar. Seu apoio significa muito para nós.</string>
-    <string name="special_offer_why_label">Por que esta oferta?</string>
-    <string name="special_offer_why_body">O Aster é uma empresa independente com uma equipe pequena, e o seu apoio significa muito para nós. As assinaturas mantêm o serviço funcionando e nos permitem continuar desenvolvendo o Aster com cuidado todos os dias. Esta oferta torna mais fácil começar.</string>
+    <string name="special_offer_success_title">Obrigado. Agora tem o Nova.</string>
+    <string name="special_offer_success_body">Obrigado pela sua subscrição. O seu apoio significa muito para nós.</string>
+    <string name="special_offer_why_label">Porquê esta oferta?</string>
+    <string name="special_offer_why_body">O Aster é uma empresa independente com uma equipa pequena, e o seu apoio significa muito para nós. As subscrições mantêm o serviço a funcionar e permitem-nos continuar a desenvolver o Aster com cuidado todos os dias. Esta oferta facilita o primeiro passo.</string>
     <string name="special_offer_entry">Oferta especial</string>
-    <string name="special_offer_cta_claim">Garantir %1$d%% de desconto</string>
-    <string name="special_offer_crypto_one_payment">O desconto de %1$d%% vale apenas para este pagamento. Os próximos pagamentos em cripto são cobrados pelo preço normal. Para ter o desconto por um ano inteiro, escolha 12 meses.</string>
+    <string name="special_offer_cta_claim">Obter %1$d%% de desconto</string>
+    <string name="special_offer_crypto_one_payment">O desconto de %1$d%% aplica-se apenas a este pagamento. Os pagamentos seguintes em cripto são cobrados ao preço normal. Para ter o desconto durante um ano inteiro, escolha 12 meses.</string>
     <string name="special_offer_benefit_aliases_title">Aliases ilimitados</string>
     <string name="special_offer_benefit_storage_title">500 GB de armazenamento encriptado</string>
     <string name="special_offer_benefit_domains_title">Até 30 domínios personalizados</string>
     <string name="special_offer_benefit_vanguard_title">Segurança avançada com o Vanguard</string>
     <string name="special_offer_benefit_aliases_body">Dê a cada site um endereço próprio.</string>
-    <string name="special_offer_benefit_storage_body">Espaço para anos de e-mails e arquivos.</string>
+    <string name="special_offer_benefit_storage_body">Espaço para anos de e-mails e ficheiros.</string>
     <string name="special_offer_benefit_domains_body">Envie de endereços nos seus próprios domínios.</string>
-    <string name="special_offer_benefit_vanguard_body">Bloqueio do app e proteção avançada da privacidade.</string>
+    <string name="special_offer_benefit_vanguard_body">Bloqueio da aplicação e proteção avançada da privacidade.</string>
     <string name="special_offers">Ofertas especiais</string>
     <string name="special_offers_description">Mostre ofertas ocasionais de planos com desconto na aplicação. Com esta opção desativada, não vê ofertas e não entra nos resultados das ofertas.</string>
     <string name="special_offers_save_failed">A sua preferência de ofertas especiais não foi guardada. Tente de novo.</string>
@@ -3194,7 +3194,7 @@
     <string name="change_address">Alterar endereço</string>
     <string name="address_change_title">Altere o seu endereço</string>
     <string name="address_change_intro_lead">Leia o que muda antes de continuar.</string>
-    <string name="address_change_keep_old_title">Você mantém %1$s</string>
+    <string name="address_change_keep_old_title">Mantém %1$s</string>
     <string name="address_change_keep_old_body">O correio enviado para esse endereço continua a chegar à sua caixa de entrada e continua a poder utilizá-lo para iniciar sessão em todos os dispositivos.</string>
     <string name="address_change_no_limit_title">O seu endereço antigo continua a ser seu</string>
     <string name="address_change_no_limit_body">Não conta para o seu limite de aliases, mais ninguém o pode reclamar e não pode ser eliminado.</string>
@@ -3284,10 +3284,10 @@
     <string name="expiry_password_internal_removed">Os destinatários do Aster abrem e-mails com expiração sem palavra-passe, por isso a palavra-passe foi removida. Para enviar a mensagem, toque novamente em Enviar.</string>
     <string name="expiring_requires_secure_message">Enquanto Exigir encriptação estiver ativado, não pode enviar e-mails com expiração para endereços externos a partir desta aplicação. Para enviar, remova a expiração ou desative Exigir encriptação.</string>
     <string name="signature_too_large">Esta assinatura é demasiado grande para ser guardada. Para a guardar, remova uma imagem ou encurte o texto.</string>
-    <string name="special_offer_compare_storage">Armazenamento criptografado</string>
+    <string name="special_offer_compare_storage">Armazenamento encriptado</string>
     <string name="special_offer_compare_aliases">Aliases</string>
     <string name="special_offer_compare_domains">Domínios personalizados</string>
-    <string name="special_offer_compare_attachments">Tamanho do anexo</string>
+    <string name="special_offer_compare_attachments">Tamanho dos anexos</string>
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Incluído</string>
     <string name="special_offer_compare_not_included">Não incluído</string>

@@ -1284,7 +1284,7 @@
     <string name="plan_desc_supernova">Armazenamento máximo, os limites mais altos e suporte dedicado.</string>
     <string name="set_as_primary">Definir como endereço principal</string>
     <string name="primary_badge">Principal</string>
-    <string name="badges">Selos</string>
+    <string name="badges">Medalhas</string>
 
 
     <!-- Pending account deletion -->
@@ -1440,12 +1440,12 @@
     <string name="color_theme_show_all">Mostrar todas as cores</string>
     <string name="expand_folder">Expandir %1$s</string>
     <string name="collapse_folder">Recolher %1$s</string>
-    <string name="badge_active">Distintivo ativo</string>
+    <string name="badge_active">Medalha ativa</string>
     <string name="badge_none">Nenhum</string>
     <string name="badge_show_on_profile">Mostrar no perfil</string>
-    <string name="badge_show_on_profile_description">Exibir seu distintivo ativo para outros usuários do Aster.</string>
+    <string name="badge_show_on_profile_description">Exibir sua medalha ativa para outros usuários do Aster.</string>
     <string name="badge_show_in_signature">Mostrar na assinatura</string>
-    <string name="badge_show_in_signature_description">Incluir seu distintivo ativo nas assinaturas de e-mails enviados.</string>
+    <string name="badge_show_in_signature_description">Incluir sua medalha ativa nas assinaturas de e-mails enviados.</string>
     <string name="badges_description">Mostre as medalhas que você conquistou.</string>
     <string name="vacation_reply_short">Resposta automática enquanto você está ausente</string>
     <string name="info_auto_discover_title">Descobrir chaves automaticamente</string>
@@ -2283,9 +2283,9 @@
     <string name="alias_apply_existing_failed">Não foi possível começar a aplicar essas configurações.</string>
     <string name="alias_apply_existing_cancel_failed">Não foi possível parar esta execução.</string>
     <string name="alias_apply_existing_queued">Em fila...</string>
-    <string name="alias_apply_existing_progress">Aplicando: %1$d analisados, %2$d atualizados</string>
-    <string name="alias_apply_existing_progress_total">Aplicando: %1$d de %2$d analisados, %3$d atualizados</string>
-    <string name="alias_apply_existing_done">Concluído: %1$d analisados, %2$d atualizados</string>
+    <string name="alias_apply_existing_progress">Aplicando. Analisados: %1$d, atualizados: %2$d</string>
+    <string name="alias_apply_existing_progress_total">Aplicando. Analisados: %1$d de %2$d, atualizados: %3$d</string>
+    <string name="alias_apply_existing_done">Concluído. Analisados: %1$d, atualizados: %2$d</string>
     <string name="alias_apply_existing_error">Falha ao aplicar aos e-mails existentes. Tente novamente.</string>
     <string name="alias_apply_existing_unavailable">Os e-mails que já estão na sua conta não podem ser movidos para o Spam.</string>
     <string name="alias_delivery_label_rule_note">A regra \"%1$s\" já aplica a etiqueta %2$s aos e-mails deste alias.</string>

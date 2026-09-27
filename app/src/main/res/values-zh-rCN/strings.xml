@@ -706,7 +706,7 @@
     <string name="copy_link">复制链接</string>
     <string name="share_link">分享链接</string>
     <string name="credits_title">积分</string>
-    <string name="credits_subtitle">通过推荐和特定操作赚取积分，用于套餐续费。</string>
+    <string name="credits_subtitle">完成各项任务即可赚取 Aster 积分。</string>
     <string name="credits_balance_label">可用余额</string>
     <string name="credits_balance_note">额度会自动用于付费套餐的购买和续订。</string>
     <string name="credits_shop_plans">浏览套餐</string>
@@ -2222,7 +2222,7 @@
     <string name="kids_release_confirm_title">要释放此地址吗？</string>
     <string name="kids_release_confirm_body">%1$s 将重新对所有人开放，此操作无法撤销。</string>
     <string name="kids_link_copied">设置链接已复制</string>
-    <string name="kids_link_regenerated">已生成新链接</string>
+    <string name="kids_link_regenerated">已生成新的设置链接</string>
     <string name="kids_released">已释放预留</string>
     <string name="kids_action_failed">操作失败，请重试。</string>
     <string name="settings_connection">连接</string>

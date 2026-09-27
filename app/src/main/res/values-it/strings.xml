@@ -2283,9 +2283,9 @@
     <string name="alias_apply_existing_failed">Impossibile avviare l\'applicazione di queste impostazioni.</string>
     <string name="alias_apply_existing_cancel_failed">Impossibile interrompere questa operazione.</string>
     <string name="alias_apply_existing_queued">In coda...</string>
-    <string name="alias_apply_existing_progress">Applicazione: %1$d analizzati, %2$d aggiornati</string>
-    <string name="alias_apply_existing_progress_total">Applicazione: %1$d di %2$d analizzati, %3$d aggiornati</string>
-    <string name="alias_apply_existing_done">Fatto: %1$d analizzati, %2$d aggiornati</string>
+    <string name="alias_apply_existing_progress">Applicazione in corso. Analizzati: %1$d, aggiornati: %2$d</string>
+    <string name="alias_apply_existing_progress_total">Applicazione in corso. Analizzati: %1$d di %2$d, aggiornati: %3$d</string>
+    <string name="alias_apply_existing_done">Fatto. Analizzati: %1$d, aggiornati: %2$d</string>
     <string name="alias_apply_existing_error">Applicazione alla posta esistente non riuscita. Riprova.</string>
     <string name="alias_apply_existing_unavailable">La posta già presente nel tuo account non può essere spostata in Spam.</string>
     <string name="alias_delivery_label_rule_note">La regola \"%1$s\" etichetta già la posta di questo alias con %2$s.</string>
@@ -3235,7 +3235,7 @@
     <string name="address_change_code_invalid">Il codice non è corretto.</string>
     <string name="address_change_code_too_many">Troppi codici errati. Per ricevere un nuovo codice, riavvia la modifica.</string>
     <string name="address_change_code_expired">Il codice è scaduto. Per riceverne uno nuovo, riavvia la modifica.</string>
-    <string name="address_change_taken_now">Qualcuno ha già preso quell\'indirizzo. Scegline un altro.</string>
+    <string name="address_change_taken_now">Qualcuno ha gia preso quell\'indirizzo. Scegline un altro.</string>
     <string name="address_change_locked_plan">Cambiare indirizzo è una funzione di Supernova.</string>
     <string name="address_change_locked_cooldown">Puoi cambiare di nuovo indirizzo il %1$s.</string>
     <string name="address_change_password_wrong">Questa password non è corretta.</string>
