@@ -17,7 +17,7 @@
     <string name="signature_select">选择签名</string>
     <string name="compose_metadata_strip_failed">无法清除以下文件中的隐藏元数据：%1$s</string>
     <string name="compose_inline_image_failed">无法添加这些图片：%1$s</string>
-    <string name="compose_attachment_read_failed">无法添加附件 \"%1$s\"。邮件尚未发送。请移除该文件或重新添加后再试。</string>
+    <string name="compose_attachment_read_failed">无法添加附件“%1$s”。邮件尚未发送。请移除该文件或重新添加后再试。</string>
     <string name="schedule_in_one_hour">一小时后</string>
     <string name="schedule_tonight">今晚</string>
     <string name="schedule_tomorrow_morning">明天上午</string>

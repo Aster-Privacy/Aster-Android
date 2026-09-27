@@ -5,7 +5,7 @@
     <string name="academic_status_pending">等待验证</string>
     <string name="academic_status_verified">已验证</string>
     <string name="alias_limit_notice">已使用 %1$d 个别名，共 %2$d 个。升级可获得更多。</string>
-    <string name="cancel_impact_catch_all">通配地址将停止接收邮件。</string>
+    <string name="cancel_impact_catch_all">全收地址将停止接收邮件。</string>
     <string name="cancel_impact_intro">套餐结束后，以下内容会发生变化：</string>
     <string name="cancel_impact_none">您的账户不会立即发生变化。</string>
     <string name="cancel_impact_storage">您已使用 %1$s，套餐容量将降至 %2$s。</string>
@@ -55,7 +55,7 @@
     <string name="subscription_refresh_failed">Aster 无法刷新您的套餐详情。</string>
     <string name="billing_plan_type_individual">个人</string>
     <string name="billing_plan_type_family">家庭</string>
-    <string name="billing_active_addons">您的活跃插件</string>
+    <string name="billing_active_addons">您已生效的附加项</string>
     <string name="billing_best_value">最超值</string>
     <string name="billing_everything_in">包含 %1$s 的全部功能，另加</string>
     <string name="billing_money_back_guarantee">30 天退款保证</string>
@@ -92,7 +92,7 @@
     <string name="billing_recap_aliases">个使用中的别名</string>
     <string name="billing_recap_domains">个自定义域名</string>
     <string name="billing_recap_storage">加密邮件</string>
-    <string name="billing_advantages_title_free">%1$s 为您带来的</string>
+    <string name="billing_advantages_title_free">%1$s 包含的内容</string>
     <string name="billing_advantages_title_paid">您的套餐包含</string>
     <string name="billing_compare_external_accounts">外部账户</string>
     <string name="billing_compare_all_plans">比较所有套餐</string>
@@ -101,13 +101,13 @@
     <string name="billing_addons_subtitle">保留套餐，增加空间</string>
     <string name="billing_addon_summary">%1$s 额外存储空间</string>
     <string name="billing_addon_pick_size">选择要添加的容量</string>
-    <string name="billing_support_subtitle">给团队发送消息</string>
+    <string name="billing_support_subtitle">给团队留言</string>
     <string name="billing_trust_card">可随时在此页面取消。银行卡付款享有 30 天退款保证。</string>
     <string name="billing_trust_crypto">加密货币付款不会自动续订，也不可退款。Aster 会在套餐结束前提醒您。</string>
     <string name="billing_cancel_continue">继续取消</string>
     <string name="billing_cancel_offer_title_price">更省钱的留下方式</string>
     <string name="billing_cancel_offer_body_price">您的地址、别名和邮件保持不变，只有价格变化。</string>
-    <string name="billing_cancel_offer_title_unused">套餐为您提供的</string>
+    <string name="billing_cancel_offer_title_unused">您的套餐为您提供的功能</string>
     <string name="billing_cancel_offer_body_unused">套餐有效期间这些功能持续可用。套餐结束后即停止。</string>
     <string name="billing_cancel_offer_title_missing">告诉我们缺少什么</string>
     <string name="billing_cancel_offer_body_missing">简短的留言会送达打造 Aster 的团队，他们会逐条阅读。之后您仍可以取消。</string>
@@ -144,8 +144,8 @@
     <string name="billing_money_back_line">试用 30 天。如果 Aster 不适合您，可全额退款。</string>
     <string name="billing_addon_choose">选择附加项</string>
     <string name="billing_plan_choose_hint">选择一个套餐以查看其包含的内容。</string>
-    <string name="billing_free_has">免费方案：%1$s</string>
-    <string name="billing_crypto_resume_title">完成你的加密货币付款</string>
+    <string name="billing_free_has">免费套餐：%1$s</string>
+    <string name="billing_crypto_resume_title">完成您的加密货币付款</string>
     <string name="billing_crypto_resume_expires">%1$s 到期</string>
     <string name="billing_status_ok">一切正常</string>
     <string name="billing_status_almost_full">即将用满</string>

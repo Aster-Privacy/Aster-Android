@@ -4,13 +4,13 @@
         <item quantity="other">%d 个别名将停止接收邮件。</item>
     </plurals>
     <plurals name="cancel_impact_domains">
-        <item quantity="other">%d 个自有域名将被暂停。</item>
+        <item quantity="other">%d 个自定义域名将被暂停。</item>
     </plurals>
     <plurals name="cancel_impact_templates">
-        <item quantity="other">%d 个模板将停止可用。</item>
+        <item quantity="other">%d 个模板将无法使用。</item>
     </plurals>
     <plurals name="cancel_impact_signatures">
-        <item quantity="other">%d 个签名将停止可用。</item>
+        <item quantity="other">%d 个签名将无法使用。</item>
     </plurals>
     <plurals name="cancel_impact_family">
         <item quantity="other">%d 位成员将失去账户。</item>

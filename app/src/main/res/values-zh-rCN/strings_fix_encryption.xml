@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="fix_enc_key_card_title">你的加密密钥</string>
+    <string name="fix_enc_key_card_title">您的加密密钥</string>
     <string name="fix_enc_key_id_label">密钥 ID</string>
     <string name="fix_enc_copy_key_id">复制密钥 ID</string>
     <string name="fix_enc_key_id_copied">已复制密钥 ID</string>

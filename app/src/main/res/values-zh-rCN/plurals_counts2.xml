@@ -54,7 +54,7 @@
         <item quantity="other">%1$s 等 %2$d 人</item>
     </plurals>
     <plurals name="messages_in_type">
-        <item quantity="other">%2$s 中有 %1$d 条消息</item>
+        <item quantity="other">%2$s 中有 %1$d 封邮件</item>
     </plurals>
     <plurals name="exported_contacts">
         <item quantity="other">已导出 %d 位联系人</item>
