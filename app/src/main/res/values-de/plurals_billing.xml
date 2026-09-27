@@ -21,8 +21,8 @@
         <item quantity="other">%d Mitglieder verlieren ihre Konten.</item>
     </plurals>
     <plurals name="crypto_renewal_days">
-        <item quantity="one">Dein Tarif endet in %1$d Tag, am %2$s.</item>
-        <item quantity="other">Dein Tarif endet in %1$d Tagen, am %2$s.</item>
+        <item quantity="one">Ihr Tarif endet in %1$d Tag, am %2$s.</item>
+        <item quantity="other">Ihr Tarif endet in %1$d Tagen, am %2$s.</item>
     </plurals>
     <plurals name="special_offer_fine_print">
         <item quantity="one">Sie zahlen %1$s pro Monat für den ersten Monat. Danach verlängert sich Ihr Tarif für %3$s pro Monat, bis Sie ihn in den Einstellungen kündigen.</item>

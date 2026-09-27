@@ -2,5 +2,5 @@
 <resources>
     <string name="low_network_mode_active_banner">Sparsamer Netzmodus ist aktiv</string>
     <string name="low_network_mode_banner_action">Einstellungen</string>
-    <string name="low_network_mode_info_desc_v2">Hält Aster auf langsamen oder getakteten Verbindungen nutzbar. Aster überspringt Profilbilder, Absenderlogos und externe Bilder in E-Mails, zeigt jede Nachricht als reinen Text, lädt kürzere Posteingangsseiten und zeigt höchstens 4 Nachrichten pro Konversation. Hintergrundabrufe laufen seltener, Animationen werden abgeschaltet, und Anhänge werden erst geladen, wenn du sie öffnest.</string>
+    <string name="low_network_mode_info_desc_v2">Hält Aster auf langsamen oder getakteten Verbindungen nutzbar. Aster überspringt Profilbilder, Absenderlogos und externe Bilder in E-Mails, zeigt jede Nachricht als reinen Text, lädt kürzere Posteingangsseiten und zeigt höchstens 4 Nachrichten pro Unterhaltung. Hintergrundabrufe laufen seltener, Animationen werden abgeschaltet, und Anhänge werden erst geladen, wenn Sie sie öffnen.</string>
 </resources>

@@ -17,8 +17,8 @@
         <item quantity="other">%d Labels</item>
     </plurals>
     <plurals name="ghosts_count">
-        <item quantity="one">%d Ghost</item>
-        <item quantity="other">%d Ghosts</item>
+        <item quantity="one">%d Ghost-Alias</item>
+        <item quantity="other">%d Ghost-Aliase</item>
     </plurals>
     <plurals name="recovery_codes_count">
         <item quantity="one">%d Wiederherstellungscode</item>
@@ -65,7 +65,7 @@
         <item quantity="other">Mails von %1$d Absendern stoppen?</item>
     </plurals>
     <plurals name="participants_and_others">
-        <item quantity="one">%1$s &amp; %2$d weiterer</item>
+        <item quantity="one">%1$s &amp; %2$d weitere Person</item>
         <item quantity="other">%1$s &amp; %2$d weitere</item>
     </plurals>
     <plurals name="messages_in_type">

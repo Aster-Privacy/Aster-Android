@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="fix_billing_available_plans">Verfügbare Pläne</string>
+    <string name="fix_billing_available_plans">Verfügbare Tarife</string>
     <string name="fix_billing_status_active">Aktiv</string>
     <string name="fix_billing_free_plan_description">Sie nutzen den kostenlosen Tarif. Entdecken Sie unten die kostenpflichtigen Tarife für mehr Speicher, Aliase und Funktionen.</string>
     <string name="fix_billing_upgrade_for_more">Upgrade für mehr Speicher, Aliase und Funktionen</string>

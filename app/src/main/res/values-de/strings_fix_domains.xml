@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="domains_load_timeout">Das Laden deiner Domains dauert länger als erwartet. Prüfe deine Verbindung und versuche es erneut.</string>
+    <string name="domains_load_timeout">Das Laden Ihrer Domains dauert länger als erwartet. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.</string>
     <string name="domain_manage_mail_setup">E-Mail-Einrichtung</string>
-    <string name="domain_manage_dns_unavailable">Die Details zur E-Mail-Einrichtung erscheinen hier, sobald diese Domain deinem Konto hinzugefügt wurde.</string>
+    <string name="domain_manage_dns_unavailable">Die Details zur E-Mail-Einrichtung erscheinen hier, sobald diese Domain Ihrem Konto hinzugefügt wurde.</string>
     <string name="domain_manage_verification">Überprüfung</string>
     <string name="domain_manage_last_verified">Zuletzt überprüft</string>
     <string name="domain_manage_never_verified">Noch nicht überprüft</string>
@@ -11,16 +11,16 @@
     <string name="domain_manage_recheck">DNS-Einträge erneut prüfen</string>
     <string name="domain_manage_rechecking">DNS-Einträge werden geprüft</string>
     <string name="domain_purchase_search_rate_limited">Zu viele Suchanfragen. Versuchen Sie es in einer Minute erneut.</string>
-    <string name="domain_purchase_results_for">Das haben wir für %1$s gefunden</string>
+    <string name="domain_purchase_results_for">Ergebnisse für %1$s</string>
     <string name="domain_purchase_change_name">Namen ändern</string>
     <string name="domain_purchase_show_more">Weitere Ergebnisse anzeigen</string>
     <string name="domain_purchase_empty_included">Jede Domain enthält WHOIS-Datenschutz, eingerichtetes DNS und unbegrenzte Adressen.</string>
     <string name="domain_purchase_retry">Erneut versuchen</string>
-    <string name="domain_purchase_progress_note">Bitte warte, während wir deine Domain registrieren und deine Postfächer einrichten. Das dauert in der Regel etwa eine Minute.</string>
-    <string name="domain_purchase_awaiting_note">Wir haben deine Zahlung noch nicht erhalten. Schließe den Bezahlvorgang ab, um deine Bestellung abzuschließen, oder schließe dieses Fenster und zahle später unter Gekaufte Domains.</string>
-    <string name="domain_purchase_purchased_desc">Domains, die du über Aster kaufst, erscheinen hier und funktionieren automatisch als eigene Domains. Namen wählen, bezahlen und sofort loslegen.</string>
+    <string name="domain_purchase_progress_note">Aster Mail registriert Ihre Domain und richtet Ihre Postfächer ein. Das dauert in der Regel etwa eine Minute.</string>
+    <string name="domain_purchase_awaiting_note">Ihre Zahlung ist noch nicht eingegangen. Um Ihre Bestellung abzuschließen, schließen Sie den Bezahlvorgang ab. Sie können dieses Fenster auch schließen und später unter „Gekaufte Domains“ bezahlen.</string>
+    <string name="domain_purchase_purchased_desc">Domains, die Sie über Aster Mail kaufen, erscheinen hier und funktionieren automatisch als eigene Domains.</string>
     <string name="domain_purchase_buy_new">Neue Domain kaufen</string>
-    <string name="domain_purchase_discount_tooltip">Aktionspreis für das erste Jahr von unserem Registrar. Danach Verlängerung für %1$s pro Jahr.</string>
+    <string name="domain_purchase_discount_tooltip">Aktionspreis für das erste Jahr. Danach Verlängerung für %1$s pro Jahr.</string>
     <string name="domain_bimi_title">Markenlogo</string>
     <string name="domain_bimi_search_keyword">BIMI</string>
     <string name="domain_bimi_row_off">Zeigen Sie Ihr Logo neben Ihren E-Mails in Posteingängen an, die Markenlogos unterstützen.</string>
