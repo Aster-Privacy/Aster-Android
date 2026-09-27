@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <plurals name="alias_export_entries">
-        <item quantity="one">%d item</item>
-        <item quantity="other">%d items</item>
+        <item quantity="one">%d vermelding</item>
+        <item quantity="other">%d vermeldingen</item>
     </plurals>
     <plurals name="alias_export_files">
         <item quantity="one">%d bestand</item>
@@ -17,8 +17,8 @@
         <item quantity="other">%d ongeldig</item>
     </plurals>
     <plurals name="alias_import_to_import">
-        <item quantity="one">%d wordt geïmporteerd</item>
-        <item quantity="other">%d worden geïmporteerd</item>
+        <item quantity="one">%d te importeren</item>
+        <item quantity="other">%d te importeren</item>
     </plurals>
     <plurals name="kids_seats_invitations">
         <item quantity="one">%d uitnodiging</item>

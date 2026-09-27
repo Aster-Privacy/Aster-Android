@@ -16,9 +16,6 @@
     <string name="notif_channel_new_mail_name">بريد جديد</string>
     <string name="notif_channel_new_mail_description">إشعارات رسائل البريد الواردة الجديدة</string>
     <string name="notif_new_message">رسالة جديدة</string>
-    <string name="notif_action_reply">رد</string>
-    <string name="notif_action_mark_read">تعليم كمقروء</string>
-    <string name="notif_action_archive">أرشفة</string>
     <string name="notif_group_summary_new_mail">بريد جديد</string>
     <string name="notif_battery_opt_title">نشاط غير مقيّد في الخلفية</string>
     <string name="notif_battery_opt_subtitle">مطلوب لإشعارات موثوقة. انقر للتفعيل من إعدادات النظام.</string>
@@ -31,7 +28,7 @@
     <string name="notif_persistent_push_body">يصل البريد الجديد دون انتظار فحص في الخلفية.</string>
     <string name="notif_persistent_push_stop">إيقاف</string>
     <string name="persistent_push_title">إبقاء الاتصال مفتوحًا</string>
-    <string name="persistent_push_subtitle">يظل Aster Mail متصلًا بالخادم ليصل البريد الجديد فورًا. فعّل هذا الخيار إذا كانت إشعارات الدفع لا تصل إلى هاتفك. يضيف إشعارًا دائمًا ويستهلك مزيدًا من البطارية.</string>
+    <string name="persistent_push_subtitle">يظل Aster Mail متصلًا بالخادم ليصل البريد الجديد فورًا. فعّل هذا الخيار إذا كانت الإشعارات الفورية لا تصل إلى هاتفك أبدًا. يضيف إشعارًا دائمًا ويستهلك مزيدًا من البطارية.</string>
     <string name="persistent_push_autostart_title">السماح بالتشغيل التلقائي</string>
     <string name="persistent_push_autostart_subtitle">تغلق بعض الهواتف الاتصالات في الخلفية. من إعدادات النظام، اسمح لـ Aster Mail بالتشغيل التلقائي وأوقف قيود البطارية.</string>
     <string name="notif_delivery_section">التسليم</string>

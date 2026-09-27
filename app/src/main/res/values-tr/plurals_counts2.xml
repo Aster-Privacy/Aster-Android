@@ -8,17 +8,13 @@
         <item quantity="one">%d anahtar</item>
         <item quantity="other">%d anahtar</item>
     </plurals>
-    <plurals name="devices_count">
-        <item quantity="one">%d cihaz</item>
-        <item quantity="other">%d cihaz</item>
-    </plurals>
     <plurals name="labels_count">
         <item quantity="one">%d etiket</item>
         <item quantity="other">%d etiket</item>
     </plurals>
     <plurals name="ghosts_count">
-        <item quantity="one">%d ghost takma ad</item>
-        <item quantity="other">%d ghost takma ad</item>
+        <item quantity="one">%d hayalet takma ad</item>
+        <item quantity="other">%d hayalet takma ad</item>
     </plurals>
     <plurals name="recovery_codes_count">
         <item quantity="one">%d kurtarma kodu</item>

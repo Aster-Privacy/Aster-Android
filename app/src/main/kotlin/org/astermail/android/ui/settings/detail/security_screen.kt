@@ -90,6 +90,7 @@ import org.astermail.android.api.security.TrustedDevice
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.auto_mirrored
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.shimmer
@@ -144,8 +145,8 @@ private fun format_audit_event(type: String): String {
 }
 
 private fun audit_icon(event_type: String): ImageVector = when {
-    event_type.contains("login") || event_type.contains("sign_in") -> TablerIcons.Login
-    event_type.contains("logout") || event_type.contains("sign_out") -> TablerIcons.Logout
+    event_type.contains("login") || event_type.contains("sign_in") -> TablerIcons.Login.auto_mirrored()
+    event_type.contains("logout") || event_type.contains("sign_out") -> TablerIcons.Logout.auto_mirrored()
     event_type.contains("password") -> TablerIcons.Lock
     event_type.contains("two_factor") || event_type.contains("totp") || event_type.contains("2fa") -> TablerIcons.ShieldCheck
     event_type.contains("key") || event_type.contains("passkey") -> TablerIcons.Key
@@ -263,7 +264,7 @@ fun SecurityScreen(
     val score_label = when {
         score == null -> "…"
         score >= security_score_max -> stringResource(R.string.score_complete)
-        else -> stringResource(R.string.score_steps_left, security_score_max - score)
+        else -> pluralStringResource(R.plurals.score_steps_left, security_score_max - score, security_score_max - score)
     }
     val score_color = when (score) {
         null -> colors.text_muted
@@ -345,8 +346,9 @@ fun SecurityScreen(
     }
     val codes_status = state.recovery_codes_status
     val recovery_codes_sub = if (codes_status != null && codes_status.total_codes > 0) {
-        stringResource(
-            R.string.recovery_codes_remaining,
+        pluralStringResource(
+            R.plurals.recovery_codes_remaining,
+            codes_status.total_codes,
             codes_status.available_codes,
             codes_status.total_codes,
         )
@@ -720,7 +722,7 @@ fun SecurityScreen(
                 }
                 devices_list_action_row(
                     label = stringResource(R.string.revoke_all_action),
-                    icon = TablerIcons.Logout,
+                    icon = TablerIcons.Logout.auto_mirrored(),
                     tint = colors.danger,
                     test_tag = "trusted_devices_revoke_all",
                     on_click = { show_revoke_all_confirm = true },
@@ -1429,7 +1431,7 @@ private fun trusted_device_row(
             val expires = device.expires_at
             if (!expires.isNullOrBlank()) {
                 Text(
-                    text = "${stringResource(R.string.trusted_device_expires)} ${relative_time_label(expires)}",
+                    text = stringResource(R.string.expires_custom_at, relative_time_label(expires)),
                     color = colors.text_tertiary,
                     fontSize = 13.sp,
                     maxLines = 1,

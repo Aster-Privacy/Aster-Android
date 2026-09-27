@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="common_back">वापस</string>
     <string name="common_storage_used_of_total">%2$s में से %1$s</string>
     <string name="common_storage_used_only">%1$s इस्तेमाल हुआ</string>
-    <string name="common_snackbar_dismiss">खारिज करें</string>
-    <string name="common_snackbar_undo">पहले जैसा करें</string>
+    <string name="auth_previous_account_data_not_cleared">पिछले खाते का मेल इस डिवाइस से नहीं हटाया जा सका। फिर से साइन इन करके देखें।</string>
+    <string name="export_readme_title">Aster Mail एक्सपोर्ट</string>
+    <string name="export_readme_mbox">MBOX फ़ॉर्मेट में सभी ईमेल (RFC 4155)</string>
+    <string name="export_readme_eml">अलग-अलग .eml फ़ाइलें</string>
+    <string name="export_readme_contacts">संपर्क विवरण</string>
+    <string name="export_readme_warning">इस एक्सपोर्ट के ईमेल एन्क्रिप्ट नहीं हैं। इस फ़ाइल को किसी सुरक्षित जगह पर रखें।</string>
 </resources>

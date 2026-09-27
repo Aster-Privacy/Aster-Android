@@ -2,26 +2,32 @@
 <resources>
     <plurals name="cancel_impact_aliases">
         <item quantity="one">%d alias smette di ricevere posta.</item>
+        <item quantity="many">%d alias smettono di ricevere posta.</item>
         <item quantity="other">%d alias smettono di ricevere posta.</item>
     </plurals>
     <plurals name="cancel_impact_domains">
         <item quantity="one">%d dominio personalizzato viene sospeso.</item>
+        <item quantity="many">%d domini personalizzati vengono sospesi.</item>
         <item quantity="other">%d domini personalizzati vengono sospesi.</item>
     </plurals>
     <plurals name="cancel_impact_templates">
         <item quantity="one">%d modello smette di funzionare.</item>
+        <item quantity="many">%d modelli smettono di funzionare.</item>
         <item quantity="other">%d modelli smettono di funzionare.</item>
     </plurals>
     <plurals name="cancel_impact_signatures">
         <item quantity="one">%d firma smette di funzionare.</item>
+        <item quantity="many">%d firme smettono di funzionare.</item>
         <item quantity="other">%d firme smettono di funzionare.</item>
     </plurals>
     <plurals name="cancel_impact_family">
         <item quantity="one">%d membro perde il proprio account.</item>
+        <item quantity="many">%d membri perdono il proprio account.</item>
         <item quantity="other">%d membri perdono il proprio account.</item>
     </plurals>
     <plurals name="crypto_renewal_days">
         <item quantity="one">Il tuo piano termina tra %1$d giorno, il %2$s.</item>
+        <item quantity="many">Il tuo piano termina tra %1$d giorni, il %2$s.</item>
         <item quantity="other">Il tuo piano termina tra %1$d giorni, il %2$s.</item>
     </plurals>
     <plurals name="special_offer_fine_print">
@@ -31,10 +37,12 @@
     </plurals>
     <plurals name="billing_invoice_count">
         <item quantity="one">%d fattura</item>
+        <item quantity="many">%d fatture</item>
         <item quantity="other">%d fatture</item>
     </plurals>
     <plurals name="billing_compare_all_features">
         <item quantity="one">Confronta %d funzione</item>
+        <item quantity="many">Confronta tutte le %d funzioni</item>
         <item quantity="other">Confronta tutte le %d funzioni</item>
     </plurals>
 </resources>

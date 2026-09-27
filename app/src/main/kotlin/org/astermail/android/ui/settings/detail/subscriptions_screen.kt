@@ -87,6 +87,7 @@ import androidx.compose.ui.text.style.TextAlign
 import kotlinx.coroutines.launch
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.design.mirror_in_rtl
 
 private val LOCALE_CURRENCY_MAP = mapOf(
     "en_us" to "usd", "en_gb" to "gbp", "en_au" to "aud", "en_ca" to "cad", "en_in" to "inr",
@@ -269,6 +270,7 @@ fun SubscriptionsScreen(
     val state by vm.state.collectAsStateWithLifecycle()
     val billing_state by billing_vm.state.collectAsStateWithLifecycle()
     val offer_vm = org.astermail.android.ui.upgrade.special_offer_view_model()
+    val offer_state by offer_vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val play_install = org.astermail.android.billing.remember_play_install()
@@ -948,6 +950,13 @@ fun SubscriptionsScreen(
                 enabled = !billing_state.is_acting,
             )
         }
+        if (!is_paid_plan && org.astermail.android.ui.upgrade.special_offer_entry_visible(offer_state)) {
+            v_gap(AsterSpacing.md)
+            billing_special_offer_card(
+                percent_off = offer_state.effective_percent_off,
+                on_open = { offer_vm.reopen() },
+            )
+        }
         val advantages_tier = if (is_paid_plan) current_tier?.takeIf { it.code !in FAMILY_PLAN_CODES } else free_teaser_tier
         if (advantages_tier != null && (sub != null || state.error == null)) {
             v_gap(AsterSpacing.md)
@@ -1585,7 +1594,7 @@ private fun cancel_offer_row(label: String, icon: androidx.compose.ui.graphics.v
             imageVector = TablerIcons.ChevronRight,
             contentDescription = null,
             tint = colors.accent_blue,
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(16.dp).mirror_in_rtl(),
         )
     }
 }
@@ -1869,6 +1878,7 @@ internal fun crypto_term_dialog(
     on_confirm: (Int) -> Unit,
     offer_prices: Map<Int, review_offer_price> = emptyMap(),
     initial_term: Int = 1,
+    offer_percent: Int? = null,
 ) {
     val colors = AsterMaterial.colors
     var selected_term by remember { mutableStateOf(initial_term) }
@@ -1884,18 +1894,27 @@ internal fun crypto_term_dialog(
         on_dismiss = on_dismiss,
         title = stringResource(R.string.crypto_term_title),
         body = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-                modifier = Modifier.selectableGroup(),
-            ) {
-                terms.forEach { (months, label) ->
-                    val term_active = selected_term == months
-                    billing_option_row(
-                        title = label,
-                        selected = term_active,
-                        on_click = { selected_term = months },
-                        modifier = Modifier.clip(billing_control_shape),
-                        below = offer_prices[months]?.let { term_offer -> { offer_price_line(term_offer) } },
+            Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    modifier = Modifier.selectableGroup(),
+                ) {
+                    terms.forEach { (months, label) ->
+                        val term_active = selected_term == months
+                        billing_option_row(
+                            title = label,
+                            selected = term_active,
+                            on_click = { selected_term = months },
+                            modifier = Modifier.clip(billing_control_shape),
+                            below = offer_prices[months]?.let { term_offer -> { offer_price_line(term_offer) } },
+                        )
+                    }
+                }
+                if (offer_percent != null && selected_term < 12 && offer_prices.containsKey(selected_term)) {
+                    Text(
+                        text = stringResource(R.string.special_offer_crypto_one_payment, offer_percent),
+                        color = colors.text_secondary,
+                        fontSize = 13.sp,
                     )
                 }
             }

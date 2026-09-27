@@ -44,6 +44,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -134,7 +135,7 @@ internal fun domain_purchase_manage_dialog(
     val term_text = if (order.years <= 1) {
         stringResource(R.string.domain_purchase_one_year)
     } else {
-        stringResource(R.string.domain_purchase_n_years, order.years)
+        pluralStringResource(R.plurals.domain_purchase_n_years, order.years, order.years)
     }
 
     AsterDialog(
@@ -481,7 +482,7 @@ private fun manage_setup_progress(done: Int, total: Int) {
         }
         Spacer(Modifier.width(AsterSpacing.sm))
         Text(
-            text = stringResource(R.string.domain_records_verified, done, total),
+            text = pluralStringResource(R.plurals.domain_records_verified, total, done, total),
             color = if (complete) colors.success else colors.text_tertiary,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,

@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="common_back">Geri</string>
     <string name="common_storage_used_of_total">%2$s içinde %1$s</string>
     <string name="common_storage_used_only">%1$s kullanıldı</string>
-    <string name="common_snackbar_dismiss">Kapat</string>
-    <string name="common_snackbar_undo">Geri al</string>
+    <string name="auth_previous_account_data_not_cleared">Önceki hesabın postaları bu cihazdan kaldırılamadı. Tekrar oturum açmayı deneyin.</string>
+    <string name="export_readme_title">Aster Mail dışa aktarımı</string>
+    <string name="export_readme_mbox">MBOX biçiminde tüm e-postalar (RFC 4155)</string>
+    <string name="export_readme_eml">Ayrı .eml dosyaları</string>
+    <string name="export_readme_contacts">Kişi ayrıntıları</string>
+    <string name="export_readme_warning">Bu dışa aktarımdaki e-postalar şifrelenmemiş. Bu dosyayı güvenli bir yerde saklayın.</string>
 </resources>

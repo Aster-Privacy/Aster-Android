@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="count_selected">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <plurals name="inbox_selected_count">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <plurals name="contacts_bulk_progress">
+        <item quantity="one">Deleting %1$d of %2$d contact</item>
+        <item quantity="other">Deleting %1$d of %2$d contacts</item>
+    </plurals>
+    <plurals name="recovery_codes_remaining">
+        <item quantity="one">%1$d of %2$d code left</item>
+        <item quantity="other">%1$d of %2$d codes left</item>
+    </plurals>
+    <plurals name="export_progress_emails">
+        <item quantity="one">%1$d / %2$d email</item>
+        <item quantity="other">%1$d / %2$d emails</item>
+    </plurals>
+    <plurals name="crypto_native_status_confirming">
+        <item quantity="one">%1$d of %2$d confirmation</item>
+        <item quantity="other">%1$d of %2$d confirmations</item>
+    </plurals>
+    <plurals name="kids_seats_used">
+        <item quantity="one">%1$d of %2$d family seat used</item>
+        <item quantity="other">%1$d of %2$d family seats used</item>
+    </plurals>
+    <plurals name="domain_records_verified">
+        <item quantity="one">%1$d of %2$d record verified</item>
+        <item quantity="other">%1$d of %2$d records verified</item>
+    </plurals>
+    <plurals name="alias_limit_notice">
+        <item quantity="one">%1$d of %2$d alias used. Upgrade for more.</item>
+        <item quantity="other">%1$d of %2$d aliases used. Upgrade for more.</item>
+    </plurals>
+    <plurals name="score_steps_left">
+        <item quantity="one">%1$d left</item>
+        <item quantity="other">%1$d left</item>
+    </plurals>
+    <plurals name="alias_import_summary_created">
+        <item quantity="one">%1$d imported</item>
+        <item quantity="other">%1$d imported</item>
+    </plurals>
+    <plurals name="alias_import_summary_skipped">
+        <item quantity="one">%1$d already existed</item>
+        <item quantity="other">%1$d already existed</item>
+    </plurals>
+    <plurals name="alias_import_summary_failed">
+        <item quantity="one">%1$d failed</item>
+        <item quantity="other">%1$d failed</item>
+    </plurals>
+    <plurals name="alias_apply_existing_canceled">
+        <item quantity="one">Stopped: %1$d updated</item>
+        <item quantity="other">Stopped: %1$d updated</item>
+    </plurals>
+    <plurals name="fix_enc_codes_used">
+        <item quantity="one">%1$d used</item>
+        <item quantity="other">%1$d used</item>
+    </plurals>
+    <plurals name="payment_failed_days_left">
+        <item quantity="one">Access limited in %1$d day.</item>
+        <item quantity="other">Access limited in %1$d days.</item>
+    </plurals>
+    <plurals name="templates_decrypt_failed_count">
+        <item quantity="one">%1$d template could not be read on this device. It was saved with a key this device does not currently hold.</item>
+        <item quantity="other">%1$d templates could not be read on this device. They were saved with a key this device does not currently hold.</item>
+    </plurals>
+    <plurals name="contact_trash_days_left">
+        <item quantity="one">%1$d day left</item>
+        <item quantity="other">%1$d days left</item>
+    </plurals>
+    <plurals name="quick_action_delete_old_confirm">
+        <item quantity="one">Move %1$d conversation older than 30 days to Trash?</item>
+        <item quantity="other">Move %1$d conversations older than 30 days to Trash?</item>
+    </plurals>
+    <plurals name="undo_send_delay_seconds">
+        <item quantity="one">%1$d second</item>
+        <item quantity="other">%1$d seconds</item>
+    </plurals>
+</resources>

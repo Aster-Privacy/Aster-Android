@@ -6,7 +6,6 @@
     <string name="domain_manage_verification">確認</string>
     <string name="domain_manage_last_verified">最終確認</string>
     <string name="domain_manage_never_verified">未確認</string>
-    <string name="domain_manage_records">DNS レコード</string>
     <string name="domain_manage_catch_all_description">このドメインのすべてのアドレス宛のメールを受信します。</string>
     <string name="domain_manage_recheck">DNS レコードを再確認</string>
     <string name="domain_manage_rechecking">DNS レコードを確認中</string>
@@ -16,11 +15,11 @@
     <string name="domain_purchase_show_more">さらに結果を表示</string>
     <string name="domain_purchase_empty_included">すべてのドメインに WHOIS 保護、設定済みの DNS、無制限のアドレスが付いています。</string>
     <string name="domain_purchase_retry">再試行</string>
-    <string name="domain_purchase_progress_note">ドメインの登録とメールボックスの設定を行っています。通常は1分ほどで完了します。</string>
+    <string name="domain_purchase_progress_note">Aster Mail がドメインを登録し、メールボックスを設定しています。通常は1分ほどで完了します。</string>
     <string name="domain_purchase_awaiting_note">お支払いはまだ確認できていません。チェックアウトを完了して注文を確定するか、このウィンドウを閉じて後で「購入したドメイン」からお支払いください。</string>
-    <string name="domain_purchase_purchased_desc">Asterで購入したドメインはここに表示され、自動的にカスタムドメインとして機能します。名前を選んで支払えば、すぐに使い始められます。</string>
+    <string name="domain_purchase_purchased_desc">Aster Mail で購入したドメインはここに表示され、自動的にカスタムドメインとして機能します。</string>
     <string name="domain_purchase_buy_new">新しいドメインを購入</string>
-    <string name="domain_purchase_discount_tooltip">レジストラによる初年度セール価格です。以降は年 %1$s で更新されます。</string>
+    <string name="domain_purchase_discount_tooltip">初年度のセール価格です。以降は年 %1$s で更新されます。</string>
     <string name="domain_bimi_title">ブランドロゴ</string>
     <string name="domain_bimi_search_keyword">BIMI</string>
     <string name="domain_bimi_row_off">ブランドロゴに対応した受信トレイで、メールの横にロゴを表示します。</string>

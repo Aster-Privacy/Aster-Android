@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="inbox_selected_count">выбрано: %1$d</string>
     <string name="inbox_search_in_folder">Поиск в папке %1$s</string>
     <string name="inbox_subject_with_count">%1$s (%2$d)</string>
     <string name="inbox_no_subject">(без темы)</string>
     <string name="inbox_a11y_select_thread">Выбрать переписку</string>
     <string name="inbox_a11y_deselect_thread">Снять выбор с переписки</string>
-    <string name="selection_scope_offer">Выбрать все %1$d в %2$s</string>
-    <string name="selection_scope_offer_categories">Выбрать все %1$d в %2$s, включая все категории</string>
-    <string name="selection_scope_confirmed">Выбрано все %1$d в %2$s</string>
-    <string name="inbox_search_in_category">Поиск в %1$s</string>
+    <string name="selection_scope_offer">Выбрать все %1$d в разделе «%2$s»</string>
+    <string name="selection_scope_offer_categories">Выбрать все %1$d в разделе «%2$s», включая все категории</string>
+    <string name="selection_scope_confirmed">Выбраны все %1$d в разделе «%2$s»</string>
+    <string name="inbox_search_in_category">Поиск: %1$s</string>
     <string name="inbox_a11y_state_read">Прочитано</string>
     <string name="inbox_a11y_state_unread">Не прочитано</string>
 </resources>

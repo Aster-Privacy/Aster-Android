@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="count_selected">
+        <item quantity="one">%1$d seleccionado</item>
+        <item quantity="many">%1$d seleccionados</item>
+        <item quantity="other">%1$d seleccionados</item>
+    </plurals>
+    <plurals name="inbox_selected_count">
+        <item quantity="one">%1$d seleccionado</item>
+        <item quantity="many">%1$d seleccionados</item>
+        <item quantity="other">%1$d seleccionados</item>
+    </plurals>
+    <plurals name="contacts_bulk_progress">
+        <item quantity="one">Eliminando %1$d de %2$d contactos</item>
+        <item quantity="many">Eliminando %1$d de %2$d contactos</item>
+        <item quantity="other">Eliminando %1$d de %2$d contactos</item>
+    </plurals>
+    <plurals name="recovery_codes_remaining">
+        <item quantity="one">Quedan %1$d de %2$d códigos</item>
+        <item quantity="many">Quedan %1$d de %2$d códigos</item>
+        <item quantity="other">Quedan %1$d de %2$d códigos</item>
+    </plurals>
+    <plurals name="export_progress_emails">
+        <item quantity="one">%1$d / %2$d correos</item>
+        <item quantity="many">%1$d / %2$d correos</item>
+        <item quantity="other">%1$d / %2$d correos</item>
+    </plurals>
+    <plurals name="crypto_native_status_confirming">
+        <item quantity="one">%1$d de %2$d confirmaciones</item>
+        <item quantity="many">%1$d de %2$d confirmaciones</item>
+        <item quantity="other">%1$d de %2$d confirmaciones</item>
+    </plurals>
+    <plurals name="kids_seats_used">
+        <item quantity="one">%1$d de %2$d plazas familiares en uso</item>
+        <item quantity="many">%1$d de %2$d plazas familiares en uso</item>
+        <item quantity="other">%1$d de %2$d plazas familiares en uso</item>
+    </plurals>
+    <plurals name="domain_records_verified">
+        <item quantity="one">%1$d de %2$d registros verificados</item>
+        <item quantity="many">%1$d de %2$d registros verificados</item>
+        <item quantity="other">%1$d de %2$d registros verificados</item>
+    </plurals>
+    <plurals name="alias_limit_notice">
+        <item quantity="one">Has usado %1$d de %2$d alias. Mejora tu plan para obtener más.</item>
+        <item quantity="many">Has usado %1$d de %2$d alias. Mejora tu plan para obtener más.</item>
+        <item quantity="other">Has usado %1$d de %2$d alias. Mejora tu plan para obtener más.</item>
+    </plurals>
+    <plurals name="score_steps_left">
+        <item quantity="one">Queda %1$d</item>
+        <item quantity="many">Quedan %1$d</item>
+        <item quantity="other">Quedan %1$d</item>
+    </plurals>
+    <plurals name="alias_import_summary_created">
+        <item quantity="one">%1$d importado</item>
+        <item quantity="many">%1$d importados</item>
+        <item quantity="other">%1$d importados</item>
+    </plurals>
+    <plurals name="alias_import_summary_skipped">
+        <item quantity="one">%1$d ya existía</item>
+        <item quantity="many">%1$d ya existían</item>
+        <item quantity="other">%1$d ya existían</item>
+    </plurals>
+    <plurals name="alias_import_summary_failed">
+        <item quantity="one">%1$d fallido</item>
+        <item quantity="many">%1$d fallidos</item>
+        <item quantity="other">%1$d fallidos</item>
+    </plurals>
+    <plurals name="alias_apply_existing_canceled">
+        <item quantity="one">Detenido: %1$d actualizado</item>
+        <item quantity="many">Detenido: %1$d actualizados</item>
+        <item quantity="other">Detenido: %1$d actualizados</item>
+    </plurals>
+    <plurals name="fix_enc_codes_used">
+        <item quantity="one">%1$d usado</item>
+        <item quantity="many">%1$d usados</item>
+        <item quantity="other">%1$d usados</item>
+    </plurals>
+    <plurals name="payment_failed_days_left">
+        <item quantity="one">El acceso se limitará en %1$d día.</item>
+        <item quantity="many">El acceso se limitará en %1$d días.</item>
+        <item quantity="other">El acceso se limitará en %1$d días.</item>
+    </plurals>
+    <plurals name="templates_decrypt_failed_count">
+        <item quantity="one">No se pudo leer %1$d plantilla en este dispositivo. Se guardó con una clave que este dispositivo no tiene actualmente.</item>
+        <item quantity="many">No se pudieron leer %1$d plantillas en este dispositivo. Se guardaron con una clave que este dispositivo no tiene actualmente.</item>
+        <item quantity="other">No se pudieron leer %1$d plantillas en este dispositivo. Se guardaron con una clave que este dispositivo no tiene actualmente.</item>
+    </plurals>
+    <plurals name="contact_trash_days_left">
+        <item quantity="one">Queda %1$d día</item>
+        <item quantity="many">Quedan %1$d días</item>
+        <item quantity="other">Quedan %1$d días</item>
+    </plurals>
+    <plurals name="quick_action_delete_old_confirm">
+        <item quantity="one">¿Mover %1$d conversación de más de 30 días a la papelera?</item>
+        <item quantity="many">¿Mover %1$d conversaciones de más de 30 días a la papelera?</item>
+        <item quantity="other">¿Mover %1$d conversaciones de más de 30 días a la papelera?</item>
+    </plurals>
+    <plurals name="undo_send_delay_seconds">
+        <item quantity="one">%1$d segundo</item>
+        <item quantity="many">%1$d segundos</item>
+        <item quantity="other">%1$d segundos</item>
+    </plurals>
+</resources>

@@ -1,10 +1,10 @@
 <resources>
-    <string name="demo_phish_subject">Urgente: atividade de login incomum na sua conta PayPal</string>
-    <string name="demo_phish_preview">Detectamos uma tentativa de login não autorizada. Verifique sua identidade imediatamente para evitar a suspensão da conta.</string>
-    <string name="demo_phish_body_greeting">Prezado cliente,</string>
-    <string name="demo_phish_body_para1">Detectamos uma atividade de login incomum na sua conta PayPal a partir de um dispositivo que não reconhecemos. Para sua proteção, sua conta será suspensa em 24 horas, a menos que você verifique sua identidade imediatamente.</string>
-    <string name="demo_phish_body_para2">Confirme suas informações de cobrança visitando o link seguro abaixo:</string>
+    <string name="demo_phish_subject">Urgente: atividade de início de sessão invulgar na sua conta PayPal</string>
+    <string name="demo_phish_preview">Detetámos uma tentativa de início de sessão não autorizada. Verifique imediatamente a sua identidade para evitar a suspensão da conta.</string>
+    <string name="demo_phish_body_greeting">Caro cliente,</string>
+    <string name="demo_phish_body_para1">Detetámos uma atividade de início de sessão invulgar na sua conta PayPal a partir de um dispositivo que não reconhecemos. Para sua proteção, a sua conta será suspensa dentro de 24 horas, a menos que verifique imediatamente a sua identidade.</string>
+    <string name="demo_phish_body_para2">Confirme as suas informações de faturação através da ligação segura abaixo:</string>
     <string name="demo_phish_body_para3">A falta de resposta resultará na perda permanente de acesso aos seus fundos. Este é um aviso de ação imediata necessária.</string>
-    <string name="demo_phish_body_signoff">Equipe de segurança do PayPal</string>
-    <string name="demo_phish_body_signin_label">Ou entre diretamente:</string>
+    <string name="demo_phish_body_signoff">Equipa de Segurança do PayPal</string>
+    <string name="demo_phish_body_signin_label">Ou inicie sessão diretamente:</string>
 </resources>

@@ -20,11 +20,11 @@
     <string name="image_theme_colors">颜色</string>
     <string name="image_theme_wallpapers">壁纸</string>
     <string name="image_theme_page_subtitle">为收件箱选择照片和颜色</string>
-    <string name="image_theme_category_yours">你的照片</string>
+    <string name="image_theme_category_yours">您的照片</string>
     <string name="image_theme_choose_photo">选择照片</string>
     <string name="image_theme_replace_photo">替换照片</string>
     <string name="image_theme_remove_photo">移除照片</string>
-    <string name="image_theme_photo_private">你的照片已加密，仅保存在此设备上。</string>
+    <string name="image_theme_photo_private">您的照片已加密，仅保存在此设备上。</string>
     <string name="image_theme_photo_too_large">此照片过大。请选择小于 40 MB 的照片。</string>
     <string name="image_theme_photo_unsupported">不支持此文件类型。请选择 JPEG、PNG、GIF、WebP 或 HEIC 照片。</string>
     <string name="image_theme_photo_unreadable">无法打开此照片。请换一张试试。</string>
@@ -40,7 +40,6 @@
     <string name="image_theme_reset_short">重置</string>
     <string name="image_theme_reset_confirm_title">要重置图片主题吗？</string>
     <string name="image_theme_reset_confirm_message">此操作会移除背景照片，并将颜色恢复为默认主题。</string>
-    <string name="theme_opacity">主题不透明度</string>
     <string name="theme_opacity_clear">通透</string>
     <string name="theme_opacity_clear_subtitle">照片显示得最清楚。</string>
     <string name="theme_opacity_glass">玻璃</string>
@@ -52,8 +51,8 @@
     <string name="glass_mode">玻璃</string>
     <string name="glass_mode_subtitle">照片会从表面后面透出。关闭后表面为不透明。</string>
     <string name="theme_transparency">透明度</string>
-    <string name="image_theme_animation">动画背景</string>
-    <string name="image_theme_animation_subtitle">播放你的动画背景。开启省电模式或设备已关闭动画时，它会停止。</string>
+    <string name="image_theme_animation">背景动画</string>
+    <string name="image_theme_animation_subtitle">播放您的动画背景。开启省电模式或设备已关闭动画时，它会停止。</string>
     <string name="image_theme_animation_too_large">此动画图片过大。请选择小于 12 MB 的图片。</string>
     <string name="image_theme_retry_download">重试下载</string>
 </resources>

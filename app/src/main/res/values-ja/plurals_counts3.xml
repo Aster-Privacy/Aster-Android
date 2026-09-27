@@ -19,13 +19,13 @@
         <item quantity="other">%1$d 時間</item>
     </plurals>
     <plurals name="settings_val_emails_per_day">
-        <item quantity="other">%1$d 通</item>
+        <item quantity="one">%1$d 件のメール</item>
+        <item quantity="other">%1$d 件のメール</item>
     </plurals>
     <plurals name="spam_auto_delete_notice">
-        <item quantity="other">迷惑メール内のアイテムは%1$d日後に自動的に削除されます。</item>
+        <item quantity="other">スパム内のアイテムは%1$d日後に自動的に削除されます。</item>
     </plurals>
     <plurals name="trash_auto_delete_notice">
-        <item quantity="one">ゴミ箱のアイテムは %1$d 日後に自動的に削除されます。</item>
         <item quantity="other">ゴミ箱のアイテムは %1$d 日後に自動的に削除されます。</item>
     </plurals>
     <plurals name="pending_deletion_body_days">

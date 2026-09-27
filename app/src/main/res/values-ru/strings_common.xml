@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="common_back">Назад</string>
     <string name="common_storage_used_of_total">%1$s из %2$s</string>
-    <string name="common_storage_used_only">занято %1$s</string>
-    <string name="common_snackbar_dismiss">Скрыть</string>
-    <string name="common_snackbar_undo">Отменить</string>
+    <string name="common_storage_used_only">Занято %1$s</string>
+    <string name="auth_previous_account_data_not_cleared">Не удалось удалить почту предыдущего аккаунта с этого устройства. Попробуйте войти снова.</string>
+    <string name="export_readme_title">Экспорт Aster Mail</string>
+    <string name="export_readme_mbox">Все письма в формате MBOX (RFC 4155)</string>
+    <string name="export_readme_eml">Отдельные файлы .eml</string>
+    <string name="export_readme_contacts">Сведения о контактах</string>
+    <string name="export_readme_warning">Письма в этом экспорте не зашифрованы. Храните этот файл в надежном месте.</string>
 </resources>

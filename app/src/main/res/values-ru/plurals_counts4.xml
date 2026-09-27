@@ -4,19 +4,19 @@
         <item quantity="one">%d запись</item>
         <item quantity="few">%d записи</item>
         <item quantity="many">%d записей</item>
-        <item quantity="other">%d записей</item>
+        <item quantity="other">%d записи</item>
     </plurals>
     <plurals name="alias_export_files">
-        <item quantity="one">%d файле</item>
-        <item quantity="few">%d файлах</item>
-        <item quantity="many">%d файлах</item>
-        <item quantity="other">%d файлах</item>
+        <item quantity="one">%d файл</item>
+        <item quantity="few">%d файла</item>
+        <item quantity="many">%d файлов</item>
+        <item quantity="other">%d файла</item>
     </plurals>
     <plurals name="alias_import_existing">
         <item quantity="one">%d уже существует</item>
         <item quantity="few">%d уже существуют</item>
-        <item quantity="many">%d уже существует</item>
-        <item quantity="other">%d уже существует</item>
+        <item quantity="many">%d уже существуют</item>
+        <item quantity="other">%d уже существуют</item>
     </plurals>
     <plurals name="alias_import_invalid">
         <item quantity="one">%d недействительный</item>

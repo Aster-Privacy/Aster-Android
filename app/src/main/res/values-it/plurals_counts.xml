@@ -2,62 +2,67 @@
 <resources>
     <plurals name="attachments_count">
         <item quantity="one">%d allegato</item>
+        <item quantity="many">%d allegati</item>
         <item quantity="other">%d allegati</item>
     </plurals>
     <plurals name="archived_conversations">
         <item quantity="one">%d conversazione archiviata</item>
+        <item quantity="many">%d conversazioni archiviate</item>
         <item quantity="other">%d conversazioni archiviate</item>
     </plurals>
     <plurals name="moved_to_trash">
         <item quantity="one">%d conversazione spostata nel cestino</item>
+        <item quantity="many">%d conversazioni spostate nel cestino</item>
         <item quantity="other">%d conversazioni spostate nel cestino</item>
     </plurals>
     <plurals name="starred_count">
-        <item quantity="one">Stella aggiunta a %d conversazione</item>
-        <item quantity="other">Stella aggiunta a %d conversazioni</item>
+        <item quantity="one">%d conversazione contrassegnata come speciale</item>
+        <item quantity="many">%d conversazioni contrassegnate come speciali</item>
+        <item quantity="other">%d conversazioni contrassegnate come speciali</item>
     </plurals>
     <plurals name="unstarred_count">
-        <item quantity="one">Stella rimossa da %d conversazione</item>
-        <item quantity="other">Stella rimossa da %d conversazioni</item>
+        <item quantity="one">%d conversazione rimossa da Speciali</item>
+        <item quantity="many">%d conversazioni rimosse da Speciali</item>
+        <item quantity="other">%d conversazioni rimosse da Speciali</item>
     </plurals>
     <plurals name="unsnoozed_count">
         <item quantity="one">Posticipo annullato per %d conversazione</item>
+        <item quantity="many">Posticipo annullato per %d conversazioni</item>
         <item quantity="other">Posticipo annullato per %d conversazioni</item>
     </plurals>
     <plurals name="draft_deleted">
         <item quantity="one">%d bozza eliminata</item>
+        <item quantity="many">%d bozze eliminate</item>
         <item quantity="other">%d bozze eliminate</item>
     </plurals>
     <plurals name="marked_read_count">
         <item quantity="one">%d messaggio contrassegnato come letto</item>
+        <item quantity="many">%d messaggi contrassegnati come letti</item>
         <item quantity="other">%d messaggi contrassegnati come letti</item>
     </plurals>
     <plurals name="marked_unread_count">
         <item quantity="one">%d messaggio contrassegnato come non letto</item>
+        <item quantity="many">%d messaggi contrassegnati come non letti</item>
         <item quantity="other">%d messaggi contrassegnati come non letti</item>
-    </plurals>
-    <plurals name="results_count">
-        <item quantity="one">%d risultato</item>
-        <item quantity="other">%d risultati</item>
     </plurals>
     <plurals name="active_endpoints">
         <item quantity="one">%d endpoint attivo</item>
+        <item quantity="many">%d endpoint attivi</item>
         <item quantity="other">%d endpoint attivi</item>
-    </plurals>
-    <plurals name="storage_addons_active_count">
-        <item quantity="one">%1$d componente attivo</item>
-        <item quantity="other">%1$d componenti attivi</item>
     </plurals>
     <plurals name="backup_codes_remaining">
         <item quantity="one">%d codice di backup rimanente</item>
+        <item quantity="many">%d codici di backup rimanenti</item>
         <item quantity="other">%d codici di backup rimanenti</item>
     </plurals>
     <plurals name="kids_seats_free">
         <item quantity="one">%1$d posto disponibile</item>
+        <item quantity="many">%1$d posti disponibili</item>
         <item quantity="other">%1$d posti disponibili</item>
     </plurals>
     <plurals name="trackers_blocked_count">
         <item quantity="one">%1$d tracker bloccato</item>
+        <item quantity="many">%1$d tracker bloccati</item>
         <item quantity="other">%1$d tracker bloccati</item>
     </plurals>
 </resources>

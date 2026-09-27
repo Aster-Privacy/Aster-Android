@@ -101,6 +101,7 @@ import org.astermail.android.design.AsterScale
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.design.auto_mirrored
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.ui.mail.search_field_bg_color
 import org.astermail.android.design.acrylic
@@ -158,7 +159,7 @@ private val extra_screen_icons = mapOf(
     "language" to TablerIcons.Language,
     "blocked" to TablerIcons.Ban,
     "allowlist" to TablerIcons.CircleCheck,
-    "auto_forward" to TablerIcons.Send,
+    "auto_forward" to TablerIcons.Send.auto_mirrored(),
     "vacation_reply" to TablerIcons.Plane,
     "labels" to TablerIcons.Tag,
     "export" to TablerIcons.Download,

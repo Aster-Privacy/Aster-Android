@@ -36,17 +36,9 @@
         <item quantity="one">Marked %d message as unread</item>
         <item quantity="other">Marked %d messages as unread</item>
     </plurals>
-    <plurals name="results_count">
-        <item quantity="one">%d result</item>
-        <item quantity="other">%d results</item>
-    </plurals>
     <plurals name="active_endpoints">
         <item quantity="one">%d active endpoint</item>
         <item quantity="other">%d active endpoints</item>
-    </plurals>
-    <plurals name="storage_addons_active_count">
-        <item quantity="one">%1$d active add-on</item>
-        <item quantity="other">%1$d active add-ons</item>
     </plurals>
     <plurals name="backup_codes_remaining">
         <item quantity="one">%d backup code remaining</item>

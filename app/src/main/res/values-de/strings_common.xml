@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="common_back">Zurück</string>
     <string name="common_storage_used_of_total">%1$s von %2$s</string>
     <string name="common_storage_used_only">%1$s belegt</string>
-    <string name="common_snackbar_dismiss">Ausblenden</string>
-    <string name="common_snackbar_undo">Rückgängig</string>
+    <string name="auth_previous_account_data_not_cleared">Die E-Mails des vorherigen Kontos konnten nicht von diesem Gerät entfernt werden. Melden Sie sich erneut an.</string>
+    <string name="export_readme_title">Aster Mail-Export</string>
+    <string name="export_readme_mbox">Alle E-Mails im MBOX-Format (RFC 4155)</string>
+    <string name="export_readme_eml">Einzelne .eml-Dateien</string>
+    <string name="export_readme_contacts">Kontaktdaten</string>
+    <string name="export_readme_warning">Die E-Mails in diesem Export sind nicht verschlüsselt. Bewahren Sie diese Datei sicher auf.</string>
 </resources>

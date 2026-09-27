@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="two_step_verification_title">التحقق بخطوتين</string>
-    <string name="two_step_verification_on_description">يتطلب حسابك رمز تحقق إضافة إلى كلمة المرور.</string>
+    <string name="two_step_verification_on_description">يتطلب حسابك رمز تحقق بالإضافة إلى كلمة المرور.</string>
     <string name="two_step_verification_off_description">لحماية أقوى، اطلب رمز تحقق إضافة إلى كلمة المرور.</string>
     <string name="security_activity_filter_all">الكل</string>
     <string name="security_activity_filter_sign_ins">عمليات تسجيل الدخول</string>
@@ -10,6 +10,5 @@
     <string name="security_activity_today">اليوم</string>
     <string name="security_activity_yesterday">أمس</string>
     <string name="security_activity_show_more">عرض المزيد</string>
-    <string name="security_activity_show_less">عرض أقل</string>
-    <string name="security_activity_empty_filter">لا يوجد نشاط يطابق هذا الفلتر.</string>
+    <string name="security_activity_empty_filter">لا يوجد نشاط يطابق عامل التصفية هذا.</string>
 </resources>

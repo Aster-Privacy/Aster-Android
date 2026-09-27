@@ -6,14 +6,14 @@
     <string name="session_client_phone">Telefone</string>
     <string name="session_client_tablet">Tablet</string>
     <string name="session_client_desktop">Computador</string>
-    <string name="session_client_desktop_app">App para computador</string>
-    <string name="session_client_bridge">Ponte de e-mail</string>
+    <string name="session_client_desktop_app">Aplicação para computador</string>
+    <string name="session_client_bridge">Ponte de correio</string>
     <string name="link_device_step_code">Código</string>
     <string name="link_device_step_confirm">Confirmar</string>
-    <string name="link_device_step_done">Vinculado</string>
-    <string name="link_device_hero_title">Digite o código do dispositivo</string>
+    <string name="link_device_step_done">Associado</string>
+    <string name="link_device_hero_title">Introduza o código do dispositivo</string>
     <string name="link_device_confirm_title">Confirme este dispositivo</string>
     <string name="link_device_pending_badge">Pendente</string>
-    <string name="link_device_step_progress">Etapa %1$d de %2$d · %3$s</string>
-    <string name="link_device_error_title">Não foi possível vincular o dispositivo</string>
+    <string name="link_device_step_progress">Passo %1$d de %2$d · %3$s</string>
+    <string name="link_device_error_title">Não foi possível associar o dispositivo</string>
 </resources>

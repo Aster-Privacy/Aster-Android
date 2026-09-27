@@ -1,23 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="search_placeholder">Cerca nella posta</string>
-    <string name="search_clear_cd">Cancella la ricerca</string>
-    <string name="search_back_cd">Indietro</string>
-    <string name="search_remove_filter_cd">Togli il filtro</string>
-    <string name="search_empty_initial_title">Cerca nella tua posta</string>
-    <string name="search_empty_initial_subtitle">Trova i messaggi per mittente, oggetto o contenuto. Ogni ricerca avviene su questo dispositivo.</string>
-    <string name="search_empty_no_results_title">Nessun risultato</string>
-    <string name="search_empty_no_results_subtitle">Prova un\'altra parola o togli qualche filtro.</string>
-    <string name="search_recent_header">Recenti</string>
-    <string name="search_recent_clear">Cancella</string>
-    <string name="search_quick_all">Tutto</string>
-    <string name="search_quick_unread">Da leggere</string>
-    <string name="search_quick_attachments">Allegati</string>
-    <string name="search_quick_flagged">Contrassegnati</string>
-    <string name="search_filter_has_attachment">Con allegato</string>
-    <string name="search_filter_unread">Da leggere</string>
-    <string name="search_filter_starred">Con stella</string>
-    <string name="search_filter_encrypted">Cifrati</string>
     <string name="search_chip_from">Da</string>
     <string name="search_chip_to">A</string>
     <string name="search_chip_contact">Contatto</string>

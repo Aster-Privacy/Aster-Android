@@ -1,29 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="compose_footer_secured_by_plain">Chronione przez Aster Mail</string>
-    <string name="compose_footer_secured_by_label">Chronione przez</string>
-    <string name="compose_footer_brand">Aster Mail</string>
-    <string name="compose_quote_forwarded_message">Wiadomość przekazana</string>
+    <string name="compose_footer_secured_by_plain">Zabezpieczone przez Aster Mail</string>
+    <string name="compose_quote_forwarded_message">Przekazana wiadomość</string>
     <string name="compose_quote_original_message">Wiadomość oryginalna</string>
     <string name="compose_quote_show_label">Pokaż %1$s</string>
     <string name="compose_quote_hide_label">Ukryj %1$s</string>
     <string name="compose_quote_header_from">Od:</string>
     <string name="compose_quote_header_date">Data:</string>
     <string name="compose_quote_header_subject">Temat:</string>
-    <string name="compose_attachment_remove">Usuń załącznik</string>
-    <string name="compose_attachment_uploading">Wysyłanie załącznika %1$s</string>
     <string name="schedule_time_in_past">Zaplanowana godzina musi być w przyszłości</string>
     <string name="signature_none">Bez podpisu</string>
     <string name="signature_select">Wybierz podpis</string>
     <string name="compose_metadata_strip_failed">Nie udało się usunąć ukrytych metadanych z: %1$s</string>
     <string name="compose_inline_image_failed">Nie udało się dodać tych obrazów: %1$s</string>
-    <string name="compose_attachment_read_failed">Nie udało się dołączyć \"%1$s\". Wiadomość nie została wysłana. Usuń plik albo dodaj go ponownie i spróbuj jeszcze raz.</string>
+    <string name="compose_attachment_read_failed">Nie udało się dołączyć „%1$s”. Wiadomość nie została wysłana. Usuń plik albo dodaj go ponownie i spróbuj jeszcze raz.</string>
     <string name="schedule_in_one_hour">Za godzinę</string>
     <string name="schedule_tonight">Dziś wieczorem</string>
     <string name="schedule_tomorrow_morning">Jutro rano</string>
     <string name="schedule_tomorrow_afternoon">Jutro po południu</string>
     <string name="schedule_monday_morning">W poniedziałek rano</string>
     <string name="schedule_pick_date_time">Wybierz datę i czas</string>
-    <string name="too_many_recipients_in_field">Każde pole Do, DW i UDW mieści maksymalnie %1$d adresów. Przenieś część do drugiej wiadomości, aby wysłać tę.</string>
+    <string name="too_many_recipients_in_field">Limit adresów w każdym z pól Do, DW i UDW wynosi %1$d. Aby wysłać tę wiadomość, przenieś część adresów do drugiej.</string>
     <string name="too_many_recipients_in_message">Jedna wiadomość dociera maksymalnie do %1$d adresów w polach Do, DW i UDW. Podzielenie listy na mniejsze wiadomości pozwoli ją wysłać.</string>
 </resources>

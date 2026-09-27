@@ -1,7 +1,10 @@
 <resources>
-    <string name="common_back">Back</string>
     <string name="common_storage_used_of_total">%1$s of %2$s</string>
     <string name="common_storage_used_only">%1$s used</string>
-    <string name="common_snackbar_dismiss">Dismiss</string>
-    <string name="common_snackbar_undo">Undo</string>
+    <string name="auth_previous_account_data_not_cleared">Couldn\'t remove the previous account\'s mail from this device. Try signing in again.</string>
+    <string name="export_readme_title">Aster Mail export</string>
+    <string name="export_readme_mbox">All emails in MBOX format (RFC 4155)</string>
+    <string name="export_readme_eml">Individual .eml files</string>
+    <string name="export_readme_contacts">Contact details</string>
+    <string name="export_readme_warning">The emails in this export aren\'t encrypted. Keep this file in a safe place.</string>
 </resources>

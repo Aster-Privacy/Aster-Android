@@ -6,7 +6,7 @@
     <string name="session_client_phone">手机</string>
     <string name="session_client_tablet">平板电脑</string>
     <string name="session_client_desktop">电脑</string>
-    <string name="session_client_desktop_app">桌面App</string>
+    <string name="session_client_desktop_app">桌面应用</string>
     <string name="session_client_bridge">邮件桥接</string>
     <string name="link_device_step_code">代码</string>
     <string name="link_device_step_confirm">确认</string>

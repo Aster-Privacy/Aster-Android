@@ -67,6 +67,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -667,7 +668,7 @@ private fun crypto_progress_stepper(status: String, confirmations: Int, min_conf
                     if (index == 2 && is_current && status == "confirming") {
                         Spacer(Modifier.height(2.dp))
                         Text(
-                            stringResource(R.string.crypto_native_status_confirming, confirmations, min_confirmations),
+                            pluralStringResource(R.plurals.crypto_native_status_confirming, min_confirmations, confirmations, min_confirmations),
                             fontSize = 12.sp,
                             color = colors.text_secondary,
                         )

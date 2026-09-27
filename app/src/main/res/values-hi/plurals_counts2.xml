@@ -8,10 +8,6 @@
         <item quantity="one">%d कुंजी</item>
         <item quantity="other">%d कुंजियां</item>
     </plurals>
-    <plurals name="devices_count">
-        <item quantity="one">%d डिवाइस</item>
-        <item quantity="other">%d डिवाइस</item>
-    </plurals>
     <plurals name="labels_count">
         <item quantity="one">%d लेबल</item>
         <item quantity="other">%d लेबल</item>

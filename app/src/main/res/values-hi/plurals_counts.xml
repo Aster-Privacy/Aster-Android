@@ -36,17 +36,9 @@
         <item quantity="one">%d संदेश अपठित चिह्नित किया गया</item>
         <item quantity="other">%d संदेश अपठित चिह्नित किए गए</item>
     </plurals>
-    <plurals name="results_count">
-        <item quantity="one">%d नतीजा</item>
-        <item quantity="other">%d नतीजे</item>
-    </plurals>
     <plurals name="active_endpoints">
         <item quantity="one">%d सक्रिय एंडपॉइंट</item>
         <item quantity="other">%d सक्रिय एंडपॉइंट</item>
-    </plurals>
-    <plurals name="storage_addons_active_count">
-        <item quantity="one">%1$d सक्रिय ऐड-ऑन</item>
-        <item quantity="other">%1$d सक्रिय ऐड-ऑन</item>
     </plurals>
     <plurals name="backup_codes_remaining">
         <item quantity="one">%d बैकअप कोड बाकी</item>

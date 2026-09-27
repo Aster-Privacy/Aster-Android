@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="image_themes">Темы с изображением</string>
-    <string name="image_themes_subtitle">Показывает фото за приложением.</string>
+    <string name="image_themes_subtitle">Показывает фото на фоне приложения.</string>
     <string name="image_theme_browse">Смотреть фото</string>
     <string name="image_theme_credit">Фото: %1$s</string>
     <string name="image_theme_category_space">Космос</string>
@@ -16,7 +16,7 @@
     <string name="image_theme_category_desert">Пустыня</string>
     <string name="image_theme_category_ocean">Океан</string>
     <string name="image_theme_apply_changes">Применить</string>
-    <string name="image_theme_reset">Сбросить по умолчанию</string>
+    <string name="image_theme_reset">Вернуть стандартную тему</string>
     <string name="image_theme_colors">Цвета</string>
     <string name="image_theme_wallpapers">Обои</string>
     <string name="image_theme_page_subtitle">Выберите фото и цвета для папки «Входящие»</string>
@@ -40,7 +40,6 @@
     <string name="image_theme_reset_short">Сбросить</string>
     <string name="image_theme_reset_confirm_title">Сбросить тему с изображением?</string>
     <string name="image_theme_reset_confirm_message">Фоновое фото будет удалено, а цвета вернутся к теме по умолчанию.</string>
-    <string name="theme_opacity">Непрозрачность темы</string>
     <string name="theme_opacity_clear">Прозрачная</string>
     <string name="theme_opacity_clear_subtitle">Ваше фото видно лучше всего.</string>
     <string name="theme_opacity_glass">Стекло</string>
@@ -53,7 +52,7 @@
     <string name="glass_mode_subtitle">Фото просвечивает сквозь поверхности. Отключите, чтобы сделать их непрозрачными.</string>
     <string name="theme_transparency">Прозрачность</string>
     <string name="image_theme_animation">Анимация фона</string>
-    <string name="image_theme_animation_subtitle">Воспроизводит анимированный фон. Она останавливается в режиме экономии заряда и когда анимации на устройстве отключены.</string>
-    <string name="image_theme_animation_too_large">Это анимированное изображение слишком большое. Выберите меньше 12 МБ.</string>
+    <string name="image_theme_animation_subtitle">Воспроизводит анимированный фон. Анимация останавливается в режиме энергосбережения и когда анимации на устройстве отключены.</string>
+    <string name="image_theme_animation_too_large">Это анимированное изображение слишком большое. Выберите изображение размером до 12 МБ.</string>
     <string name="image_theme_retry_download">Повторить загрузку</string>
 </resources>

@@ -12,12 +12,6 @@
         <item quantity="many">%d ключей</item>
         <item quantity="other">%d ключей</item>
     </plurals>
-    <plurals name="devices_count">
-        <item quantity="one">%d устройство</item>
-        <item quantity="few">%d устройства</item>
-        <item quantity="many">%d устройств</item>
-        <item quantity="other">%d устройств</item>
-    </plurals>
     <plurals name="labels_count">
         <item quantity="one">%d метка</item>
         <item quantity="few">%d метки</item>
@@ -25,10 +19,10 @@
         <item quantity="other">%d меток</item>
     </plurals>
     <plurals name="ghosts_count">
-        <item quantity="one">%d ghost-псевдоним</item>
-        <item quantity="few">%d ghost-псевдонима</item>
-        <item quantity="many">%d ghost-псевдонимов</item>
-        <item quantity="other">%d ghost-псевдонимов</item>
+        <item quantity="one">%d призрачный псевдоним</item>
+        <item quantity="few">%d призрачных псевдонима</item>
+        <item quantity="many">%d призрачных псевдонимов</item>
+        <item quantity="other">%d призрачных псевдонима</item>
     </plurals>
     <plurals name="recovery_codes_count">
         <item quantity="one">%d код восстановления</item>
@@ -46,7 +40,7 @@
         <item quantity="one">%1$d изображение</item>
         <item quantity="few">%1$d изображения</item>
         <item quantity="many">%1$d изображений</item>
-        <item quantity="other">%1$d изображений</item>
+        <item quantity="other">%1$d изображения</item>
     </plurals>
     <plurals name="n_trackers">
         <item quantity="one">%1$d трекер</item>
@@ -79,10 +73,10 @@
         <item quantity="other">Показать ещё %1$d папок</item>
     </plurals>
     <plurals name="rules_emails_count">
-        <item quantity="one">Писем: %1$d</item>
-        <item quantity="few">Писем: %1$d</item>
-        <item quantity="many">Писем: %1$d</item>
-        <item quantity="other">Писем: %1$d</item>
+        <item quantity="one">%1$d письмо</item>
+        <item quantity="few">%1$d письма</item>
+        <item quantity="many">%1$d писем</item>
+        <item quantity="other">%1$d письма</item>
     </plurals>
     <plurals name="rules_value_label_count">
         <item quantity="one">Меток: %1$d</item>

@@ -83,9 +83,18 @@ class AsterApplication : Application(), ImageLoaderFactory {
         }
     }
 
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        runCatching { org.astermail.android.settings.app_language.apply_to_application(this) }
+    }
+
     override fun onCreate() {
         super.onCreate()
         install_crash_reporting()
+        runCatching {
+            org.astermail.android.settings.app_language.migrate_to_platform(this)
+            org.astermail.android.settings.app_language.apply_to_application(this)
+        }
         runCatching { org.astermail.android.ui.common.apply_app_night_mode(this) }
         start_secure_prefs_warm()
         org.astermail.android.ui.theme.custom_theme_image.init(this)

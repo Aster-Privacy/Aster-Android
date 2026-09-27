@@ -40,7 +40,7 @@
         <item quantity="one">%1$d письмо</item>
         <item quantity="few">%1$d письма</item>
         <item quantity="many">%1$d писем</item>
-        <item quantity="other">%1$d писем</item>
+        <item quantity="other">%1$d письма</item>
     </plurals>
     <plurals name="spam_auto_delete_notice">
         <item quantity="one">Элементы в спаме удаляются автоматически через %1$d день.</item>

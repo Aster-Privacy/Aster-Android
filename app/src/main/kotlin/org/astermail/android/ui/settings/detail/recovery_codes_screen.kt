@@ -55,6 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -232,7 +233,7 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
             if (total_codes > 0) {
                 v_gap(AsterSpacing.xs)
                 Text(
-                    text = stringResource(R.string.recovery_codes_remaining, remaining, total_codes),
+                    text = pluralStringResource(R.plurals.recovery_codes_remaining, total_codes, remaining, total_codes),
                     color = if (is_low) colors.danger else colors.text_tertiary,
                     fontSize = 12.sp,
                 )

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="count_selected">
+        <item quantity="one">%1$d geselecteerd</item>
+        <item quantity="other">%1$d geselecteerd</item>
+    </plurals>
+    <plurals name="inbox_selected_count">
+        <item quantity="one">%1$d geselecteerd</item>
+        <item quantity="other">%1$d geselecteerd</item>
+    </plurals>
+    <plurals name="contacts_bulk_progress">
+        <item quantity="one">%1$d van %2$d contacten worden verwijderd</item>
+        <item quantity="other">%1$d van %2$d contacten worden verwijderd</item>
+    </plurals>
+    <plurals name="recovery_codes_remaining">
+        <item quantity="one">Nog %1$d van %2$d codes over</item>
+        <item quantity="other">Nog %1$d van %2$d codes over</item>
+    </plurals>
+    <plurals name="export_progress_emails">
+        <item quantity="one">%1$d / %2$d e-mails</item>
+        <item quantity="other">%1$d / %2$d e-mails</item>
+    </plurals>
+    <plurals name="crypto_native_status_confirming">
+        <item quantity="one">%1$d van %2$d bevestigingen</item>
+        <item quantity="other">%1$d van %2$d bevestigingen</item>
+    </plurals>
+    <plurals name="kids_seats_used">
+        <item quantity="one">%1$d van %2$d gezinsplekken in gebruik</item>
+        <item quantity="other">%1$d van %2$d gezinsplekken in gebruik</item>
+    </plurals>
+    <plurals name="domain_records_verified">
+        <item quantity="one">%1$d van %2$d records geverifieerd</item>
+        <item quantity="other">%1$d van %2$d records geverifieerd</item>
+    </plurals>
+    <plurals name="alias_limit_notice">
+        <item quantity="one">%1$d van %2$d aliassen gebruikt. Upgrade voor meer.</item>
+        <item quantity="other">%1$d van %2$d aliassen gebruikt. Upgrade voor meer.</item>
+    </plurals>
+    <plurals name="score_steps_left">
+        <item quantity="one">Nog %1$d</item>
+        <item quantity="other">Nog %1$d</item>
+    </plurals>
+    <plurals name="alias_import_summary_created">
+        <item quantity="one">%1$d geïmporteerd</item>
+        <item quantity="other">%1$d geïmporteerd</item>
+    </plurals>
+    <plurals name="alias_import_summary_skipped">
+        <item quantity="one">%1$d bestond al</item>
+        <item quantity="other">%1$d bestonden al</item>
+    </plurals>
+    <plurals name="alias_import_summary_failed">
+        <item quantity="one">%1$d mislukt</item>
+        <item quantity="other">%1$d mislukt</item>
+    </plurals>
+    <plurals name="alias_apply_existing_canceled">
+        <item quantity="one">Gestopt: %1$d bijgewerkt</item>
+        <item quantity="other">Gestopt: %1$d bijgewerkt</item>
+    </plurals>
+    <plurals name="fix_enc_codes_used">
+        <item quantity="one">%1$d gebruikt</item>
+        <item quantity="other">%1$d gebruikt</item>
+    </plurals>
+    <plurals name="payment_failed_days_left">
+        <item quantity="one">De toegang wordt over %1$d dag beperkt.</item>
+        <item quantity="other">De toegang wordt over %1$d dagen beperkt.</item>
+    </plurals>
+    <plurals name="templates_decrypt_failed_count">
+        <item quantity="one">%1$d sjabloon kon niet worden gelezen op dit apparaat. Het is opgeslagen met een sleutel die dit apparaat momenteel niet heeft.</item>
+        <item quantity="other">%1$d sjablonen konden niet worden gelezen op dit apparaat. Ze zijn opgeslagen met een sleutel die dit apparaat momenteel niet heeft.</item>
+    </plurals>
+    <plurals name="contact_trash_days_left">
+        <item quantity="one">Nog %1$d dag</item>
+        <item quantity="other">Nog %1$d dagen</item>
+    </plurals>
+    <plurals name="quick_action_delete_old_confirm">
+        <item quantity="one">%1$d gesprek ouder dan 30 dagen naar de prullenbak verplaatsen?</item>
+        <item quantity="other">%1$d gesprekken ouder dan 30 dagen naar de prullenbak verplaatsen?</item>
+    </plurals>
+    <plurals name="undo_send_delay_seconds">
+        <item quantity="one">%1$d seconde</item>
+        <item quantity="other">%1$d seconden</item>
+    </plurals>
+</resources>

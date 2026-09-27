@@ -1529,7 +1529,7 @@ internal fun search_select_top_bar(
             text = if (selected_count == 0) {
                 stringResource(R.string.select)
             } else {
-                stringResource(R.string.inbox_selected_count, selected_count)
+                pluralStringResource(R.plurals.inbox_selected_count, selected_count, selected_count)
             },
             style = MaterialTheme.typography.titleMedium,
             color = colors.text_primary,

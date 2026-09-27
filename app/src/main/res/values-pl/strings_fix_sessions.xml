@@ -6,7 +6,7 @@
     <string name="session_client_phone">Telefon</string>
     <string name="session_client_tablet">Tablet</string>
     <string name="session_client_desktop">Komputer</string>
-    <string name="session_client_desktop_app">Aplikacja komputerowa</string>
+    <string name="session_client_desktop_app">Aplikacja na komputer</string>
     <string name="session_client_bridge">Mostek poczty</string>
     <string name="link_device_step_code">Kod</string>
     <string name="link_device_step_confirm">Potwierdź</string>

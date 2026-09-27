@@ -350,16 +350,17 @@ class ExportViewModel @Inject constructor(
     private fun write_readme(zos: ZipOutputStream): Long {
         val s = _state.value
         val txt = buildString {
-            appendLine("Aster Mail Export")
-            appendLine("=================")
+            val title = context.getString(R.string.export_readme_title)
+            appendLine(title)
+            appendLine("=".repeat(title.length))
             appendLine()
             if (s.include_mail) {
-                if (s.format == "mbox") appendLine("- mailbox.mbox  All emails in MBOX format (RFC 4155)")
-                else appendLine("- eml/          Individual .eml files")
+                if (s.format == "mbox") appendLine("- mailbox.mbox  " + context.getString(R.string.export_readme_mbox))
+                else appendLine("- eml/          " + context.getString(R.string.export_readme_eml))
             }
-            if (s.include_contacts) appendLine("- contacts.json Contact metadata")
+            if (s.include_contacts) appendLine("- contacts.json " + context.getString(R.string.export_readme_contacts))
             appendLine()
-            appendLine("Emails in this export are decrypted. Keep this file secure.")
+            appendLine(context.getString(R.string.export_readme_warning))
         }
         val b = txt.toByteArray(Charsets.UTF_8)
         zos.putNextEntry(ZipEntry("README.txt"))

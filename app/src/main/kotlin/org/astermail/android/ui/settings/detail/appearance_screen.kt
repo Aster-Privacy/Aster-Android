@@ -118,6 +118,7 @@ import org.astermail.android.storage.ThemeMode
 import org.astermail.android.ui.settings.mail_rules.pickers.base_sheet
 import org.astermail.android.ui.theme.ThemeViewModel
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.design.mirror_in_rtl
 
 private val quick_seed_colors = listOf(
     "#3b82f6", "#a855f7", "#22c55e", "#f43f5e", "#f97316",
@@ -1078,7 +1079,7 @@ private fun image_theme_entry_card(
                 imageVector = TablerIcons.ChevronRight,
                 contentDescription = null,
                 tint = colors.text_tertiary,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(20.dp).mirror_in_rtl(),
             )
         }
     }

@@ -90,6 +90,7 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.ui.auth.TurnstileWidget
 import org.astermail.android.ui.common.write_to_clipboard
 import java.util.Locale
+import org.astermail.android.design.mirror_in_rtl
 
 @Composable
 internal fun billing_addons_panel(
@@ -370,7 +371,7 @@ internal fun billing_history_list(
                         imageVector = TablerIcons.ChevronRight,
                         contentDescription = stringResource(R.string.fix_billing_invoice_pdf),
                         tint = colors.text_muted,
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(18.dp).mirror_in_rtl(),
                     )
                 }
             }

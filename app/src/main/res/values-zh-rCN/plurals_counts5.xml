@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="count_selected">
+        <item quantity="other">已选择 %1$d 项</item>
+    </plurals>
+    <plurals name="inbox_selected_count">
+        <item quantity="other">已选 %1$d 项</item>
+    </plurals>
+    <plurals name="contacts_bulk_progress">
+        <item quantity="other">正在删除 %2$d 个联系人中的 %1$d 个</item>
+    </plurals>
+    <plurals name="recovery_codes_remaining">
+        <item quantity="other">剩余 %1$d/%2$d 个代码</item>
+    </plurals>
+    <plurals name="export_progress_emails">
+        <item quantity="other">%1$d / %2$d 封邮件</item>
+    </plurals>
+    <plurals name="crypto_native_status_confirming">
+        <item quantity="other">%1$d / %2$d 次确认</item>
+    </plurals>
+    <plurals name="kids_seats_used">
+        <item quantity="other">已使用 %2$d 个家庭席位中的 %1$d 个</item>
+    </plurals>
+    <plurals name="domain_records_verified">
+        <item quantity="other">已验证 %2$d 条记录中的 %1$d 条</item>
+    </plurals>
+    <plurals name="alias_limit_notice">
+        <item quantity="other">已使用 %1$d 个别名，共 %2$d 个。升级可获得更多。</item>
+    </plurals>
+    <plurals name="score_steps_left">
+        <item quantity="other">还剩 %1$d 项</item>
+    </plurals>
+    <plurals name="alias_import_summary_created">
+        <item quantity="other">已导入 %1$d 个</item>
+    </plurals>
+    <plurals name="alias_import_summary_skipped">
+        <item quantity="other">已存在 %1$d 个</item>
+    </plurals>
+    <plurals name="alias_import_summary_failed">
+        <item quantity="other">%1$d 个失败</item>
+    </plurals>
+    <plurals name="alias_apply_existing_canceled">
+        <item quantity="other">已停止：已更新 %1$d 封</item>
+    </plurals>
+    <plurals name="fix_enc_codes_used">
+        <item quantity="other">已使用 %1$d 个</item>
+    </plurals>
+    <plurals name="payment_failed_days_left">
+        <item quantity="other">访问权限将在 %1$d 天后受限。</item>
+    </plurals>
+    <plurals name="templates_decrypt_failed_count">
+        <item quantity="other">此设备上有 %1$d 个模板无法读取。它们是用此设备当前未持有的密钥保存的。</item>
+    </plurals>
+    <plurals name="contact_trash_days_left">
+        <item quantity="other">还剩 %1$d 天</item>
+    </plurals>
+    <plurals name="quick_action_delete_old_confirm">
+        <item quantity="other">要将 %1$d 个超过 30 天的对话移到回收站吗？</item>
+    </plurals>
+    <plurals name="undo_send_delay_seconds">
+        <item quantity="other">%1$d 秒</item>
+    </plurals>
+</resources>

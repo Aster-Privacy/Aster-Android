@@ -166,6 +166,7 @@ import org.astermail.android.ui.theme.theme_background_for
 import org.astermail.android.ui.theme.theme_manifest
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterAccentButton
+import org.astermail.android.design.mirror_in_rtl
 
 private data class LibraryPalette(
     val page_bg: Color,
@@ -490,7 +491,7 @@ private fun library_top_bar(reset_enabled: Boolean, on_back: () -> Unit, on_rese
                 imageVector = TablerIcons.ArrowLeft,
                 contentDescription = stringResource(R.string.close),
                 tint = local_library_palette.current.ink,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(24.dp).mirror_in_rtl(),
             )
         }
         Text(

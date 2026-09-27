@@ -1,19 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <plurals name="common_unread_count">
-        <item quantity="one">%d non lu</item>
-        <item quantity="other">%d non lus</item>
-    </plurals>
-    <plurals name="common_new_messages">
-        <item quantity="one">%d nouveau message</item>
-        <item quantity="other">%d nouveaux messages</item>
-    </plurals>
     <plurals name="common_folders_count">
         <item quantity="one">%d dossier</item>
+        <item quantity="many">%d dossiers</item>
         <item quantity="other">%d dossiers</item>
     </plurals>
     <plurals name="common_messages_count">
         <item quantity="one">%d message</item>
+        <item quantity="many">%d messages</item>
         <item quantity="other">%d messages</item>
     </plurals>
 </resources>

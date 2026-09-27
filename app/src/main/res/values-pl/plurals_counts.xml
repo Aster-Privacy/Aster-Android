@@ -4,7 +4,7 @@
         <item quantity="one">%d załącznik</item>
         <item quantity="few">%d załączniki</item>
         <item quantity="many">%d załączników</item>
-        <item quantity="other">%d załączników</item>
+        <item quantity="other">%d załącznika</item>
     </plurals>
     <plurals name="archived_conversations">
         <item quantity="one">Zarchiwizowano %d konwersację</item>
@@ -40,7 +40,7 @@
         <item quantity="one">Usunięto %d wersję roboczą</item>
         <item quantity="few">Usunięto %d wersje robocze</item>
         <item quantity="many">Usunięto %d wersji roboczych</item>
-        <item quantity="other">Usunięto %d wersji roboczych</item>
+        <item quantity="other">Usunięto %d wersji roboczej</item>
     </plurals>
     <plurals name="marked_read_count">
         <item quantity="one">Oznaczono %d wiadomość jako przeczytaną</item>
@@ -54,40 +54,28 @@
         <item quantity="many">Oznaczono %d wiadomości jako nieprzeczytane</item>
         <item quantity="other">Oznaczono %d wiadomości jako nieprzeczytane</item>
     </plurals>
-    <plurals name="results_count">
-        <item quantity="one">%d wynik</item>
-        <item quantity="few">%d wyniki</item>
-        <item quantity="many">%d wyników</item>
-        <item quantity="other">%d wyników</item>
-    </plurals>
     <plurals name="active_endpoints">
         <item quantity="one">%d aktywny punkt końcowy</item>
         <item quantity="few">%d aktywne punkty końcowe</item>
         <item quantity="many">%d aktywnych punktów końcowych</item>
-        <item quantity="other">%d aktywnych punktów końcowych</item>
-    </plurals>
-    <plurals name="storage_addons_active_count">
-        <item quantity="one">aktywne dodatki: %1$d</item>
-        <item quantity="few">aktywne dodatki: %1$d</item>
-        <item quantity="many">aktywne dodatki: %1$d</item>
-        <item quantity="other">aktywne dodatki: %1$d</item>
+        <item quantity="other">%d aktywnego punktu końcowego</item>
     </plurals>
     <plurals name="backup_codes_remaining">
         <item quantity="one">Pozostał %d kod zapasowy</item>
         <item quantity="few">Pozostały %d kody zapasowe</item>
         <item quantity="many">Pozostało %d kodów zapasowych</item>
-        <item quantity="other">Pozostało %d kodów zapasowych</item>
+        <item quantity="other">Pozostało %d kodu zapasowego</item>
     </plurals>
     <plurals name="kids_seats_free">
-        <item quantity="one">dostępne miejsca: %1$d</item>
-        <item quantity="few">dostępne miejsca: %1$d</item>
-        <item quantity="many">dostępne miejsca: %1$d</item>
-        <item quantity="other">dostępne miejsca: %1$d</item>
+        <item quantity="one">%1$d dostępne miejsce</item>
+        <item quantity="few">%1$d dostępne miejsca</item>
+        <item quantity="many">%1$d dostępnych miejsc</item>
+        <item quantity="other">%1$d dostępne miejsca</item>
     </plurals>
     <plurals name="trackers_blocked_count">
         <item quantity="one">Zablokowano %1$d element śledzący</item>
         <item quantity="few">Zablokowano %1$d elementy śledzące</item>
         <item quantity="many">Zablokowano %1$d elementów śledzących</item>
-        <item quantity="other">Zablokowano %1$d elementów śledzących</item>
+        <item quantity="other">Zablokowano %1$d elementu śledzącego</item>
     </plurals>
 </resources>

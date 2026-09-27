@@ -28,6 +28,7 @@ import android.content.Context
 import androidx.compose.material.icons.Icons
 import androidx.compose.ui.graphics.vector.ImageVector
 import org.astermail.android.R
+import org.astermail.android.design.auto_mirrored
 
 data class ToolbarAction(
     val id: String,
@@ -44,7 +45,7 @@ val toolbar_action_catalog: List<ToolbarAction> = listOf(
     ToolbarAction("star", R.string.star, TablerIcons.Star),
     ToolbarAction("snooze", R.string.snooze, TablerIcons.Clock),
     ToolbarAction("spam", R.string.report_spam, TablerIcons.Ban),
-    ToolbarAction("reply", R.string.reply, TablerIcons.ArrowBackUp),
+    ToolbarAction("reply", R.string.reply, TablerIcons.ArrowBackUp.auto_mirrored()),
     ToolbarAction("forward", R.string.forward, TablerIcons.MailForward),
 )
 

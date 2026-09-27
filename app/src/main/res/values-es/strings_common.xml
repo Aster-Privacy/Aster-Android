@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="common_back">Atrás</string>
     <string name="common_storage_used_of_total">%1$s de %2$s</string>
     <string name="common_storage_used_only">%1$s usados</string>
-    <string name="common_snackbar_dismiss">Cerrar</string>
-    <string name="common_snackbar_undo">Deshacer</string>
+    <string name="auth_previous_account_data_not_cleared">No se pudo eliminar el correo de la cuenta anterior de este dispositivo. Intenta iniciar sesión de nuevo.</string>
+    <string name="export_readme_title">Exportación de Aster Mail</string>
+    <string name="export_readme_mbox">Todos los correos en formato MBOX (RFC 4155)</string>
+    <string name="export_readme_eml">Archivos .eml individuales</string>
+    <string name="export_readme_contacts">Datos de contactos</string>
+    <string name="export_readme_warning">Los correos de esta exportación no están cifrados. Guarda este archivo en un lugar seguro.</string>
 </resources>

@@ -19,13 +19,13 @@
         <item quantity="other">%1$d시간</item>
     </plurals>
     <plurals name="settings_val_emails_per_day">
-        <item quantity="other">%1$d통</item>
+        <item quantity="one">메일 %1$d개</item>
+        <item quantity="other">메일 %1$d개</item>
     </plurals>
     <plurals name="spam_auto_delete_notice">
         <item quantity="other">스팸의 항목은 %1$d일 후 자동으로 삭제됩니다.</item>
     </plurals>
     <plurals name="trash_auto_delete_notice">
-        <item quantity="one">휴지통의 항목은 %1$d일 후에 자동으로 삭제됩니다.</item>
         <item quantity="other">휴지통의 항목은 %1$d일 후에 자동으로 삭제됩니다.</item>
     </plurals>
     <plurals name="pending_deletion_body_days">

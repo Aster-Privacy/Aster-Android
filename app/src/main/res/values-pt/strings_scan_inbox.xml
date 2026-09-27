@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="confirm_delete_permanent_message_count">Excluir %1$s permanentemente? Esta ação não pode ser desfeita.</string>
+    <string name="confirm_delete_permanent_message_count">Eliminar %1$s permanentemente? Esta ação não pode ser anulada.</string>
 </resources>

@@ -40,7 +40,6 @@
     <string name="image_theme_reset_short">Sıfırla</string>
     <string name="image_theme_reset_confirm_title">Görsel tema sıfırlansın mı?</string>
     <string name="image_theme_reset_confirm_message">Bu işlem arka plan fotoğrafını kaldırır ve renkleri varsayılan temaya döndürür.</string>
-    <string name="theme_opacity">Tema opaklığı</string>
     <string name="theme_opacity_clear">Şeffaf</string>
     <string name="theme_opacity_clear_subtitle">Fotoğrafınız en çok görünür.</string>
     <string name="theme_opacity_glass">Cam</string>

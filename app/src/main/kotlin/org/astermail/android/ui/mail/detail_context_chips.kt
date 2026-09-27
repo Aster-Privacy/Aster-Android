@@ -105,6 +105,7 @@ import org.astermail.android.R
 import org.astermail.android.api.labels.LabelItem
 import org.astermail.android.api.tags.TagItem
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.auto_mirrored
 import org.astermail.android.design.parse_hex_color_safe
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.folders.is_folder_protected
@@ -154,7 +155,7 @@ internal fun detail_system_folder_icon(folder_id: String): ImageVector = when (f
     "archive" -> TablerIcons.Archive
     "drafts" -> TablerIcons.FileText
     "scheduled" -> TablerIcons.Clock
-    "sent" -> TablerIcons.Send
+    "sent" -> TablerIcons.Send.auto_mirrored()
     else -> TablerIcons.Inbox
 }
 

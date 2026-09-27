@@ -39,6 +39,7 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.auto_mirrored
 
 internal fun plan_feature_icon(@StringRes feature_res: Int): ImageVector = when (feature_res) {
     R.string.settings_plan_bullet_free_storage,
@@ -63,7 +64,7 @@ internal fun plan_feature_icon(@StringRes feature_res: Int): ImageVector = when 
     -> TablerIcons.World
     R.string.settings_plan_bullet_daily_send_limits,
     R.string.settings_plan_bullet_daily_emails,
-    -> TablerIcons.Send
+    -> TablerIcons.Send.auto_mirrored()
     R.string.settings_plan_bullet_star_templates,
     R.string.settings_plan_bullet_unlimited_templates,
     -> TablerIcons.Template

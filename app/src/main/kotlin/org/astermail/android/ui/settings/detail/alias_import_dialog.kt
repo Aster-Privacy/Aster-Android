@@ -561,21 +561,21 @@ fun alias_import_dialog(
 
                     ImportStep.Done -> {
                         Text(
-                            text = stringResource(R.string.alias_import_summary_created, created_count),
+                            text = pluralStringResource(R.plurals.alias_import_summary_created, created_count, created_count),
                             color = colors.success,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
                         )
                         if (skipped_count > 0) {
                             Text(
-                                text = stringResource(R.string.alias_import_summary_skipped, skipped_count),
+                                text = pluralStringResource(R.plurals.alias_import_summary_skipped, skipped_count, skipped_count),
                                 color = colors.warning,
                                 fontSize = 13.sp,
                             )
                         }
                         if (failed_count > 0) {
                             Text(
-                                text = stringResource(R.string.alias_import_summary_failed, failed_count),
+                                text = pluralStringResource(R.plurals.alias_import_summary_failed, failed_count, failed_count),
                                 color = colors.danger,
                                 fontSize = 13.sp,
                             )

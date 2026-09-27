@@ -67,4 +67,69 @@ class AppLanguageSyncTest {
     fun unsupported_language_is_ignored() {
         assertNull(app_language.synced_code_to_store("xx", true, null))
     }
+
+    @Test
+    fun web_labels_map_to_codes() {
+        assertEquals("pt", app_language.normalize_code("Português (Portugal)"))
+        assertEquals("pt-BR", app_language.normalize_code("Português (Brazil)"))
+        assertEquals("zh-CN", app_language.normalize_code("简体中文 (Simplified)"))
+        assertEquals("de", app_language.normalize_code("Deutsch"))
+        assertEquals("ar", app_language.normalize_code("العربية"))
+    }
+
+    @Test
+    fun codes_and_tags_map_to_codes() {
+        assertEquals("zh-CN", app_language.normalize_code("zh"))
+        assertEquals("zh-CN", app_language.normalize_code("zh-Hans-CN"))
+        assertEquals("pt-BR", app_language.normalize_code("pt_BR"))
+        assertEquals("pt-BR", app_language.normalize_code("pt-br"))
+        assertEquals("pt", app_language.normalize_code("pt-PT"))
+        assertEquals("fr", app_language.normalize_code("fr-CA"))
+    }
+
+    @Test
+    fun legacy_stored_codes_are_not_rewritten() {
+        assertNull(app_language.synced_code_to_store("简体中文 (Simplified)", true, "zh"))
+    }
+
+    @Test
+    fun server_value_round_trips_through_normalize() {
+        for (option in app_language.supported) {
+            assertEquals(option.code, app_language.normalize_code(app_language.server_value(option.code)))
+        }
+        assertEquals("", app_language.server_value(null))
+    }
+
+    @Test
+    fun supported_languages_match_web() {
+        assertEquals(
+            listOf("en", "es", "fr", "de", "it", "pt", "pt-BR", "nl", "pl", "tr", "ru", "zh-CN", "ja", "ko", "ar", "hi"),
+            app_language.supported.map { it.code },
+        )
+    }
+
+    @Test
+    fun locale_config_lists_every_supported_language() {
+        var file = java.io.File("src/main/res/xml/locales_config.xml")
+        if (!file.isFile) file = java.io.File("app/src/main/res/xml/locales_config.xml")
+        val declared = Regex("android:name=\"([^\"]+)\"").findAll(file.readText()).map { it.groupValues[1] }.toList()
+
+        assertEquals(app_language.supported.map { it.code }, declared)
+    }
+
+    @Test
+    fun every_supported_language_has_its_own_resources() {
+        var root = java.io.File("src/main/res")
+        if (!root.isDirectory) root = java.io.File("app/src/main/res")
+        val missing = app_language.supported
+            .map { it.code }
+            .filter { it != "en" }
+            .map { code ->
+                val parts = code.split("-")
+                if (parts.size == 1) "values-${parts[0]}" else "values-${parts[0]}-r${parts[1]}"
+            }
+            .filter { !java.io.File(root, "$it/strings.xml").isFile }
+
+        assertEquals(emptyList<String>(), missing)
+    }
 }

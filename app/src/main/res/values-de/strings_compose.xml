@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="compose_footer_secured_by_plain">Geschützt durch Aster Mail</string>
-    <string name="compose_footer_secured_by_label">Geschützt durch</string>
-    <string name="compose_footer_brand">Aster Mail</string>
     <string name="compose_quote_forwarded_message">Weitergeleitete Nachricht</string>
     <string name="compose_quote_original_message">Ursprüngliche Nachricht</string>
     <string name="compose_quote_show_label">%1$s anzeigen</string>
@@ -10,20 +8,18 @@
     <string name="compose_quote_header_from">Von:</string>
     <string name="compose_quote_header_date">Datum:</string>
     <string name="compose_quote_header_subject">Betreff:</string>
-    <string name="compose_attachment_remove">Anhang entfernen</string>
-    <string name="compose_attachment_uploading">Anhang %1$s wird hochgeladen</string>
     <string name="schedule_time_in_past">Der geplante Zeitpunkt muss in der Zukunft liegen</string>
     <string name="signature_none">Keine Signatur</string>
     <string name="signature_select">Signatur wählen</string>
     <string name="compose_metadata_strip_failed">Verborgene Metadaten konnten nicht entfernt werden aus: %1$s</string>
     <string name="compose_inline_image_failed">Diese Bilder konnten nicht hinzugefügt werden: %1$s</string>
-    <string name="compose_attachment_read_failed">\"%1$s\" konnte nicht angehängt werden. Deine E-Mail wurde nicht gesendet. Entferne die Datei oder füge sie erneut hinzu und versuch es noch einmal.</string>
+    <string name="compose_attachment_read_failed">„%1$s“ konnte nicht angehängt werden. Ihre E-Mail wurde nicht gesendet. Entfernen Sie die Datei oder fügen Sie sie erneut hinzu und versuchen Sie es noch einmal.</string>
     <string name="schedule_in_one_hour">In einer Stunde</string>
     <string name="schedule_tonight">Heute Abend</string>
     <string name="schedule_tomorrow_morning">Morgen früh</string>
     <string name="schedule_tomorrow_afternoon">Morgen Nachmittag</string>
     <string name="schedule_monday_morning">Montag früh</string>
     <string name="schedule_pick_date_time">Datum &amp; Uhrzeit wählen</string>
-    <string name="too_many_recipients_in_field">Jedes Feld An, Cc und Bcc fasst höchstens %1$d Adressen. Verschiebe einen Teil in eine zweite Nachricht, um diese zu senden.</string>
+    <string name="too_many_recipients_in_field">Jedes Feld An, Cc und Bcc fasst höchstens %1$d Adressen. Verschieben Sie einen Teil in eine zweite Nachricht, um diese zu senden.</string>
     <string name="too_many_recipients_in_message">Eine Nachricht erreicht höchstens %1$d Adressen über An, Cc und Bcc hinweg. Die Liste auf kleinere Nachrichten aufzuteilen funktioniert.</string>
 </resources>

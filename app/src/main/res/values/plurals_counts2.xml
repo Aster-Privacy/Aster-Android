@@ -8,10 +8,6 @@
         <item quantity="one">%d key</item>
         <item quantity="other">%d keys</item>
     </plurals>
-    <plurals name="devices_count">
-        <item quantity="one">%d device</item>
-        <item quantity="other">%d devices</item>
-    </plurals>
     <plurals name="labels_count">
         <item quantity="one">%d label</item>
         <item quantity="other">%d labels</item>

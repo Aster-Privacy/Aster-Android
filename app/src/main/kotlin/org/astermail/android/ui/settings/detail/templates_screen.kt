@@ -54,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.style.TextOverflow
@@ -142,7 +143,7 @@ fun TemplatesScreen(
 
         if (state.undecryptable_count > 0) {
             error_banner(
-                stringResource(R.string.templates_decrypt_failed_count, state.undecryptable_count),
+                pluralStringResource(R.plurals.templates_decrypt_failed_count, state.undecryptable_count, state.undecryptable_count),
             )
             v_gap(AsterSpacing.md)
         }

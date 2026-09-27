@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="inbox_selected_count">%1$d चुने गए</string>
     <string name="inbox_search_in_folder">%1$s खोजें</string>
     <string name="inbox_search_in_category">%1$s में खोजें</string>
     <string name="inbox_subject_with_count">%1$s (%2$d)</string>
@@ -11,5 +10,5 @@
     <string name="selection_scope_offer_categories">हर श्रेणी समेत %2$s के सभी %1$d चुनें</string>
     <string name="selection_scope_confirmed">%2$s के सभी %1$d चुने गए हैं</string>
     <string name="inbox_a11y_state_read">पढ़ा गया</string>
-    <string name="inbox_a11y_state_unread">नहीं पढ़ा गया</string>
+    <string name="inbox_a11y_state_unread">अपठित</string>
 </resources>

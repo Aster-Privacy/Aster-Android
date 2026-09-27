@@ -36,25 +36,17 @@
         <item quantity="one">%d bericht gemarkeerd als ongelezen</item>
         <item quantity="other">%d berichten gemarkeerd als ongelezen</item>
     </plurals>
-    <plurals name="results_count">
-        <item quantity="one">%d resultaat</item>
-        <item quantity="other">%d resultaten</item>
-    </plurals>
     <plurals name="active_endpoints">
         <item quantity="one">%d actief eindpunt</item>
         <item quantity="other">%d actieve eindpunten</item>
-    </plurals>
-    <plurals name="storage_addons_active_count">
-        <item quantity="one">%1$d actief pakket</item>
-        <item quantity="other">%1$d actieve pakketten</item>
     </plurals>
     <plurals name="backup_codes_remaining">
         <item quantity="one">%d back-upcode resterend</item>
         <item quantity="other">%d back-upcodes resterend</item>
     </plurals>
     <plurals name="kids_seats_free">
-        <item quantity="one">%1$d plaats beschikbaar</item>
-        <item quantity="other">%1$d plaatsen beschikbaar</item>
+        <item quantity="one">%1$d plek beschikbaar</item>
+        <item quantity="other">%1$d plekken beschikbaar</item>
     </plurals>
     <plurals name="trackers_blocked_count">
         <item quantity="one">%1$d tracker geblokkeerd</item>

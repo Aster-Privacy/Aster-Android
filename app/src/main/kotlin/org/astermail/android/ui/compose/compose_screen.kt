@@ -24,6 +24,7 @@ package org.astermail.android.ui.compose
 import androidx.compose.ui.graphics.RectangleShape
 import compose.icons.TablerIcons
 import kotlinx.coroutines.CancellationException
+import org.astermail.android.design.auto_mirrored
 import org.astermail.android.ui.common.sheet_container_color
 import org.astermail.android.ui.common.app_toast
 import org.astermail.android.ui.common.show_copy_result_toast
@@ -191,13 +192,13 @@ import org.astermail.android.ui.common.sender_id_for_email
 import org.astermail.android.contacts.ContactsViewModel
 import org.astermail.android.ui.contacts.Contact
 import org.astermail.android.ui.mail.ComposePrefill
-import org.astermail.android.ui.mail.build_quoted_body
 import org.astermail.android.ui.mail.format_full_datetime
 import org.astermail.android.ui.mail.subject_prefix
 import org.astermail.android.ui.mail.thread_message_to_mock
 import org.astermail.android.util.strip_metadata
 import org.astermail.android.util.strip_status
 import org.astermail.android.ui.common.page_surface
+import org.astermail.android.design.mirror_in_rtl
 
 data class AttachmentItem(
     val uri: Uri,
@@ -3420,7 +3421,8 @@ private fun send_fab(enabled: Boolean, on_click: () -> Unit) {
             tint = tint,
             modifier = Modifier
                 .size(18.dp)
-                .offset(x = (-1).dp, y = 1.dp),
+                .offset(x = (-1).dp, y = 1.dp)
+                .mirror_in_rtl(),
         )
     }
 }
@@ -3428,7 +3430,7 @@ private fun send_fab(enabled: Boolean, on_click: () -> Unit) {
 private data class chip_parse_result(val new_chips: List<String>, val remaining: String)
 
 private val compose_mode_options = listOf(
-    "reply" to Pair(TablerIcons.ArrowBackUp, R.string.reply),
+    "reply" to Pair(TablerIcons.ArrowBackUp.auto_mirrored(), R.string.reply),
     "reply_all" to Pair(TablerIcons.ArrowsLeft, R.string.reply_all),
     "forward" to Pair(TablerIcons.MailForward, R.string.forward),
 )
@@ -3829,7 +3831,7 @@ private fun recipient_chip(text: String, show_encryption_indicator: Boolean = tr
             ) {
                 Icon(
                     imageVector = TablerIcons.X,
-                    contentDescription = "${stringResource(R.string.remove)} $text",
+                    contentDescription = stringResource(R.string.remove_named, text),
                     tint = colors.text_tertiary,
                     modifier = Modifier.size(14.dp),
                 )
@@ -5245,13 +5247,6 @@ private fun render_spanned_html(editable: android.text.Editable): String {
     return out.toString()
 }
 
-private val WATERMARK_LINE_RE = Regex("(?i)\\bSecured by Aster Mail\\b\\s*")
-
-private fun strip_watermarks(text: String): String {
-    val cleaned = WATERMARK_LINE_RE.replace(text, "\n")
-    return cleaned.replace(Regex("\\n{3,}"), "\n\n").trim()
-}
-
 internal fun insert_template_body(
     body: String,
     template: String,
@@ -5272,40 +5267,6 @@ internal fun insert_template_body(
 }
 
 private val STYLE_SCRIPT_TAG_RE = Regex("(?is)<(style|script)\\b[^>]*>.*?</\\1>")
-
-private fun build_quoted_body(
-    msg: org.astermail.android.mail.ThreadMessageDecrypted,
-    item: org.astermail.android.mail.InboxItem?,
-    forwarded: Boolean,
-): String {
-    val raw = msg.body_html ?: msg.body_text
-    val plain_raw = if (raw.contains("<") && raw.contains(">")) {
-        val repaired = org.astermail.android.ui.mail.EmailHtmlSanitizer.repair_comment_markup(raw)
-        val without_style_script = STYLE_SCRIPT_TAG_RE.replace(repaired, "")
-        android.text.Html.fromHtml(without_style_script, android.text.Html.FROM_HTML_MODE_LEGACY).toString().trimEnd()
-    } else raw
-    val plain = strip_watermarks(plain_raw)
-    val from_line = msg.display_sender_email ?: msg.sender_email
-    val to_line = msg.to_addresses.joinToString(", ")
-    val subject_line = item?.subject.orEmpty()
-    val date_line = msg.timestamp
-    val header = if (forwarded) {
-        "\n\n\n---------- Forwarded message ----------\nFrom: $from_line\nDate: $date_line\nSubject: $subject_line\nTo: $to_line\n\n"
-    } else {
-        "\n\nOn $date_line, $from_line wrote:\n"
-    }
-    val quoted = plain.lines().joinToString("\n") { if (forwarded) it else "> $it" }
-    return header + quoted
-}
-
-private fun find_quote_start(text: String): Int {
-    val patterns = listOf("\nOn ", "\n---------- Forwarded")
-    for (pattern in patterns) {
-        val idx = text.indexOf(pattern)
-        if (idx >= 0) return idx
-    }
-    return -1
-}
 
 private const val IMG_MARKER = '￼'
 

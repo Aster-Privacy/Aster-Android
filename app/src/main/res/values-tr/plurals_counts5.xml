@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="count_selected">
+        <item quantity="one">%1$d seçildi</item>
+        <item quantity="other">%1$d seçildi</item>
+    </plurals>
+    <plurals name="inbox_selected_count">
+        <item quantity="one">%1$d seçildi</item>
+        <item quantity="other">%1$d seçildi</item>
+    </plurals>
+    <plurals name="contacts_bulk_progress">
+        <item quantity="one">%2$d kişiden %1$d tanesi siliniyor</item>
+        <item quantity="other">%2$d kişiden %1$d tanesi siliniyor</item>
+    </plurals>
+    <plurals name="recovery_codes_remaining">
+        <item quantity="one">%2$d kodun %1$d tanesi kaldı</item>
+        <item quantity="other">%2$d kodun %1$d tanesi kaldı</item>
+    </plurals>
+    <plurals name="export_progress_emails">
+        <item quantity="one">%1$d / %2$d e-posta</item>
+        <item quantity="other">%1$d / %2$d e-posta</item>
+    </plurals>
+    <plurals name="crypto_native_status_confirming">
+        <item quantity="one">%1$d / %2$d onay</item>
+        <item quantity="other">%1$d / %2$d onay</item>
+    </plurals>
+    <plurals name="kids_seats_used">
+        <item quantity="one">%2$d aile koltuğundan %1$d tanesi kullanılıyor</item>
+        <item quantity="other">%2$d aile koltuğundan %1$d tanesi kullanılıyor</item>
+    </plurals>
+    <plurals name="domain_records_verified">
+        <item quantity="one">%2$d kaydın %1$d tanesi doğrulandı</item>
+        <item quantity="other">%2$d kaydın %1$d tanesi doğrulandı</item>
+    </plurals>
+    <plurals name="alias_limit_notice">
+        <item quantity="one">%1$d / %2$d takma ad kullanıldı. Daha fazlası için yükseltin.</item>
+        <item quantity="other">%1$d / %2$d takma ad kullanıldı. Daha fazlası için yükseltin.</item>
+    </plurals>
+    <plurals name="score_steps_left">
+        <item quantity="one">%1$d kaldı</item>
+        <item quantity="other">%1$d kaldı</item>
+    </plurals>
+    <plurals name="alias_import_summary_created">
+        <item quantity="one">%1$d içe aktarıldı</item>
+        <item quantity="other">%1$d içe aktarıldı</item>
+    </plurals>
+    <plurals name="alias_import_summary_skipped">
+        <item quantity="one">%1$d zaten mevcuttu</item>
+        <item quantity="other">%1$d zaten mevcuttu</item>
+    </plurals>
+    <plurals name="alias_import_summary_failed">
+        <item quantity="one">%1$d başarısız</item>
+        <item quantity="other">%1$d başarısız</item>
+    </plurals>
+    <plurals name="alias_apply_existing_canceled">
+        <item quantity="one">Durduruldu: %1$d güncellendi</item>
+        <item quantity="other">Durduruldu: %1$d güncellendi</item>
+    </plurals>
+    <plurals name="fix_enc_codes_used">
+        <item quantity="one">%1$d kullanıldı</item>
+        <item quantity="other">%1$d kullanıldı</item>
+    </plurals>
+    <plurals name="payment_failed_days_left">
+        <item quantity="one">Erişim %1$d gün içinde kısıtlanacak.</item>
+        <item quantity="other">Erişim %1$d gün içinde kısıtlanacak.</item>
+    </plurals>
+    <plurals name="templates_decrypt_failed_count">
+        <item quantity="one">%1$d şablon bu cihazda okunamadı. Bu cihazda şu anda bulunmayan bir anahtarla kaydedilmiş.</item>
+        <item quantity="other">%1$d şablon bu cihazda okunamadı. Bu cihazda şu anda bulunmayan bir anahtarla kaydedilmişler.</item>
+    </plurals>
+    <plurals name="contact_trash_days_left">
+        <item quantity="one">%1$d gün kaldı</item>
+        <item quantity="other">%1$d gün kaldı</item>
+    </plurals>
+    <plurals name="quick_action_delete_old_confirm">
+        <item quantity="one">30 günden eski %1$d konuşma çöp kutusuna taşınsın mı?</item>
+        <item quantity="other">30 günden eski %1$d konuşma çöp kutusuna taşınsın mı?</item>
+    </plurals>
+    <plurals name="undo_send_delay_seconds">
+        <item quantity="one">%1$d saniye</item>
+        <item quantity="other">%1$d saniye</item>
+    </plurals>
+</resources>

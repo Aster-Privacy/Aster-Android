@@ -70,6 +70,7 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.auto_mirrored
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_state
@@ -102,6 +103,7 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
         R.string.settings_general,
         listOf(
             settings_row_item("appearance", R.string.settings_appearance, icon = TablerIcons.Palette),
+            settings_row_item("language", R.string.language, icon = TablerIcons.Language),
             settings_row_item("accessibility", R.string.settings_accessibility, icon = TablerIcons.Typography),
         ),
     ),
@@ -134,7 +136,7 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
         R.string.settings_section_mail,
         listOf(
             settings_row_item("notifications", R.string.settings_notifications, icon = TablerIcons.Bell),
-            settings_row_item("behavior", R.string.settings_behavior, icon = TablerIcons.ArrowBackUp),
+            settings_row_item("behavior", R.string.settings_behavior, icon = TablerIcons.ArrowBackUp.auto_mirrored()),
             settings_row_item("swipe_actions", R.string.settings_swipe_actions, icon = TablerIcons.ArrowsLeftRight),
             settings_row_item("customize_toolbar", R.string.customize_toolbar, icon = TablerIcons.LayoutBottombar),
             settings_row_item("default_sender", R.string.settings_default_sender, icon = TablerIcons.Mailbox),
@@ -150,7 +152,7 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
         R.string.tools,
         listOf(
             settings_row_item("import", R.string.settings_import, icon = TablerIcons.CloudUpload),
-            settings_row_item("smtp_tokens", R.string.settings_smtp_tokens, icon = TablerIcons.Send),
+            settings_row_item("smtp_tokens", R.string.settings_smtp_tokens, icon = TablerIcons.Send.auto_mirrored()),
         ),
     ),
     settings_section(

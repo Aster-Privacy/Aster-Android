@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="common_back">뒤로</string>
     <string name="common_storage_used_of_total">%2$s 중 %1$s</string>
     <string name="common_storage_used_only">%1$s 사용</string>
-    <string name="common_snackbar_dismiss">닫기</string>
-    <string name="common_snackbar_undo">실행 취소</string>
+    <string name="auth_previous_account_data_not_cleared">이 기기에서 이전 계정의 메일을 삭제하지 못했습니다. 다시 로그인해 보세요.</string>
+    <string name="export_readme_title">Aster Mail 내보내기</string>
+    <string name="export_readme_mbox">MBOX 형식의 모든 이메일(RFC 4155)</string>
+    <string name="export_readme_eml">개별 .eml 파일</string>
+    <string name="export_readme_contacts">연락처 세부정보</string>
+    <string name="export_readme_warning">이 내보내기의 이메일은 암호화되어 있지 않습니다. 이 파일을 안전한 곳에 보관하세요.</string>
 </resources>

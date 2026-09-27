@@ -394,28 +394,23 @@ private fun terms_agreement_text(
     on_privacy_click: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val prefix = stringResource(R.string.register_agree_prefix) + " "
+    val template = stringResource(R.string.register_agree_terms)
     val terms = stringResource(R.string.terms_of_service)
-    val and_word = " " + stringResource(R.string.register_agree_and) + " "
     val privacy = stringResource(R.string.privacy_policy)
+    val muted_style = SpanStyle(color = colors.text_tertiary)
+    val link_style = SpanStyle(color = colors.accent_blue, fontWeight = FontWeight.Medium)
 
     val annotated = buildAnnotatedString {
-        withStyle(SpanStyle(color = colors.text_tertiary)) {
-            append(prefix)
+        var cursor = 0
+        Regex("%([12])\\\$s").findAll(template).forEach { match ->
+            withStyle(muted_style) { append(template.substring(cursor, match.range.first)) }
+            val tag = if (match.groupValues[1] == "1") "terms" else "privacy"
+            pushStringAnnotation(tag = tag, annotation = tag)
+            withStyle(link_style) { append(if (tag == "terms") terms else privacy) }
+            pop()
+            cursor = match.range.last + 1
         }
-        pushStringAnnotation(tag = "terms", annotation = "terms")
-        withStyle(SpanStyle(color = colors.accent_blue, fontWeight = FontWeight.Medium)) {
-            append(terms)
-        }
-        pop()
-        withStyle(SpanStyle(color = colors.text_tertiary)) {
-            append(and_word)
-        }
-        pushStringAnnotation(tag = "privacy", annotation = "privacy")
-        withStyle(SpanStyle(color = colors.accent_blue, fontWeight = FontWeight.Medium)) {
-            append(privacy)
-        }
-        pop()
+        withStyle(muted_style) { append(template.substring(cursor)) }
     }
 
     @Suppress("DEPRECATION")

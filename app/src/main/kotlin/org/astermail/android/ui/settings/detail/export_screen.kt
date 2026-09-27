@@ -384,7 +384,7 @@ private fun progress_step(
             )
             v_gap(AsterSpacing.sm)
             Text(
-                text = stringResource(R.string.export_progress_emails, processed, total),
+                text = pluralStringResource(R.plurals.export_progress_emails, total, processed, total),
                 color = colors.text_tertiary,
                 fontSize = 13.sp,
                 textAlign = TextAlign.Center,

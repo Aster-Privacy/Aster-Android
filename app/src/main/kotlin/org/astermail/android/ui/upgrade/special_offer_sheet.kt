@@ -689,6 +689,7 @@ fun SpecialOfferHost() {
             },
             offer_prices = term_prices,
             initial_term = if (is_yearly) 12 else 1,
+            offer_percent = percent_off,
         )
         SpecialOfferStep.offer -> Unit
     }

@@ -24,6 +24,7 @@ package org.astermail.android.ui.settings.detail
 import compose.icons.TablerIcons
 import kotlinx.coroutines.CancellationException
 import org.astermail.android.design.acrylic
+import org.astermail.android.design.auto_mirrored
 import org.astermail.android.ui.common.show_copy_result_toast
 import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
@@ -314,7 +315,7 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
                     }
                     devices_list_action_row(
                         label = stringResource(R.string.revoke_all_other),
-                        icon = TablerIcons.Logout,
+                        icon = TablerIcons.Logout.auto_mirrored(),
                         tint = colors.danger,
                         test_tag = "revoke_all_devices",
                         enabled = other_live_count > 0,
@@ -1926,7 +1927,7 @@ fun KidsReservedScreen(on_back: () -> Unit) {
         val seats = state.family_seats
         if (seats != null && seats.max_members > 0) {
             Text(
-                text = stringResource(R.string.kids_seats_used, seats.seats_used, seats.max_members) +
+                text = pluralStringResource(R.plurals.kids_seats_used, seats.max_members, seats.seats_used, seats.max_members) +
                     " · " +
                     pluralStringResource(R.plurals.kids_seats_free, seats.seats_remaining, seats.seats_remaining),
                 color = colors.text_tertiary,
@@ -2104,13 +2105,16 @@ fun LanguageScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
     fun save(code: String?) {
         if (code == selected) return
         selected = code
-        org.astermail.android.settings.app_language.store_code(context, code)
         prefs?.let {
             vm.save_preferences(
-                it.copy(language = code.orEmpty(), language_explicit = code != null),
+                it.copy(
+                    language = org.astermail.android.settings.app_language.server_value(code),
+                    language_explicit = code != null,
+                ),
             )
         }
-        activity?.recreate()
+        org.astermail.android.settings.app_language.store_code(context, code)
+        if (!org.astermail.android.settings.app_language.platform_managed) activity?.recreate()
     }
 
     detail_scaffold(title = stringResource(R.string.language), on_back = on_back) {
@@ -2130,7 +2134,7 @@ fun LanguageScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                     on_click = { save(null) },
                 )
                 settings_row_gap(modifier = Modifier)
-                languages.forEachIndexed { idx, (code, name) ->
+                languages.forEachIndexed { idx, (code, name, _) ->
                     choice_option_row(
                         label = name,
                         selected = selected == code,

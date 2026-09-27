@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="compose_footer_secured_by_plain">Sécurisé par Aster Mail</string>
-    <string name="compose_footer_secured_by_label">Sécurisé par</string>
-    <string name="compose_footer_brand">Aster Mail</string>
     <string name="compose_quote_forwarded_message">Message transféré</string>
     <string name="compose_quote_original_message">Message original</string>
     <string name="compose_quote_show_label">Afficher %1$s</string>
@@ -10,14 +8,12 @@
     <string name="compose_quote_header_from">De :</string>
     <string name="compose_quote_header_date">Date :</string>
     <string name="compose_quote_header_subject">Objet :</string>
-    <string name="compose_attachment_remove">Supprimer la pièce jointe</string>
-    <string name="compose_attachment_uploading">Envoi de la pièce jointe %1$s</string>
     <string name="compose_attachment_read_failed">Impossible de joindre « %1$s ». Votre e-mail n\'a pas été envoyé. Supprimez ou rajoutez le fichier, puis réessayez.</string>
     <string name="schedule_time_in_past">L\'heure programmée doit être dans le futur</string>
     <string name="signature_none">Aucune signature</string>
     <string name="signature_select">Choisir une signature</string>
     <string name="compose_metadata_strip_failed">Impossible de retirer les métadonnées cachées de : %1$s</string>
-    <string name="compose_inline_image_failed">Impossible d’ajouter ces images : %1$s</string>
+    <string name="compose_inline_image_failed">Impossible d\'ajouter ces images : %1$s</string>
     <string name="schedule_in_one_hour">Dans une heure</string>
     <string name="schedule_tonight">Ce soir</string>
     <string name="schedule_tomorrow_morning">Demain matin</string>

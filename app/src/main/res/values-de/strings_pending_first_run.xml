@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="first_run_title">Willkommen bei Aster Mail</string>
-    <string name="first_run_subtitle">Nimm deine vorhandenen E-Mails mit oder fange neu an. Du kannst später in den Einstellungen importieren.</string>
+    <string name="first_run_subtitle">Nehmen Sie Ihre vorhandenen E-Mails mit oder fangen Sie neu an. Sie können später in den Einstellungen importieren.</string>
     <string name="first_run_import">E-Mails importieren</string>
     <string name="first_run_skip">Jetzt nicht</string>
-    <string name="first_run_privacy_note">Deine E-Mails werden verschlüsselt, bevor sie dein Gerät verlassen.</string>
+    <string name="first_run_privacy_note">Ihre E-Mails werden verschlüsselt, bevor sie Ihr Gerät verlassen.</string>
     <string name="recovery_reminder_title">Wiederherstellungs-E-Mail hinzufügen</string>
-    <string name="recovery_reminder_body">Mit einer Wiederherstellungs-E-Mail kommst du wieder in dein Konto, wenn du dein Passwort vergisst.</string>
-    <string name="recovery_reminder_action">Wiederherstellungs-E-Mail hinzufügen</string>
+    <string name="recovery_reminder_body">Mit einer Wiederherstellungs-E-Mail gelangen Sie wieder in Ihr Konto, wenn Sie Ihr Passwort vergessen.</string>
+    <string name="recovery_reminder_action">Wiederherstellungsadresse hinzufügen</string>
     <string name="recovery_reminder_later">Später</string>
-    <string name="plan_prompt_title">Hol mehr aus Aster Mail heraus</string>
-    <string name="plan_prompt_body">Führe ein Upgrade durch für mehr Speicher, eigene Domains und unbegrenzte Aliasse.</string>
+    <string name="plan_prompt_title">Holen Sie mehr aus Aster Mail heraus</string>
+    <string name="plan_prompt_body">Führen Sie ein Upgrade durch, um mehr Speicher, eigene Domains und unbegrenzte Aliasse zu erhalten.</string>
     <string name="plan_prompt_action">Tarife ansehen</string>
     <string name="plan_prompt_dismiss">Jetzt nicht</string>
-    <string name="recovery_codes_reminder_title">Sichere deine Wiederherstellungscodes</string>
-    <string name="recovery_codes_reminder_body">Aster verschlüsselt deine Mail mit deinem Passwort, deshalb kann es niemand für dich zurücksetzen. Wiederherstellungscodes sind der einzige Weg zurück zu deiner verschlüsselten Mail.</string>
-    <string name="recovery_codes_reminder_action">Wiederherstellungscodes holen</string>
+    <string name="recovery_codes_reminder_title">Speichern Sie Ihre Wiederherstellungscodes</string>
+    <string name="recovery_codes_reminder_body">Aster verschlüsselt Ihre E-Mails mit Ihrem Passwort, deshalb kann es niemand für Sie zurücksetzen. Wiederherstellungscodes sind der einzige Weg zurück zu Ihren verschlüsselten E-Mails.</string>
+    <string name="recovery_codes_reminder_action">Codes abrufen</string>
     <string name="recovery_phrase_migrate_title">Zu Wiederherstellungscodes wechseln</string>
-    <string name="recovery_phrase_migrate_body">Wiederherstellungsphrasen werden abgeschafft. Hole dir jetzt Wiederherstellungscodes, damit du dein Konto weiterhin wiederherstellen kannst.</string>
+    <string name="recovery_phrase_migrate_body">Wiederherstellungsphrasen werden abgeschafft. Holen Sie sich jetzt Wiederherstellungscodes, damit Sie Ihr Konto weiterhin wiederherstellen können.</string>
     <string name="recovery_phrase_migrate_action">Codes holen</string>
 </resources>

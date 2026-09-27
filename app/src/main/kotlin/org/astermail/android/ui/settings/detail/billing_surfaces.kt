@@ -63,6 +63,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic
+import org.astermail.android.design.mirror_in_rtl
 
 internal val billing_tile_shape: Shape = SquircleShape(14.dp)
 internal val billing_control_shape: Shape = SquircleShape(12.dp)
@@ -485,7 +486,7 @@ internal fun billing_link_row(text: String, on_click: () -> Unit, modifier: Modi
             imageVector = TablerIcons.ChevronRight,
             contentDescription = null,
             tint = colors.accent_blue,
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(16.dp).mirror_in_rtl(),
         )
     }
 }

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="inbox_selected_count">%1$d seçildi</string>
     <string name="inbox_search_in_folder">%1$s içinde ara</string>
     <string name="inbox_subject_with_count">%1$s (%2$d)</string>
     <string name="inbox_no_subject">(konu yok)</string>
@@ -11,5 +10,5 @@
     <string name="selection_scope_confirmed">%2$s içindeki %1$d ögenin tümü seçildi</string>
     <string name="inbox_search_in_category">%1$s içinde ara</string>
     <string name="inbox_a11y_state_read">Okundu</string>
-    <string name="inbox_a11y_state_unread">Okunmadı</string>
+    <string name="inbox_a11y_state_unread">Okunmamış</string>
 </resources>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="image_themes">Thèmes illustrés</string>
-    <string name="image_themes_subtitle">Affiche une photo derrière l’app.</string>
+    <string name="image_themes_subtitle">Affiche une photo derrière l\'application.</string>
     <string name="image_theme_browse">Parcourir les photos</string>
     <string name="image_theme_credit">Photo : %1$s</string>
     <string name="image_theme_category_space">Espace</string>
@@ -18,7 +18,7 @@
     <string name="image_theme_apply_changes">Appliquer</string>
     <string name="image_theme_reset">Rétablir les valeurs par défaut</string>
     <string name="image_theme_colors">Couleurs</string>
-    <string name="image_theme_wallpapers">Fonds d’écran</string>
+    <string name="image_theme_wallpapers">Fonds d\'écran</string>
     <string name="image_theme_page_subtitle">Choisissez une photo et des couleurs pour votre boîte de réception</string>
     <string name="image_theme_category_yours">Votre photo</string>
     <string name="image_theme_choose_photo">Choisir une photo</string>
@@ -26,8 +26,8 @@
     <string name="image_theme_remove_photo">Supprimer la photo</string>
     <string name="image_theme_photo_private">Votre photo est chiffrée et reste sur cet appareil.</string>
     <string name="image_theme_photo_too_large">Cette photo est trop volumineuse. Choisissez-en une de moins de 40 Mo.</string>
-    <string name="image_theme_photo_unsupported">Ce type de fichier n’est pas pris en charge. Choisissez une photo JPEG, PNG, GIF, WebP ou HEIC.</string>
-    <string name="image_theme_photo_unreadable">Impossible d’ouvrir cette photo. Essayez-en une autre.</string>
+    <string name="image_theme_photo_unsupported">Ce type de fichier n\'est pas pris en charge. Choisissez une photo JPEG, PNG, GIF, WebP ou HEIC.</string>
+    <string name="image_theme_photo_unreadable">Impossible d\'ouvrir cette photo. Essayez-en une autre.</string>
     <string name="image_theme_credit_modified">Photo : %1$s. Recadrée et redimensionnée.</string>
     <string name="image_theme_credit_generated">Créé par Aster</string>
     <string name="image_theme_adjust_photo">Ajuster</string>
@@ -36,11 +36,10 @@
     <string name="image_theme_editor_set">Définir</string>
     <string name="image_theme_applied">Thème appliqué</string>
     <string name="image_theme_no_photo">Aucune photo</string>
-    <string name="image_theme_no_photo_subtitle">Utilisez uniquement des couleurs, sans photo derrière l’app.</string>
+    <string name="image_theme_no_photo_subtitle">Utilisez uniquement des couleurs, sans photo derrière l\'application.</string>
     <string name="image_theme_reset_short">Réinitialiser</string>
-    <string name="image_theme_reset_confirm_title">Réinitialiser le thème d’image ?</string>
-    <string name="image_theme_reset_confirm_message">Cette action supprime la photo d’arrière-plan et rétablit les couleurs du thème par défaut.</string>
-    <string name="theme_opacity">Opacité du thème</string>
+    <string name="image_theme_reset_confirm_title">Réinitialiser le thème d\'image ?</string>
+    <string name="image_theme_reset_confirm_message">Cette action supprime la photo d\'arrière-plan et rétablit les couleurs du thème par défaut.</string>
     <string name="theme_opacity_clear">Transparent</string>
     <string name="theme_opacity_clear_subtitle">Votre photo est la plus visible.</string>
     <string name="theme_opacity_glass">Verre</string>
@@ -52,8 +51,8 @@
     <string name="glass_mode">Verre</string>
     <string name="glass_mode_subtitle">Votre photo transparaît derrière les surfaces. Désactivez cette option pour des surfaces opaques.</string>
     <string name="theme_transparency">Transparence</string>
-    <string name="image_theme_animation">Animer l’arrière-plan</string>
-    <string name="image_theme_animation_subtitle">Lit votre arrière-plan animé. Il s’arrête en mode Économiseur de batterie et lorsque les animations sont désactivées sur votre appareil.</string>
+    <string name="image_theme_animation">Animer l\'arrière-plan</string>
+    <string name="image_theme_animation_subtitle">Lit votre arrière-plan animé. Il s\'arrête en mode Économiseur de batterie et lorsque les animations sont désactivées sur votre appareil.</string>
     <string name="image_theme_animation_too_large">Cette image animée est trop volumineuse. Choisissez-en une de moins de 12 Mo.</string>
     <string name="image_theme_retry_download">Réessayer le téléchargement</string>
 </resources>

@@ -52,6 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -75,6 +76,7 @@ import org.astermail.android.api.settings.AliasRun
 import org.astermail.android.settings.AliasDetailState
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.is_alias_run_active
+import org.astermail.android.design.mirror_in_rtl
 
 @Composable
 internal fun alias_detail_panel(
@@ -306,7 +308,7 @@ private fun alias_details_section(
                     imageVector = TablerIcons.Send,
                     contentDescription = null,
                     tint = colors.text_muted,
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(18.dp).mirror_in_rtl(),
                 )
                 Spacer(Modifier.width(AsterSpacing.sm))
                 Column(modifier = Modifier.weight(1f)) {
@@ -657,7 +659,7 @@ private fun alias_apply_existing_status(run: AliasRun?, unsupported: Boolean): S
             stringResource(R.string.alias_apply_existing_progress, run.scanned, run.applied)
         }
         "completed" -> stringResource(R.string.alias_apply_existing_done, run.scanned, run.applied)
-        "canceled" -> stringResource(R.string.alias_apply_existing_canceled, run.applied)
+        "canceled" -> pluralStringResource(R.plurals.alias_apply_existing_canceled, run.applied.toInt(), run.applied)
         "failed" -> stringResource(R.string.alias_apply_existing_error)
         else -> null
     }

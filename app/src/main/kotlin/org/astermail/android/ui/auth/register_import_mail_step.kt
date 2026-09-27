@@ -60,6 +60,7 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterGhostButton
+import org.astermail.android.design.mirror_in_rtl
 
 private data class import_source(
     val icon_res: Int?,
@@ -216,7 +217,7 @@ private fun import_source_row(
             imageVector = TablerIcons.ChevronRight,
             contentDescription = null,
             tint = colors.text_muted,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(18.dp).mirror_in_rtl(),
         )
     }
 }
