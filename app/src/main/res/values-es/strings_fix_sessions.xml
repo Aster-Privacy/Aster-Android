@@ -5,7 +5,7 @@
     <string name="session_client_browser">Navegador web</string>
     <string name="session_client_phone">Teléfono</string>
     <string name="session_client_tablet">Tableta</string>
-    <string name="session_client_desktop">Computadora</string>
+    <string name="session_client_desktop">Ordenador</string>
     <string name="session_client_desktop_app">App de escritorio</string>
     <string name="session_client_bridge">Puente de correo</string>
     <string name="link_device_step_code">Código</string>

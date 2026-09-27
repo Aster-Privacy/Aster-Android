@@ -14,7 +14,7 @@
     <string name="detail_unsubscribe_subtitle">Dejarás de recibir mensajes de esta dirección.</string>
     <string name="detail_view_raw_source">Ver el código fuente</string>
     <string name="detail_raw_source_title">Código fuente del mensaje</string>
-    <string name="detail_raw_source_headers">Cabeceras</string>
+    <string name="detail_raw_source_headers">Encabezados</string>
     <string name="detail_raw_source_body">Cuerpo</string>
     <string name="detail_raw_source_copy">Copiar</string>
     <string name="detail_raw_source_copied">Copiado al portapapeles</string>
@@ -27,9 +27,9 @@
     <string name="to_label">Para</string>
     <string name="subject_label">Asunto</string>
     <string name="message_id_label">ID del mensaje</string>
-    <string name="message_headers">Cabeceras del mensaje</string>
-    <string name="no_raw_headers">No hay cabeceras sin procesar para este mensaje.</string>
-    <string name="copy_headers">Copiar las cabeceras</string>
-    <string name="headers_copied">Cabeceras copiadas</string>
+    <string name="message_headers">Encabezados del mensaje</string>
+    <string name="no_raw_headers">No hay encabezados sin procesar para este mensaje.</string>
+    <string name="copy_headers">Copiar los encabezados</string>
+    <string name="headers_copied">Encabezados copiados</string>
     <string name="print_failed">No se puede imprimir este correo. Inténtalo otra vez.</string>
 </resources>

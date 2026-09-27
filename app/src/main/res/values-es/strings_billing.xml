@@ -5,7 +5,7 @@
     <string name="academic_status_pending">Esperando la verificación</string>
     <string name="academic_status_verified">Verificado</string>
     <string name="alias_limit_notice">Has usado %1$d de %2$d alias. Mejora tu plan para obtener más.</string>
-    <string name="cancel_impact_catch_all">Las direcciones genéricas dejan de recibir correo.</string>
+    <string name="cancel_impact_catch_all">Las direcciones comodín dejan de recibir correo.</string>
     <string name="cancel_impact_intro">Cuando termine tu plan, esto cambia:</string>
     <string name="cancel_impact_none">Nada de tu cuenta cambia de inmediato.</string>
     <string name="cancel_impact_storage">Usas %1$s y tu plan baja a %2$s.</string>
@@ -37,7 +37,7 @@
     <string name="onboarding_checklist_title">Configura Aster (%1$d de %2$d)</string>
     <string name="onboarding_task_first_email">Envía tu primer mensaje</string>
     <string name="onboarding_task_import">Importar tu correo existente</string>
-    <string name="onboarding_task_install">Instala Aster en tu computadora</string>
+    <string name="onboarding_task_install">Instala Aster en tu ordenador</string>
     <string name="onboarding_task_recovery">Añade una dirección de correo de recuperación</string>
     <string name="payment_confirmed">Pago confirmado</string>
     <string name="payment_processing_delayed">El procesamiento del pago puede tardar unos minutos.</string>
@@ -110,7 +110,7 @@
     <string name="billing_cancel_offer_title_unused">Lo que tu plan hace por ti</string>
     <string name="billing_cancel_offer_body_unused">Esto sigue funcionando mientras tu plan está activo. Cuando termina, se detiene.</string>
     <string name="billing_cancel_offer_title_missing">Cuéntanos qué falta</string>
-    <string name="billing_cancel_offer_body_missing">Una nota breve llega a las personas que construyen Aster, y leen todas. Después puedes cancelar igualmente.</string>
+    <string name="billing_cancel_offer_body_missing">Una nota breve llega a las personas que desarrollan Aster, y las leen todas. Después puedes cancelar igualmente.</string>
     <string name="billing_credits_settings_failed">Aster no pudo guardar tu ajuste de crédito.</string>
     <string name="billing_academic_request_failed">Aster no pudo enviar el correo de verificación.</string>
     <string name="billing_thanks_free_title">Gracias por usar Aster</string>
@@ -146,7 +146,7 @@
     <string name="billing_plan_choose_hint">Elige un plan para ver qué incluye.</string>
     <string name="billing_free_has">Plan gratuito: %1$s</string>
     <string name="billing_crypto_resume_title">Termina tu pago con cripto</string>
-    <string name="billing_crypto_resume_expires">Vence el %1$s</string>
+    <string name="billing_crypto_resume_expires">Caduca el %1$s</string>
     <string name="billing_status_ok">Todo en orden</string>
     <string name="billing_status_almost_full">Casi lleno</string>
     <string name="billing_status_action_required">Acción necesaria</string>

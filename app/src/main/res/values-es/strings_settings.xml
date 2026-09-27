@@ -33,9 +33,9 @@
     <string name="settings_feat_search_history">Historial de búsqueda</string>
     <string name="settings_feat_contacts">Contactos</string>
     <string name="settings_feat_contact_groups">Grupos de contactos</string>
-    <string name="settings_feat_two_factor">Verificación en dos pasos</string>
+    <string name="settings_feat_two_factor">Autenticación de dos factores</string>
     <string name="settings_feat_recovery_codes">Códigos de recuperación</string>
-    <string name="settings_feat_password_folders">Carpetas con contraseña</string>
+    <string name="settings_feat_password_folders">Carpetas protegidas con contraseña</string>
     <string name="settings_feat_session_mgmt">Gestión de sesiones</string>
     <string name="settings_feat_login_notifs">Avisos de inicio de sesión</string>
     <string name="settings_feat_encrypted_exports">Exportaciones cifradas</string>

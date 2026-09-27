@@ -2,18 +2,22 @@
 <resources>
     <plurals name="common_unread_count">
         <item quantity="one">%d sin leer</item>
+        <item quantity="many">%d sin leer</item>
         <item quantity="other">%d sin leer</item>
     </plurals>
     <plurals name="common_new_messages">
         <item quantity="one">%d mensaje nuevo</item>
+        <item quantity="many">%d mensajes nuevos</item>
         <item quantity="other">%d mensajes nuevos</item>
     </plurals>
     <plurals name="common_folders_count">
         <item quantity="one">%d carpeta</item>
+        <item quantity="many">%d carpetas</item>
         <item quantity="other">%d carpetas</item>
     </plurals>
     <plurals name="common_messages_count">
         <item quantity="one">%d mensaje</item>
+        <item quantity="many">%d mensajes</item>
         <item quantity="other">%d mensajes</item>
     </plurals>
 </resources>

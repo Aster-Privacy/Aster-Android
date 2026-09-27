@@ -2,26 +2,32 @@
 <resources>
     <plurals name="cancel_impact_aliases">
         <item quantity="one">%d alias deja de recibir correo.</item>
+        <item quantity="many">%d alias dejan de recibir correo.</item>
         <item quantity="other">%d alias dejan de recibir correo.</item>
     </plurals>
     <plurals name="cancel_impact_domains">
         <item quantity="one">%d dominio propio queda suspendido.</item>
+        <item quantity="many">%d dominios propios quedan suspendidos.</item>
         <item quantity="other">%d dominios propios quedan suspendidos.</item>
     </plurals>
     <plurals name="cancel_impact_templates">
         <item quantity="one">%d plantilla deja de funcionar.</item>
+        <item quantity="many">%d plantillas dejan de funcionar.</item>
         <item quantity="other">%d plantillas dejan de funcionar.</item>
     </plurals>
     <plurals name="cancel_impact_signatures">
         <item quantity="one">%d firma deja de funcionar.</item>
+        <item quantity="many">%d firmas dejan de funcionar.</item>
         <item quantity="other">%d firmas dejan de funcionar.</item>
     </plurals>
     <plurals name="cancel_impact_family">
         <item quantity="one">%d miembro pierde su cuenta.</item>
+        <item quantity="many">%d miembros pierden sus cuentas.</item>
         <item quantity="other">%d miembros pierden sus cuentas.</item>
     </plurals>
     <plurals name="crypto_renewal_days">
         <item quantity="one">Tu plan termina en %1$d día, el %2$s.</item>
+        <item quantity="many">Tu plan termina en %1$d días, el %2$s.</item>
         <item quantity="other">Tu plan termina en %1$d días, el %2$s.</item>
     </plurals>
     <plurals name="special_offer_fine_print">
@@ -31,10 +37,12 @@
     </plurals>
     <plurals name="billing_invoice_count">
         <item quantity="one">%d factura</item>
+        <item quantity="many">%d facturas</item>
         <item quantity="other">%d facturas</item>
     </plurals>
     <plurals name="billing_compare_all_features">
         <item quantity="one">Comparar %d función</item>
+        <item quantity="many">Comparar las %d funciones</item>
         <item quantity="other">Comparar las %d funciones</item>
     </plurals>
 </resources>
