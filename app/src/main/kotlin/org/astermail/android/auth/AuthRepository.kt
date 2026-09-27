@@ -70,6 +70,7 @@ import org.astermail.android.api.settings.ChangePasswordRequest
 import org.astermail.android.api.settings.SettingsApi
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.crypto.PgpKeyGenerator
+import org.astermail.android.crypto.PgpKeyPairResult
 import org.bouncycastle.bcpg.ArmoredOutputStream
 import org.astermail.android.storage.AccountStore
 import org.astermail.android.storage.SessionKeyStore
@@ -95,6 +96,7 @@ data class TotpChallenge(
 
 private const val UNAUTHORIZED_CHECK_COOLDOWN_MS = 10_000L
 private const val RECOVERY_BACKUP_ATTEMPTS = 3
+private const val SIGNUP_PGP_KEYGEN_ATTEMPTS = 3
 private const val RECOVERY_BACKUP_RETRY_DELAY_MS = 1_200L
 
 sealed interface LoginOutcome {
@@ -584,16 +586,11 @@ class AuthRepository @Inject constructor(
         val prekey = CryptoNative.generate_identity_keypair_struct()
         val signature = CryptoNative.sign_with_identity(identity.private_key, prekey.public_key)
 
-        val passphrase_chars = password.toCharArray()
-        val pgp_keys = try {
-            PgpKeyGenerator.generate(username, canonical_email, passphrase_chars)
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (_: Throwable) {
-            null
-        } finally {
-            passphrase_chars.fill(' ')
-        }
+        val pgp_keys = generate_signup_pgp_keys(username, canonical_email, password)
+            ?: throw ApiError.ValidationError(
+                listOf(context.getString(R.string.error_generic)),
+                "CLIENT_MESSAGE",
+            )
 
         val recovery_codes = generate_recovery_codes()
         val recovery_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
@@ -602,7 +599,7 @@ class AuthRepository @Inject constructor(
             identity_private_b64 = base64_encode(identity.private_key),
             prekey_private_b64 = base64_encode(prekey.private_key),
             recovery_codes = recovery_codes,
-            pgp_private_key = pgp_keys?.armored_private_key,
+            pgp_private_key = pgp_keys.armored_private_key,
         )
         val vault_plaintext = vault_json.toByteArray(Charsets.UTF_8)
         val raw_password_bytes = password.toByteArray(Charsets.UTF_8)
@@ -610,7 +607,7 @@ class AuthRepository @Inject constructor(
         raw_password_bytes.fill(0)
         vault_plaintext.fill(0)
 
-        val client_pgp_key = pgp_keys?.let { keys ->
+        val client_pgp_key = pgp_keys.let { keys ->
             runCatching {
                 val (encrypted_private_key, private_key_nonce) =
                     encrypt_pgp_private_key_for_server(keys.armored_private_key, password)
@@ -632,8 +629,7 @@ class AuthRepository @Inject constructor(
                 password_hash = base64_encode(password_hash_bytes),
                 password_salt = base64_encode(salt_bytes),
                 argon2_params = Argon2Params(memory = 65536, iterations = 3, parallelism = 4),
-                identity_key = pgp_keys?.armored_public_key?.let { base64_encode(it.toByteArray(Charsets.UTF_8)) }
-                    ?: base64_encode(identity.public_key),
+                identity_key = base64_encode(pgp_keys.armored_public_key.toByteArray(Charsets.UTF_8)),
                 signed_prekey = base64_encode(prekey.public_key),
                 signed_prekey_signature = base64_encode(signature),
                 encrypted_vault = base64_encode(vault_envelope.encrypted_vault),
@@ -671,7 +667,7 @@ class AuthRepository @Inject constructor(
         session_key_store.put_password_salt(salt_bytes)
         session_key_store.put_user_id(register_resp.user_id)
         session_key_store.put_user_email(canonical_email)
-        val stored_identity = pgp_keys?.armored_private_key ?: base64_encode(identity.private_key)
+        val stored_identity = pgp_keys.armored_private_key
         session_key_store.put_identity_key(stored_identity)
         session_key_store.put_encrypted_vault(
             base64_encode(vault_envelope.encrypted_vault),
@@ -1592,6 +1588,25 @@ class AuthRepository @Inject constructor(
             org.astermail.android.mail.ratchet.parse_vault_ratchet_keys(vault_obj),
             session_key_store,
         )
+    }
+
+    private fun generate_signup_pgp_keys(
+        username: String,
+        canonical_email: String,
+        password: String,
+    ): PgpKeyPairResult? {
+        repeat(SIGNUP_PGP_KEYGEN_ATTEMPTS) {
+            val passphrase_chars = password.toCharArray()
+            try {
+                return PgpKeyGenerator.generate(username, canonical_email, passphrase_chars)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Throwable) {
+            } finally {
+                passphrase_chars.fill(' ')
+            }
+        }
+        return null
     }
 
     private fun build_vault_json(

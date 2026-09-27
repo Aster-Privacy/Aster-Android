@@ -5064,7 +5064,10 @@ class SettingsViewModel @Inject constructor(
                 account_uses_encrypted_prefs = has_encrypted
 
                 if (has_encrypted) {
-                    val identity_key = await_identity_key()
+                    var identity_key = await_identity_key()
+                    if (identity_key.isNullOrBlank() && auth_repository.try_refresh_vault_keys()) {
+                        identity_key = await_identity_key()
+                    }
                     if (identity_key.isNullOrBlank()) {
                         _state.value = _state.value.copy(
                             preferences = _state.value.preferences ?: UserPreferences(),
@@ -5073,8 +5076,16 @@ class SettingsViewModel @Inject constructor(
                         )
                         return@launch
                     }
-                    val decrypted = withContext(default_dispatcher) {
+                    var decrypted = withContext(default_dispatcher) {
                         decrypt_preferences_after_key_load(enc, nonce, identity_key, _state.value.preferences)
+                    }
+                    if (decrypted == null && auth_repository.try_refresh_vault_keys()) {
+                        val refreshed_key = await_identity_key()
+                        if (!refreshed_key.isNullOrBlank()) {
+                            decrypted = withContext(default_dispatcher) {
+                                decrypt_preferences_after_key_load(enc, nonce, refreshed_key, _state.value.preferences)
+                            }
+                        }
                     }
                     if (decrypted != null) {
                         prefs_load_succeeded = true
