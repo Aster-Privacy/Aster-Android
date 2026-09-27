@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="fix_billing_available_plans">Planos Disponíveis</string>
+    <string name="fix_billing_available_plans">Planos disponíveis</string>
     <string name="fix_billing_status_active">Ativo</string>
     <string name="fix_billing_free_plan_description">Você está no plano gratuito. Explore os planos pagos abaixo para mais armazenamento, aliases e recursos.</string>
     <string name="fix_billing_upgrade_for_more">Faça upgrade para desbloquear mais armazenamento, aliases e recursos</string>
-    <string name="fix_billing_manage_plan">Gerenciar Plano</string>
+    <string name="fix_billing_manage_plan">Gerir plano</string>
     <string name="fix_billing_quota_aliases">Aliases de e-mail</string>
     <string name="fix_billing_quota_domains">Domínios personalizados</string>
     <string name="fix_billing_per_month_short">/mês</string>
@@ -33,11 +33,11 @@
     <string name="fix_billing_payment_failed_warning">A última cobrança no seu método de pagamento não passou. Atualizá-lo em Configurações, Faturamento manterá seu plano ativo. Seu correio não é afetado.</string>
     <string name="fix_billing_update_payment_method">Atualizar método de pagamento</string>
     <string name="fix_billing_card_expires">Expira %1$s</string>
-    <string name="fix_billing_status_trialing">Teste</string>
+    <string name="fix_billing_status_trialing">Período experimental</string>
     <string name="fix_billing_status_past_due">Pagamento em atraso</string>
     <string name="fix_billing_status_canceled">Cancelado</string>
-    <string name="fix_billing_billed_monthly">Faturamento mensal</string>
-    <string name="fix_billing_billed_yearly">Faturamento anual</string>
-    <string name="fix_billing_history_empty">Ainda não há faturas. Seus pagamentos aparecem aqui após a primeira cobrança.</string>
+    <string name="fix_billing_billed_monthly">Faturação mensal</string>
+    <string name="fix_billing_billed_yearly">Faturação anual</string>
+    <string name="fix_billing_history_empty">Ainda não há faturas. Os seus pagamentos aparecem aqui após a primeira cobrança.</string>
     <string name="fix_billing_quota_count">%1$d / %2$d</string>
 </resources>

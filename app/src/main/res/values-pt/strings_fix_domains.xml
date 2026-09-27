@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="domains_load_timeout">O carregamento dos seus domínios está a demorar mais do que o previsto. Verifique a sua ligação e tente novamente.</string>
-    <string name="domain_manage_mail_setup">Configuração do email</string>
-    <string name="domain_manage_dns_unavailable">Os detalhes da configuração do email aparecem aqui depois de este domínio ser adicionado à sua conta.</string>
+    <string name="domain_manage_mail_setup">Configuração do correio</string>
+    <string name="domain_manage_dns_unavailable">Os detalhes da configuração do correio aparecem aqui depois de este domínio ser adicionado à sua conta.</string>
     <string name="domain_manage_verification">Verificação</string>
     <string name="domain_manage_last_verified">Última verificação</string>
     <string name="domain_manage_never_verified">Ainda não verificado</string>
@@ -11,16 +11,16 @@
     <string name="domain_manage_recheck">Verificar novamente os registos DNS</string>
     <string name="domain_manage_rechecking">A verificar os registos DNS</string>
     <string name="domain_purchase_search_rate_limited">Muitas pesquisas. Tente novamente em um minuto.</string>
-    <string name="domain_purchase_results_for">Veja o que encontramos para %1$s</string>
+    <string name="domain_purchase_results_for">Resultados para %1$s</string>
     <string name="domain_purchase_change_name">Alterar nome</string>
     <string name="domain_purchase_show_more">Mostrar mais resultados</string>
     <string name="domain_purchase_empty_included">Todo domínio inclui privacidade WHOIS, DNS configurado para você e endereços ilimitados.</string>
     <string name="domain_purchase_retry">Tentar novamente</string>
-    <string name="domain_purchase_progress_note">Aguarde enquanto registramos seu domínio e configuramos suas caixas de correio. Isso geralmente leva cerca de um minuto.</string>
-    <string name="domain_purchase_awaiting_note">Ainda não recebemos seu pagamento. Conclua o checkout para finalizar seu pedido, ou feche esta janela e pague mais tarde em Domínios comprados.</string>
-    <string name="domain_purchase_purchased_desc">Os domínios comprados pela Aster aparecem aqui e funcionam automaticamente como domínios personalizados. Escolha um nome, pague e comece a usar na hora.</string>
+    <string name="domain_purchase_progress_note">O Aster Mail está a registar o seu domínio e a configurar as suas caixas de correio. Normalmente, isto demora cerca de um minuto.</string>
+    <string name="domain_purchase_awaiting_note">O seu pagamento ainda não chegou. Para concluir a encomenda, termine o pagamento. Também pode fechar esta janela e pagar mais tarde em Domínios comprados.</string>
+    <string name="domain_purchase_purchased_desc">Os domínios que comprar através do Aster Mail aparecem aqui e funcionam automaticamente como domínios personalizados.</string>
     <string name="domain_purchase_buy_new">Comprar um novo domínio</string>
-    <string name="domain_purchase_discount_tooltip">Preço promocional do primeiro ano do nosso registrador. Depois renova por %1$s ao ano.</string>
+    <string name="domain_purchase_discount_tooltip">Preço promocional do primeiro ano. Depois disso, é renovado por %1$s por ano.</string>
     <string name="domain_bimi_title">Logotipo da marca</string>
     <string name="domain_bimi_search_keyword">BIMI</string>
     <string name="domain_bimi_row_off">Mostre seu logotipo ao lado dos seus e-mails nas caixas de entrada que aceitam logotipos de marca.</string>
@@ -73,7 +73,7 @@
     <string name="domain_bimi_turn_off_body">Seu logotipo deixa de ser hospedado imediatamente e as caixas de entrada passam a mostrar um ícone padrão.</string>
     <string name="domain_bimi_turn_off_confirm">Desativar</string>
     <string name="domain_bimi_turn_off_remove_record">Remova o registro TXT default._bimi do seu provedor de DNS.</string>
-    <string name="domain_bimi_error_generic">Algo deu errado. Tente novamente.</string>
+    <string name="domain_bimi_error_generic">Ocorreu um erro. Tente novamente.</string>
     <string name="domain_bimi_error_throttled">Aguarde um momento e tente novamente.</string>
     <string name="domain_bimi_error_domain_not_active">Conclua a configuração deste domínio antes de publicar um logotipo.</string>
     <string name="domain_bimi_error_file_too_large">O arquivo é maior que 64 KB.</string>

@@ -2,9 +2,9 @@
 <resources>
     <string name="two_step_verification_title">Verificação em duas etapas</string>
     <string name="two_step_verification_on_description">Sua conta requer um código de verificação além da sua senha.</string>
-    <string name="two_step_verification_off_description">Para mais proteção, exija um código de verificação além da senha.</string>
+    <string name="two_step_verification_off_description">Para mais proteção, exija um código de verificação além da palavra-passe.</string>
     <string name="security_activity_filter_all">Tudo</string>
-    <string name="security_activity_filter_sign_ins">Logins</string>
+    <string name="security_activity_filter_sign_ins">Inícios de sessão</string>
     <string name="security_activity_filter_security">Alterações de segurança</string>
     <string name="security_activity_filter_failures">Falhas</string>
     <string name="security_activity_today">Hoje</string>
