@@ -3185,6 +3185,7 @@
     <string name="special_offer_why_body">Aster एक छोटी टीम वाली स्वतंत्र कंपनी है, और आपका समर्थन हमारे लिए बहुत मायने रखता है। सदस्यताएँ सेवा को चालू रखती हैं और हमें हर दिन ध्यान से Aster को बेहतर बनाते रहने में मदद करती हैं। यह ऑफ़र शुरुआत करना आसान बनाता है।</string>
     <string name="special_offer_entry">विशेष ऑफ़र</string>
     <string name="special_offer_cta_claim">%1$d%% छूट पाएं</string>
+    <string name="special_offer_crypto_one_payment">%1$d%% की छूट सिर्फ़ इस भुगतान पर लागू होती है। बाद के क्रिप्टो भुगतान सामान्य कीमत पर होंगे। पूरे साल छूट पाने के लिए 12 महीने चुनें।</string>
     <string name="special_offer_benefit_aliases_title">असीमित उपनाम</string>
     <string name="special_offer_benefit_storage_title">500 GB एन्क्रिप्टेड स्टोरेज</string>
     <string name="special_offer_benefit_domains_title">30 तक कस्टम डोमेन</string>

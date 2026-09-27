@@ -3337,6 +3337,7 @@
     <string name="special_offer_why_body">Aster является независимой компанией с небольшой командой, и ваша поддержка очень много для нас значит. Подписки поддерживают работу сервиса и позволяют нам каждый день бережно развивать Aster, а с этим предложением начать проще.</string>
     <string name="special_offer_entry">Специальное предложение</string>
     <string name="special_offer_cta_claim">Получить скидку %1$d%%</string>
+    <string name="special_offer_crypto_one_payment">Скидка %1$d%% действует только для этого платежа. Последующие оплаты криптовалютой проходят по обычной цене. Чтобы получить скидку на целый год, выберите 12 месяцев.</string>
     <string name="special_offer_benefit_aliases_title">Неограниченные псевдонимы</string>
     <string name="special_offer_benefit_storage_title">500 ГБ зашифрованного хранилища</string>
     <string name="special_offer_benefit_domains_title">До 30 собственных доменов</string>

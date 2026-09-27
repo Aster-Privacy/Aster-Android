@@ -3337,6 +3337,7 @@
     <string name="special_offer_why_body">Aster to niezależna firma z małym zespołem, a Twoje wsparcie wiele dla nas znaczy. Subskrypcje utrzymują działanie usługi i pozwalają nam każdego dnia starannie rozwijać Aster. Dzięki tej ofercie łatwiej zacząć.</string>
     <string name="special_offer_entry">Oferta specjalna</string>
     <string name="special_offer_cta_claim">Odbierz %1$d%% zniżki</string>
+    <string name="special_offer_crypto_one_payment">Rabat %1$d%% obejmuje tylko tę płatność. Kolejne płatności kryptowalutą są w normalnej cenie. Aby mieć rabat przez cały rok, wybierz 12 miesięcy.</string>
     <string name="special_offer_benefit_aliases_title">Nieograniczone aliasy</string>
     <string name="special_offer_benefit_storage_title">500 GB zaszyfrowanej przestrzeni</string>
     <string name="special_offer_benefit_domains_title">Do 30 własnych domen</string>

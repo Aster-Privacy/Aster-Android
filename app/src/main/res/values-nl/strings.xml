@@ -3295,6 +3295,7 @@
     <string name="special_offer_why_body">Aster is een onafhankelijk bedrijf met een klein team, en je steun betekent veel voor ons. Abonnementen houden de dienst draaiende en stellen ons in staat Aster elke dag met zorg verder te ontwikkelen. Met deze aanbieding is beginnen makkelijker.</string>
     <string name="special_offer_entry">Speciale aanbieding</string>
     <string name="special_offer_cta_claim">Claim %1$d%% korting</string>
+    <string name="special_offer_crypto_one_payment">De korting van %1$d%% geldt alleen voor deze betaling. Latere cryptobetalingen zijn tegen de normale prijs. Kies 12 maanden om de korting een heel jaar te krijgen.</string>
     <string name="special_offer_benefit_aliases_title">Onbeperkte aliassen</string>
     <string name="special_offer_benefit_storage_title">500 GB versleutelde opslag</string>
     <string name="special_offer_benefit_domains_title">Tot 30 eigen domeinen</string>

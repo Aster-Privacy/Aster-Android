@@ -3295,6 +3295,7 @@
     <string name="special_offer_why_body">Aster, küçük bir ekibe sahip bağımsız bir şirkettir ve desteğiniz bizim için çok değerlidir. Abonelikler hizmetin çalışmasını sağlar ve Aster\'ı her gün özenle geliştirmeye devam etmemize olanak tanır. Bu teklif başlamanızı kolaylaştırır.</string>
     <string name="special_offer_entry">Özel teklif</string>
     <string name="special_offer_cta_claim">%%%1$d indirimi alın</string>
+    <string name="special_offer_crypto_one_payment">%%%1$d indirim yalnızca bu ödeme için geçerlidir. Sonraki kripto ödemeleri normal fiyattan alınır. İndirimi bir yıl boyunca almak için 12 ay seçin.</string>
     <string name="special_offer_benefit_aliases_title">Sınırsız takma ad</string>
     <string name="special_offer_benefit_storage_title">500 GB şifrelenmiş depolama</string>
     <string name="special_offer_benefit_domains_title">30\'a kadar özel alan adı</string>

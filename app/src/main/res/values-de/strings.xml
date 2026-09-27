@@ -3296,6 +3296,7 @@
     <string name="special_offer_why_body">Aster ist ein unabhängiges Unternehmen mit einem kleinen Team, und Ihre Unterstützung bedeutet uns viel. Abonnements halten den Dienst am Laufen und ermöglichen es uns, Aster jeden Tag mit Sorgfalt weiterzuentwickeln. Mit diesem Angebot fällt Ihnen der Einstieg leichter.</string>
     <string name="special_offer_entry">Sonderangebot</string>
     <string name="special_offer_cta_claim">%1$d %% Rabatt sichern</string>
+    <string name="special_offer_crypto_one_payment">Der Rabatt von %1$d %% gilt nur für diese Zahlung. Spätere Krypto-Zahlungen erfolgen zum regulären Preis. Wählen Sie 12 Monate, um den Rabatt ein ganzes Jahr lang zu erhalten.</string>
     <string name="special_offer_benefit_aliases_title">Unbegrenzte Aliasse</string>
     <string name="special_offer_benefit_storage_title">500 GB verschlüsselter Speicher</string>
     <string name="special_offer_benefit_domains_title">Bis zu 30 eigene Domains</string>

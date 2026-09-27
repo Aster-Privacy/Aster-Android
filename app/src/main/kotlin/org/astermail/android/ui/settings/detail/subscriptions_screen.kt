@@ -1878,6 +1878,7 @@ internal fun crypto_term_dialog(
     on_confirm: (Int) -> Unit,
     offer_prices: Map<Int, review_offer_price> = emptyMap(),
     initial_term: Int = 1,
+    offer_percent: Int? = null,
 ) {
     val colors = AsterMaterial.colors
     var selected_term by remember { mutableStateOf(initial_term) }
@@ -1893,18 +1894,27 @@ internal fun crypto_term_dialog(
         on_dismiss = on_dismiss,
         title = stringResource(R.string.crypto_term_title),
         body = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-                modifier = Modifier.selectableGroup(),
-            ) {
-                terms.forEach { (months, label) ->
-                    val term_active = selected_term == months
-                    billing_option_row(
-                        title = label,
-                        selected = term_active,
-                        on_click = { selected_term = months },
-                        modifier = Modifier.clip(billing_control_shape),
-                        below = offer_prices[months]?.let { term_offer -> { offer_price_line(term_offer) } },
+            Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    modifier = Modifier.selectableGroup(),
+                ) {
+                    terms.forEach { (months, label) ->
+                        val term_active = selected_term == months
+                        billing_option_row(
+                            title = label,
+                            selected = term_active,
+                            on_click = { selected_term = months },
+                            modifier = Modifier.clip(billing_control_shape),
+                            below = offer_prices[months]?.let { term_offer -> { offer_price_line(term_offer) } },
+                        )
+                    }
+                }
+                if (offer_percent != null && selected_term < 12 && offer_prices.containsKey(selected_term)) {
+                    Text(
+                        text = stringResource(R.string.special_offer_crypto_one_payment, offer_percent),
+                        color = colors.text_secondary,
+                        fontSize = 13.sp,
                     )
                 }
             }

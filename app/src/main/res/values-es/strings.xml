@@ -3313,6 +3313,7 @@
     <string name="special_offer_why_body">Aster es una empresa independiente con un equipo pequeño, y tu apoyo significa mucho para nosotros. Las suscripciones mantienen el servicio en funcionamiento y nos permiten seguir desarrollando Aster con cuidado cada día. Esta oferta te facilita empezar.</string>
     <string name="special_offer_entry">Oferta especial</string>
     <string name="special_offer_cta_claim">Obtener un %1$d %% de descuento</string>
+    <string name="special_offer_crypto_one_payment">El descuento del %1$d %% solo se aplica a este pago. Los pagos posteriores con criptomonedas tienen el precio normal. Para obtenerlo durante un año completo, elige 12 meses.</string>
     <string name="special_offer_benefit_aliases_title">Alias ilimitados</string>
     <string name="special_offer_benefit_storage_title">500 GB de almacenamiento cifrado</string>
     <string name="special_offer_benefit_domains_title">Hasta 30 dominios personalizados</string>

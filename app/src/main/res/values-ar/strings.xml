@@ -3379,6 +3379,7 @@
     <string name="special_offer_why_body">Aster شركة مستقلة يديرها فريق صغير، ودعمك يعني لنا الكثير. تحافظ الاشتراكات على استمرار الخدمة وتتيح لنا مواصلة تطوير Aster بعناية كل يوم. يسهّل عليك هذا العرض البدء.</string>
     <string name="special_offer_entry">عرض خاص</string>
     <string name="special_offer_cta_claim">احصل على خصم %1$d%%</string>
+    <string name="special_offer_crypto_one_payment">ينطبق خصم %1$d%% على هذه الدفعة فقط، وتُحتسب دفعات العملات المشفرة اللاحقة بالسعر العادي. للحصول على الخصم لمدة عام كامل، اختر 12 شهرًا.</string>
     <string name="special_offer_benefit_aliases_title">أسماء مستعارة غير محدودة</string>
     <string name="special_offer_benefit_storage_title">500 غيغابايت من التخزين المشفّر</string>
     <string name="special_offer_benefit_domains_title">حتى 30 نطاقًا مخصصًا</string>
