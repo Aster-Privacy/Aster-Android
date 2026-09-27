@@ -3063,7 +3063,7 @@
     <string name="special_offer_cta_claim">احصل على خصم %1$d%%</string>
     <string name="special_offer_crypto_one_payment">ينطبق خصم %1$d%% على هذه الدفعة فقط، وتُحتسب دفعات العملات المشفرة اللاحقة بالسعر العادي. للحصول على الخصم لمدة عام كامل، اختر 12 شهرًا.</string>
     <string name="special_offer_benefit_aliases_title">أسماء مستعارة غير محدودة</string>
-    <string name="special_offer_benefit_storage_title">500 غيغابايت من التخزين المشفّر</string>
+    <string name="special_offer_benefit_storage_title">مساحة تخزين مشفرة بسعة 500 GB</string>
     <string name="special_offer_benefit_domains_title">حتى 30 نطاقًا مخصصًا</string>
     <string name="special_offer_benefit_vanguard_title">أمان متقدم مع Vanguard</string>
     <string name="special_offer_benefit_aliases_body">امنح كل موقع عنوانًا خاصًا به.</string>

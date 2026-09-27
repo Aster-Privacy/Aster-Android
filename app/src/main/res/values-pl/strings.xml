@@ -3019,7 +3019,7 @@
     <string name="special_offer_price_period_year">rocznie</string>
     <string name="special_offer_fine_print_year">Za pierwszy rok płacisz %1$s. Potem plan odnawia się za %2$s rocznie, dopóki nie anulujesz go w Ustawieniach.</string>
     <string name="special_offer_dismiss">Nie pokazuj więcej tej oferty</string>
-    <string name="special_offer_success_title">Dziękujemy. Masz teraz Nova.</string>
+    <string name="special_offer_success_title">Dziękujemy. Masz teraz plan Nova.</string>
     <string name="special_offer_success_body">Dziękujemy za subskrypcję. Twoje wsparcie wiele dla nas znaczy.</string>
     <string name="special_offer_why_label">Dlaczego ta oferta?</string>
     <string name="special_offer_why_body">Aster to niezależna firma z małym zespołem, a Twoje wsparcie wiele dla nas znaczy. Subskrypcje utrzymują działanie usługi i pozwalają nam każdego dnia starannie rozwijać Aster. Dzięki tej ofercie łatwiej zacząć.</string>
@@ -3029,7 +3029,7 @@
     <string name="special_offer_benefit_aliases_title">Nieograniczone aliasy</string>
     <string name="special_offer_benefit_storage_title">500 GB zaszyfrowanej przestrzeni</string>
     <string name="special_offer_benefit_domains_title">Do 30 własnych domen</string>
-    <string name="special_offer_benefit_vanguard_title">Lepsza ochrona z Vanguard</string>
+    <string name="special_offer_benefit_vanguard_title">Zaawansowane zabezpieczenia z Vanguard</string>
     <string name="special_offer_benefit_aliases_body">Każda witryna dostaje własny adres.</string>
     <string name="special_offer_benefit_storage_body">Miejsce na pocztę i pliki z wielu lat.</string>
     <string name="special_offer_benefit_domains_body">Wysyłaj z adresów we własnych domenach.</string>

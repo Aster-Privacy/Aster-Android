@@ -2975,9 +2975,9 @@
     <string name="special_offer_why_body">Aster は小さなチームで運営する独立した企業で、皆さまのご支援は私たちにとって大きな意味があります。サブスクリプションはサービスの運営を支え、Aster を毎日丁寧に開発し続けることを可能にしています。このオファーで、より気軽に始めていただけます。</string>
     <string name="special_offer_entry">特別オファー</string>
     <string name="special_offer_cta_claim">%1$d%%オフで始める</string>
-    <string name="special_offer_crypto_one_payment">%1$d%%オフはこのお支払いにのみ適用され、以降の仮想通貨でのお支払いは通常価格になります。1年間割引を受けるには、12か月を選択してください。</string>
+    <string name="special_offer_crypto_one_payment">%1$d%%オフはこのお支払いにのみ適用され、以降の暗号資産でのお支払いは通常価格になります。1年間割引を受けるには、12か月を選択してください。</string>
     <string name="special_offer_benefit_aliases_title">エイリアス無制限</string>
-    <string name="special_offer_benefit_storage_title">暗号化ストレージ500 GB</string>
+    <string name="special_offer_benefit_storage_title">500 GBの暗号化ストレージ</string>
     <string name="special_offer_benefit_domains_title">カスタムドメイン最大30個</string>
     <string name="special_offer_benefit_vanguard_title">Vanguardで強化されたセキュリティ</string>
     <string name="special_offer_benefit_aliases_body">サイトごとに専用のアドレスを使えます。</string>
