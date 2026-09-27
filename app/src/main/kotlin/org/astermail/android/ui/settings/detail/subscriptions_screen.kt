@@ -270,6 +270,7 @@ fun SubscriptionsScreen(
     val state by vm.state.collectAsStateWithLifecycle()
     val billing_state by billing_vm.state.collectAsStateWithLifecycle()
     val offer_vm = org.astermail.android.ui.upgrade.special_offer_view_model()
+    val offer_state by offer_vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val play_install = org.astermail.android.billing.remember_play_install()
@@ -947,6 +948,13 @@ fun SubscriptionsScreen(
                     }
                 },
                 enabled = !billing_state.is_acting,
+            )
+        }
+        if (!is_paid_plan && org.astermail.android.ui.upgrade.special_offer_entry_visible(offer_state)) {
+            v_gap(AsterSpacing.md)
+            billing_special_offer_card(
+                percent_off = offer_state.effective_percent_off,
+                on_open = { offer_vm.reopen() },
             )
         }
         val advantages_tier = if (is_paid_plan) current_tier?.takeIf { it.code !in FAMILY_PLAN_CODES } else free_teaser_tier

@@ -64,6 +64,7 @@ import compose.icons.tablericons.ChevronRight
 import compose.icons.tablericons.ChevronUp
 import compose.icons.tablericons.CreditCard
 import compose.icons.tablericons.Database
+import compose.icons.tablericons.Discount2
 import compose.icons.tablericons.Lifebuoy
 import compose.icons.tablericons.ListCheck
 import compose.icons.tablericons.Paperclip
@@ -387,6 +388,38 @@ internal fun billing_yearly_nudge_card(
                     contentDescription = null,
                     tint = colors.text_muted,
                     modifier = Modifier.size(18.dp).mirror_in_rtl(),
+                )
+            },
+        )
+    }
+}
+
+@Composable
+internal fun billing_special_offer_card(
+    percent_off: Int,
+    on_open: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        detail_row(
+            title = stringResource(R.string.special_offer_entry),
+            subtitle = stringResource(R.string.special_offer_title),
+            icon = TablerIcons.Discount2,
+            on_click = on_open,
+            trailing = {
+                Text(
+                    text = stringResource(R.string.save_percent, percent_off),
+                    color = colors.success,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                )
+                Spacer(Modifier.width(AsterSpacing.sm))
+                Icon(
+                    imageVector = TablerIcons.ChevronRight,
+                    contentDescription = null,
+                    tint = colors.text_muted,
+                    modifier = Modifier.size(18.dp),
                 )
             },
         )
