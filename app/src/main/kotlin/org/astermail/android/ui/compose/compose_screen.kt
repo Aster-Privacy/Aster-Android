@@ -3799,7 +3799,7 @@ private fun recipient_chip(text: String, show_encryption_indicator: Boolean = tr
             ) {
                 Icon(
                     imageVector = TablerIcons.X,
-                    contentDescription = "${stringResource(R.string.remove)} $text",
+                    contentDescription = stringResource(R.string.remove_named, text),
                     tint = colors.text_tertiary,
                     modifier = Modifier.size(14.dp),
                 )

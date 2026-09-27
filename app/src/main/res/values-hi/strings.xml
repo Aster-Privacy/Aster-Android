@@ -1647,8 +1647,8 @@
     <string name="aster_logo">Aster का लोगो</string>
     <string name="version_format">वर्शन %s</string>
     <string name="terms_of_service">सेवा की शर्तें</string>
-    <string name="register_agree_prefix">खाता बनाकर, आप सहमत होते हैं हमारी</string>
-    <string name="register_agree_and"> और </string>
+    <string name="register_agree_terms">खाता बनाकर, आप हमारी %1$s और %2$s से सहमत होते हैं।</string>
+    <string name="remove_named">%1$s निकालें</string>
     <string name="licensed_agpl">AGPL-3.0 के तहत लाइसेंस</string>
     <string name="source_on_github">GitHub पर स्रोत</string>
     <string name="downgrade">प्लान घटाएं</string>

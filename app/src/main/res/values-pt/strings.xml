@@ -1201,8 +1201,8 @@
     <string name="aster_logo">Logo do Aster</string>
     <string name="version_format">Versão %s</string>
     <string name="terms_of_service">Termos de serviço</string>
-    <string name="register_agree_prefix">Ao criar uma conta, você concorda com nossos </string>
-    <string name="register_agree_and"> e </string>
+    <string name="register_agree_terms">Ao criar uma conta, concorda com os nossos %1$s e com a nossa %2$s.</string>
+    <string name="remove_named">Remover %1$s</string>
     <string name="licensed_agpl">Licenciado sob AGPL-3.0</string>
     <string name="source_on_github">Código-fonte no GitHub</string>
     <string name="downgrade">Rebaixar</string>

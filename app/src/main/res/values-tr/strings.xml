@@ -1201,8 +1201,8 @@
     <string name="aster_logo">Aster logosu</string>
     <string name="version_format">Sürüm %s</string>
     <string name="terms_of_service">Hizmet şartları</string>
-    <string name="register_agree_prefix">Hesap oluşturarak şunları kabul etmiş olursunuz: </string>
-    <string name="register_agree_and"> ve </string>
+    <string name="register_agree_terms">Hesap oluşturarak %1$s ve %2$s belgelerini kabul etmiş olursunuz.</string>
+    <string name="remove_named">%1$s kaldır</string>
     <string name="licensed_agpl">AGPL-3.0 lisansı altında</string>
     <string name="source_on_github">GitHub\'da kaynak kodu</string>
     <string name="downgrade">Düşür</string>

@@ -1430,7 +1430,7 @@ private fun trusted_device_row(
             val expires = device.expires_at
             if (!expires.isNullOrBlank()) {
                 Text(
-                    text = "${stringResource(R.string.trusted_device_expires)} ${relative_time_label(expires)}",
+                    text = stringResource(R.string.expires_custom_at, relative_time_label(expires)),
                     color = colors.text_tertiary,
                     fontSize = 13.sp,
                     maxLines = 1,

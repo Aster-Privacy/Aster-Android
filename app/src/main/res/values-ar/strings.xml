@@ -1201,8 +1201,8 @@
     <string name="aster_logo">شعار Aster</string>
     <string name="version_format">الإصدار %s</string>
     <string name="terms_of_service">شروط الخدمة</string>
-    <string name="register_agree_prefix">بإنشاء حساب، فأنت توافق على</string>
-    <string name="register_agree_and"> و </string>
+    <string name="register_agree_terms">بإنشاء حساب، فإنك توافق على %1$s و%2$s.</string>
+    <string name="remove_named">إزالة %1$s</string>
     <string name="licensed_agpl">مرخص بموجب AGPL-3.0</string>
     <string name="source_on_github">المصدر على GitHub</string>
     <string name="downgrade">الرجوع</string>

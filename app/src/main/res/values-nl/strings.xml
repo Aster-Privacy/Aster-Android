@@ -1201,8 +1201,8 @@
     <string name="aster_logo">Aster-logo</string>
     <string name="version_format">Versie %s</string>
     <string name="terms_of_service">Servicevoorwaarden</string>
-    <string name="register_agree_prefix">Door een account aan te maken ga je akkoord met onze </string>
-    <string name="register_agree_and"> en </string>
+    <string name="register_agree_terms">Door een account aan te maken, ga je akkoord met onze %1$s en ons %2$s.</string>
+    <string name="remove_named">%1$s verwijderen</string>
     <string name="licensed_agpl">Gelicentieerd onder AGPL-3.0</string>
     <string name="source_on_github">Broncode op GitHub</string>
     <string name="downgrade">Downgraden</string>

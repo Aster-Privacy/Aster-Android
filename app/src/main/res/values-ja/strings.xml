@@ -1201,8 +1201,8 @@
     <string name="aster_logo">Asterロゴ</string>
     <string name="version_format">バージョン %s</string>
     <string name="terms_of_service">利用規約</string>
-    <string name="register_agree_prefix">アカウントを作成すると、次に同意したものとみなされます:</string>
-    <string name="register_agree_and">と</string>
+    <string name="register_agree_terms">アカウントを作成すると、%1$sと%2$sに同意したものとみなされます。</string>
+    <string name="remove_named">%1$sを削除</string>
     <string name="licensed_agpl">AGPL-3.0ライセンス</string>
     <string name="source_on_github">GitHubのソースコード</string>
     <string name="downgrade">ダウングレード</string>
