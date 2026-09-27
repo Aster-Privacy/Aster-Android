@@ -59,7 +59,7 @@ class GhostAliasSelectionResetTest {
 
     private val ghost = "ghost.robin@astermail.org"
     private val pinned = "quick.leaf91@astermail.org"
-    private val primary = "ghosttestj702q@astermail.org"
+    private val primary = "primary.owner@astermail.org"
 
     // mirrors the state that lands asynchronously in the real SettingsViewModel
     private class Settings {

@@ -17,6 +17,9 @@ on:
         description: release tag to check, for example v0.6.156
         required: true
 
+permissions:
+  contents: read
+
 jobs:
   verify:
     runs-on: ubuntu-latest
