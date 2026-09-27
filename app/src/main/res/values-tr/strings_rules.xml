@@ -101,8 +101,8 @@
     <string name="rules_create_first_folder_hint">Bir klasör oluşturun, bu kural eşleşen e-postaları oraya taşıyabilsin.</string>
     <string name="rules_create_first_label_hint">Bir etiket oluşturun, bu kural eşleşen e-postalara uygulayabilsin.</string>
     <string name="muted_categories">Sessize alınan kategoriler</string>
-    <string name="muted_categories_description">Bir kategorinin bildirimlerini susturmak için onu aç. Sessize alınan kategoriler posta almaya devam eder ve gelen kutunda görünür.</string>
-    <string name="muted_categories_empty">Hangi kategorileri sessize alacağını seçmek için gelen kutusu kategorilerini aç.</string>
+    <string name="muted_categories_description">Bir kategorinin bildirimlerini susturmak için onu açın. Sessize alınan kategoriler posta almaya devam eder ve gelen kutunuzda görünür.</string>
+    <string name="muted_categories_empty">Hangi kategorileri sessize alacağınızı seçmek için gelen kutusu kategorilerini açın.</string>
     <string name="rules_hint_name">Bu kural için bir ad girin.</string>
     <string name="rules_hint_add_condition">En az bir koşul ekleyin.</string>
     <string name="rules_hint_finish_condition">Her koşul için bir değer girin.</string>

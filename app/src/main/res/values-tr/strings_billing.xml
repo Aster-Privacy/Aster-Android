@@ -53,7 +53,7 @@
     <string name="subscription_refresh_failed">Aster, plan bilgilerinizi yenileyemedi.</string>
     <string name="billing_plan_type_individual">Bireysel</string>
     <string name="billing_plan_type_family">Aile</string>
-    <string name="billing_storage_select_option_first">Daha fazla depolama satın almak için önce bir seçenek belirle.</string>
+    <string name="billing_storage_select_option_first">Daha fazla depolama satın almak için önce bir seçenek belirleyin.</string>
     <string name="billing_manage_payment">Ödemeyi yönet</string>
     <string name="billing_storage_limit_description">Yer açana kadar yeni postalar duraklatıldı. Bir miktar e-postayı temizlemek ya da planınızı yükseltmek akışı geri getirir. Mevcut postalarınız güvende.</string>
     <string name="billing_crypto_paid_until">%1$s tarihine kadar ödendi (kripto)</string>

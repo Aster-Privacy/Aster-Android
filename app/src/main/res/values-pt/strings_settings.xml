@@ -32,7 +32,7 @@
     <string name="settings_feat_advanced_search">Pesquisa avançada</string>
     <string name="settings_feat_search_history">Histórico de pesquisa</string>
     <string name="settings_feat_contacts">Contatos</string>
-    <string name="settings_feat_contact_groups">Grupos de contatos</string>
+    <string name="settings_feat_contact_groups">Grupos de contactos</string>
     <string name="settings_feat_two_factor">Autenticação de dois fatores</string>
     <string name="settings_feat_recovery_codes">Códigos de recuperação</string>
     <string name="settings_feat_password_folders">Pastas protegidas por palavra-passe</string>
@@ -51,7 +51,7 @@
     <string name="settings_feat_import_outlook">Importar do Outlook</string>
     <string name="settings_feat_mbox_import">Importação MBOX</string>
     <string name="settings_feat_export_emails">Exportar e-mails</string>
-    <string name="settings_feat_export_contacts">Exportar contatos</string>
+    <string name="settings_feat_export_contacts">Exportar contactos</string>
     <string name="settings_feat_help_center">Central de ajuda</string>
     <string name="settings_feat_community_forum">Fórum da comunidade</string>
     <string name="settings_feat_email_support">Suporte por e-mail</string>

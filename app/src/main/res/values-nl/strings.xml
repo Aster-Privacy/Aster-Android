@@ -42,7 +42,7 @@
     <string name="log_in">Inloggen</string>
     <string name="create_account">Account aanmaken</string>
     <string name="sign_in_title">Inloggen bij Aster</string>
-    <string name="username_placeholder">Uw naam</string>
+    <string name="username_placeholder">Je naam</string>
     <string name="password_placeholder">Voer je wachtwoord in</string>
     <string name="forgot_password">Wachtwoord vergeten?</string>
     <string name="sign_in">Inloggen</string>

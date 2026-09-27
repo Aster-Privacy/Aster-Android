@@ -673,10 +673,10 @@
     <string name="copy_public_key">Copiar chave pública</string>
     <string name="identity_key_unavailable">Chave de identidade indisponível neste dispositivo. Entre novamente para atualizar seu material de chave local.</string>
     <string name="recovery">Recuperação</string>
-    <string name="key_rotation">Rotação de chave</string>
+    <string name="key_rotation">Rotação de chaves</string>
     <string name="key_rotation_description">Sua chave de identidade é rotacionada toda vez que você muda sua senha. Chaves anteriores são mantidas localmente para que mensagens antigas continuem descriptografáveis.</string>
     <string name="key_management">Gerenciamento de chaves</string>
-    <string name="key_management_description">Rotação de chave, gerenciamento de chaves PGP e verificação de chave de contato estão disponíveis no aplicativo web.</string>
+    <string name="key_management_description">Rotação de chaves, gerenciamento de chaves PGP e verificação de chaves de contato estão disponíveis no aplicativo web.</string>
 
     <string name="enter_your_password">Digite sua senha</string>
     <string name="incorrect_password">Senha incorreta</string>
@@ -2790,7 +2790,7 @@
     <string name="audit_event_account_locked">Conta bloqueada</string>
     <string name="audit_event_device_removed">Dispositivo removido</string>
     <string name="audit_event_key_exported">Chave de criptografia exportada</string>
-    <string name="audit_event_key_rotated">Chave de criptografia substituída</string>
+    <string name="audit_event_key_rotated">Chave de criptografia rotacionada</string>
     <string name="audit_event_lockdown_disabled">Modo de bloqueio desativado</string>
     <string name="audit_event_lockdown_enabled">Modo de bloqueio ativado</string>
     <string name="audit_event_login">Login realizado</string>

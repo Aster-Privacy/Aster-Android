@@ -1,13 +1,13 @@
 <resources>
     <string name="app_name">Aster Mail</string>
 
-    <string name="save">Salvar</string>
+    <string name="save">Guardar</string>
     <string name="cancel">Cancelar</string>
     <string name="continue_action">Continuar</string>
     <string name="back">Voltar</string>
     <string name="next">Próximo</string>
     <string name="done">Concluído</string>
-    <string name="delete">Excluir</string>
+    <string name="delete">Eliminar</string>
     <string name="edit">Editar</string>
     <string name="retry">Tentar novamente</string>
     <string name="copy">Copiar</string>
@@ -20,18 +20,18 @@
     <string name="clear">Limpar</string>
     <string name="settings">Definições</string>
     <string name="refresh">Atualizar</string>
-    <string name="loading">Carregando...</string>
+    <string name="loading">A carregar...</string>
     <string name="copied_to_clipboard">Copiado para a área de transferência</string>
     <string name="password">Senha</string>
     <string name="email">E-mail</string>
-    <string name="username">Nome de usuário</string>
+    <string name="username">Nome de utilizador</string>
     <string name="unknown">Desconhecido</string>
     <string name="enabled">Ativado</string>
     <string name="disabled">Desativado</string>
     <string name="active">Ativo</string>
     <string name="verified">Verificado</string>
-    <string name="show_password">Mostrar senha</string>
-    <string name="hide_password">Ocultar senha</string>
+    <string name="show_password">Mostrar palavra-passe</string>
+    <string name="hide_password">Ocultar palavra-passe</string>
     <string name="open">Abrir</string>
     <string name="remove">Remover</string>
     <string name="revoke">Revogar</string>
@@ -44,7 +44,7 @@
     <string name="sign_in_title">Iniciar sessão no Aster</string>
     <string name="username_placeholder">seunome</string>
     <string name="password_placeholder">Introduza a sua palavra-passe</string>
-    <string name="forgot_password">Esqueceu a senha?</string>
+    <string name="forgot_password">Esqueceu-se da palavra-passe?</string>
     <string name="sign_in">Entrar</string>
     <string name="sign_up">Cadastrar</string>
     <string name="no_account_prompt">Não tem uma conta? </string>
@@ -54,9 +54,9 @@
     <string name="register_subtitle">E-mail privado e encriptado em segundos</string>
     <string name="display_name_optional">Nome a apresentar (opcional)</string>
     <string name="secure_your_account">Proteja a sua conta</string>
-    <string name="new_password">Nova senha</string>
+    <string name="new_password">Nova palavra-passe</string>
     <string name="confirm_password">Confirmar palavra-passe</string>
-    <string name="confirm_password_label">Confirmar senha</string>
+    <string name="confirm_password_label">Confirmar palavra-passe</string>
     <string name="keep_me_signed_in">Manter sessão iniciada</string>
     <string name="requirement_8_chars">Pelo menos 12 caracteres</string>
     <string name="requirement_uppercase">Uma letra maiúscula</string>
@@ -81,7 +81,7 @@
     <string name="copy_to_clipboard">Copiar para a área de transferência</string>
     <string name="choose_your_plan">Escolha o seu plano</string>
     <string name="plan_subtitle">Comece gratuitamente ou desbloqueie mais com um plano pago. Pode mudar a qualquer momento.</string>
-    <string name="loading_plans">Carregando planos...</string>
+    <string name="loading_plans">A carregar planos...</string>
     <string name="plan_free">Gratuito</string>
     <string name="continue_with_free">Continuar com o gratuito</string>
     <string name="continue_with_upgrade">Continuar com a atualização</string>
@@ -178,7 +178,7 @@
     <string name="delete_action">Eliminar</string>
 
     <string name="swipe_archive">Arquivar</string>
-    <string name="swipe_delete">Excluir</string>
+    <string name="swipe_delete">Eliminar</string>
     <string name="swipe_restore">Restaurar</string>
     <string name="swipe_delete_forever">Eliminar permanentemente</string>
     <string name="swipe_not_spam">Não é spam</string>
@@ -235,7 +235,7 @@
     <string name="download_complete">Transferência concluída</string>
     <string name="cannot_decode_image">Não é possível descodificar a imagem</string>
     <string name="no_app_to_open">Nenhuma aplicação para abrir este ficheiro</string>
-    <string name="download">Baixar</string>
+    <string name="download">Transferir</string>
     <string name="open_with">Abrir com...</string>
     <string name="could_not_unsubscribe">Não foi possível cancelar a subscrição</string>
     <string name="failed_to_load_preview">Não foi possível carregar a pré-visualização</string>
@@ -278,7 +278,7 @@
     <string name="sending_in_countdown">A enviar dentro de %d s</string>
     <string name="view_message">Ver mensagem</string>
     <string name="undo">Desfazer</string>
-    <string name="save_draft">Salvar rascunho</string>
+    <string name="save_draft">Guardar rascunho</string>
     <string name="discard">Descartar</string>
     <string name="toggle_cc_bcc">Alternar cc/cco</string>
     <string name="add_recipient">Adicionar destinatário</string>
@@ -448,7 +448,7 @@
     <string name="smtp_token_host">Servidor</string>
     <string name="smtp_token_port">Porta</string>
     <string name="smtp_token_security">Segurança</string>
-    <string name="smtp_token_username">Nome de usuário</string>
+    <string name="smtp_token_username">Nome de utilizador</string>
     <string name="smtp_token_password">Senha</string>
     <string name="smtp_token_copy_all">Copiar tudo</string>
     <string name="smtp_token_never_used">Nunca</string>
@@ -596,8 +596,8 @@
     <string name="quiet_hours">Horário silencioso</string>
 
     <string name="profile">Perfil</string>
-    <string name="saving">Salvando...</string>
-    <string name="saved">Salvo</string>
+    <string name="saving">A guardar...</string>
+    <string name="saved">Guardado</string>
     <string name="error_try_again">Erro - tente novamente</string>
     <string name="your_name">O seu nome</string>
     <string name="display_name">Nome de exibição</string>
@@ -605,7 +605,7 @@
     <string name="member_since">Membro desde</string>
 
     <string name="security">Segurança</string>
-    <string name="change_password">Alterar senha</string>
+    <string name="change_password">Alterar palavra-passe</string>
     <string name="change_password_subtitle">Atualizar a palavra-passe da sua conta</string>
     <string name="two_factor_auth">Autenticação de dois fatores</string>
     <string name="two_factor_subtitle_add">Adicionar uma segunda camada</string>
@@ -616,7 +616,7 @@
     <string name="update_your_password">Atualize a sua palavra-passe</string>
     <string name="change_password_description">O seu cofre é reencriptado neste dispositivo. As chaves antigas são preservadas para que as mensagens existentes continuem legíveis.</string>
     <string name="current_password">Palavra-passe atual</string>
-    <string name="updating">Atualizando...</string>
+    <string name="updating">A atualizar...</string>
     <string name="update_password">Atualizar palavra-passe</string>
     <string name="password_protection_note">A sua palavra-passe protege o seu cofre e as suas chaves de encriptação ponto a ponto. Escolha algo longo e único.</string>
 
@@ -632,13 +632,13 @@
     <string name="open_in_app">Abrir na aplicação</string>
     <string name="enter_6_digit_code">2. Introduza o código de 6 dígitos</string>
     <string name="code_placeholder">123456</string>
-    <string name="verifying">Verificando...</string>
+    <string name="verifying">A verificar...</string>
     <string name="verify_and_enable">Verificar e ativar</string>
     <string name="confirm_disable">Confirmar desativação</string>
     <string name="confirm_disable_description">Introduza a palavra-passe da sua conta e um código atual da sua aplicação de autenticação para desativar a autenticação de dois fatores.</string>
     <string name="authenticator_code">Código do autenticador</string>
     <string name="password_dots">••••••••</string>
-    <string name="disabling">Desativando...</string>
+    <string name="disabling">A desativar...</string>
     <string name="disable_two_factor">Desativar a autenticação de dois fatores</string>
     <string name="generate_new_backup_codes_section">Gerar novos códigos de segurança</string>
     <string name="generate_backup_codes_description">Introduza um código atual da sua aplicação de autenticação. Os seus códigos de segurança anteriores serão invalidados.</string>
@@ -674,7 +674,7 @@
     <string name="identity_key_unavailable">Chave de identidade indisponível neste dispositivo. Inicie sessão novamente para atualizar o seu material de chaves local.</string>
     <string name="recovery">Recuperação</string>
     <string name="key_rotation">Rotação de chaves</string>
-    <string name="key_rotation_description">A sua chave de identidade é alterada sempre que muda a sua palavra-passe. As chaves anteriores são guardadas localmente para que as mensagens antigas continuem a poder ser desencriptadas.</string>
+    <string name="key_rotation_description">A sua chave de identidade é renovada sempre que muda a sua palavra-passe. As chaves anteriores são guardadas localmente para que as mensagens antigas continuem a poder ser desencriptadas.</string>
     <string name="key_management">Gerenciamento de chaves</string>
     <string name="key_management_description">A rotação de chaves, a gestão de chaves PGP e a verificação de chaves de contactos estão disponíveis na aplicação web.</string>
 
@@ -861,7 +861,7 @@
     <string name="feedback_placeholder">Descreva o que adora, o que falta ou o que não funciona.</string>
     <string name="feedback_privacy_note">O e-mail da sua conta será anexado para podermos responder. Nunca partilhamos o feedback.</string>
     <string name="send_feedback">Enviar feedback</string>
-    <string name="sending_feedback">Enviando...</string>
+    <string name="sending_feedback">A enviar...</string>
     <string name="sent">Enviado</string>
     <string name="feedback_sent">Feedback enviado</string>
     <string name="feedback_failed">Não foi possível enviar o feedback</string>
@@ -1261,7 +1261,7 @@
     <string name="settings_plan_bullet_carddav_import">Importação de contactos CardDAV</string>
     <string name="settings_plan_bullet_contact_merge">Assistente de fusão de contactos</string>
     <string name="settings_plan_bullet_encrypted_export">Exportação criptografada</string>
-    <string name="settings_plan_bullet_protected_folders">Pastas protegidas por senha</string>
+    <string name="settings_plan_bullet_protected_folders">Pastas protegidas por palavra-passe</string>
     <string name="settings_plan_bullet_key_rotation">Intervalos personalizados de rotação de chaves</string>
     <string name="settings_plan_bullet_supernova_storage">5 TB de armazenamento encriptado</string>
     <string name="settings_plan_bullet_supernova_attachments">Anexos até 250 MB</string>
@@ -1562,7 +1562,7 @@
     <string name="spam_emptied">Spam esvaziado</string>
     <string name="spam_already_empty">A pasta Spam já está vazia</string>
     <string name="failed_empty_spam">Não foi possível esvaziar o Spam</string>
-    <string name="recently_deleted_aliases_title">Excluídos recentemente</string>
+    <string name="recently_deleted_aliases_title">Eliminados recentemente</string>
     <string name="recently_deleted_aliases_description">Restaure um alias que eliminou. Os aliases eliminados são mantidos durante um tempo limitado.</string>
     <string name="recently_deleted_aliases_empty">Nenhum alias eliminado.</string>
     <string name="alias_restore">Restaurar</string>
@@ -1744,7 +1744,7 @@
     <string name="buy_more_storage">Comprar mais armazenamento</string>
     <string name="buy_more_storage_note">As ampliações de armazenamento são compradas através do navegador.</string>
     <string name="api_key_default_name">Chave de API</string>
-    <string name="delete_account">Excluir conta</string>
+    <string name="delete_account">Eliminar conta</string>
     <string name="delete_account_subtitle">Eliminar permanentemente a sua conta e os seus dados</string>
     <string name="delete_account_warning_title">Esta ação não pode ser anulada</string>
     <string name="delete_account_warning_body">A sua conta, caixas de correio, contactos e cofre encriptado serão eliminados permanentemente após um período de carência de 30 dias. Pode cancelar iniciando sessão novamente dentro desse prazo.</string>
@@ -2008,7 +2008,7 @@
     <string name="alias_directory_available">Este diretório está disponível.</string>
     <string name="alias_directory_not_available">Este diretório já está em uso.</string>
     <string name="checking_availability">A verificar a disponibilidade...</string>
-    <string name="alias_creating">Criando...</string>
+    <string name="alias_creating">A criar...</string>
     <string name="alias_separator_hint">Funciona com os separadores . + #</string>
     <string name="alias_delete_directory">Eliminar diretório</string>
     <string name="alias_sender_format_info_title">Formato do remetente</string>
@@ -2039,7 +2039,7 @@
     <string name="domain_delete_confirm_title">Eliminar domínio?</string>
     <string name="domain_delete_confirm_message">Eliminar %1$s? O correio enviado para endereços deste domínio deixa de ser entregue.</string>
     <string name="domain_dns_records">Registos DNS</string>
-    <string name="domain_verifying">Verificando...</string>
+    <string name="domain_verifying">A verificar...</string>
     <string name="domain_adding">A adicionar...</string>
     <string name="domain_dns_instructions">Adicione estes registos no seu fornecedor de DNS e depois verifique. Os registos novos costumam demorar alguns minutos a ficar ativos.</string>
     <string name="domain_record_host">Anfitrião</string>
@@ -2060,11 +2060,11 @@
         <item quantity="other">Atingiu o limite de verificações deste domínio. Tente novamente dentro de %1$d minutos.</item>
     </plurals>
     <string name="create_alias_dialog_title">Criar alias</string>
-    <string name="create_alias_username_label">Nome de usuário</string>
+    <string name="create_alias_username_label">Nome de utilizador</string>
     <string name="create_alias_generate_random">Gerar aleatório</string>
     <string name="add_custom_domain_dialog_title">Adicionar domínio personalizado</string>
     <string name="domain_name_label">Nome do domínio</string>
-    <string name="ghost_alias_creating">Criando...</string>
+    <string name="ghost_alias_creating">A criar...</string>
     <string name="ghost_expires_in_days">Expira em %dd</string>
     <string name="ghost_expires_in_hours">Expira em %dh</string>
     <string name="ghost_expires_in_minutes">Expira em %dmin</string>
@@ -2120,9 +2120,9 @@
     <string name="crypto_native_choose_coin">Escolha uma moeda</string>
     <string name="crypto_native_recommended">Recomendado</string>
     <string name="crypto_native_coin_on_chain">em %1$s</string>
-    <string name="crypto_native_status_awaiting">Aguardando pagamento</string>
+    <string name="crypto_native_status_awaiting">A aguardar pagamento</string>
     <string name="crypto_native_status_detected">Pagamento detectado</string>
-    <string name="crypto_native_status_confirming_short">Confirmando</string>
+    <string name="crypto_native_status_confirming_short">A confirmar</string>
     <string name="crypto_native_status_credited">Plano creditado</string>
     <string name="crypto_native_usd_value_label">Valor a pagar</string>
     <string name="crypto_native_expires_in">Expira em %1$s</string>
@@ -2452,7 +2452,7 @@
     <string name="domain_purchase_taken">Indisponível</string>
     <string name="domain_purchase_no_results">Nenhum domínio disponível encontrado</string>
     <string name="domain_purchase_renews_at">Renova por %1$s/ano</string>
-    <string name="domain_purchase_years">Período de registro</string>
+    <string name="domain_purchase_years">Período de registo</string>
     <string name="domain_purchase_one_year">1 ano</string>
     <string name="domain_purchase_pay_with">Pagar com</string>
     <string name="domain_purchase_pay_card">Cartão</string>
@@ -2464,11 +2464,11 @@
     <string name="domain_purchase_error_slow_down">Há demasiados pedidos de domínio neste momento. Conclua ou aguarde os que estão em curso.</string>
     <string name="domain_purchase_error_paused">As compras de domínios estão em pausa durante alguns minutos. Tente novamente dentro de momentos.</string>
     <string name="domain_purchase_error_not_allowed">A sua conta não pode concluir esta compra neste momento. Contacte o suporte para obter ajuda.</string>
-    <string name="domain_purchase_progress_title">Configurando %1$s</string>
+    <string name="domain_purchase_progress_title">A configurar %1$s</string>
     <string name="domain_purchase_step_payment">Pagamento recebido</string>
     <string name="domain_purchase_step_registering">A registar com a NameSilo</string>
-    <string name="domain_purchase_step_dns">Configurando DNS</string>
-    <string name="domain_purchase_step_activating">Ativando caixas de e-mail</string>
+    <string name="domain_purchase_step_dns">A configurar o DNS</string>
+    <string name="domain_purchase_step_activating">A ativar as caixas de correio</string>
     <string name="domain_purchase_step_done">Domínio ativo</string>
     <string name="domain_purchase_done_note">O seu domínio está pronto. Já pode criar endereços e aliases nele.</string>
     <string name="domain_purchase_slow_note">Está a demorar mais do que o normal. Vamos concluir em segundo plano e avisá-lo por e-mail.</string>
@@ -2500,7 +2500,7 @@
     <string name="domain_purchase_detail_setup">Zero configuração</string>
     <string name="domain_purchase_detail_instant">Pronto em segundos</string>
     <string name="domain_purchase_detail_ownership">Seu para sempre</string>
-    <string name="domain_purchase_awaiting_payment">Aguardando pagamento</string>
+    <string name="domain_purchase_awaiting_payment">A aguardar pagamento</string>
     <string name="domain_purchase_complete_purchase">Concluir compra</string>
     <string name="domain_purchase_create_first_address">Crie o seu primeiro endereço</string>
     <string name="domain_purchase_warmup_note">Os domínios novos precisam de algum tempo para criar uma reputação de envio. Algumas das suas primeiras mensagens podem ir parar ao spam enquanto o domínio ganha reputação.</string>
@@ -2745,7 +2745,7 @@
     <string name="revoke_session_confirm">A sessão neste dispositivo termina de imediato e terá de iniciar sessão novamente.</string>
     <string name="scheduled_action_failed">Não foi possível atualizar a mensagem agendada</string>
     <string name="scheduled_cancelled">Mensagem agendada cancelada</string>
-    <string name="scheduled_delete">Excluir</string>
+    <string name="scheduled_delete">Eliminar</string>
     <string name="scheduled_deleted">Mensagem agendada eliminada</string>
     <string name="scheduled_no_subject">(Sem assunto)</string>
     <string name="scheduled_reschedule">Reagendar</string>
@@ -2790,7 +2790,7 @@
     <string name="audit_event_account_locked">Conta bloqueada</string>
     <string name="audit_event_device_removed">Dispositivo removido</string>
     <string name="audit_event_key_exported">Chave de encriptação exportada</string>
-    <string name="audit_event_key_rotated">Chave de encriptação substituída</string>
+    <string name="audit_event_key_rotated">Chave de encriptação renovada</string>
     <string name="audit_event_lockdown_disabled">Modo de bloqueio desativado</string>
     <string name="audit_event_lockdown_enabled">Modo de bloqueio ativado</string>
     <string name="audit_event_login">Sessão iniciada</string>
@@ -2897,7 +2897,7 @@
     <string name="contact_groups">Grupos</string>
     <string name="new_group">Novo grupo</string>
     <string name="group_name">Nome do grupo</string>
-    <string name="delete_group">Excluir grupo</string>
+    <string name="delete_group">Eliminar grupo</string>
     <string name="edit_group">Editar grupo</string>
     <string name="delete_group_message">Os contactos deste grupo continuam no seu livro de endereços.</string>
     <string name="no_groups_yet">Ainda não há grupos</string>
@@ -2973,7 +2973,7 @@
     <string name="import_contacts_file">Importar de um ficheiro</string>
     <string name="export_as_vcard">Exportar como vCard</string>
     <string name="export_as_csv">Exportar como CSV</string>
-    <string name="contact_photo">Foto do contato</string>
+    <string name="contact_photo">Foto do contacto</string>
     <string name="remove_photo">Remover fotografia</string>
     <string name="add_photo">Adicionar fotografia</string>
     <string name="photo_too_large">Escolha uma imagem mais pequena</string>
@@ -3205,7 +3205,7 @@
     <string name="address_change_pick_title">Escolha o seu novo endereço</string>
     <string name="address_change_use_alias">Utilizar um dos seus aliases</string>
     <string name="address_change_use_new">Escolher um novo endereço</string>
-    <string name="address_change_checking">Verificando a disponibilidade</string>
+    <string name="address_change_checking">A verificar a disponibilidade</string>
     <string name="address_change_available">%1$s está disponível</string>
     <string name="address_change_unavailable">%1$s não está disponível</string>
     <string name="address_change_invalid">Use de 3 a 40 letras, números ou pontos. Um ponto não pode iniciar nem terminar o endereço, e os pontos não podem repetir-se.</string>

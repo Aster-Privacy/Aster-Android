@@ -42,7 +42,7 @@
     <string name="domain_bimi_step_of">Etapa %1$d de %2$d</string>
     <string name="domain_bimi_logo_public_note">O seu logótipo é público. Qualquer pessoa que receba o seu correio pode vê-lo.</string>
     <string name="domain_bimi_choose_file">Escolher ficheiro</string>
-    <string name="domain_bimi_uploading">Enviando</string>
+    <string name="domain_bimi_uploading">A enviar</string>
     <string name="domain_bimi_replace_logo">Substituir logotipo</string>
     <string name="domain_bimi_preview_inbox_subject">As suas novidades mais recentes</string>
     <string name="domain_bimi_adjustments_title">O Aster ajustou o seu ficheiro para cumprir os requisitos:</string>
@@ -56,9 +56,9 @@
     <string name="domain_bimi_continue">Continuar</string>
     <string name="domain_bimi_back">Voltar</string>
     <string name="domain_bimi_publish">Publicar logotipo</string>
-    <string name="domain_bimi_publishing">Publicando</string>
+    <string name="domain_bimi_publishing">A publicar</string>
     <string name="domain_bimi_check_again">Verificar novamente</string>
-    <string name="domain_bimi_checking">Verificando</string>
+    <string name="domain_bimi_checking">A verificar</string>
     <string name="domain_bimi_last_checked">Última verificação: %1$s</string>
     <string name="domain_bimi_record_title">Adicione este registo no seu fornecedor de DNS</string>
     <string name="domain_bimi_record_type">Tipo</string>
@@ -115,7 +115,7 @@
     <string name="domain_bimi_adj_converted_inline_styles">Estilos inline convertidos em atributos.</string>
     <string name="domain_bimi_adj_removed_unsupported_attributes">Atributos não suportados removidos.</string>
     <string name="domain_bimi_rules_title">Requisitos do ficheiro</string>
-    <string name="domain_bimi_rule_svg">Arquivo SVG</string>
+    <string name="domain_bimi_rule_svg">Ficheiro SVG</string>
     <string name="domain_bimi_rule_square">Quadrado, com largura e altura iguais</string>
     <string name="domain_bimi_rule_size">32 KB ou menos depois de o Aster o otimizar</string>
     <string name="domain_bimi_rule_vector">Apenas formas vetoriais, com o texto convertido em contornos</string>
