@@ -4505,19 +4505,22 @@ class MailRepository @Inject constructor(
             bcc = bcc,
             attachments = list,
         )
-        val sealed_with_attachments = if (attachments.isNotEmpty() && draft_attachments_may_fit(attachments)) {
-            try {
-                val with_attachments = envelope_for(attachments)
-                if (draft_envelope_fits(with_attachments)) encrypt_draft_envelope(with_attachments) else null
-            } catch (oom: OutOfMemoryError) {
+        val (sealed_with_attachments, sealed_envelope, content_hash) = withContext(Dispatchers.Default) {
+            val with_attachments_sealed = if (attachments.isNotEmpty() && draft_attachments_may_fit(attachments)) {
+                try {
+                    val with_attachments = envelope_for(attachments)
+                    if (draft_envelope_fits(with_attachments)) encrypt_draft_envelope(with_attachments) else null
+                } catch (oom: OutOfMemoryError) {
+                    null
+                }
+            } else {
                 null
             }
-        } else {
-            null
+            val sealed = with_attachments_sealed ?: encrypt_draft_envelope(envelope_for(emptyList()))
+            Triple(with_attachments_sealed, sealed, content_hash_of(sealed.first))
         }
         val stored_attachment_count = if (sealed_with_attachments != null) attachments.size else 0
-        val (encrypted_envelope, envelope_nonce) = sealed_with_attachments ?: encrypt_draft_envelope(envelope_for(emptyList()))
-        val content_hash = content_hash_of(encrypted_envelope)
+        val (encrypted_envelope, envelope_nonce) = sealed_envelope
 
         draft_save_mutex.withLock {
             kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {

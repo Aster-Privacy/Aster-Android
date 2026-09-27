@@ -1,0 +1,10 @@
+What's new:
+
+- If your account is suspended, the app tells you why and lets you appeal.
+
+Fixed:
+
+- Categories show their unread counts again in the menu.
+- Sending a message with large attachments no longer freezes the screen.
+- Your inbox and messages load faster and the app stays responsive.
+- Messages you mark as read or unread keep that state instead of switching back.
