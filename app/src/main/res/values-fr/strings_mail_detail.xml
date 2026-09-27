@@ -18,8 +18,8 @@
     <string name="detail_raw_source_copied">Copié dans le presse-papiers</string>
     <string name="detail_raw_source_close">Fermer</string>
     <string name="detail_raw_source_unavailable">La source brute n\'est pas disponible pour ce message.</string>
-    <string name="detail_star_action">Mettre en favori</string>
-    <string name="detail_unstar_action">Retirer des favoris</string>
+    <string name="detail_star_action">Ajouter une étoile</string>
+    <string name="detail_unstar_action">Retirer l\'étoile</string>
     <string name="detail_external_images_traffic_blocked">Les images distantes sont bloquées pour économiser des données.</string>
     <string name="detail_disable_traffic_saving">Désactiver l\'économie de données</string>
     <string name="message_details">Détails du message</string>

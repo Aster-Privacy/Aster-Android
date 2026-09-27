@@ -2,25 +2,25 @@
 <resources>
     <string name="settings_compare_plans">Comparer les forfaits</string>
 
-    <string name="settings_cat_storage_limits">Stockage &amp; limites</string>
+    <string name="settings_cat_storage_limits">Stockage et limites</string>
     <string name="settings_cat_email_features">Fonctionnalités e-mail</string>
     <string name="settings_cat_organization">Organisation</string>
     <string name="settings_cat_security">Sécurité</string>
     <string name="settings_cat_privacy">Confidentialité</string>
     <string name="settings_cat_import_export">Import et export</string>
     <string name="settings_cat_support">Assistance</string>
-    <string name="settings_cat_apps_integrations">Applications &amp; intégrations</string>
+    <string name="settings_cat_apps_integrations">Applications et intégrations</string>
 
     <string name="settings_feat_secure_storage">Stockage sécurisé</string>
     <string name="settings_feat_max_attachment">Taille maximale des pièces jointes</string>
     <string name="settings_feat_daily_send">Limite d\'envoi quotidienne</string>
     <string name="settings_feat_email_retention">Conservation des e-mails</string>
     <string name="settings_feat_e2ee">Chiffrement de bout en bout</string>
-    <string name="settings_feat_zero_knowledge">Architecture zéro connaissance</string>
+    <string name="settings_feat_zero_knowledge">Architecture zéro accès</string>
     <string name="settings_feat_aliases">Alias e-mail</string>
     <string name="settings_feat_custom_domains">Domaines personnalisés</string>
     <string name="settings_feat_scheduled_send">Envoi programmé</string>
-    <string name="settings_feat_undo_send">Annulation d\'envoi</string>
+    <string name="settings_feat_undo_send">Annuler l\'envoi</string>
     <string name="settings_feat_read_receipts">Accusés de réception</string>
     <string name="settings_feat_email_templates">Modèles d\'e-mail</string>
     <string name="settings_feat_auto_responder">Réponse automatique</string>
@@ -52,8 +52,8 @@
     <string name="settings_feat_import_gmail">Importer depuis Gmail</string>
     <string name="settings_feat_import_outlook">Importer depuis Outlook</string>
     <string name="settings_feat_mbox_import">Import MBOX</string>
-    <string name="settings_feat_export_emails">Export des e-mails</string>
-    <string name="settings_feat_export_contacts">Export des contacts</string>
+    <string name="settings_feat_export_emails">Exporter les e-mails</string>
+    <string name="settings_feat_export_contacts">Exporter les contacts</string>
     <string name="settings_feat_help_center">Centre d\'aide</string>
     <string name="settings_feat_community_forum">Forum communautaire</string>
     <string name="settings_feat_email_support">Support par e-mail</string>
@@ -62,8 +62,8 @@
     <string name="settings_feat_web_app">Application web</string>
     <string name="settings_feat_ios_app">Application iOS</string>
     <string name="settings_feat_android_app">Application Android</string>
-    <string name="settings_feat_desktop_app">Application bureau</string>
-    <string name="settings_feat_browser_ext">Extension navigateur</string>
+    <string name="settings_feat_desktop_app">Application de bureau</string>
+    <string name="settings_feat_browser_ext">Extension de navigateur</string>
     <string name="settings_feat_imap_smtp">IMAP / SMTP</string>
 
     <string name="settings_val_unlimited">Illimité</string>
@@ -83,13 +83,13 @@
     <string name="settings_plan_lead_nova">Tout ce qui est dans Nova, plus :</string>
 
     <string name="settings_plan_bullet_e2ee">Chiffrement de bout en bout</string>
-    <string name="settings_plan_bullet_zero_knowledge">Architecture zéro connaissance</string>
+    <string name="settings_plan_bullet_zero_knowledge">Architecture zéro accès</string>
 
     <string name="settings_plan_bullet_star_storage">50 Go de stockage chiffré</string>
     <string name="settings_plan_bullet_star_attachments">Pièces jointes jusqu\'à 50 Mo</string>
     <string name="settings_plan_bullet_star_aliases">15 alias e-mail</string>
     <string name="settings_plan_bullet_star_domains">5 domaines personnalisés</string>
-    <string name="settings_plan_bullet_daily_send_limits">Limites d’envoi quotidiennes plus élevées</string>
+    <string name="settings_plan_bullet_daily_send_limits">Limites d\'envoi quotidiennes plus élevées</string>
     <string name="settings_plan_bullet_daily_emails">1 000 e-mails par jour</string>
     <string name="settings_plan_bullet_star_templates">10 modèles d\'e-mail</string>
     <string name="settings_plan_bullet_tracker_protection">Protection contre les traqueurs</string>
@@ -150,5 +150,5 @@
 
     <string name="revoke_session_confirm_message">Déconnecter cet appareil de votre compte ?</string>
     <string name="sign_out_all_other_confirm_message">Déconnecter tous les appareils sauf celui-ci ?</string>
-    <string name="alias_forward_limit_reached">Vous avez atteint le nombre maximal d\'alias actifs de votre formule</string>
+    <string name="alias_forward_limit_reached">Vous avez atteint le nombre maximal d\'alias actifs de votre forfait</string>
 </resources>

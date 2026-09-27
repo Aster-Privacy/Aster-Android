@@ -37,10 +37,10 @@
     <string name="rules_category_primary">Boîte de réception</string>
     <string name="rules_category_important">Avertissement important</string>
     <string name="rules_category_promotions">Bons plans</string>
-    <string name="rules_category_newsletters">Lettres d’information</string>
+    <string name="rules_category_newsletters">Lettres d\'information</string>
     <string name="rules_category_social">Réseaux sociaux</string>
     <string name="rules_category_updates">Notifications</string>
-    <string name="rules_category_transactions">Reçus</string>
+    <string name="rules_category_transactions">Achats</string>
     <string name="rules_category_forums">Discussions</string>
 
     <string name="rules_no_labels">Aucun libellé pour le moment</string>
@@ -75,7 +75,7 @@
     <string name="category_info_shopping">Confirmations de commande, mises à jour de livraison et avis de livraison.</string>
     <string name="custom_categories_title">Catégories personnalisées</string>
     <string name="custom_categories_tutorial">Créez votre propre catégorie. Faites correspondre les e-mails par domaine de l\'expéditeur ou par un mot-clé de l\'objet.</string>
-    <string name="custom_category_locked_badge">Payant</string>
+    <string name="custom_category_locked_badge">Verrouillé</string>
     <string name="add_category">Ajouter une catégorie</string>
     <string name="no_custom_categories">Aucune catégorie personnalisée pour l\'instant.</string>
     <string name="category_name_required">Saisissez un nom pour cette catégorie.</string>
@@ -83,13 +83,13 @@
     <string name="category_domains_invalid">Domaines non valides : %1$s. Utilisez un domaine réel comme example.com.</string>
     <string name="category_keywords_invalid">Mots-clés non valides : %1$s. Utilisez uniquement des mots simples.</string>
     <string name="delete_category_title">Supprimer la catégorie ?</string>
-    <string name="delete_category_description">\"%1$s\" sera supprimée et ses messages retourneront dans leurs catégories d\'origine.</string>
-    <string name="custom_categories_locked">Les catégories personnalisées font partie des formules payantes.</string>
-    <string name="custom_categories_limit_reached">Vous avez atteint le nombre maximal de catégories personnalisées.</string>
+    <string name="delete_category_description">Voulez-vous vraiment supprimer « %1$s » ? Cette action est irréversible.</string>
+    <string name="custom_categories_locked">Les catégories personnalisées ne sont pas disponibles avec votre forfait actuel.</string>
+    <string name="custom_categories_limit_reached">Vous avez atteint la limite de catégories personnalisées de votre forfait. Passez à un forfait supérieur pour en obtenir davantage.</string>
     <string name="edit_custom_category">Modifier la catégorie</string>
     <string name="new_custom_category">Nouvelle catégorie</string>
-    <string name="category_name">Nom de la catégorie</string>
-    <string name="category_name_placeholder">Newsletters</string>
+    <string name="category_name">Nom</string>
+    <string name="category_name_placeholder">ex. Newsletters</string>
     <string name="category_icon">Icône</string>
     <string name="category_match_domains">Faire correspondre les domaines de l\'expéditeur</string>
     <string name="category_match_domains_placeholder">example.com, news.example.org</string>
@@ -97,7 +97,7 @@
     <string name="category_match_keywords">Faire correspondre les mots-clés de l\'objet</string>
     <string name="category_match_keywords_placeholder">newsletter, résumé</string>
     <string name="category_match_keywords_help">Mots séparés par des virgules. Si l\'un d\'eux apparaît dans l\'objet, l\'e-mail ira dans cette catégorie.</string>
-    <string name="category_tutorial_text">Un message rejoint votre catégorie dès qu\'il correspond à l\'un de vos domaines ou mots-clés. Les catégories personnalisées passent avant celles fournies, et toute la correspondance se fait sur votre appareil.</string>
+    <string name="category_tutorial_text">Astuce : une catégorie personnalisée correspond si le domaine de l\'expéditeur OU l\'objet contient l\'un de vos mots-clés. Les catégories personnalisées sont vérifiées avant les catégories intégrées et sont donc toujours prioritaires.</string>
     <string name="rules_create_first_folder_hint">Créez un dossier et cette règle pourra y déplacer les e-mails correspondants.</string>
     <string name="rules_create_first_label_hint">Créez un libellé et cette règle pourra l\'appliquer aux e-mails correspondants.</string>
     <string name="muted_categories">Catégories en sourdine</string>

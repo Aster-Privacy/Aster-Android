@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="two_step_verification_title">Validation en deux étapes</string>
+    <string name="two_step_verification_title">Vérification en deux étapes</string>
     <string name="two_step_verification_on_description">Votre compte nécessite un code de vérification en plus de votre mot de passe.</string>
     <string name="two_step_verification_off_description">Pour renforcer la protection, exigez un code de vérification en plus de votre mot de passe.</string>
     <string name="security_activity_filter_all">Tout</string>

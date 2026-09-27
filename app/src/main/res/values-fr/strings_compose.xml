@@ -17,7 +17,7 @@
     <string name="signature_none">Aucune signature</string>
     <string name="signature_select">Choisir une signature</string>
     <string name="compose_metadata_strip_failed">Impossible de retirer les métadonnées cachées de : %1$s</string>
-    <string name="compose_inline_image_failed">Impossible d’ajouter ces images : %1$s</string>
+    <string name="compose_inline_image_failed">Impossible d\'ajouter ces images : %1$s</string>
     <string name="schedule_in_one_hour">Dans une heure</string>
     <string name="schedule_tonight">Ce soir</string>
     <string name="schedule_tomorrow_morning">Demain matin</string>

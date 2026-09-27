@@ -2,38 +2,47 @@
 <resources>
     <plurals name="attachments_count">
         <item quantity="one">%d pièce jointe</item>
+        <item quantity="many">%d pièces jointes</item>
         <item quantity="other">%d pièces jointes</item>
     </plurals>
     <plurals name="archived_conversations">
         <item quantity="one">%d conversation archivée</item>
+        <item quantity="many">%d conversations archivées</item>
         <item quantity="other">%d conversations archivées</item>
     </plurals>
     <plurals name="moved_to_trash">
         <item quantity="one">%d conversation déplacée vers la corbeille</item>
+        <item quantity="many">%d conversations déplacées vers la corbeille</item>
         <item quantity="other">%d conversations déplacées vers la corbeille</item>
     </plurals>
     <plurals name="starred_count">
         <item quantity="one">%d conversation marquée d\'une étoile</item>
+        <item quantity="many">%d conversations marquées d\'une étoile</item>
         <item quantity="other">%d conversations marquées d\'une étoile</item>
     </plurals>
     <plurals name="unstarred_count">
         <item quantity="one">Étoile retirée de %d conversation</item>
+        <item quantity="many">Étoile retirée de %d conversations</item>
         <item quantity="other">Étoile retirée de %d conversations</item>
     </plurals>
     <plurals name="unsnoozed_count">
-        <item quantity="one">%d conversation remise en boîte de réception</item>
-        <item quantity="other">%d conversations remises en boîte de réception</item>
+        <item quantity="one">%d conversation sortie de veille</item>
+        <item quantity="many">%d conversations sorties de veille</item>
+        <item quantity="other">%d conversations sorties de veille</item>
     </plurals>
     <plurals name="draft_deleted">
         <item quantity="one">%d brouillon supprimé</item>
+        <item quantity="many">%d brouillons supprimés</item>
         <item quantity="other">%d brouillons supprimés</item>
     </plurals>
     <plurals name="marked_read_count">
         <item quantity="one">%d message marqué comme lu</item>
+        <item quantity="many">%d messages marqués comme lus</item>
         <item quantity="other">%d messages marqués comme lus</item>
     </plurals>
     <plurals name="marked_unread_count">
         <item quantity="one">%d message marqué comme non lu</item>
+        <item quantity="many">%d messages marqués comme non lus</item>
         <item quantity="other">%d messages marqués comme non lus</item>
     </plurals>
     <plurals name="results_count">
@@ -42,14 +51,17 @@
     </plurals>
     <plurals name="active_endpoints">
         <item quantity="one">%d point d\'accès actif</item>
+        <item quantity="many">%d points d\'accès actifs</item>
         <item quantity="other">%d points d\'accès actifs</item>
     </plurals>
     <plurals name="storage_addons_active_count">
         <item quantity="one">%1$d extension active</item>
+        <item quantity="many">%1$d extensions actives</item>
         <item quantity="other">%1$d extensions actives</item>
     </plurals>
     <plurals name="backup_codes_remaining">
         <item quantity="one">%d code de secours restant</item>
+        <item quantity="many">%d codes de secours restants</item>
         <item quantity="other">%d codes de secours restants</item>
     </plurals>
     <plurals name="kids_seats_free">
@@ -58,6 +70,7 @@
     </plurals>
     <plurals name="trackers_blocked_count">
         <item quantity="one">%1$d traqueur bloqué</item>
+        <item quantity="many">%1$d traqueurs bloqués</item>
         <item quantity="other">%1$d traqueurs bloqués</item>
     </plurals>
 </resources>

@@ -6,7 +6,7 @@
     <string name="session_client_phone">Téléphone</string>
     <string name="session_client_tablet">Tablette</string>
     <string name="session_client_desktop">Ordinateur</string>
-    <string name="session_client_desktop_app">App de bureau</string>
+    <string name="session_client_desktop_app">Application de bureau</string>
     <string name="session_client_bridge">Passerelle de messagerie</string>
     <string name="link_device_step_code">Code</string>
     <string name="link_device_step_confirm">Confirmer</string>
@@ -15,5 +15,5 @@
     <string name="link_device_confirm_title">Confirmez cet appareil</string>
     <string name="link_device_pending_badge">En attente</string>
     <string name="link_device_step_progress">Étape %1$d sur %2$d · %3$s</string>
-    <string name="link_device_error_title">Impossible d’associer l’appareil</string>
+    <string name="link_device_error_title">Impossible d\'associer l\'appareil</string>
 </resources>
