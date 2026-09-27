@@ -42,7 +42,7 @@ object AsterSpacing {
 object AsterRadius {
     val island = 16.dp
     val island_lg = 18.dp
-    val control = 14.dp
+    val control = 16.dp
     val item = 8.dp
     val pill = 999.dp
     val sm = item

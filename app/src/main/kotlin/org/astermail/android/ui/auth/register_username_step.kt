@@ -248,7 +248,7 @@ internal fun domain_toggle(
                 .offset(x = pill_offset)
                 .width(pill_width)
                 .fillMaxHeight()
-                .background(colors.accent_blue, SquircleShape(11.dp)),
+                .background(colors.accent_blue, SquircleShape(13.dp)),
         )
 
         Row(modifier = Modifier.fillMaxSize()) {
