@@ -809,7 +809,7 @@
     <string name="referral_step_2">Se registra con tu enlace y se suscribe a un plan de pago.</string>
     <string name="referral_step_3">Ganas una parte de cada pago que haga, acreditada automáticamente a tu saldo.</string>
     <string name="rewards">Recompensas</string>
-    <string name="reward_recurring">También recibes el 5% de cada pago que realice mientras esté suscrito.</string>
+    <string name="reward_recurring" formatted="false">También recibes el 5% de cada pago que realice mientras esté suscrito.</string>
     <string name="share_invite_link">Compartir enlace de invitación</string>
     <string name="share_text">Prueba Aster, correo privado que realmente funciona.</string>
     <string name="share_referral">Compartir referido</string>

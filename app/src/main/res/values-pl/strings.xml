@@ -808,7 +808,7 @@
     <string name="referral_step_2">Rejestrują się przez Twój link i wykupują płatny plan.</string>
     <string name="referral_step_3">Zarabiasz część każdej płatności, automatycznie doliczaną do Twojego salda.</string>
     <string name="rewards">Nagrody</string>
-    <string name="reward_recurring">Dostajesz też 5% od każdej ich płatności tak długo, jak są subskrybentami.</string>
+    <string name="reward_recurring" formatted="false">Dostajesz też 5% od każdej ich płatności tak długo, jak są subskrybentami.</string>
     <string name="share_invite_link">Udostępnij link zaproszenia</string>
     <string name="share_text">Wypróbuj Aster - prywatna poczta, która naprawdę działa.</string>
     <string name="share_referral">Udostępnij polecenie</string>

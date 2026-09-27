@@ -1162,7 +1162,7 @@
     <string name="credit_task_ios_title">iOS के लिए Aster ऐप डाउनलोड करें</string>
     <string name="credit_task_ios_hint_coming">जल्द आ रहा है</string>
     <string name="credit_task_earned">कमाए गए</string>
-    <string name="reward_recurring">उनके सदस्य बने रहने तक उनके हर भुगतान का 5% भी आपको मिलता है।</string>
+    <string name="reward_recurring" formatted="false">उनके सदस्य बने रहने तक उनके हर भुगतान का 5% भी आपको मिलता है।</string>
     <string name="share_invite_link">निमंत्रण लिंक साझा करें</string>
     <string name="share_text">Aster आज़माएं, यह निजी ईमेल है जो सचमुच काम करती है।</string>
     <string name="share_referral">रेफ़रल साझा करें</string>

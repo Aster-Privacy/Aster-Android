@@ -808,7 +808,7 @@
     <string name="referral_step_2">يسجلون باستخدام رابطك ويشتركون في خطة مدفوعة.</string>
     <string name="referral_step_3">تكسب حصة من كل دفعة يقوم بها، تُضاف تلقائيًا إلى رصيدك.</string>
     <string name="rewards">المكافآت</string>
-    <string name="reward_recurring">تحصل أيضاً على 5% من كل دفعة يقومون بها طوال فترة اشتراكهم.</string>
+    <string name="reward_recurring" formatted="false">تحصل أيضاً على 5% من كل دفعة يقومون بها طوال فترة اشتراكهم.</string>
     <string name="share_invite_link">مشاركة رابط الدعوة</string>
     <string name="share_text">جرب Aster، بريد إلكتروني خاص يعمل فعلاً.</string>
     <string name="share_referral">مشاركة الإحالة</string>

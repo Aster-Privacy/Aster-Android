@@ -808,7 +808,7 @@
     <string name="referral_step_2">あなたのリンクでサインアップし、有料プランに登録します。</string>
     <string name="referral_step_3">相手が支払うたびに報酬を獲得し、自動的に残高に加算されます。</string>
     <string name="rewards">報酬</string>
-    <string name="reward_recurring">さらに、友達が購読している間のすべての支払いの5%を獲得できます。</string>
+    <string name="reward_recurring" formatted="false">さらに、友達が購読している間のすべての支払いの5%を獲得できます。</string>
     <string name="share_invite_link">招待リンクを共有</string>
     <string name="share_text">Asterを試してみてください。本当に使えるプライベートメールです。</string>
     <string name="share_referral">紹介を共有</string>

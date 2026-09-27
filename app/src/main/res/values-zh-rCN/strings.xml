@@ -808,7 +808,7 @@
     <string name="referral_step_2">他们通过您的链接注册并订阅付费方案。</string>
     <string name="referral_step_3">对方每次付款你都能获得分成，自动计入你的余额。</string>
     <string name="rewards">奖励</string>
-    <string name="reward_recurring">此外，好友订阅期间每次付款您可获得 5%。</string>
+    <string name="reward_recurring" formatted="false">此外，好友订阅期间每次付款您可获得 5%。</string>
     <string name="share_invite_link">分享邀请链接</string>
     <string name="share_text">试试 Aster，真正好用的隐私邮箱。</string>
     <string name="share_referral">分享推荐</string>

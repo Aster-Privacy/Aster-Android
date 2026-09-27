@@ -808,7 +808,7 @@
     <string name="referral_step_2">상대방이 링크를 통해 가입하고 유료 플랜을 구독합니다.</string>
     <string name="referral_step_3">친구가 결제할 때마다 일정 비율을 적립받으며, 잔액에 자동으로 반영됩니다.</string>
     <string name="rewards">보상</string>
-    <string name="reward_recurring">또한 친구가 구독하는 동안 모든 결제의 5%를 받습니다.</string>
+    <string name="reward_recurring" formatted="false">또한 친구가 구독하는 동안 모든 결제의 5%를 받습니다.</string>
     <string name="share_invite_link">초대 링크 공유</string>
     <string name="share_text">Aster를 사용해 보세요. 진짜 쓸 수 있는 프라이버시 이메일입니다.</string>
     <string name="share_referral">추천 공유</string>

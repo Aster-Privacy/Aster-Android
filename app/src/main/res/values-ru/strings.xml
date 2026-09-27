@@ -808,7 +808,7 @@
     <string name="referral_step_2">Они регистрируются по вашей ссылке и оформляют платную подписку.</string>
     <string name="referral_step_3">Вы получаете долю с каждого его платежа, она автоматически зачисляется на ваш баланс.</string>
     <string name="rewards">Награды</string>
-    <string name="reward_recurring">Вы также получаете 5% от каждого их платежа, пока они подписаны.</string>
+    <string name="reward_recurring" formatted="false">Вы также получаете 5% от каждого их платежа, пока они подписаны.</string>
     <string name="share_invite_link">Поделиться ссылкой-приглашением</string>
     <string name="share_text">Попробуйте Aster - конфиденциальная почта, которая действительно работает.</string>
     <string name="share_referral">Поделиться реферальной ссылкой</string>

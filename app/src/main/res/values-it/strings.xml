@@ -808,7 +808,7 @@
     <string name="referral_step_2">Si registrano con il tuo link e si abbonano a un piano a pagamento.</string>
     <string name="referral_step_3">Guadagni una quota di ogni pagamento, accreditata automaticamente sul tuo saldo.</string>
     <string name="rewards">Ricompense</string>
-    <string name="reward_recurring">Ricevi anche il 5% di ogni pagamento che effettuano finché sono abbonati.</string>
+    <string name="reward_recurring" formatted="false">Ricevi anche il 5% di ogni pagamento che effettuano finché sono abbonati.</string>
     <string name="share_invite_link">Condividi link di invito</string>
     <string name="share_text">Prova Aster, email privata che funziona davvero.</string>
     <string name="share_referral">Condividi invito</string>
