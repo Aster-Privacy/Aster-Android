@@ -2,10 +2,12 @@
 <resources>
     <plurals name="alias_export_entries">
         <item quantity="one">%d entrée</item>
+        <item quantity="many">%d entrées</item>
         <item quantity="other">%d entrées</item>
     </plurals>
     <plurals name="alias_export_files">
         <item quantity="one">%d fichier</item>
+        <item quantity="many">%d fichiers</item>
         <item quantity="other">%d fichiers</item>
     </plurals>
     <plurals name="alias_import_existing">

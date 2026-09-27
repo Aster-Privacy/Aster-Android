@@ -32,6 +32,7 @@
     </plurals>
     <plurals name="settings_val_emails_per_day">
         <item quantity="one">%1$d email</item>
+        <item quantity="many">%1$d email</item>
         <item quantity="other">%1$d email</item>
     </plurals>
     <plurals name="spam_auto_delete_notice">

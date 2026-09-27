@@ -37,6 +37,7 @@
     </plurals>
     <plurals name="n_images">
         <item quantity="one">%1$d imagem</item>
+        <item quantity="many">%1$d imagens</item>
         <item quantity="other">%1$d imagens</item>
     </plurals>
     <plurals name="n_trackers">
@@ -66,6 +67,7 @@
     </plurals>
     <plurals name="rules_emails_count">
         <item quantity="one">%1$d e-mail</item>
+        <item quantity="many">%1$d e-mails</item>
         <item quantity="other">%1$d e-mails</item>
     </plurals>
     <plurals name="rules_value_label_count">

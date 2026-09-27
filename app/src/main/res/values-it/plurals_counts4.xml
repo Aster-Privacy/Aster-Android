@@ -2,10 +2,12 @@
 <resources>
     <plurals name="alias_export_entries">
         <item quantity="one">%d voce</item>
+        <item quantity="many">%d voci</item>
         <item quantity="other">%d voci</item>
     </plurals>
     <plurals name="alias_export_files">
         <item quantity="one">%d file</item>
+        <item quantity="many">%d file</item>
         <item quantity="other">%d file</item>
     </plurals>
     <plurals name="alias_import_existing">

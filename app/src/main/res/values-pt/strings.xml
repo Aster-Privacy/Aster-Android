@@ -2511,6 +2511,7 @@
     </plurals>
     <plurals name="domains_count_plural">
         <item quantity="one">%d domínio</item>
+        <item quantity="many">%d domínios</item>
         <item quantity="other">%d domínios</item>
     </plurals>
     <plurals name="subscriptions_found_count">
@@ -2520,6 +2521,7 @@
     </plurals>
     <plurals name="contacts_count_plural">
         <item quantity="one">%d contato</item>
+        <item quantity="many">%d contatos</item>
         <item quantity="other">%d contatos</item>
     </plurals>
     <string name="reaction_info_title">Reação</string>
@@ -2965,6 +2967,7 @@
     <string name="label_icon_group_everyday">DIA A DIA</string>
     <plurals name="alias_export_source_count">
         <item quantity="one">%1$d entrada</item>
+        <item quantity="many">%1$d entradas</item>
         <item quantity="other">%1$d entradas</item>
     </plurals>
     <plurals name="alias_import_confirm">
@@ -3226,6 +3229,7 @@
     </plurals>
     <plurals name="contacts_deleted_plural">
         <item quantity="one">%d contato excluído</item>
+        <item quantity="many">%d contatos excluídos</item>
         <item quantity="other">%d contatos excluídos</item>
     </plurals>
     <string name="checkout_review_title">Revisar e pagar</string>

@@ -47,6 +47,7 @@
     </plurals>
     <plurals name="results_count">
         <item quantity="one">%d resultado</item>
+        <item quantity="many">%d resultados</item>
         <item quantity="other">%d resultados</item>
     </plurals>
     <plurals name="active_endpoints">
@@ -66,6 +67,7 @@
     </plurals>
     <plurals name="kids_seats_free">
         <item quantity="one">%1$d plaza disponible</item>
+        <item quantity="many">%1$d plazas disponibles</item>
         <item quantity="other">%1$d plazas disponibles</item>
     </plurals>
     <plurals name="trackers_blocked_count">

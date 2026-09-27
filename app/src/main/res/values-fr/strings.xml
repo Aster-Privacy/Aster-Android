@@ -2538,6 +2538,7 @@
     </plurals>
     <plurals name="domains_count_plural">
         <item quantity="one">%d domaine</item>
+        <item quantity="many">%d domaines</item>
         <item quantity="other">%d domaines</item>
     </plurals>
     <plurals name="subscriptions_found_count">
@@ -2993,6 +2994,7 @@
     <string name="label_icon_group_everyday">QUOTIDIEN</string>
     <plurals name="alias_export_source_count">
         <item quantity="one">%1$d entrée</item>
+        <item quantity="many">%1$d entrées</item>
         <item quantity="other">%1$d entrées</item>
     </plurals>
     <plurals name="alias_import_confirm">
@@ -3254,6 +3256,7 @@
     </plurals>
     <plurals name="contacts_deleted_plural">
         <item quantity="one">%d contact supprimé</item>
+        <item quantity="many">%d contacts supprimés</item>
         <item quantity="other">%d contacts supprimés</item>
     </plurals>
     <string name="checkout_review_title">Vérifier et payer</string>
