@@ -63,6 +63,9 @@ object UpgradeStore {
         "html signatures" to UpgradeLimitKey.MaxHtmlSignatures,
         "filters" to UpgradeLimitKey.MaxCustomFilters,
         "custom filters" to UpgradeLimitKey.MaxCustomFilters,
+        "mail rules" to UpgradeLimitKey.MaxCustomFilters,
+        "mail rule" to UpgradeLimitKey.MaxCustomFilters,
+        "rules" to UpgradeLimitKey.MaxCustomFilters,
     )
 
     private fun resolve_key(resource: String?): UpgradeLimitKey {

@@ -28,6 +28,18 @@ internal data class settings_index_entry(
     val screen_title_res: Int,
     val label_res: Int,
     val is_screen_title: Boolean,
+    val keywords: List<String> = emptyList(),
+)
+
+private val mail_rules_search_keywords = listOf(
+    "filter",
+    "filters",
+    "email filter",
+    "email filters",
+    "mail filter",
+    "mail filters",
+    "rule",
+    "rules",
 )
 
 private val translation_search_titles = setOf(
@@ -811,7 +823,7 @@ private val all_settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("about", R.string.about, R.string.terms_of_service, false),
     settings_index_entry("about", R.string.about, R.string.source_on_github, false),
     settings_index_entry("about", R.string.about, R.string.licensed_agpl, false),
-    settings_index_entry("mail_rules", R.string.mail_rules_title, R.string.mail_rules_title, true),
+    settings_index_entry("mail_rules", R.string.mail_rules_title, R.string.mail_rules_title, true, mail_rules_search_keywords),
     settings_index_entry("mail_rules", R.string.mail_rules_title, R.string.mail_rules_empty_title, false),
     settings_index_entry("mail_rules", R.string.mail_rules_title, R.string.mail_rules_empty_subtitle, false),
     settings_index_entry("mail_rules", R.string.mail_rules_title, R.string.mail_rules_new_rule, false),

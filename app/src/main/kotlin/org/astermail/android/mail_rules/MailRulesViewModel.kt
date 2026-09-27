@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.astermail.android.api.ApiError
 import org.astermail.android.api.mail_rules.Action
 import org.astermail.android.api.mail_rules.Condition
 import org.astermail.android.api.mail_rules.CreateRuleRequest
@@ -113,7 +114,7 @@ class MailRulesViewModel @Inject constructor(
                 on_done(response.id)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(error = R.string.rules_save_failed)
+                _state.value = _state.value.copy(error = rule_save_error(t))
                 on_done(null)
             }
         }
@@ -148,7 +149,7 @@ class MailRulesViewModel @Inject constructor(
                 on_done(true)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(error = R.string.rules_save_failed)
+                _state.value = _state.value.copy(error = rule_save_error(t))
                 on_done(false)
             }
         }
@@ -221,6 +222,10 @@ class MailRulesViewModel @Inject constructor(
             }
         }
     }
+
+    @StringRes
+    private fun rule_save_error(t: Throwable): Int =
+        if (t is ApiError.PlanLimitExceeded) R.string.error_plan_limit_reached else R.string.rules_save_failed
 
     fun clear_error() {
         _state.value = _state.value.copy(error = null)

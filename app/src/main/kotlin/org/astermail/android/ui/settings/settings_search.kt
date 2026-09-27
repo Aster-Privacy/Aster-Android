@@ -411,6 +411,15 @@ private fun settings_search_result_row(hit: settings_search_match, on_click: () 
     }
 }
 
+internal fun settings_keyword_score(keywords: List<String>, needle: String, last_token: String): Int {
+    if (keywords.isEmpty()) return 0
+    if (keywords.any { it == needle }) return 130
+    val prefix_hit = keywords.any { keyword ->
+        keyword.startsWith(needle) && keyword.substringAfterLast(' ').startsWith(last_token)
+    }
+    return if (prefix_hit) 95 else 0
+}
+
 private fun rank_settings_matches(
     query: String,
     table: List<settings_search_row_text>,
@@ -423,9 +432,10 @@ private fun rank_settings_matches(
     for (row in table) {
         val label_lower = row.label.lowercase()
         val parent_lower = row.parent.lowercase()
-        val haystack = label_lower + " " + parent_lower
+        val keywords = row.entry.keywords
+        val haystack = (listOf(label_lower, parent_lower) + keywords).joinToString(" ")
         if (!tokens.all { haystack.contains(it) }) continue
-        var score = 0
+        var score = settings_keyword_score(keywords, needle, tokens.last())
         if (label_lower == needle) score += 120
         if (label_lower.startsWith(needle)) score += 60
         if (label_lower.contains(needle)) score += 30
