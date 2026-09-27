@@ -23,6 +23,7 @@ package org.astermail.android.ui.settings.detail
 
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Ban
+import compose.icons.tablericons.Bolt
 import compose.icons.tablericons.ChevronRight
 import compose.icons.tablericons.CircleCheck
 import compose.icons.tablericons.Mail
@@ -137,6 +138,13 @@ fun SenderFiltersScreen(
         v_gap(AsterSpacing.lg)
         section_label(stringResource(R.string.filters_rules))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
+            filters_nav_row(
+                title = stringResource(R.string.mail_rules_title),
+                subtitle = stringResource(R.string.mail_rules_subtitle),
+                icon = TablerIcons.Bolt,
+                on_click = { on_open("mail_rules") },
+            )
+            settings_row_gap(modifier = Modifier)
             filters_nav_row(
                 title = stringResource(R.string.auto_forward),
                 subtitle = stringResource(R.string.forward_matching),

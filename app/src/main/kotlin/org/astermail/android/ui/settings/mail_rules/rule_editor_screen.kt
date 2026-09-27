@@ -690,7 +690,7 @@ fun RuleEditorScreen(
                             actions = actions.toList() + preserved_actions,
                         ) { id ->
                             is_saving = false
-                            if (id != null) on_saved() else save_error = state.error ?: R.string.rules_save_failed
+                            if (id != null) on_saved() else save_error = vm.state.value.error ?: R.string.rules_save_failed
                         }
                     } else {
                         vm.update_rule(
@@ -702,7 +702,7 @@ fun RuleEditorScreen(
                             actions = actions.toList() + preserved_actions,
                         ) { ok ->
                             is_saving = false
-                            if (ok) on_saved() else save_error = state.error ?: R.string.rules_save_failed
+                            if (ok) on_saved() else save_error = vm.state.value.error ?: R.string.rules_save_failed
                         }
                     }
                 },
