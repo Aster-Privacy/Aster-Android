@@ -102,6 +102,7 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
         R.string.settings_general,
         listOf(
             settings_row_item("appearance", R.string.settings_appearance, icon = TablerIcons.Palette),
+            settings_row_item("language", R.string.language, icon = TablerIcons.Language),
             settings_row_item("accessibility", R.string.settings_accessibility, icon = TablerIcons.Typography),
         ),
     ),

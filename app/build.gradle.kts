@@ -100,6 +100,12 @@ android {
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
+
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
 }
 
 androidComponents {

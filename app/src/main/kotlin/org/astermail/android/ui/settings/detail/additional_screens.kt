@@ -2104,13 +2104,16 @@ fun LanguageScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
     fun save(code: String?) {
         if (code == selected) return
         selected = code
-        org.astermail.android.settings.app_language.store_code(context, code)
         prefs?.let {
             vm.save_preferences(
-                it.copy(language = code.orEmpty(), language_explicit = code != null),
+                it.copy(
+                    language = org.astermail.android.settings.app_language.server_value(code),
+                    language_explicit = code != null,
+                ),
             )
         }
-        activity?.recreate()
+        org.astermail.android.settings.app_language.store_code(context, code)
+        if (!org.astermail.android.settings.app_language.platform_managed) activity?.recreate()
     }
 
     detail_scaffold(title = stringResource(R.string.language), on_back = on_back) {
@@ -2130,7 +2133,7 @@ fun LanguageScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                     on_click = { save(null) },
                 )
                 settings_row_gap(modifier = Modifier)
-                languages.forEachIndexed { idx, (code, name) ->
+                languages.forEachIndexed { idx, (code, name, _) ->
                     choice_option_row(
                         label = name,
                         selected = selected == code,
