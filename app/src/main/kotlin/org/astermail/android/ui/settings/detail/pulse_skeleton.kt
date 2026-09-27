@@ -39,7 +39,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
@@ -59,14 +61,10 @@ private const val pulse_period_ms = 1600
 private const val pulse_min_alpha = 0.55f
 
 @Composable
-internal fun pulse_skeleton(
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.(shimmer_appearance) -> Unit,
-) {
-    val tone = shimmer_state(animated = false)
-    val reduce_motion = aster_reduce_motion()
+private fun pulse_alpha(reduce_motion: Boolean): State<Float> {
+    if (reduce_motion) return remember { mutableFloatStateOf(1f) }
     val transition = rememberInfiniteTransition(label = "pulse_skeleton")
-    val pulse by transition.animateFloat(
+    return transition.animateFloat(
         initialValue = 1f,
         targetValue = pulse_min_alpha,
         animationSpec = infiniteRepeatable(
@@ -75,10 +73,19 @@ internal fun pulse_skeleton(
         ),
         label = "pulse_alpha",
     )
+}
+
+@Composable
+internal fun pulse_skeleton(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.(shimmer_appearance) -> Unit,
+) {
+    val tone = shimmer_state(animated = false)
+    val pulse = pulse_alpha(aster_reduce_motion())
     Column(
         modifier = modifier
             .clearAndSetSemantics {}
-            .graphicsLayer { alpha = if (reduce_motion) 1f else pulse },
+            .graphicsLayer { alpha = pulse.value },
     ) {
         content(tone)
     }
