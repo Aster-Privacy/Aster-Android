@@ -2,6 +2,7 @@
 <resources>
     <plurals name="search_results_count">
         <item quantity="one">%d risultato</item>
+        <item quantity="many">%d risultati</item>
         <item quantity="other">%d risultati</item>
     </plurals>
 </resources>

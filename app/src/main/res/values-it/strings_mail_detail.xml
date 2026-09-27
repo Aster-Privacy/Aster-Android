@@ -20,8 +20,8 @@
     <string name="detail_raw_source_copied">Copiato negli appunti</string>
     <string name="detail_raw_source_close">Chiudi</string>
     <string name="detail_raw_source_unavailable">Il sorgente grezzo non è disponibile per questo messaggio.</string>
-    <string name="detail_star_action">Aggiungi la stella</string>
-    <string name="detail_unstar_action">Togli la stella</string>
+    <string name="detail_star_action">Contrassegna come speciale</string>
+    <string name="detail_unstar_action">Rimuovi da Speciali</string>
     <string name="message_details">Dettagli del messaggio</string>
     <string name="from_label">Da</string>
     <string name="to_label">A</string>

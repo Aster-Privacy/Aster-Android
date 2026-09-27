@@ -86,12 +86,12 @@
     <string name="billing_keep_action">Mantieni %1$s</string>
     <string name="billing_yearly_nudge_title">Paga annualmente e risparmia</string>
     <string name="billing_yearly_nudge_body">%1$s al mese se paghi %2$s una volta all’anno</string>
-    <string name="billing_yearly_save_both">Risparmia %1$s (%2$d %%)</string>
+    <string name="billing_yearly_save_both">Risparmia %1$s (%2$d%%)</string>
     <string name="billing_recap_title">Da quando ti sei iscritto</string>
     <string name="billing_recap_body">Cosa contiene oggi il tuo piano. Aster lo conta sul tuo dispositivo e non lo comunica mai.</string>
     <string name="billing_recap_aliases">alias in uso</string>
     <string name="billing_recap_domains">domini personalizzati</string>
-    <string name="billing_recap_storage">posta cifrata</string>
+    <string name="billing_recap_storage">posta crittografata</string>
     <string name="billing_advantages_title_free">Cosa ottieni con %1$s</string>
     <string name="billing_advantages_title_paid">Cosa include il tuo piano</string>
     <string name="billing_compare_external_accounts">Account esterni</string>

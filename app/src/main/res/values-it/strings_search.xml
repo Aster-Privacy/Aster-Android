@@ -11,13 +11,13 @@
     <string name="search_recent_header">Recenti</string>
     <string name="search_recent_clear">Cancella</string>
     <string name="search_quick_all">Tutto</string>
-    <string name="search_quick_unread">Da leggere</string>
+    <string name="search_quick_unread">Non lette</string>
     <string name="search_quick_attachments">Allegati</string>
     <string name="search_quick_flagged">Contrassegnati</string>
     <string name="search_filter_has_attachment">Con allegato</string>
-    <string name="search_filter_unread">Da leggere</string>
-    <string name="search_filter_starred">Con stella</string>
-    <string name="search_filter_encrypted">Cifrati</string>
+    <string name="search_filter_unread">Non lette</string>
+    <string name="search_filter_starred">Speciali</string>
+    <string name="search_filter_encrypted">Crittografati</string>
     <string name="search_chip_from">Da</string>
     <string name="search_chip_to">A</string>
     <string name="search_chip_contact">Contatto</string>

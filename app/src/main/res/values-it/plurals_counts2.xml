@@ -2,30 +2,37 @@
 <resources>
     <plurals name="aliases_count">
         <item quantity="one">%d alias</item>
+        <item quantity="many">%d alias</item>
         <item quantity="other">%d alias</item>
     </plurals>
     <plurals name="api_keys_count">
         <item quantity="one">%d chiave</item>
+        <item quantity="many">%d chiavi</item>
         <item quantity="other">%d chiavi</item>
     </plurals>
     <plurals name="devices_count">
         <item quantity="one">%d dispositivo</item>
+        <item quantity="many">%d dispositivi</item>
         <item quantity="other">%d dispositivi</item>
     </plurals>
     <plurals name="labels_count">
         <item quantity="one">%d etichetta</item>
+        <item quantity="many">%d etichette</item>
         <item quantity="other">%d etichette</item>
     </plurals>
     <plurals name="ghosts_count">
-        <item quantity="one">%d ghost</item>
-        <item quantity="other">%d ghost</item>
+        <item quantity="one">%d alias ghost</item>
+        <item quantity="many">%d alias ghost</item>
+        <item quantity="other">%d alias ghost</item>
     </plurals>
     <plurals name="recovery_codes_count">
         <item quantity="one">%d codice di recupero</item>
+        <item quantity="many">%d codici di recupero</item>
         <item quantity="other">%d codici di recupero</item>
     </plurals>
     <plurals name="imported_contacts">
         <item quantity="one">%d contatto importato</item>
+        <item quantity="many">%d contatti importati</item>
         <item quantity="other">%d contatti importati</item>
     </plurals>
     <plurals name="n_images">
@@ -34,22 +41,27 @@
     </plurals>
     <plurals name="n_trackers">
         <item quantity="one">%1$d tracker</item>
+        <item quantity="many">%1$d tracker</item>
         <item quantity="other">%1$d tracker</item>
     </plurals>
     <plurals name="n_fonts">
         <item quantity="one">%1$d font</item>
+        <item quantity="many">%1$d font</item>
         <item quantity="other">%1$d font</item>
     </plurals>
     <plurals name="n_stylesheets">
         <item quantity="one">%1$d foglio di stile</item>
+        <item quantity="many">%1$d fogli di stile</item>
         <item quantity="other">%1$d fogli di stile</item>
     </plurals>
     <plurals name="show_n_more_aliases">
-        <item quantity="one">Mostra altro %1$d alias</item>
+        <item quantity="one">Mostra %1$d altro alias</item>
+        <item quantity="many">Mostra altri %1$d alias</item>
         <item quantity="other">Mostra altri %1$d alias</item>
     </plurals>
     <plurals name="show_n_more_folders">
-        <item quantity="one">Mostra altra %1$d cartella</item>
+        <item quantity="one">Mostra %1$d altra cartella</item>
+        <item quantity="many">Mostra altre %1$d cartelle</item>
         <item quantity="other">Mostra altre %1$d cartelle</item>
     </plurals>
     <plurals name="rules_emails_count">
@@ -58,30 +70,37 @@
     </plurals>
     <plurals name="rules_value_label_count">
         <item quantity="one">%1$d etichetta</item>
+        <item quantity="many">%1$d etichette</item>
         <item quantity="other">%1$d etichette</item>
     </plurals>
     <plurals name="stop_senders_title">
         <item quantity="one">Bloccare la posta di %1$d mittente?</item>
+        <item quantity="many">Bloccare la posta di %1$d mittenti?</item>
         <item quantity="other">Bloccare la posta di %1$d mittenti?</item>
     </plurals>
     <plurals name="participants_and_others">
-        <item quantity="one">%1$s e altro %2$d</item>
+        <item quantity="one">%1$s e %2$d altro</item>
+        <item quantity="many">%1$s e altri %2$d</item>
         <item quantity="other">%1$s e altri %2$d</item>
     </plurals>
     <plurals name="messages_in_type">
         <item quantity="one">%1$d messaggio in %2$s</item>
+        <item quantity="many">%1$d messaggi in %2$s</item>
         <item quantity="other">%1$d messaggi in %2$s</item>
     </plurals>
     <plurals name="exported_contacts">
         <item quantity="one">%d contatto esportato</item>
+        <item quantity="many">%d contatti esportati</item>
         <item quantity="other">%d contatti esportati</item>
     </plurals>
     <plurals name="lockout_minutes">
         <item quantity="one">%1$d minuto</item>
+        <item quantity="many">%1$d minuti</item>
         <item quantity="other">%1$d minuti</item>
     </plurals>
     <plurals name="review_codes_left">
         <item quantity="one">Resta %1$d codice di recupero.</item>
+        <item quantity="many">Restano %1$d codici di recupero.</item>
         <item quantity="other">Restano %1$d codici di recupero.</item>
     </plurals>
 </resources>
