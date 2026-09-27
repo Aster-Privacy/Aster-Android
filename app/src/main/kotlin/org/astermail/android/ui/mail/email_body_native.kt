@@ -384,7 +384,7 @@ private fun repair_dark_text_contrast(root: Element) {
     for (element in root.select("[style]")) {
         val style = element.attr("style")
         val match = INLINE_COLOR.find(style) ?: continue
-        if (element.textNodes().none { it.wholeText.isNotBlank() }) continue
+        if (!element.hasText()) continue
         if (declares_background(element)) continue
         val luminance = relative_luminance(match.groupValues[2]) ?: continue
         if (luminance >= 0.35) continue
