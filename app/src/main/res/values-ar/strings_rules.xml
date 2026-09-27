@@ -75,7 +75,7 @@
     <string name="category_info_shopping">تأكيدات الطلبات وتحديثات الشحن وإشعارات التوصيل.</string>
     <string name="custom_categories_title">الفئات المخصصة</string>
     <string name="custom_categories_tutorial">أنشئ فئتك الخاصة. طابق الرسائل حسب نطاق المرسل أو كلمة مفتاحية في الموضوع.</string>
-    <string name="custom_category_locked_badge">مدفوع</string>
+    <string name="custom_category_locked_badge">مقفل</string>
     <string name="add_category">إضافة فئة</string>
     <string name="no_custom_categories">لا توجد فئات مخصصة بعد.</string>
     <string name="category_name_required">أدخل اسمًا لهذه الفئة.</string>
@@ -83,13 +83,13 @@
     <string name="category_domains_invalid">نطاقات غير صالحة: %1$s. استخدم نطاقًا حقيقيًا مثل example.com.</string>
     <string name="category_keywords_invalid">كلمات مفتاحية غير صالحة: %1$s. استخدم كلمات عادية فقط.</string>
     <string name="delete_category_title">حذف الفئة؟</string>
-    <string name="delete_category_description">سيتم حذف \"%1$s\" وستعود رسائلها إلى فئاتها الأصلية.</string>
-    <string name="custom_categories_locked">الفئات المخصصة متاحة في الخطط المدفوعة.</string>
-    <string name="custom_categories_limit_reached">لقد وصلت إلى الحد الأقصى للفئات المخصصة.</string>
+    <string name="delete_category_description">هل تريد بالتأكيد حذف «%1$s»؟ لا يمكن التراجع عن ذلك.</string>
+    <string name="custom_categories_locked">الفئات المخصصة غير متاحة في خطتك الحالية.</string>
+    <string name="custom_categories_limit_reached">لقد بلغت الحد الأقصى للفئات المخصصة في خطتك. قم بالترقية للحصول على المزيد.</string>
     <string name="edit_custom_category">تعديل الفئة</string>
     <string name="new_custom_category">فئة جديدة</string>
     <string name="category_name">اسم الفئة</string>
-    <string name="category_name_placeholder">النشرات البريدية</string>
+    <string name="category_name_placeholder">مثال: النشرات الإخبارية</string>
     <string name="category_icon">الأيقونة</string>
     <string name="category_match_domains">مطابقة نطاقات المرسل</string>
     <string name="category_match_domains_placeholder">example.com, news.example.org</string>
@@ -97,7 +97,7 @@
     <string name="category_match_keywords">مطابقة كلمات الموضوع المفتاحية</string>
     <string name="category_match_keywords_placeholder">نشرة، ملخص</string>
     <string name="category_match_keywords_help">كلمات مفصولة بفواصل. إذا ظهرت أي منها في سطر الموضوع، تنتقل الرسالة إلى هذه الفئة.</string>
-    <string name="category_tutorial_text">تُصنَّف الرسالة ضمن فئتك المخصصة إذا طابقت أي نطاق أو كلمة مفتاحية أدخلتها. تسبق الفئات المخصصة الفئات المدمجة، وتجري المطابقة كاملة على جهازك.</string>
+    <string name="category_tutorial_text">تلميح: تنطبق الفئة المخصصة إذا احتوى نطاق المرسل أو الموضوع على أي من كلماتك المفتاحية. تُفحص الفئات المخصصة قبل الفئات المدمجة، لذا تكون لها الأولوية دائمًا.</string>
     <string name="rules_create_first_folder_hint">أنشئ مجلدًا وستتمكن هذه القاعدة من نقل الرسائل المطابقة إليه.</string>
     <string name="rules_create_first_label_hint">أنشئ تصنيفًا وستتمكن هذه القاعدة من تطبيقه على الرسائل المطابقة.</string>
     <string name="muted_categories">الفئات المكتومة</string>

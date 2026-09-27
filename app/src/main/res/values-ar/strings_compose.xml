@@ -17,7 +17,7 @@
     <string name="signature_select">اختيار التوقيع</string>
     <string name="compose_metadata_strip_failed">تعذّرت إزالة البيانات المخفية من: %1$s</string>
     <string name="compose_inline_image_failed">تعذّرت إضافة هذه الصور: %1$s</string>
-    <string name="compose_attachment_read_failed">تعذّر إرفاق \"%1$s\". لم تُرسل رسالتك. أزل الملف أو أضفه من جديد وحاول مرة أخرى.</string>
+    <string name="compose_attachment_read_failed">تعذّر إرفاق «%1$s». لم تُرسل رسالتك. أزل الملف أو أضفه من جديد وحاول مرة أخرى.</string>
     <string name="schedule_in_one_hour">بعد ساعة</string>
     <string name="schedule_tonight">الليلة</string>
     <string name="schedule_tomorrow_morning">صباح الغد</string>

@@ -16,11 +16,11 @@
     <string name="domain_purchase_show_more">عرض المزيد من النتائج</string>
     <string name="domain_purchase_empty_included">كل نطاق يشمل خصوصية WHOIS، وإعداد DNS نيابةً عنك، وعناوين غير محدودة.</string>
     <string name="domain_purchase_retry">إعادة المحاولة</string>
-    <string name="domain_purchase_progress_note">يرجى الانتظار بينما نسجّل نطاقك ونجهّز صناديق البريد. يستغرق ذلك عادةً نحو دقيقة.</string>
+    <string name="domain_purchase_progress_note">يسجّل Aster Mail نطاقك ويجهّز صناديق بريدك. يستغرق ذلك عادةً نحو دقيقة.</string>
     <string name="domain_purchase_awaiting_note">لم نستلم دفعتك بعد. أكمل عملية الدفع لإتمام طلبك، أو أغلق هذه النافذة وادفع لاحقًا من قسم النطاقات المشتراة.</string>
-    <string name="domain_purchase_purchased_desc">تظهر هنا النطاقات التي تشتريها عبر Aster وتعمل تلقائيًا كنطاقات مخصصة. اختر اسمًا وادفع وابدأ استخدامه فورًا.</string>
+    <string name="domain_purchase_purchased_desc">تظهر هنا النطاقات التي تشتريها عبر Aster Mail، وتعمل تلقائيًا كنطاقات مخصصة.</string>
     <string name="domain_purchase_buy_new">شراء نطاق جديد</string>
-    <string name="domain_purchase_discount_tooltip">سعر السنة الأولى المخفض من المسجّل لدينا. بعد ذلك يتجدد بسعر %1$s سنويًا.</string>
+    <string name="domain_purchase_discount_tooltip">سعر مخفّض للسنة الأولى. بعد ذلك يتجدد بسعر %1$s سنويًا.</string>
     <string name="domain_bimi_title">شعار العلامة التجارية</string>
     <string name="domain_bimi_search_keyword">BIMI</string>
     <string name="domain_bimi_row_off">اعرض شعارك بجانب رسائلك في صناديق الوارد التي تدعم شعارات العلامات التجارية.</string>

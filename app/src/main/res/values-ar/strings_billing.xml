@@ -19,7 +19,7 @@
     <string name="crypto_renewal_today">تنتهي خطتك اليوم، %1$s. جدّدها للاحتفاظ بها.</string>
     <string name="error_attachment_too_large">هذا المرفق أكبر من أن يُرسل.</string>
     <string name="error_conflict">هذا التغيير يتعارض مع حسابك. حدّث الصفحة وحاول مرة أخرى.</string>
-    <string name="error_forbidden">ليس لديك وصول إلى ذلك.</string>
+    <string name="error_forbidden">ليس لديك صلاحية الوصول إلى ذلك.</string>
     <string name="error_network">يتعذّر على Aster الوصول إلى الخادم. تحقق من اتصالك وحاول مرة أخرى.</string>
     <string name="error_not_found">هذا العنصر لم يعد متاحًا.</string>
     <string name="error_payment_required">تحتاج خطتك إلى دفعة قبل أن تتمكن من ذلك.</string>
@@ -88,7 +88,7 @@
     <string name="billing_yearly_nudge_body">%1$s شهريًا عندما تدفع %2$s مرة واحدة في السنة</string>
     <string name="billing_yearly_save_both">وفّر %1$s (%2$d%%)</string>
     <string name="billing_recap_title">منذ انضمامك</string>
-    <string name="billing_recap_body">ما تتضمنه خطتك اليوم. يحسب Aster ذلك على جهازك ولا يبلغ عنه أبدًا.</string>
+    <string name="billing_recap_body">ما تتضمنه خطتك اليوم. يحسب Aster ذلك على جهازك ولا يرسله إلى أي جهة أبدًا.</string>
     <string name="billing_recap_aliases">أسماء مستعارة قيد الاستخدام</string>
     <string name="billing_recap_domains">نطاقات مخصصة</string>
     <string name="billing_recap_storage">بريد مشفّر</string>

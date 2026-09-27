@@ -11,5 +11,5 @@
     <string name="security_activity_yesterday">أمس</string>
     <string name="security_activity_show_more">عرض المزيد</string>
     <string name="security_activity_show_less">عرض أقل</string>
-    <string name="security_activity_empty_filter">لا يوجد نشاط يطابق هذا الفلتر.</string>
+    <string name="security_activity_empty_filter">لا يوجد نشاط يطابق عامل التصفية هذا.</string>
 </resources>

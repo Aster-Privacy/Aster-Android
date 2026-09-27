@@ -58,7 +58,7 @@
     <string name="display_name_optional">الاسم المعروض (اختياري)</string>
     <string name="secure_your_account">تأمين حسابك</string>
     <string name="create_strong_password">أنشئ كلمة مرور قوية لحماية حسابك</string>
-    <string name="new_password">كلمة مرور جديدة</string>
+    <string name="new_password">كلمة المرور الجديدة</string>
     <string name="confirm_password">تأكيد كلمة المرور</string>
     <string name="confirm_password_label">تأكيد كلمة المرور</string>
     <string name="keep_me_signed_in">إبقاء تسجيل الدخول</string>
@@ -80,14 +80,14 @@
     <string name="recovery_email_resend_cooldown">يُرجى الانتظار لحظة قبل إعادة الإرسال</string>
     <string name="recovery_email_already_in_use">هذا العنوان يحمي بالفعل الحد الأقصى وهو 10 حسابات Aster. استخدم عنوانًا آخر.</string>
     <string name="recovery_email_saved">تم حفظ بريد الاسترداد</string>
-    <string name="recovery_email_status_verified">موثّق</string>
+    <string name="recovery_email_status_verified">تم التحقق</string>
     <string name="recovery_email_hidden">محفوظ في هذا الحساب</string>
-    <string name="recovery_email_status_unverified">بانتظار التحقق</string>
+    <string name="recovery_email_status_unverified">في انتظار التحقق</string>
     <string name="skip_for_now">تخطٍّ الآن</string>
     <string name="tap_to_copy">انقر للنسخ</string>
     <string name="copy_to_clipboard">نسخ إلى الحافظة</string>
     <string name="choose_your_plan">اختر خطتك</string>
-    <string name="plan_subtitle">ابدأ مجاناً أو احصل على المزيد مع خطة مدفوعة. يمكنك تغيير ذلك في أي وقت.</string>
+    <string name="plan_subtitle">ابدأ مجانًا أو احصل على المزيد مع خطة مدفوعة. يمكنك تغيير ذلك في أي وقت.</string>
     <string name="loading_plans">جارٍ تحميل الخطط...</string>
     <string name="plan_free">مجاني</string>
     <string name="plan_starter">مبتدئ</string>
@@ -95,7 +95,7 @@
     <string name="starter_tagline">للخصوصية اليومية</string>
     <string name="professional_tagline">للمستخدمين المتقدمين والشركات</string>
     <string name="continue_with_free">المتابعة مجانًا</string>
-    <string name="continue_with_upgrade">المتابعة مع الترقية</string>
+    <string name="continue_with_upgrade">متابعة الترقية</string>
     <string name="monthly">شهري</string>
     <string name="yearly">سنوي</string>
     <string name="free_forever">مجاني للأبد</string>
@@ -140,13 +140,13 @@
     <string name="password_reset_successful">تمت إعادة تعيين كلمة المرور بنجاح</string>
     <string name="password_reset_success_description">تم استرداد حسابك. سجّل الدخول بكلمة المرور الجديدة.</string>
 
-    <string name="folder_inbox">الوارد</string>
+    <string name="folder_inbox">صندوق الوارد</string>
     <string name="folder_sent">المرسل</string>
     <string name="folder_drafts">المسودات</string>
     <string name="folder_archive">الأرشيف</string>
     <string name="folder_starred">المميز بنجمة</string>
-    <string name="folder_scheduled">المجدول</string>
-    <string name="folder_snoozed">المؤجل</string>
+    <string name="folder_scheduled">مجدول</string>
+    <string name="folder_snoozed">مؤجل</string>
     <string name="folder_spam">البريد المزعج</string>
     <string name="folder_trash">سلة المهملات</string>
     <string name="folder_all_mail">كل البريد</string>
@@ -154,8 +154,8 @@
     <string name="folder_subscriptions">الاشتراكات</string>
 
     <string name="all_caught_up">صندوق الوارد فارغ</string>
-    <string name="nothing_in_this_tab">لا شيء في هذه العلامة</string>
-    <string name="other_tabs_have_mail">لا تزال علاماتك الأخرى تحتوي على بريد.</string>
+    <string name="nothing_in_this_tab">لا شيء في علامة التبويب هذه</string>
+    <string name="other_tabs_have_mail">لا تزال علامات التبويب الأخرى تحتوي على بريد.</string>
     <string name="new_messages_here">ستظهر الرسائل الجديدة هنا</string>
     <string name="nothing_sent_yet">لا توجد رسائل مرسلة</string>
     <string name="sent_messages_here">ستظهر الرسائل التي ترسلها هنا</string>
@@ -169,11 +169,11 @@
     <string name="suspicious_caught_here">سيتم اعتراض الرسائل المشبوهة هنا</string>
     <string name="nothing_archived">لا يوجد شيء مؤرشف</string>
     <string name="archive_to_clean">أرشف الرسائل للحفاظ على صندوق الوارد نظيفًا</string>
-    <string name="no_scheduled">لا رسائل مجدولة</string>
+    <string name="no_scheduled">لا توجد رسائل مجدولة</string>
     <string name="scheduled_messages_here">ستظهر الرسائل التي تجدولها هنا</string>
     <string name="nothing_snoozed">لا شيء مؤجل حاليًا</string>
     <string name="snoozed_wake_here">ستستيقظ الرسائل المؤجلة هنا</string>
-    <string name="no_messages">لا رسائل</string>
+    <string name="no_messages">لا توجد رسائل</string>
     <string name="nothing_here_yet">لا يوجد شيء لعرضه بعد</string>
     <string name="sort_newest">الأحدث أولاً</string>
     <string name="sort_oldest">الأقدم أولاً</string>
@@ -200,12 +200,12 @@
     <string name="swipe_delete">حذف</string>
     <string name="swipe_restore">استعادة</string>
     <string name="swipe_delete_forever">حذف نهائي</string>
-    <string name="swipe_not_spam">ليس بريداً مزعجاً</string>
+    <string name="swipe_not_spam">ليس مزعجًا</string>
     <string name="swipe_read">مقروء</string>
     <string name="swipe_unread">غير مقروء</string>
     <string name="swipe_star">نجمة</string>
     <string name="swipe_spam">بريد مزعج</string>
-    <string name="swipe_inbox">الوارد</string>
+    <string name="swipe_inbox">صندوق الوارد</string>
     <string name="swipe_mark_as_read">تعليم كمقروء</string>
     <string name="swipe_mark_as_unread">تعليم كغير مقروء</string>
     <string name="swipe_report_spam">الإبلاغ عن بريد مزعج</string>
@@ -223,7 +223,7 @@
     <string name="e2e_cipher">AES-256-GCM · ML-KEM-768</string>
     <string name="protected_in_transit">محمي أثناء النقل</string>
     <string name="transit_description">مشفر أثناء النقل، ومخزن بشكل آمن على خوادم Aster.</string>
-    <string name="trackers_blocked">تم حظر %d متتبع(ات)</string>
+    <string name="trackers_blocked">المتعقّبات المحظورة: %d</string>
     <string name="trackers_blocked_description">تمت إزالة بكسلات التتبع والطلبات الخارجية.</string>
     <string name="unstar">إزالة النجمة</string>
     <string name="star">نجمة</string>
@@ -241,7 +241,7 @@
     <string name="print">طباعة</string>
     <string name="print_not_available">الطباعة غير متاحة بعد</string>
     <string name="report_spam">الإبلاغ عن بريد مزعج</string>
-    <string name="reported_as_spam">تم الإبلاغ كبريد مزعج</string>
+    <string name="reported_as_spam">تم الإبلاغ عنها كرسالة مزعجة</string>
     <string name="block_sender">حظر المرسل</string>
     <string name="sender_blocked">تم حظر المرسل</string>
     <string name="message_unavailable">الرسالة غير متاحة</string>
@@ -253,7 +253,7 @@
     <string name="forward">تحويل</string>
     <string name="load_content">تحميل المحتوى</string>
     <string name="stop_receiving_from">التوقف عن الاستقبال من</string>
-    <string name="external_content_blocked">تم حظر الصور والخطوط والمتتبعات الخارجية</string>
+    <string name="external_content_blocked">تم حظر الصور والخطوط والمتعقّبات الخارجية</string>
     <string name="e2e_encrypted_message">رسالة مشفرة من طرف إلى طرف</string>
     <string name="decrypt_failed_title">تعذر فك تشفير الرسالة</string>
     <string name="decrypt_failed_body">تم تشفير هذه الرسالة بمفتاح لا يملكه هذا الجهاز حاليًا. حاول مرة أخرى أو افتحها في تطبيق Aster على الويب.</string>
@@ -265,7 +265,7 @@
     <string name="attachment_unnamed">مرفق</string>
     <string name="attachment_locked">لا يمكن فتح هذا المرفق لأن مفتاح التشفير الخاص به غير متوفر على هذا الجهاز.</string>
     <string name="download_complete">اكتمل التنزيل</string>
-    <string name="cannot_decode_image">لا يمكن فك تشفير الصورة</string>
+    <string name="cannot_decode_image">تعذّرت قراءة الصورة</string>
     <string name="no_app_to_open">لا يوجد تطبيق لفتح هذا الملف</string>
     <string name="download">تنزيل</string>
     <string name="open_with">فتح باستخدام...</string>
@@ -283,22 +283,22 @@
     <string name="stop_receiving_domain">التوقف عن الاستقبال من %s</string>
     <string name="dismiss">تجاهل</string>
 
-    <string name="no_messages_in">لا رسائل في %s</string>
+    <string name="no_messages_in">لا توجد رسائل في %s</string>
     <string name="type_folder">مجلد</string>
     <string name="type_label">تصنيف</string>
     <string name="type_alias">اسم مستعار</string>
 
     <string name="subscriptions">الاشتراكات</string>
-    <string name="senders_tracked">مرسلون متتبعون</string>
+    <string name="senders_tracked">مرسلون تتم متابعتهم</string>
     <string name="unsubscribed">تم إلغاء الاشتراك</string>
     <string name="scanning">جارٍ الفحص...</string>
-    <string name="no_mailing_lists">لا قوائم بريدية بعد</string>
-    <string name="scan_inbox_hint">انقر "فحص الوارد" للعثور على النشرات والمرسلين التسويقيين.</string>
+    <string name="no_mailing_lists">لا توجد قوائم بريدية بعد</string>
+    <string name="scan_inbox_hint">انقر على «فحص البريد الوارد» للعثور على النشرات الإخبارية والمرسلين التسويقيين.</string>
     <string name="active_tab">نشط</string>
-    <string name="unsubscribed_tab">ملغى الاشتراك</string>
+    <string name="unsubscribed_tab">الاشتراكات الملغاة</string>
     <string name="reactivate">إعادة التفعيل</string>
     <string name="emails">رسائل</string>
-    <string name="risky">خطر</string>
+    <string name="risky">عالي الخطورة</string>
 
     <string name="compose_reply">رد</string>
     <string name="compose_forward">تحويل</string>
@@ -327,7 +327,7 @@
     <string name="e2e_recipient_description">الرسائل إلى هذا المستلم مشفرة بمفتاح هويته. هو فقط يمكنه قراءتها.</string>
     <string name="transit_recipient_description">الرسائل إلى هذا المستلم مشفرة أثناء النقل باستخدام TLS. قد يتمكن خادم المستلم من قراءتها.</string>
     <string name="format">تنسيق</string>
-    <string name="bold">عريض</string>
+    <string name="bold">غامق</string>
     <string name="italic">مائل</string>
     <string name="underline">تسطير</string>
     <string name="image">صورة</string>
@@ -339,8 +339,8 @@
     <string name="primary_account">الحساب الأساسي</string>
     <string name="alias">اسم مستعار</string>
     <string name="custom_domain">نطاق مخصص</string>
-    <string name="schedule_send">إرسال مجدول</string>
-    <string name="expiring_email">بريد منتهي الصلاحية</string>
+    <string name="schedule_send">جدولة الإرسال</string>
+    <string name="expiring_email">بريد تنتهي صلاحيته</string>
     <string name="save_failed">فشل الحفظ</string>
 
     <string name="search_mail">البحث في البريد</string>
@@ -355,7 +355,7 @@
     <string name="filter_unread_only">غير المقروءة فقط</string>
     <string name="filter_starred">مميز بنجمة</string>
     <string name="filter_encrypted">مشفر</string>
-    <string name="decrypting_indexing">جارٍ فك التشفير والفهرسة...</string>
+    <string name="decrypting_indexing">جارٍ فك تشفير البريد وفهرسته...</string>
     <string name="search_operators">عوامل البحث</string>
     <string name="op_from">from:</string>
     <string name="op_from_desc">بحث حسب المرسل</string>
@@ -370,7 +370,7 @@
     <string name="op_is_starred">is:starred</string>
     <string name="op_is_starred_desc">رسائل مميزة بنجمة</string>
     <string name="op_in_inbox">in:inbox</string>
-    <string name="op_in_inbox_desc">الوارد، المرسل، المهملات، الأرشيف، المزعج</string>
+    <string name="op_in_inbox_desc">صندوق الوارد، المرسل، المهملات، الأرشيف، الرسائل المزعجة</string>
     <string name="op_before">before:</string>
     <string name="op_before_desc">قبل تاريخ</string>
     <string name="op_after">after:</string>
@@ -383,7 +383,7 @@
     <string name="op_negate_desc">نفي أي عامل</string>
     <string name="search_privacy_note">جميع عمليات البحث مشفرة من طرف إلى طرف. يتم فك تشفير بريدك محلياً على هذا الجهاز - لا يتم إرسال شيء إلى الخادم.</string>
     <string name="no_results_found">لم يتم العثور على نتائج</string>
-    <string name="results_count">%d نتيجة(نتائج)</string>
+    <string name="results_count">النتائج: %d</string>
 
     <string name="contacts">جهات الاتصال</string>
     <string name="syncing">جارٍ المزامنة</string>
@@ -403,7 +403,7 @@
     <string name="new_contact">جهة اتصال جديدة</string>
     <string name="contact_unavailable">جهة الاتصال غير متاحة</string>
     <string name="unfavorite">إزالة من المفضلة</string>
-    <string name="favorite">مفضلة</string>
+    <string name="favorite">إضافة إلى المفضلة</string>
     <string name="mail">بريد</string>
     <string name="call">اتصال</string>
     <string name="personal">شخصي</string>
@@ -519,7 +519,7 @@
     <string name="settings_referral">دعوة صديق</string>
     <string name="settings_referral_subtitle">اكسب حصة من كل دفعة يقوم بها أصدقاؤك</string>
     <string name="settings_notifications">الإشعارات</string>
-    <string name="settings_notifications_subtitle">الدفع، الصوت، ساعات الهدوء</string>
+    <string name="settings_notifications_subtitle">الإشعارات الفورية، الصوت، ساعات الهدوء</string>
     <string name="settings_signature">التوقيع</string>
     <string name="settings_templates">القوالب</string>
     <string name="settings_templates_subtitle">مقاطع قابلة لإعادة الاستخدام</string>
@@ -548,7 +548,7 @@
     <string name="color_theme_custom">سمة مخصصة</string>
     <string name="color_theme_purple">بنفسجي</string>
     <string name="color_theme_green">أخضر</string>
-    <string name="color_theme_rose">وردي غامق</string>
+    <string name="color_theme_rose">وردي فاتح</string>
     <string name="color_theme_orange">برتقالي</string>
     <string name="color_theme_teal">أزرق مخضر</string>
     <string name="color_theme_indigo">نيلي</string>
@@ -564,14 +564,14 @@
     <string name="custom_theme_base_color">اللون الأساسي</string>
     <string name="custom_theme_base_color_subtitle">اختر لوناً وسننشئ لوحة ألوان كاملة حوله</string>
     <string name="custom_theme_hex_placeholder">#3b82f6</string>
-    <string name="custom_theme_hex_invalid">أدخل لون سداسي عشري صالح، مثل #3b82f6</string>
+    <string name="custom_theme_hex_invalid">أدخل رمز لون ست عشري صالحًا، مثل #3b82f6</string>
     <string name="custom_theme_upgrade_title">سمة مخصصة</string>
-    <string name="custom_theme_upgrade_description">أنشئ سمة لونية خاصة بك من أي لون أساسي. قم بالترقية لفتحها.</string>
+    <string name="custom_theme_upgrade_description">أنشئ سمة ألوان خاصة بك من أي لون أساسي. قم بالترقية لإتاحتها.</string>
     <string name="font">الخط</string>
     <string name="font_subtitle">اختر الخط المستخدم في التطبيق بالكامل</string>
     <string name="font_option_default">خط Aster الافتراضي</string>
-    <string name="font_option_system">واجهة النظام</string>
-    <string name="font_option_system_mono">خط أحادي النظام</string>
+    <string name="font_option_system">خط النظام</string>
+    <string name="font_option_system_mono">خط النظام أحادي المسافة</string>
     <string name="font_preview_sample">نص تجريبي للخط 123</string>
     <string name="font_option_inter">Inter</string>
     <string name="font_option_roboto">Roboto</string>
@@ -597,11 +597,11 @@
     <string name="font_large">كبير</string>
     <string name="font_extra_large">كبير جداً</string>
     <string name="vision">الرؤية</string>
-    <string name="high_contrast">تباين عالي</string>
+    <string name="high_contrast">تباين عالٍ</string>
     <string name="reduce_transparency">تقليل الشفافية</string>
     <string name="underline_links">تسطير الروابط</string>
     <string name="color_vision">رؤية الألوان</string>
-    <string name="color_vision_none">بلا</string>
+    <string name="color_vision_none">لا شيء</string>
     <string name="color_vision_protanopia">عمى اللون الأحمر</string>
     <string name="color_vision_deuteranopia">عمى اللون الأخضر</string>
     <string name="color_vision_tritanopia">عمى اللون الأزرق</string>
@@ -618,7 +618,7 @@
     <string name="immediately">فوراً</string>
     <string name="after_1_second">بعد ثانية واحدة</string>
     <string name="after_3_seconds">بعد 3 ثوانٍ</string>
-    <string name="never_manual">أبداً (يدوي)</string>
+    <string name="never_manual">أبدًا (يدويًا)</string>
     <string name="default_reply">الرد الافتراضي</string>
     <string name="reply_to_sender">الرد على المرسل</string>
     <string name="reply_to_all">الرد على الكل</string>
@@ -631,14 +631,14 @@
     <string name="send">إرسال</string>
     <string name="auto_save_recipients">حفظ المستلمين تلقائياً في جهات الاتصال</string>
     <string name="undo_send">التراجع عن الإرسال</string>
-    <string name="undo_send_subtitle">نافذة إلغاء مدتها %1$d ثوانٍ</string>
-    <string name="undo_send_delay_seconds">%1$d ثانية</string>
+    <string name="undo_send_subtitle">مهلة الإلغاء بالثواني: %1$d</string>
+    <string name="undo_send_delay_seconds">%1$d ث</string>
     <string name="change_photo">تغيير الصورة</string>
     <string name="confirmations">التأكيدات</string>
     <string name="confirm_before_delete">التأكيد قبل الحذف</string>
     <string name="confirm_before_archive">التأكيد قبل الأرشفة</string>
-    <string name="confirm_before_spam">التأكيد قبل البريد المزعج</string>
-    <string name="haptics">اللمس</string>
+    <string name="confirm_before_spam">التأكيد قبل الإبلاغ عن رسالة مزعجة</string>
+    <string name="haptics">الاستجابة اللمسية</string>
     <string name="haptic_feedback">استجابة لمسية</string>
     <string name="haptic_feedback_subtitle">اهتزاز عند إجراءات السحب</string>
 
@@ -650,7 +650,7 @@
 
     <string name="notifications">الإشعارات</string>
     <string name="channels">القنوات</string>
-    <string name="push_notifications">إشعارات الدفع</string>
+    <string name="push_notifications">الإشعارات الفورية</string>
     <string name="push_notifications_subtitle">تلقي التنبيهات على هذا الجهاز</string>
     <string name="sound">الصوت</string>
     <string name="sound_subtitle">تشغيل صوت عند وصول بريد جديد</string>
@@ -676,7 +676,7 @@
     <string name="two_factor_auth">المصادقة الثنائية</string>
     <string name="two_factor_subtitle_add">إضافة طبقة ثانية</string>
     <string name="active_sessions">الجلسات النشطة</string>
-    <string name="devices_signed_in">الأجهزة المسجلة</string>
+    <string name="devices_signed_in">الأجهزة التي سجّلت الدخول</string>
     <string name="backup_access">الوصول الاحتياطي</string>
 
     <string name="update_your_password">تحديث كلمة المرور</string>
@@ -693,8 +693,8 @@
     <string name="setup_two_factor">إعداد المصادقة الثنائية</string>
     <string name="scan_or_import">1. المسح أو الاستيراد</string>
     <string name="two_factor_qr_code">رمز QR للمصادقة الثنائية</string>
-    <string name="secret">السر</string>
-    <string name="copy_secret">نسخ السر</string>
+    <string name="secret">المفتاح السري</string>
+    <string name="copy_secret">نسخ المفتاح السري</string>
     <string name="open_in_app">فتح في التطبيق</string>
     <string name="enter_6_digit_code">2. أدخل الرمز المكون من 6 أرقام</string>
     <string name="code_placeholder">123456</string>
@@ -711,10 +711,10 @@
     <string name="generating">جارٍ الإنشاء...</string>
     <string name="generate_codes">إنشاء الرموز</string>
     <string name="two_factor_enabled_title">تم تفعيل المصادقة الثنائية</string>
-    <string name="two_factor_enabled_subtitle">احفظ هذه الرموز الاحتياطية في مكان آمن. يمكن استخدام كل واحد مرة واحدة إذا فقدت تطبيق المصادقة.</string>
+    <string name="two_factor_enabled_subtitle">احفظ هذه الرموز الاحتياطية في مكان آمن. يمكن استخدام كل رمز مرة واحدة إذا فقدت تطبيق المصادقة.</string>
     <string name="two_factor_other_devices_signed_out">قام Aster بتسجيل خروجك من أجهزتك الأخرى. لاستخدامها مرة أخرى، سجّل الدخول وأدخل رمزًا من تطبيق المصادقة.</string>
     <string name="new_backup_codes_title">رموز احتياطية جديدة</string>
-    <string name="new_backup_codes_subtitle">لم تعد الرموز الاحتياطية القديمة تعمل. احفظ هذه في مكان آمن.</string>
+    <string name="new_backup_codes_subtitle">لم تعد الرموز الاحتياطية القديمة تعمل. احفظ هذه الرموز في مكان آمن.</string>
 
     <string name="sessions">الجلسات</string>
     <string name="no_active_sessions">لا توجد جلسات نشطة</string>
@@ -736,8 +736,8 @@
     <string name="identity_key">مفتاح الهوية</string>
     <string name="identity_key_active">نشط - مخزن على هذا الجهاز</string>
     <string name="encryption_protocol">بروتوكول التشفير</string>
-    <string name="encryption_protocol_value">AES-256-GCM with HKDF-SHA256</string>
-    <string name="zero_access">وصول صفري</string>
+    <string name="encryption_protocol_value">AES-256-GCM مع HKDF-SHA256</string>
+    <string name="zero_access">انعدام الوصول</string>
     <string name="zero_access_subtitle">الخادم لا يرى النص الأصلي أبداً</string>
     <string name="account">الحساب</string>
     <string name="identity_key_fingerprint">بصمة مفتاح الهوية</string>
@@ -760,7 +760,7 @@
     <string name="no_recovery_key_found">لم يتم العثور على مفتاح استرداد. يتم تعيين رموز الاسترداد أثناء إنشاء الحساب وتخزينها في خزنتك المشفرة. حاول تسجيل الخروج وإعادة الدخول لتحديث خزنتك.</string>
 
     <string name="aliases">الأسماء المستعارة</string>
-    <string name="no_aliases">لا أسماء مستعارة</string>
+    <string name="no_aliases">لا توجد أسماء مستعارة</string>
     <string name="no_aliases_subtitle">لم تقم بإنشاء أي أسماء مستعارة بعد</string>
     <string name="forwards_to_inbox">يحول إلى صندوق الوارد</string>
     <string name="delete_alias">حذف الاسم المستعار</string>
@@ -772,8 +772,8 @@
 
     <string name="ghost_aliases">الأسماء المستعارة الشبحية</string>
     <string name="ghost_aliases_about">حول</string>
-    <string name="ghost_aliases_description">عناوين مؤقتة تحول إلى صندوق الوارد. احرق أي واحد دون التأثير على الباقي.</string>
-    <string name="no_ghost_aliases">لا أسماء مستعارة شبحية</string>
+    <string name="ghost_aliases_description">عناوين مؤقتة تُحوِّل البريد إلى صندوق الوارد. احذف أيًا منها دون التأثير على البقية.</string>
+    <string name="no_ghost_aliases">لا توجد أسماء مستعارة شبحية</string>
     <string name="no_ghost_aliases_subtitle">اكتب رسالة واختر اسماً مستعاراً شبحياً كمرسل لإنشاء واحد</string>
     <string name="forwarded_count">%d محولة</string>
     <string name="expired">منتهي الصلاحية</string>
@@ -806,7 +806,7 @@
     <string name="how_it_works">كيف يعمل</string>
     <string name="referral_step_1">شارك رابط الإحالة مع أي شخص تعتقد أنه سيحب Aster.</string>
     <string name="referral_step_2">يسجلون باستخدام رابطك ويشتركون في خطة مدفوعة.</string>
-    <string name="referral_step_3">تكسب حصة من كل دفعة يقوم بها، تُضاف تلقائيًا إلى رصيدك.</string>
+    <string name="referral_step_3">تكسب حصة من كل دفعة يقومون بها، تُضاف تلقائيًا إلى رصيدك.</string>
     <string name="rewards">المكافآت</string>
     <string name="reward_recurring" formatted="false">تحصل أيضاً على 5% من كل دفعة يقومون بها طوال فترة اشتراكهم.</string>
     <string name="share_invite_link">مشاركة رابط الدعوة</string>
@@ -845,7 +845,7 @@
     <string name="unlimited_aliases">أسماء مستعارة غير محدودة</string>
     <string name="alias_page_indicator">الصفحة %1$d من %2$d</string>
     <string name="unlimited_domains">نطاقات غير محدودة</string>
-    <string name="domains_count">%d نطاقات</string>
+    <string name="domains_count">النطاقات: %d</string>
     <string name="cancel_subscription_title">إلغاء الاشتراك</string>
     <string name="cancel_subscription_description">تظل خطتك نشطة حتى نهاية فترة الفوترة الحالية، ثم تنتقل إلى الخطة المجانية.</string>
     <string name="keep_plan">الاحتفاظ بالخطة</string>
@@ -859,7 +859,7 @@
     <string name="blocked_count">%d محظور</string>
     <string name="unblock">إلغاء الحظر</string>
     <string name="block_a_sender">حظر مُرسِل</string>
-    <string name="block_sender_hint">أدخل عنوان بريد إلكتروني أو نطاقًا. سينتقل البريد الجديد منهم إلى الرسائل غير المرغوب فيها مباشرة.</string>
+    <string name="block_sender_hint">أدخل عنوان بريد إلكتروني أو نطاقًا. سينتقل البريد الجديد منهم مباشرة إلى الرسائل المزعجة.</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">حظر</string>
     <string name="blocked_domain">النطاق بالكامل</string>
@@ -871,8 +871,8 @@
     <string name="remove_from_allowlist">إزالة</string>
 
     <string name="mail_management">إدارة البريد</string>
-    <string name="filters_rules">المرشحات والقواعد</string>
-    <string name="filters">المرشحات</string>
+    <string name="filters_rules">عوامل التصفية والقواعد</string>
+    <string name="filters">عوامل التصفية</string>
     <string name="rules_sort_mail">قواعد فرز البريد الوارد</string>
     <string name="auto_forward">التحويل التلقائي</string>
     <string name="forward_matching">تحويل الرسائل المطابقة</string>
@@ -895,7 +895,7 @@
     <string name="all_mail_forwarded">سيتم تحويل جميع البريد الوارد</string>
     <string name="forward_to">التحويل إلى</string>
     <string name="forward_to_placeholder">destination@example.com</string>
-    <string name="keep_copy_in_inbox">الاحتفاظ بنسخة في الوارد</string>
+    <string name="keep_copy_in_inbox">الاحتفاظ بنسخة في صندوق الوارد</string>
     <string name="create_rule">إنشاء قاعدة</string>
     <string name="auto_forward_saved">تم حفظ إعدادات التحويل التلقائي</string>
     <string name="forwarding_pending_verification">في انتظار التحقق</string>
@@ -937,7 +937,7 @@
     <string name="new_label">جديد</string>
 
     <string name="vacation_reply">رد الإجازة</string>
-    <string name="vacation_reply_description">إرسال ردود تلقائية خارج المكتب للمرسلين الواردين.</string>
+    <string name="vacation_reply_description">أرسل ردودًا تلقائية تفيد بأنك خارج المكتب إلى من يراسلك.</string>
     <string name="vacation_active">نشط</string>
     <string name="vacation_off">متوقف</string>
     <string name="vacation_active_subtitle">سيتلقى المرسلون رداً تلقائياً.</string>
@@ -945,7 +945,7 @@
     <string name="vacation_subject">الموضوع</string>
     <string name="vacation_subject_placeholder">خارج المكتب</string>
     <string name="vacation_reply_body">نص الرد</string>
-    <string name="vacation_reply_placeholder">أنا حالياً بعيد...</string>
+    <string name="vacation_reply_placeholder">أنا خارج المكتب حاليًا…</string>
     <string name="external_senders_only">المرسلون الخارجيون فقط</string>
     <string name="external_senders_subtitle">تخطي الردود التلقائية للأشخاص داخل نطاقك.</string>
     <string name="reply_singular">رد</string>
@@ -976,12 +976,12 @@
 
     <string name="import_title">استيراد</string>
     <string name="mail_import">استيراد البريد</string>
-    <string name="import_description">استيراد البريد من مزود آخر غير متاح بعد على أي عميل Aster. حوّل البريد القديم إلى عنوان Aster أو أعد التحويل التلقائي من المصدر.</string>
+    <string name="import_description">استيراد البريد من مزوّد آخر غير متاح بعد على أي عميل Aster. حوّل البريد القديم إلى عنوان Aster أو اضبط التحويل التلقائي من المصدر.</string>
     <string name="export_title">تصدير</string>
     <string name="mail_export">تصدير البريد</string>
     <string name="export_description">التصدير الجماعي لأرشيفات البريد غير متاح بعد على أي عميل Aster. رسائلك تبقى مشفرة من طرف إلى طرف على الخادم ويمكن استردادها في أي وقت.</string>
-    <string name="filters_title">المرشحات</string>
-    <string name="mail_filters">مرشحات البريد</string>
+    <string name="filters_title">عوامل التصفية</string>
+    <string name="mail_filters">عوامل تصفية البريد</string>
     <string name="filters_description">قواعد البريد على الخادم غير متاحة بعد على أي عميل Aster. استخدم المرسلين المحظورين والتحويل التلقائي والاشتراكات للتحكم ذي الصلة.</string>
     <string name="external_accounts">حسابات خارجية</string>
     <string name="connect_external">ربط حسابات خارجية</string>
@@ -1008,8 +1008,8 @@
     <string name="ext_smtp_username">اسم مستخدم SMTP</string>
     <string name="ext_smtp_password">كلمة مرور SMTP</string>
     <string name="ext_field_email">عنوان البريد الإلكتروني</string>
-    <string name="ext_field_password">كلمة السر</string>
-    <string name="ext_app_password_required">يتطلب هذا المزود كلمة سر للتطبيق، وليس كلمة سر حسابك المعتادة.</string>
+    <string name="ext_field_password">كلمة المرور</string>
+    <string name="ext_app_password_required">يتطلب هذا المزوّد كلمة مرور للتطبيق، وليس كلمة مرور حسابك المعتادة.</string>
     <string name="ext_app_password_create">إنشاء كلمة مرور تطبيق</string>
     <string name="ext_server_settings">إعدادات الخادم</string>
     <string name="ext_server_settings_hint">يملأ Aster هذه الحقول للمزودين المعروفين. غيّرها فقط إذا كان مزودك يستخدم خوادم مختلفة.</string>
@@ -1020,13 +1020,13 @@
     <string name="ext_edit_account">تعديل الإعدادات</string>
     <string name="ext_remove_account">فصل الحساب</string>
     <string name="ext_never_synced">لم تتم المزامنة قط</string>
-    <string name="ext_not_synced">غير مزامَن</string>
+    <string name="ext_not_synced">لم تتم المزامنة</string>
     <string name="ext_sync_ok">نجحت آخر مزامنة</string>
     <string name="ext_sync_error_short">فشلت آخر مزامنة</string>
     <string name="ext_password_reauth">فشل تسجيل الدخول. عدّل الحساب لتحديث كلمة السر.</string>
     <string name="ext_edit_title">تعديل الحساب</string>
     <string name="ext_save_changes">حفظ التغييرات</string>
-    <string name="ext_password_keep">اترك هذا الحقل فارغًا للاحتفاظ بكلمة السر الحالية.</string>
+    <string name="ext_password_keep">اترك هذا الحقل فارغًا للاحتفاظ بكلمة المرور الحالية.</string>
     <string name="ext_account_updated">تم تحديث الحساب</string>
     <string name="ext_error_update_failed">لم يتم حفظ تغييراتك. حاول مرة أخرى.</string>
     <string name="ext_error_toggle_failed">تعذّر تغيير هذا الإعداد. حاول مرة أخرى.</string>
@@ -1063,7 +1063,7 @@
     <string name="ext_error_manual_failed">تعذر حفظ الحساب. تحقق من المضيف والمنفذ وبيانات الاعتماد.</string>
     <string name="ext_error_no_session">انتهت جلستك. سجل الخروج ثم الدخول للمتابعة.</string>
     <string name="ext_error_sync_failed">فشلت المزامنة. تحقق من بيانات اعتماد الحساب وأعد المحاولة.</string>
-    <string name="ext_manual_saved">تم إضافة الحساب. تبدأ المزامنة…</string>
+    <string name="ext_manual_saved">تمت إضافة الحساب. جارٍ بدء المزامنة…</string>
     <string name="ext_last_sync">آخر مزامنة: %1$s</string>
     <string name="ext_section_oauth">تبديل سريع</string>
     <string name="ext_oauth_body">سجّل الدخول عبر مزوّدك لربط حساب في خطوة واحدة.</string>
@@ -1081,8 +1081,8 @@
     <string name="import_task_failed">فشل: %1$d</string>
     <string name="import_task_dead">متروك: %1$d</string>
     <string name="import_pause">إيقاف مؤقت</string>
-    <string name="import_retry_failed">إعادة محاولة الفاشلة</string>
-    <string name="import_recent_failures">أحدث الفشل</string>
+    <string name="import_retry_failed">إعادة محاولة العناصر الفاشلة</string>
+    <string name="import_recent_failures">أحدث الإخفاقات</string>
     <string name="import_failure_reason">%1$s (%2$d)</string>
 
     <string name="storage_title">التخزين</string>
@@ -1102,12 +1102,12 @@
     <string name="most_popular">الأكثر شعبية</string>
     <string name="upgrade">ترقية</string>
     <string name="requires_plan">يتطلب %s</string>
-    <string name="downgrade_to">الرجوع إلى %s</string>
+    <string name="downgrade_to">التخفيض إلى %s</string>
     <string name="upgrade_to">الترقية إلى %s</string>
     <string name="manage_billing_browser">إدارة الفوترة في المتصفح</string>
     <string name="subscription_will_end">سينتهي الاشتراك في تاريخ الفوترة التالي</string>
     <string name="subscription_cancelled">تم إلغاء الاشتراك</string>
-    <string name="subscription_reactivated">تم إعادة تفعيل الاشتراك</string>
+    <string name="subscription_reactivated">تمت إعادة تفعيل الاشتراك</string>
     <string name="billing_changed_to">تم تغيير الفوترة إلى %s</string>
     <string name="default_payment_updated">تم تحديث طريقة الدفع الافتراضية</string>
     <string name="payment_method_removed">تمت إزالة طريقة الدفع</string>
@@ -1122,14 +1122,14 @@
     <string name="set_default_failed">تعذر تعيين طريقة الدفع الافتراضية</string>
     <string name="remove_payment_failed">تعذر إزالة طريقة الدفع</string>
     <string name="no_device_contacts">لم يتم العثور على جهات اتصال على الجهاز</string>
-    <string name="no_new_contacts">لا جهات اتصال جديدة للاستيراد</string>
+    <string name="no_new_contacts">لا توجد جهات اتصال جديدة للاستيراد</string>
     <string name="contact_limit_reached">لقد وصلت إلى الحد الأقصى لجهات الاتصال. قم بترقية خطتك لاستيراد البقية.</string>
 
     <string name="privacy">الخصوصية</string>
     <string name="tracking">التتبع</string>
     <string name="block_tracking_pixels_privacy">حظر بكسلات التتبع</string>
-    <string name="block_tracking_pixels_subtitle">إزالة المتتبعات البعيدة من البريد الوارد</string>
-    <string name="load_remote_images">تحميل الصور البعيدة</string>
+    <string name="block_tracking_pixels_subtitle">إزالة المتعقّبات الخارجية من البريد الوارد</string>
+    <string name="load_remote_images">تحميل الصور الخارجية</string>
     <string name="load_remote_images_subtitle">الإيقاف أكثر خصوصية</string>
     <string name="send_read_receipts">إرسال إشعارات القراءة</string>
     <string name="send_read_receipts_subtitle">إعلام المرسلين بأنك قرأت بريدهم</string>
@@ -1158,23 +1158,23 @@
     <string name="cache_clear_failed">فشل في مسح الذاكرة المؤقتة</string>
 
     <string name="labels">التصنيفات</string>
-    <string name="no_labels">لا تصنيفات</string>
+    <string name="no_labels">لا توجد تصنيفات</string>
     <string name="no_labels_subtitle">لم تقم بإنشاء أي تصنيفات بعد</string>
     <string name="messages_count">%d رسائل</string>
     <string name="delete_label">حذف التصنيف</string>
     <string name="folders">المجلدات</string>
-    <string name="no_folders">لا مجلدات</string>
+    <string name="no_folders">لا توجد مجلدات</string>
     <string name="no_folders_subtitle">لم تقم بإنشاء أي مجلدات بعد</string>
-    <string name="folders_count">%d مجلدات</string>
+    <string name="folders_count">المجلدات: %d</string>
     <string name="delete_folder">حذف المجلد</string>
     <string name="delete_folder_confirm_title">حذف المجلد؟</string>
     <string name="delete_folder_confirm_message">سيُزال «%1$s»، ولا يمكن التراجع. الرسائل بداخله تبقى في حسابك، إنما لن تظل مصنّفة تحت هذا المجلد.</string>
     <string name="delete_folder_confirm_subfolders">سيتم نقل المجلدات الفرعية إلى المستوى الأعلى.</string>
     <string name="delete_label_confirm_title">حذف التصنيف؟</string>
-    <string name="delete_label_confirm_message">سيُزال «%1$s» من كل رسالة يحملها، ولا يمكن التراجع. الرسائل نفسها تبقى في حسابك.</string>
+    <string name="delete_label_confirm_message">سيُزال «%1$s» من كل رسالة تحمله، ولا يمكن التراجع عن ذلك. تبقى الرسائل نفسها في حسابك.</string>
 
     <string name="api_keys">مفاتيح API</string>
-    <string name="no_api_keys">لا مفاتيح API</string>
+    <string name="no_api_keys">لا توجد مفاتيح API</string>
     <string name="no_api_keys_subtitle">أنشئ واحداً أدناه للبدء</string>
     <string name="generate_new_key">إنشاء مفتاح جديد</string>
     <string name="mobile_key">مفتاح الجوال</string>
@@ -1189,7 +1189,7 @@
     <string name="zapier_subtitle">إعداد سير عمل Zapier في تطبيق الويب</string>
     <string name="webhooks">خطافات الويب</string>
     <string name="manage_webhooks">إدارة خطافات الويب</string>
-    <string name="no_active_endpoints">لا نقاط نهاية نشطة</string>
+    <string name="no_active_endpoints">لا توجد نقاط نهاية نشطة</string>
 
     <string name="language">اللغة</string>
     <string name="display_language">لغة العرض</string>
@@ -1205,14 +1205,14 @@
     <string name="remove_named">إزالة %1$s</string>
     <string name="licensed_agpl">مرخص بموجب AGPL-3.0</string>
     <string name="source_on_github">المصدر على GitHub</string>
-    <string name="downgrade">الرجوع</string>
+    <string name="downgrade">تخفيض الخطة</string>
 
     <string name="contacts_permission_required">إذن الوصول لجهات الاتصال مطلوب</string>
 
     <string name="trusted_devices">الأجهزة الموثوقة</string>
     <string name="no_devices_found">لم يتم العثور على أجهزة</string>
     <string name="could_not_load_devices">تعذر تحميل الأجهزة</string>
-    <string name="revoke_all_other">إلغاء جميع الأجهزة الأخرى</string>
+    <string name="revoke_all_other">إبطال وصول جميع الأجهزة الأخرى</string>
     <string name="revoke_all_devices_description">يسجّل الخروج من كل جهاز باستثناء هذا الجهاز.</string>
 
     <string name="error_invalid_email">أدخل بريدًا إلكترونيًا صالحًا</string>
@@ -1265,11 +1265,11 @@
     <string name="email_saved_as_draft">تم حفظ البريد كمسودة</string>
     <string name="failed_to_trash">فشل النقل إلى سلة المهملات</string>
     <string name="failed_to_unarchive">فشل إلغاء الأرشفة</string>
-    <string name="feature">ميزة</string>
+    <string name="feature">الميزة</string>
     <string name="fingerprint_copied">تم نسخ البصمة</string>
     <string name="generate_ghost_alias">إنشاء اسم مستعار شبحي</string>
     <string name="ghost_alias_created">تم إنشاء اسم مستعار شبحي: %s</string>
-    <string name="ghost_alias_subtitle">ينشئ عنوان @realiased.me مؤقت ينتهي تلقائيًا.</string>
+    <string name="ghost_alias_subtitle">أنشئ عنوانًا مؤقتًا على @realiased.me تنتهي صلاحيته تلقائيًا.</string>
     <string name="icon_label">أيقونة</string>
     <string name="load_external_content">تحميل المحتوى الخارجي</string>
     <string name="loading_identity_key">جارٍ تحميل مفتاح الهوية...</string>
@@ -1285,7 +1285,7 @@
     <string name="one_tracker">متعقب واحد</string>
     <string name="pgp_identity_fingerprint">بصمة هوية PGP</string>
     <string name="pin_failed">فشل التثبيت</string>
-    <string name="pinned">مثبت</string>
+    <string name="pinned">تم التثبيت</string>
     <string name="quiet_hours_subtitle_range">كتم الإشعارات %1$s - %2$s</string>
     <string name="restored_to_inbox">تمت الاستعادة إلى صندوق الوارد</string>
     <string name="set_default">تعيين كافتراضي</string>
@@ -1303,17 +1303,17 @@
     <string name="trash_emptied">تم إفراغ سلة المهملات</string>
     <string name="unpin">إلغاء التثبيت</string>
     <string name="unpin_failed">فشل إلغاء التثبيت</string>
-    <string name="unpinned">غير مثبت</string>
+    <string name="unpinned">تم إلغاء التثبيت</string>
     <plurals name="new_mail_notification">
         <item quantity="zero">%d رسالة جديدة</item>
-        <item quantity="one">رسالة جديدة</item>
+        <item quantity="one">رسالة جديدة واحدة</item>
         <item quantity="two">رسالتان جديدتان</item>
         <item quantity="few">%d رسائل جديدة</item>
-        <item quantity="many">%d رسالة جديدة</item>
+        <item quantity="many">%d رسالةً جديدةً</item>
         <item quantity="other">%d رسالة جديدة</item>
     </plurals>
     <string name="enter_current_password">أدخل كلمة المرور الحالية</string>
-    <string name="new_password_min_length">يجب أن تكون كلمة المرور الجديدة 8 أحرف على الأقل</string>
+    <string name="new_password_min_length">يجب أن تتكون كلمة المرور الجديدة من 12 حرفًا على الأقل</string>
     <string name="new_password_max_length">يجب ألا تتجاوز كلمة المرور الجديدة 128 حرفًا</string>
     <string name="new_password_mismatch">كلمة المرور الجديدة والتأكيد غير متطابقين</string>
     <string name="new_password_must_differ">يجب أن تختلف كلمة المرور الجديدة عن الحالية</string>
@@ -1369,17 +1369,17 @@
     <string name="unsubscribe_manual_required">لا يدعم هذا المرسل إلغاء الاشتراك التلقائي. يتيح لك الرابط الموجود في الرسالة إلغاء الاشتراك بنفسك.</string>
     <string name="bulk_unsubscribe_failed">فشل إلغاء الاشتراك المجمع</string>
     <plurals name="unsubscribed_count">
-        <item quantity="zero">لا مرسلين</item>
-        <item quantity="one">تم إلغاء اشتراك %d مرسل</item>
-        <item quantity="two">تم إلغاء اشتراك %d مرسلين</item>
-        <item quantity="few">تم إلغاء اشتراك %d مرسلين</item>
-        <item quantity="many">تم إلغاء اشتراك %d مرسلا</item>
-        <item quantity="other">تم إلغاء اشتراك %d مرسل</item>
+        <item quantity="zero">تم إلغاء الاشتراك من %d مرسل</item>
+        <item quantity="one">تم إلغاء الاشتراك من مرسل واحد</item>
+        <item quantity="two">تم إلغاء الاشتراك من مرسلَين</item>
+        <item quantity="few">تم إلغاء الاشتراك من %d مرسلين</item>
+        <item quantity="many">تم إلغاء الاشتراك من %d مرسلًا</item>
+        <item quantity="other">تم إلغاء الاشتراك من %d مرسل</item>
     </plurals>
     <string name="enter_six_digit_code">أدخل الرمز المكون من 6 أرقام من تطبيق المصادقة</string>
     <string name="session_unavailable_sign_in_again">الجلسة غير متاحة - يرجى تسجيل الدخول مرة أخرى</string>
     <string name="vacation_default_subject">خارج المكتب</string>
-    <string name="vacation_default_body">أنا غائب حاليا وسأرد عند عودتي.</string>
+    <string name="vacation_default_body">أنا غائب حاليًا وسأرد عند عودتي.</string>
     <string name="subject_required">الموضوع مطلوب</string>
     <string name="reply_body_required">نص الرد مطلوب</string>
     <string name="removed">تمت الإزالة</string>
@@ -1399,18 +1399,18 @@
     <string name="settings_plan_free_tagline">كل ما تحتاجه لبدء البريد الخاص والمشفر.</string>
     <string name="settings_plan_star_tagline">مساحة تخزين أكبر، وأسماء مستعارة أكثر، وما يصل إلى 5 نطاقات مخصصة.</string>
     <string name="settings_plan_nova_tagline">مساحة تخزين أكبر ونطاقات مخصصة وأسماء مستعارة غير محدودة.</string>
-    <string name="settings_plan_supernova_tagline">أقصى مساحة، وأعلى الحدود، ودعم مخصص.</string>
+    <string name="settings_plan_supernova_tagline">أكبر مساحة تخزين، وأسماء مستعارة ونطاقات غير محدودة، ودعم مخصص.</string>
     <string name="settings_plan_lead_star">كل ما في Star، بالإضافة إلى:</string>
     <string name="settings_plan_lead_nova">كل ما في Nova، بالإضافة إلى:</string>
     <string name="settings_plan_bullet_e2ee">تشفير من طرف إلى طرف</string>
-    <string name="settings_plan_bullet_zero_knowledge">بنية المعرفة الصفرية</string>
+    <string name="settings_plan_bullet_zero_knowledge">بنية انعدام الوصول</string>
     <string name="settings_plan_bullet_star_storage">50 جيجابايت تخزين مشفر</string>
     <string name="settings_plan_bullet_star_attachments">مرفقات حتى 50 ميغابايت</string>
     <string name="settings_plan_bullet_star_aliases">15 اسماً مستعاراً للبريد</string>
     <string name="settings_plan_bullet_star_domains">5 نطاقات مخصصة</string>
     <string name="settings_plan_bullet_daily_send_limits">حدود إرسال يومية أعلى</string>
     <string name="settings_plan_bullet_star_templates">10 قوالب بريد</string>
-    <string name="settings_plan_bullet_tracker_protection">حماية من المتتبعين</string>
+    <string name="settings_plan_bullet_tracker_protection">الحماية من المتعقّبات</string>
     <string name="settings_plan_bullet_vacation_reply">رد تلقائي لفترة الإجازة</string>
     <string name="settings_plan_bullet_catch_all">عنوان استقبال شامل</string>
     <string name="settings_plan_bullet_auto_forwarding">التحويل التلقائي</string>
@@ -1468,7 +1468,7 @@
     <string name="alias_available">هذا الاسم المستعار متاح.</string>
     <string name="alias_not_available">هذا الاسم المستعار مستخدم بالفعل.</string>
     <string name="alias_check_failed">تعذر التحقق من التوفر. لا يزال بإمكانك محاولة إنشائه.</string>
-    <string name="csrf_unavailable">هذه الجلسة معطوبة! يرجى تسجيل الدخول مرة أخرى.</string>
+    <string name="csrf_unavailable">لم تعد هذه الجلسة صالحة. يرجى تسجيل الدخول مرة أخرى.</string>
     <string name="received_on_prefix">تم الاستلام على %s</string>
     <string name="received_on_label">تم الاستلام على</string>
     <string name="auto_advance_label">بعد الأرشفة أو الحذف</string>
@@ -1583,7 +1583,7 @@
     <string name="mail_rules_field_attachment_size">حجم المرفق</string>
     <string name="mail_rules_field_total_size">الحجم الإجمالي</string>
     <string name="mail_rules_field_recipient_count">عدد المستلمين</string>
-    <string name="mail_rules_field_spam_score">درجة البريد المزعج</string>
+    <string name="mail_rules_field_spam_score">درجة الرسائل المزعجة</string>
     <string name="mail_rules_field_date_received">تاريخ الاستلام</string>
     <string name="mail_rules_field_dkim">DKIM</string>
     <string name="mail_rules_field_spf">SPF</string>
@@ -1612,7 +1612,7 @@
     <string name="search_action">بحث</string>
     <string name="action_failed">فشل الإجراء. يرجى المحاولة مرة أخرى.</string>
     <string name="version_copied">تم نسخ الإصدار</string>
-    <string name="hold_to_copy_version">اضغط مطولا للنسخ</string>
+    <string name="hold_to_copy_version">اضغط مطولًا للنسخ</string>
     <string name="name_copied">تم نسخ الاسم</string>
     <string name="email_copied">تم نسخ عنوان البريد الإلكتروني</string>
     <string name="show_less">عرض أقل</string>
@@ -1634,9 +1634,9 @@
     <string name="info_require_encryption_title">اشتراط التشفير</string>
     <string name="info_require_encryption_desc">أرسل فقط البريد الذي يمكن تشفيره من طرف إلى طرف. إذا لم يكن لدى المستلم مفتاح، فلن تُرسل الرسالة.</string>
     <string name="info_encryption_indicators_title">مؤشرات التشفير</string>
-    <string name="info_encryption_indicators_desc">يعرض رمز قفل على البريد لتعرف بنظرة سريعة إن كانت الرسالة مشفّرة أو موقّعة أو لا شيء منهما.</string>
+    <string name="info_encryption_indicators_desc">يعرض رمز قفل على البريد لتعرف بنظرة سريعة إن كانت الرسالة مشفّرة أو موقّعة أو غير ذلك.</string>
     <string name="info_wkd_title">ما هو WKD؟</string>
-    <string name="info_wkd_desc">معيار يتيح لتطبيقات البريد الأخرى العثور على مفتاحك العام تلقائيًا، فيرسل إليك الآخرون بريدًا مشفرًا دون طلبه.</string>
+    <string name="info_wkd_desc">معيار يتيح لتطبيقات البريد الأخرى العثور على مفتاحك العام تلقائيًا، فيرسل إليك الآخرون بريدًا مشفّرًا دون أن يطلبوا المفتاح منك.</string>
     <string name="info_keyservers_title">ما هي خوادم المفاتيح؟</string>
     <string name="info_keyservers_desc">أدلة عامة يمكن البحث فيها عن المفاتيح بعنوان البريد. معظم خوادم المفاتيح لا تتيح إزالة المفتاح نهائيًا بعد نشره.</string>
     <string name="score_weak">ضعيف</string>
@@ -1650,11 +1650,11 @@
     <string name="check_read_receipts_off">إيصالات القراءة موقوفة</string>
     <plurals name="passkeys_registered_count">
         <item quantity="zero">لا توجد مفاتيح مرور مسجّلة</item>
-        <item quantity="one">مفتاح مرور واحد مُسجّل</item>
-        <item quantity="two">مفتاحا مرور مُسجّلان</item>
-        <item quantity="few">%d مفاتيح مرور مُسجّلة</item>
-        <item quantity="many">%d مفتاح مرور مُسجّلاً</item>
-        <item quantity="other">%d مفتاح مرور مُسجّل</item>
+        <item quantity="one">مفتاح مرور واحد مسجّل</item>
+        <item quantity="two">مفتاحا مرور مسجّلان</item>
+        <item quantity="few">%d مفاتيح مرور مسجّلة</item>
+        <item quantity="many">%d مفتاحَ مرور مسجّلًا</item>
+        <item quantity="other">%d مفتاح مرور مسجّل</item>
     </plurals>
     <string name="archive">أرشفة</string>
     <string name="share_attachment_failed">تعذّر إرفاق بعض الملفات</string>
@@ -1672,35 +1672,35 @@
     <string name="onboarding_slide1_body">بريد خاص يحميك فعلًا.</string>
     <string name="onboarding_slide2_title">مشفّر من طرف إلى طرف</string>
     <string name="onboarding_slide2_body">يتم تشفير كل رسالة بمفاتيحك قبل مغادرة جهازك. ولا يستطيع Aster نفسه قراءة بريدك.</string>
-    <string name="onboarding_slide3_title">صفر تتبّع</string>
+    <string name="onboarding_slide3_title">بلا أي تتبّع</string>
     <string name="onboarding_slide3_body">نخزّن النص المشفّر فقط - لا نصًا واضحًا ولا بيانات وصفية. بياناتك ملكك دائمًا.</string>
     <string name="onboarding_slide4_title">احمِ هويتك</string>
     <string name="onboarding_slide4_body">أنشئ أسماء مستعارة مؤقتة تُحوّل إلى بريدك الحقيقي. احذف أيًا منها دون التأثير على البقية.</string>
     <string name="recovery_step_up_description">لأمانك، أكِّد كلمة المرور للمتابعة.</string>
     <string name="settings_upgrade_cta">ترقية</string>
-    <string name="unlock_aster_premium">افتح Aster المميز</string>
+    <string name="unlock_aster_premium">احصل على مزايا Aster المميزة</string>
     <string name="save_percent">وفّر %1$d%%</string>
     <string name="free">مجاني</string>
     <string name="popular">شائع</string>
     <string name="feature_storage">%1$s من التخزين المشفّر</string>
     <string name="feature_e2e_encryption">تشفير من طرف إلى طرف</string>
-    <string name="feature_zero_knowledge">بنية بدون وصول</string>
+    <string name="feature_zero_knowledge">بنية معدومة الوصول</string>
     <string name="feature_priority_support">دعم ذو أولوية</string>
     <string name="feature_custom_domain_signing">توقيع DKIM لنطاق مخصص</string>
     <string name="message_info">معلومات الرسالة</string>
     <string name="add_recipients">إضافة مستلمين</string>
     <string name="aster_free">Aster المجاني</string>
-    <string name="free_tier_description">أنت على الخطة المجانية. قم بالترقية للحصول على مساحة أكبر ونطاقات مخصصة ودعم ذي أولوية.</string>
+    <string name="free_tier_description">أنت تستخدم الخطة المجانية. قم بالترقية للحصول على مساحة تخزين أكبر ونطاقات مخصصة ودعم ذي أولوية.</string>
     <string name="plan_features_format_v2">%1$s تخزين  -  %2$s  -  %3$s</string>
     <string name="confirm_archive_title">أرشفة؟</string>
     <string name="confirm_archive_message">أرشفة هذا البريد؟</string>
     <string name="confirm_trash_title">نقل إلى المهملات؟</string>
     <string name="confirm_trash_message">نقل هذا البريد إلى المهملات؟</string>
     <string name="confirm_spam_title">وضع علامة كرسالة مزعجة؟</string>
-    <string name="confirm_spam_message">وضع علامة مزعجة على هذا البريد وحظر المرسل؟</string>
+    <string name="confirm_spam_message">هل تريد وضع علامة على هذا البريد كرسالة مزعجة وحظر المرسل؟</string>
     <string name="confirm_delete_permanent_title">حذف نهائي؟</string>
     <string name="confirm_delete_permanent_message">حذف هذا البريد نهائيًا؟ لا يمكن التراجع عن ذلك.</string>
-    <string name="compose_task_label">إنشاء</string>
+    <string name="compose_task_label">كتابة</string>
     <string name="compose_locked_title">Aster مقفل</string>
     <string name="compose_locked_message">افتح قفل Aster لمتابعة الكتابة. مسودتك محفوظة.</string>
     <string name="standard">قياسي</string>
@@ -1735,7 +1735,7 @@
     <string name="tracker_details_hint">أزالها Aster قبل عرض الرسالة، فلا يعرف المرسل عنك شيئًا.</string>
     <string name="spy_pixels_blocked">بكسلات التجسس المحظورة</string>
     <string name="links_cleaned">الروابط المنظّفة</string>
-    <string name="decrypt_retrying">إعادة المحاولة</string>
+    <string name="decrypt_retrying">جارٍ إعادة المحاولة</string>
     <string name="decrypt_retry_failed">ما زال فك تشفير هذه الرسالة متعذرًا</string>
     <string name="trash">المهملات</string>
     <string name="unarchive">إلغاء الأرشفة</string>
@@ -1744,7 +1744,7 @@
     <string name="tracker_protection">الحماية من المتعقّبات</string>
     <string name="encrypted_e2e">مشفّر من طرف إلى طرف</string>
     <string name="encrypted_in_transit">مشفّر أثناء النقل</string>
-    <string name="no_trackers">لا متعقّبات</string>
+    <string name="no_trackers">لا توجد متعقّبات</string>
     <string name="message_location">الموقع</string>
     <string name="lock_message">قفل الرسالة</string>
     <string name="delete_draft">حذف المسودة</string>
@@ -1754,12 +1754,12 @@
     <string name="to_label_prefix">إلى %s</string>
     <string name="failed_to_delete_draft">تعذّر حذف المسودة</string>
     <string name="trash_already_empty">سلة المهملات فارغة بالفعل</string>
-    <string name="empty_spam">إفراغ المزعج</string>
-    <string name="empty_spam_confirm">سيتم حذف كل ما في المزعج نهائيًا. لا يمكن التراجع عن ذلك.</string>
-    <string name="spam_emptied">تم إفراغ المزعج</string>
-    <string name="spam_already_empty">المزعج فارغ بالفعل</string>
-    <string name="failed_empty_spam">تعذّر إفراغ المزعج</string>
-    <string name="recently_deleted_aliases_title">المحذوف مؤخرًا</string>
+    <string name="empty_spam">تفريغ الرسائل المزعجة</string>
+    <string name="empty_spam_confirm">سيتم حذف كل الرسائل المزعجة نهائيًا. لا يمكن التراجع عن ذلك.</string>
+    <string name="spam_emptied">تم تفريغ الرسائل المزعجة</string>
+    <string name="spam_already_empty">مجلد الرسائل المزعجة فارغ بالفعل</string>
+    <string name="failed_empty_spam">تعذّر تفريغ الرسائل المزعجة</string>
+    <string name="recently_deleted_aliases_title">المحذوفة مؤخرًا</string>
     <string name="recently_deleted_aliases_description">استعِد اسمًا مستعارًا حذفته. يُحتفَظ بالأسماء المستعارة المحذوفة لمدة محدودة.</string>
     <string name="recently_deleted_aliases_empty">لا توجد أسماء مستعارة محذوفة.</string>
     <string name="alias_restore">استعادة</string>
@@ -1767,7 +1767,7 @@
     <string name="alias_deleted_at">حُذف %1$s</string>
     <string name="purge_alias_confirm_title">حذف الاسم المستعار نهائيًا؟</string>
     <string name="purge_alias_confirm_message">حذف %1$s نهائيًا؟ لا يمكن التراجع عن ذلك.</string>
-    <string name="empty_trash_confirm_title">إفراغ المهملات؟</string>
+    <string name="empty_trash_confirm_title">تفريغ سلة المهملات؟</string>
     <string name="empty_trash_confirm_message">حذف كل الأسماء المستعارة المحذوفة نهائيًا؟ لا يمكن التراجع عن ذلك.</string>
     <string name="alias_restored">تمت استعادة الاسم المستعار</string>
     <string name="alias_purged">تم حذف الاسم المستعار نهائيًا</string>
@@ -1776,26 +1776,26 @@
     <string name="scan_inbox">فحص البريد الوارد</string>
     <string name="search_senders">البحث في المرسلين</string>
     <string name="deselect_all">إلغاء تحديد الكل</string>
-    <string name="count_selected">%1$d محدد</string>
+    <string name="count_selected">تم تحديد %1$d</string>
     <string name="unsubscribe_selected">إلغاء الاشتراك (%1$d)</string>
     <string name="reactivate_selected">إعادة التفعيل (%1$d)</string>
     <string name="open_unsubscribe_page">فتح صفحة إلغاء الاشتراك</string>
     <string name="stat_active">نشط</string>
-    <string name="stat_unsubscribed">ملغى الاشتراك</string>
+    <string name="stat_unsubscribed">الاشتراكات الملغاة</string>
     <string name="stat_emails">رسائل</string>
     <string name="no_unsubscribed_senders">لا يوجد مرسلون ملغى اشتراكهم بعد</string>
     <string name="active_senders">المرسلون النشطون</string>
     <string name="stop_sender_title">إيقاف البريد من هذا المرسل؟</string>
-    <string name="stop_sender_body">سيطلب Aster من %1$s إزالتك من قائمته. قد يستمر وصول البريد أيامًا قليلة أثناء المعالجة، ويمكنك إعادة تفعيل هذا المرسل في أي وقت من تبويب ملغى الاشتراك.</string>
+    <string name="stop_sender_body">سيطلب Aster من %1$s إزالتك من قائمته. قد يستمر وصول البريد بضعة أيام أثناء معالجة الطلب، ويمكنك إعادة تفعيل هذا المرسل في أي وقت من تبويب «الاشتراكات الملغاة».</string>
     <string name="stop_sender_confirm">إرسال الطلب</string>
-    <string name="stop_senders_body">سيطلب Aster من كل من هؤلاء المرسلين إزالتك من قوائمهم. قد يستمر وصول البريد أيامًا قليلة أثناء المعالجة، ويمكنك إعادة تفعيل أي منهم في أي وقت من تبويب ملغى الاشتراك.</string>
+    <string name="stop_senders_body">سيطلب Aster من كل من هؤلاء المرسلين إزالتك من قوائمهم. قد يستمر وصول البريد بضعة أيام أثناء معالجة الطلب، ويمكنك إعادة تفعيل أي منهم في أي وقت من تبويب «الاشتراكات الملغاة».</string>
     <string name="to_recipients_inline">إلى %1$s</string>
     <string name="cc_recipients_inline">نسخة %1$s</string>
     <string name="bcc_recipients_inline">نسخة مخفية %1$s</string>
     <string name="recipients_required">أضف مستلمًا واحدًا على الأقل</string>
     <string name="e2e_point_device">يُشفَّر على هذا الجهاز قبل الإرسال</string>
     <string name="e2e_point_keys">لا يفتحه إلا مفتاح هوية المستلم</string>
-    <string name="e2e_point_quantum">محصّن ضد هجمات الكم المستقبلية</string>
+    <string name="e2e_point_quantum">محصّن ضد الهجمات الكمّية المستقبلية</string>
     <string name="standard_point_tls">مشفّر أثناء النقل باستخدام TLS</string>
     <string name="standard_point_server">يمكن لخادم البريد المستقبِل قراءة المحتوى</string>
     <string name="standard_point_storage">يُخزَّن مشفّرًا فور وصوله إلى Aster</string>
@@ -1826,7 +1826,7 @@
     <string name="settings_profile">الملف الشخصي</string>
     <string name="settings_plans_billing">الخطط والفوترة</string>
     <string name="settings_storage">التخزين</string>
-    <string name="settings_filters">الفلاتر</string>
+    <string name="settings_filters">عوامل التصفية</string>
     <string name="settings_auto_forward">إعادة توجيه تلقائية</string>
     <string name="settings_vacation_reply">رد الإجازة</string>
     <string name="settings_export">تصدير</string>
@@ -1853,7 +1853,7 @@
     <string name="phishing_signal_display_name_email">الاسم المعروض يحتوي على البريد \"%1$s\" لكن المرسل هو %2$s</string>
     <string name="phishing_show_details">عرض التفاصيل</string>
     <string name="phishing_hide_details">إخفاء التفاصيل</string>
-    <string name="phishing_privacy_note">تم الكشف على جهازك. أستر لا يقرأ بريدك أبدًا.</string>
+    <string name="phishing_privacy_note">تم الكشف على جهازك. لا يقرأ Aster بريدك أبدًا.</string>
     <string name="phishing_signals_heading">علامات تحذيرية وُجدت على هذا الجهاز:</string>
     <string name="phishing_links_disabled">الروابط معطّلة. اكتب \"trust\" لتفعيلها.</string>
     <string name="phishing_trust_placeholder">اكتب \"trust\" لتفعيل الروابط</string>
@@ -1884,23 +1884,23 @@
     <string name="import_provider_proton">Proton Mail</string>
     <string name="import_provider_mbox">ملف MBOX</string>
     <string name="import_provider_eml">ملف EML</string>
-    <string name="theme_dynamic">ألوان الخلفية</string>
+    <string name="theme_dynamic">ألوان خلفية الشاشة</string>
     <string name="theme_dynamic_subtitle">مطابقة ألوان جهازك</string>
     <string name="delete_alias_confirm_message">حذف %1$s نهائيًا؟ سيُرتد البريد المرسل إلى هذا الاسم المستعار.</string>
-    <string name="backup_codes_clipboard_label">رموز الاحتياط</string>
+    <string name="backup_codes_clipboard_label">الرموز الاحتياطية</string>
     <string name="forwarded_message_label">رسالة معاد توجيهها</string>
-    <string name="failed_create_tag">تعذّر إنشاء الوسم</string>
+    <string name="failed_create_tag">تعذّر إنشاء التصنيف</string>
     <string name="failed_create_folder">تعذّر إنشاء المجلد</string>
-    <string name="failed_delete_tag">تعذّر حذف الوسم</string>
+    <string name="failed_delete_tag">تعذّر حذف التصنيف</string>
     <string name="failed_delete_alias">تعذّر حذف الاسم المستعار</string>
     <string name="failed_revoke_api_key">تعذّر إبطال مفتاح API</string>
-    <string name="block_sender_confirm_message">سيذهب البريد الجديد من هذا العنوان مباشرة إلى البريد المزعج. يمكنك التراجع من الإعدادات ضمن المرسلون المحظورون.</string>
+    <string name="block_sender_confirm_message">سيذهب البريد الجديد من هذا العنوان مباشرة إلى الرسائل المزعجة. يمكنك التراجع عن ذلك من الإعدادات ضمن «المرسلون المحظورون».</string>
     <string name="sender_blocked_named">تم حظر %1$s</string>
     <string name="default_signature_name">الافتراضي</string>
     <string name="quiet_hours_start">البداية</string>
     <string name="quiet_hours_end">النهاية</string>
     <string name="revoke_api_key_title">إبطال مفتاح API؟</string>
-    <string name="revoke_api_key_confirm_message">ستتوقف أي تطبيقات تستخدم هذا المفتاح فورًا. لا يمكن التراجع عن هذا.</string>
+    <string name="revoke_api_key_confirm_message">ستتوقف أي تطبيقات تستخدم هذا المفتاح عن العمل فورًا. لا يمكن التراجع عن هذا.</string>
     <string name="signature_name">الاسم</string>
     <string name="signature_apply_to">تطبيق على</string>
     <string name="signature_apply_default">افتراضي (كل الأسماء المستعارة)</string>
@@ -1908,7 +1908,7 @@
     <string name="signature_placement_below">أسفل النص المقتبس</string>
     <string name="signature_placement_inherit">اتباع الإعداد العام</string>
     <string name="signature_alias_conflict">هذا الاسم المستعار له توقيع بالفعل.</string>
-    <string name="signature_rich_preview_note">يحتوي هذا التوقيع على تنسيق منسّق وسيتم إرساله تمامًا كما هو معروض.</string>
+    <string name="signature_rich_preview_note">يحتوي هذا التوقيع على تنسيق غني وسيتم إرساله تمامًا كما هو معروض.</string>
     <string name="signature_edit_as_plain">التحرير كنص عادي</string>
     <string name="signature_placement">الموضع</string>
     <string name="add_signature">إضافة توقيع</string>
@@ -1970,7 +1970,7 @@
     <string name="storage_empty_action">إفراغ</string>
     <string name="storage_trash_hint">البريد المحذوف يظل محسوبًا من مساحتك حتى تُفرغ سلة المهملات.</string>
     <string name="storage_spam_hint">تتم إزالة البريد المزعج تلقائيًا بعد 30 يومًا.</string>
-    <string name="storage_nothing_to_clean">لا شيء للتنظيف الآن.</string>
+    <string name="storage_nothing_to_clean">لا يوجد ما يلزم تنظيفه الآن.</string>
     <string name="storage_share_of_mail">%1$s من بريدك</string>
     <string name="storage_messages_total">%1$s رسالة إجمالًا</string>
     <string name="storage_cleanup_title">%1$s (%2$s)</string>
@@ -1979,11 +1979,11 @@
     <string name="quiet_hours_paywall_description">أوقف الإشعارات خلال فترة هدوء يومية. متاح في Star وما فوق.</string>
     <string name="email_expiration_title">انتهاء صلاحية الرسالة</string>
     <string name="email_expiration_paywall_description">اجعل الرسائل تُحذف تلقائيًا بعد مدة محددة. متاح في Nova وما فوق.</string>
-    <string name="snooze_limit_reached">الخطة المجانية تسمح بـ 15 رسالة مؤجّلة. ارتقِ للحصول على عدد غير محدود.</string>
+    <string name="snooze_limit_reached">تتيح الخطة المجانية تأجيل 15 رسالة. قم بالترقية للحصول على عدد غير محدود.</string>
     <string name="external_accounts_paywall_description">اربط حسابات Gmail وOutlook وYahoo وغيرها عبر IMAP. متاح في Star وما فوق.</string>
     <string name="custom_domains_paywall_description">استخدم نطاقك الخاص للإرسال والاستقبال. متاح في Star وما فوق.</string>
     <string name="catch_all_paywall_description">استقبل البريد على أي عنوان ضمن نطاقك. متاح في Nova وما فوق.</string>
-    <string name="bridge_pairing_paywall_description">اقرن عملاء سطح المكتب مثل Thunderbird أو Apple Mail. متاح في Star وما فوق.</string>
+    <string name="bridge_pairing_paywall_description">اربط برامج البريد على سطح المكتب مثل Thunderbird أو Apple Mail. متاح في Star وما فوق.</string>
     <string name="pgp_custom_keys_paywall_description">ارفع مفاتيح PGP الخاصة بك وقم بتدويرها. متاح في Nova وما فوق.</string>
     <string name="label_password_paywall_description">احمِ التصنيفات بكلمة مرور. متاح في Nova وما فوق.</string>
     <string name="upgrade_in_browser_note">أدر خطتك من المتصفح.</string>
@@ -2001,7 +2001,7 @@
     <string name="deleting_account">جارٍ حذف الحساب…</string>
     <string name="failed_delete_account">تعذّر حذف الحساب</string>
     <string name="delete_account_grace_note">الحذف مجدول بعد 30 يومًا. سجّل الدخول قبل ذلك للإلغاء.</string>
-    <string name="totp_code_optional">رمز التحقق بخطوتين (إن كان مفعّلًا)</string>
+    <string name="totp_code_optional">رمز المصادقة الثنائية (إن كانت مفعّلة)</string>
     <string name="totp_code_required_label">رمز المصادقة أو رمز احتياطي</string>
     <string name="totp_code_required_error">أدخل الرمز المكوّن من 6 أرقام من تطبيق المصادقة، أو أحد رموزك الاحتياطية</string>
     <string name="preferences_locked_retry">تعذّر فتح إعداداتك الآن. يتم عرض الإعدادات الافتراضية، ارجع ثم افتح مجددًا للمحاولة.</string>
@@ -2009,7 +2009,7 @@
     <string name="plan_name_star">تمييز بنجمة</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">المستعر الأعظم</string>
-    <string name="ghost_alias_limit_reached">بلغت حد أسماء الشبح المستعارة لهذا الشهر</string>
+    <string name="ghost_alias_limit_reached">بلغت الحد الشهري للأسماء المستعارة الشبحية</string>
     <string name="ghost_extend_confirm_message">تمديد %s لمدة 30 يومًا إضافية؟</string>
     <string name="ghost_expire_confirm_message">إنهاء %s الآن؟ سيتوقف وصول البريد المرسل إليه إلى صندوقك.</string>
     <string name="ghost_extended">تم تمديد الاسم المستعار الشبح</string>
@@ -2020,9 +2020,9 @@
     <string name="auth_fail_tooltip_spf">يتحقق SPF مما إذا كان الخادم المرسل مصرّحًا له من مالك النطاق. الفشل يعني أن الرسالة أتت من خادم غير معتمد.</string>
     <string name="auth_fail_tooltip_dkim">يتحقق DKIM من توقيع تشفيري يضيفه النطاق المرسل. الفشل يعني أن التوقيع مفقود أو غير صالح أو أن الرسالة عُدّلت.</string>
     <string name="auth_fail_tooltip_dmarc">يخبر DMARC المستقبِلين بما يفعلونه عند فشل SPF أو DKIM. الفشل يعني أن النطاق لا يصرّح بهذه الرسالة صراحةً.</string>
-    <string name="upgrade_modal_title">ارتقِ بخطتك</string>
-    <string name="upgrade_modal_description_generic">لقد بلغت حد خطتك الحالية. ارتقِ للمتابعة.</string>
-    <string name="upgrade_modal_description_specific">لقد بلغت حد %1$s في خطة %2$s. ارتقِ للحصول على المزيد.</string>
+    <string name="upgrade_modal_title">قم بترقية خطتك</string>
+    <string name="upgrade_modal_description_generic">لقد بلغت حد خطتك الحالية. قم بالترقية للمتابعة.</string>
+    <string name="upgrade_modal_description_specific">لقد بلغت حد %1$s في خطة %2$s. قم بالترقية للحصول على المزيد.</string>
     <string name="upgrade_view_plans">عرض الخطط</string>
     <string name="upgrade_buy_storage">إضافة مساحة</string>
     <string name="upgrade_not_now">ليس الآن</string>
@@ -2032,13 +2032,13 @@
     <string name="upgrade_perk_storage">مساحة أكبر للرسائل والمرفقات</string>
     <string name="upgrade_perk_aliases">أسماء مستعارة غير محدودة ونطاقات مخصصة</string>
     <string name="upgrade_perk_domains">نطاقات مخصصة وميزات احترافية</string>
-    <string name="upgrade_perk_features">مرشّحات وقوالب وتواقيع والمزيد</string>
+    <string name="upgrade_perk_features">عوامل التصفية والقوالب والتواقيع والمزيد</string>
     <string name="upgrade_resource_aliases">الأسماء المستعارة</string>
     <string name="upgrade_resource_domains">النطاقات</string>
     <string name="upgrade_resource_contacts">جهات الاتصال</string>
     <string name="upgrade_resource_templates">القوالب</string>
     <string name="upgrade_resource_signatures">التواقيع</string>
-    <string name="upgrade_resource_filters">المرشّحات</string>
+    <string name="upgrade_resource_filters">عوامل التصفية</string>
     <string name="upgrade_resource_generic">هذه الميزة</string>
     <string name="storage_locked_title">المساحة ممتلئة</string>
     <string name="storage_locked_description">سيتم رفض البريد الوارد حتى تحرّر مساحة أو تضيف تخزينًا.</string>
@@ -2046,11 +2046,11 @@
     <string name="usage_of">%1$s من %2$s</string>
     <string name="usage_unlimited">غير محدود</string>
     <string name="usage_storage">التخزين</string>
-    <string name="upgrade_inline_card_title">ارتقِ لإضافة المزيد</string>
+    <string name="upgrade_inline_card_title">قم بالترقية لإضافة المزيد</string>
     <string name="upgrade_inline_card_description">بلغت حد الخطة المجانية. افتح المزيد بخطة مدفوعة.</string>
     <string name="your_key">مفتاحك</string>
     <string name="recovery_codes">رموز الاسترداد</string>
-    <string name="recovery_codes_remaining">تبقّى %1$d من %2$d رمزًا</string>
+    <string name="recovery_codes_remaining">الرموز المتبقية: %1$d من %2$d</string>
     <string name="low">منخفض</string>
     <string name="ok">حسنًا</string>
     <string name="recovery_codes_low_warning">لم يتبقّ لديك سوى عدد قليل من رموز الاسترداد. احصل على رموز جديدة حتى لا تفقد الوصول إلى حسابك.</string>
@@ -2075,7 +2075,7 @@
     <string name="publish_to_wkd_sub">نشر مفتاحك العام في دليل مفاتيح الويب</string>
     <string name="publish_to_keyservers">النشر إلى خوادم المفاتيح</string>
     <string name="publish_to_keyservers_sub">نشر مفتاحك على خوادم المفاتيح العامة</string>
-    <string name="keyserver_publish_failed">مفتاحك العام لم يُنشر إلى خادم المفاتيح. محاولة أخرى ينبغي أن تنجح.</string>
+    <string name="keyserver_publish_failed">لم يُنشر مفتاحك العام على خادم المفاتيح. من المرجّح أن تنجح المحاولة التالية.</string>
     <string name="public_key_copied">تم نسخ المفتاح العام</string>
     <string name="created_at_format">أُنشئ في %1$s</string>
     <string name="identity_key_unavailable_hint">سجّل الدخول مجددًا لاستعادة مواد مفاتيحك.</string>
@@ -2085,7 +2085,7 @@
     <string name="copy_public_key_action">نسخ المفتاح العام</string>
     <string name="encryption_feature_client_side">تشفير على الجهاز</string>
     <string name="encryption_feature_client_side_sub">أنت وحدك من يمكنه قراءة رسائلك</string>
-    <string name="encryption_feature_zero_knowledge">تخزين بدون وصول</string>
+    <string name="encryption_feature_zero_knowledge">تخزين بانعدام الوصول</string>
     <string name="encryption_feature_zero_knowledge_sub">الخوادم لا ترى محتواك الصريح أبدًا</string>
     <string name="encryption_feature_openpgp">متوافق مع OpenPGP</string>
     <string name="encryption_feature_openpgp_sub">يعمل مع عملاء PGP القياسيين</string>
@@ -2101,7 +2101,7 @@
     <string name="underline_links_info_desc">يضيف خطًا سفليًا لكل الروابط في الرسائل حتى يسهل تمييزها دون الاعتماد على اللون وحده.</string>
     <string name="dyslexia_font_subtitle">استخدام خط OpenDyslexic في التطبيق بأكمله</string>
     <string name="dyslexia_font_info_title">خط ملائم لعسر القراءة</string>
-    <string name="dyslexia_font_info_desc">يبدّل خط التطبيق إلى OpenDyslexic، الذي يستخدم أسفلًا أثقل للحروف لتوضيح اتجاهها ومنع انقلابها لدى المصابين بعسر القراءة.</string>
+    <string name="dyslexia_font_info_desc">يبدّل خط التطبيق إلى OpenDyslexic، الذي يجعل الأجزاء السفلية من الحروف أثقل لتوضيح اتجاهها ومنع انقلابها لدى المصابين بعسر القراءة.</string>
     <string name="text_spacing_subtitle">زيادة تباعد الحروف وارتفاع السطر</string>
     <string name="text_spacing_info_title">تباعد النص</string>
     <string name="text_spacing_info_desc">يزيد تباعد الحروف وارتفاع الأسطر في التطبيق بأكمله لتحسين القراءة.</string>
@@ -2123,7 +2123,7 @@
     <string name="conversation_order_label">ترتيب المحادثة</string>
     <string name="show_message_size">إظهار حجم الرسالة</string>
     <string name="relative_dates">التواريخ النسبية</string>
-    <string name="relative_dates_subtitle">إظهار أمس والوقت في الرسائل الحديثة بدلاً من التاريخ</string>
+    <string name="relative_dates_subtitle">إظهار «أمس» ووقت الوصول في الرسائل الحديثة بدلًا من التاريخ</string>
     <string name="relative_dates_info_title">التواريخ النسبية</string>
     <string name="relative_dates_info_desc">عند تفعيل هذا الخيار، تظهر رسائل اليوم بالوقت ورسائل أمس بكلمة أمس. أوقفه لإظهار التاريخ دائماً في قائمة الرسائل والتاريخ والوقت داخل الرسالة نفسها.</string>
     <string name="show_alias_indicators">إظهار مؤشرات الأسماء المستعارة</string>
@@ -2135,11 +2135,11 @@
     <string name="enable_undo_send">تفعيل التراجع عن الإرسال</string>
     <string name="enable_undo_send_subtitle">تأخير الإرسال لتتمكن من التراجع عند الحاجة</string>
     <string name="cancellation_period">مهلة الإلغاء</string>
-    <string name="section_spam_filtering">تصفية البريد المزعج</string>
-    <string name="enable_spam_filtering">تفعيل تصفية البريد المزعج</string>
-    <string name="enable_spam_filtering_subtitle">اكتشاف البريد المزعج تلقائيًا ونقله إلى مجلد المزعج</string>
+    <string name="section_spam_filtering">تصفية الرسائل المزعجة</string>
+    <string name="enable_spam_filtering">تفعيل تصفية الرسائل المزعجة</string>
+    <string name="enable_spam_filtering_subtitle">اكتشاف الرسائل المزعجة تلقائيًا ونقلها إلى مجلد الرسائل المزعجة</string>
     <string name="spam_sensitivity">حساسية التصفية</string>
-    <string name="spam_sensitivity_low">منخفضة - البريد المزعج الواضح فقط</string>
+    <string name="spam_sensitivity_low">منخفضة - الرسائل المزعجة الواضحة فقط</string>
     <string name="spam_sensitivity_medium">متوسطة - موصى بها</string>
     <string name="spam_sensitivity_high">عالية - تصفية صارمة</string>
     <string name="auto_delete_spam">حذف الرسائل المزعجة تلقائيًا بعد</string>
@@ -2155,9 +2155,9 @@
     <string name="folder_lock_on_leave">قفل عند المغادرة</string>
     <string name="folder_lock_explanation">الجلسة: يُفتح حتى تغلق التطبيق أو تنتهي جلستك. عند المغادرة: يُقفل فورًا بمجرد انتقالك لمكان آخر.</string>
     <string name="purge_locked_folder_on_delete">تحديد الحذف النهائي مسبقاً</string>
-    <string name="purge_locked_folder_on_delete_subtitle">عند حذف مجلد محمي بكلمة سر، يُحدَّد خيار إتلاف بريده مسبقاً. ما زلت تؤكد قبل حذف أي شيء.</string>
+    <string name="purge_locked_folder_on_delete_subtitle">عند حذف مجلد محمي بكلمة مرور، يُحدَّد خيار إتلاف بريده مسبقًا. ستؤكد دائمًا قبل حذف أي شيء.</string>
     <string name="delete_protected_folder_title">حذف المجلد المحمي</string>
-    <string name="delete_protected_folder_message">لحذف \"%1$s\"، أدخل كلمة سر حسابك.</string>
+    <string name="delete_protected_folder_message">لحذف «%1$s»، أدخل كلمة مرور حسابك.</string>
     <string name="delete_protected_folder_purge">حذف البريد في هذا المجلد</string>
     <string name="delete_protected_folder_purge_subtitle">تُتلَف الرسائل والمرفقات ونسخها الاحتياطية على كل جهاز.</string>
     <string name="delete_protected_folder_keep_note">يبقى البريد في هذا المجلد ضمن حسابك وينتقل إلى كل البريد.</string>
@@ -2180,7 +2180,7 @@
     <string name="passkeys_none_subtitle">لا توجد مفاتيح مرور بعد</string>
     <string name="section_trusted_devices">الأجهزة الموثوقة</string>
     <string name="no_trusted_devices">لا توجد أجهزة موثوقة</string>
-    <string name="no_trusted_devices_subtitle">ستظهر هنا الأجهزة التي تثق بها لتخطي التحقق بخطوتين</string>
+    <string name="no_trusted_devices_subtitle">ستظهر هنا الأجهزة التي تثق بها لتخطي المصادقة الثنائية</string>
     <string name="revoke_all_trusted_devices">إلغاء جميع الأجهزة الموثوقة</string>
     <string name="section_content_protection">حماية المحتوى</string>
     <string name="section_tracking_protection">حماية التتبع</string>
@@ -2222,11 +2222,11 @@
     <string name="hardware_key_renamed">تم تحديث الاسم</string>
     <string name="trusted_device_default_label">جهاز موثوق</string>
     <string name="trusted_device_expires">ينتهي في</string>
-    <string name="trusted_device_revoke">إلغاء الجهاز</string>
+    <string name="trusted_device_revoke">إبطال الجهاز</string>
     <string name="info">معلومات</string>
     <string name="got_it">فهمت</string>
     <string name="conversation_grouping">تجميع المحادثات</string>
-    <string name="undo_send_cancel_window">مهلة الإلغاء: %1$d ثانية</string>
+    <string name="undo_send_cancel_window">مهلة الإلغاء: %1$d ث</string>
     <string name="no_custom_domains">لا توجد نطاقات مخصصة</string>
     <string name="no_custom_domains_subtitle">أضف نطاقًا مخصصًا لترسل وتستقبل بعنوانك الخاص</string>
     <string name="alias_sender_format">تنسيق المرسل</string>
@@ -2313,7 +2313,7 @@
     <string name="domain_record_value">القيمة</string>
     <string name="domain_record_found">تم العثور عليه</string>
     <string name="domain_record_required">مطلوب</string>
-    <string name="domain_record_recommended">مُستحسن</string>
+    <string name="domain_record_recommended">موصى به</string>
     <string name="domain_add_invalid">أدخل اسم نطاق مثل example.com.</string>
     <string name="domain_add_conflict">هذا النطاق مسجّل بالفعل. راجع قائمة نطاقاتك أو تواصل مع الدعم إذا كان حساب آخر يستخدمه.</string>
     <string name="domain_add_plan_limit">وصلت خطتك إلى حد النطاقات المخصصة. قم بترقية خطتك لإضافة نطاق آخر.</string>
@@ -2322,12 +2322,12 @@
     <string name="domain_verify_pending_generic">بعض السجلات غير ظاهرة بعد. انتظر بضع دقائق، ثم أعد التحقق.</string>
     <string name="domain_verify_rate_limited">لقد وصلت إلى حد عمليات التحقق لهذا النطاق. حاول مرة أخرى لاحقًا.</string>
     <plurals name="domain_verify_rate_limited_minutes">
-        <item quantity="zero">لقد وصلت إلى حد عمليات التحقق لهذا النطاق. حاول مرة أخرى خلال %1$d دقيقة.</item>
-        <item quantity="one">لقد وصلت إلى حد عمليات التحقق لهذا النطاق. حاول مرة أخرى خلال دقيقة واحدة.</item>
-        <item quantity="two">لقد وصلت إلى حد عمليات التحقق لهذا النطاق. حاول مرة أخرى خلال دقيقتين.</item>
-        <item quantity="few">لقد وصلت إلى حد عمليات التحقق لهذا النطاق. حاول مرة أخرى خلال %1$d دقائق.</item>
-        <item quantity="many">لقد وصلت إلى حد عمليات التحقق لهذا النطاق. حاول مرة أخرى خلال %1$d دقيقة.</item>
-        <item quantity="other">لقد وصلت إلى حد عمليات التحقق لهذا النطاق. حاول مرة أخرى خلال %1$d دقيقة.</item>
+        <item quantity="zero">لقد بلغت حد عمليات التحقق لهذا النطاق. أعد المحاولة بعد %1$d دقيقة.</item>
+        <item quantity="one">لقد بلغت حد عمليات التحقق لهذا النطاق. أعد المحاولة بعد دقيقة واحدة.</item>
+        <item quantity="two">لقد بلغت حد عمليات التحقق لهذا النطاق. أعد المحاولة بعد دقيقتين.</item>
+        <item quantity="few">لقد بلغت حد عمليات التحقق لهذا النطاق. أعد المحاولة بعد %1$d دقائق.</item>
+        <item quantity="many">لقد بلغت حد عمليات التحقق لهذا النطاق. أعد المحاولة بعد %1$d دقيقةً.</item>
+        <item quantity="other">لقد بلغت حد عمليات التحقق لهذا النطاق. أعد المحاولة بعد %1$d دقيقة.</item>
     </plurals>
     <string name="create_alias_dialog_title">إنشاء اسم مستعار</string>
     <string name="create_alias_username_label">اسم المستخدم</string>
@@ -2349,7 +2349,7 @@
     <string name="export_device_decrypt_note">سيتم فك تشفير بياناتك على جهازك، لا على الخادم.</string>
     <string name="export_warning_title">سيتم فك تشفير بياناتك</string>
     <string name="export_warning_subtitle">احتفظ بملف التصدير في مكان آمن</string>
-    <string name="export_warning_message">ينشئ هذا التصدير ملف ZIP يحتوي على رسائلك و/أو جهات اتصالك بعد فك تشفيرها. يستطيع أي شخص يحصل على هذا الملف قراءة بياناتك. احفظه في مكان آمن ولا تشاركه.</string>
+    <string name="export_warning_message">ينشئ هذا التصدير ملف ZIP يحتوي على رسائلك أو جهات اتصالك أو كليهما بعد فك تشفيرها. يستطيع أي شخص يحصل على هذا الملف قراءة بياناتك. احفظه في مكان آمن ولا تشاركه.</string>
     <string name="export_acknowledge">أفهم أن هذا التصدير يحتوي على بياناتي بعد فك التشفير</string>
     <string name="export_scope_section">ما تريد تصديره</string>
     <string name="export_scope_emails">الرسائل</string>
@@ -2360,10 +2360,10 @@
     <string name="export_format_mbox">MBOX</string>
     <string name="export_format_mbox_subtitle">ملف واحد - متوافق مع Thunderbird و Apple Mail و Outlook</string>
     <string name="export_format_eml">ملفات EML منفصلة</string>
-    <string name="export_format_eml_subtitle">ملف .eml لكل رسالة، منظمة داخل مجلد</string>
+    <string name="export_format_eml_subtitle">ملف .eml لكل رسالة، وتُنظَّم الملفات داخل مجلد</string>
     <string name="export_start">بدء التصدير</string>
     <string name="export_in_progress">جارٍ تصدير بياناتك</string>
-    <string name="export_progress_emails">%1$d / %2$d رسالة</string>
+    <string name="export_progress_emails">الرسائل: %1$d / %2$d</string>
     <string name="export_complete">اكتمل التصدير</string>
     <string name="export_emails_exported">الرسائل المُصدَّرة</string>
     <string name="export_file_size">حجم الملف</string>
@@ -2397,7 +2397,7 @@
     <string name="crypto_native_status_awaiting">في انتظار الدفع</string>
     <string name="crypto_native_status_detected">تم رصد الدفعة</string>
     <string name="crypto_native_status_confirming_short">جارٍ التأكيد</string>
-    <string name="crypto_native_status_confirming">%1$d من %2$d تأكيدات</string>
+    <string name="crypto_native_status_confirming">التأكيدات: %1$d من %2$d</string>
     <string name="crypto_native_status_credited">تم تفعيل الخطة</string>
     <string name="crypto_native_usd_value_label">المبلغ المستحق</string>
     <string name="crypto_native_expires_in">تنتهي خلال %1$s</string>
@@ -2476,9 +2476,9 @@
     <string name="app_lock_passphrase_mismatch">عبارتا المرور غير متطابقتين. حاول مرة أخرى.</string>
     <string name="app_lock_title">Aster Mail مقفل</string>
     <string name="app_lock_wrong_pin">رمز PIN غير صحيح. حاول مرة أخرى.</string>
-    <string name="app_lock_locked_out">محاولات كثيرة. انتظر قبل المحاولة مجددًا.</string>
+    <string name="app_lock_locked_out">محاولات كثيرة جدًا. انتظر قبل المحاولة مجددًا.</string>
     <string name="app_lock_unlock">فتح القفل</string>
-    <string name="app_lock_use_biometric">استخدام السمات الحيوية</string>
+    <string name="app_lock_use_biometric">استخدام المقاييس الحيوية</string>
     <string name="app_lock_biometric_title">إلغاء قفل Aster Mail</string>
     <string name="app_lock_biometric_subtitle">استخدم بصمتك أو وجهك لفتح القفل</string>
     <string name="app_lock_use_pin">استخدام رمز PIN</string>
@@ -2488,9 +2488,9 @@
     <string name="settings_alias_directories">أدلة الأسماء المستعارة</string>
     <string name="alias_directories">أدلة الأسماء المستعارة</string>
     <string name="alias_directories_description">تتيح لك أدلة الأسماء المستعارة استقبال البريد على أي عنوان يبدأ بمفتاح مشترك. شارك دليلك ليصل إليك أي شخص دون كشف عنوانك الحقيقي.</string>
-    <string name="no_alias_directories">لا توجد أدلة</string>
+    <string name="no_alias_directories">لا توجد أدلة أسماء مستعارة</string>
     <string name="no_alias_directories_subtitle">أنشئ أدلة الأسماء المستعارة على astermail.org لاستخدامها هنا</string>
-    <string name="directories_count">%1$d أدلة</string>
+    <string name="directories_count">الأدلة: %1$d</string>
     <string name="auto_create_on">الإنشاء التلقائي مفعّل</string>
     <string name="settings_family">خطة العائلة</string>
     <string name="family_plan">خطة العائلة</string>
@@ -2522,12 +2522,12 @@
     <string name="image_lightbox_title">معاينة الصورة</string>
     <string name="image_lightbox_failed">تعذّر فتح هذه الصورة.</string>
     <plurals name="aliases_count_plural">
-        <item quantity="zero">%d عنوان بديل</item>
-        <item quantity="one">%d عنوان بديل</item>
-        <item quantity="two">%d عنوانين بديلين</item>
-        <item quantity="few">%d عناوين بديلة</item>
-        <item quantity="many">%d عنوانًا بديلًا</item>
-        <item quantity="other">%d عنوان بديل</item>
+        <item quantity="zero">%d اسم مستعار</item>
+        <item quantity="one">اسم مستعار واحد</item>
+        <item quantity="two">اسمان مستعاران</item>
+        <item quantity="few">%d أسماء مستعارة</item>
+        <item quantity="many">%d اسمًا مستعارًا</item>
+        <item quantity="other">%d اسم مستعار</item>
     </plurals>
     <plurals name="domains_count_plural">
         <item quantity="zero">%d نطاق</item>
@@ -2539,8 +2539,8 @@
     </plurals>
     <plurals name="subscriptions_found_count">
         <item quantity="zero">تم العثور على %d اشتراك جديد</item>
-        <item quantity="one">تم العثور على %d اشتراك جديد</item>
-        <item quantity="two">تم العثور على %d اشتراكين جديدين</item>
+        <item quantity="one">تم العثور على اشتراك جديد واحد</item>
+        <item quantity="two">تم العثور على اشتراكين جديدين</item>
         <item quantity="few">تم العثور على %d اشتراكات جديدة</item>
         <item quantity="many">تم العثور على %d اشتراكًا جديدًا</item>
         <item quantity="other">تم العثور على %d اشتراك جديد</item>
@@ -2570,7 +2570,7 @@
     <string name="forwards_to_folder">يحول إلى %1$s</string>
     <string name="alias_delivery_folder_title">تسليم إلى</string>
     <string name="alias_delivery_folder_subtitle">اختر أين يصل البريد المرسل إلى هذا الاسم المستعار</string>
-    <string name="alias_delivery_folder_missing">مجلد محذوف</string>
+    <string name="alias_delivery_folder_missing">مجلد غير متاح</string>
     <string name="alias_delivery_label_title">تصنيف</string>
     <string name="alias_delivery_label_subtitle">ضع تصنيفًا على البريد المرسل إلى هذا الاسم المستعار</string>
     <string name="alias_delivery_label_none">بدون تصنيف</string>
@@ -2731,14 +2731,14 @@
     <string name="change_folder_color">تغيير اللون</string>
     <string name="folder_color">لون المجلد</string>
     <string name="move_folder_to">نقل إلى</string>
-    <string name="lock_folder_now">اقفل الآن</string>
+    <string name="lock_folder_now">القفل الآن</string>
     <string name="lock_folder">قفل المجلد</string>
     <string name="remove_folder_lock">إزالة القفل</string>
     <string name="lock_folder_message">عيّن كلمة مرور لـ \"%1$s\". ستحتاج إليها لفتح هذا المجلد.</string>
     <string name="remove_folder_lock_message">أدخل كلمة مرور \"%1$s\" لإزالة القفل.</string>
     <string name="failed_update_folder">تعذّر تحديث المجلد</string>
     <string name="folder_actions">إجراءات المجلد</string>
-    <string name="include_spam">تضمين البريد العشوائي</string>
+    <string name="include_spam">تضمين الرسائل المزعجة</string>
     <string name="include_trash">تضمين المهملات</string>
     <string name="mail_list_density">كثافة قائمة البريد</string>
     <string name="density_compact">مضغوط</string>
@@ -2747,8 +2747,8 @@
     <string name="density_comfortable_subtitle">مساحة أكبر حول كل رسالة</string>
     <string name="message_download_status">حالة تنزيل الرسائل: %1$d من %2$d</string>
     <string name="index_download_paused">تم إيقاف تنزيل الرسائل مؤقتًا</string>
-    <string name="index_time_remaining_min">متبق نحو %1$d دقيقة</string>
-    <string name="index_time_remaining_less_min">متبق أقل من دقيقة</string>
+    <string name="index_time_remaining_min">الوقت المتبقي: نحو %1$d د</string>
+    <string name="index_time_remaining_less_min">الوقت المتبقي: أقل من دقيقة</string>
     <string name="pause">إيقاف مؤقت</string>
     <string name="resume">استئناف</string>
     <string name="domain_purchase_banner_title">احصل على نطاق بريدك الخاص</string>
@@ -2771,7 +2771,7 @@
     <string name="domain_purchase_error_limit">لقد وصلت إلى الحد الأقصى للنطاقات في خطتك. قم بالترقية لإضافة المزيد.</string>
     <string name="domain_purchase_error_slow_down">هناك عدد كبير جدًا من طلبات النطاقات الآن. أكمل الطلبات الجارية أو انتظرها.</string>
     <string name="domain_purchase_error_paused">تم إيقاف شراء النطاقات مؤقتًا لبضع دقائق. يرجى المحاولة مرة أخرى بعد قليل.</string>
-    <string name="domain_purchase_error_not_allowed">هذا النطاق غير متاح على حسابك حاليًا. جرّب اسمًا آخر أو تواصل مع الدعم.</string>
+    <string name="domain_purchase_error_not_allowed">لا يمكن لحسابك إتمام عملية الشراء هذه حاليًا. تواصل مع الدعم للمساعدة.</string>
     <string name="domain_purchase_progress_title">جارٍ إعداد %1$s</string>
     <string name="domain_purchase_step_payment">تم استلام الدفعة</string>
     <string name="domain_purchase_step_registering">التسجيل لدى NameSilo</string>
@@ -2813,7 +2813,7 @@
     <string name="domain_purchase_complete_purchase">إتمام الشراء</string>
     <string name="domain_purchase_create_first_address">أنشئ عنوانك الأول</string>
     <string name="domain_purchase_please_wait">لن يستغرق هذا سوى لحظات. يرجى إبقاء التطبيق مفتوحًا.</string>
-    <string name="domain_purchase_warmup_note">تحتاج النطاقات الجديدة بعض الوقت لبناء سمعة إرسال. قد تصل بعض رسائلك الأولى إلى البريد غير المرغوب فيه خلال هذه الفترة.</string>
+    <string name="domain_purchase_warmup_note">تحتاج النطاقات الجديدة بعض الوقت لبناء سمعة إرسال. قد تصل بعض رسائلك الأولى إلى مجلد الرسائل المزعجة خلال هذه الفترة.</string>
     <string name="rename_label">إعادة تسمية التصنيف</string>
     <string name="change_label_color">تغيير اللون</string>
     <string name="change_label_icon">تغيير الأيقونة</string>
@@ -2843,19 +2843,19 @@
     <string name="alias_website_input_placeholder">example.com</string>
     <string name="undecryptable_message_preview">لا يحتوي هذا الجهاز على مفتاح هذه الرسالة.</string>
     <plurals name="archived_messages">
-        <item quantity="zero">لم تتم أرشفة أي رسالة</item>
+        <item quantity="zero">تمت أرشفة %d رسالة</item>
         <item quantity="one">تمت أرشفة رسالة واحدة</item>
         <item quantity="two">تمت أرشفة رسالتين</item>
         <item quantity="few">تمت أرشفة %d رسائل</item>
-        <item quantity="many">تمت أرشفة %d رسالة</item>
+        <item quantity="many">تمت أرشفة %d رسالةً</item>
         <item quantity="other">تمت أرشفة %d رسالة</item>
     </plurals>
     <plurals name="moved_messages_to_trash">
-        <item quantity="zero">لم يتم نقل أي رسالة إلى سلة المهملات</item>
+        <item quantity="zero">تم نقل %d رسالة إلى سلة المهملات</item>
         <item quantity="one">تم نقل رسالة واحدة إلى سلة المهملات</item>
         <item quantity="two">تم نقل رسالتين إلى سلة المهملات</item>
         <item quantity="few">تم نقل %d رسائل إلى سلة المهملات</item>
-        <item quantity="many">تم نقل %d رسالة إلى سلة المهملات</item>
+        <item quantity="many">تم نقل %d رسالةً إلى سلة المهملات</item>
         <item quantity="other">تم نقل %d رسالة إلى سلة المهملات</item>
     </plurals>
     <string name="unsnooze">إلغاء التأجيل</string>
@@ -2864,7 +2864,7 @@
     <string name="couldnt_remove_label">تعذر إزالة التصنيف</string>
     <string name="couldnt_unsnooze">تعذر إلغاء التأجيل</string>
     <string name="domain_verify_slow">تعذّر على Aster إكمال فحص DNS. قد تكون سجلاتك قيد التحقق، لذا حاول مرة أخرى بعد بضع دقائق.</string>
-    <string name="domain_records_verified">تم التحقق من %1$d من %2$d سجل</string>
+    <string name="domain_records_verified">السجلات التي تم التحقق منها: %1$d من %2$d</string>
     <string name="ext_sync_started">بدأت المزامنة</string>
     <string name="ext_account_removed">تمت إزالة الحساب</string>
     <string name="folder_created">تم إنشاء المجلد</string>
@@ -2884,7 +2884,7 @@
     <string name="plan_price_per_month">شهريًا</string>
     <string name="plan_price_per_year">سنويًا</string>
     <string name="plan_save_per_year">وفّر %1$s سنويًا</string>
-    <string name="section_compose_text">نص الإنشاء</string>
+    <string name="section_compose_text">نص الكتابة</string>
     <string name="compose_text_size">حجم النص</string>
     <string name="compose_text_size_subtitle">اختر الحجم الذي تبدأ به الرسائل الجديدة.</string>
     <string name="compose_size_small">صغير</string>
@@ -2892,7 +2892,7 @@
     <string name="compose_size_large">كبير</string>
     <string name="compose_size_huge">كبير جداً</string>
     <string name="compose_text_color">لون النص</string>
-    <string name="compose_text_color_subtitle">أدخل لونًا سداسي عشريًا للرسائل الجديدة، أو استخدم قيمة المظهر.</string>
+    <string name="compose_text_color_subtitle">أدخل لونًا سداسي عشريًا للرسائل الجديدة، أو استخدم اللون الافتراضي للمظهر.</string>
     <string name="compose_text_color_placeholder">#1a73e8</string>
     <string name="compose_text_color_invalid">أدخل لونًا سداسي عشريًا صالحًا، مثل #1a73e8</string>
     <string name="compose_text_color_theme_default">استخدام افتراضي السمة</string>
@@ -2915,8 +2915,8 @@
     <string name="link_device_error_invalid">أدخل الرمز المكون من 8 أحرف الظاهر على الجهاز الآخر.</string>
     <string name="link_device_error_expired">لم يعد هذا الرمز صالحًا. احصل على رمز جديد على الجهاز الآخر ثم أعد المحاولة.</string>
     <string name="link_device_error_already_linked">هذا الجهاز مرتبط بالفعل بحساب آخر.</string>
-    <string name="link_device_error_upgrade_required">يتطلب Aster Bridge خطة Star أو أعلى. رقِّ خطتك لربط Bridge.</string>
-    <string name="link_device_error_rate_limited">محاولات كثيرة. انتظر لحظة ثم أعد المحاولة.</string>
+    <string name="link_device_error_upgrade_required">يتطلب Aster Bridge خطة Star أو أعلى. قم بترقية خطتك لربط Bridge.</string>
+    <string name="link_device_error_rate_limited">محاولات كثيرة جدًا. انتظر لحظة ثم أعد المحاولة.</string>
     <string name="link_device_error_session">جلستك مقفلة. سجّل الدخول مرة أخرى ثم اربط الجهاز.</string>
     <string name="link_device_error_unavailable">ربط الأجهزة غير متاح حاليًا. أعد المحاولة لاحقًا.</string>
     <string name="link_device_error_failed">تعذّر ربط الجهاز. أعد المحاولة.</string>
@@ -2934,7 +2934,7 @@
     <string name="plan_change_due_today">المستحق اليوم: %1$s</string>
     <string name="plan_change_preview_failed">تعذر حساب المبلغ المستحق اليوم. يُعرض السعر الكامل.</string>
     <string name="payment_failed_banner_overdue">لم تتم عملية الدفع. سيتم تقييد الوصول إلى خطة %1$s قريباً.</string>
-    <string name="payment_failed_days_left">سيتم تقييد الوصول خلال %1$d يوماً.</string>
+    <string name="payment_failed_days_left">الأيام المتبقية قبل تقييد الوصول: %1$d</string>
     <string name="payment_failed_one_day_left">سيتم تقييد الوصول خلال يوم واحد.</string>
     <string name="device_verification_failed">تعذر التحقق من هذا الجهاز لإجراء هذا التغيير. سجّل الدخول مرة أخرى على هذا الجهاز، ثم أعد المحاولة.</string>
     <string name="cancel_reason_title">قبل أن تغادر</string>
@@ -3021,32 +3021,32 @@
         <item quantity="one">طُبّقت مرة واحدة</item>
         <item quantity="two">طُبّقت مرتين</item>
         <item quantity="few">طُبّقت %1$d مرات</item>
-        <item quantity="many">طُبّقت %1$d مرة</item>
+        <item quantity="many">طُبّقت %1$d مرةً</item>
         <item quantity="other">طُبّقت %1$d مرة</item>
     </plurals>
     <string name="alias_delete_directory_confirm">حذف %1$s؟ ستتوقف الرسائل المرسلة إلى العناوين الجديدة في هذا الدليل عن الوصول. أما الأسماء المستعارة التي أنشأها الدليل فتظل تعمل. لا يمكن التراجع عن ذلك.</string>
-    <string name="attachment_too_many">يمكن أن تحمل الرسالة الواحدة %1$d مرفقات</string>
+    <string name="attachment_too_many">يمكنك إرفاق ما يصل إلى %1$d من الملفات برسالة واحدة</string>
     <string name="auto_forward_setup_hint">أدخل العنوان الذي تريد إعادة توجيه بريدك إليه، ثم أنشئ القاعدة. يجب أن يؤكد ذلك العنوان الطلب قبل بدء إعادة التوجيه.</string>
     <string name="cancels_format">يُلغى في %s</string>
     <string name="check_for_older_messages">البحث عن رسائل أقدم</string>
     <string name="contact_add_failed">تعذّر حفظ %1$s في جهات الاتصال</string>
     <string name="contact_remove_failed">تعذّرت إزالة %1$s من جهات الاتصال</string>
-    <string name="copy_failed">لم يُنسخ شيء. محاولة أخرى ينبغي أن تنجح.</string>
+    <string name="copy_failed">تعذّر النسخ. حاول مرة أخرى.</string>
     <string name="create_label_subtitle">ميّز الرسائل بلون تختاره</string>
-    <string name="delete_signature_message">يُحذف “%1$s” نهائيًا، ولا يمكنك التراجع عن ذلك.</string>
+    <string name="delete_signature_message">هل تريد حذف «%1$s»؟ لا يمكن التراجع عن ذلك.</string>
     <string name="delete_vacation_reply_confirm">سيتم حذف رسالة الغياب وتواريخها، ولا يمكن التراجع عن ذلك.</string>
     <string name="error_2fa_code_required">أدخل الرمز من تطبيق المصادقة.</string>
     <string name="error_account_password_required">أدخل كلمة سر حسابك.</string>
-    <string name="error_enter_full_email_address">أدخل عنوان بريدك الإلكتروني كاملا، بما في ذلك الجزء الذي يلي علامة @.</string>
-    <string name="error_folder_password_already_set">هذا المجلد لديه كلمة سر بالفعل.</string>
-    <string name="error_folder_password_not_set">هذا المجلد ليس لديه كلمة سر.</string>
+    <string name="error_enter_full_email_address">أدخل عنوان بريدك الإلكتروني كاملًا، بما في ذلك الجزء الذي يلي علامة @.</string>
+    <string name="error_folder_password_already_set">هذا المجلد محمي بكلمة مرور بالفعل.</string>
+    <string name="error_folder_password_not_set">هذا المجلد غير محمي بكلمة مرور.</string>
     <string name="error_image_too_large">هذه الصورة كبيرة جدًا. اختر صورة أصغر.</string>
     <string name="error_invalid_2fa_code">هذا الرمز غير صحيح. تحقق من تطبيق المصادقة وحاول مرة أخرى.</string>
     <string name="error_passkey_unavailable">لا يوجد مفتاح مرور لهذا الحساب على هذا الجهاز. استخدم تطبيق المصادقة أو أضف مفتاح مرور من المتصفح أولاً.</string>
     <string name="error_passkey_failed">تعذر التحقق من مفتاح المرور. حاول مرة أخرى أو استخدم طريقة تسجيل دخول أخرى.</string>
     <string name="error_invalid_backup_code">رمز النسخ الاحتياطي هذا غير مطابق. يعمل كل رمز مرة واحدة فقط، لذا جرّب الرمز التالي غير المستخدم من قائمتك.</string>
     <string name="error_invalid_recovery_phrase">عبارة الاسترداد هذه غير مطابقة. تحقق من ترتيب الكلمات والإملاء ثم حاول مرة أخرى.</string>
-    <string name="error_plan_limit_reached">بلغت حد خطتك الحالية. الترقية أو إزالة بعض العناصر لإفساح المجال سيعيدك إلى التقدم.</string>
+    <string name="error_plan_limit_reached">بلغت حد خطتك الحالية. قم بالترقية أو أزل بعض العناصر لإفساح المجال حتى تتمكن من المتابعة.</string>
     <string name="error_sign_in_code_invalid">لم يعد هذا الرمز صالحًا. اطلب رمزًا جديدًا لمتابعة تسجيل الدخول.</string>
     <string name="error_sign_in_domain_unsupported">سجل الدخول بعنوان astermail.org أو aster.cx الذي سجلت به. العناوين على نطاقك الخاص تصل إلى الحساب نفسه.</string>
     <string name="error_storage_full">تخزينك ممتلئ. لإفساح المجال، رقِّ خطتك أو أزل بعض الرسائل.</string>
@@ -3060,14 +3060,14 @@
     <string name="hardware_key_remove_last_title">هل تريد إزالة آخر مفتاح أمان لديك؟</string>
     <string name="hardware_key_remove_last_description">هذا هو آخر عامل تحقق ثانٍ في حسابك. لإزالته، أدخل كلمة السر.</string>
     <string name="image_insert_failed">تعذّرت إضافة هذه الصورة. ربما تكون كبيرة جدًا أو بتنسيق غير مدعوم.</string>
-    <string name="invalid_recipient_address">“%1$s” ليس عنوان بريد إلكتروني صالحًا</string>
+    <string name="invalid_recipient_address">«%1$s» ليس عنوان بريد إلكتروني صالحًا</string>
     <string name="label_name_taken">يوجد تصنيف بهذا الاسم بالفعل.</string>
-    <string name="mail_rules_run_on_existing_confirm">يُطبّق هذا القاعدة على صندوق بريدك بالكامل وقد ينقل رسائل أو يحذفها، ولا يمكن التراجع عن ذلك.</string>
+    <string name="mail_rules_run_on_existing_confirm">تُطبَّق هذه القاعدة على صندوق بريدك بالكامل وقد تنقل رسائل أو تحذفها، ولا يمكن التراجع عن ذلك.</string>
     <string name="marked_as_read">تم التعليم كمقروء</string>
     <string name="moved_to_folder">نُقل إلى %s</string>
     <string name="no_more_messages">لا مزيد من الرسائل</string>
     <string name="price_per_interval">%1$s / %2$s</string>
-    <string name="purge_all_aliases_message">حذف كل الأسماء المستعارة المحذوفة نهائيًا؟ لا يمكن التراجع عن ذلك.</string>
+    <string name="purge_all_aliases_message">يؤدي هذا إلى إزالة كل الأسماء المستعارة في هذه القائمة نهائيًا. لا يمكن التراجع عن ذلك.</string>
     <string name="recovery_backup_not_saved">لم يتم حفظ هذه الرموز في حسابك بعد، لذلك لا يمكنها استعادته. تحقق من اتصالك ثم أعد المحاولة.</string>
     <string name="are_you_sure">هل أنت متأكد؟</string>
     <string name="go_back">الرجوع</string>
@@ -3090,7 +3090,7 @@
     <string name="send_refusal_attachments_too_large">يتجاوز مجموع هذه المرفقات %1$s، وهو أقصى ما يمكن لرسالة واحدة حمله في خطتك. أزل ملفًا أو صغّر حجمه ليتم الإرسال. تم حفظ مسودتك.</string>
     <string name="send_refusal_recipient_concentration">لقد أرسلت إلى العدد الذي نسمح به من عناوين %1$s خلال ساعة واحدة. إرسال هذا العدد دفعة واحدة إلى مزوّد واحد يؤدي إلى حظر خوادم البريد لدينا. حاول مرة أخرى لاحقًا. تم حفظ مسودتك.</string>
     <string name="send_refusal_that_provider">هذا المزوّد</string>
-    <string name="send_refusal_too_many_attachments">تحتوي هذه الرسالة على أكثر من %1$d مرفقًا، وهو أقصى ما يمكن لرسالة واحدة حمله. أزل بعضها ليتم الإرسال. تم حفظ مسودتك.</string>
+    <string name="send_refusal_too_many_attachments">يتجاوز عدد المرفقات في هذه الرسالة الحد الأقصى لرسالة واحدة (%1$d). أزل بعضها ليتم الإرسال. تم حفظ مسودتك.</string>
     <string name="send_refusal_too_many_recipients">تحتوي هذه الرسالة على مستلمين أكثر مما يمكن لرسالة واحدة الوصول إليه. يمكن لحسابك الإرسال إلى %1$d في المرة الواحدة، ويرتفع هذا الحد خلال أسبوعك الأول. أرسلها على دفعات أصغر. تم حفظ مسودتك.</string>
     <string name="settings_save_failed_banner">لم يتم حفظ تغييراتك. تحقق من اتصالك ثم حاول مرة أخرى.</string>
     <string name="show_email_preview">نص المعاينة</string>
@@ -3108,8 +3108,8 @@
     <string name="vacation_date_not_set">غير محدد</string>
     <string name="vacation_end_date">تاريخ الانتهاء</string>
     <string name="vacation_start_date">تاريخ البدء</string>
-    <string name="wkd_publish_failed">مفتاحك العام لم يُنشر إلى Web Key Directory. محاولة أخرى ينبغي أن تنجح.</string>
-    <string name="wkd_unpublish_failed">مفتاحك العام لا يزال في Web Key Directory. محاولة أخرى ينبغي أن تزيله.</string>
+    <string name="wkd_publish_failed">لم يُنشر مفتاحك العام في Web Key Directory. من المرجّح أن تنجح المحاولة التالية.</string>
+    <string name="wkd_unpublish_failed">لا يزال مفتاحك العام في Web Key Directory. من المرجّح أن تزيله المحاولة التالية.</string>
     <string name="text_color">لون النص</string>
     <string name="highlight_color">لون التمييز</string>
     <string name="clear_formatting">مسح التنسيق</string>
@@ -3117,8 +3117,8 @@
     <string name="alias_directory_separator_hint">يمكن استخدام نقطة أو شرطة مائلة أو علامة زائد أو علامة رقم قبل اسم الدليل.</string>
     <string name="app_lock_biometric_failed">فتح القفل بالمقاييس الحيوية غير متاح. أدخل رمز PIN.</string>
     <string name="applied_to_loaded_only">تم التطبيق على %1$d من %2$d - يشمل هذا الإجراء الرسائل المحمّلة فقط</string>
-    <string name="audit_event_2fa_disabled">تم إيقاف المصادقة بخطوتين</string>
-    <string name="audit_event_2fa_enabled">تم تشغيل المصادقة بخطوتين</string>
+    <string name="audit_event_2fa_disabled">تم تعطيل المصادقة الثنائية</string>
+    <string name="audit_event_2fa_enabled">تم تفعيل المصادقة الثنائية</string>
     <string name="audit_event_account_locked">تم قفل الحساب</string>
     <string name="audit_event_device_removed">تمت إزالة الجهاز</string>
     <string name="audit_event_key_exported">تم تصدير مفتاح التشفير</string>
@@ -3127,7 +3127,7 @@
     <string name="audit_event_lockdown_enabled">تم تشغيل وضع الإغلاق</string>
     <string name="audit_event_login">تم تسجيل الدخول</string>
     <string name="audit_event_logout">تم تسجيل الخروج</string>
-    <string name="audit_event_password_change">تم تغيير كلمة السر</string>
+    <string name="audit_event_password_change">تم تغيير كلمة المرور</string>
     <string name="audit_event_recovery_codes_regenerated">تمت إعادة إنشاء رموز الاسترداد</string>
     <string name="audit_event_session_revoked">تم إلغاء الجلسة</string>
     <string name="audit_event_settings_changed">تم تغيير الإعدادات</string>
@@ -3151,7 +3151,7 @@
     <string name="identity_changed_title">تغيّر مفتاح التشفير</string>
     <string name="mail_rules_aliases_loading">جارٍ تحميل الأسماء المستعارة…</string>
     <plurals name="mail_rules_aliases_selected">
-        <item quantity="zero">لم يتم تحديد أي اسم مستعار</item>
+        <item quantity="zero">تم تحديد %1$d اسم مستعار</item>
         <item quantity="one">تم تحديد اسم مستعار واحد</item>
         <item quantity="two">تم تحديد اسمين مستعارين</item>
         <item quantity="few">تم تحديد %1$d أسماء مستعارة</item>
@@ -3159,12 +3159,12 @@
         <item quantity="other">تم تحديد %1$d اسم مستعار</item>
     </plurals>
     <plurals name="mail_rules_aliases_skipped">
-        <item quantity="zero">لم تكن هناك عناوين مكررة.</item>
-        <item quantity="one">كان عنوان واحد موجودًا في هذه القاعدة، لذلك لم تتم إضافته مرة أخرى.</item>
-        <item quantity="two">كان عنوانان موجودين في هذه القاعدة، لذلك لم تتم إضافتهما مرة أخرى.</item>
-        <item quantity="few">كانت %1$d عناوين موجودة في هذه القاعدة، لذلك لم تتم إضافتها مرة أخرى.</item>
-        <item quantity="many">كان %1$d عنوانًا موجودًا في هذه القاعدة، لذلك لم تتم إضافتها مرة أخرى.</item>
-        <item quantity="other">كان %1$d عنوان موجودًا في هذه القاعدة، لذلك لم تتم إضافتها مرة أخرى.</item>
+        <item quantity="zero">لم تتم إضافة %1$d عنوان مرة أخرى لأنها موجودة بالفعل في هذه القاعدة.</item>
+        <item quantity="one">لم تتم إضافة العنوان مرة أخرى لأنه موجود بالفعل في هذه القاعدة.</item>
+        <item quantity="two">لم تتم إضافة العنوانين مرة أخرى لأنهما موجودان بالفعل في هذه القاعدة.</item>
+        <item quantity="few">لم تتم إضافة %1$d عناوين مرة أخرى لأنها موجودة بالفعل في هذه القاعدة.</item>
+        <item quantity="many">لم تتم إضافة %1$d عنوانًا مرة أخرى لأنها موجودة بالفعل في هذه القاعدة.</item>
+        <item quantity="other">لم تتم إضافة %1$d عنوان مرة أخرى لأنها موجودة بالفعل في هذه القاعدة.</item>
     </plurals>
     <string name="mail_rules_no_alias_matches">لا توجد أسماء مستعارة تطابق بحثك.</string>
     <string name="mail_rules_no_aliases">ليس لديك أي أسماء مستعارة بعد.</string>
@@ -3224,9 +3224,9 @@
     <string name="pgp_signature_unverified">موقّع، غير متحقق منه</string>
     <string name="pgp_signature_valid">تم التحقق من التوقيع</string>
     <string name="pgp_signature_invalid">التوقيع غير مطابق</string>
-    <string name="pgp_recipient_description">شفّر المرسل هذه الرسالة باستخدام OpenPGP قبل إرسالها. لا يمكن فك تشفيرها إلا على جهاز يحمل مفتاحك الخاص، لذا لا يمكن لأحد في المنتصف قراءتها.</string>
+    <string name="pgp_recipient_description">شفّر المرسل هذه الرسالة باستخدام OpenPGP قبل إرسالها. لا يمكن فك تشفيرها إلا على جهاز يحمل مفتاحك الخاص، لذا لا يستطيع أي طرف وسيط قراءتها.</string>
     <string name="error_account_locked">حسابك مقفل مؤقتًا. حاول مرة أخرى لاحقًا.</string>
-    <string name="error_account_probation">حسابك عليه قيود مؤقتة.</string>
+    <string name="error_account_probation">تُفرض على حسابك قيود مؤقتة.</string>
     <string name="error_account_suspended">حسابك موقوف بسبب مخالفة شروط الخدمة.</string>
     <string name="error_alias_reencryption_incomplete">لم تكتمل إعادة تشفير بعض الأسماء المستعارة، لذلك لم يتغير شيء. حاول مرة أخرى.</string>
     <string name="error_client_upgrade_required">لا يمكن لهذا الإصدار من التطبيق إجراء هذا التغيير. حدّث إلى أحدث إصدار ثم حاول مرة أخرى.</string>
@@ -3259,35 +3259,35 @@
     <string name="select_contacts_hint">انقر على صورة الملف الشخصي لتحديد جهة اتصال.</string>
     <plurals name="groups_count_plural">
         <item quantity="zero">%d مجموعة</item>
-        <item quantity="one">%d مجموعة</item>
-        <item quantity="two">%d مجموعتين</item>
+        <item quantity="one">مجموعة واحدة</item>
+        <item quantity="two">مجموعتان</item>
         <item quantity="few">%d مجموعات</item>
-        <item quantity="many">%d مجموعة</item>
+        <item quantity="many">%d مجموعةً</item>
         <item quantity="other">%d مجموعة</item>
     </plurals>
     <plurals name="group_members_plural">
         <item quantity="zero">%d عضو</item>
-        <item quantity="one">%d عضو</item>
-        <item quantity="two">%d عضوين</item>
+        <item quantity="one">عضو واحد</item>
+        <item quantity="two">عضوان</item>
         <item quantity="few">%d أعضاء</item>
         <item quantity="many">%d عضوًا</item>
         <item quantity="other">%d عضو</item>
     </plurals>
     <plurals name="duplicate_contacts_found">
         <item quantity="zero">%d جهة اتصال تبدو مكررة</item>
-        <item quantity="one">%d جهة اتصال تبدو مكررة</item>
-        <item quantity="two">%d جهتا اتصال تبدوان مكررتين</item>
+        <item quantity="one">جهة اتصال واحدة تبدو مكررة</item>
+        <item quantity="two">جهتا اتصال تبدوان مكررتين</item>
         <item quantity="few">%d جهات اتصال تبدو مكررة</item>
-        <item quantity="many">%d جهة اتصال تبدو مكررة</item>
+        <item quantity="many">%d جهةَ اتصال تبدو مكررة</item>
         <item quantity="other">%d جهة اتصال تبدو مكررة</item>
     </plurals>
     <plurals name="delete_contacts_title">
-        <item quantity="zero">حذف %d جهة اتصال؟</item>
-        <item quantity="one">حذف %d جهة اتصال؟</item>
-        <item quantity="two">حذف %d جهتي اتصال؟</item>
-        <item quantity="few">حذف %d جهات اتصال؟</item>
-        <item quantity="many">حذف %d جهة اتصال؟</item>
-        <item quantity="other">حذف %d جهة اتصال؟</item>
+        <item quantity="zero">هل تريد حذف %d جهة اتصال؟</item>
+        <item quantity="one">هل تريد حذف جهة اتصال واحدة؟</item>
+        <item quantity="two">هل تريد حذف جهتي اتصال؟</item>
+        <item quantity="few">هل تريد حذف %d جهات اتصال؟</item>
+        <item quantity="many">هل تريد حذف %d جهةَ اتصال؟</item>
+        <item quantity="other">هل تريد حذف %d جهة اتصال؟</item>
     </plurals>
     <plurals name="contacts_deleted_plural">
         <item quantity="zero">تم حذف %d جهة اتصال</item>
@@ -3457,14 +3457,14 @@
     <string name="import_provider_mbox_desc">رفع ملفات MBOX أو EML أو PST</string>
     <string name="other_devices">أجهزة أخرى</string>
     <string name="other_devices_with_count">أجهزة أخرى (%d)</string>
-    <string name="no_other_devices">لا توجد أجهزة أخرى مسجّل الدخول عليها</string>
+    <string name="no_other_devices">لم يُسجَّل الدخول على أي جهاز آخر</string>
     <plurals name="devices_show_more">
-        <item quantity="zero">عرض %d إضافية</item>
-        <item quantity="one">عرض %d إضافية</item>
-        <item quantity="two">عرض %d إضافية</item>
-        <item quantity="few">عرض %d إضافية</item>
-        <item quantity="many">عرض %d إضافية</item>
-        <item quantity="other">عرض %d إضافية</item>
+        <item quantity="zero">عرض %d جهاز إضافي</item>
+        <item quantity="one">عرض جهاز إضافي واحد</item>
+        <item quantity="two">عرض جهازين إضافيين</item>
+        <item quantity="few">عرض %d أجهزة إضافية</item>
+        <item quantity="many">عرض %d جهازًا إضافيًا</item>
+        <item quantity="other">عرض %d جهاز إضافي</item>
     </plurals>
     <string name="enc_key_fingerprint_label">بصمة المفتاح</string>
     <string name="category_notifications_muted_toast">تم كتم الإشعارات لـ %1$s</string>
@@ -3524,10 +3524,10 @@
     <string name="reset_account_title">هل تريد إعادة تعيين حسابك؟</string>
     <string name="review_devices_signed_out">تم تسجيل الخروج من الأجهزة الأخرى.</string>
     <string name="review_no_recovery_email">لا يوجد بريد استرداد.</string>
-    <string name="review_recovery_email_kept">بريد الاسترداد ما زال مضبوطًا.</string>
+    <string name="review_recovery_email_kept">لا يزال بريد الاسترداد مفعّلًا.</string>
     <string name="review_security_desc">تم تغيير كلمة المرور واسترداد حسابك.</string>
     <string name="review_security_title">راجع أمان حسابك</string>
-    <string name="review_two_step_off">التحقق بخطوتين متوقف.</string>
+    <string name="review_two_step_off">التحقق بخطوتين معطّل.</string>
     <string name="send_reset_link">إرسال رابط إعادة التعيين</string>
     <string name="try_another_way">جرب طريقة أخرى</string>
     <string name="profile_menu_storage_used">التخزين المستخدم</string>
@@ -3551,14 +3551,14 @@
     <string name="connection_relay_disconnected">غير متصل</string>
     <string name="search_groups">البحث في المجموعات</string>
     <string name="search_trash">البحث في المهملات</string>
-    <string name="no_groups_match">لا توجد مجموعات تطابق \"%1$s\"</string>
+    <string name="no_groups_match">لا توجد مجموعات تطابق «%1$s»</string>
     <string name="captcha_verifying">جارٍ التحقق من أنك إنسان</string>
     <string name="captcha_unavailable">تعذّر تحميل التحقق. تحقق من اتصالك ثم أعد المحاولة.</string>
     <string name="captcha_retry">إعادة المحاولة</string>
     <string name="connection_relay_failed">تعذّر تغيير طريقة الاتصال. أعد المحاولة.</string>
     <string name="all_emails">كل الرسائل</string>
     <string name="read_only">المقروءة فقط</string>
-    <string name="with_attachments">التي تحتوي مرفقات</string>
+    <string name="with_attachments">تحتوي على مرفقات</string>
     <string name="quick_actions">إجراءات سريعة</string>
     <string name="archive_all_read_emails">أرشفة الرسائل المقروءة</string>
     <string name="delete_emails_older_than_30_days">حذف الرسائل الأقدم من 30 يومًا</string>
@@ -3567,10 +3567,10 @@
     <string name="contacts_bulk_progress">جارٍ حذف %1$d من أصل %2$d جهة اتصال</string>
     <string name="plan_badge_thanks">شكرًا لاشتراكك في %1$s.</string>
     <string name="quick_action_unavailable">هذا الإجراء السريع غير متاح في هذا المجلد</string>
-    <string name="quick_action_no_unread">لا يوجد شيء لوضع علامة مقروء عليه هنا</string>
+    <string name="quick_action_no_unread">لا يوجد شيء لتعليمه كمقروء هنا</string>
     <string name="quick_action_no_read">لا توجد رسائل مقروءة لأرشفتها هنا</string>
     <string name="quick_action_no_old">لا توجد رسائل أقدم من 30 يومًا هنا</string>
-    <string name="quick_action_delete_old_confirm">هل تريد نقل %1$d محادثة أقدم من 30 يومًا إلى المهملات؟</string>
+    <string name="quick_action_delete_old_confirm">هل تريد نقل المحادثات الأقدم من 30 يومًا (%1$d) إلى المهملات؟</string>
     <string name="change_address">تغيير العنوان</string>
     <string name="address_change_title">غيّر عنوانك</string>
     <string name="address_change_intro_lead">اقرأ ما سيتغير قبل المتابعة.</string>
