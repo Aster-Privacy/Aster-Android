@@ -1988,7 +1988,7 @@
     <string name="totp_code_required_error">Doğrulayıcı uygulamanızdaki 6 haneli kodu ya da yedek kodlarınızdan birini girin</string>
     <string name="preferences_locked_retry">Ayarlarınız şu anda açılamadı. Varsayılanlar gösteriliyor, yeniden denemek için geri dönüp tekrar açın.</string>
     <string name="preferences_decrypt_failed">Kayıtlı ayarlarınız bu cihazda okunamadı. Varsayılanlar gösteriliyor, burada yaptığınız değişiklikler kaydedilir.</string>
-    <string name="plan_name_star">Yıldızla</string>
+    <string name="plan_name_star">Star</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Süpernova</string>
     <string name="ghost_alias_limit_reached">Bu ayki hayalet takma ad sınırına ulaştınız</string>

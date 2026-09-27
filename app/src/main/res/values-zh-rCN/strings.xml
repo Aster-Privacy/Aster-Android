@@ -1984,7 +1984,7 @@
     <string name="totp_code_required_error">请输入验证器应用中的 6 位验证码，或任一备份代码</string>
     <string name="preferences_locked_retry">暂时无法解锁您的设置。当前显示默认值，返回后重新打开可再试。</string>
     <string name="preferences_decrypt_failed">本设备无法读取您保存的设置。当前显示默认值，您在这里的更改仍会保存。</string>
-    <string name="plan_name_star">加星标</string>
+    <string name="plan_name_star">Star</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">超新星</string>
     <string name="ghost_alias_limit_reached">本月的幽灵别名已达上限</string>

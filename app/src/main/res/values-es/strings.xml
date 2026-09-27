@@ -1993,7 +1993,7 @@
     <string name="totp_code_required_error">Introduce el código de 6 dígitos de tu app de autenticación o uno de tus códigos de respaldo</string>
     <string name="preferences_locked_retry">No pudimos desbloquear tus ajustes ahora mismo. Se muestran los valores predeterminados, vuelve atrás y ábrelo de nuevo.</string>
     <string name="preferences_decrypt_failed">No se pudieron leer tus ajustes guardados en este dispositivo. Se muestran los predeterminados y los cambios que hagas aquí sí se guardarán.</string>
-    <string name="plan_name_star">Destacar</string>
+    <string name="plan_name_star">Star</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Supernova</string>
     <string name="ghost_alias_limit_reached">Has llegado al límite de alias fantasma de este mes</string>

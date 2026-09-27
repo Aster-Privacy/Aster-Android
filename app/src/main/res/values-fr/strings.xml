@@ -2076,7 +2076,7 @@
     <string name="plan_desc_supernova">Stockage maximal, les limites les plus élevées et une assistance dédiée.</string>
     <string name="plan_features_format_v2">%1$s de stockage - %2$s - %3$s</string>
     <string name="plan_name_nova">Nova</string>
-    <string name="plan_name_star">Étoile</string>
+    <string name="plan_name_star">Star</string>
     <string name="plan_name_supernova">Supernova</string>
     <string name="popular">Populaire</string>
     <string name="public_key_copied">Clé publique copiée dans le presse-papiers</string>

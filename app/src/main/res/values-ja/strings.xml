@@ -1984,7 +1984,7 @@
     <string name="totp_code_required_error">認証アプリの 6 桁のコード、またはバックアップコードのいずれかを入力してください</string>
     <string name="preferences_locked_retry">いま設定を復号できませんでした。既定値を表示しています。戻ってから開き直してください。</string>
     <string name="preferences_decrypt_failed">保存された設定をこの端末で読み取れませんでした。既定値を表示しています。ここでの変更は保存されます。</string>
-    <string name="plan_name_star">スターを付ける</string>
+    <string name="plan_name_star">Star</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">超新星</string>
     <string name="ghost_alias_limit_reached">今月のゴーストエイリアスの上限に達しました</string>

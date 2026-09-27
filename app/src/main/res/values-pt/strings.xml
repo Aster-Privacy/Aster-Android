@@ -1988,7 +1988,7 @@
     <string name="totp_code_required_error">Digite o código de 6 dígitos do seu app autenticador ou um dos códigos de backup</string>
     <string name="preferences_locked_retry">Não deu para desbloquear suas configurações agora. Mostrando os padrões, volte e abra de novo.</string>
     <string name="preferences_decrypt_failed">Não foi possível ler suas configurações salvas neste aparelho. Mostrando os padrões, e o que você mudar aqui será salvo.</string>
-    <string name="plan_name_star">Estrela</string>
+    <string name="plan_name_star">Star</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Supernova</string>
     <string name="ghost_alias_limit_reached">Limite de aliases fantasma deste mês atingido</string>

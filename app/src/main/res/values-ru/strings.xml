@@ -1996,7 +1996,7 @@
     <string name="totp_code_required_error">Введите 6-значный код из приложения аутентификации или один из резервных кодов</string>
     <string name="preferences_locked_retry">Сейчас не удалось разблокировать ваши настройки. Показаны значения по умолчанию. Вернитесь назад и откройте их снова.</string>
     <string name="preferences_decrypt_failed">Не удалось прочитать сохранённые настройки на этом устройстве. Показаны значения по умолчанию. Изменения, которые вы внесёте здесь, будут сохранены.</string>
-    <string name="plan_name_star">Отметить звёздочкой</string>
+    <string name="plan_name_star">Star</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Сверхновая</string>
     <string name="ghost_alias_limit_reached">Достигнут лимит призрачных псевдонимов на этот месяц</string>

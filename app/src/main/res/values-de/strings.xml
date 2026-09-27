@@ -1989,7 +1989,7 @@
     <string name="totp_code_required_error">Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App oder einen Ihrer Backup-Codes ein</string>
     <string name="preferences_locked_retry">Ihre Einstellungen ließen sich gerade nicht entsperren. Es werden Standardwerte angezeigt. Gehen Sie zurück und öffnen Sie sie erneut.</string>
     <string name="preferences_decrypt_failed">Ihre gespeicherten Einstellungen konnten auf diesem Gerät nicht gelesen werden. Es werden Standardwerte angezeigt. Änderungen, die Sie hier vornehmen, werden gespeichert.</string>
-    <string name="plan_name_star">Stern</string>
+    <string name="plan_name_star">Star</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Supernova</string>
     <string name="ghost_alias_limit_reached">Limit für Ghost-Aliasse in diesem Monat erreicht</string>

@@ -2004,7 +2004,7 @@
     <string name="totp_code_required_error">أدخل الرمز المكوّن من 6 أرقام من تطبيق المصادقة، أو أحد رموزك الاحتياطية</string>
     <string name="preferences_locked_retry">تعذّر فتح إعداداتك الآن. يتم عرض الإعدادات الافتراضية، ارجع ثم افتح مجددًا للمحاولة.</string>
     <string name="preferences_decrypt_failed">تعذّرت قراءة إعداداتك المحفوظة على هذا الجهاز. يتم عرض الافتراضية، وسيتم حفظ أي تغييرات تجريها هنا.</string>
-    <string name="plan_name_star">تمييز بنجمة</string>
+    <string name="plan_name_star">Star</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">المستعر الأعظم</string>
     <string name="ghost_alias_limit_reached">بلغت الحد الشهري للأسماء المستعارة الشبحية</string>

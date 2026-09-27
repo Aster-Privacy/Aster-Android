@@ -1988,7 +1988,7 @@
     <string name="totp_code_required_error">Voer de 6-cijferige code uit je authenticator-app in, of een van je back-upcodes</string>
     <string name="preferences_locked_retry">Je instellingen konden nu niet worden ontgrendeld. We tonen standaardwaarden, ga terug en open opnieuw.</string>
     <string name="preferences_decrypt_failed">Je opgeslagen instellingen konden op dit apparaat niet worden gelezen. We tonen de standaardwaarden, maar wijzigingen die je hier maakt, worden wel opgeslagen.</string>
-    <string name="plan_name_star">Ster</string>
+    <string name="plan_name_star">Star</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Supernova</string>
     <string name="ghost_alias_limit_reached">Limiet voor ghost-aliassen deze maand bereikt</string>

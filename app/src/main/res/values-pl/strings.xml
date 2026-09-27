@@ -1996,7 +1996,7 @@
     <string name="totp_code_required_error">Wpisz 6-cyfrowy kod z aplikacji uwierzytelniającej albo jeden z kodów zapasowych</string>
     <string name="preferences_locked_retry">Nie udało się teraz odblokować ustawień. Wyświetlane są ustawienia domyślne. Wróć i otwórz je ponownie, aby spróbować jeszcze raz.</string>
     <string name="preferences_decrypt_failed">Nie udało się odczytać zapisanych ustawień na tym urządzeniu. Wyświetlane są ustawienia domyślne, a zmiany wprowadzone tutaj zostaną zapisane.</string>
-    <string name="plan_name_star">Gwiazdka</string>
+    <string name="plan_name_star">Star</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Supernowa</string>
     <string name="ghost_alias_limit_reached">Osiągnięto limit aliasów widmo w tym miesiącu</string>

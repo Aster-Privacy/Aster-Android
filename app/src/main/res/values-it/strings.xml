@@ -1992,7 +1992,7 @@
     <string name="totp_code_required_error">Inserisci il codice a 6 cifre della tua app di autenticazione o uno dei codici di backup</string>
     <string name="preferences_locked_retry">Non è stato possibile sbloccare le impostazioni adesso. Mostriamo i valori predefiniti, torna indietro e riapri.</string>
     <string name="preferences_decrypt_failed">Le impostazioni salvate non sono leggibili su questo dispositivo. Mostriamo i valori predefiniti, le modifiche fatte qui verranno salvate.</string>
-    <string name="plan_name_star">Speciale</string>
+    <string name="plan_name_star">Star</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Supernova</string>
     <string name="ghost_alias_limit_reached">Limite di alias ghost raggiunto per questo mese</string>

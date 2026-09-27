@@ -1984,7 +1984,7 @@
     <string name="totp_code_required_error">인증 앱의 6자리 코드나 백업 코드 중 하나를 입력하세요</string>
     <string name="preferences_locked_retry">지금은 설정을 열 수 없습니다. 기본값을 표시합니다. 뒤로 갔다가 다시 열어 보세요.</string>
     <string name="preferences_decrypt_failed">이 기기에서 저장된 설정을 읽지 못했습니다. 기본값을 표시하며, 여기서 바꾼 내용은 저장됩니다.</string>
-    <string name="plan_name_star">별표</string>
+    <string name="plan_name_star">Star</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">초신성</string>
     <string name="ghost_alias_limit_reached">이번 달 고스트 별칭 한도에 도달했습니다</string>
