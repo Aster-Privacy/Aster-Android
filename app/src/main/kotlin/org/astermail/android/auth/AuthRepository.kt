@@ -235,6 +235,8 @@ class AuthRepository @Inject constructor(
 
     private suspend fun handle_refresh_auth_failure(presented: String?) {
         if (presented.isNullOrEmpty()) return
+        if (!_is_signed_in.value || presented != token_store.refresh_token) return
+        if (!org.astermail.android.api.auth.confirm_session_rejected { auth_api.me() }) return
         sign_out_dead_session(presented)
     }
 
