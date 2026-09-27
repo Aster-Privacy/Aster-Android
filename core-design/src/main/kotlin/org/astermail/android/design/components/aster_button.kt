@@ -45,6 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -190,6 +191,7 @@ private fun depth_button(
             .background(press_color, aster_button_shape)
             .clickable(
                 enabled = interactive,
+                role = Role.Button,
                 interactionSource = interaction,
                 indication = null,
                 onClick = onClick,
@@ -242,6 +244,7 @@ fun AsterGhostButton(
             .clip(aster_button_shape)
             .clickable(
                 enabled = interactive,
+                role = Role.Button,
                 interactionSource = interaction,
                 indication = aster_ripple(color = colors.accent_blue),
                 onClick = onClick,
