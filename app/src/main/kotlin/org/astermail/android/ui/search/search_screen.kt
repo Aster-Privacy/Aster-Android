@@ -170,6 +170,7 @@ private object search_screen_cache {
     var parsed: ParsedQuery? = null
     var filter: String? = null
     var outcome: SearchOutcome? = null
+    var outcome_corpus: List<org.astermail.android.mail.InboxItem>? = null
 
     fun sorted_for(corpus: List<org.astermail.android.mail.InboxItem>) =
         sorted.takeIf { this.corpus === corpus }
@@ -179,7 +180,7 @@ private object search_screen_cache {
         filter: String?,
         sorted: List<org.astermail.android.mail.InboxItem>?,
     ) = outcome.takeIf {
-        sorted != null && this.sorted === sorted && this.parsed == parsed && this.filter == filter
+        sorted != null && outcome_corpus === sorted && this.parsed == parsed && this.filter == filter
     }
 }
 
@@ -579,6 +580,7 @@ fun SearchScreen(
         search_screen_cache.parsed = parsed
         search_screen_cache.filter = active_filter
         search_screen_cache.outcome = outcome
+        search_screen_cache.outcome_corpus = corpus
         value = outcome
     }
 
