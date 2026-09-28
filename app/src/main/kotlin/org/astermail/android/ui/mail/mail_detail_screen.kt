@@ -3801,6 +3801,12 @@ private fun message_details_dialog(
                 if (message.to_label.isNotBlank()) {
                     message_detail_row(stringResource(R.string.to_label), message.to_label)
                 }
+                if (message.cc_addresses.isNotEmpty()) {
+                    message_detail_row(stringResource(R.string.cc), message.cc_addresses.joinToString(", "))
+                }
+                if (message.bcc_addresses.isNotEmpty()) {
+                    message_detail_row(stringResource(R.string.bcc), message.bcc_addresses.joinToString(", "))
+                }
                 resolve_received_on_address(message.raw_headers, message.to_addresses + message.cc_addresses, message.sender_email)?.let {
                     message_detail_row(stringResource(R.string.received_on_label), it)
                 }
