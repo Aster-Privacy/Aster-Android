@@ -1023,7 +1023,7 @@ class MailRepository @Inject constructor(
                     cc = cc,
                     bcc = bcc,
                     existing_draft_id = null,
-                    attachments = attachments,
+                    attachments = without_inline_images(attachments),
                     on_id_assigned = { assigned ->
                         if (timed_out.get()) app_scope.launch { adopt_late_safety_draft(pending_id, assigned) }
                     },
@@ -4026,6 +4026,7 @@ class MailRepository @Inject constructor(
             cc = cc,
         )
         val (encrypted_envelope, envelope_nonce) = encrypt_sent_envelope(envelope)
+        val recipient_body_html = with_cid_image_references(body_html, attachments)
 
         val sent_folder_token = resolve_sent_folder_token()
 
@@ -4059,12 +4060,12 @@ class MailRepository @Inject constructor(
 
             val encrypted_recipients = encrypt_field(recipients_json, derive_nonce(base_nonce, 0x01))
             val encrypted_subject = encrypt_field(subject, derive_nonce(base_nonce, 0x02))
-            val encrypted_body = encrypt_field(body_html, derive_nonce(base_nonce, 0x03))
+            val encrypted_body = encrypt_field(recipient_body_html, derive_nonce(base_nonce, 0x03))
             val ephemeral_key_b64 = android.util.Base64.encodeToString(ephemeral_key, android.util.Base64.NO_WRAP)
             ephemeral_key.fill(0)
             val signed_payload = build_signed_mime(
                 subject = subject,
-                body_html = body_html,
+                body_html = recipient_body_html,
                 from = sender_email ?: session_key_store.get_user_email().orEmpty(),
                 to = to,
                 cc = cc,
@@ -4113,7 +4114,7 @@ class MailRepository @Inject constructor(
                 if (from_addr.isBlank() || !ensure_ratchet_keys_ready()) {
                     throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
                 }
-                val existing_bundle = extract_subject_bundle(body_html)
+                val existing_bundle = extract_subject_bundle(recipient_body_html)
                 val wrapped = ASTER_SUBJECT_BUNDLE_PREFIX + org.json.JSONObject().apply {
                     put("s", subject.ifBlank { existing_bundle.subject.orEmpty() })
                     put("b", existing_bundle.body)
@@ -4136,7 +4137,7 @@ class MailRepository @Inject constructor(
                 encrypted ?: throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
             } else null
 
-            val final_body = ratchet_body ?: body_html
+            val final_body = ratchet_body ?: recipient_body_html
             val final_subject = if (ratchet_body != null) "" else subject
 
             val internal_attachments = if (attachments.isNotEmpty()) {
