@@ -1221,6 +1221,9 @@
     <string name="totp_passkey_button">パスキーで続ける</string>
     <string name="totp_use_passkey">パスキーを使う</string>
     <string name="totp_backup_code_hint">認証アプリの設定時に保存したバックアップコードのいずれかを入力してください。ASTER で始まるリカバリーコードはメールボックスを復元するためのもので、ここでは使えません。</string>
+    <string name="totp_recovery_code_detected">これはバックアップコードではなく、リカバリーコードです。このコードを使うには、リカバリーコードでパスワードをリセットしてください。</string>
+    <string name="totp_reset_with_recovery_code">リカバリーコードでリセット</string>
+    <string name="totp_passkey_only_recovery_hint">バックアップコードは認証アプリと一緒に発行されますが、このアカウントでは認証アプリを使用していません。パスキーを使わずにサインインするには、リカバリーコードのいずれかでパスワードをリセットしてください。メール、連絡先、設定はそのまま残り、リセット後に新しいパスキーを追加できます。</string>
     <string name="totp_trust_device">このデバイスを 30 日間信頼する</string>
     <string name="failed_block_sender">送信者をブロックできませんでした</string>
     <string name="failed_unblock_sender">送信者のブロック解除に失敗しました</string>

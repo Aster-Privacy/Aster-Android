@@ -1221,6 +1221,9 @@
     <string name="totp_passkey_button">使用通行密钥继续</string>
     <string name="totp_use_passkey">使用通行密钥</string>
     <string name="totp_backup_code_hint">请使用您设置验证器应用时保存的任一备份代码。以 ASTER 开头的恢复代码用于恢复邮箱，在这里无法使用。</string>
+    <string name="totp_recovery_code_detected">这是恢复码，不是备用码。如需使用，请用恢复码重置密码。</string>
+    <string name="totp_reset_with_recovery_code">使用恢复码重置</string>
+    <string name="totp_passkey_only_recovery_hint">备用码随验证器应用一起提供，而此账户未使用验证器应用。如需在不使用通行密钥的情况下登录，请用任一恢复码重置密码。您的邮件、联系人和设置都会保留，之后您可以添加新的通行密钥。</string>
     <string name="totp_trust_device">信任此设备 30 天</string>
     <string name="failed_block_sender">无法屏蔽发件人</string>
     <string name="failed_unblock_sender">无法解除屏蔽发件人</string>

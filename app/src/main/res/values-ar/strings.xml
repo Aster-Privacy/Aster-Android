@@ -1236,6 +1236,9 @@
     <string name="totp_passkey_button">المتابعة بمفتاح مرور</string>
     <string name="totp_use_passkey">استخدام مفتاح مرور</string>
     <string name="totp_backup_code_hint">استخدم أحد رموز النسخ الاحتياطي التي حفظتها عند إعداد تطبيق المصادقة. أما رمز الاسترداد الذي يبدأ بـ ASTER فيستعيد صندوق بريدك ولا يصلح هنا.</string>
+    <string name="totp_recovery_code_detected">هذا رمز استرداد وليس رمزًا احتياطيًا. لاستخدامه، أعد تعيين كلمة المرور باستخدام رمز الاسترداد.</string>
+    <string name="totp_reset_with_recovery_code">إعادة التعيين برمز الاسترداد</string>
+    <string name="totp_passkey_only_recovery_hint">تأتي الرموز الاحتياطية مع تطبيق المصادقة، وهذا الحساب لا يستخدم تطبيقًا. لتسجيل الدخول بدون مفتاح المرور، أعد تعيين كلمة المرور باستخدام أحد رموز الاسترداد. يبقى بريدك وجهات اتصالك وإعداداتك كما هي، ويمكنك إضافة مفتاح مرور جديد بعد ذلك.</string>
     <string name="totp_trust_device">الوثوق بهذا الجهاز لمدة 30 يومًا</string>
     <string name="failed_block_sender">تعذر حظر المرسل</string>
     <string name="failed_unblock_sender">تعذر إلغاء حظر المرسل</string>

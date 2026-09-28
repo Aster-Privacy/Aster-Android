@@ -1064,6 +1064,9 @@
     <string name="totp_passkey_button">Continue with a passkey</string>
     <string name="totp_use_passkey">Use a passkey</string>
     <string name="totp_backup_code_hint">Use one of the backup codes you saved when you set up your authenticator app. A recovery code that starts with ASTER restores your mailbox and does not work here.</string>
+    <string name="totp_recovery_code_detected">This is a recovery code, not a backup code. To use it, reset your password with your recovery code.</string>
+    <string name="totp_reset_with_recovery_code">Reset with recovery code</string>
+    <string name="totp_passkey_only_recovery_hint">Backup codes come with an authenticator app, and this account doesn\'t use one. To sign in without your passkey, reset your password with one of your recovery codes. Your mail, contacts, and settings stay as they are, and you can add a new passkey afterward.</string>
     <string name="totp_trust_device">Trust this device for 30 days</string>
 
     <!-- Sessions -->

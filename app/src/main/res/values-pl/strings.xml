@@ -1230,6 +1230,9 @@
     <string name="totp_passkey_button">Kontynuuj kluczem dostępu</string>
     <string name="totp_use_passkey">Użyj klucza dostępu</string>
     <string name="totp_backup_code_hint">Użyj jednego z kodów zapasowych zapisanych podczas konfiguracji aplikacji uwierzytelniającej. Kod odzyskiwania zaczynający się od ASTER przywraca skrzynkę i nie działa w tym miejscu.</string>
+    <string name="totp_recovery_code_detected">To jest kod odzyskiwania, a nie kod zapasowy. Aby go użyć, zresetuj hasło za pomocą kodu odzyskiwania.</string>
+    <string name="totp_reset_with_recovery_code">Zresetuj kodem odzyskiwania</string>
+    <string name="totp_passkey_only_recovery_hint">Kody zapasowe są dostępne tylko z aplikacją uwierzytelniającą, a to konto jej nie używa. Aby zalogować się bez klucza dostępu, zresetuj hasło za pomocą jednego z kodów odzyskiwania. Twoja poczta, kontakty i ustawienia pozostaną bez zmian, a potem możesz dodać nowy klucz dostępu.</string>
     <string name="totp_trust_device">Ufaj temu urządzeniu przez 30 dni</string>
     <string name="failed_block_sender">Nie udało się zablokować nadawcy</string>
     <string name="failed_unblock_sender">Nie udało się odblokować nadawcy</string>

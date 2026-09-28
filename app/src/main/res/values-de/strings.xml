@@ -1225,6 +1225,9 @@
     <string name="totp_passkey_button">Mit Passkey fortfahren</string>
     <string name="totp_use_passkey">Passkey verwenden</string>
     <string name="totp_backup_code_hint">Verwenden Sie einen der Backup-Codes, die Sie bei der Einrichtung Ihrer Authenticator-App gespeichert haben. Ein Wiederherstellungscode, der mit ASTER beginnt, stellt Ihr Postfach wieder her und funktioniert hier nicht.</string>
+    <string name="totp_recovery_code_detected">Das ist ein Wiederherstellungscode, kein Backup-Code. Um ihn zu verwenden, setzen Sie Ihr Passwort mit Ihrem Wiederherstellungscode zurück.</string>
+    <string name="totp_reset_with_recovery_code">Mit Wiederherstellungscode zurücksetzen</string>
+    <string name="totp_passkey_only_recovery_hint">Backup-Codes gibt es nur zusammen mit einer Authentifizierungs-App, und dieses Konto verwendet keine. Um sich ohne Passkey anzumelden, setzen Sie Ihr Passwort mit einem Ihrer Wiederherstellungscodes zurück. Ihre E-Mails, Kontakte und Einstellungen bleiben erhalten, und Sie können danach einen neuen Passkey hinzufügen.</string>
     <string name="totp_trust_device">Diesem Gerät 30 Tage vertrauen</string>
     <string name="failed_block_sender">Absender konnte nicht blockiert werden</string>
     <string name="failed_unblock_sender">Blockierung des Absenders konnte nicht aufgehoben werden</string>

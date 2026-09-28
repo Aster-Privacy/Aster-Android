@@ -1227,6 +1227,9 @@
     <string name="totp_passkey_button">Continua con una passkey</string>
     <string name="totp_use_passkey">Usa una passkey</string>
     <string name="totp_backup_code_hint">Usa uno dei codici di backup che hai salvato durante la configurazione della tua app di autenticazione. Un codice di recupero che inizia con ASTER ripristina la casella e non funziona qui.</string>
+    <string name="totp_recovery_code_detected">Questo è un codice di recupero, non un codice di backup. Per usarlo, reimposta la password con il tuo codice di recupero.</string>
+    <string name="totp_reset_with_recovery_code">Reimposta con il codice di recupero</string>
+    <string name="totp_passkey_only_recovery_hint">I codici di backup vengono forniti con un\'app di autenticazione, e questo account non ne usa una. Per accedere senza passkey, reimposta la password con uno dei tuoi codici di recupero. Email, contatti e impostazioni restano invariati, e dopo potrai aggiungere una nuova passkey.</string>
     <string name="totp_trust_device">Considera affidabile questo dispositivo per 30 giorni</string>
     <string name="failed_block_sender">Impossibile bloccare il mittente</string>
     <string name="failed_unblock_sender">Impossibile sbloccare il mittente</string>

@@ -1228,6 +1228,9 @@
     <string name="totp_passkey_button">Continuar con una clave de acceso</string>
     <string name="totp_use_passkey">Usar una clave de acceso</string>
     <string name="totp_backup_code_hint">Usa uno de los códigos de respaldo que guardaste al configurar tu app de autenticación. Un código de recuperación que empieza por ASTER restaura tu buzón y no sirve aquí.</string>
+    <string name="totp_recovery_code_detected">Este es un código de recuperación, no un código de respaldo. Para usarlo, restablece tu contraseña con tu código de recuperación.</string>
+    <string name="totp_reset_with_recovery_code">Restablecer con código de recuperación</string>
+    <string name="totp_passkey_only_recovery_hint">Los códigos de respaldo se generan con una aplicación de autenticación, y esta cuenta no usa ninguna. Para iniciar sesión sin tu llave de acceso, restablece tu contraseña con uno de tus códigos de recuperación. Tus correos, contactos y ajustes se conservan, y después puedes añadir una nueva llave de acceso.</string>
     <string name="totp_trust_device">Confiar en este dispositivo durante 30 días</string>
     <string name="failed_block_sender">No se pudo bloquear al remitente</string>
     <string name="failed_unblock_sender">No se pudo desbloquear al remitente</string>

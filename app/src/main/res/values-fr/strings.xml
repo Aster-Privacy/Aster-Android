@@ -1284,6 +1284,9 @@
     <string name="totp_passkey_button">Continuer avec une clé d\'accès</string>
     <string name="totp_use_passkey">Utiliser une clé d\'accès</string>
     <string name="totp_backup_code_hint">Utilisez l\'un des codes de secours enregistrés lors de la configuration de votre application d\'authentification. Un code de récupération commençant par ASTER restaure votre boîte mail et ne fonctionne pas ici.</string>
+    <string name="totp_recovery_code_detected">Il s\'agit d\'un code de récupération, pas d\'un code de secours. Pour l\'utiliser, réinitialisez votre mot de passe avec votre code de récupération.</string>
+    <string name="totp_reset_with_recovery_code">Réinitialiser avec un code de récupération</string>
+    <string name="totp_passkey_only_recovery_hint">Les codes de secours sont fournis avec une application d\'authentification, et ce compte n\'en utilise pas. Pour vous connecter sans votre clé d\'accès, réinitialisez votre mot de passe avec l\'un de vos codes de récupération. Vos e-mails, contacts et réglages sont conservés, et vous pourrez ajouter une nouvelle clé d\'accès ensuite.</string>
     <string name="totp_trust_device">Faire confiance à cet appareil pendant 30 jours</string>
     <string name="failed_block_sender">Impossible de bloquer l\'expéditeur</string>
     <string name="failed_unblock_sender">Impossible de débloquer l\'expéditeur</string>
