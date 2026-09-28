@@ -5057,6 +5057,15 @@ private fun is_safe_unsubscribe_url(url: String): Boolean {
 }
 
 private const val max_body_layout_px = 200000
+
+private inline fun <T> as_io_failure(block: () -> T): T =
+    try {
+        block()
+    } catch (e: java.io.IOException) {
+        throw e
+    } catch (e: Throwable) {
+        throw java.io.IOException(e)
+    }
 private const val remeasure_settle_ms = 32L
 private const val remeasure_visual_timeout_ms = 250L
 private const val remeasure_resize_frames = 20
@@ -6254,6 +6263,10 @@ internal fun email_html_view(
                     val content_type = resp.header("Content-Type")?.substringBefore(';')?.trim()
                         ?.takeIf { it.isNotBlank() } ?: "image/jpeg"
                     val stream = object : java.io.FilterInputStream(body.byteStream()) {
+                        override fun read(): Int = as_io_failure { super.read() }
+                        override fun read(b: ByteArray, off: Int, len: Int): Int = as_io_failure { super.read(b, off, len) }
+                        override fun skip(n: Long): Long = as_io_failure { super.skip(n) }
+                        override fun available(): Int = as_io_failure { super.available() }
                         override fun close() {
                             try { super.close() } finally { resp.close() }
                         }
@@ -6293,11 +6306,10 @@ internal fun email_html_view(
               .clipToBounds(),
           contentAlignment = Alignment.Center,
       ) {
-        if (white_page_ref[0] && body_reveal > 0f) {
+        if (white_page_ref[0] && body_shown) {
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .then(if (body_reveal < 1f) Modifier.alpha(body_reveal) else Modifier)
                     .background(androidx.compose.ui.graphics.Color.White),
             )
         }
@@ -6496,7 +6508,13 @@ internal fun email_html_view(
                             web_ref[0]?.invalidate()
                         }
                     }
-                    .then(if (body_reveal < 1f) Modifier.alpha(body_reveal) else Modifier)
+                    .then(
+                        when {
+                            body_reveal >= 1f -> Modifier
+                            white_page_ref[0] -> if (body_shown) Modifier else Modifier.alpha(0f)
+                            else -> Modifier.alpha(body_reveal)
+                        },
+                    )
             },
             onRelease = { web_view ->
                 runCatching {
