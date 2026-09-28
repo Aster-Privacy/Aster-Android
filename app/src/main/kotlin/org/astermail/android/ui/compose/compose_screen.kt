@@ -1578,6 +1578,7 @@ fun ComposeScreen(
             return result.data
         }
 
+        val inline_image_payloads = mutableListOf<org.astermail.android.api.send.ExternalAttachmentPayload>()
         val image_html_for = withContext(Dispatchers.IO) {
             val encoded = mutableMapOf<Int, String>()
             inline_images.forEachIndexed { idx, img ->
@@ -1594,6 +1595,15 @@ fun ComposeScreen(
                 val bytes = apply_metadata_strip(raw_bytes, img)
                 val b64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
                 encoded[idx] = "<img src=\"data:${img.mime_type};base64,$b64\" alt=\"${img.name}\" style=\"max-width:100%;height:auto;\" />"
+                inline_image_payloads.add(
+                    org.astermail.android.api.send.ExternalAttachmentPayload(
+                        data = b64,
+                        filename = img.name,
+                        content_type = img.mime_type,
+                        size_bytes = bytes.size.toLong(),
+                        content_id = org.astermail.android.mail.new_inline_image_content_id(),
+                    ),
+                )
             }
             encoded
         }
@@ -1694,7 +1704,8 @@ fun ComposeScreen(
             with_images + signature_block + quote_block
         }
 
-        return Triple(body_html, attachment_payloads, !branding_footer_kept)
+        val embedded_image_payloads = inline_image_payloads.filter { body_html.contains(it.data) }
+        return Triple(body_html, attachment_payloads + embedded_image_payloads, !branding_footer_kept)
     }
 
     val send_lock = remember { java.util.concurrent.atomic.AtomicBoolean(false) }
@@ -1935,7 +1946,7 @@ fun ComposeScreen(
                     cc = snap_cc,
                     bcc = snap_bcc,
                     subject = snap_subject,
-                    body = body_html,
+                    body = org.astermail.android.mail.with_cid_image_references(body_html, attachment_payloads),
                     attachments = attachment_payloads.map { payload ->
                         org.astermail.android.api.external_accounts.ExternalAccountSendAttachment(
                             data = payload.data,
@@ -1995,7 +2006,7 @@ fun ComposeScreen(
             }
 
             if (scheduled_send) {
-                if (attachment_payloads.isNotEmpty()) {
+                if (org.astermail.android.mail.without_inline_images(attachment_payloads).isNotEmpty()) {
                     is_sending = false
                     send_lock.set(false)
                     send_error = context.getString(R.string.scheduled_send_no_attachments)
