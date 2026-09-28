@@ -90,7 +90,7 @@ import org.astermail.android.auth.AuthViewModel
 import org.astermail.android.auth.request_passkey_assertion
 import org.astermail.android.design.readable_on
 import org.astermail.android.settings.host_activity
-import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
@@ -758,7 +758,7 @@ internal fun error_banner(message: String) {
             .fillMaxWidth()
             .background(
                 color = colors.danger,
-                shape = SquircleShape(18.dp),
+                shape = AsterShapes.island,
             )
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
     ) {

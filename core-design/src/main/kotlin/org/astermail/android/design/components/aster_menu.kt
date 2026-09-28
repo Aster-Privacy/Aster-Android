@@ -92,12 +92,12 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.Check
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.acrylic
-import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.aster_ripple
 
-private val menu_surface_shape = SquircleShape(22.dp)
-private val menu_item_shape = SquircleShape(14.dp)
+private val menu_surface_shape = AsterShapes.island
+private val menu_item_shape = AsterShapes.control
 private val menu_screen_margin = 12.dp
 private val menu_surface_padding = 6.dp
 private val menu_surface_elevation = 18.dp

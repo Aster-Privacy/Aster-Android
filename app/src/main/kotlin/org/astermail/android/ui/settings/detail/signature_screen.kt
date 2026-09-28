@@ -22,7 +22,6 @@
 package org.astermail.android.ui.settings.detail
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,8 +38,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Check
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,20 +49,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.launch
 import org.astermail.android.R
-import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.AsterShapes
+import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.billing.PlanLimitsViewModel
@@ -306,21 +303,11 @@ private fun signature_edit_modal(
         on_back = on_cancel,
     ) {
         section_label(stringResource(R.string.signature_name))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(colors.input_bg, SquircleShape(18.dp))
-                .border(1.dp, colors.input_border, SquircleShape(18.dp))
-                .padding(AsterSpacing.md),
-        ) {
-            BasicTextField(
-                value = name,
-                onValueChange = { name = it },
-                textStyle = TextStyle(color = colors.text_primary, fontSize = 15.sp),
-                cursorBrush = SolidColor(colors.accent_blue),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
+        AsterTextField(
+            value = name,
+            onValueChange = { name = it },
+            modifier = Modifier.fillMaxWidth(),
+        )
         v_gap(AsterSpacing.lg)
         section_label(stringResource(R.string.your_signature))
         if (is_html) {
@@ -332,8 +319,8 @@ private fun signature_edit_modal(
                 on_html_change = { content = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(SquircleShape(18.dp))
-                    .border(1.dp, colors.input_border, SquircleShape(18.dp))
+                    .clip(AsterShapes.control)
+                    .background(field_surface_color(colors))
                     .height(220.dp),
             )
             v_gap(AsterSpacing.sm)
@@ -348,29 +335,14 @@ private fun signature_edit_modal(
                 },
             )
         } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 160.dp)
-                    .background(colors.input_bg, SquircleShape(18.dp))
-                    .border(1.dp, colors.input_border, SquircleShape(18.dp))
-                    .padding(AsterSpacing.lg),
-            ) {
-                if (content.isEmpty()) {
-                    Text(
-                        text = stringResource(R.string.signature_placeholder),
-                        color = colors.text_muted,
-                        fontSize = 15.sp,
-                    )
-                }
-                BasicTextField(
-                    value = content,
-                    onValueChange = { content = it },
-                    textStyle = TextStyle(color = colors.text_primary, fontSize = 15.sp),
-                    cursorBrush = SolidColor(colors.accent_blue),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            AsterTextField(
+                value = content,
+                onValueChange = { content = it },
+                placeholder = stringResource(R.string.signature_placeholder),
+                singleLine = false,
+                min_height = 160.dp,
+                modifier = Modifier.fillMaxWidth(),
+            )
             v_gap(AsterSpacing.sm)
             AsterSecondaryButton(
                 label = stringResource(R.string.signature_add_formatting),

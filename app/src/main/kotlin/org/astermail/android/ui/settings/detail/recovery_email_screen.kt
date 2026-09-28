@@ -70,6 +70,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
@@ -400,7 +401,7 @@ private fun recovery_action_button(
     TextButton(
         onClick = onClick,
         enabled = enabled,
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(AsterRadius.field),
         modifier = Modifier.defaultMinSize(minWidth = 88.dp, minHeight = 44.dp),
         colors = ButtonDefaults.textButtonColors(
             contentColor = tint,

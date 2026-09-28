@@ -21,9 +21,7 @@
 
 package org.astermail.android.design.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -50,13 +48,12 @@ import compose.icons.tablericons.Check
 import compose.icons.tablericons.InfoCircle
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.AsterShapes
 
 enum class AsterAlertSeverity { danger, warning, info, success }
 
 private const val alert_surface_alpha_dark = 0.20f
 private const val alert_surface_alpha_light = 0.10f
-private const val alert_border_alpha = 0.32f
 
 @Composable
 fun AsterAlert(
@@ -80,13 +77,12 @@ fun AsterAlert(
     }
     val surface_alpha = if (colors.is_dark) alert_surface_alpha_dark else alert_surface_alpha_light
     val surface = accent.copy(alpha = surface_alpha).compositeOver(colors.bg_card)
-    val shape = SquircleShape(14.dp)
+    val shape = AsterShapes.island
     val spoken = if (title.isNullOrBlank()) message else "$title. $message"
     Row(
         modifier = modifier
             .fillMaxWidth()
             .background(surface, shape)
-            .border(BorderStroke(1.dp, accent.copy(alpha = alert_border_alpha)), shape)
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md)
             .clearAndSetSemantics { contentDescription = spoken },
     ) {

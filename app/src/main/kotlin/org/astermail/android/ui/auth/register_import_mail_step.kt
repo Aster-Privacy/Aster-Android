@@ -28,7 +28,6 @@ import compose.icons.tablericons.Lock
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -57,10 +56,12 @@ import androidx.compose.ui.unit.sp
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.mirror_in_rtl
+import org.astermail.android.design.AsterShapes
+import org.astermail.android.design.field_surface_color
+import org.astermail.android.design.island_surface_color
 
 private data class import_source(
     val icon_res: Int?,
@@ -113,8 +114,8 @@ fun RegisterImportMailStep(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(SquircleShape(16.dp))
-                .acrylic(colors, SquircleShape(16.dp), colors.bg_secondary),
+                .clip(AsterShapes.island)
+                .acrylic(colors, AsterShapes.island, island_surface_color(colors)),
         ) {
             import_sources.forEachIndexed { index, source ->
                 if (index > 0) {
@@ -177,8 +178,7 @@ private fun import_source_row(
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .acrylic(colors, SquircleShape(12.dp), colors.bg_card)
-                .border(1.dp, colors.border_primary, SquircleShape(12.dp)),
+                .background(field_surface_color(colors), AsterShapes.control),
             contentAlignment = Alignment.Center,
         ) {
             if (source.icon_res != null) {

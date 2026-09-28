@@ -85,7 +85,7 @@ import org.astermail.android.design.AsterSlide
 import org.astermail.android.design.aster_reduce_motion
 
 private val dialog_shape = SquircleShape(26.dp)
-private val dialog_button_shape = SquircleShape(999.dp)
+private val dialog_button_shape = org.astermail.android.design.AsterShapes.control
 private val dialog_button_height = 44.dp
 private val dialog_max_width = 360.dp
 private val dialog_max_content_height = 480.dp

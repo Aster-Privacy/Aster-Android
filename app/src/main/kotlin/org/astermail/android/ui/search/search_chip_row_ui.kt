@@ -26,7 +26,6 @@ import compose.icons.tablericons.Adjustments
 import compose.icons.tablericons.ChevronDown
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -62,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.design.components.AsterTextField
@@ -98,10 +98,9 @@ internal fun quick_chip(
                 if (active) {
                     Modifier.background(colors.accent_blue)
                 } else {
-                    Modifier.acrylic(colors, shape, colors.bg_card)
+                    Modifier.acrylic(colors, shape, field_surface_color(colors))
                 },
             )
-            .border(1.dp, if (active) colors.accent_blue else colors.border_primary, shape)
             .clickable(onClick = on_click)
             .padding(start = 14.dp, end = if (show_caret) 10.dp else 14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -449,8 +448,7 @@ internal fun search_chip_row(
             modifier = Modifier
                 .height(chip_height)
                 .clip(CircleShape)
-                .acrylic(colors, CircleShape, colors.bg_card)
-                .border(1.dp, colors.border_primary, CircleShape)
+                .acrylic(colors, CircleShape, field_surface_color(colors))
                 .clickable(onClick = on_advanced_click)
                 .padding(start = 12.dp, end = 14.dp),
             verticalAlignment = Alignment.CenterVertically,

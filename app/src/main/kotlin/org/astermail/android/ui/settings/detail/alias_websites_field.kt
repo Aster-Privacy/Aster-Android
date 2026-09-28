@@ -22,7 +22,6 @@
 package org.astermail.android.ui.settings.detail
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -62,6 +61,8 @@ import compose.icons.tablericons.World
 import compose.icons.tablericons.X
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.island_surface_color
+import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterButton
@@ -144,8 +145,8 @@ internal fun alias_websites_field(
             websites.forEach { url ->
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(999.dp))
-                        .border(1.dp, colors.border_primary, RoundedCornerShape(999.dp))
+                        .clip(RoundedCornerShape(AsterRadius.pill))
+                        .background(island_surface_color(colors))
                         .padding(start = 8.dp, end = 4.dp, top = 4.dp, bottom = 4.dp)
                         .testTag("alias_website_chip"),
                     verticalAlignment = Alignment.CenterVertically,
@@ -179,8 +180,8 @@ internal fun alias_websites_field(
             if (!adding) {
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(999.dp))
-                        .border(1.dp, colors.border_primary, RoundedCornerShape(999.dp))
+                        .clip(RoundedCornerShape(AsterRadius.pill))
+                        .background(island_surface_color(colors))
                         .clickable { adding = true }
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                         .testTag("alias_website_add"),

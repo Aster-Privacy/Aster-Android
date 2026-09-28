@@ -71,11 +71,13 @@ import org.astermail.android.R
 import kotlinx.coroutines.delay
 import org.astermail.android.api.billing.AvailablePlan
 import org.astermail.android.billing.BillingViewModel
-import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.acrylic
+import org.astermail.android.design.island_surface_color
+import org.astermail.android.design.tonal_surface_color
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.ui.settings.detail.aster_segmented
@@ -194,7 +196,7 @@ fun RegisterPlanStep(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(colors.accent_blue.copy(alpha = 0.08f), SquircleShape(18.dp))
+                    .background(tonal_surface_color(colors, colors.accent_blue), AsterShapes.island)
                     .padding(AsterSpacing.lg),
             ) {
                 Text(
@@ -236,8 +238,7 @@ fun RegisterPlanStep(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .acrylic(colors, SquircleShape(18.dp), colors.bg_card)
-                    .border(1.dp, colors.border_secondary, SquircleShape(18.dp))
+                    .acrylic(colors, AsterShapes.island, island_surface_color(colors))
                     .padding(AsterSpacing.lg),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -382,12 +383,8 @@ private fun plan_card_surface(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .acrylic(colors, SquircleShape(18.dp), colors.bg_card)
-                .border(
-                    if (is_selected) 2.dp else 1.dp,
-                    if (is_selected) colors.accent_blue else colors.border_secondary,
-                    SquircleShape(18.dp),
-                )
+                .acrylic(colors, AsterShapes.island, island_surface_color(colors))
+                .then(if (is_selected) Modifier.border(2.dp, colors.accent_blue, AsterShapes.island) else Modifier)
                 .clickable { on_select() }
                 .padding(AsterSpacing.lg),
         ) {

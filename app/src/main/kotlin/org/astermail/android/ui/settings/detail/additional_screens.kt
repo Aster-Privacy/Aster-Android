@@ -43,7 +43,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -63,7 +63,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.CircularProgressIndicator
@@ -85,11 +84,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -103,12 +100,15 @@ import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
+import org.astermail.android.design.disabled_surface_color
+import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.parse_hex_color_safe
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterSwitch
@@ -131,26 +131,14 @@ private fun toggle_row(title: String, subtitle: String?, checked: Boolean, on_ch
 
 @Composable
 private fun text_area(value: String, placeholder: String, on_change: (String) -> Unit, min_height: Int = 140) {
-    val colors = AsterMaterial.colors
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = min_height.dp)
-            .background(colors.input_bg, SquircleShape(18.dp))
-            .border(1.dp, colors.input_border, SquircleShape(18.dp))
-            .padding(AsterSpacing.lg),
-    ) {
-        if (value.isEmpty()) {
-            Text(text = placeholder, color = colors.text_muted, fontSize = 14.sp)
-        }
-        BasicTextField(
-            value = value,
-            onValueChange = on_change,
-            textStyle = TextStyle(color = colors.text_primary, fontSize = 14.sp),
-            cursorBrush = SolidColor(colors.accent_blue),
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
+    AsterTextField(
+        value = value,
+        onValueChange = on_change,
+        placeholder = placeholder,
+        singleLine = false,
+        min_height = min_height.dp,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 @Composable
@@ -398,26 +386,24 @@ internal fun revoke_pill_button(
             .height(36.dp)
             .widthIn(min = 72.dp)
             .clip(shape)
-            .border(1.dp, colors.border_secondary, shape)
+            .background(if (in_flight) disabled_surface_color(colors) else field_surface_color(colors))
             .clickable(enabled = !in_flight, onClick = on_click)
             .padding(horizontal = AsterSpacing.md),
         contentAlignment = Alignment.Center,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = label,
-                color = colors.text_primary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
+        Text(
+            text = label,
+            color = colors.text_primary,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.alpha(if (in_flight) 0f else 1f),
+        )
+        if (in_flight) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(16.dp),
+                color = colors.text_secondary,
+                strokeWidth = 2.dp,
             )
-            if (in_flight) {
-                Spacer(Modifier.width(AsterSpacing.xs))
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    color = colors.text_secondary,
-                    strokeWidth = 2.dp,
-                )
-            }
         }
     }
 }

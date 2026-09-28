@@ -23,12 +23,9 @@ package org.astermail.android.ui.settings.detail
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.text.InlineTextContent
-import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -42,13 +39,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.Placeholder
-import androidx.compose.ui.text.PlaceholderVerticalAlign
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -81,6 +74,17 @@ import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.mirror_in_rtl
 
 internal enum class billing_hero_status { free, active, ending, attention }
+
+@Composable
+internal fun billing_wordmark() {
+    Image(
+        painter = painterResource(R.drawable.aster_wordmark),
+        contentDescription = null,
+        modifier = Modifier
+            .padding(start = AsterSpacing.xs, top = AsterSpacing.xs, bottom = AsterSpacing.lg)
+            .height(26.dp),
+    )
+}
 
 internal data class billing_hero_action(
     val label: String,
@@ -126,7 +130,16 @@ internal fun billing_hero_card(
     AsterCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                billing_plan_title(plan_name = plan_name, modifier = Modifier.weight(1f, fill = false))
+                Text(
+                    text = plan_name,
+                    color = colors.text_primary,
+                    fontSize = 21.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = (-0.5).sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
                 if (status != billing_hero_status.free) {
                     Spacer(Modifier.width(AsterSpacing.sm))
                     Text(
@@ -360,41 +373,6 @@ private fun billing_hero_row(action: billing_hero_action) {
 }
 
 @Composable
-internal fun billing_yearly_nudge_card(
-    monthly_equivalent: String,
-    yearly_total: String,
-    save_text: String,
-    on_switch: () -> Unit,
-    enabled: Boolean,
-) {
-    val colors = AsterMaterial.colors
-    AsterCard(modifier = Modifier.fillMaxWidth()) {
-        detail_row(
-            title = stringResource(R.string.billing_yearly_nudge_title),
-            subtitle = stringResource(R.string.billing_yearly_nudge_body, monthly_equivalent, yearly_total),
-            icon = TablerIcons.Calendar,
-            on_click = if (enabled) on_switch else null,
-            trailing = {
-                Text(
-                    text = save_text,
-                    color = colors.success,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                )
-                Spacer(Modifier.width(AsterSpacing.sm))
-                Icon(
-                    imageVector = TablerIcons.ChevronRight,
-                    contentDescription = null,
-                    tint = colors.text_muted,
-                    modifier = Modifier.size(18.dp).mirror_in_rtl(),
-                )
-            },
-        )
-    }
-}
-
-@Composable
 internal fun billing_special_offer_card(
     percent_off: Int,
     on_open: () -> Unit,
@@ -546,46 +524,6 @@ internal fun billing_advantages_card(
             )
         }
     }
-}
-
-private const val billing_wordmark_id = "aster_wordmark"
-private const val billing_wordmark_aspect = 4f
-private const val billing_title_size = 21f
-private const val billing_wordmark_cap_ratio = 0.76f
-
-@Composable
-internal fun billing_plan_title(plan_name: String, modifier: Modifier = Modifier) {
-    val colors = AsterMaterial.colors
-    val cap_height = billing_title_size * billing_wordmark_cap_ratio
-    val wordmark = InlineTextContent(
-        Placeholder(
-            width = (cap_height * billing_wordmark_aspect).sp,
-            height = cap_height.sp,
-            placeholderVerticalAlign = PlaceholderVerticalAlign.AboveBaseline,
-        ),
-    ) {
-        Image(
-            painter = painterResource(R.drawable.aster_wordmark),
-            contentDescription = null,
-            contentScale = ContentScale.Fit,
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
-    Text(
-        text = buildAnnotatedString {
-            appendInlineContent(billing_wordmark_id, "Aster")
-            append(" ")
-            append(plan_name)
-        },
-        inlineContent = mapOf(billing_wordmark_id to wordmark),
-        color = colors.text_primary,
-        fontSize = billing_title_size.sp,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = (-0.5).sp,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        modifier = modifier,
-    )
 }
 
 internal const val billing_included_marker = "✓"

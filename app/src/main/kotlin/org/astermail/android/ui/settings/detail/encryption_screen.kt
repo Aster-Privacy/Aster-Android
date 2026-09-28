@@ -34,7 +34,6 @@ import android.content.Intent
 import android.util.Base64
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -96,6 +95,9 @@ import org.astermail.android.auth.AuthRepository
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
+import org.astermail.android.design.AsterShapes
+import org.astermail.android.design.field_surface_color
+import org.astermail.android.design.island_surface_color
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterActionRow
@@ -339,9 +341,8 @@ fun EncryptionScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(SquircleShape(AsterRadius.md))
-                                .acrylic(colors, SquircleShape(AsterRadius.md), colors.bg_secondary)
-                                .border(1.dp, colors.border_primary, SquircleShape(AsterRadius.md))
+                                .clip(AsterShapes.control)
+                                .background(field_surface_color(colors), AsterShapes.control)
                                 .padding(start = AsterSpacing.md, end = AsterSpacing.xs, top = AsterSpacing.xs, bottom = AsterSpacing.xs),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -792,9 +793,8 @@ private fun key_detail_field(
             fontFamily = FontFamily.Monospace,
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(SquircleShape(AsterRadius.md))
-                .acrylic(colors, SquircleShape(AsterRadius.md), colors.bg_secondary)
-                .border(1.dp, colors.border_primary, SquircleShape(AsterRadius.md))
+                .clip(AsterShapes.control)
+                .background(field_surface_color(colors), AsterShapes.control)
                 .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
         )
         if (description != null) {
@@ -815,9 +815,8 @@ internal fun recovery_codes_block(codes: List<String>) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(SquircleShape(AsterRadius.lg))
-            .acrylic(colors, SquircleShape(AsterRadius.lg), colors.bg_secondary)
-            .border(1.dp, colors.border_primary, SquircleShape(AsterRadius.lg))
+            .clip(AsterShapes.island)
+            .background(island_surface_color(colors), AsterShapes.island)
             .padding(AsterSpacing.md),
         verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
     ) {

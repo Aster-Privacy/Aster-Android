@@ -26,18 +26,14 @@ import compose.icons.tablericons.*
 
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -51,13 +47,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -67,29 +59,26 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.CancellationException
 import org.astermail.android.R
 import kotlinx.coroutines.launch
-import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.AsterShapes
+import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 
 @Composable
 private fun category_chip(label: String, icon: ImageVector, selected: Boolean, on_click: () -> Unit) {
     val colors = AsterMaterial.colors
-    val bg = if (selected) colors.accent_blue else colors.bg_secondary
+    val bg = if (selected) colors.accent_blue else field_surface_color(colors)
     val content_color = if (selected) colors.on_accent else colors.text_secondary
     Row(
         modifier = Modifier
+            .clip(AsterShapes.pill)
+            .background(bg, AsterShapes.pill)
             .clickable(onClick = on_click)
-            .clip(SquircleShape(999.dp))
-            .background(bg, SquircleShape(999.dp))
-            .border(
-                1.dp,
-                if (selected) colors.accent_blue else colors.border_secondary,
-                SquircleShape(999.dp),
-            )
             .padding(horizontal = 14.dp, vertical = AsterSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -140,31 +129,14 @@ fun FeedbackScreen(
         }
         v_gap(AsterSpacing.md)
         section_label(stringResource(R.string.message))
-        val focus_requester = remember { FocusRequester() }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 160.dp)
-                .background(colors.input_bg, SquircleShape(18.dp))
-                .border(1.dp, colors.input_border, SquircleShape(18.dp))
-                .clickable { focus_requester.requestFocus() }
-                .padding(AsterSpacing.lg),
-        ) {
-            if (message.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.feedback_placeholder),
-                    color = colors.text_muted,
-                    fontSize = 15.sp,
-                )
-            }
-            BasicTextField(
-                value = message,
-                onValueChange = { if (it.length <= MAX_FEEDBACK_LENGTH) message = it },
-                textStyle = TextStyle(color = colors.text_primary, fontSize = 15.sp),
-                cursorBrush = SolidColor(colors.accent_blue),
-                modifier = Modifier.fillMaxWidth().focusRequester(focus_requester),
-            )
-        }
+        AsterTextField(
+            value = message,
+            onValueChange = { if (it.length <= MAX_FEEDBACK_LENGTH) message = it },
+            placeholder = stringResource(R.string.feedback_placeholder),
+            singleLine = false,
+            min_height = 160.dp,
+            modifier = Modifier.fillMaxWidth(),
+        )
         Text(
             text = "${message.length} / $MAX_FEEDBACK_LENGTH",
             color = colors.text_tertiary,

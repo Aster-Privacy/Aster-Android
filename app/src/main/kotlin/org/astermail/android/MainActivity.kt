@@ -158,7 +158,6 @@ import org.astermail.android.ui.settings.detail.AutoForwardScreen
 import org.astermail.android.ui.settings.detail.BehaviorScreen
 import org.astermail.android.ui.settings.detail.SwipeActionsScreen
 import org.astermail.android.ui.settings.detail.CustomizeToolbarScreen
-import org.astermail.android.ui.settings.detail.BillingScreen
 import org.astermail.android.ui.settings.detail.SubscriptionsScreen
 import org.astermail.android.ui.settings.detail.crypto_invoice_screen
 import org.astermail.android.ui.settings.detail.FeaturesScreen
@@ -490,6 +489,7 @@ private object routes {
     }
     const val pending_send_preview = "pending_send_preview"
     const val settings = "settings"
+    const val settings_search = "settings_search"
     const val contacts = "contacts"
     const val mailing_lists = "mailing_lists"
     const val contact_detail = "contact_detail/{contact_id}"
@@ -668,8 +668,8 @@ private fun AsterNavHost() {
     }
 
     androidx.compose.runtime.CompositionLocalProvider(
-        org.astermail.android.ui.settings.local_settings_navigator provides { id ->
-            nav_controller.navigate(routes.settings_detail(id))
+        org.astermail.android.ui.settings.local_settings_search_opener provides {
+            nav_controller.navigate(routes.settings_search)
         },
     ) {
     NavHost(
@@ -1143,6 +1143,12 @@ private fun AsterNavHost() {
         composable(routes.settings) {
             SettingsScreen(
                 on_back = { nav_controller.popBackStack() },
+                on_open = { id -> nav_controller.navigate(routes.settings_detail(id)) },
+            )
+        }
+        composable(routes.settings_search) {
+            org.astermail.android.ui.settings.settings_search_screen(
+                on_back = { pop_once(nav_controller) },
                 on_open = { id -> nav_controller.navigate(routes.settings_detail(id)) },
             )
         }

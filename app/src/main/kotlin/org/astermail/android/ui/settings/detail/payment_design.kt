@@ -64,8 +64,11 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.Lock
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.field_surface_color
+import org.astermail.android.design.tonal_surface_color
 
 internal fun blend(base: Color, target: Color, amount: Float): Color = Color(
     red = base.red + (target.red - base.red) * amount,
@@ -198,7 +201,7 @@ internal fun aster_segmented(
     Row(
         modifier = modifier
             .clip(CircleShape)
-            .border(1.dp, colors.border_secondary, CircleShape)
+            .background(field_surface_color(colors))
             .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -429,17 +432,13 @@ internal fun review_tile(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(12.dp)
+    val shape = AsterShapes.control
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(if (active) colors.accent_blue.copy(alpha = 0.14f) else Color.Transparent)
-            .border(
-                if (active) 1.5.dp else 1.dp,
-                if (active) colors.accent_blue else colors.border_secondary,
-                shape,
-            )
+            .background(if (active) tonal_surface_color(colors, colors.accent_blue) else field_surface_color(colors), shape)
+            .then(if (active) Modifier.border(2.dp, colors.accent_blue, shape) else Modifier)
             .clickable(enabled = enabled, role = Role.RadioButton, onClick = on_click)
             .padding(review_tile_padding),
         content = content,

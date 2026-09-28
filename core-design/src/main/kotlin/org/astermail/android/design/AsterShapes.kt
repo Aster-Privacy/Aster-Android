@@ -79,20 +79,26 @@ class SquircleShape(
 }
 
 object AsterShapes {
-    val squircle_chip = SquircleShape(8.dp)
-    val squircle_icon_btn = SquircleShape(10.dp)
-    val squircle_input = SquircleShape(12.dp)
-    val squircle_btn_sm = SquircleShape(12.dp)
-    val squircle_btn_md = SquircleShape(14.dp)
-    val squircle_card = SquircleShape(14.dp)
-    val squircle_btn_lg = SquircleShape(16.dp)
-    val squircle_btn_xl = SquircleShape(18.dp)
-    val squircle_modal = SquircleShape(18.dp)
-    val squircle_pill = SquircleShape(999.dp)
+    val island = SquircleShape(AsterRadius.island)
+    val island_lg = SquircleShape(AsterRadius.island_lg)
+    val control = SquircleShape(AsterRadius.control)
+    val item = SquircleShape(AsterRadius.item)
+    val pill = SquircleShape(AsterRadius.pill)
 
-    val squircle_xs = SquircleShape(8.dp)
-    val squircle_sm = SquircleShape(12.dp)
-    val squircle_md = SquircleShape(14.dp)
-    val squircle_lg = SquircleShape(16.dp)
-    val squircle_xl = SquircleShape(18.dp)
+    val squircle_chip = item
+    val squircle_icon_btn = control
+    val squircle_input = control
+    val squircle_btn_sm = control
+    val squircle_btn_md = control
+    val squircle_card = island
+    val squircle_btn_lg = control
+    val squircle_btn_xl = control
+    val squircle_modal = island_lg
+    val squircle_pill = pill
+
+    val squircle_xs = item
+    val squircle_sm = control
+    val squircle_md = control
+    val squircle_lg = island
+    val squircle_xl = island_lg
 }

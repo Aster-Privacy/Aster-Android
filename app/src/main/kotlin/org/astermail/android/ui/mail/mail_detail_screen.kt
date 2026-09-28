@@ -117,6 +117,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -172,6 +173,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.looks_encrypted
@@ -183,6 +185,11 @@ import org.astermail.android.design.AsterColors
 import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterRadius
+import org.astermail.android.design.AsterShapes
+import org.astermail.android.design.tonal_surface_color
+import org.astermail.android.design.field_surface_color
+import org.astermail.android.design.disabled_surface_color
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.AsterSpacing
@@ -2460,7 +2467,7 @@ internal fun expanded_message(
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
-                                .clickable(onClick = on_reply),
+                                .clickable(role = Role.Button, onClick = on_reply),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
@@ -2475,7 +2482,7 @@ internal fun expanded_message(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
-                            .clickable(onClick = on_more)
+                            .clickable(role = Role.Button, onClick = on_more)
                             .testTag("message_more_$message_index"),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -2483,7 +2490,7 @@ internal fun expanded_message(
                             imageVector = TablerIcons.DotsVertical,
                             contentDescription = stringResource(R.string.more_options),
                             tint = colors.text_secondary,
-                            modifier = Modifier.size(22.dp),
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                 }
@@ -2717,8 +2724,7 @@ internal fun expanded_message(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = AsterSpacing.md)
-                    .acrylic(colors, RoundedCornerShape(20.dp), colors.bg_secondary)
-                    .border(1.dp, colors.border_secondary, RoundedCornerShape(20.dp))
+                    .acrylic(colors, RoundedCornerShape(AsterRadius.island), colors.bg_secondary)
                     .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xl),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -2892,7 +2898,7 @@ private fun reply_action_row(
         reply_action_button(
             icon = TablerIcons.MailForward,
             label = stringResource(R.string.forward),
-            bg = androidx.compose.ui.graphics.Color.Transparent,
+            bg = field_surface_color(colors),
             fg = colors.text_primary,
             label_size = label_size,
             on_label_overflow = on_label_overflow,
@@ -2900,24 +2906,19 @@ private fun reply_action_row(
             modifier = Modifier.weight(1f),
         )
         if (show_react) {
-            val react_alpha = if (react_enabled) 1f else 0.4f
             Box(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(SquircleShape(999.dp))
-                    .border(
-                        1.dp,
-                        colors.text_secondary.copy(alpha = 0.35f * react_alpha),
-                        SquircleShape(999.dp),
-                    )
-                    .clickable(onClick = on_react)
+                    .background(if (react_enabled) field_surface_color(colors) else disabled_surface_color(colors))
+                    .clickable(enabled = react_enabled, onClick = on_react)
                     .testTag("detail_react"),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = TablerIcons.MoodSmile,
                     contentDescription = stringResource(R.string.add_reaction),
-                    tint = colors.text_secondary.copy(alpha = react_alpha),
+                    tint = if (react_enabled) colors.text_secondary else colors.text_tertiary,
                     modifier = Modifier.size(20.dp),
                 )
             }
@@ -3295,18 +3296,11 @@ internal fun reply_action_button(
     on_click: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = AsterMaterial.colors
-    val border_color = if (bg == colors.accent_blue) {
-        androidx.compose.ui.graphics.Color.Transparent
-    } else {
-        colors.text_secondary.copy(alpha = 0.35f)
-    }
     Row(
         modifier = modifier
             .heightIn(min = 48.dp)
             .clip(SquircleShape(999.dp))
             .background(bg)
-            .border(1.dp, border_color, SquircleShape(999.dp))
             .clickable(onClick = on_click)
             .padding(vertical = 10.dp, horizontal = 6.dp),
         horizontalArrangement = Arrangement.Center,
@@ -4337,8 +4331,7 @@ private fun hidden_group_indicator(
             modifier = Modifier
                 .padding(start = AsterSpacing.md)
                 .height(40.dp)
-                .acrylic(colors, CircleShape, colors.bg_secondary)
-                .border(1.dp, colors.border_secondary, CircleShape)
+                .acrylic(colors, CircleShape, field_surface_color(colors))
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -5397,8 +5390,8 @@ private fun translation_banner(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = AsterSpacing.sm)
-            .clip(RoundedCornerShape(10.dp))
-            .background(colors.accent_blue.copy(alpha = 0.10f))
+            .clip(AsterShapes.island)
+            .background(tonal_surface_color(colors, colors.accent_blue))
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -6694,8 +6687,7 @@ private fun attachment_chip(
 
     Row(
         modifier = modifier
-            .acrylic(colors, SquircleShape(18.dp), colors.bg_secondary)
-            .border(1.dp, colors.border_secondary, SquircleShape(18.dp))
+            .acrylic(colors, AsterShapes.island_lg, field_surface_color(colors))
             .padding(start = 10.dp, end = 6.dp, top = 10.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -7306,11 +7298,12 @@ private fun attachment_fallback_panel(
             pdf_fallback_message(message)
         }
         Spacer(Modifier.height(32.dp))
+        val lightbox_button_fill = lerp(Color.Black, Color.White, 0.16f)
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(
                 modifier = Modifier
-                    .clip(SquircleShape(18.dp))
-                    .background(Color.White.copy(alpha = 0.15f))
+                    .clip(AsterShapes.control)
+                    .background(lightbox_button_fill)
                     .clickable(onClick = on_download)
                     .padding(horizontal = 20.dp, vertical = 12.dp),
             ) {
@@ -7318,8 +7311,8 @@ private fun attachment_fallback_panel(
             }
             Box(
                 modifier = Modifier
-                    .clip(SquircleShape(18.dp))
-                    .background(Color.White.copy(alpha = 0.15f))
+                    .clip(AsterShapes.control)
+                    .background(lightbox_button_fill)
                     .clickable {
                         try {
                             val opened = open_attachment_externally(
@@ -7392,7 +7385,7 @@ private fun detail_menu_action(
 private fun phishing_banner(result: org.astermail.android.security.PhishingResult) {
     val colors = AsterMaterial.colors
     val is_dangerous = result.level == org.astermail.android.security.PhishingLevel.dangerous
-    val bg = if (is_dangerous) colors.danger else colors.warning.copy(alpha = 0.14f)
+    val bg = if (is_dangerous) colors.danger else tonal_surface_color(colors, colors.warning)
     val tint = if (is_dangerous) Color.White else colors.warning
     val text_color = if (is_dangerous) Color.White else colors.text_primary
     val sub_text_color = if (is_dangerous) Color.White.copy(alpha = 0.85f) else colors.text_secondary
@@ -7402,7 +7395,7 @@ private fun phishing_banner(result: org.astermail.android.security.PhishingResul
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs)
-            .clip(SquircleShape(18.dp))
+            .clip(AsterShapes.island)
             .background(bg)
             .clickable { expanded = !expanded }
             .padding(horizontal = 14.dp, vertical = 12.dp),
@@ -7472,7 +7465,7 @@ private fun detail_menu_divider() {
             .fillMaxWidth()
             .padding(horizontal = 14.dp, vertical = 6.dp)
             .height(Dp.Hairline)
-            .background(colors.border_secondary.copy(alpha = 0.16f)),
+            .background(colors.border_secondary),
     )
 }
 
@@ -7533,15 +7526,13 @@ private fun auth_result_label(result: String?): String = when (result?.lowercase
 @Composable
 private fun identity_changed_banner(sender: String, on_acknowledge: () -> Unit) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(16.dp)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = AsterSpacing.md)
             .padding(bottom = AsterSpacing.sm)
-            .clip(shape)
-            .background(colors.danger.copy(alpha = 0.10f))
-            .border(1.dp, colors.danger.copy(alpha = 0.35f), shape)
+            .clip(AsterShapes.island)
+            .background(tonal_surface_color(colors, colors.danger))
             .padding(AsterSpacing.md),
         verticalAlignment = Alignment.Top,
     ) {
@@ -7584,15 +7575,13 @@ private fun identity_changed_banner(sender: String, on_acknowledge: () -> Unit) 
 @Composable
 private fun send_failure_banner(reason: String?) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(16.dp)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = AsterSpacing.md)
             .padding(bottom = AsterSpacing.sm)
-            .clip(shape)
-            .background(colors.danger.copy(alpha = 0.10f))
-            .border(1.dp, colors.danger.copy(alpha = 0.35f), shape)
+            .clip(AsterShapes.island)
+            .background(tonal_surface_color(colors, colors.danger))
             .padding(AsterSpacing.md),
         verticalAlignment = Alignment.Top,
     ) {
@@ -7634,15 +7623,13 @@ private fun send_failure_banner(reason: String?) {
 @Composable
 private fun sender_unverified_banner(sender: String) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(16.dp)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = AsterSpacing.md)
             .padding(bottom = AsterSpacing.sm)
-            .clip(shape)
-            .background(colors.danger.copy(alpha = 0.10f))
-            .border(1.dp, colors.danger.copy(alpha = 0.35f), shape)
+            .clip(AsterShapes.island)
+            .background(tonal_surface_color(colors, colors.danger))
             .padding(AsterSpacing.md),
         verticalAlignment = Alignment.Top,
     ) {

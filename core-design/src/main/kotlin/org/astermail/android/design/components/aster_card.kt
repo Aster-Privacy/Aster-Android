@@ -21,7 +21,7 @@
 
 package org.astermail.android.design.components
 
-import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.AsterShapes
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.Spring
@@ -51,7 +51,7 @@ fun AsterCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(16.dp)
+    val shape = AsterShapes.island
     val card_colors = CardDefaults.cardColors(
         containerColor = Color.Transparent,
         contentColor = colors.text_primary,

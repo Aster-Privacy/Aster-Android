@@ -32,7 +32,6 @@ import org.astermail.android.ui.common.write_to_clipboard
 import compose.icons.tablericons.*
 
 import org.astermail.android.design.acrylic
-import org.astermail.android.design.components.aster_menu_border_color
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu_surface_color
 import org.astermail.android.design.components.aster_menu
@@ -174,7 +173,11 @@ import org.astermail.android.design.AsterScale
 import org.astermail.android.design.AsterSlide
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.AsterRadius
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.island_surface_color
+import org.astermail.android.design.field_surface_color
+import org.astermail.android.design.tonal_surface_color
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.design.components.AsterIconButton
@@ -2130,7 +2133,7 @@ fun ComposeScreen(
                 Box {
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
+                            .clip(RoundedCornerShape(AsterRadius.field))
                             .then(
                                 if (mode_selectable) {
                                     Modifier.clickable { mode_menu_open = true }
@@ -2454,7 +2457,7 @@ fun ComposeScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(colors.danger.copy(alpha = 0.12f))
+                        .background(tonal_surface_color(colors, colors.danger))
                         .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -3795,8 +3798,7 @@ private fun recipient_chip(text: String, show_encryption_indicator: Boolean = tr
         Row(
             modifier = Modifier
                 .clip(SquircleShape(AsterRadius.pill))
-                .acrylic(colors, SquircleShape(AsterRadius.pill), colors.bg_card)
-                .border(1.dp, colors.border_secondary, SquircleShape(AsterRadius.pill))
+                .acrylic(colors, SquircleShape(AsterRadius.pill), field_surface_color(colors))
                 .clickable { menu_open = true }
                 .padding(start = 6.dp, end = 2.dp, top = 2.dp, bottom = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -4002,8 +4004,8 @@ private fun format_icon_btn(
     androidx.compose.foundation.layout.Box(
         modifier = Modifier
             .size(32.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (active) colors.accent_blue.copy(alpha = 0.15f) else androidx.compose.ui.graphics.Color.Transparent)
+            .clip(AsterShapes.control)
+            .background(if (active) tonal_surface_color(colors, colors.accent_blue) else androidx.compose.ui.graphics.Color.Transparent)
             .clickable(onClick = on_click),
         contentAlignment = Alignment.Center,
     ) {
@@ -4235,7 +4237,9 @@ private fun FromAliasSheet(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f, fill = false),
+                    .weight(1f, fill = false)
+                    .clip(AsterShapes.island)
+                    .background(island_surface_color(colors)),
             ) {
                 items(visible_options, key = { it }) { opt ->
                     val label = when {
@@ -4295,15 +4299,12 @@ private fun FromAliasSheet(
                 }
             }
             if (normalized_query.isEmpty()) {
-                androidx.compose.material3.HorizontalDivider(
-                    color = colors.border_primary,
-                    thickness = 1.dp,
-                    modifier = Modifier.padding(vertical = AsterSpacing.xs),
-                )
+                Spacer(Modifier.height(AsterSpacing.island_gap))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(SquircleShape(8.dp))
+                        .clip(AsterShapes.island)
+                        .background(island_surface_color(colors))
                         .clickable(onClick = on_create_ghost_alias)
                         .padding(horizontal = AsterSpacing.sm, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -4975,9 +4976,8 @@ internal fun ExpiringSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = AsterSpacing.sm)
-                        .clip(SquircleShape(10.dp))
-                        .border(1.dp, colors.border_secondary, SquircleShape(10.dp))
-                        .acrylic(colors, RectangleShape, colors.bg_secondary)
+                        .clip(AsterShapes.control)
+                        .acrylic(colors, RectangleShape, field_surface_color(colors))
                         .padding(start = AsterSpacing.md, end = AsterSpacing.xs, top = 6.dp, bottom = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -5492,13 +5492,11 @@ private fun compose_status_banner(
     test_tag: String,
 ) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(AsterRadius.lg)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm)
-            .acrylic(colors, shape, colors.bg_secondary)
-            .border(width = 1.dp, color = colors.border_secondary, shape = shape)
+            .acrylic(colors, AsterShapes.island, colors.bg_secondary)
             .clickable { on_change() }
             .padding(start = AsterSpacing.md, end = AsterSpacing.xs, top = 6.dp, bottom = 6.dp)
             .testTag(test_tag),

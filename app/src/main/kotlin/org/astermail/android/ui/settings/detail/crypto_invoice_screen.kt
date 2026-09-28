@@ -92,6 +92,7 @@ import org.astermail.android.api.billing.CryptoNativeInvoiceStatus
 import org.astermail.android.billing.CryptoInvoiceLoadError
 import org.astermail.android.billing.CryptoInvoiceViewModel
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
@@ -763,7 +764,7 @@ private fun crypto_qr_box(content: String) {
         ) {
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(AsterRadius.island))
                     .background(Color.White)
                     .padding(AsterSpacing.sm),
             ) {

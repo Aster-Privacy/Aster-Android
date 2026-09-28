@@ -28,7 +28,6 @@ import android.text.format.Formatter
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -73,9 +72,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
-import org.astermail.android.design.acrylic
+import org.astermail.android.design.field_surface_color
+import org.astermail.android.design.island_surface_color
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
@@ -148,9 +148,8 @@ private fun import_drop_area(on_choose: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(SquircleShape(14.dp))
-            .acrylic(colors, SquircleShape(14.dp), colors.bg_secondary)
-            .border(1.dp, colors.input_border, SquircleShape(14.dp))
+            .clip(AsterShapes.island)
+            .background(island_surface_color(colors), AsterShapes.island)
             .clickable(onClick = on_choose)
             .padding(vertical = AsterSpacing.lg, horizontal = AsterSpacing.md),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -186,9 +185,8 @@ private fun import_file_card(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(SquircleShape(14.dp))
-            .acrylic(colors, SquircleShape(14.dp), colors.bg_secondary)
-            .border(1.dp, colors.input_border, SquircleShape(14.dp))
+            .clip(AsterShapes.island)
+            .background(island_surface_color(colors), AsterShapes.island)
             .padding(AsterSpacing.md),
         verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
     ) {
@@ -384,9 +382,8 @@ fun alias_import_dialog(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clip(SquircleShape(14.dp))
-                                    .background(colors.input_bg, SquircleShape(14.dp))
-                                    .border(1.dp, colors.input_border, SquircleShape(14.dp))
+                                    .clip(AsterShapes.control)
+                                    .background(field_surface_color(colors), AsterShapes.control)
                                     .clickable(enabled = available_domains.size > 1) { domain_menu_open = true }
                                     .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -466,7 +463,7 @@ fun alias_import_dialog(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(SquircleShape(10.dp))
+                                        .clip(AsterShapes.item)
                                         .clickable(enabled = selectable) {
                                             selected_indices = if (selected) {
                                                 selected_indices - index
@@ -511,8 +508,8 @@ fun alias_import_dialog(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clip(SquircleShape(12.dp))
-                                    .acrylic(colors, SquircleShape(12.dp), colors.bg_secondary)
+                                    .clip(AsterShapes.control)
+                                    .background(field_surface_color(colors), AsterShapes.control)
                                     .clickable {
                                         update_existing = !update_existing
                                         if (update_existing) {

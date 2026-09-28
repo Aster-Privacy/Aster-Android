@@ -25,7 +25,6 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -80,9 +79,9 @@ import org.astermail.android.api.mail_rules.NumericOp
 import org.astermail.android.api.mail_rules.ReadState
 import org.astermail.android.api.mail_rules.TextOp
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
-import org.astermail.android.design.acrylic
+import org.astermail.android.design.island_surface_color
 import org.astermail.android.design.parse_hex_color_safe
 import org.astermail.android.folders.flatten_folder_tree
 import org.astermail.android.mail_rules.AliasDeliverySetting
@@ -357,9 +356,8 @@ fun RuleEditorScreen(
                     fontSize = 13.sp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(SquircleShape(16.dp))
-                        .acrylic(colors, SquircleShape(16.dp), colors.bg_card)
-                        .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
+                        .clip(AsterShapes.island)
+                        .background(island_surface_color(colors), AsterShapes.island)
                         .padding(AsterSpacing.lg)
                         .testTag("rule_advanced_notice"),
                 )
@@ -379,7 +377,7 @@ fun RuleEditorScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(SquircleShape(16.dp))
+                    .clip(AsterShapes.island)
                     .clickable(enabled = !is_read_only) { sheet = active_sheet.pick_color }
                     .heightIn(min = 56.dp)
                     .padding(horizontal = AsterSpacing.xs, vertical = AsterSpacing.sm),
@@ -469,9 +467,8 @@ fun RuleEditorScreen(
                     fontSize = 13.sp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(SquircleShape(16.dp))
-                        .acrylic(colors, SquircleShape(16.dp), colors.bg_card)
-                        .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
+                        .clip(AsterShapes.island)
+                        .background(island_surface_color(colors), AsterShapes.island)
                         .padding(AsterSpacing.lg)
                         .testTag("rule_duplicate_warning"),
                 )
@@ -489,9 +486,8 @@ fun RuleEditorScreen(
                     fontSize = 13.sp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(SquircleShape(16.dp))
-                        .acrylic(colors, SquircleShape(16.dp), colors.bg_card)
-                        .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
+                        .clip(AsterShapes.island)
+                        .background(island_surface_color(colors), AsterShapes.island)
                         .padding(AsterSpacing.lg)
                         .testTag("rule_skipped_warning"),
                 )
@@ -505,9 +501,8 @@ fun RuleEditorScreen(
                     fontSize = 13.sp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(SquircleShape(16.dp))
-                        .acrylic(colors, SquircleShape(16.dp), colors.bg_card)
-                        .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
+                        .clip(AsterShapes.island)
+                        .background(island_surface_color(colors), AsterShapes.island)
                         .padding(AsterSpacing.lg)
                         .testTag("rule_switched_to_any"),
                 )
@@ -518,9 +513,8 @@ fun RuleEditorScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(SquircleShape(16.dp))
-                        .acrylic(colors, SquircleShape(16.dp), colors.bg_card)
-                        .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
+                        .clip(AsterShapes.island)
+                        .background(island_surface_color(colors), AsterShapes.island)
                         .padding(AsterSpacing.lg)
                         .testTag("rule_conflict_warning"),
                 ) {
@@ -613,9 +607,8 @@ fun RuleEditorScreen(
                     fontSize = 13.sp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(SquircleShape(16.dp))
-                        .acrylic(colors, SquircleShape(16.dp), colors.bg_card)
-                        .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
+                        .clip(AsterShapes.island)
+                        .background(island_surface_color(colors), AsterShapes.island)
                         .padding(AsterSpacing.lg)
                         .testTag("rule_alias_delivery_warning"),
                 )
@@ -647,9 +640,8 @@ fun RuleEditorScreen(
                     fontSize = 13.sp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(SquircleShape(16.dp))
-                        .acrylic(colors, SquircleShape(16.dp), colors.bg_card)
-                        .border(1.dp, colors.border_secondary, SquircleShape(16.dp))
+                        .clip(AsterShapes.island)
+                        .background(island_surface_color(colors), AsterShapes.island)
                         .padding(AsterSpacing.lg)
                         .testTag("rule_alias_label_warning"),
                 )

@@ -30,7 +30,7 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -58,13 +58,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.R
-import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.design.components.AsterSecondaryButton
+import org.astermail.android.design.AsterShapes
+import org.astermail.android.design.island_surface_color
+import org.astermail.android.design.tonal_surface_color
 
 @Composable
 fun RegisterRecoveryStep(
@@ -131,8 +133,7 @@ fun RegisterRecoveryStep(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, colors.border_primary, SquircleShape(18.dp))
-                .acrylic(colors, SquircleShape(18.dp), colors.bg_secondary)
+                .acrylic(colors, AsterShapes.island, island_surface_color(colors))
                 .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
@@ -147,7 +148,7 @@ fun RegisterRecoveryStep(
                         color = colors.text_muted,
                         fontSize = 13.sp,
                         fontFamily = FontFamily.Monospace,
-                        modifier = Modifier.padding(end = 4.dp),
+                        modifier = Modifier.width(28.dp),
                     )
                     Text(
                         text = code,
@@ -165,8 +166,7 @@ fun RegisterRecoveryStep(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, colors.danger, SquircleShape(18.dp))
-                    .acrylic(colors, SquircleShape(18.dp), colors.bg_secondary)
+                    .acrylic(colors, AsterShapes.island, tonal_surface_color(colors, colors.danger))
                     .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
                 verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
             ) {

@@ -30,7 +30,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -59,6 +58,8 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterGhostButton
+import org.astermail.android.design.AsterShapes
+import org.astermail.android.design.island_surface_color
 import org.astermail.android.notifications.MailPollingWorker
 import org.astermail.android.notifications.PersistentPushService
 
@@ -170,8 +171,7 @@ private fun notification_preview_card() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .acrylic(colors, SquircleShape(16.dp), colors.bg_card)
-            .border(1.dp, colors.border_primary, SquircleShape(16.dp))
+            .acrylic(colors, AsterShapes.island, island_surface_color(colors))
             .padding(AsterSpacing.lg),
         verticalAlignment = Alignment.CenterVertically,
     ) {

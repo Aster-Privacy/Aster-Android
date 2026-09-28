@@ -95,8 +95,10 @@ import org.astermail.android.R
 import org.astermail.android.api.domains.BimiRecord
 import org.astermail.android.api.domains.BimiState
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.field_surface_color
+import org.astermail.android.design.island_surface_color
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.settings.BimiErrorKind
 import org.astermail.android.ui.settings.detail.copy_dns_value
@@ -145,13 +147,12 @@ internal fun bimi_alert(
     modifier: Modifier = Modifier,
 ) {
     val palette = bimi_alert_palette(tone)
-    val shape = SquircleShape(8.dp)
+    val shape = AsterShapes.control
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(shape)
             .background(Brush.verticalGradient(listOf(palette.fill_top, palette.fill_bottom)), shape)
-            .border(1.dp, Brush.verticalGradient(listOf(palette.edge_top, palette.edge_bottom)), shape)
             .padding(horizontal = AsterSpacing.md, vertical = 10.dp)
             .semantics(mergeDescendants = true) {},
         verticalAlignment = Alignment.Top,
@@ -520,7 +521,7 @@ private fun bimi_preview_panel(
     png: String?,
     time: String,
 ) {
-    val shape = SquircleShape(12.dp)
+    val shape = AsterShapes.island
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(text = label, color = AsterMaterial.colors.text_tertiary, fontSize = 12.sp, lineHeight = 16.sp)
         v_gap(AsterSpacing.xs)
@@ -528,8 +529,7 @@ private fun bimi_preview_panel(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(shape)
-                .background(palette.background, shape)
-                .border(1.dp, palette.border, shape),
+                .background(palette.background, shape),
         ) {
             Row(
                 modifier = Modifier
@@ -603,7 +603,7 @@ private fun wrap_by_character(value: String): String = value.toList().joinToStri
 internal fun bimi_record_rows(record: BimiRecord) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
-    val shape = SquircleShape(12.dp)
+    val shape = AsterShapes.island
     val copy_label = stringResource(R.string.copy)
     val rows = listOf(
         stringResource(R.string.domain_bimi_record_type) to record.record_type,
@@ -614,7 +614,7 @@ internal fun bimi_record_rows(record: BimiRecord) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .border(1.dp, colors.border_secondary, shape),
+            .background(island_surface_color(colors), shape),
     ) {
         rows.forEachIndexed { index, (label, value) ->
             if (index > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(colors.border_secondary))
@@ -708,14 +708,14 @@ internal fun bimi_compact_button(
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(10.dp)
+    val shape = AsterShapes.control
     Box(
         modifier = modifier
             .minimumInteractiveComponentSize()
             .heightIn(min = 36.dp)
             .alpha(if (enabled) 1f else 0.5f)
             .clip(shape)
-            .border(1.dp, colors.border_primary, shape)
+            .background(field_surface_color(colors), shape)
             .clickable(enabled = enabled, role = Role.Button, onClick = on_click)
             .padding(horizontal = AsterSpacing.md),
         contentAlignment = Alignment.Center,

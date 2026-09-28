@@ -27,18 +27,15 @@ import compose.icons.tablericons.*
 import androidx.activity.compose.BackHandler
 import org.astermail.android.mail.strip_non_rendered_blocks
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -56,19 +53,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import org.astermail.android.R
-import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterSecondaryButton
@@ -356,26 +351,13 @@ private fun labeled_text_field(
     on_change: (String) -> Unit,
     min_height: androidx.compose.ui.unit.Dp = 56.dp,
 ) {
-    val colors = AsterMaterial.colors
-    BasicTextField(
+    AsterTextField(
         value = value,
         onValueChange = on_change,
-        textStyle = TextStyle(color = colors.text_primary, fontSize = 15.sp),
-        cursorBrush = SolidColor(colors.accent_blue),
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = min_height)
-            .background(colors.input_bg, SquircleShape(18.dp))
-            .border(1.dp, colors.input_border, SquircleShape(18.dp))
-            .padding(AsterSpacing.lg),
-        decorationBox = { inner_field ->
-            Box {
-                if (value.isEmpty()) {
-                    Text(text = placeholder, color = colors.text_muted, fontSize = 15.sp)
-                }
-                inner_field()
-            }
-        },
+        placeholder = placeholder,
+        singleLine = false,
+        min_height = min_height,
+        modifier = Modifier.fillMaxWidth(),
     )
 }
 

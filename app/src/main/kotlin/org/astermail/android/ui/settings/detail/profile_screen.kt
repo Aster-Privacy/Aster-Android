@@ -30,7 +30,6 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -94,6 +93,9 @@ import org.astermail.android.ui.common.current_user_avatar
 import org.astermail.android.ui.common.plan_ring
 import org.astermail.android.ui.common.remember_has_paid_plan
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterRadius
+import org.astermail.android.design.AsterShapes
+import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
@@ -554,7 +556,7 @@ private fun profile_pulse_skeleton() {
 private fun badge_chip(badge: Badge) {
     val colors = AsterMaterial.colors
     val visual = remember(badge.slug) { badge_visual_for(badge.slug) }
-    val shape = remember { RoundedCornerShape(10.dp) }
+    val shape = remember { RoundedCornerShape(AsterRadius.field) }
     val background = org.astermail.android.ui.mail.chip_background(
         visual.color,
         colors.bg_primary,
@@ -629,9 +631,8 @@ private fun active_badge_row(
         Box {
             Row(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(colors.input_bg)
-                    .border(1.dp, colors.input_border, RoundedCornerShape(12.dp))
+                    .clip(AsterShapes.control)
+                    .background(field_surface_color(colors), AsterShapes.control)
                     .clickable { expanded = true }
                     .padding(horizontal = 12.dp, vertical = 9.dp),
                 verticalAlignment = Alignment.CenterVertically,
