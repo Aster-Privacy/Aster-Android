@@ -147,7 +147,7 @@ interface MailApi {
     suspend fun create_attachment(
         mail_item_id: String,
         request: CreateAttachmentRequestBody,
-    ): AttachmentResponse
+    ): CreateAttachmentResponse
 
     suspend fun get_attachment(attachment_id: String): AttachmentResponse
 
@@ -565,7 +565,7 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
     override suspend fun create_attachment(
         mail_item_id: String,
         request: CreateAttachmentRequestBody,
-    ): AttachmentResponse {
+    ): CreateAttachmentResponse {
         val response = client.http.post("${client.base_url}$base/attachments/by-mail/$mail_item_id") {
             timeout { requestTimeoutMillis = large_payload_timeout_ms }
             contentType(ContentType.Application.Json)

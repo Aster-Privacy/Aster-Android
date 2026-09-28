@@ -47,6 +47,12 @@ data class AttachmentResponse(
 )
 
 @Serializable
+data class CreateAttachmentResponse(
+    val id: String,
+    val success: Boolean = true,
+)
+
+@Serializable
 data class UpdateAttachmentMetaRequest(
     val encrypted_meta: String,
     val meta_nonce: String,
