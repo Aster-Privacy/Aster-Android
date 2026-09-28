@@ -1,0 +1,11 @@
+What's new:
+
+- You can sort folders A to Z and expand or collapse all of them at once.
+- You can open password-protected PDFs and see Cc and Bcc in message details.
+- You can choose the app language separately from your phone language.
+
+Fixed:
+
+- The app refreshes your session before it expires, so you stay signed in.
+- When a message fails to send, the app tells you why.
+- Images that you paste into a message send as attachments.
