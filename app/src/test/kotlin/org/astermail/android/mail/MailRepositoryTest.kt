@@ -49,8 +49,8 @@ import org.astermail.android.api.mail.MailUserStatsResponse
 import org.astermail.android.api.mail.PatchMetadataRequest
 import org.astermail.android.api.mail.ThreadMessageItem
 import org.astermail.android.api.mail.ThreadWithMessages
-import org.astermail.android.api.mail.AttachmentResponse
 import org.astermail.android.api.mail.CreateAttachmentRequestBody
+import org.astermail.android.api.mail.CreateAttachmentResponse
 import org.astermail.android.api.send.ExternalAttachmentPayload
 import org.astermail.android.api.send.SendApi
 import org.astermail.android.api.send.SimpleSendResponse
@@ -1957,17 +1957,7 @@ class MailRepositoryTest {
         )
         val captured = slot<CreateAttachmentRequestBody>()
         coEvery { mail_api.create_attachment("sent_1", capture(captured)) } answers {
-            val body = captured.captured
-            AttachmentResponse(
-                id = "att_1",
-                mail_item_id = "sent_1",
-                encrypted_data = body.encrypted_data,
-                data_nonce = body.data_nonce,
-                encrypted_meta = body.encrypted_meta,
-                meta_nonce = body.meta_nonce,
-                size_bytes = body.encrypted_data.length.toLong(),
-                seq_num = body.seq_num ?: 0,
-            )
+            CreateAttachmentResponse(id = "att_1", success = true)
         }
 
         repo.link_sender_attachments("sent_1", listOf(payload))

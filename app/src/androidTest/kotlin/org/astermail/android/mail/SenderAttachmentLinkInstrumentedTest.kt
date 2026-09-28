@@ -29,8 +29,8 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.runBlocking
-import org.astermail.android.api.mail.AttachmentResponse
 import org.astermail.android.api.mail.CreateAttachmentRequestBody
+import org.astermail.android.api.mail.CreateAttachmentResponse
 import org.astermail.android.api.mail.MailApi
 import org.astermail.android.api.send.ExternalAttachmentPayload
 import org.junit.Assert.assertArrayEquals
@@ -74,17 +74,7 @@ class SenderAttachmentLinkInstrumentedTest {
         val mail_api = mockk<MailApi>(relaxed = true)
         val captured = slot<CreateAttachmentRequestBody>()
         coEvery { mail_api.create_attachment("sent_1", capture(captured)) } answers {
-            val body = captured.captured
-            AttachmentResponse(
-                id = "att_1",
-                mail_item_id = "sent_1",
-                encrypted_data = body.encrypted_data,
-                data_nonce = body.data_nonce,
-                encrypted_meta = body.encrypted_meta,
-                meta_nonce = body.meta_nonce,
-                size_bytes = body.encrypted_data.length.toLong(),
-                seq_num = body.seq_num ?: 0,
-            )
+            CreateAttachmentResponse(id = "att_1", success = true)
         }
         val repo = build_repo(mail_api, "correct horse battery staple".toByteArray(Charsets.UTF_8))
 
