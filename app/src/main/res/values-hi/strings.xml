@@ -3181,4 +3181,11 @@
     <string name="outbox_failed_reason_rejected">सर्वर ने यह संदेश स्वीकार नहीं किया। प्राप्तकर्ताओं और अटैचमेंट के आकार की जाँच करें, फिर दोबारा कोशिश करें।</string>
     <string name="outbox_failed_reason_connection">कई प्रयासों के बाद भी Aster सर्वर तक नहीं पहुँच सका। अपना कनेक्शन जाँचें, फिर दोबारा कोशिश करें।</string>
     <string name="outbox_failed_reason_attachment">एक अटैचमेंट अब इस डिवाइस पर उपलब्ध नहीं है, इसलिए Aster यह संदेश नहीं भेज सकता। इसे हटाएँ, फिर फ़ाइल को नए संदेश में दोबारा अटैच करें।</string>
+    <string name="pdf_password_title">यह PDF पासवर्ड से सुरक्षित है</string>
+    <string name="pdf_password_description">इस PDF को देखने के लिए, इसका पासवर्ड डालें। पासवर्ड इसी डिवाइस पर रहता है।</string>
+    <string name="pdf_password_hint">PDF पासवर्ड</string>
+    <string name="pdf_password_incorrect">यह पासवर्ड गलत है। फिर से कोशिश करें।</string>
+    <string name="pdf_preview_failed">यह PDF यहां नहीं दिखाई जा सकती। इसे खोलने के लिए, इसे डाउनलोड करें।</string>
+    <string name="pdf_page_of_total">पेज %1$d, कुल %2$d में से</string>
+    <string name="pdf_password_unsupported">यह PDF पासवर्ड से सुरक्षित है। इसे देखने के लिए, इसे किसी दूसरे ऐप में खोलें।</string>
 </resources>

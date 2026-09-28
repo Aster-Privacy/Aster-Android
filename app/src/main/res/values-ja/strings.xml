@@ -3281,4 +3281,11 @@
     <string name="outbox_failed_reason_rejected">サーバーがこのメッセージを受け付けませんでした。受信者と添付ファイルのサイズを確認してから、もう一度お試しください。</string>
     <string name="outbox_failed_reason_connection">何度か試しましたが、Aster はサーバーに接続できませんでした。接続を確認してから、もう一度お試しください。</string>
     <string name="outbox_failed_reason_attachment">添付ファイルがこのデバイスで利用できなくなったため、Aster はこのメッセージを送信できません。メッセージを破棄し、新しいメッセージにファイルを添付し直してください。</string>
+    <string name="pdf_password_title">このPDFはパスワードで保護されています</string>
+    <string name="pdf_password_description">このPDFを表示するには、パスワードを入力してください。パスワードはこのデバイスから送信されません。</string>
+    <string name="pdf_password_hint">PDFのパスワード</string>
+    <string name="pdf_password_incorrect">パスワードが正しくありません。もう一度お試しください。</string>
+    <string name="pdf_preview_failed">このPDFはここに表示できません。開くにはダウンロードしてください。</string>
+    <string name="pdf_page_of_total">%2$dページ中%1$dページ</string>
+    <string name="pdf_password_unsupported">このPDFはパスワードで保護されています。表示するには、別のアプリで開いてください。</string>
 </resources>

@@ -3310,4 +3310,11 @@
     <string name="outbox_failed_reason_rejected">Il server non ha accettato questo messaggio. Controlla i destinatari e la dimensione degli allegati, poi riprova.</string>
     <string name="outbox_failed_reason_connection">Aster non è riuscito a raggiungere il server dopo diversi tentativi. Controlla la connessione, poi riprova.</string>
     <string name="outbox_failed_reason_attachment">Un allegato non è più disponibile su questo dispositivo, quindi Aster non può inviare questo messaggio. Eliminalo, poi allega di nuovo il file in un nuovo messaggio.</string>
+    <string name="pdf_password_title">Questo PDF è protetto da password</string>
+    <string name="pdf_password_description">Per visualizzare questo PDF, inserisci la password. La password resta su questo dispositivo.</string>
+    <string name="pdf_password_hint">Password del PDF</string>
+    <string name="pdf_password_incorrect">La password non è corretta. Riprova.</string>
+    <string name="pdf_preview_failed">Questo PDF non può essere mostrato qui. Per aprirlo, scaricalo.</string>
+    <string name="pdf_page_of_total">Pagina %1$d di %2$d</string>
+    <string name="pdf_password_unsupported">Questo PDF è protetto da password. Per visualizzarlo, aprilo in un\'altra app.</string>
 </resources>

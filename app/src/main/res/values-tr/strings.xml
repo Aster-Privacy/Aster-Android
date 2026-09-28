@@ -3291,4 +3291,11 @@
     <string name="outbox_failed_reason_rejected">Sunucu bu iletiyi kabul etmedi. Alıcıları ve eklerin boyutunu kontrol edip tekrar deneyin.</string>
     <string name="outbox_failed_reason_connection">Aster birkaç denemeden sonra sunucuya ulaşamadı. Bağlantınızı kontrol edip tekrar deneyin.</string>
     <string name="outbox_failed_reason_attachment">Bir ek bu cihazda artık kullanılamıyor, bu yüzden Aster bu iletiyi gönderemiyor. İletiyi silin, ardından dosyayı yeni bir iletiye tekrar ekleyin.</string>
+    <string name="pdf_password_title">Bu PDF parola korumalı</string>
+    <string name="pdf_password_description">Bu PDF\'yi görüntülemek için parolasını girin. Parola bu cihazda kalır.</string>
+    <string name="pdf_password_hint">PDF parolası</string>
+    <string name="pdf_password_incorrect">Parola yanlış. Tekrar deneyin.</string>
+    <string name="pdf_preview_failed">Bu PDF burada gösterilemiyor. Açmak için indirin.</string>
+    <string name="pdf_page_of_total">Sayfa %1$d / %2$d</string>
+    <string name="pdf_password_unsupported">Bu PDF parola korumalı. Görüntülemek için başka bir uygulamada açın.</string>
 </resources>

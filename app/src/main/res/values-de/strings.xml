@@ -3292,4 +3292,11 @@
     <string name="outbox_failed_reason_rejected">Der Server hat diese Nachricht nicht angenommen. Prüfe die Empfänger und die Größe der Anhänge und versuche es dann erneut.</string>
     <string name="outbox_failed_reason_connection">Aster konnte den Server nach mehreren Versuchen nicht erreichen. Prüfe deine Verbindung und versuche es dann erneut.</string>
     <string name="outbox_failed_reason_attachment">Ein Anhang ist auf diesem Gerät nicht mehr verfügbar, daher kann Aster diese Nachricht nicht senden. Verwirf sie und hänge die Datei in einer neuen Nachricht erneut an.</string>
+    <string name="pdf_password_title">Diese PDF ist passwortgeschützt</string>
+    <string name="pdf_password_description">Gib das Passwort ein, um diese PDF anzuzeigen. Das Passwort bleibt auf diesem Gerät.</string>
+    <string name="pdf_password_hint">PDF-Passwort</string>
+    <string name="pdf_password_incorrect">Das Passwort ist falsch. Versuche es noch einmal.</string>
+    <string name="pdf_preview_failed">Diese PDF kann hier nicht angezeigt werden. Lade sie herunter, um sie zu öffnen.</string>
+    <string name="pdf_page_of_total">Seite %1$d von %2$d</string>
+    <string name="pdf_password_unsupported">Diese PDF ist passwortgeschützt. Öffne sie in einer anderen App, um sie anzuzeigen.</string>
 </resources>

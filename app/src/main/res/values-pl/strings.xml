@@ -3329,4 +3329,11 @@
     <string name="outbox_failed_reason_rejected">Serwer nie przyjął tej wiadomości. Sprawdź odbiorców i rozmiar załączników, a następnie spróbuj ponownie.</string>
     <string name="outbox_failed_reason_connection">Aster nie mógł połączyć się z serwerem po kilku próbach. Sprawdź połączenie, a następnie spróbuj ponownie.</string>
     <string name="outbox_failed_reason_attachment">Załącznik nie jest już dostępny na tym urządzeniu, więc Aster nie może wysłać tej wiadomości. Odrzuć ją, a następnie dołącz plik ponownie w nowej wiadomości.</string>
+    <string name="pdf_password_title">Ten plik PDF jest chroniony hasłem</string>
+    <string name="pdf_password_description">Aby wyświetlić ten plik PDF, wpisz jego hasło. Hasło pozostaje na tym urządzeniu.</string>
+    <string name="pdf_password_hint">Hasło do pliku PDF</string>
+    <string name="pdf_password_incorrect">To hasło jest nieprawidłowe. Spróbuj ponownie.</string>
+    <string name="pdf_preview_failed">Tego pliku PDF nie można tu wyświetlić. Aby go otworzyć, pobierz go.</string>
+    <string name="pdf_page_of_total">Strona %1$d z %2$d</string>
+    <string name="pdf_password_unsupported">Ten plik PDF jest chroniony hasłem. Aby go wyświetlić, otwórz go w innej aplikacji.</string>
 </resources>
