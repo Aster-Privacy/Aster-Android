@@ -216,6 +216,7 @@
     <string name="reported_as_spam">Отмечено как спам</string>
     <string name="block_sender">Заблокировать отправителя</string>
     <string name="message_unavailable">Сообщение недоступно</string>
+    <string name="message_replaced_or_deleted">Это сообщение удалено или заменено более новой копией. Чтобы найти его, вернитесь назад и повторите поиск.</string>
     <string name="no_subject">(без темы)</string>
     <string name="open_external_link">Открыть внешнюю ссылку?</string>
     <string name="leaving_aster_warning">Вы собираетесь покинуть Aster и открыть эту ссылку в браузере:</string>

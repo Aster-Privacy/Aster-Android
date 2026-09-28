@@ -2018,7 +2018,13 @@ class MailRepository @Inject constructor(
     suspend fun fetch_single_message(item_id: String): Result<InboxItem> = runCatching {
         val item = mail_api.get_message(item_id)
         withContext(Dispatchers.IO) {
-            val decrypted = decrypt_inbox_item(item)
+            val decrypted = try {
+                decrypt_inbox_item(item)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Throwable) {
+                fallback_undecryptable_item(item)
+            }
             if (decrypted.is_undecryptable && is_sealed_inbound_nonce(item.envelope_nonce) && heal_envelope_keys()) {
                 runCatching { decrypt_inbox_item(item) }.getOrElse { decrypted }
             } else {

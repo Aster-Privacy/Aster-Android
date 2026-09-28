@@ -216,6 +216,7 @@
     <string name="reported_as_spam">스팸으로 신고됨</string>
     <string name="block_sender">발신자 차단</string>
     <string name="message_unavailable">메시지를 사용할 수 없음</string>
+    <string name="message_replaced_or_deleted">이 메시지는 삭제되었거나 최신 사본으로 대체되었습니다. 찾으려면 뒤로 돌아가 다시 검색하세요.</string>
     <string name="no_subject">(제목 없음)</string>
     <string name="open_external_link">외부 링크를 여시겠습니까?</string>
     <string name="leaving_aster_warning">Aster를 떠나 브라우저에서 이 링크를 열려고 합니다:</string>

@@ -1714,11 +1714,15 @@ class MailViewModel @Inject constructor(
             } else {
                 val keep = _thread_state.value
                 val kept = keep.item?.id == item_id && keep.messages.any { !it.is_body_pending }
+                val missing_on_server = item_result.exceptionOrNull() is org.astermail.android.api.ApiError.NotFoundError
                 if (!kept && item_result.exceptionOrNull()?.let { is_cancellation(it) } != true) {
                     undo_failed_open(item_id)
                 }
+                if (missing_on_server) forget_missing_search_item(item_id)
                 _thread_state.value = if (kept) {
                     keep.copy(is_loading = false, error = null)
+                } else if (missing_on_server) {
+                    ThreadUiState(error = context.getString(R.string.message_replaced_or_deleted))
                 } else {
                     ThreadUiState(
                         error = item_result.exceptionOrNull()
@@ -1740,6 +1744,13 @@ class MailViewModel @Inject constructor(
                     _thread_state.update { if (it.is_loading) it.copy(is_loading = false) else it }
                 }
             }
+        }
+    }
+
+    private fun forget_missing_search_item(item_id: String) {
+        _search_state.update { state -> state.copy(all_items = state.all_items.filterNot { it.id == item_id }) }
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { search_index_manager.remove_items(listOf(item_id)) }
         }
     }
 

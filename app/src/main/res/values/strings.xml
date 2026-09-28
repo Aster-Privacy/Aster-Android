@@ -365,6 +365,7 @@
     <string name="contact_added_named">Saved %1$s to contacts</string>
     <string name="contact_removed_named">Removed %1$s from contacts</string>
     <string name="message_unavailable">Message unavailable</string>
+    <string name="message_replaced_or_deleted">This message was deleted or replaced by a newer copy. To find it, go back and search again.</string>
     <string name="no_subject">(no subject)</string>
     <string name="open_external_link">Open external link?</string>
     <string name="leaving_aster_warning">You are about to leave Aster and open this link in your browser:</string>

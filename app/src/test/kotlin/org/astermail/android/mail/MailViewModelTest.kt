@@ -1409,6 +1409,37 @@ class MailViewModelTest {
     }
 
     @Test
+    fun `load_thread for a message the server no longer has drops it from search`() = runTest {
+        every { context.getString(org.astermail.android.R.string.message_replaced_or_deleted) } returns
+            "Message replaced or deleted"
+        coEvery { repository.fetch_single_message("stale_id") } returns
+            Result.failure(org.astermail.android.api.ApiError.NotFoundError)
+
+        vm.load_thread("stale_id")
+        advanceUntilIdle()
+
+        val state = vm.thread_state.value
+        assertFalse(state.is_loading)
+        assertEquals("Message replaced or deleted", state.error)
+        assertTrue(state.messages.isEmpty())
+        coVerify { search_index_manager.remove_items(listOf("stale_id")) }
+    }
+
+    @Test
+    fun `load_thread keeps search rows when the failure is not a missing message`() = runTest {
+        coEvery { repository.fetch_single_message("flaky_id") } returns
+            Result.failure(RuntimeException("timeout"))
+        val removed = mutableListOf<List<String>>()
+        coEvery { search_index_manager.remove_items(any()) } coAnswers { removed.add(firstArg()) }
+
+        vm.load_thread("flaky_id")
+        advanceUntilIdle()
+
+        assertEquals("Something went wrong", vm.thread_state.value.error)
+        assertTrue(removed.isEmpty())
+    }
+
+    @Test
     fun `load_thread loading state is set before async work`() = runTest {
         coEvery { repository.fetch_single_message(any()) } coAnswers {
             kotlinx.coroutines.delay(5000)
