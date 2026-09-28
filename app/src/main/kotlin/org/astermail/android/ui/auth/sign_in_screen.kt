@@ -172,6 +172,10 @@ fun SignInScreen(
             on_back = {
                 if (view_model.cancel_totp(active_totp_challenge)) cached_totp_challenge = null
             },
+            on_reset_with_recovery_code = {
+                if (view_model.cancel_totp(active_totp_challenge)) cached_totp_challenge = null
+                on_forgot_password()
+            },
         )
         return
     }
@@ -419,10 +423,11 @@ private fun aster_variant_body(
 }
 
 @Composable
-private fun TotpVerifyScreen(
+internal fun TotpVerifyScreen(
     challenge: org.astermail.android.auth.TotpChallenge,
     view_model: AuthViewModel,
     on_back: () -> Unit,
+    on_reset_with_recovery_code: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
@@ -446,6 +451,7 @@ private fun TotpVerifyScreen(
     val is_loading = state is AuthUiState.Loading
     val error_message = (state as? AuthUiState.Error)?.message
     val code_focus = remember { FocusRequester() }
+    val is_recovery_code = use_backup && looks_like_recovery_code(code)
     val code_ready = if (use_backup) {
         is_backup_code_length(code.count { it.isLetterOrDigit() })
     } else {
@@ -523,7 +529,7 @@ private fun TotpVerifyScreen(
                         value = code,
                         onValueChange = { v ->
                             code = if (use_backup) {
-                                latest_code_input(v.filter { it.isLetterOrDigit() || it == '-' }, 20)
+                                latest_code_input(v.filter { it.isLetterOrDigit() || it == '-' }, max_code_input_length)
                             } else {
                                 latest_code_input(ascii_digits(v), 6)
                             }
@@ -551,7 +557,14 @@ private fun TotpVerifyScreen(
                         modifier = Modifier.focusRequester(code_focus),
                     )
 
-                    if (use_backup) {
+                    if (is_recovery_code) {
+                        Spacer(Modifier.height(AsterSpacing.sm))
+                        Text(
+                            text = stringResource(R.string.totp_recovery_code_detected),
+                            color = colors.danger,
+                            fontSize = 13.sp,
+                        )
+                    } else if (use_backup) {
                         Spacer(Modifier.height(AsterSpacing.sm))
                         Text(
                             text = stringResource(R.string.totp_backup_code_hint),
@@ -597,6 +610,12 @@ private fun TotpVerifyScreen(
                         enabled = !is_loading,
                         is_loading = is_loading,
                     )
+                } else if (is_recovery_code) {
+                    AsterButton(
+                        label = stringResource(R.string.totp_reset_with_recovery_code),
+                        onClick = on_reset_with_recovery_code,
+                        enabled = !is_loading,
+                    )
                 } else {
                     AsterButton(
                         label = stringResource(R.string.totp_verify_button),
@@ -624,6 +643,21 @@ private fun TotpVerifyScreen(
                     enabled = !is_loading,
                     on_click = { switch_method(second_factor_ui_method_backup) },
                 )
+
+                if (!totp_available) {
+                    Spacer(Modifier.height(AsterSpacing.lg))
+                    Text(
+                        text = stringResource(R.string.totp_passkey_only_recovery_hint),
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                    )
+                    second_factor_method_switch(
+                        label = stringResource(R.string.totp_reset_with_recovery_code),
+                        visible = true,
+                        enabled = !is_loading,
+                        on_click = on_reset_with_recovery_code,
+                    )
+                }
             }
         }
     }
@@ -652,7 +686,15 @@ private const val second_factor_ui_method_passkey = "passkey"
 private const val second_factor_ui_method_totp = "totp"
 private const val second_factor_ui_method_backup = "backup"
 
+private const val recovery_code_prefix = "ASTER"
+private const val max_code_input_length = 32
+
 private fun is_backup_code_length(length: Int): Boolean = length == 8 || length == 12
+
+internal fun looks_like_recovery_code(value: String): Boolean {
+    val normalized = value.uppercase().filter { it in 'A'..'Z' || it in '0'..'9' }
+    return normalized.startsWith(recovery_code_prefix) && normalized.length > 12
+}
 
 @Composable
 internal fun error_banner(message: String) {

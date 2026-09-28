@@ -1227,6 +1227,9 @@
     <string name="totp_passkey_button">Continuar com uma chave de acesso</string>
     <string name="totp_use_passkey">Usar uma chave de acesso</string>
     <string name="totp_backup_code_hint">Use um dos códigos de backup que você salvou ao configurar seu app autenticador. Um código de recuperação que começa com ASTER restaura sua caixa de entrada e não funciona aqui.</string>
+    <string name="totp_recovery_code_detected">Este é um código de recuperação, não um código de backup. Para usá-lo, redefina sua senha com seu código de recuperação.</string>
+    <string name="totp_reset_with_recovery_code">Redefinir com código de recuperação</string>
+    <string name="totp_passkey_only_recovery_hint">Os códigos de backup vêm com um aplicativo autenticador, e esta conta não usa um. Para entrar sem sua chave de acesso, redefina sua senha com um dos seus códigos de recuperação. Seus e-mails, contatos e configurações continuam como estão, e depois você pode adicionar uma nova chave de acesso.</string>
     <string name="totp_trust_device">Confiar neste dispositivo por 30 dias</string>
     <string name="failed_block_sender">Não foi possível bloquear o remetente</string>
     <string name="failed_unblock_sender">Não foi possível desbloquear o remetente</string>

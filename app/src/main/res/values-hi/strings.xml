@@ -933,6 +933,9 @@
     <string name="totp_passkey_button">पासकी से जारी रखें</string>
     <string name="totp_use_passkey">पासकी का उपयोग करें</string>
     <string name="totp_backup_code_hint">प्रमाणक ऐप सेट अप करते समय सहेजे गए बैकअप कोड में से कोई एक इस्तेमाल करें। ASTER से शुरू होने वाला रिकवरी कोड आपका मेलबॉक्स बहाल करता है और यहाँ काम नहीं करता।</string>
+    <string name="totp_recovery_code_detected">यह बैकअप कोड नहीं, रिकवरी कोड है। इसे इस्तेमाल करने के लिए, अपने रिकवरी कोड से पासवर्ड रीसेट करें।</string>
+    <string name="totp_reset_with_recovery_code">रिकवरी कोड से रीसेट करें</string>
+    <string name="totp_passkey_only_recovery_hint">बैकअप कोड ऑथेंटिकेटर ऐप के साथ मिलते हैं, और यह खाता ऑथेंटिकेटर ऐप इस्तेमाल नहीं करता। पासकी के बिना साइन इन करने के लिए, अपने किसी रिकवरी कोड से पासवर्ड रीसेट करें। आपके मेल, संपर्क और सेटिंग्स वैसे ही रहेंगे, और बाद में आप नई पासकी जोड़ सकते हैं।</string>
     <string name="totp_trust_device">इस डिवाइस पर 30 दिन तक भरोसा करें</string>
     <string name="sessions">सत्र</string>
     <string name="no_active_sessions">कोई सक्रिय सत्र नहीं</string>

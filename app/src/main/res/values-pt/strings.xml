@@ -1228,6 +1228,9 @@
     <string name="totp_passkey_button">Continuar com uma chave de acesso</string>
     <string name="totp_use_passkey">Usar uma chave de acesso</string>
     <string name="totp_backup_code_hint">Use um dos códigos de segurança que guardou quando configurou a sua aplicação de autenticação. Um código de recuperação que começa por ASTER restaura a sua caixa de correio e não funciona aqui.</string>
+    <string name="totp_recovery_code_detected">Este é um código de recuperação, não um código de cópia de segurança. Para o utilizar, reponha a palavra-passe com o seu código de recuperação.</string>
+    <string name="totp_reset_with_recovery_code">Repor com código de recuperação</string>
+    <string name="totp_passkey_only_recovery_hint">Os códigos de cópia de segurança vêm com uma aplicação de autenticação, e esta conta não utiliza nenhuma. Para iniciar sessão sem a chave de acesso, reponha a palavra-passe com um dos seus códigos de recuperação. Os seus e-mails, contactos e definições mantêm-se, e depois pode adicionar uma nova chave de acesso.</string>
     <string name="totp_trust_device">Confiar neste dispositivo durante 30 dias</string>
     <string name="failed_block_sender">Não foi possível bloquear o remetente</string>
     <string name="failed_unblock_sender">Não foi possível desbloquear o remetente</string>

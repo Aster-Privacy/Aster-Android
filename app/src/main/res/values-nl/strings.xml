@@ -1225,6 +1225,9 @@
     <string name="totp_passkey_button">Doorgaan met een toegangssleutel</string>
     <string name="totp_use_passkey">Een toegangssleutel gebruiken</string>
     <string name="totp_backup_code_hint">Gebruik een van de back-upcodes die je hebt bewaard bij het instellen van je authenticator-app. Een herstelcode die met ASTER begint, herstelt je mailbox en werkt hier niet.</string>
+    <string name="totp_recovery_code_detected">Dit is een herstelcode, geen back-upcode. Als je deze wilt gebruiken, stel je je wachtwoord opnieuw in met je herstelcode.</string>
+    <string name="totp_reset_with_recovery_code">Opnieuw instellen met herstelcode</string>
+    <string name="totp_passkey_only_recovery_hint">Back-upcodes horen bij een authenticator-app, en dit account gebruikt er geen. Als je wilt inloggen zonder je passkey, stel je je wachtwoord opnieuw in met een van je herstelcodes. Je e-mail, contacten en instellingen blijven behouden, en daarna kun je een nieuwe passkey toevoegen.</string>
     <string name="totp_trust_device">Dit apparaat 30 dagen vertrouwen</string>
     <string name="failed_block_sender">Afzender kon niet worden geblokkeerd</string>
     <string name="failed_unblock_sender">Afzender kon niet worden gedeblokkeerd</string>
