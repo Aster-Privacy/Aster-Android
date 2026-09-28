@@ -3256,4 +3256,13 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">已包含</string>
     <string name="special_offer_compare_not_included">不包含</string>
+    <string name="outbox_failed_title">邮件未发送</string>
+    <string name="outbox_failed_detail">主题：%1$s\n收件人：%2$s</string>
+    <string name="outbox_failed_waiting">等待中的未发送邮件：%1$d</string>
+    <string name="outbox_failed_reason_post_quantum">有收件人尚未发布后量子密钥，因此 Aster 没有发送这封邮件。若要使用标准端到端加密发送，请轻点“仍然发送”。</string>
+    <string name="outbox_failed_reason_identity">有收件人的加密密钥已更改，因此 Aster 没有发送这封邮件。若要发送，请在收件箱中确认密钥更改，然后轻点“重试”。</string>
+    <string name="outbox_failed_reason_encryption">Aster 无法为某位收件人加密这封邮件。你可以重试或舍弃它。</string>
+    <string name="outbox_failed_reason_rejected">服务器没有接受这封邮件。请检查收件人和附件大小，然后重试。</string>
+    <string name="outbox_failed_reason_connection">Aster 多次尝试后仍无法连接服务器。请检查网络连接，然后重试。</string>
+    <string name="outbox_failed_reason_attachment">有附件在此设备上已不可用，因此 Aster 无法发送这封邮件。请舍弃它，然后在新邮件中重新添加该文件。</string>
 </resources>

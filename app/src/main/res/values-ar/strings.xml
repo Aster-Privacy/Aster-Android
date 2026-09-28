@@ -3349,4 +3349,13 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">مُضمَّن</string>
     <string name="special_offer_compare_not_included">غير مُضمَّن</string>
+    <string name="outbox_failed_title">لم يتم إرسال الرسالة</string>
+    <string name="outbox_failed_detail">الموضوع: %1$s\nإلى: %2$s</string>
+    <string name="outbox_failed_waiting">رسائل غير مرسلة في الانتظار: %1$d</string>
+    <string name="outbox_failed_reason_post_quantum">لم ينشر أحد المستلمين مفاتيح ما بعد الكم بعد، لذلك لم يرسل Aster هذه الرسالة. لإرسالها بالتشفير التام بين الطرفين القياسي، اضغط على أرسل على أي حال.</string>
+    <string name="outbox_failed_reason_identity">تغيّر مفتاح التشفير لأحد المستلمين، لذلك لم يرسل Aster هذه الرسالة. لإرسالها، أكّد تغيير المفتاح في صندوق الوارد، ثم اضغط على إعادة المحاولة.</string>
+    <string name="outbox_failed_reason_encryption">تعذّر على Aster تشفير هذه الرسالة لأحد المستلمين. يمكنك إعادة المحاولة أو تجاهلها.</string>
+    <string name="outbox_failed_reason_rejected">لم يقبل الخادم هذه الرسالة. تحقّق من المستلمين وحجم المرفقات، ثم أعد المحاولة.</string>
+    <string name="outbox_failed_reason_connection">تعذّر على Aster الوصول إلى الخادم بعد عدة محاولات. تحقّق من اتصالك، ثم أعد المحاولة.</string>
+    <string name="outbox_failed_reason_attachment">لم يعد أحد المرفقات متاحًا على هذا الجهاز، لذلك لا يمكن لـ Aster إرسال هذه الرسالة. تجاهلها، ثم أرفق الملف مجددًا في رسالة جديدة.</string>
 </resources>

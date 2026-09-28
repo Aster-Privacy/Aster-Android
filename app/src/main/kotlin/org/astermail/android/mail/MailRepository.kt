@@ -113,6 +113,9 @@ private const val SEND_RETRY_QUIET_ATTEMPTS = 2
 internal const val SEND_RETRY_MAX_ATTEMPTS = 8
 private const val STATUS_PENDING = "pending"
 private const val STATUS_FAILED = "failed"
+private const val SEND_FAILURE_PREFS = "outbox_send_failures"
+private const val SEND_FAILURE_REASON_PREFIX = "reason_"
+private const val SEND_FAILURE_ACKNOWLEDGED_KEY = "acknowledged"
 private const val SENDING_CLAIM_STALE_MS = 5 * 60 * 1000L
 private const val MAX_ATTACHMENT_META_BATCH_SIZE = 50
 
@@ -622,6 +625,8 @@ class MailRepository @Inject constructor(
     val send_problem: kotlinx.coroutines.flow.StateFlow<Boolean> = _send_problem
     private val _failed_send_count = kotlinx.coroutines.flow.MutableStateFlow(0)
     val failed_send_count: kotlinx.coroutines.flow.StateFlow<Int> = _failed_send_count
+    private val _failed_send_notice = kotlinx.coroutines.flow.MutableStateFlow<FailedSendNotice?>(null)
+    val failed_send_notice: kotlinx.coroutines.flow.StateFlow<FailedSendNotice?> = _failed_send_notice
 
     fun clear_send_problem() {
         _send_problem.value = false
@@ -1099,7 +1104,7 @@ class MailRepository @Inject constructor(
             }
             _send_problem.value = true
             _send_result_events.tryEmit(Result.failure(IllegalStateException("attachment payload unavailable", err)))
-            runCatching { pending_send_dao.mark_failed(pending_id) }
+            mark_send_failed(pending_id, SendFailureReason.ATTACHMENT)
             refresh_failed_send_count()
             _draft_changes.tryEmit(Unit)
             return PendingSendOutcome.FAILED
@@ -1113,7 +1118,7 @@ class MailRepository @Inject constructor(
         }.getOrElse { err ->
             _send_problem.value = true
             _send_result_events.tryEmit(Result.failure(IllegalStateException("recipient list unreadable", err)))
-            runCatching { pending_send_dao.mark_failed(pending_id) }
+            mark_send_failed(pending_id, SendFailureReason.OTHER)
             refresh_failed_send_count()
             _draft_changes.tryEmit(Unit)
             return PendingSendOutcome.FAILED
@@ -1121,7 +1126,7 @@ class MailRepository @Inject constructor(
         if (recipients.first.isEmpty() && recipients.second.isEmpty() && recipients.third.isEmpty()) {
             _send_problem.value = true
             _send_result_events.tryEmit(Result.failure(IllegalStateException("recipient list empty")))
-            runCatching { pending_send_dao.mark_failed(pending_id) }
+            mark_send_failed(pending_id, SendFailureReason.OTHER)
             refresh_failed_send_count()
             _draft_changes.tryEmit(Unit)
             return PendingSendOutcome.FAILED
@@ -1168,7 +1173,7 @@ class MailRepository @Inject constructor(
                 _send_result_events.tryEmit(
                     Result.failure(server_rejection_cause(err) ?: err ?: IllegalStateException("send rejected")),
                 )
-                runCatching { pending_send_dao.mark_failed(pending_id) }
+                mark_send_failed(pending_id, send_failure_reason_for(err))
                 refresh_failed_send_count()
                 preserve_failed_send_draft(pending_id, row, recipients, attachments)
                 _draft_changes.tryEmit(Unit)
@@ -1290,22 +1295,115 @@ class MailRepository @Inject constructor(
     suspend fun reconcile_pending_sends() {
         val rows = pending_rows_for_current_account() ?: return
         val now = System.currentTimeMillis()
-        var failed = 0
         for (row in rows) {
-            if (row.status == STATUS_FAILED) {
-                failed++
-                _send_problem.value = true
-                continue
-            }
+            if (row.status == STATUS_FAILED) continue
             val remaining = (row.fire_at_ms - now).coerceAtLeast(0L)
             runCatching { UndoSendWorker.enqueue_if_absent(context, row.id, remaining, row.account_id) }
         }
-        _failed_send_count.value = failed
+        refresh_failed_send_count()
+        if (_failed_send_notice.value != null) _send_problem.value = true
+    }
+
+    private val send_failure_prefs by lazy {
+        context.getSharedPreferences(SEND_FAILURE_PREFS, android.content.Context.MODE_PRIVATE)
+    }
+
+    private fun acknowledged_failure_ids(): Set<String> =
+        runCatching {
+            send_failure_prefs.getStringSet(SEND_FAILURE_ACKNOWLEDGED_KEY, emptySet())?.toSet()
+        }.getOrNull() ?: emptySet()
+
+    private fun stored_failure_reason(pending_id: String): SendFailureReason =
+        SendFailureReason.from_code(
+            runCatching { send_failure_prefs.getString(SEND_FAILURE_REASON_PREFIX + pending_id, null) }.getOrNull(),
+        )
+
+    private fun forget_send_failure(pending_id: String) {
+        runCatching {
+            send_failure_prefs.edit()
+                .remove(SEND_FAILURE_REASON_PREFIX + pending_id)
+                .putStringSet(SEND_FAILURE_ACKNOWLEDGED_KEY, acknowledged_failure_ids() - pending_id)
+                .apply()
+        }
+    }
+
+    private suspend fun mark_send_failed(pending_id: String, reason: SendFailureReason) {
+        runCatching {
+            send_failure_prefs.edit()
+                .putString(SEND_FAILURE_REASON_PREFIX + pending_id, reason.code)
+                .putStringSet(SEND_FAILURE_ACKNOWLEDGED_KEY, acknowledged_failure_ids() - pending_id)
+                .apply()
+        }
+        runCatching { pending_send_dao.mark_failed(pending_id) }
+    }
+
+    private fun failed_send_notice_for(
+        row: org.astermail.android.storage.outbox.PendingSendEntity,
+        more_count: Int,
+    ): FailedSendNotice {
+        val recipients = listOf(row.to_json, row.cc_json, row.bcc_json).flatMap { raw ->
+            runCatching { outbox_json.decodeFromString<List<String>>(raw) }.getOrDefault(emptyList())
+        }
+        return FailedSendNotice(
+            id = row.id,
+            subject = row.subject,
+            recipients = recipients,
+            reason = stored_failure_reason(row.id),
+            more_count = more_count,
+        )
     }
 
     private suspend fun refresh_failed_send_count() {
         val rows = pending_rows_for_current_account() ?: return
-        _failed_send_count.value = rows.count { it.status == STATUS_FAILED }
+        val failed = rows.filter { it.status == STATUS_FAILED }.sortedBy { it.created_at_ms }
+        _failed_send_count.value = failed.size
+        val acknowledged = acknowledged_failure_ids()
+        val open = failed.filterNot { it.id in acknowledged }
+        _failed_send_notice.value = open.firstOrNull()?.let { failed_send_notice_for(it, open.size - 1) }
+    }
+
+    private suspend fun settle_send_problem() {
+        refresh_failed_send_count()
+        _send_problem.value = _failed_send_notice.value != null
+    }
+
+    suspend fun retry_failed_send(pending_id: String, allow_non_post_quantum: Boolean = false) {
+        val row = runCatching { pending_send_dao.get_by_id(pending_id) }.getOrNull()
+        if (row == null || row.status != STATUS_FAILED) {
+            forget_send_failure(pending_id)
+            settle_send_problem()
+            return
+        }
+        if (allow_non_post_quantum && !row.allow_non_post_quantum) {
+            runCatching {
+                pending_send_dao.upsert(row.copy(status = STATUS_PENDING, allow_non_post_quantum = true))
+            }
+        } else {
+            runCatching { pending_send_dao.mark_pending(pending_id) }
+        }
+        forget_send_failure(pending_id)
+        runCatching { UndoSendWorker.enqueue(context, pending_id, 0L, row.account_id) }
+        settle_send_problem()
+    }
+
+    suspend fun discard_failed_send(pending_id: String) {
+        val row = runCatching { pending_send_dao.get_by_id(pending_id) }.getOrNull()
+        if (row != null && row.status == STATUS_FAILED) {
+            runCatching { UndoSendWorker.cancel(context, pending_id) }
+            runCatching { pending_send_dao.delete_by_id(pending_id) }
+            delete_outbox_attachments(pending_id)
+        }
+        forget_send_failure(pending_id)
+        settle_send_problem()
+    }
+
+    suspend fun dismiss_failed_send(pending_id: String) {
+        runCatching {
+            send_failure_prefs.edit()
+                .putStringSet(SEND_FAILURE_ACKNOWLEDGED_KEY, acknowledged_failure_ids() + pending_id)
+                .apply()
+        }
+        settle_send_problem()
     }
 
     suspend fun retry_failed_sends() {
@@ -1313,9 +1411,11 @@ class MailRepository @Inject constructor(
         for (row in rows) {
             if (row.status != STATUS_FAILED) continue
             runCatching { pending_send_dao.mark_pending(row.id) }
+            forget_send_failure(row.id)
             runCatching { UndoSendWorker.enqueue(context, row.id, 0L, row.account_id) }
         }
         _failed_send_count.value = 0
+        _failed_send_notice.value = null
         _send_problem.value = false
     }
 
@@ -1326,8 +1426,10 @@ class MailRepository @Inject constructor(
             runCatching { UndoSendWorker.cancel(context, row.id) }
             runCatching { pending_send_dao.delete_by_id(row.id) }
             delete_outbox_attachments(row.id)
+            forget_send_failure(row.id)
         }
         _failed_send_count.value = 0
+        _failed_send_notice.value = null
         _send_problem.value = false
     }
 
@@ -5099,6 +5201,54 @@ internal fun server_rejection_cause(err: Throwable?): Throwable? {
         depth++
     }
     return null
+}
+
+enum class SendFailureReason(val code: String) {
+    POST_QUANTUM("post_quantum"),
+    IDENTITY_CHANGED("identity_changed"),
+    ENCRYPTION("encryption"),
+    REJECTED("rejected"),
+    CONNECTION("connection"),
+    ATTACHMENT("attachment"),
+    OTHER("other"),
+    ;
+
+    companion object {
+        fun from_code(code: String?): SendFailureReason = entries.firstOrNull { it.code == code } ?: OTHER
+    }
+}
+
+data class FailedSendNotice(
+    val id: String,
+    val subject: String,
+    val recipients: List<String>,
+    val reason: SendFailureReason,
+    val more_count: Int,
+)
+
+private inline fun has_cause(err: Throwable?, predicate: (Throwable) -> Boolean): Boolean {
+    var cause = err
+    var depth = 0
+    while (cause != null && depth < 8) {
+        if (predicate(cause)) return true
+        cause = cause.cause
+        depth++
+    }
+    return false
+}
+
+internal fun send_failure_reason_for(err: Throwable?): SendFailureReason = when {
+    has_cause(err) { it is org.astermail.android.mail.ratchet.PostQuantumUnavailableException } ->
+        SendFailureReason.POST_QUANTUM
+    has_cause(err) { it is org.astermail.android.mail.ratchet.RatchetIdentityPinException } ->
+        SendFailureReason.IDENTITY_CHANGED
+    server_rejection_cause(err) != null -> SendFailureReason.REJECTED
+    is_transient_send_cause(err) || has_retryable_api_cause(err) -> SendFailureReason.CONNECTION
+    has_cause(err) { it is AttachmentPrepareException } -> SendFailureReason.ATTACHMENT
+    has_cause(err) {
+        it is E2eEncryptionException || it is org.astermail.android.mail.ratchet.RatchetEncryptionException
+    } -> SendFailureReason.ENCRYPTION
+    else -> SendFailureReason.OTHER
 }
 
 internal fun is_permanent_send_failure_cause(err: Throwable?): Boolean {

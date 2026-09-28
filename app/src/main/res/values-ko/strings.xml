@@ -3256,4 +3256,13 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">포함</string>
     <string name="special_offer_compare_not_included">포함되지 않음</string>
+    <string name="outbox_failed_title">메시지를 보내지 못함</string>
+    <string name="outbox_failed_detail">제목: %1$s\n받는 사람: %2$s</string>
+    <string name="outbox_failed_waiting">대기 중인 보내지 않은 메시지: %1$d개</string>
+    <string name="outbox_failed_reason_post_quantum">받는 사람이 아직 양자 내성 키를 게시하지 않아 Aster가 이 메시지를 보내지 않았습니다. 표준 종단 간 암호화로 보내려면 그대로 보내기를 탭하세요.</string>
+    <string name="outbox_failed_reason_identity">받는 사람의 암호화 키가 변경되어 Aster가 이 메시지를 보내지 않았습니다. 보내려면 받은편지함에서 키 변경을 확인한 다음 재시도를 탭하세요.</string>
+    <string name="outbox_failed_reason_encryption">Aster가 받는 사람을 위해 이 메시지를 암호화하지 못했습니다. 다시 시도하거나 메시지를 삭제할 수 있습니다.</string>
+    <string name="outbox_failed_reason_rejected">서버가 이 메시지를 받지 않았습니다. 받는 사람과 첨부 파일 크기를 확인한 다음 다시 시도하세요.</string>
+    <string name="outbox_failed_reason_connection">여러 번 시도했지만 Aster가 서버에 연결하지 못했습니다. 연결을 확인한 다음 다시 시도하세요.</string>
+    <string name="outbox_failed_reason_attachment">첨부 파일을 이 기기에서 더 이상 사용할 수 없어 Aster가 이 메시지를 보낼 수 없습니다. 메시지를 삭제한 다음 새 메시지에 파일을 다시 첨부하세요.</string>
 </resources>

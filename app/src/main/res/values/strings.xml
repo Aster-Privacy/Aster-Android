@@ -3322,4 +3322,13 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Included</string>
     <string name="special_offer_compare_not_included">Not included</string>
+    <string name="outbox_failed_title">Message not sent</string>
+    <string name="outbox_failed_detail">Subject: %1$s\nTo: %2$s</string>
+    <string name="outbox_failed_waiting">Unsent messages waiting: %1$d</string>
+    <string name="outbox_failed_reason_post_quantum">A recipient hasn’t published post-quantum keys, so Aster didn’t send this message. To send it with standard end-to-end encryption, tap Send anyway.</string>
+    <string name="outbox_failed_reason_identity">A recipient’s encryption key changed, so Aster didn’t send this message. To send it, confirm the key change in your inbox, then tap Retry.</string>
+    <string name="outbox_failed_reason_encryption">Aster couldn’t encrypt this message for a recipient. You can try again or discard it.</string>
+    <string name="outbox_failed_reason_rejected">The server didn’t accept this message. Check the recipients and the attachment sizes, then try again.</string>
+    <string name="outbox_failed_reason_connection">Aster couldn’t reach the server after several tries. Check your connection, then try again.</string>
+    <string name="outbox_failed_reason_attachment">An attachment is no longer available on this device, so Aster can’t send this message. Discard it, then attach the file again in a new message.</string>
 </resources>

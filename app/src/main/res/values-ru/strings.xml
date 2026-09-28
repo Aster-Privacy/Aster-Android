@@ -3311,4 +3311,13 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Включено</string>
     <string name="special_offer_compare_not_included">Не включено</string>
+    <string name="outbox_failed_title">Сообщение не отправлено</string>
+    <string name="outbox_failed_detail">Тема: %1$s\nКому: %2$s</string>
+    <string name="outbox_failed_waiting">Неотправленных сообщений в очереди: %1$d</string>
+    <string name="outbox_failed_reason_post_quantum">Получатель ещё не опубликовал постквантовые ключи, поэтому Aster не отправил это сообщение. Чтобы отправить его со стандартным сквозным шифрованием, нажмите «Всё равно отправить».</string>
+    <string name="outbox_failed_reason_identity">Ключ шифрования получателя изменился, поэтому Aster не отправил это сообщение. Чтобы отправить его, подтвердите смену ключа во входящих, затем нажмите «Повторить».</string>
+    <string name="outbox_failed_reason_encryption">Aster не удалось зашифровать это сообщение для получателя. Вы можете повторить попытку или удалить его.</string>
+    <string name="outbox_failed_reason_rejected">Сервер не принял это сообщение. Проверьте получателей и размер вложений, затем повторите попытку.</string>
+    <string name="outbox_failed_reason_connection">Aster не удалось связаться с сервером после нескольких попыток. Проверьте подключение, затем повторите попытку.</string>
+    <string name="outbox_failed_reason_attachment">Вложение больше недоступно на этом устройстве, поэтому Aster не может отправить это сообщение. Удалите его, затем снова прикрепите файл в новом сообщении.</string>
 </resources>

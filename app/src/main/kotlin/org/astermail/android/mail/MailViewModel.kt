@@ -4663,6 +4663,20 @@ class MailViewModel @Inject constructor(
         viewModelScope.launch { runCatching { repository.discard_failed_sends() } }
     }
 
+    val failed_send_notice: StateFlow<FailedSendNotice?> = repository.failed_send_notice
+
+    fun retry_failed_send(pending_id: String, allow_non_post_quantum: Boolean = false) {
+        viewModelScope.launch { runCatching { repository.retry_failed_send(pending_id, allow_non_post_quantum) } }
+    }
+
+    fun discard_failed_send(pending_id: String) {
+        viewModelScope.launch { runCatching { repository.discard_failed_send(pending_id) } }
+    }
+
+    fun dismiss_failed_send(pending_id: String) {
+        viewModelScope.launch { runCatching { repository.dismiss_failed_send(pending_id) } }
+    }
+
     init {
         seed_inbox_attachment_flags()
         viewModelScope.launch {

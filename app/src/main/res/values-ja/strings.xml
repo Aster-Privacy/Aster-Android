@@ -3263,4 +3263,13 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">含まれます</string>
     <string name="special_offer_compare_not_included">含まれません</string>
+    <string name="outbox_failed_title">メッセージは送信されませんでした</string>
+    <string name="outbox_failed_detail">件名: %1$s\n宛先: %2$s</string>
+    <string name="outbox_failed_waiting">未送信のメッセージ: %1$d 件</string>
+    <string name="outbox_failed_reason_post_quantum">受信者がまだポスト量子鍵を公開していないため、Aster はこのメッセージを送信しませんでした。標準のエンドツーエンド暗号化で送信するには、「そのまま送信」をタップします。</string>
+    <string name="outbox_failed_reason_identity">受信者の暗号鍵が変更されたため、Aster はこのメッセージを送信しませんでした。送信するには、受信トレイで鍵の変更を確認してから「再試行」をタップします。</string>
+    <string name="outbox_failed_reason_encryption">Aster は受信者向けにこのメッセージを暗号化できませんでした。もう一度試すか、メッセージを破棄できます。</string>
+    <string name="outbox_failed_reason_rejected">サーバーがこのメッセージを受け付けませんでした。受信者と添付ファイルのサイズを確認してから、もう一度お試しください。</string>
+    <string name="outbox_failed_reason_connection">何度か試しましたが、Aster はサーバーに接続できませんでした。接続を確認してから、もう一度お試しください。</string>
+    <string name="outbox_failed_reason_attachment">添付ファイルがこのデバイスで利用できなくなったため、Aster はこのメッセージを送信できません。メッセージを破棄し、新しいメッセージにファイルを添付し直してください。</string>
 </resources>

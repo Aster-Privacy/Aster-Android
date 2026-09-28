@@ -3293,4 +3293,13 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Incluido</string>
     <string name="special_offer_compare_not_included">No incluido</string>
+    <string name="outbox_failed_title">Mensaje no enviado</string>
+    <string name="outbox_failed_detail">Asunto: %1$s\nPara: %2$s</string>
+    <string name="outbox_failed_waiting">Mensajes sin enviar en espera: %1$d</string>
+    <string name="outbox_failed_reason_post_quantum">Un destinatario aún no ha publicado claves poscuánticas, así que Aster no envió este mensaje. Para enviarlo con cifrado de extremo a extremo estándar, toca Enviar de todos modos.</string>
+    <string name="outbox_failed_reason_identity">La clave de cifrado de un destinatario cambió, así que Aster no envió este mensaje. Para enviarlo, confirma el cambio de clave en tu bandeja de entrada y toca Reintentar.</string>
+    <string name="outbox_failed_reason_encryption">Aster no pudo cifrar este mensaje para un destinatario. Puedes intentarlo de nuevo o descartarlo.</string>
+    <string name="outbox_failed_reason_rejected">El servidor no aceptó este mensaje. Revisa los destinatarios y el tamaño de los archivos adjuntos, y vuelve a intentarlo.</string>
+    <string name="outbox_failed_reason_connection">Aster no pudo conectar con el servidor tras varios intentos. Revisa tu conexión y vuelve a intentarlo.</string>
+    <string name="outbox_failed_reason_attachment">Un archivo adjunto ya no está disponible en este dispositivo, así que Aster no puede enviar este mensaje. Descártalo y vuelve a adjuntar el archivo en un mensaje nuevo.</string>
 </resources>

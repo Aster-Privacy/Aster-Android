@@ -3311,4 +3311,13 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">W zestawie</string>
     <string name="special_offer_compare_not_included">Brak w zestawie</string>
+    <string name="outbox_failed_title">Wiadomość nie została wysłana</string>
+    <string name="outbox_failed_detail">Temat: %1$s\nDo: %2$s</string>
+    <string name="outbox_failed_waiting">Oczekujące niewysłane wiadomości: %1$d</string>
+    <string name="outbox_failed_reason_post_quantum">Odbiorca nie opublikował jeszcze kluczy postkwantowych, więc Aster nie wysłał tej wiadomości. Aby wysłać ją ze standardowym szyfrowaniem end-to-end, stuknij Wyślij mimo to.</string>
+    <string name="outbox_failed_reason_identity">Klucz szyfrowania odbiorcy się zmienił, więc Aster nie wysłał tej wiadomości. Aby ją wysłać, potwierdź zmianę klucza w skrzynce odbiorczej, a następnie stuknij Ponów.</string>
+    <string name="outbox_failed_reason_encryption">Aster nie mógł zaszyfrować tej wiadomości dla odbiorcy. Możesz spróbować ponownie lub ją odrzucić.</string>
+    <string name="outbox_failed_reason_rejected">Serwer nie przyjął tej wiadomości. Sprawdź odbiorców i rozmiar załączników, a następnie spróbuj ponownie.</string>
+    <string name="outbox_failed_reason_connection">Aster nie mógł połączyć się z serwerem po kilku próbach. Sprawdź połączenie, a następnie spróbuj ponownie.</string>
+    <string name="outbox_failed_reason_attachment">Załącznik nie jest już dostępny na tym urządzeniu, więc Aster nie może wysłać tej wiadomości. Odrzuć ją, a następnie dołącz plik ponownie w nowej wiadomości.</string>
 </resources>

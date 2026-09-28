@@ -3274,4 +3274,13 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Inbegriffen</string>
     <string name="special_offer_compare_not_included">Nicht inbegriffen</string>
+    <string name="outbox_failed_title">Nachricht nicht gesendet</string>
+    <string name="outbox_failed_detail">Betreff: %1$s\nAn: %2$s</string>
+    <string name="outbox_failed_waiting">Wartende ungesendete Nachrichten: %1$d</string>
+    <string name="outbox_failed_reason_post_quantum">Ein Empfänger hat noch keine Post-Quanten-Schlüssel veröffentlicht, daher hat Aster diese Nachricht nicht gesendet. Um sie mit normaler Ende-zu-Ende-Verschlüsselung zu senden, tippe auf „Trotzdem senden“.</string>
+    <string name="outbox_failed_reason_identity">Der Verschlüsselungsschlüssel eines Empfängers hat sich geändert, daher hat Aster diese Nachricht nicht gesendet. Um sie zu senden, bestätige die Schlüsseländerung in deinem Posteingang und tippe dann auf „Erneut versuchen“.</string>
+    <string name="outbox_failed_reason_encryption">Aster konnte diese Nachricht für einen Empfänger nicht verschlüsseln. Du kannst es erneut versuchen oder die Nachricht verwerfen.</string>
+    <string name="outbox_failed_reason_rejected">Der Server hat diese Nachricht nicht angenommen. Prüfe die Empfänger und die Größe der Anhänge und versuche es dann erneut.</string>
+    <string name="outbox_failed_reason_connection">Aster konnte den Server nach mehreren Versuchen nicht erreichen. Prüfe deine Verbindung und versuche es dann erneut.</string>
+    <string name="outbox_failed_reason_attachment">Ein Anhang ist auf diesem Gerät nicht mehr verfügbar, daher kann Aster diese Nachricht nicht senden. Verwirf sie und hänge die Datei in einer neuen Nachricht erneut an.</string>
 </resources>

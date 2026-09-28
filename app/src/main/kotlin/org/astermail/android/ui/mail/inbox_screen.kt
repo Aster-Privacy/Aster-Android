@@ -490,7 +490,52 @@ fun InboxScreen(
 
     val send_problem by mail_vm.send_problem.collectAsStateWithLifecycle()
     val failed_send_count by mail_vm.failed_send_count.collectAsStateWithLifecycle()
-    if (send_problem) {
+    val failed_send_notice by mail_vm.failed_send_notice.collectAsStateWithLifecycle()
+    val open_failed_send = failed_send_notice
+    if (send_problem && open_failed_send != null) {
+        val reason_text = when (open_failed_send.reason) {
+            org.astermail.android.mail.SendFailureReason.POST_QUANTUM -> stringResource(R.string.outbox_failed_reason_post_quantum)
+            org.astermail.android.mail.SendFailureReason.IDENTITY_CHANGED -> stringResource(R.string.outbox_failed_reason_identity)
+            org.astermail.android.mail.SendFailureReason.ENCRYPTION -> stringResource(R.string.outbox_failed_reason_encryption)
+            org.astermail.android.mail.SendFailureReason.REJECTED -> stringResource(R.string.outbox_failed_reason_rejected)
+            org.astermail.android.mail.SendFailureReason.CONNECTION -> stringResource(R.string.outbox_failed_reason_connection)
+            org.astermail.android.mail.SendFailureReason.ATTACHMENT -> stringResource(R.string.outbox_failed_reason_attachment)
+            org.astermail.android.mail.SendFailureReason.OTHER -> stringResource(R.string.send_problem_failed_message)
+        }
+        val subject_text = open_failed_send.subject.ifBlank { stringResource(R.string.no_subject) }
+        val shown_recipients = open_failed_send.recipients.take(3).joinToString(", ")
+        val hidden_recipients = open_failed_send.recipients.size - 3
+        val recipients_text = if (hidden_recipients > 0) "$shown_recipients +$hidden_recipients" else shown_recipients
+        val detail_text = stringResource(R.string.outbox_failed_detail, subject_text, recipients_text)
+        val waiting_text = if (open_failed_send.more_count > 0) {
+            "\n\n" + stringResource(R.string.outbox_failed_waiting, open_failed_send.more_count)
+        } else {
+            ""
+        }
+        val failed_id = open_failed_send.id
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { mail_vm.dismiss_failed_send(failed_id) },
+            title = stringResource(R.string.outbox_failed_title),
+            message = reason_text + "\n\n" + detail_text + waiting_text,
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.discard),
+                    onClick = { mail_vm.discard_failed_send(failed_id) },
+                )
+                if (open_failed_send.reason == org.astermail.android.mail.SendFailureReason.POST_QUANTUM) {
+                    org.astermail.android.design.components.AsterDialogPrimaryButton(
+                        label = stringResource(R.string.post_quantum_send_anyway),
+                        onClick = { mail_vm.retry_failed_send(failed_id, allow_non_post_quantum = true) },
+                    )
+                } else {
+                    org.astermail.android.design.components.AsterDialogPrimaryButton(
+                        label = stringResource(R.string.retry),
+                        onClick = { mail_vm.retry_failed_send(failed_id) },
+                    )
+                }
+            },
+        )
+    } else if (send_problem) {
         val has_failed = failed_send_count > 0
         org.astermail.android.design.components.AsterDialog(
             on_dismiss = { mail_vm.dismiss_send_problem() },

@@ -3292,4 +3292,13 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Incluído</string>
     <string name="special_offer_compare_not_included">Não incluído</string>
+    <string name="outbox_failed_title">Mensagem não enviada</string>
+    <string name="outbox_failed_detail">Assunto: %1$s\nPara: %2$s</string>
+    <string name="outbox_failed_waiting">Mensagens por enviar em espera: %1$d</string>
+    <string name="outbox_failed_reason_post_quantum">Um destinatário ainda não publicou chaves pós-quânticas, por isso o Aster não enviou esta mensagem. Para a enviar com encriptação ponto a ponto padrão, toque em Enviar mesmo assim.</string>
+    <string name="outbox_failed_reason_identity">A chave de encriptação de um destinatário mudou, por isso o Aster não enviou esta mensagem. Para a enviar, confirme a alteração da chave na sua caixa de entrada e toque em Tentar novamente.</string>
+    <string name="outbox_failed_reason_encryption">O Aster não conseguiu encriptar esta mensagem para um destinatário. Pode tentar novamente ou descartá-la.</string>
+    <string name="outbox_failed_reason_rejected">O servidor não aceitou esta mensagem. Verifique os destinatários e o tamanho dos anexos e tente novamente.</string>
+    <string name="outbox_failed_reason_connection">O Aster não conseguiu contactar o servidor após várias tentativas. Verifique a sua ligação e tente novamente.</string>
+    <string name="outbox_failed_reason_attachment">Um anexo já não está disponível neste dispositivo, por isso o Aster não pode enviar esta mensagem. Descarte-a e anexe o ficheiro novamente numa nova mensagem.</string>
 </resources>

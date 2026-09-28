@@ -3163,4 +3163,13 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">शामिल है</string>
     <string name="special_offer_compare_not_included">शामिल नहीं है</string>
+    <string name="outbox_failed_title">संदेश नहीं भेजा गया</string>
+    <string name="outbox_failed_detail">विषय: %1$s\nप्रति: %2$s</string>
+    <string name="outbox_failed_waiting">प्रतीक्षा में न भेजे गए संदेश: %1$d</string>
+    <string name="outbox_failed_reason_post_quantum">एक प्राप्तकर्ता ने अभी तक पोस्ट-क्वांटम कुंजियाँ प्रकाशित नहीं की हैं, इसलिए Aster ने यह संदेश नहीं भेजा। इसे मानक एंड-टू-एंड एन्क्रिप्शन के साथ भेजने के लिए, फिर भी भेजें पर टैप करें।</string>
+    <string name="outbox_failed_reason_identity">एक प्राप्तकर्ता की एन्क्रिप्शन कुंजी बदल गई है, इसलिए Aster ने यह संदेश नहीं भेजा। इसे भेजने के लिए, अपने इनबॉक्स में कुंजी परिवर्तन की पुष्टि करें, फिर फिर से कोशिश करें पर टैप करें।</string>
+    <string name="outbox_failed_reason_encryption">Aster एक प्राप्तकर्ता के लिए यह संदेश एन्क्रिप्ट नहीं कर सका। आप फिर से कोशिश कर सकते हैं या इसे हटा सकते हैं।</string>
+    <string name="outbox_failed_reason_rejected">सर्वर ने यह संदेश स्वीकार नहीं किया। प्राप्तकर्ताओं और अटैचमेंट के आकार की जाँच करें, फिर दोबारा कोशिश करें।</string>
+    <string name="outbox_failed_reason_connection">कई प्रयासों के बाद भी Aster सर्वर तक नहीं पहुँच सका। अपना कनेक्शन जाँचें, फिर दोबारा कोशिश करें।</string>
+    <string name="outbox_failed_reason_attachment">एक अटैचमेंट अब इस डिवाइस पर उपलब्ध नहीं है, इसलिए Aster यह संदेश नहीं भेज सकता। इसे हटाएँ, फिर फ़ाइल को नए संदेश में दोबारा अटैच करें।</string>
 </resources>

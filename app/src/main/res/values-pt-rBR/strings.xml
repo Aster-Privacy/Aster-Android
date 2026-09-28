@@ -3292,4 +3292,13 @@
     <string name="special_offer_compare_included">Incluído</string>
     <string name="special_offer_compare_not_included">Não incluído</string>
     <string name="compose_total_size">Tamanho total</string>
+    <string name="outbox_failed_title">Mensagem não enviada</string>
+    <string name="outbox_failed_detail">Assunto: %1$s\nPara: %2$s</string>
+    <string name="outbox_failed_waiting">Mensagens não enviadas aguardando: %1$d</string>
+    <string name="outbox_failed_reason_post_quantum">Um destinatário ainda não publicou chaves pós-quânticas, então o Aster não enviou esta mensagem. Para enviá-la com criptografia de ponta a ponta padrão, toque em Enviar mesmo assim.</string>
+    <string name="outbox_failed_reason_identity">A chave de criptografia de um destinatário mudou, então o Aster não enviou esta mensagem. Para enviá-la, confirme a mudança de chave na sua caixa de entrada e toque em Tentar novamente.</string>
+    <string name="outbox_failed_reason_encryption">O Aster não conseguiu criptografar esta mensagem para um destinatário. Você pode tentar novamente ou descartá-la.</string>
+    <string name="outbox_failed_reason_rejected">O servidor não aceitou esta mensagem. Verifique os destinatários e o tamanho dos anexos e tente novamente.</string>
+    <string name="outbox_failed_reason_connection">O Aster não conseguiu acessar o servidor após várias tentativas. Verifique sua conexão e tente novamente.</string>
+    <string name="outbox_failed_reason_attachment">Um anexo não está mais disponível neste dispositivo, então o Aster não pode enviar esta mensagem. Descarte-a e anexe o arquivo novamente em uma nova mensagem.</string>
 </resources>

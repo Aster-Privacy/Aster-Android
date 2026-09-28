@@ -66,6 +66,32 @@ internal fun classify_post_quantum_bundle(
     else -> PostQuantumRecipientStatus.UNSUPPORTED
 }
 
+internal fun classify_prekey_bundle(bundle: PrekeyBundleResponse): PostQuantumRecipientStatus {
+    val pq_prekey_pair = bundle.pq_prekey?.let {
+        runCatching { it.key_id to RatchetCrypto.b64_decode(it.public_key) }.getOrNull()
+    }
+    val pq_identity_raw = bundle.pq_kem_public_key
+        ?.takeIf { it.isNotBlank() }
+        ?.let { runCatching { RatchetCrypto.b64_decode(it) }.getOrNull() }
+    return classify_post_quantum_bundle(bundle.pq_capable, pq_prekey_pair, pq_identity_raw)
+}
+
+internal fun session_reused_for_send(
+    bootstrap: BootstrapData,
+    sender_identity_public: String?,
+    bundle: PrekeyBundleResponse?,
+): Boolean {
+    if (bootstrap.sender_identity_key != sender_identity_public) return false
+    return bundle == null || bundle.kem_identity_key == bootstrap.recipient_identity_key
+}
+
+internal fun session_post_quantum_status(bootstrap: BootstrapData): PostQuantumRecipientStatus =
+    if (bootstrap.pq_ciphertext != null && bootstrap.pq_key_id != null) {
+        PostQuantumRecipientStatus.SUPPORTED
+    } else {
+        PostQuantumRecipientStatus.UNSUPPORTED
+    }
+
 @Singleton
 class RatchetEncryptor @Inject constructor(
     private val state_store: RatchetStateStore,
@@ -94,25 +120,31 @@ class RatchetEncryptor @Inject constructor(
         for (recipient_email in recipients) {
             val status = runCatching {
                 val conversation_id = X3dh.derive_conversation_id(sender_email, recipient_email)
+                val username = recipient_email.substringBefore('@')
                 val bootstrap = state_store.load(conversation_id)?.bootstrap
                 if (bootstrap != null) {
-                    if (bootstrap.pq_ciphertext != null) {
-                        PostQuantumRecipientStatus.SUPPORTED
+                    val sender_identity_public = session_key_store.get_ratchet_identity_public_b64()
+                    val sender_changed = bootstrap.sender_identity_key != sender_identity_public
+                    val bundle = if (sender_changed) {
+                        ratchet_api.fetch_prekey_bundle(username, recipient_email)
                     } else {
-                        PostQuantumRecipientStatus.UNSUPPORTED
+                        try {
+                            ratchet_api.fetch_prekey_bundle(username, recipient_email)
+                        } catch (c: kotlinx.coroutines.CancellationException) {
+                            throw c
+                        } catch (t: Throwable) {
+                            null
+                        }
+                    }
+                    if (session_reused_for_send(bootstrap, sender_identity_public, bundle)) {
+                        session_post_quantum_status(bootstrap)
+                    } else {
+                        bundle?.let { classify_prekey_bundle(it) } ?: PostQuantumRecipientStatus.UNSUPPORTED
                     }
                 } else {
-                    val bundle = ratchet_api.fetch_prekey_bundle(
-                        recipient_email.substringBefore('@'),
-                        recipient_email,
-                    ) ?: return@runCatching PostQuantumRecipientStatus.UNSUPPORTED
-                    val pq_prekey_pair = bundle.pq_prekey?.let {
-                        runCatching { it.key_id to RatchetCrypto.b64_decode(it.public_key) }.getOrNull()
-                    }
-                    val pq_identity_raw = bundle.pq_kem_public_key
-                        ?.takeIf { it.isNotBlank() }
-                        ?.let { runCatching { RatchetCrypto.b64_decode(it) }.getOrNull() }
-                    classify_post_quantum_bundle(bundle.pq_capable, pq_prekey_pair, pq_identity_raw)
+                    val bundle = ratchet_api.fetch_prekey_bundle(username, recipient_email)
+                        ?: return@runCatching PostQuantumRecipientStatus.UNSUPPORTED
+                    classify_prekey_bundle(bundle)
                 }
             }.getOrNull() ?: continue
             if (status == PostQuantumRecipientStatus.SUPPORTED) continue
@@ -319,7 +351,7 @@ class RatchetEncryptor @Inject constructor(
                 throw c
             } catch (t: Throwable) {
                 if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "prekey bundle fetch threw: ${t.javaClass.simpleName}")
-                null
+                throw RatchetEncryptionException(recipient_email, "prekey bundle fetch failed", t)
             }) ?: run {
                 if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "no prekey bundle for recipient")
                 return null

@@ -3273,4 +3273,13 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Dahil</string>
     <string name="special_offer_compare_not_included">Dahil değil</string>
+    <string name="outbox_failed_title">İleti gönderilmedi</string>
+    <string name="outbox_failed_detail">Konu: %1$s\nKime: %2$s</string>
+    <string name="outbox_failed_waiting">Bekleyen gönderilmemiş iletiler: %1$d</string>
+    <string name="outbox_failed_reason_post_quantum">Bir alıcı henüz kuantum sonrası anahtar yayınlamadı, bu yüzden Aster bu iletiyi göndermedi. İletiyi standart uçtan uca şifrelemeyle göndermek için Yine de gönder\'e dokunun.</string>
+    <string name="outbox_failed_reason_identity">Bir alıcının şifreleme anahtarı değişti, bu yüzden Aster bu iletiyi göndermedi. Göndermek için gelen kutunuzda anahtar değişikliğini onaylayın, ardından Tekrar dene\'ye dokunun.</string>
+    <string name="outbox_failed_reason_encryption">Aster bu iletiyi bir alıcı için şifreleyemedi. Tekrar deneyebilir veya iletiyi silebilirsiniz.</string>
+    <string name="outbox_failed_reason_rejected">Sunucu bu iletiyi kabul etmedi. Alıcıları ve eklerin boyutunu kontrol edip tekrar deneyin.</string>
+    <string name="outbox_failed_reason_connection">Aster birkaç denemeden sonra sunucuya ulaşamadı. Bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="outbox_failed_reason_attachment">Bir ek bu cihazda artık kullanılamıyor, bu yüzden Aster bu iletiyi gönderemiyor. İletiyi silin, ardından dosyayı yeni bir iletiye tekrar ekleyin.</string>
 </resources>

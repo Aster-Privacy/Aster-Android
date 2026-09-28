@@ -3273,4 +3273,13 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Inbegrepen</string>
     <string name="special_offer_compare_not_included">Niet inbegrepen</string>
+    <string name="outbox_failed_title">Bericht niet verzonden</string>
+    <string name="outbox_failed_detail">Onderwerp: %1$s\nAan: %2$s</string>
+    <string name="outbox_failed_waiting">Wachtende niet-verzonden berichten: %1$d</string>
+    <string name="outbox_failed_reason_post_quantum">Een ontvanger heeft nog geen post-kwantumsleutels gepubliceerd, dus Aster heeft dit bericht niet verzonden. Tik op Toch verzenden om het te verzenden met standaard end-to-end-versleuteling.</string>
+    <string name="outbox_failed_reason_identity">De versleutelingssleutel van een ontvanger is gewijzigd, dus Aster heeft dit bericht niet verzonden. Bevestig de sleutelwijziging in je inbox en tik daarna op Opnieuw proberen om het te verzenden.</string>
+    <string name="outbox_failed_reason_encryption">Aster kon dit bericht niet versleutelen voor een ontvanger. Je kunt het opnieuw proberen of het bericht verwijderen.</string>
+    <string name="outbox_failed_reason_rejected">De server heeft dit bericht niet geaccepteerd. Controleer de ontvangers en de grootte van de bijlagen en probeer het daarna opnieuw.</string>
+    <string name="outbox_failed_reason_connection">Aster kon de server na meerdere pogingen niet bereiken. Controleer je verbinding en probeer het daarna opnieuw.</string>
+    <string name="outbox_failed_reason_attachment">Een bijlage is niet meer beschikbaar op dit apparaat, dus Aster kan dit bericht niet verzenden. Verwijder het en voeg het bestand opnieuw toe in een nieuw bericht.</string>
 </resources>

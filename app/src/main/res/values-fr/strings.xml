@@ -3319,4 +3319,13 @@
     <string name="special_offer_compare_vanguard">Aster Vanguard</string>
     <string name="special_offer_compare_included">Inclus</string>
     <string name="special_offer_compare_not_included">Non inclus</string>
+    <string name="outbox_failed_title">Message non envoyé</string>
+    <string name="outbox_failed_detail">Objet : %1$s\nÀ : %2$s</string>
+    <string name="outbox_failed_waiting">Messages non envoyés en attente : %1$d</string>
+    <string name="outbox_failed_reason_post_quantum">Un destinataire n\'a pas encore publié de clés post-quantiques, Aster n\'a donc pas envoyé ce message. Pour l\'envoyer avec le chiffrement de bout en bout standard, touchez Envoyer quand même.</string>
+    <string name="outbox_failed_reason_identity">La clé de chiffrement d\'un destinataire a changé, Aster n\'a donc pas envoyé ce message. Pour l\'envoyer, confirmez le changement de clé dans votre boîte de réception, puis touchez Réessayer.</string>
+    <string name="outbox_failed_reason_encryption">Aster n\'a pas pu chiffrer ce message pour un destinataire. Vous pouvez réessayer ou le supprimer.</string>
+    <string name="outbox_failed_reason_rejected">Le serveur n\'a pas accepté ce message. Vérifiez les destinataires et la taille des pièces jointes, puis réessayez.</string>
+    <string name="outbox_failed_reason_connection">Aster n\'a pas pu joindre le serveur après plusieurs tentatives. Vérifiez votre connexion, puis réessayez.</string>
+    <string name="outbox_failed_reason_attachment">Une pièce jointe n\'est plus disponible sur cet appareil, Aster ne peut donc pas envoyer ce message. Supprimez-le, puis joignez à nouveau le fichier dans un nouveau message.</string>
 </resources>

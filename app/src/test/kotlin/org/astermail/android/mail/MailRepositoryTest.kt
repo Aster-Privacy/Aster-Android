@@ -2227,6 +2227,76 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `reconcile_pending_sends exposes the oldest failed message with its recipients`() = runTest {
+        pending_send_dao.rows["p_old"] = pending_row("p_old", status = "failed", to = "first@astermail.org")
+        pending_send_dao.rows["p_new"] = pending_row("p_new", status = "failed", to = "second@astermail.org")
+            .copy(created_at_ms = 10L)
+
+        repo.reconcile_pending_sends()
+
+        val notice = repo.failed_send_notice.value
+        assertEquals("p_old", notice?.id)
+        assertEquals(listOf("first@astermail.org"), notice?.recipients)
+        assertEquals("Subject", notice?.subject)
+        assertEquals(1, notice?.more_count)
+        assertTrue(repo.send_problem.value)
+    }
+
+    @Test
+    fun `retry_failed_send requeues one message and keeps the others failed`() = runTest {
+        pending_send_dao.rows["p_a"] = pending_row("p_a", status = "failed")
+        pending_send_dao.rows["p_b"] = pending_row("p_b", status = "failed").copy(created_at_ms = 10L)
+        repo.reconcile_pending_sends()
+
+        repo.retry_failed_send("p_a")
+
+        assertEquals("pending", pending_send_dao.rows["p_a"]?.status)
+        assertEquals("failed", pending_send_dao.rows["p_b"]?.status)
+        assertEquals(1, repo.failed_send_count.value)
+        assertEquals("p_b", repo.failed_send_notice.value?.id)
+    }
+
+    @Test
+    fun `retry_failed_send with send anyway allows standard encryption`() = runTest {
+        pending_send_dao.rows["p_pq"] = pending_row("p_pq", status = "failed")
+        repo.reconcile_pending_sends()
+
+        repo.retry_failed_send("p_pq", allow_non_post_quantum = true)
+
+        assertEquals("pending", pending_send_dao.rows["p_pq"]?.status)
+        assertTrue(pending_send_dao.rows["p_pq"]?.allow_non_post_quantum == true)
+        assertEquals(0, repo.failed_send_count.value)
+        assertNull(repo.failed_send_notice.value)
+        assertFalse(repo.send_problem.value)
+    }
+
+    @Test
+    fun `discard_failed_send deletes only that message`() = runTest {
+        pending_send_dao.rows["p_a"] = pending_row("p_a", status = "failed")
+        pending_send_dao.rows["p_b"] = pending_row("p_b", status = "failed").copy(created_at_ms = 10L)
+        pending_send_dao.rows["p_ok"] = pending_row("p_ok", status = "pending")
+        repo.reconcile_pending_sends()
+
+        repo.discard_failed_send("p_a")
+
+        assertNull(pending_send_dao.rows["p_a"])
+        assertNotNull(pending_send_dao.rows["p_b"])
+        assertNotNull(pending_send_dao.rows["p_ok"])
+        assertEquals(1, repo.failed_send_count.value)
+        assertTrue(repo.send_problem.value)
+    }
+
+    @Test
+    fun `retry_failed_send ignores a message that is no longer failed`() = runTest {
+        pending_send_dao.rows["p_ok"] = pending_row("p_ok", status = "pending")
+
+        repo.retry_failed_send("p_ok")
+
+        assertEquals("pending", pending_send_dao.rows["p_ok"]?.status)
+        assertFalse(pending_send_dao.rows["p_ok"]?.allow_non_post_quantum == true)
+    }
+
+    @Test
     fun `clear_caches keeps the persistent ratchet plaintext cache`() = runTest {
         repo.clear_caches()
 

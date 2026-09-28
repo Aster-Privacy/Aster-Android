@@ -33,6 +33,12 @@ import io.ktor.http.contentType
 import kotlinx.serialization.Serializable
 import org.astermail.android.api.ApiClient
 
+class PrekeyBundleFetchException(val status: Int) :
+    java.io.IOException("prekey bundle request failed with status $status")
+
+fun is_retryable_prekey_bundle_status(status: Int): Boolean =
+    status >= 500 || status == 401 || status == 408 || status == 429
+
 @Serializable
 data class RatchetStateResponse(
     val id: String,
@@ -207,6 +213,9 @@ class RatchetApiImpl(private val client: ApiClient) : RatchetApi {
         val email_enc = java.net.URLEncoder.encode(email, "UTF-8").replace("+", "%20")
         val response = client.http.get("${client.base_url}/api/crypto/v1/ratchet/prekey-bundle/$username_enc?email=$email_enc")
         if (response.status.value == 404) return null
+        if (is_retryable_prekey_bundle_status(response.status.value)) {
+            throw PrekeyBundleFetchException(response.status.value)
+        }
         if (response.status.value !in 200..299) return null
         return try { response.body() } catch (_: Throwable) { null }
     }

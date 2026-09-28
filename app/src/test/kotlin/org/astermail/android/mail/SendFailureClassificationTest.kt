@@ -22,8 +22,11 @@
 package org.astermail.android.mail
 
 import org.astermail.android.api.ApiError
+import org.astermail.android.api.ratchet.PrekeyBundleFetchException
+import org.astermail.android.api.ratchet.is_retryable_prekey_bundle_status
 import org.astermail.android.mail.ratchet.PostQuantumUnavailableException
 import org.astermail.android.mail.ratchet.RatchetEncryptionException
+import org.astermail.android.mail.ratchet.RatchetIdentityPinException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -220,5 +223,74 @@ class SendFailureClassificationTest {
         assertFalse(has_mixed_recipients(listOf("a@astermail.org", "b@aster.cx", "c@realiased.me")))
         assertFalse(has_mixed_recipients(listOf("a@example.com", "b@example.net")))
         assertFalse(has_mixed_recipients(listOf("a@gs-cloud.space", "b@example.com")))
+    }
+
+    @Test
+    fun `a prekey bundle server error is retried instead of failing the send`() {
+        val err = RatchetEncryptionException(
+            "friend@astermail.org",
+            "prekey bundle fetch failed",
+            PrekeyBundleFetchException(503),
+        )
+
+        assertFalse(is_permanent_send_failure_cause(err))
+        assertTrue(is_transient_send_cause(err))
+        assertEquals(SendFailureReason.CONNECTION, send_failure_reason_for(err))
+    }
+
+    @Test
+    fun `prekey bundle statuses that can recover are retryable`() {
+        assertTrue(is_retryable_prekey_bundle_status(500))
+        assertTrue(is_retryable_prekey_bundle_status(503))
+        assertTrue(is_retryable_prekey_bundle_status(429))
+        assertTrue(is_retryable_prekey_bundle_status(408))
+        assertTrue(is_retryable_prekey_bundle_status(401))
+        assertFalse(is_retryable_prekey_bundle_status(400))
+        assertFalse(is_retryable_prekey_bundle_status(403))
+        assertFalse(is_retryable_prekey_bundle_status(200))
+    }
+
+    @Test
+    fun `send failure reasons follow the cause chain`() {
+        assertEquals(
+            SendFailureReason.POST_QUANTUM,
+            send_failure_reason_for(PostQuantumUnavailableException(listOf("friend@astermail.org"))),
+        )
+        assertEquals(
+            SendFailureReason.IDENTITY_CHANGED,
+            send_failure_reason_for(
+                IllegalStateException("blocked", RatchetIdentityPinException("friend@astermail.org", "pin changed")),
+            ),
+        )
+        assertEquals(
+            SendFailureReason.REJECTED,
+            send_failure_reason_for(ApiError.ValidationError(listOf("bad request"))),
+        )
+        assertEquals(
+            SendFailureReason.CONNECTION,
+            send_failure_reason_for(RuntimeException("send failed", IOException("connection reset"))),
+        )
+        assertEquals(
+            SendFailureReason.ATTACHMENT,
+            send_failure_reason_for(AttachmentPrepareException("unreadable")),
+        )
+        assertEquals(
+            SendFailureReason.ENCRYPTION,
+            send_failure_reason_for(
+                E2eEncryptionException(
+                    "failed",
+                    RatchetEncryptionException("friend@astermail.org", "no prekey bundle available for recipient"),
+                ),
+            ),
+        )
+        assertEquals(SendFailureReason.OTHER, send_failure_reason_for(IllegalStateException("send rejected")))
+        assertEquals(SendFailureReason.OTHER, send_failure_reason_for(null))
+    }
+
+    @Test
+    fun `unknown stored failure codes fall back to other`() {
+        assertEquals(SendFailureReason.POST_QUANTUM, SendFailureReason.from_code("post_quantum"))
+        assertEquals(SendFailureReason.OTHER, SendFailureReason.from_code("unknown"))
+        assertEquals(SendFailureReason.OTHER, SendFailureReason.from_code(null))
     }
 }
