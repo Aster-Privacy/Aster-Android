@@ -3298,4 +3298,7 @@
     <string name="pdf_preview_failed">Bu PDF burada gösterilemiyor. Açmak için indirin.</string>
     <string name="pdf_page_of_total">Sayfa %1$d / %2$d</string>
     <string name="pdf_password_unsupported">Bu PDF parola korumalı. Görüntülemek için başka bir uygulamada açın.</string>
+    <string name="sort_a_to_z">A\'dan Z\'ye sırala</string>
+    <string name="folders_sorted_a_to_z">Klasörler A\'dan Z\'ye sıralandı</string>
+    <string name="plan_f_sort_folders">Klasörleri A\'dan Z\'ye sıralama</string>
 </resources>

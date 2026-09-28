@@ -42,7 +42,7 @@ class PlanComparisonTest {
         assertEquals("en", feed.locale)
         assertEquals(listOf("free", "star", "nova", "supernova", "duo", "family"), feed.plans.map { it.code })
         assertEquals(9, feed.groups.size)
-        assertEquals(80, feed.row_count)
+        assertEquals(81, feed.row_count)
         assertEquals("10 GB", feed.row("storage")?.value_for("free")?.text)
         assertEquals(plan_comparison_value(false, null), feed.row("external_accounts")?.value_for("free"))
         assertEquals(plan_comparison_value(true, null), feed.row("key_rotation")?.value_for("nova"))

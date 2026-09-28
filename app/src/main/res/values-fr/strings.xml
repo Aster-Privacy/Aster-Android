@@ -3344,4 +3344,7 @@
     <string name="pdf_preview_failed">Ce PDF ne peut pas s\'afficher ici. Pour l\'ouvrir, téléchargez-le.</string>
     <string name="pdf_page_of_total">Page %1$d sur %2$d</string>
     <string name="pdf_password_unsupported">Ce PDF est protégé par un mot de passe. Pour l\'afficher, ouvrez-le dans une autre app.</string>
+    <string name="sort_a_to_z">Trier de A à Z</string>
+    <string name="folders_sorted_a_to_z">Dossiers triés de A à Z</string>
+    <string name="plan_f_sort_folders">Trier les dossiers de A à Z</string>
 </resources>

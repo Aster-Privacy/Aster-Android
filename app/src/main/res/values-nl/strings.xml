@@ -3298,4 +3298,7 @@
     <string name="pdf_preview_failed">Deze pdf kan hier niet worden getoond. Download de pdf om hem te openen.</string>
     <string name="pdf_page_of_total">Pagina %1$d van %2$d</string>
     <string name="pdf_password_unsupported">Deze pdf is beveiligd met een wachtwoord. Open de pdf in een andere app om hem te bekijken.</string>
+    <string name="sort_a_to_z">Sorteren van A tot Z</string>
+    <string name="folders_sorted_a_to_z">Mappen gesorteerd van A tot Z</string>
+    <string name="plan_f_sort_folders">Mappen sorteren van A tot Z</string>
 </resources>

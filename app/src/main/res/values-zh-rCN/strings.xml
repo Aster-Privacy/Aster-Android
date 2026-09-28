@@ -3281,4 +3281,7 @@
     <string name="pdf_preview_failed">无法在此处显示此 PDF。要打开它，请下载文件。</string>
     <string name="pdf_page_of_total">第%1$d页，共%2$d页</string>
     <string name="pdf_password_unsupported">此 PDF 受密码保护。要查看它，请在其他应用中打开。</string>
+    <string name="sort_a_to_z">按名称排序</string>
+    <string name="folders_sorted_a_to_z">文件夹已按名称排序</string>
+    <string name="plan_f_sort_folders">文件夹按名称排序</string>
 </resources>

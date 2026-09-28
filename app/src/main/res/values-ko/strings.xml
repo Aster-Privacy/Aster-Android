@@ -3281,4 +3281,7 @@
     <string name="pdf_preview_failed">이 PDF는 여기에 표시할 수 없습니다. 열려면 다운로드하세요.</string>
     <string name="pdf_page_of_total">%2$d 중 %1$d 페이지</string>
     <string name="pdf_password_unsupported">이 PDF는 암호로 보호되어 있습니다. 보려면 다른 앱에서 여세요.</string>
+    <string name="sort_a_to_z">이름순 정렬</string>
+    <string name="folders_sorted_a_to_z">폴더를 이름순으로 정렬했습니다</string>
+    <string name="plan_f_sort_folders">폴더 이름순 정렬</string>
 </resources>

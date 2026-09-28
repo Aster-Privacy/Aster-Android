@@ -3188,4 +3188,7 @@
     <string name="pdf_preview_failed">यह PDF यहां नहीं दिखाई जा सकती। इसे खोलने के लिए, इसे डाउनलोड करें।</string>
     <string name="pdf_page_of_total">पेज %1$d, कुल %2$d में से</string>
     <string name="pdf_password_unsupported">यह PDF पासवर्ड से सुरक्षित है। इसे देखने के लिए, इसे किसी दूसरे ऐप में खोलें।</string>
+    <string name="sort_a_to_z">A से Z क्रम में लगाएं</string>
+    <string name="folders_sorted_a_to_z">फ़ोल्डर A से Z क्रम में लगाए गए</string>
+    <string name="plan_f_sort_folders">फ़ोल्डर A से Z क्रम में लगाएं</string>
 </resources>

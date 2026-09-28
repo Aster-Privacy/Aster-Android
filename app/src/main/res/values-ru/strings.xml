@@ -3336,4 +3336,7 @@
     <string name="pdf_preview_failed">Этот PDF нельзя показать здесь. Чтобы открыть его, скачайте файл.</string>
     <string name="pdf_page_of_total">Страница %1$d из %2$d</string>
     <string name="pdf_password_unsupported">Этот PDF защищен паролем. Чтобы просмотреть его, откройте его в другом приложении.</string>
+    <string name="sort_a_to_z">Сортировать от А до Я</string>
+    <string name="folders_sorted_a_to_z">Папки отсортированы от А до Я</string>
+    <string name="plan_f_sort_folders">Сортировка папок от А до Я</string>
 </resources>

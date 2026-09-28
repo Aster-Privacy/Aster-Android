@@ -3336,4 +3336,7 @@
     <string name="pdf_preview_failed">Tego pliku PDF nie można tu wyświetlić. Aby go otworzyć, pobierz go.</string>
     <string name="pdf_page_of_total">Strona %1$d z %2$d</string>
     <string name="pdf_password_unsupported">Ten plik PDF jest chroniony hasłem. Aby go wyświetlić, otwórz go w innej aplikacji.</string>
+    <string name="sort_a_to_z">Sortuj od A do Z</string>
+    <string name="folders_sorted_a_to_z">Foldery posortowane od A do Z</string>
+    <string name="plan_f_sort_folders">Sortowanie folderów od A do Z</string>
 </resources>

@@ -3318,4 +3318,7 @@
     <string name="pdf_preview_failed">Este PDF no se puede mostrar aquí. Para abrirlo, descárgalo.</string>
     <string name="pdf_page_of_total">Página %1$d de %2$d</string>
     <string name="pdf_password_unsupported">Este PDF está protegido con contraseña. Para verlo, ábrelo en otra app.</string>
+    <string name="sort_a_to_z">Ordenar de la A a la Z</string>
+    <string name="folders_sorted_a_to_z">Carpetas ordenadas de la A a la Z</string>
+    <string name="plan_f_sort_folders">Ordenar carpetas de la A a la Z</string>
 </resources>

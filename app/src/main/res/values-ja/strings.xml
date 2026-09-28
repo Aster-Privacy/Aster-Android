@@ -3288,4 +3288,7 @@
     <string name="pdf_preview_failed">このPDFはここに表示できません。開くにはダウンロードしてください。</string>
     <string name="pdf_page_of_total">%2$dページ中%1$dページ</string>
     <string name="pdf_password_unsupported">このPDFはパスワードで保護されています。表示するには、別のアプリで開いてください。</string>
+    <string name="sort_a_to_z">名前順で並べ替え</string>
+    <string name="folders_sorted_a_to_z">フォルダを名前順に並べ替えました</string>
+    <string name="plan_f_sort_folders">フォルダを名前順に並べ替え</string>
 </resources>
