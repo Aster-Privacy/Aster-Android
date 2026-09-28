@@ -798,7 +798,6 @@
     <string name="resend_verification_email">Reenviar correo de verificación</string>
     <string name="forwarding_awaiting_verification">Esperando verificación: %1$s</string>
     <string name="forwarding_verification_sent">Correo de verificación enviado a %1$s. El reenvío empezará cuando se confirme.</string>
-    <string name="forwarding_internal_active">El reenvío está activo. Los destinos de Aster a Aster no necesitan verificación.</string>
     <string name="forwarding_verification_resent">Correo de verificación reenviado a %1$s</string>
     <string name="forwarding_failed_badge">Sin entregar</string>
     <string name="forwarding_failed_encryption">Requerir cifrado está activado, pero %1$s no tiene clave PGP, así que los mensajes no se reenvían. Desactiva Requerir cifrado en los ajustes de cifrado o añade la clave pública del destinatario.</string>

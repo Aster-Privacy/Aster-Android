@@ -48,6 +48,8 @@ data class LoginRequest(
     val remember_me: Boolean? = null,
     val captcha_token: String? = null,
     @EncodeDefault val client_platform: String = "android",
+    val integrity_token: String? = null,
+    val integrity_nonce: String? = null,
 )
 
 @Serializable

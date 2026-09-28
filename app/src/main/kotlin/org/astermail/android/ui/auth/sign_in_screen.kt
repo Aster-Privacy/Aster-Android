@@ -114,6 +114,10 @@ fun SignInScreen(
     org.astermail.android.ui.common.secure_screen()
     val colors = AsterMaterial.colors
     val state by view_model.ui_state.collectAsStateWithLifecycle()
+    val captcha_required by view_model.login_captcha_required.collectAsStateWithLifecycle()
+    var captcha_token by remember { mutableStateOf<String?>(null) }
+    var captcha_failed by remember { mutableStateOf(false) }
+    var captcha_reset_trigger by remember { mutableStateOf(0) }
 
     var email by rememberSaveable(prefill_email) { mutableStateOf(prefill_email) }
     var email_domain by rememberSaveable { mutableStateOf("astermail.org") }
@@ -131,9 +135,15 @@ fun SignInScreen(
         when (state) {
             is AuthUiState.Success -> if (!signed_in_fired) { signed_in_fired = true; on_signed_in() }
             is AuthUiState.TotpChallenge -> cached_totp_challenge = (state as AuthUiState.TotpChallenge).challenge
-            is AuthUiState.Error -> if ((state as AuthUiState.Error).restart_login) {
-                cached_totp_challenge = null
-                password = ""
+            is AuthUiState.Error -> {
+                if ((state as AuthUiState.Error).restart_login) {
+                    cached_totp_challenge = null
+                    password = ""
+                }
+                if (captcha_required) {
+                    captcha_token = null
+                    captcha_reset_trigger += 1
+                }
             }
             else -> Unit
         }
@@ -141,14 +151,15 @@ fun SignInScreen(
 
     val is_loading = state is AuthUiState.Loading
     val error_message = (state as? AuthUiState.Error)?.message
-    val can_submit = email.isNotBlank() && password.isNotBlank() && !is_loading
+    val captcha_ok = !captcha_required || !captcha_token.isNullOrBlank()
+    val can_submit = email.isNotBlank() && password.isNotBlank() && captcha_ok && !is_loading
 
     val submit: () -> Unit = {
         if (can_submit) {
             keyboard_controller?.hide()
             val trimmed = email.trim()
             val full_email = if (trimmed.contains("@")) trimmed else "$trimmed@$email_domain"
-            view_model.submit_login(full_email, password)
+            view_model.submit_login(full_email, password, captcha_token)
         }
     }
 
@@ -188,6 +199,10 @@ fun SignInScreen(
         error_message = error_message,
         is_loading = is_loading,
         can_submit = can_submit,
+        captcha_required = captcha_required,
+        captcha_failed = captcha_failed,
+        captcha_pending = captcha_required && !captcha_failed && captcha_token.isNullOrBlank(),
+        captcha_reset_trigger = captcha_reset_trigger,
     )
     val callbacks = SignInCallbacks(
         on_email_change = { raw ->
@@ -217,6 +232,22 @@ fun SignInScreen(
         on_toggle_password_visible = { password_visible = !password_visible },
         on_domain_select = { email_domain = it },
         on_submit = submit,
+        on_captcha_token = {
+            captcha_token = it
+            captcha_failed = false
+        },
+        on_captcha_error = {
+            captcha_token = null
+            captcha_failed = true
+        },
+        on_captcha_expired = {
+            captcha_token = null
+            captcha_reset_trigger += 1
+        },
+        on_captcha_retry = {
+            captcha_failed = false
+            captcha_reset_trigger += 1
+        },
         on_forgot_password = on_forgot_password,
         on_register = on_register,
     )
@@ -257,6 +288,10 @@ private data class SignInFieldState(
     val error_message: String?,
     val is_loading: Boolean,
     val can_submit: Boolean,
+    val captcha_required: Boolean,
+    val captcha_failed: Boolean,
+    val captcha_pending: Boolean,
+    val captcha_reset_trigger: Int,
 )
 
 private class SignInCallbacks(
@@ -267,6 +302,10 @@ private class SignInCallbacks(
     val on_submit: () -> Unit,
     val on_forgot_password: () -> Unit,
     val on_register: () -> Unit,
+    val on_captcha_token: (String) -> Unit,
+    val on_captcha_error: (String) -> Unit,
+    val on_captcha_expired: () -> Unit,
+    val on_captcha_retry: () -> Unit,
 )
 
 @Composable
@@ -390,6 +429,21 @@ private fun aster_variant_body(
         }
 
         Spacer(Modifier.height(AsterSpacing.md))
+
+        if (fields.captcha_required) {
+            TurnstileWidget(
+                on_token = cb.on_captcha_token,
+                on_error = cb.on_captcha_error,
+                on_expired = cb.on_captcha_expired,
+                reset_trigger = fields.captcha_reset_trigger,
+            )
+            captcha_status_row(
+                failed = fields.captcha_failed,
+                pending = fields.captcha_pending,
+                on_retry = cb.on_captcha_retry,
+            )
+            Spacer(Modifier.height(AsterSpacing.md))
+        }
 
         AsterButton(
             label = stringResource(R.string.sign_in),

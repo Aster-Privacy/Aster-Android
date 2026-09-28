@@ -433,7 +433,7 @@ private fun terms_agreement_text(
 }
 
 @Composable
-private fun captcha_status_row(
+internal fun captcha_status_row(
     failed: Boolean,
     pending: Boolean,
     on_retry: () -> Unit,

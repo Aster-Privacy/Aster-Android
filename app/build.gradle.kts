@@ -196,6 +196,7 @@ dependencies {
     "fullImplementation"(libs.unifiedpush.efcmd)
     "fullImplementation"("com.google.android.play:review-ktx:2.0.2")
     "fullImplementation"("com.android.billingclient:billing:9.1.0")
+    "fullImplementation"(libs.play.integrity)
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.lifecycle.process)

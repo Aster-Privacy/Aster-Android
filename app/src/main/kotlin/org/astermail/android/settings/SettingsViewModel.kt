@@ -5762,9 +5762,6 @@ class SettingsViewModel @Inject constructor(
                 pending.joinToString(", ") { it.address },
             )
         }
-        if (rule.all_destinations_internal) {
-            return context.getString(R.string.forwarding_internal_active)
-        }
         return null
     }
 

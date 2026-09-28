@@ -110,6 +110,7 @@ const val FINGERPRINT_MISMATCH_CODE = "FINGERPRINT_MISMATCH"
 const val INVALID_CREDENTIALS_CODE = "INVALID_CREDENTIALS"
 const val STORAGE_QUOTA_CODE = "STORAGE_QUOTA_EXCEEDED"
 const val ACCOUNT_SUSPENDED_CODE = "ACCOUNT_SUSPENDED"
+const val CAPTCHA_FAILED_CODE = "CAPTCHA_FAILED"
 
 fun map_unauthorized(server_code: String?, detail: String): ApiError =
     when (server_code) {

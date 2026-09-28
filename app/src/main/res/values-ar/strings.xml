@@ -797,7 +797,6 @@
     <string name="resend_verification_email">إعادة إرسال بريد التحقق</string>
     <string name="forwarding_awaiting_verification">في انتظار التحقق: %1$s</string>
     <string name="forwarding_verification_sent">تم إرسال بريد التحقق إلى %1$s. تبدأ إعادة التوجيه بعد التأكيد.</string>
-    <string name="forwarding_internal_active">إعادة التوجيه نشطة. الوجهات من Aster إلى Aster لا تحتاج إلى تحقق.</string>
     <string name="forwarding_verification_resent">تمت إعادة إرسال بريد التحقق إلى %1$s</string>
     <string name="forwarding_failed_badge">لا يتم التسليم</string>
     <string name="forwarding_failed_encryption">خيار طلب التشفير مفعّل، لكن %1$s لا يملك مفتاح PGP، لذلك لا تتم إعادة توجيه الرسائل. أوقف طلب التشفير في إعدادات التشفير، أو أضف المفتاح العام للمستلم.</string>

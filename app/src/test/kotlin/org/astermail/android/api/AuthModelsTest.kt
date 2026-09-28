@@ -49,6 +49,8 @@ class AuthModelsTest {
         assertNull(request.remember_me)
         assertNull(request.captcha_token)
         assertEquals("android", request.client_platform)
+        assertNull(request.integrity_token)
+        assertNull(request.integrity_nonce)
     }
 
     @Test
