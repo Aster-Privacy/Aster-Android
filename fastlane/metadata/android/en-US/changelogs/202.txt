@@ -1,0 +1,8 @@
+What's new:
+
+- Your inbox opens faster when you start the app.
+- Encrypted messages open faster after the first one.
+
+Fixed:
+
+- New messages and replies leave one blank line between your text and your signature.
