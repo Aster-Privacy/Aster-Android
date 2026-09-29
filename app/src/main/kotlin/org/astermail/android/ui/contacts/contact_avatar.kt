@@ -144,7 +144,7 @@ private val contact_photo_cache = object : android.util.LruCache<String, ImageBi
 private fun is_inline_contact_photo(avatar_url: String): Boolean =
     avatar_url.startsWith("data:image", ignoreCase = true)
 
-private fun decode_contact_photo(avatar_url: String): ImageBitmap? {
+internal fun decode_contact_photo(avatar_url: String): ImageBitmap? {
     if (!is_inline_contact_photo(avatar_url)) return null
     val payload = avatar_url.substringAfter("base64,", "")
     if (payload.length < contact_photo_min_bytes) return null

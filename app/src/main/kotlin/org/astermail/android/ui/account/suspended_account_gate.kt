@@ -185,6 +185,7 @@ fun SuspendedAccountGate(
                         size = 48.dp,
                         profile_picture_url = account_picture,
                         profile_color = account_color,
+                        use_contact_photo = false,
                     )
                 }
                 Spacer(Modifier.width(14.dp))

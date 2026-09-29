@@ -1032,6 +1032,7 @@ class AuthRepository @Inject constructor(
         runCatching {
             org.astermail.android.mail.AsterProfileResolverHolder.shared?.clear()
             org.astermail.android.mail.OwnAddressAvatars.clear()
+            org.astermail.android.contacts.ContactPhotoDirectory.clear()
         }
         runCatching { database.decrypted_mail_dao().clear_all() }
         runCatching { database.folder_row_dao().clear_all() }
@@ -1542,6 +1543,7 @@ class AuthRepository @Inject constructor(
         runCatching {
             org.astermail.android.mail.AsterProfileResolverHolder.shared?.clear()
             org.astermail.android.mail.OwnAddressAvatars.clear()
+            org.astermail.android.contacts.ContactPhotoDirectory.clear()
         }
         database.decrypted_mail_dao().clear_all()
         database.folder_row_dao().clear_all()

@@ -109,6 +109,12 @@ class AsterApplication : Application(), ImageLoaderFactory {
             org.astermail.android.mail.AsterProfileResolverHolder.shared = ep.aster_profile_resolver()
         }
         runCatching {
+            val contacts_repository = EntryPointAccessors
+                .fromApplication(this, ImageLoaderEntryPoint::class.java)
+                .contacts_repository()
+            org.astermail.android.contacts.ContactPhotoDirectory.install { contacts_repository.get() }
+        }
+        runCatching {
             org.astermail.android.mail.DemoPhishingContentHolder.shared = org.astermail.android.mail.DemoPhishingContent(
                 subject = getString(R.string.demo_phish_subject),
                 preview = getString(R.string.demo_phish_preview),
@@ -240,6 +246,7 @@ class AsterApplication : Application(), ImageLoaderFactory {
         fun account_store(): org.astermail.android.storage.AccountStore
         fun database(): dagger.Lazy<org.astermail.android.storage.search.AsterDatabase>
         fun aster_profile_resolver(): org.astermail.android.mail.AsterProfileResolver
+        fun contacts_repository(): dagger.Lazy<org.astermail.android.contacts.ContactsRepository>
         fun labels_api(): org.astermail.android.api.labels.LabelsApi
         fun search_index_manager(): org.astermail.android.mail.SearchIndexManager
         fun app_lock_store(): org.astermail.android.security.AppLockStore

@@ -2125,6 +2125,7 @@ internal fun workspace_switcher_sheet(
                             size = 48.dp,
                             profile_picture_url = current_picture,
                             profile_color = current_color,
+                            use_contact_photo = false,
                         )
                     }
                     Spacer(Modifier.width(14.dp))
@@ -2268,6 +2269,7 @@ internal fun workspace_switcher_sheet(
                         size = 32.dp,
                         profile_picture_url = account.profile_picture,
                         profile_color = account.profile_color,
+                        use_contact_photo = false,
                     )
                     Spacer(Modifier.width(14.dp))
                     Column(
@@ -2390,6 +2392,7 @@ private fun workspace_header(
                     size = 40.dp,
                     profile_picture_url = profile_picture,
                     profile_color = profile_color,
+                    use_contact_photo = false,
                     modifier = Modifier.testTag("account_avatar"),
                 )
             }

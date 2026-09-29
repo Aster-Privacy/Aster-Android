@@ -131,6 +131,7 @@ class AccountsViewModel @Inject constructor(
         org.astermail.android.billing.AttachmentLimits.reset()
         org.astermail.android.billing.AvailablePlansCache.reset()
         org.astermail.android.billing.PlanLimitsCache.reset()
+        org.astermail.android.contacts.ContactPhotoDirectory.clear()
         refresh()
         viewModelScope.launch {
             val restored = try {
@@ -138,6 +139,7 @@ class AccountsViewModel @Inject constructor(
             } finally {
                 is_switching = false
             }
+            org.astermail.android.contacts.ContactPhotoDirectory.clear()
             if (account_store.get_current_id() == account_id) {
                 on_result(restored)
                 if (restored) load_account_limit()

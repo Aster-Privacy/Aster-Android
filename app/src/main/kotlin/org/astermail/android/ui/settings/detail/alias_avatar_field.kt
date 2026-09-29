@@ -92,6 +92,7 @@ internal fun alias_avatar_field(
                 email = address,
                 size = 44.dp,
                 profile_picture_url = profile_picture,
+                use_contact_photo = false,
             )
             AsterSecondaryButton(
                 label = when {
