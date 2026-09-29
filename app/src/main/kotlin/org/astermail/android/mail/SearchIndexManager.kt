@@ -28,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -103,7 +104,52 @@ class SearchIndexManager @Inject constructor(
 
     fun ensure_index_built() {
         if (is_building || _index_ready.value || _index_paused.value) return
-        build_job = scope.launch { build_index_background() }
+        if (build_job?.isActive == true) return
+        build_job = scope.launch {
+            if (has_fresh_full_build() && dao.count() > 0) {
+                if (!_index_ready.value) _index_ready.value = true
+                return@launch
+            }
+            delay(STARTUP_BUILD_DELAY_MS)
+            build_index_background()
+        }
+    }
+
+    private fun has_fresh_full_build(): Boolean {
+        val built_at = runCatching { pause_prefs.getLong(KEY_LAST_FULL_BUILD, 0L) }.getOrDefault(0L)
+        val age = System.currentTimeMillis() - built_at
+        return built_at > 0L && age in 0 until FULL_BUILD_FRESH_MS
+    }
+
+    private fun mark_full_build() {
+        runCatching { pause_prefs.edit().putLong(KEY_LAST_FULL_BUILD, System.currentTimeMillis()).apply() }
+    }
+
+    private fun load_poisoned_ids(): MutableSet<String> {
+        val recorded_at = runCatching { pause_prefs.getLong(KEY_POISONED_AT, 0L) }.getOrDefault(0L)
+        val age = System.currentTimeMillis() - recorded_at
+        if (recorded_at <= 0L || age !in 0 until POISONED_TTL_MS) return HashSet()
+        return runCatching { pause_prefs.getStringSet(KEY_POISONED_IDS, null)?.toHashSet() }
+            .getOrNull() ?: HashSet()
+    }
+
+    private fun save_poisoned_ids(ids: Set<String>, reset_clock: Boolean) {
+        val capped = if (ids.size > MAX_POISONED_IDS) ids.take(MAX_POISONED_IDS).toHashSet() else HashSet(ids)
+        runCatching {
+            val editor = pause_prefs.edit().putStringSet(KEY_POISONED_IDS, capped)
+            if (reset_clock) editor.putLong(KEY_POISONED_AT, System.currentTimeMillis())
+            editor.apply()
+        }
+    }
+
+    private fun forget_build_state() {
+        runCatching {
+            pause_prefs.edit()
+                .remove(KEY_LAST_FULL_BUILD)
+                .remove(KEY_POISONED_IDS)
+                .remove(KEY_POISONED_AT)
+                .apply()
+        }
     }
 
     fun refresh_index() {
@@ -320,6 +366,7 @@ class SearchIndexManager @Inject constructor(
         mutex.withLock {
             epoch.incrementAndGet()
             dao.clear_all()
+            forget_build_state()
             _index_ready.value = false
             _index_progress.value = null
         }
@@ -350,6 +397,11 @@ class SearchIndexManager @Inject constructor(
         try {
             purge_bundle_poisoned()
             val existing_ids = dao.get_all_ids().toHashSet()
+            val incremental = has_fresh_full_build()
+            val poisoned_ids = load_poisoned_ids()
+            val poisoned_before = poisoned_ids.size
+            val poisoned_clock_reset = poisoned_ids.isEmpty()
+            val added_ids = HashSet<String>()
             val page_size = 200
             val max_pages = 500
             val build_budget_ms = 10 * 60 * 1000L
@@ -375,7 +427,7 @@ class SearchIndexManager @Inject constructor(
                     if (page == 0 && response.total >= 0) {
                         total_target += minOf(response.total, max_pages * page_size)
                     }
-                    val new_items = response.items.filter { it.id !in existing_ids }
+                    val new_items = response.items.filter { it.id !in existing_ids && it.id !in poisoned_ids }
                     val known_ids = response.items.map { it.id }.filter { it in existing_ids }
                     if (known_ids.isNotEmpty()) {
                         val known_set = known_ids.toHashSet()
@@ -407,6 +459,10 @@ class SearchIndexManager @Inject constructor(
                         }
                         val persisted = cache_items(decrypted, my_epoch)
                         existing_ids.addAll(persisted)
+                        added_ids.addAll(persisted)
+                        if (epoch.get() == my_epoch) {
+                            decrypted.filter { is_index_poisoned(it) }.mapTo(poisoned_ids) { it.id }
+                        }
                     }
                     processed += response.items.size
                     if (epoch.get() == my_epoch) {
@@ -426,8 +482,14 @@ class SearchIndexManager @Inject constructor(
                 }
                 if (!scope_complete) walk_complete = false
             }
-            enrich_attachment_flags(my_epoch)
-            if (epoch.get() == my_epoch && walk_complete) _index_ready.value = true
+            if (epoch.get() == my_epoch && poisoned_ids.size != poisoned_before) {
+                save_poisoned_ids(poisoned_ids, poisoned_clock_reset)
+            }
+            enrich_attachment_flags(my_epoch, if (incremental) added_ids else null)
+            if (epoch.get() == my_epoch && walk_complete) {
+                _index_ready.value = true
+                mark_full_build()
+            }
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             throw cancelled
         } catch (error: Throwable) {
@@ -446,6 +508,13 @@ class SearchIndexManager @Inject constructor(
         const val KEY_INDEX_PAUSED = "index_paused"
         const val KEY_WINDOW_ABSENCES = "window_absences"
         const val KEY_LAST_INBOX_SYNC = "last_inbox_sync"
+        const val KEY_LAST_FULL_BUILD = "last_full_build"
+        const val KEY_POISONED_IDS = "poisoned_ids"
+        const val KEY_POISONED_AT = "poisoned_at"
+        const val FULL_BUILD_FRESH_MS = 6 * 60 * 60 * 1000L
+        const val POISONED_TTL_MS = 24 * 60 * 60 * 1000L
+        const val MAX_POISONED_IDS = 2000
+        const val STARTUP_BUILD_DELAY_MS = 4000L
         const val MAX_TRACKED_ABSENCES = 500
         const val WINDOW_ABSENCES_BEFORE_REMOVAL = 2
     }
@@ -500,9 +569,11 @@ class SearchIndexManager @Inject constructor(
         if (unpinned.isNotEmpty()) dao.set_pinned(unpinned, false)
     }
 
-    private suspend fun enrich_attachment_flags(my_epoch: Int) {
+    private suspend fun enrich_attachment_flags(my_epoch: Int, only_ids: Set<String>?) {
         if (epoch.get() != my_epoch) return
-        resolve_attachment_ids(dao.ids_without_attachments())
+        val candidates = dao.ids_without_attachments()
+        val targets = if (only_ids == null) candidates else candidates.filter { it in only_ids }
+        resolve_attachment_ids(targets)
     }
 
     suspend fun purge_folder_tokens(folder_tokens: Set<String>) {
