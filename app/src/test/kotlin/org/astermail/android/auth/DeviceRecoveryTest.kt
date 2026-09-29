@@ -52,8 +52,6 @@ import org.astermail.android.api.recovery.RecoveryApi
 import org.astermail.android.api.recovery.RecoveryMethodsResponse
 import org.astermail.android.api.recovery.SaveRecoveryBackupRequest
 import org.astermail.android.api.recovery.SaveRecoveryBackupResponse
-import org.astermail.android.api.recovery.ValidateEmailRecoveryRequest
-import org.astermail.android.api.recovery.ValidateEmailRecoveryResponse
 import org.astermail.android.api.recovery.VerifyCodesStepUpRequest
 import org.astermail.android.api.recovery.VerifyCodesStepUpResponse
 import org.astermail.android.crypto.AesGcm
@@ -208,10 +206,6 @@ private class FakeRecoveryApi : RecoveryApi {
     override suspend fun initiate_email(
         request: InitiateEmailRecoveryRequest,
     ): InitiateEmailRecoveryResponse = throw UnsupportedOperationException()
-
-    override suspend fun validate_email(
-        request: ValidateEmailRecoveryRequest,
-    ): ValidateEmailRecoveryResponse = throw UnsupportedOperationException()
 
     override suspend fun complete(request: CompleteRecoveryRequest): CompleteRecoveryResponse =
         throw UnsupportedOperationException()

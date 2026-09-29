@@ -29,8 +29,6 @@ import org.astermail.android.api.recovery.InitiateRecoveryRequest
 import org.astermail.android.api.recovery.InitiateRecoveryResponse
 import org.astermail.android.api.recovery.NewEmailRecoveryBackup
 import org.astermail.android.api.recovery.RecoveryShareData
-import org.astermail.android.api.recovery.ValidateEmailRecoveryRequest
-import org.astermail.android.api.recovery.ValidateEmailRecoveryResponse
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -106,39 +104,6 @@ class RecoveryModelsTest {
 
         val response_false = InitiateEmailRecoveryResponse(success = false)
         assertFalse(response_false.success)
-    }
-
-    @Test
-    fun `ValidateEmailRecoveryRequest stores token`() {
-        val request = ValidateEmailRecoveryRequest(token = "verify_token_123")
-        assertEquals("verify_token_123", request.token)
-    }
-
-    @Test
-    fun `ValidateEmailRecoveryResponse stores all fields`() {
-        val response = ValidateEmailRecoveryResponse(
-            encrypted_vault_backup = "evb",
-            vault_backup_nonce = "vbn",
-            vault_backup_salt = "vbs",
-            email_vault_key = "evk",
-            recovery_token = "rt",
-        )
-        assertEquals("evb", response.encrypted_vault_backup)
-        assertEquals("vbn", response.vault_backup_nonce)
-        assertEquals("vbs", response.vault_backup_salt)
-        assertEquals("evk", response.email_vault_key)
-        assertEquals("rt", response.recovery_token)
-    }
-
-    @Test
-    fun `ValidateEmailRecoveryResponse copy`() {
-        val original = ValidateEmailRecoveryResponse(
-            encrypted_vault_backup = "a", vault_backup_nonce = "b",
-            vault_backup_salt = "c", email_vault_key = "d", recovery_token = "e",
-        )
-        val copied = original.copy(email_vault_key = "new_key")
-        assertEquals("new_key", copied.email_vault_key)
-        assertEquals("a", copied.encrypted_vault_backup)
     }
 
     @Test

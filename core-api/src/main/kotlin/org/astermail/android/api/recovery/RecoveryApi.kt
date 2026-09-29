@@ -64,20 +64,6 @@ data class InitiateEmailRecoveryResponse(
 )
 
 @Serializable
-data class ValidateEmailRecoveryRequest(
-    val token: String,
-)
-
-@Serializable
-data class ValidateEmailRecoveryResponse(
-    val encrypted_vault_backup: String,
-    val vault_backup_nonce: String,
-    val vault_backup_salt: String,
-    val email_vault_key: String,
-    val recovery_token: String,
-)
-
-@Serializable
 data class RecoveryShareData(
     val code_hash: String,
     val code_salt: String,
@@ -253,7 +239,6 @@ data class DeviceSecretsResponse(
 interface RecoveryApi {
     suspend fun initiate(request: InitiateRecoveryRequest): InitiateRecoveryResponse
     suspend fun initiate_email(request: InitiateEmailRecoveryRequest): InitiateEmailRecoveryResponse
-    suspend fun validate_email(request: ValidateEmailRecoveryRequest): ValidateEmailRecoveryResponse
     suspend fun complete(request: CompleteRecoveryRequest): CompleteRecoveryResponse
     suspend fun backup(request: SaveRecoveryBackupRequest): SaveRecoveryBackupResponse
     suspend fun methods(): RecoveryMethodsResponse
@@ -280,14 +265,6 @@ class RecoveryApiImpl(private val client: ApiClient) : RecoveryApi {
 
     override suspend fun initiate_email(request: InitiateEmailRecoveryRequest): InitiateEmailRecoveryResponse {
         val response = client.http.post("${client.base_url}$base/forgot-password") {
-            contentType(ContentType.Application.Json)
-            setBody(request)
-        }
-        return decode_or_throw(response)
-    }
-
-    override suspend fun validate_email(request: ValidateEmailRecoveryRequest): ValidateEmailRecoveryResponse {
-        val response = client.http.post("${client.base_url}$base/email-validate") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }
