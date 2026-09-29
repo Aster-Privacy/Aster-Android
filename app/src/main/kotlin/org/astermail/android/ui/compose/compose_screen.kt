@@ -800,6 +800,7 @@ fun ComposeScreen(
         )
     }
     var active_signature_placement by remember { mutableStateOf(preloaded_signature_obj?.placement) }
+    var active_signature_id by remember { mutableStateOf(preloaded_signature_obj?.id) }
     var body by rememberSaveable {
         mutableStateOf(
             when {
@@ -827,12 +828,9 @@ fun ComposeScreen(
         return render_spanned_html(editable)
     }
     fun draft_body_with_signature(): String {
-        val formatted = get_body_with_formatting().replace(IMG_MARKER.toString(), "")
-        return if (signature_html.isNotBlank()) {
-            formatted + "<br><br><div class=\"aster_signature\">" + signature_html + "</div>"
-        } else {
-            formatted
-        }
+        val raw_formatted = get_body_with_formatting()
+        val formatted = raw_formatted.replace(IMG_MARKER.toString(), "")
+        return draft_html_with_signature(formatted, raw_formatted != body, signature_html)
     }
     var initial_to_chips by rememberSaveable { mutableStateOf<List<String>>(emptyList()) }
     var initial_subject by rememberSaveable { mutableStateOf("") }
@@ -877,6 +875,7 @@ fun ComposeScreen(
             signature_separator_enabled,
         )
         active_signature_placement = resolved_sig?.placement
+        active_signature_id = resolved_sig?.id
         applied_signature = resolved
         signature_applied = true
     }
@@ -896,6 +895,7 @@ fun ComposeScreen(
         if (resolved == applied_signature && resolved_html == signature_html) return@LaunchedEffect
         signature_html = resolved_html
         active_signature_placement = resolved_sig?.placement
+        active_signature_id = resolved_sig?.id
         val watermark = context.getString(R.string.compose_footer_secured_by_plain)
         val watermark_suffix = "\n\n${watermark}"
         val kept_suffix = if (body.endsWith(watermark_suffix)) watermark_suffix else ""
@@ -1560,15 +1560,11 @@ fun ComposeScreen(
             if (strip_branding) raw_formatted_body.replace(footer_secured_by_plain, "")
             else raw_formatted_body.removeSuffix(footer_secured_by_plain)
         ).trimEnd('\n', ' ')
+        val body_is_rich = raw_formatted_body != body
         val place_signature_below = signature_below_quote(
             active_signature_placement,
             settings_state.preferences?.signature_placement,
         ) && quoted_html != null
-        val moved_signature = if (place_signature_below) {
-            split_trailing_signature(body_without_footer, applied_signature)
-        } else {
-            null
-        }
         val strip_metadata_enabled = settings_state.preferences?.strip_exif_on_compose != false
         val unstripped_names = mutableListOf<String>()
         val dropped_image_names = mutableListOf<String>()
@@ -1612,7 +1608,7 @@ fun ComposeScreen(
         }
         val tokenized = StringBuilder()
         var marker_idx = 0
-        for (ch in (moved_signature?.first ?: body_without_footer)) {
+        for (ch in body_without_footer) {
             if (ch == IMG_MARKER) {
                 tokenized.append("[[ASTER_IMG_${marker_idx}]]")
                 marker_idx++
@@ -1621,21 +1617,6 @@ fun ComposeScreen(
             }
         }
         val raw_text = tokenized.toString()
-        val raw_html = if (raw_text.contains("<") && raw_text.contains(">")) {
-            raw_text
-        } else {
-            raw_text.split("\n\n")
-                .joinToString("") { paragraph ->
-                    val inner = paragraph.replace("\n", "<br>")
-                    "<p>$inner</p>"
-                }
-        }
-        var with_images = raw_html
-        image_html_for.forEach { (idx, html) ->
-            with_images = with_images.replace("[[ASTER_IMG_${idx}]]", html)
-        }
-        with_images = with_images.replace(Regex("\\[\\[ASTER_IMG_\\d+]]"), "")
-
         val attachment_payloads = withContext(Dispatchers.IO) {
             attachments.map { att ->
                 val raw_bytes = try {
@@ -1680,7 +1661,7 @@ fun ComposeScreen(
 
         val quote_block = quoted_html?.let { qh ->
             val (from_addr, ts, subj) = quoted_meta ?: Triple("", "", "")
-            "<br><div class=\"aster_quote gmail_quote\">" +
+            "<br><br><div class=\"aster_quote gmail_quote\">" +
                 "<div class=\"aster_quote_attr gmail_attr\" style=\"color:#555;font-size:13px\">" +
                 "<div><b>${escape_html(quote_header_from)}</b> ${escape_html(from_addr)}</div>" +
                 "<div><b>${escape_html(quote_header_date)}</b> ${escape_html(format_quote_timestamp(ts))}</div>" +
@@ -1690,22 +1671,19 @@ fun ComposeScreen(
                 qh +
                 "</blockquote></div>"
         }.orEmpty()
-        val html_separator = if (signature_separator_enabled != false) "--<br>" else ""
-        val signature_block = if (signature_html.isNotBlank()) {
-            "<br><br><div class=\"aster_signature\">" + html_separator + signature_html + "</div>"
-        } else {
-            ""
+        var body_html = assemble_body_with_signature(
+            body = raw_text,
+            is_rich = body_is_rich,
+            plain_signature = applied_signature,
+            html_signature = signature_html,
+            signature_id = active_signature_id,
+            quote_html = quote_block,
+            place_below = place_signature_below,
+        )
+        image_html_for.forEach { (idx, html) ->
+            body_html = body_html.replace("[[ASTER_IMG_${idx}]]", html)
         }
-        val moved_signature_block = moved_signature?.second?.let { text ->
-            "<br><div class=\"aster_signature\">" +
-                text.split("\n").joinToString("<br>") { escape_html(it) } +
-                "</div>"
-        }.orEmpty()
-        val body_html = if (place_signature_below) {
-            with_images + quote_block + signature_block + moved_signature_block
-        } else {
-            with_images + signature_block + quote_block
-        }
+        body_html = body_html.replace(Regex(IMG_TOKEN_PATTERN), "")
 
         val embedded_image_payloads = inline_image_payloads.filter { body_html.contains(it.data) }
         return Triple(body_html, attachment_payloads + embedded_image_payloads, !branding_footer_kept)
@@ -2995,6 +2973,7 @@ fun ComposeScreen(
                     signature_separator_enabled,
                 )
                 active_signature_placement = picked?.placement
+                active_signature_id = picked?.id
                 val watermark = context.getString(R.string.compose_footer_secured_by_plain)
                 val watermark_suffix = "\n\n${watermark}"
                 val kept_suffix = if (body.endsWith(watermark_suffix)) watermark_suffix else ""
