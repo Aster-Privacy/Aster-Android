@@ -761,6 +761,7 @@ private fun AsterNavHost() {
             val prefill = raw_email?.takeIf { it.isNotBlank() }
                 ?.let { java.net.URLDecoder.decode(it, "UTF-8") }
                 .orEmpty()
+            val sign_in_settings_vm = org.astermail.android.settings.shared_settings_view_model()
             SignInScreen(
                 on_back = {
                     if (!nav_controller.popBackStack()) {
@@ -769,6 +770,9 @@ private fun AsterNavHost() {
                 },
                 on_forgot_password = { nav_controller.navigate(routes.forgot_password) },
                 on_signed_in = {
+                    sign_in_settings_vm.reset_for_account_switch()
+                    sign_in_settings_vm.load_preferences()
+                    sign_in_settings_vm.load_signature()
                     nav_controller.navigate(routes.inbox) {
                         popUpTo(0) { inclusive = true }
                     }
@@ -783,6 +787,7 @@ private fun AsterNavHost() {
             )
         }
         composable(routes.register) {
+            val register_settings_vm = org.astermail.android.settings.shared_settings_view_model()
             RegisterScreen(
                 on_back = {
                     if (!nav_controller.popBackStack()) {
@@ -790,6 +795,9 @@ private fun AsterNavHost() {
                     }
                 },
                 on_registered = { destination ->
+                    register_settings_vm.reset_for_account_switch()
+                    register_settings_vm.load_preferences()
+                    register_settings_vm.load_signature()
                     mark_signed_up_now(context)
                     theme_vm.mark_first_run(setup_pending = false)
                     nav_controller.navigate(routes.inbox) {
