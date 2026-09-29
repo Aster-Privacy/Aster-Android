@@ -268,6 +268,7 @@ private const val LOCAL_READ_MUTATION_TTL_MS = 15_000L
 
 
 private const val EMPTY_STATE_SETTLE_MS = 700L
+private const val CATEGORY_DRAIN_SKELETON_MAX_MS = 2500L
 
 private const val REFRESH_SCROLL_SETTLE_MS = 1500L
 
@@ -1837,9 +1838,20 @@ fun InboxScreen(
                     inbox_state.error != null &&
                     !cache_pending &&
                     !inbox_state.is_loading
+                var category_drain_expired by remember(current_folder, active_category_label) {
+                    mutableStateOf(false)
+                }
+                LaunchedEffect(hidden_by_category, current_folder, active_category_label) {
+                    if (!hidden_by_category) {
+                        category_drain_expired = false
+                    } else {
+                        kotlinx.coroutines.delay(CATEGORY_DRAIN_SKELETON_MAX_MS)
+                        category_drain_expired = true
+                    }
+                }
                 val category_skeleton = hidden_by_category &&
                     (
-                        (category_drain_active && inbox_state.is_loading_more) ||
+                        (category_drain_active && inbox_state.is_loading_more && !category_drain_expired) ||
                             (!thread_gate.category_only && !empty_settled)
                         )
                 val empty_skeleton = !hidden_by_category &&

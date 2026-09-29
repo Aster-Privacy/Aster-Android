@@ -65,7 +65,8 @@ object StorageModule {
 
     @Provides
     @Singleton
-    fun provide_session_key_store(@ApplicationContext context: Context): SessionKeyStore = SessionKeyStore(context)
+    fun provide_session_key_store(@ApplicationContext context: Context): SessionKeyStore =
+        SessionKeyStore(context).also { it.add_clear_listener { org.astermail.android.crypto.PgpDecryptor.clear_caches() } }
 
     @Provides
     @Singleton

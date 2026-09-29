@@ -951,10 +951,11 @@ class MailViewModel @Inject constructor(
         return emptyList()
     }
 
-    private fun reload_keeping_items(replace_items: Boolean) {
+    private fun reload_keeping_items(replace_items: Boolean, keep_inflight_load: Boolean = false) {
         val current = _inbox_state.value
         val folder = current.current_folder
         if (current.items.isEmpty()) {
+            if (keep_inflight_load && inbox_load_job?.isActive == true && (current.is_loading || current.initial)) return
             inbox_load_job?.cancel()
             silent_revalidate_job?.cancel()
             folder_cache.remove(folder)
@@ -978,7 +979,7 @@ class MailViewModel @Inject constructor(
         )
         if (page_size == clamped) return
         page_size = clamped
-        reload_keeping_items(replace_items = false)
+        reload_keeping_items(replace_items = false, keep_inflight_load = true)
     }
 
     fun load_inbox(folder: String = "inbox", force: Boolean = false) {

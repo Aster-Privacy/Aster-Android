@@ -31,6 +31,7 @@ import org.bouncycastle.openpgp.PGPObjectFactory
 import org.bouncycastle.openpgp.PGPCompressedData
 import org.bouncycastle.openpgp.PGPOnePassSignature
 import org.bouncycastle.openpgp.PGPOnePassSignatureList
+import org.bouncycastle.openpgp.PGPPrivateKey
 import org.bouncycastle.openpgp.PGPPublicKeyEncryptedData
 import org.bouncycastle.openpgp.PGPPublicKeyRing
 import org.bouncycastle.openpgp.PGPPublicKeyRingCollection
@@ -111,21 +112,106 @@ object PgpDecryptor {
         return null
     }
 
+    private const val SECRET_RING_CACHE_MAX = 48
+    private const val PRIVATE_KEY_CACHE_MAX = 64
+    private const val FAILED_UNLOCK_CACHE_MAX = 64
+    private const val OWN_PUBLIC_CACHE_MAX = 4
+
+    private class LruCache<V>(private val max_entries: Int) :
+        LinkedHashMap<String, V>(16, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, V>?): Boolean =
+            size > max_entries
+    }
+
+    private val cache_lock = Any()
+    private val secret_ring_cache = LruCache<PGPSecretKeyRingCollection>(SECRET_RING_CACHE_MAX)
+    private val private_key_cache = LruCache<PGPPrivateKey>(PRIVATE_KEY_CACHE_MAX)
+    private val failed_unlocks = LruCache<Boolean>(FAILED_UNLOCK_CACHE_MAX)
+    private val own_public_cache = LruCache<PGPPublicKeyRingCollection>(OWN_PUBLIC_CACHE_MAX)
+
+    fun clear_caches() {
+        synchronized(cache_lock) {
+            secret_ring_cache.clear()
+            private_key_cache.clear()
+            failed_unlocks.clear()
+            own_public_cache.clear()
+        }
+    }
+
+    private fun digest_hex(vararg parts: ByteArray): String {
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        for (part in parts) {
+            digest.update(part)
+            digest.update(0.toByte())
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
+    private fun key_digest(armored: String): String = digest_hex(armored.toByteArray(Charsets.UTF_8))
+
+    private fun passphrase_digest(key_hash: String, passphrase: CharArray): String {
+        val encoded = Charsets.UTF_8.encode(java.nio.CharBuffer.wrap(passphrase))
+        val bytes = ByteArray(encoded.remaining())
+        encoded.get(bytes)
+        return try {
+            digest_hex(key_hash.toByteArray(Charsets.UTF_8), bytes)
+        } finally {
+            bytes.fill(0)
+            if (encoded.hasArray()) encoded.array().fill(0)
+        }
+    }
+
+    private fun secret_rings(armored: String, key_hash: String): PGPSecretKeyRingCollection {
+        synchronized(cache_lock) { secret_ring_cache[key_hash] }?.let { return it }
+        val parsed = PGPSecretKeyRingCollection(
+            PGPUtil.getDecoderStream(ByteArrayInputStream(armored.toByteArray(Charsets.UTF_8))),
+            JcaKeyFingerprintCalculator(),
+        )
+        synchronized(cache_lock) { secret_ring_cache[key_hash] = parsed }
+        return parsed
+    }
+
+    private fun unlocked_private_key(
+        key_rings: PGPSecretKeyRingCollection,
+        key_id: Long,
+        unlock_id: String,
+        passphrase: CharArray,
+    ): PGPPrivateKey? {
+        val cache_id = "$unlock_id:$key_id"
+        synchronized(cache_lock) {
+            private_key_cache[cache_id]?.let { return it }
+            if (failed_unlocks[cache_id] == true) return null
+        }
+        @Suppress("DEPRECATION")
+        val secret_key = key_rings.getSecretKey(key_id) ?: return null
+        val decryptor = JcePBESecretKeyDecryptorBuilder()
+            .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+            .build(passphrase)
+        val private_key = runCatching { secret_key.extractPrivateKey(decryptor) }.getOrNull()
+        synchronized(cache_lock) {
+            if (private_key != null) private_key_cache[cache_id] = private_key
+            else failed_unlocks[cache_id] = true
+        }
+        return private_key
+    }
+
     private fun own_public_keys(armored_private_keys: List<String>): PGPPublicKeyRingCollection? {
-        val rings = armored_private_keys.flatMap { armored ->
+        val hashes = armored_private_keys.map { key_digest(it) }
+        val cache_id = digest_hex(*hashes.map { it.toByteArray(Charsets.UTF_8) }.toTypedArray())
+        synchronized(cache_lock) { own_public_cache[cache_id] }?.let { return it }
+        val rings = armored_private_keys.zip(hashes).flatMap { (armored, hash) ->
             runCatching {
-                val secret_rings = PGPSecretKeyRingCollection(
-                    PGPUtil.getDecoderStream(ByteArrayInputStream(armored.toByteArray(Charsets.UTF_8))),
-                    JcaKeyFingerprintCalculator(),
-                )
-                secret_rings.keyRings.asSequence().map { ring ->
+                secret_rings(armored, hash).keyRings.asSequence().map { ring ->
                     PGPPublicKeyRing(ring.publicKeys.asSequence().toList())
                 }.toList()
             }.getOrDefault(emptyList())
         }
         if (rings.isEmpty()) return null
         val by_key_id = rings.associateBy { it.publicKey.keyID }
-        return runCatching { PGPPublicKeyRingCollection(by_key_id.values.toList()) }.getOrNull()
+        val collection = runCatching { PGPPublicKeyRingCollection(by_key_id.values.toList()) }.getOrNull()
+            ?: return null
+        synchronized(cache_lock) { own_public_cache[cache_id] = collection }
+        return collection
     }
 
     private fun decrypt_with_verifier(
@@ -146,10 +232,9 @@ object PgpDecryptor {
         tracker: SignatureTracker,
     ): String? {
         return try {
-            val key_stream = PGPUtil.getDecoderStream(
-                ByteArrayInputStream(armored_private_key.toByteArray(Charsets.UTF_8)),
-            )
-            val key_rings = PGPSecretKeyRingCollection(key_stream, JcaKeyFingerprintCalculator())
+            val key_hash = key_digest(armored_private_key)
+            val key_rings = secret_rings(armored_private_key, key_hash)
+            val unlock_id = passphrase_digest(key_hash, passphrase)
 
             val msg_stream = PGPUtil.getDecoderStream(
                 ByteArrayInputStream(armored_ciphertext.toByteArray(Charsets.UTF_8)),
@@ -164,14 +249,13 @@ object PgpDecryptor {
                 if (pbe !is PGPPublicKeyEncryptedData) continue
 
                 @Suppress("DEPRECATION")
-                val secret_key = key_rings.getSecretKey(pbe.keyID) ?: continue
+                val holds_secret_key = key_rings.getSecretKey(pbe.keyID) != null
+                if (!holds_secret_key) continue
 
                 if (!pbe.isIntegrityProtected()) continue
 
-                val decryptor = JcePBESecretKeyDecryptorBuilder()
-                    .setProvider(BouncyCastleProvider.PROVIDER_NAME)
-                    .build(passphrase)
-                val private_key = secret_key.extractPrivateKey(decryptor)
+                val private_key = unlocked_private_key(key_rings, pbe.keyID, unlock_id, passphrase)
+                    ?: continue
 
                 val decryptor_factory = JcePublicKeyDataDecryptorFactoryBuilder()
                     .setProvider(BouncyCastleProvider.PROVIDER_NAME)
