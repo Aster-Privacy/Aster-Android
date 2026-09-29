@@ -3110,6 +3110,7 @@
     <string name="confirm_its_you">Bevestig dat jij het bent</string>
     <string name="error_recovery_code_replaced">Deze code hoort bij een oudere set en werkt niet meer. Gebruik een code uit de meest recente lijst die je hebt opgeslagen.</string>
     <string name="error_recovery_code_used">Deze code is al gebruikt. Elke code werkt één keer, dus voer een andere code uit je opgeslagen lijst in.</string>
+    <string name="error_recovery_session_expired">Je herstelsessie is verlopen. Voer opnieuw een herstelcode in om door te gaan.</string>
     <string name="error_recovery_locked_until">Deze account heeft te veel herstelpogingen gehad. Je kunt het over %1$s opnieuw proberen. Geen van je codes is gebruikt, dus je hebt ze nog allemaal.</string>
     <string name="get_new_codes">Nieuwe codes ophalen</string>
     <string name="get_new_codes_message">Je huidige codes werken niet meer zodra je nieuwe ophaalt.</string>

@@ -3110,6 +3110,7 @@
     <string name="confirm_its_you">Kimliğinizi doğrulayın</string>
     <string name="error_recovery_code_replaced">Bu kod eski bir gruba ait ve artık çalışmıyor. Kaydettiğiniz en son listedeki bir kodu kullanın.</string>
     <string name="error_recovery_code_used">Bu kod zaten kullanıldı. Her kod bir kez çalışır, bu yüzden kayıtlı listenizden başka bir kod girin.</string>
+    <string name="error_recovery_session_expired">Kurtarma oturumunuzun süresi doldu. Devam etmek için bir kurtarma kodunu yeniden girin.</string>
     <string name="error_recovery_locked_until">Bu hesapta çok fazla kurtarma denemesi yapıldı. %1$s sonra yeniden deneyebilirsiniz. Kodlarınızdan hiçbiri kullanılmadı, bu yüzden hepsi hâlâ sizde.</string>
     <string name="get_new_codes">Yeni kod al</string>
     <string name="get_new_codes_message">Yeni kodlar aldığınız anda mevcut kodlarınız geçersiz olur.</string>

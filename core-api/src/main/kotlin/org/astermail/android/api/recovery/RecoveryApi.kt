@@ -106,6 +106,7 @@ data class CompleteRecoveryRequest(
     val new_recovery_key_salt: String,
     val new_email_recovery_backup: NewEmailRecoveryBackup? = null,
     val new_recovery_email: RecoveryEmailReencryption? = null,
+    val vault_format: Int? = null,
 )
 
 @Serializable

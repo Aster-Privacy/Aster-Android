@@ -3129,6 +3129,7 @@
     <string name="confirm_its_you">Confirme a sua identidade</string>
     <string name="error_recovery_code_replaced">Esse código pertence a um conjunto anterior e já não funciona. Use um código da lista mais recente que guardou.</string>
     <string name="error_recovery_code_used">Este código já foi usado. Cada código funciona uma vez, por isso introduza outro da sua lista guardada.</string>
+    <string name="error_recovery_session_expired">A sua sessão de recuperação expirou. Para continuar, introduza novamente um código de recuperação.</string>
     <string name="error_recovery_locked_until">Esta conta teve demasiadas tentativas de recuperação. Pode tentar novamente dentro de %1$s. Nenhum dos seus códigos foi utilizado, por isso continua a tê-los todos.</string>
     <string name="get_new_codes">Obter novos códigos</string>
     <string name="get_new_codes_message">Os seus códigos atuais deixam de funcionar assim que obtiver novos.</string>

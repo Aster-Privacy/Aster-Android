@@ -3186,6 +3186,7 @@
     <string name="confirm_its_you">أكّد هويتك</string>
     <string name="error_recovery_code_replaced">ينتمي هذا الرمز إلى مجموعة أقدم ولم يعد يعمل. استخدم رمزًا من أحدث قائمة حفظتها.</string>
     <string name="error_recovery_code_used">تم استخدام هذا الرمز من قبل. يعمل كل رمز مرة واحدة، لذا أدخل رمزًا آخر من قائمتك المحفوظة.</string>
+    <string name="error_recovery_session_expired">انتهت صلاحية جلسة الاسترداد. للمتابعة، أدخل رمز استرداد مجددًا.</string>
     <string name="error_recovery_locked_until">جرت محاولات استعادة كثيرة جدًا على هذا الحساب. يمكنك المحاولة مرة أخرى بعد %1$s. لم يُستخدم أي من رموزك، لذا ما زالت جميعها لديك.</string>
     <string name="get_new_codes">احصل على رموز جديدة</string>
     <string name="get_new_codes_message">تتوقف رموزك الحالية عن العمل بمجرد حصولك على رموز جديدة.</string>

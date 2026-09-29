@@ -1660,6 +1660,7 @@
     <string name="error_recovery_too_many_attempts">This account has had too many recovery attempts. You can try again in about 30 minutes. None of your codes were used, so you still have all of them.</string>
     <string name="error_recovery_locked_until">This account has had too many recovery attempts. You can try again in %1$s. None of your codes were used, so you still have all of them.</string>
     <string name="error_recovery_code_used">That code was already used. Each code works once, so enter a different one from your saved list.</string>
+    <string name="error_recovery_session_expired">Your recovery session expired. To continue, enter a recovery code again.</string>
     <string name="error_recovery_code_replaced">That code belongs to an older set and no longer works. Use a code from the most recent list you saved.</string>
     <string name="error_recovery_failed">Recovery failed</string>
     <string name="status_deriving_key">Deriving new password key</string>

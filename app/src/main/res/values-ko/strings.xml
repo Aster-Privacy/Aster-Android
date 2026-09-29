@@ -3093,6 +3093,7 @@
     <string name="confirm_its_you">본인 확인</string>
     <string name="error_recovery_code_replaced">이 코드는 이전 세트에 속하며 더 이상 사용할 수 없습니다. 가장 최근에 저장한 목록의 코드를 사용하세요.</string>
     <string name="error_recovery_code_used">이 코드는 이미 사용되었습니다. 각 코드는 한 번만 사용할 수 있으므로 저장한 목록에서 다른 코드를 입력하세요.</string>
+    <string name="error_recovery_session_expired">복구 세션이 만료되었습니다. 계속하려면 복구 코드를 다시 입력하세요.</string>
     <string name="error_recovery_locked_until">이 계정에서 복구 시도가 너무 많았습니다. %1$s 후에 다시 시도할 수 있습니다. 코드는 하나도 사용되지 않았으므로 모두 그대로 남아 있습니다.</string>
     <string name="get_new_codes">새 코드 받기</string>
     <string name="get_new_codes_message">새 코드를 받으면 현재 코드는 바로 사용할 수 없습니다.</string>

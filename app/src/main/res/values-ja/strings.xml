@@ -3100,6 +3100,7 @@
     <string name="confirm_its_you">本人確認</string>
     <string name="error_recovery_code_replaced">このコードは以前のセットのもので、現在は使用できません。最後に保存したリストのコードを使用してください。</string>
     <string name="error_recovery_code_used">このコードはすでに使用されています。各コードは1回だけ使えるため、保存したリストから別のコードを入力してください。</string>
+    <string name="error_recovery_session_expired">リカバリーセッションの有効期限が切れました。続行するには、リカバリーコードをもう一度入力してください。</string>
     <string name="error_recovery_locked_until">このアカウントでは復元の試行が多すぎました。%1$s後に再度お試しください。コードはどれも使用されていないため、すべて残っています。</string>
     <string name="get_new_codes">新しいコードを取得</string>
     <string name="get_new_codes_message">新しいコードを取得すると、現在のコードは使えなくなります。</string>

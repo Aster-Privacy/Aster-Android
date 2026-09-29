@@ -3148,6 +3148,7 @@
     <string name="confirm_its_you">Potwierdź swoją tożsamość</string>
     <string name="error_recovery_code_replaced">Ten kod pochodzi ze starszego zestawu i już nie działa. Użyj kodu z najnowszej zapisanej listy.</string>
     <string name="error_recovery_code_used">Ten kod został już użyty. Każdy kod działa raz, więc wpisz inny kod z zapisanej listy.</string>
+    <string name="error_recovery_session_expired">Sesja odzyskiwania wygasła. Aby kontynuować, wpisz ponownie kod odzyskiwania.</string>
     <string name="error_recovery_locked_until">To konto miało zbyt wiele prób odzyskiwania. Możesz spróbować ponownie za %1$s. Żaden z Twoich kodów nie został użyty, więc nadal masz je wszystkie.</string>
     <string name="get_new_codes">Wygeneruj nowe kody</string>
     <string name="get_new_codes_message">Obecne kody przestaną działać, gdy tylko wygenerujesz nowe.</string>

@@ -3111,6 +3111,7 @@
     <string name="confirm_its_you">Bestätigen Sie, dass Sie es sind</string>
     <string name="error_recovery_code_replaced">Dieser Code gehört zu einem älteren Satz und funktioniert nicht mehr. Verwenden Sie einen Code aus der zuletzt gespeicherten Liste.</string>
     <string name="error_recovery_code_used">Dieser Code wurde bereits verwendet. Jeder Code funktioniert einmal, geben Sie daher einen anderen aus Ihrer gespeicherten Liste ein.</string>
+    <string name="error_recovery_session_expired">Ihre Wiederherstellungssitzung ist abgelaufen. Geben Sie zum Fortfahren erneut einen Wiederherstellungscode ein.</string>
     <string name="error_recovery_locked_until">Für dieses Konto gab es zu viele Wiederherstellungsversuche. Sie können es in %1$s erneut versuchen. Keiner Ihrer Codes wurde verwendet, Sie haben also weiterhin alle.</string>
     <string name="get_new_codes">Neue Codes anfordern</string>
     <string name="get_new_codes_message">Ihre aktuellen Codes werden ungültig, sobald Sie neue anfordern.</string>

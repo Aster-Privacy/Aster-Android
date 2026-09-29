@@ -3000,6 +3000,7 @@
     <string name="confirm_its_you">पुष्टि करें कि यह आप हैं</string>
     <string name="error_recovery_code_replaced">यह कोड पुराने सेट का है और अब काम नहीं करता। आपने जो सबसे नई सूची सेव की थी, उसमें से कोड इस्तेमाल करें।</string>
     <string name="error_recovery_code_used">यह कोड पहले ही इस्तेमाल हो चुका है। हर कोड एक बार काम करता है, इसलिए अपनी सेव की गई सूची से कोई दूसरा कोड डालें।</string>
+    <string name="error_recovery_session_expired">आपका रिकवरी सेशन खत्म हो गया है। जारी रखने के लिए, फिर से कोई रिकवरी कोड डालें।</string>
     <string name="error_recovery_locked_until">इस खाते पर बहुत सारी रिकवरी कोशिशें हो चुकी हैं। आप %1$s बाद फिर कोशिश कर सकते हैं। आपका कोई भी कोड इस्तेमाल नहीं हुआ, इसलिए वे सभी आपके पास हैं।</string>
     <string name="get_new_codes">नए कोड पाएं</string>
     <string name="get_new_codes_message">नए कोड पाते ही आपके मौजूदा कोड काम करना बंद कर देते हैं।</string>

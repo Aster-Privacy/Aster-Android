@@ -271,17 +271,22 @@ class RecoveryViewModel @Inject constructor(
                     CryptoNative.derive_pbkdf2_hash(password_bytes, new_salt, PBKDF2_ITERATIONS)
                 }
 
-                val new_envelope = withContext(compute_dispatcher) {
-                    CryptoNative.encrypt_vault_with_password(vault_bytes, password_bytes)
-                }
-
                 _state.value = _state.value.copy(processing_status = ctx.getString(R.string.status_generating_codes))
                 val new_codes = generate_recovery_codes()
                 val new_recovery_key = ByteArray(32).also { SecureRandom().nextBytes(it) }
+                val updated_vault = with_recovery_codes(vault_bytes, new_codes)
 
-                _state.value = _state.value.copy(processing_status = ctx.getString(R.string.status_creating_backup))
-                val backup = withContext(compute_dispatcher) {
-                    encrypt_vault_backup(vault_bytes, new_recovery_key)
+                val (new_envelope, backup) = try {
+                    val envelope = withContext(compute_dispatcher) {
+                        CryptoNative.encrypt_vault_with_password(updated_vault.plain, password_bytes)
+                    }
+                    _state.value = _state.value.copy(processing_status = ctx.getString(R.string.status_creating_backup))
+                    val sealed_backup = withContext(compute_dispatcher) {
+                        encrypt_vault_backup(updated_vault.plain, new_recovery_key)
+                    }
+                    envelope to sealed_backup
+                } finally {
+                    updated_vault.plain.fill(0)
                 }
 
                 val shares = withContext(compute_dispatcher) {
@@ -302,6 +307,7 @@ class RecoveryViewModel @Inject constructor(
                         new_encrypted_vault_backup = backup.encrypted_data,
                         new_vault_backup_nonce = backup.nonce,
                         new_recovery_key_salt = backup.salt,
+                        vault_format = updated_vault.vault_format,
                     ),
                 )
 
@@ -323,16 +329,56 @@ class RecoveryViewModel @Inject constructor(
                 )
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(
-                    step = RecoveryStep.password,
-                    is_loading = false,
-                    error = map_error(t, R.string.error_recovery_failed),
-                    processing_status = "",
-                )
+                val restart_message = recovery_restart_message(t)
+                if (restart_message != null) {
+                    reset_recovery_session()
+                    _state.value = _state.value.copy(
+                        step = RecoveryStep.code,
+                        is_loading = false,
+                        error = restart_message,
+                        processing_status = "",
+                    )
+                } else {
+                    _state.value = _state.value.copy(
+                        step = RecoveryStep.password,
+                        is_loading = false,
+                        error = map_error(t, R.string.error_recovery_failed),
+                        processing_status = "",
+                    )
+                }
             } finally {
                 password_bytes.fill(0)
             }
         }
+    }
+
+    private fun recovery_restart_message(t: Throwable): String? = when (t) {
+        is ApiError.Conflict -> ctx.getString(R.string.error_recovery_code_used)
+        is ApiError.UnauthorizedError, is ApiError.InvalidCredentials ->
+            ctx.getString(R.string.error_recovery_session_expired)
+        else -> null
+    }
+
+    private fun reset_recovery_session() {
+        recovery_token = null
+        decrypted_vault?.fill(0)
+        decrypted_vault = null
+    }
+
+    private class UpdatedVault(val plain: ByteArray, val vault_format: Int)
+
+    private fun with_recovery_codes(vault_bytes: ByteArray, codes: List<String>): UpdatedVault {
+        val vault_obj = org.json.JSONObject(String(vault_bytes, Charsets.UTF_8))
+        val codes_array = org.json.JSONArray()
+        codes.forEach { codes_array.put(it) }
+        vault_obj.put("recovery_codes", codes_array)
+
+        val vault_format = maxOf(
+            vault_obj.optInt("vault_format", 1),
+            if (vault_obj.optString("data_kek", "").isNotBlank()) MASTER_KEY_VAULT_FORMAT else 1,
+        )
+
+        return UpdatedVault(vault_obj.toString().toByteArray(Charsets.UTF_8), vault_format)
     }
 
     fun go_to_review_security() {

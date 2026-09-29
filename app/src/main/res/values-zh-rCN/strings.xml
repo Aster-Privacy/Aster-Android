@@ -3093,6 +3093,7 @@
     <string name="confirm_its_you">验证身份</string>
     <string name="error_recovery_code_replaced">该代码属于旧的一组，已不再有效。请使用您保存的最新列表中的代码。</string>
     <string name="error_recovery_code_used">该代码已使用。每个代码只能使用一次，请从保存的列表中输入其他代码。</string>
+    <string name="error_recovery_session_expired">恢复会话已过期。要继续，请重新输入恢复代码。</string>
     <string name="error_recovery_locked_until">这个账户的恢复尝试次数过多。请在 %1$s 后重试。您的验证码一个都没有被使用，因此它们都还在。</string>
     <string name="get_new_codes">获取新代码</string>
     <string name="get_new_codes_message">获取新代码后，当前代码会立即失效。</string>

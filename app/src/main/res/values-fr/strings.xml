@@ -3156,6 +3156,7 @@
     <string name="confirm_its_you">Confirmez votre identité</string>
     <string name="error_recovery_code_replaced">Ce code appartient à un ancien lot et ne fonctionne plus. Utilisez un code de la liste la plus récente que vous avez enregistrée.</string>
     <string name="error_recovery_code_used">Ce code a déjà été utilisé. Chaque code ne fonctionne qu\'une fois, saisissez donc un autre code de votre liste enregistrée.</string>
+    <string name="error_recovery_session_expired">Votre session de récupération a expiré. Pour continuer, saisissez à nouveau un code de récupération.</string>
     <string name="error_recovery_locked_until">Ce compte a fait l\'objet de trop de tentatives de récupération. Vous pouvez réessayer dans %1$s. Aucun de vos codes n\'a été utilisé, vous les avez donc tous encore.</string>
     <string name="get_new_codes">Obtenir de nouveaux codes</string>
     <string name="get_new_codes_message">Vos codes actuels cessent de fonctionner dès que vous en obtenez de nouveaux.</string>
