@@ -26,7 +26,9 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import org.json.JSONObject
 import org.junit.After
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -93,5 +95,39 @@ class RecoveryCodeVectorsTest {
                 assertEquals(input, case.getString("code_hash"), hash_recovery_code(input))
             }
         }
+    }
+
+    @Test
+    fun verifier_has_versioned_prefix_and_digest_length() {
+        val raw_hash = ByteArray(32) { 0x07 }
+        val verifier = recovery_code_verifier(raw_hash)
+
+        assertEquals(36, verifier.size)
+        assertArrayEquals(byteArrayOf(0x41, 0x52, 0x56, 0x32), verifier.copyOfRange(0, 4))
+    }
+
+    @Test
+    fun verifier_is_deterministic_and_input_bound() {
+        val raw_hash = ByteArray(32) { 0x07 }
+        val other_hash = ByteArray(32) { 0x08 }
+
+        assertArrayEquals(recovery_code_verifier(raw_hash), recovery_code_verifier(raw_hash.copyOf()))
+        assertFalse(recovery_code_verifier(raw_hash).contentEquals(recovery_code_verifier(other_hash)))
+        assertFalse(recovery_code_verifier(raw_hash).copyOfRange(4, 36).contentEquals(raw_hash))
+    }
+
+    @Test
+    fun stored_hashes_cover_legacy_and_verifier_forms() {
+        val code = generate_recovery_codes(1).first()
+        val raw_hash = raw_recovery_code_hash(code)
+        val stored = recovery_code_stored_hashes(code)
+
+        assertEquals(2, stored.size)
+        assertTrue(stored.contains(hash_recovery_code(code)))
+        assertTrue(
+            stored.contains(
+                java.util.Base64.getEncoder().encodeToString(recovery_code_verifier(raw_hash)),
+            ),
+        )
     }
 }

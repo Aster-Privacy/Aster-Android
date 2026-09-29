@@ -72,7 +72,7 @@ import java.text.DateFormat
 import java.util.Date
 import kotlinx.coroutines.launch
 import org.astermail.android.R
-import org.astermail.android.auth.hash_recovery_code
+import org.astermail.android.auth.recovery_code_stored_hashes
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
@@ -434,7 +434,9 @@ private fun recovery_codes_status_grid(codes: List<String>, used_hashes: Set<Str
                 horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
             ) {
                 pair.forEachIndexed { column_index, code ->
-                    val is_used = used_hashes.contains(runCatching { hash_recovery_code(code) }.getOrNull())
+                    val is_used = runCatching { recovery_code_stored_hashes(code) }
+                        .getOrDefault(emptySet())
+                        .any { it in used_hashes }
                     Row(
                         modifier = Modifier.weight(1f),
                         verticalAlignment = Alignment.CenterVertically,

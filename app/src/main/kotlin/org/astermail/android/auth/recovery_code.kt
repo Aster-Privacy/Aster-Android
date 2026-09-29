@@ -81,9 +81,31 @@ fun generate_recovery_codes(count: Int = RECOVERY_CODE_SET_SIZE): List<String> {
     }
 }
 
-fun hash_recovery_code(code: String): String {
-    val canonical = canonicalize_recovery_code(code)
-    val digest = MessageDigest.getInstance("SHA-256").digest(canonical.toByteArray(Charsets.UTF_8))
+fun hash_recovery_code(code: String): String =
+    Base64.encodeToString(raw_recovery_code_hash(code), Base64.NO_WRAP)
 
-    return Base64.encodeToString(digest, Base64.NO_WRAP)
+fun raw_recovery_code_hash(code: String): ByteArray {
+    val canonical = canonicalize_recovery_code(code)
+
+    return MessageDigest.getInstance("SHA-256").digest(canonical.toByteArray(Charsets.UTF_8))
 }
+
+fun recovery_code_verifier(raw_hash: ByteArray): ByteArray {
+    val digest = MessageDigest.getInstance("SHA-256")
+    digest.update(RECOVERY_VERIFIER_DOMAIN.toByteArray(Charsets.UTF_8))
+    digest.update(raw_hash)
+
+    return RECOVERY_VERIFIER_PREFIX + digest.digest()
+}
+
+fun recovery_code_stored_hashes(code: String): Set<String> {
+    val raw_hash = raw_recovery_code_hash(code)
+
+    return setOf(
+        Base64.encodeToString(raw_hash, Base64.NO_WRAP),
+        Base64.encodeToString(recovery_code_verifier(raw_hash), Base64.NO_WRAP),
+    )
+}
+
+private const val RECOVERY_VERIFIER_DOMAIN = "aster-recovery-verifier-v2"
+private val RECOVERY_VERIFIER_PREFIX = "ARV2".toByteArray(Charsets.US_ASCII)
