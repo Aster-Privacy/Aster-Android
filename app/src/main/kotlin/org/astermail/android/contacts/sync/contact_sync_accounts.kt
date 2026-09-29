@@ -98,7 +98,12 @@ object ContactSyncAccounts {
     }
 
     fun start(context: Context) {
-        if (is_enabled(context)) watch(context)
+        if (is_enabled(context)) {
+            watch(context)
+        } else if (system_accounts(context).isNotEmpty()) {
+            val app = context.applicationContext
+            scope.launch { runCatching { reconcile(app) } }
+        }
     }
 
     @Synchronized
