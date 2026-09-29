@@ -70,8 +70,32 @@ private const val DEFAULT_GROUP_COLOR = "#4f46e5"
 class ContactsRepository @Inject constructor(
     private val contacts_api: ContactsApi,
     private val session_key_store: SessionKeyStore,
-) {
+) : ContactPhotoSource {
     suspend fun fetch_contacts(group_id: String? = null): Result<List<Contact>> = runCatching {
+        fetch_all_contacts(group_id)
+    }.onSuccess { contacts ->
+        if (group_id == null) ContactPhotoDirectory.offer(contacts.mapNotNull { contact_photo_entry(it) })
+    }
+
+    override suspend fun list_photo_entries(): List<ContactPhotoEntry> {
+        val passphrase = session_key_store.get_passphrase() ?: throw IllegalStateException("no session")
+        passphrase.fill(0)
+        return fetch_all_contacts(null).mapNotNull { contact_photo_entry(it) }
+    }
+
+    override suspend fun fetch_contact_photo(contact_id: String): ContactPhotoFetch = try {
+        val contact = decrypt_contact(contacts_api.get_contact(contact_id))
+        val photo = contact?.let { contact_photo_entry(it)?.photo }
+        if (photo != null) ContactPhotoFetch.Found(photo) else ContactPhotoFetch.Missing
+    } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
+        throw cancelled
+    } catch (_: ApiError.NotFoundError) {
+        ContactPhotoFetch.Missing
+    } catch (t: Throwable) {
+        ContactPhotoFetch.Failed(t)
+    }
+
+    private suspend fun fetch_all_contacts(group_id: String?): List<Contact> {
         val all = mutableListOf<ContactItem>()
         val seen_cursors = mutableSetOf<String>()
         var cursor: String? = null
@@ -89,7 +113,7 @@ class ContactsRepository @Inject constructor(
             if (!page.has_more || next.isNullOrBlank() || !seen_cursors.add(next)) break
             cursor = next
         }
-        all.mapNotNull { decrypt_contact(it) }
+        return all.mapNotNull { decrypt_contact(it) }
     }
 
     suspend fun fetch_contact(contact_id: String): Result<Contact> = runCatching {
@@ -109,7 +133,7 @@ class ContactsRepository @Inject constructor(
         } finally {
             key.fill(0)
         }
-    }
+    }.also { ContactPhotoDirectory.invalidate() }
 
     suspend fun import_contacts(contacts: List<Contact>): ContactImportSummary {
         var imported = 0L
@@ -146,6 +170,7 @@ class ContactsRepository @Inject constructor(
             }
         } finally {
             key.fill(0)
+            ContactPhotoDirectory.invalidate()
         }
         return ContactImportSummary(
             imported = imported,
@@ -196,7 +221,7 @@ class ContactsRepository @Inject constructor(
         } finally {
             key.fill(0)
         }
-    }
+    }.also { ContactPhotoDirectory.invalidate() }
 
     suspend fun trash_contact(contact: Contact): Result<Unit> =
         update_contact(contact.id, contact.copy(deleted_at = java.time.Instant.now().toString()))
@@ -206,11 +231,11 @@ class ContactsRepository @Inject constructor(
 
     suspend fun delete_contact(contact_id: String): Result<DeleteContactResponse> = runCatching {
         contacts_api.delete_contact(contact_id)
-    }
+    }.also { ContactPhotoDirectory.invalidate() }
 
     suspend fun bulk_delete_contacts(ids: List<String>): Result<DeleteContactResponse> = runCatching {
         contacts_api.bulk_delete_contacts(BulkDeleteContactsRequest(ids))
-    }
+    }.also { ContactPhotoDirectory.invalidate() }
 
     suspend fun search_contacts(query: String, field: String = "all", limit: Int? = null): Result<List<Contact>> = runCatching {
         val key = derive_contacts_key()

@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
@@ -55,6 +56,7 @@ import kotlinx.coroutines.flow.map
 import org.astermail.android.R
 import org.astermail.android.api.BuildConfig as ApiBuildConfig
 import org.astermail.android.api.auth.PublicProfile
+import org.astermail.android.contacts.ContactPhotoDirectory
 import org.astermail.android.mail.AsterProfileResolverHolder
 import org.astermail.android.mail.OwnAddressAvatars
 import org.astermail.android.mail.is_aster_domain
@@ -154,7 +156,15 @@ fun SenderAvatar(
     sender_authenticated: Boolean = false,
     profile_color: String? = null,
     use_peer_profile_color: Boolean = true,
+    use_contact_photo: Boolean = true,
 ) {
+    if (use_contact_photo && !remember(email, sender_authenticated) { is_aster_system_sender(email, sender_authenticated) }) {
+        val contact_photo = remember_contact_photo(email)
+        if (contact_photo != null) {
+            ContactPhotoAvatar(photo = contact_photo, name = name, size = size, modifier = modifier)
+            return
+        }
+    }
     val context = LocalContext.current
     val low_network = org.astermail.android.network.low_network_active()
     val remote_avatars_allowed = org.astermail.android.api.network.should_load_remote_avatar(low_network)
@@ -287,6 +297,42 @@ fun SenderAvatar(
             modifier = Modifier.size(size).clip(CircleShape),
         )
     }
+}
+
+@Composable
+private fun remember_contact_photo(email: String): ImageBitmap? {
+    val version by ContactPhotoDirectory.version.collectAsStateWithLifecycle()
+    var photo by remember(email) { mutableStateOf(ContactPhotoDirectory.cached(email)) }
+    LaunchedEffect(email, version) {
+        photo = ContactPhotoDirectory.photo_for(email)
+    }
+    return photo
+}
+
+@Composable
+private fun ContactPhotoAvatar(
+    photo: ImageBitmap,
+    name: String,
+    size: Dp,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier.size(size).clip(CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            bitmap = photo,
+            contentDescription = name.ifBlank { null },
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.size(size).clip(CircleShape),
+        )
+    }
+}
+
+internal fun is_aster_system_sender(email: String, sender_authenticated: Boolean): Boolean {
+    if (!sender_authenticated || !is_system_local_part(email)) return false
+    val domain = extract_domain(email)
+    return domain.isNotBlank() && is_aster_domain(get_root_domain(domain))
 }
 
 internal val SYSTEM_LOCAL_PARTS = setOf(
