@@ -2,6 +2,7 @@ What's new:
 
 - Your inbox opens faster when you start the app.
 - Encrypted messages open faster after the first one.
+- Contact photos you saved appear as sender avatars.
 
 Fixed:
 
