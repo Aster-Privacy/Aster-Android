@@ -33,6 +33,12 @@ data class AccountKeyLoadTicket(val seq: Long, val write_epoch: Long)
 class SessionKeyStore(context: Context? = null) {
 
     private val lock = Any()
+
+    private val clear_listeners = java.util.concurrent.CopyOnWriteArrayList<() -> Unit>()
+
+    fun add_clear_listener(listener: () -> Unit) {
+        clear_listeners.addIfAbsent(listener)
+    }
     private val prefs: SharedPreferences? = context?.let { SecurePrefs.open(it, prefs_name) }
 
     @Volatile
@@ -561,6 +567,7 @@ class SessionKeyStore(context: Context? = null) {
             ratchet_pq_identity_public = null
             prefs?.edit()?.clear()?.commit()
         }
+        for (listener in clear_listeners) runCatching { listener() }
     }
 
     private fun encode_b64(bytes: ByteArray): String =
