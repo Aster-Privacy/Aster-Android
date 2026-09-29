@@ -511,7 +511,7 @@ private fun hoist_trailing_signature(details: Element) {
     var node = details.nextSibling()
     while (node != null) {
         val next = node.nextSibling()
-        if (node is Element && node.hasClass("aster_signature")) {
+        if (node is Element && (node.hasClass("aster_signature") || node.attr("data-aster-signature") == "1")) {
             moved.addAll(pending)
             pending.clear()
             moved.add(node)
