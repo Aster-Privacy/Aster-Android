@@ -387,6 +387,7 @@ class PersistentPushService : Service() {
                 "ping" -> runCatching { webSocket.send(PONG_FRAME) }
                 "new_mail", "new_reaction" -> deliver_new_mail()
                 "contacts_changed" -> runCatching {
+                    org.astermail.android.contacts.sync.ContactSyncAccounts.notify_remote_updated()
                     org.astermail.android.contacts.sync.ContactSyncAccounts
                         .request_sync_current_async(this@PersistentPushService)
                 }

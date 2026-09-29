@@ -92,6 +92,7 @@ class LiveSyncSocket @Inject constructor(
     }
 
     private fun request_contact_sync() {
+        ContactSyncAccounts.notify_remote_updated()
         runCatching {
             val account_id = contact_sync_entry_point(context).account_store().get_current_id() ?: return
             ContactSyncAccounts.request_sync_for(context, account_id)

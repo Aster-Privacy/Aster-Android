@@ -94,7 +94,9 @@ class ContactSyncAdapter(context: Context) : AbstractThreadedSyncAdapter(context
                     result.stats.numDeletes = stats.pending_deletions.toLong()
                 }
                 log_stats(stats)
-                if (stats.created_remote + stats.updated_remote + stats.deleted_remote > 0) {
+                if (stats.created_remote + stats.updated_remote + stats.deleted_remote +
+                    stats.inserted_local + stats.updated_local + stats.deleted_local > 0
+                ) {
                     ContactSyncAccounts.notify_remote_updated()
                 }
             } catch (_: ContactSyncSessionLost) {
