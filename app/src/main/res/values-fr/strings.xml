@@ -3348,4 +3348,17 @@
     <string name="sort_a_to_z">Trier de A à Z</string>
     <string name="folders_sorted_a_to_z">Dossiers triés de A à Z</string>
     <string name="plan_f_sort_folders">Trier les dossiers de A à Z</string>
+    <string name="contact_sync_section">Contacts du téléphone</string>
+    <string name="contact_sync_title">Synchroniser avec les contacts du téléphone</string>
+    <string name="contact_sync_subtitle">Affichez vos contacts Aster dans l\'app Contacts du téléphone et synchronisez les modifications dans les deux sens</string>
+    <string name="contact_sync_disclosure_title">Synchroniser les contacts avec ce téléphone ?</string>
+    <string name="contact_sync_disclosure_message">Aster ajoute un compte à l\'app Contacts du téléphone pour chaque compte Aster présent sur cet appareil. Vos contacts sont déchiffrés sur ce téléphone, donc les autres apps ayant accès à vos contacts peuvent les lire. Les modifications faites d\'un côté ou de l\'autre sont synchronisées dans les deux sens, et les contacts supprimés sur le téléphone sont placés dans la corbeille d\'Aster.</string>
+    <string name="contact_sync_turn_on">Activer</string>
+    <string name="contact_sync_off_title">Désactiver la synchronisation des contacts ?</string>
+    <string name="contact_sync_off_message">Vos contacts Aster sont retirés de l\'app Contacts de ce téléphone. Ils restent dans Aster.</string>
+    <string name="contact_sync_turn_off">Désactiver</string>
+    <string name="contact_sync_permission_denied">Pour synchroniser les contacts, autorisez Aster à accéder à vos contacts.</string>
+    <string name="contact_sync_label_sibling">Frère ou sœur</string>
+    <string name="contact_sync_label_graduation">Remise de diplôme</string>
+    <string name="contact_sync_label_wedding">Mariage</string>
 </resources>

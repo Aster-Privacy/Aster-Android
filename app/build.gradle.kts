@@ -45,6 +45,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
+        resValue("string", "contact_sync_account_type", "org.astermail.android.contacts")
 
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64") }
     }
@@ -66,6 +67,7 @@ android {
         debug {
             isDebuggable = System.getenv("ASTER_DEBUGGABLE") == "1"
             applicationIdSuffix = ".debug"
+            resValue("string", "contact_sync_account_type", "org.astermail.android.debug.contacts")
         }
         release {
             isMinifyEnabled = true
@@ -87,6 +89,7 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+        resValues = true
     }
 
     packaging {

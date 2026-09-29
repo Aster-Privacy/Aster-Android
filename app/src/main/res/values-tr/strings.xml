@@ -3302,4 +3302,17 @@
     <string name="sort_a_to_z">A\'dan Z\'ye sırala</string>
     <string name="folders_sorted_a_to_z">Klasörler A\'dan Z\'ye sıralandı</string>
     <string name="plan_f_sort_folders">Klasörleri A\'dan Z\'ye sıralama</string>
+    <string name="contact_sync_section">Telefon kişileri</string>
+    <string name="contact_sync_title">Telefon kişileriyle eşzamanla</string>
+    <string name="contact_sync_subtitle">Aster kişilerinizi telefonunuzun Kişiler uygulamasında gösterin ve değişiklikleri iki yönlü eşzamanlayın</string>
+    <string name="contact_sync_disclosure_title">Kişiler bu telefonla eşzamanlansın mı?</string>
+    <string name="contact_sync_disclosure_message">Aster, bu cihazdaki her Aster hesabı için telefonunuzun Kişiler uygulamasına bir hesap ekler. Kişileriniz bu telefonda şifresi çözülmüş olarak tutulur, bu nedenle kişilerinize erişimi olan diğer uygulamalar onları okuyabilir. Her iki taraftaki değişiklikler iki yönlü eşzamanlanır ve telefonunuzda sildiğiniz kişiler Aster\'da Çöp Kutusu\'na taşınır.</string>
+    <string name="contact_sync_turn_on">Aç</string>
+    <string name="contact_sync_off_title">Kişi eşzamanlama kapatılsın mı?</string>
+    <string name="contact_sync_off_message">Aster kişileriniz bu telefonun Kişiler uygulamasından kaldırılır. Aster\'da kalmaya devam ederler.</string>
+    <string name="contact_sync_turn_off">Kapat</string>
+    <string name="contact_sync_permission_denied">Kişileri eşzamanlamak için Aster\'ın kişilerinize erişmesine izin verin.</string>
+    <string name="contact_sync_label_sibling">Kardeş</string>
+    <string name="contact_sync_label_graduation">Mezuniyet</string>
+    <string name="contact_sync_label_wedding">Düğün</string>
 </resources>

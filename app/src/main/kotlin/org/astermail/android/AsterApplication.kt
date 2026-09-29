@@ -127,6 +127,7 @@ class AsterApplication : Application(), ImageLoaderFactory {
             )
         }
         runCatching { org.astermail.android.network.low_network_monitor.start(this) }
+        runCatching { org.astermail.android.contacts.sync.ContactSyncAccounts.start(this) }
         register_app_lock_lifecycle()
         runCatching { register_folder_lock_hooks() }
         runCatching { seed_protected_folder_tokens() }
@@ -188,6 +189,9 @@ class AsterApplication : Application(), ImageLoaderFactory {
                     androidx.lifecycle.Lifecycle.Event.ON_START -> {
                         if (store.is_store_open()) store.check_on_foreground()
                         org.astermail.android.ui.common.app_session.mark_foregrounded()
+                        runCatching {
+                            org.astermail.android.contacts.sync.ContactSyncAccounts.request_sync_current_async(this)
+                        }
                     }
                     else -> {}
                 }

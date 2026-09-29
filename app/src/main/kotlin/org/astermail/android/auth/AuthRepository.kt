@@ -759,11 +759,17 @@ class AuthRepository @Inject constructor(
 
     @OptIn(coil.annotation.ExperimentalCoilApi::class)
     suspend fun try_restore_session(account_id: String): Boolean {
-        val snapshot = session_snapshot_store.load(account_id) ?: return false
-        if (!clear_decrypted_mail_cache_blocking()) return false
-        mail_repository.clear_account_data()
-        cancel_all_notifications()
-        token_store.save(snapshot.token_access, snapshot.token_refresh)
+        SessionRefreshGate.mutex.lock()
+        val snapshot = try {
+            val loaded = session_snapshot_store.load(account_id) ?: return false
+            if (!clear_decrypted_mail_cache_blocking()) return false
+            mail_repository.clear_account_data()
+            cancel_all_notifications()
+            token_store.save(loaded.token_access, loaded.token_refresh)
+            loaded
+        } finally {
+            SessionRefreshGate.mutex.unlock()
+        }
         api_client.set_csrf(snapshot.csrf_token)
         api_client.invalidate_bearer_cache()
         session_key_store.clear()

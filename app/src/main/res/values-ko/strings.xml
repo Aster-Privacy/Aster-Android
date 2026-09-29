@@ -3285,4 +3285,17 @@
     <string name="sort_a_to_z">이름순 정렬</string>
     <string name="folders_sorted_a_to_z">폴더를 이름순으로 정렬했습니다</string>
     <string name="plan_f_sort_folders">폴더 이름순 정렬</string>
+    <string name="contact_sync_section">휴대전화 연락처</string>
+    <string name="contact_sync_title">휴대전화 연락처와 동기화</string>
+    <string name="contact_sync_subtitle">Aster 연락처를 휴대전화의 연락처 앱에 표시하고 변경 사항을 양방향으로 동기화합니다</string>
+    <string name="contact_sync_disclosure_title">이 휴대전화와 연락처를 동기화할까요?</string>
+    <string name="contact_sync_disclosure_message">Aster는 이 기기에 있는 Aster 계정마다 휴대전화의 연락처 앱에 계정을 추가합니다. 연락처는 이 휴대전화에서 복호화되므로 연락처 접근 권한이 있는 다른 앱이 읽을 수 있습니다. 어느 쪽에서 변경하든 양방향으로 동기화되며, 휴대전화에서 삭제한 연락처는 Aster 휴지통으로 이동합니다.</string>
+    <string name="contact_sync_turn_on">켜기</string>
+    <string name="contact_sync_off_title">연락처 동기화를 끌까요?</string>
+    <string name="contact_sync_off_message">Aster 연락처가 이 휴대전화의 연락처 앱에서 삭제됩니다. Aster에는 그대로 남아 있습니다.</string>
+    <string name="contact_sync_turn_off">끄기</string>
+    <string name="contact_sync_permission_denied">연락처를 동기화하려면 Aster의 연락처 접근을 허용하세요.</string>
+    <string name="contact_sync_label_sibling">형제자매</string>
+    <string name="contact_sync_label_graduation">졸업</string>
+    <string name="contact_sync_label_wedding">결혼</string>
 </resources>

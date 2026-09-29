@@ -48,6 +48,11 @@ class LiveSyncFrameTest {
     }
 
     @Test
+    fun parses_contacts_changed() {
+        assertEquals(LiveSyncFrame.contacts_changed, parse_live_sync_frame("""{"type":"contacts_changed"}"""))
+    }
+
+    @Test
     fun ignores_unknown_and_malformed_frames() {
         assertNull(parse_live_sync_frame("""{"type":"prekey_low"}"""))
         assertNull(parse_live_sync_frame("not json"))

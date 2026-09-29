@@ -3292,4 +3292,17 @@
     <string name="sort_a_to_z">名前順で並べ替え</string>
     <string name="folders_sorted_a_to_z">フォルダを名前順に並べ替えました</string>
     <string name="plan_f_sort_folders">フォルダを名前順に並べ替え</string>
+    <string name="contact_sync_section">スマートフォンの連絡先</string>
+    <string name="contact_sync_title">スマートフォンの連絡先と同期</string>
+    <string name="contact_sync_subtitle">Aster の連絡先をスマートフォンの連絡帳アプリに表示し、変更を双方向に同期します</string>
+    <string name="contact_sync_disclosure_title">このスマートフォンと連絡先を同期しますか？</string>
+    <string name="contact_sync_disclosure_message">Aster は、このデバイス上の Aster アカウントごとに、スマートフォンの連絡帳アプリにアカウントを追加します。連絡先はこのスマートフォン上で復号されるため、連絡先へのアクセスを許可された他のアプリから読み取れます。どちらで行った変更も双方向に同期され、スマートフォンで削除した連絡先は Aster のゴミ箱に移動します。</string>
+    <string name="contact_sync_turn_on">オンにする</string>
+    <string name="contact_sync_off_title">連絡先の同期をオフにしますか？</string>
+    <string name="contact_sync_off_message">Aster の連絡先はこのスマートフォンの連絡帳アプリから削除されます。Aster には残ります。</string>
+    <string name="contact_sync_turn_off">オフにする</string>
+    <string name="contact_sync_permission_denied">連絡先を同期するには、Aster に連絡先へのアクセスを許可してください。</string>
+    <string name="contact_sync_label_sibling">兄弟姉妹</string>
+    <string name="contact_sync_label_graduation">卒業</string>
+    <string name="contact_sync_label_wedding">結婚</string>
 </resources>

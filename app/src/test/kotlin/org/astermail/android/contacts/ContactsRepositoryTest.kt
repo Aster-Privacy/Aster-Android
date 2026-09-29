@@ -27,6 +27,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.slot
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.test.runTest
 import org.astermail.android.api.ApiError
@@ -325,7 +326,7 @@ class ContactsRepositoryTest {
 
     @Test
     fun `update_contact calls api with encrypted data`() = runTest {
-        coEvery { contacts_api.update_contact(eq("c_1"), any()) } returns Unit
+        coEvery { contacts_api.update_contact(eq("c_1"), any()) } returns org.astermail.android.api.contacts.UpdateContactResponse(success = true)
 
         val contact = Contact(
             id = "c_1",
@@ -339,6 +340,88 @@ class ContactsRepositoryTest {
         coVerify { contacts_api.update_contact(eq("c_1"), match {
             it.encrypted_data.isNotBlank() && it.data_nonce.isNotBlank()
         }) }
+    }
+
+    private fun decrypt_request_json(data: String, nonce: String): org.json.JSONObject {
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(
+            Cipher.DECRYPT_MODE,
+            SecretKeySpec(derive_test_key(), "AES"),
+            GCMParameterSpec(128, java.util.Base64.getDecoder().decode(nonce)),
+        )
+        val plain = cipher.doFinal(java.util.Base64.getDecoder().decode(data))
+        return org.json.JSONObject(String(plain, Charsets.UTF_8))
+    }
+
+    @Test
+    fun `update_contact keeps typed entries in step with primary email and phone`() = runTest {
+        val raw = """{"first_name":"Alice","last_name":"Webster",""" +
+            """"emails":["alice@example.com","alice@corp.example"],""" +
+            """"email_entries":[{"value":"alice@example.com","type":"other"},{"value":"alice@corp.example","type":"work"}],""" +
+            """"phone":"(555) 123-4567",""" +
+            """"phone_entries":[{"value":"(555) 123-4567","type":"mobile"},{"value":"(555) 000-1111","type":"work"}]}"""
+        val captured = slot<org.astermail.android.api.contacts.UpdateContactRequest>()
+        coEvery { contacts_api.update_contact(eq("c_1"), capture(captured)) } returns
+            org.astermail.android.api.contacts.UpdateContactResponse(success = true)
+
+        val contact = Contact(
+            id = "c_1",
+            name = "Alice Webster",
+            email = "alice@work.example",
+            work_email = "alice@corp.example",
+            phone = "(555) 999-8888",
+            work_phone = "(555) 000-1111",
+            raw_json = raw,
+        )
+        assertTrue(repo.update_contact("c_1", contact).isSuccess)
+
+        val json = decrypt_request_json(captured.captured.encrypted_data, captured.captured.data_nonce)
+        val emails = json.getJSONArray("email_entries")
+        assertEquals(2, emails.length())
+        assertEquals("alice@work.example", emails.getJSONObject(0).getString("value"))
+        assertEquals("other", emails.getJSONObject(0).getString("type"))
+        assertEquals("alice@corp.example", emails.getJSONObject(1).getString("value"))
+        val phones = json.getJSONArray("phone_entries")
+        assertEquals("(555) 999-8888", phones.getJSONObject(0).getString("value"))
+        assertEquals("(555) 000-1111", phones.getJSONObject(1).getString("value"))
+
+        val card = org.astermail.android.contacts.sync.contact_card_from_json_object(json)
+        assertEquals("alice@work.example", card.emails.first().value)
+        assertEquals("(555) 999-8888", card.phones.first().value)
+    }
+
+    @Test
+    fun `update_contact removes the primary typed entry when the primary email is cleared`() = runTest {
+        val raw = """{"first_name":"Bob","emails":["bob@example.org"],""" +
+            """"email_entries":[{"value":"bob@example.org","type":"other"}]}"""
+        val captured = slot<org.astermail.android.api.contacts.UpdateContactRequest>()
+        coEvery { contacts_api.update_contact(eq("c_2"), capture(captured)) } returns
+            org.astermail.android.api.contacts.UpdateContactResponse(success = true)
+
+        assertTrue(repo.update_contact("c_2", Contact(id = "c_2", name = "Bob", email = "", raw_json = raw)).isSuccess)
+
+        val json = decrypt_request_json(captured.captured.encrypted_data, captured.captured.data_nonce)
+        assertTrue(!json.has("email_entries"))
+        assertEquals(0, json.getJSONArray("emails").length())
+    }
+
+    @Test
+    fun `update_contact repairs a typed entry that drifted from the primary email`() = runTest {
+        val raw = """{"first_name":"Alice","emails":["alice@work.example"],""" +
+            """"email_entries":[{"value":"alice@example.com","type":"other"}]}"""
+        val captured = slot<org.astermail.android.api.contacts.UpdateContactRequest>()
+        coEvery { contacts_api.update_contact(eq("c_3"), capture(captured)) } returns
+            org.astermail.android.api.contacts.UpdateContactResponse(success = true)
+
+        assertTrue(
+            repo.update_contact("c_3", Contact(id = "c_3", name = "Alice", email = "alice@new.example", raw_json = raw))
+                .isSuccess,
+        )
+
+        val json = decrypt_request_json(captured.captured.encrypted_data, captured.captured.data_nonce)
+        val entries = json.getJSONArray("email_entries")
+        assertEquals(1, entries.length())
+        assertEquals("alice@new.example", entries.getJSONObject(0).getString("value"))
     }
 
     @Test

@@ -289,6 +289,15 @@ fun ComposeScreen(
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val contacts_state by contacts_vm.state.collectAsStateWithLifecycle()
     val all_contacts = contacts_state.contacts
+    val compose_context = androidx.compose.ui.platform.LocalContext.current
+    val device_contacts by androidx.compose.runtime.produceState(emptyList<Contact>()) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            org.astermail.android.contacts.load_device_email_contacts(compose_context)
+        }
+    }
+    val suggestion_pool = remember(all_contacts, device_contacts) {
+        org.astermail.android.contacts.recipient_suggestion_pool(all_contacts, device_contacts)
+    }
     val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
     val keyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
     val focus_manager = androidx.compose.ui.platform.LocalFocusManager.current
@@ -2310,7 +2319,7 @@ fun ComposeScreen(
                         to_chips = to_chips.filterIndexed { i, _ -> i != idx }
                         schedule_draft_save()
                     },
-                    suggestions = all_contacts.filter { it.email.isNotBlank() },
+                    suggestions = suggestion_pool,
                     on_suggestion_pick = { email ->
                         to_chips = to_chips + email
                         to_input = ""
@@ -2352,7 +2361,7 @@ fun ComposeScreen(
                             cc_chips = cc_chips.filterIndexed { i, _ -> i != idx }
                             schedule_draft_save()
                         },
-                        suggestions = all_contacts.filter { it.email.isNotBlank() },
+                        suggestions = suggestion_pool,
                         on_suggestion_pick = { email ->
                             cc_chips = cc_chips + email
                             cc_input = ""
@@ -2383,7 +2392,7 @@ fun ComposeScreen(
                             bcc_chips = bcc_chips.filterIndexed { i, _ -> i != idx }
                             schedule_draft_save()
                         },
-                        suggestions = all_contacts.filter { it.email.isNotBlank() },
+                        suggestions = suggestion_pool,
                         on_suggestion_pick = { email ->
                             bcc_chips = bcc_chips + email
                             bcc_input = ""

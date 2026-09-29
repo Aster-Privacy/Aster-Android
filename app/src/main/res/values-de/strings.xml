@@ -3303,4 +3303,17 @@
     <string name="sort_a_to_z">Von A bis Z sortieren</string>
     <string name="folders_sorted_a_to_z">Ordner von A bis Z sortiert</string>
     <string name="plan_f_sort_folders">Ordner von A bis Z sortieren</string>
+    <string name="contact_sync_section">Telefonkontakte</string>
+    <string name="contact_sync_title">Mit Telefonkontakten synchronisieren</string>
+    <string name="contact_sync_subtitle">Zeige deine Aster-Kontakte in der Kontakte-App deines Telefons an und synchronisiere Änderungen in beide Richtungen</string>
+    <string name="contact_sync_disclosure_title">Kontakte mit diesem Telefon synchronisieren?</string>
+    <string name="contact_sync_disclosure_message">Aster fügt der Kontakte-App deines Telefons für jedes Aster-Konto auf diesem Gerät ein Konto hinzu. Deine Kontakte werden auf diesem Telefon entschlüsselt, sodass andere Apps mit Zugriff auf deine Kontakte sie lesen können. Änderungen an beiden Stellen werden in beide Richtungen synchronisiert, und Kontakte, die du auf dem Telefon löschst, landen in Aster im Papierkorb.</string>
+    <string name="contact_sync_turn_on">Aktivieren</string>
+    <string name="contact_sync_off_title">Kontaktsynchronisierung deaktivieren?</string>
+    <string name="contact_sync_off_message">Deine Aster-Kontakte werden aus der Kontakte-App dieses Telefons entfernt. In Aster bleiben sie erhalten.</string>
+    <string name="contact_sync_turn_off">Deaktivieren</string>
+    <string name="contact_sync_permission_denied">Erlaube Aster den Zugriff auf deine Kontakte, um sie zu synchronisieren.</string>
+    <string name="contact_sync_label_sibling">Geschwister</string>
+    <string name="contact_sync_label_graduation">Abschluss</string>
+    <string name="contact_sync_label_wedding">Hochzeit</string>
 </resources>

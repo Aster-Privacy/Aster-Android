@@ -104,10 +104,18 @@ class ContactsViewModel @Inject constructor(
     private var mutation_in_flight = false
     private var groups_in_flight = false
 
-    fun load_contacts() {
+    init {
+        viewModelScope.launch {
+            org.astermail.android.contacts.sync.ContactSyncAccounts.remote_updated.collect {
+                load_contacts(quiet = true)
+            }
+        }
+    }
+
+    fun load_contacts(quiet: Boolean = false) {
         if (list_in_flight) return
         list_in_flight = true
-        _state.value = _state.value.copy(is_loading = true, error = null)
+        if (!quiet) _state.value = _state.value.copy(is_loading = true, error = null)
         viewModelScope.launch {
             val outcome = repository.fetch_contacts()
             list_in_flight = false
@@ -122,10 +130,12 @@ class ContactsViewModel @Inject constructor(
                     }
                 },
                 onFailure = { t ->
-                    _state.value = _state.value.copy(
-                        is_loading = false,
-                        error = friendly_error(t),
-                    )
+                    if (!quiet) {
+                        _state.value = _state.value.copy(
+                            is_loading = false,
+                            error = friendly_error(t),
+                        )
+                    }
                 },
             )
         }
@@ -519,6 +529,25 @@ class ContactsViewModel @Inject constructor(
 
         if (contacts.isEmpty()) return emptyList()
 
+        val own_account_type = org.astermail.android.contacts.sync.ContactSyncAccounts.account_type(context)
+        val foreign_selection = "(" + ContactsContract.RawContacts.ACCOUNT_TYPE + " IS NULL OR " +
+            ContactsContract.RawContacts.ACCOUNT_TYPE + " != ?)"
+        val foreign_contact_ids = mutableSetOf<String>()
+        resolver.query(
+            ContactsContract.RawContacts.CONTENT_URI,
+            arrayOf(ContactsContract.RawContacts.CONTACT_ID),
+            ContactsContract.RawContacts.DELETED + "=0 AND " + foreign_selection,
+            arrayOf(own_account_type),
+            null,
+        )?.use { cursor ->
+            while (cursor.moveToNext()) {
+                cursor.getString(0)?.let { foreign_contact_ids.add(it) }
+            }
+        }
+        contacts.keys.retainAll(foreign_contact_ids)
+        with_photo.retainAll(foreign_contact_ids)
+        if (contacts.isEmpty()) return emptyList()
+
         val mime_types = listOf(
             ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE,
             ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE,
@@ -542,13 +571,13 @@ class ContactsViewModel @Inject constructor(
         )
 
         val selection = ContactsContract.Data.MIMETYPE +
-            " IN (" + mime_types.joinToString(",") { "?" } + ")"
+            " IN (" + mime_types.joinToString(",") { "?" } + ") AND " + foreign_selection
 
         resolver.query(
             ContactsContract.Data.CONTENT_URI,
             data_projection,
             selection,
-            mime_types.toTypedArray(),
+            (mime_types + own_account_type).toTypedArray(),
             null,
         )?.use { cursor ->
             val id_idx = cursor.getColumnIndex(ContactsContract.Data.CONTACT_ID)

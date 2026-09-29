@@ -3285,4 +3285,17 @@
     <string name="sort_a_to_z">按名称排序</string>
     <string name="folders_sorted_a_to_z">文件夹已按名称排序</string>
     <string name="plan_f_sort_folders">文件夹按名称排序</string>
+    <string name="contact_sync_section">手机联系人</string>
+    <string name="contact_sync_title">与手机联系人同步</string>
+    <string name="contact_sync_subtitle">在手机的通讯录应用中显示 Aster 联系人，并双向同步更改</string>
+    <string name="contact_sync_disclosure_title">要将联系人与这部手机同步吗？</string>
+    <string name="contact_sync_disclosure_message">Aster 会为此设备上的每个 Aster 账户在手机的通讯录应用中添加一个账户。你的联系人会在这部手机上解密，因此有权访问联系人的其他应用可以读取它们。在任一处所做的更改都会双向同步，你在手机上删除的联系人会移到 Aster 的废纸篓。</string>
+    <string name="contact_sync_turn_on">开启</string>
+    <string name="contact_sync_off_title">要关闭联系人同步吗？</string>
+    <string name="contact_sync_off_message">你的 Aster 联系人将从这部手机的通讯录应用中移除，但仍保留在 Aster 中。</string>
+    <string name="contact_sync_turn_off">关闭</string>
+    <string name="contact_sync_permission_denied">要同步联系人，请允许 Aster 访问你的联系人。</string>
+    <string name="contact_sync_label_sibling">兄弟姐妹</string>
+    <string name="contact_sync_label_graduation">毕业</string>
+    <string name="contact_sync_label_wedding">婚礼</string>
 </resources>
