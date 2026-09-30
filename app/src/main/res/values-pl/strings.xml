@@ -3356,4 +3356,13 @@
     <string name="contact_sync_label_sibling">Rodzeństwo</string>
     <string name="contact_sync_label_graduation">Ukończenie szkoły</string>
     <string name="contact_sync_label_wedding">Ślub</string>
+    <string name="domain_dkim_rotate_title">Obróć klucz DKIM</string>
+    <string name="domain_dkim_rotate_hint">Wygeneruj nowy klucz do podpisywania poczty wysyłanej z tej domeny.</string>
+    <string name="domain_dkim_rotate_action">Obróć</string>
+    <string name="domain_dkim_rotate_confirm_title">Obrócić klucz DKIM?</string>
+    <string name="domain_dkim_rotate_confirm_purchased">Aster Mail generuje nowy klucz DKIM dla %1$s i automatycznie aktualizuje za Ciebie rekord DNS.</string>
+    <string name="domain_dkim_rotate_confirm_manual">Aster Mail generuje nowy klucz DKIM dla %1$s i od razu podpisuje nim Twoją pocztę. Musisz dodać nowy rekord TXT u swojego dostawcy DNS. Do tego czasu weryfikacja DKIM może się nie powieść.</string>
+    <string name="domain_dkim_rotated_auto">Klucz DKIM obrócony. Aster Mail zaktualizował za Ciebie rekord DNS.</string>
+    <string name="domain_dkim_notice_title">Dodaj to jako nowy rekord DNS</string>
+    <string name="domain_dkim_notice_body">Twoja poczta jest już podpisywana nowym kluczem. Aby przejść weryfikację DKIM, dodaj ten rekord TXT u swojego dostawcy DNS.</string>
 </resources>

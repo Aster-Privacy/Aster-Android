@@ -3208,4 +3208,13 @@
     <string name="contact_sync_label_sibling">भाई या बहन</string>
     <string name="contact_sync_label_graduation">ग्रेजुएशन</string>
     <string name="contact_sync_label_wedding">शादी</string>
+    <string name="domain_dkim_rotate_title">DKIM कुंजी बदलें</string>
+    <string name="domain_dkim_rotate_hint">इस डोमेन से भेजे गए मेल पर हस्ताक्षर करने के लिए नई कुंजी बनाएं।</string>
+    <string name="domain_dkim_rotate_action">बदलें</string>
+    <string name="domain_dkim_rotate_confirm_title">DKIM कुंजी बदलें?</string>
+    <string name="domain_dkim_rotate_confirm_purchased">Aster Mail %1$s के लिए नई DKIM कुंजी बनाता है और आपके लिए DNS रिकॉर्ड अपने आप अपडेट करता है।</string>
+    <string name="domain_dkim_rotate_confirm_manual">Aster Mail %1$s के लिए नई DKIM कुंजी बनाता है और तुरंत उसी से आपके मेल पर हस्ताक्षर करता है। आपको अपने DNS प्रदाता पर नया TXT रिकॉर्ड जोड़ना होगा। जब तक आप इसे नहीं जोड़ते, DKIM जांच विफल हो सकती है।</string>
+    <string name="domain_dkim_rotated_auto">DKIM कुंजी बदल दी गई। Aster Mail ने आपके लिए DNS रिकॉर्ड अपडेट कर दिया।</string>
+    <string name="domain_dkim_notice_title">इसे नए DNS रिकॉर्ड के रूप में जोड़ें</string>
+    <string name="domain_dkim_notice_body">आपके मेल पर पहले से ही नई कुंजी से हस्ताक्षर हो रहे हैं। DKIM जांच पास करने के लिए, अपने DNS प्रदाता पर यह TXT रिकॉर्ड जोड़ें।</string>
 </resources>

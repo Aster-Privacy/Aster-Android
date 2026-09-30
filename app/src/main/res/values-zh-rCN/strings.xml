@@ -3301,4 +3301,13 @@
     <string name="contact_sync_label_sibling">兄弟姐妹</string>
     <string name="contact_sync_label_graduation">毕业</string>
     <string name="contact_sync_label_wedding">婚礼</string>
+    <string name="domain_dkim_rotate_title">轮换 DKIM 密钥</string>
+    <string name="domain_dkim_rotate_hint">为从此域名发送的邮件生成新的签名密钥。</string>
+    <string name="domain_dkim_rotate_action">轮换</string>
+    <string name="domain_dkim_rotate_confirm_title">要轮换 DKIM 密钥吗？</string>
+    <string name="domain_dkim_rotate_confirm_purchased">Aster Mail 会为 %1$s 生成新的 DKIM 密钥，并自动为你更新 DNS 记录。</string>
+    <string name="domain_dkim_rotate_confirm_manual">Aster Mail 会为 %1$s 生成新的 DKIM 密钥，并立即用它为你的邮件签名。你需要在 DNS 服务商处添加新的 TXT 记录。添加之前，DKIM 检查可能会失败。</string>
+    <string name="domain_dkim_rotated_auto">DKIM 密钥已轮换。Aster Mail 已为你更新 DNS 记录。</string>
+    <string name="domain_dkim_notice_title">将此项添加为新的 DNS 记录</string>
+    <string name="domain_dkim_notice_body">你的邮件已使用新密钥签名。要通过 DKIM 检查，请在 DNS 服务商处添加此 TXT 记录。</string>
 </resources>

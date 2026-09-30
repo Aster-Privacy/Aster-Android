@@ -3356,4 +3356,13 @@
     <string name="contact_sync_label_sibling">Брат или сестра</string>
     <string name="contact_sync_label_graduation">Выпускной</string>
     <string name="contact_sync_label_wedding">Свадьба</string>
+    <string name="domain_dkim_rotate_title">Обновить ключ DKIM</string>
+    <string name="domain_dkim_rotate_hint">Создайте новый ключ для подписи писем, отправленных с этого домена.</string>
+    <string name="domain_dkim_rotate_action">Обновить</string>
+    <string name="domain_dkim_rotate_confirm_title">Обновить ключ DKIM?</string>
+    <string name="domain_dkim_rotate_confirm_purchased">Aster Mail создаст новый ключ DKIM для %1$s и автоматически обновит DNS-запись за вас.</string>
+    <string name="domain_dkim_rotate_confirm_manual">Aster Mail создаст новый ключ DKIM для %1$s и сразу начнет подписывать им ваши письма. Добавьте новую TXT-запись у своего DNS-провайдера. Пока вы этого не сделаете, проверки DKIM могут не проходить.</string>
+    <string name="domain_dkim_rotated_auto">Ключ DKIM обновлен. Aster Mail обновил DNS-запись за вас.</string>
+    <string name="domain_dkim_notice_title">Добавьте это как новую DNS-запись</string>
+    <string name="domain_dkim_notice_body">Ваши письма уже подписываются новым ключом. Чтобы проходить проверки DKIM, добавьте эту TXT-запись у своего DNS-провайдера.</string>
 </resources>

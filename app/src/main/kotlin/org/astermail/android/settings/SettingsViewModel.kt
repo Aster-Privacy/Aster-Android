@@ -2598,6 +2598,33 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    data class DkimRotateOutcome(
+        val manual_record: org.astermail.android.api.settings.DnsRecord?,
+    )
+
+    suspend fun rotate_dkim_now(domain_id: String): DkimRotateOutcome? {
+        return try {
+            val result = settings_api.rotate_dkim(domain_id)
+            if (!result.success) {
+                _state.update { it.copy(action_result = context.getString(R.string.something_went_wrong)) }
+                return null
+            }
+            load_domains()
+            if (result.dns_auto_published) {
+                _state.update { it.copy(action_result = context.getString(R.string.domain_dkim_rotated_auto)) }
+                DkimRotateOutcome(manual_record = null)
+            } else {
+                DkimRotateOutcome(manual_record = result.dns_record)
+            }
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            _state.update {
+                it.copy(action_result = localized_api_error(context, t, context.getString(R.string.something_went_wrong)))
+            }
+            null
+        }
+    }
+
     private fun is_transport_failure(t: Throwable): Boolean {
         if (t is ApiError) return t is ApiError.NetworkError || t is ApiError.ServerError
         var cause: Throwable? = t

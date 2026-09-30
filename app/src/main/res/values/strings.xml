@@ -3367,4 +3367,13 @@
     <string name="contact_sync_label_sibling">Sibling</string>
     <string name="contact_sync_label_graduation">Graduation</string>
     <string name="contact_sync_label_wedding">Wedding</string>
+    <string name="domain_dkim_rotate_title">Rotate DKIM key</string>
+    <string name="domain_dkim_rotate_hint">Generate a new key for signing mail sent from this domain.</string>
+    <string name="domain_dkim_rotate_action">Rotate</string>
+    <string name="domain_dkim_rotate_confirm_title">Rotate DKIM key?</string>
+    <string name="domain_dkim_rotate_confirm_purchased">Aster Mail generates a new DKIM key for %1$s and updates the DNS record for you automatically.</string>
+    <string name="domain_dkim_rotate_confirm_manual">Aster Mail generates a new DKIM key for %1$s and signs your mail with it right away. You need to add the new TXT record at your DNS provider. Until you do, DKIM checks can fail.</string>
+    <string name="domain_dkim_rotated_auto">DKIM key rotated. Aster Mail updated the DNS record for you.</string>
+    <string name="domain_dkim_notice_title">Add this as a new DNS record</string>
+    <string name="domain_dkim_notice_body">Your mail is already signed with the new key. To pass DKIM checks, add this TXT record at your DNS provider.</string>
 </resources>

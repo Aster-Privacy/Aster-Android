@@ -3394,4 +3394,13 @@
     <string name="contact_sync_label_sibling">أخ أو أخت</string>
     <string name="contact_sync_label_graduation">تخرج</string>
     <string name="contact_sync_label_wedding">زفاف</string>
+    <string name="domain_dkim_rotate_title">تدوير مفتاح DKIM</string>
+    <string name="domain_dkim_rotate_hint">أنشئ مفتاحًا جديدًا لتوقيع البريد المُرسَل من هذا النطاق.</string>
+    <string name="domain_dkim_rotate_action">تدوير</string>
+    <string name="domain_dkim_rotate_confirm_title">هل تريد تدوير مفتاح DKIM؟</string>
+    <string name="domain_dkim_rotate_confirm_purchased">ينشئ Aster Mail مفتاح DKIM جديدًا لـ %1$s ويحدّث سجل DNS نيابةً عنك تلقائيًا.</string>
+    <string name="domain_dkim_rotate_confirm_manual">ينشئ Aster Mail مفتاح DKIM جديدًا لـ %1$s ويوقّع بريدك به فورًا. عليك إضافة سجل TXT الجديد لدى مزوّد DNS. قد تفشل عمليات التحقق من DKIM إلى أن تضيفه.</string>
+    <string name="domain_dkim_rotated_auto">تم تدوير مفتاح DKIM. حدّث Aster Mail سجل DNS نيابةً عنك.</string>
+    <string name="domain_dkim_notice_title">أضف هذا كسجل DNS جديد</string>
+    <string name="domain_dkim_notice_body">يُوقَّع بريدك بالفعل بالمفتاح الجديد. لاجتياز عمليات التحقق من DKIM، أضف سجل TXT هذا لدى مزوّد DNS.</string>
 </resources>
