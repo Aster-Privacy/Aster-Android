@@ -68,7 +68,7 @@ data class RemoteCreated(
 )
 
 interface ContactSyncRemote {
-    suspend fun changes(since: Long, limit: Int): RemoteChangesPage
+    suspend fun changes(since: Long, limit: Int, full: Boolean): RemoteChangesPage
     suspend fun fetch(id: String): RemoteContact?
     suspend fun create(json: String): RemoteCreated
     suspend fun update(id: String, json: String, expected_revision: Long): Long
@@ -271,7 +271,7 @@ class ContactSyncEngine(
         while (true) {
             ensure_active()
             val page = try {
-                remote.changes(since, options.page_size)
+                remote.changes(since, options.page_size, full)
             } catch (e: ContactResyncRequired) {
                 if (restarted) throw e
                 restarted = true

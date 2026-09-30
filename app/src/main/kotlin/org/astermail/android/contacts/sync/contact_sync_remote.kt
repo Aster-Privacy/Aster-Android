@@ -32,9 +32,9 @@ class RepositoryContactSyncRemote(
     private val repository: ContactsRepository,
 ) : ContactSyncRemote {
 
-    override suspend fun changes(since: Long, limit: Int): RemoteChangesPage {
+    override suspend fun changes(since: Long, limit: Int, full: Boolean): RemoteChangesPage {
         val page = try {
-            repository.fetch_raw_changes(since, limit)
+            repository.fetch_raw_changes(since, limit, full)
         } catch (_: ContactResyncRequiredError) {
             throw ContactResyncRequired()
         }

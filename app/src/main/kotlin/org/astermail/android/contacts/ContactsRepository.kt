@@ -321,8 +321,8 @@ class ContactsRepository @Inject constructor(
         contacts_api.remove_contact_from_group(contact_id, group_id)
     }
 
-    suspend fun fetch_raw_changes(since: Long, limit: Int): RawContactChanges {
-        val response = contacts_api.list_contact_changes(since, limit)
+    suspend fun fetch_raw_changes(since: Long, limit: Int, full: Boolean = false): RawContactChanges {
+        val response = contacts_api.list_contact_changes(since, limit, full)
         val records = mutableListOf<RawContactRecord>()
         val undecryptable = mutableListOf<String>()
         for (item in response.changes) {
