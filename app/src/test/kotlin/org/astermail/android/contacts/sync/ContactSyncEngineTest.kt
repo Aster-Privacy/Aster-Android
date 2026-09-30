@@ -125,6 +125,8 @@ class ContactSyncEngineTest {
         var next_id = 1
         var before_update: ((String) -> Unit)? = null
         var create_limit = Int.MAX_VALUE
+        val undecryptable = mutableSetOf<String>()
+        var stuck_cursor = false
 
         private fun touch(id: String, deleted: Boolean) {
             log.add(Triple(++seq, id, deleted))
@@ -177,12 +179,15 @@ class ContactSyncEngineTest {
                 },
                 deleted_ids = page.filter { it.third }.map { it.second },
                 undecryptable_ids = emptyList(),
-                next_since = next,
-                has_more = latest.size > limit,
+                next_since = if (stuck_cursor) since else next,
+                has_more = stuck_cursor || latest.size > limit,
             )
         }
 
-        override suspend fun fetch(id: String) = store[id]?.let { RemoteContact(id, it.first, it.second) }
+        override suspend fun fetch(id: String): RemoteContact? {
+            if (id in undecryptable) throw RemoteUndecryptable()
+            return store[id]?.let { RemoteContact(id, it.first, it.second) }
+        }
 
         override suspend fun create(json: String): RemoteCreated {
             if (store.size >= create_limit) throw RemotePlanLimit()
@@ -470,5 +475,37 @@ class ContactSyncEngineTest {
         }
         assertTrue(failed)
         assertTrue(remote.store.isEmpty())
+    }
+
+    @Test
+    fun undecryptable_contact_does_not_block_other_changes() = runTest {
+        val a = remote.server_create(person(1))
+        val b = remote.server_create(person(2))
+        engine.sync()
+        remote.undecryptable.add(a)
+        device.user_edit(device.by_source(a)!!.key) { it.copy(notes = "a") }
+        device.user_edit(device.by_source(b)!!.key) { it.copy(notes = "b") }
+        remote.server_create(person(3))
+        val stats = engine.sync()
+        assertEquals(1, stats.skipped_undecryptable)
+        assertEquals(1, stats.updated_remote)
+        assertEquals(1, stats.inserted_local)
+        assertEquals("b", remote.card(b).notes)
+        assertTrue(device.by_source(a)!!.value.dirty)
+    }
+
+    @Test
+    fun stalled_cursor_stops_the_pull() = runTest {
+        remote.server_create(person(1))
+        engine.sync()
+        remote.server_create(person(2))
+        remote.stuck_cursor = true
+        var failed = false
+        try {
+            engine.sync()
+        } catch (_: IllegalStateException) {
+            failed = true
+        }
+        assertTrue(failed)
     }
 }

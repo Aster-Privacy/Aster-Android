@@ -67,6 +67,8 @@ data class ContactGroup(
 
 private const val DEFAULT_GROUP_COLOR = "#4f46e5"
 
+class ContactUndecryptableException : IllegalStateException("failed to decrypt contact")
+
 @Singleton
 class ContactsRepository @Inject constructor(
     private val contacts_api: ContactsApi,
@@ -342,7 +344,7 @@ class ContactsRepository @Inject constructor(
         } catch (_: ApiError.NotFoundError) {
             return null
         }
-        return raw_record(item) ?: throw IllegalStateException("failed to decrypt contact")
+        return raw_record(item) ?: throw ContactUndecryptableException()
     }
 
     suspend fun create_raw_contact(json: String, unique_token: Boolean): CreateContactResponse {
