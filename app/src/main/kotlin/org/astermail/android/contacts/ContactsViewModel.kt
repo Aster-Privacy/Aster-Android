@@ -44,7 +44,7 @@ private const val bulk_delete_concurrency = 8
 
 private const val CONTACT_TRASH_RETENTION_DAYS = 30L
 
-private const val DEVICE_PHOTO_MAX_BYTES = 400 * 1024
+private const val DEVICE_PHOTO_MAX_BYTES = 20 * 1024 * 1024
 
 fun contact_trash_days_left(deleted_at: String): Int {
     val deleted = runCatching { java.time.Instant.parse(deleted_at) }.getOrNull()
@@ -83,6 +83,8 @@ data class ContactsUiState(
     val is_transferring: Boolean = false,
     val bulk_done: Int = 0,
     val bulk_total: Int = 0,
+    val import_done: Int = 0,
+    val import_total: Int = 0,
 ) {
     val is_selecting: Boolean get() = selected_ids.isNotEmpty()
 
@@ -239,7 +241,13 @@ class ContactsViewModel @Inject constructor(
 
     fun sync_device_contacts(context: Context) {
         if (_state.value.is_syncing) return
-        _state.value = _state.value.copy(is_syncing = true, error = null, sync_message = null)
+        _state.value = _state.value.copy(
+            is_syncing = true,
+            error = null,
+            sync_message = null,
+            import_done = 0,
+            import_total = 0,
+        )
         viewModelScope.launch {
             try {
                 val device_contacts = withContext(Dispatchers.IO) {
@@ -266,15 +274,21 @@ class ContactsViewModel @Inject constructor(
                 var imported = 0
                 var last_failure: Throwable? = null
                 var failed = 0
-                for (contact in new_contacts) {
-                    repository.create_contact(contact).fold(
+                _state.value = _state.value.copy(import_done = 0, import_total = new_contacts.size)
+                for ((index, contact) in new_contacts.withIndex()) {
+                    val prepared = withContext(Dispatchers.Default) {
+                        contact.copy(avatar_url = normalize_contact_photo(contact.avatar_url))
+                    }
+                    repository.create_contact(prepared).fold(
                         onSuccess = { imported++ },
                         onFailure = { t ->
                             last_failure = t
                             failed++
                         },
                     )
+                    _state.value = _state.value.copy(import_done = index + 1)
                 }
+                _state.value = _state.value.copy(import_done = 0, import_total = 0)
                 val failure = last_failure
                 if (imported == 0 && failure != null) {
                     _state.value = _state.value.copy(
@@ -311,7 +325,13 @@ class ContactsViewModel @Inject constructor(
 
     fun import_contacts_from_file(context: Context, uri: android.net.Uri) {
         if (_state.value.is_transferring) return
-        _state.value = _state.value.copy(is_transferring = true, error = null, sync_message = null)
+        _state.value = _state.value.copy(
+            is_transferring = true,
+            error = null,
+            sync_message = null,
+            import_done = 0,
+            import_total = 0,
+        )
         viewModelScope.launch {
             try {
                 val parsed = withContext(Dispatchers.IO) {
@@ -345,7 +365,17 @@ class ContactsViewModel @Inject constructor(
                 val new_contacts = candidates.filterNot {
                     matches_any(it, trashed_emails, trashed_names)
                 }
-                val summary = if (new_contacts.isEmpty()) null else repository.import_contacts(new_contacts)
+                val prepared = withContext(Dispatchers.Default) {
+                    new_contacts.map { it.copy(avatar_url = normalize_contact_photo(it.avatar_url)) }
+                }
+                val summary = if (prepared.isEmpty()) {
+                    null
+                } else {
+                    repository.import_contacts(prepared) { done, total ->
+                        _state.value = _state.value.copy(import_done = done, import_total = total)
+                    }
+                }
+                _state.value = _state.value.copy(import_done = 0, import_total = 0)
                 val imported = ((summary?.imported ?: 0L) + (summary?.updated ?: 0L)).toInt()
                 val failure = summary?.last_failure
                 if (imported == 0 && summary != null && summary.limit_reached) {
@@ -472,8 +502,7 @@ class ContactsViewModel @Inject constructor(
             null
         } ?: return ""
         if (bytes.isEmpty() || bytes.size > DEVICE_PHOTO_MAX_BYTES) return ""
-        val encoded = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
-        return "data:image/jpeg;base64,$encoded"
+        return runCatching { encode_contact_photo_bytes(bytes) }.getOrNull().orEmpty()
     }
 
     private fun email_keys(contacts: List<Contact>): Set<String> =

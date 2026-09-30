@@ -26,16 +26,42 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Base64
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.InputStream
 
 const val CONTACT_PHOTO_MAX_EDGE = 512
 const val CONTACT_PHOTO_MAX_BYTES = 180 * 1024
 
 private val QUALITY_STEPS = intArrayOf(85, 70, 55, 40, 25)
 
-fun encode_contact_photo(context: Context, uri: Uri): String? {
+fun encode_contact_photo(context: Context, uri: Uri): String? =
+    encode_contact_photo_stream { context.contentResolver.openInputStream(uri) }
+
+fun encode_contact_photo_bytes(bytes: ByteArray): String? =
+    encode_contact_photo_stream { ByteArrayInputStream(bytes) }
+
+fun decode_contact_photo_data_uri(data_uri: String): ByteArray? {
+    if (!data_uri.startsWith("data:image/", ignoreCase = true)) return null
+    val comma = data_uri.indexOf(',')
+    if (comma < 0) return null
+    val header = data_uri.substring(0, comma)
+    if (!header.contains(";base64", ignoreCase = true)) return null
+    return runCatching { Base64.decode(data_uri.substring(comma + 1), Base64.DEFAULT) }
+        .getOrNull()
+        ?.takeIf { it.isNotEmpty() }
+}
+
+fun normalize_contact_photo(data_uri: String): String {
+    if (data_uri.isBlank()) return ""
+    val bytes = decode_contact_photo_data_uri(data_uri) ?: return ""
+    if (bytes.size <= CONTACT_PHOTO_MAX_BYTES) return data_uri
+    return runCatching { encode_contact_photo_bytes(bytes) }.getOrNull().orEmpty()
+}
+
+private fun encode_contact_photo_stream(open: () -> InputStream?): String? {
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    val bounds_stream = context.contentResolver.openInputStream(uri) ?: return null
+    val bounds_stream = open() ?: return null
     bounds_stream.use { stream -> BitmapFactory.decodeStream(stream, null, bounds) }
     if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
 
@@ -48,7 +74,7 @@ fun encode_contact_photo(context: Context, uri: Uri): String? {
     }
 
     val options = BitmapFactory.Options().apply { inSampleSize = sample }
-    val decoded = context.contentResolver.openInputStream(uri)?.use { stream ->
+    val decoded = open()?.use { stream ->
         BitmapFactory.decodeStream(stream, null, options)
     } ?: return null
 
