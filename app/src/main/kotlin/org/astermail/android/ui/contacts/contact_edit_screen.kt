@@ -144,6 +144,10 @@ fun ContactEditScreen(
     var notes by rememberSaveable { mutableStateOf(source?.notes.orEmpty()) }
     var avatar_url by rememberSaveable { mutableStateOf(source?.avatar_url.orEmpty()) }
     var loaded_contact_id by rememberSaveable { mutableStateOf<String?>(null) }
+    var show_email_errors by rememberSaveable { mutableStateOf(false) }
+    val invalid_email_text = stringResource(R.string.error_invalid_email)
+    val email_error = invalid_email_text.takeIf { show_email_errors && !is_valid_contact_email(email) }
+    val work_email_error = invalid_email_text.takeIf { show_email_errors && !is_valid_contact_email(work_email) }
 
     LaunchedEffect(source) {
         if (source != null && source.id != loaded_contact_id) {
@@ -223,14 +227,18 @@ fun ContactEditScreen(
                 label = stringResource(R.string.save),
                 enabled = can_save && !ui_state.is_loading && !contact_unavailable,
                 onClick = {
+                    if (!is_valid_contact_email(email) || !is_valid_contact_email(work_email)) {
+                        show_email_errors = true
+                        return@AsterGhostButton
+                    }
                     val contact = Contact(
                         id = contact_id ?: "",
                         name = name,
-                        email = email,
+                        email = email.trim(),
                         phone = phone,
                         company = company,
                         title = title,
-                        work_email = work_email,
+                        work_email = work_email.trim(),
                         work_phone = work_phone,
                         birthday = birthday,
                         address = address,
@@ -353,7 +361,7 @@ fun ContactEditScreen(
 
             FormSection(icon = TablerIcons.User, title = stringResource(R.string.personal)) {
                 FormField(stringResource(R.string.name), name, keyboard_capitalization = KeyboardCapitalization.Words) { name = it }
-                FormField(stringResource(R.string.email), email, keyboard_type = KeyboardType.Email) { email = it }
+                FormField(stringResource(R.string.email), email, keyboard_type = KeyboardType.Email, error_text = email_error) { email = it }
                 FormField(stringResource(R.string.phone), phone, keyboard_type = KeyboardType.Phone) { phone = it }
                 FormField(stringResource(R.string.birthday), birthday) { birthday = it }
             }
@@ -361,7 +369,7 @@ fun ContactEditScreen(
             FormSection(icon = TablerIcons.Briefcase, title = stringResource(R.string.work)) {
                 FormField(stringResource(R.string.company), company, keyboard_capitalization = KeyboardCapitalization.Words) { company = it }
                 FormField(stringResource(R.string.title), title, keyboard_capitalization = KeyboardCapitalization.Words) { title = it }
-                FormField(stringResource(R.string.work_email), work_email, keyboard_type = KeyboardType.Email) { work_email = it }
+                FormField(stringResource(R.string.work_email), work_email, keyboard_type = KeyboardType.Email, error_text = work_email_error) { work_email = it }
                 FormField(stringResource(R.string.work_phone), work_phone, keyboard_type = KeyboardType.Phone) { work_phone = it }
             }
 
@@ -442,12 +450,14 @@ private fun FormField(
     keyboard_type: KeyboardType = KeyboardType.Text,
     keyboard_capitalization: KeyboardCapitalization = KeyboardCapitalization.None,
     single_line: Boolean = true,
+    error_text: String? = null,
     on_change: (String) -> Unit,
 ) {
     AsterTextField(
         value = value,
         onValueChange = on_change,
         label = label,
+        error_text = error_text,
         singleLine = single_line,
         min_lines = if (single_line) 1 else 3,
         keyboard_options = KeyboardOptions(
@@ -456,4 +466,11 @@ private fun FormField(
             imeAction = if (single_line) ImeAction.Next else ImeAction.Default,
         ),
     )
+}
+
+private val contact_email_regex = Regex("""^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$""")
+
+internal fun is_valid_contact_email(value: String): Boolean {
+    val trimmed = value.trim()
+    return trimmed.isEmpty() || contact_email_regex.matches(trimmed)
 }

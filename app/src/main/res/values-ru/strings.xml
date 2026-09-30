@@ -3340,4 +3340,20 @@
     <string name="sort_a_to_z">Сортировать от А до Я</string>
     <string name="folders_sorted_a_to_z">Папки отсортированы от А до Я</string>
     <string name="plan_f_sort_folders">Сортировка папок от А до Я</string>
+    <string name="contact_sync_section">Контакты телефона</string>
+    <string name="contact_sync_title">Синхронизация с контактами телефона</string>
+    <string name="contact_sync_subtitle">Показывать контакты Aster в приложении «Контакты» и синхронизировать изменения в обе стороны</string>
+    <string name="contact_sync_disclosure_title">Синхронизировать контакты с этим телефоном?</string>
+    <string name="contact_sync_disclosure_message">Aster добавляет аккаунт в приложение «Контакты» для каждого аккаунта Aster на этом устройстве. Контакты расшифровываются на этом телефоне, поэтому другие приложения с доступом к контактам смогут их прочитать. Изменения в любом месте синхронизируются в обе стороны, а контакты, удаленные на телефоне, перемещаются в корзину Aster.</string>
+    <string name="contact_sync_turn_on">Включить</string>
+    <string name="contact_sync_off_title">Отключить синхронизацию контактов?</string>
+    <string name="contact_sync_off_message">Контакты Aster будут удалены из приложения «Контакты» на этом телефоне. В Aster они сохранятся.</string>
+    <string name="contact_sync_turn_off">Отключить</string>
+    <string name="contact_sync_permission_denied">Чтобы синхронизировать контакты, разрешите Aster доступ к контактам.</string>
+    <string name="contact_sync_settings_title">Разрешите доступ к контактам</string>
+    <string name="contact_sync_settings_message">Чтобы синхронизировать контакты, нажмите «Открыть настройки», перейдите в раздел «Разрешения» &gt; «Контакты» и выберите «Разрешить».</string>
+    <string name="contact_sync_open_settings">Открыть настройки</string>
+    <string name="contact_sync_label_sibling">Брат или сестра</string>
+    <string name="contact_sync_label_graduation">Выпускной</string>
+    <string name="contact_sync_label_wedding">Свадьба</string>
 </resources>

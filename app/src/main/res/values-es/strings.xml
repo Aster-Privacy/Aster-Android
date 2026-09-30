@@ -3322,4 +3322,20 @@
     <string name="sort_a_to_z">Ordenar de la A a la Z</string>
     <string name="folders_sorted_a_to_z">Carpetas ordenadas de la A a la Z</string>
     <string name="plan_f_sort_folders">Ordenar carpetas de la A a la Z</string>
+    <string name="contact_sync_section">Contactos del teléfono</string>
+    <string name="contact_sync_title">Sincronizar con los contactos del teléfono</string>
+    <string name="contact_sync_subtitle">Muestra tus contactos de Aster en la app Contactos del teléfono y sincroniza los cambios en ambos sentidos</string>
+    <string name="contact_sync_disclosure_title">¿Sincronizar los contactos con este teléfono?</string>
+    <string name="contact_sync_disclosure_message">Aster añade una cuenta a la app Contactos del teléfono por cada cuenta de Aster en este dispositivo. Tus contactos se descifran en este teléfono, por lo que otras apps con acceso a tus contactos pueden leerlos. Los cambios que hagas en cualquiera de los dos lugares se sincronizan en ambos sentidos, y los contactos que elimines en el teléfono se mueven a la papelera de Aster.</string>
+    <string name="contact_sync_turn_on">Activar</string>
+    <string name="contact_sync_off_title">¿Desactivar la sincronización de contactos?</string>
+    <string name="contact_sync_off_message">Tus contactos de Aster se quitan de la app Contactos de este teléfono. Se conservan en Aster.</string>
+    <string name="contact_sync_turn_off">Desactivar</string>
+    <string name="contact_sync_permission_denied">Para sincronizar los contactos, permite que Aster acceda a tus contactos.</string>
+    <string name="contact_sync_settings_title">Permitir acceso a los contactos</string>
+    <string name="contact_sync_settings_message">Para sincronizar tus contactos, toca Abrir Ajustes, ve a Permisos &gt; Contactos y elige Permitir.</string>
+    <string name="contact_sync_open_settings">Abrir Ajustes</string>
+    <string name="contact_sync_label_sibling">Hermano o hermana</string>
+    <string name="contact_sync_label_graduation">Graduación</string>
+    <string name="contact_sync_label_wedding">Boda</string>
 </resources>

@@ -3351,4 +3351,20 @@
     <string name="sort_a_to_z">Sort A to Z</string>
     <string name="folders_sorted_a_to_z">Folders sorted A to Z</string>
     <string name="plan_f_sort_folders">Sort folders A to Z</string>
+    <string name="contact_sync_section">Phone contacts</string>
+    <string name="contact_sync_title">Sync with phone contacts</string>
+    <string name="contact_sync_subtitle">Show your Aster contacts in your phone\'s Contacts app and keep changes in sync both ways</string>
+    <string name="contact_sync_disclosure_title">Sync contacts with this phone?</string>
+    <string name="contact_sync_disclosure_message">Aster adds an account to your phone\'s Contacts app for each Aster account on this device. Your contacts are decrypted on this phone, so other apps with access to your contacts can read them. Changes you make in either place sync both ways, and contacts you delete on your phone move to Trash in Aster.</string>
+    <string name="contact_sync_turn_on">Turn on</string>
+    <string name="contact_sync_off_title">Turn off contact sync?</string>
+    <string name="contact_sync_off_message">Your Aster contacts are removed from this phone\'s Contacts app. They stay in Aster.</string>
+    <string name="contact_sync_turn_off">Turn off</string>
+    <string name="contact_sync_permission_denied">To sync contacts, allow Aster to access your contacts.</string>
+    <string name="contact_sync_settings_title">Allow access to contacts</string>
+    <string name="contact_sync_settings_message">To sync your contacts, tap Open Settings, go to Permissions &gt; Contacts, and choose Allow.</string>
+    <string name="contact_sync_open_settings">Open Settings</string>
+    <string name="contact_sync_label_sibling">Sibling</string>
+    <string name="contact_sync_label_graduation">Graduation</string>
+    <string name="contact_sync_label_wedding">Wedding</string>
 </resources>

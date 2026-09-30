@@ -48,6 +48,8 @@ data class ContactItem(
     val data_version: Int? = null,
     val created_at: String? = null,
     val updated_at: String? = null,
+    val change_seq: Long? = null,
+    val revision: Long? = null,
 )
 
 @Serializable
@@ -79,6 +81,8 @@ data class CreateContactResponse(
     val id: String? = null,
     val success: Boolean = false,
     val created_at: String? = null,
+    val revision: Long? = null,
+    val change_seq: Long? = null,
 )
 
 @Serializable
@@ -89,7 +93,34 @@ data class UpdateContactRequest(
     val name_search_token: String? = null,
     val email_search_token: String? = null,
     val company_search_token: String? = null,
+    val expected_revision: Long? = null,
 )
+
+@Serializable
+data class UpdateContactResponse(
+    val success: Boolean = false,
+    val revision: Long? = null,
+    val change_seq: Long? = null,
+)
+
+@Serializable
+data class DeletedContactEntry(
+    val id: String,
+    val change_seq: Long,
+)
+
+@Serializable
+data class ContactChangesResponse(
+    val changes: List<ContactItem> = emptyList(),
+    val deleted: List<DeletedContactEntry> = emptyList(),
+    val next_since: Long = 0,
+    val has_more: Boolean = false,
+)
+
+const val CONTACT_REVISION_CONFLICT_CODE = "CONTACT_REVISION_CONFLICT"
+const val CONTACT_RESYNC_REQUIRED_CODE = "CONTACT_RESYNC_REQUIRED"
+
+class ContactResyncRequiredError : Exception("contact resync required")
 
 @Serializable
 data class DeleteContactResponse(
@@ -173,7 +204,8 @@ interface ContactsApi {
     suspend fun get_contacts_count(): ContactsCountResponse
     suspend fun get_contact(contact_id: String): ContactItem
     suspend fun create_contact(request: CreateContactRequest): CreateContactResponse
-    suspend fun update_contact(contact_id: String, request: UpdateContactRequest)
+    suspend fun update_contact(contact_id: String, request: UpdateContactRequest): UpdateContactResponse
+    suspend fun list_contact_changes(since: Long, limit: Int? = null): ContactChangesResponse
     suspend fun delete_contact(contact_id: String): DeleteContactResponse
     suspend fun bulk_delete_contacts(request: BulkDeleteContactsRequest): DeleteContactResponse
     suspend fun search_contacts(search_token: String, field: String = "all", limit: Int? = null): SearchContactsResponse
@@ -226,7 +258,7 @@ class ContactsApiImpl(private val client: ApiClient) : ContactsApi {
         return decode_or_throw(response)
     }
 
-    override suspend fun update_contact(contact_id: String, request: UpdateContactRequest) {
+    override suspend fun update_contact(contact_id: String, request: UpdateContactRequest): UpdateContactResponse {
         val response = client.http.put("${client.base_url}$base/$contact_id") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
@@ -236,6 +268,22 @@ class ContactsApiImpl(private val client: ApiClient) : ContactsApi {
             val body = try { response.body<String>() } catch (_: Throwable) { "" }
             throw client.map_http_status(response.status.value, body)
         }
+        return try {
+            response.body()
+        } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+            throw t
+        } catch (_: Throwable) {
+            UpdateContactResponse(success = true)
+        }
+    }
+
+    override suspend fun list_contact_changes(since: Long, limit: Int?): ContactChangesResponse {
+        val response = client.http.get("${client.base_url}$base/changes") {
+            parameter("since", since)
+            limit?.let { parameter("limit", it) }
+        }
+        if (response.status.value == 410) throw ContactResyncRequiredError()
+        return decode_or_throw(response)
     }
 
     override suspend fun delete_contact(contact_id: String): DeleteContactResponse {

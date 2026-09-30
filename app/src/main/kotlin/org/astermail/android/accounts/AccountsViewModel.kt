@@ -28,6 +28,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import org.astermail.android.BuildConfig
 import org.astermail.android.api.billing.BillingApi
@@ -62,6 +63,11 @@ class AccountsViewModel @Inject constructor(
             auth_repository.refresh_profile()
             refresh()
             sync_account_limit()
+        }
+        viewModelScope.launch {
+            account_store.current_account
+                .drop(1)
+                .collect { refresh() }
         }
     }
 

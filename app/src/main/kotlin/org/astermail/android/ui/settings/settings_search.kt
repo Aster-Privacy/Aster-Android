@@ -365,7 +365,10 @@ private fun settings_search_results(query: String, on_open: (String) -> Unit) {
                 is_last = index == matched.lastIndex,
                 min_height = metrics.min_height,
                 vertical_padding = metrics.vertical_padding,
-                on_click = { on_open(hit.screen_id) },
+                on_click = {
+                    settings_search_target.set(hit.label)
+                    on_open(hit.screen_id)
+                },
             )
         }
     }

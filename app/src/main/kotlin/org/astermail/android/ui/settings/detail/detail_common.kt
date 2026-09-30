@@ -96,6 +96,11 @@ import org.astermail.android.design.mirror_in_rtl
 import org.astermail.android.ui.common.page_punch
 import org.astermail.android.ui.common.page_surface
 import org.astermail.android.design.acrylic
+import org.astermail.android.ui.settings.local_settings_anchor_host
+import org.astermail.android.ui.settings.remember_settings_anchor_host
+import org.astermail.android.ui.settings.settings_search_anchor
+import org.astermail.android.ui.settings.settings_search_content
+import androidx.compose.runtime.CompositionLocalProvider
 
 internal val settings_row_min_height = 56.dp
 internal val settings_group_inset = AsterSpacing.xs
@@ -192,13 +197,17 @@ internal fun detail_scaffold(
         )
 
         if (scrollable) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(effective_scroll)
-                    .padding(AsterSpacing.lg),
-                content = content,
-            )
+            val anchor_host = remember_settings_anchor_host(effective_scroll)
+            CompositionLocalProvider(local_settings_anchor_host provides anchor_host) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(effective_scroll)
+                        .settings_search_content(anchor_host)
+                        .padding(AsterSpacing.lg),
+                    content = content,
+                )
+            }
         } else {
             Column(
                 modifier = Modifier.fillMaxSize(),
@@ -221,13 +230,18 @@ internal fun embeddable_detail_scaffold(
         return
     }
     if (scrollable) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(AsterSpacing.lg),
-            content = content,
-        )
+        val scroll_state = rememberScrollState()
+        val anchor_host = remember_settings_anchor_host(scroll_state)
+        CompositionLocalProvider(local_settings_anchor_host provides anchor_host) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scroll_state)
+                    .settings_search_content(anchor_host)
+                    .padding(AsterSpacing.lg),
+                content = content,
+            )
+        }
     } else {
         Column(modifier = Modifier.fillMaxSize(), content = content)
     }
@@ -310,7 +324,7 @@ internal fun section_label(text: String) {
         fontSize = 11.sp,
         fontWeight = FontWeight.SemiBold,
         letterSpacing = 0.8.sp,
-        modifier = Modifier.padding(
+        modifier = Modifier.settings_search_anchor(text).padding(
             start = AsterSpacing.xs,
             end = AsterSpacing.xs,
             top = AsterSpacing.xl,
@@ -365,6 +379,7 @@ internal fun settings_toggle_row(
     val view = androidx.compose.ui.platform.LocalView.current
     Row(
         modifier = modifier
+            .settings_search_anchor(title, subtitle)
             .fillMaxWidth()
             .toggleable(
                 value = checked,
@@ -420,7 +435,7 @@ internal fun settings_toggle_row(
 internal fun choice_group_title(text: String, subtitle: String? = null) {
     val colors = AsterMaterial.colors
     Column(
-        modifier = Modifier.padding(
+        modifier = Modifier.settings_search_anchor(text, subtitle).padding(
             start = AsterSpacing.lg,
             end = AsterSpacing.lg,
             top = AsterSpacing.md,
@@ -471,6 +486,7 @@ internal fun choice_option_row(
     }
     Row(
         modifier = Modifier
+            .settings_search_anchor(label, subtitle)
             .fillMaxWidth()
             .clip(androidx.compose.ui.graphics.RectangleShape)
             .then(interaction)
@@ -544,6 +560,7 @@ internal fun section_header_action(
     val colors = AsterMaterial.colors
     Row(
         modifier = Modifier
+            .settings_search_anchor(title)
             .fillMaxWidth()
             .padding(top = AsterSpacing.md, bottom = AsterSpacing.xs),
         verticalAlignment = Alignment.CenterVertically,
@@ -615,6 +632,7 @@ internal fun detail_row(
     val colors = AsterMaterial.colors
     Row(
         modifier = Modifier
+            .settings_search_anchor(title, subtitle)
             .fillMaxWidth()
             .then(if (on_click != null) Modifier.clickable(onClick = on_click) else Modifier)
             .heightIn(min = settings_row_min_height)

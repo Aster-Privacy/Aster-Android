@@ -3378,4 +3378,20 @@
     <string name="sort_a_to_z">ترتيب من أ إلى ي</string>
     <string name="folders_sorted_a_to_z">تم ترتيب المجلدات من أ إلى ي</string>
     <string name="plan_f_sort_folders">ترتيب المجلدات من أ إلى ي</string>
+    <string name="contact_sync_section">جهات اتصال الهاتف</string>
+    <string name="contact_sync_title">المزامنة مع جهات اتصال الهاتف</string>
+    <string name="contact_sync_subtitle">اعرض جهات اتصال Aster في تطبيق جهات الاتصال على هاتفك وزامن التغييرات في الاتجاهين</string>
+    <string name="contact_sync_disclosure_title">هل تريد مزامنة جهات الاتصال مع هذا الهاتف؟</string>
+    <string name="contact_sync_disclosure_message">يضيف Aster حسابًا إلى تطبيق جهات الاتصال على هاتفك لكل حساب Aster على هذا الجهاز. يُفك تشفير جهات اتصالك على هذا الهاتف، لذا يمكن للتطبيقات الأخرى التي لديها إذن الوصول إلى جهات الاتصال قراءتها. تتم مزامنة التغييرات التي تجريها في أي من المكانين في الاتجاهين، وتُنقل جهات الاتصال التي تحذفها من هاتفك إلى المهملات في Aster.</string>
+    <string name="contact_sync_turn_on">تشغيل</string>
+    <string name="contact_sync_off_title">هل تريد إيقاف مزامنة جهات الاتصال؟</string>
+    <string name="contact_sync_off_message">ستُزال جهات اتصال Aster من تطبيق جهات الاتصال على هذا الهاتف، وستبقى في Aster.</string>
+    <string name="contact_sync_turn_off">إيقاف</string>
+    <string name="contact_sync_permission_denied">لمزامنة جهات الاتصال، اسمح لـ Aster بالوصول إلى جهات اتصالك.</string>
+    <string name="contact_sync_settings_title">السماح بالوصول إلى جهات الاتصال</string>
+    <string name="contact_sync_settings_message">لمزامنة جهات اتصالك، اضغط على فتح الإعدادات، وانتقل إلى الأذونات &gt; جهات الاتصال، واختر السماح.</string>
+    <string name="contact_sync_open_settings">فتح الإعدادات</string>
+    <string name="contact_sync_label_sibling">أخ أو أخت</string>
+    <string name="contact_sync_label_graduation">تخرج</string>
+    <string name="contact_sync_label_wedding">زفاف</string>
 </resources>

@@ -51,6 +51,7 @@ import org.astermail.android.api.contacts.ImportContactsRequest
 import org.astermail.android.api.contacts.ImportContactsResponse
 import org.astermail.android.api.contacts.SuccessResponse
 import org.astermail.android.api.contacts.UpdateContactRequest
+import org.astermail.android.api.contacts.UpdateContactResponse
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.ui.contacts.Contact
 
@@ -133,7 +134,7 @@ class ContactsRepository @Inject constructor(
         } finally {
             key.fill(0)
         }
-    }.also { ContactPhotoDirectory.invalidate() }
+    }.also { on_local_change() }
 
     suspend fun import_contacts(contacts: List<Contact>): ContactImportSummary {
         var imported = 0L
@@ -170,7 +171,7 @@ class ContactsRepository @Inject constructor(
             }
         } finally {
             key.fill(0)
-            ContactPhotoDirectory.invalidate()
+            on_local_change()
         }
         return ContactImportSummary(
             imported = imported,
@@ -218,10 +219,11 @@ class ContactsRepository @Inject constructor(
         try {
             val request = build_update_request(contact, key)
             contacts_api.update_contact(contact_id, request)
+            Unit
         } finally {
             key.fill(0)
         }
-    }.also { ContactPhotoDirectory.invalidate() }
+    }.also { on_local_change() }
 
     suspend fun trash_contact(contact: Contact): Result<Unit> =
         update_contact(contact.id, contact.copy(deleted_at = java.time.Instant.now().toString()))
@@ -231,11 +233,16 @@ class ContactsRepository @Inject constructor(
 
     suspend fun delete_contact(contact_id: String): Result<DeleteContactResponse> = runCatching {
         contacts_api.delete_contact(contact_id)
-    }.also { ContactPhotoDirectory.invalidate() }
+    }.also { on_local_change() }
 
     suspend fun bulk_delete_contacts(ids: List<String>): Result<DeleteContactResponse> = runCatching {
         contacts_api.bulk_delete_contacts(BulkDeleteContactsRequest(ids))
-    }.also { ContactPhotoDirectory.invalidate() }
+    }.also { on_local_change() }
+
+    private fun on_local_change() {
+        ContactPhotoDirectory.invalidate()
+        org.astermail.android.contacts.sync.ContactSyncAccounts.notify_local_change()
+    }
 
     suspend fun search_contacts(query: String, field: String = "all", limit: Int? = null): Result<List<Contact>> = runCatching {
         val key = derive_contacts_key()
@@ -310,6 +317,101 @@ class ContactsRepository @Inject constructor(
 
     suspend fun remove_contact_from_group(contact_id: String, group_id: String): Result<SuccessResponse> = runCatching {
         contacts_api.remove_contact_from_group(contact_id, group_id)
+    }
+
+    suspend fun fetch_raw_changes(since: Long, limit: Int): RawContactChanges {
+        val response = contacts_api.list_contact_changes(since, limit)
+        val records = mutableListOf<RawContactRecord>()
+        val undecryptable = mutableListOf<String>()
+        for (item in response.changes) {
+            val record = raw_record(item)
+            if (record == null) undecryptable.add(item.id) else records.add(record)
+        }
+        return RawContactChanges(
+            records = records,
+            deleted_ids = response.deleted.map { it.id },
+            undecryptable_ids = undecryptable,
+            next_since = response.next_since,
+            has_more = response.has_more,
+        )
+    }
+
+    suspend fun fetch_raw_contact(contact_id: String): RawContactRecord? {
+        val item = try {
+            contacts_api.get_contact(contact_id)
+        } catch (_: ApiError.NotFoundError) {
+            return null
+        }
+        return raw_record(item) ?: throw IllegalStateException("failed to decrypt contact")
+    }
+
+    suspend fun create_raw_contact(json: String, unique_token: Boolean): CreateContactResponse {
+        val key = derive_contacts_key()
+        return try {
+            val contact = parse_contact_json("", json) ?: throw IllegalArgumentException("invalid contact json")
+            val (encrypted_data, data_nonce) = encrypt_raw_json(json, key)
+            contacts_api.create_contact(
+                CreateContactRequest(
+                    contact_token = if (unique_token) {
+                        b64(ByteArray(32).also { java.security.SecureRandom().nextBytes(it) })
+                    } else {
+                        generate_contact_token(contact, key)
+                    },
+                    encrypted_data = encrypted_data,
+                    data_nonce = data_nonce,
+                    integrity_hash = generate_integrity_hash(encrypted_data, data_nonce, CONTACT_DATA_VERSION, key),
+                    data_version = CONTACT_DATA_VERSION,
+                    name_search_token = generate_name_token(contact, key),
+                    email_search_token = generate_email_token(contact, key),
+                    company_search_token = generate_company_token(contact, key),
+                ),
+            )
+        } finally {
+            key.fill(0)
+            ContactPhotoDirectory.invalidate()
+        }
+    }
+
+    suspend fun update_raw_contact(contact_id: String, json: String, expected_revision: Long?): UpdateContactResponse {
+        val key = derive_contacts_key()
+        return try {
+            val contact = parse_contact_json(contact_id, json) ?: throw IllegalArgumentException("invalid contact json")
+            val (encrypted_data, data_nonce) = encrypt_raw_json(json, key)
+            contacts_api.update_contact(
+                contact_id,
+                UpdateContactRequest(
+                    encrypted_data = encrypted_data,
+                    data_nonce = data_nonce,
+                    integrity_hash = generate_integrity_hash(encrypted_data, data_nonce, CONTACT_DATA_VERSION, key),
+                    name_search_token = generate_name_token(contact, key),
+                    email_search_token = generate_email_token(contact, key),
+                    company_search_token = generate_company_token(contact, key),
+                    expected_revision = expected_revision,
+                ),
+            )
+        } finally {
+            key.fill(0)
+            ContactPhotoDirectory.invalidate()
+        }
+    }
+
+    private fun raw_record(item: ContactItem): RawContactRecord? {
+        val json = decrypt_contact(item)?.raw_json?.takeIf { it.isNotBlank() } ?: return null
+        return RawContactRecord(
+            id = item.id,
+            revision = item.revision ?: 1L,
+            change_seq = item.change_seq ?: 0L,
+            json = json,
+        )
+    }
+
+    private fun encrypt_raw_json(json: String, key: ByteArray): Pair<String, String> {
+        val obj = org.json.JSONObject(json)
+        obj.put("_version", CONTACT_DATA_VERSION)
+        obj.put("_encrypted_at", java.time.Instant.now().toString())
+        val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
+        val ciphertext = aes_gcm_encrypt(obj.toString().toByteArray(Charsets.UTF_8), key, nonce)
+        return b64(ciphertext) to b64(nonce)
     }
 
     private fun build_create_request(contact: Contact, key: ByteArray): CreateContactRequest {
@@ -628,6 +730,42 @@ class ContactsRepository @Inject constructor(
         return ""
     }
 
+    private fun put_primary_entry(
+        obj: org.json.JSONObject,
+        key: String,
+        previous: String,
+        value: String,
+        default_type: String,
+    ) {
+        val arr = obj.optJSONArray(key) ?: return
+        var index = -1
+        var fallback = -1
+        for (i in 0 until arr.length()) {
+            val entry = arr.optJSONObject(i) ?: continue
+            if (entry.optString("type", "") == "work") continue
+            if (fallback < 0) fallback = i
+            if (previous.isNotBlank() && entry.optString("value", "").trim().equals(previous.trim(), ignoreCase = true)) {
+                index = i
+                break
+            }
+        }
+        if (index < 0) index = fallback
+        if (index >= 0 && arr.optJSONObject(index)?.optString("value", "") == value) return
+        if (value.isBlank()) {
+            if (index >= 0) arr.remove(index)
+            if (arr.length() == 0) obj.remove(key)
+            return
+        }
+        if (index >= 0) {
+            arr.optJSONObject(index)?.put("value", value)
+            return
+        }
+        val rebuilt = org.json.JSONArray()
+        rebuilt.put(org.json.JSONObject().put("value", value).put("type", default_type))
+        for (i in 0 until arr.length()) rebuilt.put(arr.opt(i))
+        obj.put(key, rebuilt)
+    }
+
     private fun put_typed_entry(obj: org.json.JSONObject, key: String, type: String, value: String, primary: String) {
         val arr = obj.optJSONArray(key)
         if (arr == null) {
@@ -687,7 +825,7 @@ class ContactsRepository @Inject constructor(
                 email = emails.firstOrNull() ?: "",
                 phone = obj.optString("phone", "").ifBlank { first_entry_value(obj, "phone_entries", "work") },
                 company = obj.optString("company", ""),
-                title = obj.optString("job_title", ""),
+                title = obj.optString("role", "").ifBlank { obj.optString("job_title", "") },
                 work_email = resolve_work_email(emails, entry_value(obj, "email_entries", "work")),
                 work_phone = entry_value(obj, "phone_entries", "work"),
                 birthday = obj.optString("birthday", ""),
@@ -727,6 +865,8 @@ class ContactsRepository @Inject constructor(
         obj.put("last_name", last)
 
         val previous_emails = obj.optJSONArray("emails")
+        val previous_email = previous_emails?.optString(0, "").orEmpty()
+        val previous_phone = obj.optString("phone", "").ifBlank { first_entry_value(obj, "phone_entries", "work") }
         val emails = org.json.JSONArray()
         if (contact.email.isNotBlank()) emails.put(contact.email)
         if (contact.work_email.isNotBlank()) emails.put(contact.work_email)
@@ -738,12 +878,15 @@ class ContactsRepository @Inject constructor(
             }
         }
         obj.put("emails", emails)
+        put_primary_entry(obj, "email_entries", previous_email, contact.email, "other")
+        put_primary_entry(obj, "phone_entries", previous_phone, contact.phone, "mobile")
         put_typed_entry(obj, "email_entries", "work", contact.work_email, contact.email)
         put_typed_entry(obj, "phone_entries", "work", contact.work_phone, contact.phone)
 
         if (contact.phone.isNotBlank()) obj.put("phone", contact.phone) else obj.remove("phone")
         if (contact.company.isNotBlank()) obj.put("company", contact.company) else obj.remove("company")
         if (contact.title.isNotBlank()) obj.put("job_title", contact.title) else obj.remove("job_title")
+        if (contact.title.isNotBlank()) obj.put("role", contact.title) else obj.remove("role")
 
         val has_address = listOf(contact.address, contact.city, contact.region, contact.postal_code, contact.country)
             .any { it.isNotBlank() }
@@ -811,6 +954,21 @@ class ContactsRepository @Inject constructor(
         private val ENVELOPE_VERSIONS = listOf("astermail-envelope-v1", "astermail-import-v1")
     }
 }
+
+data class RawContactRecord(
+    val id: String,
+    val revision: Long,
+    val change_seq: Long,
+    val json: String,
+)
+
+data class RawContactChanges(
+    val records: List<RawContactRecord>,
+    val deleted_ids: List<String>,
+    val undecryptable_ids: List<String>,
+    val next_since: Long,
+    val has_more: Boolean,
+)
 
 data class ContactImportSummary(
     val imported: Long,

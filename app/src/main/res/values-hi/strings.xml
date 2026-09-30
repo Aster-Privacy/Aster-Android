@@ -3192,4 +3192,20 @@
     <string name="sort_a_to_z">A से Z क्रम में लगाएं</string>
     <string name="folders_sorted_a_to_z">फ़ोल्डर A से Z क्रम में लगाए गए</string>
     <string name="plan_f_sort_folders">फ़ोल्डर A से Z क्रम में लगाएं</string>
+    <string name="contact_sync_section">फ़ोन के संपर्क</string>
+    <string name="contact_sync_title">फ़ोन के संपर्कों के साथ सिंक करें</string>
+    <string name="contact_sync_subtitle">अपने Aster संपर्क फ़ोन के Contacts ऐप में दिखाएं और बदलावों को दोनों ओर सिंक रखें</string>
+    <string name="contact_sync_disclosure_title">इस फ़ोन के साथ संपर्क सिंक करें?</string>
+    <string name="contact_sync_disclosure_message">Aster इस डिवाइस पर हर Aster खाते के लिए आपके फ़ोन के Contacts ऐप में एक खाता जोड़ता है। आपके संपर्क इस फ़ोन पर डिक्रिप्ट होते हैं, इसलिए संपर्कों की अनुमति वाले दूसरे ऐप उन्हें पढ़ सकते हैं। किसी भी जगह किए गए बदलाव दोनों ओर सिंक होते हैं, और फ़ोन पर हटाए गए संपर्क Aster के ट्रैश में चले जाते हैं।</string>
+    <string name="contact_sync_turn_on">चालू करें</string>
+    <string name="contact_sync_off_title">संपर्क सिंक बंद करें?</string>
+    <string name="contact_sync_off_message">आपके Aster संपर्क इस फ़ोन के Contacts ऐप से हटा दिए जाते हैं। वे Aster में बने रहते हैं।</string>
+    <string name="contact_sync_turn_off">बंद करें</string>
+    <string name="contact_sync_permission_denied">संपर्क सिंक करने के लिए, Aster को अपने संपर्कों तक पहुंचने दें।</string>
+    <string name="contact_sync_settings_title">संपर्कों तक पहुंच की अनुमति दें</string>
+    <string name="contact_sync_settings_message">अपने संपर्क सिंक करने के लिए, सेटिंग खोलें पर टैप करें, अनुमतियां &gt; संपर्क पर जाएं, और अनुमति दें चुनें।</string>
+    <string name="contact_sync_open_settings">सेटिंग खोलें</string>
+    <string name="contact_sync_label_sibling">भाई या बहन</string>
+    <string name="contact_sync_label_graduation">ग्रेजुएशन</string>
+    <string name="contact_sync_label_wedding">शादी</string>
 </resources>

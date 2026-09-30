@@ -3340,4 +3340,20 @@
     <string name="sort_a_to_z">Sortuj od A do Z</string>
     <string name="folders_sorted_a_to_z">Foldery posortowane od A do Z</string>
     <string name="plan_f_sort_folders">Sortowanie folderów od A do Z</string>
+    <string name="contact_sync_section">Kontakty w telefonie</string>
+    <string name="contact_sync_title">Synchronizuj z kontaktami w telefonie</string>
+    <string name="contact_sync_subtitle">Pokazuj kontakty Aster w aplikacji Kontakty w telefonie i synchronizuj zmiany w obie strony</string>
+    <string name="contact_sync_disclosure_title">Synchronizować kontakty z tym telefonem?</string>
+    <string name="contact_sync_disclosure_message">Aster dodaje konto do aplikacji Kontakty w telefonie dla każdego konta Aster na tym urządzeniu. Kontakty są odszyfrowywane w tym telefonie, więc inne aplikacje z dostępem do kontaktów mogą je odczytać. Zmiany wprowadzone w dowolnym miejscu są synchronizowane w obie strony, a kontakty usunięte w telefonie trafiają do kosza w Aster.</string>
+    <string name="contact_sync_turn_on">Włącz</string>
+    <string name="contact_sync_off_title">Wyłączyć synchronizację kontaktów?</string>
+    <string name="contact_sync_off_message">Kontakty Aster zostaną usunięte z aplikacji Kontakty w tym telefonie. Pozostaną w Aster.</string>
+    <string name="contact_sync_turn_off">Wyłącz</string>
+    <string name="contact_sync_permission_denied">Aby synchronizować kontakty, zezwól Aster na dostęp do kontaktów.</string>
+    <string name="contact_sync_settings_title">Zezwól na dostęp do kontaktów</string>
+    <string name="contact_sync_settings_message">Aby synchronizować kontakty, kliknij Otwórz Ustawienia, przejdź do Uprawnienia &gt; Kontakty i wybierz Zezwól.</string>
+    <string name="contact_sync_open_settings">Otwórz Ustawienia</string>
+    <string name="contact_sync_label_sibling">Rodzeństwo</string>
+    <string name="contact_sync_label_graduation">Ukończenie szkoły</string>
+    <string name="contact_sync_label_wedding">Ślub</string>
 </resources>

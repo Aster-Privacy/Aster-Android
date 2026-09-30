@@ -3321,4 +3321,20 @@
     <string name="sort_a_to_z">Ordina dalla A alla Z</string>
     <string name="folders_sorted_a_to_z">Cartelle ordinate dalla A alla Z</string>
     <string name="plan_f_sort_folders">Ordina le cartelle dalla A alla Z</string>
+    <string name="contact_sync_section">Contatti del telefono</string>
+    <string name="contact_sync_title">Sincronizza con i contatti del telefono</string>
+    <string name="contact_sync_subtitle">Mostra i contatti Aster nell\'app Contatti del telefono e sincronizza le modifiche in entrambe le direzioni</string>
+    <string name="contact_sync_disclosure_title">Sincronizzare i contatti con questo telefono?</string>
+    <string name="contact_sync_disclosure_message">Aster aggiunge un account all\'app Contatti del telefono per ogni account Aster su questo dispositivo. I contatti vengono decrittografati su questo telefono, quindi le altre app con accesso ai contatti possono leggerli. Le modifiche fatte in un posto o nell\'altro vengono sincronizzate in entrambe le direzioni, e i contatti eliminati sul telefono vengono spostati nel Cestino di Aster.</string>
+    <string name="contact_sync_turn_on">Attiva</string>
+    <string name="contact_sync_off_title">Disattivare la sincronizzazione dei contatti?</string>
+    <string name="contact_sync_off_message">I contatti Aster vengono rimossi dall\'app Contatti di questo telefono. Restano in Aster.</string>
+    <string name="contact_sync_turn_off">Disattiva</string>
+    <string name="contact_sync_permission_denied">Per sincronizzare i contatti, consenti ad Aster di accedere ai tuoi contatti.</string>
+    <string name="contact_sync_settings_title">Consenti l\'accesso ai contatti</string>
+    <string name="contact_sync_settings_message">Per sincronizzare i contatti, tocca Apri Impostazioni, vai su Autorizzazioni &gt; Contatti e scegli Consenti.</string>
+    <string name="contact_sync_open_settings">Apri Impostazioni</string>
+    <string name="contact_sync_label_sibling">Fratello o sorella</string>
+    <string name="contact_sync_label_graduation">Laurea</string>
+    <string name="contact_sync_label_wedding">Matrimonio</string>
 </resources>

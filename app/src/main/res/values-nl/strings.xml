@@ -3302,4 +3302,20 @@
     <string name="sort_a_to_z">Sorteren van A tot Z</string>
     <string name="folders_sorted_a_to_z">Mappen gesorteerd van A tot Z</string>
     <string name="plan_f_sort_folders">Mappen sorteren van A tot Z</string>
+    <string name="contact_sync_section">Telefooncontacten</string>
+    <string name="contact_sync_title">Synchroniseren met telefooncontacten</string>
+    <string name="contact_sync_subtitle">Toon je Aster-contacten in de Contacten-app van je telefoon en synchroniseer wijzigingen in beide richtingen</string>
+    <string name="contact_sync_disclosure_title">Contacten synchroniseren met deze telefoon?</string>
+    <string name="contact_sync_disclosure_message">Aster voegt voor elk Aster-account op dit apparaat een account toe aan de Contacten-app van je telefoon. Je contacten worden op deze telefoon ontsleuteld, dus andere apps met toegang tot je contacten kunnen ze lezen. Wijzigingen op beide plekken worden in beide richtingen gesynchroniseerd, en contacten die je op je telefoon verwijdert, gaan naar de prullenbak in Aster.</string>
+    <string name="contact_sync_turn_on">Inschakelen</string>
+    <string name="contact_sync_off_title">Contactsynchronisatie uitschakelen?</string>
+    <string name="contact_sync_off_message">Je Aster-contacten worden verwijderd uit de Contacten-app van deze telefoon. Ze blijven in Aster.</string>
+    <string name="contact_sync_turn_off">Uitschakelen</string>
+    <string name="contact_sync_permission_denied">Geef Aster toegang tot je contacten om ze te synchroniseren.</string>
+    <string name="contact_sync_settings_title">Toegang tot contacten toestaan</string>
+    <string name="contact_sync_settings_message">Tik op Instellingen openen, ga naar Rechten &gt; Contacten en kies Toestaan om je contacten te synchroniseren.</string>
+    <string name="contact_sync_open_settings">Instellingen openen</string>
+    <string name="contact_sync_label_sibling">Broer of zus</string>
+    <string name="contact_sync_label_graduation">Diploma-uitreiking</string>
+    <string name="contact_sync_label_wedding">Bruiloft</string>
 </resources>

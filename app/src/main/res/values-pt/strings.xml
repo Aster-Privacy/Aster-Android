@@ -3321,4 +3321,20 @@
     <string name="sort_a_to_z">Ordenar de A a Z</string>
     <string name="folders_sorted_a_to_z">Pastas ordenadas de A a Z</string>
     <string name="plan_f_sort_folders">Ordenar pastas de A a Z</string>
+    <string name="contact_sync_section">Contactos do telemóvel</string>
+    <string name="contact_sync_title">Sincronizar com os contactos do telemóvel</string>
+    <string name="contact_sync_subtitle">Mostre os contactos do Aster na app Contactos do telemóvel e sincronize as alterações nos dois sentidos</string>
+    <string name="contact_sync_disclosure_title">Sincronizar os contactos com este telemóvel?</string>
+    <string name="contact_sync_disclosure_message">O Aster adiciona uma conta à app Contactos do telemóvel por cada conta Aster neste dispositivo. Os contactos são desencriptados neste telemóvel, por isso outras apps com acesso aos contactos podem lê-los. As alterações feitas em qualquer um dos lados são sincronizadas nos dois sentidos, e os contactos que eliminar no telemóvel vão para o lixo do Aster.</string>
+    <string name="contact_sync_turn_on">Ativar</string>
+    <string name="contact_sync_off_title">Desativar a sincronização de contactos?</string>
+    <string name="contact_sync_off_message">Os contactos do Aster são removidos da app Contactos deste telemóvel. Continuam no Aster.</string>
+    <string name="contact_sync_turn_off">Desativar</string>
+    <string name="contact_sync_permission_denied">Para sincronizar os contactos, permita que o Aster aceda aos seus contactos.</string>
+    <string name="contact_sync_settings_title">Permitir acesso aos contactos</string>
+    <string name="contact_sync_settings_message">Para sincronizar os seus contactos, toque em Abrir Definições, aceda a Permissões &gt; Contactos e escolha Permitir.</string>
+    <string name="contact_sync_open_settings">Abrir Definições</string>
+    <string name="contact_sync_label_sibling">Irmão ou irmã</string>
+    <string name="contact_sync_label_graduation">Formatura</string>
+    <string name="contact_sync_label_wedding">Casamento</string>
 </resources>

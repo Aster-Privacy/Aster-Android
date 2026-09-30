@@ -36,6 +36,8 @@ import okhttp3.WebSocketListener
 import org.astermail.android.api.BuildConfig
 import org.astermail.android.api.auth.RefreshOutcome
 import org.astermail.android.api.auth.SessionRefresher
+import org.astermail.android.contacts.sync.ContactSyncAccounts
+import org.astermail.android.contacts.sync.contact_sync_entry_point
 import org.astermail.android.notifications.websocket_url_for
 import org.astermail.android.storage.TokenStore
 import org.json.JSONObject
@@ -46,7 +48,7 @@ import kotlin.random.Random
 
 enum class LiveSyncEvent { connected, mail_changed, new_mail }
 
-enum class LiveSyncFrame { auth_success, auth_error, session_revoked, ping, mail_mutation, new_mail }
+enum class LiveSyncFrame { auth_success, auth_error, session_revoked, ping, mail_mutation, new_mail, contacts_changed }
 
 fun parse_live_sync_frame(text: String): LiveSyncFrame? {
     if (text.length > LIVE_SYNC_MAX_FRAME_CHARS) return null
@@ -58,6 +60,7 @@ fun parse_live_sync_frame(text: String): LiveSyncFrame? {
         "ping" -> LiveSyncFrame.ping
         "mail_mutation" -> LiveSyncFrame.mail_mutation
         "new_mail", "new_reaction" -> LiveSyncFrame.new_mail
+        "contacts_changed" -> LiveSyncFrame.contacts_changed
         else -> null
     }
 }
@@ -86,6 +89,14 @@ class LiveSyncSocket @Inject constructor(
             .writeTimeout(Duration.ofSeconds(15))
             .pingInterval(Duration.ofSeconds(PING_SECONDS))
             .build()
+    }
+
+    private fun request_contact_sync() {
+        ContactSyncAccounts.notify_remote_updated()
+        runCatching {
+            val account_id = contact_sync_entry_point(context).account_store().get_current_id() ?: return
+            ContactSyncAccounts.request_sync_for(context, account_id)
+        }
     }
 
     suspend fun run(on_event: (LiveSyncEvent) -> Unit) {
@@ -160,6 +171,7 @@ class LiveSyncSocket @Inject constructor(
                     LiveSyncFrame.ping -> runCatching { socket.send(PONG_FRAME) }
                     LiveSyncFrame.mail_mutation -> on_event(LiveSyncEvent.mail_changed)
                     LiveSyncFrame.new_mail -> on_event(LiveSyncEvent.new_mail)
+                    LiveSyncFrame.contacts_changed -> request_contact_sync()
                     null -> Unit
                 }
             }

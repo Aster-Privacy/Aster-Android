@@ -3321,4 +3321,20 @@
     <string name="sort_a_to_z">Ordenar de A a Z</string>
     <string name="folders_sorted_a_to_z">Pastas ordenadas de A a Z</string>
     <string name="plan_f_sort_folders">Ordenar pastas de A a Z</string>
+    <string name="contact_sync_section">Contatos do celular</string>
+    <string name="contact_sync_title">Sincronizar com os contatos do celular</string>
+    <string name="contact_sync_subtitle">Mostre seus contatos do Aster no app Contatos do celular e sincronize as alterações nos dois sentidos</string>
+    <string name="contact_sync_disclosure_title">Sincronizar os contatos com este celular?</string>
+    <string name="contact_sync_disclosure_message">O Aster adiciona uma conta ao app Contatos do celular para cada conta Aster neste dispositivo. Seus contatos são descriptografados neste celular, então outros apps com acesso aos seus contatos podem lê-los. As alterações feitas em qualquer um dos lados são sincronizadas nos dois sentidos, e os contatos que você excluir no celular vão para a lixeira do Aster.</string>
+    <string name="contact_sync_turn_on">Ativar</string>
+    <string name="contact_sync_off_title">Desativar a sincronização de contatos?</string>
+    <string name="contact_sync_off_message">Seus contatos do Aster são removidos do app Contatos deste celular. Eles continuam no Aster.</string>
+    <string name="contact_sync_turn_off">Desativar</string>
+    <string name="contact_sync_permission_denied">Para sincronizar os contatos, permita que o Aster acesse seus contatos.</string>
+    <string name="contact_sync_settings_title">Permitir acesso aos contatos</string>
+    <string name="contact_sync_settings_message">Para sincronizar seus contatos, toque em Abrir Configurações, acesse Permissões &gt; Contatos e escolha Permitir.</string>
+    <string name="contact_sync_open_settings">Abrir Configurações</string>
+    <string name="contact_sync_label_sibling">Irmão ou irmã</string>
+    <string name="contact_sync_label_graduation">Formatura</string>
+    <string name="contact_sync_label_wedding">Casamento</string>
 </resources>
