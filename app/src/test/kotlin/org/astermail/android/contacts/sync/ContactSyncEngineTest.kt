@@ -164,8 +164,8 @@ class ContactSyncEngineTest {
 
         fun card(id: String) = contact_card_from_json(store.getValue(id).second)
 
-        override suspend fun changes(since: Long, limit: Int): RemoteChangesPage {
-            if (since in 1 until floor) throw ContactResyncRequired()
+        override suspend fun changes(since: Long, limit: Int, full: Boolean): RemoteChangesPage {
+            if (!full && since in 1 until floor) throw ContactResyncRequired()
             val latest = log.filter { it.first > since }
                 .groupBy { it.second }
                 .map { it.value.last() }
@@ -389,6 +389,20 @@ class ContactSyncEngineTest {
         assertEquals(2, device.rows.size)
         assertEquals(remote.seq, cursor.since)
         assertFalse(engine.sync().full_sync)
+    }
+
+    @Test
+    fun full_sync_pages_past_purged_tombstones() = runTest {
+        val ids = (1..5).map { remote.server_create(person(it)) }
+        remote.server_hard_delete(ids[4])
+        remote.prune_tombstones()
+        remote.server_edit(ids[0]) { it.copy(notes = "after purge") }
+        val stats = engine.sync(ContactSyncOptions(page_size = 2))
+        assertTrue(stats.full_sync)
+        assertEquals(4, device.rows.size)
+        assertEquals("after purge", device.by_source(ids[0])!!.value.card.notes)
+        assertTrue(cursor.since >= remote.floor)
+        assertFalse(engine.sync(ContactSyncOptions(page_size = 2)).full_sync)
     }
 
     @Test

@@ -205,7 +205,7 @@ interface ContactsApi {
     suspend fun get_contact(contact_id: String): ContactItem
     suspend fun create_contact(request: CreateContactRequest): CreateContactResponse
     suspend fun update_contact(contact_id: String, request: UpdateContactRequest): UpdateContactResponse
-    suspend fun list_contact_changes(since: Long, limit: Int? = null): ContactChangesResponse
+    suspend fun list_contact_changes(since: Long, limit: Int? = null, full: Boolean = false): ContactChangesResponse
     suspend fun delete_contact(contact_id: String): DeleteContactResponse
     suspend fun bulk_delete_contacts(request: BulkDeleteContactsRequest): DeleteContactResponse
     suspend fun search_contacts(search_token: String, field: String = "all", limit: Int? = null): SearchContactsResponse
@@ -277,10 +277,11 @@ class ContactsApiImpl(private val client: ApiClient) : ContactsApi {
         }
     }
 
-    override suspend fun list_contact_changes(since: Long, limit: Int?): ContactChangesResponse {
+    override suspend fun list_contact_changes(since: Long, limit: Int?, full: Boolean): ContactChangesResponse {
         val response = client.http.get("${client.base_url}$base/changes") {
             parameter("since", since)
             limit?.let { parameter("limit", it) }
+            if (full) parameter("full", true)
         }
         if (response.status.value == 410) throw ContactResyncRequiredError()
         return decode_or_throw(response)
