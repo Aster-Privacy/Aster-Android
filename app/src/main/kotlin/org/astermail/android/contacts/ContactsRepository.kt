@@ -54,6 +54,8 @@ import org.astermail.android.api.contacts.UpdateContactRequest
 import org.astermail.android.api.contacts.UpdateContactResponse
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.ui.contacts.Contact
+import org.astermail.android.ui.contacts.ContactEntry
+import org.astermail.android.ui.contacts.ContactPostal
 
 data class ContactGroup(
     val id: String,
@@ -138,7 +140,10 @@ class ContactsRepository @Inject constructor(
         }
     }.also { on_local_change() }
 
-    suspend fun import_contacts(contacts: List<Contact>): ContactImportSummary {
+    suspend fun import_contacts(
+        contacts: List<Contact>,
+        on_progress: (done: Int, total: Int) -> Unit = { _, _ -> },
+    ): ContactImportSummary {
         var imported = 0L
         var updated = 0L
         var skipped = 0L
@@ -146,10 +151,14 @@ class ContactsRepository @Inject constructor(
         var limit_reached = false
         var last_failure: Throwable? = null
         val key = derive_contacts_key()
+        var processed = 0
+        on_progress(0, contacts.size)
         try {
             for (chunk in contacts.chunked(IMPORT_CHUNK_SIZE)) {
                 if (limit_reached) {
                     failed += chunk.size
+                    processed += chunk.size
+                    on_progress(processed, contacts.size)
                     continue
                 }
                 val request = ImportContactsRequest(chunk.map { build_import_item(it, key) })
@@ -170,6 +179,8 @@ class ContactsRepository @Inject constructor(
                         if (t is ApiError.PlanLimitExceeded) limit_reached = true
                     },
                 )
+                processed += chunk.size
+                on_progress(processed, contacts.size)
             }
         } finally {
             key.fill(0)
@@ -846,7 +857,16 @@ class ContactsRepository @Inject constructor(
                 groups = groups.toList(),
                 raw_json = json_str,
                 deleted_at = obj.optString("deleted_at", ""),
-            )
+            ).let { parsed ->
+                val card = org.astermail.android.contacts.sync.contact_card_from_json_object(obj)
+                parsed.with_typed_fields(
+                    emails = card.emails.map { ContactEntry(it.value, it.type, it.label) },
+                    phones = card.phones.map { ContactEntry(it.value, it.type, it.label) },
+                    addresses = card.addresses.map {
+                        ContactPostal(it.street, it.city, it.state, it.postal_code, it.country, it.type, it.label)
+                    },
+                )
+            }
         } catch (_: Throwable) {
             null
         }
@@ -866,43 +886,14 @@ class ContactsRepository @Inject constructor(
         obj.put("first_name", first)
         obj.put("last_name", last)
 
-        val previous_emails = obj.optJSONArray("emails")
-        val previous_email = previous_emails?.optString(0, "").orEmpty()
-        val previous_phone = obj.optString("phone", "").ifBlank { first_entry_value(obj, "phone_entries", "work") }
-        val emails = org.json.JSONArray()
-        if (contact.email.isNotBlank()) emails.put(contact.email)
-        if (contact.work_email.isNotBlank()) emails.put(contact.work_email)
-        if (previous_emails != null) {
-            val seen = mutableSetOf(contact.email.lowercase(), contact.work_email.lowercase())
-            for (i in 1 until previous_emails.length()) {
-                val extra = previous_emails.optString(i, "")
-                if (extra.isNotBlank() && seen.add(extra.lowercase())) emails.put(extra)
-            }
+        if (contact.has_typed_fields && contact.typed_fields_in_sync()) {
+            write_typed_fields(obj, contact)
+        } else {
+            write_flat_fields(obj, contact)
         }
-        obj.put("emails", emails)
-        put_primary_entry(obj, "email_entries", previous_email, contact.email, "other")
-        put_primary_entry(obj, "phone_entries", previous_phone, contact.phone, "mobile")
-        put_typed_entry(obj, "email_entries", "work", contact.work_email, contact.email)
-        put_typed_entry(obj, "phone_entries", "work", contact.work_phone, contact.phone)
-
-        if (contact.phone.isNotBlank()) obj.put("phone", contact.phone) else obj.remove("phone")
         if (contact.company.isNotBlank()) obj.put("company", contact.company) else obj.remove("company")
         if (contact.title.isNotBlank()) obj.put("job_title", contact.title) else obj.remove("job_title")
         if (contact.title.isNotBlank()) obj.put("role", contact.title) else obj.remove("role")
-
-        val has_address = listOf(contact.address, contact.city, contact.region, contact.postal_code, contact.country)
-            .any { it.isNotBlank() }
-        if (has_address) {
-            val addr = obj.optJSONObject("address") ?: org.json.JSONObject()
-            addr.put("street", contact.address)
-            addr.put("city", contact.city)
-            addr.put("state", contact.region)
-            addr.put("postal_code", contact.postal_code)
-            addr.put("country", contact.country)
-            obj.put("address", addr)
-        } else {
-            obj.remove("address")
-        }
 
         val social = obj.optJSONObject("social_links") ?: org.json.JSONObject()
         if (contact.website.isNotBlank()) social.put("website", contact.website) else social.remove("website")
@@ -946,13 +937,102 @@ class ContactsRepository @Inject constructor(
         return obj.toString()
     }
 
+    private fun write_flat_fields(obj: org.json.JSONObject, contact: Contact) {
+        val previous_emails = obj.optJSONArray("emails")
+        val previous_email = previous_emails?.optString(0, "").orEmpty()
+        val previous_phone = obj.optString("phone", "").ifBlank { first_entry_value(obj, "phone_entries", "work") }
+        val emails = org.json.JSONArray()
+        if (contact.email.isNotBlank()) emails.put(contact.email)
+        if (contact.work_email.isNotBlank()) emails.put(contact.work_email)
+        if (previous_emails != null) {
+            val seen = mutableSetOf(contact.email.lowercase(), contact.work_email.lowercase())
+            for (i in 1 until previous_emails.length()) {
+                val extra = previous_emails.optString(i, "")
+                if (extra.isNotBlank() && seen.add(extra.lowercase())) emails.put(extra)
+            }
+        }
+        obj.put("emails", emails)
+        put_primary_entry(obj, "email_entries", previous_email, contact.email, "other")
+        put_primary_entry(obj, "phone_entries", previous_phone, contact.phone, "mobile")
+        put_typed_entry(obj, "email_entries", "work", contact.work_email, contact.email)
+        put_typed_entry(obj, "phone_entries", "work", contact.work_phone, contact.phone)
+
+        if (contact.phone.isNotBlank()) obj.put("phone", contact.phone) else obj.remove("phone")
+
+        val has_address = listOf(contact.address, contact.city, contact.region, contact.postal_code, contact.country)
+            .any { it.isNotBlank() }
+        if (has_address) {
+            val addr = obj.optJSONObject("address") ?: org.json.JSONObject()
+            addr.put("street", contact.address)
+            addr.put("city", contact.city)
+            addr.put("state", contact.region)
+            addr.put("postal_code", contact.postal_code)
+            addr.put("country", contact.country)
+            obj.put("address", addr)
+        } else {
+            obj.remove("address")
+        }
+        val entries = obj.optJSONArray("address_entries") ?: return
+        var index = -1
+        for (i in 0 until entries.length()) {
+            val entry = entries.optJSONObject(i) ?: continue
+            if (index < 0) index = i
+            if (entry.optString("type", "") == "home") {
+                index = i
+                break
+            }
+        }
+        if (index < 0) return
+        if (!has_address) {
+            entries.remove(index)
+            if (entries.length() == 0) obj.remove("address_entries")
+            return
+        }
+        entries.optJSONObject(index)?.apply {
+            put("street", contact.address)
+            put("city", contact.city)
+            put("state", contact.region)
+            put("postal_code", contact.postal_code)
+            put("country", contact.country)
+        }
+    }
+
+    private fun write_typed_fields(obj: org.json.JSONObject, contact: Contact) {
+        val card = org.astermail.android.contacts.sync.ContactCard(
+            emails = contact.emails.map { org.astermail.android.contacts.sync.CardEntry(it.value, it.type, it.label) },
+            phones = contact.phones.map { org.astermail.android.contacts.sync.CardEntry(it.value, it.type, it.label) },
+            addresses = contact.addresses.map {
+                org.astermail.android.contacts.sync.CardAddress(
+                    it.street,
+                    it.city,
+                    it.region,
+                    it.postal_code,
+                    it.country,
+                    it.type,
+                    it.label,
+                )
+            },
+        ).normalized()
+        for (field in TYPED_FIELDS) {
+            org.astermail.android.contacts.sync.write_card_field(obj, card, field)
+        }
+        if (card.emails.isEmpty()) obj.remove("email_entries")
+        if (card.phones.isEmpty()) obj.remove("phone_entries")
+        if (card.addresses.isEmpty()) obj.remove("address_entries")
+    }
+
     companion object {
-        private const val IMPORT_CHUNK_SIZE = 500
+        private const val IMPORT_CHUNK_SIZE = 100
         private const val IMPORT_MAX_RETRIES = 3
         private const val SALT_PREFIX = "aster-hkdf-salt-v1:"
         private const val DERIVED_KEY_INFO = "aster-storage-encryption-key-v1"
         private const val HMAC_INFO = "contacts-hmac-v2"
         private const val SEARCH_INFO = "contacts-search-v2"
+        private val TYPED_FIELDS = listOf(
+            org.astermail.android.contacts.sync.CardField.EMAILS,
+            org.astermail.android.contacts.sync.CardField.PHONES,
+            org.astermail.android.contacts.sync.CardField.ADDRESSES,
+        )
         private val ENVELOPE_VERSIONS = listOf("astermail-envelope-v1", "astermail-import-v1")
     }
 }

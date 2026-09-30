@@ -34,7 +34,10 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -97,6 +100,8 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDestructiveButton
 import org.astermail.android.design.components.AsterIconButton
+import org.astermail.android.design.components.aster_menu
+import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.ui.search.build_contact_mail_query
 import androidx.compose.material.icons.filled.Star
 import org.astermail.android.ui.common.page_surface
@@ -115,6 +120,16 @@ fun ContactDetailScreen(
     val context = LocalContext.current
     val clipboard = LocalClipboard.current
     val clipboard_scope = rememberCoroutineScope()
+    val share_scope = rememberCoroutineScope()
+    var show_share_menu by remember { mutableStateOf(false) }
+    val share_failed_message = stringResource(R.string.could_not_open_link)
+    val copied_value_message = stringResource(R.string.copied)
+    val copy_value: (String) -> Unit = { value ->
+        clipboard_scope.launch {
+            clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("", value)))
+            Toast.makeText(context, copied_value_message, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     LaunchedEffect(contact_id) {
         vm.load_contact(contact_id)
@@ -191,6 +206,40 @@ fun ContactDetailScreen(
                 },
                 tint = if (is_favorite) colors.star else Color.Unspecified,
             )
+            Box {
+                AsterIconButton(
+                    icon = TablerIcons.Share,
+                    content_description = stringResource(R.string.share_contact),
+                    enabled = contact != null,
+                    onClick = { show_share_menu = true },
+                )
+                aster_menu(expanded = show_share_menu, on_dismiss = { show_share_menu = false }) {
+                    aster_menu_item(
+                        label = stringResource(R.string.contact_share_as_text),
+                        icon = TablerIcons.FileText,
+                        on_click = {
+                            show_share_menu = false
+                            val target = contact ?: return@aster_menu_item
+                            if (!share_contact_as_text(context, target)) {
+                                Toast.makeText(context, share_failed_message, Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                    )
+                    aster_menu_item(
+                        label = stringResource(R.string.contact_share_as_vcard),
+                        icon = TablerIcons.Id,
+                        on_click = {
+                            show_share_menu = false
+                            val target = contact ?: return@aster_menu_item
+                            share_scope.launch {
+                                if (!share_contact_as_vcard(context, target)) {
+                                    Toast.makeText(context, share_failed_message, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        },
+                    )
+                }
+            }
             AsterIconButton(
                 icon = TablerIcons.Edit,
                 content_description = stringResource(R.string.edit),
@@ -261,9 +310,24 @@ fun ContactDetailScreen(
                 }
             }
 
-            val primary_email = contact.email.ifBlank { contact.work_email }
-            val primary_phone = contact.phone.ifBlank { contact.work_phone }
-            val mail_query = build_contact_mail_query(listOf(contact.email, contact.work_email))
+            val email_entries = contact.email_entries()
+            val phone_entries = contact.phone_entries()
+            val address_entries = contact.address_entries()
+            val primary_email = email_entries.firstOrNull()?.value.orEmpty()
+            val primary_phone = phone_entries.firstOrNull()?.value.orEmpty()
+            val mail_query = build_contact_mail_query(email_entries.map { it.value })
+            fun dial(number: String) {
+                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + Uri.encode(number)))
+                try {
+                    context.startActivity(intent)
+                } catch (_: Throwable) {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.could_not_open_link),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+            }
             val can_mail = on_compose != null && primary_email.isNotBlank()
             val can_call = primary_phone.isNotBlank()
             val can_search = on_search_mail != null && mail_query.isNotEmpty()
@@ -289,16 +353,7 @@ fun ContactDetailScreen(
                         label = stringResource(R.string.call),
                         modifier = Modifier.weight(1f),
                     ) {
-                        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + primary_phone))
-                        try {
-                            context.startActivity(intent)
-                        } catch (_: Throwable) {
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.could_not_open_link),
-                                Toast.LENGTH_SHORT,
-                            ).show()
-                        }
+                        dial(primary_phone)
                     }
                 }
                 if (can_search) {
@@ -328,30 +383,30 @@ fun ContactDetailScreen(
             }
             Spacer(Modifier.height(AsterSpacing.xl))
 
-            if (contact.email.isNotBlank() || contact.work_email.isNotBlank()) {
+            if (email_entries.isNotEmpty()) {
                 detail_section(stringResource(R.string.email)) {
-                    if (contact.email.isNotBlank()) {
-                        DetailRow(stringResource(R.string.personal), contact.email)
-                    }
-                    if (contact.email.isNotBlank() && contact.work_email.isNotBlank()) {
-                        detail_row_divider()
-                    }
-                    if (contact.work_email.isNotBlank()) {
-                        DetailRow(stringResource(R.string.work), contact.work_email)
+                    email_entries.forEachIndexed { index, entry ->
+                        if (index > 0) detail_row_divider()
+                        DetailRow(
+                            label = contact_entry_type_label(entry.type, entry.label),
+                            value = entry.value,
+                            on_open = on_compose?.let { compose -> { compose(entry.value) } },
+                            on_copy = copy_value,
+                        )
                     }
                 }
             }
 
-            if (contact.phone.isNotBlank() || contact.work_phone.isNotBlank()) {
+            if (phone_entries.isNotEmpty()) {
                 detail_section(stringResource(R.string.phone)) {
-                    if (contact.phone.isNotBlank()) {
-                        DetailRow(stringResource(R.string.mobile), contact.phone)
-                    }
-                    if (contact.phone.isNotBlank() && contact.work_phone.isNotBlank()) {
-                        detail_row_divider()
-                    }
-                    if (contact.work_phone.isNotBlank()) {
-                        DetailRow(stringResource(R.string.work), contact.work_phone)
+                    phone_entries.forEachIndexed { index, entry ->
+                        if (index > 0) detail_row_divider()
+                        DetailRow(
+                            label = contact_entry_type_label(entry.type, entry.label),
+                            value = entry.value,
+                            on_open = { dial(entry.value) },
+                            on_copy = copy_value,
+                        )
                     }
                 }
             }
@@ -370,23 +425,15 @@ fun ContactDetailScreen(
                 }
             }
 
-            val has_address = listOf(
-                contact.address,
-                contact.city,
-                contact.region,
-                contact.postal_code,
-                contact.country,
-            ).any { it.isNotBlank() }
-            if (has_address) {
+            if (address_entries.isNotEmpty()) {
                 detail_section(stringResource(R.string.address)) {
-                    val lines = listOf(
-                        contact.address,
-                        listOf(contact.city, contact.region, contact.postal_code)
-                            .filter { it.isNotBlank() }
-                            .joinToString(", "),
-                        contact.country,
-                    ).filter { it.isNotBlank() }
-                    DetailRow(stringResource(R.string.location), lines.joinToString("\n"))
+                    address_entries.forEachIndexed { index, postal ->
+                        if (index > 0) detail_row_divider()
+                        DetailRow(
+                            label = contact_entry_type_label(postal.type, postal.label),
+                            value = postal.lines().joinToString("\n"),
+                        )
+                    }
                 }
             }
 
@@ -416,6 +463,7 @@ fun ContactDetailScreen(
                             stringResource(R.string.website),
                             contact.website,
                             on_open = url?.let { { open_contact_url(it) } },
+                            on_copy = copy_value,
                         )
                     }
                     if (contact.website.isNotBlank() && contact.twitter.isNotBlank()) {
@@ -427,6 +475,7 @@ fun ContactDetailScreen(
                             stringResource(R.string.twitter),
                             contact.twitter,
                             on_open = url?.let { { open_contact_url(it) } },
+                            on_copy = copy_value,
                         )
                     }
                     if ((contact.website.isNotBlank() || contact.twitter.isNotBlank()) && contact.linkedin.isNotBlank()) {
@@ -438,6 +487,7 @@ fun ContactDetailScreen(
                             stringResource(R.string.linkedin),
                             contact.linkedin,
                             on_open = url?.let { { open_contact_url(it) } },
+                            on_copy = copy_value,
                         )
                     }
                 }
@@ -445,15 +495,17 @@ fun ContactDetailScreen(
 
             if (contact.notes.isNotBlank()) {
                 detail_section(stringResource(R.string.notes)) {
-                    Text(
-                        text = contact.notes,
-                        color = colors.text_primary,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(
-                            horizontal = AsterSpacing.lg,
-                            vertical = AsterSpacing.md,
-                        ),
-                    )
+                    SelectionContainer {
+                        Text(
+                            text = contact.notes,
+                            color = colors.text_primary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(
+                                horizontal = AsterSpacing.lg,
+                                vertical = AsterSpacing.md,
+                            ),
+                        )
+                    }
                 }
             }
 
@@ -591,13 +643,29 @@ private fun detail_row_divider() {
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun DetailRow(label: String, value: String, on_open: (() -> Unit)? = null) {
+private fun DetailRow(
+    label: String,
+    value: String,
+    on_open: (() -> Unit)? = null,
+    on_copy: ((String) -> Unit)? = null,
+) {
     val colors = AsterMaterial.colors
+    val interactive = on_open != null
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .then(if (on_open != null) Modifier.clickable(onClick = on_open) else Modifier)
+            .then(
+                if (interactive) {
+                    Modifier.combinedClickable(
+                        onClick = { on_open?.invoke() },
+                        onLongClick = on_copy?.let { copy -> { copy(value) } },
+                    )
+                } else {
+                    Modifier
+                },
+            )
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
     ) {
         Text(
@@ -606,11 +674,21 @@ private fun DetailRow(label: String, value: String, on_open: (() -> Unit)? = nul
             fontSize = 12.sp,
         )
         Spacer(Modifier.height(2.dp))
-        Text(
-            text = value,
-            color = if (on_open != null) colors.accent_blue else colors.text_primary,
-            fontSize = 15.sp,
-        )
+        if (interactive) {
+            Text(
+                text = value,
+                color = colors.accent_blue,
+                fontSize = 15.sp,
+            )
+        } else {
+            SelectionContainer {
+                Text(
+                    text = value,
+                    color = colors.text_primary,
+                    fontSize = 15.sp,
+                )
+            }
+        }
     }
 }
 

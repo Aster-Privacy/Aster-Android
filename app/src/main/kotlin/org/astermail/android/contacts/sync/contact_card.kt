@@ -30,6 +30,7 @@ import org.json.JSONObject
 data class CardEntry(
     val value: String,
     val type: String,
+    val label: String = "",
 )
 
 @Serializable
@@ -40,6 +41,7 @@ data class CardAddress(
     val postal_code: String = "",
     val country: String = "",
     val type: String = "home",
+    val label: String = "",
 ) {
     fun is_blank(): Boolean =
         street.isBlank() && city.isBlank() && state.isBlank() && postal_code.isBlank() && country.isBlank()
@@ -69,6 +71,7 @@ data class ContactCard(
     val messengers: List<CardEntry> = emptyList(),
     val dates: List<CardEntry> = emptyList(),
     val starred: Boolean = false,
+    val photo: String = "",
 ) {
     fun has_content(): Boolean =
         normalized().copy(starred = false) != ContactCard()
@@ -96,11 +99,12 @@ data class ContactCard(
         messengers = normalize_entries(messengers, MESSENGER_TYPES, dedupe_case_insensitive = false),
         dates = normalize_entries(dates, DATE_TYPES, dedupe_case_insensitive = false),
         starred = starred,
+        photo = photo.trim(),
     )
 
     companion object {
-        val EMAIL_TYPES = listOf("home", "work", "other")
-        val PHONE_TYPES = listOf("mobile", "home", "work", "fax", "pager", "other")
+        val EMAIL_TYPES = listOf("home", "personal", "work", "other")
+        val PHONE_TYPES = listOf("mobile", "home", "personal", "work", "fax", "pager", "other")
         val ADDRESS_TYPES = listOf("home", "work", "other")
         val WEBSITE_TYPES = listOf("private", "work", "blog", "other")
         val RELATION_TYPES = listOf(
@@ -116,6 +120,9 @@ private fun normalize_type(type: String, allowed: List<String>): String {
     return if (lowered in allowed) lowered else "other"
 }
 
+private fun normalize_label(type: String, label: String): String =
+    if (type == "other") label.trim() else ""
+
 private fun normalize_entries(
     entries: List<CardEntry>,
     allowed: List<String>,
@@ -127,9 +134,10 @@ private fun normalize_entries(
         val value = entry.value.trim()
         if (value.isEmpty()) continue
         val type = normalize_type(entry.type, allowed)
+        val label = normalize_label(type, entry.label)
         val key = (if (dedupe_case_insensitive) value.lowercase(java.util.Locale.ROOT) else value) to type
         if (!seen.add(key)) continue
-        out.add(CardEntry(value, type))
+        out.add(CardEntry(value, type, label))
     }
     return out
 }
@@ -144,7 +152,7 @@ private fun normalize_addresses(addresses: List<CardAddress>): List<CardAddress>
             postal_code = address.postal_code.trim(),
             country = address.country.trim(),
             type = normalize_type(address.type, ContactCard.ADDRESS_TYPES),
-        )
+        ).let { it.copy(label = normalize_label(it.type, address.label)) }
         if (trimmed.is_blank() || trimmed in out) continue
         out.add(trimmed)
     }
@@ -174,6 +182,7 @@ enum class CardField {
     MESSENGERS,
     DATES,
     STARRED,
+    PHOTO,
 }
 
 fun ContactCard.field_value(field: CardField): Any = when (field) {
@@ -199,6 +208,7 @@ fun ContactCard.field_value(field: CardField): Any = when (field) {
     CardField.MESSENGERS -> messengers
     CardField.DATES -> dates
     CardField.STARRED -> starred
+    CardField.PHOTO -> photo
 }
 
 fun ContactCard.changed_fields(other: ContactCard): List<CardField> =
@@ -227,7 +237,7 @@ private fun JSONObject.entries(key: String): List<CardEntry> {
     val out = mutableListOf<CardEntry>()
     for (i in 0 until arr.length()) {
         val entry = arr.optJSONObject(i) ?: continue
-        out.add(CardEntry(entry.str("value"), entry.str("type")))
+        out.add(CardEntry(entry.str("value"), entry.str("type"), entry.str("label")))
     }
     return out
 }
@@ -239,6 +249,7 @@ private fun JSONObject.address(type_fallback: String): CardAddress = CardAddress
     postal_code = str("postal_code"),
     country = str("country"),
     type = str("type").ifBlank { type_fallback },
+    label = str("label"),
 )
 
 private fun JSONObject.has_array_entries(key: String): Boolean =
@@ -309,8 +320,28 @@ fun contact_card_from_json_object(obj: JSONObject): ContactCard {
         messengers = obj.entries("instant_messengers"),
         dates = obj.entries("date_entries"),
         starred = obj.optBoolean("is_favorite", false),
+        photo = remote_photo_fingerprint(obj.str("avatar_url")),
     ).normalized()
 }
+
+fun is_inline_photo(avatar_url: String): Boolean =
+    avatar_url.startsWith("data:image/", ignoreCase = true) && avatar_url.contains(";base64,", ignoreCase = true)
+
+fun remote_photo_fingerprint(avatar_url: String): String {
+    val trimmed = avatar_url.trim()
+    if (!is_inline_photo(trimmed)) return ""
+    return "r:" + sha256_prefix(trimmed.toByteArray(Charsets.UTF_8))
+}
+
+fun device_photo_fingerprint(bytes: ByteArray): String = sha256_prefix(bytes)
+
+private fun sha256_prefix(bytes: ByteArray): String =
+    java.security.MessageDigest.getInstance("SHA-256").digest(bytes)
+        .joinToString("") { "%02x".format(it) }
+        .take(32)
+
+fun contact_inline_avatar(json: String): String? =
+    runCatching { JSONObject(json).str("avatar_url").trim() }.getOrNull()?.takeIf { is_inline_photo(it) }
 
 fun is_trashed_contact_json(json: String): Boolean =
     runCatching { JSONObject(json).str("deleted_at").isNotBlank() }.getOrDefault(false)
@@ -321,7 +352,11 @@ private fun JSONObject.put_or_remove(key: String, value: String) {
 
 private fun entries_array(entries: List<CardEntry>): JSONArray {
     val arr = JSONArray()
-    for (entry in entries) arr.put(JSONObject().put("value", entry.value).put("type", entry.type))
+    for (entry in entries) {
+        val obj = JSONObject().put("value", entry.value).put("type", entry.type)
+        if (entry.label.isNotBlank()) obj.put("label", entry.label)
+        arr.put(obj)
+    }
     return arr
 }
 
@@ -332,11 +367,14 @@ private fun address_object(address: CardAddress, include_type: Boolean): JSONObj
     obj.put("state", address.state)
     obj.put("postal_code", address.postal_code)
     obj.put("country", address.country)
-    if (include_type) obj.put("type", address.type)
+    if (include_type) {
+        obj.put("type", address.type)
+        if (address.label.isNotBlank()) obj.put("label", address.label)
+    }
     return obj
 }
 
-fun write_card_field(obj: JSONObject, card: ContactCard, field: CardField) {
+fun write_card_field(obj: JSONObject, card: ContactCard, field: CardField, avatar: String? = null) {
     when (field) {
         CardField.FIRST_NAME -> obj.put("first_name", card.first_name)
         CardField.LAST_NAME -> obj.put("last_name", card.last_name)
@@ -367,7 +405,7 @@ fun write_card_field(obj: JSONObject, card: ContactCard, field: CardField) {
             val arr = JSONArray()
             card.addresses.forEach { arr.put(address_object(it, include_type = true)) }
             obj.put("address_entries", arr)
-            val first = card.addresses.firstOrNull()
+            val first = card.addresses.firstOrNull { it.type == "home" } ?: card.addresses.firstOrNull()
             if (first == null) obj.remove("address") else obj.put("address", address_object(first, include_type = false))
         }
         CardField.WEBSITES -> {
@@ -383,23 +421,32 @@ fun write_card_field(obj: JSONObject, card: ContactCard, field: CardField) {
         CardField.MESSENGERS -> obj.put("instant_messengers", entries_array(card.messengers))
         CardField.DATES -> obj.put("date_entries", entries_array(card.dates))
         CardField.STARRED -> obj.put("is_favorite", card.starred)
+        CardField.PHOTO -> when {
+            card.photo.isBlank() -> obj.remove("avatar_url")
+            avatar != null -> obj.put("avatar_url", avatar)
+        }
     }
 }
 
-fun patch_contact_json(remote_json: String, remote_card: ContactCard, target: ContactCard): String {
+fun patch_contact_json(
+    remote_json: String,
+    remote_card: ContactCard,
+    target: ContactCard,
+    avatar: String? = null,
+): String {
     val obj = JSONObject(remote_json)
-    for (field in target.changed_fields(remote_card)) write_card_field(obj, target, field)
+    for (field in target.changed_fields(remote_card)) write_card_field(obj, target, field, avatar)
     return obj.toString()
 }
 
-fun new_contact_json(card: ContactCard): String {
+fun new_contact_json(card: ContactCard, avatar: String? = null): String {
     val obj = JSONObject()
     obj.put("first_name", "")
     obj.put("last_name", "")
     obj.put("emails", JSONArray())
     obj.put("is_favorite", false)
     for (field in CardField.entries) {
-        if (card.field_value(field) != ContactCard().field_value(field)) write_card_field(obj, card, field)
+        if (card.field_value(field) != ContactCard().field_value(field)) write_card_field(obj, card, field, avatar)
     }
     return obj.toString()
 }

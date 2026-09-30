@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_type_home">Home</string>
+    <string name="contact_type_other">Other</string>
+    <string name="contact_type_fax">Fax</string>
+    <string name="contact_type_pager">Pager</string>
+    <string name="contact_type_custom">Custom</string>
+    <string name="contact_custom_label">Custom label</string>
+    <string name="contact_add_email">Add email</string>
+    <string name="contact_add_phone">Add phone</string>
+    <string name="contact_add_address">Add address</string>
+    <string name="contact_change_type">Change type</string>
+    <string name="share_contact">Share contact</string>
+    <string name="contact_share_as_text">Share as text</string>
+    <string name="contact_share_as_vcard">Share as vCard</string>
+    <plurals name="contacts_import_progress">
+        <item quantity="one">Importing %1$d of %2$d contact</item>
+        <item quantity="other">Importing %1$d of %2$d contacts</item>
+    </plurals>
+</resources>

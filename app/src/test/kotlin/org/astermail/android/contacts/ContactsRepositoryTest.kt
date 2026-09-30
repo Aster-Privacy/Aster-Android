@@ -527,12 +527,14 @@ class ContactsRepositoryTest {
             sizes.add(request.contacts.size)
             ImportContactsResponse(imported = request.contacts.size.toLong() - 1, updated = 1, skipped = 0)
         }
-        val contacts = (1..1201).map { Contact(id = "", name = "Person $it", email = "p$it@astermail.org") }
+        val contacts = (1..201).map { Contact(id = "", name = "Person $it", email = "p$it@astermail.org") }
+        val progress = mutableListOf<Pair<Int, Int>>()
 
-        val summary = repo.import_contacts(contacts)
+        val summary = repo.import_contacts(contacts) { done, total -> progress.add(done to total) }
 
-        assertEquals(listOf(500, 500, 201), sizes)
-        assertEquals(1198L, summary.imported)
+        assertEquals(listOf(100, 100, 1), sizes)
+        assertEquals(listOf(0 to 201, 100 to 201, 200 to 201, 201 to 201), progress)
+        assertEquals(198L, summary.imported)
         assertEquals(3L, summary.updated)
         assertEquals(0, summary.failed)
         assertFalse(summary.limit_reached)
@@ -580,13 +582,13 @@ class ContactsRepositoryTest {
             calls += 1
             if (calls == 1) throw ApiError.NotFoundError else ImportContactsResponse(imported = 1)
         }
-        val contacts = (1..501).map { Contact(id = "", name = "Person $it", email = "p$it@astermail.org") }
+        val contacts = (1..101).map { Contact(id = "", name = "Person $it", email = "p$it@astermail.org") }
 
         val summary = repo.import_contacts(contacts)
 
         assertEquals(2, calls)
         assertEquals(1L, summary.imported)
-        assertEquals(500, summary.failed)
+        assertEquals(100, summary.failed)
         assertTrue(summary.last_failure is ApiError.NotFoundError)
     }
 }

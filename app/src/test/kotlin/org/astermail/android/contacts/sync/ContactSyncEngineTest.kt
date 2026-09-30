@@ -41,6 +41,9 @@ class ContactSyncEngineTest {
         var dirty: Boolean,
         var deleted: Boolean,
         var version: Int,
+        var photo: String? = null,
+        var link: String = "",
+        var schema: Int = CARD_SCHEMA,
     )
 
     private class FakeDevice : ContactSyncDevice {
@@ -48,17 +51,46 @@ class ContactSyncEngineTest {
         var next_id = 1L
         var before_apply: ((Long) -> Unit)? = null
 
+        val photo_reads = mutableListOf<Long>()
+
+        private fun device_fp(row: Row) = row.photo?.let { device_photo_fingerprint(it.toByteArray()) }
+
+        private fun photo_value(row: Row): String {
+            val fp = device_fp(row) ?: return ""
+            val linked = row.link.substringBefore('|')
+            val remote_fp = row.link.substringAfter('|', "")
+            return if (linked == fp && remote_fp.isNotEmpty()) remote_fp else DEVICE_PHOTO_PREFIX + fp
+        }
+
+        private fun refresh(row: Row) {
+            row.card = row.card.copy(photo = photo_value(row))
+        }
+
+        private fun stored_photo(data_uri: String) = "dev:$data_uri"
+
         override fun list_states() = rows.map { (id, r) ->
-            DeviceContactState(id, r.source_id, r.revision, r.dirty, r.deleted, r.version)
+            DeviceContactState(id, r.source_id, r.revision, r.dirty, r.deleted, r.version, r.schema)
         }
 
         override fun read_cards(raw_ids: Collection<Long>) =
-            raw_ids.mapNotNull { id -> rows[id]?.let { id to it.card } }.toMap()
+            raw_ids.mapNotNull { id -> rows[id]?.let { refresh(it); id to it.card } }.toMap()
 
         override fun read_base(raw_id: Long) = rows[raw_id]?.base
 
-        override fun insert(source_id: String, revision: Long, card: ContactCard) {
-            rows[next_id++] = Row(source_id, revision, card, card, dirty = false, deleted = false, version = 1)
+        override fun read_photo(raw_id: Long): String? {
+            photo_reads.add(raw_id)
+            val photo = rows[raw_id]?.photo ?: return null
+            return "data:image/jpeg;base64," + java.util.Base64.getEncoder().encodeToString(photo.toByteArray())
+        }
+
+        override fun insert(source_id: String, revision: Long, card: ContactCard, photo: String?) {
+            val row = Row(source_id, revision, card, card, dirty = false, deleted = false, version = 1)
+            if (card.photo.isNotEmpty() && photo != null) {
+                row.photo = stored_photo(photo)
+                row.link = "${device_fp(row)}|${card.photo}"
+            }
+            refresh(row)
+            rows[next_id++] = row
         }
 
         override fun apply_remote(
@@ -68,15 +100,33 @@ class ContactSyncEngineTest {
             revision: Long,
             source_id: String,
             expected_version: Int,
+            photo: String?,
         ): Boolean {
             before_apply?.invoke(raw_id)
             val row = rows[raw_id] ?: return false
             if (row.version != expected_version || row.deleted) return false
+            val current_photo = current?.photo.orEmpty()
+            if (current_photo != target.photo) {
+                when {
+                    target.photo.isNotEmpty() && photo != null -> {
+                        row.photo = stored_photo(photo)
+                        row.link = "${device_fp(row)}|${target.photo}"
+                    }
+                    target.photo.isEmpty() -> if (!is_device_photo(current_photo)) {
+                        row.photo = null
+                        row.link = ""
+                    }
+                    is_device_photo(current_photo) ->
+                        row.link = current_photo.removePrefix(DEVICE_PHOTO_PREFIX) + "|" + target.photo
+                }
+            }
             row.card = target
+            refresh(row)
             row.base = target
             row.revision = revision
             row.source_id = source_id
             row.dirty = false
+            row.schema = CARD_SCHEMA
             row.version++
             return true
         }
@@ -86,6 +136,7 @@ class ContactSyncEngineTest {
             row.source_id = source_id
             row.revision = revision
             row.base = base
+            row.schema = CARD_SCHEMA
         }
 
         override fun purge(raw_id: Long) {
@@ -98,6 +149,14 @@ class ContactSyncEngineTest {
             val id = next_id++
             rows[id] = Row(null, null, card.normalized(), null, dirty = true, deleted = false, version = 1)
             return id
+        }
+
+        fun user_set_photo(raw_id: Long, photo: String?) {
+            val row = rows.getValue(raw_id)
+            row.photo = photo
+            refresh(row)
+            row.dirty = true
+            row.version++
         }
 
         fun user_edit(raw_id: Long, change: (ContactCard) -> ContactCard) {
@@ -145,6 +204,16 @@ class ContactSyncEngineTest {
             store[id] = rev + 1 to patch_contact_json(json, card, change(card).normalized())
             touch(id, false)
         }
+
+        fun server_set_avatar(id: String, avatar: String?) {
+            val (rev, json) = store.getValue(id)
+            val obj = JSONObject(json)
+            if (avatar == null) obj.remove("avatar_url") else obj.put("avatar_url", avatar)
+            store[id] = rev + 1 to obj.toString()
+            touch(id, false)
+        }
+
+        fun avatar(id: String) = contact_inline_avatar(store.getValue(id).second)
 
         fun server_trash(id: String) {
             val (rev, json) = store.getValue(id)
@@ -448,7 +517,7 @@ class ContactSyncEngineTest {
     fun duplicate_rows_for_one_contact_are_collapsed() = runTest {
         val id = remote.server_create(person(1))
         engine.sync()
-        device.insert(id, 1L, person(1))
+        device.insert(id, 1L, person(1), null)
         assertEquals(2, device.rows.size)
         engine.sync()
         assertEquals(1, device.rows.size)
@@ -521,5 +590,109 @@ class ContactSyncEngineTest {
             failed = true
         }
         assertTrue(failed)
+    }
+
+    private fun avatar(n: Int) = "data:image/jpeg;base64," +
+        java.util.Base64.getEncoder().encodeToString("image$n".toByteArray())
+
+    private fun device_avatar(photo: String) = "data:image/jpeg;base64," +
+        java.util.Base64.getEncoder().encodeToString(photo.toByteArray())
+
+    @Test
+    fun remote_avatar_is_written_to_the_phone() = runTest {
+        val id = remote.server_create(person(1))
+        remote.server_set_avatar(id, avatar(1))
+        engine.sync()
+        val row = device.by_source(id)!!.value
+        assertEquals("dev:${avatar(1)}", row.photo)
+        assertEquals(remote_photo_fingerprint(avatar(1)), row.card.photo)
+        assertEquals(ContactSyncStats(), engine.sync())
+    }
+
+    @Test
+    fun phone_photo_is_uploaded_with_a_new_contact() = runTest {
+        val raw = device.user_create(person(2))
+        device.user_set_photo(raw, "phone-photo")
+        assertEquals(1, engine.sync().created_remote)
+        val row = device.rows.getValue(raw)
+        assertEquals(device_avatar("phone-photo"), remote.avatar(row.source_id!!))
+        assertEquals(remote_photo_fingerprint(device_avatar("phone-photo")), row.card.photo)
+        assertEquals("phone-photo", row.photo)
+        val again = engine.sync()
+        assertEquals(0, again.updated_remote)
+        assertEquals(0, again.updated_local)
+    }
+
+    @Test
+    fun phone_photo_change_is_uploaded() = runTest {
+        val id = remote.server_create(person(1))
+        remote.server_set_avatar(id, avatar(1))
+        engine.sync()
+        val raw = device.by_source(id)!!.key
+        device.user_set_photo(raw, "new-photo")
+        assertEquals(1, engine.sync().updated_remote)
+        assertEquals(device_avatar("new-photo"), remote.avatar(id))
+        assertEquals("new-photo", device.rows.getValue(raw).photo)
+        assertFalse(device.rows.getValue(raw).dirty)
+        val again = engine.sync()
+        assertEquals(0, again.updated_remote)
+        assertEquals(0, again.updated_local)
+    }
+
+    @Test
+    fun phone_photo_removal_clears_the_avatar() = runTest {
+        val id = remote.server_create(person(1))
+        remote.server_set_avatar(id, avatar(1))
+        engine.sync()
+        device.user_set_photo(device.by_source(id)!!.key, null)
+        engine.sync()
+        assertNull(remote.avatar(id))
+        assertFalse(JSONObject(remote.store.getValue(id).second).has("avatar_url"))
+    }
+
+    @Test
+    fun remote_avatar_change_and_removal_reach_the_phone() = runTest {
+        val id = remote.server_create(person(1))
+        remote.server_set_avatar(id, avatar(1))
+        engine.sync()
+        remote.server_set_avatar(id, avatar(2))
+        engine.sync()
+        assertEquals("dev:${avatar(2)}", device.by_source(id)!!.value.photo)
+        remote.server_set_avatar(id, null)
+        engine.sync()
+        assertNull(device.by_source(id)!!.value.photo)
+        assertEquals("", device.by_source(id)!!.value.card.photo)
+    }
+
+    @Test
+    fun unsynced_phone_photo_survives_a_remote_edit() = runTest {
+        val id = remote.server_create(person(1))
+        engine.sync()
+        val raw = device.by_source(id)!!.key
+        device.rows.getValue(raw).photo = "added-offline"
+        remote.server_edit(id) { it.copy(company = "Web Co") }
+        engine.sync()
+        val row = device.rows.getValue(raw)
+        assertEquals("added-offline", row.photo)
+        assertEquals("Web Co", row.card.company)
+        assertEquals(device_avatar("added-offline"), remote.avatar(id))
+        assertEquals("Web Co", remote.card(id).company)
+    }
+
+    @Test
+    fun schema_upgrade_reapplies_unchanged_contacts() = runTest {
+        val id = remote.server_create(person(1))
+        remote.server_set_avatar(id, avatar(1))
+        engine.sync()
+        val row = device.by_source(id)!!.value
+        row.photo = null
+        row.link = ""
+        row.schema = 1
+        row.card = row.card.copy(photo = "")
+        cursor.since = 0
+        engine.sync()
+        val after = device.by_source(id)!!.value
+        assertEquals("dev:${avatar(1)}", after.photo)
+        assertEquals(CARD_SCHEMA, after.schema)
     }
 }
