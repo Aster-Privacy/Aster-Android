@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_type_home">住宅</string>
+    <string name="contact_type_other">其他</string>
+    <string name="contact_type_fax">传真</string>
+    <string name="contact_type_pager">寻呼机</string>
+    <string name="contact_type_custom">自定义</string>
+    <string name="contact_custom_label">自定义标签</string>
+    <string name="contact_add_email">添加邮箱</string>
+    <string name="contact_add_phone">添加电话</string>
+    <string name="contact_add_address">添加地址</string>
+    <string name="contact_change_type">更改类型</string>
+    <string name="share_contact">分享联系人</string>
+    <string name="contact_share_as_text">以文本分享</string>
+    <string name="contact_share_as_vcard">以 vCard 分享</string>
+    <plurals name="contacts_import_progress">
+        <item quantity="other">正在导入 %1$d/%2$d 个联系人</item>
+    </plurals>
+</resources>

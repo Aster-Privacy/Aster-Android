@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_type_home">Privat</string>
+    <string name="contact_type_other">Andere</string>
+    <string name="contact_type_fax">Fax</string>
+    <string name="contact_type_pager">Pager</string>
+    <string name="contact_type_custom">Benutzerdefiniert</string>
+    <string name="contact_custom_label">Eigene Bezeichnung</string>
+    <string name="contact_add_email">E-Mail hinzufügen</string>
+    <string name="contact_add_phone">Telefon hinzufügen</string>
+    <string name="contact_add_address">Adresse hinzufügen</string>
+    <string name="contact_change_type">Typ ändern</string>
+    <string name="share_contact">Kontakt teilen</string>
+    <string name="contact_share_as_text">Als Text teilen</string>
+    <string name="contact_share_as_vcard">Als vCard teilen</string>
+    <plurals name="contacts_import_progress">
+        <item quantity="one">%1$d von %2$d Kontakt wird importiert</item>
+        <item quantity="other">%1$d von %2$d Kontakten werden importiert</item>
+    </plurals>
+</resources>

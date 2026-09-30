@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_type_home">집</string>
+    <string name="contact_type_other">기타</string>
+    <string name="contact_type_fax">팩스</string>
+    <string name="contact_type_pager">호출기</string>
+    <string name="contact_type_custom">사용자 지정</string>
+    <string name="contact_custom_label">사용자 지정 라벨</string>
+    <string name="contact_add_email">이메일 추가</string>
+    <string name="contact_add_phone">전화번호 추가</string>
+    <string name="contact_add_address">주소 추가</string>
+    <string name="contact_change_type">유형 변경</string>
+    <string name="share_contact">연락처 공유</string>
+    <string name="contact_share_as_text">텍스트로 공유</string>
+    <string name="contact_share_as_vcard">vCard로 공유</string>
+    <plurals name="contacts_import_progress">
+        <item quantity="other">연락처 %2$d개 중 %1$d개 가져오는 중</item>
+    </plurals>
+</resources>

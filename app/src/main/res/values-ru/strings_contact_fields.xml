@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_type_home">Домашний</string>
+    <string name="contact_type_other">Другой</string>
+    <string name="contact_type_fax">Факс</string>
+    <string name="contact_type_pager">Пейджер</string>
+    <string name="contact_type_custom">Свой вариант</string>
+    <string name="contact_custom_label">Своя метка</string>
+    <string name="contact_add_email">Добавить email</string>
+    <string name="contact_add_phone">Добавить телефон</string>
+    <string name="contact_add_address">Добавить адрес</string>
+    <string name="contact_change_type">Изменить тип</string>
+    <string name="share_contact">Поделиться контактом</string>
+    <string name="contact_share_as_text">Поделиться текстом</string>
+    <string name="contact_share_as_vcard">Поделиться как vCard</string>
+    <plurals name="contacts_import_progress">
+        <item quantity="one">Импорт %1$d из %2$d контакта</item>
+        <item quantity="few">Импорт %1$d из %2$d контактов</item>
+        <item quantity="many">Импорт %1$d из %2$d контактов</item>
+        <item quantity="other">Импорт %1$d из %2$d контакта</item>
+    </plurals>
+</resources>

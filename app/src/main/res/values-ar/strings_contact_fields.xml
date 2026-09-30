@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_type_home">المنزل</string>
+    <string name="contact_type_other">أخرى</string>
+    <string name="contact_type_fax">فاكس</string>
+    <string name="contact_type_pager">جهاز النداء</string>
+    <string name="contact_type_custom">مخصص</string>
+    <string name="contact_custom_label">تسمية مخصصة</string>
+    <string name="contact_add_email">إضافة بريد إلكتروني</string>
+    <string name="contact_add_phone">إضافة هاتف</string>
+    <string name="contact_add_address">إضافة عنوان</string>
+    <string name="contact_change_type">تغيير النوع</string>
+    <string name="share_contact">مشاركة جهة الاتصال</string>
+    <string name="contact_share_as_text">المشاركة كنص</string>
+    <string name="contact_share_as_vcard">المشاركة كبطاقة vCard</string>
+    <plurals name="contacts_import_progress">
+        <item quantity="zero">جارٍ استيراد %1$d من أصل %2$d جهة اتصال</item>
+        <item quantity="one">جارٍ استيراد %1$d من أصل %2$d جهة اتصال</item>
+        <item quantity="two">جارٍ استيراد %1$d من أصل %2$d جهة اتصال</item>
+        <item quantity="few">جارٍ استيراد %1$d من أصل %2$d جهة اتصال</item>
+        <item quantity="many">جارٍ استيراد %1$d من أصل %2$d جهة اتصال</item>
+        <item quantity="other">جارٍ استيراد %1$d من أصل %2$d جهة اتصال</item>
+    </plurals>
+</resources>
