@@ -189,10 +189,10 @@ object MaterialThemeGenerator {
     )
 
     private val DARK_BASE_VARS = MaterialThemeVars(
-        bg_primary = "#121212", bg_secondary = "#0a0a0a", bg_tertiary = "#121212", bg_hover = "#1a1a1a",
-        bg_selected = "#142744", bg_card = "#121212",
-        border_primary = "#333333", border_secondary = "#2a2a2a", border_thread_divider = "#333333",
-        text_primary = "#f5f5f5", text_secondary = "#d4d4d4", text_tertiary = "#a1a1aa", text_muted = "#8a8a8a",
+        bg_primary = "#121212", bg_secondary = "#0a0a0a", bg_tertiary = "#1e1e1e", bg_hover = "#242424",
+        bg_selected = "#172a47", bg_card = "#121212",
+        border_primary = "#343434", border_secondary = "#2a2a2a", border_thread_divider = "#333333",
+        text_primary = "#f5f5f5", text_secondary = "#d4d4d4", text_tertiary = "#a7a7b0", text_muted = "#9c9c9c",
         accent_color = "#3b82f6", accent_color_hover = "#60a5fa",
         accent_blue = "#3b82f6", accent_blue_hover = "#60a5fa",
         avatar_bg = "#2a2a2a", avatar_text = "#9ca3af", indicator_bg = "#121212",
@@ -201,12 +201,12 @@ object MaterialThemeGenerator {
 
     private val LIGHT_BASE_VARS = MaterialThemeVars(
         bg_primary = "#ffffff", bg_secondary = "#f5f5f5", bg_tertiary = "#f3f4f6", bg_hover = "#ececec",
-        bg_selected = "#eff6ff", bg_card = "#ffffff",
-        border_primary = "#e8e8e8", border_secondary = "#e5e7eb", border_thread_divider = "#e5e5e5",
+        bg_selected = "#e8efff", bg_card = "#ffffff",
+        border_primary = "#d1d2d4", border_secondary = "#dfe1e5", border_thread_divider = "#e5e5e5",
         text_primary = "#111827", text_secondary = "#374151", text_tertiary = "#4b5563", text_muted = "#5f6470",
-        accent_color = "#3b82f6", accent_color_hover = "#2563eb",
-        accent_blue = "#3b82f6", accent_blue_hover = "#2563eb",
-        avatar_bg = "#e5e7eb", avatar_text = "#6b7280", indicator_bg = "#ffffff",
+        accent_color = "#2563eb", accent_color_hover = "#1d4ed8",
+        accent_blue = "#2563eb", accent_blue_hover = "#1d4ed8",
+        avatar_bg = "#e5e7eb", avatar_text = "#626875", indicator_bg = "#ffffff",
         sidebar_bg = "#f5f5f5", sidebar_hover = "#e0e0e0",
     )
 
@@ -269,8 +269,24 @@ object MaterialThemeGenerator {
         )
     }
 
+    private const val custom_field_border_contrast = 1.5
+
+    private val accent_ink_dark = androidx.compose.ui.graphics.Color(0xFF0A0A0A)
+
+    private fun readable_accent_ink(
+        accent: androidx.compose.ui.graphics.Color,
+        hover: androidx.compose.ui.graphics.Color,
+    ): androidx.compose.ui.graphics.Color {
+        val white = androidx.compose.ui.graphics.Color.White
+        val white_floor = min(contrast_ratio(white, accent), contrast_ratio(white, hover))
+        if (white_floor >= contrast_body_text) return white
+        val dark_floor = min(contrast_ratio(accent_ink_dark, accent), contrast_ratio(accent_ink_dark, hover))
+        return if (dark_floor > white_floor) accent_ink_dark else white
+    }
+
     fun to_palette(vars: MaterialThemeVars): ColorThemePalette {
         fun c(hex: String) = androidx.compose.ui.graphics.Color(("FF" + hex.removePrefix("#")).toLong(16))
+        val field_border = ensure_contrast(c(vars.border_primary), listOf(c(vars.bg_tertiary)), custom_field_border_contrast)
 
         return ColorThemePalette(
             bg_primary = c(vars.bg_primary),
@@ -296,12 +312,13 @@ object MaterialThemeGenerator {
             dropdown_bg = c(vars.bg_primary),
             dropdown_hover = c(vars.bg_hover),
             input_bg = c(vars.bg_tertiary),
-            input_border = c(vars.border_primary),
+            input_border = field_border,
             thread_card_bg = c(vars.bg_tertiary),
             thread_card_bg_hover = c(vars.bg_hover),
-            thread_card_border = c(vars.border_primary),
+            thread_card_border = field_border,
             thread_header_bg = c(vars.bg_tertiary),
             thread_content_bg = c(vars.bg_primary),
+            on_accent = readable_accent_ink(c(vars.accent_color), c(vars.accent_color_hover)),
         )
     }
 }

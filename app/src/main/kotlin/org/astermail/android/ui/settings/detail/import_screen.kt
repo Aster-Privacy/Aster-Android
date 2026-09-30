@@ -330,7 +330,8 @@ private fun state_pill(state_value: String, on_click: (() -> Unit)? = null) {
         "running", "queued" -> colors.accent_blue
         else -> colors.text_tertiary
     }.let { tone ->
-        org.astermail.android.ui.mail.chip_subtle_background(tone, colors.bg_card, colors.is_dark) to tone
+        val tint = org.astermail.android.ui.mail.chip_subtle_background(tone, colors.bg_card, colors.is_dark)
+        tint to org.astermail.android.ui.mail.chip_subtle_content(tone, tint, colors.is_dark)
     }
     Box(
         modifier = Modifier

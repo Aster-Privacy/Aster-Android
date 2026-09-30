@@ -181,7 +181,6 @@ import org.astermail.android.subscriptions.MailingListsViewModel
 import org.astermail.android.ui.common.TopToastState
 import org.astermail.android.ui.common.app_toast
 import org.astermail.android.design.SquircleShape
-import org.astermail.android.design.AsterColors
 import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
@@ -3933,7 +3932,7 @@ internal fun message_details_panel(
     } else {
         stringResource(R.string.encrypted_in_transit)
     }
-    val encryption_tint = if (is_encrypted) AsterColors.accent_blue else colors.text_muted
+    val encryption_tint = if (is_encrypted) colors.accent_blue else colors.text_muted
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -3987,7 +3986,7 @@ internal fun message_details_panel(
         }
         Text(
             text = stringResource(R.string.view_encryption_details),
-            color = AsterColors.accent_blue,
+            color = colors.accent_blue,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier
@@ -4077,7 +4076,7 @@ private fun security_details_dialog(
                         stringResource(R.string.encrypted_in_transit)
                     },
                     icon = TablerIcons.Lock,
-                    value_tint = if (is_encrypted) AsterColors.accent_blue else colors.text_muted,
+                    value_tint = if (is_encrypted) colors.accent_blue else colors.text_muted,
                 )
                 if (pgp_encrypted) {
                     detail_meta_row(
@@ -4135,7 +4134,7 @@ private fun pgp_signature_tint(
     return when (status) {
         org.astermail.android.crypto.PgpSignatureStatus.VALID -> colors.success
         org.astermail.android.crypto.PgpSignatureStatus.INVALID -> colors.danger
-        org.astermail.android.crypto.PgpSignatureStatus.UNVERIFIED -> AsterColors.accent_blue
+        org.astermail.android.crypto.PgpSignatureStatus.UNVERIFIED -> colors.accent_blue
         org.astermail.android.crypto.PgpSignatureStatus.NONE -> colors.text_muted
     }
 }
