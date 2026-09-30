@@ -187,13 +187,14 @@ fun contact_to_vcard(contact: Contact): String {
 
     var item = 0
 
-    fun push_typed(key: String, base_params: String, type_param: String?, label: String?, value: String) {
+    fun push_typed(key: String, type_param: String?, label: String?, value: String) {
         if (label != null) {
             item += 1
-            push("item$item.$key$base_params:$value")
+            val custom_type = vcard_param_text(label).let { if (it.isEmpty()) "" else ";TYPE=$it" }
+            push("item$item.$key$custom_type:$value")
             push("item$item.X-ABLabel:${escape_vcard(label)}")
         } else {
-            push("$key$base_params${type_param?.let { ";TYPE=$it" }.orEmpty()}:$value")
+            push("$key${type_param?.let { ";TYPE=$it" }.orEmpty()}:$value")
         }
     }
 
@@ -201,11 +202,11 @@ fun contact_to_vcard(contact: Contact): String {
     push("FN:${escape_vcard(contact.name.ifBlank { contact.email })}")
     for (entry in contact.email_entries()) {
         val (type_param, label) = vcard_type_for(entry.type, entry.label, EMAIL_TYPE_PARAMS)
-        push_typed("EMAIL", ";TYPE=INTERNET", type_param, label, escape_vcard(entry.value))
+        push_typed("EMAIL", type_param, label, escape_vcard(entry.value))
     }
     for (entry in contact.phone_entries()) {
         val (type_param, label) = vcard_type_for(entry.type, entry.label, PHONE_TYPE_PARAMS)
-        push_typed("TEL", "", type_param, label, escape_vcard(entry.value))
+        push_typed("TEL", type_param, label, escape_vcard(entry.value))
     }
     if (contact.company.isNotBlank()) push("ORG:${escape_vcard(contact.company)}")
     if (contact.title.isNotBlank()) push("TITLE:${escape_vcard(contact.title)}")
@@ -216,7 +217,7 @@ fun contact_to_vcard(contact: Contact): String {
         val value = ";;${escape_vcard(postal.street)};${escape_vcard(postal.city)};" +
             "${escape_vcard(postal.region)};${escape_vcard(postal.postal_code)};" +
             escape_vcard(postal.country)
-        push_typed("ADR", "", type_param, label, value)
+        push_typed("ADR", type_param, label, value)
     }
     if (contact.website.isNotBlank()) push_raw("URL", contact.website)
     if (contact.twitter.isNotBlank()) {
@@ -238,6 +239,9 @@ fun contact_to_vcard(contact: Contact): String {
 
     return lines.joinToString("\r\n")
 }
+
+private fun vcard_param_text(label: String): String =
+    label.replace(Regex("[\\p{Cntrl};:,\"]"), " ").trim().replace(Regex("\\s+"), " ")
 
 private val EMAIL_TYPE_PARAMS = mapOf("home" to "HOME", "work" to "WORK")
 private val PHONE_TYPE_PARAMS = mapOf(
