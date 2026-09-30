@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account_security_percent_title">Bezpieczeństwo Twojego konta wynosi %1$d%%</string>
+    <string name="account_security_dismiss">Odrzuć</string>
+    <string name="security_center_recommended">Zalecane działania</string>
+    <string name="security_center_protected">Chronione</string>
+    <string name="security_center_all_clear">Wszystkie zabezpieczenia są włączone.</string>
+    <string name="action_recommended">Zalecana czynność</string>
+    <string name="two_step_verification_recommendation">Włącz weryfikację dwuetapową, aby chronić konto nawet w razie kradzieży hasła.</string>
+    <string name="no_passkeys_recommendation">Dodaj klucz dostępu, aby logować się szybciej i bezpieczniej za pomocą biometrii lub kodu PIN urządzenia.</string>
+    <string name="login_alerts_off_recommendation">Włącz alerty logowania, aby otrzymywać powiadomienia, gdy nowe urządzenie zaloguje się na Twoje konto.</string>
+    <string name="billing_usage_title">Przegląd użycia</string>
+    <plurals name="security_actions_remaining">
+        <item quantity="one">%1$d zalecane działanie</item>
+        <item quantity="few">%1$d zalecane działania</item>
+        <item quantity="many">%1$d zalecanych działań</item>
+        <item quantity="other">%1$d zalecanego działania</item>
+    </plurals>
+</resources>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account_security_percent_title">Je accountbeveiliging is %1$d%%</string>
+    <string name="account_security_dismiss">Sluiten</string>
+    <string name="security_center_recommended">Aanbevolen acties</string>
+    <string name="security_center_protected">Beveiligd</string>
+    <string name="security_center_all_clear">Alle beveiligingen zijn ingeschakeld.</string>
+    <string name="action_recommended">Actie aanbevolen</string>
+    <string name="two_step_verification_recommendation">Schakel tweestapsverificatie in om je account veilig te houden, zelfs als je wachtwoord wordt gestolen.</string>
+    <string name="no_passkeys_recommendation">Voeg een passkey toe voor sneller en veiliger inloggen met de biometrie of pincode van je apparaat.</string>
+    <string name="login_alerts_off_recommendation">Schakel inlogmeldingen in om een melding te krijgen wanneer een nieuw apparaat inlogt op je account.</string>
+    <string name="billing_usage_title">Gebruiksoverzicht</string>
+    <plurals name="security_actions_remaining">
+        <item quantity="one">%1$d aanbevolen actie</item>
+        <item quantity="other">%1$d aanbevolen acties</item>
+    </plurals>
+</resources>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account_security_percent_title">Ihre Kontosicherheit liegt bei %1$d%%</string>
+    <string name="account_security_dismiss">Verwerfen</string>
+    <string name="security_center_recommended">Empfohlene Aktionen</string>
+    <string name="security_center_protected">Geschützt</string>
+    <string name="security_center_all_clear">Alle Schutzfunktionen sind aktiviert.</string>
+    <string name="action_recommended">Aktion empfohlen</string>
+    <string name="two_step_verification_recommendation">Aktivieren Sie die zweistufige Verifizierung, damit Ihr Konto auch bei gestohlenem Passwort sicher bleibt.</string>
+    <string name="no_passkeys_recommendation">Fügen Sie einen Passkey hinzu, um sich schneller und sicherer mit Biometrie oder PIN Ihres Geräts anzumelden.</string>
+    <string name="login_alerts_off_recommendation">Aktivieren Sie Anmeldebenachrichtigungen, um informiert zu werden, wenn sich ein neues Gerät bei Ihrem Konto anmeldet.</string>
+    <string name="billing_usage_title">Nutzungsübersicht</string>
+    <plurals name="security_actions_remaining">
+        <item quantity="one">%1$d empfohlene Aktion</item>
+        <item quantity="other">%1$d empfohlene Aktionen</item>
+    </plurals>
+</resources>

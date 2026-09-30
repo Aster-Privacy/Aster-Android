@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account_security_percent_title">Hesap güvenliğiniz %%%1$d</string>
+    <string name="account_security_dismiss">Kapat</string>
+    <string name="security_center_recommended">Önerilen işlemler</string>
+    <string name="security_center_protected">Korunuyor</string>
+    <string name="security_center_all_clear">Tüm korumalar açık.</string>
+    <string name="action_recommended">İşlem önerilir</string>
+    <string name="two_step_verification_recommendation">Şifreniz çalınsa bile hesabınızı güvende tutmak için iki adımlı doğrulamayı açın.</string>
+    <string name="no_passkeys_recommendation">Cihazınızın biyometrisini veya PIN\'ini kullanarak daha hızlı ve güvenli giriş için bir geçiş anahtarı ekleyin.</string>
+    <string name="login_alerts_off_recommendation">Hesabınıza yeni bir cihazdan giriş yapıldığında bildirim almak için giriş uyarılarını açın.</string>
+    <string name="billing_usage_title">Kullanım Genel Bakışı</string>
+    <plurals name="security_actions_remaining">
+        <item quantity="one">%1$d önerilen işlem</item>
+        <item quantity="other">%1$d önerilen işlem</item>
+    </plurals>
+</resources>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account_security_percent_title">アカウントのセキュリティは %1$d%% です</string>
+    <string name="account_security_dismiss">閉じる</string>
+    <string name="security_center_recommended">推奨される操作</string>
+    <string name="security_center_protected">保護済み</string>
+    <string name="security_center_all_clear">すべての保護が有効です。</string>
+    <string name="action_recommended">対応をおすすめします</string>
+    <string name="two_step_verification_recommendation">パスワードが盗まれてもアカウントを安全に保つため、二段階認証を有効にしてください。</string>
+    <string name="no_passkeys_recommendation">デバイスの生体認証やPINを使ったより速く安全なサインインのために、パスキーを追加してください。</string>
+    <string name="login_alerts_off_recommendation">新しいデバイスでアカウントにサインインした際に通知を受け取るには、ログインアラートをオンにしてください。</string>
+    <string name="billing_usage_title">使用状況の概要</string>
+    <plurals name="security_actions_remaining">
+        <item quantity="other">推奨される操作: %1$d 件</item>
+    </plurals>
+</resources>
