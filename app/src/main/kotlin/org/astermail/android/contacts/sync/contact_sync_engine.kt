@@ -28,13 +28,17 @@ data class DeviceContactState(
     val dirty: Boolean,
     val deleted: Boolean,
     val version: Int,
+    val schema: Int = CARD_SCHEMA,
 )
+
+const val CARD_SCHEMA = 2
 
 interface ContactSyncDevice {
     fun list_states(): List<DeviceContactState>
     fun read_cards(raw_ids: Collection<Long>): Map<Long, ContactCard>
     fun read_base(raw_id: Long): ContactCard?
-    fun insert(source_id: String, revision: Long, card: ContactCard)
+    fun read_photo(raw_id: Long): String?
+    fun insert(source_id: String, revision: Long, card: ContactCard, photo: String?)
     fun apply_remote(
         raw_id: Long,
         current: ContactCard?,
@@ -42,6 +46,7 @@ interface ContactSyncDevice {
         revision: Long,
         source_id: String,
         expected_version: Int,
+        photo: String?,
     ): Boolean
     fun set_identity(raw_id: Long, source_id: String, revision: Long, base: ContactCard)
     fun purge(raw_id: Long)
@@ -178,15 +183,17 @@ class ContactSyncEngine(
                 val card = cards[row.raw_id] ?: continue
                 if (!card.has_content()) continue
                 ensure_active()
+                val avatar = if (is_device_photo(card.photo)) device.read_photo(row.raw_id) else null
+                val synced = card.copy(photo = avatar?.let { remote_photo_fingerprint(it) }.orEmpty())
                 val result = try {
-                    remote.create(new_contact_json(card))
+                    remote.create(new_contact_json(synced, avatar))
                 } catch (_: RemotePlanLimit) {
                     stats.skipped_plan_limit += created.size - created.indexOf(row)
                     break
                 }
                 stats.created_remote++
-                if (!device.apply_remote(row.raw_id, card, card, result.revision, result.id, row.version)) {
-                    device.set_identity(row.raw_id, result.id, result.revision, card)
+                if (!device.apply_remote(row.raw_id, card, synced, result.revision, result.id, row.version, null)) {
+                    device.set_identity(row.raw_id, result.id, result.revision, synced)
                 }
             }
         }
@@ -234,14 +241,19 @@ class ContactSyncEngine(
                 return
             }
             val remote_card = contact_card_from_json(current.json)
-            val merged = merge_contact_cards(base, local, remote_card)
+            var merged = merge_contact_cards(base, local, remote_card)
+            var avatar: String? = null
+            if (is_device_photo(merged.photo)) {
+                avatar = device.read_photo(row.raw_id)
+                merged = merged.copy(photo = avatar?.let { remote_photo_fingerprint(it) } ?: remote_card.photo)
+            }
             var revision = current.revision
             if (merged != remote_card) {
                 ensure_active()
                 try {
                     revision = remote.update(
                         source_id,
-                        patch_contact_json(current.json, remote_card, merged),
+                        patch_contact_json(current.json, remote_card, merged, avatar),
                         current.revision,
                     )
                     stats.updated_remote++
@@ -255,7 +267,8 @@ class ContactSyncEngine(
                     return
                 }
             }
-            if (device.apply_remote(row.raw_id, local, merged, revision, source_id, row.version) && merged != local) {
+            val photo = if (avatar == null && merged.photo != local.photo) contact_inline_avatar(current.json) else null
+            if (device.apply_remote(row.raw_id, local, merged, revision, source_id, row.version, photo) && merged != local) {
                 stats.updated_local++
             }
             return
@@ -298,7 +311,8 @@ class ContactSyncEngine(
                 if (state == null) {
                     if (trashed) continue
                     val card = contact_card_from_json(contact.json)
-                    device.insert(contact.id, contact.revision, card)
+                    val photo = if (card.photo.isNotEmpty()) contact_inline_avatar(contact.json) else null
+                    device.insert(contact.id, contact.revision, card, photo)
                     stats.inserted_local++
                     continue
                 }
@@ -308,21 +322,37 @@ class ContactSyncEngine(
                     stats.deleted_local++
                     continue
                 }
-                if (state.sync_revision == contact.revision) continue
+                if (state.sync_revision == contact.revision && state.schema >= CARD_SCHEMA) continue
                 updates.add(state to contact)
             }
 
             if (updates.isNotEmpty()) {
                 val current = device.read_cards(updates.map { it.first.raw_id })
                 for ((state, contact) in updates) {
+                    val local = current[state.raw_id]
+                    if (local != null && is_device_photo(local.photo)) {
+                        device.flush()
+                        try {
+                            push_edit(state, local, stats)
+                        } catch (_: RemoteUndecryptable) {
+                            stats.skipped_undecryptable++
+                        }
+                        continue
+                    }
                     val target = contact_card_from_json(contact.json)
+                    val photo = if (target.photo.isNotEmpty() && target.photo != local?.photo) {
+                        contact_inline_avatar(contact.json)
+                    } else {
+                        null
+                    }
                     val applied = device.apply_remote(
                         state.raw_id,
-                        current[state.raw_id],
+                        local,
                         target,
                         contact.revision,
                         contact.id,
                         state.version,
+                        photo,
                     )
                     if (applied) stats.updated_local++
                 }
@@ -347,3 +377,7 @@ class ContactSyncEngine(
         }
     }
 }
+
+fun is_device_photo(photo: String): Boolean = photo.startsWith(DEVICE_PHOTO_PREFIX)
+
+const val DEVICE_PHOTO_PREFIX = "d:"
