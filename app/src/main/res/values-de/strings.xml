@@ -3313,6 +3313,9 @@
     <string name="contact_sync_off_message">Deine Aster-Kontakte werden aus der Kontakte-App dieses Telefons entfernt. In Aster bleiben sie erhalten.</string>
     <string name="contact_sync_turn_off">Deaktivieren</string>
     <string name="contact_sync_permission_denied">Erlaube Aster den Zugriff auf deine Kontakte, um sie zu synchronisieren.</string>
+    <string name="contact_sync_settings_title">Zugriff auf Kontakte erlauben</string>
+    <string name="contact_sync_settings_message">Um deine Kontakte zu synchronisieren, tippe auf „Einstellungen öffnen“, gehe zu Berechtigungen &gt; Kontakte und wähle „Zulassen“.</string>
+    <string name="contact_sync_open_settings">Einstellungen öffnen</string>
     <string name="contact_sync_label_sibling">Geschwister</string>
     <string name="contact_sync_label_graduation">Abschluss</string>
     <string name="contact_sync_label_wedding">Hochzeit</string>

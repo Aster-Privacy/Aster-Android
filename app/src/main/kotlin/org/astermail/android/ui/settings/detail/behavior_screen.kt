@@ -25,6 +25,12 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import android.Manifest
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -72,6 +78,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -847,9 +856,29 @@ private fun phone_contacts_sync_section() {
     var permitted by remember { mutableStateOf(ContactSyncAccounts.has_permissions(context)) }
     var show_disclosure by remember { mutableStateOf(false) }
     var show_off_confirm by remember { mutableStateOf(false) }
+    var show_settings_prompt by remember { mutableStateOf(false) }
+    var pending_enable by remember { mutableStateOf(false) }
 
     fun apply(value: Boolean) {
         scope.launch(Dispatchers.IO) { ContactSyncAccounts.set_enabled(context, value) }
+    }
+
+    val lifecycle_owner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycle_owner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event != Lifecycle.Event.ON_RESUME) return@LifecycleEventObserver
+            val was_permitted = permitted
+            permitted = ContactSyncAccounts.has_permissions(context)
+            if (!permitted) return@LifecycleEventObserver
+            if (pending_enable) {
+                pending_enable = false
+                apply(true)
+            } else if (!was_permitted && ContactSyncAccounts.is_enabled(context)) {
+                apply(true)
+            }
+        }
+        lifecycle_owner.lifecycle.addObserver(observer)
+        onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }
     }
 
     val permission_launcher = rememberLauncherForActivityResult(
@@ -858,6 +887,8 @@ private fun phone_contacts_sync_section() {
         permitted = ContactSyncAccounts.has_permissions(context)
         if (result.isNotEmpty() && permitted) {
             apply(true)
+        } else if (contacts_permission_blocked(context)) {
+            show_settings_prompt = true
         } else {
             Toast.makeText(context, context.getString(R.string.contact_sync_permission_denied), Toast.LENGTH_LONG).show()
         }
@@ -907,5 +938,34 @@ private fun phone_contacts_sync_section() {
                 apply(false)
             },
         )
+    }
+
+    if (show_settings_prompt) {
+        AsterAlertDialog(
+            on_dismiss = { show_settings_prompt = false },
+            title = stringResource(R.string.contact_sync_settings_title),
+            message = stringResource(R.string.contact_sync_settings_message),
+            confirm_label = stringResource(R.string.contact_sync_open_settings),
+            cancel_label = stringResource(R.string.cancel),
+            on_confirm = {
+                show_settings_prompt = false
+                pending_enable = true
+                val intent = Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:" + context.packageName),
+                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                runCatching { context.startActivity(intent) }.onFailure { pending_enable = false }
+            },
+        )
+    }
+}
+
+private fun contacts_permission_blocked(context: Context): Boolean {
+    var current: Context? = context
+    while (current is ContextWrapper && current !is Activity) current = current.baseContext
+    val activity = current as? Activity ?: return false
+    return listOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS).any {
+        androidx.core.content.ContextCompat.checkSelfPermission(activity, it) != android.content.pm.PackageManager.PERMISSION_GRANTED &&
+            !activity.shouldShowRequestPermissionRationale(it)
     }
 }

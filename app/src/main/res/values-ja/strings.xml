@@ -3302,6 +3302,9 @@
     <string name="contact_sync_off_message">Aster の連絡先はこのスマートフォンの連絡帳アプリから削除されます。Aster には残ります。</string>
     <string name="contact_sync_turn_off">オフにする</string>
     <string name="contact_sync_permission_denied">連絡先を同期するには、Aster に連絡先へのアクセスを許可してください。</string>
+    <string name="contact_sync_settings_title">連絡先へのアクセスを許可</string>
+    <string name="contact_sync_settings_message">連絡先を同期するには、「設定を開く」をタップし、「権限」&gt;「連絡先」で「許可」を選択してください。</string>
+    <string name="contact_sync_open_settings">設定を開く</string>
     <string name="contact_sync_label_sibling">兄弟姉妹</string>
     <string name="contact_sync_label_graduation">卒業</string>
     <string name="contact_sync_label_wedding">結婚</string>

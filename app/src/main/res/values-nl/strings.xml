@@ -3312,6 +3312,9 @@
     <string name="contact_sync_off_message">Je Aster-contacten worden verwijderd uit de Contacten-app van deze telefoon. Ze blijven in Aster.</string>
     <string name="contact_sync_turn_off">Uitschakelen</string>
     <string name="contact_sync_permission_denied">Geef Aster toegang tot je contacten om ze te synchroniseren.</string>
+    <string name="contact_sync_settings_title">Toegang tot contacten toestaan</string>
+    <string name="contact_sync_settings_message">Tik op Instellingen openen, ga naar Rechten &gt; Contacten en kies Toestaan om je contacten te synchroniseren.</string>
+    <string name="contact_sync_open_settings">Instellingen openen</string>
     <string name="contact_sync_label_sibling">Broer of zus</string>
     <string name="contact_sync_label_graduation">Diploma-uitreiking</string>
     <string name="contact_sync_label_wedding">Bruiloft</string>

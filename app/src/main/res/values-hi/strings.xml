@@ -3202,6 +3202,9 @@
     <string name="contact_sync_off_message">आपके Aster संपर्क इस फ़ोन के Contacts ऐप से हटा दिए जाते हैं। वे Aster में बने रहते हैं।</string>
     <string name="contact_sync_turn_off">बंद करें</string>
     <string name="contact_sync_permission_denied">संपर्क सिंक करने के लिए, Aster को अपने संपर्कों तक पहुंचने दें।</string>
+    <string name="contact_sync_settings_title">संपर्कों तक पहुंच की अनुमति दें</string>
+    <string name="contact_sync_settings_message">अपने संपर्क सिंक करने के लिए, सेटिंग खोलें पर टैप करें, अनुमतियां &gt; संपर्क पर जाएं, और अनुमति दें चुनें।</string>
+    <string name="contact_sync_open_settings">सेटिंग खोलें</string>
     <string name="contact_sync_label_sibling">भाई या बहन</string>
     <string name="contact_sync_label_graduation">ग्रेजुएशन</string>
     <string name="contact_sync_label_wedding">शादी</string>

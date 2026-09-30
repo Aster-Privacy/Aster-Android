@@ -3295,6 +3295,9 @@
     <string name="contact_sync_off_message">Aster 연락처가 이 휴대전화의 연락처 앱에서 삭제됩니다. Aster에는 그대로 남아 있습니다.</string>
     <string name="contact_sync_turn_off">끄기</string>
     <string name="contact_sync_permission_denied">연락처를 동기화하려면 Aster의 연락처 접근을 허용하세요.</string>
+    <string name="contact_sync_settings_title">연락처 접근 허용</string>
+    <string name="contact_sync_settings_message">연락처를 동기화하려면 설정 열기를 탭하고 권한 &gt; 연락처로 이동한 다음 허용을 선택하세요.</string>
+    <string name="contact_sync_open_settings">설정 열기</string>
     <string name="contact_sync_label_sibling">형제자매</string>
     <string name="contact_sync_label_graduation">졸업</string>
     <string name="contact_sync_label_wedding">결혼</string>

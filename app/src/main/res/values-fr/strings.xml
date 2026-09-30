@@ -3358,6 +3358,9 @@
     <string name="contact_sync_off_message">Vos contacts Aster sont retirés de l\'app Contacts de ce téléphone. Ils restent dans Aster.</string>
     <string name="contact_sync_turn_off">Désactiver</string>
     <string name="contact_sync_permission_denied">Pour synchroniser les contacts, autorisez Aster à accéder à vos contacts.</string>
+    <string name="contact_sync_settings_title">Autoriser l\'accès aux contacts</string>
+    <string name="contact_sync_settings_message">Pour synchroniser vos contacts, touchez Ouvrir les paramètres, accédez à Autorisations &gt; Contacts, puis choisissez Autoriser.</string>
+    <string name="contact_sync_open_settings">Ouvrir les paramètres</string>
     <string name="contact_sync_label_sibling">Frère ou sœur</string>
     <string name="contact_sync_label_graduation">Remise de diplôme</string>
     <string name="contact_sync_label_wedding">Mariage</string>

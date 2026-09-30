@@ -3295,6 +3295,9 @@
     <string name="contact_sync_off_message">你的 Aster 联系人将从这部手机的通讯录应用中移除，但仍保留在 Aster 中。</string>
     <string name="contact_sync_turn_off">关闭</string>
     <string name="contact_sync_permission_denied">要同步联系人，请允许 Aster 访问你的联系人。</string>
+    <string name="contact_sync_settings_title">允许访问联系人</string>
+    <string name="contact_sync_settings_message">要同步联系人，请点按“打开设置”，前往“权限”&gt;“通讯录”，然后选择“允许”。</string>
+    <string name="contact_sync_open_settings">打开设置</string>
     <string name="contact_sync_label_sibling">兄弟姐妹</string>
     <string name="contact_sync_label_graduation">毕业</string>
     <string name="contact_sync_label_wedding">婚礼</string>

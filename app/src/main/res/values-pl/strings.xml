@@ -3350,6 +3350,9 @@
     <string name="contact_sync_off_message">Kontakty Aster zostaną usunięte z aplikacji Kontakty w tym telefonie. Pozostaną w Aster.</string>
     <string name="contact_sync_turn_off">Wyłącz</string>
     <string name="contact_sync_permission_denied">Aby synchronizować kontakty, zezwól Aster na dostęp do kontaktów.</string>
+    <string name="contact_sync_settings_title">Zezwól na dostęp do kontaktów</string>
+    <string name="contact_sync_settings_message">Aby synchronizować kontakty, kliknij Otwórz Ustawienia, przejdź do Uprawnienia &gt; Kontakty i wybierz Zezwól.</string>
+    <string name="contact_sync_open_settings">Otwórz Ustawienia</string>
     <string name="contact_sync_label_sibling">Rodzeństwo</string>
     <string name="contact_sync_label_graduation">Ukończenie szkoły</string>
     <string name="contact_sync_label_wedding">Ślub</string>

@@ -3312,6 +3312,9 @@
     <string name="contact_sync_off_message">Aster kişileriniz bu telefonun Kişiler uygulamasından kaldırılır. Aster\'da kalmaya devam ederler.</string>
     <string name="contact_sync_turn_off">Kapat</string>
     <string name="contact_sync_permission_denied">Kişileri eşzamanlamak için Aster\'ın kişilerinize erişmesine izin verin.</string>
+    <string name="contact_sync_settings_title">Kişilere erişime izin verin</string>
+    <string name="contact_sync_settings_message">Kişilerinizi eşzamanlamak için Ayarları aç\'a dokunun, İzinler &gt; Kişiler\'e gidin ve İzin ver\'i seçin.</string>
+    <string name="contact_sync_open_settings">Ayarları aç</string>
     <string name="contact_sync_label_sibling">Kardeş</string>
     <string name="contact_sync_label_graduation">Mezuniyet</string>
     <string name="contact_sync_label_wedding">Düğün</string>

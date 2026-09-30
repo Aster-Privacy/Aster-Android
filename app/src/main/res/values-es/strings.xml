@@ -3332,6 +3332,9 @@
     <string name="contact_sync_off_message">Tus contactos de Aster se quitan de la app Contactos de este teléfono. Se conservan en Aster.</string>
     <string name="contact_sync_turn_off">Desactivar</string>
     <string name="contact_sync_permission_denied">Para sincronizar los contactos, permite que Aster acceda a tus contactos.</string>
+    <string name="contact_sync_settings_title">Permitir acceso a los contactos</string>
+    <string name="contact_sync_settings_message">Para sincronizar tus contactos, toca Abrir Ajustes, ve a Permisos &gt; Contactos y elige Permitir.</string>
+    <string name="contact_sync_open_settings">Abrir Ajustes</string>
     <string name="contact_sync_label_sibling">Hermano o hermana</string>
     <string name="contact_sync_label_graduation">Graduación</string>
     <string name="contact_sync_label_wedding">Boda</string>

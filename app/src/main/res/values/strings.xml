@@ -3361,6 +3361,9 @@
     <string name="contact_sync_off_message">Your Aster contacts are removed from this phone\'s Contacts app. They stay in Aster.</string>
     <string name="contact_sync_turn_off">Turn off</string>
     <string name="contact_sync_permission_denied">To sync contacts, allow Aster to access your contacts.</string>
+    <string name="contact_sync_settings_title">Allow access to contacts</string>
+    <string name="contact_sync_settings_message">To sync your contacts, tap Open Settings, go to Permissions &gt; Contacts, and choose Allow.</string>
+    <string name="contact_sync_open_settings">Open Settings</string>
     <string name="contact_sync_label_sibling">Sibling</string>
     <string name="contact_sync_label_graduation">Graduation</string>
     <string name="contact_sync_label_wedding">Wedding</string>
