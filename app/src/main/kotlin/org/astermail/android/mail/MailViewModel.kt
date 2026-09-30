@@ -83,6 +83,12 @@ private const val OFFLINE_PREFETCH_DELAY_MS = 3_000L
 private const val OFFLINE_WARM_FOLDER_TIMEOUT_MS = 20_000L
 private const val OFFLINE_WARM_FOLDER_FRESH_MS = 10L * 60 * 1000
 private const val OFFLINE_WARM_THREAD_LIMIT = 10
+private const val THREAD_OPEN_TIMEOUT_MS = 30_000L
+private const val SLOW_LINK_THREAD_OPEN_TIMEOUT_MS = 60_000L
+
+private fun thread_open_timeout_ms(): Long =
+    if (org.astermail.android.api.network.low_network_state.extend_timeouts()) SLOW_LINK_THREAD_OPEN_TIMEOUT_MS else THREAD_OPEN_TIMEOUT_MS
+
 private val OFFLINE_WARM_FOLDERS = listOf("sent", "drafts", "starred", "archive", "spam", "trash")
 private const val LOAD_MORE_FAILURE_LIMIT = 3
 private const val LOAD_MORE_RETRY_COOLDOWN_MS = 30_000L
@@ -1010,7 +1016,7 @@ class MailViewModel @Inject constructor(
         val now = System.currentTimeMillis()
         for (folder in OFFLINE_WARM_FOLDERS) {
             if (gen != account_generation) return
-            if (org.astermail.android.api.network.low_network_state.active()) return
+            if (org.astermail.android.api.network.low_network_state.extend_timeouts()) return
             if (!repository.is_network_available()) return
             if (_inbox_state.value.is_loading) return
             val last_warm = maxOf(folder_cache_time[folder] ?: 0L, offline_warmed_at[folder] ?: 0L)
@@ -1767,13 +1773,13 @@ class MailViewModel @Inject constructor(
             }
             val early_thread = if (seed_token != null) {
                 async(Dispatchers.IO) {
-                    withTimeoutOrNull(15_000) { repository.fetch_thread(seed_token) }
+                    withTimeoutOrNull(thread_open_timeout_ms()) { repository.fetch_thread(seed_token) }
                 }
             } else {
                 null
             }
             try {
-            val item_result = withTimeoutOrNull(15_000) {
+            val item_result = withTimeoutOrNull(thread_open_timeout_ms()) {
                 repository.fetch_single_message(item_id)
             } ?: Result.failure(java.net.SocketTimeoutException(context.getString(R.string.something_went_wrong)))
             if (thread_gen != thread_load_generation) {
@@ -1791,7 +1797,7 @@ class MailViewModel @Inject constructor(
                     early_thread?.cancel()
                     null
                 }
-                val result = reusable ?: withTimeoutOrNull(15_000) {
+                val result = reusable ?: withTimeoutOrNull(thread_open_timeout_ms()) {
                     repository.fetch_thread(thread_token)
                 } ?: Result.failure(Exception(context.getString(R.string.something_went_wrong)))
                 if (thread_gen != thread_load_generation) return@launch
@@ -1873,7 +1879,7 @@ class MailViewModel @Inject constructor(
                     ThreadUiState(error = context.getString(R.string.message_replaced_or_deleted))
                 } else if (offline_failure) {
                     offline_retry_item_id = item_id
-                    ThreadUiState(error = context.getString(R.string.message_unavailable_offline))
+                    ThreadUiState(error = context.getString(open_failure_message(item_result.exceptionOrNull())))
                 } else {
                     ThreadUiState(
                         error = item_result.exceptionOrNull()
@@ -5131,6 +5137,12 @@ class MailViewModel @Inject constructor(
         is java.net.UnknownHostException -> true
         is java.net.ConnectException -> true
         else -> false
+    }
+
+    private fun open_failure_message(t: Throwable?): Int = when {
+        !repository.is_network_available() -> R.string.message_unavailable_offline
+        t != null && is_timeout_failure(t) -> R.string.error_timeout
+        else -> R.string.error_no_connection
     }
 
     private fun friendly_load_error(t: Throwable): String {

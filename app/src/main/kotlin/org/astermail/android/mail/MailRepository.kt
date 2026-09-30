@@ -682,7 +682,7 @@ class MailRepository @Inject constructor(
     private val offline_prefetch_mutex = kotlinx.coroutines.sync.Mutex()
 
     suspend fun prefetch_threads_for_offline(items: List<InboxItem>, limit: Int = OFFLINE_PREFETCH_LIMIT) {
-        if (org.astermail.android.api.network.low_network_state.active()) return
+        if (org.astermail.android.api.network.low_network_state.extend_timeouts()) return
         if (pending_action_queue?.is_network_available() == false) return
         if (!offline_prefetch_mutex.tryLock()) return
         try {
@@ -704,7 +704,8 @@ class MailRepository @Inject constructor(
                     launch(Dispatchers.IO) {
                         gate.acquire()
                         try {
-                            if (pending_action_queue?.is_network_available() != false) {
+                            val slow_link = org.astermail.android.api.network.low_network_state.extend_timeouts()
+                            if (!slow_link && pending_action_queue?.is_network_available() != false) {
                                 kotlinx.coroutines.withTimeoutOrNull(OFFLINE_PREFETCH_TIMEOUT_MS) {
                                     fetch_thread(item.thread_token!!)
                                 }

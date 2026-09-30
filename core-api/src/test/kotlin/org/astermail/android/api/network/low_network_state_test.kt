@@ -73,4 +73,23 @@ class low_network_state_test {
         assertTrue(seen[1])
         assertFalse(seen[2])
     }
+
+    @Test
+    fun a_timeout_extends_timeouts_without_activating_the_state() {
+        low_network_state.note_timeout(now_ms = 1_000L)
+        assertTrue(low_network_state.extend_timeouts(now_ms = 1_000L + SLOW_LINK_WINDOW_MS - 1))
+        assertFalse(low_network_state.active())
+    }
+
+    @Test
+    fun the_timeout_extension_expires() {
+        low_network_state.note_timeout(now_ms = 1_000L)
+        assertFalse(low_network_state.extend_timeouts(now_ms = 1_000L + SLOW_LINK_WINDOW_MS))
+    }
+
+    @Test
+    fun the_preference_always_extends_timeouts() {
+        low_network_state.set_preference(true)
+        assertTrue(low_network_state.extend_timeouts(now_ms = 0L))
+    }
 }
