@@ -44,6 +44,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -59,6 +60,7 @@ import org.astermail.android.ui.mail.MessageAttachment
 
 private const val INBOX_FETCH_BACKSTOP_MS = 50_000L
 private const val PULL_REFRESH_BACKSTOP_MS = 20_000L
+private const val PENDING_DRAIN_BEFORE_REFRESH_MS = 8_000L
 private const val LIVE_SYNC_DEBOUNCE_MS = 600L
 private const val WARM_CACHE_MIN_ITEMS = 8
 private const val WARM_CACHE_WINDOW = 200
@@ -77,6 +79,11 @@ private const val TAG_OVERRIDE_TTL_MS = 5 * 60_000L
 private const val TAG_CONFIRM_GRACE_MS = 15_000L
 private const val DECRYPT_RETRY_TIMEOUT_MS = 20_000L
 private const val SEND_GUARD_WINDOW_MS = 30_000L
+private const val OFFLINE_PREFETCH_DELAY_MS = 3_000L
+private const val OFFLINE_WARM_FOLDER_TIMEOUT_MS = 20_000L
+private const val OFFLINE_WARM_FOLDER_FRESH_MS = 10L * 60 * 1000
+private const val OFFLINE_WARM_THREAD_LIMIT = 10
+private val OFFLINE_WARM_FOLDERS = listOf("sent", "drafts", "starred", "archive", "trash")
 private const val LOAD_MORE_FAILURE_LIMIT = 3
 private const val LOAD_MORE_RETRY_COOLDOWN_MS = 30_000L
 private const val LOAD_ALL_MAX_PAGES = 5_000
@@ -470,6 +477,7 @@ class MailViewModel @Inject constructor(
     private var refresh_job: Job? = null
     private var refresh_generation = 0
     private var load_all_remaining_job: Job? = null
+    @Volatile
     private var account_generation = 0
     private val star_overrides = TimedOverrides(OVERRIDE_TTL_MS)
     private val pin_overrides = TimedOverrides(OVERRIDE_TTL_MS)
@@ -707,6 +715,8 @@ class MailViewModel @Inject constructor(
 
     fun reset_for_account_switch() {
         account_generation++
+        offline_prefetch_job?.cancel()
+        offline_prefetch_job = null
         inbox_load_job?.cancel()
         silent_revalidate_job?.cancel()
         refresh_job?.cancel()
@@ -921,7 +931,120 @@ class MailViewModel @Inject constructor(
     }
 
     private fun apply_demo_overlay(items: List<InboxItem>, folder: String): List<InboxItem> {
-        return items.filter { it.id != DEMO_PHISH_ITEM_ID }
+        return apply_pending_actions(
+            folder,
+            items.filter { it.id != DEMO_PHISH_ITEM_ID },
+            repository.pending_actions_for_current_account(),
+        )
+    }
+
+    private fun observe_pending_actions() {
+        val actions_flow = repository.pending_actions ?: return
+        viewModelScope.launch {
+            var had_pending = false
+            actions_flow
+                .map { all ->
+                    val account = repository.current_account_id()
+                    all.filter { it.account_id == account }
+                }
+                .distinctUntilChanged()
+                .collect { actions ->
+                    if (actions.isNotEmpty()) {
+                        _inbox_state.update { state ->
+                            val patched = apply_pending_actions(state.current_folder, state.items, actions)
+                            if (patched == state.items) state else state.copy(items = patched)
+                        }
+                    }
+                    val drained = had_pending && actions.isEmpty()
+                    had_pending = actions.isNotEmpty()
+                    if (drained && foreground_check()) {
+                        folder_cache_time.clear()
+                        load_stats(force = true)
+                        val state = _inbox_state.value
+                        if (!state.is_loading && !state.is_refreshing) silent_revalidate(state.current_folder)
+                    }
+                }
+        }
+        val online_flow = repository.network_online ?: return
+        viewModelScope.launch {
+            online_flow
+                .drop(1)
+                .distinctUntilChanged()
+                .filter { it }
+                .collect {
+                    retry_offline_thread()
+                    runCatching { repository.drain_pending_actions_now() }
+                }
+        }
+    }
+
+    private var offline_retry_item_id: String? = null
+
+    private var offline_prefetch_job: kotlinx.coroutines.Job? = null
+
+    private fun retry_offline_thread() {
+        val item_id = offline_retry_item_id ?: return
+        offline_retry_item_id = null
+        val state = _thread_state.value
+        if (state.item != null || state.error == null) return
+        load_thread(item_id)
+    }
+
+    private fun schedule_offline_prefetch(items: List<InboxItem>) {
+        if (offline_prefetch_job?.isActive == true) return
+        val snapshot = items.toList()
+        val gen = account_generation
+        offline_prefetch_job = viewModelScope.launch(Dispatchers.IO) {
+            kotlinx.coroutines.delay(OFFLINE_PREFETCH_DELAY_MS)
+            if (gen != account_generation) return@launch
+            runCatching { repository.prefetch_threads_for_offline(snapshot) }
+            if (gen != account_generation) return@launch
+            warm_folders_for_offline(gen)
+        }
+    }
+
+    private suspend fun warm_folders_for_offline(gen: Int) {
+        val now = System.currentTimeMillis()
+        for (folder in OFFLINE_WARM_FOLDERS) {
+            if (gen != account_generation) return
+            if (org.astermail.android.api.network.low_network_state.active()) return
+            if (!repository.is_network_available()) return
+            if (now - (folder_cache_time[folder] ?: 0L) < OFFLINE_WARM_FOLDER_FRESH_MS) continue
+            if (_inbox_state.value.current_folder == folder) continue
+            val page = try {
+                kotlinx.coroutines.withTimeoutOrNull(OFFLINE_WARM_FOLDER_TIMEOUT_MS) {
+                    fetch_for_folder(folder).getOrNull()
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Throwable) {
+                null
+            } ?: return
+            val items = page.items.filter { folder_matches(folder, it) }
+            val persisted = kotlinx.coroutines.withContext(Dispatchers.Main.immediate) {
+                if (gen != account_generation) return@withContext null
+                if (_inbox_state.value.current_folder == folder || items.isEmpty()) return@withContext false
+                persist_folder_rows(folder, items)
+                true
+            } ?: return
+            if (!persisted) continue
+            if (folder != "drafts" && gen == account_generation) {
+                runCatching { repository.prefetch_threads_for_offline(items, OFFLINE_WARM_THREAD_LIMIT) }
+            }
+        }
+    }
+
+    private suspend fun offline_message_from_seed(seed: InboxItem): ThreadMessageDecrypted? {
+        val message = try {
+            single_message_from_item(seed)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            return null
+        }
+        if (message.is_undecryptable || message.is_body_pending) return null
+        if (message.body_text.isBlank() && message.body_html.isNullOrBlank()) return null
+        return message
     }
 
     private fun handle_demo_in(item_ids: List<String>): List<String> {
@@ -1226,6 +1349,7 @@ class MailViewModel @Inject constructor(
 
     private suspend fun reconcile_cache_window(folder: String, page: InboxPage) {
         if (folder != "inbox" || page.items.isEmpty()) return
+        schedule_offline_prefetch(page.items)
         if (list_order != null) return
         val min_timestamp = page.items.minOf { it.timestamp }
         val returned_ids = page.items.mapTo(HashSet()) { it.id }
@@ -1621,6 +1745,7 @@ class MailViewModel @Inject constructor(
             }
         }
         thread_load_job?.cancel()
+        if (offline_retry_item_id != item_id) offline_retry_item_id = null
         thread_open_started_at = android.os.SystemClock.elapsedRealtime()
         thread_open_painted.clear()
         val thread_gen = ++thread_load_generation
@@ -1640,7 +1765,7 @@ class MailViewModel @Inject constructor(
             try {
             val item_result = withTimeoutOrNull(15_000) {
                 repository.fetch_single_message(item_id)
-            } ?: Result.failure(Exception(context.getString(R.string.something_went_wrong)))
+            } ?: Result.failure(java.net.SocketTimeoutException(context.getString(R.string.something_went_wrong)))
             if (thread_gen != thread_load_generation) {
                 early_thread?.cancel()
                 return@launch
@@ -1717,6 +1842,17 @@ class MailViewModel @Inject constructor(
                 val keep = _thread_state.value
                 val kept = keep.item?.id == item_id && keep.messages.any { !it.is_body_pending }
                 val missing_on_server = item_result.exceptionOrNull() is org.astermail.android.api.ApiError.NotFoundError
+                val offline_failure = !kept && !missing_on_server &&
+                    is_transient_failure(item_result.exceptionOrNull())
+                val offline_fallback = if (offline_failure && seed != null) offline_message_from_seed(seed) else null
+                if (thread_gen != thread_load_generation) return@launch
+                if (offline_fallback != null && seed != null) {
+                    offline_retry_item_id = null
+                    _thread_state.value = apply_thread_read_overrides(
+                        ThreadUiState(messages = listOf(offline_fallback), item = seed),
+                    )
+                    return@launch
+                }
                 if (!kept && item_result.exceptionOrNull()?.let { is_cancellation(it) } != true) {
                     undo_failed_open(item_id)
                 }
@@ -1725,6 +1861,9 @@ class MailViewModel @Inject constructor(
                     keep.copy(is_loading = false, error = null)
                 } else if (missing_on_server) {
                     ThreadUiState(error = context.getString(R.string.message_replaced_or_deleted))
+                } else if (offline_failure) {
+                    offline_retry_item_id = item_id
+                    ThreadUiState(error = context.getString(R.string.message_unavailable_offline))
                 } else {
                     ThreadUiState(
                         error = item_result.exceptionOrNull()
@@ -4190,9 +4329,10 @@ class MailViewModel @Inject constructor(
                     invalidate_caches(listOf(folder, "starred"))
                     load_stats(force = true)
                     refresh()
+                    val count = if (response.batch_id == QUEUED_BATCH_ID) snapshot.size else response.affected_count
                     emit_toast(
-                        if (is_starred) context.resources.getQuantityString(R.plurals.starred_count, response.affected_count, response.affected_count)
-                        else context.resources.getQuantityString(R.plurals.unstarred_count, response.affected_count, response.affected_count),
+                        if (is_starred) context.resources.getQuantityString(R.plurals.starred_count, count, count)
+                        else context.resources.getQuantityString(R.plurals.unstarred_count, count, count),
                     )
                 },
                 onFailure = {
@@ -4533,6 +4673,9 @@ class MailViewModel @Inject constructor(
         load_more_job?.cancel()
         refresh_job?.cancel()
         refresh_job = viewModelScope.launch {
+            kotlinx.coroutines.withTimeoutOrNull(PENDING_DRAIN_BEFORE_REFRESH_MS) {
+                runCatching { repository.drain_pending_actions_now() }
+            }
             val result = runCatching {
                 kotlinx.coroutines.withTimeout(PULL_REFRESH_BACKSTOP_MS) {
                     fetch_for_folder(folder).getOrThrow()
@@ -4692,6 +4835,7 @@ class MailViewModel @Inject constructor(
 
     init {
         seed_inbox_attachment_flags()
+        observe_pending_actions()
         viewModelScope.launch {
             MailReadEvents.events.collect { apply_notification_read(it) }
         }

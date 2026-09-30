@@ -25,10 +25,12 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import org.astermail.android.storage.actions.PendingMailActionDao
+import org.astermail.android.storage.actions.PendingMailActionEntity
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.outbox.PendingSendEntity
 
-const val aster_database_version = 17
+const val aster_database_version = 18
 
 data class schema_column(val table: String, val name: String, val definition: String)
 
@@ -110,6 +112,15 @@ const val create_thread_snapshot_cache =
         "`cached_at` INTEGER NOT NULL, " +
         "PRIMARY KEY(`thread_token`))"
 
+const val create_pending_mail_action =
+    "CREATE TABLE IF NOT EXISTS `pending_mail_action` (" +
+        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+        "`account_id` TEXT NOT NULL, " +
+        "`kind` TEXT NOT NULL, " +
+        "`payload` TEXT NOT NULL, " +
+        "`created_at_ms` INTEGER NOT NULL, " +
+        "`attempts` INTEGER NOT NULL)"
+
 val migration_columns: Map<Int, List<schema_column>> = mapOf(
     3 to listOf(schema_column(decrypted_mail_table, "category", "TEXT NOT NULL DEFAULT 'primary'")),
     5 to listOf(
@@ -142,6 +153,7 @@ val migration_statements: Map<Int, List<String>> = mapOf(
     15 to listOf(create_folder_row_cache),
     16 to listOf(create_message_body_cache),
     17 to listOf(create_thread_snapshot_cache),
+    18 to listOf(create_pending_mail_action),
 )
 
 private fun has_table(db: SupportSQLiteDatabase, table: String): Boolean =
@@ -186,6 +198,7 @@ private fun step_migration(to_version: Int): Migration = object : Migration(to_v
         FolderRowEntity::class,
         MessageBodyEntity::class,
         ThreadSnapshotEntity::class,
+        PendingMailActionEntity::class,
     ],
     version = aster_database_version,
     exportSchema = false,
@@ -196,6 +209,7 @@ abstract class AsterDatabase : RoomDatabase() {
     abstract fun folder_row_dao(): FolderRowDao
     abstract fun message_body_dao(): MessageBodyDao
     abstract fun thread_snapshot_dao(): ThreadSnapshotDao
+    abstract fun pending_mail_action_dao(): PendingMailActionDao
 
     companion object {
         val migration_1_2 = step_migration(2)
@@ -214,6 +228,7 @@ abstract class AsterDatabase : RoomDatabase() {
         val migration_14_15 = step_migration(15)
         val migration_15_16 = step_migration(16)
         val migration_16_17 = step_migration(17)
+        val migration_17_18 = step_migration(18)
 
         val all_migrations: Array<Migration> = arrayOf(
             migration_1_2,
@@ -232,6 +247,7 @@ abstract class AsterDatabase : RoomDatabase() {
             migration_14_15,
             migration_15_16,
             migration_16_17,
+            migration_17_18,
         )
     }
 }

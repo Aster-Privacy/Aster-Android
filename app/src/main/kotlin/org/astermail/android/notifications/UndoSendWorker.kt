@@ -72,6 +72,7 @@ class UndoSendWorker(
             PendingSendOutcome.DEFERRED,
             -> Result.success()
             PendingSendOutcome.RETRY -> retry_or_give_up(runAttemptCount)
+            PendingSendOutcome.WAIT_FOR_NETWORK -> Result.retry()
         }
     }
 

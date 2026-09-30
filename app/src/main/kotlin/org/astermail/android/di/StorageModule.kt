@@ -38,6 +38,7 @@ import org.astermail.android.storage.PreferencesCacheStore
 import org.astermail.android.storage.ThemeStore
 import org.astermail.android.storage.TokenStore
 import org.astermail.android.storage.TrustedDeviceStore
+import org.astermail.android.storage.actions.PendingMailActionDao
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.search.AsterDatabase
 import org.astermail.android.storage.search.MessageBodyDao
@@ -58,6 +59,11 @@ object StorageModule {
     @Provides
     @Singleton
     fun provide_thread_snapshot_dao(database: AsterDatabase): ThreadSnapshotDao = database.thread_snapshot_dao()
+
+    @Provides
+    @Singleton
+    fun provide_pending_mail_action_dao(database: AsterDatabase): PendingMailActionDao =
+        database.pending_mail_action_dao()
 
     @Provides
     @Singleton

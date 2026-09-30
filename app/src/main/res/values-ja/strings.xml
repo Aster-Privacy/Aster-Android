@@ -217,6 +217,7 @@
     <string name="block_sender">送信者をブロック</string>
     <string name="message_unavailable">メッセージは利用できません</string>
     <string name="message_replaced_or_deleted">このメッセージは削除されたか、新しいコピーに置き換えられました。見つけるには、戻ってもう一度検索してください。</string>
+    <string name="message_unavailable_offline">このメッセージはオフラインでは表示できません。オンラインに戻ると開きます。</string>
     <string name="no_subject">(件名なし)</string>
     <string name="open_external_link">外部リンクを開きますか？</string>
     <string name="leaving_aster_warning">Aster を離れて、次のリンクをブラウザで開こうとしています：</string>

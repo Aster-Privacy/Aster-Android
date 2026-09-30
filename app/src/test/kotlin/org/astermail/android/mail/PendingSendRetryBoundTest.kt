@@ -22,6 +22,8 @@
 package org.astermail.android.mail
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PendingSendRetryBoundTest {
@@ -41,5 +43,22 @@ class PendingSendRetryBoundTest {
     fun an_exhausted_attempt_is_deferred_instead_of_retried_forever() {
         assertEquals(PendingSendOutcome.DEFERRED, bounded_retry_outcome(SEND_RETRY_MAX_ATTEMPTS))
         assertEquals(PendingSendOutcome.DEFERRED, bounded_retry_outcome(SEND_RETRY_MAX_ATTEMPTS + 40))
+    }
+
+    @Test
+    fun a_send_that_loses_its_connection_waits_for_the_network() {
+        assertTrue(should_wait_for_network(java.net.UnknownHostException("offline"), false, 0L, 60_000L))
+        assertTrue(should_wait_for_network(java.net.ConnectException("refused"), false, 0L, 60_000L))
+        assertTrue(should_wait_for_network(org.astermail.android.api.ApiError.NetworkError, false, 0L, 60_000L))
+    }
+
+    @Test
+    fun a_rejected_or_stale_send_does_not_wait() {
+        assertFalse(should_wait_for_network(java.net.UnknownHostException("offline"), true, 0L, 60_000L))
+        assertFalse(should_wait_for_network(IllegalStateException("rejected"), false, 0L, 60_000L))
+        assertFalse(should_wait_for_network(java.net.SocketTimeoutException("read timed out"), false, 0L, 60_000L))
+        assertFalse(should_wait_for_network(org.astermail.android.api.ApiError.ServerError(503), false, 0L, 60_000L))
+        assertFalse(should_wait_for_network(org.astermail.android.api.ApiError.RateLimited(), false, 0L, 60_000L))
+        assertFalse(should_wait_for_network(java.net.UnknownHostException("offline"), false, 0L, SEND_OFFLINE_MAX_AGE_MS))
     }
 }

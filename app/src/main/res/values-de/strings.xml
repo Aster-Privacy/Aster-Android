@@ -218,6 +218,7 @@
     <string name="block_sender">Absender blockieren</string>
     <string name="message_unavailable">Nachricht nicht verfügbar</string>
     <string name="message_replaced_or_deleted">Diese Nachricht wurde gelöscht oder durch eine neuere Kopie ersetzt. Um sie zu finden, gehe zurück und suche erneut.</string>
+    <string name="message_unavailable_offline">Diese Nachricht ist offline nicht verfügbar. Sie wird geöffnet, sobald du wieder online bist.</string>
     <string name="no_subject">(kein Betreff)</string>
     <string name="open_external_link">Externen Link öffnen?</string>
     <string name="leaving_aster_warning">Sie verlassen Aster und öffnen diesen Link in Ihrem Browser:</string>

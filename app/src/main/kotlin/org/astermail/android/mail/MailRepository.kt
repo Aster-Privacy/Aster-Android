@@ -32,6 +32,10 @@ import org.astermail.android.crypto.PasswordKdf
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -41,6 +45,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
+import org.astermail.android.api.ApiError
 import org.astermail.android.api.mail.BulkLabelRequest
 import org.astermail.android.api.mail.BulkPatchMetadataItem
 import org.astermail.android.api.mail.BulkPatchMetadataRequest
@@ -92,7 +97,7 @@ import org.astermail.android.storage.search.ThreadSnapshotEntity
 import org.astermail.android.storage.search.message_body_cache_limit
 import org.astermail.android.storage.search.thread_snapshot_cache_limit
 
-enum class PendingSendOutcome { SENT, GONE, RETRY, FAILED, DEFERRED }
+enum class PendingSendOutcome { SENT, GONE, RETRY, FAILED, DEFERRED, WAIT_FOR_NETWORK }
 
 class TransientSendException : Exception("send retry pending")
 
@@ -111,6 +116,12 @@ fun bounded_retry_outcome(attempt: Int): PendingSendOutcome =
 
 private const val SEND_RETRY_QUIET_ATTEMPTS = 2
 internal const val SEND_RETRY_MAX_ATTEMPTS = 8
+internal const val SEND_OFFLINE_MAX_AGE_MS = 3L * 24 * 60 * 60 * 1000
+
+fun should_wait_for_network(err: Throwable?, is_permanent: Boolean, created_at_ms: Long, now_ms: Long): Boolean =
+    !is_permanent && is_connectivity_failure(err) && now_ms - created_at_ms < SEND_OFFLINE_MAX_AGE_MS
+
+private const val DRAIN_PAUSE_WAIT_MS = 15_000L
 private const val STATUS_PENDING = "pending"
 private const val STATUS_FAILED = "failed"
 private const val SEND_FAILURE_PREFS = "outbox_send_failures"
@@ -437,7 +448,203 @@ class MailRepository @Inject constructor(
     private val thread_snapshot_dao_provider: dagger.Lazy<ThreadSnapshotDao>,
     @ApplicationContext private val context: Context,
     private val auth_repository: dagger.Lazy<org.astermail.android.auth.AuthRepository>,
+    private val pending_action_queue_provider: dagger.Lazy<PendingMailActionQueue>? = null,
 ) {
+    private val pending_action_queue: PendingMailActionQueue?
+        get() = pending_action_queue_provider?.get()
+
+    private val drain_mutex = Mutex()
+
+    private val drain_holds = java.util.concurrent.atomic.AtomicInteger(0)
+
+    suspend fun pause_pending_drain() {
+        drain_holds.incrementAndGet()
+        kotlinx.coroutines.withTimeoutOrNull(DRAIN_PAUSE_WAIT_MS) { drain_mutex.withLock { } }
+    }
+
+    fun resume_pending_drain() {
+        if (drain_holds.decrementAndGet() <= 0) {
+            drain_holds.set(0)
+            if (pending_action_queue?.has_pending(current_account_id()) == true) pending_action_queue?.schedule_drain()
+        }
+    }
+
+    val pending_actions: kotlinx.coroutines.flow.StateFlow<List<PendingMailAction>>?
+        get() = pending_action_queue?.actions
+
+    val network_online: kotlinx.coroutines.flow.StateFlow<Boolean>?
+        get() = pending_action_queue?.online
+
+    fun is_network_available(): Boolean = pending_action_queue?.is_network_available() != false
+
+    fun pending_actions_for_current_account(): List<PendingMailAction> =
+        pending_action_queue?.for_account(current_account_id()).orEmpty()
+
+    suspend fun clear_pending_actions(account_id: String) {
+        pending_action_queue?.clear_account(account_id)
+    }
+
+    private suspend fun <T> run_or_queue(
+        kind: PendingActionKind,
+        payload: PendingActionPayload,
+        queued_value: T,
+        block: suspend () -> Result<T>,
+    ): Result<T> {
+        val queue = pending_action_queue ?: return block()
+        val account = current_account_id()?.takeIf { it.isNotBlank() } ?: return block()
+        queue.await_loaded()
+        if (queue.has_pending(account) || !queue.is_network_available()) {
+            queue.enqueue(account, kind, payload)
+            return Result.success(queued_value)
+        }
+        val result = try {
+            block()
+        } catch (error: Throwable) {
+            Result.failure(error)
+        }
+        val error = result.exceptionOrNull() ?: return result
+        if (error is CancellationException) {
+            if (error !is TimeoutCancellationException || !currentCoroutineContext().isActive) throw error
+        }
+        if (!is_transient_failure(error)) return result
+        queue.enqueue(account, kind, payload)
+        return Result.success(queued_value)
+    }
+
+    private suspend fun run_or_queue_set(
+        kind: PendingActionKind,
+        payload: PendingActionPayload,
+        block: suspend () -> Set<String>,
+    ): Set<String> = run_or_queue(kind, payload, emptySet<String>()) { runCatching { block() } }
+        .getOrElse { error ->
+            if (error is CancellationException) throw error
+            payload.ids.toSet()
+        }
+
+    suspend fun drain_pending_actions(): PendingDrainOutcome {
+        val queue = pending_action_queue ?: return PendingDrainOutcome.Done
+        return drain_mutex.withLock { drain_locked(queue) }
+    }
+
+    private suspend fun drain_locked(queue: PendingMailActionQueue): PendingDrainOutcome {
+        queue.await_loaded()
+        val account = current_account_id()?.takeIf { it.isNotBlank() } ?: return PendingDrainOutcome.Done
+        while (true) {
+            if (drain_holds.get() > 0 || current_account_id() != account) return PendingDrainOutcome.Done
+            val next = queue.for_account(account).firstOrNull() ?: return PendingDrainOutcome.Done
+            if (pending_action_expired(next, System.currentTimeMillis())) {
+                queue.complete(next.id)
+                continue
+            }
+            val result = try {
+                replay_pending_action(next)
+            } catch (error: Throwable) {
+                if (error is CancellationException && !currentCoroutineContext().isActive) throw error
+                Result.failure<Unit>(error)
+            }
+            val error = result.exceptionOrNull()
+            if (error is ApiError.UnauthorizedError) return PendingDrainOutcome.Done
+            if (error == null || !is_transient_failure(error) || pending_action_exhausted(next, error)) {
+                queue.complete(next.id)
+                continue
+            }
+            if (is_server_side_failure(error)) queue.record_attempt(next.id)
+            return PendingDrainOutcome.Retry
+        }
+    }
+
+    suspend fun drain_pending_actions_now() {
+        val queue = pending_action_queue ?: return
+        if (!queue.has_pending(current_account_id())) return
+        if (!queue.is_network_available()) return
+        if (drain_pending_actions() == PendingDrainOutcome.Retry) queue.schedule_drain()
+    }
+
+    private suspend fun replay_each(ids: List<String>, block: suspend (String) -> Result<*>): Result<Unit> {
+        for (id in ids) {
+            val error = block(id).exceptionOrNull() ?: continue
+            if (error is CancellationException || is_transient_failure(error) || error is ApiError.UnauthorizedError) {
+                return Result.failure(error)
+            }
+        }
+        return Result.success(Unit)
+    }
+
+    private suspend fun replay_membership(block: suspend () -> Set<String>): Result<Unit> =
+        runCatching { block() }.map { }
+
+    private suspend fun replay_pending_action(action: PendingMailAction): Result<*> {
+        val payload = action.payload
+        val ids = payload.ids
+        val patch = payload.value == PENDING_PATCH_MODE
+        val token = payload.token
+        return when (action.kind) {
+            PendingActionKind.archive -> archive_now(ids)
+            PendingActionKind.unarchive -> unarchive_now(ids)
+            PendingActionKind.trash -> trash_now(ids, emptyList(), payload.threads, payload.covered.toSet())
+            PendingActionKind.restore_trash -> restore_trash_now(ids)
+            PendingActionKind.mark_spam -> mark_spam_now(ids)
+            PendingActionKind.unmark_spam -> unmark_spam_now(ids)
+            PendingActionKind.mark_read,
+            PendingActionKind.mark_unread -> {
+                val read = action.kind == PendingActionKind.mark_read
+                when {
+                    patch -> replay_each(ids) { mark_read_now(it, read) }
+                    read -> mark_read_bulk_now(ids)
+                    else -> mark_unread_bulk_now(ids)
+                }
+            }
+            PendingActionKind.mark_thread_read -> replay_each(payload.threads) { mark_thread_read_all_now(it) }
+            PendingActionKind.star,
+            PendingActionKind.unstar -> {
+                val starred = action.kind == PendingActionKind.star
+                if (patch) replay_each(ids) { toggle_star_now(it, starred) } else star_bulk_now(ids, starred)
+            }
+            PendingActionKind.star_scope ->
+                payload.folder?.let { star_scope_now(it, payload.value == "true") } ?: Result.success(Unit)
+            PendingActionKind.pin -> replay_each(ids) { toggle_pin_now(it, true) }
+            PendingActionKind.unpin -> replay_each(ids) { toggle_pin_now(it, false) }
+            PendingActionKind.snooze -> replay_each(ids) { snooze_now(it, payload.value.orEmpty()) }
+            PendingActionKind.unsnooze -> replay_each(ids) { unsnooze_now(it) }
+            PendingActionKind.add_label -> when {
+                token == null -> Result.success(Unit)
+                patch -> replay_each(ids) { add_label_to_item_now(it, token) }
+                else -> replay_membership { add_label_bulk_now(ids, token) }
+            }
+            PendingActionKind.remove_label -> when {
+                token == null -> Result.success(Unit)
+                patch -> replay_each(ids) { remove_label_from_item_now(it, token) }
+                else -> replay_membership { remove_label_bulk_now(ids, token) }
+            }
+            PendingActionKind.add_tag -> when {
+                token == null -> Result.success(Unit)
+                patch -> replay_each(ids) { add_tag_to_item_now(it, token) }
+                else -> replay_membership { add_tag_bulk_now(ids, token) }
+            }
+            PendingActionKind.remove_tag -> when {
+                token == null -> Result.success(Unit)
+                patch -> replay_each(ids) { remove_tag_from_item_now(it, token) }
+                else -> replay_membership { remove_tag_bulk_now(ids, token) }
+            }
+            PendingActionKind.move_to_folder ->
+                if (token == null) Result.success(Unit)
+                else replay_membership { move_to_folder_bulk_now(ids, token, payload.from_token) }
+            PendingActionKind.scope_action -> {
+                val folder = payload.folder
+                val scope_action = payload.value
+                if (folder == null || scope_action == null) Result.success(Unit)
+                else bulk_scope_action_now(folder, scope_action)
+            }
+            PendingActionKind.delete_permanent ->
+                if (ids.size == 1) delete_permanent_now(ids.first()) else bulk_delete_permanent_now(ids)
+            PendingActionKind.delete_draft -> replay_each(ids) { delete_draft_now(it) }
+            PendingActionKind.empty_trash -> empty_trash_now()
+            PendingActionKind.empty_spam -> empty_spam_now()
+            PendingActionKind.report_spam_senders -> runCatching { report_spam_senders_now(ids) }
+            PendingActionKind.remove_spam_senders -> runCatching { remove_spam_senders_now(ids) }
+        }
+    }
+
     private val pending_send_dao: PendingSendDao
         get() = pending_send_dao_provider.get()
 
@@ -469,6 +676,47 @@ class MailRepository @Inject constructor(
             }.getOrNull() ?: return@withContext null
             parsed.map { thread_message_of(it) }.takeIf { it.isNotEmpty() }
         }
+
+    private val offline_prefetch_mutex = kotlinx.coroutines.sync.Mutex()
+
+    suspend fun prefetch_threads_for_offline(items: List<InboxItem>, limit: Int = OFFLINE_PREFETCH_LIMIT) {
+        if (org.astermail.android.api.network.low_network_state.active()) return
+        if (pending_action_queue?.is_network_available() == false) return
+        if (!offline_prefetch_mutex.tryLock()) return
+        try {
+            val targets = items.asSequence()
+                .filterNot { it.is_undecryptable }
+                .filter { !it.thread_token.isNullOrBlank() }
+                .distinctBy { it.thread_token }
+                .take(limit)
+                .toList()
+            val missing = withContext(Dispatchers.IO) {
+                targets.filterNot { item ->
+                    cached_thread_messages(item.thread_token!!)?.any { it.id == item.id } == true
+                }
+            }
+            if (missing.isEmpty()) return
+            val gate = kotlinx.coroutines.sync.Semaphore(OFFLINE_PREFETCH_CONCURRENCY)
+            coroutineScope {
+                missing.forEach { item ->
+                    launch(Dispatchers.IO) {
+                        gate.acquire()
+                        try {
+                            if (pending_action_queue?.is_network_available() != false) {
+                                kotlinx.coroutines.withTimeoutOrNull(OFFLINE_PREFETCH_TIMEOUT_MS) {
+                                    fetch_thread(item.thread_token!!)
+                                }
+                            }
+                        } finally {
+                            gate.release()
+                        }
+                    }
+                }
+            }
+        } finally {
+            offline_prefetch_mutex.unlock()
+        }
+    }
 
     private suspend fun store_thread_snapshot(
         thread_token: String,
@@ -1168,7 +1416,13 @@ class MailRepository @Inject constructor(
                     "send_pending attempt=$attempt failed cause=${err?.javaClass?.name} msg=${err?.message} inner=${err?.cause?.javaClass?.name}",
                 )
             }
-            if (is_permanent_send_failure(err) || attempt >= SEND_RETRY_MAX_ATTEMPTS) {
+            val permanent = is_permanent_send_failure(err)
+            if (attempt >= SEND_RETRY_MAX_ATTEMPTS &&
+                should_wait_for_network(err, permanent, row.created_at_ms, System.currentTimeMillis())
+            ) {
+                runCatching { pending_send_dao.mark_pending(pending_id) }
+                PendingSendOutcome.WAIT_FOR_NETWORK
+            } else if (permanent || attempt >= SEND_RETRY_MAX_ATTEMPTS) {
                 _send_problem.value = true
                 _send_result_events.tryEmit(
                     Result.failure(server_rejection_cause(err) ?: err ?: IllegalStateException("send rejected")),
@@ -1180,7 +1434,7 @@ class MailRepository @Inject constructor(
                 PendingSendOutcome.FAILED
             } else {
                 runCatching { pending_send_dao.mark_pending(pending_id) }
-                if (attempt >= SEND_RETRY_QUIET_ATTEMPTS) {
+                if (attempt == SEND_RETRY_QUIET_ATTEMPTS) {
                     _send_result_events.tryEmit(Result.failure(TransientSendException()))
                 }
                 PendingSendOutcome.RETRY
@@ -2037,8 +2291,15 @@ class MailRepository @Inject constructor(
         mail_api.get_stats()
     }
 
-    suspend fun mark_read(item_id: String, is_read: Boolean, raw_item: MailItem? = null): Result<Unit> = runCatching {
-        val resolved = raw_item ?: resolve_raw_item(item_id)
+    suspend fun mark_read(item_id: String, is_read: Boolean, raw_item: MailItem? = null): Result<Unit> =
+        run_or_queue(
+            if (is_read) PendingActionKind.mark_read else PendingActionKind.mark_unread,
+            PendingActionPayload(ids = listOf(item_id), value = PENDING_PATCH_MODE),
+            Unit,
+        ) { mark_read_now(item_id, is_read, raw_item) }
+
+    private suspend fun mark_read_now(item_id: String, is_read: Boolean, raw_item: MailItem? = null): Result<Unit> = runCatching {
+        val resolved = raw_item ?: resolve_action_item(item_id)
         val request = build_metadata_patch(resolved, mapOf("is_read" to is_read))
         mail_api.patch_metadata(item_id, request)
         Unit
@@ -2047,7 +2308,25 @@ class MailRepository @Inject constructor(
     private suspend fun resolve_raw_item(item_id: String): MailItem? =
         runCatching { mail_api.get_message(item_id) }.getOrNull()
 
-    suspend fun mark_thread_message_read(message: ThreadMessageItem, is_read: Boolean): Result<Unit> = runCatching {
+    private suspend fun resolve_action_item(item_id: String): MailItem? {
+        val result = runCatching { mail_api.get_message(item_id) }
+        rethrow_if_transient(result.exceptionOrNull())
+        return result.getOrNull()
+    }
+
+    private fun rethrow_if_transient(error: Throwable?) {
+        if (error == null) return
+        if (error is CancellationException || is_transient_failure(error)) throw error
+    }
+
+    suspend fun mark_thread_message_read(message: ThreadMessageItem, is_read: Boolean): Result<Unit> =
+        run_or_queue(
+            if (is_read) PendingActionKind.mark_read else PendingActionKind.mark_unread,
+            PendingActionPayload(ids = listOf(message.id), value = PENDING_PATCH_MODE),
+            Unit,
+        ) { mark_thread_message_read_now(message, is_read) }
+
+    private suspend fun mark_thread_message_read_now(message: ThreadMessageItem, is_read: Boolean): Result<Unit> = runCatching {
         val carrier = MailItem(
             id = message.id,
             encrypted_metadata = message.encrypted_metadata,
@@ -2059,21 +2338,42 @@ class MailRepository @Inject constructor(
         Unit
     }
 
-    suspend fun toggle_star(item_id: String, is_starred: Boolean, raw_item: MailItem? = null): Result<Unit> = runCatching {
-        val resolved = raw_item ?: resolve_raw_item(item_id)
+    suspend fun toggle_star(item_id: String, is_starred: Boolean, raw_item: MailItem? = null): Result<Unit> =
+        run_or_queue(
+            if (is_starred) PendingActionKind.star else PendingActionKind.unstar,
+            PendingActionPayload(ids = listOf(item_id), value = PENDING_PATCH_MODE),
+            Unit,
+        ) { toggle_star_now(item_id, is_starred, raw_item) }
+
+    private suspend fun toggle_star_now(item_id: String, is_starred: Boolean, raw_item: MailItem? = null): Result<Unit> = runCatching {
+        val resolved = raw_item ?: resolve_action_item(item_id)
         val request = build_metadata_patch(resolved, mapOf("is_starred" to is_starred))
         mail_api.patch_metadata(item_id, request)
         Unit
     }
 
-    suspend fun toggle_pin(item_id: String, is_pinned: Boolean, raw_item: MailItem? = null): Result<Unit> = runCatching {
-        val resolved = raw_item ?: resolve_raw_item(item_id)
+    suspend fun toggle_pin(item_id: String, is_pinned: Boolean, raw_item: MailItem? = null): Result<Unit> =
+        run_or_queue(
+            if (is_pinned) PendingActionKind.pin else PendingActionKind.unpin,
+            PendingActionPayload(ids = listOf(item_id)),
+            Unit,
+        ) { toggle_pin_now(item_id, is_pinned, raw_item) }
+
+    private suspend fun toggle_pin_now(item_id: String, is_pinned: Boolean, raw_item: MailItem? = null): Result<Unit> = runCatching {
+        val resolved = raw_item ?: resolve_action_item(item_id)
         val request = build_metadata_patch(resolved, mapOf("is_pinned" to is_pinned))
         mail_api.patch_metadata(item_id, request)
         Unit
     }
 
-    suspend fun snooze(item_id: String, snoozed_until_iso: String): Result<Unit> = runCatching {
+    suspend fun snooze(item_id: String, snoozed_until_iso: String): Result<Unit> =
+        run_or_queue(
+            PendingActionKind.snooze,
+            PendingActionPayload(ids = listOf(item_id), value = snoozed_until_iso),
+            Unit,
+        ) { snooze_now(item_id, snoozed_until_iso) }
+
+    private suspend fun snooze_now(item_id: String, snoozed_until_iso: String): Result<Unit> = runCatching {
         snooze_api.snooze(
             org.astermail.android.api.snooze.SnoozeRequest(
                 mail_item_id = item_id,
@@ -2083,7 +2383,12 @@ class MailRepository @Inject constructor(
         Unit
     }
 
-    suspend fun unsnooze(item_id: String): Result<Unit> = runCatching {
+    suspend fun unsnooze(item_id: String): Result<Unit> =
+        run_or_queue(PendingActionKind.unsnooze, PendingActionPayload(ids = listOf(item_id)), Unit) {
+            unsnooze_now(item_id)
+        }
+
+    private suspend fun unsnooze_now(item_id: String): Result<Unit> = runCatching {
         snooze_api.unsnooze_by_mail_item(item_id)
     }
 
@@ -2097,7 +2402,14 @@ class MailRepository @Inject constructor(
             }
     }
 
-    suspend fun add_label_to_item(item_id: String, label_token: String): Result<Unit> = runCatching {
+    suspend fun add_label_to_item(item_id: String, label_token: String): Result<Unit> =
+        run_or_queue(
+            PendingActionKind.add_label,
+            PendingActionPayload(ids = listOf(item_id), token = label_token, value = PENDING_PATCH_MODE),
+            Unit,
+        ) { add_label_to_item_now(item_id, label_token) }
+
+    private suspend fun add_label_to_item_now(item_id: String, label_token: String): Result<Unit> = runCatching {
         mail_api.add_label_to_item(item_id, label_token)
     }
 
@@ -2107,24 +2419,57 @@ class MailRepository @Inject constructor(
         from_label_token: String? = null,
     ): Set<String> {
         if (item_ids.isEmpty()) return emptySet()
-        val failed = add_label_bulk(item_ids, folder_token).toMutableSet()
+        return run_or_queue_set(
+            PendingActionKind.move_to_folder,
+            PendingActionPayload(ids = item_ids, token = folder_token, from_token = from_label_token),
+        ) { move_to_folder_bulk_now(item_ids, folder_token, from_label_token) }
+    }
+
+    private suspend fun move_to_folder_bulk_now(
+        item_ids: List<String>,
+        folder_token: String,
+        from_label_token: String? = null,
+    ): Set<String> {
+        if (item_ids.isEmpty()) return emptySet()
+        val failed = add_label_bulk_now(item_ids, folder_token).toMutableSet()
         val moved = item_ids.filter { it !in failed }
         if (moved.isEmpty()) return failed
         if (from_label_token != null && from_label_token != folder_token) {
-            remove_label_bulk(moved, from_label_token)
+            remove_label_bulk_now(moved, from_label_token)
         }
         return failed
     }
 
-    suspend fun remove_label_from_item(item_id: String, label_token: String): Result<Unit> = runCatching {
+    suspend fun remove_label_from_item(item_id: String, label_token: String): Result<Unit> =
+        run_or_queue(
+            PendingActionKind.remove_label,
+            PendingActionPayload(ids = listOf(item_id), token = label_token, value = PENDING_PATCH_MODE),
+            Unit,
+        ) { remove_label_from_item_now(item_id, label_token) }
+
+    private suspend fun remove_label_from_item_now(item_id: String, label_token: String): Result<Unit> = runCatching {
         mail_api.remove_label_from_item(item_id, label_token)
     }
 
-    suspend fun add_tag_to_item(item_id: String, tag_token: String): Result<Unit> = runCatching {
+    suspend fun add_tag_to_item(item_id: String, tag_token: String): Result<Unit> =
+        run_or_queue(
+            PendingActionKind.add_tag,
+            PendingActionPayload(ids = listOf(item_id), token = tag_token, value = PENDING_PATCH_MODE),
+            Unit,
+        ) { add_tag_to_item_now(item_id, tag_token) }
+
+    private suspend fun add_tag_to_item_now(item_id: String, tag_token: String): Result<Unit> = runCatching {
         mail_api.add_tag_to_item(item_id, tag_token)
     }
 
-    suspend fun remove_tag_from_item(item_id: String, tag_token: String): Result<Unit> = runCatching {
+    suspend fun remove_tag_from_item(item_id: String, tag_token: String): Result<Unit> =
+        run_or_queue(
+            PendingActionKind.remove_tag,
+            PendingActionPayload(ids = listOf(item_id), token = tag_token, value = PENDING_PATCH_MODE),
+            Unit,
+        ) { remove_tag_from_item_now(item_id, tag_token) }
+
+    private suspend fun remove_tag_from_item_now(item_id: String, tag_token: String): Result<Unit> = runCatching {
         mail_api.remove_tag_from_item(item_id, tag_token)
     }
 
@@ -2135,36 +2480,71 @@ class MailRepository @Inject constructor(
     ): Set<String> {
         val failed = mutableSetOf<String>()
         item_ids.chunked(METADATA_PATCH_BATCH_SIZE).forEach { chunk ->
-            if (runCatching { per_chunk(chunk) }.isSuccess) return@forEach
+            val chunk_error = runCatching { per_chunk(chunk) }.exceptionOrNull() ?: return@forEach
+            rethrow_if_transient(chunk_error)
             chunk.forEach { item_id ->
-                if (runCatching { per_item(item_id) }.isFailure) failed.add(item_id)
+                val item_error = runCatching { per_item(item_id) }.exceptionOrNull() ?: return@forEach
+                rethrow_if_transient(item_error)
+                failed.add(item_id)
             }
         }
         return failed
     }
 
-    suspend fun add_label_bulk(item_ids: List<String>, label_token: String): Set<String> =
+    suspend fun add_label_bulk(item_ids: List<String>, label_token: String): Set<String> {
+        if (item_ids.isEmpty()) return emptySet()
+        return run_or_queue_set(
+            PendingActionKind.add_label,
+            PendingActionPayload(ids = item_ids, token = label_token),
+        ) { add_label_bulk_now(item_ids, label_token) }
+    }
+
+    private suspend fun add_label_bulk_now(item_ids: List<String>, label_token: String): Set<String> =
         bulk_membership(
             item_ids,
             per_item = { mail_api.add_label_to_item(it, label_token) },
             per_chunk = { mail_api.bulk_add_label(BulkLabelRequest(ids = it, label_token = label_token)) },
         )
 
-    suspend fun remove_label_bulk(item_ids: List<String>, label_token: String): Set<String> =
+    suspend fun remove_label_bulk(item_ids: List<String>, label_token: String): Set<String> {
+        if (item_ids.isEmpty()) return emptySet()
+        return run_or_queue_set(
+            PendingActionKind.remove_label,
+            PendingActionPayload(ids = item_ids, token = label_token),
+        ) { remove_label_bulk_now(item_ids, label_token) }
+    }
+
+    private suspend fun remove_label_bulk_now(item_ids: List<String>, label_token: String): Set<String> =
         bulk_membership(
             item_ids,
             per_item = { mail_api.remove_label_from_item(it, label_token) },
             per_chunk = { mail_api.bulk_remove_label(BulkLabelRequest(ids = it, label_token = label_token)) },
         )
 
-    suspend fun add_tag_bulk(item_ids: List<String>, tag_token: String): Set<String> =
+    suspend fun add_tag_bulk(item_ids: List<String>, tag_token: String): Set<String> {
+        if (item_ids.isEmpty()) return emptySet()
+        return run_or_queue_set(
+            PendingActionKind.add_tag,
+            PendingActionPayload(ids = item_ids, token = tag_token),
+        ) { add_tag_bulk_now(item_ids, tag_token) }
+    }
+
+    private suspend fun add_tag_bulk_now(item_ids: List<String>, tag_token: String): Set<String> =
         bulk_membership(
             item_ids,
             per_item = { mail_api.add_tag_to_item(it, tag_token) },
             per_chunk = { mail_api.bulk_add_tag(BulkTagRequest(ids = it, tag_token = tag_token)) },
         )
 
-    suspend fun remove_tag_bulk(item_ids: List<String>, tag_token: String): Set<String> =
+    suspend fun remove_tag_bulk(item_ids: List<String>, tag_token: String): Set<String> {
+        if (item_ids.isEmpty()) return emptySet()
+        return run_or_queue_set(
+            PendingActionKind.remove_tag,
+            PendingActionPayload(ids = item_ids, token = tag_token),
+        ) { remove_tag_bulk_now(item_ids, tag_token) }
+    }
+
+    private suspend fun remove_tag_bulk_now(item_ids: List<String>, tag_token: String): Set<String> =
         bulk_membership(
             item_ids,
             per_item = { mail_api.remove_tag_from_item(it, tag_token) },
@@ -2175,11 +2555,28 @@ class MailRepository @Inject constructor(
         item_ids: List<String>,
         is_starred: Boolean,
         raw_items: List<MailItem?> = emptyList(),
+    ): Result<Unit> = run_or_queue(
+        if (is_starred) PendingActionKind.star else PendingActionKind.unstar,
+        PendingActionPayload(ids = item_ids),
+        Unit,
+    ) { star_bulk_now(item_ids, is_starred, raw_items) }
+
+    private suspend fun star_bulk_now(
+        item_ids: List<String>,
+        is_starred: Boolean,
+        raw_items: List<MailItem?> = emptyList(),
     ): Result<Unit> = runCatching {
         patch_metadata_for_items(item_ids, raw_items, mapOf("is_starred" to is_starred), require_patch = true)
     }
 
-    suspend fun star_scope(folder: String, is_starred: Boolean): Result<BulkScopeResponse> = runCatching {
+    suspend fun star_scope(folder: String, is_starred: Boolean): Result<BulkScopeResponse> =
+        run_or_queue(
+            PendingActionKind.star_scope,
+            PendingActionPayload(folder = folder, value = is_starred.toString()),
+            queued_scope_response(0),
+        ) { star_scope_now(folder, is_starred) }
+
+    private suspend fun star_scope_now(folder: String, is_starred: Boolean): Result<BulkScopeResponse> = runCatching {
         mail_api.bulk_action(
             BulkScopeRequest(
                 action = if (is_starred) "star" else "unstar",
@@ -2192,12 +2589,14 @@ class MailRepository @Inject constructor(
         item_id: String,
         request: PatchMetadataRequest,
     ): Boolean {
+        var last_error: Throwable? = null
         repeat(METADATA_PATCH_ATTEMPTS) { attempt ->
-            if (runCatching { mail_api.patch_metadata(item_id, request) }.isSuccess) return true
+            last_error = runCatching { mail_api.patch_metadata(item_id, request) }.exceptionOrNull() ?: return true
             if (attempt < METADATA_PATCH_ATTEMPTS - 1) {
                 delay(METADATA_PATCH_RETRY_DELAY_MS * (attempt + 1))
             }
         }
+        rethrow_if_transient(last_error)
         return false
     }
 
@@ -2214,7 +2613,7 @@ class MailRepository @Inject constructor(
         missing.chunked(METADATA_RESOLVE_CONCURRENCY).forEach { chunk ->
             coroutineScope {
                 chunk.map { index ->
-                    async(Dispatchers.IO) { index to resolve_raw_item(item_ids[index]) }
+                    async(Dispatchers.IO) { index to resolve_action_item(item_ids[index]) }
                 }.awaitAll()
             }.forEach { (index, item) -> resolved[index] = item }
         }
@@ -2222,13 +2621,15 @@ class MailRepository @Inject constructor(
     }
 
     private suspend fun bulk_patch_with_retry(items: List<BulkPatchMetadataItem>): Boolean {
+        var last_error: Throwable? = null
         repeat(METADATA_PATCH_ATTEMPTS) { attempt ->
             val result = runCatching { mail_api.bulk_patch_metadata(BulkPatchMetadataRequest(items)) }
-            if (result.isSuccess) return true
+            last_error = result.exceptionOrNull() ?: return true
             if (attempt < METADATA_PATCH_ATTEMPTS - 1) {
                 delay(METADATA_PATCH_RETRY_DELAY_MS * (attempt + 1))
             }
         }
+        rethrow_if_transient(last_error)
         return false
     }
 
@@ -2268,7 +2669,12 @@ class MailRepository @Inject constructor(
         }
     }
 
-    suspend fun archive(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> = runCatching {
+    suspend fun archive(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> =
+        run_or_queue(PendingActionKind.archive, PendingActionPayload(ids = item_ids), Unit) {
+            archive_now(item_ids, raw_items)
+        }
+
+    private suspend fun archive_now(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> = runCatching {
         mail_api.bulk_action(BulkScopeRequest(action = "archive", ids = item_ids))
         patch_metadata_for_items(
             item_ids,
@@ -2284,6 +2690,17 @@ class MailRepository @Inject constructor(
     }
 
     suspend fun trash(
+        item_ids: List<String>,
+        raw_items: List<MailItem?> = emptyList(),
+        thread_tokens: List<String> = emptyList(),
+        thread_covered_ids: Set<String> = emptySet(),
+    ): Result<Unit> = run_or_queue(
+        PendingActionKind.trash,
+        PendingActionPayload(ids = item_ids, threads = thread_tokens, covered = thread_covered_ids.toList()),
+        Unit,
+    ) { trash_now(item_ids, raw_items, thread_tokens, thread_covered_ids) }
+
+    private suspend fun trash_now(
         item_ids: List<String>,
         raw_items: List<MailItem?> = emptyList(),
         thread_tokens: List<String> = emptyList(),
@@ -2317,7 +2734,9 @@ class MailRepository @Inject constructor(
         if (targets.isEmpty()) return emptySet()
         val failed = mutableSetOf<String>()
         targets.forEach { token ->
-            if (runCatching { mail_api.trash_thread(token, true) }.isFailure) failed.add(token)
+            val error = runCatching { mail_api.trash_thread(token, true) }.exceptionOrNull() ?: return@forEach
+            rethrow_if_transient(error)
+            failed.add(token)
         }
         return failed
     }
@@ -2346,7 +2765,12 @@ class MailRepository @Inject constructor(
         }
     }
 
-    suspend fun mark_spam(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> = runCatching {
+    suspend fun mark_spam(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> =
+        run_or_queue(PendingActionKind.mark_spam, PendingActionPayload(ids = item_ids), Unit) {
+            mark_spam_now(item_ids, raw_items)
+        }
+
+    private suspend fun mark_spam_now(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> = runCatching {
         mail_api.bulk_action(BulkScopeRequest(action = "mark_spam", ids = item_ids))
         patch_metadata_for_items(
             item_ids,
@@ -2361,7 +2785,12 @@ class MailRepository @Inject constructor(
         Unit
     }
 
-    suspend fun unmark_spam(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
+    suspend fun unmark_spam(item_ids: List<String>): Result<BulkScopeResponse> =
+        run_or_queue(PendingActionKind.unmark_spam, PendingActionPayload(ids = item_ids), queued_scope_response(item_ids.size)) {
+            unmark_spam_now(item_ids)
+        }
+
+    private suspend fun unmark_spam_now(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
         val response = mail_api.bulk_action(BulkScopeRequest(action = "unmark_spam", ids = item_ids))
         patch_metadata_for_items(
             item_ids,
@@ -2376,28 +2805,48 @@ class MailRepository @Inject constructor(
     }
 
     suspend fun report_spam_senders(sender_emails: List<String>) {
+        val emails = normalize_sender_emails(sender_emails)
+        if (emails.isEmpty()) return
+        run_or_queue(PendingActionKind.report_spam_senders, PendingActionPayload(ids = emails), Unit) {
+            runCatching { report_spam_senders_now(emails) }
+        }
+    }
+
+    private suspend fun report_spam_senders_now(sender_emails: List<String>) {
         for (email in normalize_sender_emails(sender_emails)) {
             val domain = email.substringAfterLast('@', "")
-            runCatching {
-                mail_api.report_spam_sender(
-                    SpamSenderRequest(
-                        sender_hash = sha256_hex(email),
-                        sender_domain_hash = if (domain.isNotEmpty()) sha256_hex(domain) else null,
-                    ),
-                )
-            }
+            rethrow_if_transient(
+                runCatching {
+                    mail_api.report_spam_sender(
+                        SpamSenderRequest(
+                            sender_hash = sha256_hex(email),
+                            sender_domain_hash = if (domain.isNotEmpty()) sha256_hex(domain) else null,
+                        ),
+                    )
+                }.exceptionOrNull(),
+            )
         }
     }
 
     suspend fun remove_spam_senders(sender_emails: List<String>) {
+        val emails = normalize_sender_emails(sender_emails)
+        if (emails.isEmpty()) return
+        run_or_queue(PendingActionKind.remove_spam_senders, PendingActionPayload(ids = emails), Unit) {
+            runCatching { remove_spam_senders_now(emails) }
+        }
+    }
+
+    private suspend fun remove_spam_senders_now(sender_emails: List<String>) {
         for (email in normalize_sender_emails(sender_emails)) {
             val domain = email.substringAfterLast('@', "")
-            runCatching {
-                mail_api.remove_spam_sender(
-                    sender_hash = sha256_hex(email),
-                    sender_domain_hash = if (domain.isNotEmpty()) sha256_hex(domain) else null,
-                )
-            }
+            rethrow_if_transient(
+                runCatching {
+                    mail_api.remove_spam_sender(
+                        sender_hash = sha256_hex(email),
+                        sender_domain_hash = if (domain.isNotEmpty()) sha256_hex(domain) else null,
+                    )
+                }.exceptionOrNull(),
+            )
         }
     }
 
@@ -2412,7 +2861,12 @@ class MailRepository @Inject constructor(
             .digest(value.toByteArray(Charsets.UTF_8))
             .joinToString("") { "%02x".format(it) }
 
-    suspend fun unarchive(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<BulkScopeResponse> = runCatching {
+    suspend fun unarchive(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<BulkScopeResponse> =
+        run_or_queue(PendingActionKind.unarchive, PendingActionPayload(ids = item_ids), queued_scope_response(item_ids.size)) {
+            unarchive_now(item_ids, raw_items)
+        }
+
+    private suspend fun unarchive_now(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<BulkScopeResponse> = runCatching {
         val response = mail_api.bulk_action(BulkScopeRequest(action = "unarchive", ids = item_ids))
         patch_metadata_for_items(
             item_ids,
@@ -2423,7 +2877,12 @@ class MailRepository @Inject constructor(
         response
     }
 
-    suspend fun restore_trash(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
+    suspend fun restore_trash(item_ids: List<String>): Result<BulkScopeResponse> =
+        run_or_queue(PendingActionKind.restore_trash, PendingActionPayload(ids = item_ids), queued_scope_response(item_ids.size)) {
+            restore_trash_now(item_ids)
+        }
+
+    private suspend fun restore_trash_now(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
         val response = mail_api.bulk_action(BulkScopeRequest(action = "restore_trash", ids = item_ids))
         patch_metadata_for_items(
             item_ids,
@@ -2437,29 +2896,65 @@ class MailRepository @Inject constructor(
         response
     }
 
-    suspend fun mark_read_bulk(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
+    suspend fun mark_read_bulk(item_ids: List<String>): Result<BulkScopeResponse> =
+        run_or_queue(PendingActionKind.mark_read, PendingActionPayload(ids = item_ids), queued_scope_response(item_ids.size)) {
+            mark_read_bulk_now(item_ids)
+        }
+
+    private suspend fun mark_read_bulk_now(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
         mail_api.bulk_action(BulkScopeRequest(action = "mark_read", ids = item_ids))
     }
 
-    suspend fun mark_thread_read_all(thread_token: String): Result<Unit> = runCatching {
+    suspend fun mark_thread_read_all(thread_token: String): Result<Unit> =
+        run_or_queue(PendingActionKind.mark_thread_read, PendingActionPayload(threads = listOf(thread_token)), Unit) {
+            mark_thread_read_all_now(thread_token)
+        }
+
+    private suspend fun mark_thread_read_all_now(thread_token: String): Result<Unit> = runCatching {
         mail_api.mark_thread_read(thread_token)
     }
 
-    suspend fun mark_unread_bulk(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
+    suspend fun mark_unread_bulk(item_ids: List<String>): Result<BulkScopeResponse> =
+        run_or_queue(PendingActionKind.mark_unread, PendingActionPayload(ids = item_ids), queued_scope_response(item_ids.size)) {
+            mark_unread_bulk_now(item_ids)
+        }
+
+    private suspend fun mark_unread_bulk_now(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
         mail_api.bulk_action(BulkScopeRequest(action = "mark_unread", ids = item_ids))
     }
 
-    suspend fun mark_all_read_scope(folder: String): Result<BulkScopeResponse> = runCatching {
+    suspend fun mark_all_read_scope(folder: String): Result<BulkScopeResponse> =
+        run_or_queue(
+            PendingActionKind.scope_action,
+            PendingActionPayload(folder = folder, value = "mark_read"),
+            queued_scope_response(0),
+        ) { mark_all_read_scope_now(folder) }
+
+    private suspend fun mark_all_read_scope_now(folder: String): Result<BulkScopeResponse> = runCatching {
         val scope = folder_to_bulk_scope(folder)
         mail_api.bulk_action(BulkScopeRequest(action = "mark_read", scope = scope))
     }
 
-    suspend fun mark_all_unread_scope(folder: String): Result<BulkScopeResponse> = runCatching {
+    suspend fun mark_all_unread_scope(folder: String): Result<BulkScopeResponse> =
+        run_or_queue(
+            PendingActionKind.scope_action,
+            PendingActionPayload(folder = folder, value = "mark_unread"),
+            queued_scope_response(0),
+        ) { mark_all_unread_scope_now(folder) }
+
+    private suspend fun mark_all_unread_scope_now(folder: String): Result<BulkScopeResponse> = runCatching {
         val scope = folder_to_bulk_scope(folder)
         mail_api.bulk_action(BulkScopeRequest(action = "mark_unread", scope = scope))
     }
 
-    suspend fun bulk_scope_action(folder: String, action: String): Result<BulkScopeResponse> = runCatching {
+    suspend fun bulk_scope_action(folder: String, action: String): Result<BulkScopeResponse> =
+        run_or_queue(
+            PendingActionKind.scope_action,
+            PendingActionPayload(folder = folder, value = action),
+            queued_scope_response(0),
+        ) { bulk_scope_action_now(folder, action) }
+
+    private suspend fun bulk_scope_action_now(folder: String, action: String): Result<BulkScopeResponse> = runCatching {
         val scope = folder_to_bulk_scope(folder)
         var response = mail_api.bulk_action(BulkScopeRequest(action = action, scope = scope))
         var total = response.affected_count
@@ -2506,7 +3001,18 @@ class MailRepository @Inject constructor(
         }
     }
 
-    suspend fun delete_draft(draft_id: String): Result<Unit> = runCatching {
+    suspend fun delete_draft(draft_id: String): Result<Unit> {
+        val result = run_or_queue(PendingActionKind.delete_draft, PendingActionPayload(ids = listOf(draft_id)), Unit) {
+            delete_draft_now(draft_id)
+        }
+        if (result.isSuccess) {
+            forget_draft(draft_id)
+            _draft_changes.tryEmit(Unit)
+        }
+        return result
+    }
+
+    private suspend fun delete_draft_now(draft_id: String): Result<Unit> = runCatching {
         mail_api.delete_draft(draft_id)
         forget_draft(draft_id)
         _draft_changes.tryEmit(Unit)
@@ -2519,21 +3025,37 @@ class MailRepository @Inject constructor(
         draft_session_ids.entries.removeAll { it.value == draft_id }
     }
 
-    suspend fun delete_permanent(item_id: String): Result<Unit> = runCatching {
+    suspend fun delete_permanent(item_id: String): Result<Unit> =
+        run_or_queue(PendingActionKind.delete_permanent, PendingActionPayload(ids = listOf(item_id)), Unit) {
+            delete_permanent_now(item_id)
+        }
+
+    private suspend fun delete_permanent_now(item_id: String): Result<Unit> = runCatching {
         mail_api.delete_permanent(item_id)
         Unit
     }
 
-    suspend fun empty_trash(): Result<Unit> = runCatching {
+    suspend fun empty_trash(): Result<Unit> =
+        run_or_queue(PendingActionKind.empty_trash, PendingActionPayload(), Unit) { empty_trash_now() }
+
+    private suspend fun empty_trash_now(): Result<Unit> = runCatching {
         mail_api.empty_trash()
         Unit
     }
 
-    suspend fun empty_spam(): Result<Int> = runCatching {
+    suspend fun empty_spam(): Result<Int> =
+        run_or_queue(PendingActionKind.empty_spam, PendingActionPayload(), PENDING_UNKNOWN_COUNT) { empty_spam_now() }
+
+    private suspend fun empty_spam_now(): Result<Int> = runCatching {
         mail_api.empty_spam().deleted_count
     }
 
-    suspend fun bulk_delete_permanent(ids: List<String>): Result<Int> = runCatching {
+    suspend fun bulk_delete_permanent(ids: List<String>): Result<Int> =
+        run_or_queue(PendingActionKind.delete_permanent, PendingActionPayload(ids = ids), ids.size) {
+            bulk_delete_permanent_now(ids)
+        }
+
+    private suspend fun bulk_delete_permanent_now(ids: List<String>): Result<Int> = runCatching {
         var deleted = 0
         ids.filter { it.isNotBlank() }.chunked(100).forEach { chunk ->
             val response = mail_api.bulk_delete_permanent(
@@ -5112,6 +5634,10 @@ class MailRepository @Inject constructor(
 }
 
 class AttachmentKeyUnavailableException : Exception("attachment key unavailable")
+
+private const val OFFLINE_PREFETCH_LIMIT = 25
+private const val OFFLINE_PREFETCH_CONCURRENCY = 2
+private const val OFFLINE_PREFETCH_TIMEOUT_MS = 20_000L
 
 data class InboxPage(
     val items: List<InboxItem>,

@@ -443,6 +443,20 @@ class AuthRepository @Inject constructor(
         password_hash_bytes: ByteArray,
         salt_bytes: ByteArray,
     ) {
+        mail_repository.pause_pending_drain()
+        try {
+            complete_login_while_drain_paused(login_resp, password_bytes, password_hash_bytes, salt_bytes)
+        } finally {
+            mail_repository.resume_pending_drain()
+        }
+    }
+
+    private suspend fun complete_login_while_drain_paused(
+        login_resp: LoginResponse,
+        password_bytes: ByteArray,
+        password_hash_bytes: ByteArray,
+        salt_bytes: ByteArray,
+    ) {
         val access = login_resp.access_token ?: throw ApiError.UnknownError(context.getString(R.string.error_generic))
         val previous_user_id = session_key_store.get_user_id()
         if (previous_user_id != null && previous_user_id != login_resp.user_id) {
@@ -569,6 +583,21 @@ class AuthRepository @Inject constructor(
         captcha_token: String? = null,
         remember_me: Boolean = true,
         display_name: String? = null,
+    ): Result<RegisterSuccess> {
+        mail_repository.pause_pending_drain()
+        try {
+            return register_while_drain_paused(email, password, captcha_token, remember_me, display_name)
+        } finally {
+            mail_repository.resume_pending_drain()
+        }
+    }
+
+    private suspend fun register_while_drain_paused(
+        email: String,
+        password: String,
+        captcha_token: String?,
+        remember_me: Boolean,
+        display_name: String?,
     ): Result<RegisterSuccess> = runCatching {
         val trimmed = email.trim().lowercase(java.util.Locale.ROOT)
         val at_index = trimmed.indexOf('@')
@@ -759,6 +788,15 @@ class AuthRepository @Inject constructor(
 
     @OptIn(coil.annotation.ExperimentalCoilApi::class)
     suspend fun try_restore_session(account_id: String): Boolean {
+        mail_repository.pause_pending_drain()
+        try {
+            return restore_session_while_drain_paused(account_id)
+        } finally {
+            mail_repository.resume_pending_drain()
+        }
+    }
+
+    private suspend fun restore_session_while_drain_paused(account_id: String): Boolean {
         SessionRefreshGate.mutex.lock()
         val snapshot = try {
             val loaded = session_snapshot_store.load(account_id) ?: return false
@@ -1050,6 +1088,7 @@ class AuthRepository @Inject constructor(
                 current_id?.let { database.pending_send_dao().clear_for_account(it) }
                     ?: database.pending_send_dao().clear_all()
             }
+            current_id?.let { runCatching { mail_repository.clear_pending_actions(it) } }
         }
         if (current_id != null) {
             runCatching { session_snapshot_store.remove(current_id) }
@@ -1558,6 +1597,8 @@ class AuthRepository @Inject constructor(
         current_email?.let { trusted_device_store.clear(it) }
         if (current_id != null) {
             runCatching { org.astermail.android.mail.clear_folder_cache_stats(context, current_id) }
+            runCatching { mail_repository.clear_pending_actions(current_id) }
+            runCatching { database.pending_send_dao().clear_for_account(current_id) }
             account_store.remove(current_id)
             runCatching { session_snapshot_store.remove(current_id) }
         }

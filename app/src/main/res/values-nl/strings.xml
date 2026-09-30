@@ -217,6 +217,7 @@
     <string name="block_sender">Afzender blokkeren</string>
     <string name="message_unavailable">Bericht niet beschikbaar</string>
     <string name="message_replaced_or_deleted">Dit bericht is verwijderd of vervangen door een nieuwere kopie. Ga terug en zoek opnieuw om het te vinden.</string>
+    <string name="message_unavailable_offline">Dit bericht is offline niet beschikbaar. Het wordt geopend zodra je weer online bent.</string>
     <string name="no_subject">(geen onderwerp)</string>
     <string name="open_external_link">Externe link openen?</string>
     <string name="leaving_aster_warning">Je staat op het punt Aster te verlaten en deze link in je browser te openen:</string>

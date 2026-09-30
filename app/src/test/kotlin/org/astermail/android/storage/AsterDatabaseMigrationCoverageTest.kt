@@ -21,6 +21,7 @@
 
 package org.astermail.android.storage
 
+import org.astermail.android.storage.actions.PendingMailActionEntity
 import org.astermail.android.storage.outbox.PendingSendEntity
 import org.astermail.android.storage.search.AsterDatabase
 import org.astermail.android.storage.search.DecryptedMailEntity
@@ -30,6 +31,7 @@ import org.astermail.android.storage.search.ThreadSnapshotEntity
 import org.astermail.android.storage.search.aster_database_version
 import org.astermail.android.storage.search.create_folder_row_cache
 import org.astermail.android.storage.search.create_message_body_cache
+import org.astermail.android.storage.search.create_pending_mail_action
 import org.astermail.android.storage.search.create_thread_snapshot_cache
 import org.astermail.android.storage.search.migration_columns
 import org.astermail.android.storage.search.migration_statements
@@ -44,6 +46,7 @@ class AsterDatabaseMigrationCoverageTest {
     private val folder_row_table = "folder_row_cache"
     private val message_body_table = "message_body_cache"
     private val thread_snapshot_table = "thread_snapshot_cache"
+    private val pending_mail_action_table = "pending_mail_action"
 
     private val decrypted_mail_baseline = listOf(
         "id",
@@ -143,8 +146,8 @@ class AsterDatabaseMigrationCoverageTest {
     }
 
     @Test
-    fun the_thread_snapshot_table_is_created_by_the_latest_migration_step() {
-        val statements = migration_statements.getValue(aster_database_version)
+    fun the_thread_snapshot_table_is_created_by_its_migration_step() {
+        val statements = migration_statements.getValue(17)
 
         assertTrue(statements.contains(create_thread_snapshot_cache))
         assertTrue(create_thread_snapshot_cache.contains("PRIMARY KEY(`thread_token`)"))
@@ -154,6 +157,22 @@ class AsterDatabaseMigrationCoverageTest {
     fun every_thread_snapshot_column_is_created_by_the_thread_snapshot_migration() {
         val expected = entity_columns(ThreadSnapshotEntity::class.java).sorted()
         val actual = created_columns(create_thread_snapshot_cache, thread_snapshot_table).sorted()
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun the_pending_mail_action_table_is_created_by_the_latest_migration_step() {
+        val statements = migration_statements.getValue(aster_database_version)
+
+        assertTrue(statements.contains(create_pending_mail_action))
+        assertTrue(create_pending_mail_action.contains("`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL"))
+    }
+
+    @Test
+    fun every_pending_mail_action_column_is_created_by_its_migration() {
+        val expected = entity_columns(PendingMailActionEntity::class.java).sorted()
+        val actual = created_columns(create_pending_mail_action, pending_mail_action_table).sorted()
 
         assertEquals(expected, actual)
     }
