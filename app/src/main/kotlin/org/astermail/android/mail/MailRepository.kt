@@ -5092,10 +5092,16 @@ class MailRepository @Inject constructor(
                 }
                 throw AttachmentKeyUnavailableException()
             }
+            val stored_unencrypted = is_unencrypted_stored_attachment(data_nonce_b64)
             try {
                 val ciphertext = android.util.Base64.decode(encrypted_data_b64, android.util.Base64.DEFAULT)
                 val nonce = android.util.Base64.decode(data_nonce_b64, android.util.Base64.DEFAULT)
-                return aes_gcm_decrypt_bytes(ciphertext, key, nonce)
+                return try {
+                    aes_gcm_decrypt_bytes(ciphertext, key, nonce)
+                } catch (error: Exception) {
+                    if (!stored_unencrypted) throw error
+                    ciphertext
+                }
             } finally {
                 key.fill(0)
             }
