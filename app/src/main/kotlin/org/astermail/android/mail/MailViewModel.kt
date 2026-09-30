@@ -83,7 +83,7 @@ private const val OFFLINE_PREFETCH_DELAY_MS = 3_000L
 private const val OFFLINE_WARM_FOLDER_TIMEOUT_MS = 20_000L
 private const val OFFLINE_WARM_FOLDER_FRESH_MS = 10L * 60 * 1000
 private const val OFFLINE_WARM_THREAD_LIMIT = 10
-private val OFFLINE_WARM_FOLDERS = listOf("sent", "drafts", "starred", "archive", "trash")
+private val OFFLINE_WARM_FOLDERS = listOf("sent", "drafts", "starred", "archive", "spam", "trash")
 private const val LOAD_MORE_FAILURE_LIMIT = 3
 private const val LOAD_MORE_RETRY_COOLDOWN_MS = 30_000L
 private const val LOAD_ALL_MAX_PAGES = 5_000
@@ -717,6 +717,7 @@ class MailViewModel @Inject constructor(
         account_generation++
         offline_prefetch_job?.cancel()
         offline_prefetch_job = null
+        offline_warmed_at.clear()
         inbox_load_job?.cancel()
         silent_revalidate_job?.cancel()
         refresh_job?.cancel()
@@ -982,6 +983,8 @@ class MailViewModel @Inject constructor(
 
     private var offline_prefetch_job: kotlinx.coroutines.Job? = null
 
+    private val offline_warmed_at = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
     private fun retry_offline_thread() {
         val item_id = offline_retry_item_id ?: return
         offline_retry_item_id = null
@@ -1009,7 +1012,9 @@ class MailViewModel @Inject constructor(
             if (gen != account_generation) return
             if (org.astermail.android.api.network.low_network_state.active()) return
             if (!repository.is_network_available()) return
-            if (now - (folder_cache_time[folder] ?: 0L) < OFFLINE_WARM_FOLDER_FRESH_MS) continue
+            if (_inbox_state.value.is_loading) return
+            val last_warm = maxOf(folder_cache_time[folder] ?: 0L, offline_warmed_at[folder] ?: 0L)
+            if (now - last_warm < OFFLINE_WARM_FOLDER_FRESH_MS) continue
             if (_inbox_state.value.current_folder == folder) continue
             val page = try {
                 kotlinx.coroutines.withTimeoutOrNull(OFFLINE_WARM_FOLDER_TIMEOUT_MS) {
@@ -1023,7 +1028,9 @@ class MailViewModel @Inject constructor(
             val items = page.items.filter { folder_matches(folder, it) }
             val persisted = kotlinx.coroutines.withContext(Dispatchers.Main.immediate) {
                 if (gen != account_generation) return@withContext null
-                if (_inbox_state.value.current_folder == folder || items.isEmpty()) return@withContext false
+                if (_inbox_state.value.current_folder == folder) return@withContext false
+                offline_warmed_at[folder] = System.currentTimeMillis()
+                if (items.isEmpty()) return@withContext false
                 persist_folder_rows(folder, items)
                 true
             } ?: return
@@ -1147,6 +1154,8 @@ class MailViewModel @Inject constructor(
         }
         inbox_load_job?.cancel()
         silent_revalidate_job?.cancel()
+        offline_prefetch_job?.cancel()
+        offline_prefetch_job = null
         val probed = disk_probed.contains(folder)
         val seeded = strip_removed(
             disk_rows[folder].orEmpty().filter { folder_matches(folder, it) },
@@ -1257,11 +1266,12 @@ class MailViewModel @Inject constructor(
                 },
                 onFailure = { t ->
                     val keep_items = _inbox_state.value.items.isNotEmpty()
+                    val known_empty = is_offline_failure(t) && folder_known_empty(folder, _inbox_state.value.stats)
                     _inbox_state.value = _inbox_state.value.copy(
                         is_loading = false,
                         initial = false,
                         cache_pending = false,
-                        error = if (keep_items) null else friendly_load_error(t),
+                        error = if (keep_items || known_empty) null else friendly_load_error(t),
                     )
                 },
             )
@@ -4967,8 +4977,9 @@ class MailViewModel @Inject constructor(
             session_id = session_id,
             on_id_assigned = on_id_assigned,
             attachments = attachments,
+            queue_offline = true,
         )
-        if (result.isSuccess) invalidate_caches(listOf("drafts"))
+        if (result.isSuccess && repository.is_network_available()) invalidate_caches(listOf("drafts"))
         return result
     }
 
@@ -5011,10 +5022,11 @@ class MailViewModel @Inject constructor(
                     thread_token = thread_token,
                     session_id = session_id,
                     attachments = attachments,
+                    queue_offline = true,
                 )
             }
             if (result.isSuccess) {
-                runCatching { invalidate_caches(listOf("drafts")) }
+                if (repository.is_network_available()) runCatching { invalidate_caches(listOf("drafts")) }
                 runCatching {
                     emit_toast(context.getString(R.string.email_saved_as_draft))
                 }
@@ -5230,6 +5242,21 @@ internal fun folder_keeps_archived(folder: String): Boolean =
         folder.startsWith("label:") ||
         folder.startsWith("tag:") ||
         folder.startsWith("routing:")
+
+internal fun folder_known_empty(folder: String, stats: MailUserStatsResponse?): Boolean {
+    if (stats == null) return false
+    val count = when (folder) {
+        "drafts" -> stats.drafts
+        "scheduled" -> stats.scheduled
+        "snoozed" -> stats.snoozed
+        "starred" -> stats.starred
+        "archive" -> stats.archived
+        "spam" -> stats.spam
+        "trash" -> stats.trash
+        else -> return false
+    }
+    return count == 0
+}
 
 internal fun folder_matches_item(folder: String, item: InboxItem): Boolean = when (folder) {
     "inbox" -> !item.is_trashed && !item.is_archived && !item.is_spam && item.labels.isEmpty()

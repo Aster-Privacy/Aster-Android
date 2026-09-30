@@ -125,6 +125,44 @@ class PendingMailActionQueue @Inject constructor(
         schedule_drain()
     }
 
+    suspend fun replace_draft(account_id: String, key: String, payload: PendingActionPayload) {
+        withContext(Dispatchers.IO) {
+            mutex.withLock {
+                val dao = dao_provider.get()
+                draft_rows_locked(account_id, key).forEach { dao.delete_by_id(it.id) }
+                dao.insert(
+                    PendingMailActionEntity(
+                        account_id = account_id,
+                        kind = PendingActionKind.save_draft.name,
+                        payload = encode_pending_payload(payload),
+                        created_at_ms = System.currentTimeMillis(),
+                    ),
+                )
+                reload_locked()
+            }
+        }
+        schedule_drain()
+    }
+
+    suspend fun remove_drafts(key: String): Boolean =
+        withContext(Dispatchers.IO) {
+            mutex.withLock {
+                val rows = _actions.value.filter { it.kind == PendingActionKind.save_draft && it.payload.key == key }
+                if (rows.isEmpty()) return@withLock false
+                val dao = dao_provider.get()
+                rows.forEach { dao.delete_by_id(it.id) }
+                reload_locked()
+                true
+            }
+        }
+
+    fun is_queued(id: Long): Boolean = _actions.value.any { it.id == id }
+
+    private fun draft_rows_locked(account_id: String, key: String): List<PendingMailAction> =
+        _actions.value.filter {
+            it.account_id == account_id && it.kind == PendingActionKind.save_draft && it.payload.key == key
+        }
+
     suspend fun complete(id: Long) {
         withContext(Dispatchers.IO) {
             mutex.withLock {

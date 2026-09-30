@@ -148,6 +148,7 @@ private const val SENDER_ALIAS_BACKFILL_CHUNK = 200
 private const val SENDER_ALIAS_BACKFILL_MAX_PAGES = 500
 private const val SENDER_ALIAS_BACKFILL_MAX_ATTEMPTS = 3
 private const val UNDO_SAFETY_DRAFT_TIMEOUT_MS = 12_000L
+private const val LOCAL_DRAFT_MAP_LIMIT = 500
 private const val METADATA_PATCH_ATTEMPTS = 3
 private const val METADATA_PATCH_RETRY_DELAY_MS = 400L
 private const val DRAFT_UPDATE_CONFLICT_RETRIES = 2
@@ -642,6 +643,7 @@ class MailRepository @Inject constructor(
             PendingActionKind.empty_spam -> empty_spam_now()
             PendingActionKind.report_spam_senders -> runCatching { report_spam_senders_now(ids) }
             PendingActionKind.remove_spam_senders -> runCatching { remove_spam_senders_now(ids) }
+            PendingActionKind.save_draft -> replay_save_draft(action)
         }
     }
 
@@ -1520,6 +1522,20 @@ class MailRepository @Inject constructor(
     }
 
     private suspend fun try_delete_draft(draft_id: String): Boolean {
+        if (is_local_draft_id(draft_id)) {
+            val server_id = draft_save_mutex.withLock {
+                pending_action_queue?.remove_drafts(draft_id)
+                local_draft_server_id(draft_id)
+            }
+            if (server_id == null) {
+                forget_local_draft(draft_id)
+                return true
+            }
+            val deleted = try_delete_draft(server_id)
+            if (deleted) forget_local_draft(draft_id)
+            return deleted
+        }
+        draft_save_mutex.withLock { pending_action_queue?.remove_drafts(draft_id) }
         repeat(SENT_DRAFT_DELETE_MAX_ATTEMPTS) { attempt ->
             val outcome = runCatching { mail_api.delete_draft(draft_id) }
             val error = outcome.exceptionOrNull()
@@ -1543,7 +1559,8 @@ class MailRepository @Inject constructor(
 
     private suspend fun hidden_draft_ids(): Set<String> {
         val active = runCatching { pending_send_dao.active_draft_ids() }.getOrDefault(emptyList())
-        return pending_sweep_ids() + active.filter { it.isNotBlank() }
+        return (pending_sweep_ids() + active.filter { it.isNotBlank() })
+            .mapTo(HashSet()) { id -> if (is_local_draft_id(id)) local_draft_server_id(id) ?: id else id }
     }
 
     suspend fun reconcile_pending_sends() {
@@ -3002,6 +3019,19 @@ class MailRepository @Inject constructor(
     }
 
     suspend fun delete_draft(draft_id: String): Result<Unit> {
+        if (is_local_draft_id(draft_id)) {
+            val server_id = draft_save_mutex.withLock {
+                pending_action_queue?.remove_drafts(draft_id)
+                local_draft_server_id(draft_id)
+            }
+            val result = server_id?.let { delete_draft(it) } ?: Result.success(Unit)
+            if (result.isSuccess) {
+                forget_local_draft(draft_id)
+                _draft_changes.tryEmit(Unit)
+            }
+            return result
+        }
+        draft_save_mutex.withLock { pending_action_queue?.remove_drafts(draft_id) }
         val result = run_or_queue(PendingActionKind.delete_draft, PendingActionPayload(ids = listOf(draft_id)), Unit) {
             delete_draft_now(draft_id)
         }
@@ -5126,6 +5156,7 @@ class MailRepository @Inject constructor(
         session_id: String? = null,
         on_id_assigned: ((String) -> Unit)? = null,
         attachments: List<ExternalAttachmentPayload> = emptyList(),
+        queue_offline: Boolean = false,
     ): Result<String> = runCatching {
         fun envelope_for(list: List<ExternalAttachmentPayload>): String = build_envelope_json(
             subject = subject,
@@ -5159,57 +5190,169 @@ class MailRepository @Inject constructor(
                 if (session_id != null && session_id in closed_draft_sessions) {
                     throw IllegalStateException("draft session closed")
                 }
-                val target_id = session_id?.let { draft_session_ids[it] }
+                val requested_id = session_id?.let { draft_session_ids[it] }
                     ?: existing_draft_id?.takeIf { it.isNotBlank() }
+                val local_key = requested_id?.takeIf { is_local_draft_id(it) }
+                val target_id = if (local_key != null) local_draft_server_id(local_key) else requested_id
+                val queue = pending_action_queue
+                val account = current_account_id()?.takeIf { it.isNotBlank() }
 
-                if (target_id != null && is_uuid(target_id)) {
-                    val updated = update_existing_draft(
-                        draft_id = target_id,
-                        encrypted_content = encrypted_envelope,
-                        content_nonce = envelope_nonce,
-                        content_hash = content_hash,
-                        attachment_count = stored_attachment_count,
+                suspend fun keep_on_device(): String? {
+                    if (!queue_offline || queue == null || account == null) return null
+                    if (encrypted_envelope.length > PENDING_DRAFT_MAX_CHARS) return null
+                    val key = local_key ?: target_id ?: (LOCAL_DRAFT_PREFIX + java.util.UUID.randomUUID())
+                    queue.replace_draft(
+                        account,
+                        key,
+                        PendingActionPayload(
+                            ids = listOfNotNull(target_id),
+                            key = key,
+                            content = encrypted_envelope,
+                            nonce = envelope_nonce,
+                            hash = content_hash,
+                            reply_to = reply_to_id?.takeIf { is_uuid(it) },
+                            token = thread_token?.takeIf { it.isNotBlank() },
+                            value = draft_type,
+                            count = stored_attachment_count,
+                        ),
                     )
-                    if (updated) {
-                        draft_item_cache.remove(target_id)
-                        session_id?.let { draft_session_ids[it] = target_id }
-                        on_id_assigned?.invoke(target_id)
-                        return@withContext target_id
-                    }
+                    session_id?.let { draft_session_ids[it] = key }
+                    on_id_assigned?.invoke(key)
+                    return key
                 }
 
-                val normalized_draft_type = normalize_draft_type(draft_type)
-                val linked_thread_token = thread_token?.takeIf { it.isNotBlank() }
-                    ?: reply_to_id
-                        ?.takeIf { is_uuid(it) && normalized_draft_type == "reply" }
-                        ?.let { runCatching { get_or_create_thread_token(it, null) }.getOrNull() }
-                val response = mail_api.create_draft(
-                    org.astermail.android.api.mail.CreateDraftRequestBody(
-                        draft_type = normalized_draft_type,
+                if (queue_offline && queue != null && !queue.is_network_available()) {
+                    keep_on_device()?.let { return@withContext it }
+                }
+                val written = try {
+                    write_draft_remote(
+                        target_id = target_id,
                         encrypted_content = encrypted_envelope,
                         content_nonce = envelope_nonce,
                         content_hash = content_hash,
-                        reply_to_id = reply_to_id?.takeIf { is_uuid(it) },
-                        forward_from_id = null,
-                        thread_token = linked_thread_token,
-                        size_bytes = encrypted_envelope.length,
-                        has_attachments = stored_attachment_count > 0,
                         attachment_count = stored_attachment_count,
-                    ),
-                )
-                val new_id = response.id
-                draft_versions[new_id] = response.version
-                session_id?.let { draft_session_ids[it] = new_id }
-                on_id_assigned?.invoke(new_id)
-                if (target_id != null && target_id != new_id) {
-                    runCatching { mail_api.delete_draft(target_id) }
-                    draft_versions.remove(target_id)
-                    draft_item_cache.remove(target_id)
+                        draft_type = draft_type,
+                        reply_to_id = reply_to_id,
+                        thread_token = thread_token,
+                    )
+                } catch (error: Throwable) {
+                    if (error is CancellationException || !is_transient_failure(error)) throw error
+                    keep_on_device()?.let { return@withContext it }
+                    throw error
                 }
-                draft_item_cache.remove(new_id)
-                new_id
+                target_id?.let { queue?.remove_drafts(it) }
+                val assigned = if (local_key != null) {
+                    queue?.remove_drafts(local_key)
+                    remember_local_draft(local_key, written)
+                    local_key
+                } else {
+                    written
+                }
+                session_id?.let { draft_session_ids[it] = assigned }
+                on_id_assigned?.invoke(assigned)
+                assigned
             }
         }
+    }
+
+    private suspend fun write_draft_remote(
+        target_id: String?,
+        encrypted_content: String,
+        content_nonce: String,
+        content_hash: String,
+        attachment_count: Int,
+        draft_type: String,
+        reply_to_id: String?,
+        thread_token: String?,
+    ): String {
+        if (target_id != null && is_uuid(target_id)) {
+            val updated = update_existing_draft(
+                draft_id = target_id,
+                encrypted_content = encrypted_content,
+                content_nonce = content_nonce,
+                content_hash = content_hash,
+                attachment_count = attachment_count,
+            )
+            if (updated) {
+                draft_item_cache.remove(target_id)
+                return target_id
+            }
+        }
+        val normalized_draft_type = normalize_draft_type(draft_type)
+        val linked_thread_token = thread_token?.takeIf { it.isNotBlank() }
+            ?: reply_to_id
+                ?.takeIf { is_uuid(it) && normalized_draft_type == "reply" }
+                ?.let { runCatching { get_or_create_thread_token(it, null) }.getOrNull() }
+        val response = mail_api.create_draft(
+            org.astermail.android.api.mail.CreateDraftRequestBody(
+                draft_type = normalized_draft_type,
+                encrypted_content = encrypted_content,
+                content_nonce = content_nonce,
+                content_hash = content_hash,
+                reply_to_id = reply_to_id?.takeIf { is_uuid(it) },
+                forward_from_id = null,
+                thread_token = linked_thread_token,
+                size_bytes = encrypted_content.length,
+                has_attachments = attachment_count > 0,
+                attachment_count = attachment_count,
+            ),
+        )
+        val new_id = response.id
+        draft_versions[new_id] = response.version
+        if (target_id != null && target_id != new_id) {
+            runCatching { mail_api.delete_draft(target_id) }
+            draft_versions.remove(target_id)
+            draft_item_cache.remove(target_id)
+        }
+        draft_item_cache.remove(new_id)
+        return new_id
+    }
+
+    private suspend fun replay_save_draft(action: PendingMailAction): Result<Unit> = runCatching {
+        val payload = action.payload
+        val key = payload.key ?: return@runCatching
+        val content = payload.content ?: return@runCatching
+        val nonce = payload.nonce ?: return@runCatching
+        val hash = payload.hash ?: return@runCatching
+        val wrote = draft_save_mutex.withLock {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                if (pending_action_queue?.is_queued(action.id) != true) return@withContext false
+                val local = is_local_draft_id(key)
+                val target_id = if (local) local_draft_server_id(key) else payload.ids.firstOrNull()
+                val written = write_draft_remote(
+                    target_id = target_id,
+                    encrypted_content = content,
+                    content_nonce = nonce,
+                    content_hash = hash,
+                    attachment_count = payload.count,
+                    draft_type = payload.value ?: "new",
+                    reply_to_id = payload.reply_to,
+                    thread_token = payload.token,
+                )
+                if (local) remember_local_draft(key, written)
+                true
+            }
+        }
+        if (wrote) _draft_changes.tryEmit(Unit)
+    }
+
+    private val local_draft_prefs by lazy {
+        context.getSharedPreferences("offline_draft_ids", android.content.Context.MODE_PRIVATE)
+    }
+
+    private fun local_draft_server_id(key: String): String? =
+        runCatching { local_draft_prefs.getString(key, null) }.getOrNull()?.takeIf { is_uuid(it) }
+
+    private fun remember_local_draft(key: String, server_id: String) {
+        runCatching {
+            val editor = local_draft_prefs.edit()
+            if (local_draft_prefs.all.size >= LOCAL_DRAFT_MAP_LIMIT) editor.clear()
+            editor.putString(key, server_id).apply()
+        }
+    }
+
+    private fun forget_local_draft(key: String) {
+        runCatching { local_draft_prefs.edit().remove(key).apply() }
     }
 
     private suspend fun update_existing_draft(
@@ -5273,13 +5416,20 @@ class MailRepository @Inject constructor(
 
     fun discard_sent_draft(draft_id: String?, session_id: String?): kotlinx.coroutines.Deferred<Boolean> =
         app_scope.async {
+            var dropped_local = false
             val target = draft_save_mutex.withLock {
                 val resolved = session_id?.let { draft_session_ids[it] }
                     ?: draft_id?.takeIf { it.isNotBlank() }
                 session_id?.let { end_draft_session(it) }
-                resolved?.also { retiring_draft_ids.add(it) }
+                val server_id = resolved?.let { resolved_id ->
+                    pending_action_queue?.remove_drafts(resolved_id)
+                    if (!is_local_draft_id(resolved_id)) return@let resolved_id
+                    dropped_local = true
+                    local_draft_server_id(resolved_id).also { if (it == null) forget_local_draft(resolved_id) }
+                }
+                server_id?.also { retiring_draft_ids.add(it) }
             }
-            if (target == null) return@async false
+            if (target == null) return@async dropped_local
             _draft_changes.tryEmit(Unit)
             val deleted = runCatching { mail_api.delete_draft(target) }.fold(
                 onSuccess = { true },
@@ -5287,12 +5437,23 @@ class MailRepository @Inject constructor(
             )
             if (deleted) {
                 forget_draft(target)
+                forget_local_drafts_for(target)
             } else {
                 retiring_draft_ids.remove(target)
             }
             _draft_changes.tryEmit(Unit)
             deleted
         }
+
+    private fun forget_local_drafts_for(server_id: String) {
+        runCatching {
+            val keys = local_draft_prefs.all.filterValues { it == server_id }.keys
+            if (keys.isEmpty()) return@runCatching
+            val editor = local_draft_prefs.edit()
+            keys.forEach { editor.remove(it) }
+            editor.apply()
+        }
+    }
 
     private fun normalize_draft_type(mode: String): String = when (mode) {
         "reply", "reply_all" -> "reply"

@@ -1300,6 +1300,7 @@ class MailViewModelTest {
                 sender_email = any(),
                 to = any(),
                 cc = any(),
+                queue_offline = any(),
             )
         } returns Result.success("draft_123")
 
@@ -1325,6 +1326,7 @@ class MailViewModelTest {
                 draft_type = "reply",
                 reply_to_id = "msg_1",
                 thread_token = "thread_1",
+                queue_offline = any(),
             )
         } returns Result.success("draft_456")
 
@@ -1348,6 +1350,7 @@ class MailViewModelTest {
                 sender_email = any(),
                 to = any(),
                 cc = any(),
+                queue_offline = any(),
             )
         } returns Result.failure(RuntimeException("draft save failed"))
 

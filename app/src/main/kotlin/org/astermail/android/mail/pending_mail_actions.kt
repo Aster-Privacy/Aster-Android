@@ -56,6 +56,7 @@ enum class PendingActionKind {
     empty_spam,
     report_spam_senders,
     remove_spam_senders,
+    save_draft,
 }
 
 @Serializable
@@ -67,6 +68,12 @@ data class PendingActionPayload(
     val from_token: String? = null,
     val folder: String? = null,
     val value: String? = null,
+    val key: String? = null,
+    val content: String? = null,
+    val nonce: String? = null,
+    val hash: String? = null,
+    val reply_to: String? = null,
+    val count: Int = 0,
 )
 
 data class PendingMailAction(
@@ -97,6 +104,12 @@ const val PENDING_PATCH_MODE = "patch"
 const val QUEUED_BATCH_ID = "queued"
 
 const val PENDING_UNKNOWN_COUNT = -1
+
+const val LOCAL_DRAFT_PREFIX = "local-"
+
+internal const val PENDING_DRAFT_MAX_CHARS = 1_000_000
+
+fun is_local_draft_id(id: String?): Boolean = id?.startsWith(LOCAL_DRAFT_PREFIX) == true
 
 internal fun queued_scope_response(count: Int): org.astermail.android.api.mail.BulkScopeResponse =
     org.astermail.android.api.mail.BulkScopeResponse(batch_id = QUEUED_BATCH_ID, affected_count = count)
@@ -230,7 +243,8 @@ private fun targets(action: PendingMailAction, item: InboxItem): Boolean = when 
     PendingActionKind.trash -> item.id in action.id_set ||
         (item.thread_token != null && item.thread_token in action.thread_set)
     PendingActionKind.report_spam_senders,
-    PendingActionKind.remove_spam_senders -> false
+    PendingActionKind.remove_spam_senders,
+    PendingActionKind.save_draft -> false
     else -> item.id in action.id_set
 }
 
@@ -271,7 +285,8 @@ private fun apply_action(state: OverlayState, action: PendingMailAction) {
         PendingActionKind.empty_trash,
         PendingActionKind.empty_spam -> state.gone = true
         PendingActionKind.report_spam_senders,
-        PendingActionKind.remove_spam_senders -> Unit
+        PendingActionKind.remove_spam_senders,
+        PendingActionKind.save_draft -> Unit
     }
 }
 
