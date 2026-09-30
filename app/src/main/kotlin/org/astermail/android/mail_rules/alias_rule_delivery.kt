@@ -111,13 +111,16 @@ fun rule_alias_delivery_conflict(
     conditions: List<Condition>,
     actions: List<Action>,
     alias_delivery: Map<String, AliasDeliverySetting>,
+    folder_type_of: (String) -> String? = { null },
 ): AliasDeliveryConflict? {
     val rule_folder = actions.filterIsInstance<Action.MoveTo>().lastOrNull()?.folder_token ?: return null
+    val rule_folder_is_archive = folder_type_of(rule_folder) == "archive"
     conditions.flatMap { condition_exact_addresses(it) }.forEach { address ->
         val delivery = alias_delivery[address.lowercase(java.util.Locale.ROOT)] ?: return@forEach
         val has_explicit_target = delivery.delivery_folder_token != null || delivery.never_inbox
         if (!has_explicit_target) return@forEach
         if (delivery.delivery_folder_token == rule_folder) return@forEach
+        if (delivery.delivery_folder_token == null && delivery.never_inbox && rule_folder_is_archive) return@forEach
         return AliasDeliveryConflict(
             alias_address = address,
             alias_delivery = delivery,

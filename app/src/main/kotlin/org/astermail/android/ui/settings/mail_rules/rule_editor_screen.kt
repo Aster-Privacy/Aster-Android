@@ -246,20 +246,11 @@ fun RuleEditorScreen(
     var skipped_duplicates by remember { mutableStateOf(0) }
     var switched_to_any by remember { mutableStateOf(false) }
 
-    val folders = remember(settings_state.labels) {
-        flatten_folder_tree(settings_state.labels)
-            .filter { !it.label.encrypted_name.isNullOrBlank() }
-            .map { node ->
-                picker_item(
-                    id = node.label.label_token,
-                    label = node.label.encrypted_name.orEmpty(),
-                    icon = if (is_folder_protected(node.label)) TablerIcons.Lock else TablerIcons.Folder,
-                    icon_tint = node.label.encrypted_color
-                        ?.takeIf { it.startsWith("#") }
-                        ?.let { parse_hex_color_safe(it) },
-                    depth = node.depth,
-                )
-            }
+    val system_folder_names = org.astermail.android.mail_rules.RuleSystemFolder.entries.associateWith {
+        stringResource(rule_system_folder_name_res(it))
+    }
+    val folders = remember(settings_state.labels, system_folder_names) {
+        rule_folder_picker_items(settings_state.labels, system_folder_names)
     }
     val labels = remember(settings_state.labels, settings_state.tags) {
         val from_tags = org.astermail.android.labels.tag_rows(settings_state.tags)
@@ -584,6 +575,9 @@ fun RuleEditorScreen(
                 conditions = conditions.toList(),
                 actions = actions.toList(),
                 alias_delivery = alias_delivery,
+                folder_type_of = { token ->
+                    org.astermail.android.mail_rules.rule_folder_type_of(settings_state.labels, token)
+                },
             )
             if (!is_read_only && delivery_conflict != null) {
                 val archive_name = stringResource(R.string.folder_archive)
@@ -923,6 +917,33 @@ private val rules_label_palette = listOf(
     Color(0xFFF97316),
     Color(0xFF6366F1),
 )
+
+internal fun rule_folder_picker_items(
+    labels: List<org.astermail.android.api.labels.LabelItem>,
+    system_folder_names: Map<org.astermail.android.mail_rules.RuleSystemFolder, String>,
+): List<picker_item> {
+    val system_items = org.astermail.android.mail_rules.rule_system_folders(labels)
+        .map { entry ->
+            picker_item(
+                id = entry.folder.label_token,
+                label = system_folder_names.getValue(entry.system_type),
+                icon = rule_system_folder_icon(entry.system_type),
+            )
+        }
+    return system_items + flatten_folder_tree(labels)
+        .filter { !it.label.encrypted_name.isNullOrBlank() }
+        .map { node ->
+            picker_item(
+                id = node.label.label_token,
+                label = node.label.encrypted_name.orEmpty(),
+                icon = if (is_folder_protected(node.label)) TablerIcons.Lock else TablerIcons.Folder,
+                icon_tint = node.label.encrypted_color
+                    ?.takeIf { it.startsWith("#") }
+                    ?.let { parse_hex_color_safe(it) },
+                depth = node.depth,
+            )
+        }
+}
 
 private fun parse_hex(hex: String): Color = try {
     Color(android.graphics.Color.parseColor(hex))
