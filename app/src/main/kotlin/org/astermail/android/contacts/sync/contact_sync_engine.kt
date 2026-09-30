@@ -83,6 +83,7 @@ class ContactResyncRequired : Exception()
 class RemoteConflict : Exception()
 class RemotePlanLimit : Exception()
 class RemoteNotFound : Exception()
+class RemoteUndecryptable : Exception()
 
 data class ContactSyncOptions(
     val override_too_many_deletions: Boolean = false,
@@ -100,6 +101,7 @@ data class ContactSyncStats(
     var deleted_local: Int = 0,
     var conflicts: Int = 0,
     var skipped_plan_limit: Int = 0,
+    var skipped_undecryptable: Int = 0,
     var pending_deletions: Int = 0,
     var too_many_deletions: Boolean = false,
     var full_sync: Boolean = false,
@@ -158,7 +160,13 @@ class ContactSyncEngine(
                     stats.too_many_deletions = true
                     stats.pending_deletions = deleted_synced.size
                 } else {
-                    for (row in deleted_synced) push_deletion(row, stats)
+                    for (row in deleted_synced) {
+                        try {
+                            push_deletion(row, stats)
+                        } catch (_: RemoteUndecryptable) {
+                            stats.skipped_undecryptable++
+                        }
+                    }
                 }
             }
         }
@@ -188,7 +196,11 @@ class ContactSyncEngine(
             val cards = device.read_cards(edited.map { it.raw_id })
             for (row in edited) {
                 val local = cards[row.raw_id] ?: continue
-                push_edit(row, local, stats)
+                try {
+                    push_edit(row, local, stats)
+                } catch (_: RemoteUndecryptable) {
+                    stats.skipped_undecryptable++
+                }
             }
         }
         return force_full
@@ -257,6 +269,7 @@ class ContactSyncEngine(
         var restarted = false
 
         while (true) {
+            ensure_active()
             val page = try {
                 remote.changes(since, options.page_size)
             } catch (e: ContactResyncRequired) {
@@ -316,6 +329,7 @@ class ContactSyncEngine(
             }
             device.flush()
 
+            if (page.has_more && page.next_since <= since) throw IllegalStateException("contact changes cursor did not advance")
             since = page.next_since
             if (!full) cursor.save(since)
             if (!page.has_more) break

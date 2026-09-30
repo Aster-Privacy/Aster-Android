@@ -23,6 +23,7 @@ package org.astermail.android.contacts.sync
 
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.contacts.ContactResyncRequiredError
+import org.astermail.android.contacts.ContactUndecryptableException
 import org.astermail.android.contacts.ContactsRepository
 
 const val REVISION_CONFLICT_CODE = "CONTACT_REVISION_CONFLICT"
@@ -46,8 +47,14 @@ class RepositoryContactSyncRemote(
         )
     }
 
-    override suspend fun fetch(id: String): RemoteContact? =
-        repository.fetch_raw_contact(id)?.let { RemoteContact(it.id, it.revision, it.json) }
+    override suspend fun fetch(id: String): RemoteContact? {
+        val record = try {
+            repository.fetch_raw_contact(id)
+        } catch (_: ContactUndecryptableException) {
+            throw RemoteUndecryptable()
+        }
+        return record?.let { RemoteContact(it.id, it.revision, it.json) }
+    }
 
     override suspend fun create(json: String): RemoteCreated {
         val response = try {
