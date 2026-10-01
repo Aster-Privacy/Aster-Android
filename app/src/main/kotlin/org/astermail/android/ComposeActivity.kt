@@ -180,7 +180,7 @@ class ComposeActivity :
         val main_class_name = MainActivity::class.java.name
         val main_task = runCatching {
             manager.appTasks.firstOrNull { task ->
-                val info = task.taskInfo
+                val info = task.taskInfo ?: return@firstOrNull false
                 info.baseActivity?.className == main_class_name ||
                     info.topActivity?.className == main_class_name
             }
