@@ -2696,6 +2696,10 @@ internal fun expanded_message(
             html_rendering_mode = body_settings_state.preferences?.html_rendering_mode,
             low_network = org.astermail.android.network.low_network_active(),
         )
+        val html_part = remember(msg.body_html, msg.body) { renderable_html_part(msg.body_html, msg.body) }
+        val text_part = remember(msg.body_html, msg.body) {
+            msg.body.ifBlank { org.astermail.android.mail.html_to_plain_text(msg.body_html.orEmpty()) }
+        }
         if (msg.is_body_pending) {
             var body_wait_expired by remember(msg.id, retry_in_progress) { mutableStateOf(false) }
             LaunchedEffect(msg.id, retry_in_progress) {
@@ -2731,9 +2735,9 @@ internal fun expanded_message(
                         .testTag("message_body"),
                 )
             }
-        } else if (!plain_text_mode && !msg.body_html.isNullOrBlank() && !msg.is_undecryptable) {
+        } else if (!plain_text_mode && html_part != null && !msg.is_undecryptable) {
             email_html_view(
-                html = msg.body_html,
+                html = html_part,
                 allow_external = allow_external,
                 inline_images = inline_images,
                 access_token = access_token,
@@ -2812,7 +2816,7 @@ internal fun expanded_message(
                     }
                 }
             }
-        } else if (msg.body.isBlank()) {
+        } else if (text_part.isBlank()) {
             LaunchedEffect(Unit) { on_body_ready() }
             Row(
                 modifier = Modifier
@@ -2830,9 +2834,9 @@ internal fun expanded_message(
         } else {
             val e2e_no_key_text = stringResource(R.string.e2e_no_key_description)
             val no_body_text = stringResource(R.string.no_body)
-            val plain_html by produceState(initialValue = "", msg.body, msg.is_encrypted, e2e_no_key_text, no_body_text) {
+            val plain_html by produceState(initialValue = "", text_part, msg.is_encrypted, e2e_no_key_text, no_body_text) {
                 value = withContext(kotlinx.coroutines.Dispatchers.Default) {
-                val body_source = msg.body.ifBlank {
+                val body_source = text_part.ifBlank {
                     if (msg.is_encrypted) {
                         e2e_no_key_text
                     } else {
