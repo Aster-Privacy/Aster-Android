@@ -176,15 +176,11 @@ class EmailAuthenticationTest {
 
     @Test
     fun hides_domains_the_old_idn_rules_would_show_as_another_domain() {
-        // IDNA2003 would show these as strasse.de and a plain sigma, not as
-        // the punycode domains the checks ran on.
         listOf(
             "billing@stra\u00DFe.de",
             "BILLING@STRA\u1E9EE.DE",
             "a@\u03B1\u03B2\u03C2.gr",
         ).forEach { assertEquals(it, "", auth_display_domain(it)) }
-        // A capital sigma folds to the plain sigma, as it does on the web,
-        // also at the end of a label.
         assertEquals("xn---x-b9be9f.gr", auth_display_domain("a@\u0391\u0392\u03A3-x.gr"))
         assertEquals("xn--mxac5c.gr", auth_display_domain("a@\u03B1\u03B2\u03C3.gr"))
         assertEquals("xn--mxac5c.gr", auth_display_domain("a@\u0391\u0392\u03A3.GR"))

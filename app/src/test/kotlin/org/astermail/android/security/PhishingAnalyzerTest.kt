@@ -100,7 +100,6 @@ class PhishingAnalyzerTest {
 
     @Test
     fun a_failed_check_that_dmarc_passed_anyway_is_not_a_signal() {
-        // Forwarded mail: SPF fails at the forwarder, DKIM still aligns.
         val result = analyze("Someone", "someone@example.com", spf = "fail", dkim = "pass", dmarc = "pass")
         assertFalse(has_signal(result, "sender_authentication_failed"))
     }

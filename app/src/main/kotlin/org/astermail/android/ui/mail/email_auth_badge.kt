@@ -85,9 +85,6 @@ fun summarize_email_authentication(msg: ThreadMessage): EmailAuthSummary? {
     return summarize_email_authentication(msg.spf_result, msg.dkim_result, msg.dmarc_result)
 }
 
-// Only results worth a second look get a badge. Mail that passed, or that
-// simply lacks checks, gets none: a green mark next to a name the sender
-// chooses would reassure a look-alike domain with its own DMARC too.
 internal fun shows_auth_badge(verdict: EmailAuthVerdict): Boolean =
     verdict == EmailAuthVerdict.partial || verdict == EmailAuthVerdict.failed
 
@@ -96,7 +93,6 @@ private const val pop_directional_isolate = '\u2069'
 private const val non_breaking_hyphen = '\u2011'
 private const val nowrap_domain_length = 36
 
-// The verdicts below are the ones shows_auth_badge lets through.
 private fun verdict_label_res(verdict: EmailAuthVerdict): Int =
     if (verdict == EmailAuthVerdict.partial) R.string.email_auth_partial else R.string.email_auth_failed
 
@@ -112,9 +108,6 @@ private fun verdict_tone(verdict: EmailAuthVerdict): Color {
     return if (verdict == EmailAuthVerdict.partial) colors.warning else colors.danger
 }
 
-// A badge next to the sender when the SPF, DKIM and DMARC checks Aster ran
-// when the message arrived failed or gave unusual results. Tapping it shows
-// each check.
 @Composable
 internal fun email_auth_badge(msg: ThreadMessage, modifier: Modifier = Modifier) {
     val summary = remember(msg.item_type, msg.spf_result, msg.dkim_result, msg.dmarc_result) {
@@ -154,7 +147,6 @@ internal fun email_auth_badge(msg: ThreadMessage, modifier: Modifier = Modifier)
 private fun email_auth_dialog(summary: EmailAuthSummary, domain: String, on_dismiss: () -> Unit) {
     val colors = AsterMaterial.colors
     val surface = if (colors.is_glass) colors.solid_bg else colors.bg_card
-    // Short domains stay on one line instead of breaking at a hyphen.
     val shown_domain = if (domain.length <= nowrap_domain_length) domain.replace('-', non_breaking_hyphen) else domain
     val isolated_domain = "$first_strong_isolate$shown_domain$pop_directional_isolate"
     val sentence = stringResource(verdict_description_res(summary.verdict), isolated_domain)

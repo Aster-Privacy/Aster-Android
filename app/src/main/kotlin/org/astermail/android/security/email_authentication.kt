@@ -24,11 +24,6 @@ package org.astermail.android.security
 import java.net.IDN
 import java.util.Locale
 
-// Summary of the SPF, DKIM and DMARC results that Aster's mail servers record
-// when a message arrives (spf_result, dkim_result and dmarc_result). Only
-// those server-side results are used: an Authentication-Results header inside
-// the message could have been written by the sender. The web client applies
-// the same rules.
 
 enum class EmailAuthCheck { spf, dkim, dmarc }
 
@@ -69,14 +64,6 @@ private fun auth_check_result(check: EmailAuthCheck, raw: String?): EmailAuthChe
 private fun cap_code_points(text: String, limit: Int): String =
     if (text.codePointCount(0, text.length) <= limit) text else text.substring(0, text.offsetByCodePoints(0, limit))
 
-// Authenticated when DMARC passed on top of SPF or DKIM. Failed when a check
-// failed and DMARC did not pass. Inconclusive when a check gave an unusual
-// result (softfail, neutral, temperror...), or when DMARC passed without an
-// SPF or DKIM pass: the server accepted the domain, for example through
-// another DKIM signature, so a failed check alone does not make the message
-// a spoof. Not fully verified when checks were simply absent, which is
-// common for legitimate mail from domains without a DMARC policy. Null when
-// the server recorded nothing.
 fun summarize_email_authentication(
     spf_result: String?,
     dkim_result: String?,
@@ -98,32 +85,17 @@ fun summarize_email_authentication(
     return EmailAuthSummary(verdict, checks)
 }
 
-// Longer than any host name; also keeps the pattern below away from inputs
-// long enough to exhaust the regex engine's stack.
 private const val max_domain_length = 253
 
-// java.net.IDN follows IDNA2003, which maps the sharp s and the final sigma
-// to other letters ("ss", a plain sigma) instead of encoding them, so the
-// ASCII form shown would not be the domain the checks ran on.
 private val idna_deviations = setOf('\u00DF', '\u03C2')
 
 private val auth_bidi_controls = Regex("[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]")
 
-// Dot-separated labels of letters, marks, digits and hyphens. Anything else
-// (a slash, a colon, an invisible format character) could not be part of a
-// host name the checks looked up.
 private val auth_domain_pattern = Regex("""^[\p{L}\p{M}\p{N}-]+(?:\.[\p{L}\p{M}\p{N}-]+)*\.?$""")
 
-// Only ASCII letters: IDN folds the case of other scripts the way DNS does,
-// where lowercase() would turn a closing capital sigma into a final sigma.
 private fun ascii_lowercase(text: String): String =
     buildString(text.length) { text.forEach { append(if (it in 'A'..'Z') it + 32 else it) } }
 
-// The domain of the From address, as the checks saw it: without bidi
-// controls that could reorder it, and in its ASCII (punycode) form when it
-// holds other scripts, so look-alike letters show up. Empty when it could
-// not be a host name, which hides the badge rather than show a domain the
-// checks did not see.
 fun auth_display_domain(sender_email: String?): String {
     val email = sender_email.orEmpty().replace(auth_bidi_controls, "").trim()
     val at = email.lastIndexOf('@')

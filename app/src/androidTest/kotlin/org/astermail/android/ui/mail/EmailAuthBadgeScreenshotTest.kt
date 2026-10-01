@@ -171,8 +171,6 @@ class EmailAuthBadgeScreenshotTest {
         }
     }
 
-    // The app blocks screenshots until an app lock is set up; the dialogs
-    // inherit the flag from the activity window when they open.
     private fun allow_screenshots() {
         compose_rule.activity.window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
     }
@@ -195,9 +193,6 @@ class EmailAuthBadgeScreenshotTest {
         }
     }
 
-    // Only the inconclusive (Weekly Digest) and failed (Example Bank) messages
-    // get a badge; mail that passed, lacks checks or came through a forwarding
-    // alias gets none.
     private val with_badge = listOf("digest", "bank")
 
     private fun capture_all(dark: Boolean) {
@@ -235,7 +230,6 @@ class EmailAuthBadgeScreenshotTest {
         capture_all(dark = true)
     }
 
-    // Mail without a badge still lists its checks in the security details.
     @Test
     fun security_details_list_the_checks_of_a_message_without_a_badge() {
         show(messages.take(1), dark = false)
