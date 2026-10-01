@@ -21,7 +21,7 @@ if (!is_fdroid_build) {
 
 android {
     namespace = "org.astermail.android"
-    compileSdk = 36
+    compileSdk = 37
 
     flavorDimensions += "distribution"
 

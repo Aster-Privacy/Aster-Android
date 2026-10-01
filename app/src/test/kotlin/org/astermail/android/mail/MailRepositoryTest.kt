@@ -1202,7 +1202,9 @@ class MailRepositoryTest {
     fun `save_draft keeps a single draft when the caller is cancelled mid save`() = runTest {
         every { session_key_store.get_identity_key() } returns "test_identity_key"
         val gate = CompletableDeferred<Unit>()
+        val create_started = CompletableDeferred<Unit>()
         coEvery { mail_api.create_draft(any()) } coAnswers {
+            create_started.complete(Unit)
             gate.await()
             org.astermail.android.api.mail.CreateDraftResponse(id = draft_uuid, version = 1)
         }
@@ -1218,7 +1220,7 @@ class MailRepositoryTest {
                 on_id_assigned = { assigned = it },
             )
         }
-        advanceUntilIdle()
+        await_real { create_started.await() }
         job.cancel()
         gate.complete(Unit)
         advanceUntilIdle()
@@ -1751,24 +1753,26 @@ class MailRepositoryTest {
         coEvery { mail_api.create_draft(any()) } returns
             org.astermail.android.api.mail.CreateDraftResponse(id = "safety_draft_1", success = true)
 
-        repo.persist_and_schedule_undo_send(
-            pending_id = "pend_1",
-            to = listOf("friend@astermail.org"),
-            cc = emptyList(),
-            bcc = emptyList(),
-            subject = "Hi",
-            body_html = "<p>hello</p>",
-            sender_email = "me@astermail.org",
-            sender_display_name = null,
-            thread_token = null,
-            expires_at = null,
-            expiry_password = null,
-            attachments = emptyList(),
-            sender_alias_hash = null,
-            suppress_branding = null,
-            delay_ms = 10_000L,
-            draft_id = null,
-        )
+        await_real {
+            repo.persist_and_schedule_undo_send(
+                pending_id = "pend_1",
+                to = listOf("friend@astermail.org"),
+                cc = emptyList(),
+                bcc = emptyList(),
+                subject = "Hi",
+                body_html = "<p>hello</p>",
+                sender_email = "me@astermail.org",
+                sender_display_name = null,
+                thread_token = null,
+                expires_at = null,
+                expiry_password = null,
+                attachments = emptyList(),
+                sender_alias_hash = null,
+                suppress_branding = null,
+                delay_ms = 10_000L,
+                draft_id = null,
+            )
+        }
 
         val row = pending_send_dao.get_by_id("pend_1")
         assertNotNull(row)
@@ -2067,24 +2071,26 @@ class MailRepositoryTest {
         coEvery { mail_api.create_draft(capture(captured)) } returns
             org.astermail.android.api.mail.CreateDraftResponse(id = "safety_att", success = true)
 
-        repo.persist_and_schedule_undo_send(
-            pending_id = "pend_att",
-            to = listOf("friend@astermail.org"),
-            cc = emptyList(),
-            bcc = emptyList(),
-            subject = "Hi",
-            body_html = "<p>hello</p>",
-            sender_email = "me@astermail.org",
-            sender_display_name = null,
-            thread_token = null,
-            expires_at = null,
-            expiry_password = null,
-            attachments = listOf(attachment_payload()),
-            sender_alias_hash = null,
-            suppress_branding = null,
-            delay_ms = 10_000L,
-            draft_id = null,
-        )
+        await_real {
+            repo.persist_and_schedule_undo_send(
+                pending_id = "pend_att",
+                to = listOf("friend@astermail.org"),
+                cc = emptyList(),
+                bcc = emptyList(),
+                subject = "Hi",
+                body_html = "<p>hello</p>",
+                sender_email = "me@astermail.org",
+                sender_display_name = null,
+                thread_token = null,
+                expires_at = null,
+                expiry_password = null,
+                attachments = listOf(attachment_payload()),
+                sender_alias_hash = null,
+                suppress_branding = null,
+                delay_ms = 10_000L,
+                draft_id = null,
+            )
+        }
 
         assertEquals("safety_att", pending_send_dao.get_by_id("pend_att")?.draft_id)
         assertTrue(captured.captured.has_attachments)
