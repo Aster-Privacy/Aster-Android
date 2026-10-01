@@ -1,4 +1,4 @@
-﻿//
+//
 // Aster Communications Inc.
 //
 // Copyright (c) 2026 Aster Communications Inc.
@@ -29,7 +29,6 @@ import org.astermail.android.ui.common.write_to_clipboard
 import compose.icons.tablericons.*
 
 import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
@@ -56,12 +55,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -79,6 +77,7 @@ import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
@@ -89,6 +88,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -99,14 +99,16 @@ import org.astermail.android.auth.RecoveryStep
 import org.astermail.android.auth.RecoveryViewModel
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
+import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.ui.common.page_surface
-import org.astermail.android.design.mirror_in_rtl
 
 private const val SUPPORT_MAIL_URL = "mailto:support@astermail.org"
 private const val HELP_CENTER_URL = "https://astermail.org/help"
@@ -166,7 +168,11 @@ fun ForgotPasswordScreen(
                 },
                 label = "recovery_step",
             ) { step ->
-                auth_centered_column {
+                auth_centered_column(
+                    horizontal_alignment = Alignment.Start,
+                    vertical_arrangement = Arrangement.Top,
+                ) {
+                    val change_account = { view_model.go_to_email_step() }
                     when (step) {
                         RecoveryStep.email -> email_step(
                             initial_email = state.email,
@@ -177,33 +183,45 @@ fun ForgotPasswordScreen(
                             on_back = on_back,
                         )
                         RecoveryStep.email_sent -> email_sent_step(
+                            email = state.email,
                             error = state.error,
                             is_loading = state.is_loading,
                             resend_seconds = state.resend_seconds,
                             on_sign_in = on_back,
                             on_resend = { view_model.resend_reset_link() },
                             on_use_code = { view_model.go_to_code_step() },
+                            on_change_account = change_account,
                         )
                         RecoveryStep.code -> code_step(
+                            email = state.email,
                             is_loading = state.is_loading,
                             error = state.error,
                             on_verify = { view_model.verify_code(it) },
                             on_other_ways = { view_model.go_to_other_ways() },
+                            on_change_account = change_account,
                         )
                         RecoveryStep.other_ways -> other_ways_step(
+                            email = state.email,
                             is_loading = state.is_loading,
                             on_select_code = { view_model.go_to_code_step() },
                             on_select_email = { view_model.go_to_reset_email_confirm() },
                             on_contact_support = { view_model.go_to_support() },
+                            on_change_account = change_account,
                         )
-                        RecoveryStep.support -> support_step()
+                        RecoveryStep.support -> support_step(
+                            email = state.email,
+                            on_change_account = change_account,
+                        )
                         RecoveryStep.reset_email_confirm -> reset_email_confirm_step(
+                            email = state.email,
                             is_loading = state.is_loading,
                             error = state.error,
                             on_send = { view_model.send_reset_link() },
                             on_back = { view_model.go_back() },
+                            on_change_account = change_account,
                         )
                         RecoveryStep.password -> password_step(
+                            email = state.email,
                             password = new_password,
                             confirm = new_password_confirm,
                             on_password_change = { new_password = it },
@@ -235,30 +253,140 @@ fun ForgotPasswordScreen(
 private fun recovery_step_header(
     title: String,
     description: String,
+    email: String = "",
+    on_change_account: (() -> Unit)? = null,
+    show_logo: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
 
-    Spacer(Modifier.height(AsterSpacing.xl))
-    Image(
-        painter = painterResource(R.drawable.aster_wordmark),
-        contentDescription = null,
-        modifier = Modifier.height(40.dp),
-    )
-    Spacer(Modifier.height(AsterSpacing.xl))
+    if (show_logo) {
+        Image(
+            painter = painterResource(R.drawable.aster_wordmark),
+            contentDescription = null,
+            modifier = Modifier.height(28.dp),
+        )
+        Spacer(Modifier.height(AsterSpacing.xxl))
+    }
     Text(
         text = title,
         color = colors.text_primary,
-        fontSize = 30.sp,
-        fontWeight = FontWeight.ExtraBold,
-        letterSpacing = (-0.3).sp,
-        textAlign = TextAlign.Center,
+        fontSize = 26.sp,
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = (-0.2).sp,
+        lineHeight = 32.sp,
     )
-    Spacer(Modifier.height(AsterSpacing.md))
+    Spacer(Modifier.height(AsterSpacing.sm))
     Text(
         text = description,
-        color = colors.text_tertiary,
+        color = colors.text_secondary,
+        fontSize = 15.sp,
+        lineHeight = 22.sp,
+    )
+    if (email.isNotBlank()) {
+        Spacer(Modifier.height(AsterSpacing.lg))
+        account_chip(email = email, on_click = on_change_account)
+    }
+}
+
+@Composable
+private fun account_chip(
+    email: String,
+    on_click: (() -> Unit)?,
+) {
+    val colors = AsterMaterial.colors
+
+    Row(
+        modifier = Modifier
+            .clip(AsterShapes.pill)
+            .border(1.dp, colors.border_primary, AsterShapes.pill)
+            .then(if (on_click != null) Modifier.clickable(onClick = on_click) else Modifier)
+            .padding(start = AsterSpacing.xs, end = AsterSpacing.md, top = AsterSpacing.xs, bottom = AsterSpacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(24.dp)
+                .clip(CircleShape)
+                .background(colors.accent_blue),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = email.take(1).uppercase(),
+                color = colors.on_accent,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        Spacer(Modifier.width(AsterSpacing.sm))
+        Text(
+            text = email,
+            color = colors.text_primary,
+            fontSize = 14.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.widthIn(max = 260.dp),
+        )
+        if (on_click != null) {
+            Spacer(Modifier.width(AsterSpacing.xs))
+            Icon(
+                imageVector = TablerIcons.ChevronDown,
+                contentDescription = null,
+                tint = colors.text_muted,
+                modifier = Modifier.size(16.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun recovery_actions(
+    primary_label: String,
+    on_primary: () -> Unit,
+    primary_enabled: Boolean = true,
+    primary_loading: Boolean = false,
+    secondary_label: String? = null,
+    on_secondary: (() -> Unit)? = null,
+    secondary_enabled: Boolean = true,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (secondary_label != null && on_secondary != null) {
+            AsterGhostButton(
+                label = secondary_label,
+                onClick = on_secondary,
+                enabled = secondary_enabled,
+            )
+        }
+        Spacer(Modifier.weight(1f))
+        Box(modifier = Modifier.widthIn(min = 128.dp)) {
+            AsterButton(
+                label = primary_label,
+                onClick = on_primary,
+                enabled = primary_enabled,
+                is_loading = primary_loading,
+            )
+        }
+    }
+}
+
+@Composable
+private fun text_link(
+    label: String,
+    enabled: Boolean = true,
+    on_click: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Text(
+        text = label,
+        color = if (enabled) colors.accent_blue else colors.text_muted,
         fontSize = 14.sp,
-        textAlign = TextAlign.Center,
+        fontWeight = FontWeight.Medium,
+        modifier = Modifier
+            .clip(AsterShapes.item)
+            .clickable(enabled = enabled, onClick = on_click)
+            .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.sm),
     )
 }
 
@@ -278,7 +406,6 @@ private fun email_step(
     on_clear_error: () -> Unit,
     on_back: () -> Unit,
 ) {
-    val colors = AsterMaterial.colors
     var username by remember { mutableStateOf(initial_email.substringBefore('@')) }
     var email_domain by remember {
         mutableStateOf(recovery_account_domain(initial_email.substringAfter('@', "")) ?: recovery_account_domains.first())
@@ -323,13 +450,6 @@ private fun email_step(
             imeAction = ImeAction.Done,
         ),
         keyboard_actions = KeyboardActions(onDone = { submit() }),
-        leading_icon = {
-            Icon(
-                imageVector = TablerIcons.User,
-                contentDescription = null,
-                tint = colors.text_muted,
-            )
-        },
         content_type = ContentType.Username,
     )
 
@@ -343,47 +463,44 @@ private fun email_step(
         },
     )
 
-    Spacer(Modifier.height(AsterSpacing.xl))
+    Spacer(Modifier.height(AsterSpacing.xxxl))
 
-    AsterButton(
-        label = stringResource(R.string.continue_action),
-        onClick = submit,
-        enabled = username.isNotBlank() && !is_loading,
-        is_loading = is_loading,
+    recovery_actions(
+        primary_label = stringResource(R.string.continue_action),
+        on_primary = submit,
+        primary_enabled = username.isNotBlank() && !is_loading,
+        primary_loading = is_loading,
+        secondary_label = stringResource(R.string.back_to_sign_in),
+        on_secondary = on_back,
+        secondary_enabled = !is_loading,
     )
-
-    Spacer(Modifier.height(AsterSpacing.md))
-
-    AsterSecondaryButton(
-        label = stringResource(R.string.back_to_sign_in),
-        onClick = on_back,
-        enabled = !is_loading,
-    )
-
-    Spacer(Modifier.height(AsterSpacing.xxl))
 }
 
 @Composable
 private fun email_sent_step(
+    email: String,
     error: String?,
     is_loading: Boolean,
     resend_seconds: Int,
     on_sign_in: () -> Unit,
     on_resend: () -> Unit,
     on_use_code: () -> Unit,
+    on_change_account: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
 
     recovery_step_header(
         title = stringResource(R.string.recovery_email_sent),
         description = stringResource(R.string.recovery_email_sent_description),
+        email = email,
+        on_change_account = on_change_account,
     )
-    Spacer(Modifier.height(AsterSpacing.md))
+    Spacer(Modifier.height(AsterSpacing.lg))
     Text(
         text = stringResource(R.string.reset_link_sent_next),
-        color = colors.text_tertiary,
-        fontSize = 14.sp,
-        textAlign = TextAlign.Center,
+        color = colors.text_secondary,
+        fontSize = 15.sp,
+        lineHeight = 22.sp,
     )
 
     Spacer(Modifier.height(AsterSpacing.xxl))
@@ -393,73 +510,44 @@ private fun email_sent_step(
         Spacer(Modifier.height(AsterSpacing.lg))
     }
 
-    AsterButton(
-        label = stringResource(R.string.back_to_sign_in),
-        onClick = on_sign_in,
+    text_link(
+        label = stringResource(R.string.use_recovery_code_instead),
         enabled = !is_loading,
+        on_click = on_use_code,
     )
 
-    Spacer(Modifier.height(AsterSpacing.md))
+    Spacer(Modifier.height(AsterSpacing.xxl))
 
-    AsterSecondaryButton(
-        label = if (resend_seconds > 0) {
+    recovery_actions(
+        primary_label = stringResource(R.string.back_to_sign_in),
+        on_primary = on_sign_in,
+        primary_enabled = !is_loading,
+        secondary_label = if (resend_seconds > 0) {
             stringResource(R.string.resend_reset_link_in, resend_seconds)
         } else {
             stringResource(R.string.resend_reset_link)
         },
-        onClick = on_resend,
-        enabled = !is_loading && resend_seconds == 0,
+        on_secondary = on_resend,
+        secondary_enabled = !is_loading && resend_seconds == 0,
     )
-
-    Spacer(Modifier.height(AsterSpacing.xl))
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = stringResource(R.string.use_recovery_code_instead),
-            color = colors.accent_blue,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.clickable(enabled = !is_loading, onClick = on_use_code),
-        )
-    }
-
-    Spacer(Modifier.height(AsterSpacing.xxl))
 }
 
 @Composable
 private fun code_step(
+    email: String,
     is_loading: Boolean,
     error: String?,
     on_verify: (String) -> Unit,
     on_other_ways: () -> Unit,
+    on_change_account: () -> Unit,
 ) {
-    val colors = AsterMaterial.colors
     var code by remember { mutableStateOf("") }
 
-    Spacer(Modifier.height(AsterSpacing.xl))
-    Image(
-        painter = painterResource(R.drawable.aster_wordmark),
-        contentDescription = null,
-        modifier = Modifier.height(40.dp),
-    )
-    Spacer(Modifier.height(AsterSpacing.xl))
-    Text(
-        text = stringResource(R.string.enter_recovery_code),
-        color = colors.text_primary,
-        fontSize = 30.sp,
-        fontWeight = FontWeight.ExtraBold,
-        letterSpacing = (-0.3).sp,
-        textAlign = TextAlign.Center,
-    )
-    Spacer(Modifier.height(AsterSpacing.md))
-    Text(
-        text = stringResource(R.string.enter_recovery_code_description),
-        color = colors.text_tertiary,
-        fontSize = 14.sp,
-        textAlign = TextAlign.Center,
+    recovery_step_header(
+        title = stringResource(R.string.enter_recovery_code),
+        description = stringResource(R.string.enter_recovery_code_description),
+        email = email,
+        on_change_account = on_change_account,
     )
 
     Spacer(Modifier.height(AsterSpacing.xxl))
@@ -483,45 +571,24 @@ private fun code_step(
         keyboard_actions = KeyboardActions(
             onDone = { if (code.isNotBlank() && !is_loading) on_verify(code) },
         ),
-        leading_icon = {
-            Icon(
-                imageVector = TablerIcons.Key,
-                contentDescription = null,
-                tint = colors.text_muted,
-            )
-        },
     )
 
-    Spacer(Modifier.height(AsterSpacing.xl))
+    Spacer(Modifier.height(AsterSpacing.xxxl))
 
-    AsterButton(
-        label = stringResource(R.string.continue_action),
-        onClick = { on_verify(code) },
-        enabled = code.isNotBlank() && !is_loading,
-        is_loading = is_loading,
+    recovery_actions(
+        primary_label = stringResource(R.string.continue_action),
+        on_primary = { on_verify(code) },
+        primary_enabled = code.isNotBlank() && !is_loading,
+        primary_loading = is_loading,
+        secondary_label = stringResource(R.string.try_another_way),
+        on_secondary = on_other_ways,
+        secondary_enabled = !is_loading,
     )
-
-    Spacer(Modifier.height(AsterSpacing.lg))
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = stringResource(R.string.try_another_way),
-            color = colors.accent_blue,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.clickable(enabled = !is_loading, onClick = on_other_ways),
-        )
-    }
-
-    Spacer(Modifier.height(AsterSpacing.xxl))
 }
 
 @Composable
 private fun recovery_option_row(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     title: String,
     description: String,
     enabled: Boolean,
@@ -532,18 +599,16 @@ private fun recovery_option_row(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(SquircleShape(18.dp))
+            .clip(AsterShapes.item)
             .clickable(enabled = enabled, onClick = on_click)
-            .border(1.dp, colors.border_primary, SquircleShape(18.dp))
-            .acrylic(colors, SquircleShape(18.dp), colors.bg_secondary)
-            .padding(AsterSpacing.lg),
+            .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.lg),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             tint = colors.text_secondary,
-            modifier = Modifier.size(22.dp),
+            modifier = Modifier.size(24.dp),
         )
         Spacer(Modifier.width(AsterSpacing.lg))
         Column(modifier = Modifier.weight(1f)) {
@@ -551,38 +616,36 @@ private fun recovery_option_row(
                 text = title,
                 color = colors.text_primary,
                 fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Medium,
             )
             Spacer(Modifier.height(2.dp))
             Text(
                 text = description,
                 color = colors.text_tertiary,
                 fontSize = 13.sp,
+                lineHeight = 18.sp,
             )
         }
-        Spacer(Modifier.width(AsterSpacing.md))
-        Icon(
-            imageVector = TablerIcons.ChevronRight,
-            contentDescription = null,
-            tint = colors.text_muted,
-            modifier = Modifier.size(18.dp).mirror_in_rtl(),
-        )
     }
 }
 
 @Composable
 private fun other_ways_step(
+    email: String,
     is_loading: Boolean,
     on_select_code: () -> Unit,
     on_select_email: () -> Unit,
     on_contact_support: () -> Unit,
+    on_change_account: () -> Unit,
 ) {
     recovery_step_header(
         title = stringResource(R.string.recover_choose_method),
         description = stringResource(R.string.other_ways_desc),
+        email = email,
+        on_change_account = on_change_account,
     )
 
-    Spacer(Modifier.height(AsterSpacing.xxl))
+    Spacer(Modifier.height(AsterSpacing.xl))
 
     recovery_option_row(
         icon = TablerIcons.Key,
@@ -592,7 +655,7 @@ private fun other_ways_step(
         on_click = on_select_code,
     )
 
-    Spacer(Modifier.height(AsterSpacing.md))
+    AsterDivider()
 
     recovery_option_row(
         icon = TablerIcons.Mail,
@@ -602,82 +665,55 @@ private fun other_ways_step(
         on_click = on_select_email,
     )
 
-    Spacer(Modifier.height(AsterSpacing.md))
-
-    recovery_option_row(
-        icon = TablerIcons.Help,
-        title = stringResource(R.string.other_way_none_title),
-        description = stringResource(R.string.other_way_none_desc),
-        enabled = !is_loading,
-        on_click = on_contact_support,
-    )
-
-    Spacer(Modifier.height(AsterSpacing.xxl))
-}
-
-@Composable
-private fun support_step() {
-    val colors = AsterMaterial.colors
-    val context = LocalContext.current
-
-    Spacer(Modifier.height(AsterSpacing.xl))
-    Image(
-        painter = painterResource(R.drawable.aster_wordmark),
-        contentDescription = null,
-        modifier = Modifier.height(40.dp),
-    )
-    Spacer(Modifier.height(AsterSpacing.xl))
-    Text(
-        text = stringResource(R.string.support_step_title),
-        color = colors.text_primary,
-        fontSize = 30.sp,
-        fontWeight = FontWeight.ExtraBold,
-        letterSpacing = (-0.3).sp,
-        textAlign = TextAlign.Center,
-    )
-    Spacer(Modifier.height(AsterSpacing.md))
-    Text(
-        text = stringResource(R.string.support_step_desc),
-        color = colors.text_tertiary,
-        fontSize = 14.sp,
-        textAlign = TextAlign.Center,
-    )
-
-    Spacer(Modifier.height(AsterSpacing.xxl))
-
-    AsterButton(
-        label = stringResource(R.string.support_email_action),
-        onClick = { open_external_url(context, SUPPORT_MAIL_URL) },
-    )
+    AsterDivider()
 
     Spacer(Modifier.height(AsterSpacing.lg))
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = stringResource(R.string.support_help_center),
-            color = colors.accent_blue,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.clickable { open_external_url(context, HELP_CENTER_URL) },
-        )
-    }
+    text_link(
+        label = stringResource(R.string.other_way_none_title),
+        enabled = !is_loading,
+        on_click = on_contact_support,
+    )
+}
 
-    Spacer(Modifier.height(AsterSpacing.xxl))
+@Composable
+private fun support_step(
+    email: String,
+    on_change_account: () -> Unit,
+) {
+    val context = LocalContext.current
+
+    recovery_step_header(
+        title = stringResource(R.string.support_step_title),
+        description = stringResource(R.string.support_step_desc),
+        email = email,
+        on_change_account = on_change_account,
+    )
+
+    Spacer(Modifier.height(AsterSpacing.xxxl))
+
+    recovery_actions(
+        primary_label = stringResource(R.string.support_email_action),
+        on_primary = { open_external_url(context, SUPPORT_MAIL_URL) },
+        secondary_label = stringResource(R.string.support_help_center),
+        on_secondary = { open_external_url(context, HELP_CENTER_URL) },
+    )
 }
 
 @Composable
 private fun reset_email_confirm_step(
+    email: String,
     is_loading: Boolean,
     error: String?,
     on_send: () -> Unit,
     on_back: () -> Unit,
+    on_change_account: () -> Unit,
 ) {
     recovery_step_header(
         title = stringResource(R.string.other_way_email_title),
         description = stringResource(R.string.reset_account_desc),
+        email = email,
+        on_change_account = on_change_account,
     )
 
     Spacer(Modifier.height(AsterSpacing.xxl))
@@ -687,26 +723,20 @@ private fun reset_email_confirm_step(
         Spacer(Modifier.height(AsterSpacing.lg))
     }
 
-    AsterButton(
-        label = stringResource(R.string.send_reset_link),
-        onClick = on_send,
-        enabled = !is_loading,
-        is_loading = is_loading,
+    recovery_actions(
+        primary_label = stringResource(R.string.send_reset_link),
+        on_primary = on_send,
+        primary_enabled = !is_loading,
+        primary_loading = is_loading,
+        secondary_label = stringResource(R.string.back),
+        on_secondary = on_back,
+        secondary_enabled = !is_loading,
     )
-
-    Spacer(Modifier.height(AsterSpacing.md))
-
-    AsterSecondaryButton(
-        label = stringResource(R.string.back),
-        onClick = on_back,
-        enabled = !is_loading,
-    )
-
-    Spacer(Modifier.height(AsterSpacing.xxl))
 }
 
 @Composable
 private fun password_step(
+    email: String,
     password: String,
     confirm: String,
     on_password_change: (String) -> Unit,
@@ -720,27 +750,10 @@ private fun password_step(
     var confirm_visible by remember { mutableStateOf(false) }
     val confirm_focus = remember { androidx.compose.ui.focus.FocusRequester() }
 
-    Spacer(Modifier.height(AsterSpacing.xl))
-    Image(
-        painter = painterResource(R.drawable.aster_wordmark),
-        contentDescription = null,
-        modifier = Modifier.height(40.dp),
-    )
-    Spacer(Modifier.height(AsterSpacing.xl))
-    Text(
-        text = stringResource(R.string.create_new_password),
-        color = colors.text_primary,
-        fontSize = 30.sp,
-        fontWeight = FontWeight.ExtraBold,
-        letterSpacing = (-0.3).sp,
-        textAlign = TextAlign.Center,
-    )
-    Spacer(Modifier.height(AsterSpacing.md))
-    Text(
-        text = stringResource(R.string.choose_strong_password),
-        color = colors.text_tertiary,
-        fontSize = 14.sp,
-        textAlign = TextAlign.Center,
+    recovery_step_header(
+        title = stringResource(R.string.create_new_password),
+        description = stringResource(R.string.choose_strong_password),
+        email = email,
     )
 
     Spacer(Modifier.height(AsterSpacing.xxl))
@@ -765,9 +778,6 @@ private fun password_step(
         keyboard_actions = KeyboardActions(
             onNext = { confirm_focus.requestFocus() },
         ),
-        leading_icon = {
-            Icon(TablerIcons.Lock, null, tint = colors.text_muted)
-        },
         trailing_icon = {
             AsterIconButton(
                 icon = if (password_visible) TablerIcons.EyeOff else TablerIcons.Eye,
@@ -804,9 +814,6 @@ private fun password_step(
                 }
             },
         ),
-        leading_icon = {
-            Icon(TablerIcons.Lock, null, tint = colors.text_muted)
-        },
         trailing_icon = {
             AsterIconButton(
                 icon = if (confirm_visible) TablerIcons.EyeOff else TablerIcons.Eye,
@@ -818,16 +825,14 @@ private fun password_step(
         modifier = Modifier.focusRequester(confirm_focus),
     )
 
-    Spacer(Modifier.height(AsterSpacing.xl))
+    Spacer(Modifier.height(AsterSpacing.xxxl))
 
-    AsterButton(
-        label = stringResource(R.string.reset_password),
-        onClick = { on_submit(password, confirm) },
-        enabled = password.isNotBlank() && confirm.isNotBlank() && !is_loading,
-        is_loading = is_loading,
+    recovery_actions(
+        primary_label = stringResource(R.string.reset_password),
+        on_primary = { on_submit(password, confirm) },
+        primary_enabled = password.isNotBlank() && confirm.isNotBlank() && !is_loading,
+        primary_loading = is_loading,
     )
-
-    Spacer(Modifier.height(AsterSpacing.xxl))
 }
 
 @Composable
@@ -879,7 +884,6 @@ private fun compute_strength(password: String): Int {
 @Composable
 private fun processing_step(status: String) {
     val colors = AsterMaterial.colors
-    Spacer(Modifier.height(100.dp))
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -931,27 +935,10 @@ private fun new_codes_step(
     val failed_message = stringResource(R.string.failed_to_save)
     val print_failed_message = stringResource(R.string.print_not_available)
 
-    Spacer(Modifier.height(AsterSpacing.xl))
-    Image(
-        painter = painterResource(R.drawable.aster_wordmark),
-        contentDescription = null,
-        modifier = Modifier.height(40.dp),
-    )
-    Spacer(Modifier.height(AsterSpacing.xl))
-    Text(
-        text = stringResource(R.string.save_new_recovery_codes),
-        color = colors.text_primary,
-        fontSize = 30.sp,
-        fontWeight = FontWeight.ExtraBold,
-        letterSpacing = (-0.3).sp,
-        textAlign = TextAlign.Center,
-    )
-    Spacer(Modifier.height(AsterSpacing.md))
-    Text(
-        text = stringResource(R.string.old_codes_invalidated),
-        color = colors.text_tertiary,
-        fontSize = 14.sp,
-        textAlign = TextAlign.Center,
+    recovery_step_header(
+        title = stringResource(R.string.save_new_recovery_codes),
+        description = stringResource(R.string.old_codes_invalidated),
+        email = account_email,
     )
 
     Spacer(Modifier.height(AsterSpacing.xxl))
@@ -1005,50 +992,55 @@ private fun new_codes_step(
 
     Spacer(Modifier.height(AsterSpacing.xl))
 
-    AsterButton(
-        label = stringResource(R.string.copy_to_clipboard),
-        onClick = {
-            val text = codes.joinToString("\n")
-            val clip = ClipData.newPlainText(context.getString(R.string.recovery_codes), text)
-            clip.description.extras = android.os.PersistableBundle().apply {
-                putBoolean("android.content.extra.IS_SENSITIVE", true)
-            }
-            if (write_to_clipboard(context, clip)) {
-                org.astermail.android.util.schedule_sensitive_clipboard_clear(context)
-                org.astermail.android.ui.common.app_toast.show(copied_message)
-            } else {
-                show_copy_failed_toast(context)
-            }
-        },
-    )
-
-    Spacer(Modifier.height(AsterSpacing.md))
-
-    AsterSecondaryButton(
-        label = stringResource(R.string.download),
-        onClick = {
-            request_storage_access {
-                val saved = download_forgot_password_codes(context, codes)
-                org.astermail.android.ui.common.app_toast.show(if (saved) saved_message else failed_message)
-            }
-        },
-    )
-
-    Spacer(Modifier.height(AsterSpacing.md))
-
-    AsterSecondaryButton(
-        label = stringResource(R.string.print_codes),
-        onClick = {
-            org.astermail.android.ui.common.print_recovery_codes(
-                context = context,
-                account_email = account_email,
-                codes = codes,
-                on_failure = {
-                    org.astermail.android.ui.common.app_toast.show(print_failed_message)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+    ) {
+        Box(modifier = Modifier.weight(1f)) {
+            AsterSecondaryButton(
+                label = stringResource(R.string.copy_to_clipboard),
+                onClick = {
+                    val text = codes.joinToString("\n")
+                    val clip = ClipData.newPlainText(context.getString(R.string.recovery_codes), text)
+                    clip.description.extras = android.os.PersistableBundle().apply {
+                        putBoolean("android.content.extra.IS_SENSITIVE", true)
+                    }
+                    if (write_to_clipboard(context, clip)) {
+                        org.astermail.android.util.schedule_sensitive_clipboard_clear(context)
+                        org.astermail.android.ui.common.app_toast.show(copied_message)
+                    } else {
+                        show_copy_failed_toast(context)
+                    }
                 },
             )
-        },
-    )
+        }
+        Box(modifier = Modifier.weight(1f)) {
+            AsterSecondaryButton(
+                label = stringResource(R.string.download),
+                onClick = {
+                    request_storage_access {
+                        val saved = download_forgot_password_codes(context, codes)
+                        org.astermail.android.ui.common.app_toast.show(if (saved) saved_message else failed_message)
+                    }
+                },
+            )
+        }
+        Box(modifier = Modifier.weight(1f)) {
+            AsterSecondaryButton(
+                label = stringResource(R.string.print_codes),
+                onClick = {
+                    org.astermail.android.ui.common.print_recovery_codes(
+                        context = context,
+                        account_email = account_email,
+                        codes = codes,
+                        on_failure = {
+                            org.astermail.android.ui.common.app_toast.show(print_failed_message)
+                        },
+                    )
+                },
+            )
+        }
+    }
 
     Spacer(Modifier.height(AsterSpacing.xl))
 
@@ -1072,15 +1064,13 @@ private fun new_codes_step(
         )
     }
 
-    Spacer(Modifier.height(AsterSpacing.md))
+    Spacer(Modifier.height(AsterSpacing.lg))
 
-    AsterButton(
-        label = stringResource(R.string.continue_action),
-        onClick = on_continue,
-        enabled = codes_saved,
+    recovery_actions(
+        primary_label = stringResource(R.string.continue_action),
+        on_primary = on_continue,
+        primary_enabled = codes_saved,
     )
-
-    Spacer(Modifier.height(AsterSpacing.xxl))
 }
 
 private const val FORGOT_PASSWORD_CODES_FILE_NAME = "aster-recovery-codes.txt"
@@ -1095,20 +1085,20 @@ private fun review_row(text: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = AsterSpacing.sm),
+            .padding(vertical = AsterSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = TablerIcons.Check,
             contentDescription = null,
             tint = colors.success,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(20.dp),
         )
-        Spacer(Modifier.width(AsterSpacing.md))
+        Spacer(Modifier.width(AsterSpacing.lg))
         Text(
             text = text,
-            color = colors.text_secondary,
-            fontSize = 14.sp,
+            color = colors.text_primary,
+            fontSize = 15.sp,
         )
     }
 }
@@ -1118,37 +1108,19 @@ private fun review_security_step(
     review: org.astermail.android.auth.RecoveryReview?,
     on_sign_in: () -> Unit,
 ) {
-    val colors = AsterMaterial.colors
-
-    Spacer(Modifier.height(AsterSpacing.xxl))
-    Text(
-        text = stringResource(R.string.review_security_title),
-        color = colors.text_primary,
-        fontSize = 30.sp,
-        fontWeight = FontWeight.ExtraBold,
-        letterSpacing = (-0.3).sp,
-        textAlign = TextAlign.Center,
-    )
-    Spacer(Modifier.height(AsterSpacing.md))
-    Text(
-        text = stringResource(R.string.review_security_desc),
-        color = colors.text_tertiary,
-        fontSize = 14.sp,
-        textAlign = TextAlign.Center,
+    recovery_step_header(
+        title = stringResource(R.string.review_security_title),
+        description = stringResource(R.string.review_security_desc),
     )
 
-    Spacer(Modifier.height(AsterSpacing.xxl))
+    Spacer(Modifier.height(AsterSpacing.xl))
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(1.dp, colors.border_primary, SquircleShape(18.dp))
-            .acrylic(colors, SquircleShape(18.dp), colors.bg_secondary)
-            .padding(AsterSpacing.lg),
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         review_row(stringResource(R.string.review_devices_signed_out))
+        AsterDivider()
         if (review?.second_factors_removed != false) {
             review_row(stringResource(R.string.review_two_step_off))
+            AsterDivider()
         }
         review_row(
             if (review?.recovery_email_set == true) {
@@ -1157,18 +1129,17 @@ private fun review_security_step(
                 stringResource(R.string.review_no_recovery_email)
             },
         )
+        AsterDivider()
         val codes_left = review?.codes_remaining ?: 0
         review_row(
             pluralStringResource(R.plurals.review_codes_left, codes_left, codes_left),
         )
     }
 
-    Spacer(Modifier.height(AsterSpacing.xxl))
+    Spacer(Modifier.height(AsterSpacing.xxxl))
 
-    AsterButton(
-        label = stringResource(R.string.sign_in),
-        onClick = on_sign_in,
+    recovery_actions(
+        primary_label = stringResource(R.string.sign_in),
+        on_primary = on_sign_in,
     )
-
-    Spacer(Modifier.height(AsterSpacing.xxl))
 }
