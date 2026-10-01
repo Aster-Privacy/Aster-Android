@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account_security_percent_title">您的账户安全评分为 %1$d%%</string>
+    <string name="account_security_dismiss">关闭</string>
+    <string name="security_center_recommended">建议的操作</string>
+    <string name="security_center_protected">已保护</string>
+    <string name="security_center_all_clear">所有保护均已开启。</string>
+    <string name="action_recommended">建议操作</string>
+    <string name="two_step_verification_recommendation">开启两步验证，即使密码被盗也能保护您的账户安全。</string>
+    <string name="no_passkeys_recommendation">添加通行密钥，使用设备的生物识别或PIN码更快、更安全地登录。</string>
+    <string name="login_alerts_off_recommendation">开启登录提醒，以便在有新设备登录您的账户时收到通知。</string>
+    <string name="billing_usage_title">用量概览</string>
+    <plurals name="security_actions_remaining">
+        <item quantity="other">%1$d 项建议操作</item>
+    </plurals>
+</resources>

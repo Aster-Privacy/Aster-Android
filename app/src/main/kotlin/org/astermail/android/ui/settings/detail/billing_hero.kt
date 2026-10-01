@@ -225,41 +225,6 @@ internal fun billing_hero_card(
                     )
                 }
             }
-            if (storage_limit_bytes > 0) {
-                val storage_fraction = storage_used_bytes.toFloat() / storage_limit_bytes.toFloat()
-                val storage_status = when {
-                    storage_over_limit || storage_fraction >= 1f -> billing_meter_status.full
-                    storage_fraction >= 0.8f -> billing_meter_status.near
-                    else -> billing_meter_status.ok
-                }
-                Spacer(Modifier.height(AsterSpacing.lg))
-                billing_meter(
-                    label = stringResource(R.string.storage),
-                    value_text = stringResource(
-                        R.string.storage_used_format,
-                        format_storage_short(storage_used_bytes),
-                        format_storage_short(storage_limit_bytes),
-                    ),
-                    fraction = storage_fraction,
-                    status = storage_status,
-                    status_text = stringResource(
-                        when (storage_status) {
-                            billing_meter_status.full -> R.string.billing_status_action_required
-                            billing_meter_status.near -> R.string.billing_status_almost_full
-                            else -> R.string.billing_status_ok
-                        },
-                    ),
-                    trailing_action = if (storage_action_label == null || on_storage_action == null) {
-                        null
-                    } else {
-                        { billing_action_text(label = storage_action_label, on_click = on_storage_action) }
-                    },
-                )
-            }
-            usage.forEach { item ->
-                Spacer(Modifier.height(AsterSpacing.lg))
-                billing_usage_meter(item = item, on_upgrade = on_usage_upgrade)
-            }
         }
         if (keep_title != null && keep_action != null && on_keep != null) {
             settings_row_gap()
@@ -311,6 +276,48 @@ internal fun billing_hero_card(
         if (danger_action != null) {
             settings_row_gap()
             billing_hero_row(danger_action)
+        }
+    }
+    if (storage_limit_bytes > 0 || usage.isNotEmpty()) {
+        v_gap(AsterSpacing.lg)
+        section_label(stringResource(R.string.billing_usage_title))
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(AsterSpacing.lg)) {
+                if (storage_limit_bytes > 0) {
+                    val storage_fraction = storage_used_bytes.toFloat() / storage_limit_bytes.toFloat()
+                    val storage_status = when {
+                        storage_over_limit || storage_fraction >= 1f -> billing_meter_status.full
+                        storage_fraction >= 0.8f -> billing_meter_status.near
+                        else -> billing_meter_status.ok
+                    }
+                    billing_meter(
+                        label = stringResource(R.string.storage),
+                        value_text = stringResource(
+                            R.string.storage_used_format,
+                            format_storage_short(storage_used_bytes),
+                            format_storage_short(storage_limit_bytes),
+                        ),
+                        fraction = storage_fraction,
+                        status = storage_status,
+                        status_text = stringResource(
+                            when (storage_status) {
+                                billing_meter_status.full -> R.string.billing_status_action_required
+                                billing_meter_status.near -> R.string.billing_status_almost_full
+                                else -> R.string.billing_status_ok
+                            },
+                        ),
+                        trailing_action = if (storage_action_label == null || on_storage_action == null) {
+                            null
+                        } else {
+                            { billing_action_text(label = storage_action_label, on_click = on_storage_action) }
+                        },
+                    )
+                }
+                usage.forEachIndexed { index, item ->
+                    if (index > 0 || storage_limit_bytes > 0) Spacer(Modifier.height(AsterSpacing.lg))
+                    billing_usage_meter(item = item, on_upgrade = on_usage_upgrade)
+                }
+            }
         }
     }
 }
@@ -434,10 +441,10 @@ internal fun billing_usage_meter(item: billing_usage_item, on_upgrade: (() -> Un
     if (limit == null || limit <= 0) {
         billing_meter(
             label = item.label,
-            value_text = stringResource(R.string.billing_usage_in_use, item.current),
+            value_text = stringResource(R.string.billing_usage_in_use, item.current) + " · " + stringResource(R.string.usage_unlimited),
             fraction = 0f,
             status = billing_meter_status.ok,
-            status_text = stringResource(R.string.usage_unlimited),
+            status_text = null,
         )
         return
     }

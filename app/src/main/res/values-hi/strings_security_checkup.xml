@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account_security_percent_title">आपके खाते की सुरक्षा %1$d%% है</string>
+    <string name="account_security_dismiss">खारिज करें</string>
+    <string name="security_center_recommended">अनुशंसित कार्रवाई</string>
+    <string name="security_center_protected">सुरक्षित</string>
+    <string name="security_center_all_clear">सभी सुरक्षाएँ चालू हैं।</string>
+    <string name="action_recommended">कार्रवाई की सलाह दी जाती है</string>
+    <string name="two_step_verification_recommendation">पासवर्ड चोरी होने पर भी खाता सुरक्षित रखने के लिए दो-चरणीय सत्यापन चालू करें।</string>
+    <string name="no_passkeys_recommendation">अपने डिवाइस के बायोमेट्रिक या PIN से तेज़ और ज़्यादा सुरक्षित साइन इन के लिए पासकी जोड़ें।</string>
+    <string name="login_alerts_off_recommendation">जब भी कोई नया डिवाइस आपके खाते में साइन इन करे, सूचना पाने के लिए लॉगिन चेतावनियां चालू करें।</string>
+    <string name="billing_usage_title">इस्तेमाल का ब्योरा</string>
+    <plurals name="security_actions_remaining">
+        <item quantity="one">%1$d सुझाई गई कार्रवाई</item>
+        <item quantity="other">%1$d सुझाई गई कार्रवाइयां</item>
+    </plurals>
+</resources>

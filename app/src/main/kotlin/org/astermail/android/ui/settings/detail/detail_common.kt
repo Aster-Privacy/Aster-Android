@@ -628,6 +628,7 @@ internal fun detail_row(
     value: String? = null,
     leading: (@Composable () -> Unit)? = null,
     muted: Boolean = false,
+    recommendation: String? = null,
 ) {
     val colors = AsterMaterial.colors
     Row(
@@ -676,6 +677,12 @@ internal fun detail_row(
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
             }
+            if (recommendation != null) {
+                recommendation_note(
+                    text = recommendation,
+                    modifier = Modifier.padding(top = AsterSpacing.xs),
+                )
+            }
         }
         if (value != null) {
             Spacer(Modifier.width(AsterSpacing.md))
@@ -699,6 +706,31 @@ internal fun detail_row(
                 modifier = Modifier.size(20.dp).mirror_in_rtl(),
             )
         }
+    }
+}
+
+@Composable
+internal fun recommendation_note(text: String, modifier: Modifier = Modifier) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag("recommendation_note"),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Icon(
+            imageVector = TablerIcons.AlertTriangle,
+            contentDescription = stringResource(R.string.action_recommended),
+            tint = colors.warning,
+            modifier = Modifier.padding(top = 1.dp).size(14.dp),
+        )
+        Spacer(Modifier.width(AsterSpacing.xs))
+        Text(
+            text = text,
+            color = colors.warning,
+            fontSize = 12.sp,
+            lineHeight = 16.sp,
+        )
     }
 }
 
