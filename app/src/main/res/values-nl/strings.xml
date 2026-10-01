@@ -101,6 +101,8 @@
     <string name="recovery_email_sent_description">Als dit account een geverifieerde herstel-e-mail heeft, heeft Aster Mail daar een link naartoe gestuurd. De link verloopt over 30 minuten. Zie je de e-mail niet, controleer dan je spammap.</string>
     <string name="reset_link_sent_next">Nadat je een nieuw wachtwoord hebt gekozen, ga je terug naar deze app en log je in.</string>
     <string name="use_recovery_code_instead">Gebruik in plaats daarvan een herstelcode</string>
+    <string name="resend_reset_link">Link opnieuw sturen</string>
+    <string name="resend_reset_link_in">Opnieuw sturen over %1$d s</string>
     <string name="enter_recovery_code">Voer herstelcode in</string>
     <string name="enter_recovery_code_description">Voer een van de herstelcodes in die je hebt opgeslagen toen je je account aanmaakte. Elke code werkt één keer.</string>
     <string name="recovery_code">Herstelcode</string>

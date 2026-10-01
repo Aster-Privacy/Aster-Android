@@ -101,6 +101,8 @@
     <string name="recovery_email_sent_description">このアカウントに確認済みのリカバリーメールがある場合、Aster Mailがリセット用のリンクを送信しました。リンクは30分で期限切れになります。メールが見つからない場合は、迷惑メールフォルダを確認してください。</string>
     <string name="reset_link_sent_next">新しいパスワードを設定したら、このアプリに戻ってサインインしてください。</string>
     <string name="use_recovery_code_instead">代わりにリカバリーコードを使用</string>
+    <string name="resend_reset_link">リンクを再送信</string>
+    <string name="resend_reset_link_in">%1$d 秒後に再送信</string>
     <string name="enter_recovery_code">リカバリーコードを入力</string>
     <string name="enter_recovery_code_description">アカウント作成時に保存したリカバリーコードのいずれかを入力してください。各コードは一度だけ使用できます。</string>
     <string name="recovery_code">リカバリーコード</string>

@@ -101,6 +101,8 @@
     <string name="recovery_email_sent_description">Jeśli to konto ma zweryfikowany adres odzyskiwania, Aster Mail wysłał na niego link do resetowania. Link wygasa po 30 minutach. Jeśli nie widzisz wiadomości, sprawdź folder ze spamem.</string>
     <string name="reset_link_sent_next">Po ustawieniu nowego hasła wróć do tej aplikacji i zaloguj się.</string>
     <string name="use_recovery_code_instead">Użyj kodu odzyskiwania</string>
+    <string name="resend_reset_link">Wyślij link ponownie</string>
+    <string name="resend_reset_link_in">Wyślij ponownie za %1$d s</string>
     <string name="enter_recovery_code">Wprowadź kod odzyskiwania</string>
     <string name="enter_recovery_code_description">Wpisz jeden z kodów odzyskiwania zapisanych podczas tworzenia konta. Każdy kod działa raz.</string>
     <string name="recovery_code">Kod odzyskiwania</string>

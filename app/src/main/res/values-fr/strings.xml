@@ -106,6 +106,8 @@
     <string name="recovery_email_sent_description">Si ce compte a un e-mail de récupération vérifié, Aster Mail y a envoyé un lien de réinitialisation. Le lien expire dans 30 minutes. Si vous ne voyez pas l\'e-mail, vérifiez votre dossier de courrier indésirable.</string>
     <string name="reset_link_sent_next">Après avoir choisi un nouveau mot de passe, revenez dans cette app et connectez-vous.</string>
     <string name="use_recovery_code_instead">Utiliser un code de récupération</string>
+    <string name="resend_reset_link">Renvoyer le lien</string>
+    <string name="resend_reset_link_in">Renvoyer dans %1$d s</string>
     <string name="enter_recovery_code">Saisir le code de récupération</string>
     <string name="enter_recovery_code_description">Saisissez l\'un des codes de récupération que vous avez enregistrés lors de la création de votre compte. Chaque code fonctionne une seule fois.</string>
     <string name="recovery_code">Code de récupération</string>

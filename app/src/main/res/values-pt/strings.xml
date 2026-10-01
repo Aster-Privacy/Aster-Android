@@ -101,6 +101,8 @@
     <string name="recovery_email_sent_description">Se esta conta tiver um e-mail de recuperação verificado, o Aster Mail enviou-lhe uma ligação de reposição. A ligação expira dentro de 30 minutos. Se não vir o e-mail, verifique a pasta de spam.</string>
     <string name="reset_link_sent_next">Depois de escolher uma nova palavra-passe, volte a esta app e inicie sessão.</string>
     <string name="use_recovery_code_instead">Utilizar um código de recuperação</string>
+    <string name="resend_reset_link">Reenviar ligação</string>
+    <string name="resend_reset_link_in">Reenviar em %1$d s</string>
     <string name="enter_recovery_code">Introduza o código de recuperação</string>
     <string name="enter_recovery_code_description">Introduza um dos códigos de recuperação que guardou ao criar a conta. Cada código funciona uma vez.</string>
     <string name="recovery_code">Código de recuperação</string>

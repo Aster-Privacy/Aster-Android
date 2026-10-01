@@ -101,6 +101,8 @@
     <string name="recovery_email_sent_description">如果此账户有已验证的恢复邮箱，Aster Mail 已向其发送重置链接。链接将在 30 分钟后失效。如果没有看到邮件，请检查垃圾邮件文件夹。</string>
     <string name="reset_link_sent_next">设置新密码后，请返回此应用并登录。</string>
     <string name="use_recovery_code_instead">改用恢复代码</string>
+    <string name="resend_reset_link">重新发送链接</string>
+    <string name="resend_reset_link_in">%1$d 秒后重新发送</string>
     <string name="enter_recovery_code">输入恢复代码</string>
     <string name="enter_recovery_code_description">输入您创建账户时保存的其中一个恢复代码。每个代码只能使用一次。</string>
     <string name="recovery_code">恢复代码</string>

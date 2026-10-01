@@ -102,6 +102,8 @@
     <string name="recovery_email_sent_description">Wenn dieses Konto eine bestätigte Wiederherstellungs-E-Mail hat, hat Aster Mail einen Link zum Zurücksetzen dorthin gesendet. Der Link läuft in 30 Minuten ab. Wenn Sie die E-Mail nicht sehen, prüfen Sie Ihren Spam-Ordner.</string>
     <string name="reset_link_sent_next">Nachdem Sie ein neues Passwort gewählt haben, kehren Sie zu dieser App zurück und melden Sie sich an.</string>
     <string name="use_recovery_code_instead">Stattdessen einen Wiederherstellungscode verwenden</string>
+    <string name="resend_reset_link">Link erneut senden</string>
+    <string name="resend_reset_link_in">Erneut senden in %1$d s</string>
     <string name="enter_recovery_code">Wiederherstellungscode eingeben</string>
     <string name="enter_recovery_code_description">Geben Sie einen der Wiederherstellungscodes ein, die Sie beim Erstellen Ihres Kontos gespeichert haben. Jeder Code funktioniert einmal.</string>
     <string name="recovery_code">Wiederherstellungscode</string>

@@ -102,6 +102,8 @@
     <string name="recovery_email_sent_description">Si esta cuenta tiene un correo de recuperación verificado, Aster Mail le ha enviado un enlace de restablecimiento. El enlace caduca en 30 minutos. Si no ves el mensaje, revisa tu carpeta de spam.</string>
     <string name="reset_link_sent_next">Después de elegir una contraseña nueva, vuelve a esta app e inicia sesión.</string>
     <string name="use_recovery_code_instead">Usar un código de recuperación</string>
+    <string name="resend_reset_link">Reenviar enlace</string>
+    <string name="resend_reset_link_in">Reenviar en %1$d s</string>
     <string name="enter_recovery_code">Ingresar código de recuperación</string>
     <string name="enter_recovery_code_description">Introduce uno de los códigos de recuperación que guardaste al crear tu cuenta. Cada código funciona una vez.</string>
     <string name="recovery_code">Código de recuperación</string>

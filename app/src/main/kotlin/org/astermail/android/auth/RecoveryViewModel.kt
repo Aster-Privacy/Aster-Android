@@ -32,6 +32,8 @@ import org.astermail.android.crypto.hkdf_sha256
 import org.astermail.android.crypto.PasswordKdf
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -70,6 +72,7 @@ data class RecoveryUiState(
     val email: String = "",
     val is_loading: Boolean = false,
     val error: String? = null,
+    val resend_seconds: Int = 0,
     val processing_status: String = "",
     val new_codes: List<String> = emptyList(),
     val review: RecoveryReview? = null,
@@ -92,6 +95,7 @@ class RecoveryViewModel @Inject constructor(
     private var decrypted_vault: ByteArray? = null
     private var user_email: String = ""
     private var had_recovery_email: Boolean = false
+    private var cooldown_job: Job? = null
 
     fun submit_email(email: String) {
         if (_state.value.is_loading) return
@@ -127,6 +131,17 @@ class RecoveryViewModel @Inject constructor(
         if (_state.value.is_loading) return
         if (!accept_email(email)) return
 
+        request_reset_link(resend = false)
+    }
+
+    fun resend_reset_link() {
+        if (_state.value.is_loading || _state.value.resend_seconds > 0) return
+        if (!accept_email(user_email)) return
+
+        request_reset_link(resend = true)
+    }
+
+    private fun request_reset_link(resend: Boolean) {
         val at_index = user_email.indexOf('@')
         val username = user_email.substring(0, at_index)
         val email_domain = user_email.substring(at_index + 1).trimEnd('.')
@@ -141,14 +156,29 @@ class RecoveryViewModel @Inject constructor(
                     ),
                 )
                 _state.value = _state.value.copy(
-                    step = RecoveryStep.email_sent,
+                    step = if (resend) _state.value.step else RecoveryStep.email_sent,
                     is_loading = false,
                 )
+                start_resend_cooldown()
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     is_loading = false,
                     error = map_error(t, R.string.error_send_reset_link),
+                )
+                if (resend) start_resend_cooldown()
+            }
+        }
+    }
+
+    private fun start_resend_cooldown() {
+        cooldown_job?.cancel()
+        _state.value = _state.value.copy(resend_seconds = RESEND_COOLDOWN_SECONDS)
+        cooldown_job = viewModelScope.launch {
+            while (_state.value.resend_seconds > 0) {
+                delay(1_000L)
+                _state.value = _state.value.copy(
+                    resend_seconds = (_state.value.resend_seconds - 1).coerceAtLeast(0),
                 )
             }
         }
@@ -405,7 +435,7 @@ class RecoveryViewModel @Inject constructor(
         if (_state.value.is_loading) return
         val current = _state.value.step
         val prev = when (current) {
-            RecoveryStep.email_sent -> RecoveryStep.email
+            RecoveryStep.email_sent -> RecoveryStep.reset_email_confirm
             RecoveryStep.code ->
                 if (_state.value.email.isEmpty()) RecoveryStep.email else RecoveryStep.other_ways
             RecoveryStep.other_ways -> RecoveryStep.email
@@ -512,6 +542,7 @@ class RecoveryViewModel @Inject constructor(
         android.util.Base64.decode(s, android.util.Base64.DEFAULT)
 
     companion object {
+        private const val RESEND_COOLDOWN_SECONDS = 60
         private const val PBKDF2_ITERATIONS = 310000
         private const val HKDF_INFO = "Aster Mail_Recovery_Vault_v1"
     }

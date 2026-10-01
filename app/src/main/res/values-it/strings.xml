@@ -101,6 +101,8 @@
     <string name="recovery_email_sent_description">Se questo account ha un\'email di recupero verificata, Aster Mail vi ha inviato un link di reimpostazione. Il link scade tra 30 minuti. Se non vedi l\'email, controlla la cartella spam.</string>
     <string name="reset_link_sent_next">Dopo aver scelto una nuova password, torna in questa app e accedi.</string>
     <string name="use_recovery_code_instead">Usa un codice di recupero</string>
+    <string name="resend_reset_link">Invia di nuovo il link</string>
+    <string name="resend_reset_link_in">Invia di nuovo tra %1$d s</string>
     <string name="enter_recovery_code">Inserisci codice di recupero</string>
     <string name="enter_recovery_code_description">Inserisci uno dei codici di recupero che hai salvato quando hai creato l\'account. Ogni codice funziona una sola volta.</string>
     <string name="recovery_code">Codice di recupero</string>

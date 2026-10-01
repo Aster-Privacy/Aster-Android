@@ -101,6 +101,8 @@
     <string name="recovery_email_sent_description">Se esta conta tiver um e-mail de recuperação verificado, o Aster Mail enviou um link de redefinição para ele. O link expira em 30 minutos. Se você não encontrar o e-mail, verifique a pasta de spam.</string>
     <string name="reset_link_sent_next">Depois de escolher uma nova senha, volte a este app e entre na sua conta.</string>
     <string name="use_recovery_code_instead">Usar um código de recuperação</string>
+    <string name="resend_reset_link">Reenviar link</string>
+    <string name="resend_reset_link_in">Reenviar em %1$d s</string>
     <string name="enter_recovery_code">Digite o código de recuperação</string>
     <string name="enter_recovery_code_description">Digite um dos códigos de recuperação que você salvou ao criar a conta. Cada código funciona uma vez.</string>
     <string name="recovery_code">Código de recuperação</string>

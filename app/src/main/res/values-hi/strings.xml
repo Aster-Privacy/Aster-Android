@@ -136,6 +136,8 @@
     <string name="recovery_email_sent_description">अगर इस खाते में सत्यापित रिकवरी ईमेल है, तो Aster Mail ने उस पर रीसेट लिंक भेजा है। लिंक 30 मिनट में समाप्त हो जाता है। अगर आपको ईमेल नहीं दिखता, तो अपना स्पैम फ़ोल्डर देखें।</string>
     <string name="reset_link_sent_next">नया पासवर्ड चुनने के बाद, इस ऐप पर वापस आएँ और साइन इन करें।</string>
     <string name="use_recovery_code_instead">इसके बजाय रिकवरी कोड इस्तेमाल करें</string>
+    <string name="resend_reset_link">लिंक फिर से भेजें</string>
+    <string name="resend_reset_link_in">%1$d सेकंड में फिर से भेजें</string>
     <string name="enter_recovery_code">रिकवरी कोड डालें</string>
     <string name="enter_recovery_code_description">खाता बनाते समय आपने जो रिकवरी कोड सेव किए थे, उनमें से एक डालें। हर कोड एक बार काम करता है।</string>
     <string name="recovery_code">रिकवरी कोड</string>

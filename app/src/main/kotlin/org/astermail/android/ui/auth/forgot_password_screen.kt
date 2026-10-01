@@ -177,7 +177,11 @@ fun ForgotPasswordScreen(
                             on_back = on_back,
                         )
                         RecoveryStep.email_sent -> email_sent_step(
+                            error = state.error,
+                            is_loading = state.is_loading,
+                            resend_seconds = state.resend_seconds,
                             on_sign_in = on_back,
+                            on_resend = { view_model.resend_reset_link() },
                             on_use_code = { view_model.go_to_code_step() },
                         )
                         RecoveryStep.code -> code_step(
@@ -361,7 +365,11 @@ private fun email_step(
 
 @Composable
 private fun email_sent_step(
+    error: String?,
+    is_loading: Boolean,
+    resend_seconds: Int,
     on_sign_in: () -> Unit,
+    on_resend: () -> Unit,
     on_use_code: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -380,17 +388,43 @@ private fun email_sent_step(
 
     Spacer(Modifier.height(AsterSpacing.xxl))
 
+    if (error != null) {
+        error_banner(message = error)
+        Spacer(Modifier.height(AsterSpacing.lg))
+    }
+
     AsterButton(
         label = stringResource(R.string.back_to_sign_in),
         onClick = on_sign_in,
+        enabled = !is_loading,
     )
 
     Spacer(Modifier.height(AsterSpacing.md))
 
     AsterSecondaryButton(
-        label = stringResource(R.string.use_recovery_code_instead),
-        onClick = on_use_code,
+        label = if (resend_seconds > 0) {
+            stringResource(R.string.resend_reset_link_in, resend_seconds)
+        } else {
+            stringResource(R.string.resend_reset_link)
+        },
+        onClick = on_resend,
+        enabled = !is_loading && resend_seconds == 0,
     )
+
+    Spacer(Modifier.height(AsterSpacing.xl))
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = stringResource(R.string.use_recovery_code_instead),
+            color = colors.accent_blue,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.clickable(enabled = !is_loading, onClick = on_use_code),
+        )
+    }
 
     Spacer(Modifier.height(AsterSpacing.xxl))
 }

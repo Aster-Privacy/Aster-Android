@@ -31,7 +31,9 @@ import io.mockk.unmockkStatic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -321,16 +323,42 @@ class RecoveryViewModelTest {
     }
 
     @Test
-    fun `go_back from email_sent goes to email`() = runTest {
+    fun `go_back from email_sent returns to the confirm step`() = runTest {
         coEvery { recovery_api.initiate_email(any()) } returns
             InitiateEmailRecoveryResponse(success = true)
 
         vm.send_recovery_email("test@astermail.org")
-        advanceUntilIdle()
+        runCurrent()
         assertEquals(RecoveryStep.email_sent, vm.state.value.step)
 
         vm.go_back()
-        assertEquals(RecoveryStep.email, vm.state.value.step)
+        assertEquals(RecoveryStep.reset_email_confirm, vm.state.value.step)
+    }
+
+    @Test
+    fun `resend_reset_link waits for the cooldown then sends again`() = runTest {
+        coEvery { recovery_api.initiate_email(any()) } returns
+            InitiateEmailRecoveryResponse(success = true)
+
+        vm.send_recovery_email("test@astermail.org")
+        runCurrent()
+        assertEquals(RecoveryStep.email_sent, vm.state.value.step)
+        assertEquals(60, vm.state.value.resend_seconds)
+
+        vm.resend_reset_link()
+        runCurrent()
+        coVerify(exactly = 1) { recovery_api.initiate_email(any()) }
+
+        advanceTimeBy(61_000)
+        runCurrent()
+        assertEquals(0, vm.state.value.resend_seconds)
+
+        vm.resend_reset_link()
+        runCurrent()
+        coVerify(exactly = 2) { recovery_api.initiate_email(any()) }
+        assertEquals(RecoveryStep.email_sent, vm.state.value.step)
+        assertNull(vm.state.value.error)
+        assertEquals(60, vm.state.value.resend_seconds)
     }
 
     @Test

@@ -101,6 +101,8 @@
     <string name="recovery_email_sent_description">Bu hesabın doğrulanmış bir kurtarma e-postası varsa Aster Mail oraya bir sıfırlama bağlantısı gönderdi. Bağlantının süresi 30 dakika içinde dolar. E-postayı görmüyorsanız spam klasörünüzü kontrol edin.</string>
     <string name="reset_link_sent_next">Yeni bir parola seçtikten sonra bu uygulamaya dönün ve oturum açın.</string>
     <string name="use_recovery_code_instead">Bunun yerine kurtarma kodu kullanın</string>
+    <string name="resend_reset_link">Bağlantıyı yeniden gönder</string>
+    <string name="resend_reset_link_in">%1$d sn sonra yeniden gönder</string>
     <string name="enter_recovery_code">Kurtarma kodunu girin</string>
     <string name="enter_recovery_code_description">Hesabınızı oluştururken kaydettiğiniz kurtarma kodlarından birini girin. Her kod bir kez çalışır.</string>
     <string name="recovery_code">Kurtarma kodu</string>

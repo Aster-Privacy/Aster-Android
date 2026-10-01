@@ -147,6 +147,8 @@
     <string name="recovery_email_sent_description">If this account has a verified recovery email, Aster Mail sent a reset link to it. The link expires in 30 minutes. If you don\'t see the email, check your spam folder.</string>
     <string name="reset_link_sent_next">After you choose a new password, come back to this app and sign in.</string>
     <string name="use_recovery_code_instead">Use a recovery code instead</string>
+    <string name="resend_reset_link">Resend link</string>
+    <string name="resend_reset_link_in">Resend in %1$ds</string>
     <string name="enter_recovery_code">Enter recovery code</string>
     <string name="enter_recovery_code_description">Enter one of the recovery codes you saved when you created your account. Each code works once.</string>
     <string name="recovery_code">Recovery code</string>

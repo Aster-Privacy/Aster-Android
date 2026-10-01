@@ -101,6 +101,8 @@
     <string name="recovery_email_sent_description">Если у этого аккаунта есть подтвержденный резервный адрес, Aster Mail отправил на него ссылку для сброса. Ссылка действует 30 минут. Если письма нет, проверьте папку со спамом.</string>
     <string name="reset_link_sent_next">После того как вы выберете новый пароль, вернитесь в это приложение и войдите.</string>
     <string name="use_recovery_code_instead">Использовать код восстановления</string>
+    <string name="resend_reset_link">Отправить ссылку ещё раз</string>
+    <string name="resend_reset_link_in">Отправить ещё раз через %1$d с</string>
     <string name="enter_recovery_code">Введите код восстановления</string>
     <string name="enter_recovery_code_description">Введите один из кодов восстановления, сохраненных при создании аккаунта. Каждый код работает один раз.</string>
     <string name="recovery_code">Код восстановления</string>
