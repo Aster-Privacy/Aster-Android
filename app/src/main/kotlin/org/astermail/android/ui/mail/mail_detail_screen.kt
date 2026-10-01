@@ -2325,6 +2325,9 @@ internal fun expanded_message(
     val auth_status = remember(msg.id, msg.item_type, msg.spf_result, msg.dkim_result, msg.dmarc_result) {
         sender_auth_status(msg)
     }
+    val auth_summary = remember(msg.id, msg.item_type, msg.spf_result, msg.dkim_result, msg.dmarc_result) {
+        summarize_email_authentication(msg)
+    }
 
     val card_color = inbox_card_read_color(colors)
     val card_shape = remember(is_first_card, is_last_card) {
@@ -2368,130 +2371,143 @@ internal fun expanded_message(
             )
             Spacer(Modifier.width(AsterSpacing.md))
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = shown_sender_name,
-                        color = colors.text_primary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = if (addresses_expanded) 3 else 1,
-                        overflow = TextOverflow.Ellipsis,
-                        onTextLayout = { if (!addresses_expanded) sender_name_truncated = it.hasVisualOverflow },
-                        modifier = Modifier
-                            .weight(1f, fill = false)
-                            .combinedClickable(
-                                hapticFeedbackEnabled = false,
-                                onClick = {
-                                    if (sender_name_truncated || addresses_expanded) {
-                                        addresses_expanded = !addresses_expanded
-                                    } else if (can_collapse) {
-                                        on_collapse()
-                                    }
-                                },
-                                onLongClick = { copy_email(shown_sender_email) },
-                            ),
-                    )
-                    if (msg.sender_verified_domain != null) {
-                        Spacer(Modifier.width(4.dp))
-                        Icon(
-                            imageVector = TablerIcons.CircleCheck,
-                            contentDescription = stringResource(R.string.sender_verified_badge),
-                            tint = colors.accent_blue,
-                            modifier = Modifier
-                                .size(16.dp)
-                                .clip(CircleShape)
-                                .clickable { show_sender_verified = true },
-                        )
+                Row(verticalAlignment = Alignment.Top) {
+                    FlowRow(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        itemVerticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = shown_sender_name,
+                                color = colors.text_primary,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = if (addresses_expanded) 3 else 1,
+                                overflow = TextOverflow.Ellipsis,
+                                onTextLayout = { if (!addresses_expanded) sender_name_truncated = it.hasVisualOverflow },
+                                modifier = Modifier
+                                    .weight(1f, fill = false)
+                                    .combinedClickable(
+                                        hapticFeedbackEnabled = false,
+                                        onClick = {
+                                            if (sender_name_truncated || addresses_expanded) {
+                                                addresses_expanded = !addresses_expanded
+                                            } else if (can_collapse) {
+                                                on_collapse()
+                                            }
+                                        },
+                                        onLongClick = { copy_email(shown_sender_email) },
+                                    ),
+                            )
+                            if (msg.sender_verified_domain != null) {
+                                Spacer(Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = TablerIcons.CircleCheck,
+                                    contentDescription = stringResource(R.string.sender_verified_badge),
+                                    tint = colors.accent_blue,
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .clip(CircleShape)
+                                        .clickable { show_sender_verified = true },
+                                )
+                            }
+                        }
+                        email_auth_badge(msg = msg)
                     }
-                }
-                Spacer(Modifier.height(1.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.combinedClickable(
-                        hapticFeedbackEnabled = false,
-                        onClick = { show_details = !show_details },
-                        onLongClick = {
-                            val recipient = msg.to_addresses.joinToString(", ").ifBlank { msg.to_label }
-                            copy_email(recipient)
-                        },
-                    ),
-                ) {
+                    Spacer(Modifier.width(AsterSpacing.sm))
+                    val header_yesterday_label = stringResource(R.string.yesterday)
+                    val header_relative_time = remember(msg.timestamp, header_yesterday_label, AsterTimePreferences.generation) {
+                        msg.timestamp.format_message_time(header_yesterday_label)
+                    }
                     Text(
-                        text = stringResource(R.string.to_label_prefix, msg.to_label),
+                        text = header_relative_time,
                         color = colors.text_muted,
                         fontSize = 12.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false),
-                    )
-                    Icon(
-                        imageVector = TablerIcons.ChevronDown,
-                        contentDescription = if (show_details) {
-                            stringResource(R.string.detail_hide_details)
-                        } else {
-                            stringResource(R.string.detail_show_details)
-                        },
-                        tint = colors.text_muted,
-                        modifier = Modifier
-                            .padding(start = 2.dp)
-                            .size(15.dp)
-                            .graphicsLayer(rotationZ = chevron_rotation),
+                        modifier = Modifier.padding(end = inbox_card_content_padding - AsterSpacing.sm),
                     )
                 }
-                val header_received_on = remember(msg) {
-                    resolve_received_on_address(msg.raw_headers, msg.to_addresses + msg.cc_addresses, msg.sender_email)
-                }
-                val header_alias_label = alias_indicator_store.label_for(header_received_on)
-                if (header_alias_label != null) {
-                    Spacer(Modifier.height(4.dp))
-                    alias_chip(header_alias_label, modifier = Modifier.widthIn(max = 200.dp))
-                }
-            }
-            Spacer(Modifier.width(AsterSpacing.sm))
-            Column(horizontalAlignment = Alignment.End) {
-                val header_yesterday_label = stringResource(R.string.yesterday)
-                val header_relative_time = remember(msg.timestamp, header_yesterday_label, AsterTimePreferences.generation) {
-                    msg.timestamp.format_message_time(header_yesterday_label)
-                }
-                Text(
-                    text = header_relative_time,
-                    color = colors.text_muted,
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(end = inbox_card_content_padding - AsterSpacing.sm),
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (show_header_reply) {
+                Row(verticalAlignment = Alignment.Top) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Spacer(Modifier.height(1.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.combinedClickable(
+                                hapticFeedbackEnabled = false,
+                                onClick = { show_details = !show_details },
+                                onLongClick = {
+                                    val recipient = msg.to_addresses.joinToString(", ").ifBlank { msg.to_label }
+                                    copy_email(recipient)
+                                },
+                            ),
+                        ) {
+                            Text(
+                                text = stringResource(R.string.to_label_prefix, msg.to_label),
+                                color = colors.text_muted,
+                                fontSize = 12.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false),
+                            )
+                            Icon(
+                                imageVector = TablerIcons.ChevronDown,
+                                contentDescription = if (show_details) {
+                                    stringResource(R.string.detail_hide_details)
+                                } else {
+                                    stringResource(R.string.detail_show_details)
+                                },
+                                tint = colors.text_muted,
+                                modifier = Modifier
+                                    .padding(start = 2.dp)
+                                    .size(15.dp)
+                                    .graphicsLayer(rotationZ = chevron_rotation),
+                            )
+                        }
+                        val header_received_on = remember(msg) {
+                            resolve_received_on_address(msg.raw_headers, msg.to_addresses + msg.cc_addresses, msg.sender_email)
+                        }
+                        val header_alias_label = alias_indicator_store.label_for(header_received_on)
+                        if (header_alias_label != null) {
+                            Spacer(Modifier.height(4.dp))
+                            alias_chip(header_alias_label, modifier = Modifier.widthIn(max = 200.dp))
+                        }
+                    }
+                    Spacer(Modifier.width(AsterSpacing.sm))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (show_header_reply) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .clickable(role = Role.Button, onClick = on_reply),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = TablerIcons.ArrowBackUp,
+                                    contentDescription = stringResource(R.string.reply),
+                                    tint = colors.text_secondary,
+                                    modifier = Modifier.size(22.dp).mirror_in_rtl(),
+                                )
+                            }
+                        }
                         Box(
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
-                                .clickable(role = Role.Button, onClick = on_reply),
+                                .clickable(role = Role.Button, onClick = on_more)
+                                .testTag("message_more_$message_index"),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
-                                imageVector = TablerIcons.ArrowBackUp,
-                                contentDescription = stringResource(R.string.reply),
+                                imageVector = TablerIcons.DotsVertical,
+                                contentDescription = stringResource(R.string.more_options),
                                 tint = colors.text_secondary,
-                                modifier = Modifier.size(22.dp).mirror_in_rtl(),
+                                modifier = Modifier.size(20.dp),
                             )
                         }
-                    }
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .clickable(role = Role.Button, onClick = on_more)
-                            .testTag("message_more_$message_index"),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = TablerIcons.DotsVertical,
-                            contentDescription = stringResource(R.string.more_options),
-                            tint = colors.text_secondary,
-                            modifier = Modifier.size(20.dp),
-                        )
                     }
                 }
             }
@@ -2528,17 +2544,13 @@ internal fun expanded_message(
                 tracker_count = tracker_count,
                 date_text = msg.timestamp.format_full_datetime(),
                 received_on = received_on,
-                authentication = if (msg.item_type == "received" &&
-                    (msg.spf_result != null || msg.dkim_result != null || msg.dmarc_result != null)
-                ) {
+                authentication = auth_summary?.let { summary ->
                     stringResource(
                         R.string.auth_summary_format,
-                        auth_result_label(msg.spf_result),
-                        auth_result_label(msg.dkim_result),
-                        auth_result_label(msg.dmarc_result),
+                        auth_result_label(summary.checks[0]),
+                        auth_result_label(summary.checks[1]),
+                        auth_result_label(summary.checks[2]),
                     )
-                } else {
-                    null
                 },
                 authentication_failed = auth_status == SenderAuthStatus.failed,
                 on_show_trackers = if (tracker_report.total > 0) ({ show_tracker_details = true }) else null,
@@ -7517,11 +7529,13 @@ internal fun encryption_info_body(is_encrypted: Boolean, is_pgp: Boolean = false
 }
 
 @Composable
-private fun auth_result_label(result: String?): String = when (result?.lowercase()) {
-    "pass" -> stringResource(R.string.auth_result_pass)
-    "fail", "softfail", "permerror", "temperror" -> stringResource(R.string.auth_result_fail)
-    else -> stringResource(R.string.auth_result_missing)
-}
+private fun auth_result_label(result: org.astermail.android.security.EmailAuthCheckResult): String =
+    when (result.status) {
+        org.astermail.android.security.EmailAuthStatus.pass -> stringResource(R.string.auth_result_pass)
+        org.astermail.android.security.EmailAuthStatus.fail -> stringResource(R.string.auth_result_fail)
+        org.astermail.android.security.EmailAuthStatus.other -> result.value
+        else -> stringResource(R.string.auth_result_missing)
+    }
 
 @Composable
 private fun identity_changed_banner(sender: String, on_acknowledge: () -> Unit) {

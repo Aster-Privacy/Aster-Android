@@ -25,6 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
+import org.astermail.android.security.EmailAuthVerdict
+import org.astermail.android.security.summarize_email_authentication
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -287,12 +289,11 @@ fun system_avatar_authenticated(msg: ThreadMessage): Boolean =
 
 fun sender_auth_status(msg: ThreadMessage): SenderAuthStatus {
     if (msg.item_type != "received") return SenderAuthStatus.unknown
-    val spf = msg.spf_result?.lowercase()
-    val dkim = msg.dkim_result?.lowercase()
-    val dmarc = msg.dmarc_result?.lowercase()
-    if (dmarc == "pass" && (dkim == "pass" || spf == "pass")) return SenderAuthStatus.verified
-    if (dmarc == "fail" || spf == "fail" || dkim == "fail") return SenderAuthStatus.failed
-    return SenderAuthStatus.unknown
+    return when (summarize_email_authentication(msg.spf_result, msg.dkim_result, msg.dmarc_result)?.verdict) {
+        EmailAuthVerdict.authenticated -> SenderAuthStatus.verified
+        EmailAuthVerdict.failed -> SenderAuthStatus.failed
+        else -> SenderAuthStatus.unknown
+    }
 }
 
 internal val default_label_color = Color(0xFF3B82F6)
