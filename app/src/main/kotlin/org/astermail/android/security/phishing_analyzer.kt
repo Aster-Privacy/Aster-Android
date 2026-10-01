@@ -232,11 +232,9 @@ fun analyze_email(
 ): PhishingResult {
     if (!is_external) return PhishingResult(PhishingLevel.safe, 0.0, emptyList())
 
-    val spf = spf_result?.lowercase(java.util.Locale.ROOT)
-    val dkim = dkim_result?.lowercase(java.util.Locale.ROOT)
-    val dmarc = dmarc_result?.lowercase(java.util.Locale.ROOT)
-    val authenticated = dmarc == "pass" && (dkim == "pass" || spf == "pass")
-    val auth_failed = dmarc == "fail" || spf == "fail" || dkim == "fail"
+    val auth_verdict = summarize_email_authentication(spf_result, dkim_result, dmarc_result)?.verdict
+    val authenticated = auth_verdict == EmailAuthVerdict.authenticated
+    val auth_failed = auth_verdict == EmailAuthVerdict.failed
 
     val signals = mutableListOf<PhishingSignal>()
     signals += check_display_name_spoof(sender_name, sender_email)
