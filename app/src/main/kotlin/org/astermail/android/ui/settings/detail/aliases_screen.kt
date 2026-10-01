@@ -966,13 +966,17 @@ internal fun alias_rule_delivery_note(
 ): AliasRuleDeliveryNote? {
     val delivery = org.astermail.android.mail_rules.alias_rule_delivery(rules, alias.address) ?: return null
     val missing_name = stringResource(R.string.alias_delivery_folder_missing)
-    val folder_name = labels.firstOrNull {
-        it.label_token == delivery.folder_token && !it.encrypted_name.isNullOrBlank()
-    }?.encrypted_name ?: missing_name
+    val folder_name = org.astermail.android.ui.settings.mail_rules.rule_folder_name(labels, delivery.folder_token)
+        ?: missing_name
     return AliasRuleDeliveryNote(
         rule_name = delivery.rule_name,
         folder_name = folder_name,
-        matches_alias_delivery = alias.delivery_folder_token == delivery.folder_token,
+        matches_alias_delivery = org.astermail.android.mail_rules.rule_target_matches_alias_delivery(
+            rule_folder_token = delivery.folder_token,
+            rule_folder_type = org.astermail.android.mail_rules.rule_folder_type_of(labels, delivery.folder_token),
+            alias_delivery_folder_token = alias.delivery_folder_token,
+            alias_never_inbox = alias.never_inbox,
+        ),
     )
 }
 
