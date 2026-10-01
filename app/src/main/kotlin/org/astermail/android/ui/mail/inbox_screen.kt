@@ -572,25 +572,28 @@ fun InboxScreen(
     val locked_data_context = LocalContext.current
     LaunchedEffect(locked_data_vm) {
         locked_data_vm.outcomes.collect { outcome ->
-            val message_res = when (outcome) {
-                org.astermail.android.mail.LockedDataRecoveryOutcome.SUCCESS -> R.string.recover_data_success
-                org.astermail.android.mail.LockedDataRecoveryOutcome.NO_MATCH -> R.string.recover_data_no_match
-                org.astermail.android.mail.LockedDataRecoveryOutcome.FAILED -> R.string.recover_data_failed
-            }
+            val unlocked_some = outcome == org.astermail.android.mail.LockedDataRecoveryOutcome.SUCCESS ||
+                outcome == org.astermail.android.mail.LockedDataRecoveryOutcome.PARTIAL
+            if (unlocked_some) settings_vm.load_aliases(force = true)
             if (outcome == org.astermail.android.mail.LockedDataRecoveryOutcome.SUCCESS) {
                 show_recover_data_dialog = false
-                settings_vm.load_aliases(force = true)
+                top_toast_state = org.astermail.android.ui.common.TopToastState(
+                    message = locked_data_context.getString(R.string.recover_data_success),
+                )
             }
-            top_toast_state = org.astermail.android.ui.common.TopToastState(
-                message = locked_data_context.getString(message_res),
-            )
         }
     }
     if (show_recover_data_dialog) {
         recover_data_dialog(
             is_recovering = locked_data_state.recovering,
+            outcome = locked_data_state.last_outcome,
             on_recover = { password -> locked_data_vm.recover(password) },
-            on_dismiss = { show_recover_data_dialog = false },
+            on_recover_with_code = { code -> locked_data_vm.recover_with_code(code) },
+            on_clear_outcome = { locked_data_vm.clear_outcome() },
+            on_dismiss = {
+                show_recover_data_dialog = false
+                locked_data_vm.clear_outcome()
+            },
         )
     }
     LaunchedEffect(mail_vm) {

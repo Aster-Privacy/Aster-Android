@@ -38,19 +38,27 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.astermail.android.storage.SessionKeyStore
 
-enum class LockedDataRecoveryOutcome { SUCCESS, NO_MATCH, FAILED }
+enum class LockedDataRecoveryOutcome { SUCCESS, PARTIAL, NO_MATCH, CODE_NO_MATCH, RATE_LIMITED, FAILED }
 
 fun locked_data_recovery_outcome(result: LockedDataRecovery): LockedDataRecoveryOutcome = when {
-    result.restored_key_sets > 0 || result.recovered_sent_mail > 0 -> LockedDataRecoveryOutcome.SUCCESS
+    result.rate_limited -> LockedDataRecoveryOutcome.RATE_LIMITED
+    result.restored_key_sets > 0 || result.recovered_sent_mail > 0 ->
+        if (result.incomplete > 0) LockedDataRecoveryOutcome.PARTIAL else LockedDataRecoveryOutcome.SUCCESS
     result.failed -> LockedDataRecoveryOutcome.FAILED
     else -> LockedDataRecoveryOutcome.NO_MATCH
 }
+
+fun locked_data_code_recovery_outcome(result: LockedDataRecovery): LockedDataRecoveryOutcome =
+    locked_data_recovery_outcome(result).let {
+        if (it == LockedDataRecoveryOutcome.NO_MATCH) LockedDataRecoveryOutcome.CODE_NO_MATCH else it
+    }
 
 data class LockedDataUiState(
     val status: LockedDataStatus? = null,
     val vault_unlocked: Boolean = false,
     val dismissed_signature: String? = null,
     val recovering: Boolean = false,
+    val last_outcome: LockedDataRecoveryOutcome? = null,
 )
 
 @HiltViewModel
@@ -90,20 +98,42 @@ class LockedDataViewModel @Inject constructor(
         _state.update { it.copy(dismissed_signature = signature) }
     }
 
+    fun clear_outcome() {
+        _state.update { it.copy(last_outcome = null) }
+    }
+
     fun recover(password: String) {
         if (_state.value.recovering || password.isEmpty()) return
+        run_recovery(::locked_data_recovery_outcome) { service.recover_locked_data(it, password) }
+    }
+
+    fun recover_with_code(code: String) {
+        if (_state.value.recovering || code.isBlank()) return
+        run_recovery(::locked_data_code_recovery_outcome) { service.recover_locked_data_with_code(it, code) }
+    }
+
+    private fun run_recovery(
+        to_outcome: (LockedDataRecovery) -> LockedDataRecoveryOutcome,
+        recover: suspend (String) -> LockedDataRecovery,
+    ) {
         val account_id = session_key_store.get_user_id().orEmpty()
-        _state.update { it.copy(recovering = true) }
+        _state.update { it.copy(recovering = true, last_outcome = null) }
         viewModelScope.launch {
             val result = try {
-                service.recover_locked_data(account_id, password)
+                recover(account_id)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Throwable) {
                 LockedDataRecovery(failed = true)
             }
-            _state.update { it.copy(recovering = false) }
-            _outcomes.trySend(locked_data_recovery_outcome(result))
+            val outcome = to_outcome(result)
+            _state.update {
+                it.copy(
+                    recovering = false,
+                    last_outcome = outcome.takeIf { value -> value != LockedDataRecoveryOutcome.SUCCESS },
+                )
+            }
+            _outcomes.trySend(outcome)
             refresh()
         }
     }

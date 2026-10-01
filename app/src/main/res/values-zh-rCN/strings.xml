@@ -94,11 +94,12 @@
 
 
     <string name="recover_your_account">恢复您的账户</string>
-    <string name="enter_email_for_recovery">输入与您的账户关联的电子邮件地址</string>
+    <string name="enter_email_for_recovery">请输入您要恢复的账户的用户名。</string>
     <string name="email_address">邮箱地址</string>
     <string name="back_to_sign_in">返回登录</string>
-    <string name="recovery_email_sent">恢复邮件已发送</string>
-    <string name="recovery_email_sent_description">我们已将密码重置链接发送到您的恢复邮箱。请查看您的收件箱并点击链接继续。</string>
+    <string name="recovery_email_sent">查看您的邮箱</string>
+    <string name="recovery_email_sent_description">如果此账户有已验证的恢复邮箱，Aster Mail 已向其发送重置链接。链接将在 30 分钟后失效。如果没有看到邮件，请检查垃圾邮件文件夹。</string>
+    <string name="reset_link_sent_next">设置新密码后，请返回此应用并登录。</string>
     <string name="use_recovery_code_instead">改用恢复代码</string>
     <string name="enter_recovery_code">输入恢复代码</string>
     <string name="enter_recovery_code_description">输入您创建账户时保存的其中一个恢复代码。每个代码只能使用一次。</string>
@@ -1086,7 +1087,8 @@
     <string name="error_send_recovery">恢复邮件发送失败</string>
     <string name="error_invalid_recovery_code">恢复代码的格式为 ASTER-XXXX-XXXX-XXXX-XXXX。请检查代码后重新输入。</string>
     <string name="error_invalid_code">该代码与此账户不匹配。请对照您保存的列表检查后重新输入。空格和大小写不影响。</string>
-    <string name="error_recovery_failed">恢复失败</string>
+    <string name="error_recovery_failed">恢复未完成。请检查网络连接，然后重试。</string>
+    <string name="error_send_reset_link">无法发送重置链接。请检查网络连接，然后重试。</string>
     <string name="error_recovery_too_many_attempts">此账户的恢复尝试次数过多。您可以在大约 30 分钟后重试。您的代码一个都没有被使用，因此全部仍然有效。</string>
     <string name="status_deriving_key">正在派生新的密码密钥</string>
     <string name="status_encrypting_vault">正在使用新密码加密保险库</string>
@@ -1177,6 +1179,10 @@
     <string name="recover_data_success">您的较早数据已解锁。</string>
     <string name="recover_data_no_match">该密码未解锁任何数据。请尝试其他以前的密码。</string>
     <string name="recover_data_failed">部分数据无法解锁。请检查网络连接后重试。</string>
+    <string name="recover_data_code_description">要解锁密码重置之前的邮件，请输入您在重置前保存的恢复代码之一。</string>
+    <string name="recover_data_code_no_match">该代码未解锁任何数据。请输入您在重置前保存的代码。</string>
+    <string name="recover_data_partial">您之前的部分邮件已解锁。要解锁其余邮件，请输入先前的密码。</string>
+    <string name="recover_data_rate_limited">尝试次数过多。请等待 30 分钟后重试。</string>
     <plurals name="password_change_sent_mail_locked">
         <item quantity="other">密码已更改。%1$d 封已发送邮件使用旧密码加密，仍处于锁定状态。要解锁这些邮件，请点击收件箱顶部横幅中的“恢复数据”。</item>
     </plurals>
@@ -3112,27 +3118,25 @@
     <string name="get_new_codes_message">获取新代码后，当前代码会立即失效。</string>
     <string name="get_new_codes_title">要获取新的恢复代码吗？</string>
     <string name="i_saved_these_codes">我已保存这些代码</string>
-    <string name="other_way_code_desc">输入您保存的其中一个代码。</string>
+    <string name="other_way_code_desc">请输入您保存的其中一个代码。您的所有邮件仍可阅读。</string>
     <string name="other_way_code_title">使用恢复代码</string>
-    <string name="other_way_email_desc">Aster Mail 会向您的恢复邮箱发送一个链接。您将无法访问重置前的邮件。</string>
+    <string name="other_way_email_desc">Aster Mail 会向您的恢复邮箱发送一个链接，供您设置新密码。</string>
     <string name="other_way_email_title">使用恢复邮箱重置</string>
     <string name="other_way_none_desc">联系支持团队，我们会协助您完成后续步骤。</string>
-    <string name="change_account">使用其他地址</string>
-    <string name="change_account_desc">恢复其他 Aster Mail 账户。</string>
     <string name="support_step_title">联系支持团队</string>
     <string name="support_step_desc">Aster Mail 无法读取您的加密数据，因此没有恢复代码或恢复邮箱，任何人都无法解锁。支持团队可以检查您的账户并说明后续步骤。</string>
     <string name="support_email_action">给支持团队发邮件</string>
     <string name="support_help_center">打开帮助中心</string>
     <string name="other_way_none_title">这些我都没有</string>
     <string name="other_ways_desc">选择您想要重新登录账户的方式。</string>
+    <string name="recover_choose_method">选择恢复方式</string>
     <string name="print_codes">打印</string>
     <string name="recovery_codes_print_created">创建于 %1$s</string>
     <string name="recovery_codes_print_note">每个代码只能使用一次。请妥善保管这些代码。任何掌握代码和您的电子邮件地址的人都可以重置您的密码。</string>
     <string name="recovery_codes_print_title">Aster Mail 恢复代码</string>
     <string name="recovery_codes_unavailable">此设备未存储您的代码。获取新代码即可查看。</string>
     <string name="recovery_codes_view_desc">每个代码只能使用一次。已使用的代码会显示删除线。</string>
-    <string name="reset_account_desc">重置前的加密邮件、联系人和文件会保持锁定，直到您用旧密码恢复它们。您会获得一个新的空加密密钥。</string>
-    <string name="reset_account_title">要重置您的账户吗？</string>
+    <string name="reset_account_desc">Aster Mail 会向您的恢复邮箱发送一个链接。打开链接即可设置新密码。在您使用恢复代码或先前的密码解锁之前，之前的邮件会一直保持加密。</string>
     <string name="review_devices_signed_out">其他设备已退出登录。</string>
     <string name="review_no_recovery_email">没有恢复邮箱。</string>
     <string name="review_recovery_email_kept">您的恢复邮箱仍已设置。</string>

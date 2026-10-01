@@ -63,7 +63,7 @@ class RecoveryViewModelTest {
             "Passwords do not match"
         every { application.getString(org.astermail.android.R.string.error_invalid_recovery_code) } returns
             "Invalid recovery code format"
-        every { application.getString(org.astermail.android.R.string.error_send_recovery) } returns
+        every { application.getString(org.astermail.android.R.string.error_send_reset_link) } returns
             "failed to send recovery email"
         every { application.getString(org.astermail.android.R.string.error_invalid_code) } returns
             "invalid recovery code"
@@ -348,13 +348,43 @@ class RecoveryViewModelTest {
     }
 
     @Test
-    fun `go_back from other_ways returns to code`() {
+    fun `go_back from other_ways returns to email`() {
         vm.go_to_code_step()
         vm.go_to_other_ways()
         assertEquals(RecoveryStep.other_ways, vm.state.value.step)
 
         vm.go_back()
-        assertEquals(RecoveryStep.code, vm.state.value.step)
+        assertEquals(RecoveryStep.email, vm.state.value.step)
+    }
+
+    @Test
+    fun `submit_email opens the recovery method choice`() {
+        vm.submit_email("User@astermail.org")
+
+        assertEquals(RecoveryStep.other_ways, vm.state.value.step)
+        assertEquals("user@astermail.org", vm.state.value.email)
+        assertNull(vm.state.value.error)
+    }
+
+    @Test
+    fun `submit_email without a domain stays on the email step`() {
+        vm.submit_email("user")
+
+        assertEquals(RecoveryStep.email, vm.state.value.step)
+        assertEquals("enter your full email address", vm.state.value.error)
+    }
+
+    @Test
+    fun `go_back from code returns to the method choice once an account is entered`() {
+        vm.submit_email("user@astermail.org")
+        vm.go_to_code_step()
+
+        vm.go_back()
+        assertEquals(RecoveryStep.other_ways, vm.state.value.step)
+
+        vm.go_back()
+        assertEquals(RecoveryStep.email, vm.state.value.step)
+        assertEquals("user@astermail.org", vm.state.value.email)
     }
 
     @Test

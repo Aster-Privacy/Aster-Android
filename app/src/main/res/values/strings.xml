@@ -140,12 +140,13 @@
 
     <!-- Forgot password -->
     <string name="recover_your_account">Recover your account</string>
-    <string name="enter_email_for_recovery">Enter the email address associated with your account</string>
+    <string name="enter_email_for_recovery">Enter the username of the account you want to recover.</string>
     <string name="email_address">Email address</string>
     <string name="back_to_sign_in">Back to sign in</string>
-    <string name="recovery_email_sent">Recovery email sent</string>
-    <string name="recovery_email_sent_description">We\'ve sent a password reset link to your recovery email. Check your inbox and click the link to continue.</string>
-    <string name="use_recovery_code_instead">Use recovery code instead</string>
+    <string name="recovery_email_sent">Check your email</string>
+    <string name="recovery_email_sent_description">If this account has a verified recovery email, Aster Mail sent a reset link to it. The link expires in 30 minutes. If you don\'t see the email, check your spam folder.</string>
+    <string name="reset_link_sent_next">After you choose a new password, come back to this app and sign in.</string>
+    <string name="use_recovery_code_instead">Use a recovery code instead</string>
     <string name="enter_recovery_code">Enter recovery code</string>
     <string name="enter_recovery_code_description">Enter one of the recovery codes you saved when you created your account. Each code works once.</string>
     <string name="recovery_code">Recovery code</string>
@@ -166,20 +167,18 @@
     <string name="old_codes_invalidated">Your old recovery codes no longer work. Store these somewhere safe, such as a password manager or a printed copy. Each code works once.</string>
     <string name="try_another_way">Try another way</string>
     <string name="other_ways_desc">Choose how you want to get back into your account.</string>
+    <string name="recover_choose_method">Choose a recovery method</string>
     <string name="other_way_code_title">Use a recovery code</string>
-    <string name="other_way_code_desc">Enter one of the codes you saved.</string>
+    <string name="other_way_code_desc">Enter one of the codes you saved. All your mail stays readable.</string>
     <string name="other_way_email_title">Reset with your recovery email</string>
-    <string name="other_way_email_desc">Aster Mail sends a link to your recovery email. You lose access to mail from before the reset.</string>
+    <string name="other_way_email_desc">Aster Mail sends a link to your recovery email so you can choose a new password.</string>
     <string name="other_way_none_title">I do not have any of these</string>
     <string name="other_way_none_desc">Contact support for help with what comes next.</string>
-    <string name="change_account">Use a different address</string>
-    <string name="change_account_desc">Recover a different Aster Mail account.</string>
     <string name="support_step_title">Contact support</string>
     <string name="support_step_desc">Aster Mail cannot read your encrypted data, so no one can unlock it without a recovery code or your recovery email. Support can check your account and help you with what comes next.</string>
     <string name="support_email_action">Email support</string>
     <string name="support_help_center">Visit the help center</string>
-    <string name="reset_account_title">Reset your account?</string>
-    <string name="reset_account_desc">Your encrypted mail, contacts, and files from before the reset stay locked until you recover them with your old password. You get a new, empty encryption key.</string>
+    <string name="reset_account_desc">Aster Mail sends a link to your recovery email. Open it to choose a new password. Your earlier mail stays encrypted until you unlock it with a recovery code or your previous password.</string>
     <string name="send_reset_link">Send reset link</string>
     <string name="print_codes">Print</string>
     <string name="recovery_codes_print_title">Aster Mail recovery codes</string>
@@ -1675,7 +1674,8 @@
     <string name="error_recovery_code_used">That code was already used. Each code works once, so enter a different one from your saved list.</string>
     <string name="error_recovery_session_expired">Your recovery session expired. To continue, enter a recovery code again.</string>
     <string name="error_recovery_code_replaced">That code belongs to an older set and no longer works. Use a code from the most recent list you saved.</string>
-    <string name="error_recovery_failed">Recovery failed</string>
+    <string name="error_recovery_failed">Recovery didn\'t finish. Check your connection, then try again.</string>
+    <string name="error_send_reset_link">The reset link couldn\'t be sent. Check your connection, then try again.</string>
     <string name="status_deriving_key">Deriving new password key</string>
     <string name="status_encrypting_vault">Encrypting vault with new password</string>
     <string name="status_generating_codes">Generating new recovery codes</string>
@@ -1728,6 +1728,10 @@
     <string name="recover_data_success">Your older data is unlocked.</string>
     <string name="recover_data_no_match">That password didn\'t unlock any data. Try another previous password.</string>
     <string name="recover_data_failed">Some data couldn\'t be unlocked. Check your connection and try again.</string>
+    <string name="recover_data_code_description">To unlock mail from before a password reset, enter one of the recovery codes you saved before the reset.</string>
+    <string name="recover_data_code_no_match">That code didn\'t unlock any data. Enter a code you saved before the reset.</string>
+    <string name="recover_data_partial">Some of your earlier mail is unlocked. To unlock the rest, enter your previous password.</string>
+    <string name="recover_data_rate_limited">Too many attempts. Wait 30 minutes, then try again.</string>
     <plurals name="password_change_sent_mail_locked">
         <item quantity="one">Your password changed. %1$d sent emails were encrypted with an older password and stay locked. To unlock them, tap Recover data in the banner at the top of your inbox.</item>
         <item quantity="other">Your password changed. %1$d sent emails were encrypted with an older password and stay locked. To unlock them, tap Recover data in the banner at the top of your inbox.</item>

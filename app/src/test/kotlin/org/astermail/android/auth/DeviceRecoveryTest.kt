@@ -213,6 +213,11 @@ private class FakeRecoveryApi : RecoveryApi {
     override suspend fun backup(request: SaveRecoveryBackupRequest): SaveRecoveryBackupResponse =
         throw UnsupportedOperationException()
 
+    override suspend fun unlock_inactive_key_sets_with_code(
+        request: org.astermail.android.api.recovery.UnlockInactiveWithCodeRequest,
+    ): org.astermail.android.api.recovery.UnlockInactiveWithCodeResponse =
+        throw UnsupportedOperationException()
+
     override suspend fun methods(): RecoveryMethodsResponse = throw UnsupportedOperationException()
 
     override suspend fun codes_status(): CodesStatusResponse = throw UnsupportedOperationException()

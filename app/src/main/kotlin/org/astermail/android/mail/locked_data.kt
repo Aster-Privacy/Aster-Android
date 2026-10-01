@@ -30,8 +30,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import org.astermail.android.api.ApiError
 import org.astermail.android.api.recovery.RecoveryApi
 import org.astermail.android.auth.AuthRepository
+import org.astermail.android.auth.CodeRestoreResult
 import org.astermail.android.storage.SessionKeyStore
 
 interface LockedSentMailCounts {
@@ -87,6 +89,8 @@ data class LockedDataRecovery(
     val restored_key_sets: Int = 0,
     val recovered_sent_mail: Int = 0,
     val failed: Boolean = false,
+    val incomplete: Int = 0,
+    val rate_limited: Boolean = false,
 )
 
 fun locked_data_signature(inactive_key_set_ids: List<String>, locked_sent_mail: Int): String {
@@ -126,6 +130,7 @@ class LockedDataService internal constructor(
     private val recover_with_conversion: suspend (String, String) -> AccountDataConversionSummary?,
     private val reseal_sent_mail: suspend (ByteArray, ByteArray) -> SentMailResealSummary,
     private val on_changed: () -> Unit,
+    private val restore_inactive_key_sets_with_code: suspend (String) -> CodeRestoreResult = { CodeRestoreResult() },
 ) {
     @Inject
     constructor(
@@ -147,6 +152,7 @@ class LockedDataService internal constructor(
         },
         reseal_sent_mail = { old, current -> resealer.run(old, current) },
         on_changed = { locked_sent_mail_store.notify_changed() },
+        restore_inactive_key_sets_with_code = { auth_repository.restore_inactive_key_sets_with_code(it) },
     )
 
     suspend fun status(account_id: String): LockedDataStatus? {
@@ -187,6 +193,35 @@ class LockedDataService internal constructor(
 
         runCatching { on_changed() }
         return LockedDataRecovery(restored, recovered, failed)
+    }
+
+    suspend fun recover_locked_data_with_code(account_id: String, code: String): LockedDataRecovery {
+        if (account_id.isEmpty() || code.isBlank()) return LockedDataRecovery()
+
+        var restored = 0
+        var incomplete = 0
+        var failed = false
+        var rate_limited = false
+        try {
+            val result = restore_inactive_key_sets_with_code(code)
+            restored = result.restored
+            incomplete = result.incomplete
+            failed = restored == 0 && incomplete > 0
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: ApiError.RateLimited) {
+            rate_limited = true
+        } catch (_: Throwable) {
+            failed = true
+        }
+
+        runCatching { on_changed() }
+        return LockedDataRecovery(
+            restored_key_sets = restored,
+            failed = failed,
+            incomplete = incomplete,
+            rate_limited = rate_limited,
+        )
     }
 
     private suspend fun recover_sent_mail(account_id: String, password: String): Pair<Int, Boolean> {

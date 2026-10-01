@@ -94,11 +94,12 @@
 
 
     <string name="recover_your_account">アカウントの復旧</string>
-    <string name="enter_email_for_recovery">アカウントに関連付けられたメールアドレスを入力してください</string>
+    <string name="enter_email_for_recovery">リカバリーするアカウントのユーザー名を入力してください。</string>
     <string name="email_address">メールアドレス</string>
     <string name="back_to_sign_in">サインインに戻る</string>
-    <string name="recovery_email_sent">復旧用メールを送信しました</string>
-    <string name="recovery_email_sent_description">パスワードリセット用のリンクを復旧用メールアドレスに送信しました。受信トレイを確認し、リンクをクリックして続行してください。</string>
+    <string name="recovery_email_sent">メールを確認してください</string>
+    <string name="recovery_email_sent_description">このアカウントに確認済みのリカバリーメールがある場合、Aster Mailがリセット用のリンクを送信しました。リンクは30分で期限切れになります。メールが見つからない場合は、迷惑メールフォルダを確認してください。</string>
+    <string name="reset_link_sent_next">新しいパスワードを設定したら、このアプリに戻ってサインインしてください。</string>
     <string name="use_recovery_code_instead">代わりにリカバリーコードを使用</string>
     <string name="enter_recovery_code">リカバリーコードを入力</string>
     <string name="enter_recovery_code_description">アカウント作成時に保存したリカバリーコードのいずれかを入力してください。各コードは一度だけ使用できます。</string>
@@ -1086,7 +1087,8 @@
     <string name="error_send_recovery">復旧用メールを送信できませんでした</string>
     <string name="error_invalid_recovery_code">リカバリーコードは ASTER-XXXX-XXXX-XXXX-XXXX の形式です。コードを確認して、もう一度入力してください。</string>
     <string name="error_invalid_code">そのコードはこのアカウントと一致しません。保存した一覧と照らし合わせて、もう一度入力してください。スペースや大文字・小文字は区別されません。</string>
-    <string name="error_recovery_failed">復旧に失敗しました</string>
+    <string name="error_recovery_failed">リカバリーが完了しませんでした。接続を確認してから、もう一度お試しください。</string>
+    <string name="error_send_reset_link">リセット用リンクを送信できませんでした。接続を確認してから、もう一度お試しください。</string>
     <string name="error_recovery_too_many_attempts">このアカウントで復旧の試行回数が多すぎます。約30分後にもう一度お試しください。コードは1つも使用されていないため、すべてそのまま残っています。</string>
     <string name="status_deriving_key">新しいパスワードキーを導出中</string>
     <string name="status_encrypting_vault">新しいパスワードでボルトを暗号化中</string>
@@ -1177,6 +1179,10 @@
     <string name="recover_data_success">以前のデータのロックが解除されました。</string>
     <string name="recover_data_no_match">そのパスワードではデータのロックを解除できませんでした。別の以前のパスワードをお試しください。</string>
     <string name="recover_data_failed">一部のデータのロックを解除できませんでした。接続を確認して、もう一度お試しください。</string>
+    <string name="recover_data_code_description">パスワードのリセット前のメールのロックを解除するには、リセット前に保存したリカバリーコードのいずれかを入力してください。</string>
+    <string name="recover_data_code_no_match">そのコードではデータのロックを解除できませんでした。リセット前に保存したコードを入力してください。</string>
+    <string name="recover_data_partial">以前のメールの一部のロックが解除されました。残りを解除するには、以前のパスワードを入力してください。</string>
+    <string name="recover_data_rate_limited">試行回数が多すぎます。30分待ってから、もう一度お試しください。</string>
     <plurals name="password_change_sent_mail_locked">
         <item quantity="other">パスワードが変更されました。%1$d 件の送信済みメールは以前のパスワードで暗号化されているため、ロックされたままです。ロックを解除するには、受信トレイ上部のバナーで「データを復元」をタップしてください。</item>
     </plurals>
@@ -3119,27 +3125,25 @@
     <string name="get_new_codes_message">新しいコードを取得すると、現在のコードは使えなくなります。</string>
     <string name="get_new_codes_title">新しいリカバリーコードを取得しますか？</string>
     <string name="i_saved_these_codes">これらのコードを保存しました</string>
-    <string name="other_way_code_desc">保存したコードのいずれかを入力します。</string>
+    <string name="other_way_code_desc">保存したコードのいずれかを入力してください。すべてのメールは引き続き読むことができます。</string>
     <string name="other_way_code_title">リカバリーコードを使用する</string>
-    <string name="other_way_email_desc">Aster Mail が復旧用メールアドレスにリンクを送信します。リセット前のメールにはアクセスできなくなります。</string>
+    <string name="other_way_email_desc">Aster Mailがリカバリーメールにリンクを送信し、新しいパスワードを選択できるようにします。</string>
     <string name="other_way_email_title">復旧用メールでリセット</string>
     <string name="other_way_none_desc">サポートにお問い合わせください。次の手順をご案内します。</string>
-    <string name="change_account">別のアドレスを使う</string>
-    <string name="change_account_desc">別の Aster Mail アカウントを復元します。</string>
     <string name="support_step_title">サポートに問い合わせる</string>
     <string name="support_step_desc">Aster Mail は暗号化されたデータを読み取れないため、リカバリーコードまたは復旧用メールがなければ誰もロックを解除できません。サポートがアカウントを確認し、次の手順を案内します。</string>
     <string name="support_email_action">サポートにメールする</string>
     <string name="support_help_center">ヘルプセンターを開く</string>
     <string name="other_way_none_title">どれも持っていない</string>
     <string name="other_ways_desc">アカウントに戻る方法を選択してください。</string>
+    <string name="recover_choose_method">リカバリー方法を選択</string>
     <string name="print_codes">印刷</string>
     <string name="recovery_codes_print_created">作成日 %1$s</string>
     <string name="recovery_codes_print_note">各コードは一度だけ使用できます。これらのコードは他人に見せないでください。コードとメールアドレスを知っている人は、パスワードをリセットできます。</string>
     <string name="recovery_codes_print_title">Aster Mail のリカバリーコード</string>
     <string name="recovery_codes_unavailable">このデバイスにはコードが保存されていません。表示するには新しいコードを取得してください。</string>
     <string name="recovery_codes_view_desc">各コードは一度だけ使用できます。使用済みのコードには取り消し線が付きます。</string>
-    <string name="reset_account_desc">リセット前の暗号化されたメール、連絡先、ファイルは、以前のパスワードで復元するまでロックされたままです。新しい空の暗号鍵が発行されます。</string>
-    <string name="reset_account_title">アカウントをリセットしますか？</string>
+    <string name="reset_account_desc">Aster Mailがリカバリーメールにリンクを送信します。リンクを開いて新しいパスワードを選択してください。以前のメールは、リカバリーコードまたは以前のパスワードでロックを解除するまで暗号化されたままです。</string>
     <string name="review_devices_signed_out">他のデバイスからサインアウトしました。</string>
     <string name="review_no_recovery_email">復旧用メールは設定されていません。</string>
     <string name="review_recovery_email_kept">復旧用メールは設定されたままです。</string>
