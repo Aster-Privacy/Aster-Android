@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import org.astermail.android.design.components.aster_menu_surface_color
 import androidx.core.view.WindowCompat
 
 private val aster_shapes = Shapes(
@@ -89,8 +90,30 @@ private fun dynamic_palette(scheme: ColorScheme): ColorThemePalette = ColorTheme
     thread_content_bg = scheme.surfaceContainerLowest,
 )
 
-private fun apply_high_contrast(base: AsterSemanticColors): AsterSemanticColors {
-    return if (base.is_dark) {
+internal fun readable_text_surfaces(colors: AsterSemanticColors): List<Color> = listOf(
+    colors.bg_primary,
+    colors.bg_secondary,
+    colors.bg_tertiary,
+    colors.bg_card,
+    colors.bg_hover,
+    colors.bg_selected,
+    colors.input_bg,
+    colors.thread_card_bg,
+    colors.thread_header_bg,
+    colors.modal_bg,
+    island_surface_color(colors),
+    field_surface_color(colors),
+    aster_menu_surface_color(colors.dropdown_bg, colors.is_dark),
+).map { it.copy(alpha = 1f) }
+
+private fun stronger_ink(a: Color, b: Color, is_dark: Boolean): Color {
+    val a_lum = relative_luminance(a)
+    val b_lum = relative_luminance(b)
+    return if (is_dark == (a_lum >= b_lum)) a else b
+}
+
+internal fun apply_high_contrast(base: AsterSemanticColors): AsterSemanticColors {
+    val lifted = if (base.is_dark) {
         base.copy(
             text_primary = Color(0xFFFFFFFF),
             text_secondary = Color(0xFFF0F0F0),
@@ -111,7 +134,14 @@ private fun apply_high_contrast(base: AsterSemanticColors): AsterSemanticColors 
             border_thread_divider = Color(0xFF555555),
         )
     }
+    val surfaces = readable_text_surfaces(lifted)
+    return lifted.copy(
+        text_tertiary = ensure_contrast(stronger_ink(base.text_tertiary, lifted.text_tertiary, base.is_dark), surfaces, high_contrast_text_floor),
+        text_muted = ensure_contrast(stronger_ink(base.text_muted, lifted.text_muted, base.is_dark), surfaces, high_contrast_text_floor),
+    )
 }
+
+internal const val high_contrast_text_floor = 5.0
 
 private fun apply_reduce_transparency(base: AsterSemanticColors): AsterSemanticColors {
     return base.copy(

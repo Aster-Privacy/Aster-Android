@@ -239,7 +239,15 @@ fun FeaturesScreen(on_back: () -> Unit) {
                         ) {
                             Text(
                                 text = stringResource(row.name_res),
-                                color = colors.accent_blue,
+                                color = org.astermail.android.ui.mail.chip_subtle_content(
+                                    colors.accent_blue,
+                                    org.astermail.android.ui.mail.chip_subtle_background(
+                                        colors.accent_blue,
+                                        colors.bg_card,
+                                        colors.is_dark,
+                                    ),
+                                    colors.is_dark,
+                                ),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                             )

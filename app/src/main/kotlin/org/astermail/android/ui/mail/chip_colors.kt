@@ -162,5 +162,24 @@ internal fun chip_subtle_background(label: Color, surface: Color, is_dark: Boole
 internal fun chip_subtle_border(label: Color, surface: Color, is_dark: Boolean): Color =
     mix(surface, label, if (is_dark) 0.30f else 0.25f)
 
-internal fun chip_content(label: Color, background: Color, is_dark: Boolean): Color =
-    readable_ink(background)
+internal fun chip_content(label: Color, background: Color, is_dark: Boolean): Color {
+    val ink = readable_ink(background)
+    if (contrast_ratio(ink, background) >= chip_min_contrast) return ink
+    val white = Color.White
+    val black = Color.Black
+    return if (contrast_ratio(white, background) >= contrast_ratio(black, background)) white else black
+}
+
+internal fun chip_subtle_content(label: Color, background: Color, is_dark: Boolean): Color {
+    val solid = label.copy(alpha = 1f)
+    if (contrast_ratio(solid, background) >= chip_min_contrast) return solid
+    val target = if (relative_luminance(background) < 0.18) Color.White else Color.Black
+    if (contrast_ratio(target, background) < chip_min_contrast) return chip_content(label, background, is_dark)
+    var low = 0f
+    var high = 1f
+    repeat(24) {
+        val mid = (low + high) / 2f
+        if (contrast_ratio(mix(solid, target, mid), background) >= chip_min_contrast) high = mid else low = mid
+    }
+    return mix(solid, target, high)
+}
