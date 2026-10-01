@@ -339,4 +339,26 @@ class extraction_test {
         assertEquals("https://www.ups.com/track?tracknum=1Z999AA10123456784", result.shipping?.tracking_url)
         assertFalse(result.is_empty)
     }
+
+    @Test
+    fun `ignores mail that mentions tracking and delivery in passing`() {
+        val subject = "Update on your support request"
+        val body = "We are tracking the bug you reported, and the fix was delivered in version 2.3."
+        assertFalse(is_shipping_email(subject, body))
+        assertFalse(extract_email_details(subject, body, null, "me@example.com", "Me").has_shipping_details)
+    }
+
+    @Test
+    fun `ignores release notes that shipped and delivered features`() {
+        assertFalse(
+            is_shipping_email("What's new in October", "We shipped dark mode and delivered the new editor you asked for."),
+        )
+    }
+
+    @Test
+    fun `still detects a shipment`() {
+        assertTrue(is_shipping_email("Your order has shipped", "Tracking number: 1Z999AA10123456784. Estimated delivery: Friday."))
+        assertTrue(is_shipping_email("Delivered", "Your package was delivered. Tracking # 9400100000000000000000"))
+        assertTrue(is_shipping_email("Out for delivery", "Your package is out for delivery and arriving today."))
+    }
 }
