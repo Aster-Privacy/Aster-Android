@@ -305,16 +305,33 @@ private val shipping_indicators = listOf(
     Regex("\\bTBA\\d{12,15}\\b", RegexOption.IGNORE_CASE),
 )
 
+// "Tracking", "shipped" and "delivered" also turn up in mail that has nothing
+// to do with a parcel ("when the email was delivered", "a tracking pixel",
+// "we shipped a new feature"), so at least one sign has to be specific to a
+// shipment.
+private val parcel_specific_indicators = listOf(
+    Regex("\\btracking\\s*(?:#|number)", RegexOption.IGNORE_CASE),
+    Regex("\\bout\\s+for\\s+delivery\\b", RegexOption.IGNORE_CASE),
+    Regex("\\bin\\s+transit\\b", RegexOption.IGNORE_CASE),
+    Regex("\\bhas\\s+shipped\\b", RegexOption.IGNORE_CASE),
+    Regex("\\bshipment\\s+(?:update|notification)\\b", RegexOption.IGNORE_CASE),
+    Regex("\\bpackage\\s+(?:update|notification|shipped|delivered)\\b", RegexOption.IGNORE_CASE),
+    Regex("\\bestimated\\s+delivery\\b", RegexOption.IGNORE_CASE),
+    Regex("\\barriving\\s+(?:today|tomorrow|soon)\\b", RegexOption.IGNORE_CASE),
+    Regex("\\b1Z[A-Z0-9]{16}\\b", RegexOption.IGNORE_CASE),
+    Regex("\\bTBA\\d{12,15}\\b", RegexOption.IGNORE_CASE),
+)
+
 fun is_shipping_email(subject: String, body: String): Boolean {
     val combined = (subject + " " + body).lowercase(Locale.ROOT)
     var matches = 0
     for (pattern in shipping_indicators) {
         if (pattern.containsMatchIn(combined)) {
             matches += 1
-            if (matches >= 2) return true
+            if (matches >= 2) break
         }
     }
-    return false
+    return matches >= 2 && parcel_specific_indicators.any { it.containsMatchIn(combined) }
 }
 
 fun extract_email_details(
