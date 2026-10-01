@@ -761,7 +761,6 @@ fun DrawerContent(
                                 address = item.address,
                                 selected = item.id == selected_id,
                                 on_click = {
-                                    on_select(item.id)
                                     on_navigate_alias(item.id, item.address, item.routing_token)
                                     on_close()
                                 },
@@ -778,7 +777,6 @@ fun DrawerContent(
                                         address = item.address,
                                         selected = item.id == selected_id,
                                         on_click = {
-                                            on_select(item.id)
                                             on_navigate_alias(item.id, item.address, item.routing_token)
                                             on_close()
                                         },

@@ -78,3 +78,12 @@ fun mail_folder_for_filter(
     filter_kind_folder -> filter_value
     else -> "inbox"
 }
+
+private val folder_token_pattern = Regex("^[A-Za-z0-9+/]+={0,2}$")
+
+fun is_folder_token(value: String): Boolean =
+    value.length % 4 == 0 && folder_token_pattern.matches(value)
+
+fun is_permanent_load_failure(failure: Throwable?): Boolean =
+    failure is org.astermail.android.api.ApiError.ValidationError ||
+        failure is org.astermail.android.api.ApiError.NotFoundError
