@@ -3350,4 +3350,13 @@
     <string name="contact_sync_label_sibling">Irmão ou irmã</string>
     <string name="contact_sync_label_graduation">Formatura</string>
     <string name="contact_sync_label_wedding">Casamento</string>
+    <string name="domain_dkim_rotate_title">Rodar chave DKIM</string>
+    <string name="domain_dkim_rotate_hint">Gere uma nova chave para assinar o correio enviado a partir deste domínio.</string>
+    <string name="domain_dkim_rotate_action">Rodar</string>
+    <string name="domain_dkim_rotate_confirm_title">Rodar a chave DKIM?</string>
+    <string name="domain_dkim_rotate_confirm_purchased">O Aster Mail gera uma nova chave DKIM para %1$s e atualiza automaticamente o registo DNS por si.</string>
+    <string name="domain_dkim_rotate_confirm_manual">O Aster Mail gera uma nova chave DKIM para %1$s e assina de imediato o seu correio com ela. Tem de adicionar o novo registo TXT no seu fornecedor de DNS. Até o fazer, as verificações DKIM podem falhar.</string>
+    <string name="domain_dkim_rotated_auto">Chave DKIM rodada. O Aster Mail atualizou o registo DNS por si.</string>
+    <string name="domain_dkim_notice_title">Adicione isto como um novo registo DNS</string>
+    <string name="domain_dkim_notice_body">O seu correio já é assinado com a nova chave. Para passar nas verificações DKIM, adicione este registo TXT no seu fornecedor de DNS.</string>
 </resources>

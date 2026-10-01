@@ -3331,4 +3331,13 @@
     <string name="contact_sync_label_sibling">Kardeş</string>
     <string name="contact_sync_label_graduation">Mezuniyet</string>
     <string name="contact_sync_label_wedding">Düğün</string>
+    <string name="domain_dkim_rotate_title">DKIM anahtarını döndür</string>
+    <string name="domain_dkim_rotate_hint">Bu alan adından gönderilen postaları imzalamak için yeni bir anahtar oluşturun.</string>
+    <string name="domain_dkim_rotate_action">Döndür</string>
+    <string name="domain_dkim_rotate_confirm_title">DKIM anahtarı döndürülsün mü?</string>
+    <string name="domain_dkim_rotate_confirm_purchased">Aster Mail, %1$s için yeni bir DKIM anahtarı oluşturur ve DNS kaydını sizin için otomatik olarak günceller.</string>
+    <string name="domain_dkim_rotate_confirm_manual">Aster Mail, %1$s için yeni bir DKIM anahtarı oluşturur ve postalarınızı hemen bu anahtarla imzalar. Yeni TXT kaydını DNS sağlayıcınıza eklemeniz gerekir. Siz ekleyene kadar DKIM denetimleri başarısız olabilir.</string>
+    <string name="domain_dkim_rotated_auto">DKIM anahtarı döndürüldü. Aster Mail DNS kaydını sizin için güncelledi.</string>
+    <string name="domain_dkim_notice_title">Bunu yeni bir DNS kaydı olarak ekleyin</string>
+    <string name="domain_dkim_notice_body">Postalarınız zaten yeni anahtarla imzalanıyor. DKIM denetimlerini geçmek için bu TXT kaydını DNS sağlayıcınıza ekleyin.</string>
 </resources>

@@ -3332,4 +3332,13 @@
     <string name="contact_sync_label_sibling">Geschwister</string>
     <string name="contact_sync_label_graduation">Abschluss</string>
     <string name="contact_sync_label_wedding">Hochzeit</string>
+    <string name="domain_dkim_rotate_title">DKIM-Schlüssel rotieren</string>
+    <string name="domain_dkim_rotate_hint">Erzeuge einen neuen Schlüssel zum Signieren der E-Mails dieser Domain.</string>
+    <string name="domain_dkim_rotate_action">Rotieren</string>
+    <string name="domain_dkim_rotate_confirm_title">DKIM-Schlüssel rotieren?</string>
+    <string name="domain_dkim_rotate_confirm_purchased">Aster Mail erzeugt einen neuen DKIM-Schlüssel für %1$s und aktualisiert den DNS-Eintrag automatisch für dich.</string>
+    <string name="domain_dkim_rotate_confirm_manual">Aster Mail erzeugt einen neuen DKIM-Schlüssel für %1$s und signiert deine E-Mails sofort damit. Du musst den neuen TXT-Eintrag bei deinem DNS-Anbieter hinzufügen. Bis dahin können DKIM-Prüfungen fehlschlagen.</string>
+    <string name="domain_dkim_rotated_auto">DKIM-Schlüssel rotiert. Aster Mail hat den DNS-Eintrag für dich aktualisiert.</string>
+    <string name="domain_dkim_notice_title">Als neuen DNS-Eintrag hinzufügen</string>
+    <string name="domain_dkim_notice_body">Deine E-Mails werden bereits mit dem neuen Schlüssel signiert. Damit DKIM-Prüfungen bestehen, füge diesen TXT-Eintrag bei deinem DNS-Anbieter hinzu.</string>
 </resources>

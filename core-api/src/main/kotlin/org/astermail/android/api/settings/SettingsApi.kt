@@ -551,7 +551,10 @@ data class CustomDomain(
     val bimi_available: Boolean = false,
     val bimi_state: String? = null,
     val purchased: Boolean = false,
-)
+    val is_purchased: Boolean = false,
+) {
+    val is_aster_managed: Boolean get() = is_purchased || purchased
+}
 
 @Serializable
 data class DomainListResponse(
@@ -595,6 +598,15 @@ data class DomainVerificationResult(
 @Serializable
 data class DnsRecordsResponse(
     val records: List<DnsRecord> = emptyList(),
+)
+
+@Serializable
+data class DkimRotationResponse(
+    val success: Boolean = false,
+    val new_selector: String = "",
+    val public_key: String = "",
+    val dns_record: DnsRecord? = null,
+    val dns_auto_published: Boolean = false,
 )
 
 @Serializable
@@ -733,6 +745,7 @@ interface SettingsApi {
     suspend fun delete_domain(domain_id: String)
     suspend fun trigger_domain_verification(domain_id: String): DomainVerificationResult
     suspend fun get_dns_records(domain_id: String): DnsRecordsResponse
+    suspend fun rotate_dkim(domain_id: String): DkimRotationResponse
     suspend fun update_domain(domain_id: String, request: UpdateDomainRequest): CustomDomain
     suspend fun get_storage_overview(): StorageOverview
     suspend fun get_subscription(): SubscriptionInfo
@@ -1159,6 +1172,14 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
 
     override suspend fun get_dns_records(domain_id: String): DnsRecordsResponse {
         val response = client.http.get("${client.base_url}/api/addresses/v1/domains/$domain_id/dns-records")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun rotate_dkim(domain_id: String): DkimRotationResponse {
+        val response = client.http.post("${client.base_url}/api/addresses/v1/domains/$domain_id/dkim/rotate") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
         return decode_or_throw(response)
     }
 

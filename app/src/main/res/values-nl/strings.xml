@@ -3331,4 +3331,13 @@
     <string name="contact_sync_label_sibling">Broer of zus</string>
     <string name="contact_sync_label_graduation">Diploma-uitreiking</string>
     <string name="contact_sync_label_wedding">Bruiloft</string>
+    <string name="domain_dkim_rotate_title">DKIM-sleutel roteren</string>
+    <string name="domain_dkim_rotate_hint">Maak een nieuwe sleutel om e-mail van dit domein te ondertekenen.</string>
+    <string name="domain_dkim_rotate_action">Roteren</string>
+    <string name="domain_dkim_rotate_confirm_title">DKIM-sleutel roteren?</string>
+    <string name="domain_dkim_rotate_confirm_purchased">Aster Mail maakt een nieuwe DKIM-sleutel voor %1$s en werkt het DNS-record automatisch voor je bij.</string>
+    <string name="domain_dkim_rotate_confirm_manual">Aster Mail maakt een nieuwe DKIM-sleutel voor %1$s en ondertekent je e-mail er meteen mee. Je moet het nieuwe TXT-record toevoegen bij je DNS-provider. Tot die tijd kunnen DKIM-controles mislukken.</string>
+    <string name="domain_dkim_rotated_auto">DKIM-sleutel geroteerd. Aster Mail heeft het DNS-record voor je bijgewerkt.</string>
+    <string name="domain_dkim_notice_title">Voeg dit toe als nieuw DNS-record</string>
+    <string name="domain_dkim_notice_body">Je e-mail wordt al met de nieuwe sleutel ondertekend. Voeg dit TXT-record toe bij je DNS-provider om DKIM-controles te laten slagen.</string>
 </resources>

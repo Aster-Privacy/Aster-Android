@@ -3321,4 +3321,13 @@
     <string name="contact_sync_label_sibling">兄弟姉妹</string>
     <string name="contact_sync_label_graduation">卒業</string>
     <string name="contact_sync_label_wedding">結婚</string>
+    <string name="domain_dkim_rotate_title">DKIM キーをローテーション</string>
+    <string name="domain_dkim_rotate_hint">このドメインから送信するメールに署名する新しいキーを生成します。</string>
+    <string name="domain_dkim_rotate_action">ローテーション</string>
+    <string name="domain_dkim_rotate_confirm_title">DKIM キーをローテーションしますか？</string>
+    <string name="domain_dkim_rotate_confirm_purchased">Aster Mail が %1$s の新しい DKIM キーを生成し、DNS レコードを自動で更新します。</string>
+    <string name="domain_dkim_rotate_confirm_manual">Aster Mail が %1$s の新しい DKIM キーを生成し、すぐにそのキーでメールに署名します。DNS プロバイダで新しい TXT レコードを追加してください。追加するまで DKIM チェックに失敗する場合があります。</string>
+    <string name="domain_dkim_rotated_auto">DKIM キーをローテーションしました。Aster Mail が DNS レコードを更新しました。</string>
+    <string name="domain_dkim_notice_title">新しい DNS レコードとして追加してください</string>
+    <string name="domain_dkim_notice_body">メールはすでに新しいキーで署名されています。DKIM チェックに合格するには、この TXT レコードを DNS プロバイダで追加してください。</string>
 </resources>

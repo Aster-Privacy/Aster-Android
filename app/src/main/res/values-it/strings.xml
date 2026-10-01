@@ -3350,4 +3350,13 @@
     <string name="contact_sync_label_sibling">Fratello o sorella</string>
     <string name="contact_sync_label_graduation">Laurea</string>
     <string name="contact_sync_label_wedding">Matrimonio</string>
+    <string name="domain_dkim_rotate_title">Ruota chiave DKIM</string>
+    <string name="domain_dkim_rotate_hint">Genera una nuova chiave per firmare la posta inviata da questo dominio.</string>
+    <string name="domain_dkim_rotate_action">Ruota</string>
+    <string name="domain_dkim_rotate_confirm_title">Ruotare la chiave DKIM?</string>
+    <string name="domain_dkim_rotate_confirm_purchased">Aster Mail genera una nuova chiave DKIM per %1$s e aggiorna automaticamente il record DNS per te.</string>
+    <string name="domain_dkim_rotate_confirm_manual">Aster Mail genera una nuova chiave DKIM per %1$s e firma subito la tua posta con essa. Devi aggiungere il nuovo record TXT presso il tuo provider DNS. Fino ad allora, i controlli DKIM possono non riuscire.</string>
+    <string name="domain_dkim_rotated_auto">Chiave DKIM ruotata. Aster Mail ha aggiornato il record DNS per te.</string>
+    <string name="domain_dkim_notice_title">Aggiungi questo come nuovo record DNS</string>
+    <string name="domain_dkim_notice_body">La tua posta è già firmata con la nuova chiave. Per superare i controlli DKIM, aggiungi questo record TXT presso il tuo provider DNS.</string>
 </resources>

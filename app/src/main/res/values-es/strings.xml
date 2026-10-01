@@ -3351,4 +3351,13 @@
     <string name="contact_sync_label_sibling">Hermano o hermana</string>
     <string name="contact_sync_label_graduation">Graduación</string>
     <string name="contact_sync_label_wedding">Boda</string>
+    <string name="domain_dkim_rotate_title">Renovar clave DKIM</string>
+    <string name="domain_dkim_rotate_hint">Genera una clave nueva para firmar el correo enviado desde este dominio.</string>
+    <string name="domain_dkim_rotate_action">Renovar</string>
+    <string name="domain_dkim_rotate_confirm_title">¿Renovar la clave DKIM?</string>
+    <string name="domain_dkim_rotate_confirm_purchased">Aster Mail genera una clave DKIM nueva para %1$s y actualiza el registro DNS por ti automáticamente.</string>
+    <string name="domain_dkim_rotate_confirm_manual">Aster Mail genera una clave DKIM nueva para %1$s y firma tu correo con ella de inmediato. Debes añadir el nuevo registro TXT en tu proveedor de DNS. Hasta que lo hagas, las comprobaciones DKIM pueden fallar.</string>
+    <string name="domain_dkim_rotated_auto">Clave DKIM renovada. Aster Mail actualizó el registro DNS por ti.</string>
+    <string name="domain_dkim_notice_title">Añade esto como un nuevo registro DNS</string>
+    <string name="domain_dkim_notice_body">Tu correo ya se firma con la clave nueva. Para superar las comprobaciones DKIM, añade este registro TXT en tu proveedor de DNS.</string>
 </resources>

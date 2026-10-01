@@ -3314,4 +3314,13 @@
     <string name="contact_sync_label_sibling">형제자매</string>
     <string name="contact_sync_label_graduation">졸업</string>
     <string name="contact_sync_label_wedding">결혼</string>
+    <string name="domain_dkim_rotate_title">DKIM 키 교체</string>
+    <string name="domain_dkim_rotate_hint">이 도메인에서 보내는 메일에 서명할 새 키를 생성합니다.</string>
+    <string name="domain_dkim_rotate_action">교체</string>
+    <string name="domain_dkim_rotate_confirm_title">DKIM 키를 교체할까요?</string>
+    <string name="domain_dkim_rotate_confirm_purchased">Aster Mail이 %1$s의 새 DKIM 키를 생성하고 DNS 레코드를 자동으로 업데이트합니다.</string>
+    <string name="domain_dkim_rotate_confirm_manual">Aster Mail이 %1$s의 새 DKIM 키를 생성하고 즉시 이 키로 메일에 서명합니다. DNS 제공업체에서 새 TXT 레코드를 추가해야 합니다. 추가하기 전까지 DKIM 검사가 실패할 수 있습니다.</string>
+    <string name="domain_dkim_rotated_auto">DKIM 키를 교체했습니다. Aster Mail이 DNS 레코드를 업데이트했습니다.</string>
+    <string name="domain_dkim_notice_title">새 DNS 레코드로 추가하세요</string>
+    <string name="domain_dkim_notice_body">메일은 이미 새 키로 서명되고 있습니다. DKIM 검사를 통과하려면 DNS 제공업체에서 이 TXT 레코드를 추가하세요.</string>
 </resources>
