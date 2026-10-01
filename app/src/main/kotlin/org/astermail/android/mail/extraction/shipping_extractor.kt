@@ -305,10 +305,6 @@ private val shipping_indicators = listOf(
     Regex("\\bTBA\\d{12,15}\\b", RegexOption.IGNORE_CASE),
 )
 
-// "Tracking", "shipped" and "delivered" also turn up in mail that has nothing
-// to do with a parcel ("when the email was delivered", "a tracking pixel",
-// "we shipped a new feature"), so at least one sign has to be specific to a
-// shipment.
 private val parcel_specific_indicators = listOf(
     Regex("\\btracking\\s*(?:#|number)", RegexOption.IGNORE_CASE),
     Regex("\\bout\\s+for\\s+delivery\\b", RegexOption.IGNORE_CASE),
