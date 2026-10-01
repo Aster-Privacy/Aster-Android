@@ -757,6 +757,8 @@ fun MailDetailScreen(
     var hidden_group_revealed by remember(email_id) { mutableStateOf(false) }
     var allow_external_ids by remember(email_id) { mutableStateOf(emptySet<String>()) }
     var dismissed_unsub_ids by remember(email_id) { mutableStateOf(emptySet<String>()) }
+    val unsubscribed_tokens by subscriptions_vm.unsubscribed_tokens.collectAsStateWithLifecycle()
+    LaunchedEffect(email_id) { subscriptions_vm.refresh_unsubscribed() }
     var pending_link by remember { mutableStateOf<String?>(null) }
     var lightbox_src by remember { mutableStateOf<String?>(null) }
     var preview_attachment by remember { mutableStateOf<MessageAttachment?>(null) }
@@ -1493,7 +1495,8 @@ fun MailDetailScreen(
                                     settings_vm.save_preferences(base.copy(low_network_mode = false))
                                 }
                             },
-                            show_unsub = msg.id !in dismissed_unsub_ids,
+                            show_unsub = msg.id !in dismissed_unsub_ids &&
+                                subscriptions_vm.sender_token(msg.sender_email) !in unsubscribed_tokens,
                             on_dismiss_unsub = {
                                 dismissed_unsub_ids = dismissed_unsub_ids + msg.id
                             },
@@ -1510,13 +1513,23 @@ fun MailDetailScreen(
                                     val outcome = execute_unsubscribe(info) { request ->
                                         subscriptions_vm.proxy_unsubscribe(request)
                                     }
+                                    val record_unsubscribed = {
+                                        subscriptions_vm.record_unsubscribed(
+                                            msg.sender_email,
+                                            msg.sender_name,
+                                            info.unsubscribe_link,
+                                            info.list_unsubscribe_header,
+                                        )
+                                    }
                                     if (outcome == UnsubscribeOutcome.unsubscribed) {
+                                        record_unsubscribed()
                                         show_toast(context.getString(R.string.toast_unsubscribed))
                                         return@launch
                                     }
                                     val manual_url = get_manual_unsubscribe_url(info)
                                         ?.takeIf { is_safe_unsubscribe_url(it) }
                                     if (manual_url == null) {
+                                        dismissed_unsub_ids = dismissed_unsub_ids - msg.id
                                         show_toast(context.getString(R.string.could_not_unsubscribe))
                                         return@launch
                                     }
@@ -1530,9 +1543,11 @@ fun MailDetailScreen(
                                                     context.startActivity(
                                                         Intent(Intent.ACTION_VIEW, Uri.parse(manual_url)),
                                                     )
+                                                    record_unsubscribed()
                                                 } catch (cancelled: CancellationException) {
                                                     throw cancelled
                                                 } catch (_: Throwable) {
+                                                    dismissed_unsub_ids = dismissed_unsub_ids - msg.id
                                                     show_toast(context.getString(R.string.could_not_unsubscribe))
                                                 }
                                             },
@@ -2563,7 +2578,7 @@ internal fun expanded_message(
             )
         }
 
-        val unsub_info = remember(msg.body_html, msg.body, msg.raw_headers) {
+        val unsub_info = remember(msg.body_html, msg.body, msg.raw_headers, msg.dkim_result) {
             detect_unsubscribe_info(
                 html_content = msg.body_html,
                 text_content = msg.body,
@@ -2573,6 +2588,7 @@ internal fun expanded_message(
                 list_unsubscribe_post = msg.raw_headers.firstOrNull {
                     it.first.equals("list-unsubscribe-post", ignoreCase = true)
                 }?.second,
+                dkim_result = msg.dkim_result,
             )
         }
 
@@ -2680,6 +2696,10 @@ internal fun expanded_message(
             html_rendering_mode = body_settings_state.preferences?.html_rendering_mode,
             low_network = org.astermail.android.network.low_network_active(),
         )
+        val html_part = remember(msg.body_html, msg.body) { renderable_html_part(msg.body_html, msg.body) }
+        val text_part = remember(msg.body_html, msg.body) {
+            msg.body.ifBlank { org.astermail.android.mail.html_to_plain_text(msg.body_html.orEmpty()) }
+        }
         if (msg.is_body_pending) {
             var body_wait_expired by remember(msg.id, retry_in_progress) { mutableStateOf(false) }
             LaunchedEffect(msg.id, retry_in_progress) {
@@ -2715,9 +2735,9 @@ internal fun expanded_message(
                         .testTag("message_body"),
                 )
             }
-        } else if (!plain_text_mode && !msg.body_html.isNullOrBlank() && !msg.is_undecryptable) {
+        } else if (!plain_text_mode && html_part != null && !msg.is_undecryptable) {
             email_html_view(
-                html = msg.body_html,
+                html = html_part,
                 allow_external = allow_external,
                 inline_images = inline_images,
                 access_token = access_token,
@@ -2796,7 +2816,7 @@ internal fun expanded_message(
                     }
                 }
             }
-        } else if (msg.body.isBlank()) {
+        } else if (text_part.isBlank()) {
             LaunchedEffect(Unit) { on_body_ready() }
             Row(
                 modifier = Modifier
@@ -2814,9 +2834,9 @@ internal fun expanded_message(
         } else {
             val e2e_no_key_text = stringResource(R.string.e2e_no_key_description)
             val no_body_text = stringResource(R.string.no_body)
-            val plain_html by produceState(initialValue = "", msg.body, msg.is_encrypted, e2e_no_key_text, no_body_text) {
+            val plain_html by produceState(initialValue = "", text_part, msg.is_encrypted, e2e_no_key_text, no_body_text) {
                 value = withContext(kotlinx.coroutines.Dispatchers.Default) {
-                val body_source = msg.body.ifBlank {
+                val body_source = text_part.ifBlank {
                     if (msg.is_encrypted) {
                         e2e_no_key_text
                     } else {
