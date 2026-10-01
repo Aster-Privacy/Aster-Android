@@ -80,8 +80,35 @@ private fun is_valid_url(url: String): Boolean {
 }
 
 private val HEADER_MAILTO = Regex("""mailto:([^>,\s]+)""", RegexOption.IGNORE_CASE)
-private val HEADER_BRACKETED_HTTP = Regex("""<(https?://[^>]+)>""", RegexOption.IGNORE_CASE)
+private val HEADER_BRACKETED_HTTP = Regex("""<\s*(https?://[^>\s]+)\s*>""", RegexOption.IGNORE_CASE)
 private val HEADER_BARE_HTTP = Regex("""(https?://[^,\s>]+)""", RegexOption.IGNORE_CASE)
+
+const val ONE_CLICK_POST_VALUE = "List-Unsubscribe=One-Click"
+
+fun is_one_click_post_header(value: String?): Boolean {
+    return value?.trim().equals(ONE_CLICK_POST_VALUE, ignoreCase = true)
+}
+
+private fun is_https_url(url: String): Boolean {
+    return url.startsWith("https://", ignoreCase = true)
+}
+
+private fun is_dkim_acceptable(dkim_result: String?): Boolean {
+    val normalized = dkim_result?.trim()
+    return normalized.isNullOrEmpty() || normalized.equals("pass", ignoreCase = true)
+}
+
+private fun header_http_links(header: String): List<String> {
+    val bracketed = HEADER_BRACKETED_HTTP.findAll(header)
+        .map { it.groupValues[1] }
+        .filter { is_valid_url(it) }
+        .toList()
+    if (bracketed.isNotEmpty()) return bracketed
+    return HEADER_BARE_HTTP.findAll(header)
+        .map { it.groupValues[1] }
+        .filter { is_valid_url(it) }
+        .toList()
+}
 
 private fun find_body_unsubscribe_link(
     html_content: String?,
@@ -123,37 +150,43 @@ fun detect_unsubscribe_info(
     text_content: String? = null,
     list_unsubscribe: String? = null,
     list_unsubscribe_post: String? = null,
+    dkim_result: String? = null,
 ): UnsubscribeInfo {
     val body_link = find_body_unsubscribe_link(html_content, text_content)
+    val post_declared = is_one_click_post_header(list_unsubscribe_post)
+    val declared_post = if (post_declared) ONE_CLICK_POST_VALUE else null
 
     if (!list_unsubscribe.isNullOrBlank()) {
         val mailto = HEADER_MAILTO.find(list_unsubscribe)?.groupValues?.get(1)
-        val http_link = HEADER_BRACKETED_HTTP.find(list_unsubscribe)?.groupValues?.get(1)
-            ?: HEADER_BARE_HTTP.find(list_unsubscribe)?.groupValues?.get(1)
+        val http_links = header_http_links(list_unsubscribe)
+        val https_link = http_links.firstOrNull { is_https_url(it) }
+        val plain_link = http_links.firstOrNull()
         when {
-            !list_unsubscribe_post.isNullOrBlank() && http_link != null && is_valid_url(http_link) ->
+            post_declared && https_link != null && is_dkim_acceptable(dkim_result) ->
                 return UnsubscribeInfo(
                     has_unsubscribe = true,
-                    unsubscribe_link = http_link,
+                    unsubscribe_link = https_link,
+                    unsubscribe_mailto = mailto,
                     unsubscribe_page_url = body_link,
                     method = "one-click",
                     list_unsubscribe_header = list_unsubscribe,
-                    list_unsubscribe_post = list_unsubscribe_post,
-                )
-            http_link != null && is_valid_url(http_link) ->
-                return UnsubscribeInfo(
-                    has_unsubscribe = true,
-                    unsubscribe_link = http_link,
-                    unsubscribe_page_url = http_link,
-                    method = "link",
-                    list_unsubscribe_header = list_unsubscribe,
+                    list_unsubscribe_post = declared_post,
                 )
             mailto != null ->
                 return UnsubscribeInfo(
                     has_unsubscribe = true,
                     unsubscribe_mailto = mailto,
-                    unsubscribe_page_url = body_link,
+                    unsubscribe_page_url = plain_link?.takeIf { !post_declared } ?: body_link,
                     method = "mailto",
+                    list_unsubscribe_header = list_unsubscribe,
+                    list_unsubscribe_post = declared_post,
+                )
+            plain_link != null && !post_declared ->
+                return UnsubscribeInfo(
+                    has_unsubscribe = true,
+                    unsubscribe_link = plain_link,
+                    unsubscribe_page_url = plain_link,
+                    method = "link",
                     list_unsubscribe_header = list_unsubscribe,
                 )
         }
@@ -166,10 +199,14 @@ fun detect_unsubscribe_info(
             unsubscribe_page_url = body_link,
             method = "link",
             list_unsubscribe_header = list_unsubscribe,
+            list_unsubscribe_post = declared_post,
         )
     }
 
-    return UnsubscribeInfo(list_unsubscribe_header = list_unsubscribe)
+    return UnsubscribeInfo(
+        list_unsubscribe_header = list_unsubscribe,
+        list_unsubscribe_post = declared_post,
+    )
 }
 
 fun is_one_click_only(info: UnsubscribeInfo): Boolean {
@@ -188,9 +225,7 @@ fun get_manual_unsubscribe_url(info: UnsubscribeInfo): String? {
 
     val header = info.list_unsubscribe_header ?: return null
     if (!one_click_only) {
-        val http_link = HEADER_BRACKETED_HTTP.find(header)?.groupValues?.get(1)
-            ?: HEADER_BARE_HTTP.find(header)?.groupValues?.get(1)
-        if (http_link != null && is_valid_url(http_link)) return http_link
+        header_http_links(header).firstOrNull()?.let { return it }
     }
     val mailto = HEADER_MAILTO.find(header)?.groupValues?.get(1) ?: return null
     return to_mailto_url(mailto)

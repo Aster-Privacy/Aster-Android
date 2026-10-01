@@ -28,36 +28,37 @@ enum class UnsubscribeOutcome {
     manual_required,
 }
 
-fun build_proxy_unsubscribe_request(info: UnsubscribeInfo): ProxyUnsubscribeRequest? {
-    return when {
-        info.method == "one-click" && info.unsubscribe_link != null -> ProxyUnsubscribeRequest(
+fun build_proxy_unsubscribe_requests(info: UnsubscribeInfo): List<ProxyUnsubscribeRequest> {
+    val requests = mutableListOf<ProxyUnsubscribeRequest>()
+    if (info.method == "one-click" && info.unsubscribe_link != null) {
+        requests += ProxyUnsubscribeRequest(
             method = "one-click",
             url = info.unsubscribe_link,
-            list_unsubscribe_post = info.list_unsubscribe_post,
+            list_unsubscribe_post = ONE_CLICK_POST_VALUE,
         )
-        info.method == "link" && info.unsubscribe_link != null -> ProxyUnsubscribeRequest(
-            method = "link",
-            url = info.unsubscribe_link,
-        )
-        info.method == "mailto" && info.unsubscribe_mailto != null -> ProxyUnsubscribeRequest(
+    }
+    if (info.unsubscribe_mailto != null) {
+        requests += ProxyUnsubscribeRequest(
             method = "mailto",
             mailto_address = info.unsubscribe_mailto,
         )
-        else -> null
     }
+    return requests
 }
 
 suspend fun execute_unsubscribe(
     info: UnsubscribeInfo,
     send: suspend (ProxyUnsubscribeRequest) -> Boolean,
 ): UnsubscribeOutcome {
-    val request = build_proxy_unsubscribe_request(info) ?: return UnsubscribeOutcome.manual_required
-    val succeeded = try {
-        send(request)
-    } catch (t: kotlinx.coroutines.CancellationException) {
-        throw t
-    } catch (_: Throwable) {
-        false
+    for (request in build_proxy_unsubscribe_requests(info)) {
+        val succeeded = try {
+            send(request)
+        } catch (t: kotlinx.coroutines.CancellationException) {
+            throw t
+        } catch (_: Throwable) {
+            false
+        }
+        if (succeeded) return UnsubscribeOutcome.unsubscribed
     }
-    return if (succeeded) UnsubscribeOutcome.unsubscribed else UnsubscribeOutcome.manual_required
+    return UnsubscribeOutcome.manual_required
 }
