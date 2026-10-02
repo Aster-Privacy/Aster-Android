@@ -1888,7 +1888,7 @@
     <string name="show_alias_indicators_subtitle">Berichten markeren die via een van je aliassen zijn binnengekomen</string>
     <string name="show_message_size_subtitle">Toon de grootte van elke e-mail in de inboxlijst</string>
     <string name="force_dark_emails">Donkere modus afdwingen voor e-mail</string>
-    <string name="force_dark_emails_subtitle">Toont e-mailinhoud altijd in donkere modus</string>
+    <string name="force_dark_emails_subtitle">E-mailinhoud in donkere modus weergeven zolang Aster het donkere thema gebruikt, waarbij de oorspronkelijke stijl wordt overschreven</string>
     <string name="section_composing_replies">Opstellen en beantwoorden</string>
     <string name="enable_undo_send">Verzenden ongedaan maken inschakelen</string>
     <string name="enable_undo_send_subtitle">Stelt verzenden uit zodat je het nog kunt annuleren</string>

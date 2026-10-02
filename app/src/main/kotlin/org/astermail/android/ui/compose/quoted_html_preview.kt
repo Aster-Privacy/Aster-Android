@@ -104,13 +104,12 @@ internal fun quoted_html_preview(html: String, modifier: Modifier = Modifier) {
     } else {
         colors.bg_primary.luminance() < colors.text_primary.luminance()
     }
-    val force_dark_emails = preferences?.force_dark_emails == true
-    val is_dark = theme_dark || force_dark_emails
-    val fg_hex = if (force_dark_emails && !theme_dark) {
-        org.astermail.android.ui.mail.FORCED_DARK_INK
-    } else {
-        String.format(java.util.Locale.US, "#%06X", colors.text_secondary.toArgb() and 0xFFFFFF)
-    }
+    val force_dark_emails = org.astermail.android.ui.mail.forces_dark_emails(
+        preference = preferences?.force_dark_emails == true,
+        theme_dark = theme_dark,
+    )
+    val is_dark = theme_dark
+    val fg_hex = String.format(java.util.Locale.US, "#%06X", colors.text_secondary.toArgb() and 0xFFFFFF)
     val link_hex = String.format(java.util.Locale.US, "#%06X", colors.accent_blue.toArgb() and 0xFFFFFF)
     val forwarded_label = stringResource(R.string.forwarded_message_label)
     val blocked_image_labels = BlockedImageLabels(
@@ -157,7 +156,6 @@ internal fun quoted_html_preview(html: String, modifier: Modifier = Modifier) {
                     forwarded_label = forwarded_label,
                     image_failed_label = image_failed_label,
                     force_dark_emails = force_dark_emails,
-                    forced_dark_canvas = force_dark_emails && !theme_dark,
                     dyslexia_font = dyslexia_font,
                     translate_mode = "off",
                     email_font_id = email_font_id,
@@ -225,11 +223,10 @@ internal fun quoted_html_preview(html: String, modifier: Modifier = Modifier) {
             web_view.settings.textZoom = text_zoom
             web_view.settings.blockNetworkImage = !allow_external
             web_view.setBackgroundColor(
-                when {
-                    doc.contains("data-white=\"1\"") -> android.graphics.Color.WHITE
-                    force_dark_emails && !theme_dark ->
-                        android.graphics.Color.parseColor(org.astermail.android.ui.mail.FORCED_DARK_CANVAS)
-                    else -> android.graphics.Color.TRANSPARENT
+                if (doc.contains("data-white=\"1\"")) {
+                    android.graphics.Color.WHITE
+                } else {
+                    android.graphics.Color.TRANSPARENT
                 },
             )
             if (web_view.tag != doc) {

@@ -1892,7 +1892,7 @@
     <string name="show_alias_indicators_subtitle">Marcar mensagens que chegaram através de um dos seus aliases</string>
     <string name="show_message_size_subtitle">Mostrar o tamanho de cada e-mail na lista da caixa de entrada</string>
     <string name="force_dark_emails">Forçar modo escuro nos e-mails</string>
-    <string name="force_dark_emails_subtitle">Apresentar sempre o conteúdo dos e-mails no modo escuro</string>
+    <string name="force_dark_emails_subtitle">Apresentar o conteúdo dos e-mails em modo escuro enquanto a Aster estiver a usar o tema escuro, substituindo o estilo original</string>
     <string name="section_composing_replies">Composição e respostas</string>
     <string name="enable_undo_send">Ativar Anular envio</string>
     <string name="enable_undo_send_subtitle">Atrasar o envio para poder anular, se necessário</string>

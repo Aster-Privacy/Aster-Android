@@ -1791,7 +1791,7 @@
     <string name="show_sender_pictures_subtitle">अपने इनबॉक्स में हर प्रेषक की तस्वीर या नाम के पहले अक्षर दिखाएं</string>
     <string name="show_message_size_subtitle">इनबॉक्स सूची में हर ईमेल का आकार दिखाएं</string>
     <string name="force_dark_emails">ईमेल पर डार्क मोड लागू करें</string>
-    <string name="force_dark_emails_subtitle">ईमेल की सामग्री हमेशा डार्क मोड में दिखाएं</string>
+    <string name="force_dark_emails_subtitle">जब Aster डार्क थीम में हो, तब ईमेल की सामग्री डार्क मोड में दिखाएं, चाहे ईमेल की अपनी स्टाइल कुछ भी हो</string>
     <string name="section_composing_replies">लिखना और जवाब देना</string>
     <string name="enable_undo_send">भेजना वापस लेना चालू करें</string>
     <string name="enable_undo_send_subtitle">भेजने में देरी करें, ताकि ज़रूरत पड़ने पर आप इसे पहले जैसा कर सकें</string>

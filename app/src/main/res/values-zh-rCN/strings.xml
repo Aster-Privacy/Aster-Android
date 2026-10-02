@@ -1884,7 +1884,7 @@
     <string name="show_alias_indicators_subtitle">标记通过您的别名收到的邮件</string>
     <string name="show_message_size_subtitle">在收件箱列表中显示每封邮件的大小</string>
     <string name="force_dark_emails">强制以深色显示邮件</string>
-    <string name="force_dark_emails_subtitle">始终以深色模式渲染邮件内容</string>
+    <string name="force_dark_emails_subtitle">在 Aster 使用深色主题时，以深色模式渲染电子邮件内容，覆盖电子邮件的原始样式</string>
     <string name="section_composing_replies">撰写与回复</string>
     <string name="enable_undo_send">启用撤销发送</string>
     <string name="enable_undo_send_subtitle">延迟发送，以便您在需要时撤销</string>

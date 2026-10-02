@@ -5596,19 +5596,16 @@ internal fun email_html_view(
     val settings_vm: SettingsViewModel = shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val theme_dark = !force_light && if (colors.is_glass) colors.is_dark else colors.bg_primary.luminance() < colors.text_primary.luminance()
-    val force_dark_emails = !force_light && settings_state.preferences?.force_dark_emails == true
-    val is_dark = theme_dark || force_dark_emails
-    val forced_dark_canvas = force_dark_emails && !theme_dark
+    val force_dark_emails = forces_dark_emails(settings_state.preferences?.force_dark_emails == true, theme_dark)
+    val is_dark = theme_dark
     val body_surface = if (colors.is_glass) colors.thread_content_bg else colors.bg_primary
     val bg_hex = when {
         force_light -> "#FFFFFF"
-        forced_dark_canvas -> FORCED_DARK_CANVAS
         colors.is_glass -> "transparent"
         else -> String.format(java.util.Locale.US, "#%06X", body_surface.toArgb() and 0xFFFFFF)
     }
     val fg_hex = when {
         force_light -> "#111827"
-        forced_dark_canvas -> FORCED_DARK_INK
         else -> String.format(java.util.Locale.US, "#%06X", colors.text_primary.toArgb() and 0xFFFFFF)
     }
     val link_hex = String.format(java.util.Locale.US, "#%06X", colors.accent_blue.toArgb() and 0xFFFFFF)
@@ -5839,7 +5836,6 @@ internal fun email_html_view(
         forwarded_label = forwarded_label,
         image_failed_label = image_failed_label,
         force_dark_emails = force_dark_emails,
-        forced_dark_canvas = forced_dark_canvas,
         dyslexia_font = dyslexia_font,
         translate_mode = translate_mode,
         email_font_id = email_font_id,

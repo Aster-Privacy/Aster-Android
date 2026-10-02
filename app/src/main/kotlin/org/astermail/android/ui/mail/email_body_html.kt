@@ -80,7 +80,6 @@ internal fun build_email_html(
     forwarded_label: String,
     image_failed_label: String,
     force_dark_emails: Boolean,
-    forced_dark_canvas: Boolean = false,
     dyslexia_font: Boolean,
     translate_mode: String,
     email_font_id: String? = null,
@@ -188,12 +187,7 @@ html,body{background-color:#ffffff!important}
     val detail_color = if (simple_dark) "#9ca3af" else "#6b7280"
 
     val forced_dark_css = if (force_dark_emails) {
-        forced_dark_mode_css(
-            link_hex,
-            "#4b5563",
-            "#9ca3af",
-            if (forced_dark_canvas) FORCED_DARK_CANVAS else "transparent",
-        )
+        forced_dark_mode_css(link_hex, "#4b5563", "#9ca3af")
     } else {
         ""
     }

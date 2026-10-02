@@ -1888,7 +1888,7 @@
     <string name="show_alias_indicators_subtitle">Takma adlarınızdan birine gelen mesajları işaretler</string>
     <string name="show_message_size_subtitle">Gelen kutusu listesinde her e-postanın boyutunu göster</string>
     <string name="force_dark_emails">E-postalarda koyu modu zorla</string>
-    <string name="force_dark_emails_subtitle">E-posta içeriğini her zaman koyu modda göster</string>
+    <string name="force_dark_emails_subtitle">Aster koyu temadayken e-posta içeriğini karanlık modda göster, orijinal stili geçersiz kılarak</string>
     <string name="section_composing_replies">Yazma ve yanıtlar</string>
     <string name="enable_undo_send">Göndermeyi geri almayı etkinleştir</string>
     <string name="enable_undo_send_subtitle">Gönderimi geciktirir, böylece vazgeçebilirsiniz</string>

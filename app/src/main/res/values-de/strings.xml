@@ -1889,7 +1889,7 @@
     <string name="show_alias_indicators_subtitle">Nachrichten kennzeichnen, die über einen Ihrer Aliasse eingegangen sind</string>
     <string name="show_message_size_subtitle">Die Größe jeder E-Mail in der Posteingangsliste anzeigen</string>
     <string name="force_dark_emails">Dunkelmodus für E-Mails erzwingen</string>
-    <string name="force_dark_emails_subtitle">E-Mail-Inhalte immer im Dunkelmodus darstellen</string>
+    <string name="force_dark_emails_subtitle">E-Mail-Inhalte im Dunkelmodus rendern, solange Aster das dunkle Design nutzt, und das ursprüngliche Styling der E-Mail überschreiben</string>
     <string name="section_composing_replies">Verfassen &amp; Antworten</string>
     <string name="enable_undo_send">Senden rückgängig machen aktivieren</string>
     <string name="enable_undo_send_subtitle">Verzögert das Senden, damit Sie es noch abbrechen können</string>

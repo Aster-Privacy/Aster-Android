@@ -1904,7 +1904,7 @@
     <string name="show_alias_indicators_subtitle">وضع علامة على الرسائل التي وصلت عبر أحد أسمائك المستعارة</string>
     <string name="show_message_size_subtitle">عرض حجم كل رسالة في قائمة صندوق الوارد</string>
     <string name="force_dark_emails">فرض الوضع الداكن على الرسائل</string>
-    <string name="force_dark_emails_subtitle">عرض محتوى الرسائل دائمًا بالوضع الداكن</string>
+    <string name="force_dark_emails_subtitle">عرض محتوى البريد الإلكتروني في الوضع الداكن عندما يستخدم Aster السمة الداكنة، متجاوزًا التنسيق الأصلي</string>
     <string name="section_composing_replies">الكتابة والردود</string>
     <string name="enable_undo_send">تفعيل التراجع عن الإرسال</string>
     <string name="enable_undo_send_subtitle">تأخير الإرسال لتتمكن من التراجع عند الحاجة</string>
