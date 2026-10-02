@@ -22,9 +22,11 @@
 package org.astermail.android.ui.mail
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import org.astermail.android.design.AsterColorThemes
 import org.astermail.android.design.ColorThemeId
 import org.astermail.android.design.MaterialThemeGenerator
+import org.astermail.android.design.contrast_ratio
 import org.astermail.android.design.dark_semantic_colors
 import org.astermail.android.design.light_semantic_colors
 import org.junit.Assert.assertEquals
@@ -257,5 +259,44 @@ class EmailDarkModeTest {
             assertTrue(email_theme_is_dark(glass))
             assertTrue(forces_dark_emails(true, email_theme_is_dark(glass)))
         }
+    }
+
+    private fun glass_colors(opacity: Float) = dark_semantic_colors.copy(
+        bg_primary = Color(0xFF1E2C45),
+        bg_secondary = Color(0xFF243249),
+        bg_card = Color(0xFF26344B),
+        thread_content_bg = Color(0xFF1E2C45),
+        is_glass = true,
+        glass_opacity = opacity,
+    )
+
+    private fun body_surface_over_bright_backdrop(colors: org.astermail.android.design.AsterSemanticColors, card: Color): Color {
+        val veiled = colors.bg_primary.copy(alpha = 0.34f).compositeOver(Color.White)
+        val carded = card.compositeOver(veiled)
+        return email_glass_backing(colors, white_page = false).compositeOver(carded)
+    }
+
+    @Test
+    fun translucent_glass_gets_a_backing_so_light_email_ink_reads_over_a_bright_backdrop() {
+        for (opacity in listOf(0.2f, 0.38f, 0.62f)) {
+            val colors = glass_colors(opacity)
+            val body = body_surface_over_bright_backdrop(colors, colors.bg_card.copy(alpha = opacity))
+            val quote = body_surface_over_bright_backdrop(colors, colors.bg_secondary.copy(alpha = opacity * 0.82f))
+            val ink = Color(0xFFE5E5E5)
+            assertTrue("body at $opacity", contrast_ratio(ink, body) >= 4.5)
+            assertTrue("quote at $opacity", contrast_ratio(ink, quote) >= 4.5)
+            assertTrue("theme ink at $opacity", contrast_ratio(colors.text_primary, body) >= 4.5)
+        }
+    }
+
+    @Test
+    fun solid_themes_and_white_pages_keep_a_transparent_email_surface() {
+        assertEquals(Color.Transparent, email_glass_backing(light_semantic_colors, white_page = false))
+        assertEquals(Color.Transparent, email_glass_backing(dark_semantic_colors, white_page = false))
+        val purple = AsterColorThemes.semantic_colors_for(true, AsterColorThemes.palette_for(ColorThemeId.purple))
+        assertEquals(Color.Transparent, email_glass_backing(purple, white_page = false))
+        assertEquals(Color.Transparent, email_glass_backing(glass_colors(1f), white_page = false))
+        assertEquals(Color.Transparent, email_glass_backing(glass_colors(0.9f), white_page = false))
+        assertEquals(Color.Transparent, email_glass_backing(glass_colors(0.2f), white_page = true))
     }
 }

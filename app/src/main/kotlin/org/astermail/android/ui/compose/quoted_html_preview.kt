@@ -23,6 +23,7 @@ package org.astermail.android.ui.compose
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -43,6 +44,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.ui.mail.BlockedImageLabels
@@ -52,6 +54,8 @@ import org.astermail.android.ui.mail.build_email_html
 import org.astermail.android.ui.mail.configure_mail_body_web_view
 import org.astermail.android.ui.mail.proxy_external_urls
 import org.astermail.android.ui.mail.resolve_inline_cids
+
+internal val quoted_preview_card_shape = SquircleShape(16.dp)
 
 private const val quoted_preview_min_height_dp = 64
 
@@ -237,6 +241,13 @@ internal fun quoted_html_preview(html: String, modifier: Modifier = Modifier) {
         },
         modifier = modifier
             .fillMaxWidth()
-            .height(if (reduce_motion) target_height_dp.dp else animated_height),
+            .height(if (reduce_motion) target_height_dp.dp else animated_height)
+            .background(
+                org.astermail.android.ui.mail.email_glass_backing(
+                    colors,
+                    white_page = document?.contains("data-white=\"1\"") == true,
+                ),
+                quoted_preview_card_shape,
+            ),
     )
 }
