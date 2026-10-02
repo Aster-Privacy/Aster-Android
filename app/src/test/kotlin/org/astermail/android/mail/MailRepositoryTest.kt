@@ -2544,4 +2544,42 @@ class MailRepositoryTest {
         assertTrue(result.isFailure)
         coVerify(exactly = 0) { scheduled_api.reschedule(any(), any()) }
     }
+
+    @Test
+    fun `run_pending_send stops when an external recipient key changed while queued`() = runTest {
+        pending_send_dao.upsert(pending_row("pend_key", draft_id = "draft_key", to = "friend@example.com"))
+        coEvery { keys_api.discover_external_keys_batch(any()) } returns listOf(
+            org.astermail.android.api.keys.ExternalKeyInfo(
+                email = "friend@example.com",
+                found = true,
+                fingerprint_change = org.astermail.android.api.keys.ExternalKeyFingerprintChange(
+                    prior_fingerprint = "aa",
+                    new_fingerprint = "bb",
+                ),
+            ),
+        )
+
+        val outcome = repo.run_pending_send("pend_key")
+
+        assertEquals(PendingSendOutcome.FAILED, outcome)
+        assertEquals("failed", pending_send_dao.get_by_id("pend_key")?.status)
+        coVerify(exactly = 0) { send_api.send_external(any()) }
+        coVerify(exactly = 0) { mail_api.delete_draft(any()) }
+    }
+
+    @Test
+    fun `run_pending_send delivers an external send when no key changed`() = runTest {
+        pending_send_dao.upsert(pending_row("pend_ok", draft_id = "draft_ok", to = "friend@example.com"))
+        coEvery { keys_api.discover_external_keys_batch(any()) } returns listOf(
+            org.astermail.android.api.keys.ExternalKeyInfo(email = "friend@example.com", found = true),
+        )
+        coEvery { send_api.send_external(any()) } returns
+            org.astermail.android.api.send.ExternalSendResponse(success = true, mail_item_id = "m_ok")
+        coEvery { mail_api.delete_draft(any()) } returns DeleteResponse(success = true, deleted_count = 1)
+
+        val outcome = repo.run_pending_send("pend_ok")
+
+        assertEquals(PendingSendOutcome.SENT, outcome)
+        coVerify(exactly = 1) { send_api.send_external(any()) }
+    }
 }

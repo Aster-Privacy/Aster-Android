@@ -1131,6 +1131,20 @@ class MailRepository @Inject constructor(
             _draft_changes.tryEmit(Unit)
             return PendingSendOutcome.FAILED
         }
+        val all_recipients = recipients.first + recipients.second + recipients.third
+        if (all_recipients.any { !is_internal_recipient(it) } &&
+            replay_blocked_by_key_change(all_recipients, find_external_key_fingerprint_changes(all_recipients))
+        ) {
+            _send_problem.value = true
+            _send_result_events.tryEmit(
+                Result.failure(IllegalStateException(context.getString(R.string.send_key_changed_while_waiting))),
+            )
+            mark_send_failed(pending_id, SendFailureReason.IDENTITY_CHANGED)
+            refresh_failed_send_count()
+            preserve_failed_send_draft(pending_id, row, recipients, attachments)
+            _draft_changes.tryEmit(Unit)
+            return PendingSendOutcome.FAILED
+        }
         val result = send_email(
             to = recipients.first,
             cc = recipients.second,
