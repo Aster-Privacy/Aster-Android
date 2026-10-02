@@ -928,6 +928,58 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `client send id is the pending id only when it is a uuid`() {
+        assertEquals(
+            "7d4f2c1a-9b3e-4f6a-8c2d-1e5b7a9c3f80",
+            client_send_id_for("7d4f2c1a-9b3e-4f6a-8c2d-1e5b7a9c3f80"),
+        )
+        assertEquals(null, client_send_id_for("pend_1"))
+        assertEquals(null, client_send_id_for("1-1-1-1-1"))
+    }
+
+    @Test
+    fun `send_email passes the client send id to an internal send`() = runTest {
+        coEvery { send_api.send_simple(any()) } returns
+            SimpleSendResponse(success = true, message = "ok", mail_item_id = "sent_1")
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+
+        repo.send_email(
+            to = listOf("recipient@astermail.org"),
+            subject = "Test",
+            body_html = "<p>Hello</p>",
+            client_send_id = "7d4f2c1a-9b3e-4f6a-8c2d-1e5b7a9c3f80",
+        )
+
+        val request = slot<org.astermail.android.api.send.SimpleSendRequest>()
+        coVerify(exactly = 1) { send_api.send_simple(capture(request)) }
+        assertEquals("7d4f2c1a-9b3e-4f6a-8c2d-1e5b7a9c3f80", request.captured.client_send_id)
+    }
+
+    @Test
+    fun `send_email passes the client send id to an external send`() = runTest {
+        coEvery { labels_api.list_labels(include_counts = false) } returns
+            org.astermail.android.api.labels.LabelsListResponse(labels = emptyList())
+        coEvery { system_folder_bootstrap.ensure_system_folders() } returns mapOf("sent" to "healed_sent_token")
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+        coEvery { send_api.send_external(any()) } returns
+            org.astermail.android.api.send.ExternalSendResponse(success = true, mail_item_id = "m1")
+
+        repo.send_email(
+            to = listOf("someone@example.com"),
+            subject = "Test",
+            body_html = "<p>Hello</p>",
+            client_send_id = "7d4f2c1a-9b3e-4f6a-8c2d-1e5b7a9c3f80",
+        )
+
+        val request = slot<org.astermail.android.api.send.ExternalSendRequest>()
+        coVerify(exactly = 1) { send_api.send_external(capture(request)) }
+        assertEquals("7d4f2c1a-9b3e-4f6a-8c2d-1e5b7a9c3f80", request.captured.client_send_id)
+    }
+
+    @Test
     fun `send_email refuses to relay when the sent folder cannot be resolved`() = runTest {
         coEvery { labels_api.list_labels(include_counts = false) } throws RuntimeException("network error")
         every { session_key_store.has_ratchet_keys() } returns true

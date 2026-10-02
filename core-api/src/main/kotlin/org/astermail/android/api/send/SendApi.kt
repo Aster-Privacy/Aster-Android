@@ -42,6 +42,7 @@ import org.astermail.android.api.ApiError
 
 @Serializable
 data class SimpleSendRequest(
+    val client_send_id: String? = null,
     val to: List<String>,
     val cc: List<String> = emptyList(),
     val bcc: List<String> = emptyList(),
@@ -84,6 +85,7 @@ data class SimpleSendResponse(
 
 @Serializable
 data class ExternalSendRequest(
+    val client_send_id: String? = null,
     val encrypted_recipients: String,
     val encrypted_subject: String,
     val encrypted_body: String,
