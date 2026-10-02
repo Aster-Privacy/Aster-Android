@@ -757,6 +757,8 @@ fun MailDetailScreen(
     var hidden_group_revealed by remember(email_id) { mutableStateOf(false) }
     var allow_external_ids by remember(email_id) { mutableStateOf(emptySet<String>()) }
     var dismissed_unsub_ids by remember(email_id) { mutableStateOf(emptySet<String>()) }
+    val unsubscribed_tokens by subscriptions_vm.unsubscribed_tokens.collectAsStateWithLifecycle()
+    LaunchedEffect(email_id) { subscriptions_vm.refresh_unsubscribed() }
     var pending_link by remember { mutableStateOf<String?>(null) }
     var lightbox_src by remember { mutableStateOf<String?>(null) }
     var preview_attachment by remember { mutableStateOf<MessageAttachment?>(null) }
@@ -1493,7 +1495,8 @@ fun MailDetailScreen(
                                     settings_vm.save_preferences(base.copy(low_network_mode = false))
                                 }
                             },
-                            show_unsub = msg.id !in dismissed_unsub_ids,
+                            show_unsub = msg.id !in dismissed_unsub_ids &&
+                                subscriptions_vm.sender_token(msg.sender_email) !in unsubscribed_tokens,
                             on_dismiss_unsub = {
                                 dismissed_unsub_ids = dismissed_unsub_ids + msg.id
                             },
@@ -1510,13 +1513,23 @@ fun MailDetailScreen(
                                     val outcome = execute_unsubscribe(info) { request ->
                                         subscriptions_vm.proxy_unsubscribe(request)
                                     }
+                                    val record_unsubscribed = {
+                                        subscriptions_vm.record_unsubscribed(
+                                            msg.sender_email,
+                                            msg.sender_name,
+                                            info.unsubscribe_link,
+                                            info.list_unsubscribe_header,
+                                        )
+                                    }
                                     if (outcome == UnsubscribeOutcome.unsubscribed) {
+                                        record_unsubscribed()
                                         show_toast(context.getString(R.string.toast_unsubscribed))
                                         return@launch
                                     }
                                     val manual_url = get_manual_unsubscribe_url(info)
                                         ?.takeIf { is_safe_unsubscribe_url(it) }
                                     if (manual_url == null) {
+                                        dismissed_unsub_ids = dismissed_unsub_ids - msg.id
                                         show_toast(context.getString(R.string.could_not_unsubscribe))
                                         return@launch
                                     }
@@ -1530,9 +1543,11 @@ fun MailDetailScreen(
                                                     context.startActivity(
                                                         Intent(Intent.ACTION_VIEW, Uri.parse(manual_url)),
                                                     )
+                                                    record_unsubscribed()
                                                 } catch (cancelled: CancellationException) {
                                                     throw cancelled
                                                 } catch (_: Throwable) {
+                                                    dismissed_unsub_ids = dismissed_unsub_ids - msg.id
                                                     show_toast(context.getString(R.string.could_not_unsubscribe))
                                                 }
                                             },
@@ -2035,6 +2050,17 @@ fun MailDetailScreen(
                 confirm_label = stringResource(R.string.open),
                 cancel_label = stringResource(R.string.cancel),
                 on_confirm = open_external_link,
+                secondary_label = stringResource(R.string.copy_link),
+                on_secondary = {
+                    copy_external_link(
+                        link = link,
+                        write_clip = { label, text ->
+                            write_to_clipboard(context, android.content.ClipData.newPlainText(label, text))
+                        },
+                        on_copied = { show_toast(context.getString(R.string.link_copied)) },
+                        on_failed = { show_copy_failed_toast(context) },
+                    )
+                },
                 extra_content = {
                     Text(
                         text = link,
@@ -2563,7 +2589,7 @@ internal fun expanded_message(
             )
         }
 
-        val unsub_info = remember(msg.body_html, msg.body, msg.raw_headers) {
+        val unsub_info = remember(msg.body_html, msg.body, msg.raw_headers, msg.dkim_result) {
             detect_unsubscribe_info(
                 html_content = msg.body_html,
                 text_content = msg.body,
@@ -2573,6 +2599,7 @@ internal fun expanded_message(
                 list_unsubscribe_post = msg.raw_headers.firstOrNull {
                     it.first.equals("list-unsubscribe-post", ignoreCase = true)
                 }?.second,
+                dkim_result = msg.dkim_result,
             )
         }
 
@@ -2680,6 +2707,10 @@ internal fun expanded_message(
             html_rendering_mode = body_settings_state.preferences?.html_rendering_mode,
             low_network = org.astermail.android.network.low_network_active(),
         )
+        val html_part = remember(msg.body_html, msg.body) { renderable_html_part(msg.body_html, msg.body) }
+        val text_part = remember(msg.body_html, msg.body) {
+            msg.body.ifBlank { org.astermail.android.mail.html_to_plain_text(msg.body_html.orEmpty()) }
+        }
         if (msg.is_body_pending) {
             var body_wait_expired by remember(msg.id, retry_in_progress) { mutableStateOf(false) }
             LaunchedEffect(msg.id, retry_in_progress) {
@@ -2715,9 +2746,9 @@ internal fun expanded_message(
                         .testTag("message_body"),
                 )
             }
-        } else if (!plain_text_mode && !msg.body_html.isNullOrBlank() && !msg.is_undecryptable) {
+        } else if (!plain_text_mode && html_part != null && !msg.is_undecryptable) {
             email_html_view(
-                html = msg.body_html,
+                html = html_part,
                 allow_external = allow_external,
                 inline_images = inline_images,
                 access_token = access_token,
@@ -2796,7 +2827,7 @@ internal fun expanded_message(
                     }
                 }
             }
-        } else if (msg.body.isBlank()) {
+        } else if (text_part.isBlank()) {
             LaunchedEffect(Unit) { on_body_ready() }
             Row(
                 modifier = Modifier
@@ -2814,9 +2845,9 @@ internal fun expanded_message(
         } else {
             val e2e_no_key_text = stringResource(R.string.e2e_no_key_description)
             val no_body_text = stringResource(R.string.no_body)
-            val plain_html by produceState(initialValue = "", msg.body, msg.is_encrypted, e2e_no_key_text, no_body_text) {
+            val plain_html by produceState(initialValue = "", text_part, msg.is_encrypted, e2e_no_key_text, no_body_text) {
                 value = withContext(kotlinx.coroutines.Dispatchers.Default) {
-                val body_source = msg.body.ifBlank {
+                val body_source = text_part.ifBlank {
                     if (msg.is_encrypted) {
                         e2e_no_key_text
                     } else {
@@ -4904,13 +4935,19 @@ private suspend fun print_email(
         to = context.getString(R.string.to_label),
         cc = context.getString(R.string.cc),
         date = context.getString(R.string.date),
-        image_blocked = context.getString(R.string.image_blocked_placeholder),
+        image_blocked = context.getString(R.string.image_blocked),
+        tracking_pixel_blocked = context.getString(R.string.tracking_pixel_blocked),
     )
     val job_name = print_job_name(subject, context.getString(R.string.aster_email))
     val failure_message = context.getString(R.string.print_failed)
     val html = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
         runCatching {
-            val body = build_email_print_body(msg, allow_external, sanitize_options, labels.image_blocked)
+            val body = build_email_print_body(
+                msg,
+                allow_external,
+                sanitize_options,
+                BlockedImageLabels(labels.image_blocked, labels.tracking_pixel_blocked),
+            )
             build_email_print_html(msg, subject, msg.timestamp.format_full_datetime(), labels, body)
         }.getOrNull()
     }
@@ -5049,6 +5086,15 @@ private fun info_banner(
 
 private val safe_external_schemes = setOf("http", "https", "mailto", "tel")
 private val safe_unsubscribe_schemes = setOf("https", "mailto")
+
+internal fun copy_external_link(
+    link: String,
+    write_clip: (label: String, text: String) -> Boolean,
+    on_copied: () -> Unit,
+    on_failed: () -> Unit,
+) {
+    if (write_clip("link", link)) on_copied() else on_failed()
+}
 
 private fun is_safe_external_url(url: String): Boolean {
     val scheme = runCatching { Uri.parse(url).scheme?.lowercase() }.getOrNull() ?: return false
@@ -5386,6 +5432,8 @@ private sealed interface TranslationBannerState {
     object Translating : TranslationBannerState
     data class Translated(val language: String) : TranslationBannerState
     object Failed : TranslationBannerState
+    object WifiRequired : TranslationBannerState
+    object WebViewOutdated : TranslationBannerState
 }
 
 @Composable
@@ -5394,6 +5442,7 @@ private fun translation_banner(
     on_translate: (String) -> Unit,
     on_show_original: () -> Unit,
     on_dismiss: () -> Unit,
+    on_update_webview: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     if (state is TranslationBannerState.Hidden) return
@@ -5469,6 +5518,47 @@ private fun translation_banner(
                         .padding(horizontal = 6.dp, vertical = 2.dp),
                 )
             }
+            is TranslationBannerState.WifiRequired -> {
+                Text(
+                    text = stringResource(R.string.translation_wifi_required),
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Icon(
+                    imageVector = TablerIcons.X,
+                    contentDescription = null,
+                    tint = colors.text_tertiary,
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clickable { on_dismiss() },
+                )
+            }
+            is TranslationBannerState.WebViewOutdated -> {
+                Text(
+                    text = stringResource(R.string.translation_webview_outdated),
+                    color = colors.text_primary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = stringResource(R.string.translation_webview_update),
+                    color = colors.accent_blue,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clickable { on_update_webview() }
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                )
+                Icon(
+                    imageVector = TablerIcons.X,
+                    contentDescription = null,
+                    tint = colors.text_tertiary,
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clickable { on_dismiss() },
+                )
+            }
             is TranslationBannerState.Failed -> {
                 Text(
                     text = stringResource(R.string.translation_failed),
@@ -5506,19 +5596,16 @@ internal fun email_html_view(
     val settings_vm: SettingsViewModel = shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val theme_dark = !force_light && if (colors.is_glass) colors.is_dark else colors.bg_primary.luminance() < colors.text_primary.luminance()
-    val force_dark_emails = !force_light && settings_state.preferences?.force_dark_emails == true
-    val is_dark = theme_dark || force_dark_emails
-    val forced_dark_canvas = force_dark_emails && !theme_dark
+    val force_dark_emails = forces_dark_emails(settings_state.preferences?.force_dark_emails == true, theme_dark)
+    val is_dark = theme_dark
     val body_surface = if (colors.is_glass) colors.thread_content_bg else colors.bg_primary
     val bg_hex = when {
         force_light -> "#FFFFFF"
-        forced_dark_canvas -> FORCED_DARK_CANVAS
         colors.is_glass -> "transparent"
         else -> String.format(java.util.Locale.US, "#%06X", body_surface.toArgb() and 0xFFFFFF)
     }
     val fg_hex = when {
         force_light -> "#111827"
-        forced_dark_canvas -> FORCED_DARK_INK
         else -> String.format(java.util.Locale.US, "#%06X", colors.text_primary.toArgb() and 0xFFFFFF)
     }
     val link_hex = String.format(java.util.Locale.US, "#%06X", colors.accent_blue.toArgb() and 0xFFFFFF)
@@ -5531,7 +5618,10 @@ internal fun email_html_view(
         else -> 100
     }
     val forwarded_label = stringResource(R.string.forwarded_message_label)
-    val image_blocked_label = stringResource(R.string.image_blocked_placeholder)
+    val blocked_image_labels = BlockedImageLabels(
+        image = stringResource(R.string.image_blocked),
+        tracking_pixel = stringResource(R.string.tracking_pixel_blocked),
+    )
     val image_failed_label = stringResource(R.string.image_failed_placeholder)
     val tracking_protection_on = settings_state.preferences?.block_external_content != false
     val sanitize_options = EmailHtmlSanitizer.SanitizeOptions(
@@ -5586,9 +5676,11 @@ internal fun email_html_view(
     val source_body_ref = remember(html) { arrayOfNulls<String>(1) }
     var translated_body by remember(html) { mutableStateOf<String?>(null) }
     val translation_scope = androidx.compose.runtime.rememberCoroutineScope()
+    val translation_from_ref = remember { arrayOfNulls<String>(1) }
 
     fun run_translation(from: String) {
         val source = source_body_ref[0] ?: return
+        translation_from_ref[0] = from
         translation_scope.launch {
             val segments = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
                 extract_translatable_segments(source)
@@ -5601,6 +5693,17 @@ internal fun email_html_view(
             }
             set_translation_state[0]?.invoke(TranslationBannerState.Translating)
             engine.translate(segments, from, translate_target_ref[0])
+        }
+    }
+
+    fun start_translation(from: String) {
+        val to = translate_target_ref[0]
+        when {
+            !org.astermail.android.translation.TranslationRuntime.webview_supported(translate_context) ->
+                set_translation_state[0]?.invoke(TranslationBannerState.WebViewOutdated)
+            TranslationDownloadPolicy.route_download_blocked(translate_context, from, to) ->
+                set_translation_state[0]?.invoke(TranslationBannerState.WifiRequired)
+            else -> run_translation(from)
         }
     }
 
@@ -5621,8 +5724,10 @@ internal fun email_html_view(
             language,
             translate_target_ref[0],
         )
-        if (mode == "always" && granted) {
-            run_translation(language)
+        if (!org.astermail.android.translation.TranslationRuntime.webview_supported(translate_context)) {
+            set_translation_state[0]?.invoke(TranslationBannerState.WebViewOutdated)
+        } else if (mode == "always" && granted) {
+            start_translation(language)
         } else {
             set_translation_state[0]?.invoke(TranslationBannerState.Offer(language, !granted))
         }
@@ -5635,7 +5740,12 @@ internal fun email_html_view(
         when (state) {
             "translating" -> apply_state?.invoke(TranslationBannerState.Translating)
             "translated" -> apply_state?.invoke(TranslationBannerState.Translated(from ?: ""))
-            "error" -> apply_state?.invoke(TranslationBannerState.Failed)
+            "error" -> {
+                val failed_from = translation_from_ref[0]
+                val blocked = failed_from != null &&
+                    TranslationDownloadPolicy.route_download_blocked(translate_context, failed_from, translate_target_ref[0])
+                apply_state?.invoke(if (blocked) TranslationBannerState.WifiRequired else TranslationBannerState.Failed)
+            }
             else -> Unit
         }
     }
@@ -5726,7 +5836,6 @@ internal fun email_html_view(
         forwarded_label = forwarded_label,
         image_failed_label = image_failed_label,
         force_dark_emails = force_dark_emails,
-        forced_dark_canvas = forced_dark_canvas,
         dyslexia_font = dyslexia_font,
         translate_mode = translate_mode,
         email_font_id = email_font_id,
@@ -5816,7 +5925,7 @@ internal fun email_html_view(
     fun proxy_html(raw: String): String {
         val cid_normalized = resolve_inline_cids(raw, inline_images)
         if (!allow_external) {
-            val imgs_blocked = EmailHtmlSanitizer.replace_blocked_images(cid_normalized, image_blocked_label)
+            val imgs_blocked = EmailHtmlSanitizer.replace_blocked_images(cid_normalized, blocked_image_labels)
             return EmailHtmlSanitizer.neutralize_blocked_backgrounds(imgs_blocked)
         }
         return proxy_external_urls(cid_normalized, proxy_base)
@@ -6286,10 +6395,11 @@ internal fun email_html_view(
         state = translation_state,
         on_translate = { lang ->
             TranslationDownloadPolicy.grant_route_consent(translate_context, lang, translate_target)
-            run_translation(lang)
+            start_translation(lang)
         },
         on_show_original = { show_original() },
         on_dismiss = { translation_state = TranslationBannerState.Hidden },
+        on_update_webview = { org.astermail.android.translation.TranslationRuntime.open_webview_update(translate_context) },
       )
       val body_ready_now = html.isNotEmpty() && has_measured && height_settled && page_painted.value
       LaunchedEffect(body_ready_now) {

@@ -590,6 +590,18 @@ private fun AsterNavHost() {
         }
     }
 
+    val forced_switch_settings_vm = org.astermail.android.settings.shared_settings_view_model()
+    androidx.compose.runtime.LaunchedEffect(auth_gate) {
+        auth_gate.forced_account_switch.collect {
+            forced_switch_settings_vm.reset_for_account_switch()
+            forced_switch_settings_vm.load_preferences()
+            forced_switch_settings_vm.load_signature()
+            nav_controller.navigate(routes.inbox) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+
     val lifecycle_owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     androidx.compose.runtime.DisposableEffect(lifecycle_owner) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
@@ -2071,7 +2083,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     }
 
     val api_aliases = settings_state.aliases
-        .filter { !looks_encrypted(it.encrypted_local_part) }
+        .filter { it.is_enabled && !looks_encrypted(it.encrypted_local_part) }
         .map { alias ->
             drawer_alias_item(
                 id = alias.id,
@@ -2079,7 +2091,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 routing_token = alias.alias_address_hash.ifBlank { null },
             )
         } + settings_state.custom_domain_addresses
-        .filter { !looks_encrypted(it.encrypted_local_part) }
+        .filter { it.is_enabled && !looks_encrypted(it.encrypted_local_part) }
         .map { addr ->
             drawer_alias_item(
                 id = addr.id,

@@ -249,4 +249,96 @@ class EmailBodyNativeTest {
 
         assertTrue(prepared.contains("aster-quoted-wrapper"))
     }
+
+    @Test
+    fun a_message_that_is_only_a_forward_wrapper_stays_visible() {
+        val prepared = prepare("<div class=\"protonmail_quote\"><p>Hi there, a clan is a group.</p></div>")
+
+        assertFalse(prepared.contains("<details"))
+        assertTrue(prepared.contains("<div class=\"aster-quoted-content aster-quoted-solo\"><div class=\"protonmail_quote\">"))
+    }
+
+    @Test
+    fun a_quote_class_on_another_tag_stays_visible() {
+        val prepared = prepare("<table class=\"gmail_quote\"><tbody><tr><td>Hi there</td></tr></tbody></table>")
+
+        assertTrue(prepared.contains("aster-quoted-solo\"><table class=\"gmail_quote\""))
+    }
+
+    @Test
+    fun a_second_quote_block_outside_the_disclosure_stays_visible() {
+        val prepared = prepare(
+            "<p>Reply text</p><div class=\"gmail_quote\">First</div>" +
+                "<p>More text</p><div class=\"gmail_quote\">Second</div>",
+        )
+
+        assertTrue(prepared.contains("aster-quoted-wrapper"))
+        assertTrue(prepared.contains("aster-quoted-solo\"><div class=\"gmail_quote\">Second"))
+    }
+
+    @Test
+    fun content_hidden_by_its_own_inline_style_is_shown() {
+        val prepared = prepare("<div style=\"display:none;color:red\"><p>Hi there</p></div>")
+
+        assertFalse(prepared.contains("display:none"))
+        assertTrue(prepared.contains("color:red"))
+    }
+
+    @Test
+    fun a_hidden_preheader_stays_hidden_when_other_text_is_visible() {
+        val prepared = prepare("<div style=\"display:none\">Preview</div><p>Visible body</p>")
+
+        assertTrue(prepared.contains("display:none"))
+    }
+
+    @Test
+    fun partial_opacity_is_not_treated_as_hidden() {
+        val prepared = prepare("<div style=\"opacity:0.5\"><p>Hi there</p></div>")
+
+        assertTrue(prepared.contains("opacity:0.5"))
+    }
+
+    @Test
+    fun content_hidden_by_a_style_sheet_rule_is_shown() {
+        val prepared = prepare(
+            "<style>.wrap{display:none}</style><div class=\"wrap\"><p>Hi there</p></div>",
+        )
+
+        assertTrue(prepared.contains("class=\"wrap\" style=\"display:revert !important"))
+    }
+
+    @Test
+    fun a_style_sheet_hidden_block_stays_hidden_when_other_text_is_visible() {
+        val prepared = prepare(
+            "<style>.mobile{display:none}</style><div class=\"mobile\">Small</div><p>Visible body</p>",
+        )
+
+        assertFalse(prepared.contains("display:revert"))
+    }
+
+    @Test
+    fun rules_inside_media_queries_are_ignored() {
+        val prepared = prepare(
+            "<style>@media (max-width:1px){.wrap{display:none}}</style><div class=\"wrap\">Hi there</div>",
+        )
+
+        assertFalse(prepared.contains("display:revert"))
+    }
+
+    @Test
+    fun an_html_part_with_nothing_to_show_yields_to_the_text_part() {
+        assertNull(renderable_html_part("<html><body><div><br></div></body></html>", "Hi there"))
+        assertNull(renderable_html_part("<img src=\"https://a.test/p.gif\" width=\"1\" height=\"1\">", "Hi there"))
+        assertNull(renderable_html_part("", "Hi there"))
+    }
+
+    @Test
+    fun an_html_part_with_content_is_kept() {
+        assertEquals("<p>Hello</p>", renderable_html_part("<p>Hello</p>", "Hi there"))
+        assertEquals("<div></div>", renderable_html_part("<div></div>", ""))
+        assertEquals(
+            "<img src=\"https://a.test/b.png\" width=\"600\">",
+            renderable_html_part("<img src=\"https://a.test/b.png\" width=\"600\">", "Hi there"),
+        )
+    }
 }

@@ -42,6 +42,7 @@ import org.astermail.android.api.ApiError
 
 @Serializable
 data class SimpleSendRequest(
+    val client_send_id: String? = null,
     val to: List<String>,
     val cc: List<String> = emptyList(),
     val bcc: List<String> = emptyList(),
@@ -61,6 +62,7 @@ data class SimpleSendRequest(
     val attachments: List<SendAttachmentPayload> = emptyList(),
     val forward_original_mail_id: String? = null,
     val suppress_branding: Boolean? = null,
+    val recipient_bodies: Map<String, String>? = null,
 )
 
 @Serializable
@@ -70,6 +72,7 @@ data class SendAttachmentPayload(
     val sender_encrypted_meta: String,
     val sender_meta_nonce: String,
     val recipient_encrypted_meta: String? = null,
+    val recipient_metas: Map<String, String>? = null,
     val size_bytes: Long,
 )
 
@@ -82,6 +85,7 @@ data class SimpleSendResponse(
 
 @Serializable
 data class ExternalSendRequest(
+    val client_send_id: String? = null,
     val encrypted_recipients: String,
     val encrypted_subject: String,
     val encrypted_body: String,

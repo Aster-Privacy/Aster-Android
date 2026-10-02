@@ -2053,7 +2053,7 @@
     <string name="show_sender_pictures_subtitle">Show a photo or initials for each sender in your inbox</string>
     <string name="show_message_size_subtitle">Display the size of each email in the inbox list</string>
     <string name="force_dark_emails">Force dark mode for emails</string>
-    <string name="force_dark_emails_subtitle">Always render email content in dark mode</string>
+    <string name="force_dark_emails_subtitle">Render email content in dark mode while Aster uses the dark theme, overriding the email\'s original styling</string>
     <string name="section_composing_replies">Composing &amp; Replies</string>
     <string name="enable_undo_send">Enable undo send</string>
     <string name="enable_undo_send_subtitle">Delay sending so you can undo if needed</string>
@@ -2473,7 +2473,8 @@
     <string name="pending_deletion_sign_out">Sign Out</string>
     <string name="pending_deletion_restoring">Restoring…</string>
     <string name="pending_deletion_error">Could not restore your account. Please try again.</string>
-    <string name="image_blocked_placeholder">[Image blocked]</string>
+    <string name="image_blocked">Image blocked</string>
+    <string name="tracking_pixel_blocked">Tracking pixel blocked</string>
     <string name="image_failed_placeholder">[Image could not be loaded]</string>
     <string name="image_lightbox_title">Image preview</string>
     <string name="image_lightbox_failed">This image could not be opened.</string>
@@ -2515,6 +2516,10 @@
     <string name="translation_translated">Translated from %1$s on your device</string>
     <string name="translation_show_original">Show original</string>
     <string name="translation_failed">Translation failed</string>
+    <string name="translation_wifi_required">To download this language pack, connect to Wi-Fi or turn off Download over Wi-Fi only in Settings.</string>
+    <string name="translation_webview_outdated">To translate mail, update Android System WebView.</string>
+    <string name="translation_webview_update">Update</string>
+    <string name="translate_webview_outdated_notice">Translation needs a newer version of Android System WebView. To translate mail on this device, update Android System WebView from Google Play.</string>
     <string name="mail_rules_regex_empty">A regex pattern is needed before saving.</string>
     <string name="mail_rules_regex_too_long">This regex is too long. A trimmed version will work.</string>
     <string name="mail_rules_regex_invalid">This regex pattern has a typo. Checking the syntax usually sorts it.</string>

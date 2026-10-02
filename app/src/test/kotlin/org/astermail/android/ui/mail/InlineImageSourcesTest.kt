@@ -207,7 +207,7 @@ class InlineImageSourcesTest {
     fun inline_sources_survive_the_remote_image_blocker_and_the_proxy_rewriter() {
         val src = InlineImageStore.url_for("deadbeef")
         val html = """<img src="$src"><img src="https://cdn.example/banner.png" width="600" height="200">"""
-        val blocked = EmailHtmlSanitizer.replace_blocked_images(html, "blocked")
+        val blocked = EmailHtmlSanitizer.replace_blocked_images(html)
         assertTrue("inline images must never be blocked as remote", blocked.contains(src))
         assertTrue(blocked.contains("blocked-image"))
         val proxied = proxy_external_urls(html, "https://app.astermail.org/api/images/v1/proxy?url=")

@@ -101,6 +101,20 @@ object PrekeyBindingVerifier {
         return PrekeyBindingResult.VERIFIED
     }
 
+    fun owner_fingerprint(armored_public_key: String?): String? {
+        if (armored_public_key.isNullOrBlank()) return null
+        return runCatching {
+            val collection = PGPPublicKeyRingCollection(
+                PGPUtil.getDecoderStream(
+                    ByteArrayInputStream(armored_public_key.toByteArray(Charsets.UTF_8)),
+                ),
+                BcKeyFingerprintCalculator(),
+            )
+            val ring = collection.keyRings.asSequence().firstOrNull() ?: return@runCatching null
+            ring.publicKey.fingerprint.joinToString("") { "%02X".format(it) }
+        }.getOrNull()?.takeIf { it.isNotEmpty() }
+    }
+
     private fun same_key(signed_b64: String, published_b64: String): Boolean {
         if (signed_b64 == published_b64) return true
         val signed = decode_b64(signed_b64) ?: return false

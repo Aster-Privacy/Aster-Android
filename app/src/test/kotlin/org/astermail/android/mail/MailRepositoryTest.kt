@@ -928,6 +928,58 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `client send id is the pending id only when it is a uuid`() {
+        assertEquals(
+            "7d4f2c1a-9b3e-4f6a-8c2d-1e5b7a9c3f80",
+            client_send_id_for("7d4f2c1a-9b3e-4f6a-8c2d-1e5b7a9c3f80"),
+        )
+        assertEquals(null, client_send_id_for("pend_1"))
+        assertEquals(null, client_send_id_for("1-1-1-1-1"))
+    }
+
+    @Test
+    fun `send_email passes the client send id to an internal send`() = runTest {
+        coEvery { send_api.send_simple(any()) } returns
+            SimpleSendResponse(success = true, message = "ok", mail_item_id = "sent_1")
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+
+        repo.send_email(
+            to = listOf("recipient@astermail.org"),
+            subject = "Test",
+            body_html = "<p>Hello</p>",
+            client_send_id = "7d4f2c1a-9b3e-4f6a-8c2d-1e5b7a9c3f80",
+        )
+
+        val request = slot<org.astermail.android.api.send.SimpleSendRequest>()
+        coVerify(exactly = 1) { send_api.send_simple(capture(request)) }
+        assertEquals("7d4f2c1a-9b3e-4f6a-8c2d-1e5b7a9c3f80", request.captured.client_send_id)
+    }
+
+    @Test
+    fun `send_email passes the client send id to an external send`() = runTest {
+        coEvery { labels_api.list_labels(include_counts = false) } returns
+            org.astermail.android.api.labels.LabelsListResponse(labels = emptyList())
+        coEvery { system_folder_bootstrap.ensure_system_folders() } returns mapOf("sent" to "healed_sent_token")
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+        coEvery { send_api.send_external(any()) } returns
+            org.astermail.android.api.send.ExternalSendResponse(success = true, mail_item_id = "m1")
+
+        repo.send_email(
+            to = listOf("someone@example.com"),
+            subject = "Test",
+            body_html = "<p>Hello</p>",
+            client_send_id = "7d4f2c1a-9b3e-4f6a-8c2d-1e5b7a9c3f80",
+        )
+
+        val request = slot<org.astermail.android.api.send.ExternalSendRequest>()
+        coVerify(exactly = 1) { send_api.send_external(capture(request)) }
+        assertEquals("7d4f2c1a-9b3e-4f6a-8c2d-1e5b7a9c3f80", request.captured.client_send_id)
+    }
+
+    @Test
     fun `send_email refuses to relay when the sent folder cannot be resolved`() = runTest {
         coEvery { labels_api.list_labels(include_counts = false) } throws RuntimeException("network error")
         every { session_key_store.has_ratchet_keys() } returns true
@@ -1202,7 +1254,9 @@ class MailRepositoryTest {
     fun `save_draft keeps a single draft when the caller is cancelled mid save`() = runTest {
         every { session_key_store.get_identity_key() } returns "test_identity_key"
         val gate = CompletableDeferred<Unit>()
+        val create_started = CompletableDeferred<Unit>()
         coEvery { mail_api.create_draft(any()) } coAnswers {
+            create_started.complete(Unit)
             gate.await()
             org.astermail.android.api.mail.CreateDraftResponse(id = draft_uuid, version = 1)
         }
@@ -1218,7 +1272,7 @@ class MailRepositoryTest {
                 on_id_assigned = { assigned = it },
             )
         }
-        advanceUntilIdle()
+        await_real { create_started.await() }
         job.cancel()
         gate.complete(Unit)
         advanceUntilIdle()
@@ -1751,24 +1805,26 @@ class MailRepositoryTest {
         coEvery { mail_api.create_draft(any()) } returns
             org.astermail.android.api.mail.CreateDraftResponse(id = "safety_draft_1", success = true)
 
-        repo.persist_and_schedule_undo_send(
-            pending_id = "pend_1",
-            to = listOf("friend@astermail.org"),
-            cc = emptyList(),
-            bcc = emptyList(),
-            subject = "Hi",
-            body_html = "<p>hello</p>",
-            sender_email = "me@astermail.org",
-            sender_display_name = null,
-            thread_token = null,
-            expires_at = null,
-            expiry_password = null,
-            attachments = emptyList(),
-            sender_alias_hash = null,
-            suppress_branding = null,
-            delay_ms = 10_000L,
-            draft_id = null,
-        )
+        await_real {
+            repo.persist_and_schedule_undo_send(
+                pending_id = "pend_1",
+                to = listOf("friend@astermail.org"),
+                cc = emptyList(),
+                bcc = emptyList(),
+                subject = "Hi",
+                body_html = "<p>hello</p>",
+                sender_email = "me@astermail.org",
+                sender_display_name = null,
+                thread_token = null,
+                expires_at = null,
+                expiry_password = null,
+                attachments = emptyList(),
+                sender_alias_hash = null,
+                suppress_branding = null,
+                delay_ms = 10_000L,
+                draft_id = null,
+            )
+        }
 
         val row = pending_send_dao.get_by_id("pend_1")
         assertNotNull(row)
@@ -2067,24 +2123,26 @@ class MailRepositoryTest {
         coEvery { mail_api.create_draft(capture(captured)) } returns
             org.astermail.android.api.mail.CreateDraftResponse(id = "safety_att", success = true)
 
-        repo.persist_and_schedule_undo_send(
-            pending_id = "pend_att",
-            to = listOf("friend@astermail.org"),
-            cc = emptyList(),
-            bcc = emptyList(),
-            subject = "Hi",
-            body_html = "<p>hello</p>",
-            sender_email = "me@astermail.org",
-            sender_display_name = null,
-            thread_token = null,
-            expires_at = null,
-            expiry_password = null,
-            attachments = listOf(attachment_payload()),
-            sender_alias_hash = null,
-            suppress_branding = null,
-            delay_ms = 10_000L,
-            draft_id = null,
-        )
+        await_real {
+            repo.persist_and_schedule_undo_send(
+                pending_id = "pend_att",
+                to = listOf("friend@astermail.org"),
+                cc = emptyList(),
+                bcc = emptyList(),
+                subject = "Hi",
+                body_html = "<p>hello</p>",
+                sender_email = "me@astermail.org",
+                sender_display_name = null,
+                thread_token = null,
+                expires_at = null,
+                expiry_password = null,
+                attachments = listOf(attachment_payload()),
+                sender_alias_hash = null,
+                suppress_branding = null,
+                delay_ms = 10_000L,
+                draft_id = null,
+            )
+        }
 
         assertEquals("safety_att", pending_send_dao.get_by_id("pend_att")?.draft_id)
         assertTrue(captured.captured.has_attachments)
@@ -2383,5 +2441,238 @@ class MailRepositoryTest {
 
         assertEquals(1, page.items.size)
         assertEquals("s1", page.items[0].id)
+    }
+
+    @Test
+    fun `send_email seals hidden bcc separately from the shared copy`() = runTest {
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), match { "hidden@astermail.org" !in it }, any(), any()) } returns "shared_body"
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), listOf("hidden@astermail.org"), any(), any()) } returns "hidden_body"
+        coEvery { send_api.send_simple(any()) } returns
+            SimpleSendResponse(success = true, message = "ok", mail_item_id = "sent_bcc")
+
+        val result = repo.send_email(
+            to = listOf("to@astermail.org"),
+            bcc = listOf("hidden@astermail.org", "TO@astermail.org"),
+            subject = "Hi",
+            body_html = "<p>hello</p>",
+        )
+
+        assertTrue(result.isSuccess)
+        val request = slot<org.astermail.android.api.send.SimpleSendRequest>()
+        coVerify(exactly = 1) { send_api.send_simple(capture(request)) }
+        assertEquals("shared_body", request.captured.body)
+        assertEquals(mapOf("hidden@astermail.org" to "hidden_body"), request.captured.recipient_bodies)
+        coVerify(exactly = 0) {
+            ratchet_encryptor.encrypt_envelope(any(), match { it.size > 1 && "hidden@astermail.org" in it }, any(), any())
+        }
+    }
+
+    @Test
+    fun `send_email sends no private copies without hidden bcc`() = runTest {
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any(), any()) } returns "shared_body"
+        coEvery { send_api.send_simple(any()) } returns
+            SimpleSendResponse(success = true, message = "ok", mail_item_id = "sent_plain")
+
+        repo.send_email(
+            to = listOf("to@astermail.org"),
+            cc = listOf("cc@astermail.org"),
+            subject = "Hi",
+            body_html = "<p>hello</p>",
+        )
+
+        val request = slot<org.astermail.android.api.send.SimpleSendRequest>()
+        coVerify(exactly = 1) { send_api.send_simple(capture(request)) }
+        assertNull(request.captured.recipient_bodies)
+    }
+
+    @Test
+    fun `internal schedule is sealed locally and sends no ephemeral key`() = runTest {
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), match { "hidden@astermail.org" !in it }, any(), any()) } returns "shared_body"
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), listOf("hidden@astermail.org"), any(), any()) } returns "hidden_body"
+        coEvery { scheduled_api.create_scheduled(any()) } returns
+            org.astermail.android.api.scheduled.CreateScheduledResponse(id = "sched_1", success = true)
+        val scheduled_at = java.time.Instant.now().plus(java.time.Duration.ofDays(2)).toString()
+
+        val result = repo.schedule_email(
+            subject = "Later",
+            body_html = "<p>later</p>",
+            sender_email = "me@astermail.org",
+            to = listOf("to@astermail.org"),
+            bcc = listOf("hidden@astermail.org"),
+            scheduled_at = scheduled_at,
+        )
+
+        assertEquals("sched_1", result.getOrThrow())
+        val request = slot<org.astermail.android.api.scheduled.CreateScheduledRequest>()
+        coVerify(exactly = 1) { scheduled_api.create_scheduled(capture(request)) }
+        val sent = request.captured
+        assertNull(sent.ephemeral_key)
+        assertNull(sent.base_nonce)
+        assertEquals(false, sent.is_external)
+        assertEquals(2, sent.recipient_count)
+        val delivery = sent.delivery!!
+        assertEquals("shared_body", delivery.internal_encrypted_body)
+        assertEquals(mapOf("hidden@astermail.org" to "hidden_body"), delivery.recipient_bodies)
+        assertEquals(listOf("hidden@astermail.org"), delivery.bcc)
+        assertTrue(delivery.hosted_recipients.isEmpty())
+
+        val key = java.security.MessageDigest.getInstance("SHA-256")
+            .digest("test_identity_keyastermail-scheduled-v1".toByteArray(Charsets.UTF_8))
+        val envelope_nonce = java.util.Base64.getDecoder().decode(sent.envelope_nonce)
+        val recipients_nonce = java.util.Base64.getDecoder().decode(sent.recipients_nonce)
+        assertFalse(envelope_nonce.contentEquals(recipients_nonce))
+        val envelope = String(
+            org.astermail.android.crypto.AesGcm.decrypt(
+                key,
+                envelope_nonce,
+                java.util.Base64.getDecoder().decode(sent.encrypted_envelope),
+            ),
+            Charsets.UTF_8,
+        )
+        assertTrue(envelope.contains("Later"))
+    }
+
+    @Test
+    fun `external schedule keeps the ephemeral key and sends no delivery`() = runTest {
+        coEvery { scheduled_api.create_scheduled(any()) } returns
+            org.astermail.android.api.scheduled.CreateScheduledResponse(id = "sched_ext", success = true)
+        val scheduled_at = java.time.Instant.now().plus(java.time.Duration.ofDays(1)).toString()
+
+        val result = repo.schedule_email(
+            subject = "Later",
+            body_html = "<p>later</p>",
+            to = listOf("friend@example.com"),
+            scheduled_at = scheduled_at,
+        )
+
+        assertEquals("sched_ext", result.getOrThrow())
+        val request = slot<org.astermail.android.api.scheduled.CreateScheduledRequest>()
+        coVerify(exactly = 1) { scheduled_api.create_scheduled(capture(request)) }
+        assertNotNull(request.captured.ephemeral_key)
+        assertEquals(true, request.captured.is_external)
+        assertNull(request.captured.delivery)
+        coVerify(exactly = 0) { ratchet_encryptor.encrypt_envelope(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `schedule beyond twenty eight days is refused before any request`() = runTest {
+        val scheduled_at = java.time.Instant.now().plus(java.time.Duration.ofDays(29)).toString()
+
+        val result = repo.schedule_email(
+            subject = "Later",
+            body_html = "<p>later</p>",
+            to = listOf("to@astermail.org"),
+            scheduled_at = scheduled_at,
+        )
+
+        assertTrue(result.isFailure)
+        coVerify(exactly = 0) { scheduled_api.create_scheduled(any()) }
+    }
+
+    @Test
+    fun `schedule with mixed recipients is refused before any request`() = runTest {
+        val scheduled_at = java.time.Instant.now().plus(java.time.Duration.ofDays(1)).toString()
+
+        val result = repo.schedule_email(
+            subject = "Later",
+            body_html = "<p>later</p>",
+            to = listOf("to@astermail.org", "friend@example.com"),
+            scheduled_at = scheduled_at,
+        )
+
+        assertTrue(result.exceptionOrNull() is MixedRecipientsException)
+        coVerify(exactly = 0) { scheduled_api.create_scheduled(any()) }
+    }
+
+    @Test
+    fun `reschedule beyond twenty eight days is refused before any request`() = runTest {
+        val scheduled_at = java.time.Instant.now().plus(java.time.Duration.ofDays(30)).toString()
+
+        val result = repo.reschedule_scheduled("sched_1", scheduled_at)
+
+        assertTrue(result.isFailure)
+        coVerify(exactly = 0) { scheduled_api.reschedule(any(), any()) }
+    }
+
+    @Test
+    fun `run_pending_send stops when an external recipient key changed while queued`() = runTest {
+        pending_send_dao.upsert(pending_row("pend_key", draft_id = "draft_key", to = "friend@example.com"))
+        coEvery { keys_api.discover_external_keys_batch(any()) } returns listOf(
+            org.astermail.android.api.keys.ExternalKeyInfo(
+                email = "friend@example.com",
+                found = true,
+                fingerprint_change = org.astermail.android.api.keys.ExternalKeyFingerprintChange(
+                    prior_fingerprint = "aa",
+                    new_fingerprint = "bb",
+                ),
+            ),
+        )
+
+        val outcome = repo.run_pending_send("pend_key")
+
+        assertEquals(PendingSendOutcome.FAILED, outcome)
+        assertEquals("failed", pending_send_dao.get_by_id("pend_key")?.status)
+        coVerify(exactly = 0) { send_api.send_external(any()) }
+        coVerify(exactly = 0) { mail_api.delete_draft(any()) }
+    }
+
+    @Test
+    fun `run_pending_send delivers an external send when no key changed`() = runTest {
+        pending_send_dao.upsert(pending_row("pend_ok", draft_id = "draft_ok", to = "friend@example.com"))
+        coEvery { keys_api.discover_external_keys_batch(any()) } returns listOf(
+            org.astermail.android.api.keys.ExternalKeyInfo(email = "friend@example.com", found = true),
+        )
+        coEvery { send_api.send_external(any()) } returns
+            org.astermail.android.api.send.ExternalSendResponse(success = true, mail_item_id = "m_ok")
+        coEvery { mail_api.delete_draft(any()) } returns DeleteResponse(success = true, deleted_count = 1)
+
+        val outcome = repo.run_pending_send("pend_ok")
+
+        assertEquals(PendingSendOutcome.SENT, outcome)
+        coVerify(exactly = 1) { send_api.send_external(any()) }
+    }
+
+    @Test
+    fun `run_pending_send keeps an external send queued when the key lookup fails`() = runTest {
+        pending_send_dao.upsert(pending_row("pend_net", draft_id = "draft_net", to = "friend@example.com"))
+        coEvery { keys_api.discover_external_keys_batch(any()) } throws java.io.IOException("offline")
+
+        val outcome = repo.run_pending_send("pend_net")
+
+        assertEquals(PendingSendOutcome.RETRY, outcome)
+        assertEquals("pending", pending_send_dao.get_by_id("pend_net")?.status)
+        coVerify(exactly = 0) { send_api.send_external(any()) }
+    }
+
+    @Test
+    fun `run_pending_send defers instead of failing when the key lookup keeps failing`() = runTest {
+        pending_send_dao.upsert(pending_row("pend_net_max", draft_id = "draft_net_max", to = "friend@example.com"))
+        coEvery { keys_api.discover_external_keys_batch(any()) } throws java.io.IOException("offline")
+
+        val outcome = repo.run_pending_send("pend_net_max", attempt = SEND_RETRY_MAX_ATTEMPTS)
+
+        assertEquals(PendingSendOutcome.DEFERRED, outcome)
+        assertEquals("pending", pending_send_dao.get_by_id("pend_net_max")?.status)
+        coVerify(exactly = 0) { send_api.send_external(any()) }
+    }
+
+    @Test
+    fun `run_pending_send refuses a queued external send with a weak message password`() = runTest {
+        pending_send_dao.upsert(
+            pending_row("pend_weak", draft_id = "draft_weak", to = "friend@example.com")
+                .copy(expires_at = "2030-01-01T00:00:00Z", expiry_password = "password"),
+        )
+        coEvery { keys_api.discover_external_keys_batch(any()) } returns listOf(
+            org.astermail.android.api.keys.ExternalKeyInfo(email = "friend@example.com", found = true),
+        )
+
+        val outcome = repo.run_pending_send("pend_weak")
+
+        assertEquals(PendingSendOutcome.FAILED, outcome)
+        assertEquals("failed", pending_send_dao.get_by_id("pend_weak")?.status)
+        coVerify(exactly = 0) { send_api.send_external(any()) }
     }
 }

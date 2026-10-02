@@ -1799,7 +1799,7 @@
     <string name="show_sender_pictures_subtitle">अपने इनबॉक्स में हर प्रेषक की तस्वीर या नाम के पहले अक्षर दिखाएं</string>
     <string name="show_message_size_subtitle">इनबॉक्स सूची में हर ईमेल का आकार दिखाएं</string>
     <string name="force_dark_emails">ईमेल पर डार्क मोड लागू करें</string>
-    <string name="force_dark_emails_subtitle">ईमेल की सामग्री हमेशा डार्क मोड में दिखाएं</string>
+    <string name="force_dark_emails_subtitle">जब Aster डार्क थीम में हो, तब ईमेल की सामग्री डार्क मोड में दिखाएं, चाहे ईमेल की अपनी स्टाइल कुछ भी हो</string>
     <string name="section_composing_replies">लिखना और जवाब देना</string>
     <string name="enable_undo_send">भेजना वापस लेना चालू करें</string>
     <string name="enable_undo_send_subtitle">भेजने में देरी करें, ताकि ज़रूरत पड़ने पर आप इसे पहले जैसा कर सकें</string>
@@ -2188,7 +2188,8 @@
     <string name="pending_deletion_sign_out">साइन आउट करें</string>
     <string name="pending_deletion_restoring">वापस लाया जा रहा है…</string>
     <string name="pending_deletion_error">आपका खाता वापस नहीं लाया जा सका। फिर से कोशिश करें।</string>
-    <string name="image_blocked_placeholder">[तस्वीर रोकी गई]</string>
+    <string name="image_blocked">छवि ब्लॉक की गई</string>
+    <string name="tracking_pixel_blocked">ट्रैकिंग पिक्सल ब्लॉक किया गया</string>
     <string name="image_failed_placeholder">[तस्वीर लोड नहीं हो सकी]</string>
     <string name="image_lightbox_title">तस्वीर की झलक</string>
     <string name="image_lightbox_failed">यह तस्वीर खोली नहीं जा सकी।</string>
@@ -2230,6 +2231,10 @@
     <string name="translation_translated">आपके डिवाइस पर %1$s से अनुवाद किया गया</string>
     <string name="translation_show_original">मूल दिखाएं</string>
     <string name="translation_failed">अनुवाद नहीं हो सका</string>
+    <string name="translation_wifi_required">यह भाषा पैक डाउनलोड करने के लिए, Wi-Fi से कनेक्ट करें या सेटिंग में सिर्फ़ Wi-Fi पर डाउनलोड करें को बंद करें।</string>
+    <string name="translation_webview_outdated">ईमेल का अनुवाद करने के लिए, Android System WebView अपडेट करें।</string>
+    <string name="translation_webview_update">अपडेट करें</string>
+    <string name="translate_webview_outdated_notice">अनुवाद के लिए Android System WebView का नया वर्शन ज़रूरी है। इस डिवाइस पर ईमेल का अनुवाद करने के लिए, Google Play से Android System WebView अपडेट करें।</string>
     <string name="mail_rules_regex_empty">सहेजने से पहले एक regex पैटर्न चाहिए।</string>
     <string name="mail_rules_regex_too_long">यह regex बहुत लंबा है। छोटा किया हुआ रूप काम करेगा।</string>
     <string name="mail_rules_regex_invalid">इस regex पैटर्न में कोई टाइपिंग गलती है। सिंटैक्स जांचने से आमतौर पर बात बन जाती है।</string>

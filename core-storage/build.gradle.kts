@@ -12,7 +12,7 @@ kotlin {
 
 android {
     namespace = "org.astermail.android.storage"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig { minSdk = 26 }
 

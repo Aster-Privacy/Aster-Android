@@ -64,6 +64,7 @@ data class MailingListsState(
 class MailingListsViewModel @Inject constructor(
     private val api: SubscriptionsApi,
     private val scanner: SubscriptionScanner,
+    private val unsubscribed_store: UnsubscribedSendersStore,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -73,12 +74,39 @@ class MailingListsViewModel @Inject constructor(
     private var load_job: Job? = null
     private var scan_job: Job? = null
 
+    val unsubscribed_tokens: StateFlow<Set<String>> = unsubscribed_store.tokens
+
+    init {
+        unsubscribed_store.load_cached()
+    }
+
+    fun sender_token(sender_email: String): String = unsubscribed_store.token_for(sender_email)
+
+    fun refresh_unsubscribed() = unsubscribed_store.refresh()
+
+    fun record_unsubscribed(
+        sender_email: String,
+        sender_name: String?,
+        unsubscribe_link: String?,
+        list_unsubscribe_header: String?,
+    ) = unsubscribed_store.record_unsubscribed(
+        sender_email,
+        sender_name,
+        unsubscribe_link,
+        list_unsubscribe_header,
+    )
+
     fun load() {
         if (load_job?.isActive == true) return
         _state.value = _state.value.copy(is_loading = true, error = null, load_error = null)
         load_job = viewModelScope.launch {
             try {
                 val items = load_all_subscriptions()
+                if (items.size < subscription_page_size * max_subscription_pages) {
+                    unsubscribed_store.replace_confirmed(
+                        items.filter { it.status == "unsubscribed" }.map { it.sender_email },
+                    )
+                }
                 val stats = try {
                     api.stats()
                 } catch (e: CancellationException) {
@@ -192,13 +220,22 @@ class MailingListsViewModel @Inject constructor(
         _state.value = _state.value.copy(pending_ids = _state.value.pending_ids + subscription_id)
         viewModelScope.launch {
             try {
-                api.unsubscribe(UnsubscribeRequest(subscription_id))
-                _state.value = _state.value.copy(
-                    items = _state.value.items.map { item ->
-                        if (item.id == subscription_id) item.copy(status = "unsubscribed") else item
-                    },
-                    message = context.getString(R.string.toast_unsubscribed),
-                )
+                val result = api.unsubscribe(UnsubscribeRequest(subscription_id))
+                if (result.success) {
+                    _state.value.items.firstOrNull { it.id == subscription_id }?.let {
+                        unsubscribed_store.mark_unsubscribed(it.sender_email)
+                    }
+                    _state.value = _state.value.copy(
+                        items = _state.value.items.map { item ->
+                            if (item.id == subscription_id) item.copy(status = "unsubscribed") else item
+                        },
+                        message = context.getString(R.string.toast_unsubscribed),
+                    )
+                } else {
+                    _state.value = _state.value.copy(
+                        error = context.getString(R.string.unsubscribe_failed),
+                    )
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (t: Throwable) {
@@ -247,6 +284,9 @@ class MailingListsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 api.reactivate(subscription_id)
+                _state.value.items.firstOrNull { it.id == subscription_id }?.let {
+                    unsubscribed_store.mark_active(it.sender_email)
+                }
                 _state.value = _state.value.copy(
                     items = _state.value.items.map { item ->
                         if (item.id == subscription_id) item.copy(status = "active") else item

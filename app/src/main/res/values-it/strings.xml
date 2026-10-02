@@ -1306,7 +1306,8 @@
     <string name="pending_deletion_sign_out">Esci</string>
     <string name="pending_deletion_restoring">Ripristino…</string>
     <string name="pending_deletion_error">Impossibile ripristinare il tuo account. Riprova.</string>
-    <string name="image_blocked_placeholder">[Immagine bloccata]</string>
+    <string name="image_blocked">Immagine bloccata</string>
+    <string name="tracking_pixel_blocked">Pixel di tracciamento bloccato</string>
     <string name="alias_available">Questo alias è disponibile.</string>
     <string name="alias_not_available">Questo alias è già in uso.</string>
     <string name="alias_check_failed">Impossibile verificare la disponibilità. Puoi comunque provare a crearlo.</string>
@@ -1349,6 +1350,10 @@
     <string name="translation_translated">Tradotta da %1$s sul tuo dispositivo</string>
     <string name="translation_show_original">Mostra originale</string>
     <string name="translation_failed">Traduzione non riuscita</string>
+    <string name="translation_wifi_required">Per scaricare questo pacchetto lingua, connettiti a una rete Wi-Fi o disattiva Scarica solo con Wi-Fi nelle Impostazioni.</string>
+    <string name="translation_webview_outdated">Per tradurre le email, aggiorna Android System WebView.</string>
+    <string name="translation_webview_update">Aggiorna</string>
+    <string name="translate_webview_outdated_notice">La traduzione richiede una versione più recente di Android System WebView. Per tradurre le email su questo dispositivo, aggiorna Android System WebView da Google Play.</string>
     <string name="customize_toolbar">Personalizza barra strumenti</string>
     <string name="customize_toolbar_subtitle">Scegli quali azioni mostrare nella barra inferiore durante la lettura o la selezione delle email.</string>
     <string name="reading_toolbar">Lettura email</string>
@@ -1895,7 +1900,7 @@
     <string name="show_alias_indicators_subtitle">Contrassegna i messaggi arrivati tramite uno dei tuoi alias</string>
     <string name="show_message_size_subtitle">Visualizza la dimensione di ogni email nell\'elenco della posta in arrivo</string>
     <string name="force_dark_emails">Forza la modalità scura nelle email</string>
-    <string name="force_dark_emails_subtitle">Mostra sempre il contenuto delle email in modalità scura</string>
+    <string name="force_dark_emails_subtitle">Renderizza il contenuto delle email in modalità scura quando Aster usa il tema scuro, sovrascrivendo lo stile originale</string>
     <string name="section_composing_replies">Scrittura e risposte</string>
     <string name="enable_undo_send">Attiva annulla invio</string>
     <string name="enable_undo_send_subtitle">Ritarda l\'invio così puoi ancora annullarlo</string>

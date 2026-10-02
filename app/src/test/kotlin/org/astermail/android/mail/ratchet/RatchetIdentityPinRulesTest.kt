@@ -104,4 +104,56 @@ class RatchetIdentityPinRulesTest {
         val key = RatchetIdentityPinRules.scoped_key("user-ab", "pin_conv")
         assertFalse(RatchetIdentityPinRules.belongs_to_account(key, "user-a"))
     }
+
+    @Test
+    fun `owner key is pinned on the first verified bundle`() {
+        assertEquals(
+            OwnerKeyDecision.PIN_FIRST,
+            RatchetIdentityPinRules.decide_owner_key(null, "AA", PrekeyBindingResult.VERIFIED),
+        )
+        assertEquals(
+            OwnerKeyDecision.ACCEPT,
+            RatchetIdentityPinRules.decide_owner_key(null, "AA", PrekeyBindingResult.UNSIGNED_LEGACY),
+        )
+        assertEquals(
+            OwnerKeyDecision.ACCEPT,
+            RatchetIdentityPinRules.decide_owner_key(null, null, PrekeyBindingResult.UNVERIFIABLE),
+        )
+    }
+
+    @Test
+    fun `pinned owner key only accepts a verified bundle from the same key`() {
+        assertEquals(
+            OwnerKeyDecision.ACCEPT,
+            RatchetIdentityPinRules.decide_owner_key("AA", "aa", PrekeyBindingResult.VERIFIED),
+        )
+        assertEquals(
+            OwnerKeyDecision.UNTRUSTED,
+            RatchetIdentityPinRules.decide_owner_key("AA", "BB", PrekeyBindingResult.VERIFIED),
+        )
+        assertEquals(
+            OwnerKeyDecision.UNTRUSTED,
+            RatchetIdentityPinRules.decide_owner_key("AA", "AA", PrekeyBindingResult.UNSIGNED_LEGACY),
+        )
+        assertEquals(
+            OwnerKeyDecision.UNTRUSTED,
+            RatchetIdentityPinRules.decide_owner_key("AA", "AA", PrekeyBindingResult.UNVERIFIABLE),
+        )
+        assertEquals(
+            OwnerKeyDecision.UNAVAILABLE,
+            RatchetIdentityPinRules.decide_owner_key("AA", null, PrekeyBindingResult.UNVERIFIABLE),
+        )
+    }
+
+    @Test
+    fun `tampered bundle is untrusted with or without a pin`() {
+        assertEquals(
+            OwnerKeyDecision.UNTRUSTED,
+            RatchetIdentityPinRules.decide_owner_key(null, "AA", PrekeyBindingResult.INVALID),
+        )
+        assertEquals(
+            OwnerKeyDecision.UNTRUSTED,
+            RatchetIdentityPinRules.decide_owner_key("AA", "AA", PrekeyBindingResult.INVALID),
+        )
+    }
 }

@@ -1300,7 +1300,8 @@
     <string name="pending_deletion_sign_out">退出登录</string>
     <string name="pending_deletion_restoring">正在恢复…</string>
     <string name="pending_deletion_error">无法恢复您的账户。请重试。</string>
-    <string name="image_blocked_placeholder">[图片已被拦截]</string>
+    <string name="image_blocked">图片已屏蔽</string>
+    <string name="tracking_pixel_blocked">跟踪像素已屏蔽</string>
     <string name="alias_available">此别名可用。</string>
     <string name="alias_not_available">此别名已被占用。</string>
     <string name="alias_check_failed">无法检查可用性。您仍然可以尝试创建。</string>
@@ -1343,6 +1344,10 @@
     <string name="translation_translated">已在您的设备上从%1$s翻译</string>
     <string name="translation_show_original">显示原文</string>
     <string name="translation_failed">翻译失败</string>
+    <string name="translation_wifi_required">要下载此语言包，请连接 Wi-Fi，或在设置中关闭“仅通过 Wi-Fi 下载”。</string>
+    <string name="translation_webview_outdated">要翻译邮件，请更新 Android System WebView。</string>
+    <string name="translation_webview_update">更新</string>
+    <string name="translate_webview_outdated_notice">翻译功能需要较新版本的 Android System WebView。要在此设备上翻译邮件，请通过 Google Play 更新 Android System WebView。</string>
     <string name="customize_toolbar">自定义工具栏</string>
     <string name="customize_toolbar_subtitle">选择阅读或选中邮件时底部栏中显示的操作。</string>
     <string name="reading_toolbar">阅读邮件时</string>
@@ -1887,7 +1892,7 @@
     <string name="show_alias_indicators_subtitle">标记通过您的别名收到的邮件</string>
     <string name="show_message_size_subtitle">在收件箱列表中显示每封邮件的大小</string>
     <string name="force_dark_emails">强制以深色显示邮件</string>
-    <string name="force_dark_emails_subtitle">始终以深色模式渲染邮件内容</string>
+    <string name="force_dark_emails_subtitle">在 Aster 使用深色主题时，以深色模式渲染电子邮件内容，覆盖电子邮件的原始样式</string>
     <string name="section_composing_replies">撰写与回复</string>
     <string name="enable_undo_send">启用撤销发送</string>
     <string name="enable_undo_send_subtitle">延迟发送，以便您在需要时撤销</string>

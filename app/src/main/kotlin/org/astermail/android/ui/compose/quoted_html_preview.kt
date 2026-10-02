@@ -46,6 +46,7 @@ import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.mail.BlockedImageLabels
 import org.astermail.android.ui.mail.EmailHtmlSanitizer
 import org.astermail.android.ui.mail.REMOTE_IMAGE_PROXY_BASE
 import org.astermail.android.ui.mail.build_email_html
@@ -64,14 +65,14 @@ private val quoted_preview_measure_delays_ms = longArrayOf(0L, 120L, 400L, 900L)
 internal fun build_quoted_preview_body(
     raw_html: String,
     allow_external: Boolean,
-    image_blocked_label: String,
+    blocked_image_labels: BlockedImageLabels,
     sanitize_options: EmailHtmlSanitizer.SanitizeOptions,
 ): String {
     val sanitized = EmailHtmlSanitizer.sanitize(raw_html, sanitize_options)
     val cid_resolved = resolve_inline_cids(sanitized, emptyMap())
     if (allow_external) return proxy_external_urls(cid_resolved, REMOTE_IMAGE_PROXY_BASE)
     return EmailHtmlSanitizer.neutralize_blocked_backgrounds(
-        EmailHtmlSanitizer.replace_blocked_images(cid_resolved, image_blocked_label),
+        EmailHtmlSanitizer.replace_blocked_images(cid_resolved, blocked_image_labels),
     )
 }
 
@@ -103,16 +104,18 @@ internal fun quoted_html_preview(html: String, modifier: Modifier = Modifier) {
     } else {
         colors.bg_primary.luminance() < colors.text_primary.luminance()
     }
-    val force_dark_emails = preferences?.force_dark_emails == true
-    val is_dark = theme_dark || force_dark_emails
-    val fg_hex = if (force_dark_emails && !theme_dark) {
-        org.astermail.android.ui.mail.FORCED_DARK_INK
-    } else {
-        String.format(java.util.Locale.US, "#%06X", colors.text_secondary.toArgb() and 0xFFFFFF)
-    }
+    val force_dark_emails = org.astermail.android.ui.mail.forces_dark_emails(
+        preference = preferences?.force_dark_emails == true,
+        theme_dark = theme_dark,
+    )
+    val is_dark = theme_dark
+    val fg_hex = String.format(java.util.Locale.US, "#%06X", colors.text_secondary.toArgb() and 0xFFFFFF)
     val link_hex = String.format(java.util.Locale.US, "#%06X", colors.accent_blue.toArgb() and 0xFFFFFF)
     val forwarded_label = stringResource(R.string.forwarded_message_label)
-    val image_blocked_label = stringResource(R.string.image_blocked_placeholder)
+    val blocked_image_labels = BlockedImageLabels(
+        image = stringResource(R.string.image_blocked),
+        tracking_pixel = stringResource(R.string.tracking_pixel_blocked),
+    )
     val image_failed_label = stringResource(R.string.image_failed_placeholder)
     val dyslexia_font = preferences?.dyslexia_font == true
     val underline_links = preferences?.underline_links == true
@@ -144,7 +147,7 @@ internal fun quoted_html_preview(html: String, modifier: Modifier = Modifier) {
                     body = build_quoted_preview_body(
                         raw_html = html,
                         allow_external = allow_external,
-                        image_blocked_label = image_blocked_label,
+                        blocked_image_labels = blocked_image_labels,
                         sanitize_options = sanitize_options,
                     ),
                     is_dark = is_dark,
@@ -153,7 +156,6 @@ internal fun quoted_html_preview(html: String, modifier: Modifier = Modifier) {
                     forwarded_label = forwarded_label,
                     image_failed_label = image_failed_label,
                     force_dark_emails = force_dark_emails,
-                    forced_dark_canvas = force_dark_emails && !theme_dark,
                     dyslexia_font = dyslexia_font,
                     translate_mode = "off",
                     email_font_id = email_font_id,
@@ -221,11 +223,10 @@ internal fun quoted_html_preview(html: String, modifier: Modifier = Modifier) {
             web_view.settings.textZoom = text_zoom
             web_view.settings.blockNetworkImage = !allow_external
             web_view.setBackgroundColor(
-                when {
-                    doc.contains("data-white=\"1\"") -> android.graphics.Color.WHITE
-                    force_dark_emails && !theme_dark ->
-                        android.graphics.Color.parseColor(org.astermail.android.ui.mail.FORCED_DARK_CANVAS)
-                    else -> android.graphics.Color.TRANSPARENT
+                if (doc.contains("data-white=\"1\"")) {
+                    android.graphics.Color.WHITE
+                } else {
+                    android.graphics.Color.TRANSPARENT
                 },
             )
             if (web_view.tag != doc) {

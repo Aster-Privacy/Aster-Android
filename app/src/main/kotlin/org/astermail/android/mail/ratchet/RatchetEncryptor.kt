@@ -40,10 +40,15 @@ open class RatchetEncryptionException(
     cause: Throwable? = null,
 ) : Exception(message, cause)
 
-class RatchetIdentityPinException(
+open class RatchetIdentityPinException(
     recipient: String?,
     message: String,
 ) : RatchetEncryptionException(recipient, message)
+
+class RecipientKeyUntrustedException(
+    recipient: String?,
+    message: String,
+) : RatchetIdentityPinException(recipient, message)
 
 class PostQuantumUnavailableException(
     val recipients: List<String>,
@@ -199,41 +204,73 @@ class RatchetEncryptor @Inject constructor(
     private val verifying_key_cache = java.util.concurrent.ConcurrentHashMap<String, String>()
 
     private suspend fun verify_prekey_binding(
+        conversation_id: String,
         username: String,
         recipient_email: String,
         bundle: PrekeyBundleResponse,
     ) {
+        val pinned_owner = identity_pins.owner_key_pin(recipient_email)?.takeIf { it.isNotBlank() }
         val signature = bundle.signed_prekey_signature
-        if (!PrekeyBindingVerifier.is_pgp_signature(signature)) {
+        val signed = PrekeyBindingVerifier.is_pgp_signature(signature)
+        if (!signed && pinned_owner == null) {
             if (BuildConfig.DEBUG) {
                 android.util.Log.w("AsterRatchet", "prekey bundle carries a legacy unsigned binding")
             }
             return
         }
 
-        val verifying_key = fetch_verifying_key(username, recipient_email) ?: return
+        val verifying_key = fetch_verifying_key(username, recipient_email)
+        val result = when {
+            !signed -> PrekeyBindingResult.UNSIGNED_LEGACY
+            verifying_key == null -> PrekeyBindingResult.UNVERIFIABLE
+            else -> PrekeyBindingVerifier.verify(
+                signature_block = signature,
+                recipient_public_key_armored = verifying_key,
+                kem_identity_key_b64 = bundle.kem_identity_key,
+                signed_prekey_b64 = bundle.signed_prekey,
+                pq_identity_key_b64 = bundle.pq_kem_public_key,
+            )
+        }
+        val served_owner = PrekeyBindingVerifier.owner_fingerprint(verifying_key)
 
-        val result = PrekeyBindingVerifier.verify(
-            signature_block = signature,
-            recipient_public_key_armored = verifying_key,
-            kem_identity_key_b64 = bundle.kem_identity_key,
-            signed_prekey_b64 = bundle.signed_prekey,
-            pq_identity_key_b64 = bundle.pq_kem_public_key,
-        )
-        when (result) {
-            PrekeyBindingResult.INVALID -> {
-                verifying_key_cache.remove(recipient_email.lowercase(java.util.Locale.ROOT))
-                throw RatchetEncryptionException(
-                    recipient_email,
-                    "recipient prekey signature did not verify",
-                )
-            }
-            PrekeyBindingResult.VERIFIED ->
-                runCatching { identity_pins.record_prekey_binding_verified(recipient_email) }
-            PrekeyBindingResult.UNSIGNED_LEGACY, PrekeyBindingResult.UNVERIFIABLE -> {
-                if (BuildConfig.DEBUG) {
+        when (RatchetIdentityPinRules.decide_owner_key(pinned_owner, served_owner, result)) {
+            OwnerKeyDecision.ACCEPT -> {
+                if (result == PrekeyBindingResult.VERIFIED) {
+                    runCatching { identity_pins.record_prekey_binding_verified(recipient_email) }
+                } else if (BuildConfig.DEBUG) {
                     android.util.Log.w("AsterRatchet", "prekey bundle signature could not be checked: $result")
                 }
+            }
+            OwnerKeyDecision.PIN_FIRST -> {
+                if (!identity_pins.pin_owner_key_if_absent(recipient_email, served_owner.orEmpty())) {
+                    throw RatchetEncryptionException(recipient_email, "recipient owner key pin unavailable")
+                }
+                runCatching { identity_pins.record_prekey_binding_verified(recipient_email) }
+            }
+            OwnerKeyDecision.UNAVAILABLE -> throw RatchetEncryptionException(
+                recipient_email,
+                "recipient owner key unavailable",
+            )
+            OwnerKeyDecision.UNTRUSTED -> {
+                verifying_key_cache.remove(recipient_email.lowercase(java.util.Locale.ROOT))
+                if (pinned_owner != null && served_owner != null &&
+                    !served_owner.equals(pinned_owner, ignoreCase = true)
+                ) {
+                    val observed_at = System.currentTimeMillis()
+                    runCatching { identity_pins.flag_owner_key_change(recipient_email, served_owner, observed_at) }
+                    runCatching {
+                        identity_pins.flag_identity_change(
+                            conversation_id = conversation_id,
+                            peer_email = recipient_email,
+                            identity_key_b64 = bundle.kem_identity_key,
+                            observed_at = observed_at,
+                        )
+                    }
+                }
+                throw RecipientKeyUntrustedException(
+                    recipient_email,
+                    "recipient key is not trusted",
+                )
             }
         }
     }
@@ -357,7 +394,7 @@ class RatchetEncryptor @Inject constructor(
                 return null
             }
 
-            verify_prekey_binding(username, recipient_email, resolved_bundle)
+            verify_prekey_binding(conversation_id, username, recipient_email, resolved_bundle)
             verify_identity_pin(conversation_id, recipient_email, resolved_bundle)
 
             bundle = resolved_bundle

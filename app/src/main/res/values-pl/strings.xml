@@ -1309,7 +1309,8 @@
     <string name="pending_deletion_sign_out">Wyloguj się</string>
     <string name="pending_deletion_restoring">Przywracanie…</string>
     <string name="pending_deletion_error">Nie udało się przywrócić konta. Spróbuj ponownie.</string>
-    <string name="image_blocked_placeholder">[Obraz zablokowany]</string>
+    <string name="image_blocked">Obraz zablokowany</string>
+    <string name="tracking_pixel_blocked">Piksel śledzący zablokowany</string>
     <string name="alias_available">Ten alias jest dostępny.</string>
     <string name="alias_not_available">Ten alias jest już zajęty.</string>
     <string name="alias_check_failed">Nie udało się sprawdzić dostępności. Nadal możesz spróbować go utworzyć.</string>
@@ -1352,6 +1353,10 @@
     <string name="translation_translated">Przetłumaczono na Twoim urządzeniu (język źródłowy: %1$s)</string>
     <string name="translation_show_original">Pokaż oryginał</string>
     <string name="translation_failed">Tłumaczenie nie powiodło się</string>
+    <string name="translation_wifi_required">Aby pobrać ten pakiet językowy, połącz się z Wi-Fi lub wyłącz opcję Pobieraj tylko przez Wi-Fi w Ustawieniach.</string>
+    <string name="translation_webview_outdated">Aby tłumaczyć wiadomości, zaktualizuj Android System WebView.</string>
+    <string name="translation_webview_update">Aktualizuj</string>
+    <string name="translate_webview_outdated_notice">Tłumaczenie wymaga nowszej wersji Android System WebView. Aby tłumaczyć wiadomości na tym urządzeniu, zaktualizuj Android System WebView w Google Play.</string>
     <string name="customize_toolbar">Dostosuj pasek narzędzi</string>
     <string name="customize_toolbar_subtitle">Wybierz, które akcje pojawiają się na dolnym pasku podczas czytania lub zaznaczania wiadomości.</string>
     <string name="reading_toolbar">Czytanie wiadomości</string>
@@ -1899,7 +1904,7 @@
     <string name="show_alias_indicators_subtitle">Oznaczaj wiadomości, które dotarły przez jeden z Twoich aliasów</string>
     <string name="show_message_size_subtitle">Wyświetlaj rozmiar każdego e-maila na liście w skrzynce</string>
     <string name="force_dark_emails">Wymuś ciemny tryb w wiadomościach</string>
-    <string name="force_dark_emails_subtitle">Zawsze wyświetlaj treść wiadomości w ciemnym trybie</string>
+    <string name="force_dark_emails_subtitle">Renderuj treść e-maili w trybie ciemnym, gdy Aster używa ciemnego motywu, nadpisując oryginalny styl</string>
     <string name="section_composing_replies">Pisanie i odpowiedzi</string>
     <string name="enable_undo_send">Włącz cofanie wysyłania</string>
     <string name="enable_undo_send_subtitle">Opóźnia wysyłanie, aby w razie potrzeby można było je cofnąć</string>
