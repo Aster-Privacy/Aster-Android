@@ -205,8 +205,61 @@ private val HIDING_DECLARATION = Regex(
     RegexOption.IGNORE_CASE,
 )
 
+private val CSS_COMMENT = Regex("""/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL)
+
+private val CSS_RULE = Regex("""([^{}@]+)\{([^{}]*)\}""")
+
+private const val STYLE_REVEAL =
+    "display:revert !important;visibility:visible !important;opacity:1 !important;" +
+        "max-height:none !important;font-size:inherit !important"
+
+private fun strip_nested_blocks(css: String): String {
+    val out = StringBuilder()
+    var depth = 0
+    var at_rule = false
+    var i = 0
+    while (i < css.length) {
+        val c = css[i]
+        when {
+            c == '@' && depth == 0 -> {
+                at_rule = true
+            }
+            c == '{' -> {
+                depth++
+                if (!at_rule && depth == 1) out.append(c)
+            }
+            c == '}' -> {
+                if (!at_rule && depth == 1) out.append(c)
+                depth = (depth - 1).coerceAtLeast(0)
+                if (depth == 0) at_rule = false
+            }
+            c == ';' && at_rule && depth == 0 -> at_rule = false
+            !at_rule -> out.append(c)
+        }
+        i++
+    }
+    return out.toString()
+}
+
+private fun stylesheet_hidden_elements(root: Element): List<Element> {
+    val css = root.select("style").joinToString(" ") { it.data() }
+    if (css.isBlank()) return emptyList()
+    val flat = strip_nested_blocks(CSS_COMMENT.replace(css, ""))
+    return CSS_RULE.findAll(flat)
+        .filter { HIDING_DECLARATION.containsMatchIn(it.groupValues[2]) }
+        .flatMap { rule ->
+            rule.groupValues[1].split(',').map { it.trim() }.filter { it.isNotEmpty() }.asSequence()
+        }
+        .flatMap { selector -> runCatching { root.select(selector).toList() }.getOrDefault(emptyList()).asSequence() }
+        .filter { it.tagName().lowercase() != "style" }
+        .distinct()
+        .toList()
+}
+
 private fun reveal_fully_hidden_content(root: Element) {
-    val hidden = root.select("[style]").filter { HIDING_DECLARATION.containsMatchIn(it.attr("style")) }
+    val inline_hidden = root.select("[style]").filter { HIDING_DECLARATION.containsMatchIn(it.attr("style")) }
+    val sheet_hidden = stylesheet_hidden_elements(root)
+    val hidden = (inline_hidden + sheet_hidden).distinct()
     if (hidden.isEmpty()) return
     val texts = collect_text_nodes(root).filter { it.wholeText.replace(INVISIBLE_CHARACTERS, "").isNotBlank() }
     if (texts.isEmpty()) return
@@ -214,9 +267,13 @@ private fun reveal_fully_hidden_content(root: Element) {
     val visible_media = root.select("img, video, picture, svg, canvas")
         .any { !is_within(it, hidden) && !(it.tagName().lowercase() == "img" && is_tracking_pixel(it)) }
     if (visible_media) return
-    for (element in hidden) {
+    for (element in inline_hidden) {
         val style = HIDING_DECLARATION.replace(element.attr("style"), "").trim()
         if (style.isEmpty()) element.removeAttr("style") else element.attr("style", style)
+    }
+    for (element in sheet_hidden) {
+        val style = element.attr("style").trim().trimEnd(';')
+        element.attr("style", if (style.isEmpty()) STYLE_REVEAL else "$style;$STYLE_REVEAL")
     }
 }
 

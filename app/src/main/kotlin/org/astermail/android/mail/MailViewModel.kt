@@ -1664,7 +1664,11 @@ class MailViewModel @Inject constructor(
                 val previous = if (cur_thread.item?.id == item_id) cur_thread.messages else emptyList()
                 result.fold(
                     onSuccess = { messages ->
-                        val base = if (messages.isEmpty()) previous.ifEmpty { fallback } else messages
+                        val base = if (messages.isEmpty()) {
+                            previous.ifEmpty { fallback }
+                        } else {
+                            include_opened_message(messages, fallback.first())
+                        }
                         val resolved = if (
                             previous.isNotEmpty() &&
                             System.currentTimeMillis() < send_guard_until
