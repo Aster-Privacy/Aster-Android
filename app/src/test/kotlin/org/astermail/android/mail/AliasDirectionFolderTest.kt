@@ -64,6 +64,23 @@ class AliasDirectionFolderTest {
     }
 
     @Test
+    fun only_base64_values_count_as_folder_tokens() {
+        assertEquals(true, is_folder_token("q83vEjRWeJCrze8SNFZ4kA=="))
+        assertEquals(true, is_folder_token("ab+/abcd"))
+        assertEquals(false, is_folder_token("ef99c690-ec75-4f6b-81fc-1599a2a3542e"))
+        assertEquals(false, is_folder_token("abc"))
+        assertEquals(false, is_folder_token(""))
+    }
+
+    @Test
+    fun rejected_requests_are_not_retried() {
+        assertEquals(true, is_permanent_load_failure(org.astermail.android.api.ApiError.ValidationError(listOf("bad"))))
+        assertEquals(true, is_permanent_load_failure(org.astermail.android.api.ApiError.NotFoundError))
+        assertEquals(false, is_permanent_load_failure(org.astermail.android.api.ApiError.ServerError(503)))
+        assertEquals(false, is_permanent_load_failure(null))
+    }
+
+    @Test
     fun label_and_tag_filters_ignore_the_direction() {
         assertEquals("label:x", mail_folder_for_filter(filter_kind_label, "x", alias_direction_sent))
         assertEquals("tag:x", mail_folder_for_filter(filter_kind_tag, "x", alias_direction_sent))

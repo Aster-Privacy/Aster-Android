@@ -1090,6 +1090,7 @@ class MailViewModel @Inject constructor(
                 _inbox_state.value.current_folder == folder &&
                 !is_offline_failure(result.exceptionOrNull()) &&
                 !is_cancellation(result.exceptionOrNull()) &&
+                !is_permanent_load_failure(result.exceptionOrNull()) &&
                 result.exceptionOrNull() !is org.astermail.android.api.ApiError.UnauthorizedError
             ) {
                 kotlinx.coroutines.delay(500L)
@@ -5033,6 +5034,9 @@ class MailViewModel @Inject constructor(
                     direction = alias_direction_query(routing_scope.direction),
                 )
             }
+            !is_folder_token(folder) -> Result.success(
+                InboxPage(items = emptyList(), has_more = false, next_cursor = null, total = 0),
+            )
             else -> repository.fetch_inbox(limit = limit, item_type = null, label_token = folder, offset = cursor?.toIntOrNull(), order = list_order)
         }
     }
