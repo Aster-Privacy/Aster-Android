@@ -23,8 +23,11 @@ package org.astermail.android.ui.auth
 
 import compose.icons.TablerIcons
 import org.astermail.android.design.acrylic
-import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.island_surface_color
+import org.astermail.android.ui.mail.avatar_colors_for
+import org.astermail.android.ui.mail.avatar_initial_style
+import org.astermail.android.ui.mail.avatar_key_for
+import org.astermail.android.ui.mail.initial_for
 import org.astermail.android.design.mirror_in_rtl
 import org.astermail.android.ui.common.open_external_url
 import org.astermail.android.ui.common.show_copy_failed_toast
@@ -81,6 +84,7 @@ import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -298,39 +302,41 @@ private fun account_chip(
 ) {
     val colors = AsterMaterial.colors
 
+    val surface = lerp(colors.dropdown_bg, colors.text_primary, 0.09f)
+    val (avatar_bg, avatar_fg) = avatar_colors_for(avatar_key_for(email, ""), null)
+
     Row(
         modifier = Modifier
             .clip(AsterShapes.pill)
-            .border(1.dp, colors.border_primary, AsterShapes.pill)
+            .background(surface)
             .then(if (on_click != null) Modifier.clickable(onClick = on_click) else Modifier)
-            .padding(start = AsterSpacing.xs, end = AsterSpacing.md, top = AsterSpacing.xs, bottom = AsterSpacing.xs),
+            .padding(start = 6.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
                 .size(24.dp)
                 .clip(CircleShape)
-                .background(colors.accent_blue),
+                .background(avatar_bg),
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = email.take(1).uppercase(),
-                color = colors.on_accent,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                text = initial_for("", email),
+                color = avatar_fg,
+                style = avatar_initial_style(24.dp),
             )
         }
-        Spacer(Modifier.width(AsterSpacing.sm))
+        Spacer(Modifier.width(10.dp))
         Text(
             text = email,
             color = colors.text_primary,
-            fontSize = 14.sp,
+            fontSize = 13.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.widthIn(max = 260.dp),
         )
         if (on_click != null) {
-            Spacer(Modifier.width(AsterSpacing.xs))
+            Spacer(Modifier.width(6.dp))
             Icon(
                 imageVector = TablerIcons.ChevronDown,
                 contentDescription = null,
@@ -638,9 +644,7 @@ private fun recovery_option_row(
         horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
     ) {
         Box(
-            modifier = Modifier
-                .size(40.dp)
-                .background(field_surface_color(colors), AsterShapes.control),
+            modifier = Modifier.size(40.dp),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
