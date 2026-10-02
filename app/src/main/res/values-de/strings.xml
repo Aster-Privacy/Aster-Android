@@ -1339,6 +1339,10 @@
     <string name="translation_translated">Aus %1$s auf Ihrem Gerät übersetzt</string>
     <string name="translation_show_original">Original anzeigen</string>
     <string name="translation_failed">Übersetzung fehlgeschlagen</string>
+    <string name="translation_wifi_required">Um dieses Sprachpaket herunterzuladen, verbinden Sie sich mit einem WLAN oder deaktivieren Sie „Nur über WLAN laden“ in den Einstellungen.</string>
+    <string name="translation_webview_outdated">Aktualisieren Sie Android System WebView, um E-Mails zu übersetzen.</string>
+    <string name="translation_webview_update">Aktualisieren</string>
+    <string name="translate_webview_outdated_notice">Für die Übersetzung ist eine neuere Version von Android System WebView erforderlich. Um E-Mails auf diesem Gerät zu übersetzen, aktualisieren Sie Android System WebView über Google Play.</string>
     <string name="customize_toolbar">Symbolleiste anpassen</string>
     <string name="customize_toolbar_subtitle">Wählen Sie aus, welche Aktionen beim Lesen oder Auswählen von E-Mails in der unteren Leiste angezeigt werden.</string>
     <string name="reading_toolbar">E-Mail lesen</string>

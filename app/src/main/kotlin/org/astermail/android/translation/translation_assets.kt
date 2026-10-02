@@ -230,6 +230,18 @@ object TranslationAssets {
         }
     }
 
+    fun packs_cached(context: Context, packs: List<String>): Boolean {
+        if (packs.isEmpty()) return true
+        val cache_root = File(context.filesDir, CACHE_DIR)
+        val registry = File(cache_root, REGISTRY_NAME)
+        if (!registry.exists() || registry.length() == 0L || registry.length() > MAX_REGISTRY_BYTES) return false
+        val names = runCatching { read_registry_hashes(registry.readText())?.keys }.getOrNull() ?: return false
+        return packs.all { pack ->
+            val files = names.filter { it.startsWith("$pack/") }
+            files.isNotEmpty() && files.all { File(cache_root, it).length() > 0L }
+        }
+    }
+
     fun clear_cache(context: Context): Boolean {
         return File(context.filesDir, CACHE_DIR).deleteRecursively()
     }

@@ -1341,6 +1341,10 @@
     <string name="translation_translated">Tradotta da %1$s sul tuo dispositivo</string>
     <string name="translation_show_original">Mostra originale</string>
     <string name="translation_failed">Traduzione non riuscita</string>
+    <string name="translation_wifi_required">Per scaricare questo pacchetto lingua, connettiti a una rete Wi-Fi o disattiva Scarica solo con Wi-Fi nelle Impostazioni.</string>
+    <string name="translation_webview_outdated">Per tradurre le email, aggiorna Android System WebView.</string>
+    <string name="translation_webview_update">Aggiorna</string>
+    <string name="translate_webview_outdated_notice">La traduzione richiede una versione più recente di Android System WebView. Per tradurre le email su questo dispositivo, aggiorna Android System WebView da Google Play.</string>
     <string name="customize_toolbar">Personalizza barra strumenti</string>
     <string name="customize_toolbar_subtitle">Scegli quali azioni mostrare nella barra inferiore durante la lettura o la selezione delle email.</string>
     <string name="reading_toolbar">Lettura email</string>

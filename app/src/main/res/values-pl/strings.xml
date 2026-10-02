@@ -1344,6 +1344,10 @@
     <string name="translation_translated">Przetłumaczono na Twoim urządzeniu (język źródłowy: %1$s)</string>
     <string name="translation_show_original">Pokaż oryginał</string>
     <string name="translation_failed">Tłumaczenie nie powiodło się</string>
+    <string name="translation_wifi_required">Aby pobrać ten pakiet językowy, połącz się z Wi-Fi lub wyłącz opcję Pobieraj tylko przez Wi-Fi w Ustawieniach.</string>
+    <string name="translation_webview_outdated">Aby tłumaczyć wiadomości, zaktualizuj Android System WebView.</string>
+    <string name="translation_webview_update">Aktualizuj</string>
+    <string name="translate_webview_outdated_notice">Tłumaczenie wymaga nowszej wersji Android System WebView. Aby tłumaczyć wiadomości na tym urządzeniu, zaktualizuj Android System WebView w Google Play.</string>
     <string name="customize_toolbar">Dostosuj pasek narzędzi</string>
     <string name="customize_toolbar_subtitle">Wybierz, które akcje pojawiają się na dolnym pasku podczas czytania lub zaznaczania wiadomości.</string>
     <string name="reading_toolbar">Czytanie wiadomości</string>

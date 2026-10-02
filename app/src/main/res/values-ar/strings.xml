@@ -1350,6 +1350,10 @@
     <string name="translation_translated">تُرجِم من %1$s على جهازك</string>
     <string name="translation_show_original">عرض النص الأصلي</string>
     <string name="translation_failed">فشلت الترجمة</string>
+    <string name="translation_wifi_required">لتنزيل حزمة اللغة هذه، اتصل بشبكة Wi-Fi أو أوقف خيار التنزيل عبر Wi-Fi فقط في الإعدادات.</string>
+    <string name="translation_webview_outdated">لترجمة البريد، حدّث Android System WebView.</string>
+    <string name="translation_webview_update">تحديث</string>
+    <string name="translate_webview_outdated_notice">تحتاج الترجمة إلى إصدار أحدث من Android System WebView. لترجمة البريد على هذا الجهاز، حدّث Android System WebView من Google Play.</string>
     <string name="customize_toolbar">تخصيص شريط الأدوات</string>
     <string name="customize_toolbar_subtitle">اختر الإجراءات التي تظهر في الشريط السفلي عند قراءة البريد أو تحديده.</string>
     <string name="reading_toolbar">قراءة البريد</string>

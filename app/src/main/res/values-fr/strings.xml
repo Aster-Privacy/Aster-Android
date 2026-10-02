@@ -2003,6 +2003,10 @@
     <string name="translation_translated">Traduit depuis %1$s sur votre appareil</string>
     <string name="translation_show_original">Afficher l\'original</string>
     <string name="translation_failed">Échec de la traduction</string>
+    <string name="translation_wifi_required">Pour télécharger ce pack linguistique, connectez-vous à un réseau Wi-Fi ou désactivez Télécharger uniquement en Wi-Fi dans les Paramètres.</string>
+    <string name="translation_webview_outdated">Pour traduire vos e-mails, mettez à jour Android System WebView.</string>
+    <string name="translation_webview_update">Mettre à jour</string>
+    <string name="translate_webview_outdated_notice">La traduction nécessite une version plus récente de Android System WebView. Pour traduire vos e-mails sur cet appareil, mettez à jour Android System WebView depuis Google Play.</string>
     <string name="reading_toolbar">Lecture d\'e-mail</string>
     <string name="selection_toolbar">Sélection d\'e-mails</string>
     <string name="more_actions">Plus</string>

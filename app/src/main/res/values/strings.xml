@@ -2509,6 +2509,10 @@
     <string name="translation_translated">Translated from %1$s on your device</string>
     <string name="translation_show_original">Show original</string>
     <string name="translation_failed">Translation failed</string>
+    <string name="translation_wifi_required">To download this language pack, connect to Wi-Fi or turn off Download over Wi-Fi only in Settings.</string>
+    <string name="translation_webview_outdated">To translate mail, update Android System WebView.</string>
+    <string name="translation_webview_update">Update</string>
+    <string name="translate_webview_outdated_notice">Translation needs a newer version of Android System WebView. To translate mail on this device, update Android System WebView from Google Play.</string>
     <string name="mail_rules_regex_empty">A regex pattern is needed before saving.</string>
     <string name="mail_rules_regex_too_long">This regex is too long. A trimmed version will work.</string>
     <string name="mail_rules_regex_invalid">This regex pattern has a typo. Checking the syntax usually sorts it.</string>
