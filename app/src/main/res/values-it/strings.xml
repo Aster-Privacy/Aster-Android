@@ -1298,7 +1298,8 @@
     <string name="pending_deletion_sign_out">Esci</string>
     <string name="pending_deletion_restoring">Ripristino…</string>
     <string name="pending_deletion_error">Impossibile ripristinare il tuo account. Riprova.</string>
-    <string name="image_blocked_placeholder">[Immagine bloccata]</string>
+    <string name="image_blocked">Immagine bloccata</string>
+    <string name="tracking_pixel_blocked">Pixel di tracciamento bloccato</string>
     <string name="alias_available">Questo alias è disponibile.</string>
     <string name="alias_not_available">Questo alias è già in uso.</string>
     <string name="alias_check_failed">Impossibile verificare la disponibilità. Puoi comunque provare a crearlo.</string>
