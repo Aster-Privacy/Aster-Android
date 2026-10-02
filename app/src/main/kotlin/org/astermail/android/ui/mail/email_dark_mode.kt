@@ -23,9 +23,6 @@ package org.astermail.android.ui.mail
 
 internal const val FORCED_DARK_INK = "#e5e5e5"
 
-// Force Dark Mode for Emails follows the app appearance: it rewrites email styles
-// only while Aster itself is dark, so the light theme shows each message's own
-// styling. Callers recompute this on every theme change.
 internal fun forces_dark_emails(preference: Boolean, theme_dark: Boolean): Boolean =
     preference && theme_dark
 
