@@ -2050,6 +2050,17 @@ fun MailDetailScreen(
                 confirm_label = stringResource(R.string.open),
                 cancel_label = stringResource(R.string.cancel),
                 on_confirm = open_external_link,
+                secondary_label = stringResource(R.string.copy_link),
+                on_secondary = {
+                    copy_external_link(
+                        link = link,
+                        write_clip = { label, text ->
+                            write_to_clipboard(context, android.content.ClipData.newPlainText(label, text))
+                        },
+                        on_copied = { show_toast(context.getString(R.string.link_copied)) },
+                        on_failed = { show_copy_failed_toast(context) },
+                    )
+                },
                 extra_content = {
                     Text(
                         text = link,
@@ -5069,6 +5080,15 @@ private fun info_banner(
 
 private val safe_external_schemes = setOf("http", "https", "mailto", "tel")
 private val safe_unsubscribe_schemes = setOf("https", "mailto")
+
+internal fun copy_external_link(
+    link: String,
+    write_clip: (label: String, text: String) -> Boolean,
+    on_copied: () -> Unit,
+    on_failed: () -> Unit,
+) {
+    if (write_clip("link", link)) on_copied() else on_failed()
+}
 
 private fun is_safe_external_url(url: String): Boolean {
     val scheme = runCatching { Uri.parse(url).scheme?.lowercase() }.getOrNull() ?: return false
