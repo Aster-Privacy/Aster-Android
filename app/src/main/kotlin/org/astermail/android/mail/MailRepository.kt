@@ -1830,6 +1830,11 @@ class MailRepository @Inject constructor(
             if (plaintext != null) return parse_scheduled_envelope(plaintext)
         }
 
+        for (kek in kek_candidates()) {
+            val plaintext = runCatching { AesGcm.decrypt(kek, nonce, ciphertext) }.getOrNull()
+            if (plaintext != null) return parse_scheduled_envelope(plaintext)
+        }
+
         return null
     }
 
@@ -1851,6 +1856,10 @@ class MailRepository @Inject constructor(
     }
 
     suspend fun reschedule_scheduled(id: String, scheduled_at: String): Result<Unit> = runCatching {
+        val scheduled_at_ms = java.time.Instant.parse(scheduled_at).toEpochMilli()
+        if (exceeds_sealed_schedule_window(scheduled_at_ms, System.currentTimeMillis())) {
+            throw IllegalStateException(context.getString(R.string.scheduled_too_far_ahead))
+        }
         scheduled_api.reschedule(id, scheduled_at)
         Unit
     }
@@ -4861,28 +4870,17 @@ class MailRepository @Inject constructor(
         bcc: List<String> = emptyList(),
         scheduled_at: String,
         sender_alias_hash: String? = null,
+        allow_non_post_quantum: Boolean = false,
     ): Result<String> = runCatching {
-        val is_external = (to + cc + bcc).any { !is_internal_recipient(it) }
-
-        val ephemeral_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
-        val base_nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
-
-        fun derive_nonce(base: ByteArray, xor_byte: Byte): ByteArray {
-            val n = base.copyOf()
-            n[11] = (n[11].toInt() xor xor_byte.toInt()).toByte()
-            return n
+        val all_recipients = to + cc + bcc
+        if (has_mixed_recipients(all_recipients)) throw MixedRecipientsException()
+        val scheduled_at_ms = java.time.Instant.parse(scheduled_at).toEpochMilli()
+        if (exceeds_sealed_schedule_window(scheduled_at_ms, System.currentTimeMillis())) {
+            throw IllegalStateException(context.getString(R.string.scheduled_too_far_ahead))
         }
+        val is_external = all_recipients.any { !is_internal_recipient(it) }
 
-        fun encrypt_field(plaintext: String, nonce: ByteArray): String =
-            android.util.Base64.encodeToString(
-                AesGcm.encrypt(ephemeral_key, nonce, plaintext.toByteArray(Charsets.UTF_8)),
-                android.util.Base64.NO_WRAP,
-            )
-
-        val envelope_nonce_bytes = derive_nonce(base_nonce, 0x01)
-        val recipients_nonce_bytes = derive_nonce(base_nonce, 0x02)
-
-        val envelope_obj = org.json.JSONObject().apply {
+        val envelope_json = org.json.JSONObject().apply {
             put("to_recipients", org.json.JSONArray(to))
             put("cc_recipients", org.json.JSONArray(cc))
             put("bcc_recipients", org.json.JSONArray(bcc))
@@ -4893,39 +4891,123 @@ class MailRepository @Inject constructor(
                 put("name", sender_display_name.orEmpty())
                 put("email", sender_email.orEmpty())
             })
-        }
-
-        val encrypted_envelope = encrypt_field(envelope_obj.toString(), envelope_nonce_bytes)
-        val recipients_json = org.json.JSONArray().apply {
-            (to + cc + bcc).forEach { put(it) }
         }.toString()
-        val encrypted_recipients = encrypt_field(recipients_json, recipients_nonce_bytes)
-
-        val ephemeral_key_b64 = android.util.Base64.encodeToString(ephemeral_key, android.util.Base64.NO_WRAP)
-        ephemeral_key.fill(0)
+        val recipients_json = org.json.JSONArray().apply {
+            all_recipients.forEach { put(it) }
+        }.toString()
 
         val sent_folder_token = resolve_sent_folder_token()
-
         if (sent_folder_token.isNullOrBlank()) {
             throw IllegalStateException(context.getString(R.string.send_sent_folder_unavailable))
         }
 
-        val response = scheduled_api.create_scheduled(
-            CreateScheduledRequest(
-                encrypted_envelope = encrypted_envelope,
-                envelope_nonce = android.util.Base64.encodeToString(envelope_nonce_bytes, android.util.Base64.NO_WRAP),
-                encrypted_recipients = encrypted_recipients,
-                recipients_nonce = android.util.Base64.encodeToString(recipients_nonce_bytes, android.util.Base64.NO_WRAP),
-                recipient_count = (to + cc + bcc).size,
-                scheduled_at = scheduled_at,
-                folder_token = sent_folder_token,
-                is_external = is_external,
-                ephemeral_key = ephemeral_key_b64,
-                base_nonce = android.util.Base64.encodeToString(base_nonce, android.util.Base64.NO_WRAP),
-                sender_alias_hash = sender_alias_hash,
-            ),
-        )
+        val request = if (is_external) {
+            build_external_scheduled_request(
+                envelope_json,
+                recipients_json,
+                all_recipients.size,
+                scheduled_at,
+                sent_folder_token,
+                sender_alias_hash,
+            )
+        } else {
+            val from_addr = sender_email?.takeIf { it.isNotBlank() }
+                ?: session_key_store.get_user_email().orEmpty()
+            if (from_addr.isBlank() || !ensure_ratchet_keys_ready()) {
+                throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
+            }
+            val existing_bundle = extract_subject_bundle(body_html)
+            val wrapped = ASTER_SUBJECT_BUNDLE_PREFIX + org.json.JSONObject().apply {
+                put("s", subject.ifBlank { existing_bundle.subject.orEmpty() })
+                put("b", existing_bundle.body)
+            }.toString()
+            val sealed = seal_with_private_bcc(
+                from_addr,
+                shared_targets(to, cc, bcc),
+                hidden_internal_bcc(to, cc, bcc),
+                wrapped,
+                allow_non_post_quantum,
+            )
+            val key = scheduled_local_key()
+                ?: throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
+            try {
+                val envelope_nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+                val recipients_nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+                CreateScheduledRequest(
+                    encrypted_envelope = seal_scheduled_field(key, envelope_nonce, envelope_json),
+                    envelope_nonce = scheduled_b64(envelope_nonce),
+                    encrypted_recipients = seal_scheduled_field(key, recipients_nonce, recipients_json),
+                    recipients_nonce = scheduled_b64(recipients_nonce),
+                    recipient_count = all_recipients.size,
+                    scheduled_at = scheduled_at,
+                    folder_token = sent_folder_token,
+                    is_external = false,
+                    sender_alias_hash = sender_alias_hash,
+                    delivery = org.astermail.android.api.scheduled.ScheduledDelivery(
+                        to = to,
+                        cc = cc,
+                        bcc = bcc,
+                        sender_email = sender_email?.takeIf { it.isNotBlank() },
+                        sender_display_name = sender_display_name?.takeIf { it.isNotBlank() },
+                        internal_encrypted_body = sealed.first,
+                        recipient_bodies = sealed.second,
+                    ),
+                )
+            } finally {
+                key.fill(0)
+            }
+        }
+
+        val response = scheduled_api.create_scheduled(request)
         response.id ?: throw IllegalStateException("no scheduled item id returned")
+    }
+
+    private fun scheduled_b64(bytes: ByteArray): String =
+        android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+
+    private fun seal_scheduled_field(key: ByteArray, nonce: ByteArray, plaintext: String): String =
+        scheduled_b64(AesGcm.encrypt(key, nonce, plaintext.toByteArray(Charsets.UTF_8)))
+
+    private suspend fun scheduled_local_key(): ByteArray? {
+        account_data_writer.write_key(org.astermail.android.crypto.AccountDataWriter.SCHEDULED_CONTEXT)
+            ?.let { return it }
+        val identity_key = session_key_store.get_identity_key()?.takeIf { it.isNotBlank() } ?: return null
+        return MessageDigest.getInstance("SHA-256")
+            .digest((identity_key + SCHEDULED_KEY_VERSION).toByteArray(Charsets.UTF_8))
+    }
+
+    private fun build_external_scheduled_request(
+        envelope_json: String,
+        recipients_json: String,
+        recipient_count: Int,
+        scheduled_at: String,
+        folder_token: String,
+        sender_alias_hash: String?,
+    ): CreateScheduledRequest {
+        val ephemeral_key = ByteArray(32).also { SecureRandom().nextBytes(it) }
+        val base_nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+        fun derive_nonce(xor_byte: Int): ByteArray = base_nonce.copyOf().also {
+            it[11] = (it[11].toInt() xor xor_byte).toByte()
+        }
+        try {
+            val envelope_nonce = derive_nonce(0x01)
+            val recipients_nonce = derive_nonce(0x02)
+            return CreateScheduledRequest(
+                encrypted_envelope = seal_scheduled_field(ephemeral_key, envelope_nonce, envelope_json),
+                envelope_nonce = scheduled_b64(envelope_nonce),
+                encrypted_recipients = seal_scheduled_field(ephemeral_key, recipients_nonce, recipients_json),
+                recipients_nonce = scheduled_b64(recipients_nonce),
+                recipient_count = recipient_count,
+                scheduled_at = scheduled_at,
+                folder_token = folder_token,
+                is_external = true,
+                ephemeral_key = scheduled_b64(ephemeral_key),
+                base_nonce = scheduled_b64(base_nonce),
+                sender_alias_hash = sender_alias_hash,
+            )
+        } finally {
+            ephemeral_key.fill(0)
+        }
     }
 
     private fun build_envelope_json(

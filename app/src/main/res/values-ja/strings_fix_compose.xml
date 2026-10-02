@@ -2,4 +2,7 @@
 <resources>
     <string name="compose_discard_draft_title">この下書きを破棄しますか？</string>
     <string name="compose_discard_draft_message">この下書きを破棄すると、本文と添付ファイルは削除されます。元に戻すことはできません。</string>
+    <string name="scheduled_too_far_ahead">予約送信は最大 28 日先まで設定できます。もっと早い日時を選択してください。</string>
+    <string name="scheduled_requires_encryption">暗号化の必須設定がオンになっており、外部アドレスへの予約送信メールはエンドツーエンドで暗号化されません。このメッセージを今すぐ送信するか、設定で暗号化の必須設定をオフにしてください。</string>
+    <string name="send_key_changed_while_waiting">このメッセージの送信待ちの間に受信者の暗号鍵が変更されたため、送信されませんでした。</string>
 </resources>

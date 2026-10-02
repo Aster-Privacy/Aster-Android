@@ -2,4 +2,7 @@
 <resources>
     <string name="compose_discard_draft_title">هل تريد حذف هذه المسودة؟</string>
     <string name="compose_discard_draft_message">إذا حذفت هذه المسودة، فسيُحذف نصها وأي مرفقات فيها. لا يمكن التراجع عن ذلك.</string>
+    <string name="scheduled_too_far_ahead">يمكن جدولة الرسائل لمدة أقصاها 28 يومًا مقدمًا. اختر وقتًا أقرب.</string>
+    <string name="scheduled_requires_encryption">لقد فعّلت التشفير الإلزامي، والرسائل المجدولة إلى عناوين خارجية ليست مشفرة من طرف إلى طرف. أرسل هذه الرسالة الآن، أو أوقف التشفير الإلزامي في الإعدادات.</string>
+    <string name="send_key_changed_while_waiting">تغير مفتاح تشفير أحد المستلمين بينما كانت هذه الرسالة تنتظر الإرسال، لذلك لم تُرسل.</string>
 </resources>

@@ -1858,6 +1858,29 @@ fun ComposeScreen(
             }
             return
         }
+        if (scheduled_send && external_sender_tokens[from_alias] == null) {
+            val scheduled_block = org.astermail.android.mail.scheduled_send_block(
+                recipients = to_chips.toList() + cc_chips.toList() + bcc_chips.toList(),
+                scheduled_at_ms = scheduled_at_iso
+                    ?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() }
+                    ?: System.currentTimeMillis(),
+                now_ms = System.currentTimeMillis(),
+                require_encryption = settings_state.encryption_settings?.require_encryption
+                    ?: settings_state.preferences?.require_encryption
+                    ?: false,
+            )
+            if (scheduled_block != null) {
+                send_lock.set(false)
+                send_error = context.getString(
+                    when (scheduled_block) {
+                        org.astermail.android.mail.ScheduledSendBlock.TOO_FAR_AHEAD -> R.string.scheduled_too_far_ahead
+                        org.astermail.android.mail.ScheduledSendBlock.MIXED_RECIPIENTS -> R.string.cannot_mix_recipients
+                        org.astermail.android.mail.ScheduledSendBlock.REQUIRES_ENCRYPTION -> R.string.scheduled_requires_encryption
+                    },
+                )
+                return
+            }
+        }
         if (is_sending) { send_lock.set(false); return }
         dismiss_keyboard()
         is_sending = true
@@ -1977,7 +2000,7 @@ fun ComposeScreen(
                 }
             }
 
-            if (!allow_non_post_quantum && !scheduled_send) {
+            if (!allow_non_post_quantum && (!scheduled_send || all_recipients_internal(snap_to + snap_cc + snap_bcc))) {
                 val coverage = kotlinx.coroutines.withTimeoutOrNull(
                     POST_QUANTUM_COVERAGE_TIMEOUT_MS,
                 ) {
@@ -2019,6 +2042,7 @@ fun ComposeScreen(
                     sender_display_name = resolve_sender_display_name(snap_from),
                     scheduled_at = scheduled_at,
                     sender_alias_hash = if (snap_from != user_email) alias_hash_map[snap_from]?.takeIf { it.isNotBlank() } else null,
+                    allow_non_post_quantum = allow_non_post_quantum,
                 )
                 is_sending = false
                 send_lock.set(false)

@@ -2,4 +2,7 @@
 <resources>
     <string name="compose_discard_draft_title">Dit concept weggooien?</string>
     <string name="compose_discard_draft_message">Als je dit concept weggooit, worden de tekst en eventuele bijlagen verwijderd. Je kunt dit niet ongedaan maken.</string>
+    <string name="scheduled_too_far_ahead">Geplande e-mails kunnen maximaal 28 dagen vooruit worden verstuurd. Kies een eerder tijdstip.</string>
+    <string name="scheduled_requires_encryption">Je hebt verplichte versleuteling ingeschakeld, en geplande e-mails naar externe adressen zijn niet end-to-end versleuteld. Verstuur dit bericht nu of schakel verplichte versleuteling uit in Instellingen.</string>
+    <string name="send_key_changed_while_waiting">De versleutelingssleutel van een ontvanger is gewijzigd terwijl dit bericht wachtte op verzending, dus het is niet verstuurd.</string>
 </resources>

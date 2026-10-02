@@ -2,4 +2,7 @@
 <resources>
     <string name="compose_discard_draft_title">Descartar este rascunho?</string>
     <string name="compose_discard_draft_message">Se descartar este rascunho, o texto e os anexos são eliminados. Esta ação não pode ser anulada.</string>
+    <string name="scheduled_too_far_ahead">Os emails agendados podem ser enviados com, no máximo, 28 dias de antecedência. Escolha uma hora anterior.</string>
+    <string name="scheduled_requires_encryption">Tem a encriptação obrigatória ativada, e os emails agendados para endereços externos não são encriptados ponto a ponto. Envie esta mensagem agora ou desative a encriptação obrigatória nas Definições.</string>
+    <string name="send_key_changed_while_waiting">A chave de encriptação de um destinatário mudou enquanto esta mensagem aguardava envio, por isso não foi enviada.</string>
 </resources>

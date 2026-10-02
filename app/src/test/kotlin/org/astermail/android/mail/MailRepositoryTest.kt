@@ -2434,4 +2434,114 @@ class MailRepositoryTest {
         coVerify(exactly = 1) { send_api.send_simple(capture(request)) }
         assertNull(request.captured.recipient_bodies)
     }
+
+    @Test
+    fun `internal schedule is sealed locally and sends no ephemeral key`() = runTest {
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), match { "hidden@astermail.org" !in it }, any(), any()) } returns "shared_body"
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), listOf("hidden@astermail.org"), any(), any()) } returns "hidden_body"
+        coEvery { scheduled_api.create_scheduled(any()) } returns
+            org.astermail.android.api.scheduled.CreateScheduledResponse(id = "sched_1", success = true)
+        val scheduled_at = java.time.Instant.now().plus(java.time.Duration.ofDays(2)).toString()
+
+        val result = repo.schedule_email(
+            subject = "Later",
+            body_html = "<p>later</p>",
+            sender_email = "me@astermail.org",
+            to = listOf("to@astermail.org"),
+            bcc = listOf("hidden@astermail.org"),
+            scheduled_at = scheduled_at,
+        )
+
+        assertEquals("sched_1", result.getOrThrow())
+        val request = slot<org.astermail.android.api.scheduled.CreateScheduledRequest>()
+        coVerify(exactly = 1) { scheduled_api.create_scheduled(capture(request)) }
+        val sent = request.captured
+        assertNull(sent.ephemeral_key)
+        assertNull(sent.base_nonce)
+        assertEquals(false, sent.is_external)
+        assertEquals(2, sent.recipient_count)
+        val delivery = sent.delivery!!
+        assertEquals("shared_body", delivery.internal_encrypted_body)
+        assertEquals(mapOf("hidden@astermail.org" to "hidden_body"), delivery.recipient_bodies)
+        assertEquals(listOf("hidden@astermail.org"), delivery.bcc)
+        assertTrue(delivery.hosted_recipients.isEmpty())
+
+        val key = java.security.MessageDigest.getInstance("SHA-256")
+            .digest("test_identity_keyastermail-scheduled-v1".toByteArray(Charsets.UTF_8))
+        val envelope_nonce = java.util.Base64.getDecoder().decode(sent.envelope_nonce)
+        val recipients_nonce = java.util.Base64.getDecoder().decode(sent.recipients_nonce)
+        assertFalse(envelope_nonce.contentEquals(recipients_nonce))
+        val envelope = String(
+            org.astermail.android.crypto.AesGcm.decrypt(
+                key,
+                envelope_nonce,
+                java.util.Base64.getDecoder().decode(sent.encrypted_envelope),
+            ),
+            Charsets.UTF_8,
+        )
+        assertTrue(envelope.contains("Later"))
+    }
+
+    @Test
+    fun `external schedule keeps the ephemeral key and sends no delivery`() = runTest {
+        coEvery { scheduled_api.create_scheduled(any()) } returns
+            org.astermail.android.api.scheduled.CreateScheduledResponse(id = "sched_ext", success = true)
+        val scheduled_at = java.time.Instant.now().plus(java.time.Duration.ofDays(1)).toString()
+
+        val result = repo.schedule_email(
+            subject = "Later",
+            body_html = "<p>later</p>",
+            to = listOf("friend@example.com"),
+            scheduled_at = scheduled_at,
+        )
+
+        assertEquals("sched_ext", result.getOrThrow())
+        val request = slot<org.astermail.android.api.scheduled.CreateScheduledRequest>()
+        coVerify(exactly = 1) { scheduled_api.create_scheduled(capture(request)) }
+        assertNotNull(request.captured.ephemeral_key)
+        assertEquals(true, request.captured.is_external)
+        assertNull(request.captured.delivery)
+        coVerify(exactly = 0) { ratchet_encryptor.encrypt_envelope(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `schedule beyond twenty eight days is refused before any request`() = runTest {
+        val scheduled_at = java.time.Instant.now().plus(java.time.Duration.ofDays(29)).toString()
+
+        val result = repo.schedule_email(
+            subject = "Later",
+            body_html = "<p>later</p>",
+            to = listOf("to@astermail.org"),
+            scheduled_at = scheduled_at,
+        )
+
+        assertTrue(result.isFailure)
+        coVerify(exactly = 0) { scheduled_api.create_scheduled(any()) }
+    }
+
+    @Test
+    fun `schedule with mixed recipients is refused before any request`() = runTest {
+        val scheduled_at = java.time.Instant.now().plus(java.time.Duration.ofDays(1)).toString()
+
+        val result = repo.schedule_email(
+            subject = "Later",
+            body_html = "<p>later</p>",
+            to = listOf("to@astermail.org", "friend@example.com"),
+            scheduled_at = scheduled_at,
+        )
+
+        assertTrue(result.exceptionOrNull() is MixedRecipientsException)
+        coVerify(exactly = 0) { scheduled_api.create_scheduled(any()) }
+    }
+
+    @Test
+    fun `reschedule beyond twenty eight days is refused before any request`() = runTest {
+        val scheduled_at = java.time.Instant.now().plus(java.time.Duration.ofDays(30)).toString()
+
+        val result = repo.reschedule_scheduled("sched_1", scheduled_at)
+
+        assertTrue(result.isFailure)
+        coVerify(exactly = 0) { scheduled_api.reschedule(any(), any()) }
+    }
 }

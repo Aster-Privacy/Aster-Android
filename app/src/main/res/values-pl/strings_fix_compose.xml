@@ -2,4 +2,7 @@
 <resources>
     <string name="compose_discard_draft_title">Odrzucić tę wersję roboczą?</string>
     <string name="compose_discard_draft_message">Jeśli odrzucisz tę wersję roboczą, jej tekst i wszystkie załączniki zostaną usunięte. Nie można tego cofnąć.</string>
+    <string name="scheduled_too_far_ahead">Zaplanowane e-maile można wysłać najwyżej 28 dni naprzód. Wybierz wcześniejszy termin.</string>
+    <string name="scheduled_requires_encryption">Masz włączone wymagane szyfrowanie, a zaplanowane e-maile do adresów zewnętrznych nie są szyfrowane end-to-end. Wyślij tę wiadomość teraz lub wyłącz wymagane szyfrowanie w Ustawieniach.</string>
+    <string name="send_key_changed_while_waiting">Klucz szyfrowania odbiorcy zmienił się, gdy ta wiadomość czekała na wysłanie, więc nie została wysłana.</string>
 </resources>

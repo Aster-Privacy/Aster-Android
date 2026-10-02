@@ -2,4 +2,7 @@
 <resources>
     <string name="compose_discard_draft_title">यह ड्राफ़्ट छोड़ दें?</string>
     <string name="compose_discard_draft_message">अगर आप यह ड्राफ़्ट छोड़ते हैं, तो इसका टेक्स्ट और सारे अटैचमेंट हट जाते हैं। इसे पहले जैसा नहीं किया जा सकता।</string>
+    <string name="scheduled_too_far_ahead">शेड्यूल किए गए ईमेल अधिकतम 28 दिन आगे के लिए भेजे जा सकते हैं। पहले का समय चुनें।</string>
+    <string name="scheduled_requires_encryption">आपने आवश्यक एन्क्रिप्शन चालू किया है, और बाहरी पतों पर शेड्यूल किए गए ईमेल एंड-टू-एंड एन्क्रिप्टेड नहीं होते। यह संदेश अभी भेजें, या सेटिंग्स में आवश्यक एन्क्रिप्शन बंद करें।</string>
+    <string name="send_key_changed_while_waiting">यह संदेश भेजे जाने की प्रतीक्षा में था तभी किसी प्राप्तकर्ता की एन्क्रिप्शन कुंजी बदल गई, इसलिए इसे नहीं भेजा गया।</string>
 </resources>
