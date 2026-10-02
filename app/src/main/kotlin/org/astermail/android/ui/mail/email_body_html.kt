@@ -45,6 +45,33 @@ internal fun fit_wide_width_attributes(body: String): String {
     }
 }
 
+private val NARROW_FIXED_STYLE_WIDTH = Regex("""(?<![a-z-])width\s*:\s*([1-3]\d{2})(?:\.\d+)?px""", RegexOption.IGNORE_CASE)
+
+private val NARROW_FIXED_WIDTH_ATTRIBUTE = Regex("""^([1-3]\d{2})(?:px)?$""", RegexOption.IGNORE_CASE)
+
+internal fun fluid_narrow_fixed_tables(body: String): String {
+    if (!body.contains("<table", ignoreCase = true)) return body
+    return try {
+        val doc = org.jsoup.Jsoup.parseBodyFragment(body)
+        doc.outputSettings(org.jsoup.nodes.Document.OutputSettings().prettyPrint(false))
+        var changed = false
+        for (table in doc.select("table")) {
+            val style = table.attr("style")
+            val from_style = NARROW_FIXED_STYLE_WIDTH.find(style)?.groupValues?.get(1)
+            val from_attribute = NARROW_FIXED_WIDTH_ATTRIBUTE.find(table.attr("width").trim())?.groupValues?.get(1)
+            val fixed = from_style ?: from_attribute ?: continue
+            if (from_attribute != null) table.attr("width", "100%")
+            val base = if (from_style != null) NARROW_FIXED_STYLE_WIDTH.replace(style, "width:100%") else style
+            val separator = if (base.isBlank() || base.trimEnd().endsWith(";")) "" else ";"
+            table.attr("style", "$base${separator}width:100%;max-width:${fixed}px!important")
+            changed = true
+        }
+        if (changed) doc.body().html() else body
+    } catch (_: Throwable) {
+        body
+    }
+}
+
 internal fun build_email_html(
     body: String,
     is_dark: Boolean,
@@ -75,6 +102,7 @@ internal fun build_email_html(
             .replace(Regex("""(?<!\(\s{0,8})\bmin-width\s*:\s*([1-9]\d{2,3})px""", RegexOption.IGNORE_CASE), "min-width:$1px;min-width:min($1px,100%)")
             .replace(Regex("""(?<!\(\s{0,8})(?<![a-z-])width\s*:\s*[4-9]\d{2,3}px""", RegexOption.IGNORE_CASE), "width:100%")
             .let { fit_wide_width_attributes(it) }
+            .let { fluid_narrow_fixed_tables(it) }
     } else {
         body
     }
@@ -140,7 +168,7 @@ html,body{background-color:#ffffff!important}
     }
 
     val table_css = if (has_newsletter_layout) {
-        "#m{max-width:100%!important;overflow-x:hidden!important;box-sizing:border-box!important}#m table{max-width:100%!important;box-sizing:border-box!important}#m img{max-width:100%!important;height:auto!important}#m div,#m p,#m blockquote,#m section,#m article{box-sizing:border-box!important;max-width:100%!important}td,th{box-sizing:border-box!important;max-width:100%!important}#m,#m *{word-break:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}#m a{overflow-wrap:anywhere!important}"
+        "#m{max-width:100%!important;overflow-x:auto!important;box-sizing:border-box!important}#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}#m table{max-width:100%!important;box-sizing:border-box!important}#m img{max-width:100%!important;height:auto!important}#m div,#m p,#m blockquote,#m section,#m article{box-sizing:border-box!important;max-width:100%!important}td,th{box-sizing:border-box!important;max-width:100%!important}#m,#m *{word-break:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}#m a{overflow-wrap:anywhere!important}"
     } else {
         "table{max-width:100%!important;border-collapse:collapse;width:100%!important}td,th{overflow-wrap:break-word}"
     }
