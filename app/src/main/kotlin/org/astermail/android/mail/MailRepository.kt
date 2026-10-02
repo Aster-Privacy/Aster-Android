@@ -1169,6 +1169,7 @@ class MailRepository @Inject constructor(
             sender_alias_hash = row.sender_alias_hash,
             suppress_branding = row.suppress_branding,
             allow_non_post_quantum = row.allow_non_post_quantum,
+            client_send_id = client_send_id_for(pending_id),
         )
         val response = result.getOrNull()
         return if (result.isSuccess && response?.success == true) {
@@ -4159,6 +4160,7 @@ class MailRepository @Inject constructor(
         sender_alias_hash: String? = null,
         suppress_branding: Boolean? = null,
         allow_non_post_quantum: Boolean = false,
+        client_send_id: String? = null,
     ): Result<SimpleSendResponse> = runCatching {
         if (has_mixed_recipients(to + cc + bcc)) throw MixedRecipientsException()
         val envelope = build_envelope_json(
@@ -4222,6 +4224,7 @@ class MailRepository @Inject constructor(
             )
             val result = send_api.send_external(
                 ExternalSendRequest(
+                    client_send_id = client_send_id,
                     encrypted_recipients = encrypted_recipients,
                     encrypted_subject = encrypted_subject,
                     encrypted_body = encrypted_body,
@@ -4296,6 +4299,7 @@ class MailRepository @Inject constructor(
 
             send_api.send_simple(
                 SimpleSendRequest(
+                    client_send_id = client_send_id,
                     to = to,
                     cc = cc,
                     bcc = bcc,
@@ -5436,6 +5440,12 @@ internal fun send_failure_reason_for(err: Throwable?): SendFailureReason = when 
     } -> SendFailureReason.ENCRYPTION
     else -> SendFailureReason.OTHER
 }
+
+private val client_send_id_pattern =
+    Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
+internal fun client_send_id_for(pending_id: String): String? =
+    pending_id.takeIf { client_send_id_pattern.matches(it) }
 
 internal fun is_permanent_send_failure_cause(err: Throwable?): Boolean {
     if (has_cause(err) { it is WeakMessagePasswordException }) return true
