@@ -299,6 +299,33 @@ class EmailBodyNativeTest {
     }
 
     @Test
+    fun content_hidden_by_a_style_sheet_rule_is_shown() {
+        val prepared = prepare(
+            "<style>.wrap{display:none}</style><div class=\"wrap\"><p>Hi there</p></div>",
+        )
+
+        assertTrue(prepared.contains("class=\"wrap\" style=\"display:revert !important"))
+    }
+
+    @Test
+    fun a_style_sheet_hidden_block_stays_hidden_when_other_text_is_visible() {
+        val prepared = prepare(
+            "<style>.mobile{display:none}</style><div class=\"mobile\">Small</div><p>Visible body</p>",
+        )
+
+        assertFalse(prepared.contains("display:revert"))
+    }
+
+    @Test
+    fun rules_inside_media_queries_are_ignored() {
+        val prepared = prepare(
+            "<style>@media (max-width:1px){.wrap{display:none}}</style><div class=\"wrap\">Hi there</div>",
+        )
+
+        assertFalse(prepared.contains("display:revert"))
+    }
+
+    @Test
     fun an_html_part_with_nothing_to_show_yields_to_the_text_part() {
         assertNull(renderable_html_part("<html><body><div><br></div></body></html>", "Hi there"))
         assertNull(renderable_html_part("<img src=\"https://a.test/p.gif\" width=\"1\" height=\"1\">", "Hi there"))
