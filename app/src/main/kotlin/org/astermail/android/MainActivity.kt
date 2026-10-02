@@ -2083,7 +2083,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     }
 
     val api_aliases = settings_state.aliases
-        .filter { !looks_encrypted(it.encrypted_local_part) }
+        .filter { it.is_enabled && !looks_encrypted(it.encrypted_local_part) }
         .map { alias ->
             drawer_alias_item(
                 id = alias.id,
@@ -2091,7 +2091,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 routing_token = alias.alias_address_hash.ifBlank { null },
             )
         } + settings_state.custom_domain_addresses
-        .filter { !looks_encrypted(it.encrypted_local_part) }
+        .filter { it.is_enabled && !looks_encrypted(it.encrypted_local_part) }
         .map { addr ->
             drawer_alias_item(
                 id = addr.id,
