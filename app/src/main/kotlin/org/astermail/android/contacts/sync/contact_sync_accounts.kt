@@ -51,6 +51,7 @@ object ContactSyncAccounts {
     const val AUTHORITY = ContactsContract.AUTHORITY
     const val KEY_ACCOUNT_ID = "aster_account_id"
     const val KEY_SINCE = "contact_sync_since"
+    const val KEY_SCHEMA = "contact_sync_schema"
     private const val PREFS = "contact_sync"
     private const val PREF_ENABLED = "enabled"
     private const val PREF_LINKED = "linked_ids"
@@ -250,11 +251,18 @@ object ContactSyncAccounts {
         system_accounts(context).forEach { request_sync(it, manual) }
     }
 
-    fun load_since(context: Context, account: Account): Long =
-        runCatching { AccountManager.get(context).getUserData(account, KEY_SINCE)?.toLongOrNull() }
-            .getOrNull() ?: 0L
+    fun load_since(context: Context, account: Account): Long {
+        val manager = AccountManager.get(context)
+        val schema = runCatching { manager.getUserData(account, KEY_SCHEMA)?.toIntOrNull() }.getOrNull() ?: 0
+        if (schema < CARD_SCHEMA) return 0L
+        return runCatching { manager.getUserData(account, KEY_SINCE)?.toLongOrNull() }.getOrNull() ?: 0L
+    }
 
     fun save_since(context: Context, account: Account, since: Long) {
-        runCatching { AccountManager.get(context).setUserData(account, KEY_SINCE, since.toString()) }
+        runCatching {
+            val manager = AccountManager.get(context)
+            manager.setUserData(account, KEY_SINCE, since.toString())
+            manager.setUserData(account, KEY_SCHEMA, CARD_SCHEMA.toString())
+        }
     }
 }

@@ -22,6 +22,8 @@
 package org.astermail.android.mail
 
 import kotlinx.coroutines.test.runTest
+import org.astermail.android.api.ApiError
+import org.astermail.android.auth.CodeRestoreResult
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -42,6 +44,7 @@ class LockedDataTest {
         var conversion = 0
         var reseal = 0
         var changed = 0
+        var code_restore = 0
         var reseal_old: String? = null
     }
 
@@ -53,6 +56,7 @@ class LockedDataTest {
         restore: suspend (String) -> Int = { 0 },
         conversion: suspend (String, String) -> AccountDataConversionSummary? = { _, _ -> null },
         reseal: SentMailResealSummary = SentMailResealSummary(),
+        restore_with_code: suspend (String) -> CodeRestoreResult = { CodeRestoreResult() },
     ) = LockedDataService(
         list_inactive_key_set_ids = { ids },
         locked_counts = counts,
@@ -71,6 +75,10 @@ class LockedDataTest {
             reseal
         },
         on_changed = { calls.changed++ },
+        restore_inactive_key_sets_with_code = {
+            calls.code_restore++
+            restore_with_code(it)
+        },
     )
 
     @Test
@@ -230,5 +238,112 @@ class LockedDataTest {
         assertEquals(LockedDataRecovery(), service(calls = calls).recover_locked_data("acct", ""))
         assertEquals(0, calls.restore)
         assertEquals(0, calls.changed)
+    }
+
+    @Test
+    fun a_code_that_restores_every_set_is_a_success() = runTest {
+        val calls = Calls()
+        var seen = ""
+
+        val result = service(
+            calls = calls,
+            restore_with_code = {
+                seen = it
+                CodeRestoreResult(restored = 2)
+            },
+        ).recover_locked_data_with_code("acct", "ASTER-AAAA-BBBB-CCCC-DDDD")
+
+        assertEquals(LockedDataRecovery(restored_key_sets = 2), result)
+        assertEquals("ASTER-AAAA-BBBB-CCCC-DDDD", seen)
+        assertEquals(1, calls.code_restore)
+        assertEquals(0, calls.restore)
+        assertEquals(0, calls.conversion)
+        assertEquals(1, calls.changed)
+        assertEquals(LockedDataRecoveryOutcome.SUCCESS, locked_data_code_recovery_outcome(result))
+    }
+
+    @Test
+    fun a_code_that_restores_part_of_a_set_is_partial() = runTest {
+        val result = service(
+            restore_with_code = { CodeRestoreResult(restored = 2, incomplete = 1) },
+        ).recover_locked_data_with_code("acct", "code")
+
+        assertEquals(LockedDataRecovery(restored_key_sets = 2, incomplete = 1), result)
+        assertEquals(LockedDataRecoveryOutcome.PARTIAL, locked_data_code_recovery_outcome(result))
+    }
+
+    @Test
+    fun a_code_restore_that_cannot_be_saved_is_a_failure() = runTest {
+        val result = service(
+            restore_with_code = { CodeRestoreResult(restored = 0, incomplete = 1) },
+        ).recover_locked_data_with_code("acct", "code")
+
+        assertTrue(result.failed)
+        assertEquals(LockedDataRecoveryOutcome.FAILED, locked_data_code_recovery_outcome(result))
+    }
+
+    @Test
+    fun a_code_that_matches_nothing_is_a_code_no_match() = runTest {
+        val calls = Calls()
+
+        val result = service(calls = calls).recover_locked_data_with_code("acct", "code")
+
+        assertEquals(LockedDataRecovery(), result)
+        assertEquals(1, calls.changed)
+        assertEquals(LockedDataRecoveryOutcome.CODE_NO_MATCH, locked_data_code_recovery_outcome(result))
+        assertEquals(LockedDataRecoveryOutcome.NO_MATCH, locked_data_recovery_outcome(result))
+    }
+
+    @Test
+    fun too_many_code_attempts_are_reported_as_rate_limited() = runTest {
+        val result = service(
+            restore_with_code = { throw ApiError.RateLimited() },
+        ).recover_locked_data_with_code("acct", "code")
+
+        assertTrue(result.rate_limited)
+        assertFalse(result.failed)
+        assertEquals(LockedDataRecoveryOutcome.RATE_LIMITED, locked_data_code_recovery_outcome(result))
+    }
+
+    @Test
+    fun a_code_restore_that_throws_is_a_failure() = runTest {
+        val calls = Calls()
+
+        val result = service(
+            calls = calls,
+            restore_with_code = { error("network") },
+        ).recover_locked_data_with_code("acct", "code")
+
+        assertEquals(LockedDataRecovery(failed = true), result)
+        assertEquals(1, calls.changed)
+        assertEquals(LockedDataRecoveryOutcome.FAILED, locked_data_code_recovery_outcome(result))
+    }
+
+    @Test
+    fun a_blank_code_does_nothing() = runTest {
+        val calls = Calls()
+
+        assertEquals(LockedDataRecovery(), service(calls = calls).recover_locked_data_with_code("acct", "  "))
+        assertEquals(LockedDataRecovery(), service(calls = calls).recover_locked_data_with_code("", "code"))
+        assertEquals(0, calls.code_restore)
+        assertEquals(0, calls.changed)
+    }
+
+    @Test
+    fun rate_limiting_outranks_every_other_outcome() {
+        assertEquals(
+            LockedDataRecoveryOutcome.RATE_LIMITED,
+            locked_data_recovery_outcome(
+                LockedDataRecovery(restored_key_sets = 1, failed = true, incomplete = 1, rate_limited = true),
+            ),
+        )
+    }
+
+    @Test
+    fun a_partial_restore_outranks_a_failure() {
+        assertEquals(
+            LockedDataRecoveryOutcome.PARTIAL,
+            locked_data_recovery_outcome(LockedDataRecovery(restored_key_sets = 1, failed = true, incomplete = 2)),
+        )
     }
 }

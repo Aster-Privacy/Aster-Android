@@ -167,6 +167,7 @@ data class UserPreferences(
     val compose_font_size: String = "normal",
     val compose_font_color: String = "",
     val locked_data_banner_dismissed: String = "",
+    val account_security_banner_dismissed: Boolean = false,
 )
 
 @Serializable

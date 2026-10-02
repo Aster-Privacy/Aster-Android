@@ -23,6 +23,8 @@ package org.astermail.android.contacts
 
 import java.util.Locale
 import org.astermail.android.ui.contacts.Contact
+import org.astermail.android.ui.contacts.ContactEntry
+import org.astermail.android.ui.contacts.ContactPostal
 
 const val MAX_IMPORTED_CONTACTS = 5000
 
@@ -132,7 +134,7 @@ private fun split_vcard_value(value: String): List<String> {
     return parts.map { unescape_vcard(it) }
 }
 
-private data class VcardLine(val key: String, val params: List<String>, val value: String)
+private data class VcardLine(val group: String, val key: String, val params: List<String>, val value: String)
 
 private fun parse_line(line: String): VcardLine? {
     val separator = line.indexOf(':')
@@ -140,9 +142,11 @@ private fun parse_line(line: String): VcardLine? {
     val head = line.substring(0, separator)
     val value = line.substring(separator + 1)
     val segments = head.split(";")
-    val key = segments.first().substringAfter('.').uppercase(Locale.ROOT)
+    val name = segments.first()
+    val group = name.substringBefore('.', "").trim().lowercase(Locale.ROOT)
+    val key = name.substringAfter('.').trim().uppercase(Locale.ROOT)
     val params = segments.drop(1).map { it.trim() }
-    return VcardLine(key, params, value)
+    return VcardLine(group, key, params, value)
 }
 
 private fun types_of(params: List<String>): List<String> =
@@ -176,42 +180,44 @@ fun contact_to_vcard(contact: Contact): String {
         lines.add(fold_line("$key:" + value.replace("\r", "").replace("\n", "")))
 
     fun push_photo(value: String) {
-        val match = photo_data_uri.matchEntire(value)
-        if (match == null) {
-            push_raw("PHOTO;VALUE=URI", value)
-            return
-        }
+        val match = photo_data_uri.matchEntire(value) ?: return
         val media = match.groupValues[1].uppercase(Locale.ROOT)
         push_raw("PHOTO;ENCODING=b;TYPE=$media", match.groupValues[2])
     }
 
+    var item = 0
+
+    fun push_typed(key: String, type_param: String?, label: String?, value: String) {
+        if (label != null) {
+            item += 1
+            val custom_type = vcard_param_text(label).let { if (it.isEmpty()) "" else ";TYPE=$it" }
+            push("item$item.$key$custom_type:$value")
+            push("item$item.X-ABLabel:${escape_vcard(label)}")
+        } else {
+            push("$key${type_param?.let { ";TYPE=$it" }.orEmpty()}:$value")
+        }
+    }
+
     push("N:${escape_vcard(last)};${escape_vcard(first)};;;")
     push("FN:${escape_vcard(contact.name.ifBlank { contact.email })}")
-    if (contact.email.isNotBlank()) {
-        push("EMAIL;TYPE=INTERNET;TYPE=HOME:${escape_vcard(contact.email)}")
+    for (entry in contact.email_entries()) {
+        val (type_param, label) = vcard_type_for(entry.type, entry.label, EMAIL_TYPE_PARAMS)
+        push_typed("EMAIL", type_param, label, escape_vcard(entry.value))
     }
-    if (contact.work_email.isNotBlank()) {
-        push("EMAIL;TYPE=INTERNET;TYPE=WORK:${escape_vcard(contact.work_email)}")
+    for (entry in contact.phone_entries()) {
+        val (type_param, label) = vcard_type_for(entry.type, entry.label, PHONE_TYPE_PARAMS)
+        push_typed("TEL", type_param, label, escape_vcard(entry.value))
     }
-    if (contact.phone.isNotBlank()) push("TEL;TYPE=CELL:${escape_vcard(contact.phone)}")
-    if (contact.work_phone.isNotBlank()) push("TEL;TYPE=WORK:${escape_vcard(contact.work_phone)}")
     if (contact.company.isNotBlank()) push("ORG:${escape_vcard(contact.company)}")
     if (contact.title.isNotBlank()) push("TITLE:${escape_vcard(contact.title)}")
     if (contact.birthday.isNotBlank()) push("BDAY:${escape_vcard(contact.birthday)}")
 
-    val has_address = listOf(
-        contact.address,
-        contact.city,
-        contact.region,
-        contact.postal_code,
-        contact.country,
-    ).any { it.isNotBlank() }
-    if (has_address) {
-        push(
-            "ADR;TYPE=HOME:;;${escape_vcard(contact.address)};${escape_vcard(contact.city)};" +
-                "${escape_vcard(contact.region)};${escape_vcard(contact.postal_code)};" +
-                escape_vcard(contact.country),
-        )
+    for (postal in contact.address_entries()) {
+        val (type_param, label) = vcard_type_for(postal.type, postal.label, ADDRESS_TYPE_PARAMS)
+        val value = ";;${escape_vcard(postal.street)};${escape_vcard(postal.city)};" +
+            "${escape_vcard(postal.region)};${escape_vcard(postal.postal_code)};" +
+            escape_vcard(postal.country)
+        push_typed("ADR", type_param, label, value)
     }
     if (contact.website.isNotBlank()) push_raw("URL", contact.website)
     if (contact.twitter.isNotBlank()) {
@@ -234,6 +240,83 @@ fun contact_to_vcard(contact: Contact): String {
     return lines.joinToString("\r\n")
 }
 
+private fun vcard_param_text(label: String): String =
+    label.replace(Regex("[\\p{Cntrl};:,\"]"), " ").trim().replace(Regex("\\s+"), " ")
+
+private val EMAIL_TYPE_PARAMS = mapOf("home" to "HOME", "work" to "WORK")
+private val PHONE_TYPE_PARAMS = mapOf(
+    "mobile" to "CELL",
+    "home" to "HOME",
+    "work" to "WORK",
+    "fax" to "FAX",
+    "pager" to "PAGER",
+)
+private val ADDRESS_TYPE_PARAMS = mapOf("home" to "HOME", "work" to "WORK")
+
+private fun vcard_type_for(type: String, label: String, known: Map<String, String>): Pair<String?, String?> =
+    when {
+        type == ContactEntry.TYPE_PERSONAL -> null to "Personal"
+        type == ContactEntry.TYPE_OTHER && label.isNotBlank() -> null to label.trim()
+        else -> known[type] to null
+    }
+
+fun contact_share_text(contact: Contact): String {
+    val phones = contact.phone_entries().map { it.value.trim() }.filter { it.isNotEmpty() }
+    val name = contact.name.trim()
+    return (listOfNotNull(name.takeIf { it.isNotEmpty() }) + phones).joinToString("\n")
+}
+
+fun contact_share_file_name(contact: Contact): String {
+    val base = contact.name.trim()
+        .replace(Regex("[^\\p{L}\\p{N} _-]"), "")
+        .trim()
+        .take(60)
+    return base.ifBlank { "contact" } + ".vcf"
+}
+
+private val IGNORED_TYPE_TOKENS = setOf(
+    "pref", "internet", "voice", "x400", "dom", "intl", "postal", "parcel", "text", "msg",
+)
+
+private fun clean_ab_label(raw: String): String =
+    raw.trim().removePrefix("_\$!<").removeSuffix(">!\$_").trim()
+
+private enum class VcardKind { EMAIL, PHONE, ADDRESS }
+
+private fun resolve_word(word: String, kind: VcardKind): String? =
+    when (word.lowercase(Locale.ROOT)) {
+        "home" -> "home"
+        "work" -> "work"
+        "other" -> "other"
+        "personal" -> if (kind == VcardKind.ADDRESS) null else "personal"
+        "cell", "mobile", "iphone" -> if (kind == VcardKind.PHONE) "mobile" else null
+        "fax", "homefax", "workfax", "otherfax" -> if (kind == VcardKind.PHONE) "fax" else null
+        "pager" -> if (kind == VcardKind.PHONE) "pager" else null
+        else -> null
+    }
+
+private fun resolve_type(types: List<String>, ab_label: String?, kind: VcardKind): Pair<String, String> {
+    val cleaned = ab_label?.let { clean_ab_label(it) }.orEmpty()
+    if (cleaned.isNotEmpty()) {
+        val word = resolve_word(cleaned, kind)
+        return if (word != null) word to "" else "other" to cleaned
+    }
+    val tokens = types.filter { it !in IGNORED_TYPE_TOKENS }
+    if (tokens.isEmpty()) return (if (kind == VcardKind.PHONE) "mobile" else "other") to ""
+    if (kind == VcardKind.PHONE) {
+        if ("fax" in tokens) return "fax" to ""
+        if ("pager" in tokens) return "pager" to ""
+        if (tokens.any { it == "cell" || it == "mobile" || it == "iphone" }) return "mobile" to ""
+    }
+    tokens.firstNotNullOfOrNull { resolve_word(it, kind) }?.let { return it to "" }
+    val custom = tokens.first().removePrefix("x-").replaceFirstChar { it.titlecase(Locale.ROOT) }
+    return "other" to custom
+}
+
+private class PendingEntry(val group: String, val value: String, val types: List<String>)
+
+private class PendingPostal(val group: String, val postal: ContactPostal, val types: List<String>)
+
 fun contacts_to_vcard(contacts: List<Contact>): String =
     contacts.joinToString("\r\n") { contact_to_vcard(it) } + "\r\n"
 
@@ -242,11 +325,29 @@ fun parse_vcards(raw_text: String): List<Contact> {
     val contacts = mutableListOf<Contact>()
     var current: MutableMap<String, String>? = null
     var groups = mutableListOf<String>()
+    var emails = mutableListOf<PendingEntry>()
+    var phones = mutableListOf<PendingEntry>()
+    var postals = mutableListOf<PendingPostal>()
+    var ab_labels = mutableMapOf<String, String>()
 
     fun flush() {
         val fields = current ?: return
-        val name = fields["name"].orEmpty().ifBlank { fields["email"].orEmpty() }
-        if (name.isBlank() && fields["email"].orEmpty().isBlank()) return
+        fun label_for(group: String) = if (group.isEmpty()) null else ab_labels[group]
+        val typed_emails = emails.map {
+            val (type, label) = resolve_type(it.types, label_for(it.group), VcardKind.EMAIL)
+            ContactEntry(it.value, type, label)
+        }
+        val typed_phones = phones.map {
+            val (type, label) = resolve_type(it.types, label_for(it.group), VcardKind.PHONE)
+            ContactEntry(it.value, type, label)
+        }
+        val typed_addresses = postals.map {
+            val (type, label) = resolve_type(it.types, label_for(it.group), VcardKind.ADDRESS)
+            it.postal.copy(type = type, label = label)
+        }
+        val first_email = typed_emails.firstOrNull()?.value.orEmpty()
+        val name = fields["name"].orEmpty().ifBlank { first_email }
+        if (name.isBlank() && first_email.isBlank()) return
         contacts.add(
             Contact(
                 id = "",
@@ -271,7 +372,7 @@ fun parse_vcards(raw_text: String): List<Contact> {
                 profile_color = fields["profile_color"].orEmpty(),
                 is_favorite = fields["is_favorite"] == "true",
                 groups = groups.toList(),
-            ),
+            ).with_typed_fields(typed_emails, typed_phones, typed_addresses),
         )
     }
 
@@ -280,6 +381,10 @@ fun parse_vcards(raw_text: String): List<Contact> {
         if (trimmed.equals("BEGIN:VCARD", ignoreCase = true)) {
             current = mutableMapOf()
             groups = mutableListOf()
+            emails = mutableListOf()
+            phones = mutableListOf()
+            postals = mutableListOf()
+            ab_labels = mutableMapOf()
             continue
         }
         if (trimmed.equals("END:VCARD", ignoreCase = true)) {
@@ -305,39 +410,25 @@ fun parse_vcards(raw_text: String): List<Contact> {
                     if (joined.isNotBlank()) fields["name"] = joined
                 }
             }
-            "EMAIL" -> {
-                if (types.contains("work") && fields["work_email"].isNullOrBlank()) {
-                    fields["work_email"] = value
-                } else if (fields["email"].isNullOrBlank()) {
-                    fields["email"] = value
-                } else if (fields["work_email"].isNullOrBlank()) {
-                    fields["work_email"] = value
-                }
-            }
-            "TEL" -> {
-                if (types.contains("work") && fields["work_phone"].isNullOrBlank()) {
-                    fields["work_phone"] = value
-                } else if (fields["phone"].isNullOrBlank()) {
-                    fields["phone"] = value
-                } else if (fields["work_phone"].isNullOrBlank()) {
-                    fields["work_phone"] = value
-                }
-            }
+            "EMAIL" -> emails.add(PendingEntry(parsed.group, value.removePrefix("mailto:"), types))
+            "TEL" -> phones.add(PendingEntry(parsed.group, value.removePrefix("tel:"), types))
+            "X-ABLABEL" -> if (parsed.group.isNotEmpty()) ab_labels[parsed.group] = value
             "ORG" -> fields["company"] = split_vcard_value(parsed.value).firstOrNull().orEmpty().trim()
             "TITLE" -> fields["title"] = value
             "BDAY" -> fields["birthday"] = value
             "ADR" -> {
-                if (fields["address"].isNullOrBlank() && fields["city"].isNullOrBlank()) {
-                    val parts = split_vcard_value(parsed.value)
-                    val street = listOf(parts.getOrNull(1).orEmpty(), parts.getOrNull(2).orEmpty())
-                        .filter { it.isNotBlank() }
-                        .joinToString(" ")
-                    fields["address"] = street
-                    fields["city"] = parts.getOrNull(3).orEmpty()
-                    fields["region"] = parts.getOrNull(4).orEmpty()
-                    fields["postal_code"] = parts.getOrNull(5).orEmpty()
-                    fields["country"] = parts.getOrNull(6).orEmpty()
-                }
+                val parts = split_vcard_value(parsed.value)
+                val street = listOf(parts.getOrNull(1).orEmpty(), parts.getOrNull(2).orEmpty())
+                    .filter { it.isNotBlank() }
+                    .joinToString(" ")
+                val postal = ContactPostal(
+                    street = street.trim(),
+                    city = parts.getOrNull(3).orEmpty().trim(),
+                    region = parts.getOrNull(4).orEmpty().trim(),
+                    postal_code = parts.getOrNull(5).orEmpty().trim(),
+                    country = parts.getOrNull(6).orEmpty().trim(),
+                )
+                if (!postal.is_blank()) postals.add(PendingPostal(parsed.group, postal, types))
             }
             "URL" -> if (fields["website"].isNullOrBlank()) fields["website"] = parsed.value.trim()
             "X-SOCIALPROFILE" -> {
@@ -362,7 +453,8 @@ fun parse_vcards(raw_text: String): List<Contact> {
                 val encoding = param_value(parsed.params, "ENCODING").lowercase(Locale.ROOT)
                 val raw = parsed.value.trim()
                 fields["avatar_url"] = when {
-                    raw.startsWith("data:") || raw.startsWith("http") -> raw
+                    photo_data_uri.matches(raw) -> raw
+                    raw.contains(":") -> ""
                     encoding == "b" || encoding == "base64" -> {
                         val media = param_value(parsed.params, "TYPE").ifBlank { "jpeg" }
                         "data:image/${media.lowercase(Locale.ROOT)};base64,$raw"

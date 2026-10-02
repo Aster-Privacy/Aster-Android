@@ -327,7 +327,8 @@ fun InboxScreen(
     val locked_data_vm: org.astermail.android.mail.LockedDataViewModel = hiltViewModel()
     val locked_data_state by locked_data_vm.state.collectAsStateWithLifecycle()
     var show_recover_data_dialog by remember { mutableStateOf(false) }
-    val locked_data_preferences_loaded = settings_state.preferences_authoritative && settings_state.preferences != null
+    val locked_data_preferences_loaded = settings_state.preferences != null &&
+        (settings_state.preferences_authoritative || settings_state.preferences_locked)
     LaunchedEffect(locked_data_preferences_loaded) {
         if (locked_data_preferences_loaded) locked_data_vm.refresh()
     }
@@ -494,11 +495,23 @@ fun InboxScreen(
     val send_problem by mail_vm.send_problem.collectAsStateWithLifecycle()
     val failed_send_count by mail_vm.failed_send_count.collectAsStateWithLifecycle()
     val failed_send_notice by mail_vm.failed_send_notice.collectAsStateWithLifecycle()
+    val pending_identity_changes by mail_vm.identity_changes.collectAsStateWithLifecycle()
     val open_failed_send = failed_send_notice
     if (send_problem && open_failed_send != null) {
+        val identity_change_pending = open_failed_send.reason == org.astermail.android.mail.SendFailureReason.IDENTITY_CHANGED &&
+            org.astermail.android.mail.identity_change_pending_for(
+                open_failed_send.recipients,
+                pending_identity_changes.map { it.sender_email },
+            )
         val reason_text = when (open_failed_send.reason) {
             org.astermail.android.mail.SendFailureReason.POST_QUANTUM -> stringResource(R.string.outbox_failed_reason_post_quantum)
-            org.astermail.android.mail.SendFailureReason.IDENTITY_CHANGED -> stringResource(R.string.outbox_failed_reason_identity)
+            org.astermail.android.mail.SendFailureReason.IDENTITY_CHANGED -> if (identity_change_pending) {
+                stringResource(R.string.outbox_failed_reason_identity)
+            } else {
+                stringResource(R.string.outbox_failed_reason_identity_unverified)
+            }
+            org.astermail.android.mail.SendFailureReason.KEY_CHANGED -> stringResource(R.string.outbox_failed_reason_key_changed)
+            org.astermail.android.mail.SendFailureReason.WEAK_PASSWORD -> stringResource(R.string.message_password_too_weak)
             org.astermail.android.mail.SendFailureReason.ENCRYPTION -> stringResource(R.string.outbox_failed_reason_encryption)
             org.astermail.android.mail.SendFailureReason.REJECTED -> stringResource(R.string.outbox_failed_reason_rejected)
             org.astermail.android.mail.SendFailureReason.CONNECTION -> stringResource(R.string.outbox_failed_reason_connection)
@@ -529,6 +542,12 @@ fun InboxScreen(
                     org.astermail.android.design.components.AsterDialogPrimaryButton(
                         label = stringResource(R.string.post_quantum_send_anyway),
                         onClick = { mail_vm.retry_failed_send(failed_id, allow_non_post_quantum = true) },
+                    )
+                } else if (identity_change_pending) {
+                    val failed_recipients = open_failed_send.recipients
+                    org.astermail.android.design.components.AsterDialogPrimaryButton(
+                        label = stringResource(R.string.identity_trust_new_key),
+                        onClick = { mail_vm.trust_new_keys_and_retry(failed_id, failed_recipients) },
                     )
                 } else {
                     org.astermail.android.design.components.AsterDialogPrimaryButton(
@@ -572,25 +591,28 @@ fun InboxScreen(
     val locked_data_context = LocalContext.current
     LaunchedEffect(locked_data_vm) {
         locked_data_vm.outcomes.collect { outcome ->
-            val message_res = when (outcome) {
-                org.astermail.android.mail.LockedDataRecoveryOutcome.SUCCESS -> R.string.recover_data_success
-                org.astermail.android.mail.LockedDataRecoveryOutcome.NO_MATCH -> R.string.recover_data_no_match
-                org.astermail.android.mail.LockedDataRecoveryOutcome.FAILED -> R.string.recover_data_failed
-            }
+            val unlocked_some = outcome == org.astermail.android.mail.LockedDataRecoveryOutcome.SUCCESS ||
+                outcome == org.astermail.android.mail.LockedDataRecoveryOutcome.PARTIAL
+            if (unlocked_some) settings_vm.load_aliases(force = true)
             if (outcome == org.astermail.android.mail.LockedDataRecoveryOutcome.SUCCESS) {
                 show_recover_data_dialog = false
-                settings_vm.load_aliases(force = true)
+                top_toast_state = org.astermail.android.ui.common.TopToastState(
+                    message = locked_data_context.getString(R.string.recover_data_success),
+                )
             }
-            top_toast_state = org.astermail.android.ui.common.TopToastState(
-                message = locked_data_context.getString(message_res),
-            )
         }
     }
     if (show_recover_data_dialog) {
         recover_data_dialog(
             is_recovering = locked_data_state.recovering,
+            outcome = locked_data_state.last_outcome,
             on_recover = { password -> locked_data_vm.recover(password) },
-            on_dismiss = { show_recover_data_dialog = false },
+            on_recover_with_code = { code -> locked_data_vm.recover_with_code(code) },
+            on_clear_outcome = { locked_data_vm.clear_outcome() },
+            on_dismiss = {
+                show_recover_data_dialog = false
+                locked_data_vm.clear_outcome()
+            },
         )
     }
     LaunchedEffect(mail_vm) {

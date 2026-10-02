@@ -21,9 +21,25 @@
 
 package org.astermail.android.ui.mail
 
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import org.astermail.android.design.AsterSemanticColors
+
 internal const val FORCED_DARK_INK = "#e5e5e5"
 
-internal const val FORCED_DARK_CANVAS = "#121212"
+internal fun forces_dark_emails(preference: Boolean, theme_dark: Boolean): Boolean =
+    preference && theme_dark
+
+internal fun email_theme_is_dark(colors: AsterSemanticColors): Boolean =
+    if (colors.is_glass) colors.is_dark else colors.bg_primary.luminance() < colors.text_primary.luminance()
+
+private const val GLASS_EMAIL_SURFACE_COVER = 0.82f
+
+internal fun email_glass_backing(colors: AsterSemanticColors, white_page: Boolean): Color {
+    if (white_page || !colors.is_translucent) return Color.Transparent
+    val alpha = 1f - (1f - GLASS_EMAIL_SURFACE_COVER) / (1f - colors.glass_opacity)
+    return if (alpha <= 0f) Color.Transparent else colors.thread_content_bg.copy(alpha = alpha)
+}
 
 private const val DARK_INK_LUMINANCE_LIMIT = 0.25
 
@@ -209,14 +225,13 @@ internal fun forced_dark_mode_css(
     link_hex: String,
     quote_border: String,
     quote_color: String,
-    canvas: String = "transparent",
 ): String {
     val neutralized = NEUTRALIZED_TAGS.joinToString(",") { "$it$KEEPS_BACKGROUND" }
     val readable_link = "a:not(.aster-email-button):not([$KEEP_BACKGROUND_ATTRIBUTE])"
     val readable_links = "$readable_link,$readable_link *"
     return """
 html{color-scheme:dark!important}
-html,body{background-color:$canvas!important;color:$FORCED_DARK_INK!important}
+html,body{background-color:transparent!important;color:$FORCED_DARK_INK!important}
 $neutralized{background-color:transparent!important;background-image:none!important}
 $readable_links{color:$link_hex!important}
 a[style*="background" i] *,[bgcolor] > a *{color:inherit!important}

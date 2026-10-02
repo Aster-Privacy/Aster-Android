@@ -50,5 +50,6 @@ class AccountDataWriter(
         const val READ_WAIT_MS = 5_000L
         const val PREFERENCES_CONTEXT = "astermail-preferences-v1"
         const val DRAFT_CONTEXT = "astermail-draft-v2"
+        const val SCHEDULED_CONTEXT = "astermail-scheduled-v1"
     }
 }

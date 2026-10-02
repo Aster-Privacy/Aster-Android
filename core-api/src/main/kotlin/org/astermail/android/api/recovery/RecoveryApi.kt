@@ -205,6 +205,27 @@ data class ConsumeInactiveKeySetResponse(
 )
 
 @Serializable
+data class UnlockInactiveWithCodeRequest(
+    val code_hash: String,
+)
+
+@Serializable
+data class InactiveKeySetCodeUnlock(
+    val inactive_vault_id: String,
+    val encrypted_recovery_key: String,
+    val recovery_key_nonce: String,
+    val code_salt: String,
+    val encrypted_vault_backup: String,
+    val vault_backup_nonce: String,
+    val recovery_key_salt: String,
+)
+
+@Serializable
+data class UnlockInactiveWithCodeResponse(
+    val key_sets: List<InactiveKeySetCodeUnlock> = emptyList(),
+)
+
+@Serializable
 data class PutDeviceSecretRequest(
     val snapshot_id: String,
     val secret: String,
@@ -247,6 +268,9 @@ interface RecoveryApi {
     suspend fun list_inactive_key_sets(): ListInactiveKeySetsResponse
     suspend fun fetch_inactive_key_set(request: FetchInactiveKeySetRequest): FetchInactiveKeySetResponse
     suspend fun consume_inactive_key_set(request: ConsumeInactiveKeySetRequest): ConsumeInactiveKeySetResponse
+    suspend fun unlock_inactive_key_sets_with_code(
+        request: UnlockInactiveWithCodeRequest,
+    ): UnlockInactiveWithCodeResponse
     suspend fun put_device_recovery_secret(request: PutDeviceSecretRequest): PutDeviceSecretResponse
     suspend fun fetch_device_recovery_secrets(request: FetchDeviceSecretsRequest): DeviceSecretsResponse
     suspend fun delete_device_recovery_secrets(request: DeleteDeviceSecretsRequest): PutDeviceSecretResponse
@@ -326,6 +350,16 @@ class RecoveryApiImpl(private val client: ApiClient) : RecoveryApi {
         request: ConsumeInactiveKeySetRequest,
     ): ConsumeInactiveKeySetResponse {
         val response = client.http.post("${client.base_url}$base/inactive/consume") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun unlock_inactive_key_sets_with_code(
+        request: UnlockInactiveWithCodeRequest,
+    ): UnlockInactiveWithCodeResponse {
+        val response = client.http.post("${client.base_url}$base/inactive/unlock-with-code") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }

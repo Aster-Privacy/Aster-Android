@@ -124,6 +124,8 @@ class RatchetEncryptorIdentityPinTest {
         every { session_key_store.get_ratchet_identity_jwk() } returns to_private_jwk(sender_identity_kp)
         coEvery { ratchet_api.fetch_prekey_bundle(any(), any()) } returns bundle
         every { identity_pins.is_prekey_binding_verified(any()) } returns false
+        every { identity_pins.owner_key_pin(any()) } returns null
+        coEvery { identity_pins.pin_owner_key_if_absent(any(), any()) } returns true
     }
 
     @After
@@ -273,6 +275,22 @@ class RatchetEncryptorIdentityPinTest {
 
         assertNotNull(send().getOrThrow())
         coVerify(exactly = 1) { identity_pins.record_prekey_binding_verified(recipient_email) }
+        coVerify(exactly = 1) {
+            identity_pins.pin_owner_key_if_absent(recipient_email, PrekeyBindingVerifier.owner_fingerprint(public_armor(key))!!)
+        }
+    }
+
+    @Test
+    fun `first contact that cannot store the owner pin blocks the send`() = runTest {
+        val key = generate_pgp_key()
+        serve_bundle(sign_binding(key, bundle.kem_identity_key, bundle.signed_prekey))
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
+            PublicKeyResponse("kchaos", public_armor(key))
+        coEvery { identity_pins.pin_owner_key_if_absent(any(), any()) } returns false
+
+        val thrown = send().exceptionOrNull()
+        assertTrue(thrown is RatchetEncryptionException)
+        coVerify(exactly = 0) { state_store.save(any()) }
     }
 
     @Test
@@ -284,7 +302,7 @@ class RatchetEncryptorIdentityPinTest {
             PublicKeyResponse("kchaos", public_armor(key))
 
         val thrown = send().exceptionOrNull()
-        assertTrue(thrown is RatchetEncryptionException)
+        assertTrue(thrown is RecipientKeyUntrustedException)
         coVerify(exactly = 0) { state_store.save(any()) }
     }
 
@@ -314,5 +332,82 @@ class RatchetEncryptorIdentityPinTest {
         every { identity_pins.is_prekey_binding_verified(any()) } returns true
 
         assertNotNull(send().getOrThrow())
+    }
+
+    private fun pin_owner(key: PGPSecretKey) {
+        every { identity_pins.owner_key_pin(recipient_email) } returns
+            PrekeyBindingVerifier.owner_fingerprint(public_armor(key))
+    }
+
+    @Test
+    fun `pinned owner key that still signs the bundle is sent`() = runTest {
+        val key = generate_pgp_key()
+        pin_owner(key)
+        serve_bundle(sign_binding(key, bundle.kem_identity_key, bundle.signed_prekey))
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
+            PublicKeyResponse("kchaos", public_armor(key))
+
+        assertNotNull(send().getOrThrow())
+        coVerify(exactly = 0) { identity_pins.flag_owner_key_change(any(), any(), any()) }
+    }
+
+    @Test
+    fun `server swapping the owner key and bundle together blocks the send`() = runTest {
+        val pinned = generate_pgp_key()
+        val swapped = generate_pgp_key()
+        pin_owner(pinned)
+        serve_bundle(sign_binding(swapped, bundle.kem_identity_key, bundle.signed_prekey))
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
+            PublicKeyResponse("kchaos", public_armor(swapped))
+
+        val thrown = send().exceptionOrNull()
+        assertTrue(thrown is RecipientKeyUntrustedException)
+        coVerify(exactly = 0) { state_store.save(any()) }
+        coVerify(exactly = 1) {
+            identity_pins.flag_owner_key_change(
+                recipient_email,
+                PrekeyBindingVerifier.owner_fingerprint(public_armor(swapped))!!,
+                any(),
+            )
+        }
+    }
+
+    @Test
+    fun `unsigned bundle for a pinned owner blocks the send`() = runTest {
+        val key = generate_pgp_key()
+        pin_owner(key)
+        serve_bundle("")
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
+            PublicKeyResponse("kchaos", public_armor(key))
+
+        val thrown = send().exceptionOrNull()
+        assertTrue(thrown is RecipientKeyUntrustedException)
+        coVerify(exactly = 0) { state_store.save(any()) }
+    }
+
+    @Test
+    fun `bundle signed by another key for a pinned owner blocks the send`() = runTest {
+        val key = generate_pgp_key()
+        val signer = generate_pgp_key()
+        pin_owner(key)
+        serve_bundle(sign_binding(signer, bundle.kem_identity_key, bundle.signed_prekey))
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
+            PublicKeyResponse("kchaos", public_armor(key))
+
+        val thrown = send().exceptionOrNull()
+        assertTrue(thrown is RecipientKeyUntrustedException)
+    }
+
+    @Test
+    fun `pinned owner key that cannot be fetched fails closed`() = runTest {
+        val key = generate_pgp_key()
+        pin_owner(key)
+        serve_bundle(sign_binding(key, bundle.kem_identity_key, bundle.signed_prekey))
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } throws RuntimeException("offline")
+
+        val thrown = send().exceptionOrNull()
+        assertTrue(thrown is RatchetEncryptionException)
+        assertTrue(thrown !is RecipientKeyUntrustedException)
+        coVerify(exactly = 0) { state_store.save(any()) }
     }
 }

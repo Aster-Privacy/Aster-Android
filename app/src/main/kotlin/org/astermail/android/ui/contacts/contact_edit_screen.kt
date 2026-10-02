@@ -29,6 +29,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.activity.result.contract.ActivityResultContracts
@@ -49,7 +50,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -126,18 +131,18 @@ fun ContactEditScreen(
     val contact_unavailable = contact_id != null && source == null
 
     var name by rememberSaveable { mutableStateOf(source?.name.orEmpty()) }
-    var email by rememberSaveable { mutableStateOf(source?.email.orEmpty()) }
-    var phone by rememberSaveable { mutableStateOf(source?.phone.orEmpty()) }
+    var emails by rememberSaveable(stateSaver = editable_entry_list_saver) {
+        mutableStateOf(initial_email_rows(source))
+    }
+    var phones by rememberSaveable(stateSaver = editable_entry_list_saver) {
+        mutableStateOf(initial_phone_rows(source))
+    }
+    var postals by rememberSaveable(stateSaver = editable_postal_list_saver) {
+        mutableStateOf(initial_postal_rows(source))
+    }
     var company by rememberSaveable { mutableStateOf(source?.company.orEmpty()) }
     var title by rememberSaveable { mutableStateOf(source?.title.orEmpty()) }
-    var work_email by rememberSaveable { mutableStateOf(source?.work_email.orEmpty()) }
-    var work_phone by rememberSaveable { mutableStateOf(source?.work_phone.orEmpty()) }
     var birthday by rememberSaveable { mutableStateOf(source?.birthday.orEmpty()) }
-    var address by rememberSaveable { mutableStateOf(source?.address.orEmpty()) }
-    var city by rememberSaveable { mutableStateOf(source?.city.orEmpty()) }
-    var region by rememberSaveable { mutableStateOf(source?.region.orEmpty()) }
-    var postal_code by rememberSaveable { mutableStateOf(source?.postal_code.orEmpty()) }
-    var country by rememberSaveable { mutableStateOf(source?.country.orEmpty()) }
     var website by rememberSaveable { mutableStateOf(source?.website.orEmpty()) }
     var twitter by rememberSaveable { mutableStateOf(source?.twitter.orEmpty()) }
     var linkedin by rememberSaveable { mutableStateOf(source?.linkedin.orEmpty()) }
@@ -146,25 +151,18 @@ fun ContactEditScreen(
     var loaded_contact_id by rememberSaveable { mutableStateOf<String?>(null) }
     var show_email_errors by rememberSaveable { mutableStateOf(false) }
     val invalid_email_text = stringResource(R.string.error_invalid_email)
-    val email_error = invalid_email_text.takeIf { show_email_errors && !is_valid_contact_email(email) }
-    val work_email_error = invalid_email_text.takeIf { show_email_errors && !is_valid_contact_email(work_email) }
+    val email = emails.firstOrNull { it.value.isNotBlank() }?.value.orEmpty()
 
     LaunchedEffect(source) {
         if (source != null && source.id != loaded_contact_id) {
             loaded_contact_id = source.id
             name = source.name
-            email = source.email
-            phone = source.phone
+            emails = initial_email_rows(source)
+            phones = initial_phone_rows(source)
+            postals = initial_postal_rows(source)
             company = source.company
             title = source.title
-            work_email = source.work_email
-            work_phone = source.work_phone
             birthday = source.birthday
-            address = source.address
-            city = source.city
-            region = source.region
-            postal_code = source.postal_code
-            country = source.country
             website = source.website
             twitter = source.twitter
             linkedin = source.linkedin
@@ -199,7 +197,8 @@ fun ContactEditScreen(
         modifier = Modifier
             .fillMaxSize()
             .page_surface(colors)
-            .systemBarsPadding(),
+            .systemBarsPadding()
+            .imePadding(),
     ) {
         Row(
             modifier = Modifier
@@ -222,30 +221,24 @@ fun ContactEditScreen(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.weight(1f),
             )
-            val can_save = name.isNotBlank() || email.isNotBlank() || phone.isNotBlank()
+            val can_save = name.isNotBlank() ||
+                emails.any { it.value.isNotBlank() } ||
+                phones.any { it.value.isNotBlank() }
             AsterGhostButton(
                 label = stringResource(R.string.save),
                 enabled = can_save && !ui_state.is_loading && !contact_unavailable,
                 onClick = {
-                    if (!is_valid_contact_email(email) || !is_valid_contact_email(work_email)) {
+                    if (emails.any { !is_valid_contact_email(it.value) }) {
                         show_email_errors = true
                         return@AsterGhostButton
                     }
                     val contact = Contact(
                         id = contact_id ?: "",
                         name = name,
-                        email = email.trim(),
-                        phone = phone,
+                        email = "",
                         company = company,
                         title = title,
-                        work_email = work_email.trim(),
-                        work_phone = work_phone,
                         birthday = birthday,
-                        address = address,
-                        city = city,
-                        region = region,
-                        postal_code = postal_code,
-                        country = country,
                         website = website,
                         twitter = twitter,
                         linkedin = linkedin,
@@ -255,6 +248,10 @@ fun ContactEditScreen(
                         is_favorite = source?.is_favorite ?: false,
                         groups = source?.groups ?: emptyList(),
                         raw_json = source?.raw_json.orEmpty(),
+                    ).with_typed_fields(
+                        emails = emails.map { it.to_entry() },
+                        phones = phones.map { it.to_entry() },
+                        addresses = postals.map { it.to_postal() },
                     )
                     save_requested = true
                     vm.save_contact(contact, contact_id)
@@ -361,24 +358,41 @@ fun ContactEditScreen(
 
             FormSection(icon = TablerIcons.User, title = stringResource(R.string.personal)) {
                 FormField(stringResource(R.string.name), name, keyboard_capitalization = KeyboardCapitalization.Words) { name = it }
-                FormField(stringResource(R.string.email), email, keyboard_type = KeyboardType.Email, error_text = email_error) { email = it }
-                FormField(stringResource(R.string.phone), phone, keyboard_type = KeyboardType.Phone) { phone = it }
                 FormField(stringResource(R.string.birthday), birthday) { birthday = it }
+            }
+
+            FormSection(icon = TablerIcons.Mail, title = stringResource(R.string.email)) {
+                ContactEntryRows(
+                    kind = ContactEntryKind.EMAIL,
+                    entries = emails,
+                    on_change = { emails = it },
+                    add_label = stringResource(R.string.contact_add_email),
+                    field_label = stringResource(R.string.email),
+                    keyboard_type = KeyboardType.Email,
+                    error_for = { value ->
+                        invalid_email_text.takeIf { show_email_errors && !is_valid_contact_email(value) }
+                    },
+                )
+            }
+
+            FormSection(icon = TablerIcons.Phone, title = stringResource(R.string.phone)) {
+                ContactEntryRows(
+                    kind = ContactEntryKind.PHONE,
+                    entries = phones,
+                    on_change = { phones = it },
+                    add_label = stringResource(R.string.contact_add_phone),
+                    field_label = stringResource(R.string.phone),
+                    keyboard_type = KeyboardType.Phone,
+                )
             }
 
             FormSection(icon = TablerIcons.Briefcase, title = stringResource(R.string.work)) {
                 FormField(stringResource(R.string.company), company, keyboard_capitalization = KeyboardCapitalization.Words) { company = it }
                 FormField(stringResource(R.string.title), title, keyboard_capitalization = KeyboardCapitalization.Words) { title = it }
-                FormField(stringResource(R.string.work_email), work_email, keyboard_type = KeyboardType.Email, error_text = work_email_error) { work_email = it }
-                FormField(stringResource(R.string.work_phone), work_phone, keyboard_type = KeyboardType.Phone) { work_phone = it }
             }
 
             FormSection(icon = TablerIcons.MapPin, title = stringResource(R.string.address)) {
-                FormField(stringResource(R.string.street), address, keyboard_capitalization = KeyboardCapitalization.Words) { address = it }
-                FormField(stringResource(R.string.city), city, keyboard_capitalization = KeyboardCapitalization.Words) { city = it }
-                FormField(stringResource(R.string.region), region, keyboard_capitalization = KeyboardCapitalization.Words) { region = it }
-                FormField(stringResource(R.string.postal_code), postal_code) { postal_code = it }
-                FormField(stringResource(R.string.country), country, keyboard_capitalization = KeyboardCapitalization.Words) { country = it }
+                ContactPostalRows(postals = postals, on_change = { postals = it })
             }
 
             FormSection(icon = TablerIcons.Link, title = stringResource(R.string.social)) {
@@ -388,11 +402,22 @@ fun ContactEditScreen(
             }
 
             FormSection(icon = TablerIcons.Notes, title = stringResource(R.string.notes)) {
+                val notes_requester = remember { BringIntoViewRequester() }
+                var notes_focused by remember { mutableStateOf(false) }
+                LaunchedEffect(notes_focused, notes, ui_state.is_loading) {
+                    if (notes_focused) {
+                        delay(NOTES_SCROLL_DELAY_MS)
+                        notes_requester.bringIntoView()
+                    }
+                }
                 FormField(
                     label = stringResource(R.string.notes),
                     value = notes,
                     single_line = false,
                     keyboard_capitalization = KeyboardCapitalization.Sentences,
+                    modifier = Modifier
+                        .bringIntoViewRequester(notes_requester)
+                        .onFocusChanged { notes_focused = it.isFocused },
                     on_change = { notes = it },
                 )
             }
@@ -451,11 +476,13 @@ private fun FormField(
     keyboard_capitalization: KeyboardCapitalization = KeyboardCapitalization.None,
     single_line: Boolean = true,
     error_text: String? = null,
+    modifier: Modifier = Modifier,
     on_change: (String) -> Unit,
 ) {
     AsterTextField(
         value = value,
         onValueChange = on_change,
+        modifier = modifier,
         label = label,
         error_text = error_text,
         singleLine = single_line,
@@ -467,6 +494,19 @@ private fun FormField(
         ),
     )
 }
+
+private const val NOTES_SCROLL_DELAY_MS = 250L
+
+private fun initial_email_rows(source: Contact?): List<EditableEntry> =
+    source?.email_entries()?.map { EditableEntry.of(it) }?.ifEmpty { null }
+        ?: listOf(EditableEntry(type = ContactEntryKind.EMAIL.default_type))
+
+private fun initial_phone_rows(source: Contact?): List<EditableEntry> =
+    source?.phone_entries()?.map { EditableEntry.of(it) }?.ifEmpty { null }
+        ?: listOf(EditableEntry(type = ContactEntryKind.PHONE.default_type))
+
+private fun initial_postal_rows(source: Contact?): List<EditablePostal> =
+    source?.address_entries()?.map { EditablePostal.of(it) } ?: emptyList()
 
 private val contact_email_regex = Regex("""^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$""")
 

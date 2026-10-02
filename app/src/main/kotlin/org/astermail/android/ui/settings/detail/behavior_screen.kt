@@ -743,6 +743,27 @@ internal fun ColumnScope.translation_settings_section(
             if (i < 2) settings_row_gap(modifier = Modifier)
         }
     }
+    val webview_supported = remember { org.astermail.android.translation.TranslationRuntime.webview_supported(context) }
+    if (translate_incoming != "off" && !webview_supported) {
+        v_gap(AsterSpacing.md)
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = stringResource(R.string.translate_webview_outdated_notice),
+                color = colors.text_primary,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),
+            )
+            Text(
+                text = stringResource(R.string.translation_webview_update),
+                color = colors.accent_blue,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier
+                    .padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = AsterSpacing.md)
+                    .clickable { org.astermail.android.translation.TranslationRuntime.open_webview_update(context) },
+            )
+        }
+    }
     if (translate_incoming != "off") {
         v_gap(AsterSpacing.md)
         AsterCard(modifier = Modifier.fillMaxWidth()) {

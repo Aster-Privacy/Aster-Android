@@ -22,6 +22,8 @@
 package org.astermail.android.contacts
 
 import org.astermail.android.ui.contacts.Contact
+import org.astermail.android.ui.contacts.ContactEntry
+import org.astermail.android.ui.contacts.ContactPostal
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -104,6 +106,103 @@ class ContactTransferTest {
         }
 
         assertEquals("data:image/jpeg;base64,AAAA", parse_vcards(vcard).first().avatar_url)
+    }
+
+    private fun typed_sample() = Contact(id = "3", name = "Ada Lovelace", email = "").with_typed_fields(
+        emails = listOf(
+            ContactEntry("ada@home.example", "home"),
+            ContactEntry("ada@work.example", "work"),
+            ContactEntry("ada@me.example", "personal"),
+            ContactEntry("ada@lab.example", "other", "Lab"),
+        ),
+        phones = listOf(
+            ContactEntry("+44 1", "mobile"),
+            ContactEntry("+44 2", "work"),
+            ContactEntry("+44 3", "personal"),
+            ContactEntry("+44 4", "fax"),
+            ContactEntry("+44 5", "other", "Boat"),
+        ),
+        addresses = listOf(
+            ContactPostal("1 Engine Row", "Oxford", "", "OX1", "UK", "work"),
+            ContactPostal("12 Bridge St", "London", "", "SW1A", "UK", "home"),
+            ContactPostal("2 Cottage Ln", "Bath", "", "BA1", "UK", "other", "Summer house"),
+        ),
+    )
+
+    @Test
+    fun `vcard round trip keeps typed entries and custom labels`() {
+        val original = typed_sample()
+        val vcard = contact_to_vcard(original)
+        assertTrue(vcard.contains("X-ABLabel:Personal"))
+        assertTrue(vcard.contains("X-ABLabel:Summer house"))
+        assertFalse(vcard.contains("TYPE=HOME:ada@me.example"))
+        assertFalse(vcard.contains("INTERNET"))
+        assertTrue(vcard.contains("EMAIL;TYPE=HOME:ada@home.example"))
+        assertTrue(vcard.contains(".TEL;TYPE=Boat:+44 5"))
+        assertTrue(vcard.contains(".ADR;TYPE=Summer house:"))
+        val result = parse_vcards(vcard).single()
+        assertEquals(original.emails, result.emails)
+        assertEquals(original.phones, result.phones)
+        assertEquals(original.addresses, result.addresses)
+        assertEquals("12 Bridge St", result.address)
+        assertEquals("ada@home.example", result.email)
+        assertEquals("ada@work.example", result.work_email)
+    }
+
+    @Test
+    fun `apple labels and unknown type tokens become labels`() {
+        val vcard = buildString {
+            append("BEGIN:VCARD\r\n")
+            append("VERSION:3.0\r\n")
+            append("FN:Grace Hopper\r\n")
+            append("item1.EMAIL;type=INTERNET;type=pref:grace@example.com\r\n")
+            append("item1.X-ABLabel:_\$!<Home>!\$_\r\n")
+            append("item2.TEL:+1 555\r\n")
+            append("item2.X-ABLabel:Ship\r\n")
+            append("TEL;TYPE=CELL;TYPE=VOICE:+1 556\r\n")
+            append("TEL;TYPE=X-SATELLITE:+1 557\r\n")
+            append("item3.ADR:;;1 Main St;Arlington;VA;22201;USA\r\n")
+            append("item3.X-ABLabel:_\$!<Work>!\$_\r\n")
+            append("END:VCARD\r\n")
+        }
+        val result = parse_vcards(vcard).single()
+        assertEquals(listOf(ContactEntry("grace@example.com", "home")), result.emails)
+        assertEquals(
+            listOf(
+                ContactEntry("+1 555", "other", "Ship"),
+                ContactEntry("+1 556", "mobile"),
+                ContactEntry("+1 557", "other", "Satellite"),
+            ),
+            result.phones,
+        )
+        assertEquals("work", result.addresses.single().type)
+        assertEquals("1 Main St", result.address)
+    }
+
+    @Test
+    fun `remote photo urls are ignored`() {
+        val vcard = buildString {
+            append("BEGIN:VCARD\r\n")
+            append("VERSION:3.0\r\n")
+            append("FN:Grace Hopper\r\n")
+            append("PHOTO;VALUE=URI:https://example.com/grace.jpg\r\n")
+            append("END:VCARD\r\n")
+        }
+        assertEquals("", parse_vcards(vcard).single().avatar_url)
+        assertFalse(contact_to_vcard(sample().copy(avatar_url = "https://example.com/a.png")).contains("PHOTO"))
+    }
+
+    @Test
+    fun `share text lists the name then every phone`() {
+        assertEquals("Ada Lovelace\n+44 1\n+44 2\n+44 3\n+44 4\n+44 5", contact_share_text(typed_sample()))
+        val nameless = Contact(id = "", name = "", email = "").with_typed_fields(
+            emptyList(),
+            listOf(ContactEntry("+1", "mobile")),
+            emptyList(),
+        )
+        assertEquals("+1", contact_share_text(nameless))
+        assertEquals("Ada Lovelace.vcf", contact_share_file_name(typed_sample()))
+        assertEquals("contact.vcf", contact_share_file_name(nameless))
     }
 
     @Test

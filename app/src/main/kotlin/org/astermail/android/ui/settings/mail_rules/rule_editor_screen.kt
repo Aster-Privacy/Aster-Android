@@ -240,26 +240,18 @@ fun RuleEditorScreen(
     var create_for_action by remember { mutableStateOf<Int?>(null) }
     var pending_field_index: Int? by remember { mutableStateOf(null) }
     var auto_advance by remember { mutableStateOf(false) }
+    var chain_to_value by remember { mutableStateOf(false) }
     var is_saving by remember { mutableStateOf(false) }
     var save_error by remember { mutableStateOf<Int?>(null) }
     var duplicate_warning by remember { mutableStateOf<Int?>(null) }
     var skipped_duplicates by remember { mutableStateOf(0) }
     var switched_to_any by remember { mutableStateOf(false) }
 
-    val folders = remember(settings_state.labels) {
-        flatten_folder_tree(settings_state.labels)
-            .filter { !it.label.encrypted_name.isNullOrBlank() }
-            .map { node ->
-                picker_item(
-                    id = node.label.label_token,
-                    label = node.label.encrypted_name.orEmpty(),
-                    icon = if (is_folder_protected(node.label)) TablerIcons.Lock else TablerIcons.Folder,
-                    icon_tint = node.label.encrypted_color
-                        ?.takeIf { it.startsWith("#") }
-                        ?.let { parse_hex_color_safe(it) },
-                    depth = node.depth,
-                )
-            }
+    val system_folder_names = org.astermail.android.mail_rules.RuleSystemFolder.entries.associateWith {
+        stringResource(rule_system_folder_name_res(it))
+    }
+    val folders = remember(settings_state.labels, system_folder_names) {
+        rule_folder_picker_items(settings_state.labels, system_folder_names)
     }
     val labels = remember(settings_state.labels, settings_state.tags) {
         val from_tags = org.astermail.android.labels.tag_rows(settings_state.tags)
@@ -373,81 +365,82 @@ fun RuleEditorScreen(
             )
             Spacer(Modifier.height(AsterSpacing.md))
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(AsterShapes.island)
-                    .clickable(enabled = !is_read_only) { sheet = active_sheet.pick_color }
-                    .heightIn(min = 56.dp)
-                    .padding(horizontal = AsterSpacing.xs, vertical = AsterSpacing.sm),
-            ) {
-                Text(
-                    text = stringResource(R.string.mail_rules_color),
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.weight(1f),
-                )
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(CircleShape)
-                        .background(parse_hex(color_hex), CircleShape),
+            org.astermail.android.ui.settings.detail.settings_group {
+                org.astermail.android.ui.settings.detail.detail_row(
+                    title = stringResource(R.string.mail_rules_color),
+                    on_click = if (is_read_only) null else ({ sheet = active_sheet.pick_color }),
+                    trailing = {
+                        Box(
+                            modifier = Modifier
+                                .size(22.dp)
+                                .clip(CircleShape)
+                                .background(parse_hex(color_hex), CircleShape),
+                        )
+                    },
                 )
             }
 
-            Spacer(Modifier.height(AsterSpacing.xl))
-            org.astermail.android.ui.settings.detail.section_label(
-                stringResource(R.string.mail_rules_when_section),
-            )
-
-            conditions.forEachIndexed { index, condition ->
-                condition_chip(
-                    condition = condition,
-                    on_field = {
-                        if (!is_read_only) {
+            org.astermail.android.ui.settings.detail.settings_group(
+                title = stringResource(R.string.mail_rules_when_section),
+                modifier = Modifier.testTag("rule_when_group"),
+            ) {
+                if (conditions.size >= 2) {
+                    org.astermail.android.ui.settings.detail.detail_row(
+                        title = stringResource(R.string.mail_rules_match_mode),
+                        icon = TablerIcons.Filter,
+                        value = if (match_mode == MatchMode.ALL) {
+                            stringResource(R.string.mail_rules_match_all)
+                        } else {
+                            stringResource(R.string.mail_rules_match_any)
+                        },
+                        on_click = if (is_read_only) null else ({ sheet = active_sheet.pick_match_mode }),
+                    )
+                    rule_group_divider()
+                }
+                conditions.forEachIndexed { index, condition ->
+                    rule_step_row(
+                        icon = field_icon(field_of(condition)),
+                        title = field_display(field_of(condition)),
+                        detail_prefix = operator_display(condition),
+                        detail_value = value_display(condition),
+                        on_click = if (is_read_only) null else ({
                             pending_field_index = index
+                            auto_advance = true
                             sheet = active_sheet.pick_field
-                        }
-                    },
-                    on_operator = { if (!is_read_only) sheet = active_sheet.pick_operator(index) },
-                    on_value = { if (!is_read_only) sheet = active_sheet.pick_value(index) },
-                    on_remove = {
-                        if (!is_read_only) {
+                        }),
+                        on_remove = if (is_read_only) null else ({
                             duplicate_warning = null
                             skipped_duplicates = 0
                             switched_to_any = false
                             if (conditions.size == 1) {
                                 conditions.removeAt(0)
+                                auto_advance = true
                                 sheet = active_sheet.pick_field
                             } else {
                                 conditions.removeAt(index)
                             }
-                        }
-                    },
-                    modifier = Modifier.testTag("cond_$index"),
-                )
-                if (index < conditions.lastIndex) {
-                    Spacer(Modifier.height(AsterSpacing.sm))
-                    and_or_pill(
-                        label = if (match_mode == MatchMode.ALL) stringResource(R.string.mail_rules_and) else stringResource(R.string.mail_rules_or),
-                        on_click = { if (!is_read_only) sheet = active_sheet.pick_match_mode },
+                        }),
+                        modifier = Modifier.testTag("cond_$index"),
                     )
-                    Spacer(Modifier.height(AsterSpacing.sm))
-                } else {
-                    Spacer(Modifier.height(AsterSpacing.sm))
+                    if (index < conditions.lastIndex) {
+                        rule_connector(
+                            label = if (match_mode == MatchMode.ALL) stringResource(R.string.mail_rules_and) else stringResource(R.string.mail_rules_or),
+                            on_click = if (is_read_only) null else ({ sheet = active_sheet.pick_match_mode }),
+                        )
+                    }
                 }
-            }
-            if (!is_read_only) {
-                add_chip_pill(
-                    label = stringResource(R.string.mail_rules_add_condition),
-                    on_click = {
-                        auto_advance = true
-                        sheet = active_sheet.pick_field
-                    },
-                    modifier = Modifier.testTag("add_condition"),
-                )
+                if (!is_read_only) {
+                    if (conditions.isNotEmpty()) rule_group_divider()
+                    rule_add_row(
+                        label = stringResource(R.string.mail_rules_add_condition),
+                        on_click = {
+                            pending_field_index = null
+                            auto_advance = true
+                            sheet = active_sheet.pick_field
+                        },
+                        modifier = Modifier.testTag("add_condition"),
+                    )
+                }
             }
 
             val existing_duplicates = duplicate_condition_indices(conditions.toList())
@@ -538,33 +531,39 @@ fun RuleEditorScreen(
                 }
             }
 
-            Spacer(Modifier.height(AsterSpacing.xl))
-            org.astermail.android.ui.settings.detail.section_label(
-                stringResource(R.string.mail_rules_then_section),
-            )
-
-            actions.forEachIndexed { index, action ->
-                action_chip(
-                    action = action,
-                    folder_label = (action as? Action.MoveTo)?.folder_token?.let { token ->
-                        folders.firstOrNull { it.id == token }?.label
-                    },
-                    on_kind = { if (!is_read_only) sheet = active_sheet.pick_action_kind(index) },
-                    on_target = { if (!is_read_only) sheet = active_sheet.pick_action_target(index) },
-                    on_remove = { if (!is_read_only) actions.removeAt(index) },
-                    modifier = Modifier.testTag("action_$index"),
-                )
-                Spacer(Modifier.height(AsterSpacing.sm))
-            }
-            if (!is_read_only) {
-                add_chip_pill(
-                    label = stringResource(R.string.mail_rules_add_action),
-                    on_click = {
-                        actions.add(default_action_for(action_id.move_to))
-                        sheet = active_sheet.pick_action_kind(actions.lastIndex)
-                    },
-                    modifier = Modifier.testTag("add_action"),
-                )
+            org.astermail.android.ui.settings.detail.settings_group(
+                title = stringResource(R.string.mail_rules_then_section),
+                modifier = Modifier.testTag("rule_then_group"),
+            ) {
+                actions.forEachIndexed { index, action ->
+                    val kind = action_of(action)
+                    rule_step_row(
+                        icon = action_icon(kind),
+                        title = action_label(kind),
+                        detail_prefix = null,
+                        detail_value = action_target_display(
+                            action,
+                            (action as? Action.MoveTo)?.folder_token?.let { token ->
+                                folders.firstOrNull { it.id == token }?.label
+                            },
+                        ),
+                        on_click = if (is_read_only) null else ({ sheet = active_sheet.pick_action_kind(index) }),
+                        on_remove = if (is_read_only) null else ({ actions.removeAt(index) }),
+                        modifier = Modifier.testTag("action_$index"),
+                    )
+                    if (index < actions.lastIndex) rule_group_divider()
+                }
+                if (!is_read_only) {
+                    if (actions.isNotEmpty()) rule_group_divider()
+                    rule_add_row(
+                        label = stringResource(R.string.mail_rules_add_action),
+                        on_click = {
+                            actions.add(default_action_for(action_id.move_to))
+                            sheet = active_sheet.pick_action_kind(actions.lastIndex)
+                        },
+                        modifier = Modifier.testTag("add_action"),
+                    )
+                }
             }
 
             val needs_alias_delivery = actions.any { it is Action.MoveTo || it is Action.ApplyLabels }
@@ -584,6 +583,9 @@ fun RuleEditorScreen(
                 conditions = conditions.toList(),
                 actions = actions.toList(),
                 alias_delivery = alias_delivery,
+                folder_type_of = { token ->
+                    org.astermail.android.mail_rules.rule_folder_type_of(settings_state.labels, token)
+                },
             )
             if (!is_read_only && delivery_conflict != null) {
                 val archive_name = stringResource(R.string.folder_archive)
@@ -707,6 +709,7 @@ fun RuleEditorScreen(
     when (val s = sheet) {
         active_sheet.none -> {}
         active_sheet.pick_field -> field_picker(
+            selected = pending_field_index?.let { conditions.getOrNull(it) }?.let { field_of(it) },
             on_dismiss = {
                 sheet = next_sheet ?: active_sheet.none
                 next_sheet = null
@@ -715,20 +718,31 @@ fun RuleEditorScreen(
             },
             on_pick = { picked ->
                 val target_index = pending_field_index
-                if (target_index != null) {
-                    if (target_index in conditions.indices) {
+                val editing = target_index != null
+                val index = if (target_index != null) {
+                    if (target_index !in conditions.indices) return@field_picker
+                    if (field_of(conditions[target_index]) != picked) {
                         conditions[target_index] = default_condition_for(picked)
                     }
-                    pending_field_index = null
+                    target_index
                 } else {
                     conditions.add(default_condition_for(picked))
-                    if (auto_advance && field_kind_of(picked) != field_kind.boolean) {
-                        next_sheet = active_sheet.pick_operator(conditions.lastIndex)
-                        auto_advance = false
-                        return@field_picker
-                    }
-                    auto_advance = false
+                    conditions.lastIndex
                 }
+                pending_field_index = null
+                if (auto_advance) {
+                    val condition = conditions[index]
+                    next_sheet = when {
+                        current_operator_id(condition) != null -> {
+                            chain_to_value = true
+                            active_sheet.pick_operator(index)
+                        }
+                        field_kind_of(picked) == field_kind.auth -> active_sheet.pick_value(index)
+                        editing -> active_sheet.pick_value(index)
+                        else -> null
+                    }
+                }
+                auto_advance = false
             },
         )
         is active_sheet.pick_operator -> operator_picker(
@@ -736,15 +750,14 @@ fun RuleEditorScreen(
             on_dismiss = {
                 sheet = next_sheet ?: active_sheet.none
                 next_sheet = null
+                chain_to_value = false
             },
             on_pick = { updated ->
                 conditions[s.cond_index] = updated
-                if (auto_advance && needs_value(updated)) {
+                if (chain_to_value && needs_value(updated)) {
                     next_sheet = active_sheet.pick_value(s.cond_index)
-                    auto_advance = false
-                    return@operator_picker
                 }
-                auto_advance = false
+                chain_to_value = false
             },
         )
         is active_sheet.pick_value -> {
@@ -818,13 +831,11 @@ fun RuleEditorScreen(
             selected_id = action_of(actions[s.action_index])?.name,
             on_pick = { id ->
                 val picked = action_id.valueOf(id)
-                actions[s.action_index] = default_action_for(picked)
-                if (picked == action_id.move_to || picked == action_id.apply_labels ||
-                    picked == action_id.categorize ||
-                    picked == action_id.mark_as
-                ) {
+                if (action_of(actions[s.action_index]) != picked) {
+                    actions[s.action_index] = default_action_for(picked)
+                }
+                if (picked in actions_with_target) {
                     next_sheet = active_sheet.pick_action_target(s.action_index)
-                    return@options_picker
                 }
             },
         )
@@ -913,6 +924,15 @@ fun RuleEditorScreen(
     }
 }
 
+private val actions_with_target = setOf(
+    action_id.move_to,
+    action_id.apply_labels,
+    action_id.mark_as,
+    action_id.snooze,
+    action_id.categorize,
+    action_id.notify,
+)
+
 private val rules_label_palette = listOf(
     Color(0xFF3B82F6),
     Color(0xFF22C55E),
@@ -923,6 +943,33 @@ private val rules_label_palette = listOf(
     Color(0xFFF97316),
     Color(0xFF6366F1),
 )
+
+internal fun rule_folder_picker_items(
+    labels: List<org.astermail.android.api.labels.LabelItem>,
+    system_folder_names: Map<org.astermail.android.mail_rules.RuleSystemFolder, String>,
+): List<picker_item> {
+    val system_items = org.astermail.android.mail_rules.rule_system_folders(labels)
+        .map { entry ->
+            picker_item(
+                id = entry.folder.label_token,
+                label = system_folder_names.getValue(entry.system_type),
+                icon = rule_system_folder_icon(entry.system_type),
+            )
+        }
+    return system_items + flatten_folder_tree(labels)
+        .filter { !it.label.encrypted_name.isNullOrBlank() }
+        .map { node ->
+            picker_item(
+                id = node.label.label_token,
+                label = node.label.encrypted_name.orEmpty(),
+                icon = if (is_folder_protected(node.label)) TablerIcons.Lock else TablerIcons.Folder,
+                icon_tint = node.label.encrypted_color
+                    ?.takeIf { it.startsWith("#") }
+                    ?.let { parse_hex_color_safe(it) },
+                depth = node.depth,
+            )
+        }
+}
 
 private fun parse_hex(hex: String): Color = try {
     Color(android.graphics.Color.parseColor(hex))
@@ -948,57 +995,6 @@ internal fun action_label(id: action_id?): String = stringResource(
         action_id.auto_reply -> R.string.mail_rules_action_auto_reply
     },
 )
-
-@Composable
-private fun condition_chip(
-    condition: Condition,
-    on_field: () -> Unit,
-    on_operator: () -> Unit,
-    on_value: () -> Unit,
-    on_remove: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val field_label = field_display(field_of(condition))
-    val op_label = operator_display(condition)
-    val value_label = value_display(condition)
-    val segments = buildList {
-        add(chip_segment_spec(field_label, on_field, is_active = true))
-        if (op_label != null) add(chip_segment_spec(op_label, on_operator))
-        if (value_label != null) add(
-            chip_segment_spec(
-                label = value_label.ifBlank { stringResource(R.string.rules_value_placeholder_ellipsis) },
-                on_click = on_value,
-                is_placeholder = value_label.isBlank(),
-            ),
-        )
-    }
-    chip_pill_row(segments = segments, on_remove = on_remove, modifier = modifier)
-}
-
-@Composable
-private fun action_chip(
-    action: Action,
-    folder_label: String?,
-    on_kind: () -> Unit,
-    on_target: () -> Unit,
-    on_remove: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val kind = action_of(action)
-    val kind_label = action_label(kind)
-    val target = action_target_display(action, folder_label)
-    val segments = buildList {
-        add(chip_segment_spec(kind_label, on_kind, is_active = true))
-        if (target != null) add(
-            chip_segment_spec(
-                label = target.ifBlank { stringResource(R.string.rules_value_placeholder_ellipsis) },
-                on_click = on_target,
-                is_placeholder = target.isBlank(),
-            ),
-        )
-    }
-    chip_pill_row(segments = segments, on_remove = on_remove, modifier = modifier)
-}
 
 @Composable
 internal fun field_display(field: field_id?): String = stringResource(

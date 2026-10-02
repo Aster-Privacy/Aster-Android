@@ -88,7 +88,7 @@ fun alias_detail_screen(
 
     LaunchedEffect(Unit) {
         vm.load_aliases()
-        vm.load_labels(folder_type = "folder")
+        vm.load_labels()
         vm.load_mail_rules()
     }
 

@@ -45,9 +45,22 @@ class ContactCardTest {
         job_title = "Mathematician",
         notes = "First program",
         birthday = "1815-12-10",
-        emails = listOf(CardEntry("ada@example.com", "home"), CardEntry("ada@work.example", "work")),
-        phones = listOf(CardEntry("+44 20 7946 0000", "mobile"), CardEntry("+44 20 7946 0001", "work")),
-        addresses = listOf(CardAddress("12 St James's Square", "London", "", "SW1Y 4JH", "UK", "home")),
+        emails = listOf(
+            CardEntry("ada@example.com", "home"),
+            CardEntry("ada@work.example", "work"),
+            CardEntry("ada@personal.example", "personal"),
+        ),
+        phones = listOf(
+            CardEntry("+44 20 7946 0000", "mobile"),
+            CardEntry("+44 20 7946 0001", "work"),
+            CardEntry("+44 20 7946 0002", "other", "Lab"),
+            CardEntry("+44 20 7946 0003", "personal"),
+        ),
+        addresses = listOf(
+            CardAddress("1 Engine Row", "Oxford", "", "OX1 1AA", "UK", "work"),
+            CardAddress("12 St James's Square", "London", "", "SW1Y 4JH", "UK", "home"),
+            CardAddress("2 Cottage Lane", "Bath", "", "BA1 1AA", "UK", "other", "Summer house"),
+        ),
         websites = listOf(CardEntry("https://ada.example", "private")),
         relations = listOf(CardEntry("Byron", "father"), CardEntry("Augusta", "sibling")),
         messengers = listOf(CardEntry("@ada:matrix.example", "matrix")),
@@ -71,6 +84,50 @@ class ContactCardTest {
             DeviceDataRow(row.mimetype, row.values.mapValues { (_, v) -> v?.toString() })
         }
         assertEquals(full_card, contact_card_from_device_rows(rows, starred = true, labels = labels).normalized())
+    }
+
+    @Test
+    fun custom_labels_use_custom_device_type() {
+        val rows = device_rows_for_card(full_card, labels)
+        val phone = rows.first { it.values[android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER] == "+44 20 7946 0002" }
+        assertEquals(android.provider.ContactsContract.CommonDataKinds.Phone.TYPE_CUSTOM, phone.values[android.provider.ContactsContract.CommonDataKinds.Phone.TYPE])
+        assertEquals("Lab", phone.values[android.provider.ContactsContract.CommonDataKinds.Phone.LABEL])
+        val personal = rows.first { it.values[android.provider.ContactsContract.CommonDataKinds.Email.ADDRESS] == "ada@personal.example" }
+        assertEquals("Personal", personal.values[android.provider.ContactsContract.CommonDataKinds.Email.LABEL])
+    }
+
+    @Test
+    fun label_is_dropped_unless_type_is_other() {
+        assertEquals("", ContactCard(phones = listOf(CardEntry("1", "work", "Desk"))).normalized().phones.single().label)
+        assertEquals("Desk", ContactCard(phones = listOf(CardEntry("1", "other", " Desk "))).normalized().phones.single().label)
+    }
+
+    @Test
+    fun legacy_fields_prefer_home_address_and_first_phone() {
+        val json = JSONObject(new_contact_json(full_card))
+        assertEquals("12 St James's Square", json.getJSONObject("address").getString("street"))
+        assertEquals("+44 20 7946 0000", json.getString("phone"))
+        val entry = json.getJSONArray("phone_entries").getJSONObject(2)
+        assertEquals("other", entry.getString("type"))
+        assertEquals("Lab", entry.getString("label"))
+    }
+
+    @Test
+    fun inline_avatar_round_trips_as_fingerprint() {
+        val avatar = "data:image/jpeg;base64,AAAA"
+        val card = full_card.copy(photo = remote_photo_fingerprint(avatar))
+        val json = new_contact_json(card, avatar)
+        assertEquals(avatar, contact_inline_avatar(json))
+        assertEquals(card, contact_card_from_json(json).normalized())
+        val cleared = patch_contact_json(json, card, card.copy(photo = ""))
+        assertFalse(JSONObject(cleared).has("avatar_url"))
+    }
+
+    @Test
+    fun remote_avatar_url_is_not_treated_as_photo() {
+        val json = JSONObject(new_contact_json(full_card)).put("avatar_url", "https://example.com/a.png").toString()
+        assertEquals("", contact_card_from_json(json).photo)
+        assertEquals(null, contact_inline_avatar(json))
     }
 
     @Test
@@ -115,8 +172,8 @@ class ContactCardTest {
         val merged = merge_contact_cards(base, local, remote)
         assertEquals("Local nick", merged.nickname)
         assertEquals("Remote Co", merged.company)
-        assertEquals(3, merged.phones.size)
-        assertEquals(listOf(CardEntry("ada@work.example", "work")), merged.emails)
+        assertEquals(base.phones.size + 1, merged.phones.size)
+        assertEquals(base.emails.drop(1), merged.emails)
     }
 
     @Test

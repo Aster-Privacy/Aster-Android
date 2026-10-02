@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_type_home">Dom</string>
+    <string name="contact_type_other">Inne</string>
+    <string name="contact_type_fax">Faks</string>
+    <string name="contact_type_pager">Pager</string>
+    <string name="contact_type_custom">Niestandardowa</string>
+    <string name="contact_custom_label">Własna etykieta</string>
+    <string name="contact_add_email">Dodaj e-mail</string>
+    <string name="contact_add_phone">Dodaj telefon</string>
+    <string name="contact_add_address">Dodaj adres</string>
+    <string name="contact_change_type">Zmień typ</string>
+    <string name="share_contact">Udostępnij kontakt</string>
+    <string name="contact_share_as_text">Udostępnij jako tekst</string>
+    <string name="contact_share_as_vcard">Udostępnij jako vCard</string>
+    <plurals name="contacts_import_progress">
+        <item quantity="one">Importowanie %1$d z %2$d kontaktu</item>
+        <item quantity="few">Importowanie %1$d z %2$d kontaktów</item>
+        <item quantity="many">Importowanie %1$d z %2$d kontaktów</item>
+        <item quantity="other">Importowanie %1$d z %2$d kontaktów</item>
+    </plurals>
+</resources>

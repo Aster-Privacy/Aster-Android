@@ -32,6 +32,8 @@ import org.astermail.android.crypto.hkdf_sha256
 import org.astermail.android.crypto.PasswordKdf
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -48,8 +50,8 @@ import org.astermail.android.crypto.CryptoNative
 
 enum class RecoveryStep {
     email,
-    code,
     other_ways,
+    code,
     reset_email_confirm,
     support,
     email_sent,
@@ -70,6 +72,7 @@ data class RecoveryUiState(
     val email: String = "",
     val is_loading: Boolean = false,
     val error: String? = null,
+    val resend_seconds: Int = 0,
     val processing_status: String = "",
     val new_codes: List<String> = emptyList(),
     val review: RecoveryReview? = null,
@@ -92,16 +95,19 @@ class RecoveryViewModel @Inject constructor(
     private var decrypted_vault: ByteArray? = null
     private var user_email: String = ""
     private var had_recovery_email: Boolean = false
+    private var cooldown_job: Job? = null
 
     fun submit_email(email: String) {
         if (_state.value.is_loading) return
         if (!accept_email(email)) return
 
-        _state.value = _state.value.copy(step = RecoveryStep.code, error = null)
+        _state.value = _state.value.copy(step = RecoveryStep.other_ways, error = null)
     }
 
     private fun accept_email(email: String): Boolean {
-        user_email = email.trim().lowercase(java.util.Locale.ROOT)
+        val normalized = email.trim().lowercase(java.util.Locale.ROOT)
+        if (normalized != user_email) clear_resend_cooldown()
+        user_email = normalized
         val at_index = user_email.indexOf('@')
 
         if (at_index <= 0) {
@@ -127,6 +133,21 @@ class RecoveryViewModel @Inject constructor(
         if (_state.value.is_loading) return
         if (!accept_email(email)) return
 
+        request_reset_link(resend = false)
+    }
+
+    fun resend_reset_link() {
+        if (_state.value.is_loading || _state.value.resend_seconds > 0) return
+        if (!accept_email(user_email)) return
+
+        request_reset_link(resend = true)
+    }
+
+    private fun request_reset_link(resend: Boolean) {
+        if (_state.value.resend_seconds > 0) {
+            if (!resend) _state.value = _state.value.copy(step = RecoveryStep.email_sent, error = null)
+            return
+        }
         val at_index = user_email.indexOf('@')
         val username = user_email.substring(0, at_index)
         val email_domain = user_email.substring(at_index + 1).trimEnd('.')
@@ -141,14 +162,35 @@ class RecoveryViewModel @Inject constructor(
                     ),
                 )
                 _state.value = _state.value.copy(
-                    step = RecoveryStep.email_sent,
+                    step = if (resend) _state.value.step else RecoveryStep.email_sent,
                     is_loading = false,
                 )
+                start_resend_cooldown()
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     is_loading = false,
-                    error = map_error(t, R.string.error_send_recovery),
+                    error = map_error(t, R.string.error_send_reset_link),
+                )
+                if (resend) start_resend_cooldown()
+            }
+        }
+    }
+
+    private fun clear_resend_cooldown() {
+        cooldown_job?.cancel()
+        cooldown_job = null
+        if (_state.value.resend_seconds != 0) _state.value = _state.value.copy(resend_seconds = 0)
+    }
+
+    private fun start_resend_cooldown() {
+        cooldown_job?.cancel()
+        _state.value = _state.value.copy(resend_seconds = RESEND_COOLDOWN_SECONDS)
+        cooldown_job = viewModelScope.launch {
+            while (_state.value.resend_seconds > 0) {
+                delay(1_000L)
+                _state.value = _state.value.copy(
+                    resend_seconds = (_state.value.resend_seconds - 1).coerceAtLeast(0),
                 )
             }
         }
@@ -164,6 +206,8 @@ class RecoveryViewModel @Inject constructor(
     }
 
     fun go_to_email_step() {
+        clear_resend_cooldown()
+        user_email = ""
         _state.value = _state.value.copy(step = RecoveryStep.email, email = "", error = null)
     }
 
@@ -274,7 +318,14 @@ class RecoveryViewModel @Inject constructor(
                 _state.value = _state.value.copy(processing_status = ctx.getString(R.string.status_generating_codes))
                 val new_codes = generate_recovery_codes()
                 val new_recovery_key = ByteArray(32).also { SecureRandom().nextBytes(it) }
-                val updated_vault = with_recovery_codes(vault_bytes, new_codes)
+                val password_chars = password.toCharArray()
+                val updated_vault = try {
+                    withContext(compute_dispatcher) {
+                        with_recovery_codes(vault_bytes, new_codes, password_chars)
+                    }
+                } finally {
+                    password_chars.fill('\u0000')
+                }
 
                 val (new_envelope, backup) = try {
                     val envelope = withContext(compute_dispatcher) {
@@ -282,11 +333,12 @@ class RecoveryViewModel @Inject constructor(
                     }
                     _state.value = _state.value.copy(processing_status = ctx.getString(R.string.status_creating_backup))
                     val sealed_backup = withContext(compute_dispatcher) {
-                        encrypt_vault_backup(updated_vault.plain, new_recovery_key)
+                        encrypt_vault_backup(updated_vault.backup_plain, new_recovery_key)
                     }
                     envelope to sealed_backup
                 } finally {
                     updated_vault.plain.fill(0)
+                    updated_vault.backup_plain.fill(0)
                 }
 
                 val shares = withContext(compute_dispatcher) {
@@ -365,20 +417,26 @@ class RecoveryViewModel @Inject constructor(
         decrypted_vault = null
     }
 
-    private class UpdatedVault(val plain: ByteArray, val vault_format: Int)
+    private class UpdatedVault(val plain: ByteArray, val backup_plain: ByteArray, val vault_format: Int)
 
-    private fun with_recovery_codes(vault_bytes: ByteArray, codes: List<String>): UpdatedVault {
-        val vault_obj = org.json.JSONObject(String(vault_bytes, Charsets.UTF_8))
+    private fun with_recovery_codes(vault_bytes: ByteArray, codes: List<String>, password: CharArray): UpdatedVault {
+        val backup_obj = org.json.JSONObject(String(vault_bytes, Charsets.UTF_8))
+        val unlocked_keys = read_unlocked_keys(backup_obj)
+        val vault_obj = strip_backup_fields(backup_obj)
+        val relocked_keys = relock_vault_keys(vault_obj, unlocked_keys, password)
         val codes_array = org.json.JSONArray()
         codes.forEach { codes_array.put(it) }
         vault_obj.put("recovery_codes", codes_array)
 
-        val vault_format = maxOf(
-            vault_obj.optInt("vault_format", 1),
-            if (vault_obj.optString("data_kek", "").isNotBlank()) MASTER_KEY_VAULT_FORMAT else 1,
-        )
+        val vault_format = stored_vault_format(vault_obj)
 
-        return UpdatedVault(vault_obj.toString().toByteArray(Charsets.UTF_8), vault_format)
+        return UpdatedVault(
+            plain = vault_obj.toString().toByteArray(Charsets.UTF_8),
+            backup_plain = carry_backup_unlocked_keys(vault_obj, relocked_keys)
+                .toString()
+                .toByteArray(Charsets.UTF_8),
+            vault_format = vault_format,
+        )
     }
 
     fun go_to_review_security() {
@@ -396,9 +454,10 @@ class RecoveryViewModel @Inject constructor(
         if (_state.value.is_loading) return
         val current = _state.value.step
         val prev = when (current) {
-            RecoveryStep.email_sent -> RecoveryStep.email
-            RecoveryStep.code -> RecoveryStep.email
-            RecoveryStep.other_ways -> RecoveryStep.code
+            RecoveryStep.email_sent -> RecoveryStep.reset_email_confirm
+            RecoveryStep.code ->
+                if (_state.value.email.isEmpty()) RecoveryStep.email else RecoveryStep.other_ways
+            RecoveryStep.other_ways -> RecoveryStep.email
             RecoveryStep.reset_email_confirm -> RecoveryStep.other_ways
             RecoveryStep.support -> RecoveryStep.other_ways
             RecoveryStep.password -> RecoveryStep.code
@@ -502,6 +561,7 @@ class RecoveryViewModel @Inject constructor(
         android.util.Base64.decode(s, android.util.Base64.DEFAULT)
 
     companion object {
+        private const val RESEND_COOLDOWN_SECONDS = 60
         private const val PBKDF2_ITERATIONS = 310000
         private const val HKDF_INFO = "Aster Mail_Recovery_Vault_v1"
     }

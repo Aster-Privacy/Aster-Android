@@ -31,7 +31,9 @@ import io.mockk.unmockkStatic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -63,7 +65,7 @@ class RecoveryViewModelTest {
             "Passwords do not match"
         every { application.getString(org.astermail.android.R.string.error_invalid_recovery_code) } returns
             "Invalid recovery code format"
-        every { application.getString(org.astermail.android.R.string.error_send_recovery) } returns
+        every { application.getString(org.astermail.android.R.string.error_send_reset_link) } returns
             "failed to send recovery email"
         every { application.getString(org.astermail.android.R.string.error_invalid_code) } returns
             "invalid recovery code"
@@ -116,6 +118,43 @@ class RecoveryViewModelTest {
         assertEquals(RecoveryStep.email_sent, state.step)
         assertFalse(state.is_loading)
         assertNull(state.error)
+    }
+
+    @Test
+    fun `sending again during the cooldown reuses the link already sent`() = runTest {
+        coEvery { recovery_api.initiate_email(any()) } returns
+            InitiateEmailRecoveryResponse(success = true)
+
+        vm.send_recovery_email("user@astermail.org")
+        runCurrent()
+        vm.go_to_other_ways()
+        vm.send_reset_link()
+        runCurrent()
+
+        assertEquals(RecoveryStep.email_sent, vm.state.value.step)
+        assertTrue(vm.state.value.resend_seconds > 0)
+        coVerify(exactly = 1) { recovery_api.initiate_email(any()) }
+    }
+
+    @Test
+    fun `going back to the email step clears the cooldown`() = runTest {
+        coEvery { recovery_api.initiate_email(any()) } returns
+            InitiateEmailRecoveryResponse(success = true)
+
+        vm.send_recovery_email("user@astermail.org")
+        runCurrent()
+        assertTrue(vm.state.value.resend_seconds > 0)
+
+        vm.go_to_email_step()
+
+        assertEquals(0, vm.state.value.resend_seconds)
+        assertEquals("", vm.state.value.email)
+
+        vm.send_recovery_email("other@astermail.org")
+        advanceUntilIdle()
+
+        assertEquals(RecoveryStep.email_sent, vm.state.value.step)
+        coVerify(exactly = 2) { recovery_api.initiate_email(any()) }
     }
 
     @Test
@@ -321,16 +360,42 @@ class RecoveryViewModelTest {
     }
 
     @Test
-    fun `go_back from email_sent goes to email`() = runTest {
+    fun `go_back from email_sent returns to the confirm step`() = runTest {
         coEvery { recovery_api.initiate_email(any()) } returns
             InitiateEmailRecoveryResponse(success = true)
 
         vm.send_recovery_email("test@astermail.org")
-        advanceUntilIdle()
+        runCurrent()
         assertEquals(RecoveryStep.email_sent, vm.state.value.step)
 
         vm.go_back()
-        assertEquals(RecoveryStep.email, vm.state.value.step)
+        assertEquals(RecoveryStep.reset_email_confirm, vm.state.value.step)
+    }
+
+    @Test
+    fun `resend_reset_link waits for the cooldown then sends again`() = runTest {
+        coEvery { recovery_api.initiate_email(any()) } returns
+            InitiateEmailRecoveryResponse(success = true)
+
+        vm.send_recovery_email("test@astermail.org")
+        runCurrent()
+        assertEquals(RecoveryStep.email_sent, vm.state.value.step)
+        assertEquals(60, vm.state.value.resend_seconds)
+
+        vm.resend_reset_link()
+        runCurrent()
+        coVerify(exactly = 1) { recovery_api.initiate_email(any()) }
+
+        advanceTimeBy(61_000)
+        runCurrent()
+        assertEquals(0, vm.state.value.resend_seconds)
+
+        vm.resend_reset_link()
+        runCurrent()
+        coVerify(exactly = 2) { recovery_api.initiate_email(any()) }
+        assertEquals(RecoveryStep.email_sent, vm.state.value.step)
+        assertNull(vm.state.value.error)
+        assertEquals(60, vm.state.value.resend_seconds)
     }
 
     @Test
@@ -348,13 +413,43 @@ class RecoveryViewModelTest {
     }
 
     @Test
-    fun `go_back from other_ways returns to code`() {
+    fun `go_back from other_ways returns to email`() {
         vm.go_to_code_step()
         vm.go_to_other_ways()
         assertEquals(RecoveryStep.other_ways, vm.state.value.step)
 
         vm.go_back()
-        assertEquals(RecoveryStep.code, vm.state.value.step)
+        assertEquals(RecoveryStep.email, vm.state.value.step)
+    }
+
+    @Test
+    fun `submit_email opens the recovery method choice`() {
+        vm.submit_email("User@astermail.org")
+
+        assertEquals(RecoveryStep.other_ways, vm.state.value.step)
+        assertEquals("user@astermail.org", vm.state.value.email)
+        assertNull(vm.state.value.error)
+    }
+
+    @Test
+    fun `submit_email without a domain stays on the email step`() {
+        vm.submit_email("user")
+
+        assertEquals(RecoveryStep.email, vm.state.value.step)
+        assertEquals("enter your full email address", vm.state.value.error)
+    }
+
+    @Test
+    fun `go_back from code returns to the method choice once an account is entered`() {
+        vm.submit_email("user@astermail.org")
+        vm.go_to_code_step()
+
+        vm.go_back()
+        assertEquals(RecoveryStep.other_ways, vm.state.value.step)
+
+        vm.go_back()
+        assertEquals(RecoveryStep.email, vm.state.value.step)
+        assertEquals("user@astermail.org", vm.state.value.email)
     }
 
     @Test

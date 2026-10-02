@@ -966,13 +966,17 @@ internal fun alias_rule_delivery_note(
 ): AliasRuleDeliveryNote? {
     val delivery = org.astermail.android.mail_rules.alias_rule_delivery(rules, alias.address) ?: return null
     val missing_name = stringResource(R.string.alias_delivery_folder_missing)
-    val folder_name = labels.firstOrNull {
-        it.label_token == delivery.folder_token && !it.encrypted_name.isNullOrBlank()
-    }?.encrypted_name ?: missing_name
+    val folder_name = org.astermail.android.ui.settings.mail_rules.rule_folder_name(labels, delivery.folder_token)
+        ?: missing_name
     return AliasRuleDeliveryNote(
         rule_name = delivery.rule_name,
         folder_name = folder_name,
-        matches_alias_delivery = alias.delivery_folder_token == delivery.folder_token,
+        matches_alias_delivery = org.astermail.android.mail_rules.rule_target_matches_alias_delivery(
+            rule_folder_token = delivery.folder_token,
+            rule_folder_type = org.astermail.android.mail_rules.rule_folder_type_of(labels, delivery.folder_token),
+            alias_delivery_folder_token = alias.delivery_folder_token,
+            alias_never_inbox = alias.never_inbox,
+        ),
     )
 }
 
@@ -1759,6 +1763,14 @@ internal fun domains_tab(
                 },
                 on_delete = { vm.delete_domain(domain.id) },
                 on_open_bimi = { on_open_bimi(domain.id) },
+                on_rotate_dkim = {
+                    val outcome = vm.rotate_dkim_now(domain.id)
+                    if (outcome != null) {
+                        val records = vm.get_dns_records_now(domain.id)
+                        if (!records.isNullOrEmpty()) on_dns_loaded(domain.id, records)
+                    }
+                    outcome
+                },
             )
             v_gap(AsterSpacing.md)
         }
@@ -2702,10 +2714,12 @@ private fun domain_card(
     on_delete: () -> Unit,
     catch_all_locked: Boolean = false,
     on_open_bimi: () -> Unit = {},
+    on_rotate_dkim: suspend () -> SettingsViewModel.DkimRotateOutcome? = { null },
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
+    val card_scope = rememberCoroutineScope()
     val is_active = domain.status.equals("active", ignoreCase = true) ||
         (domain.status.isBlank() && domain.txt_verified && domain.mx_verified && domain.spf_verified && domain.dkim_verified)
     val status_label = when (domain.status.lowercase()) {
@@ -2722,6 +2736,9 @@ private fun domain_card(
         format_grace_end(domain.downgrade_grace_expires_at)
     }
     var confirm_delete by remember(domain.id) { mutableStateOf(false) }
+    var confirm_rotate_dkim by remember(domain.id) { mutableStateOf(false) }
+    var is_rotating_dkim by remember(domain.id) { mutableStateOf(false) }
+    var rotated_dkim_record by remember(domain.id) { mutableStateOf<DnsRecord?>(null) }
     var name_expanded by remember(domain.id) { mutableStateOf(false) }
     val shared_label = domain.shared_from?.let { stringResource(R.string.domain_shared_by, it) }
         ?: stringResource(R.string.domain_shared_label)
@@ -2737,6 +2754,26 @@ private fun domain_card(
             on_confirm = {
                 confirm_delete = false
                 on_delete()
+            },
+        )
+    }
+
+    if (confirm_rotate_dkim) {
+        dkim_rotate_confirm_dialog(
+            domain_name = domain.domain_name,
+            is_aster_managed = domain.is_aster_managed,
+            on_dismiss = { confirm_rotate_dkim = false },
+            on_confirm = {
+                confirm_rotate_dkim = false
+                is_rotating_dkim = true
+                card_scope.launch {
+                    try {
+                        val outcome = on_rotate_dkim()
+                        if (outcome != null) rotated_dkim_record = outcome.manual_record
+                    } finally {
+                        is_rotating_dkim = false
+                    }
+                }
             },
         )
     }
@@ -2900,6 +2937,36 @@ private fun domain_card(
                         onClick = { if (!is_verifying) on_verify() },
                         enabled = !is_verifying,
                     )
+
+                    v_gap(AsterSpacing.md)
+                    settings_row_gap()
+                    v_gap(AsterSpacing.md)
+                    Text(
+                        text = stringResource(R.string.domain_dkim_rotate_title),
+                        color = colors.text_primary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Text(
+                        text = stringResource(R.string.domain_dkim_rotate_hint),
+                        color = colors.text_tertiary,
+                        fontSize = 12.sp,
+                    )
+                    v_gap(AsterSpacing.sm)
+                    AsterSecondaryButton(
+                        label = stringResource(R.string.domain_dkim_rotate_action),
+                        onClick = { if (!is_rotating_dkim) confirm_rotate_dkim = true },
+                        enabled = !is_rotating_dkim,
+                        is_loading = is_rotating_dkim,
+                    )
+                    rotated_dkim_record?.let { record ->
+                        v_gap(AsterSpacing.md)
+                        dkim_rotation_notice(
+                            record = record,
+                            on_copy = { label, value -> copy_dns_value(context, label, value) },
+                            on_dismiss = { rotated_dkim_record = null },
+                        )
+                    }
                 }
 
                 if (domain.bimi_available) {

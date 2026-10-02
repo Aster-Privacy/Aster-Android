@@ -45,14 +45,15 @@ class EmailPrintDocumentTest {
         to = "To",
         cc = "Cc",
         date = "Date",
-        image_blocked = "[Image blocked]",
+        image_blocked = "Image blocked",
+        tracking_pixel_blocked = "Tracking pixel blocked",
     )
 
     private val remote_image = "https://cdn.example/hero.png"
 
     private val remote_image_html = "<p>Hello</p><img src=\"$remote_image\" width=\"600\" height=\"300\" alt=\"Hero\">"
 
-    private val remote_img_src = Regex("<img[^>]*src=\"(https?:)?//", RegexOption.IGNORE_CASE)
+    private val remote_img_src = Regex("<img[^>]*\\s(?:src|srcset)=\"(https?:)?//", RegexOption.IGNORE_CASE)
 
     private fun message(
         body: String = "Hello",
@@ -111,7 +112,7 @@ class EmailPrintDocumentTest {
             message(body_html = remote_image_html),
             allow_external = false,
             sanitize_options = EmailHtmlSanitizer.SanitizeOptions(),
-            image_blocked_label = labels.image_blocked,
+            blocked_image_labels = BlockedImageLabels(labels.image_blocked, labels.tracking_pixel_blocked),
         )
 
         assertTrue(body.contains("Hello"))
@@ -125,7 +126,7 @@ class EmailPrintDocumentTest {
             message(body_html = remote_image_html),
             allow_external = true,
             sanitize_options = EmailHtmlSanitizer.SanitizeOptions(),
-            image_blocked_label = labels.image_blocked,
+            blocked_image_labels = BlockedImageLabels(labels.image_blocked, labels.tracking_pixel_blocked),
         )
 
         assertTrue(body.contains(REMOTE_IMAGE_PROXY_BASE + java.net.URLEncoder.encode(remote_image, "UTF-8")))
@@ -138,7 +139,7 @@ class EmailPrintDocumentTest {
             message(body_html = "<p>ok</p><script>alert(1)</script>"),
             allow_external = true,
             sanitize_options = EmailHtmlSanitizer.SanitizeOptions(),
-            image_blocked_label = labels.image_blocked,
+            blocked_image_labels = BlockedImageLabels(labels.image_blocked, labels.tracking_pixel_blocked),
         )
 
         assertTrue(body.contains("ok"))
@@ -151,7 +152,7 @@ class EmailPrintDocumentTest {
             message(body = "<script>alert(1)</script>\nline two"),
             allow_external = false,
             sanitize_options = EmailHtmlSanitizer.SanitizeOptions(),
-            image_blocked_label = labels.image_blocked,
+            blocked_image_labels = BlockedImageLabels(labels.image_blocked, labels.tracking_pixel_blocked),
         )
 
         assertTrue(body.contains("&lt;script&gt;alert(1)&lt;/script&gt;\nline two"))

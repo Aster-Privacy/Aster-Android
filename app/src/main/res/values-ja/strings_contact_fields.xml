@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_type_home">自宅</string>
+    <string name="contact_type_other">その他</string>
+    <string name="contact_type_fax">FAX</string>
+    <string name="contact_type_pager">ポケベル</string>
+    <string name="contact_type_custom">カスタム</string>
+    <string name="contact_custom_label">カスタムラベル</string>
+    <string name="contact_add_email">メールを追加</string>
+    <string name="contact_add_phone">電話を追加</string>
+    <string name="contact_add_address">住所を追加</string>
+    <string name="contact_change_type">種類を変更</string>
+    <string name="share_contact">連絡先を共有</string>
+    <string name="contact_share_as_text">テキストで共有</string>
+    <string name="contact_share_as_vcard">vCardで共有</string>
+    <plurals name="contacts_import_progress">
+        <item quantity="other">%2$d件中%1$d件の連絡先をインポート中</item>
+    </plurals>
+</resources>

@@ -45,6 +45,33 @@ internal fun fit_wide_width_attributes(body: String): String {
     }
 }
 
+private val NARROW_FIXED_STYLE_WIDTH = Regex("""(?<![a-z-])width\s*:\s*([1-3]\d{2})(?:\.\d+)?px""", RegexOption.IGNORE_CASE)
+
+private val NARROW_FIXED_WIDTH_ATTRIBUTE = Regex("""^([1-3]\d{2})(?:px)?$""", RegexOption.IGNORE_CASE)
+
+internal fun fluid_narrow_fixed_tables(body: String): String {
+    if (!body.contains("<table", ignoreCase = true)) return body
+    return try {
+        val doc = org.jsoup.Jsoup.parseBodyFragment(body)
+        doc.outputSettings(org.jsoup.nodes.Document.OutputSettings().prettyPrint(false))
+        var changed = false
+        for (table in doc.select("table")) {
+            val style = table.attr("style")
+            val from_style = NARROW_FIXED_STYLE_WIDTH.find(style)?.groupValues?.get(1)
+            val from_attribute = NARROW_FIXED_WIDTH_ATTRIBUTE.find(table.attr("width").trim())?.groupValues?.get(1)
+            val fixed = from_style ?: from_attribute ?: continue
+            if (from_attribute != null) table.attr("width", "100%")
+            val base = if (from_style != null) NARROW_FIXED_STYLE_WIDTH.replace(style, "width:100%") else style
+            val separator = if (base.isBlank() || base.trimEnd().endsWith(";")) "" else ";"
+            table.attr("style", "$base${separator}width:100%;max-width:${fixed}px!important")
+            changed = true
+        }
+        if (changed) doc.body().html() else body
+    } catch (_: Throwable) {
+        body
+    }
+}
+
 internal fun build_email_html(
     body: String,
     is_dark: Boolean,
@@ -53,7 +80,6 @@ internal fun build_email_html(
     forwarded_label: String,
     image_failed_label: String,
     force_dark_emails: Boolean,
-    forced_dark_canvas: Boolean = false,
     dyslexia_font: Boolean,
     translate_mode: String,
     email_font_id: String? = null,
@@ -75,6 +101,7 @@ internal fun build_email_html(
             .replace(Regex("""(?<!\(\s{0,8})\bmin-width\s*:\s*([1-9]\d{2,3})px""", RegexOption.IGNORE_CASE), "min-width:$1px;min-width:min($1px,100%)")
             .replace(Regex("""(?<!\(\s{0,8})(?<![a-z-])width\s*:\s*[4-9]\d{2,3}px""", RegexOption.IGNORE_CASE), "width:100%")
             .let { fit_wide_width_attributes(it) }
+            .let { fluid_narrow_fixed_tables(it) }
     } else {
         body
     }
@@ -140,7 +167,7 @@ html,body{background-color:#ffffff!important}
     }
 
     val table_css = if (has_newsletter_layout) {
-        "#m{max-width:100%!important;overflow-x:hidden!important;box-sizing:border-box!important}#m table{max-width:100%!important;box-sizing:border-box!important}#m img{max-width:100%!important;height:auto!important}#m div,#m p,#m blockquote,#m section,#m article{box-sizing:border-box!important;max-width:100%!important}td,th{box-sizing:border-box!important;max-width:100%!important}#m,#m *{word-break:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}#m a{overflow-wrap:anywhere!important}"
+        "#m{max-width:100%!important;overflow-x:auto!important;box-sizing:border-box!important}#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}#m table{max-width:100%!important;box-sizing:border-box!important}#m img{max-width:100%!important;height:auto!important}#m div,#m p,#m blockquote,#m section,#m article{box-sizing:border-box!important;max-width:100%!important}td,th{box-sizing:border-box!important;max-width:100%!important}#m,#m *{word-break:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}#m a{overflow-wrap:anywhere!important}"
     } else {
         "table{max-width:100%!important;border-collapse:collapse;width:100%!important}td,th{overflow-wrap:break-word}"
     }
@@ -160,12 +187,7 @@ html,body{background-color:#ffffff!important}
     val detail_color = if (simple_dark) "#9ca3af" else "#6b7280"
 
     val forced_dark_css = if (force_dark_emails) {
-        forced_dark_mode_css(
-            link_hex,
-            "#4b5563",
-            "#9ca3af",
-            if (forced_dark_canvas) FORCED_DARK_CANVAS else "transparent",
-        )
+        forced_dark_mode_css(link_hex, "#4b5563", "#9ca3af")
     } else {
         ""
     }
@@ -200,11 +222,11 @@ a.aster-image-zoom img{cursor:zoom-in}
 a{color:$link_hex;text-decoration:underline;-webkit-tap-highlight-color:transparent}
 pre,code{overflow-x:auto;max-width:100%}
 #m img[data-aster-failed-label]::after{content:attr(data-aster-failed-label);display:inline-block;padding:4px 8px;border-radius:4px;font-size:12px;background-color:${if (simple_dark) "#1f1f1f" else "#f3f4f6"};color:#9ca3af;border:1px dashed ${if (simple_dark) "#374151" else "#e5e7eb"}}
-.blocked-image{display:inline-block;padding:4px 8px;border-radius:4px;font-size:12px;background-color:${if (simple_dark) "#1f1f1f" else "#f3f4f6"};color:#9ca3af${if (simple_dark) "!important" else ""};border:1px dashed ${if (simple_dark) "#374151" else "#e5e7eb"}}
+img.blocked-image[data-blocked='true']{opacity:1!important;filter:none!important}
 $table_css
 a.aster-email-button,#m a.aster-email-button{white-space:nowrap!important;word-break:keep-all!important;overflow-wrap:normal!important;max-width:100%!important}
 .aster_quote,.gmail_quote,.protonmail_quote,.yahoo_quoted,.moz-cite-prefix{display:none}
-.aster-quoted-content .aster_quote,.aster-quoted-content .gmail_quote,.aster-quoted-content .protonmail_quote,.aster-quoted-content .yahoo_quoted,.aster-quoted-content .moz-cite-prefix,.aster-forwarded-content .aster_quote,.aster-forwarded-content .gmail_quote,.aster-forwarded-content .protonmail_quote{display:block;margin:0;padding:0}
+.aster-quoted-content .aster_quote,.aster-quoted-content .gmail_quote,.aster-quoted-content .protonmail_quote,.aster-quoted-content .yahoo_quoted,.aster-quoted-content .moz-cite-prefix,.aster-forwarded-content .aster_quote,.aster-forwarded-content .gmail_quote,.aster-forwarded-content .protonmail_quote,.aster-forwarded-content .yahoo_quoted,.aster-forwarded-content .moz-cite-prefix{display:block;margin:0;padding:0}
 blockquote{margin:8px 0;padding-left:12px;border-left:2px solid $bq_border;color:$bq_color}
 details.aster-quoted-wrapper{margin-top:18px;margin-bottom:4px}
 .aster-quote-toggle{display:inline-flex;align-items:center;justify-content:center;min-height:${scaled_px(28f)};min-width:${scaled_px(44f)};padding:0 ${scaled_px(16f)};margin:0;border-radius:${scaled_px(14f)};border:none;outline:none;background:${if (chip_dark) "rgba(255,255,255,0.12)" else "rgba(0,0,0,0.08)"};color:${if (chip_dark) "rgba(255,255,255,0.65)" else "rgba(0,0,0,0.55)"};cursor:pointer;font-family:inherit;font-size:0;letter-spacing:0;line-height:0;vertical-align:middle;user-select:none;list-style:none;-webkit-tap-highlight-color:transparent;transition:background 0.12s ease}

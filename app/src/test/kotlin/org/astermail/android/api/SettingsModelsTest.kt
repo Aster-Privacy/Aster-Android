@@ -27,6 +27,8 @@ import org.astermail.android.api.settings.BlockedSenderInfo
 import org.astermail.android.api.settings.BlockedSendersResponse
 import org.astermail.android.api.settings.ChangePasswordRequest
 import org.astermail.android.api.settings.ChangePasswordResponse
+import org.astermail.android.api.settings.CustomDomain
+import org.astermail.android.api.settings.DkimRotationResponse
 import org.astermail.android.api.settings.DirectoryAvailabilityRequest
 import org.astermail.android.api.settings.DirectoryAvailabilityResponse
 import org.astermail.android.api.settings.FeedbackRequest
@@ -543,5 +545,33 @@ class SettingsModelsTest {
         val a = AliasInfo(id = "a1", domain = "astermail.org", encrypted_local_part = "user")
         val b = AliasInfo(id = "a1", domain = "astermail.org", encrypted_local_part = "user")
         assertEquals(a, b)
+    }
+
+    @Test
+    fun `DkimRotationResponse treats missing dns_auto_published as false`() {
+        val body = """{"success":true,"new_selector":"aster2","public_key":"k","dns_record":{"record_type":"TXT","host":"aster2._domainkey.example.com","value":"v=DKIM1; k=rsa; p=k","purpose":"dkim","is_verified":false,"priority":null,"required":true}}"""
+        val response = json.decodeFromString(DkimRotationResponse.serializer(), body)
+        assertTrue(response.success)
+        assertFalse(response.dns_auto_published)
+        assertEquals("aster2._domainkey.example.com", response.dns_record?.name)
+        assertEquals("TXT", response.dns_record?.type)
+    }
+
+    @Test
+    fun `DkimRotationResponse decodes dns_auto_published true`() {
+        val body = """{"success":true,"new_selector":"aster2","public_key":"k","dns_record":null,"dns_auto_published":true}"""
+        val response = json.decodeFromString(DkimRotationResponse.serializer(), body)
+        assertTrue(response.dns_auto_published)
+        assertNull(response.dns_record)
+    }
+
+    @Test
+    fun `CustomDomain is aster managed when either purchased flag is set`() {
+        val decode = { extra: String ->
+            json.decodeFromString(CustomDomain.serializer(), """{"id":"d1","domain_name":"example.com"$extra}""")
+        }
+        assertFalse(decode("").is_aster_managed)
+        assertTrue(decode(",\"is_purchased\":true").is_aster_managed)
+        assertTrue(decode(",\"purchased\":true").is_aster_managed)
     }
 }

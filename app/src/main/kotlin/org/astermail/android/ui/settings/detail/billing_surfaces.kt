@@ -162,10 +162,11 @@ internal fun billing_meter(
 ) {
     val colors = AsterMaterial.colors
     val is_over = status == billing_meter_status.full
+    val show_status = status_text != null &&
+        (status == billing_meter_status.near || status == billing_meter_status.full)
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -173,30 +174,35 @@ internal fun billing_meter(
                 color = colors.text_primary,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
-            )
-            if (status_text != null) {
-                billing_status_mark(status = status, text = status_text)
-            }
-        }
-        Spacer(Modifier.height(AsterSpacing.sm))
-        solid_progress_bar(fraction = fraction, is_over = is_over, height = 6.dp)
-        Spacer(Modifier.height(6.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = value_text,
-                color = colors.text_tertiary,
-                fontSize = 13.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
-            if (trailing_action != null) {
-                Spacer(Modifier.width(AsterSpacing.sm))
-                trailing_action()
+            Spacer(Modifier.width(AsterSpacing.sm))
+            Text(
+                text = value_text,
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+                maxLines = 1,
+            )
+        }
+        Spacer(Modifier.height(AsterSpacing.sm))
+        solid_progress_bar(fraction = fraction, is_over = is_over, height = 6.dp)
+        if (show_status || trailing_action != null) {
+            Spacer(Modifier.height(AsterSpacing.sm))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    if (show_status && status_text != null) {
+                        billing_status_mark(status = status, text = status_text)
+                    }
+                }
+                if (trailing_action != null) {
+                    Spacer(Modifier.width(AsterSpacing.sm))
+                    trailing_action()
+                }
             }
         }
     }

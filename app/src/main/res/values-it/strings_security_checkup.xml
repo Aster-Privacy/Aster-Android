@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account_security_percent_title">La sicurezza del tuo account è al %1$d%%</string>
+    <string name="account_security_dismiss">Ignora</string>
+    <string name="security_center_recommended">Azioni consigliate</string>
+    <string name="security_center_protected">Protetto</string>
+    <string name="security_center_all_clear">Tutte le protezioni sono attive.</string>
+    <string name="action_recommended">Azione consigliata</string>
+    <string name="two_step_verification_recommendation">Attiva la verifica in due passaggi per proteggere il tuo account anche se la password viene rubata.</string>
+    <string name="no_passkeys_recommendation">Aggiungi una passkey per un accesso più rapido e sicuro usando la biometria o il PIN del tuo dispositivo.</string>
+    <string name="login_alerts_off_recommendation">Attiva gli avvisi di accesso per essere avvisato quando un nuovo dispositivo accede al tuo account.</string>
+    <string name="billing_usage_title">Panoramica utilizzo</string>
+    <plurals name="security_actions_remaining">
+        <item quantity="one">%1$d azione consigliata</item>
+        <item quantity="other">%1$d azioni consigliate</item>
+    </plurals>
+</resources>

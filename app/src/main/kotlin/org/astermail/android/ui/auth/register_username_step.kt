@@ -24,28 +24,14 @@ package org.astermail.android.ui.auth
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -69,16 +55,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.R
-import org.astermail.android.design.SquircleShape
-import org.astermail.android.design.AsterDuration
-import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterTextField
-import org.astermail.android.design.AsterShapes
-import org.astermail.android.design.field_surface_color
+import org.astermail.android.ui.common.pill_toggle
 
 private const val display_name_max_length = 100
 
@@ -214,70 +195,15 @@ fun RegisterUsernameStep(
     }
 }
 
-private val domain_toggle_height = 40.dp
-private val domain_toggle_shape = AsterShapes.control
-
 @Composable
 internal fun domain_toggle(
     selected: String,
     on_select: (String) -> Unit,
 ) {
-    val colors = AsterMaterial.colors
     val options = listOf("astermail.org", "aster.cx")
-    val selected_index = options.indexOf(selected).coerceAtLeast(0)
-
-    BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(domain_toggle_height)
-            .acrylic(colors, domain_toggle_shape, field_surface_color(colors))
-            .padding(3.dp),
-    ) {
-        val pill_width = ((maxWidth - 6.dp) / options.size).coerceAtLeast(0.dp)
-        val pill_offset by animateDpAsState(
-            targetValue = pill_width * selected_index,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMediumLow,
-            ),
-            label = "domain_pill_offset",
-        )
-
-        Box(
-            modifier = Modifier
-                .offset(x = pill_offset)
-                .width(pill_width)
-                .fillMaxHeight()
-                .background(colors.accent_blue, SquircleShape(13.dp)),
-        )
-
-        Row(modifier = Modifier.fillMaxSize()) {
-            options.forEach { opt ->
-                val active = selected == opt
-                val label_color by animateColorAsState(
-                    targetValue = if (active) colors.on_accent else colors.text_muted,
-                    animationSpec = tween(durationMillis = AsterDuration.short_4, easing = AsterEasing.standard_enter),
-                    label = "domain_label_color",
-                )
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = androidx.compose.foundation.LocalIndication.current,
-                            onClick = { on_select(opt) },
-                        ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "@$opt",
-                        color = label_color,
-                        fontSize = 13.sp,
-                        fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
-                    )
-                }
-            }
-        }
-    }
+    pill_toggle(
+        labels = options.map { "@$it" },
+        selected_index = options.indexOf(selected).coerceAtLeast(0),
+        on_select = { on_select(options[it]) },
+    )
 }

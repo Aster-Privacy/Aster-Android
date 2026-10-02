@@ -45,6 +45,7 @@ internal fun auth_centered_column(
     vertical_padding: Dp = AsterSpacing.xl,
     scroll_state: ScrollState = rememberScrollState(),
     horizontal_alignment: Alignment.Horizontal = Alignment.CenterHorizontally,
+    vertical_arrangement: Arrangement.Vertical = Arrangement.Center,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
@@ -56,7 +57,7 @@ internal fun auth_centered_column(
                 .heightIn(min = viewport_height)
                 .padding(horizontal = horizontal_padding, vertical = vertical_padding),
             horizontalAlignment = horizontal_alignment,
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = vertical_arrangement,
             content = content,
         )
     }

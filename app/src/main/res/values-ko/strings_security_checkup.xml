@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account_security_percent_title">계정 보안 수준: %1$d%%</string>
+    <string name="account_security_dismiss">닫기</string>
+    <string name="security_center_recommended">권장 작업</string>
+    <string name="security_center_protected">보호됨</string>
+    <string name="security_center_all_clear">모든 보호 기능이 켜져 있습니다.</string>
+    <string name="action_recommended">조치 권장</string>
+    <string name="two_step_verification_recommendation">비밀번호가 유출되더라도 계정을 안전하게 유지하려면 2단계 인증을 켜세요.</string>
+    <string name="no_passkeys_recommendation">기기의 생체 인증 또는 PIN을 사용해 더 빠르고 안전하게 로그인하려면 패스키를 추가하세요.</string>
+    <string name="login_alerts_off_recommendation">새 기기가 계정에 로그인할 때 알림을 받으려면 로그인 알림을 켜세요.</string>
+    <string name="billing_usage_title">사용량 개요</string>
+    <plurals name="security_actions_remaining">
+        <item quantity="other">권장 조치 %1$d개</item>
+    </plurals>
+</resources>

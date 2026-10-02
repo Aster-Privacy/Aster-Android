@@ -107,13 +107,21 @@ fun MailRulesListScreen(
     val state by vm.state.collectAsStateWithLifecycle()
     val settings_vm: SettingsViewModel = shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { vm.load() }
+    LaunchedEffect(Unit) {
+        vm.load()
+        settings_vm.load_labels()
+    }
     val rules_context = androidx.compose.ui.platform.LocalContext.current
 
-    val folder_names = remember(settings_state.labels) {
-        flatten_folder_tree(settings_state.labels)
-            .filter { !it.label.encrypted_name.isNullOrBlank() }
-            .associate { it.label.label_token to it.label.encrypted_name.orEmpty() }
+    val system_folder_names = org.astermail.android.mail_rules.RuleSystemFolder.entries.associateWith {
+        stringResource(rule_system_folder_name_res(it))
+    }
+    val folder_names = remember(settings_state.labels, system_folder_names) {
+        org.astermail.android.mail_rules.rule_system_folders(settings_state.labels)
+            .associate { it.folder.label_token to system_folder_names.getValue(it.system_type) } +
+            flatten_folder_tree(settings_state.labels)
+                .filter { !it.label.encrypted_name.isNullOrBlank() }
+                .associate { it.label.label_token to it.label.encrypted_name.orEmpty() }
     }
 
     LaunchedEffect(state.error, state.rules.isEmpty()) {

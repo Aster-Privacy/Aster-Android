@@ -270,6 +270,12 @@ fun ContactsScreen(
                     done = ui_state.bulk_done,
                     total = ui_state.bulk_total,
                 )
+            } else if ((ui_state.is_transferring || ui_state.is_syncing) && ui_state.import_total > 0) {
+                bulk_progress_banner(
+                    done = ui_state.import_done,
+                    total = ui_state.import_total,
+                    label_res = R.plurals.contacts_import_progress,
+                )
             }
             if (ui_state.is_selecting) {
                 Row(
@@ -1770,7 +1776,11 @@ private fun ContactRow(
 }
 
 @Composable
-private fun bulk_progress_banner(done: Int, total: Int) {
+private fun bulk_progress_banner(
+    done: Int,
+    total: Int,
+    label_res: Int = R.plurals.contacts_bulk_progress,
+) {
     val colors = AsterMaterial.colors
     val safe_total = total.coerceAtLeast(1)
     val target = (done.toFloat() / safe_total).coerceIn(0f, 1f)
@@ -1781,7 +1791,7 @@ private fun bulk_progress_banner(done: Int, total: Int) {
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
     ) {
         Text(
-            text = pluralStringResource(R.plurals.contacts_bulk_progress, total, done.coerceAtMost(total), total),
+            text = pluralStringResource(label_res, total, done.coerceAtMost(total), total),
             color = colors.text_secondary,
             fontSize = 12.sp,
         )

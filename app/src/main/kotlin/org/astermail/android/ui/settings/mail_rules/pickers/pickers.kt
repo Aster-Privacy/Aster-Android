@@ -243,6 +243,7 @@ fun row_select(
 fun field_picker(
     on_dismiss: () -> Unit,
     on_pick: (field_id) -> Unit,
+    selected: field_id? = null,
 ) {
     val sections = remember {
         listOf(
@@ -305,7 +306,7 @@ fun field_picker(
                 section.items.forEach { item ->
                     row_select(
                         label = stringResource(item.label_res),
-                        selected = false,
+                        selected = selected?.name == item.id,
                         on_click = { on_pick(field_id.valueOf(item.id)); on_dismiss() },
                         test_tag = "field_${item.id}",
                     )

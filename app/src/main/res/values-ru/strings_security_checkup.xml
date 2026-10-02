@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account_security_percent_title">Уровень безопасности вашего аккаунта: %1$d%%</string>
+    <string name="account_security_dismiss">Скрыть</string>
+    <string name="security_center_recommended">Рекомендуемые действия</string>
+    <string name="security_center_protected">Защищено</string>
+    <string name="security_center_all_clear">Все средства защиты включены.</string>
+    <string name="action_recommended">Рекомендуется действие</string>
+    <string name="two_step_verification_recommendation">Включите двухэтапную проверку, чтобы ваш аккаунт оставался защищённым, даже если пароль будет украден.</string>
+    <string name="no_passkeys_recommendation">Добавьте ключ доступа для более быстрого и безопасного входа с использованием биометрии или PIN-кода устройства.</string>
+    <string name="login_alerts_off_recommendation">Включите оповещения о входе, чтобы получать уведомления при входе с нового устройства в вашу учётную запись.</string>
+    <string name="billing_usage_title">Обзор использования</string>
+    <plurals name="security_actions_remaining">
+        <item quantity="one">%1$d рекомендуемое действие</item>
+        <item quantity="few">%1$d рекомендуемых действия</item>
+        <item quantity="many">%1$d рекомендуемых действий</item>
+        <item quantity="other">%1$d рекомендуемого действия</item>
+    </plurals>
+</resources>

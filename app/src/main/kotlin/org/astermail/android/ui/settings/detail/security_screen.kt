@@ -60,6 +60,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -81,6 +82,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import org.astermail.android.R
 import org.astermail.android.api.preferences.UserPreferences
@@ -263,11 +265,6 @@ fun SecurityScreen(
         s
     }
 
-    val score_label = when {
-        score == null -> "…"
-        score >= security_score_max -> stringResource(R.string.score_complete)
-        else -> pluralStringResource(R.plurals.score_steps_left, security_score_max - score, security_score_max - score)
-    }
     val score_color = when (score) {
         null -> colors.text_muted
         in 0..2 -> colors.danger
@@ -286,7 +283,7 @@ fun SecurityScreen(
         vm.save_preferences(update(current))
     }
 
-    var score_expanded by remember { mutableStateOf(false) }
+    var banner_dismissed by rememberSaveable { mutableStateOf(false) }
     var hardware_keys_expanded by remember { mutableStateOf(false) }
     var show_revoke_all_confirm by remember { mutableStateOf(false) }
     var trusted_expanded by remember { mutableStateOf(false) }
@@ -378,7 +375,7 @@ fun SecurityScreen(
         scroll_state = scroll_state,
     ) {
         if (!content_ready) {
-            security_loading_skeleton()
+            security_loading_skeleton(show_banner = prefs?.account_security_banner_dismissed != true)
             return@detail_scaffold
         }
 
@@ -388,172 +385,70 @@ fun SecurityScreen(
                 .onGloballyPositioned { content_top_coordinates = it },
         )
         preferences_save_error_banner()
-        section_label(stringResource(R.string.section_account_protection))
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(SquircleShape(14.dp))
-                    .clickable { score_expanded = !score_expanded }
-                    .padding(AsterSpacing.md),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(R.string.protection_score),
-                        color = colors.text_primary,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (score == null) {
-                            val score_shimmer = shimmer_state()
-                            skeleton_block(score_shimmer, 34.dp, 15.dp)
-                            Spacer(Modifier.width(AsterSpacing.xs))
-                            skeleton_block(score_shimmer, 52.dp, 17.dp, corner = 6.dp)
-                        } else {
-                            Text(
-                                text = "$score / $security_score_max",
-                                color = score_color,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Spacer(Modifier.width(AsterSpacing.xs))
-                            val badge_background = org.astermail.android.ui.mail.chip_background(
-                                score_color,
-                                colors.bg_primary,
-                                colors.is_dark,
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .background(badge_background, SquircleShape(6.dp))
-                                    .padding(horizontal = AsterSpacing.xs, vertical = 2.dp),
-                            ) {
-                                Text(
-                                    text = score_label,
-                                    color = org.astermail.android.ui.mail.chip_content(
-                                        score_color,
-                                        badge_background,
-                                        colors.is_dark,
-                                    ),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                            }
-                            Spacer(Modifier.width(AsterSpacing.xs))
-                            Icon(
-                                imageVector = if (score_expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
-                                contentDescription = null,
-                                tint = colors.text_muted,
-                                modifier = Modifier.size(18.dp),
-                            )
-                        }
-                    }
-                }
-                v_gap(AsterSpacing.sm)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(CircleShape)
-                        .background(colors.border_primary),
-                ) {
-                    if (score != null) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(fraction = (score / security_score_max.toFloat()).coerceIn(0f, 1f))
-                                .height(6.dp)
-                                .clip(CircleShape)
-                                .background(score_color),
-                        )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(6.dp)
-                                .shimmer(shimmer_state(), CircleShape),
-                        )
-                    }
-                }
-                AnimatedVisibility(
-                    visible = score_expanded && score != null,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut(),
-                ) {
-                    Column(modifier = Modifier.padding(top = AsterSpacing.md)) {
-                        score_checklist_row(
-                            label = stringResource(R.string.two_factor_auth),
-                            checked = sec?.totp_enabled == true,
-                            colors = colors,
-                            on_open = { open_check(security_check.two_factor) },
-                            on_toggle = null,
-                        )
-                        score_checklist_row(
-                            label = stringResource(R.string.check_passkey_registered),
-                            checked = hardware_keys_count > 0,
-                            colors = colors,
-                            on_open = { open_check(security_check.passkey) },
-                            on_toggle = null,
-                        )
-                        score_checklist_row(
-                            label = stringResource(R.string.check_verified_recovery_email),
-                            checked = recovery_email_verified,
-                            colors = colors,
-                            on_open = { open_check(security_check.recovery_email) },
-                            on_toggle = null,
-                        )
-                        score_checklist_row(
-                            label = stringResource(R.string.login_alerts),
-                            checked = state.login_alerts_enabled == true,
-                            colors = colors,
-                            on_open = { open_check(security_check.login_alerts) },
-                            on_toggle = { vm.set_login_alerts(state.login_alerts_enabled != true) },
-                        )
-                        score_checklist_row(
-                            label = stringResource(R.string.block_tracking_pixels),
-                            checked = prefs?.block_tracking_pixels == true,
-                            colors = colors,
-                            on_open = { open_check(security_check.tracking_pixels) },
-                            on_toggle = { toggle { it.copy(block_tracking_pixels = it.block_tracking_pixels != true) } },
-                        )
-                        score_checklist_row(
-                            label = stringResource(R.string.block_remote_images),
-                            checked = prefs?.block_external_images == true,
-                            colors = colors,
-                            on_open = { open_check(security_check.remote_images) },
-                            on_toggle = {
-                                toggle {
-                                    val on = it.block_external_images != true
-                                    it.copy(
-                                        block_external_images = on,
-                                        load_remote_images = if (on) "never" else "always",
-                                    )
-                                }
-                            },
-                        )
-                        score_checklist_row(
-                            label = stringResource(R.string.strip_exif),
-                            checked = prefs?.strip_exif_on_compose == true,
-                            colors = colors,
-                            on_open = { open_check(security_check.strip_exif) },
-                            on_toggle = {
-                                toggle {
-                                    it.copy(
-                                        strip_exif = it.strip_exif_on_compose != true,
-                                        strip_exif_on_compose = it.strip_exif_on_compose != true,
-                                    )
-                                }
-                            },
-                        )
-                    }
-                }
+        val protection_items = listOf(
+            protection_item(
+                label = stringResource(R.string.two_factor_auth),
+                done = sec?.totp_enabled == true,
+                test_tag = "protection_item_two_factor",
+                on_open = { open_check(security_check.two_factor) },
+            ),
+            protection_item(
+                label = stringResource(R.string.check_passkey_registered),
+                done = hardware_keys_count > 0,
+                test_tag = "protection_item_passkey",
+                on_open = { open_check(security_check.passkey) },
+            ),
+            protection_item(
+                label = stringResource(R.string.check_verified_recovery_email),
+                done = recovery_email_verified,
+                test_tag = "protection_item_recovery_email",
+                on_open = { open_check(security_check.recovery_email) },
+            ),
+            protection_item(
+                label = stringResource(R.string.login_alerts),
+                done = state.login_alerts_enabled == true,
+                test_tag = "protection_item_login_alerts",
+                on_open = { open_check(security_check.login_alerts) },
+            ),
+            protection_item(
+                label = stringResource(R.string.block_tracking_pixels),
+                done = prefs?.block_tracking_pixels == true,
+                test_tag = "protection_item_tracking_pixels",
+                on_open = { open_check(security_check.tracking_pixels) },
+            ),
+            protection_item(
+                label = stringResource(R.string.block_remote_images),
+                done = prefs?.block_external_images == true,
+                test_tag = "protection_item_remote_images",
+                on_open = { open_check(security_check.remote_images) },
+            ),
+            protection_item(
+                label = stringResource(R.string.strip_exif),
+                done = prefs?.strip_exif_on_compose == true,
+                test_tag = "protection_item_strip_exif",
+                on_open = { open_check(security_check.strip_exif) },
+            ),
+        )
+        val banner_visible = score != null &&
+            !banner_dismissed &&
+            prefs?.account_security_banner_dismissed != true
+        AnimatedVisibility(
+            visible = banner_visible,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut(),
+        ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(top = AsterSpacing.md)) {
+                protection_banner(
+                    score = score ?: 0,
+                    tone = score_color,
+                    items = protection_items,
+                    on_dismiss = {
+                        banner_dismissed = true
+                        toggle { it.copy(account_security_banner_dismissed = true) }
+                    },
+                )
             }
         }
-
-        v_gap(AsterSpacing.lg)
 
         section_label(stringResource(R.string.section_authentication))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -569,6 +464,11 @@ fun SecurityScreen(
                 subtitle = totp_sub,
                 icon = TablerIcons.ShieldCheck,
                 on_click = { on_open("two_factor") },
+                recommendation = if (sec != null && !sec.totp_enabled) {
+                    stringResource(R.string.two_step_verification_recommendation)
+                } else {
+                    null
+                },
             )
             settings_row_gap()
             Box(modifier = anchor_modifier(security_anchor.login_alerts)) {
@@ -578,6 +478,11 @@ fun SecurityScreen(
                     icon = TablerIcons.BellRinging,
                     info_title = stringResource(R.string.login_alerts_info_title),
                     info_description = stringResource(R.string.login_alerts_info_desc),
+                    recommendation = if (state.login_alerts_enabled == false) {
+                        stringResource(R.string.login_alerts_off_recommendation)
+                    } else {
+                        null
+                    },
                     trailing = {
                         if (state.login_alerts_enabled == null && state.login_alerts_load_failed) {
                             AsterGhostButton(
@@ -649,6 +554,7 @@ fun SecurityScreen(
                         title = stringResource(R.string.passkeys_security_keys),
                         subtitle = stringResource(R.string.passkeys_none_subtitle),
                         icon = TablerIcons.Key,
+                        recommendation = stringResource(R.string.no_passkeys_recommendation),
                     )
                 }
                 settings_row_gap()
@@ -1237,60 +1143,178 @@ private fun app_lock_row(
     }
 }
 
+private data class protection_item(
+    val label: String,
+    val done: Boolean,
+    val test_tag: String,
+    val on_open: () -> Unit,
+)
+
 @Composable
-private fun score_checklist_row(
-    label: String,
-    checked: Boolean,
-    colors: org.astermail.android.design.AsterSemanticColors,
-    on_open: (() -> Unit)?,
-    on_toggle: (() -> Unit)?,
+private fun protection_banner(
+    score: Int,
+    tone: Color,
+    items: List<protection_item>,
+    on_dismiss: () -> Unit,
 ) {
-    val row_action = on_open ?: on_toggle
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(SquircleShape(8.dp))
-            .then(if (row_action == null) Modifier else Modifier.clickable(onClick = row_action))
-            .padding(vertical = 3.dp, horizontal = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
+    val colors = AsterMaterial.colors
+    val percent = (score * 100f / security_score_max).roundToInt()
+    val pending = items.filterNot { it.done }
+    val protected_items = items.filter { it.done }
+    var show_protected by rememberSaveable { mutableStateOf(false) }
+    val tone_background = tone.copy(alpha = if (colors.is_dark) 0.18f else 0.14f)
+    AsterCard(modifier = Modifier.fillMaxWidth().testTag("protection_banner")) {
+        Column(
             modifier = Modifier
-                .size(28.dp)
-                .clip(CircleShape)
-                .then(if (on_toggle == null) Modifier else Modifier.clickable(onClick = on_toggle)),
-            contentAlignment = Alignment.Center,
+                .fillMaxWidth()
+                .padding(start = AsterSpacing.lg, end = AsterSpacing.xs, top = AsterSpacing.md, bottom = AsterSpacing.sm),
         ) {
-            if (checked) {
-                Icon(
-                    imageVector = TablerIcons.CircleCheck,
-                    contentDescription = null,
-                    tint = colors.success,
-                    modifier = Modifier.size(17.dp),
-                )
-            } else {
+            Row(verticalAlignment = Alignment.Top) {
                 Box(
                     modifier = Modifier
-                        .size(17.dp)
-                        .border(1.5.dp, colors.text_muted, CircleShape),
+                        .size(44.dp)
+                        .background(tone_background, SquircleShape(12.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = if (pending.isEmpty()) TablerIcons.ShieldCheck else TablerIcons.Shield,
+                        contentDescription = null,
+                        tint = tone,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+                Spacer(Modifier.width(AsterSpacing.md))
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(top = 2.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.account_security_percent_title, percent),
+                        color = colors.text_primary,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = if (pending.isEmpty()) {
+                            stringResource(R.string.security_center_all_clear)
+                        } else {
+                            pluralStringResource(R.plurals.security_actions_remaining, pending.size, pending.size)
+                        },
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                    )
+                }
+                AsterIconButton(
+                    icon = TablerIcons.X,
+                    content_description = stringResource(R.string.account_security_dismiss),
+                    onClick = on_dismiss,
+                    modifier = Modifier.testTag("protection_banner_dismiss"),
                 )
             }
+            v_gap(AsterSpacing.md)
+            Box(
+                modifier = Modifier
+                    .padding(end = AsterSpacing.md)
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(CircleShape)
+                    .background(colors.border_primary),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(fraction = (score / security_score_max.toFloat()).coerceIn(0f, 1f))
+                        .height(6.dp)
+                        .clip(CircleShape)
+                        .background(tone),
+                )
+            }
+            if (pending.isNotEmpty()) {
+                v_gap(AsterSpacing.md)
+                Text(
+                    text = stringResource(R.string.security_center_recommended).uppercase(),
+                    color = colors.text_tertiary,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 0.8.sp,
+                )
+                v_gap(AsterSpacing.xs)
+                pending.forEach { protection_item_row(it) }
+            }
+            if (protected_items.isNotEmpty()) {
+                Row(
+                    modifier = Modifier
+                        .padding(end = AsterSpacing.sm)
+                        .fillMaxWidth()
+                        .clip(SquircleShape(10.dp))
+                        .clickable { show_protected = !show_protected }
+                        .testTag("protection_banner_protected_toggle")
+                        .heightIn(min = 40.dp)
+                        .padding(vertical = AsterSpacing.xs),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.security_center_protected),
+                        color = colors.text_secondary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Spacer(Modifier.width(AsterSpacing.xs))
+                    tone_badge(text = protected_items.size.toString(), tone = colors.success)
+                    Spacer(Modifier.weight(1f))
+                    Icon(
+                        imageVector = if (show_protected) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
+                        contentDescription = null,
+                        tint = colors.text_muted,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+                AnimatedVisibility(
+                    visible = show_protected,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut(),
+                ) {
+                    Column { protected_items.forEach { protection_item_row(it) } }
+                }
+            }
         }
-        Spacer(Modifier.width(AsterSpacing.xs))
+    }
+}
+
+@Composable
+private fun protection_item_row(item: protection_item) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .padding(end = AsterSpacing.sm)
+            .fillMaxWidth()
+            .clip(SquircleShape(10.dp))
+            .clickable(onClick = item.on_open)
+            .testTag(item.test_tag)
+            .heightIn(min = 44.dp)
+            .padding(vertical = AsterSpacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = if (item.done) TablerIcons.CircleCheck else TablerIcons.AlertCircle,
+            contentDescription = null,
+            tint = if (item.done) colors.success else colors.warning,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(Modifier.width(AsterSpacing.md))
         Text(
-            text = label,
-            color = if (checked) colors.text_primary else colors.text_tertiary,
-            fontSize = 13.sp,
+            text = item.label,
+            color = if (item.done) colors.text_secondary else colors.text_primary,
+            fontSize = 14.sp,
+            fontWeight = if (item.done) FontWeight.Normal else FontWeight.Medium,
             modifier = Modifier.weight(1f),
         )
-        if (on_open != null) {
-            Icon(
-                imageVector = TablerIcons.ChevronRight,
-                contentDescription = null,
-                tint = colors.text_muted,
-                modifier = Modifier.size(14.dp).mirror_in_rtl(),
-            )
-        }
+        Icon(
+            imageVector = TablerIcons.ChevronRight,
+            contentDescription = null,
+            tint = colors.text_muted,
+            modifier = Modifier.size(16.dp).mirror_in_rtl(),
+        )
     }
 }
 
@@ -1590,7 +1614,7 @@ private fun recent_activity_section(
     ).filter { it.first == AuditFilter.all || present.contains(it.first) }
 
     Row(
-        modifier = Modifier.fillMaxWidth().padding(top = AsterSpacing.md, bottom = AsterSpacing.xs),
+        modifier = Modifier.fillMaxWidth().padding(top = AsterSpacing.md, bottom = AsterSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -1861,10 +1885,11 @@ private fun remote_image_loading_row(
 }
 
 @Composable
-private fun security_loading_skeleton() {
-    section_label(stringResource(R.string.section_account_protection))
-    skeleton_hero_card(lines = 1, bar = true)
-    v_gap(AsterSpacing.lg)
+private fun security_loading_skeleton(show_banner: Boolean) {
+    if (show_banner) {
+        v_gap(AsterSpacing.md)
+        skeleton_hero_card(lines = 1, bar = true)
+    }
     section_label(stringResource(R.string.section_authentication))
     skeleton_card_list(rows = 5)
     v_gap(AsterSpacing.lg)

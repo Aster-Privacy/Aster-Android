@@ -103,6 +103,8 @@ class TransientSendException : Exception("send retry pending")
 
 class MixedRecipientsException : Exception("internal and external recipients in one send")
 
+class WeakMessagePasswordException(message: String) : Exception(message)
+
 fun has_mixed_recipients(recipients: List<String>): Boolean {
     val addresses = recipients.filter { it.isNotBlank() }
     return addresses.any { is_internal_recipient(it) } && addresses.any { !is_internal_recipient(it) }
@@ -1382,6 +1384,27 @@ class MailRepository @Inject constructor(
             _draft_changes.tryEmit(Unit)
             return PendingSendOutcome.FAILED
         }
+        val all_recipients = recipients.first + recipients.second + recipients.third
+        val key_changes = if (all_recipients.any { !is_internal_recipient(it) }) {
+            verified_external_key_fingerprint_changes(all_recipients)
+        } else {
+            Result.success(emptyList())
+        }
+        if (key_changes.isFailure) {
+            runCatching { pending_send_dao.mark_pending(pending_id) }
+            return bounded_retry_outcome(attempt)
+        }
+        if (replay_blocked_by_key_change(all_recipients, key_changes.getOrDefault(emptyList()))) {
+            _send_problem.value = true
+            _send_result_events.tryEmit(
+                Result.failure(IllegalStateException(context.getString(R.string.send_key_changed_while_waiting))),
+            )
+            mark_send_failed(pending_id, SendFailureReason.KEY_CHANGED)
+            refresh_failed_send_count()
+            preserve_failed_send_draft(pending_id, row, recipients, attachments)
+            _draft_changes.tryEmit(Unit)
+            return PendingSendOutcome.FAILED
+        }
         val result = send_email(
             to = recipients.first,
             cc = recipients.second,
@@ -1397,6 +1420,7 @@ class MailRepository @Inject constructor(
             sender_alias_hash = row.sender_alias_hash,
             suppress_branding = row.suppress_branding,
             allow_non_post_quantum = row.allow_non_post_quantum,
+            client_send_id = client_send_id_for(pending_id),
         )
         val response = result.getOrNull()
         return if (result.isSuccess && response?.success == true) {
@@ -2102,6 +2126,11 @@ class MailRepository @Inject constructor(
             if (plaintext != null) return parse_scheduled_envelope(plaintext)
         }
 
+        for (kek in kek_candidates()) {
+            val plaintext = runCatching { AesGcm.decrypt(kek, nonce, ciphertext) }.getOrNull()
+            if (plaintext != null) return parse_scheduled_envelope(plaintext)
+        }
+
         return null
     }
 
@@ -2123,6 +2152,10 @@ class MailRepository @Inject constructor(
     }
 
     suspend fun reschedule_scheduled(id: String, scheduled_at: String): Result<Unit> = runCatching {
+        val scheduled_at_ms = java.time.Instant.parse(scheduled_at).toEpochMilli()
+        if (exceeds_sealed_schedule_window(scheduled_at_ms, System.currentTimeMillis())) {
+            throw IllegalStateException(context.getString(R.string.scheduled_too_far_ahead))
+        }
         scheduled_api.reschedule(id, scheduled_at)
         Unit
     }
@@ -4627,14 +4660,18 @@ class MailRepository @Inject constructor(
         }
     }
 
-    suspend fun find_external_key_fingerprint_changes(
+    suspend fun verified_external_key_fingerprint_changes(
         recipients: List<String>,
-    ): List<RecipientKeyChange> {
+    ): Result<List<RecipientKeyChange>> {
         val external = external_key_trust_candidates(recipients)
-        if (external.isEmpty()) return emptyList()
-        return runCatching {
-            key_changes_from_discovery(keys_api.discover_external_keys_batch(external))
-        }.getOrDefault(emptyList())
+        if (external.isEmpty()) return Result.success(emptyList())
+        return try {
+            Result.success(key_changes_from_discovery(keys_api.discover_external_keys_batch(external)))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            Result.failure(e)
+        }
     }
 
     suspend fun acknowledge_external_key_fingerprint_change(
@@ -4676,6 +4713,7 @@ class MailRepository @Inject constructor(
         sender_alias_hash: String? = null,
         suppress_branding: Boolean? = null,
         allow_non_post_quantum: Boolean = false,
+        client_send_id: String? = null,
     ): Result<SimpleSendResponse> = runCatching {
         if (has_mixed_recipients(to + cc + bcc)) throw MixedRecipientsException()
         val envelope = build_envelope_json(
@@ -4698,6 +4736,9 @@ class MailRepository @Inject constructor(
         }
 
         if (all_external) {
+            if (!expiry_password.isNullOrEmpty() && !is_strong_message_password(expiry_password)) {
+                throw WeakMessagePasswordException(context.getString(R.string.message_password_too_weak))
+            }
             val ephemeral_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
             val base_nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
 
@@ -4736,6 +4777,7 @@ class MailRepository @Inject constructor(
             )
             val result = send_api.send_external(
                 ExternalSendRequest(
+                    client_send_id = client_send_id,
                     encrypted_recipients = encrypted_recipients,
                     encrypted_subject = encrypted_subject,
                     encrypted_body = encrypted_body,
@@ -4770,7 +4812,10 @@ class MailRepository @Inject constructor(
         } else {
             val from_addr = sender_email ?: session_key_store.get_user_email() ?: ""
             val internal_recipients = (to + cc + bcc).filter { is_internal_recipient(it) }
+            val hidden_bcc = hidden_internal_bcc(to, cc, bcc)
+            val shared_internal = shared_targets(to, cc, bcc).filter { is_internal_recipient(it) }
 
+            var recipient_bodies: Map<String, String>? = null
             val ratchet_body = if (internal_recipients.isNotEmpty()) {
                 if (from_addr.isBlank() || !ensure_ratchet_keys_ready()) {
                     throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
@@ -4780,35 +4825,34 @@ class MailRepository @Inject constructor(
                     put("s", subject.ifBlank { existing_bundle.subject.orEmpty() })
                     put("b", existing_bundle.body)
                 }.toString()
-                val encrypted = try {
-                    ratchet_encryptor.encrypt_envelope(
-                        from_addr,
-                        internal_recipients,
-                        wrapped,
-                        allow_non_post_quantum,
-                    )
-                } catch (t: org.astermail.android.mail.ratchet.PostQuantumUnavailableException) {
-                    throw t
-                } catch (t: org.astermail.android.mail.ratchet.RatchetIdentityPinException) {
-                    throw IllegalStateException(context.getString(R.string.e2e_identity_changed_blocked), t)
-                } catch (t: Throwable) {
-                    if (t is CancellationException) throw t
-                    throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed), t)
-                }
-                encrypted ?: throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
+                val sealed = seal_with_private_bcc(
+                    from_addr,
+                    shared_internal,
+                    hidden_bcc,
+                    wrapped,
+                    allow_non_post_quantum,
+                )
+                recipient_bodies = sealed.second.takeIf { it.isNotEmpty() }
+                sealed.first
             } else null
 
             val final_body = ratchet_body ?: recipient_body_html
             val final_subject = if (ratchet_body != null) "" else subject
 
             val internal_attachments = if (attachments.isNotEmpty()) {
-                build_internal_attachments(to + cc + bcc, attachments, from_addr)
+                build_internal_attachments(
+                    shared_targets(to, cc, bcc),
+                    attachments,
+                    from_addr,
+                    hidden_bcc,
+                )
             } else {
                 emptyList()
             }
 
             send_api.send_simple(
                 SimpleSendRequest(
+                    client_send_id = client_send_id,
                     to = to,
                     cc = cc,
                     bcc = bcc,
@@ -4825,9 +4869,48 @@ class MailRepository @Inject constructor(
                     expires_at = expires_at,
                     sender_alias_hash = sender_alias_hash,
                     suppress_branding = suppress_branding,
+                    recipient_bodies = recipient_bodies,
                 ),
             )
         }
+    }
+
+    private suspend fun seal_internal_envelope(
+        from_addr: String,
+        recipients: List<String>,
+        wrapped: String,
+        allow_non_post_quantum: Boolean,
+    ): String {
+        val encrypted = try {
+            ratchet_encryptor.encrypt_envelope(from_addr, recipients, wrapped, allow_non_post_quantum)
+        } catch (t: org.astermail.android.mail.ratchet.PostQuantumUnavailableException) {
+            throw t
+        } catch (t: org.astermail.android.mail.ratchet.RatchetIdentityPinException) {
+            throw IllegalStateException(context.getString(R.string.e2e_identity_changed_blocked), t)
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+            throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed), t)
+        }
+        return encrypted ?: throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
+    }
+
+    private suspend fun seal_with_private_bcc(
+        from_addr: String,
+        shared_internal: List<String>,
+        hidden_bcc: List<String>,
+        wrapped: String,
+        allow_non_post_quantum: Boolean,
+    ): Pair<String, Map<String, String>> {
+        val shared = seal_internal_envelope(
+            from_addr,
+            shared_internal.ifEmpty { listOf(from_addr) },
+            wrapped,
+            allow_non_post_quantum,
+        )
+        val private_bodies = hidden_bcc.associateWith { recipient ->
+            seal_internal_envelope(from_addr, listOf(recipient), wrapped, allow_non_post_quantum)
+        }
+        return shared to private_bodies
     }
 
     suspend fun send_reaction(
@@ -4979,15 +5062,26 @@ class MailRepository @Inject constructor(
         recipients: List<String>,
         attachments: List<ExternalAttachmentPayload>,
         sender_email: String? = null,
+        hidden_bcc: List<String> = emptyList(),
     ): List<SendAttachmentPayload> {
-        val recipient_keys = fetch_internal_public_keys(recipients, sender_email)
-        val has_internal_recipients = recipients.any { is_internal_recipient(it) }
+        val shared_keys = fetch_internal_public_keys(recipients, sender_email)
+        val recipient_keys = if (shared_keys.isEmpty() && hidden_bcc.isNotEmpty()) {
+            listOfNotNull(own_public_key()?.takeIf { it.isNotBlank() })
+        } else {
+            shared_keys
+        }
+        val has_internal_recipients = (recipients + hidden_bcc).any { is_internal_recipient(it) }
         if (has_internal_recipients && recipient_keys.isEmpty()) {
             throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
         }
+        val private_keys = hidden_bcc.associateWith { recipient ->
+            fetch_internal_public_keys(listOf(recipient), sender_email).ifEmpty {
+                throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
+            }
+        }
         val own_seal = if (attachments.isEmpty()) null else own_seal_inputs()
         try {
-            return build_attachment_payloads(attachments, recipient_keys, own_seal)
+            return build_attachment_payloads(attachments, recipient_keys, own_seal, private_keys)
         } finally {
             own_seal?.second?.fill(' ')
         }
@@ -4997,6 +5091,7 @@ class MailRepository @Inject constructor(
         attachments: List<ExternalAttachmentPayload>,
         recipient_keys: List<String>,
         own_seal: Pair<String, CharArray>?,
+        private_keys: Map<String, List<String>> = emptyMap(),
     ): List<SendAttachmentPayload> {
         return attachments.map { att ->
             try {
@@ -5028,6 +5123,17 @@ class MailRepository @Inject constructor(
                     meta_json
                 }
 
+                val recipient_metas = private_keys.mapValues { (_, keys) ->
+                    val sealed = PgpEncryptor.encrypt_to_keys(meta_json, keys)
+                        ?: throw E2eEncryptionException(
+                            context.getString(R.string.e2e_encryption_failed),
+                        )
+                    android.util.Base64.encodeToString(
+                        sealed.toByteArray(Charsets.UTF_8),
+                        android.util.Base64.NO_WRAP,
+                    )
+                }
+
                 val (sender_encrypted_meta, sender_meta_nonce) = own_seal?.let { (key, chars) ->
                     withContext(Dispatchers.Default) {
                         org.astermail.android.crypto.SentCopySeal.seal(meta_json, key, chars)
@@ -5049,6 +5155,7 @@ class MailRepository @Inject constructor(
                         sealed_meta.toByteArray(Charsets.UTF_8),
                         android.util.Base64.NO_WRAP,
                     ),
+                    recipient_metas = recipient_metas.takeIf { it.isNotEmpty() },
                     size_bytes = att.size_bytes,
                 )
             } catch (t: Throwable) {
@@ -5481,28 +5588,17 @@ class MailRepository @Inject constructor(
         bcc: List<String> = emptyList(),
         scheduled_at: String,
         sender_alias_hash: String? = null,
+        allow_non_post_quantum: Boolean = false,
     ): Result<String> = runCatching {
-        val is_external = (to + cc + bcc).any { !is_internal_recipient(it) }
-
-        val ephemeral_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
-        val base_nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
-
-        fun derive_nonce(base: ByteArray, xor_byte: Byte): ByteArray {
-            val n = base.copyOf()
-            n[11] = (n[11].toInt() xor xor_byte.toInt()).toByte()
-            return n
+        val all_recipients = to + cc + bcc
+        if (has_mixed_recipients(all_recipients)) throw MixedRecipientsException()
+        val scheduled_at_ms = java.time.Instant.parse(scheduled_at).toEpochMilli()
+        if (exceeds_sealed_schedule_window(scheduled_at_ms, System.currentTimeMillis())) {
+            throw IllegalStateException(context.getString(R.string.scheduled_too_far_ahead))
         }
+        val is_external = all_recipients.any { !is_internal_recipient(it) }
 
-        fun encrypt_field(plaintext: String, nonce: ByteArray): String =
-            android.util.Base64.encodeToString(
-                AesGcm.encrypt(ephemeral_key, nonce, plaintext.toByteArray(Charsets.UTF_8)),
-                android.util.Base64.NO_WRAP,
-            )
-
-        val envelope_nonce_bytes = derive_nonce(base_nonce, 0x01)
-        val recipients_nonce_bytes = derive_nonce(base_nonce, 0x02)
-
-        val envelope_obj = org.json.JSONObject().apply {
+        val envelope_json = org.json.JSONObject().apply {
             put("to_recipients", org.json.JSONArray(to))
             put("cc_recipients", org.json.JSONArray(cc))
             put("bcc_recipients", org.json.JSONArray(bcc))
@@ -5513,39 +5609,123 @@ class MailRepository @Inject constructor(
                 put("name", sender_display_name.orEmpty())
                 put("email", sender_email.orEmpty())
             })
-        }
-
-        val encrypted_envelope = encrypt_field(envelope_obj.toString(), envelope_nonce_bytes)
-        val recipients_json = org.json.JSONArray().apply {
-            (to + cc + bcc).forEach { put(it) }
         }.toString()
-        val encrypted_recipients = encrypt_field(recipients_json, recipients_nonce_bytes)
-
-        val ephemeral_key_b64 = android.util.Base64.encodeToString(ephemeral_key, android.util.Base64.NO_WRAP)
-        ephemeral_key.fill(0)
+        val recipients_json = org.json.JSONArray().apply {
+            all_recipients.forEach { put(it) }
+        }.toString()
 
         val sent_folder_token = resolve_sent_folder_token()
-
         if (sent_folder_token.isNullOrBlank()) {
             throw IllegalStateException(context.getString(R.string.send_sent_folder_unavailable))
         }
 
-        val response = scheduled_api.create_scheduled(
-            CreateScheduledRequest(
-                encrypted_envelope = encrypted_envelope,
-                envelope_nonce = android.util.Base64.encodeToString(envelope_nonce_bytes, android.util.Base64.NO_WRAP),
-                encrypted_recipients = encrypted_recipients,
-                recipients_nonce = android.util.Base64.encodeToString(recipients_nonce_bytes, android.util.Base64.NO_WRAP),
-                recipient_count = (to + cc + bcc).size,
-                scheduled_at = scheduled_at,
-                folder_token = sent_folder_token,
-                is_external = is_external,
-                ephemeral_key = ephemeral_key_b64,
-                base_nonce = android.util.Base64.encodeToString(base_nonce, android.util.Base64.NO_WRAP),
-                sender_alias_hash = sender_alias_hash,
-            ),
-        )
+        val request = if (is_external) {
+            build_external_scheduled_request(
+                envelope_json,
+                recipients_json,
+                all_recipients.size,
+                scheduled_at,
+                sent_folder_token,
+                sender_alias_hash,
+            )
+        } else {
+            val from_addr = sender_email?.takeIf { it.isNotBlank() }
+                ?: session_key_store.get_user_email().orEmpty()
+            if (from_addr.isBlank() || !ensure_ratchet_keys_ready()) {
+                throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
+            }
+            val existing_bundle = extract_subject_bundle(body_html)
+            val wrapped = ASTER_SUBJECT_BUNDLE_PREFIX + org.json.JSONObject().apply {
+                put("s", subject.ifBlank { existing_bundle.subject.orEmpty() })
+                put("b", existing_bundle.body)
+            }.toString()
+            val sealed = seal_with_private_bcc(
+                from_addr,
+                shared_targets(to, cc, bcc),
+                hidden_internal_bcc(to, cc, bcc),
+                wrapped,
+                allow_non_post_quantum,
+            )
+            val key = scheduled_local_key()
+                ?: throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
+            try {
+                val envelope_nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+                val recipients_nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+                CreateScheduledRequest(
+                    encrypted_envelope = seal_scheduled_field(key, envelope_nonce, envelope_json),
+                    envelope_nonce = scheduled_b64(envelope_nonce),
+                    encrypted_recipients = seal_scheduled_field(key, recipients_nonce, recipients_json),
+                    recipients_nonce = scheduled_b64(recipients_nonce),
+                    recipient_count = all_recipients.size,
+                    scheduled_at = scheduled_at,
+                    folder_token = sent_folder_token,
+                    is_external = false,
+                    sender_alias_hash = sender_alias_hash,
+                    delivery = org.astermail.android.api.scheduled.ScheduledDelivery(
+                        to = to,
+                        cc = cc,
+                        bcc = bcc,
+                        sender_email = sender_email?.takeIf { it.isNotBlank() },
+                        sender_display_name = sender_display_name?.takeIf { it.isNotBlank() },
+                        internal_encrypted_body = sealed.first,
+                        recipient_bodies = sealed.second,
+                    ),
+                )
+            } finally {
+                key.fill(0)
+            }
+        }
+
+        val response = scheduled_api.create_scheduled(request)
         response.id ?: throw IllegalStateException("no scheduled item id returned")
+    }
+
+    private fun scheduled_b64(bytes: ByteArray): String =
+        android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+
+    private fun seal_scheduled_field(key: ByteArray, nonce: ByteArray, plaintext: String): String =
+        scheduled_b64(AesGcm.encrypt(key, nonce, plaintext.toByteArray(Charsets.UTF_8)))
+
+    private suspend fun scheduled_local_key(): ByteArray? {
+        account_data_writer.write_key(org.astermail.android.crypto.AccountDataWriter.SCHEDULED_CONTEXT)
+            ?.let { return it }
+        val identity_key = session_key_store.get_identity_key()?.takeIf { it.isNotBlank() } ?: return null
+        return MessageDigest.getInstance("SHA-256")
+            .digest((identity_key + SCHEDULED_KEY_VERSION).toByteArray(Charsets.UTF_8))
+    }
+
+    private fun build_external_scheduled_request(
+        envelope_json: String,
+        recipients_json: String,
+        recipient_count: Int,
+        scheduled_at: String,
+        folder_token: String,
+        sender_alias_hash: String?,
+    ): CreateScheduledRequest {
+        val ephemeral_key = ByteArray(32).also { SecureRandom().nextBytes(it) }
+        val base_nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+        fun derive_nonce(xor_byte: Int): ByteArray = base_nonce.copyOf().also {
+            it[11] = (it[11].toInt() xor xor_byte).toByte()
+        }
+        try {
+            val envelope_nonce = derive_nonce(0x01)
+            val recipients_nonce = derive_nonce(0x02)
+            return CreateScheduledRequest(
+                encrypted_envelope = seal_scheduled_field(ephemeral_key, envelope_nonce, envelope_json),
+                envelope_nonce = scheduled_b64(envelope_nonce),
+                encrypted_recipients = seal_scheduled_field(ephemeral_key, recipients_nonce, recipients_json),
+                recipients_nonce = scheduled_b64(recipients_nonce),
+                recipient_count = recipient_count,
+                scheduled_at = scheduled_at,
+                folder_token = folder_token,
+                is_external = true,
+                ephemeral_key = scheduled_b64(ephemeral_key),
+                base_nonce = scheduled_b64(base_nonce),
+                sender_alias_hash = sender_alias_hash,
+            )
+        } finally {
+            ephemeral_key.fill(0)
+        }
     }
 
     private fun build_envelope_json(
@@ -5901,6 +6081,8 @@ internal fun server_rejection_cause(err: Throwable?): Throwable? {
 enum class SendFailureReason(val code: String) {
     POST_QUANTUM("post_quantum"),
     IDENTITY_CHANGED("identity_changed"),
+    KEY_CHANGED("key_changed"),
+    WEAK_PASSWORD("weak_password"),
     ENCRYPTION("encryption"),
     REJECTED("rejected"),
     CONNECTION("connection"),
@@ -5933,6 +6115,7 @@ private inline fun has_cause(err: Throwable?, predicate: (Throwable) -> Boolean)
 }
 
 internal fun send_failure_reason_for(err: Throwable?): SendFailureReason = when {
+    has_cause(err) { it is WeakMessagePasswordException } -> SendFailureReason.WEAK_PASSWORD
     has_cause(err) { it is org.astermail.android.mail.ratchet.PostQuantumUnavailableException } ->
         SendFailureReason.POST_QUANTUM
     has_cause(err) { it is org.astermail.android.mail.ratchet.RatchetIdentityPinException } ->
@@ -5946,7 +6129,14 @@ internal fun send_failure_reason_for(err: Throwable?): SendFailureReason = when 
     else -> SendFailureReason.OTHER
 }
 
+private val client_send_id_pattern =
+    Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
+internal fun client_send_id_for(pending_id: String): String? =
+    pending_id.takeIf { client_send_id_pattern.matches(it) }
+
 internal fun is_permanent_send_failure_cause(err: Throwable?): Boolean {
+    if (has_cause(err) { it is WeakMessagePasswordException }) return true
     if (server_rejection_cause(err) != null) return true
     if (is_transient_send_cause(err)) return false
     var cause = err

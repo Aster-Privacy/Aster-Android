@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_type_home">घर</string>
+    <string name="contact_type_other">अन्य</string>
+    <string name="contact_type_fax">फ़ैक्स</string>
+    <string name="contact_type_pager">पेजर</string>
+    <string name="contact_type_custom">कस्टम</string>
+    <string name="contact_custom_label">कस्टम लेबल</string>
+    <string name="contact_add_email">ईमेल जोड़ें</string>
+    <string name="contact_add_phone">फ़ोन जोड़ें</string>
+    <string name="contact_add_address">पता जोड़ें</string>
+    <string name="contact_change_type">प्रकार बदलें</string>
+    <string name="share_contact">संपर्क शेयर करें</string>
+    <string name="contact_share_as_text">टेक्स्ट के रूप में शेयर करें</string>
+    <string name="contact_share_as_vcard">vCard के रूप में शेयर करें</string>
+    <plurals name="contacts_import_progress">
+        <item quantity="one">%2$d में से %1$d संपर्क इंपोर्ट हो रहा है</item>
+        <item quantity="other">%2$d में से %1$d संपर्क इंपोर्ट हो रहे हैं</item>
+    </plurals>
+</resources>

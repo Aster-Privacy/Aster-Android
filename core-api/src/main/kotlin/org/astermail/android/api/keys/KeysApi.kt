@@ -50,6 +50,7 @@ data class UpdateVaultRequest(
     val vault_nonce: String,
     val expected_user_id: String? = null,
     val vault_key_fingerprints: List<String>? = null,
+    val vault_format: Int? = null,
 )
 
 @Serializable
@@ -184,7 +185,8 @@ interface KeysApi {
         encrypted_vault: String,
         vault_nonce: String,
         expected_user_id: String?,
-        vault_key_fingerprints: List<String>? = null,
+        vault_key_fingerprints: List<String>?,
+        vault_format: Int?,
     ): Boolean
     suspend fun fetch_current_vault(): CurrentVaultResult
     suspend fun get_account_key_token(): AccountKeyTokenResponse? = null
@@ -278,6 +280,7 @@ class KeysApiImpl(private val client: ApiClient) : KeysApi {
         vault_nonce: String,
         expected_user_id: String?,
         vault_key_fingerprints: List<String>?,
+        vault_format: Int?,
     ): Boolean {
         val response = client.http.put("${client.base_url}$base/vault") {
             contentType(ContentType.Application.Json)
@@ -288,6 +291,7 @@ class KeysApiImpl(private val client: ApiClient) : KeysApi {
                     vault_nonce,
                     expected_user_id,
                     vault_key_fingerprints?.takeIf { it.isNotEmpty() },
+                    vault_format,
                 ),
             )
         }

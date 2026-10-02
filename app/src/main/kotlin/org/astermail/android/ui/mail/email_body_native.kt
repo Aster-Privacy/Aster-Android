@@ -157,14 +157,125 @@ internal fun prepare_email_body(
     if (is_newsletter) pad_loose_blocks(root)
     if (simple_dark) repair_dark_text_contrast(root)
     prune_empty_signature_blocks(root)
+    reveal_fully_hidden_content(root)
     collapse_quoted_content(root, forwarded_label)
+    if (simple_dark) BlockedImagePlaceholder.repaint(root, BlockedImagePlaceholder.DARK)
     wrap_images_for_zoom(root)
     label_images_for_failure(root, image_failed_label)
     trim_leading_blank_nodes(root)
     trim_trailing_blank_nodes(root)
     root.html()
 } catch (_: Throwable) {
-    body
+    "<div class=\"aster-quoted-content aster-quoted-solo\">$body</div>"
+}
+
+private const val RENDERABLE_SCAN_LIMIT = 32768
+
+private val PIXEL_DIMENSION = Regex("^[01](?:px)?$")
+
+private val INVISIBLE_CHARACTERS = Regex("[\u200B-\u200D\uFEFF]")
+
+private fun is_tracking_pixel(image: Element): Boolean =
+    PIXEL_DIMENSION.matches(image.attr("width").trim()) || PIXEL_DIMENSION.matches(image.attr("height").trim())
+
+internal fun html_has_renderable_content(html: String): Boolean = try {
+    if (html.length > RENDERABLE_SCAN_LIMIT) {
+        true
+    } else {
+        val root = Jsoup.parseBodyFragment(html).body()
+        root.select("script, style, template, head, title, noscript").remove()
+        root.text().replace(INVISIBLE_CHARACTERS, "").isNotBlank() ||
+            root.selectFirst("svg, video, canvas, picture, hr") != null ||
+            root.select("img").any { !is_tracking_pixel(it) }
+    }
+} catch (_: Throwable) {
+    true
+}
+
+internal fun renderable_html_part(body_html: String?, body: String): String? {
+    if (body_html.isNullOrBlank()) return null
+    if (body.isBlank() || body == body_html) return body_html
+    return if (html_has_renderable_content(body_html)) body_html else null
+}
+
+private val HIDING_DECLARATION = Regex(
+    """(?<![a-z-])(?:display\s*:\s*none|visibility\s*:\s*(?:hidden|collapse)|""" +
+        """opacity\s*:\s*0(?:\.0+)?(?![.\d])|""" +
+        """(?:font-size|max-height)\s*:\s*0(?:\.0+)?(?:px|pt|em|rem|%)?(?![.\d]))""" +
+        """\s*(?:!important)?\s*;?""",
+    RegexOption.IGNORE_CASE,
+)
+
+private val CSS_COMMENT = Regex("""/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL)
+
+private val CSS_RULE = Regex("""([^{}@]+)\{([^{}]*)\}""")
+
+private const val STYLE_REVEAL =
+    "display:revert !important;visibility:visible !important;opacity:1 !important;" +
+        "max-height:none !important;font-size:inherit !important"
+
+private fun strip_nested_blocks(css: String): String {
+    val out = StringBuilder()
+    var depth = 0
+    var at_rule = false
+    var i = 0
+    while (i < css.length) {
+        val c = css[i]
+        when {
+            c == '@' && depth == 0 -> {
+                at_rule = true
+            }
+            c == '{' -> {
+                depth++
+                if (!at_rule && depth == 1) out.append(c)
+            }
+            c == '}' -> {
+                if (!at_rule && depth == 1) out.append(c)
+                depth = (depth - 1).coerceAtLeast(0)
+                if (depth == 0) at_rule = false
+            }
+            c == ';' && at_rule && depth == 0 -> at_rule = false
+            !at_rule -> out.append(c)
+        }
+        i++
+    }
+    return out.toString()
+}
+
+private fun stylesheet_hidden_elements(root: Element): List<Element> {
+    val css = root.select("style").joinToString(" ") { it.data() }
+    if (css.isBlank()) return emptyList()
+    val flat = strip_nested_blocks(CSS_COMMENT.replace(css, ""))
+    return CSS_RULE.findAll(flat)
+        .filter { HIDING_DECLARATION.containsMatchIn(it.groupValues[2]) }
+        .flatMap { rule ->
+            rule.groupValues[1].split(',').map { it.trim() }.filter { it.isNotEmpty() }.asSequence()
+        }
+        .flatMap { selector -> runCatching { root.select(selector).toList() }.getOrDefault(emptyList()).asSequence() }
+        .filter { it.tagName().lowercase() != "style" }
+        .distinct()
+        .toList()
+}
+
+private fun reveal_fully_hidden_content(root: Element) {
+    val inline_hidden = root.select("[style]").filter { HIDING_DECLARATION.containsMatchIn(it.attr("style")) }
+    val sheet_hidden = stylesheet_hidden_elements(root)
+    val hidden = (inline_hidden + sheet_hidden).distinct()
+    if (hidden.isEmpty()) return
+    val texts = collect_text_nodes(root).filter { it.wholeText.replace(INVISIBLE_CHARACTERS, "").isNotBlank() }
+    if (texts.isEmpty()) return
+    if (texts.any { !is_within(it, hidden) }) return
+    val visible_media = root.select("img, video, picture, svg, canvas")
+        .any { !is_within(it, hidden) && !(it.tagName().lowercase() == "img" && is_tracking_pixel(it)) }
+    if (visible_media) return
+    for (element in inline_hidden) {
+        val style = HIDING_DECLARATION.replace(element.attr("style"), "").trim()
+        if (style.isEmpty()) element.removeAttr("style") else element.attr("style", style)
+    }
+    for (element in sheet_hidden) {
+        val style = element.attr("style").trim().trimEnd(';')
+        element.attr("style", if (style.isEmpty()) STYLE_REVEAL else "$style;$STYLE_REVEAL")
+    }
 }
 
 internal data class detected_link(val start: Int, val end: Int, val text: String, val href: String)
@@ -566,7 +677,21 @@ private fun quote_is_whole_body(root: Element): Boolean {
     return root.select("img").size <= quote.select("img").size
 }
 
+private val HIDDEN_QUOTE_SELECTOR =
+    ".aster_quote, .gmail_quote, .protonmail_quote, .yahoo_quoted, .moz-cite-prefix"
+
+private fun reveal_orphaned_quotes(root: Element) {
+    for (element in root.select(HIDDEN_QUOTE_SELECTOR)) {
+        if (element.closest(".aster-quoted-content, .aster-forwarded-content") == null) reveal_element(element)
+    }
+}
+
 private fun collapse_quoted_content(root: Element, forwarded_label: String) {
+    collapse_first_quote(root, forwarded_label)
+    reveal_orphaned_quotes(root)
+}
+
+private fun collapse_first_quote(root: Element, forwarded_label: String) {
     collapse_proton_forward(root, forwarded_label)
     if (!already_collapsed(root) && quote_is_whole_body(root)) {
         root.selectFirst(QUOTE_ROOT_SELECTOR)?.let { reveal_element(it) }

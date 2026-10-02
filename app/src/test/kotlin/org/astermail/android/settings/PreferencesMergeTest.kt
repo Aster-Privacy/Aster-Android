@@ -384,4 +384,34 @@ class PreferencesMergeTest {
 
         assertEquals("set_a|sent", merged.locked_data_banner_dismissed)
     }
+
+    @Test
+    fun reads_the_account_security_banner_dismissal_written_by_the_web_client() {
+        val merged = merge_decrypted_preferences(json, """{"theme":"dark","account_security_banner_dismissed":true}""", null)
+
+        assertTrue(merged.account_security_banner_dismissed)
+    }
+
+    @Test
+    fun dismissing_the_account_security_banner_round_trips_as_a_boolean() {
+        val server_blob = """{"theme":"dark","undo_send_period":"30 seconds"}"""
+        val prefs = merge_decrypted_preferences(json, server_blob, null)
+            .copy(account_security_banner_dismissed = true)
+
+        val encoded = encode_preferences_preserving_unknown(json, prefs, server_blob)
+        val obj = json.parseToJsonElement(encoded).jsonObject
+
+        assertEquals("true", obj["account_security_banner_dismissed"]?.jsonPrimitive?.content)
+        assertEquals("30 seconds", obj["undo_send_period"]?.jsonPrimitive?.content)
+        assertTrue(merge_decrypted_preferences(json, encoded, null).account_security_banner_dismissed)
+    }
+
+    @Test
+    fun keeps_the_account_security_dismissal_when_a_stale_client_dropped_the_key() {
+        val previous = UserPreferences(account_security_banner_dismissed = true)
+
+        val merged = merge_decrypted_preferences(json, """{"theme":"dark"}""", previous)
+
+        assertTrue(merged.account_security_banner_dismissed)
+    }
 }

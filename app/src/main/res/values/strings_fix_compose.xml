@@ -2,4 +2,13 @@
 <resources>
     <string name="compose_discard_draft_title">Discard this draft?</string>
     <string name="compose_discard_draft_message">If you discard this draft, its text and any attachments are deleted. This action cannot be undone.</string>
+    <string name="scheduled_too_far_ahead">Scheduled emails can go out at most 28 days ahead. Choose an earlier time.</string>
+    <string name="scheduled_requires_encryption">You have required encryption turned on, and scheduled emails to outside addresses aren\'t end-to-end encrypted. Send this message now, or turn off required encryption in Settings.</string>
+    <string name="send_key_changed_while_waiting">A recipient\'s encryption key changed while this message was waiting to send, so it wasn\'t sent.</string>
+    <string name="outbox_failed_reason_key_changed">A recipient\'s encryption key changed. Open the draft and confirm the new key to send it.</string>
+    <string name="message_password_weak_hint">Use at least 12 characters, and include a number, a symbol, or both uppercase and lowercase letters.</string>
+    <string name="message_password_too_weak">The message password is too weak, so the message wasn\'t sent. Use at least 12 characters, and include a number, a symbol, or both uppercase and lowercase letters.</string>
+    <string name="identity_trust_new_key">Trust new key</string>
+    <string name="send_key_check_failed">Aster couldn\'t check the recipients\' encryption keys, so it didn\'t send this message. Check your connection, then try again.</string>
+    <string name="outbox_failed_reason_identity_unverified">Aster couldn\'t verify a recipient\'s encryption key, so it didn\'t send this message. You can try again later or discard it.</string>
 </resources>

@@ -43,6 +43,7 @@ data class DeviceLabels(
     val sibling: String,
     val graduation: String,
     val wedding: String,
+    val personal: String = "Personal",
 )
 
 enum class DeviceGroup(val mimetype: String) {
@@ -160,40 +161,49 @@ fun device_rows_for_group(card: ContactCard, group: DeviceGroup, labels: DeviceL
             }
         }
         DeviceGroup.EMAIL -> card.emails.map {
+            val custom = custom_label(it.type, it.label, labels)
             row(
                 Email.ADDRESS to it.value,
-                Email.TYPE to when (it.type) {
-                    "home" -> Email.TYPE_HOME
-                    "work" -> Email.TYPE_WORK
+                Email.TYPE to when {
+                    custom != null -> Email.TYPE_CUSTOM
+                    it.type == "home" -> Email.TYPE_HOME
+                    it.type == "work" -> Email.TYPE_WORK
                     else -> Email.TYPE_OTHER
                 },
+                Email.LABEL to custom,
             )
         }
         DeviceGroup.PHONE -> card.phones.map {
+            val custom = custom_label(it.type, it.label, labels)
             row(
                 Phone.NUMBER to it.value,
-                Phone.TYPE to when (it.type) {
-                    "mobile" -> Phone.TYPE_MOBILE
-                    "home" -> Phone.TYPE_HOME
-                    "work" -> Phone.TYPE_WORK
-                    "fax" -> Phone.TYPE_OTHER_FAX
-                    "pager" -> Phone.TYPE_PAGER
+                Phone.TYPE to when {
+                    custom != null -> Phone.TYPE_CUSTOM
+                    it.type == "mobile" -> Phone.TYPE_MOBILE
+                    it.type == "home" -> Phone.TYPE_HOME
+                    it.type == "work" -> Phone.TYPE_WORK
+                    it.type == "fax" -> Phone.TYPE_OTHER_FAX
+                    it.type == "pager" -> Phone.TYPE_PAGER
                     else -> Phone.TYPE_OTHER
                 },
+                Phone.LABEL to custom,
             )
         }
         DeviceGroup.POSTAL -> card.addresses.map {
+            val custom = custom_label(it.type, it.label, labels)
             row(
                 StructuredPostal.STREET to it.street.or_null(),
                 StructuredPostal.CITY to it.city.or_null(),
                 StructuredPostal.REGION to it.state.or_null(),
                 StructuredPostal.POSTCODE to it.postal_code.or_null(),
                 StructuredPostal.COUNTRY to it.country.or_null(),
-                StructuredPostal.TYPE to when (it.type) {
-                    "home" -> StructuredPostal.TYPE_HOME
-                    "work" -> StructuredPostal.TYPE_WORK
+                StructuredPostal.TYPE to when {
+                    custom != null -> StructuredPostal.TYPE_CUSTOM
+                    it.type == "home" -> StructuredPostal.TYPE_HOME
+                    it.type == "work" -> StructuredPostal.TYPE_WORK
                     else -> StructuredPostal.TYPE_OTHER
                 },
+                StructuredPostal.LABEL to custom,
             )
         }
         DeviceGroup.WEBSITE -> card.websites.map {
@@ -247,6 +257,30 @@ fun device_rows_for_group(card: ContactCard, group: DeviceGroup, labels: DeviceL
     }
 }
 
+private fun custom_label(type: String, label: String, labels: DeviceLabels): String? = when {
+    type == "personal" -> labels.personal
+    type == "other" && label.isNotBlank() -> label
+    else -> null
+}
+
+private fun DeviceDataRow.typed(
+    type_column: String,
+    label_column: String,
+    custom_type: Int,
+    labels: DeviceLabels,
+    allows_personal: Boolean,
+    known: (Int?) -> String,
+): Pair<String, String> {
+    val code = int(type_column)
+    if (code != custom_type) return known(code) to ""
+    val label = text(label_column)
+    return when {
+        label.isEmpty() -> "other" to ""
+        allows_personal && label.matches_label(labels.personal, "personal") -> "personal" to ""
+        else -> "other" to label
+    }
+}
+
 fun device_rows_for_card(card: ContactCard, labels: DeviceLabels): List<DeviceDataRow> =
     DeviceGroup.entries.flatMap { device_rows_for_group(card, it, labels) }
 
@@ -257,7 +291,12 @@ private fun DeviceDataRow.int(column: String): Int? = values[column]?.toString()
 private fun String.matches_label(localized: String, fallback: String): Boolean =
     equals(localized, ignoreCase = true) || equals(fallback, ignoreCase = true)
 
-fun contact_card_from_device_rows(rows: List<DeviceDataRow>, starred: Boolean, labels: DeviceLabels): ContactCard {
+fun contact_card_from_device_rows(
+    rows: List<DeviceDataRow>,
+    starred: Boolean,
+    labels: DeviceLabels,
+    photo: String = "",
+): ContactCard {
     fun of(mimetype: String) = rows.filter { it.mimetype == mimetype }
     val name = of(StructuredName.CONTENT_ITEM_TYPE).firstOrNull()
     val organization = of(Organization.CONTENT_ITEM_TYPE).firstOrNull {
@@ -298,27 +337,27 @@ fun contact_card_from_device_rows(rows: List<DeviceDataRow>, starred: Boolean, l
         notes = notes.joinToString("\n"),
         birthday = birthday?.text(Event.START_DATE).orEmpty(),
         emails = of(Email.CONTENT_ITEM_TYPE).map {
-            CardEntry(
-                it.text(Email.ADDRESS),
-                when (it.int(Email.TYPE)) {
+            val (type, label) = it.typed(Email.TYPE, Email.LABEL, Email.TYPE_CUSTOM, labels, true) { code ->
+                when (code) {
                     Email.TYPE_HOME -> "home"
                     Email.TYPE_WORK -> "work"
                     else -> "other"
-                },
-            )
+                }
+            }
+            CardEntry(it.text(Email.ADDRESS), type, label)
         },
         phones = of(Phone.CONTENT_ITEM_TYPE).map {
-            CardEntry(
-                it.text(Phone.NUMBER),
-                when (it.int(Phone.TYPE)) {
+            val (type, label) = it.typed(Phone.TYPE, Phone.LABEL, Phone.TYPE_CUSTOM, labels, true) { code ->
+                when (code) {
                     Phone.TYPE_MOBILE -> "mobile"
                     Phone.TYPE_HOME -> "home"
                     Phone.TYPE_WORK, Phone.TYPE_WORK_MOBILE, Phone.TYPE_COMPANY_MAIN -> "work"
                     Phone.TYPE_FAX_HOME, Phone.TYPE_FAX_WORK, Phone.TYPE_OTHER_FAX -> "fax"
                     Phone.TYPE_PAGER, Phone.TYPE_WORK_PAGER -> "pager"
                     else -> "other"
-                },
-            )
+                }
+            }
+            CardEntry(it.text(Phone.NUMBER), type, label)
         },
         addresses = of(StructuredPostal.CONTENT_ITEM_TYPE).map {
             val street = it.text(StructuredPostal.STREET)
@@ -328,17 +367,27 @@ fun contact_card_from_device_rows(rows: List<DeviceDataRow>, starred: Boolean, l
             val country = it.text(StructuredPostal.COUNTRY)
             val structured_blank = street.isEmpty() && city.isEmpty() && region.isEmpty() &&
                 postcode.isEmpty() && country.isEmpty()
+            val (type, label) = it.typed(
+                StructuredPostal.TYPE,
+                StructuredPostal.LABEL,
+                StructuredPostal.TYPE_CUSTOM,
+                labels,
+                false,
+            ) { code ->
+                when (code) {
+                    StructuredPostal.TYPE_HOME -> "home"
+                    StructuredPostal.TYPE_WORK -> "work"
+                    else -> "other"
+                }
+            }
             CardAddress(
                 street = if (structured_blank) it.text(StructuredPostal.FORMATTED_ADDRESS) else street,
                 city = city,
                 state = region,
                 postal_code = postcode,
                 country = country,
-                type = when (it.int(StructuredPostal.TYPE)) {
-                    StructuredPostal.TYPE_HOME -> "home"
-                    StructuredPostal.TYPE_WORK -> "work"
-                    else -> "other"
-                },
+                type = type,
+                label = label,
             )
         },
         websites = of(Website.CONTENT_ITEM_TYPE).map {
@@ -387,5 +436,6 @@ fun contact_card_from_device_rows(rows: List<DeviceDataRow>, starred: Boolean, l
         },
         dates = dates,
         starred = starred,
+        photo = photo,
     ).normalized()
 }

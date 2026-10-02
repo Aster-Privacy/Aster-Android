@@ -27,6 +27,7 @@ import org.astermail.android.api.ratchet.is_retryable_prekey_bundle_status
 import org.astermail.android.mail.ratchet.PostQuantumUnavailableException
 import org.astermail.android.mail.ratchet.RatchetEncryptionException
 import org.astermail.android.mail.ratchet.RatchetIdentityPinException
+import org.astermail.android.mail.ratchet.RecipientKeyUntrustedException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -292,5 +293,21 @@ class SendFailureClassificationTest {
         assertEquals(SendFailureReason.POST_QUANTUM, SendFailureReason.from_code("post_quantum"))
         assertEquals(SendFailureReason.OTHER, SendFailureReason.from_code("unknown"))
         assertEquals(SendFailureReason.OTHER, SendFailureReason.from_code(null))
+    }
+
+    @Test
+    fun `weak message password failures are permanent and named`() {
+        val err = RuntimeException("send failed", WeakMessagePasswordException("weak"))
+        assertTrue(is_permanent_send_failure_cause(err))
+        assertEquals(SendFailureReason.WEAK_PASSWORD, send_failure_reason_for(err))
+        assertEquals(SendFailureReason.KEY_CHANGED, SendFailureReason.from_code("key_changed"))
+    }
+
+    @Test
+    fun `an untrusted recipient key blocks the send as an identity change`() {
+        val err = IllegalStateException("blocked", RecipientKeyUntrustedException("a@astermail.org", "untrusted"))
+
+        assertEquals(SendFailureReason.IDENTITY_CHANGED, send_failure_reason_for(err))
+        assertTrue(is_permanent_send_failure_cause(err))
     }
 }

@@ -92,18 +92,18 @@ object RatchetCrypto {
     }
 
     fun ml_kem_768_decapsulate(ciphertext: ByteArray, secret_key: ByteArray): ByteArray {
-        val params = org.bouncycastle.pqc.crypto.mlkem.MLKEMParameters.ml_kem_768
-        val priv = org.bouncycastle.pqc.crypto.mlkem.MLKEMPrivateKeyParameters(params, secret_key)
-        val extractor = org.bouncycastle.pqc.crypto.mlkem.MLKEMExtractor(priv)
+        val params = org.bouncycastle.crypto.params.MLKEMParameters.ml_kem_768
+        val priv = org.bouncycastle.crypto.params.MLKEMPrivateKeyParameters(params, secret_key)
+        val extractor = org.bouncycastle.crypto.kems.MLKEMExtractor(priv)
         return extractor.extractSecret(ciphertext)
     }
 
     data class MlKemEncapsulation(val ciphertext: ByteArray, val shared_secret: ByteArray)
 
     fun ml_kem_768_encapsulate(public_key: ByteArray): MlKemEncapsulation {
-        val params = org.bouncycastle.pqc.crypto.mlkem.MLKEMParameters.ml_kem_768
-        val pub = org.bouncycastle.pqc.crypto.mlkem.MLKEMPublicKeyParameters(params, public_key)
-        val generator = org.bouncycastle.pqc.crypto.mlkem.MLKEMGenerator(secure_random)
+        val params = org.bouncycastle.crypto.params.MLKEMParameters.ml_kem_768
+        val pub = org.bouncycastle.crypto.params.MLKEMPublicKeyParameters(params, public_key)
+        val generator = org.bouncycastle.crypto.kems.MLKEMGenerator(secure_random)
         val encap = generator.generateEncapsulated(pub)
         return MlKemEncapsulation(encap.encapsulation, encap.secret)
     }
@@ -118,21 +118,19 @@ object RatchetCrypto {
 
     fun ml_kem_768_keypair_from_seed(seed: ByteArray): MlKemKeyPair {
         require(seed.size == 64) { "ml-kem seed must be 64 bytes" }
-        val params = org.bouncycastle.pqc.crypto.mlkem.MLKEMParameters.ml_kem_768
-        val generator = org.bouncycastle.pqc.crypto.mlkem.MLKEMKeyPairGenerator()
-        generator.init(
-            org.bouncycastle.pqc.crypto.mlkem.MLKEMKeyGenerationParameters(secure_random, params),
+        val params = org.bouncycastle.crypto.params.MLKEMParameters.ml_kem_768
+        val priv = org.bouncycastle.crypto.params.MLKEMPrivateKeyParameters(params, seed)
+        val expanded = priv.withPreferredFormat(
+            org.bouncycastle.crypto.params.MLKEMPrivateKeyParameters.EXPANDED_KEY,
         )
-        val pair = generator.internalGenerateKeyPair(
-            seed.copyOfRange(0, 32),
-            seed.copyOfRange(32, 64),
-        )
-        val priv = pair.private as org.bouncycastle.pqc.crypto.mlkem.MLKEMPrivateKeyParameters
-        val pub = pair.public as org.bouncycastle.pqc.crypto.mlkem.MLKEMPublicKeyParameters
+        val secret_key = expanded.encoded
+        val public_key = priv.publicKey
+        check(secret_key.size == 2400) { "unexpected ml-kem secret key size" }
+        check(public_key.size == 1184) { "unexpected ml-kem public key size" }
         return MlKemKeyPair(
             seed = seed,
-            secret_key = priv.encoded,
-            public_key = pub.encoded,
+            secret_key = secret_key,
+            public_key = public_key,
         )
     }
 

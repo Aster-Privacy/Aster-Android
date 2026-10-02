@@ -173,4 +173,24 @@ class ChipColorsTest {
     fun white_against_black_is_the_maximum_ratio() {
         assertEquals(21.0, contrast_ratio(Color.White, Color.Black), 0.01)
     }
+
+    @Test
+    fun subtle_chip_text_is_readable_on_its_tint() {
+        for (surface in dark_surfaces + light_surfaces) {
+            for (label in label_palette) {
+                val is_dark = surface in dark_surfaces
+                val background = chip_subtle_background(label, surface, is_dark)
+                val content = chip_subtle_content(label, background, is_dark)
+                val ratio = contrast_ratio(content, background)
+                assertTrue("label=$label surface=$surface ratio=$ratio", ratio >= chip_min_contrast)
+            }
+        }
+    }
+
+    @Test
+    fun subtle_chip_text_keeps_a_readable_label() {
+        val label = Color(0xFF1D4ED8)
+        val background = chip_subtle_background(label, Color.White, is_dark = false)
+        assertEquals(label, chip_subtle_content(label, background, is_dark = false))
+    }
 }

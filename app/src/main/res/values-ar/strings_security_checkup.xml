@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account_security_percent_title">أمان حسابك هو %1$d%%</string>
+    <string name="account_security_dismiss">إغلاق</string>
+    <string name="security_center_recommended">الإجراءات الموصى بها</string>
+    <string name="security_center_protected">محمي</string>
+    <string name="security_center_all_clear">جميع وسائل الحماية مفعّلة.</string>
+    <string name="action_recommended">يوصى باتخاذ إجراء</string>
+    <string name="two_step_verification_recommendation">فعّل التحقق بخطوتين لإبقاء حسابك آمنًا حتى إذا سُرقت كلمة المرور.</string>
+    <string name="no_passkeys_recommendation">أضف مفتاح مرور لتسجيل دخول أسرع وأكثر أمانًا باستخدام القياسات الحيوية أو رمز PIN لجهازك.</string>
+    <string name="login_alerts_off_recommendation">فعّل تنبيهات تسجيل الدخول لتصلك إشعارات عند تسجيل دخول جهاز جديد إلى حسابك.</string>
+    <string name="billing_usage_title">نظرة عامة على الاستخدام</string>
+    <plurals name="security_actions_remaining">
+        <item quantity="zero">الإجراءات الموصى بها: %1$d</item>
+        <item quantity="one">الإجراءات الموصى بها: %1$d</item>
+        <item quantity="two">الإجراءات الموصى بها: %1$d</item>
+        <item quantity="few">الإجراءات الموصى بها: %1$d</item>
+        <item quantity="many">الإجراءات الموصى بها: %1$d</item>
+        <item quantity="other">الإجراءات الموصى بها: %1$d</item>
+    </plurals>
+</resources>

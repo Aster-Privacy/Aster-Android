@@ -37,8 +37,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -66,6 +69,7 @@ import org.astermail.android.api.recovery.FetchInactiveKeySetRequest
 import org.astermail.android.api.recovery.RecoveryApi
 import org.astermail.android.api.recovery.RecoveryShareData
 import org.astermail.android.api.recovery.SaveRecoveryBackupRequest
+import org.astermail.android.api.recovery.UnlockInactiveWithCodeRequest
 import org.astermail.android.api.settings.ChangePasswordRequest
 import org.astermail.android.api.settings.SettingsApi
 import org.astermail.android.crypto.CryptoNative
@@ -142,6 +146,9 @@ class AuthRepository @Inject constructor(
 
     private val _session_expired = MutableStateFlow(false)
     val session_expired: StateFlow<Boolean> = _session_expired.asStateFlow()
+
+    private val _forced_account_switch = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val forced_account_switch: SharedFlow<String> = _forced_account_switch.asSharedFlow()
 
     fun consume_session_expired() {
         _session_expired.value = false
@@ -721,7 +728,10 @@ class AuthRepository @Inject constructor(
         signature.fill(0)
         password_hash_bytes.fill(0)
 
-        val vault_for_backup = vault_json.toByteArray(Charsets.UTF_8)
+        val vault_for_backup = backup_vault_bytes(
+            org.json.JSONObject(vault_json),
+            password.toByteArray(Charsets.UTF_8),
+        )
         val vault_backup = encrypt_vault_backup(vault_for_backup, recovery_key)
         vault_for_backup.fill(0)
         val recovery_shares = recovery_codes.map { code -> generate_recovery_share(code, recovery_key) }
@@ -1020,8 +1030,13 @@ class AuthRepository @Inject constructor(
     suspend fun logout(): Result<Unit> = sign_out_internal(remove_account = true)
 
     suspend fun force_sign_out(): Result<Unit> {
+        val previous_id = session_key_store.get_user_id()
         val result = sign_out_internal(remove_account = false)
-        if (!_is_signed_in.value) _session_expired.value = true
+        if (!_is_signed_in.value) {
+            _session_expired.value = true
+        } else {
+            _active_account_id.value?.takeIf { it != previous_id }?.let { _forced_account_switch.tryEmit(it) }
+        }
         return result
     }
 
@@ -1277,6 +1292,96 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    suspend fun restore_inactive_key_sets_with_code(code: String): CodeRestoreResult {
+        val code_hash = hash_recovery_code(canonicalize_recovery_code(code))
+        val key_sets = recovery_api
+            .unlock_inactive_key_sets_with_code(UnlockInactiveWithCodeRequest(code_hash))
+            .key_sets
+        if (key_sets.isEmpty()) return CodeRestoreResult()
+
+        val user_id = session_key_store.get_user_id() ?: return CodeRestoreResult()
+        val stored_vault = session_key_store.get_encrypted_vault() ?: return CodeRestoreResult()
+        val passphrase = session_key_store.get_passphrase() ?: return CodeRestoreResult()
+
+        try {
+            val vault_plain = runCatching {
+                CryptoNative.decrypt_vault_with_password(
+                    base64_decode(stored_vault.first),
+                    base64_decode(stored_vault.second),
+                    passphrase,
+                )
+            }.getOrNull() ?: return CodeRestoreResult()
+            val vault_obj = runCatching {
+                org.json.JSONObject(String(vault_plain, Charsets.UTF_8))
+            }.getOrNull()
+            vault_plain.fill(0)
+            if (vault_obj == null) return CodeRestoreResult()
+
+            val recovered_keks = mutableListOf<String>()
+            val recovered_ratchet = mutableListOf<org.json.JSONObject>()
+            val opened = mutableListOf<String>()
+            val password_bound = mutableListOf<Boolean>()
+            val old_vaults = mutableListOf<org.json.JSONObject>()
+            val unlocked_keys = mutableMapOf<String, String>()
+
+            for (key_set in key_sets) {
+                val backup = runCatching {
+                    open_recovery_vault_backup(
+                        code = code,
+                        encrypted_recovery_key = base64_decode(key_set.encrypted_recovery_key),
+                        recovery_key_nonce = base64_decode(key_set.recovery_key_nonce),
+                        code_salt = base64_decode(key_set.code_salt),
+                        encrypted_vault_backup = base64_decode(key_set.encrypted_vault_backup),
+                        vault_backup_nonce = base64_decode(key_set.vault_backup_nonce),
+                        recovery_key_salt = base64_decode(key_set.recovery_key_salt),
+                    )
+                }.getOrNull() ?: continue
+
+                unlocked_keys.putAll(read_unlocked_keys(backup))
+                val old_vault = strip_backup_fields(backup)
+                recovered_keks.addAll(harvest_storage_keks(old_vault, null))
+                recovered_ratchet.addAll(retain_previous_ratchet_keys(old_vault))
+                opened.add(key_set.inactive_vault_id)
+                password_bound.add(!carries_master_key(old_vault))
+                old_vaults.add(old_vault)
+            }
+
+            if (opened.isEmpty()) return CodeRestoreResult()
+
+            val current_chars = passphrase_chars(passphrase)
+            val identity_keys = try {
+                merge_identity_keys_with(
+                    vault_obj,
+                    old_vaults,
+                    relock_with_unlocked_keys(unlocked_keys, current_chars),
+                )
+            } finally {
+                current_chars.fill('\u0000')
+                unlocked_keys.clear()
+            }
+            val committed = commit_recovered_keys(
+                user_id = user_id,
+                passphrase = passphrase,
+                vault_obj = vault_obj,
+                identity_keys = identity_keys,
+                recovered_keks = recovered_keks,
+                recovered_ratchet = recovered_ratchet,
+            )
+            if (!committed) return CodeRestoreResult(restored = 0, incomplete = opened.size)
+
+            val absorbed = opened.filterIndexed { index, _ ->
+                identity_keys.absorbed.getOrElse(index) { false } && !password_bound[index]
+            }
+            absorbed.forEach { id ->
+                runCatching { recovery_api.consume_inactive_key_set(ConsumeInactiveKeySetRequest(id)) }
+            }
+
+            return CodeRestoreResult(restored = opened.size, incomplete = opened.size - absorbed.size)
+        } finally {
+            passphrase.fill(0)
+        }
+    }
+
     suspend fun commit_recovered_keys(
         user_id: String,
         passphrase: ByteArray,
@@ -1322,6 +1427,7 @@ class AuthRepository @Inject constructor(
                 vault_nonce,
                 user_id,
                 org.astermail.android.mail.ratchet.collect_vault_key_fingerprints(vault_obj),
+                stored_vault_format(vault_obj),
             )
         }.getOrDefault(false)
         if (!pushed) return@withLock false
@@ -1478,6 +1584,7 @@ class AuthRepository @Inject constructor(
             vault_nonce,
             session_key_store.get_user_id(),
             org.astermail.android.mail.ratchet.collect_vault_key_fingerprints(vault_obj),
+            stored_vault_format(vault_obj),
         )
         if (!pushed) return false
 
@@ -1927,10 +2034,7 @@ class AuthRepository @Inject constructor(
             codes.forEach { codes_array.put(it) }
             vault_obj.put("recovery_codes", codes_array)
 
-            val vault_format = maxOf(
-                vault_obj.optInt("vault_format", 1),
-                if (vault_obj.optString("data_kek", "").isNotBlank()) MASTER_KEY_VAULT_FORMAT else 1,
-            )
+            val vault_format = stored_vault_format(vault_obj)
 
             val updated_plain = vault_obj.toString().toByteArray(Charsets.UTF_8)
             val sealed = CryptoNative.encrypt_vault_with_password(updated_plain, passphrase)
@@ -1939,7 +2043,7 @@ class AuthRepository @Inject constructor(
             val vault_nonce = base64_encode(sealed.vault_nonce)
 
             val recovery_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
-            val backup_plain = vault_obj.toString().toByteArray(Charsets.UTF_8)
+            val backup_plain = backup_vault_bytes(vault_obj, passphrase.copyOf())
             val vault_backup = encrypt_vault_backup(backup_plain, recovery_key)
             backup_plain.fill(0)
             val shares = codes.map { generate_recovery_share(it, recovery_key) }
@@ -1966,6 +2070,16 @@ class AuthRepository @Inject constructor(
 
             return codes
         } finally {
+            passphrase.fill(0)
+        }
+    }
+
+    private fun backup_vault_bytes(vault: org.json.JSONObject, passphrase: ByteArray): ByteArray {
+        val chars = passphrase_chars(passphrase)
+        try {
+            return build_backup_vault(vault, chars).toString().toByteArray(Charsets.UTF_8)
+        } finally {
+            chars.fill('\u0000')
             passphrase.fill(0)
         }
     }

@@ -46,6 +46,7 @@ fun merge_contact_cards(base: ContactCard?, local: ContactCard, remote: ContactC
         messengers = merge_list(origin.messengers, local.messengers, remote.messengers),
         dates = merge_list(origin.dates, local.dates, remote.dates),
         starred = merge_scalar(origin.starred, local.starred, remote.starred),
+        photo = merge_scalar(origin.photo, local.photo, remote.photo),
     ).normalized()
 }
 

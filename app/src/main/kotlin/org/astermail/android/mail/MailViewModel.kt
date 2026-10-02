@@ -1228,6 +1228,7 @@ class MailViewModel @Inject constructor(
                 _inbox_state.value.current_folder == folder &&
                 !is_offline_failure(result.exceptionOrNull()) &&
                 !is_cancellation(result.exceptionOrNull()) &&
+                !is_permanent_load_failure(result.exceptionOrNull()) &&
                 result.exceptionOrNull() !is org.astermail.android.api.ApiError.UnauthorizedError
             ) {
                 kotlinx.coroutines.delay(500L)
@@ -1804,7 +1805,11 @@ class MailViewModel @Inject constructor(
                 val previous = if (cur_thread.item?.id == item_id) cur_thread.messages else emptyList()
                 result.fold(
                     onSuccess = { messages ->
-                        val base = if (messages.isEmpty()) previous.ifEmpty { fallback } else messages
+                        val base = if (messages.isEmpty()) {
+                            previous.ifEmpty { fallback }
+                        } else {
+                            include_opened_message(messages, fallback.first())
+                        }
                         val resolved = if (
                             previous.isNotEmpty() &&
                             System.currentTimeMillis() < send_guard_until
@@ -4668,10 +4673,16 @@ class MailViewModel @Inject constructor(
     fun send_scheduled_now(id: String) =
         run_scheduled_action(id, R.string.scheduled_sending_now, true) { repository.send_scheduled_now(id) }
 
-    fun reschedule_scheduled(id: String, scheduled_at: String) =
+    fun reschedule_scheduled(id: String, scheduled_at: String) {
+        val scheduled_at_ms = runCatching { java.time.Instant.parse(scheduled_at).toEpochMilli() }.getOrNull()
+        if (scheduled_at_ms != null && exceeds_sealed_schedule_window(scheduled_at_ms, System.currentTimeMillis())) {
+            emit_toast(context.getString(R.string.scheduled_too_far_ahead))
+            return
+        }
         run_scheduled_action(id, R.string.scheduled_rescheduled, false) {
             repository.reschedule_scheduled(id, scheduled_at)
         }
+    }
 
     fun refresh() {
         val folder = _inbox_state.value.current_folder
@@ -4758,9 +4769,9 @@ class MailViewModel @Inject constructor(
         sender_email: String? = null,
     ): PostQuantumCoverage = repository.check_post_quantum_coverage(recipients, sender_email)
 
-    suspend fun find_external_key_fingerprint_changes(
+    suspend fun verified_external_key_fingerprint_changes(
         recipients: List<String>,
-    ): List<RecipientKeyChange> = repository.find_external_key_fingerprint_changes(recipients)
+    ): Result<List<RecipientKeyChange>> = repository.verified_external_key_fingerprint_changes(recipients)
 
     suspend fun acknowledge_external_key_fingerprint_change(
         change: RecipientKeyChange,
@@ -4839,6 +4850,11 @@ class MailViewModel @Inject constructor(
 
     fun retry_failed_send(pending_id: String, allow_non_post_quantum: Boolean = false) {
         viewModelScope.launch { runCatching { repository.retry_failed_send(pending_id, allow_non_post_quantum) } }
+    }
+
+    fun trust_new_keys_and_retry(pending_id: String, recipients: List<String>) {
+        recipients.forEach { identity_pins.acknowledge_sender(it) }
+        retry_failed_send(pending_id)
     }
 
     fun discard_failed_send(pending_id: String) {
@@ -5055,6 +5071,7 @@ class MailViewModel @Inject constructor(
         sender_display_name: String? = null,
         scheduled_at: String,
         sender_alias_hash: String? = null,
+        allow_non_post_quantum: Boolean = false,
     ): Result<String> {
         return repository.schedule_email(
             subject = subject,
@@ -5066,6 +5083,7 @@ class MailViewModel @Inject constructor(
             bcc = bcc,
             scheduled_at = scheduled_at,
             sender_alias_hash = sender_alias_hash,
+            allow_non_post_quantum = allow_non_post_quantum,
         )
     }
 
@@ -5201,6 +5219,9 @@ class MailViewModel @Inject constructor(
                     direction = alias_direction_query(routing_scope.direction),
                 )
             }
+            !is_folder_token(folder) -> Result.success(
+                InboxPage(items = emptyList(), has_more = false, next_cursor = null, total = 0),
+            )
             else -> repository.fetch_inbox(limit = limit, item_type = null, label_token = folder, offset = cursor?.toIntOrNull(), order = list_order)
         }
     }

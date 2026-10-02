@@ -64,6 +64,7 @@ class ContactSyncAdapter(context: Context) : AbstractThreadedSyncAdapter(context
             sibling = app.getString(R.string.contact_sync_label_sibling),
             graduation = app.getString(R.string.contact_sync_label_graduation),
             wedding = app.getString(R.string.contact_sync_label_wedding),
+            personal = app.getString(R.string.personal),
         )
         val cursor = object : ContactSyncCursor {
             override fun load(): Long = ContactSyncAccounts.load_since(app, account)
