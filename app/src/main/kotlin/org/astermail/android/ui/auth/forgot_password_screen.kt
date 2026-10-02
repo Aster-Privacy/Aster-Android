@@ -103,7 +103,6 @@ import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterDivider
-import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTextField
@@ -348,25 +347,25 @@ private fun recovery_actions(
     on_secondary: (() -> Unit)? = null,
     secondary_enabled: Boolean = true,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        AsterButton(
+            label = primary_label,
+            onClick = on_primary,
+            enabled = primary_enabled,
+            is_loading = primary_loading,
+        )
         if (secondary_label != null && on_secondary != null) {
-            AsterGhostButton(
-                label = secondary_label,
-                onClick = on_secondary,
-                enabled = secondary_enabled,
-            )
-        }
-        Spacer(Modifier.weight(1f))
-        Box(modifier = Modifier.widthIn(min = 128.dp)) {
-            AsterButton(
-                label = primary_label,
-                onClick = on_primary,
-                enabled = primary_enabled,
-                is_loading = primary_loading,
-            )
+            Spacer(Modifier.height(AsterSpacing.lg))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                text_link(
+                    label = secondary_label,
+                    enabled = secondary_enabled,
+                    on_click = on_secondary,
+                )
+            }
         }
     }
 }
@@ -382,7 +381,7 @@ private fun text_link(
         text = label,
         color = if (enabled) colors.accent_blue else colors.text_muted,
         fontSize = 14.sp,
-        fontWeight = FontWeight.Medium,
+        fontWeight = FontWeight.SemiBold,
         modifier = Modifier
             .clip(AsterShapes.item)
             .clickable(enabled = enabled, onClick = on_click)
