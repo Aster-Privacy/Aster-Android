@@ -1883,7 +1883,7 @@
     <string name="show_alias_indicators_subtitle">별칭으로 도착한 메시지에 표시합니다</string>
     <string name="show_message_size_subtitle">받은 편지함 목록에서 각 이메일의 크기를 표시합니다</string>
     <string name="force_dark_emails">메일에 어두운 모드 강제 적용</string>
-    <string name="force_dark_emails_subtitle">메일 내용을 항상 어두운 모드로 표시합니다</string>
+    <string name="force_dark_emails_subtitle">Aster가 다크 테마를 사용하는 동안 이메일의 원래 스타일을 무시하고 다크 모드로 이메일 콘텐츠를 렌더링합니다</string>
     <string name="section_composing_replies">작성 및 답장</string>
     <string name="enable_undo_send">보내기 취소 활성화</string>
     <string name="enable_undo_send_subtitle">발송을 잠시 늦춰 취소할 수 있게 합니다</string>

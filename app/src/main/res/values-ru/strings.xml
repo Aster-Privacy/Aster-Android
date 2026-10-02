@@ -1895,7 +1895,7 @@
     <string name="show_alias_indicators_subtitle">Отмечать письма, пришедшие на один из ваших псевдонимов</string>
     <string name="show_message_size_subtitle">Отображать размер каждого письма в списке входящих</string>
     <string name="force_dark_emails">Всегда тёмная тема для писем</string>
-    <string name="force_dark_emails_subtitle">Показывать содержимое писем только в тёмной теме</string>
+    <string name="force_dark_emails_subtitle">Отображать содержимое писем в тёмном режиме, пока в Aster включена тёмная тема, переопределяя оригинальное оформление</string>
     <string name="section_composing_replies">Написание и ответы</string>
     <string name="enable_undo_send">Включить отмену отправки</string>
     <string name="enable_undo_send_subtitle">Задерживает отправку, чтобы вы успели её отменить</string>

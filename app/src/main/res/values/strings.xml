@@ -2047,7 +2047,7 @@
     <string name="show_sender_pictures_subtitle">Show a photo or initials for each sender in your inbox</string>
     <string name="show_message_size_subtitle">Display the size of each email in the inbox list</string>
     <string name="force_dark_emails">Force dark mode for emails</string>
-    <string name="force_dark_emails_subtitle">Always render email content in dark mode</string>
+    <string name="force_dark_emails_subtitle">Render email content in dark mode while Aster uses the dark theme, overriding the email\'s original styling</string>
     <string name="section_composing_replies">Composing &amp; Replies</string>
     <string name="enable_undo_send">Enable undo send</string>
     <string name="enable_undo_send_subtitle">Delay sending so you can undo if needed</string>

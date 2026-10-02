@@ -89,11 +89,11 @@ class EmailDarkModeTest {
             "<p style=\"color:#333333\">Here is what shipped.</p>" +
             "</td></tr></table>"
 
-    private fun render(body: String, forced: Boolean): String =
+    private fun render(body: String, forced: Boolean, theme_dark: Boolean = true): String =
         build_email_html(
             body = body,
-            is_dark = true,
-            fg_hex = "#E8E8E8",
+            is_dark = theme_dark,
+            fg_hex = if (theme_dark) "#E8E8E8" else "#111827",
             link_hex = "#8ab4f8",
             forwarded_label = "Forwarded message",
             image_failed_label = "Image unavailable",
@@ -170,5 +170,35 @@ class EmailDarkModeTest {
             forced = true,
         )
         assertTrue("the button cell must survive: " + html, html.contains(KEEP_BACKGROUND_ATTRIBUTE))
+    }
+
+    @Test
+    fun the_force_preference_applies_only_while_the_app_theme_is_dark() {
+        assertTrue(forces_dark_emails(preference = true, theme_dark = true))
+        assertFalse(forces_dark_emails(preference = true, theme_dark = false))
+        assertFalse(forces_dark_emails(preference = false, theme_dark = true))
+        assertFalse(forces_dark_emails(preference = false, theme_dark = false))
+    }
+
+    @Test
+    fun the_light_theme_keeps_the_original_styling_with_the_preference_on() {
+        val html = render(
+            newsletter,
+            forced = forces_dark_emails(preference = true, theme_dark = false),
+            theme_dark = false,
+        )
+        assertFalse("light theme must not force dark: " + html, html.contains("data-dark-force"))
+        assertFalse("light theme must not strip backgrounds: " + html, html.contains("background-image:none!important"))
+        assertFalse("light theme must not switch the color scheme: " + html, html.contains("color-scheme:dark"))
+        assertTrue("authored ink must survive in the light theme: " + html, html.contains("color:#111111"))
+    }
+
+    @Test
+    fun switching_back_to_the_dark_theme_forces_dark_again() {
+        val light = render(newsletter, forced = forces_dark_emails(true, theme_dark = false), theme_dark = false)
+        val dark = render(newsletter, forced = forces_dark_emails(true, theme_dark = true), theme_dark = true)
+        assertFalse(light.contains("data-dark-force"))
+        assertTrue(dark.contains("data-dark-force=\"1\""))
+        assertTrue(dark.contains("html,body{background-color:transparent!important;color:" + FORCED_DARK_INK))
     }
 }

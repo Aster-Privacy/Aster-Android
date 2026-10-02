@@ -1883,7 +1883,7 @@
     <string name="show_alias_indicators_subtitle">エイリアス宛てに届いたメッセージに印を付けます</string>
     <string name="show_message_size_subtitle">受信トレイのリストに各メールのサイズを表示します</string>
     <string name="force_dark_emails">メールを常にダークで表示</string>
-    <string name="force_dark_emails_subtitle">メール本文を常にダークモードで表示します</string>
+    <string name="force_dark_emails_subtitle">Aster がダークテーマのとき、メールの元のスタイルを上書きしてダークモードでメール内容を表示します</string>
     <string name="section_composing_replies">作成と返信</string>
     <string name="enable_undo_send">送信取り消しを有効にする</string>
     <string name="enable_undo_send_subtitle">送信を少し遅らせ、取り消せるようにします</string>

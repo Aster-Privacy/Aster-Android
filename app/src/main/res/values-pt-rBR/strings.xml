@@ -1890,7 +1890,7 @@
     <string name="show_alias_indicators_subtitle">Marcar mensagens que chegaram através de um dos seus aliases</string>
     <string name="show_message_size_subtitle">Exibir o tamanho de cada e-mail na lista da caixa de entrada</string>
     <string name="force_dark_emails">Forçar modo escuro nos e-mails</string>
-    <string name="force_dark_emails_subtitle">Sempre exibir o conteúdo dos e-mails em modo escuro</string>
+    <string name="force_dark_emails_subtitle">Exibir o conteúdo dos e-mails no modo escuro enquanto a Aster estiver usando o tema escuro, substituindo o estilo original</string>
     <string name="section_composing_replies">Composição e respostas</string>
     <string name="enable_undo_send">Ativar Desfazer envio</string>
     <string name="enable_undo_send_subtitle">Atrasa o envio para você poder desfazer</string>
