@@ -21,10 +21,25 @@
 
 package org.astermail.android.ui.mail
 
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import org.astermail.android.design.AsterSemanticColors
+
 internal const val FORCED_DARK_INK = "#e5e5e5"
 
 internal fun forces_dark_emails(preference: Boolean, theme_dark: Boolean): Boolean =
     preference && theme_dark
+
+internal fun email_theme_is_dark(colors: AsterSemanticColors): Boolean =
+    if (colors.is_glass) colors.is_dark else colors.bg_primary.luminance() < colors.text_primary.luminance()
+
+private const val GLASS_EMAIL_SURFACE_COVER = 0.82f
+
+internal fun email_glass_backing(colors: AsterSemanticColors, white_page: Boolean): Color {
+    if (white_page || !colors.is_translucent) return Color.Transparent
+    val alpha = 1f - (1f - GLASS_EMAIL_SURFACE_COVER) / (1f - colors.glass_opacity)
+    return if (alpha <= 0f) Color.Transparent else colors.thread_content_bg.copy(alpha = alpha)
+}
 
 private const val DARK_INK_LUMINANCE_LIMIT = 0.25
 

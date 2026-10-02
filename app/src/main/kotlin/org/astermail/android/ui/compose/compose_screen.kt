@@ -2693,7 +2693,7 @@ fun ComposeScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = AsterSpacing.sm, bottom = AsterSpacing.sm)
-                                .acrylic(colors, SquircleShape(16.dp), colors.bg_secondary)
+                                .acrylic(colors, quoted_preview_card_shape, colors.bg_secondary)
                                 .padding(AsterSpacing.md)
                                 .testTag("compose_quote_body"),
                         ) {
