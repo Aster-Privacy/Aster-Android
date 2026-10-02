@@ -2687,12 +2687,8 @@ class MailRepository @Inject constructor(
             ?: !item.encrypted_envelope.isNullOrBlank()
         val is_decrypt_pending = is_undecryptable && envelope?.is_decrypt_pending == true
         val show_placeholder = is_undecryptable && !is_decrypt_pending
-        val enc_meta = item.encrypted_metadata
-        val meta_nonce = item.metadata_nonce
-        val decrypted_meta = item.metadata
-            ?: if (!enc_meta.isNullOrBlank() && !meta_nonce.isNullOrBlank()) {
-                decrypt_mail_metadata(enc_meta, meta_nonce)
-            } else null
+        val decrypted_meta = decrypt_blob_metadata(item.encrypted_metadata, item.metadata_nonce)
+            ?: item.metadata
         val meta = decrypted_meta?.let { merge_server_flags(it, item) }
         val forwarding = envelope?.let {
             org.astermail.android.ui.mail.resolve_forwarding_display(it.from_email, it.raw_headers)
@@ -2778,12 +2774,8 @@ class MailRepository @Inject constructor(
 
     private fun decrypt_thread_message(item: ThreadMessageItem): ThreadMessageDecrypted {
         val envelope = try_decrypt_envelope(item.encrypted_envelope, item.envelope_nonce, item.id)
-        val enc_meta = item.encrypted_metadata
-        val meta_nonce = item.metadata_nonce
-        val meta = item.metadata
-            ?: if (!enc_meta.isNullOrBlank() && !meta_nonce.isNullOrBlank()) {
-                decrypt_mail_metadata(enc_meta, meta_nonce)
-            } else null
+        val meta = decrypt_blob_metadata(item.encrypted_metadata, item.metadata_nonce)
+            ?: item.metadata
         val to_names = envelope?.to?.map { it.second.ifBlank { it.first } } ?: listOf("me")
         val forwarding = envelope?.let {
             org.astermail.android.ui.mail.resolve_forwarding_display(it.from_email, it.raw_headers)
@@ -3194,6 +3186,13 @@ class MailRepository @Inject constructor(
         }
     }
 
+    private fun decrypt_blob_metadata(encrypted_b64: String?, nonce_b64: String?): MailItemMetadata? =
+        if (!encrypted_b64.isNullOrBlank() && !nonce_b64.isNullOrBlank()) {
+            decrypt_mail_metadata(encrypted_b64, nonce_b64)
+        } else {
+            null
+        }
+
     private fun encrypt_mail_metadata(metadata: MailItemMetadata): Pair<String, String>? {
         val key = metadata_key() ?: return null
         return try {
@@ -3219,7 +3218,7 @@ class MailRepository @Inject constructor(
             null
         }
         val is_undecryptable = decrypted == null && enc_meta != null && meta_nonce != null
-        val current_metadata = raw_item?.metadata ?: decrypted
+        val current_metadata = if (decrypted != null && raw_item != null) merge_server_flags(decrypted, raw_item) else null
 
         val base = current_metadata ?: MailItemMetadata()
         val updated = base.copy(
