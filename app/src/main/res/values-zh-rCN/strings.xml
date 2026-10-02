@@ -3334,4 +3334,7 @@
     <string name="domain_dkim_rotated_auto">DKIM 密钥已轮换。Aster Mail 已为你更新 DNS 记录。</string>
     <string name="domain_dkim_notice_title">将此项添加为新的 DNS 记录</string>
     <string name="domain_dkim_notice_body">你的邮件已使用新密钥签名。要通过 DKIM 检查，请在 DNS 服务商处添加此 TXT 记录。</string>
+    <string name="move_to_category">移至分类</string>
+    <string name="moved_to_category">已移至分类</string>
+    <string name="metadata_undecryptable_change">此设备无法打开这封邮件的详细信息，因此您的更改未保存。要重新加载密钥，请退出并重新登录。服务器上的邮件保持不变。</string>
 </resources>

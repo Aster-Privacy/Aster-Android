@@ -3352,4 +3352,7 @@
     <string name="domain_dkim_rotated_auto">DKIM-Schlüssel rotiert. Aster Mail hat den DNS-Eintrag für dich aktualisiert.</string>
     <string name="domain_dkim_notice_title">Als neuen DNS-Eintrag hinzufügen</string>
     <string name="domain_dkim_notice_body">Deine E-Mails werden bereits mit dem neuen Schlüssel signiert. Damit DKIM-Prüfungen bestehen, füge diesen TXT-Eintrag bei deinem DNS-Anbieter hinzu.</string>
+    <string name="move_to_category">In Kategorie verschieben</string>
+    <string name="moved_to_category">In Kategorie verschoben</string>
+    <string name="metadata_undecryptable_change">Dieses Gerät kann die Details dieser Nachricht nicht öffnen, daher wird Ihre Änderung nicht gespeichert. Um Ihre Schlüssel neu zu laden, melden Sie sich ab und wieder an. Ihre Nachricht auf dem Server bleibt unverändert.</string>
 </resources>

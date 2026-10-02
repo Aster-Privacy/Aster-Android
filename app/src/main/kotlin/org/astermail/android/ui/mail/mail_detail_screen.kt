@@ -752,6 +752,8 @@ fun MailDetailScreen(
     var show_snooze_sheet by remember { mutableStateOf(false) }
     var show_folder_sheet by remember { mutableStateOf(false) }
     var show_label_sheet by remember { mutableStateOf(false) }
+    var show_category_sheet by remember { mutableStateOf(false) }
+    val categories_enabled = settings_state.preferences?.inbox_categories_enabled ?: true
     var action_target_id by remember { mutableStateOf<String?>(null) }
 
     var show_encryption_dropdown by remember { mutableStateOf(false) }
@@ -1162,6 +1164,17 @@ fun MailDetailScreen(
                             show_topbar_menu = false
                             settings_vm.load_tags()
                             show_label_sheet = true
+                        }
+                        if (can_move_to_category(api_item, categories_enabled)) {
+                            detail_menu_action(
+                                icon = TablerIcons.LayoutGrid,
+                                text = stringResource(R.string.move_to_category),
+                                tint = colors.text_primary,
+                                test_tag = "move_to_category",
+                            ) {
+                                show_topbar_menu = false
+                                show_category_sheet = true
+                            }
                         }
                         detail_menu_action(
                             icon = TablerIcons.Printer,
@@ -2212,6 +2225,25 @@ fun MailDetailScreen(
             } else {
                 null
             },
+        )
+    }
+
+    val category_item = api_item
+    if (show_category_sheet && category_item != null) {
+        val plan_vm_categories: org.astermail.android.billing.PlanLimitsViewModel = hiltViewModel()
+        val plan_state_categories by plan_vm_categories.state.collectAsStateWithLifecycle()
+        val custom_categories = settings_state.preferences?.custom_categories.orEmpty()
+        val active_tabs = category_move_tabs(
+            settings_state.preferences?.enabled_categories,
+            custom_categories,
+            plan_state_categories.limits?.limits?.get("max_custom_categories")?.limit ?: -1,
+        )
+        move_to_category_sheet(
+            current_category = category_item.category,
+            active_tabs = active_tabs,
+            custom_categories = custom_categories,
+            on_pick = { picked -> mail_vm.move_to_category(category_item.id, picked) },
+            on_close = { show_category_sheet = false },
         )
     }
 

@@ -3351,4 +3351,7 @@
     <string name="domain_dkim_rotated_auto">DKIM-sleutel geroteerd. Aster Mail heeft het DNS-record voor je bijgewerkt.</string>
     <string name="domain_dkim_notice_title">Voeg dit toe als nieuw DNS-record</string>
     <string name="domain_dkim_notice_body">Je e-mail wordt al met de nieuwe sleutel ondertekend. Voeg dit TXT-record toe bij je DNS-provider om DKIM-controles te laten slagen.</string>
+    <string name="move_to_category">Naar categorie verplaatsen</string>
+    <string name="moved_to_category">Naar categorie verplaatst</string>
+    <string name="metadata_undecryptable_change">Dit apparaat kan de details van dit bericht niet openen, dus je wijziging wordt niet opgeslagen. Meld je af en weer aan om je sleutels opnieuw te laden. Je bericht op de server blijft ongewijzigd.</string>
 </resources>

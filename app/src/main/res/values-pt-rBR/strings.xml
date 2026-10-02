@@ -3370,4 +3370,7 @@
     <string name="domain_dkim_rotated_auto">Chave DKIM rotacionada. O Aster Mail atualizou o registro DNS para você.</string>
     <string name="domain_dkim_notice_title">Adicione isto como um novo registro DNS</string>
     <string name="domain_dkim_notice_body">Seus e-mails já são assinados com a nova chave. Para passar nas verificações DKIM, adicione este registro TXT no seu provedor de DNS.</string>
+    <string name="move_to_category">Mover para a categoria</string>
+    <string name="moved_to_category">Movido para a categoria</string>
+    <string name="metadata_undecryptable_change">Este dispositivo não consegue abrir os detalhes desta mensagem, então sua alteração não é salva. Para recarregar suas chaves, saia e entre novamente. Sua mensagem no servidor continua igual.</string>
 </resources>
