@@ -428,10 +428,7 @@ class RecoveryViewModel @Inject constructor(
         codes.forEach { codes_array.put(it) }
         vault_obj.put("recovery_codes", codes_array)
 
-        val vault_format = maxOf(
-            vault_obj.optInt("vault_format", 1),
-            if (vault_obj.optString("data_kek", "").isNotBlank()) MASTER_KEY_VAULT_FORMAT else 1,
-        )
+        val vault_format = stored_vault_format(vault_obj)
 
         return UpdatedVault(
             plain = vault_obj.toString().toByteArray(Charsets.UTF_8),

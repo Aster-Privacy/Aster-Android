@@ -1388,6 +1388,7 @@ class AuthRepository @Inject constructor(
                 vault_nonce,
                 user_id,
                 org.astermail.android.mail.ratchet.collect_vault_key_fingerprints(vault_obj),
+                stored_vault_format(vault_obj),
             )
         }.getOrDefault(false)
         if (!pushed) return@withLock false
@@ -1544,6 +1545,7 @@ class AuthRepository @Inject constructor(
             vault_nonce,
             session_key_store.get_user_id(),
             org.astermail.android.mail.ratchet.collect_vault_key_fingerprints(vault_obj),
+            stored_vault_format(vault_obj),
         )
         if (!pushed) return false
 
@@ -1991,10 +1993,7 @@ class AuthRepository @Inject constructor(
             codes.forEach { codes_array.put(it) }
             vault_obj.put("recovery_codes", codes_array)
 
-            val vault_format = maxOf(
-                vault_obj.optInt("vault_format", 1),
-                if (vault_obj.optString("data_kek", "").isNotBlank()) MASTER_KEY_VAULT_FORMAT else 1,
-            )
+            val vault_format = stored_vault_format(vault_obj)
 
             val updated_plain = vault_obj.toString().toByteArray(Charsets.UTF_8)
             val sealed = CryptoNative.encrypt_vault_with_password(updated_plain, passphrase)

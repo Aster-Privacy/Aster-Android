@@ -30,6 +30,7 @@ import org.astermail.android.api.keys.CurrentVaultResult
 import org.astermail.android.api.keys.KeysApi
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.api.ratchet.UploadPrekeyBundleRequest
+import org.astermail.android.auth.stored_vault_format
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.storage.SessionKeyStore
@@ -298,6 +299,7 @@ class RatchetBootstrapService @Inject constructor(
                 new_nonce_b64,
                 session_key_store.get_user_id(),
                 collect_vault_key_fingerprints(vault_json),
+                stored_vault_format(vault_json),
             )
         }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
             .getOrDefault(false)
@@ -468,6 +470,7 @@ class RatchetBootstrapService @Inject constructor(
                 new_nonce_b64,
                 session_key_store.get_user_id(),
                 collect_vault_key_fingerprints(vault_json),
+                stored_vault_format(vault_json),
             )
         }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
             .getOrDefault(false)
@@ -568,7 +571,7 @@ class RatchetBootstrapService @Inject constructor(
             base64_encode(armored.toByteArray(Charsets.UTF_8))
         }
             .onFailure { debug_log("pgp prekey signature threw: ${it.javaClass.simpleName}: ${it.message}") }
-            .also { passphrase.fill(' ') }
+            .also { passphrase.fill('\u0000') }
             .getOrNull()
     }
 
