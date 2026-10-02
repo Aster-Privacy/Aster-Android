@@ -118,7 +118,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -5595,7 +5594,7 @@ internal fun email_html_view(
     val colors = AsterMaterial.colors
     val settings_vm: SettingsViewModel = shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
-    val theme_dark = !force_light && if (colors.is_glass) colors.is_dark else colors.bg_primary.luminance() < colors.text_primary.luminance()
+    val theme_dark = !force_light && email_theme_is_dark(colors)
     val force_dark_emails = forces_dark_emails(settings_state.preferences?.force_dark_emails == true, theme_dark)
     val is_dark = theme_dark
     val body_surface = if (colors.is_glass) colors.thread_content_bg else colors.bg_primary

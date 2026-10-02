@@ -21,6 +21,12 @@
 
 package org.astermail.android.ui.mail
 
+import androidx.compose.ui.graphics.Color
+import org.astermail.android.design.AsterColorThemes
+import org.astermail.android.design.ColorThemeId
+import org.astermail.android.design.MaterialThemeGenerator
+import org.astermail.android.design.dark_semantic_colors
+import org.astermail.android.design.light_semantic_colors
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -200,5 +206,56 @@ class EmailDarkModeTest {
         assertFalse(light.contains("data-dark-force"))
         assertTrue(dark.contains("data-dark-force=\"1\""))
         assertTrue(dark.contains("html,body{background-color:transparent!important;color:" + FORCED_DARK_INK))
+    }
+
+    @Test
+    fun every_coloured_palette_theme_counts_as_dark_so_forced_dark_applies() {
+        val palette_themes = ColorThemeId.entries.filter { AsterColorThemes.palette_for(it) != null }
+        assertEquals(15, palette_themes.size)
+        for (id in palette_themes) {
+            assertTrue("$id is a dark-only theme", AsterColorThemes.is_dark_only(id))
+            val colors = AsterColorThemes.semantic_colors_for(true, AsterColorThemes.palette_for(id))
+            assertTrue("$id must count as dark for emails", email_theme_is_dark(colors))
+            assertTrue("$id must force dark emails", forces_dark_emails(true, email_theme_is_dark(colors)))
+        }
+    }
+
+    @Test
+    fun the_default_theme_follows_the_light_and_dark_setting() {
+        assertFalse(email_theme_is_dark(AsterColorThemes.semantic_colors_for(false, null)))
+        assertTrue(email_theme_is_dark(AsterColorThemes.semantic_colors_for(true, null)))
+        assertFalse(forces_dark_emails(true, email_theme_is_dark(light_semantic_colors)))
+        assertTrue(forces_dark_emails(true, email_theme_is_dark(dark_semantic_colors)))
+    }
+
+    @Test
+    fun a_custom_seed_theme_follows_the_light_and_dark_setting() {
+        for (seed in listOf("#3b82f6", "#a855f7", "#f59e0b", "#000000", "#ffffff")) {
+            fun colors(dark: Boolean) = AsterColorThemes.semantic_colors_for(
+                dark,
+                MaterialThemeGenerator.to_palette(
+                    MaterialThemeGenerator.compute_custom_theme_vars(seed, is_dark = dark, overrides = emptyMap()),
+                ),
+            )
+            assertFalse("custom $seed light must not force dark", email_theme_is_dark(colors(false)))
+            assertTrue("custom $seed dark must force dark", email_theme_is_dark(colors(true)))
+        }
+    }
+
+    @Test
+    fun glass_themes_count_as_dark_so_forced_dark_applies() {
+        val tint = Color(0xFF1E2A3A)
+        for (base in listOf(dark_semantic_colors) + ColorThemeId.entries.mapNotNull { id ->
+            AsterColorThemes.palette_for(id)?.let { AsterColorThemes.semantic_colors_for(true, it) }
+        }) {
+            val glass = base.copy(
+                bg_primary = tint.copy(alpha = 0.4f),
+                thread_content_bg = tint.copy(alpha = 0.4f),
+                is_glass = true,
+                glass_opacity = 0.4f,
+            )
+            assertTrue(email_theme_is_dark(glass))
+            assertTrue(forces_dark_emails(true, email_theme_is_dark(glass)))
+        }
     }
 }
