@@ -1960,7 +1960,8 @@
     <string name="pending_deletion_sign_out">Se déconnecter</string>
     <string name="pending_deletion_restoring">Restauration…</string>
     <string name="pending_deletion_error">Impossible de restaurer votre compte. Veuillez réessayer.</string>
-    <string name="image_blocked_placeholder">[Image bloquée]</string>
+    <string name="image_blocked">Image bloquée</string>
+    <string name="tracking_pixel_blocked">Pixel de suivi bloqué</string>
     <string name="alias_available">Cet alias est disponible.</string>
     <string name="alias_not_available">Cet alias est déjà pris.</string>
     <string name="alias_check_failed">Impossible de vérifier la disponibilité. Vous pouvez quand même essayer de le créer.</string>

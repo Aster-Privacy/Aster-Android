@@ -178,38 +178,44 @@ class EmailHtmlSanitizerTest {
     @Test
     fun replaces_blocked_remote_images_with_placeholder() {
         val html = """<p>text</p><img src="https://x.example/banner.png" alt="Banner" width="600" height="200">"""
-        val out = EmailHtmlSanitizer.replace_blocked_images(html, "[Image blocked]")
-        assertFalse(out.contains("<img"))
-        assertTrue(out.contains("blocked-image"))
-        assertTrue(out.contains("data-original-src=\"https://x.example/banner.png\""))
-        assertTrue(out.contains(">Banner</span>"))
+        val out = EmailHtmlSanitizer.replace_blocked_images(html)
+        val img = org.jsoup.Jsoup.parseBodyFragment(out).selectFirst("img")!!
+        assertTrue(img.hasClass("blocked-image"))
+        assertEquals("https://x.example/banner.png", img.attr("data-original-src"))
+        assertTrue(img.attr("src").startsWith("data:image/svg+xml,"))
+        assertEquals("Image blocked: Banner", img.attr("aria-label"))
         assertTrue(out.contains("text"))
     }
 
     @Test
-    fun blocked_image_without_alt_uses_placeholder_text() {
+    fun blocked_image_without_alt_is_labelled_image_blocked() {
         val out = EmailHtmlSanitizer.replace_blocked_images(
             """<img src="https://x.example/hero.jpg" width="600" height="300" style="display:block">""",
-            "[Image blocked]",
         )
-        assertTrue(out.contains("[Image blocked]"))
+        val img = org.jsoup.Jsoup.parseBodyFragment(out).selectFirst("img")!!
+        assertEquals("Image blocked", img.attr("title"))
+        assertTrue(java.net.URLDecoder.decode(img.attr("src").substringAfter(','), "UTF-8").contains(">Image blocked</text>"))
     }
 
     @Test
-    fun blocked_tracking_pixels_are_removed_entirely() {
+    fun blocked_tracking_pixels_keep_their_footprint_without_the_remote_source() {
         val out = EmailHtmlSanitizer.replace_blocked_images(
             """<p>hi</p><img src="https://track.example/o.gif" width="1" height="1">""",
-            "[Image blocked]",
         )
-        assertFalse(out.contains("blocked-image"))
-        assertFalse(out.contains("track.example"))
+        val img = org.jsoup.Jsoup.parseBodyFragment(out).selectFirst("img")!!
+        assertEquals("1", img.attr("width"))
+        assertEquals("1", img.attr("height"))
+        assertEquals("true", img.attr("data-tracking-pixel"))
+        assertEquals("Tracking pixel blocked", img.attr("aria-label"))
+        assertTrue(img.attr("src").startsWith("data:image/svg+xml,"))
+        assertFalse(img.attr("src").contains("track.example"))
         assertTrue(out.contains("hi"))
     }
 
     @Test
     fun replace_blocked_images_keeps_data_and_cid_images() {
         val html = """<img src="data:image/png;base64,AAAA" alt="inline"><img src="cid:part1" alt="attached">"""
-        val out = EmailHtmlSanitizer.replace_blocked_images(html, "[Image blocked]")
+        val out = EmailHtmlSanitizer.replace_blocked_images(html)
         assertTrue(out.contains("data:image/png;base64,AAAA"))
         assertTrue(out.contains("cid:part1"))
         assertFalse(out.contains("blocked-image"))

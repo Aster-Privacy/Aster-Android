@@ -296,6 +296,8 @@ fun AsterAlertDialog(
     is_busy: Boolean = false,
     dismiss_on_confirm: Boolean = true,
     extra_content: @Composable (() -> Unit)? = null,
+    secondary_label: String? = null,
+    on_secondary: (() -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     val reduce_motion = aster_reduce_motion()
@@ -381,6 +383,16 @@ fun AsterAlertDialog(
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp, vertical = 16.dp),
                 ) {
+                    if (secondary_label != null && on_secondary != null) {
+                        AsterDialogOutlineButton(
+                            label = secondary_label,
+                            onClick = {
+                                on_secondary()
+                                start_dismiss()
+                            },
+                            enabled = !is_busy,
+                        )
+                    }
                     if (cancel_label != null) {
                         AsterDialogOutlineButton(
                             label = cancel_label,
