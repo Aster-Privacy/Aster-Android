@@ -9,4 +9,6 @@
     <string name="message_password_weak_hint">Utilisez au moins 12 caractères et incluez un chiffre, un symbole ou des lettres majuscules et minuscules.</string>
     <string name="message_password_too_weak">Le mot de passe du message est trop faible, le message n\'a donc pas été envoyé. Utilisez au moins 12 caractères et incluez un chiffre, un symbole ou des lettres majuscules et minuscules.</string>
     <string name="identity_trust_new_key">Faire confiance à la nouvelle clé</string>
+    <string name="send_key_check_failed">Aster n\'a pas pu vérifier les clés de chiffrement des destinataires et n\'a donc pas envoyé ce message. Vérifiez votre connexion, puis réessayez.</string>
+    <string name="outbox_failed_reason_identity_unverified">Aster n\'a pas pu vérifier la clé de chiffrement d\'un destinataire et n\'a donc pas envoyé ce message. Vous pouvez réessayer plus tard ou le supprimer.</string>
 </resources>

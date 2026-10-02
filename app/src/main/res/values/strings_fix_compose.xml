@@ -9,4 +9,6 @@
     <string name="message_password_weak_hint">Use at least 12 characters, and include a number, a symbol, or both uppercase and lowercase letters.</string>
     <string name="message_password_too_weak">The message password is too weak, so the message wasn\'t sent. Use at least 12 characters, and include a number, a symbol, or both uppercase and lowercase letters.</string>
     <string name="identity_trust_new_key">Trust new key</string>
+    <string name="send_key_check_failed">Aster couldn\'t check the recipients\' encryption keys, so it didn\'t send this message. Check your connection, then try again.</string>
+    <string name="outbox_failed_reason_identity_unverified">Aster couldn\'t verify a recipient\'s encryption key, so it didn\'t send this message. You can try again later or discard it.</string>
 </resources>

@@ -69,6 +69,11 @@ fun replay_blocked_by_key_change(recipients: List<String>, changes: List<Recipie
     return changes.any { address_key(it.email) in external }
 }
 
+fun identity_change_pending_for(recipients: List<String>, changed_senders: List<String>): Boolean {
+    val wanted = recipients.filter { it.isNotBlank() }.map { address_key(it) }.toSet()
+    return changed_senders.any { it.isNotBlank() && address_key(it) in wanted }
+}
+
 const val MIN_MESSAGE_PASSWORD_LENGTH = 12
 
 fun message_password_strength_tier(password: String): Int {

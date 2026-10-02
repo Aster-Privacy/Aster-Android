@@ -9,4 +9,6 @@
     <string name="message_password_weak_hint">Gebruik minstens 12 tekens en voeg een cijfer, een symbool of zowel hoofdletters als kleine letters toe.</string>
     <string name="message_password_too_weak">Het berichtwachtwoord is te zwak, dus het bericht is niet verstuurd. Gebruik minstens 12 tekens en voeg een cijfer, een symbool of zowel hoofdletters als kleine letters toe.</string>
     <string name="identity_trust_new_key">Nieuwe sleutel vertrouwen</string>
+    <string name="send_key_check_failed">Aster kon de versleutelingssleutels van de ontvangers niet controleren en heeft dit bericht daarom niet verstuurd. Controleer je verbinding en probeer het opnieuw.</string>
+    <string name="outbox_failed_reason_identity_unverified">Aster kon de versleutelingssleutel van een ontvanger niet verifiëren en heeft dit bericht daarom niet verstuurd. Je kunt het later opnieuw proberen of het bericht verwijderen.</string>
 </resources>

@@ -182,4 +182,12 @@ class SendGatesTest {
         assertEquals(3, message_password_strength_tier("abcdefghijk1"))
         assertEquals(4, message_password_strength_tier("Tr0ub4dor-and-3"))
     }
+
+    @Test
+    fun `trust new key appears only when a matching identity change is pending`() {
+        assertTrue(identity_change_pending_for(listOf("Bob@AsterMail.org"), listOf("bob@astermail.org")))
+        assertFalse(identity_change_pending_for(listOf("bob@astermail.org"), listOf("eve@astermail.org")))
+        assertFalse(identity_change_pending_for(listOf("bob@astermail.org"), emptyList()))
+        assertFalse(identity_change_pending_for(listOf(""), listOf("")))
+    }
 }

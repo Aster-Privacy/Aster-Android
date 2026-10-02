@@ -9,4 +9,6 @@
     <string name="message_password_weak_hint">استخدم 12 حرفًا على الأقل، وأضف رقمًا أو رمزًا أو أحرفًا كبيرة وصغيرة معًا.</string>
     <string name="message_password_too_weak">كلمة مرور الرسالة ضعيفة جدًا، لذلك لم تُرسل الرسالة. استخدم 12 حرفًا على الأقل، وأضف رقمًا أو رمزًا أو أحرفًا كبيرة وصغيرة معًا.</string>
     <string name="identity_trust_new_key">الوثوق بالمفتاح الجديد</string>
+    <string name="send_key_check_failed">تعذّر على Aster التحقق من مفاتيح التشفير الخاصة بالمستلمين، لذلك لم يُرسل هذه الرسالة. تحقق من اتصالك، ثم حاول مرة أخرى.</string>
+    <string name="outbox_failed_reason_identity_unverified">تعذّر على Aster التحقق من مفتاح التشفير لأحد المستلمين، لذلك لم يُرسل هذه الرسالة. يمكنك المحاولة مرة أخرى لاحقًا أو تجاهلها.</string>
 </resources>

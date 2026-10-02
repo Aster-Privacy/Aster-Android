@@ -4106,10 +4106,6 @@ class MailRepository @Inject constructor(
         }
     }
 
-    suspend fun find_external_key_fingerprint_changes(
-        recipients: List<String>,
-    ): List<RecipientKeyChange> = verified_external_key_fingerprint_changes(recipients).getOrDefault(emptyList())
-
     suspend fun verified_external_key_fingerprint_changes(
         recipients: List<String>,
     ): Result<List<RecipientKeyChange>> {

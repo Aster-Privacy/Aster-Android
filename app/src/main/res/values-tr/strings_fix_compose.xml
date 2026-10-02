@@ -9,4 +9,6 @@
     <string name="message_password_weak_hint">En az 12 karakter kullanın ve bir rakam, bir sembol ya da hem büyük hem küçük harf ekleyin.</string>
     <string name="message_password_too_weak">İleti parolası çok zayıf, bu yüzden ileti gönderilmedi. En az 12 karakter kullanın ve bir rakam, bir sembol ya da hem büyük hem küçük harf ekleyin.</string>
     <string name="identity_trust_new_key">Yeni anahtara güven</string>
+    <string name="send_key_check_failed">Aster alıcıların şifreleme anahtarlarını kontrol edemediği için bu iletiyi göndermedi. Bağlantınızı kontrol edin ve tekrar deneyin.</string>
+    <string name="outbox_failed_reason_identity_unverified">Aster bir alıcının şifreleme anahtarını doğrulayamadığı için bu iletiyi göndermedi. Daha sonra tekrar deneyebilir veya iletiyi silebilirsiniz.</string>
 </resources>

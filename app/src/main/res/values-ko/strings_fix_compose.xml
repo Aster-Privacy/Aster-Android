@@ -9,4 +9,6 @@
     <string name="message_password_weak_hint">12자 이상으로 하고 숫자, 기호 또는 대문자와 소문자를 모두 포함하세요.</string>
     <string name="message_password_too_weak">메시지 비밀번호가 너무 약해서 메시지가 전송되지 않았습니다. 12자 이상으로 하고 숫자, 기호 또는 대문자와 소문자를 모두 포함하세요.</string>
     <string name="identity_trust_new_key">새 키 신뢰</string>
+    <string name="send_key_check_failed">Aster에서 수신자의 암호화 키를 확인하지 못해 이 메시지를 보내지 않았습니다. 연결을 확인한 후 다시 시도하세요.</string>
+    <string name="outbox_failed_reason_identity_unverified">Aster에서 수신자의 암호화 키를 확인하지 못해 이 메시지를 보내지 않았습니다. 나중에 다시 시도하거나 삭제할 수 있습니다.</string>
 </resources>

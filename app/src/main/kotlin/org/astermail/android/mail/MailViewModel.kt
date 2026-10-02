@@ -4610,9 +4610,9 @@ class MailViewModel @Inject constructor(
         sender_email: String? = null,
     ): PostQuantumCoverage = repository.check_post_quantum_coverage(recipients, sender_email)
 
-    suspend fun find_external_key_fingerprint_changes(
+    suspend fun verified_external_key_fingerprint_changes(
         recipients: List<String>,
-    ): List<RecipientKeyChange> = repository.find_external_key_fingerprint_changes(recipients)
+    ): Result<List<RecipientKeyChange>> = repository.verified_external_key_fingerprint_changes(recipients)
 
     suspend fun acknowledge_external_key_fingerprint_change(
         change: RecipientKeyChange,

@@ -1990,8 +1990,14 @@ fun ComposeScreen(
                 val changes = kotlinx.coroutines.withTimeoutOrNull(
                     KEY_TRUST_LOOKUP_TIMEOUT_MS,
                 ) {
-                    mail_vm.find_external_key_fingerprint_changes(snap_to + snap_cc + snap_bcc)
-                }.orEmpty()
+                    mail_vm.verified_external_key_fingerprint_changes(snap_to + snap_cc + snap_bcc)
+                }?.getOrNull()
+                if (changes == null) {
+                    is_sending = false
+                    send_lock.set(false)
+                    send_error = context.getString(R.string.send_key_check_failed)
+                    return@launch
+                }
                 if (changes.isNotEmpty()) {
                     is_sending = false
                     send_lock.set(false)

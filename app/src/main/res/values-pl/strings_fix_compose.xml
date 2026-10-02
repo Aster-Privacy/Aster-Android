@@ -9,4 +9,6 @@
     <string name="message_password_weak_hint">Użyj co najmniej 12 znaków i dodaj cyfrę, symbol albo wielkie i małe litery.</string>
     <string name="message_password_too_weak">Hasło wiadomości jest zbyt słabe, więc wiadomość nie została wysłana. Użyj co najmniej 12 znaków i dodaj cyfrę, symbol albo wielkie i małe litery.</string>
     <string name="identity_trust_new_key">Zaufaj nowemu kluczowi</string>
+    <string name="send_key_check_failed">Aster nie mógł sprawdzić kluczy szyfrowania odbiorców, więc nie wysłał tej wiadomości. Sprawdź połączenie i spróbuj ponownie.</string>
+    <string name="outbox_failed_reason_identity_unverified">Aster nie mógł zweryfikować klucza szyfrowania odbiorcy, więc nie wysłał tej wiadomości. Możesz spróbować ponownie później albo ją odrzucić.</string>
 </resources>
