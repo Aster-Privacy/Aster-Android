@@ -327,7 +327,8 @@ fun InboxScreen(
     val locked_data_vm: org.astermail.android.mail.LockedDataViewModel = hiltViewModel()
     val locked_data_state by locked_data_vm.state.collectAsStateWithLifecycle()
     var show_recover_data_dialog by remember { mutableStateOf(false) }
-    val locked_data_preferences_loaded = settings_state.preferences_authoritative && settings_state.preferences != null
+    val locked_data_preferences_loaded = settings_state.preferences != null &&
+        (settings_state.preferences_authoritative || settings_state.preferences_locked)
     LaunchedEffect(locked_data_preferences_loaded) {
         if (locked_data_preferences_loaded) locked_data_vm.refresh()
     }

@@ -215,6 +215,7 @@ data class SettingsUiState(
     val referral_load_failed: Boolean = false,
     val preferences: UserPreferences? = null,
     val preferences_authoritative: Boolean = false,
+    val preferences_locked: Boolean = false,
     val reserved_addresses: List<ReservedAddress> = emptyList(),
     val family_seats: FamilySeatUsage? = null,
     val ghost_aliases: List<GhostAlias> = emptyList(),
@@ -5190,6 +5191,7 @@ class SettingsViewModel @Inject constructor(
                     if (identity_key.isNullOrBlank()) {
                         _state.value = _state.value.copy(
                             preferences = _state.value.preferences ?: UserPreferences(),
+                            preferences_locked = true,
                             is_loading = false,
                             error = context.getString(R.string.preferences_locked_retry),
                         )
@@ -5217,6 +5219,7 @@ class SettingsViewModel @Inject constructor(
                         _state.value = _state.value.copy(
                             preferences = decrypted,
                             preferences_authoritative = true,
+                            preferences_locked = false,
                             is_loading = false,
                         )
                     } else {
@@ -5227,6 +5230,7 @@ class SettingsViewModel @Inject constructor(
                         _state.value = _state.value.copy(
                             preferences = fallback ?: UserPreferences(),
                             preferences_authoritative = fallback != null,
+                            preferences_locked = fallback == null,
                             is_loading = false,
                             error = if (fallback != null) {
                                 null
