@@ -23,6 +23,9 @@ package org.astermail.android.ui.auth
 
 import compose.icons.TablerIcons
 import org.astermail.android.design.acrylic
+import org.astermail.android.design.field_surface_color
+import org.astermail.android.design.island_surface_color
+import org.astermail.android.design.mirror_in_rtl
 import org.astermail.android.ui.common.open_external_url
 import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
@@ -62,6 +65,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -586,45 +590,89 @@ private fun code_step(
 }
 
 @Composable
-private fun recovery_option_row(
-    icon: ImageVector,
-    title: String,
-    description: String,
+private fun recovery_option_group(
+    options: List<recovery_option>,
     enabled: Boolean,
-    on_click: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(AsterShapes.island)
+            .acrylic(colors, AsterShapes.island, island_surface_color(colors)),
+    ) {
+        options.forEachIndexed { index, option ->
+            if (index > 0) {
+                HorizontalDivider(
+                    modifier = Modifier.padding(start = 68.dp),
+                    thickness = 1.dp,
+                    color = colors.border_primary,
+                )
+            }
+            recovery_option_row(option = option, enabled = enabled)
+        }
+    }
+}
+
+private data class recovery_option(
+    val icon: ImageVector,
+    val title: String,
+    val description: String,
+    val on_click: () -> Unit,
+)
+
+@Composable
+private fun recovery_option_row(
+    option: recovery_option,
+    enabled: Boolean,
 ) {
     val colors = AsterMaterial.colors
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(AsterShapes.item)
-            .clickable(enabled = enabled, onClick = on_click)
-            .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.lg),
+            .clickable(enabled = enabled, onClick = option.on_click)
+            .padding(horizontal = AsterSpacing.lg, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = colors.text_secondary,
-            modifier = Modifier.size(24.dp),
-        )
-        Spacer(Modifier.width(AsterSpacing.lg))
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .background(field_surface_color(colors), AsterShapes.control),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = option.icon,
+                contentDescription = null,
+                tint = colors.text_primary,
+                modifier = Modifier.size(22.dp),
+            )
+        }
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = title,
+                text = option.title,
                 color = colors.text_primary,
                 fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
+                lineHeight = 20.sp,
+                fontWeight = FontWeight.SemiBold,
             )
-            Spacer(Modifier.height(2.dp))
             Text(
-                text = description,
+                text = option.description,
                 color = colors.text_tertiary,
                 fontSize = 13.sp,
                 lineHeight = 18.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
         }
+        Icon(
+            imageVector = TablerIcons.ChevronRight,
+            contentDescription = null,
+            tint = colors.text_muted,
+            modifier = Modifier.size(18.dp).mirror_in_rtl(),
+        )
     }
 }
 
@@ -644,35 +692,35 @@ private fun other_ways_step(
         on_change_account = on_change_account,
     )
 
+    Spacer(Modifier.height(AsterSpacing.xxl))
+
+    recovery_option_group(
+        options = listOf(
+            recovery_option(
+                icon = TablerIcons.Key,
+                title = stringResource(R.string.other_way_code_title),
+                description = stringResource(R.string.other_way_code_desc),
+                on_click = on_select_code,
+            ),
+            recovery_option(
+                icon = TablerIcons.Mail,
+                title = stringResource(R.string.other_way_email_title),
+                description = stringResource(R.string.other_way_email_desc),
+                on_click = on_select_email,
+            ),
+        ),
+        enabled = !is_loading,
+    )
+
     Spacer(Modifier.height(AsterSpacing.xl))
 
-    recovery_option_row(
-        icon = TablerIcons.Key,
-        title = stringResource(R.string.other_way_code_title),
-        description = stringResource(R.string.other_way_code_desc),
-        enabled = !is_loading,
-        on_click = on_select_code,
-    )
-
-    AsterDivider()
-
-    recovery_option_row(
-        icon = TablerIcons.Mail,
-        title = stringResource(R.string.other_way_email_title),
-        description = stringResource(R.string.other_way_email_desc),
-        enabled = !is_loading,
-        on_click = on_select_email,
-    )
-
-    AsterDivider()
-
-    Spacer(Modifier.height(AsterSpacing.lg))
-
-    text_link(
-        label = stringResource(R.string.other_way_none_title),
-        enabled = !is_loading,
-        on_click = on_contact_support,
-    )
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+        text_link(
+            label = stringResource(R.string.other_way_none_title),
+            enabled = !is_loading,
+            on_click = on_contact_support,
+        )
+    }
 }
 
 @Composable
