@@ -242,7 +242,9 @@ class RatchetEncryptor @Inject constructor(
                 }
             }
             OwnerKeyDecision.PIN_FIRST -> {
-                identity_pins.pin_owner_key_if_absent(recipient_email, served_owner.orEmpty())
+                if (!identity_pins.pin_owner_key_if_absent(recipient_email, served_owner.orEmpty())) {
+                    throw RatchetEncryptionException(recipient_email, "recipient owner key pin unavailable")
+                }
                 runCatching { identity_pins.record_prekey_binding_verified(recipient_email) }
             }
             OwnerKeyDecision.UNAVAILABLE -> throw RatchetEncryptionException(

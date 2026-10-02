@@ -125,6 +125,7 @@ class RatchetEncryptorIdentityPinTest {
         coEvery { ratchet_api.fetch_prekey_bundle(any(), any()) } returns bundle
         every { identity_pins.is_prekey_binding_verified(any()) } returns false
         every { identity_pins.owner_key_pin(any()) } returns null
+        coEvery { identity_pins.pin_owner_key_if_absent(any(), any()) } returns true
     }
 
     @After
@@ -277,6 +278,19 @@ class RatchetEncryptorIdentityPinTest {
         coVerify(exactly = 1) {
             identity_pins.pin_owner_key_if_absent(recipient_email, PrekeyBindingVerifier.owner_fingerprint(public_armor(key))!!)
         }
+    }
+
+    @Test
+    fun `first contact that cannot store the owner pin blocks the send`() = runTest {
+        val key = generate_pgp_key()
+        serve_bundle(sign_binding(key, bundle.kem_identity_key, bundle.signed_prekey))
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
+            PublicKeyResponse("kchaos", public_armor(key))
+        coEvery { identity_pins.pin_owner_key_if_absent(any(), any()) } returns false
+
+        val thrown = send().exceptionOrNull()
+        assertTrue(thrown is RatchetEncryptionException)
+        coVerify(exactly = 0) { state_store.save(any()) }
     }
 
     @Test

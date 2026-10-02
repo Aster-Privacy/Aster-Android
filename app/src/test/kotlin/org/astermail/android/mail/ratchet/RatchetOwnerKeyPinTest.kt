@@ -30,6 +30,7 @@ import org.astermail.android.storage.SecurePrefs
 import org.astermail.android.storage.SessionKeyStore
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -38,6 +39,7 @@ import org.junit.Test
 class RatchetOwnerKeyPinTest {
 
     private val values = mutableMapOf<String, Any?>()
+    private var commit_result = true
     private lateinit var store: RatchetIdentityPinStore
 
     private fun fake_prefs(): SharedPreferences {
@@ -62,7 +64,7 @@ class RatchetOwnerKeyPinTest {
             values.clear()
             editor
         }
-        every { editor.commit() } returns true
+        every { editor.commit() } answers { commit_result }
         every { editor.apply() } returns Unit
         val prefs = mockk<SharedPreferences>()
         every { prefs.edit() } returns editor
@@ -123,5 +125,20 @@ class RatchetOwnerKeyPinTest {
         store.flag_owner_key_change("peer@astermail.org", "aaaa", 1L)
 
         assertTrue(store.unacknowledged_changes.value.isEmpty())
+    }
+
+    @Test
+    fun `owner pin reports a failed write`() = runTest {
+        commit_result = false
+
+        assertFalse(store.pin_owner_key_if_absent("peer@astermail.org", "AAAA"))
+    }
+
+    @Test
+    fun `owner pin reports success when written or already present`() = runTest {
+        assertTrue(store.pin_owner_key_if_absent("peer@astermail.org", "AAAA"))
+        commit_result = false
+
+        assertTrue(store.pin_owner_key_if_absent("peer@astermail.org", "BBBB"))
     }
 }

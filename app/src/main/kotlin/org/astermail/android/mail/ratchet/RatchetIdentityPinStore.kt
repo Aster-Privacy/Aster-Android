@@ -222,12 +222,14 @@ class RatchetIdentityPinStore @Inject constructor(
         return read_string(refresh_scope(), owner_key(normalized))?.takeIf { it.isNotBlank() }
     }
 
-    suspend fun pin_owner_key_if_absent(recipient_email: String, fingerprint: String): Unit = mutex.withLock {
-        val normalized = normalize_email(recipient_email) ?: return@withLock
-        if (fingerprint.isBlank()) return@withLock
+    suspend fun pin_owner_key_if_absent(recipient_email: String, fingerprint: String): Boolean = mutex.withLock {
+        val normalized = normalize_email(recipient_email) ?: return@withLock false
+        if (fingerprint.isBlank()) return@withLock false
         val scope = refresh_scope()
-        if (!read_string(scope, owner_key(normalized)).isNullOrBlank()) return@withLock
-        prefs.edit().putString(scoped(scope, owner_key(normalized)), fingerprint).commit()
+        if (!read_string(scope, owner_key(normalized)).isNullOrBlank()) return@withLock true
+        runCatching {
+            prefs.edit().putString(scoped(scope, owner_key(normalized)), fingerprint).commit()
+        }.getOrDefault(false)
     }
 
     suspend fun flag_owner_key_change(
