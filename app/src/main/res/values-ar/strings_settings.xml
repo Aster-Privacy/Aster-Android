@@ -89,4 +89,6 @@
     <string name="sign_out_all_other_confirm_message">هل تريد تسجيل الخروج من كل الأجهزة عدا هذا الجهاز؟</string>
     <string name="alias_forward_limit_reached">لقد بلغت الحد الأقصى للأسماء المستعارة النشطة في خطتك.</string>
     <string name="settings_plan_bullet_daily_emails">1000 رسالة يوميًا</string>
+    <string name="launch_folder">الفتح عند التشغيل</string>
+    <string name="launch_folder_hint">يظهر عند فتح التطبيق. تظل الإشعارات والروابط تفتح الرسالة التي تشير إليها.</string>
 </resources>

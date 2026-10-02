@@ -525,6 +525,7 @@ private val all_settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("behavior", R.string.settings_behavior, R.string.conversation_grouping_subtitle, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.inbox_categories, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.inbox_categories_subtitle, false),
+    settings_index_entry("behavior", R.string.settings_behavior, R.string.launch_folder, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.conversation_order_label, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.sort_newest, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.sort_oldest, false),

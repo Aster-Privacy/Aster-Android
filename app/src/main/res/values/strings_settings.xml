@@ -151,4 +151,6 @@
     <string name="revoke_session_confirm_message">Sign this device out of your account?</string>
     <string name="sign_out_all_other_confirm_message">Sign out every device except this one?</string>
     <string name="alias_forward_limit_reached">You have reached the maximum number of active aliases for your plan</string>
+    <string name="launch_folder">Open on launch</string>
+    <string name="launch_folder_hint">Shown when you open the app. Notifications and links still open the message they point to.</string>
 </resources>

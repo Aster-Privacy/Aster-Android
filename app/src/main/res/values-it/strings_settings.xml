@@ -89,4 +89,6 @@
     <string name="sign_out_all_other_confirm_message">Vuoi disconnettere tutti i dispositivi tranne questo?</string>
     <string name="alias_forward_limit_reached">Hai raggiunto il numero massimo di alias attivi previsto dal tuo piano</string>
     <string name="settings_plan_bullet_daily_emails">1.000 email al giorno</string>
+    <string name="launch_folder">Apri all\'avvio</string>
+    <string name="launch_folder_hint">Viene mostrata all\'apertura dell\'app. Notifiche e link aprono comunque il messaggio a cui rimandano.</string>
 </resources>

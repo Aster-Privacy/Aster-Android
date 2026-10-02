@@ -89,4 +89,6 @@
     <string name="sign_out_all_other_confirm_message">Op alle apparaten behalve dit apparaat uitloggen?</string>
     <string name="alias_forward_limit_reached">Je hebt het maximum aantal actieve aliassen van je abonnement bereikt</string>
     <string name="settings_plan_bullet_daily_emails">1.000 e-mails per dag</string>
+    <string name="launch_folder">Openen bij starten</string>
+    <string name="launch_folder_hint">Wordt getoond wanneer je de app opent. Meldingen en links openen nog steeds het bericht waarnaar ze verwijzen.</string>
 </resources>
