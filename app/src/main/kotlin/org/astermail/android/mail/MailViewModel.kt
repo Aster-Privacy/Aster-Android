@@ -4693,6 +4693,11 @@ class MailViewModel @Inject constructor(
         viewModelScope.launch { runCatching { repository.retry_failed_send(pending_id, allow_non_post_quantum) } }
     }
 
+    fun trust_new_keys_and_retry(pending_id: String, recipients: List<String>) {
+        recipients.forEach { identity_pins.acknowledge_sender(it) }
+        retry_failed_send(pending_id)
+    }
+
     fun discard_failed_send(pending_id: String) {
         viewModelScope.launch { runCatching { repository.discard_failed_send(pending_id) } }
     }

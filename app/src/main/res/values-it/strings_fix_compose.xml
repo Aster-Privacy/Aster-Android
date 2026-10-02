@@ -5,4 +5,8 @@
     <string name="scheduled_too_far_ahead">Le email programmate possono partire al massimo con 28 giorni di anticipo. Scegli un orario precedente.</string>
     <string name="scheduled_requires_encryption">Hai attivato la crittografia obbligatoria, e le email programmate verso indirizzi esterni non sono crittografate end-to-end. Invia questo messaggio ora o disattiva la crittografia obbligatoria nelle Impostazioni.</string>
     <string name="send_key_changed_while_waiting">La chiave di crittografia di un destinatario è cambiata mentre questo messaggio era in attesa di invio, quindi non è stato inviato.</string>
+    <string name="outbox_failed_reason_key_changed">La chiave di crittografia di un destinatario è cambiata. Apri la bozza e conferma la nuova chiave per inviarla.</string>
+    <string name="message_password_weak_hint">Usa almeno 12 caratteri e includi un numero, un simbolo o lettere sia maiuscole sia minuscole.</string>
+    <string name="message_password_too_weak">La password del messaggio è troppo debole, quindi il messaggio non è stato inviato. Usa almeno 12 caratteri e includi un numero, un simbolo o lettere sia maiuscole sia minuscole.</string>
+    <string name="identity_trust_new_key">Considera attendibile la nuova chiave</string>
 </resources>

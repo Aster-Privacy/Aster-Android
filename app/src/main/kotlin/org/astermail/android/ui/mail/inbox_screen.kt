@@ -499,6 +499,8 @@ fun InboxScreen(
         val reason_text = when (open_failed_send.reason) {
             org.astermail.android.mail.SendFailureReason.POST_QUANTUM -> stringResource(R.string.outbox_failed_reason_post_quantum)
             org.astermail.android.mail.SendFailureReason.IDENTITY_CHANGED -> stringResource(R.string.outbox_failed_reason_identity)
+            org.astermail.android.mail.SendFailureReason.KEY_CHANGED -> stringResource(R.string.outbox_failed_reason_key_changed)
+            org.astermail.android.mail.SendFailureReason.WEAK_PASSWORD -> stringResource(R.string.message_password_too_weak)
             org.astermail.android.mail.SendFailureReason.ENCRYPTION -> stringResource(R.string.outbox_failed_reason_encryption)
             org.astermail.android.mail.SendFailureReason.REJECTED -> stringResource(R.string.outbox_failed_reason_rejected)
             org.astermail.android.mail.SendFailureReason.CONNECTION -> stringResource(R.string.outbox_failed_reason_connection)
@@ -529,6 +531,12 @@ fun InboxScreen(
                     org.astermail.android.design.components.AsterDialogPrimaryButton(
                         label = stringResource(R.string.post_quantum_send_anyway),
                         onClick = { mail_vm.retry_failed_send(failed_id, allow_non_post_quantum = true) },
+                    )
+                } else if (open_failed_send.reason == org.astermail.android.mail.SendFailureReason.IDENTITY_CHANGED) {
+                    val failed_recipients = open_failed_send.recipients
+                    org.astermail.android.design.components.AsterDialogPrimaryButton(
+                        label = stringResource(R.string.identity_trust_new_key),
+                        onClick = { mail_vm.trust_new_keys_and_retry(failed_id, failed_recipients) },
                     )
                 } else {
                     org.astermail.android.design.components.AsterDialogPrimaryButton(

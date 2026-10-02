@@ -37,8 +37,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -142,6 +145,9 @@ class AuthRepository @Inject constructor(
 
     private val _session_expired = MutableStateFlow(false)
     val session_expired: StateFlow<Boolean> = _session_expired.asStateFlow()
+
+    private val _forced_account_switch = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val forced_account_switch: SharedFlow<String> = _forced_account_switch.asSharedFlow()
 
     fun consume_session_expired() {
         _session_expired.value = false
@@ -982,8 +988,13 @@ class AuthRepository @Inject constructor(
     suspend fun logout(): Result<Unit> = sign_out_internal(remove_account = true)
 
     suspend fun force_sign_out(): Result<Unit> {
+        val previous_id = session_key_store.get_user_id()
         val result = sign_out_internal(remove_account = false)
-        if (!_is_signed_in.value) _session_expired.value = true
+        if (!_is_signed_in.value) {
+            _session_expired.value = true
+        } else {
+            _active_account_id.value?.takeIf { it != previous_id }?.let { _forced_account_switch.tryEmit(it) }
+        }
         return result
     }
 

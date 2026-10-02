@@ -68,3 +68,23 @@ fun replay_blocked_by_key_change(recipients: List<String>, changes: List<Recipie
     val external = recipients.filter { it.isNotBlank() && !is_internal_recipient(it) }.map { address_key(it) }.toSet()
     return changes.any { address_key(it.email) in external }
 }
+
+const val MIN_MESSAGE_PASSWORD_LENGTH = 12
+
+fun message_password_strength_tier(password: String): Int {
+    var score = 0
+    if (password.length >= 8) score++
+    if (password.length >= 12) score++
+    if (password.any { it in 'A'..'Z' } && password.any { it in 'a'..'z' }) score++
+    if (password.any { it in '0'..'9' }) score++
+    if (password.any { !(it in 'A'..'Z' || it in 'a'..'z' || it in '0'..'9') }) score++
+    return when {
+        score <= 1 -> 1
+        score == 2 -> 2
+        score == 3 -> 3
+        else -> 4
+    }
+}
+
+fun is_strong_message_password(password: String): Boolean =
+    password.length >= MIN_MESSAGE_PASSWORD_LENGTH && message_password_strength_tier(password) >= 3

@@ -150,4 +150,36 @@ class SendGatesTest {
         val changes = listOf(RecipientKeyChange("a@astermail.org", "aa", "bb"))
         assertFalse(replay_blocked_by_key_change(listOf("a@astermail.org"), changes))
     }
+
+    @Test
+    fun `weak message passwords are rejected`() {
+        listOf("", "a", "password", "Password1", "abcdefghijkl", "a".repeat(20), "abcd1234", "Abcdefg1234").forEach {
+            assertFalse(it, is_strong_message_password(it))
+        }
+    }
+
+    @Test
+    fun `strong message passwords are accepted`() {
+        listOf(
+            "correct horse battery staple",
+            "Tr0ub4dor-and-3",
+            "abcdefghijk1",
+            "AbcdefghijkL",
+            "abcdefghijk!",
+            "Abcdefghijkl",
+        ).forEach {
+            assertTrue(it, is_strong_message_password(it))
+        }
+    }
+
+    @Test
+    fun `message password tier follows the shared score`() {
+        assertEquals(1, message_password_strength_tier(""))
+        assertEquals(1, message_password_strength_tier("password"))
+        assertEquals(1, message_password_strength_tier("abcdefgh"))
+        assertEquals(4, message_password_strength_tier("Abcdefghij1!"))
+        assertEquals(2, message_password_strength_tier("abcdefghijkl"))
+        assertEquals(3, message_password_strength_tier("abcdefghijk1"))
+        assertEquals(4, message_password_strength_tier("Tr0ub4dor-and-3"))
+    }
 }

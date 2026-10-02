@@ -2582,4 +2582,45 @@ class MailRepositoryTest {
         assertEquals(PendingSendOutcome.SENT, outcome)
         coVerify(exactly = 1) { send_api.send_external(any()) }
     }
+
+    @Test
+    fun `run_pending_send keeps an external send queued when the key lookup fails`() = runTest {
+        pending_send_dao.upsert(pending_row("pend_net", draft_id = "draft_net", to = "friend@example.com"))
+        coEvery { keys_api.discover_external_keys_batch(any()) } throws java.io.IOException("offline")
+
+        val outcome = repo.run_pending_send("pend_net")
+
+        assertEquals(PendingSendOutcome.RETRY, outcome)
+        assertEquals("pending", pending_send_dao.get_by_id("pend_net")?.status)
+        coVerify(exactly = 0) { send_api.send_external(any()) }
+    }
+
+    @Test
+    fun `run_pending_send defers instead of failing when the key lookup keeps failing`() = runTest {
+        pending_send_dao.upsert(pending_row("pend_net_max", draft_id = "draft_net_max", to = "friend@example.com"))
+        coEvery { keys_api.discover_external_keys_batch(any()) } throws java.io.IOException("offline")
+
+        val outcome = repo.run_pending_send("pend_net_max", attempt = SEND_RETRY_MAX_ATTEMPTS)
+
+        assertEquals(PendingSendOutcome.DEFERRED, outcome)
+        assertEquals("pending", pending_send_dao.get_by_id("pend_net_max")?.status)
+        coVerify(exactly = 0) { send_api.send_external(any()) }
+    }
+
+    @Test
+    fun `run_pending_send refuses a queued external send with a weak message password`() = runTest {
+        pending_send_dao.upsert(
+            pending_row("pend_weak", draft_id = "draft_weak", to = "friend@example.com")
+                .copy(expires_at = "2030-01-01T00:00:00Z", expiry_password = "password"),
+        )
+        coEvery { keys_api.discover_external_keys_batch(any()) } returns listOf(
+            org.astermail.android.api.keys.ExternalKeyInfo(email = "friend@example.com", found = true),
+        )
+
+        val outcome = repo.run_pending_send("pend_weak")
+
+        assertEquals(PendingSendOutcome.FAILED, outcome)
+        assertEquals("failed", pending_send_dao.get_by_id("pend_weak")?.status)
+        coVerify(exactly = 0) { send_api.send_external(any()) }
+    }
 }

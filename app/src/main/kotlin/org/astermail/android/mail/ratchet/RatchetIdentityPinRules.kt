@@ -28,6 +28,13 @@ enum class IdentityPinDecision {
     REPLACE,
 }
 
+enum class OwnerKeyDecision {
+    ACCEPT,
+    PIN_FIRST,
+    UNAVAILABLE,
+    UNTRUSTED,
+}
+
 enum class IdentitySighting {
     CHAINED,
     BOOTSTRAP,
@@ -49,6 +56,24 @@ object RatchetIdentityPinRules {
         stored_fingerprint == current_fingerprint -> IdentityPinDecision.KEEP
         confirmed -> IdentityPinDecision.REPLACE
         else -> IdentityPinDecision.FLAG_DRIFT
+    }
+
+    fun decide_owner_key(
+        pinned_fingerprint: String?,
+        served_fingerprint: String?,
+        binding: PrekeyBindingResult,
+    ): OwnerKeyDecision = when {
+        binding == PrekeyBindingResult.INVALID -> OwnerKeyDecision.UNTRUSTED
+        pinned_fingerprint.isNullOrBlank() ->
+            if (binding == PrekeyBindingResult.VERIFIED && !served_fingerprint.isNullOrBlank()) {
+                OwnerKeyDecision.PIN_FIRST
+            } else {
+                OwnerKeyDecision.ACCEPT
+            }
+        served_fingerprint.isNullOrBlank() -> OwnerKeyDecision.UNAVAILABLE
+        !served_fingerprint.equals(pinned_fingerprint, ignoreCase = true) -> OwnerKeyDecision.UNTRUSTED
+        binding == PrekeyBindingResult.VERIFIED -> OwnerKeyDecision.ACCEPT
+        else -> OwnerKeyDecision.UNTRUSTED
     }
 
     fun pq_prekey_accepts(consumed_by_ephemeral_key: String?, ephemeral_key: String): Boolean =

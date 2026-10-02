@@ -5,4 +5,8 @@
     <string name="scheduled_too_far_ahead">예약 이메일은 최대 28일 후까지 보낼 수 있습니다. 더 이른 시간을 선택하세요.</string>
     <string name="scheduled_requires_encryption">필수 암호화가 켜져 있으며, 외부 주소로 보내는 예약 이메일은 종단 간 암호화되지 않습니다. 이 메시지를 지금 보내거나 설정에서 필수 암호화를 끄세요.</string>
     <string name="send_key_changed_while_waiting">이 메시지가 전송을 기다리는 동안 수신자의 암호화 키가 변경되어 전송되지 않았습니다.</string>
+    <string name="outbox_failed_reason_key_changed">수신자의 암호화 키가 변경되었습니다. 보내려면 초안을 열고 새 키를 확인하세요.</string>
+    <string name="message_password_weak_hint">12자 이상으로 하고 숫자, 기호 또는 대문자와 소문자를 모두 포함하세요.</string>
+    <string name="message_password_too_weak">메시지 비밀번호가 너무 약해서 메시지가 전송되지 않았습니다. 12자 이상으로 하고 숫자, 기호 또는 대문자와 소문자를 모두 포함하세요.</string>
+    <string name="identity_trust_new_key">새 키 신뢰</string>
 </resources>

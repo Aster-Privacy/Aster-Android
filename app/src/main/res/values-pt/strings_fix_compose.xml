@@ -5,4 +5,8 @@
     <string name="scheduled_too_far_ahead">Os emails agendados podem ser enviados com, no máximo, 28 dias de antecedência. Escolha uma hora anterior.</string>
     <string name="scheduled_requires_encryption">Tem a encriptação obrigatória ativada, e os emails agendados para endereços externos não são encriptados ponto a ponto. Envie esta mensagem agora ou desative a encriptação obrigatória nas Definições.</string>
     <string name="send_key_changed_while_waiting">A chave de encriptação de um destinatário mudou enquanto esta mensagem aguardava envio, por isso não foi enviada.</string>
+    <string name="outbox_failed_reason_key_changed">A chave de encriptação de um destinatário mudou. Abra o rascunho e confirme a nova chave para o enviar.</string>
+    <string name="message_password_weak_hint">Utilize pelo menos 12 caracteres e inclua um número, um símbolo ou letras maiúsculas e minúsculas.</string>
+    <string name="message_password_too_weak">A palavra-passe da mensagem é demasiado fraca, por isso a mensagem não foi enviada. Utilize pelo menos 12 caracteres e inclua um número, um símbolo ou letras maiúsculas e minúsculas.</string>
+    <string name="identity_trust_new_key">Confiar na nova chave</string>
 </resources>

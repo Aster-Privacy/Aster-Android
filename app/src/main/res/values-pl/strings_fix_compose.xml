@@ -5,4 +5,8 @@
     <string name="scheduled_too_far_ahead">Zaplanowane e-maile można wysłać najwyżej 28 dni naprzód. Wybierz wcześniejszy termin.</string>
     <string name="scheduled_requires_encryption">Masz włączone wymagane szyfrowanie, a zaplanowane e-maile do adresów zewnętrznych nie są szyfrowane end-to-end. Wyślij tę wiadomość teraz lub wyłącz wymagane szyfrowanie w Ustawieniach.</string>
     <string name="send_key_changed_while_waiting">Klucz szyfrowania odbiorcy zmienił się, gdy ta wiadomość czekała na wysłanie, więc nie została wysłana.</string>
+    <string name="outbox_failed_reason_key_changed">Klucz szyfrowania odbiorcy się zmienił. Otwórz wersję roboczą i potwierdź nowy klucz, aby ją wysłać.</string>
+    <string name="message_password_weak_hint">Użyj co najmniej 12 znaków i dodaj cyfrę, symbol albo wielkie i małe litery.</string>
+    <string name="message_password_too_weak">Hasło wiadomości jest zbyt słabe, więc wiadomość nie została wysłana. Użyj co najmniej 12 znaków i dodaj cyfrę, symbol albo wielkie i małe litery.</string>
+    <string name="identity_trust_new_key">Zaufaj nowemu kluczowi</string>
 </resources>

@@ -5,4 +5,8 @@
     <string name="scheduled_too_far_ahead">Los correos programados pueden enviarse como máximo con 28 días de antelación. Elige una hora anterior.</string>
     <string name="scheduled_requires_encryption">Tienes activado el cifrado obligatorio, y los correos programados a direcciones externas no tienen cifrado de extremo a extremo. Envía este mensaje ahora o desactiva el cifrado obligatorio en Ajustes.</string>
     <string name="send_key_changed_while_waiting">La clave de cifrado de un destinatario cambió mientras este mensaje esperaba para enviarse, así que no se envió.</string>
+    <string name="outbox_failed_reason_key_changed">La clave de cifrado de un destinatario cambió. Abre el borrador y confirma la nueva clave para enviarlo.</string>
+    <string name="message_password_weak_hint">Usa al menos 12 caracteres e incluye un número, un símbolo o letras mayúsculas y minúsculas.</string>
+    <string name="message_password_too_weak">La contraseña del mensaje es demasiado débil, así que el mensaje no se envió. Usa al menos 12 caracteres e incluye un número, un símbolo o letras mayúsculas y minúsculas.</string>
+    <string name="identity_trust_new_key">Confiar en la nueva clave</string>
 </resources>

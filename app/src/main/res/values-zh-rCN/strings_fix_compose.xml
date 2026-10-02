@@ -5,4 +5,8 @@
     <string name="scheduled_too_far_ahead">定时邮件最多只能提前 28 天安排。请选择更早的时间。</string>
     <string name="scheduled_requires_encryption">你已开启强制加密，而发往外部地址的定时邮件不是端到端加密的。请立即发送此邮件，或在设置中关闭强制加密。</string>
     <string name="send_key_changed_while_waiting">此邮件等待发送期间，某位收件人的加密密钥发生了变化，因此未发送。</string>
+    <string name="outbox_failed_reason_key_changed">某位收件人的加密密钥已更改。请打开草稿并确认新密钥后再发送。</string>
+    <string name="message_password_weak_hint">请至少使用 12 个字符，并包含数字、符号，或同时包含大写和小写字母。</string>
+    <string name="message_password_too_weak">邮件密码强度太弱，因此邮件未发送。请至少使用 12 个字符，并包含数字、符号，或同时包含大写和小写字母。</string>
+    <string name="identity_trust_new_key">信任新密钥</string>
 </resources>

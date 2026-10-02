@@ -4849,6 +4849,7 @@ internal fun ExpiringSheet(
     var custom_epoch_ms by remember { mutableStateOf<Long?>(null) }
     val password_arg = password.trim().ifBlank { null }
         ?.takeIf { password_mode == ExpiryPasswordMode.AVAILABLE }
+    val password_weak = password_arg != null && !org.astermail.android.mail.is_strong_message_password(password_arg)
     val one_hour_label_top = stringResource(R.string.duration_one_hour)
     val one_day_label_top = stringResource(R.string.duration_one_day)
     val seven_days_label_top = pluralStringResource(R.plurals.duration_n_days, 7, 7)
@@ -4894,7 +4895,7 @@ internal fun ExpiringSheet(
     val commit_or_close: () -> Unit = commit@{
         val hours = selected_hours
         val custom = custom_epoch_ms
-        if (hours == null && custom == null) {
+        if (password_weak || (hours == null && custom == null)) {
             on_close()
             return@commit
         }
@@ -5037,12 +5038,22 @@ internal fun ExpiringSheet(
                             .padding(9.dp),
                     )
                 }
+                if (password_weak) {
+                    Text(
+                        text = stringResource(R.string.message_password_weak_hint),
+                        color = colors.text_muted,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .padding(start = AsterSpacing.sm, end = AsterSpacing.sm, top = AsterSpacing.xs)
+                            .testTag("expiry_password_weak_hint"),
+                    )
+                }
             }
             Spacer(Modifier.height(AsterSpacing.md))
             org.astermail.android.design.components.AsterButton(
                 label = stringResource(R.string.accept),
                 onClick = commit_or_close,
-                enabled = selected_hours != null || custom_epoch_ms != null,
+                enabled = (selected_hours != null || custom_epoch_ms != null) && !password_weak,
                 modifier = Modifier.padding(horizontal = AsterSpacing.sm),
             )
             Spacer(Modifier.height(AsterSpacing.lg))

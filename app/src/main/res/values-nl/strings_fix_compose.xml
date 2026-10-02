@@ -5,4 +5,8 @@
     <string name="scheduled_too_far_ahead">Geplande e-mails kunnen maximaal 28 dagen vooruit worden verstuurd. Kies een eerder tijdstip.</string>
     <string name="scheduled_requires_encryption">Je hebt verplichte versleuteling ingeschakeld, en geplande e-mails naar externe adressen zijn niet end-to-end versleuteld. Verstuur dit bericht nu of schakel verplichte versleuteling uit in Instellingen.</string>
     <string name="send_key_changed_while_waiting">De versleutelingssleutel van een ontvanger is gewijzigd terwijl dit bericht wachtte op verzending, dus het is niet verstuurd.</string>
+    <string name="outbox_failed_reason_key_changed">De versleutelingssleutel van een ontvanger is gewijzigd. Open het concept en bevestig de nieuwe sleutel om het te versturen.</string>
+    <string name="message_password_weak_hint">Gebruik minstens 12 tekens en voeg een cijfer, een symbool of zowel hoofdletters als kleine letters toe.</string>
+    <string name="message_password_too_weak">Het berichtwachtwoord is te zwak, dus het bericht is niet verstuurd. Gebruik minstens 12 tekens en voeg een cijfer, een symbool of zowel hoofdletters als kleine letters toe.</string>
+    <string name="identity_trust_new_key">Nieuwe sleutel vertrouwen</string>
 </resources>

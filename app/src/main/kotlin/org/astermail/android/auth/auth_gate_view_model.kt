@@ -57,6 +57,8 @@ class AuthGateViewModel @Inject constructor(
 
     val session_expired: StateFlow<Boolean> = auth_repository.session_expired
 
+    val forced_account_switch: kotlinx.coroutines.flow.SharedFlow<String> = auth_repository.forced_account_switch
+
     fun consume_session_expired() {
         auth_repository.consume_session_expired()
     }

@@ -98,6 +98,8 @@ class TransientSendException : Exception("send retry pending")
 
 class MixedRecipientsException : Exception("internal and external recipients in one send")
 
+class WeakMessagePasswordException(message: String) : Exception(message)
+
 fun has_mixed_recipients(recipients: List<String>): Boolean {
     val addresses = recipients.filter { it.isNotBlank() }
     return addresses.any { is_internal_recipient(it) } && addresses.any { !is_internal_recipient(it) }
@@ -1132,14 +1134,21 @@ class MailRepository @Inject constructor(
             return PendingSendOutcome.FAILED
         }
         val all_recipients = recipients.first + recipients.second + recipients.third
-        if (all_recipients.any { !is_internal_recipient(it) } &&
-            replay_blocked_by_key_change(all_recipients, find_external_key_fingerprint_changes(all_recipients))
-        ) {
+        val key_changes = if (all_recipients.any { !is_internal_recipient(it) }) {
+            verified_external_key_fingerprint_changes(all_recipients)
+        } else {
+            Result.success(emptyList())
+        }
+        if (key_changes.isFailure) {
+            runCatching { pending_send_dao.mark_pending(pending_id) }
+            return bounded_retry_outcome(attempt)
+        }
+        if (replay_blocked_by_key_change(all_recipients, key_changes.getOrDefault(emptyList()))) {
             _send_problem.value = true
             _send_result_events.tryEmit(
                 Result.failure(IllegalStateException(context.getString(R.string.send_key_changed_while_waiting))),
             )
-            mark_send_failed(pending_id, SendFailureReason.IDENTITY_CHANGED)
+            mark_send_failed(pending_id, SendFailureReason.KEY_CHANGED)
             refresh_failed_send_count()
             preserve_failed_send_draft(pending_id, row, recipients, attachments)
             _draft_changes.tryEmit(Unit)
@@ -4099,12 +4108,20 @@ class MailRepository @Inject constructor(
 
     suspend fun find_external_key_fingerprint_changes(
         recipients: List<String>,
-    ): List<RecipientKeyChange> {
+    ): List<RecipientKeyChange> = verified_external_key_fingerprint_changes(recipients).getOrDefault(emptyList())
+
+    suspend fun verified_external_key_fingerprint_changes(
+        recipients: List<String>,
+    ): Result<List<RecipientKeyChange>> {
         val external = external_key_trust_candidates(recipients)
-        if (external.isEmpty()) return emptyList()
-        return runCatching {
-            key_changes_from_discovery(keys_api.discover_external_keys_batch(external))
-        }.getOrDefault(emptyList())
+        if (external.isEmpty()) return Result.success(emptyList())
+        return try {
+            Result.success(key_changes_from_discovery(keys_api.discover_external_keys_batch(external)))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            Result.failure(e)
+        }
     }
 
     suspend fun acknowledge_external_key_fingerprint_change(
@@ -4168,6 +4185,9 @@ class MailRepository @Inject constructor(
         }
 
         if (all_external) {
+            if (!expiry_password.isNullOrEmpty() && !is_strong_message_password(expiry_password)) {
+                throw WeakMessagePasswordException(context.getString(R.string.message_password_too_weak))
+            }
             val ephemeral_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
             val base_nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
 
@@ -5373,6 +5393,8 @@ internal fun server_rejection_cause(err: Throwable?): Throwable? {
 enum class SendFailureReason(val code: String) {
     POST_QUANTUM("post_quantum"),
     IDENTITY_CHANGED("identity_changed"),
+    KEY_CHANGED("key_changed"),
+    WEAK_PASSWORD("weak_password"),
     ENCRYPTION("encryption"),
     REJECTED("rejected"),
     CONNECTION("connection"),
@@ -5405,6 +5427,7 @@ private inline fun has_cause(err: Throwable?, predicate: (Throwable) -> Boolean)
 }
 
 internal fun send_failure_reason_for(err: Throwable?): SendFailureReason = when {
+    has_cause(err) { it is WeakMessagePasswordException } -> SendFailureReason.WEAK_PASSWORD
     has_cause(err) { it is org.astermail.android.mail.ratchet.PostQuantumUnavailableException } ->
         SendFailureReason.POST_QUANTUM
     has_cause(err) { it is org.astermail.android.mail.ratchet.RatchetIdentityPinException } ->
@@ -5419,6 +5442,7 @@ internal fun send_failure_reason_for(err: Throwable?): SendFailureReason = when 
 }
 
 internal fun is_permanent_send_failure_cause(err: Throwable?): Boolean {
+    if (has_cause(err) { it is WeakMessagePasswordException }) return true
     if (server_rejection_cause(err) != null) return true
     if (is_transient_send_cause(err)) return false
     var cause = err
