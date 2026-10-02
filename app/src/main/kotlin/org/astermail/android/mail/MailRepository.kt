@@ -4217,7 +4217,10 @@ class MailRepository @Inject constructor(
         } else {
             val from_addr = sender_email ?: session_key_store.get_user_email() ?: ""
             val internal_recipients = (to + cc + bcc).filter { is_internal_recipient(it) }
+            val hidden_bcc = hidden_internal_bcc(to, cc, bcc)
+            val shared_internal = shared_targets(to, cc, bcc).filter { is_internal_recipient(it) }
 
+            var recipient_bodies: Map<String, String>? = null
             val ratchet_body = if (internal_recipients.isNotEmpty()) {
                 if (from_addr.isBlank() || !ensure_ratchet_keys_ready()) {
                     throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
@@ -4227,29 +4230,27 @@ class MailRepository @Inject constructor(
                     put("s", subject.ifBlank { existing_bundle.subject.orEmpty() })
                     put("b", existing_bundle.body)
                 }.toString()
-                val encrypted = try {
-                    ratchet_encryptor.encrypt_envelope(
-                        from_addr,
-                        internal_recipients,
-                        wrapped,
-                        allow_non_post_quantum,
-                    )
-                } catch (t: org.astermail.android.mail.ratchet.PostQuantumUnavailableException) {
-                    throw t
-                } catch (t: org.astermail.android.mail.ratchet.RatchetIdentityPinException) {
-                    throw IllegalStateException(context.getString(R.string.e2e_identity_changed_blocked), t)
-                } catch (t: Throwable) {
-                    if (t is CancellationException) throw t
-                    throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed), t)
-                }
-                encrypted ?: throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
+                val sealed = seal_with_private_bcc(
+                    from_addr,
+                    shared_internal,
+                    hidden_bcc,
+                    wrapped,
+                    allow_non_post_quantum,
+                )
+                recipient_bodies = sealed.second.takeIf { it.isNotEmpty() }
+                sealed.first
             } else null
 
             val final_body = ratchet_body ?: recipient_body_html
             val final_subject = if (ratchet_body != null) "" else subject
 
             val internal_attachments = if (attachments.isNotEmpty()) {
-                build_internal_attachments(to + cc + bcc, attachments, from_addr)
+                build_internal_attachments(
+                    shared_targets(to, cc, bcc),
+                    attachments,
+                    from_addr,
+                    hidden_bcc,
+                )
             } else {
                 emptyList()
             }
@@ -4272,9 +4273,48 @@ class MailRepository @Inject constructor(
                     expires_at = expires_at,
                     sender_alias_hash = sender_alias_hash,
                     suppress_branding = suppress_branding,
+                    recipient_bodies = recipient_bodies,
                 ),
             )
         }
+    }
+
+    private suspend fun seal_internal_envelope(
+        from_addr: String,
+        recipients: List<String>,
+        wrapped: String,
+        allow_non_post_quantum: Boolean,
+    ): String {
+        val encrypted = try {
+            ratchet_encryptor.encrypt_envelope(from_addr, recipients, wrapped, allow_non_post_quantum)
+        } catch (t: org.astermail.android.mail.ratchet.PostQuantumUnavailableException) {
+            throw t
+        } catch (t: org.astermail.android.mail.ratchet.RatchetIdentityPinException) {
+            throw IllegalStateException(context.getString(R.string.e2e_identity_changed_blocked), t)
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+            throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed), t)
+        }
+        return encrypted ?: throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
+    }
+
+    private suspend fun seal_with_private_bcc(
+        from_addr: String,
+        shared_internal: List<String>,
+        hidden_bcc: List<String>,
+        wrapped: String,
+        allow_non_post_quantum: Boolean,
+    ): Pair<String, Map<String, String>> {
+        val shared = seal_internal_envelope(
+            from_addr,
+            shared_internal.ifEmpty { listOf(from_addr) },
+            wrapped,
+            allow_non_post_quantum,
+        )
+        val private_bodies = hidden_bcc.associateWith { recipient ->
+            seal_internal_envelope(from_addr, listOf(recipient), wrapped, allow_non_post_quantum)
+        }
+        return shared to private_bodies
     }
 
     suspend fun send_reaction(
@@ -4426,15 +4466,26 @@ class MailRepository @Inject constructor(
         recipients: List<String>,
         attachments: List<ExternalAttachmentPayload>,
         sender_email: String? = null,
+        hidden_bcc: List<String> = emptyList(),
     ): List<SendAttachmentPayload> {
-        val recipient_keys = fetch_internal_public_keys(recipients, sender_email)
-        val has_internal_recipients = recipients.any { is_internal_recipient(it) }
+        val shared_keys = fetch_internal_public_keys(recipients, sender_email)
+        val recipient_keys = if (shared_keys.isEmpty() && hidden_bcc.isNotEmpty()) {
+            listOfNotNull(own_public_key()?.takeIf { it.isNotBlank() })
+        } else {
+            shared_keys
+        }
+        val has_internal_recipients = (recipients + hidden_bcc).any { is_internal_recipient(it) }
         if (has_internal_recipients && recipient_keys.isEmpty()) {
             throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
         }
+        val private_keys = hidden_bcc.associateWith { recipient ->
+            fetch_internal_public_keys(listOf(recipient), sender_email).ifEmpty {
+                throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
+            }
+        }
         val own_seal = if (attachments.isEmpty()) null else own_seal_inputs()
         try {
-            return build_attachment_payloads(attachments, recipient_keys, own_seal)
+            return build_attachment_payloads(attachments, recipient_keys, own_seal, private_keys)
         } finally {
             own_seal?.second?.fill(' ')
         }
@@ -4444,6 +4495,7 @@ class MailRepository @Inject constructor(
         attachments: List<ExternalAttachmentPayload>,
         recipient_keys: List<String>,
         own_seal: Pair<String, CharArray>?,
+        private_keys: Map<String, List<String>> = emptyMap(),
     ): List<SendAttachmentPayload> {
         return attachments.map { att ->
             try {
@@ -4475,6 +4527,17 @@ class MailRepository @Inject constructor(
                     meta_json
                 }
 
+                val recipient_metas = private_keys.mapValues { (_, keys) ->
+                    val sealed = PgpEncryptor.encrypt_to_keys(meta_json, keys)
+                        ?: throw E2eEncryptionException(
+                            context.getString(R.string.e2e_encryption_failed),
+                        )
+                    android.util.Base64.encodeToString(
+                        sealed.toByteArray(Charsets.UTF_8),
+                        android.util.Base64.NO_WRAP,
+                    )
+                }
+
                 val (sender_encrypted_meta, sender_meta_nonce) = own_seal?.let { (key, chars) ->
                     withContext(Dispatchers.Default) {
                         org.astermail.android.crypto.SentCopySeal.seal(meta_json, key, chars)
@@ -4496,6 +4559,7 @@ class MailRepository @Inject constructor(
                         sealed_meta.toByteArray(Charsets.UTF_8),
                         android.util.Base64.NO_WRAP,
                     ),
+                    recipient_metas = recipient_metas.takeIf { it.isNotEmpty() },
                     size_bytes = att.size_bytes,
                 )
             } catch (t: Throwable) {

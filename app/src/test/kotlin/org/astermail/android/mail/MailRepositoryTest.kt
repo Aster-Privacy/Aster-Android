@@ -2390,4 +2390,48 @@ class MailRepositoryTest {
         assertEquals(1, page.items.size)
         assertEquals("s1", page.items[0].id)
     }
+
+    @Test
+    fun `send_email seals hidden bcc separately from the shared copy`() = runTest {
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), match { "hidden@astermail.org" !in it }, any(), any()) } returns "shared_body"
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), listOf("hidden@astermail.org"), any(), any()) } returns "hidden_body"
+        coEvery { send_api.send_simple(any()) } returns
+            SimpleSendResponse(success = true, message = "ok", mail_item_id = "sent_bcc")
+
+        val result = repo.send_email(
+            to = listOf("to@astermail.org"),
+            bcc = listOf("hidden@astermail.org", "TO@astermail.org"),
+            subject = "Hi",
+            body_html = "<p>hello</p>",
+        )
+
+        assertTrue(result.isSuccess)
+        val request = slot<org.astermail.android.api.send.SimpleSendRequest>()
+        coVerify(exactly = 1) { send_api.send_simple(capture(request)) }
+        assertEquals("shared_body", request.captured.body)
+        assertEquals(mapOf("hidden@astermail.org" to "hidden_body"), request.captured.recipient_bodies)
+        coVerify(exactly = 0) {
+            ratchet_encryptor.encrypt_envelope(any(), match { it.size > 1 && "hidden@astermail.org" in it }, any(), any())
+        }
+    }
+
+    @Test
+    fun `send_email sends no private copies without hidden bcc`() = runTest {
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any(), any()) } returns "shared_body"
+        coEvery { send_api.send_simple(any()) } returns
+            SimpleSendResponse(success = true, message = "ok", mail_item_id = "sent_plain")
+
+        repo.send_email(
+            to = listOf("to@astermail.org"),
+            cc = listOf("cc@astermail.org"),
+            subject = "Hi",
+            body_html = "<p>hello</p>",
+        )
+
+        val request = slot<org.astermail.android.api.send.SimpleSendRequest>()
+        coVerify(exactly = 1) { send_api.send_simple(capture(request)) }
+        assertNull(request.captured.recipient_bodies)
+    }
 }
