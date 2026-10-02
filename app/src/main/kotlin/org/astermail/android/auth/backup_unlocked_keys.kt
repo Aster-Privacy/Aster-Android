@@ -102,6 +102,42 @@ fun carry_backup_unlocked_keys(vault: JSONObject, unlocked: Map<String, String>)
     return with_unlocked_keys(base, pairs)
 }
 
+fun carries_master_key(vault: JSONObject): Boolean =
+    vault.optInt("vault_format", 1) >= MASTER_KEY_VAULT_FORMAT &&
+        vault.optString("data_kek", "").isNotBlank()
+
+fun relock_vault_keys(
+    vault: JSONObject,
+    unlocked: Map<String, String>,
+    passphrase: CharArray,
+    lock: (String, CharArray) -> String = ::lock_unlocked_pgp_key,
+): Map<String, String> {
+    val relocked = linkedMapOf<String, String>()
+
+    fun relock(armored: String): String {
+        val open = unlocked[armored] ?: return armored
+        val next = runCatching { lock(open, passphrase) }.getOrNull() ?: return armored
+        relocked[next] = open
+        return next
+    }
+
+    val identity = vault_identity_key(vault)
+    if (identity.isNotEmpty()) {
+        val next = relock(identity)
+        if (next != identity) {
+            vault.put("identity_key", next)
+            vault.remove("identity_private_key")
+        }
+    }
+
+    val previous = json_strings(vault.optJSONArray("previous_keys"))
+    if (previous.isNotEmpty()) {
+        vault.put("previous_keys", JSONArray(previous.map(::relock)))
+    }
+
+    return relocked
+}
+
 fun relock_with_unlocked_keys(
     unlocked: Map<String, String>,
     passphrase: CharArray,

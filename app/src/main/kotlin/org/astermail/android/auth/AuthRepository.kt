@@ -1270,6 +1270,7 @@ class AuthRepository @Inject constructor(
             val recovered_keks = mutableListOf<String>()
             val recovered_ratchet = mutableListOf<org.json.JSONObject>()
             val opened = mutableListOf<String>()
+            val password_bound = mutableListOf<Boolean>()
             val old_vaults = mutableListOf<org.json.JSONObject>()
             val unlocked_keys = mutableMapOf<String, String>()
 
@@ -1291,6 +1292,7 @@ class AuthRepository @Inject constructor(
                 recovered_keks.addAll(harvest_storage_keks(old_vault, null))
                 recovered_ratchet.addAll(retain_previous_ratchet_keys(old_vault))
                 opened.add(key_set.inactive_vault_id)
+                password_bound.add(!carries_master_key(old_vault))
                 old_vaults.add(old_vault)
             }
 
@@ -1317,7 +1319,9 @@ class AuthRepository @Inject constructor(
             )
             if (!committed) return CodeRestoreResult(restored = 0, incomplete = opened.size)
 
-            val absorbed = opened.filterIndexed { index, _ -> identity_keys.absorbed.getOrElse(index) { false } }
+            val absorbed = opened.filterIndexed { index, _ ->
+                identity_keys.absorbed.getOrElse(index) { false } && !password_bound[index]
+            }
             absorbed.forEach { id ->
                 runCatching { recovery_api.consume_inactive_key_set(ConsumeInactiveKeySetRequest(id)) }
             }

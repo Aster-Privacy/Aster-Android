@@ -166,6 +166,52 @@ class BackupUnlockedKeysTest {
     }
 
     @Test
+    fun relock_vault_keys_rewrites_identity_and_previous_keys_under_the_new_passphrase() {
+        val source = vault(identity = "locked-current", previous = listOf("locked-old", "locked-foreign"))
+        val unlocked = mapOf("locked-current" to "open-current", "locked-old" to "open-old")
+        val next = "new".toCharArray()
+
+        val relocked = relock_vault_keys(source, unlocked, next) { open, pass -> "$open@" + String(pass) }
+
+        assertEquals("open-current@new", source.getString("identity_key"))
+        assertEquals(listOf("open-old@new", "locked-foreign"), json_strings(source.getJSONArray("previous_keys")))
+        assertEquals(mapOf("open-current@new" to "open-current", "open-old@new" to "open-old"), relocked)
+        assertEquals(
+            listOf("open-current@new" to "open-current", "open-old@new" to "open-old"),
+            pairs(carry_backup_unlocked_keys(source, relocked)),
+        )
+    }
+
+    @Test
+    fun relock_vault_keys_keeps_a_key_whose_lock_fails() {
+        val source = vault(identity = "locked-current")
+        val unlocked = mapOf("locked-current" to "open-current")
+
+        val relocked = relock_vault_keys(source, unlocked, passphrase) { _, _ -> error("boom") }
+
+        assertEquals("locked-current", source.getString("identity_key"))
+        assertTrue(relocked.isEmpty())
+    }
+
+    @Test
+    fun relock_vault_keys_moves_a_legacy_identity_field_to_identity_key() {
+        val source = JSONObject().put("identity_private_key", "locked-legacy")
+
+        relock_vault_keys(source, mapOf("locked-legacy" to "open-legacy"), passphrase) { open, _ -> "$open!" }
+
+        assertEquals("open-legacy!", source.getString("identity_key"))
+        assertFalse(source.has("identity_private_key"))
+    }
+
+    @Test
+    fun carries_master_key_requires_format_two_and_a_data_kek() {
+        assertFalse(carries_master_key(vault()))
+        assertFalse(carries_master_key(vault().put("data_kek", "kek")))
+        assertFalse(carries_master_key(vault().put("vault_format", 2)))
+        assertTrue(carries_master_key(vault().put("vault_format", 2).put("data_kek", "kek")))
+    }
+
+    @Test
     fun relock_fails_for_a_key_without_an_unlocked_copy() {
         val relock = relock_with_unlocked_keys(emptyMap(), passphrase) { open, _ -> open }
 

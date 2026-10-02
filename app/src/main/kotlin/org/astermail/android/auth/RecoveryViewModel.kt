@@ -105,7 +105,9 @@ class RecoveryViewModel @Inject constructor(
     }
 
     private fun accept_email(email: String): Boolean {
-        user_email = email.trim().lowercase(java.util.Locale.ROOT)
+        val normalized = email.trim().lowercase(java.util.Locale.ROOT)
+        if (normalized != user_email) clear_resend_cooldown()
+        user_email = normalized
         val at_index = user_email.indexOf('@')
 
         if (at_index <= 0) {
@@ -142,6 +144,10 @@ class RecoveryViewModel @Inject constructor(
     }
 
     private fun request_reset_link(resend: Boolean) {
+        if (_state.value.resend_seconds > 0) {
+            if (!resend) _state.value = _state.value.copy(step = RecoveryStep.email_sent, error = null)
+            return
+        }
         val at_index = user_email.indexOf('@')
         val username = user_email.substring(0, at_index)
         val email_domain = user_email.substring(at_index + 1).trimEnd('.')
@@ -171,6 +177,12 @@ class RecoveryViewModel @Inject constructor(
         }
     }
 
+    private fun clear_resend_cooldown() {
+        cooldown_job?.cancel()
+        cooldown_job = null
+        if (_state.value.resend_seconds != 0) _state.value = _state.value.copy(resend_seconds = 0)
+    }
+
     private fun start_resend_cooldown() {
         cooldown_job?.cancel()
         _state.value = _state.value.copy(resend_seconds = RESEND_COOLDOWN_SECONDS)
@@ -194,6 +206,8 @@ class RecoveryViewModel @Inject constructor(
     }
 
     fun go_to_email_step() {
+        clear_resend_cooldown()
+        user_email = ""
         _state.value = _state.value.copy(step = RecoveryStep.email, email = "", error = null)
     }
 
@@ -304,7 +318,14 @@ class RecoveryViewModel @Inject constructor(
                 _state.value = _state.value.copy(processing_status = ctx.getString(R.string.status_generating_codes))
                 val new_codes = generate_recovery_codes()
                 val new_recovery_key = ByteArray(32).also { SecureRandom().nextBytes(it) }
-                val updated_vault = with_recovery_codes(vault_bytes, new_codes)
+                val password_chars = password.toCharArray()
+                val updated_vault = try {
+                    withContext(compute_dispatcher) {
+                        with_recovery_codes(vault_bytes, new_codes, password_chars)
+                    }
+                } finally {
+                    password_chars.fill('\u0000')
+                }
 
                 val (new_envelope, backup) = try {
                     val envelope = withContext(compute_dispatcher) {
@@ -398,10 +419,11 @@ class RecoveryViewModel @Inject constructor(
 
     private class UpdatedVault(val plain: ByteArray, val backup_plain: ByteArray, val vault_format: Int)
 
-    private fun with_recovery_codes(vault_bytes: ByteArray, codes: List<String>): UpdatedVault {
+    private fun with_recovery_codes(vault_bytes: ByteArray, codes: List<String>, password: CharArray): UpdatedVault {
         val backup_obj = org.json.JSONObject(String(vault_bytes, Charsets.UTF_8))
         val unlocked_keys = read_unlocked_keys(backup_obj)
         val vault_obj = strip_backup_fields(backup_obj)
+        val relocked_keys = relock_vault_keys(vault_obj, unlocked_keys, password)
         val codes_array = org.json.JSONArray()
         codes.forEach { codes_array.put(it) }
         vault_obj.put("recovery_codes", codes_array)
@@ -413,7 +435,7 @@ class RecoveryViewModel @Inject constructor(
 
         return UpdatedVault(
             plain = vault_obj.toString().toByteArray(Charsets.UTF_8),
-            backup_plain = carry_backup_unlocked_keys(vault_obj, unlocked_keys)
+            backup_plain = carry_backup_unlocked_keys(vault_obj, relocked_keys)
                 .toString()
                 .toByteArray(Charsets.UTF_8),
             vault_format = vault_format,

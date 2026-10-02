@@ -121,6 +121,43 @@ class RecoveryViewModelTest {
     }
 
     @Test
+    fun `sending again during the cooldown reuses the link already sent`() = runTest {
+        coEvery { recovery_api.initiate_email(any()) } returns
+            InitiateEmailRecoveryResponse(success = true)
+
+        vm.send_recovery_email("user@astermail.org")
+        runCurrent()
+        vm.go_to_other_ways()
+        vm.send_reset_link()
+        runCurrent()
+
+        assertEquals(RecoveryStep.email_sent, vm.state.value.step)
+        assertTrue(vm.state.value.resend_seconds > 0)
+        coVerify(exactly = 1) { recovery_api.initiate_email(any()) }
+    }
+
+    @Test
+    fun `going back to the email step clears the cooldown`() = runTest {
+        coEvery { recovery_api.initiate_email(any()) } returns
+            InitiateEmailRecoveryResponse(success = true)
+
+        vm.send_recovery_email("user@astermail.org")
+        runCurrent()
+        assertTrue(vm.state.value.resend_seconds > 0)
+
+        vm.go_to_email_step()
+
+        assertEquals(0, vm.state.value.resend_seconds)
+        assertEquals("", vm.state.value.email)
+
+        vm.send_recovery_email("other@astermail.org")
+        advanceUntilIdle()
+
+        assertEquals(RecoveryStep.email_sent, vm.state.value.step)
+        coVerify(exactly = 2) { recovery_api.initiate_email(any()) }
+    }
+
+    @Test
     fun `send_recovery_email trims and lowercases email`() = runTest {
         coEvery { recovery_api.initiate_email(any()) } returns
             InitiateEmailRecoveryResponse(success = true)

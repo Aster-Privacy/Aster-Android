@@ -126,6 +126,10 @@ class LockedDataViewModel @Inject constructor(
             } catch (_: Throwable) {
                 LockedDataRecovery(failed = true)
             }
+            if (session_key_store.get_user_id().orEmpty() != account_id) {
+                _state.update { it.copy(recovering = false) }
+                return@launch
+            }
             val outcome = to_outcome(result)
             _state.update {
                 it.copy(
