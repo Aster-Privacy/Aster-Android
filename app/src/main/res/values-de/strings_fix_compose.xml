@@ -2,4 +2,13 @@
 <resources>
     <string name="compose_discard_draft_title">Diesen Entwurf verwerfen?</string>
     <string name="compose_discard_draft_message">Wenn Sie diesen Entwurf verwerfen, werden sein Text und alle Anhänge gelöscht. Das lässt sich nicht rückgängig machen.</string>
+    <string name="scheduled_too_far_ahead">Geplante E-Mails können höchstens 28 Tage im Voraus gesendet werden. Wählen Sie einen früheren Zeitpunkt.</string>
+    <string name="scheduled_requires_encryption">Sie haben die erforderliche Verschlüsselung aktiviert, und geplante E-Mails an externe Adressen sind nicht Ende-zu-Ende-verschlüsselt. Senden Sie diese Nachricht jetzt oder deaktivieren Sie die erforderliche Verschlüsselung in den Einstellungen.</string>
+    <string name="send_key_changed_while_waiting">Der Verschlüsselungsschlüssel eines Empfängers hat sich geändert, während diese Nachricht auf den Versand wartete, daher wurde sie nicht gesendet.</string>
+    <string name="outbox_failed_reason_key_changed">Der Verschlüsselungsschlüssel eines Empfängers hat sich geändert. Öffnen Sie den Entwurf und bestätigen Sie den neuen Schlüssel, um ihn zu senden.</string>
+    <string name="message_password_weak_hint">Verwenden Sie mindestens 12 Zeichen und fügen Sie eine Zahl, ein Symbol oder Groß- und Kleinbuchstaben hinzu.</string>
+    <string name="message_password_too_weak">Das Nachrichtenpasswort ist zu schwach, daher wurde die Nachricht nicht gesendet. Verwenden Sie mindestens 12 Zeichen und fügen Sie eine Zahl, ein Symbol oder Groß- und Kleinbuchstaben hinzu.</string>
+    <string name="identity_trust_new_key">Neuem Schlüssel vertrauen</string>
+    <string name="send_key_check_failed">Aster konnte die Verschlüsselungsschlüssel der Empfänger nicht prüfen und hat diese Nachricht daher nicht gesendet. Prüfen Sie Ihre Verbindung und versuchen Sie es dann erneut.</string>
+    <string name="outbox_failed_reason_identity_unverified">Aster konnte den Verschlüsselungsschlüssel eines Empfängers nicht bestätigen und hat diese Nachricht daher nicht gesendet. Sie können es später erneut versuchen oder die Nachricht verwerfen.</string>
 </resources>

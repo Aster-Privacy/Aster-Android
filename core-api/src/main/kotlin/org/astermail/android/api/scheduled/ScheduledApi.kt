@@ -54,6 +54,19 @@ data class CreateScheduledRequest(
     val attachment_count: Int? = null,
     val size_bytes: Long? = null,
     val sender_alias_hash: String? = null,
+    val delivery: ScheduledDelivery? = null,
+)
+
+@Serializable
+data class ScheduledDelivery(
+    val to: List<String>,
+    val cc: List<String> = emptyList(),
+    val bcc: List<String> = emptyList(),
+    val sender_email: String? = null,
+    val sender_display_name: String? = null,
+    val internal_encrypted_body: String,
+    val recipient_bodies: Map<String, String> = emptyMap(),
+    val hosted_recipients: List<String> = emptyList(),
 )
 
 @Serializable

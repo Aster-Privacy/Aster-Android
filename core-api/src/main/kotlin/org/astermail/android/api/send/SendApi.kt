@@ -61,6 +61,7 @@ data class SimpleSendRequest(
     val attachments: List<SendAttachmentPayload> = emptyList(),
     val forward_original_mail_id: String? = null,
     val suppress_branding: Boolean? = null,
+    val recipient_bodies: Map<String, String>? = null,
 )
 
 @Serializable
@@ -70,6 +71,7 @@ data class SendAttachmentPayload(
     val sender_encrypted_meta: String,
     val sender_meta_nonce: String,
     val recipient_encrypted_meta: String? = null,
+    val recipient_metas: Map<String, String>? = null,
     val size_bytes: Long,
 )
 

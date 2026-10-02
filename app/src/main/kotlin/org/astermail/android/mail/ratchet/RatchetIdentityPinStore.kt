@@ -217,6 +217,46 @@ class RatchetIdentityPinStore @Inject constructor(
         prefs.edit().putBoolean(scoped(scope, binding_key(normalized)), true).commit()
     }
 
+    fun owner_key_pin(recipient_email: String): String? {
+        val normalized = normalize_email(recipient_email) ?: return null
+        return read_string(refresh_scope(), owner_key(normalized))?.takeIf { it.isNotBlank() }
+    }
+
+    suspend fun pin_owner_key_if_absent(recipient_email: String, fingerprint: String): Boolean = mutex.withLock {
+        val normalized = normalize_email(recipient_email) ?: return@withLock false
+        if (fingerprint.isBlank()) return@withLock false
+        val scope = refresh_scope()
+        if (!read_string(scope, owner_key(normalized)).isNullOrBlank()) return@withLock true
+        runCatching {
+            prefs.edit().putString(scoped(scope, owner_key(normalized)), fingerprint).commit()
+        }.getOrDefault(false)
+    }
+
+    suspend fun flag_owner_key_change(
+        recipient_email: String,
+        served_fingerprint: String,
+        observed_at: Long,
+    ): Unit = mutex.withLock {
+        val normalized = normalize_email(recipient_email) ?: return@withLock
+        if (served_fingerprint.isBlank()) return@withLock
+        val scope = refresh_scope()
+        val stored = read_string(scope, owner_key(normalized)) ?: return@withLock
+        if (stored.equals(served_fingerprint, ignoreCase = true)) return@withLock
+        val marker = owner_change_marker(normalized)
+        synchronized(pending_guard) {
+            val updated = pending.value.filterNot { it.conversation_id == marker } +
+                IdentityChange(
+                    conversation_id = marker,
+                    sender_email = normalized,
+                    previous_fingerprint = stored,
+                    current_fingerprint = served_fingerprint,
+                    observed_at = observed_at,
+                )
+            prefs.edit().putString(scoped(scope, pending_key), encode_pending(updated)).commit()
+            pending.value = updated
+        }
+    }
+
     fun pq_prekey_consumer(key_id: Int): String? =
         prefs.getString(scoped(refresh_scope(), pq_consumed_key(key_id)), null)?.takeIf { it.isNotBlank() }
 
@@ -281,7 +321,12 @@ class RatchetIdentityPinStore @Inject constructor(
             }
             accepted.forEach { change ->
                 if (change.conversation_id.isNotBlank() && change.current_fingerprint.isNotBlank()) {
-                    editor.putString(scoped(scope, pin_key(change.conversation_id)), change.current_fingerprint)
+                    val pinned_key = if (change.conversation_id.startsWith(owner_change_prefix)) {
+                        owner_key(change.conversation_id.removePrefix(owner_change_prefix))
+                    } else {
+                        pin_key(change.conversation_id)
+                    }
+                    editor.putString(scoped(scope, pinned_key), change.current_fingerprint)
                 }
             }
             editor.apply()
@@ -406,11 +451,19 @@ class RatchetIdentityPinStore @Inject constructor(
 
     private fun pq_consumed_key(key_id: Int): String = "pqused_$key_id"
 
+    private fun owner_key(recipient_email: String): String = "owner_$recipient_email"
+
+    private fun owner_change_marker(recipient_email: String): String = "$owner_change_prefix$recipient_email"
+
+    private fun normalize_email(email: String): String? =
+        email.trim().lowercase(java.util.Locale.ROOT).takeIf { it.isNotBlank() }
+
     companion object {
         private const val prefs_name = "aster_ratchet_identity_pins"
         private const val separator = "|"
         private const val max_tracked_bootstraps = 64
         private const val pending_key = "pending_identity_changes"
         private const val max_pending_changes = 50
+        private const val owner_change_prefix = "owner:"
     }
 }

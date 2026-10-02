@@ -4517,10 +4517,16 @@ class MailViewModel @Inject constructor(
     fun send_scheduled_now(id: String) =
         run_scheduled_action(id, R.string.scheduled_sending_now, true) { repository.send_scheduled_now(id) }
 
-    fun reschedule_scheduled(id: String, scheduled_at: String) =
+    fun reschedule_scheduled(id: String, scheduled_at: String) {
+        val scheduled_at_ms = runCatching { java.time.Instant.parse(scheduled_at).toEpochMilli() }.getOrNull()
+        if (scheduled_at_ms != null && exceeds_sealed_schedule_window(scheduled_at_ms, System.currentTimeMillis())) {
+            emit_toast(context.getString(R.string.scheduled_too_far_ahead))
+            return
+        }
         run_scheduled_action(id, R.string.scheduled_rescheduled, false) {
             repository.reschedule_scheduled(id, scheduled_at)
         }
+    }
 
     fun refresh() {
         val folder = _inbox_state.value.current_folder
@@ -4604,9 +4610,9 @@ class MailViewModel @Inject constructor(
         sender_email: String? = null,
     ): PostQuantumCoverage = repository.check_post_quantum_coverage(recipients, sender_email)
 
-    suspend fun find_external_key_fingerprint_changes(
+    suspend fun verified_external_key_fingerprint_changes(
         recipients: List<String>,
-    ): List<RecipientKeyChange> = repository.find_external_key_fingerprint_changes(recipients)
+    ): Result<List<RecipientKeyChange>> = repository.verified_external_key_fingerprint_changes(recipients)
 
     suspend fun acknowledge_external_key_fingerprint_change(
         change: RecipientKeyChange,
@@ -4685,6 +4691,11 @@ class MailViewModel @Inject constructor(
 
     fun retry_failed_send(pending_id: String, allow_non_post_quantum: Boolean = false) {
         viewModelScope.launch { runCatching { repository.retry_failed_send(pending_id, allow_non_post_quantum) } }
+    }
+
+    fun trust_new_keys_and_retry(pending_id: String, recipients: List<String>) {
+        recipients.forEach { identity_pins.acknowledge_sender(it) }
+        retry_failed_send(pending_id)
     }
 
     fun discard_failed_send(pending_id: String) {
@@ -4898,6 +4909,7 @@ class MailViewModel @Inject constructor(
         sender_display_name: String? = null,
         scheduled_at: String,
         sender_alias_hash: String? = null,
+        allow_non_post_quantum: Boolean = false,
     ): Result<String> {
         return repository.schedule_email(
             subject = subject,
@@ -4909,6 +4921,7 @@ class MailViewModel @Inject constructor(
             bcc = bcc,
             scheduled_at = scheduled_at,
             sender_alias_hash = sender_alias_hash,
+            allow_non_post_quantum = allow_non_post_quantum,
         )
     }
 

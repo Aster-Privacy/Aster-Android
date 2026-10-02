@@ -2,4 +2,13 @@
 <resources>
     <string name="compose_discard_draft_title">هل تريد حذف هذه المسودة؟</string>
     <string name="compose_discard_draft_message">إذا حذفت هذه المسودة، فسيُحذف نصها وأي مرفقات فيها. لا يمكن التراجع عن ذلك.</string>
+    <string name="scheduled_too_far_ahead">يمكن جدولة الرسائل لمدة أقصاها 28 يومًا مقدمًا. اختر وقتًا أقرب.</string>
+    <string name="scheduled_requires_encryption">لقد فعّلت التشفير الإلزامي، والرسائل المجدولة إلى عناوين خارجية ليست مشفرة من طرف إلى طرف. أرسل هذه الرسالة الآن، أو أوقف التشفير الإلزامي في الإعدادات.</string>
+    <string name="send_key_changed_while_waiting">تغير مفتاح تشفير أحد المستلمين بينما كانت هذه الرسالة تنتظر الإرسال، لذلك لم تُرسل.</string>
+    <string name="outbox_failed_reason_key_changed">تغير مفتاح تشفير أحد المستلمين. افتح المسودة وأكّد المفتاح الجديد لإرسالها.</string>
+    <string name="message_password_weak_hint">استخدم 12 حرفًا على الأقل، وأضف رقمًا أو رمزًا أو أحرفًا كبيرة وصغيرة معًا.</string>
+    <string name="message_password_too_weak">كلمة مرور الرسالة ضعيفة جدًا، لذلك لم تُرسل الرسالة. استخدم 12 حرفًا على الأقل، وأضف رقمًا أو رمزًا أو أحرفًا كبيرة وصغيرة معًا.</string>
+    <string name="identity_trust_new_key">الوثوق بالمفتاح الجديد</string>
+    <string name="send_key_check_failed">تعذّر على Aster التحقق من مفاتيح التشفير الخاصة بالمستلمين، لذلك لم يُرسل هذه الرسالة. تحقق من اتصالك، ثم حاول مرة أخرى.</string>
+    <string name="outbox_failed_reason_identity_unverified">تعذّر على Aster التحقق من مفتاح التشفير لأحد المستلمين، لذلك لم يُرسل هذه الرسالة. يمكنك المحاولة مرة أخرى لاحقًا أو تجاهلها.</string>
 </resources>
