@@ -2467,7 +2467,8 @@
     <string name="pending_deletion_sign_out">Sign Out</string>
     <string name="pending_deletion_restoring">Restoring…</string>
     <string name="pending_deletion_error">Could not restore your account. Please try again.</string>
-    <string name="image_blocked_placeholder">[Image blocked]</string>
+    <string name="image_blocked">Image blocked</string>
+    <string name="tracking_pixel_blocked">Tracking pixel blocked</string>
     <string name="image_failed_placeholder">[Image could not be loaded]</string>
     <string name="image_lightbox_title">Image preview</string>
     <string name="image_lightbox_failed">This image could not be opened.</string>

@@ -159,6 +159,7 @@ internal fun prepare_email_body(
     prune_empty_signature_blocks(root)
     reveal_fully_hidden_content(root)
     collapse_quoted_content(root, forwarded_label)
+    if (simple_dark) BlockedImagePlaceholder.repaint(root, BlockedImagePlaceholder.DARK)
     wrap_images_for_zoom(root)
     label_images_for_failure(root, image_failed_label)
     trim_leading_blank_nodes(root)

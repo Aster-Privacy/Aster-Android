@@ -232,31 +232,37 @@ object EmailHtmlSanitizer {
         return false
     }
 
-    fun replace_blocked_images(html: String, placeholder_text: String): String {
+    private val url_ignorable_characters = Regex("[\\u0000-\\u0020\\u007F]")
+
+    private fun is_local_image_source(src: String): Boolean {
+        val compact = src.replace(url_ignorable_characters, "").lowercase()
+        if (compact.isEmpty()) return true
+        if (compact.startsWith("data:") || compact.startsWith("cid:")) return true
+        return src.trim().startsWith(INLINE_IMAGE_URL_PREFIX)
+    }
+
+    internal fun replace_blocked_images(
+        html: String,
+        labels: BlockedImageLabels = BlockedImageLabels.ENGLISH,
+    ): String {
         if (html.isBlank()) return html
         val doc = Jsoup.parseBodyFragment(html).apply { outputSettings(raw_output_settings()) }
-        for (img in doc.select("img[src]")) {
-            val src = img.attr("src")
-            val lower = src.trim().lowercase()
-            if (!lower.startsWith("http://") && !lower.startsWith("https://")) continue
-            if (lower.startsWith(INLINE_IMAGE_URL_PREFIX)) continue
-            if (is_tracking_pixel(img)) {
-                img.remove()
+        for (img in doc.select("img")) {
+            val src = img.attr("src").ifBlank { img.attr("srcset").trim().substringBefore(' ') }
+            if (is_local_image_source(src)) {
+                img.removeAttr("srcset")
+                img.removeAttr("sizes")
                 continue
             }
-            val span = Element("span")
-            span.attr("class", "blocked-image")
-            span.attr("data-original-src", src)
-            val w = img.attr("width")
-            val h = img.attr("height")
-            val s = img.attr("style")
-            val alt = img.attr("alt")
-            if (w.isNotEmpty()) span.attr("data-width", w)
-            if (h.isNotEmpty()) span.attr("data-height", h)
-            if (s.isNotEmpty()) span.attr("data-style", s)
-            if (alt.isNotEmpty()) span.attr("data-alt", alt)
-            span.text(alt.ifEmpty { placeholder_text })
-            img.replaceWith(span)
+            BlockedImagePlaceholder.prepare(img, src, is_tracking_pixel(img), labels)
+        }
+        for (element in doc.select("[srcset]")) {
+            element.removeAttr("srcset")
+            element.removeAttr("sizes")
+        }
+        for (element in doc.select("[src]")) {
+            if (element.normalName() == "img") continue
+            if (!is_local_image_source(element.attr("src"))) element.removeAttr("src")
         }
         return doc.body().html()
     }

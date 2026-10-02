@@ -65,7 +65,7 @@ class AmpEmailWebViewTest {
 
     private fun rendered_document(): String {
         val sanitized = EmailHtmlSanitizer.sanitize(amp_email, EmailHtmlSanitizer.SanitizeOptions())
-        val blocked = EmailHtmlSanitizer.replace_blocked_images(sanitized, "Image could not be loaded")
+        val blocked = EmailHtmlSanitizer.replace_blocked_images(sanitized)
         return document_for(EmailHtmlSanitizer.neutralize_blocked_backgrounds(blocked))
     }
 
