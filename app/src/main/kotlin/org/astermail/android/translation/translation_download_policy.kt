@@ -49,6 +49,9 @@ object TranslationDownloadPolicy {
 
     fun download_blocked(context: Context): Boolean = wifi_only(context) && metered(context)
 
+    fun route_download_blocked(context: Context, from: String, to: String): Boolean =
+        download_blocked(context) && !TranslationAssets.packs_cached(context, route_packs(from, to))
+
     private fun granted(context: Context): Set<String> =
         prefs(context).getStringSet(KEY_CONSENT, emptySet()) ?: emptySet()
 

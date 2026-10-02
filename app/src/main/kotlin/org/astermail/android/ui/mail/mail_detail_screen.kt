@@ -5406,6 +5406,8 @@ private sealed interface TranslationBannerState {
     object Translating : TranslationBannerState
     data class Translated(val language: String) : TranslationBannerState
     object Failed : TranslationBannerState
+    object WifiRequired : TranslationBannerState
+    object WebViewOutdated : TranslationBannerState
 }
 
 @Composable
@@ -5414,6 +5416,7 @@ private fun translation_banner(
     on_translate: (String) -> Unit,
     on_show_original: () -> Unit,
     on_dismiss: () -> Unit,
+    on_update_webview: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     if (state is TranslationBannerState.Hidden) return
@@ -5487,6 +5490,47 @@ private fun translation_banner(
                     modifier = Modifier
                         .clickable { on_show_original() }
                         .padding(horizontal = 6.dp, vertical = 2.dp),
+                )
+            }
+            is TranslationBannerState.WifiRequired -> {
+                Text(
+                    text = stringResource(R.string.translation_wifi_required),
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Icon(
+                    imageVector = TablerIcons.X,
+                    contentDescription = null,
+                    tint = colors.text_tertiary,
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clickable { on_dismiss() },
+                )
+            }
+            is TranslationBannerState.WebViewOutdated -> {
+                Text(
+                    text = stringResource(R.string.translation_webview_outdated),
+                    color = colors.text_primary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = stringResource(R.string.translation_webview_update),
+                    color = colors.accent_blue,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clickable { on_update_webview() }
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                )
+                Icon(
+                    imageVector = TablerIcons.X,
+                    contentDescription = null,
+                    tint = colors.text_tertiary,
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clickable { on_dismiss() },
                 )
             }
             is TranslationBannerState.Failed -> {
@@ -5606,9 +5650,11 @@ internal fun email_html_view(
     val source_body_ref = remember(html) { arrayOfNulls<String>(1) }
     var translated_body by remember(html) { mutableStateOf<String?>(null) }
     val translation_scope = androidx.compose.runtime.rememberCoroutineScope()
+    val translation_from_ref = remember { arrayOfNulls<String>(1) }
 
     fun run_translation(from: String) {
         val source = source_body_ref[0] ?: return
+        translation_from_ref[0] = from
         translation_scope.launch {
             val segments = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
                 extract_translatable_segments(source)
@@ -5621,6 +5667,17 @@ internal fun email_html_view(
             }
             set_translation_state[0]?.invoke(TranslationBannerState.Translating)
             engine.translate(segments, from, translate_target_ref[0])
+        }
+    }
+
+    fun start_translation(from: String) {
+        val to = translate_target_ref[0]
+        when {
+            !org.astermail.android.translation.TranslationRuntime.webview_supported(translate_context) ->
+                set_translation_state[0]?.invoke(TranslationBannerState.WebViewOutdated)
+            TranslationDownloadPolicy.route_download_blocked(translate_context, from, to) ->
+                set_translation_state[0]?.invoke(TranslationBannerState.WifiRequired)
+            else -> run_translation(from)
         }
     }
 
@@ -5641,8 +5698,10 @@ internal fun email_html_view(
             language,
             translate_target_ref[0],
         )
-        if (mode == "always" && granted) {
-            run_translation(language)
+        if (!org.astermail.android.translation.TranslationRuntime.webview_supported(translate_context)) {
+            set_translation_state[0]?.invoke(TranslationBannerState.WebViewOutdated)
+        } else if (mode == "always" && granted) {
+            start_translation(language)
         } else {
             set_translation_state[0]?.invoke(TranslationBannerState.Offer(language, !granted))
         }
@@ -5655,7 +5714,12 @@ internal fun email_html_view(
         when (state) {
             "translating" -> apply_state?.invoke(TranslationBannerState.Translating)
             "translated" -> apply_state?.invoke(TranslationBannerState.Translated(from ?: ""))
-            "error" -> apply_state?.invoke(TranslationBannerState.Failed)
+            "error" -> {
+                val failed_from = translation_from_ref[0]
+                val blocked = failed_from != null &&
+                    TranslationDownloadPolicy.route_download_blocked(translate_context, failed_from, translate_target_ref[0])
+                apply_state?.invoke(if (blocked) TranslationBannerState.WifiRequired else TranslationBannerState.Failed)
+            }
             else -> Unit
         }
     }
@@ -6306,10 +6370,11 @@ internal fun email_html_view(
         state = translation_state,
         on_translate = { lang ->
             TranslationDownloadPolicy.grant_route_consent(translate_context, lang, translate_target)
-            run_translation(lang)
+            start_translation(lang)
         },
         on_show_original = { show_original() },
         on_dismiss = { translation_state = TranslationBannerState.Hidden },
+        on_update_webview = { org.astermail.android.translation.TranslationRuntime.open_webview_update(translate_context) },
       )
       val body_ready_now = html.isNotEmpty() && has_measured && height_settled && page_painted.value
       LaunchedEffect(body_ready_now) {

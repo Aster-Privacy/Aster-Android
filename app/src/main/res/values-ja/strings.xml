@@ -1335,6 +1335,10 @@
     <string name="translation_translated">端末上で%1$sから翻訳しました</string>
     <string name="translation_show_original">原文を表示</string>
     <string name="translation_failed">翻訳に失敗しました</string>
+    <string name="translation_wifi_required">この言語パックをダウンロードするには、Wi-Fi に接続するか、設定で「Wi-Fi 接続時のみダウンロード」をオフにしてください。</string>
+    <string name="translation_webview_outdated">メールを翻訳するには、Android System WebView を更新してください。</string>
+    <string name="translation_webview_update">更新</string>
+    <string name="translate_webview_outdated_notice">翻訳には新しいバージョンの Android System WebView が必要です。このデバイスでメールを翻訳するには、Google Play で Android System WebView を更新してください。</string>
     <string name="customize_toolbar">ツールバーをカスタマイズ</string>
     <string name="customize_toolbar_subtitle">メールの閲覧時や選択時に下部バーに表示する操作を選べます。</string>
     <string name="reading_toolbar">メール閲覧時</string>

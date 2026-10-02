@@ -1342,6 +1342,10 @@
     <string name="translation_translated">Traducido del %1$s en tu dispositivo</string>
     <string name="translation_show_original">Mostrar original</string>
     <string name="translation_failed">No se pudo traducir</string>
+    <string name="translation_wifi_required">Para descargar este paquete de idioma, conéctate a una red Wi-Fi o desactiva Descargar solo por Wi-Fi en Configuración.</string>
+    <string name="translation_webview_outdated">Para traducir correos, actualiza Android System WebView.</string>
+    <string name="translation_webview_update">Actualizar</string>
+    <string name="translate_webview_outdated_notice">La traducción necesita una versión más reciente de Android System WebView. Para traducir correos en este dispositivo, actualiza Android System WebView desde Google Play.</string>
     <string name="customize_toolbar">Personalizar barra de herramientas</string>
     <string name="customize_toolbar_subtitle">Elige qué acciones aparecen en la barra inferior al leer o seleccionar correos.</string>
     <string name="reading_toolbar">Leyendo correo</string>

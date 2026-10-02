@@ -1335,6 +1335,10 @@
     <string name="translation_translated">已在您的设备上从%1$s翻译</string>
     <string name="translation_show_original">显示原文</string>
     <string name="translation_failed">翻译失败</string>
+    <string name="translation_wifi_required">要下载此语言包，请连接 Wi-Fi，或在设置中关闭“仅通过 Wi-Fi 下载”。</string>
+    <string name="translation_webview_outdated">要翻译邮件，请更新 Android System WebView。</string>
+    <string name="translation_webview_update">更新</string>
+    <string name="translate_webview_outdated_notice">翻译功能需要较新版本的 Android System WebView。要在此设备上翻译邮件，请通过 Google Play 更新 Android System WebView。</string>
     <string name="customize_toolbar">自定义工具栏</string>
     <string name="customize_toolbar_subtitle">选择阅读或选中邮件时底部栏中显示的操作。</string>
     <string name="reading_toolbar">阅读邮件时</string>
