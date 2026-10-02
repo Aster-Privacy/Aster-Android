@@ -1301,7 +1301,8 @@
     <string name="pending_deletion_sign_out">Выйти</string>
     <string name="pending_deletion_restoring">Восстановление…</string>
     <string name="pending_deletion_error">Не удалось восстановить аккаунт. Попробуйте ещё раз.</string>
-    <string name="image_blocked_placeholder">[Изображение заблокировано]</string>
+    <string name="image_blocked">Изображение заблокировано</string>
+    <string name="tracking_pixel_blocked">Пиксель отслеживания заблокирован</string>
     <string name="alias_available">Этот псевдоним доступен.</string>
     <string name="alias_not_available">Этот псевдоним уже занят.</string>
     <string name="alias_check_failed">Не удалось проверить доступность. Вы всё равно можете попытаться создать его.</string>

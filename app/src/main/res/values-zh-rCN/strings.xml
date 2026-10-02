@@ -1292,7 +1292,8 @@
     <string name="pending_deletion_sign_out">退出登录</string>
     <string name="pending_deletion_restoring">正在恢复…</string>
     <string name="pending_deletion_error">无法恢复您的账户。请重试。</string>
-    <string name="image_blocked_placeholder">[图片已被拦截]</string>
+    <string name="image_blocked">图片已屏蔽</string>
+    <string name="tracking_pixel_blocked">跟踪像素已屏蔽</string>
     <string name="alias_available">此别名可用。</string>
     <string name="alias_not_available">此别名已被占用。</string>
     <string name="alias_check_failed">无法检查可用性。您仍然可以尝试创建。</string>

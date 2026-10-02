@@ -1204,15 +1204,15 @@ class MailViewModelTest {
     @Test
     fun `load_inbox custom folder does not force item_type received`() = runTest {
         coEvery {
-            repository.fetch_inbox(any(), any(), item_type = isNull(), label_token = eq("custom_folder_token"))
+            repository.fetch_inbox(any(), any(), item_type = isNull(), label_token = eq("Y3VzdG9tRm9sZGVy"))
         } returns Result.success(fake_inbox_page(2))
 
-        vm.load_inbox("custom_folder_token", force = true)
+        vm.load_inbox("Y3VzdG9tRm9sZGVy", force = true)
         advanceUntilIdle()
 
         assertEquals(2, vm.inbox_state.value.items.size)
         coVerify {
-            repository.fetch_inbox(any(), any(), item_type = null, label_token = "custom_folder_token")
+            repository.fetch_inbox(any(), any(), item_type = null, label_token = "Y3VzdG9tRm9sZGVy")
         }
     }
 
@@ -1365,7 +1365,7 @@ class MailViewModelTest {
         val inbox_item = fake_inbox_page(1).items[0]
         val thread_messages = listOf(
             ThreadMessageDecrypted(
-                id = "msg_1",
+                id = "id_1",
                 sender_name = "Alice",
                 sender_email = "alice@example.com",
                 to_label = "me",
@@ -1380,6 +1380,7 @@ class MailViewModelTest {
 
         coEvery { repository.fetch_single_message("id_1") } returns Result.success(inbox_item)
         coEvery { repository.fetch_thread("thread_1") } returns Result.success(thread_messages)
+        coEvery { repository.decrypt_single_thread_message(any()) } returns thread_messages[0]
 
         vm.load_thread("id_1")
         assertTrue(vm.thread_state.value.is_loading)
@@ -1390,7 +1391,7 @@ class MailViewModelTest {
         assertFalse(state.is_loading)
         assertNull(state.error)
         assertEquals(1, state.messages.size)
-        assertEquals("msg_1", state.messages[0].id)
+        assertEquals("id_1", state.messages[0].id)
         assertNotNull(state.item)
     }
 
@@ -1484,7 +1485,7 @@ class MailViewModelTest {
         val inbox_item = fake_inbox_page(1).items[0]
         val thread_messages = listOf(
             ThreadMessageDecrypted(
-                id = "msg_1",
+                id = "id_1",
                 sender_name = "Alice",
                 sender_email = "alice@example.com",
                 to_label = "me",
@@ -1498,10 +1499,11 @@ class MailViewModelTest {
         )
         coEvery { repository.fetch_single_message("id_1") } returns Result.success(inbox_item)
         coEvery { repository.fetch_thread("thread_1") } returns Result.success(thread_messages)
+        coEvery { repository.decrypt_single_thread_message(any()) } returns thread_messages[0]
 
         vm.load_thread("id_1")
         advanceUntilIdle()
-        assertEquals("msg_1", vm.thread_state.value.messages.single().id)
+        assertEquals("id_1", vm.thread_state.value.messages.single().id)
 
         coEvery { repository.fetch_single_message("id_1") } returns
             Result.failure(org.astermail.android.api.ApiError.UnauthorizedError)
@@ -1515,7 +1517,7 @@ class MailViewModelTest {
         assertFalse(state.is_loading)
         assertNull(state.error)
         assertEquals("id_1", state.item?.id)
-        assertEquals("msg_1", state.messages.single().id)
+        assertEquals("id_1", state.messages.single().id)
     }
 
     @Test
@@ -1703,11 +1705,11 @@ class MailViewModelTest {
         val page = fake_inbox_page(1)
         coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
 
-        vm.load_inbox("unknown_folder", force = true)
+        vm.load_inbox("dW5rbm93bkZvbGRlcg==", force = true)
         advanceUntilIdle()
 
         assertEquals(1, vm.inbox_state.value.items.size)
-        assertEquals("unknown_folder", vm.inbox_state.value.current_folder)
+        assertEquals("dW5rbm93bkZvbGRlcg==", vm.inbox_state.value.current_folder)
     }
 
     @Test

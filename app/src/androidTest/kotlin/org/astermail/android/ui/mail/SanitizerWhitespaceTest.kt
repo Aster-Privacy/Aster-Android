@@ -53,7 +53,7 @@ class SanitizerWhitespaceTest {
     fun blocked_image_pass_preserves_pre_wrap_whitespace_exactly() {
         val text = MimeParser.parse(raw).text ?: ""
         val html = build_plain_text_html(text)
-        val blocked = EmailHtmlSanitizer.replace_blocked_images(html, "Image could not be loaded")
+        val blocked = EmailHtmlSanitizer.replace_blocked_images(html)
         val neutralized = EmailHtmlSanitizer.neutralize_blocked_backgrounds(blocked)
         val proxied = EmailHtmlSanitizer.rewrite_img_through_proxy(
             neutralized,

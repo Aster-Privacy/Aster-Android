@@ -2050,6 +2050,17 @@ fun MailDetailScreen(
                 confirm_label = stringResource(R.string.open),
                 cancel_label = stringResource(R.string.cancel),
                 on_confirm = open_external_link,
+                secondary_label = stringResource(R.string.copy_link),
+                on_secondary = {
+                    copy_external_link(
+                        link = link,
+                        write_clip = { label, text ->
+                            write_to_clipboard(context, android.content.ClipData.newPlainText(label, text))
+                        },
+                        on_copied = { show_toast(context.getString(R.string.link_copied)) },
+                        on_failed = { show_copy_failed_toast(context) },
+                    )
+                },
                 extra_content = {
                     Text(
                         text = link,
@@ -4924,13 +4935,19 @@ private suspend fun print_email(
         to = context.getString(R.string.to_label),
         cc = context.getString(R.string.cc),
         date = context.getString(R.string.date),
-        image_blocked = context.getString(R.string.image_blocked_placeholder),
+        image_blocked = context.getString(R.string.image_blocked),
+        tracking_pixel_blocked = context.getString(R.string.tracking_pixel_blocked),
     )
     val job_name = print_job_name(subject, context.getString(R.string.aster_email))
     val failure_message = context.getString(R.string.print_failed)
     val html = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
         runCatching {
-            val body = build_email_print_body(msg, allow_external, sanitize_options, labels.image_blocked)
+            val body = build_email_print_body(
+                msg,
+                allow_external,
+                sanitize_options,
+                BlockedImageLabels(labels.image_blocked, labels.tracking_pixel_blocked),
+            )
             build_email_print_html(msg, subject, msg.timestamp.format_full_datetime(), labels, body)
         }.getOrNull()
     }
@@ -5069,6 +5086,15 @@ private fun info_banner(
 
 private val safe_external_schemes = setOf("http", "https", "mailto", "tel")
 private val safe_unsubscribe_schemes = setOf("https", "mailto")
+
+internal fun copy_external_link(
+    link: String,
+    write_clip: (label: String, text: String) -> Boolean,
+    on_copied: () -> Unit,
+    on_failed: () -> Unit,
+) {
+    if (write_clip("link", link)) on_copied() else on_failed()
+}
 
 private fun is_safe_external_url(url: String): Boolean {
     val scheme = runCatching { Uri.parse(url).scheme?.lowercase() }.getOrNull() ?: return false
@@ -5592,7 +5618,10 @@ internal fun email_html_view(
         else -> 100
     }
     val forwarded_label = stringResource(R.string.forwarded_message_label)
-    val image_blocked_label = stringResource(R.string.image_blocked_placeholder)
+    val blocked_image_labels = BlockedImageLabels(
+        image = stringResource(R.string.image_blocked),
+        tracking_pixel = stringResource(R.string.tracking_pixel_blocked),
+    )
     val image_failed_label = stringResource(R.string.image_failed_placeholder)
     val tracking_protection_on = settings_state.preferences?.block_external_content != false
     val sanitize_options = EmailHtmlSanitizer.SanitizeOptions(
@@ -5896,7 +5925,7 @@ internal fun email_html_view(
     fun proxy_html(raw: String): String {
         val cid_normalized = resolve_inline_cids(raw, inline_images)
         if (!allow_external) {
-            val imgs_blocked = EmailHtmlSanitizer.replace_blocked_images(cid_normalized, image_blocked_label)
+            val imgs_blocked = EmailHtmlSanitizer.replace_blocked_images(cid_normalized, blocked_image_labels)
             return EmailHtmlSanitizer.neutralize_blocked_backgrounds(imgs_blocked)
         }
         return proxy_external_urls(cid_normalized, proxy_base)

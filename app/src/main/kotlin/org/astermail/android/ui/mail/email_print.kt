@@ -56,6 +56,7 @@ internal data class email_print_labels(
     val cc: String,
     val date: String,
     val image_blocked: String,
+    val tracking_pixel_blocked: String,
 )
 
 internal fun escape_print_text(value: String): String = buildString(value.length) {
@@ -102,7 +103,7 @@ internal fun build_email_print_body(
     msg: ThreadMessage,
     allow_external: Boolean,
     sanitize_options: EmailHtmlSanitizer.SanitizeOptions,
-    image_blocked_label: String,
+    blocked_image_labels: BlockedImageLabels,
 ): String {
     val plain = "<pre class=\"aster-print-plain\">${escape_print_text(msg.body)}</pre>"
     val html = msg.body_html?.takeIf { it.isNotBlank() } ?: return plain
@@ -112,7 +113,7 @@ internal fun build_email_print_body(
             proxy_external_urls(sanitized, REMOTE_IMAGE_PROXY_BASE)
         } else {
             EmailHtmlSanitizer.neutralize_blocked_backgrounds(
-                EmailHtmlSanitizer.replace_blocked_images(sanitized, image_blocked_label),
+                EmailHtmlSanitizer.replace_blocked_images(sanitized, blocked_image_labels),
             )
         }
     }.getOrElse { plain }
@@ -149,7 +150,6 @@ internal fun build_email_print_html(
         append(".aster-print-rule{border:none;border-top:1px solid #ccc;margin:16px 0;}")
         append(".aster-print-body img{max-width:100%;height:auto;}")
         append(".aster-print-plain{white-space:pre-wrap;font-family:inherit;margin:0;}")
-        append(".blocked-image{display:inline-block;color:#666;border:1px dashed #bbb;padding:2px 6px;font-size:12px;}")
         append("</style></head><body dir=\"auto\">")
         append("<header class=\"aster-print-header\">")
         append(heading)

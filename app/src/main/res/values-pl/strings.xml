@@ -1301,7 +1301,8 @@
     <string name="pending_deletion_sign_out">Wyloguj się</string>
     <string name="pending_deletion_restoring">Przywracanie…</string>
     <string name="pending_deletion_error">Nie udało się przywrócić konta. Spróbuj ponownie.</string>
-    <string name="image_blocked_placeholder">[Obraz zablokowany]</string>
+    <string name="image_blocked">Obraz zablokowany</string>
+    <string name="tracking_pixel_blocked">Piksel śledzący zablokowany</string>
     <string name="alias_available">Ten alias jest dostępny.</string>
     <string name="alias_not_available">Ten alias jest już zajęty.</string>
     <string name="alias_check_failed">Nie udało się sprawdzić dostępności. Nadal możesz spróbować go utworzyć.</string>
