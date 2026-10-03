@@ -3098,6 +3098,7 @@ fun ComposeScreen(
         val picker_context = LocalContext.current
         val picker_theme = picker_theme_res()
         LaunchedEffect(Unit) {
+            val limit_to_sealed_window = external_sender_tokens[from_alias] == null
             val calendar = org.astermail.android.ui.mail.AsterTimePreferences.account_calendar()
             val date_picker = android.app.DatePickerDialog(
                 picker_context,
@@ -3113,6 +3114,16 @@ fun ComposeScreen(
                             if (cal.timeInMillis < System.currentTimeMillis() + minimum_schedule_lead_ms) {
                                 show_schedule_picker = false
                                 send_error = context.getString(R.string.schedule_time_in_past)
+                            } else if (
+                                limit_to_sealed_window &&
+                                org.astermail.android.mail.exceeds_sealed_schedule_window(
+                                    cal.timeInMillis,
+                                    System.currentTimeMillis(),
+                                )
+                            ) {
+                                show_schedule_picker = false
+                                if (scheduled_at_iso == null) scheduled_send = false
+                                send_error = context.getString(R.string.scheduled_too_far_ahead)
                             } else {
                                 scheduled_at_iso = java.time.Instant.ofEpochMilli(cal.timeInMillis).toString()
                                 scheduled_send = true
@@ -3134,6 +3145,10 @@ fun ComposeScreen(
                 calendar.get(java.util.Calendar.DAY_OF_MONTH),
             )
             date_picker.datePicker.minDate = System.currentTimeMillis()
+            if (limit_to_sealed_window) {
+                date_picker.datePicker.maxDate =
+                    org.astermail.android.mail.latest_sealed_schedule_ms(System.currentTimeMillis())
+            }
             date_picker.setOnCancelListener {
                 show_schedule_picker = false
                 scheduled_send = false
