@@ -4671,6 +4671,12 @@ internal fun signature_html_web_preview(html: String, modifier: Modifier = Modif
             wv.tag = html
             wv.loadDataWithBaseURL(null, doc, "text/html", "utf-8", null)
         },
+        onRelease = { wv ->
+            runCatching {
+                wv.stopLoading()
+                wv.destroy()
+            }
+        },
         modifier = modifier,
     )
 }
