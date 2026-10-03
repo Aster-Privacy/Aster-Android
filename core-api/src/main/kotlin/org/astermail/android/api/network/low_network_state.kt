@@ -22,13 +22,17 @@
 package org.astermail.android.api.network
 
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+const val SLOW_LINK_WINDOW_MS = 180_000L
+
 object low_network_state {
 
     private val preference_enabled = AtomicBoolean(false)
+    private val slow_link_until = AtomicLong(0L)
     private val active = MutableStateFlow(false)
 
     val is_active: StateFlow<Boolean> = active.asStateFlow()
@@ -42,8 +46,16 @@ object low_network_state {
 
     fun active(): Boolean = active.value
 
+    fun note_timeout(now_ms: Long = System.currentTimeMillis()) {
+        slow_link_until.set(now_ms + SLOW_LINK_WINDOW_MS)
+    }
+
+    fun extend_timeouts(now_ms: Long = System.currentTimeMillis()): Boolean =
+        active() || now_ms < slow_link_until.get()
+
     fun reset() {
         preference_enabled.set(false)
+        slow_link_until.set(0L)
         recompute()
     }
 

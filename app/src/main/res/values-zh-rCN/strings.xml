@@ -220,6 +220,7 @@
     <string name="block_sender">屏蔽发件人</string>
     <string name="message_unavailable">邮件不可用</string>
     <string name="message_replaced_or_deleted">此邮件已被删除或被较新的副本替换。要找到它，请返回并重新搜索。</string>
+    <string name="message_unavailable_offline">此邮件无法离线查看。恢复联网后将自动打开。</string>
     <string name="no_subject">（无主题）</string>
     <string name="open_external_link">打开外部链接？</string>
     <string name="leaving_aster_warning">您即将离开 Aster 并在浏览器中打开此链接：</string>

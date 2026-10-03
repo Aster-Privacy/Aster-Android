@@ -220,6 +220,7 @@
     <string name="block_sender">Bloquear remetente</string>
     <string name="message_unavailable">Mensagem indisponível</string>
     <string name="message_replaced_or_deleted">Esta mensagem foi eliminada ou substituída por uma cópia mais recente. Para a encontrar, volte atrás e pesquise novamente.</string>
+    <string name="message_unavailable_offline">Esta mensagem não está disponível offline. Será aberta quando voltar a estar online.</string>
     <string name="no_subject">(sem assunto)</string>
     <string name="open_external_link">Abrir ligação externa?</string>
     <string name="leaving_aster_warning">Está prestes a sair do Aster e abrir esta ligação no seu navegador:</string>

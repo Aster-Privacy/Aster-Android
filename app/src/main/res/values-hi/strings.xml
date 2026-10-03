@@ -296,6 +296,7 @@
     <string name="contact_removed_named">%1$s संपर्कों से हटाया गया</string>
     <string name="message_unavailable">संदेश उपलब्ध नहीं</string>
     <string name="message_replaced_or_deleted">यह संदेश हटा दिया गया है या नई कॉपी से बदल दिया गया है। इसे ढूंढने के लिए, वापस जाएं और फिर से खोजें।</string>
+    <string name="message_unavailable_offline">यह संदेश ऑफ़लाइन उपलब्ध नहीं है। ऑनलाइन वापस आने पर यह खुल जाएगा।</string>
     <string name="no_subject">(कोई विषय नहीं)</string>
     <string name="open_external_link">बाहरी लिंक खोलें?</string>
     <string name="leaving_aster_warning">आप Aster से बाहर जाकर यह लिंक अपने ब्राउज़र में खोलने जा रहे हैं:</string>

@@ -220,6 +220,7 @@
     <string name="block_sender">Göndereni engelle</string>
     <string name="message_unavailable">Mesaj kullanılamıyor</string>
     <string name="message_replaced_or_deleted">Bu ileti silindi veya daha yeni bir kopyayla değiştirildi. Bulmak için geri dönüp yeniden arayın.</string>
+    <string name="message_unavailable_offline">Bu ileti çevrimdışı kullanılamıyor. Yeniden çevrimiçi olduğunuzda açılır.</string>
     <string name="no_subject">(konu yok)</string>
     <string name="open_external_link">Harici bağlantı açılsın mı?</string>
     <string name="leaving_aster_warning">Aster\'den ayrılmak ve bu bağlantıyı tarayıcınızda açmak üzeresiniz:</string>

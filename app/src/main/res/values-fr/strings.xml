@@ -230,6 +230,7 @@
     <string name="block_sender">Bloquer l\'expéditeur</string>
     <string name="message_unavailable">Message indisponible</string>
     <string name="message_replaced_or_deleted">Ce message a été supprimé ou remplacé par une copie plus récente. Pour le retrouver, revenez en arrière et relancez la recherche.</string>
+    <string name="message_unavailable_offline">Ce message n\'est pas disponible hors ligne. Il s\'ouvrira dès que vous serez de nouveau en ligne.</string>
     <string name="no_subject">(sans objet)</string>
     <string name="open_external_link">Ouvrir le lien externe ?</string>
     <string name="leaving_aster_warning">Vous êtes sur le point de quitter Aster et d\'ouvrir ce lien dans votre navigateur :</string>

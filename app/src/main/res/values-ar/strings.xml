@@ -220,6 +220,7 @@
     <string name="block_sender">حظر المرسل</string>
     <string name="message_unavailable">الرسالة غير متاحة</string>
     <string name="message_replaced_or_deleted">تم حذف هذه الرسالة أو استبدالها بنسخة أحدث. للعثور عليها، ارجع وابحث مرة أخرى.</string>
+    <string name="message_unavailable_offline">هذه الرسالة غير متاحة دون اتصال. ستُفتح عند عودتك إلى الاتصال بالإنترنت.</string>
     <string name="no_subject">(بدون موضوع)</string>
     <string name="open_external_link">فتح رابط خارجي؟</string>
     <string name="leaving_aster_warning">أنت على وشك مغادرة Aster وفتح هذا الرابط في متصفحك:</string>
