@@ -200,6 +200,7 @@ class MainActivity :
         const val EXTRA_OPEN_SESSIONS = "open_sessions"
         private const val FIRST_FRAME_INSET_TIMEOUT_MS = 1000L
         private const val CONTENT_INSET_TIMEOUT_MS = 4000L
+        private const val STATE_LAUNCH_PENDING = "launch_intent_pending"
     }
 
     private val insets_applied = java.util.concurrent.atomic.AtomicBoolean(false)
@@ -237,8 +238,8 @@ class MainActivity :
                 secure_storage_ready.value = true
             }
         }
-        if (saved_instance_state == null) {
-            note_launch_folder(intent)
+        if (saved_instance_state == null) note_launch_folder(intent)
+        if (saved_instance_state == null || saved_instance_state.getBoolean(STATE_LAUNCH_PENDING)) {
             consume_open_email_extra(intent)
             consume_share_intent(intent)
         }
@@ -297,6 +298,11 @@ class MainActivity :
                 )
             }
         }
+    }
+
+    override fun onSaveInstanceState(out_state: Bundle) {
+        super.onSaveInstanceState(out_state)
+        out_state.putBoolean(STATE_LAUNCH_PENDING, pending_launch.has_pending_target())
     }
 
     override fun onNewIntent(intent: Intent) {
