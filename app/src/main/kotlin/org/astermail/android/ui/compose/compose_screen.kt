@@ -158,6 +158,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.compose.ui.res.pluralStringResource
@@ -1350,7 +1351,7 @@ fun ComposeScreen(
             if (result.isSuccess) {
                 current_draft_id = result.getOrNull().orEmpty()
                 draft_status = context.getString(R.string.saved)
-            } else {
+            } else if (isActive) {
                 draft_status = context.getString(R.string.save_failed)
             }
         }
