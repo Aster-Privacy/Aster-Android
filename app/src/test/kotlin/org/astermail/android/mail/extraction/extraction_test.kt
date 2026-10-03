@@ -361,4 +361,60 @@ class extraction_test {
         assertTrue(is_shipping_email("Delivered", "Your package was delivered. Tracking # 9400100000000000000000"))
         assertTrue(is_shipping_email("Out for delivery", "Your package is out for delivery and arriving today."))
     }
+
+    @Test
+    fun `ignores encryption and tracking pixel wording`() {
+        listOf(
+            "Messages are encrypted in transit and tracking pixels are blocked.",
+            "The server did deliver the envelope. Mail is protected in transit. Blocked tracking pixels.",
+            "Scheduled mail is only released at delivery time and was delivered to every recipient; data in transit.",
+        ).forEach { body ->
+            assertFalse(body, is_shipping_email("Re: Code review notes", body))
+        }
+    }
+
+    @Test
+    fun `ignores a privacy newsletter`() {
+        val subject = "Our privacy report for October"
+        val body = "Every message is encrypted at rest and in transit, with TLS used for in transit encryption between servers. " +
+            "Tracking protection now strips tracking pixels and link tracking from incoming mail, and blocked trackers are listed per message. " +
+            "This report was delivered to every subscriber, and your order history stays private."
+        assertFalse(is_shipping_email(subject, body))
+        assertFalse(extract_email_details(subject, body, null, "news@example.com", "News").has_shipping_details)
+    }
+
+    @Test
+    fun `ignores a security review reply`() {
+        assertFalse(
+            is_shipping_email(
+                "Re: Review of the scheduled sending flow",
+                "Data is secured in transit, but the queued copy was delivered to the server in plain form. " +
+                    "Tracking prevention does not cover this path.",
+            ),
+        )
+    }
+
+    @Test
+    fun `detects carrier and shop notices`() {
+        listOf(
+            "UPS Update: Package Scheduled for Delivery Tomorrow" to
+                "Your package is in transit. Tracking Number: 1Z999AA10123456784. Estimated delivery: Friday.",
+            "USPS Tracking update" to
+                "Your item is in transit to the next facility. USPS Tracking 9400100000000000000000.",
+            "Your DHL shipment is on its way" to
+                "Shipment in transit. Track your parcel with tracking ID JD014600006281230000.",
+            "FedEx shipment update" to
+                "Your shipment is in transit and was handed to the destination hub. Tracking: 771234567890.",
+            "Your Amazon order has shipped" to
+                "Arriving tomorrow. Track package TBA123456789012.",
+            "Your order is on the way" to
+                "Good news! Your order has shipped and is now in transit with Royal Mail. Tracking: RM123456785GB.",
+            "In transit" to
+                "In transit: your order 4821 left our warehouse. We are tracking it for you.",
+            "Delivered: your parcel" to
+                "Your parcel was delivered at 14:02. Tracking # CP123456789PT.",
+        ).forEach { (subject, body) ->
+            assertTrue(subject, is_shipping_email(subject, body))
+        }
+    }
 }

@@ -292,10 +292,8 @@ fun extract_shipping_details(
 
 private val shipping_indicators = listOf(
     Regex("\\bshipped\\b", RegexOption.IGNORE_CASE),
-    Regex("\\btracking\\s*(?:#|number)?\\b", RegexOption.IGNORE_CASE),
     Regex("\\bout\\s+for\\s+delivery\\b", RegexOption.IGNORE_CASE),
     Regex("\\bdelivered\\b", RegexOption.IGNORE_CASE),
-    Regex("\\bin\\s+transit\\b", RegexOption.IGNORE_CASE),
     Regex("\\bhas\\s+shipped\\b", RegexOption.IGNORE_CASE),
     Regex("\\bshipment\\s+(?:update|notification)\\b", RegexOption.IGNORE_CASE),
     Regex("\\bpackage\\s+(?:update|notification|shipped|delivered)\\b", RegexOption.IGNORE_CASE),
@@ -308,7 +306,6 @@ private val shipping_indicators = listOf(
 private val parcel_specific_indicators = listOf(
     Regex("\\btracking\\s*(?:#|number)", RegexOption.IGNORE_CASE),
     Regex("\\bout\\s+for\\s+delivery\\b", RegexOption.IGNORE_CASE),
-    Regex("\\bin\\s+transit\\b", RegexOption.IGNORE_CASE),
     Regex("\\bhas\\s+shipped\\b", RegexOption.IGNORE_CASE),
     Regex("\\bshipment\\s+(?:update|notification)\\b", RegexOption.IGNORE_CASE),
     Regex("\\bpackage\\s+(?:update|notification|shipped|delivered)\\b", RegexOption.IGNORE_CASE),
@@ -318,16 +315,50 @@ private val parcel_specific_indicators = listOf(
     Regex("\\bTBA\\d{12,15}\\b", RegexOption.IGNORE_CASE),
 )
 
+private val in_transit_regex = Regex("\\bin\\s+transit\\b", RegexOption.IGNORE_CASE)
+private val tracking_regex = Regex("\\btracking\\b", RegexOption.IGNORE_CASE)
+private val shipment_noun_regex =
+    Regex("\\b(?:packages?|parcels?|orders?|shipments?|deliver(?:y|ies)|items?)\\b", RegexOption.IGNORE_CASE)
+private val non_parcel_transit_before = Regex(
+    "\\b(?:encrypted|encryption|protected|secured|secure|data|rest)\\s+(?:(?:and|both)\\s+)?$",
+    RegexOption.IGNORE_CASE,
+)
+private val non_parcel_transit_after = Regex("^\\s+encryption\\b", RegexOption.IGNORE_CASE)
+private val non_parcel_tracking_before = Regex("\\blink\\s+$", RegexOption.IGNORE_CASE)
+private val non_parcel_tracking_after = Regex("^\\s+(?:pixels?|protection|prevention)\\b", RegexOption.IGNORE_CASE)
+private val sentence_break_regex = Regex("[.!?\\n]")
+
+private data class TermContext(val before: String, val after: String)
+
+private fun find_term_contexts(
+    text: String,
+    pattern: Regex,
+    excluded_before: Regex,
+    excluded_after: Regex,
+): List<TermContext> = pattern.findAll(text).mapNotNull { match ->
+    val start = match.range.first
+    val end = match.range.last + 1
+    val before = text.substring(maxOf(0, start - 60), start).split(sentence_break_regex).last()
+    val after = text.substring(end, minOf(text.length, end + 60)).split(sentence_break_regex).first()
+    if (excluded_before.containsMatchIn(before) || excluded_after.containsMatchIn(after)) {
+        null
+    } else {
+        TermContext(before, after)
+    }
+}.toList()
+
 fun is_shipping_email(subject: String, body: String): Boolean {
     val combined = (subject + " " + body).lowercase(Locale.ROOT)
-    var matches = 0
+    val in_transit = find_term_contexts(combined, in_transit_regex, non_parcel_transit_before, non_parcel_transit_after)
+    val tracking = find_term_contexts(combined, tracking_regex, non_parcel_tracking_before, non_parcel_tracking_after)
+    var matches = (if (in_transit.isNotEmpty()) 1 else 0) + (if (tracking.isNotEmpty()) 1 else 0)
     for (pattern in shipping_indicators) {
-        if (pattern.containsMatchIn(combined)) {
-            matches += 1
-            if (matches >= 2) break
-        }
+        if (matches >= 2) break
+        if (pattern.containsMatchIn(combined)) matches += 1
     }
-    return matches >= 2 && parcel_specific_indicators.any { it.containsMatchIn(combined) }
+    if (matches < 2) return false
+    return parcel_specific_indicators.any { it.containsMatchIn(combined) } ||
+        in_transit.any { shipment_noun_regex.containsMatchIn(it.before) || shipment_noun_regex.containsMatchIn(it.after) }
 }
 
 fun extract_email_details(
