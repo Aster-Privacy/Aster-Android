@@ -1329,10 +1329,18 @@ class BillingViewModel @Inject constructor(
         _state.update { it.copy(academic_sent = false, academic_error = null) }
     }
 
-    fun load_onboarding_checklist() {
+    private var onboarding_finished_for: String? = null
+
+    fun load_onboarding_checklist(force: Boolean = true) {
+        val account = cache_account_key()
+        if (!force && account != null && account == onboarding_finished_for) return
         viewModelScope.launch {
             try {
-                _state.update { it.copy(onboarding = billing_api.get_onboarding_checklist()) }
+                val checklist = billing_api.get_onboarding_checklist()
+                _state.update { it.copy(onboarding = checklist) }
+                val finished = checklist.dismissed_at != null ||
+                    (checklist.tasks.isNotEmpty() && checklist.tasks.values.all { it })
+                onboarding_finished_for = if (finished) account else null
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_onboarding_checklist failed", t)
