@@ -128,4 +128,58 @@ class EmailBodyOverflowTest {
 
         assertFalse(css.contains("#m [style*=\"nowrap\" i]"))
     }
+
+    private val long_link = "https://accounts.example.com/oauth/authorize?client_id=abc123&state=eyJ" + "aB3xYz9QwErTy".repeat(45)
+
+    private val transactional = "<table><tr><td><p>Hi Ann,</p><p>Or copy and paste this link into your web browser: " +
+        "<a href=\"$long_link\">$long_link</a></p></td></tr></table>"
+
+    private fun marked_tokens(document: String): List<String> =
+        org.jsoup.Jsoup.parse(document).select("[data-aster-long-token]").map { it.text() }
+
+    @Test
+    fun a_plain_html_message_lets_long_unbroken_tokens_wrap_anywhere() {
+        val css = style_block(render(transactional))
+
+        assertTrue(css.contains("#m [data-aster-long-token]{overflow-wrap:anywhere}"))
+    }
+
+    @Test
+    fun a_long_link_in_a_plain_html_table_is_marked_so_it_cannot_widen_the_cell() {
+        val document = render(transactional)
+
+        assertEquals(listOf(long_link), marked_tokens(document))
+        val anchor = org.jsoup.Jsoup.parse(document).selectFirst("a[href^=https://accounts.example.com]")!!
+        assertEquals(long_link, anchor.attr("href"))
+        assertEquals(long_link, anchor.text())
+    }
+
+    @Test
+    fun ordinary_words_and_table_cells_keep_their_wrapping() {
+        val body = "<table><tr><td>Description:</td><td>Your monthly subscription renewal</td></tr>" +
+            "<tr><td>Reference:</td><td>INV-2026-000123</td></tr></table>"
+        val document = render(body)
+        val css = style_block(document)
+
+        assertTrue(marked_tokens(document).isEmpty())
+        assertTrue(css.contains("td,th{overflow-wrap:break-word}"))
+        assertFalse(css.contains("td,th{overflow-wrap:anywhere"))
+        assertFalse(css.contains("#m td{overflow-wrap:anywhere"))
+    }
+
+    @Test
+    fun preformatted_and_code_tokens_are_left_alone() {
+        val token = "a".repeat(80)
+        val document = render("<table><tr><td><pre>$token</pre><code>$token</code></td></tr></table>")
+
+        assertTrue(marked_tokens(document).isEmpty())
+    }
+
+    @Test
+    fun newsletters_keep_their_own_wrapping_rules() {
+        val document = render(newsletter.replace("VISIT EXAMPLE.COM", long_link))
+
+        assertTrue(marked_tokens(document).isEmpty())
+        assertFalse(style_block(document).contains("[data-aster-long-token]"))
+    }
 }
