@@ -2883,7 +2883,7 @@
     <string name="show_sender_pictures_subtitle">Muestra una foto o las iniciales de cada remitente en tu bandeja de entrada</string>
     <string name="theme_sync_across_devices">Sincronizar el tema entre dispositivos</string>
     <string name="theme_sync_across_devices_subtitle">Desactívalo para usar un tema distinto en este dispositivo.</string>
-    <string name="view_encryption_details">Ver detalles del cifrado</string>
+    <string name="view_security_details">Ver detalles de seguridad</string>
     <string name="resubscribe">Volver a suscribirte</string>
     <string name="translate_confirm_title">¿Activar la traducción?</string>
     <string name="translate_confirm_message">Aster traduce el correo en tu dispositivo, por lo que nada de lo que lees se envía a un servicio de traducción. La primera vez que traduces desde un idioma, Aster descarga un paquete de idioma de 20 a 55 MB y lo guarda en este dispositivo. Puedes eliminar los paquetes cuando quieras.</string>

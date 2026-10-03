@@ -454,7 +454,7 @@
     <string name="to_label_prefix">to %s</string>
     <string name="received_on_label">Received on</string>
     <string name="reply_to_label">Reply to</string>
-    <string name="view_encryption_details">View encryption details</string>
+    <string name="view_security_details">View security details</string>
     <string name="security_details_title">Security details</string>
     <string name="failed_to_trash">Failed to move to trash</string>
     <string name="failed_report_spam">Failed to report spam</string>

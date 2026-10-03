@@ -200,7 +200,7 @@ class ChipAndDetailsScreenshotTest {
                 }
             }
         }
-        compose_rule.onNodeWithText("View encryption details").performClick()
+        compose_rule.onNodeWithText("View security details").performClick()
         compose_rule.waitForIdle()
         save_device_screenshot(name)
     }

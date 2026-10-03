@@ -4060,7 +4060,7 @@ internal fun message_details_panel(
             )
         }
         Text(
-            text = stringResource(R.string.view_encryption_details),
+            text = stringResource(R.string.view_security_details),
             color = colors.accent_blue,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
