@@ -558,6 +558,7 @@ object EmailHtmlSanitizer {
     private val css_cross_fade_regex = Regex("cross-fade\\s*\\([^)]*\\)", RegexOption.IGNORE_CASE)
     private val css_closing_tag_regex = Regex("</(style|script)", RegexOption.IGNORE_CASE)
     private const val media_keyword = "@media"
+    private const val max_css_sanitize_passes = 8
     private val media_prelude_terminators = charArrayOf('{', ';')
     private val dark_scheme_regex = Regex("prefers-color-scheme\\s*:\\s*dark", RegexOption.IGNORE_CASE)
     private val media_not_regex = Regex("(^|[\\s(])not\\b", RegexOption.IGNORE_CASE)
@@ -703,7 +704,20 @@ object EmailHtmlSanitizer {
         }
     }
 
-    private fun sanitize_style_value(css: String): String {
+    private fun sanitize_until_stable(css: String, pass: (String) -> String): String {
+        var current = css
+        repeat(max_css_sanitize_passes) {
+            val next = pass(current)
+            if (next == current) return next
+            current = next
+        }
+        return ""
+    }
+
+    private fun sanitize_style_value(css: String): String =
+        sanitize_until_stable(css) { sanitize_style_value_pass(it) }
+
+    private fun sanitize_style_value_pass(css: String): String {
         var out = strip_css_comments(css)
         out = out.replace("<", "")
         out = out.replace(css_expression_regex, "blocked(")
@@ -718,7 +732,10 @@ object EmailHtmlSanitizer {
 
     private val font_face_block = Regex("@font-face\\s*\\{[^}]*\\}", RegexOption.IGNORE_CASE)
 
-    private fun sanitize_css_block(css: String, options: SanitizeOptions = SanitizeOptions()): String {
+    private fun sanitize_css_block(css: String, options: SanitizeOptions = SanitizeOptions()): String =
+        sanitize_until_stable(css) { sanitize_css_block_pass(it, options) }
+
+    private fun sanitize_css_block_pass(css: String, options: SanitizeOptions): String {
         var out = strip_css_comments(css)
         if (options.block_remote_css) {
             out = out.replace(css_import_regex, "")
