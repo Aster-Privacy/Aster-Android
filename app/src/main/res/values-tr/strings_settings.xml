@@ -89,4 +89,6 @@
     <string name="sign_out_all_other_confirm_message">Bu cihaz dışındaki tüm cihazlardan çıkılsın mı?</string>
     <string name="alias_forward_limit_reached">Planınızdaki etkin takma ad sayısının üst sınırına ulaştınız</string>
     <string name="settings_plan_bullet_daily_emails">Günde 1.000 e-posta</string>
+    <string name="launch_folder">Başlangıçta aç</string>
+    <string name="launch_folder_hint">Uygulamayı açtığınızda gösterilir. Bildirimler ve bağlantılar yine ilgili iletiyi açar.</string>
 </resources>

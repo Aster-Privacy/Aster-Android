@@ -25,6 +25,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import org.astermail.android.mail.decode_html_entities
+import org.astermail.android.mail.strip_non_rendered_blocks
 
 data class ProtectedMimeAttachment(
     val filename: String,
@@ -241,7 +243,8 @@ object ProtectedMimeBuilder {
 
     private fun base64_body(value: String): String = wrap_base64(base64_of_string(value))
 
-    fun html_to_plain_text(html: String): String {
+    fun html_to_plain_text(input: String): String {
+        val html = strip_non_rendered_blocks(input)
         val out = StringBuilder()
         var index = 0
 
@@ -281,13 +284,7 @@ object ProtectedMimeBuilder {
             index += 1
         }
 
-        val decoded = out.toString()
-            .replace("&nbsp;", " ")
-            .replace("&amp;", "&")
-            .replace("&lt;", "<")
-            .replace("&gt;", ">")
-            .replace("&quot;", "\"")
-            .replace("&#39;", "'")
+        val decoded = decode_html_entities(out.toString())
 
         val collapsed = StringBuilder()
         var blank_run = 0

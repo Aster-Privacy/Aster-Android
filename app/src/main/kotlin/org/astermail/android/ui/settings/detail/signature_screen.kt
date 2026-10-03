@@ -41,10 +41,13 @@ import compose.icons.tablericons.Check
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -84,7 +87,8 @@ fun SignatureScreen(
     val plan_state by plan_vm.state.collectAsStateWithLifecycle()
     val is_paid: Boolean? = plan_state.limits?.let { it.plan_code != "free" }
     var editing by remember { mutableStateOf<DecryptedSignature?>(null) }
-    var creating by remember { mutableStateOf(false) }
+    var editing_id by rememberSaveable { mutableStateOf<String?>(null) }
+    var creating by rememberSaveable { mutableStateOf(false) }
     var pending_delete by remember { mutableStateOf<DecryptedSignature?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
     val save_scope = androidx.compose.runtime.rememberCoroutineScope()
@@ -98,6 +102,11 @@ fun SignatureScreen(
         }
     }
 
+    LaunchedEffect(editing_id, signatures) {
+        val id = editing_id ?: return@LaunchedEffect
+        if (editing == null) editing = signatures.firstOrNull { it.id == id }
+    }
+
     LaunchedEffect(Unit) {
         vm.load_aliases()
         vm.load_signature()
@@ -109,7 +118,7 @@ fun SignatureScreen(
             initial = editing,
             aliases = state.aliases,
             all_signatures = signatures,
-            on_cancel = { editing = null; creating = false },
+            on_cancel = { editing = null; editing_id = null; creating = false },
             on_save = save@{ name, raw_content, alias_id, placement, is_html, is_default ->
                 if (fitting_signature) return@save
                 fitting_signature = true
@@ -153,6 +162,7 @@ fun SignatureScreen(
                         )
                     }
                     editing = null
+                    editing_id = null
                     creating = false
                 }
             },
@@ -174,6 +184,7 @@ fun SignatureScreen(
                     pending_delete = null
                     vm.delete_signature(delete_target.id)
                     editing = null
+                    editing_id = null
                     creating = false
                 },
             )
@@ -216,7 +227,7 @@ fun SignatureScreen(
                         detail_row(
                             title = sig.name.ifBlank { stringResource(R.string.signature) },
                             subtitle = subtitle,
-                            on_click = { editing = sig },
+                            on_click = { editing = sig; editing_id = sig.id },
                         )
                     }
                 }
@@ -270,6 +281,11 @@ fun SignatureScreen(
     }
 }
 
+private val signature_content_saver = Saver<MutableState<String>, String>(
+    save = { state -> state.value.takeIf { org.astermail.android.settings.signature_fits(it) } },
+    restore = { mutableStateOf(it) },
+)
+
 @Composable
 private fun signature_edit_modal(
     initial: DecryptedSignature?,
@@ -280,12 +296,12 @@ private fun signature_edit_modal(
     on_delete: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    var name by remember { mutableStateOf(initial?.name.orEmpty()) }
-    var content by remember { mutableStateOf(initial?.content.orEmpty()) }
-    var alias_id by remember { mutableStateOf(initial?.alias_id) }
-    var placement by remember { mutableStateOf(initial?.placement) }
-    var is_default by remember { mutableStateOf(initial?.is_default ?: (initial == null)) }
-    var is_html by remember { mutableStateOf(initial?.is_html ?: false) }
+    var name by rememberSaveable { mutableStateOf(initial?.name.orEmpty()) }
+    var content by rememberSaveable(saver = signature_content_saver) { mutableStateOf(initial?.content.orEmpty()) }
+    var alias_id by rememberSaveable { mutableStateOf(initial?.alias_id) }
+    var placement by rememberSaveable { mutableStateOf(initial?.placement) }
+    var is_default by rememberSaveable { mutableStateOf(initial?.is_default ?: (initial == null)) }
+    var is_html by rememberSaveable { mutableStateOf(initial?.is_html ?: false) }
     val editor_controller = remember { signature_editor_controller() }
 
     fun commit(latest_content: String) {

@@ -89,4 +89,6 @@
     <string name="sign_out_all_other_confirm_message">Wylogować wszystkie urządzenia oprócz tego?</string>
     <string name="alias_forward_limit_reached">Osiągnięto maksymalną liczbę aktywnych aliasów w Twoim planie</string>
     <string name="settings_plan_bullet_daily_emails">1000 wiadomości dziennie</string>
+    <string name="launch_folder">Otwieraj przy uruchomieniu</string>
+    <string name="launch_folder_hint">Wyświetlany po otwarciu aplikacji. Powiadomienia i linki nadal otwierają wiadomość, do której prowadzą.</string>
 </resources>

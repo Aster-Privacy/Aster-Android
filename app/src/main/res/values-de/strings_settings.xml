@@ -89,4 +89,6 @@
     <string name="sign_out_all_other_confirm_message">Alle Geräte außer diesem abmelden?</string>
     <string name="alias_forward_limit_reached">Sie haben die Höchstzahl aktiver Aliase für Ihren Tarif erreicht</string>
     <string name="settings_plan_bullet_daily_emails">1.000 E-Mails pro Tag</string>
+    <string name="launch_folder">Beim Start öffnen</string>
+    <string name="launch_folder_hint">Wird beim Öffnen der App angezeigt. Benachrichtigungen und Links öffnen weiterhin die jeweilige Nachricht.</string>
 </resources>

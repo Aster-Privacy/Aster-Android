@@ -29,7 +29,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -42,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -240,7 +241,7 @@ fun swipe_action_row(
                     .let { if (background_shape != null) it.clip(background_shape) else it }
                     .background(surface)
                     .padding(horizontal = AsterSpacing.xl),
-                contentAlignment = if (towards_start) Alignment.CenterStart else Alignment.CenterEnd,
+                contentAlignment = if (towards_start) AbsoluteAlignment.CenterLeft else AbsoluteAlignment.CenterRight,
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -259,7 +260,7 @@ fun swipe_action_row(
                 }
             }
         }
-        Box(modifier = Modifier.offset { IntOffset(offset_x.value.roundToInt(), 0) }) {
+        Box(modifier = Modifier.absoluteOffset { IntOffset(offset_x.value.roundToInt(), 0) }) {
             content()
         }
     }

@@ -151,4 +151,6 @@
     <string name="revoke_session_confirm_message">Déconnecter cet appareil de votre compte ?</string>
     <string name="sign_out_all_other_confirm_message">Déconnecter tous les appareils sauf celui-ci ?</string>
     <string name="alias_forward_limit_reached">Vous avez atteint le nombre maximal d\'alias actifs de votre forfait</string>
+    <string name="launch_folder">Ouvrir au démarrage</string>
+    <string name="launch_folder_hint">S\'affiche à l\'ouverture de l\'application. Les notifications et les liens ouvrent toujours le message concerné.</string>
 </resources>

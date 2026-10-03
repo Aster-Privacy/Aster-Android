@@ -89,4 +89,6 @@
     <string name="sign_out_all_other_confirm_message">Выйти на всех устройствах, кроме этого?</string>
     <string name="alias_forward_limit_reached">Достигнут лимит активных псевдонимов в вашем тарифе</string>
     <string name="settings_plan_bullet_daily_emails">1000 писем в день</string>
+    <string name="launch_folder">Открывать при запуске</string>
+    <string name="launch_folder_hint">Показывается при открытии приложения. Уведомления и ссылки по-прежнему открывают нужное письмо.</string>
 </resources>

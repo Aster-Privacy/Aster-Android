@@ -41,6 +41,7 @@ import org.astermail.android.api.billing.CancelSubscriptionRequest
 import org.astermail.android.api.billing.CancelSubscriptionResponse
 import org.astermail.android.api.billing.ChangePlanRequest
 import org.astermail.android.api.billing.ChangePlanResponse
+import org.astermail.android.api.billing.OnboardingChecklistResponse
 import org.astermail.android.api.billing.PlanChangePreviewResponse
 import org.astermail.android.api.billing.PlanInfo
 import org.astermail.android.api.billing.PortalSessionResponse
@@ -269,5 +270,52 @@ class BillingViewModelTest {
 
         vm.clear_subscription_error()
         assertNull(vm.state.value.subscription_error)
+    }
+
+    private fun signed_in_vm(): BillingViewModel {
+        val store = SessionKeyStore(null).also { it.put_user_id("user1") }
+        return BillingViewModel(application, billing_api, auth_repository, PreferencesCacheStore(null), store)
+    }
+
+    @Test
+    fun `a finished onboarding checklist is not refetched on inbox entry`() = runTest {
+        coEvery { billing_api.get_onboarding_checklist() } returns
+            OnboardingChecklistResponse(tasks = mapOf("compose" to true, "import_mail" to true))
+        val billing = signed_in_vm()
+        billing.load_onboarding_checklist(force = false)
+        advanceUntilIdle()
+
+        billing.load_onboarding_checklist(force = false)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { billing_api.get_onboarding_checklist() }
+    }
+
+    @Test
+    fun `an open onboarding checklist is refetched on inbox entry`() = runTest {
+        coEvery { billing_api.get_onboarding_checklist() } returns
+            OnboardingChecklistResponse(tasks = mapOf("compose" to true, "import_mail" to false))
+        val billing = signed_in_vm()
+        billing.load_onboarding_checklist(force = false)
+        advanceUntilIdle()
+
+        billing.load_onboarding_checklist(force = false)
+        advanceUntilIdle()
+
+        coVerify(exactly = 2) { billing_api.get_onboarding_checklist() }
+    }
+
+    @Test
+    fun `a forced onboarding load always refetches`() = runTest {
+        coEvery { billing_api.get_onboarding_checklist() } returns
+            OnboardingChecklistResponse(dismissed_at = "2026-01-01T00:00:00Z")
+        val billing = signed_in_vm()
+        billing.load_onboarding_checklist()
+        advanceUntilIdle()
+
+        billing.load_onboarding_checklist()
+        advanceUntilIdle()
+
+        coVerify(exactly = 2) { billing_api.get_onboarding_checklist() }
     }
 }
