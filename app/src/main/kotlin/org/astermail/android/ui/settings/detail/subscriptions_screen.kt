@@ -675,12 +675,18 @@ fun SubscriptionsScreen(
         val has_addons = (!play_install || play_mode) && (available_addons.isNotEmpty() || active_addons.isNotEmpty())
         val play_active_addon_ids = billing_state.play_active_addons.map { it.product_id }.toSet()
         val play_yearly_addon_ids = billing_state.play_active_addons.filter { it.term_months == 12 }.map { it.product_id }.toSet()
-        val addons_sell_yearly = play_install &&
+        val addons_sell_yearly = if (play_install) {
             org.astermail.android.billing.play_addon_sells_yearly(billing_state.play_offers, billing_state.play_addon_products)
+        } else {
+            org.astermail.android.billing.card_addons_sell_yearly(available_addons)
+        }
         val addon_yearly_badge = if (addons_sell_yearly) {
-            org.astermail.android.billing.play_addon_yearly_savings_percent(billing_state.play_offers, billing_state.play_addon_products)
-                ?.takeIf { it > 0 }
-                ?.let { stringResource(R.string.save_percent, it) }
+            val savings = if (play_install) {
+                org.astermail.android.billing.play_addon_yearly_savings_percent(billing_state.play_offers, billing_state.play_addon_products)
+            } else {
+                org.astermail.android.billing.card_addon_yearly_savings_percent(available_addons)
+            }
+            savings?.takeIf { it > 0 }?.let { stringResource(R.string.save_percent, it) }
         } else {
             null
         }
@@ -1179,16 +1185,21 @@ fun SubscriptionsScreen(
                                         interval,
                                     )
                                 } else {
-                                    null
+                                    org.astermail.android.billing.card_addon_price_cents(available_addons, bytes, interval)
+                                        ?.let { cents -> format_price(cents, detected_currency) }
                                 }
                             },
                             active_interval_for = { bytes ->
-                                val product_id = if (play_install) {
-                                    org.astermail.android.billing.play_addon_product_for(billing_state.play_addon_products, bytes)?.product_id
+                                if (play_install) {
+                                    val product_id = org.astermail.android.billing.play_addon_product_for(
+                                        billing_state.play_addon_products,
+                                        bytes,
+                                    )?.product_id
+                                    if (product_id != null && product_id in play_yearly_addon_ids) "year" else "month"
                                 } else {
-                                    null
+                                    active_addons.firstOrNull { it.size_bytes == bytes }?.billing_period
+                                        ?.takeIf { it == "year" } ?: "month"
                                 }
-                                if (product_id != null && product_id in play_yearly_addon_ids) "year" else "month"
                             },
                             play_product_for = { bytes ->
                                 if (play_install) {

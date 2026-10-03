@@ -125,7 +125,7 @@ internal fun billing_addons_panel(
                 subtitle = if (ending && addon.current_period_end != null) {
                     stringResource(R.string.ends_date, absolute_date_label(addon.current_period_end))
                 } else {
-                    (price_label_for(addon.size_bytes, active_interval) ?: format_money(addon.price_cents.toLong(), currency)) +
+                    (play_product_id?.let { price_label_for(addon.size_bytes, active_interval) } ?: format_money(addon.price_cents.toLong(), currency)) +
                         suffix_for(active_interval)
                 },
                 icon = billing_icon_storage,
