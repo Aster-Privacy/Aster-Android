@@ -1970,7 +1970,7 @@ fun InboxScreen(
                             )
                             "spam" -> SwipeConfig(
                                 start_label = not_spam_label_outer, end_label = delete_label_outer,
-                                start_icon = TablerIcons.Inbox, end_icon = TablerIcons.Trash,
+                                start_icon = spam_action_icon(is_spam = true), end_icon = TablerIcons.Trash,
                                 start_action = "unmark_spam", end_action = "delete",
                             )
                             else -> SwipeConfig(
@@ -3517,10 +3517,11 @@ internal fun select_mode_bottom_bar(
                             test_tag = "sel_action_unarchive",
                         )
                         bottom_select_action(
-                            icon = TablerIcons.Ban,
+                            icon = spam_action_icon(is_spam = false),
                             label = stringResource(R.string.report_spam),
                             enabled = enabled,
                             onClick = { on_action("spam") },
+                            tint = colors.danger,
                             test_tag = "sel_action_spam",
                         )
                         bottom_select_action(
@@ -3549,7 +3550,7 @@ internal fun select_mode_bottom_bar(
                             test_tag = "mark_read",
                         )
                         bottom_select_action(
-                            icon = TablerIcons.Inbox,
+                            icon = spam_action_icon(is_spam = true),
                             label = stringResource(R.string.swipe_not_spam),
                             enabled = enabled,
                             onClick = { on_action("not_spam") },
@@ -3689,7 +3690,7 @@ internal fun selection_overflow_sheet(
                 overflow_sheet_row("restore", TablerIcons.Inbox, stringResource(R.string.swipe_restore), colors.text_primary) { on_action("restore") }
             }
             if (in_spam) {
-                overflow_sheet_row("not_spam", TablerIcons.Inbox, stringResource(R.string.swipe_not_spam), colors.text_primary) { on_action("not_spam") }
+                overflow_sheet_row("not_spam", spam_action_icon(is_spam = true), stringResource(R.string.swipe_not_spam), colors.text_primary) { on_action("not_spam") }
             }
             if (in_archive) {
                 overflow_sheet_row("unarchive", TablerIcons.Inbox, stringResource(R.string.swipe_restore), colors.text_primary) { on_action("unarchive") }
@@ -3712,7 +3713,7 @@ internal fun selection_overflow_sheet(
                 overflow_sheet_row("trash", TablerIcons.Trash, stringResource(R.string.delete_action), colors.danger) { on_action("trash") }
             }
             if (!in_spam) {
-                overflow_sheet_row("spam", TablerIcons.Ban, stringResource(R.string.report_spam), colors.danger) { on_action("spam") }
+                overflow_sheet_row("spam", spam_action_icon(is_spam = false), stringResource(R.string.report_spam), colors.danger) { on_action("spam") }
             }
             if (on_customize != null) {
                 AsterDivider()
@@ -3987,17 +3988,17 @@ private fun swipe_action_label(action: String): String = when (action) {
     else -> stringResource(R.string.swipe_archive)
 }
 
-private fun swipe_action_icon(action: String): androidx.compose.ui.graphics.vector.ImageVector = when (action) {
+internal fun swipe_action_icon(action: String): androidx.compose.ui.graphics.vector.ImageVector = when (action) {
     "archive" -> TablerIcons.Archive
     "delete", "trash" -> TablerIcons.Trash
     "toggle_read" -> TablerIcons.MailOpened
     "snooze" -> TablerIcons.Clock
     "star" -> TablerIcons.Star
-    "spam" -> TablerIcons.Ban
+    "spam" -> spam_action_icon(is_spam = false)
     "move_to_inbox" -> TablerIcons.Inbox
     "unarchive" -> TablerIcons.Inbox
     "restore_trash" -> TablerIcons.Inbox
-    "unmark_spam" -> TablerIcons.Inbox
+    "unmark_spam" -> spam_action_icon(is_spam = true)
     "delete_permanent" -> TablerIcons.Trash
     else -> TablerIcons.Archive
 }

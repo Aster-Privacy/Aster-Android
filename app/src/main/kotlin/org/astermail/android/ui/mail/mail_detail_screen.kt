@@ -1232,7 +1232,7 @@ fun MailDetailScreen(
                         }
                         detail_menu_divider()
                         detail_menu_action(
-                            icon = TablerIcons.AlertOctagon,
+                            icon = spam_action_icon(is_spam),
                             text = if (is_spam) stringResource(R.string.swipe_not_spam) else stringResource(R.string.report_spam),
                             tint = if (is_spam) colors.accent_blue else colors.danger,
                         ) {
@@ -1831,7 +1831,7 @@ fun MailDetailScreen(
                                     show_snooze_sheet = true
                                 }
                                 "spam" -> bottom_action(
-                                    if (is_spam) TablerIcons.ShieldCheck else TablerIcons.Ban,
+                                    spam_action_icon(is_spam),
                                     if (is_spam) stringResource(R.string.swipe_not_spam) else stringResource(R.string.report_spam),
                                     test_tag = "toolbar_spam",
                                 ) {
@@ -4593,14 +4593,14 @@ internal fun action_menu_sheet(
                         aster_menu_item(
                             stringResource(R.string.swipe_not_spam),
                             on_spam,
-                            icon = TablerIcons.ShieldCheck,
+                            icon = spam_action_icon(is_spam = true),
                             tint = colors.accent_blue,
                         )
                     } else {
                         aster_menu_item(
                             stringResource(R.string.report_spam),
                             on_spam,
-                            icon = TablerIcons.AlertTriangle,
+                            icon = spam_action_icon(is_spam = false),
                             destructive = true,
                         )
                     }
