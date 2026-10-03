@@ -136,4 +136,8 @@
     <string name="billing_compare_included">含まれる</string>
     <string name="billing_compare_not_included">含まれない</string>
     <string name="billing_compare_yearly_save">年払い · %1$d%% お得</string>
+    <string name="billing_addon_add_size">%1$s を追加</string>
+    <string name="billing_addon_usage_nudge">ストレージの %1$d%% を使用しています。メールを受信し続けるには、容量を追加してください。</string>
+    <string name="billing_addon_supernova_nudge">Supernova には 5 TB のストレージと最も高い上限が含まれます。</string>
+    <string name="billing_addon_supernova_action">Supernova を見る</string>
 </resources>

@@ -136,4 +136,8 @@
     <string name="billing_compare_included">包含</string>
     <string name="billing_compare_not_included">不包含</string>
     <string name="billing_compare_yearly_save">按年 · 节省 %1$d%%</string>
+    <string name="billing_addon_add_size">添加 %1$s</string>
+    <string name="billing_addon_usage_nudge">您已使用 %1$d%% 的存储空间。请添加更多空间以继续接收邮件。</string>
+    <string name="billing_addon_supernova_nudge">Supernova 包含 5 TB 存储空间和最高限额。</string>
+    <string name="billing_addon_supernova_action">查看 Supernova</string>
 </resources>

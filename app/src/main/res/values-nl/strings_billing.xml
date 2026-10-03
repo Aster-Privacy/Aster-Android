@@ -136,4 +136,8 @@
     <string name="billing_compare_included">Inbegrepen</string>
     <string name="billing_compare_not_included">Niet inbegrepen</string>
     <string name="billing_compare_yearly_save">Jaarlijks · Bespaar %1$d%%</string>
+    <string name="billing_addon_add_size">%1$s toevoegen</string>
+    <string name="billing_addon_usage_nudge">Je hebt %1$d%% van je opslag gebruikt. Voeg meer ruimte toe om e-mail te blijven ontvangen.</string>
+    <string name="billing_addon_supernova_nudge">Supernova bevat 5 TB opslag en de hoogste limieten.</string>
+    <string name="billing_addon_supernova_action">Supernova bekijken</string>
 </resources>

@@ -136,4 +136,8 @@
     <string name="billing_compare_included">Incluso</string>
     <string name="billing_compare_not_included">Non incluso</string>
     <string name="billing_compare_yearly_save">Annuale · Risparmia il %1$d%%</string>
+    <string name="billing_addon_add_size">Aggiungi %1$s</string>
+    <string name="billing_addon_usage_nudge">Hai usato il %1$d%% del tuo spazio di archiviazione. Aggiungi altro spazio per continuare a ricevere la posta.</string>
+    <string name="billing_addon_supernova_nudge">Supernova include 5 TB di spazio di archiviazione e i limiti più alti.</string>
+    <string name="billing_addon_supernova_action">Vedi Supernova</string>
 </resources>
