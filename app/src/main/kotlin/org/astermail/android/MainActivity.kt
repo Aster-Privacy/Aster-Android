@@ -237,9 +237,11 @@ class MainActivity :
                 secure_storage_ready.value = true
             }
         }
-        if (saved_instance_state == null) note_launch_folder(intent)
-        consume_open_email_extra(intent)
-        consume_share_intent(intent)
+        if (saved_instance_state == null) {
+            note_launch_folder(intent)
+            consume_open_email_extra(intent)
+            consume_share_intent(intent)
+        }
         apply_boot_background()
         enableEdgeToEdge()
         setContent {
