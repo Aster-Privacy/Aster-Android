@@ -417,7 +417,7 @@ private object routes {
     const val register = "register"
 
     fun sign_in_for(email: String): String {
-        val encoded = java.net.URLEncoder.encode(email, "UTF-8")
+        val encoded = android.net.Uri.encode(email)
         return "sign_in?email=$encoded"
     }
     const val forgot_password = "forgot_password"
@@ -427,7 +427,7 @@ private object routes {
     const val crypto_invoice = "crypto_invoice/{invoice_id}"
 
     fun crypto_invoice_for(invoice_id: String): String {
-        val encoded = java.net.URLEncoder.encode(invoice_id, "UTF-8")
+        val encoded = android.net.Uri.encode(invoice_id)
         return "crypto_invoice/$encoded"
     }
     const val folder_filter = "folder/{folder_id}/{folder_name}"
@@ -435,18 +435,18 @@ private object routes {
     const val alias_filter = "alias/{alias_id}/{alias_name}"
 
     fun folder_filter_for(folder_id: String, folder_name: String): String {
-        val id = java.net.URLEncoder.encode(folder_id, "UTF-8")
-        val name = java.net.URLEncoder.encode(folder_name, "UTF-8")
+        val id = android.net.Uri.encode(folder_id)
+        val name = android.net.Uri.encode(folder_name)
         return "folder/$id/$name"
     }
     fun label_filter_for(label_id: String, label_name: String): String {
-        val id = java.net.URLEncoder.encode(label_id, "UTF-8")
-        val name = java.net.URLEncoder.encode(label_name, "UTF-8")
+        val id = android.net.Uri.encode(label_id)
+        val name = android.net.Uri.encode(label_name)
         return "label/$id/$name"
     }
     fun alias_filter_for(alias_id: String, alias_name: String): String {
-        val id = java.net.URLEncoder.encode(alias_id, "UTF-8")
-        val name = java.net.URLEncoder.encode(alias_name, "UTF-8")
+        val id = android.net.Uri.encode(alias_id)
+        val name = android.net.Uri.encode(alias_name)
         return "alias/$id/$name"
     }
     const val compose = "compose?reply_to={reply_to}&mode={mode}&draft_id={draft_id}&to={to}&thread_ghost={thread_ghost}&share={share}"
@@ -467,24 +467,24 @@ private object routes {
     }
 
     fun compose_new(to: String = ""): String {
-        val encoded_to = if (to.isNotBlank()) java.net.URLEncoder.encode(to, "UTF-8") else ""
+        val encoded_to = if (to.isNotBlank()) android.net.Uri.encode(to) else ""
         return "compose?reply_to=&mode=&draft_id=&to=$encoded_to&thread_ghost="
     }
     fun compose_reply(msg_id: String, mode: String, thread_ghost: String? = null): String {
-        val encoded_msg = java.net.URLEncoder.encode(msg_id, "UTF-8")
-        val encoded_mode = java.net.URLEncoder.encode(mode, "UTF-8")
-        val encoded_ghost = if (!thread_ghost.isNullOrBlank()) java.net.URLEncoder.encode(thread_ghost, "UTF-8") else ""
+        val encoded_msg = android.net.Uri.encode(msg_id)
+        val encoded_mode = android.net.Uri.encode(mode)
+        val encoded_ghost = if (!thread_ghost.isNullOrBlank()) android.net.Uri.encode(thread_ghost) else ""
         return "compose?reply_to=$encoded_msg&mode=$encoded_mode&draft_id=&to=&thread_ghost=$encoded_ghost"
     }
     fun compose_from(address: String): String {
-        val encoded = java.net.URLEncoder.encode(address, "UTF-8")
+        val encoded = android.net.Uri.encode(address)
         return "compose?reply_to=&mode=&draft_id=&to=&thread_ghost=$encoded"
     }
     fun compose_share(token: String): String {
         return "compose?reply_to=&mode=&draft_id=&to=&thread_ghost=&share=$token"
     }
     fun compose_draft(draft_id: String): String {
-        val encoded = java.net.URLEncoder.encode(draft_id, "UTF-8")
+        val encoded = android.net.Uri.encode(draft_id)
         return "compose?reply_to=&mode=draft&draft_id=$encoded&to=&thread_ghost="
     }
     const val pending_send_preview = "pending_send_preview"
@@ -499,12 +499,12 @@ private object routes {
     const val domain_order = "domain_order/{order_id}"
     const val domain_bimi = "settings_domain_bimi/{domain_id}"
 
-    fun mail_detail_for(email_id: String) = "mail_detail/" + java.net.URLEncoder.encode(email_id, "UTF-8")
+    fun mail_detail_for(email_id: String) = "mail_detail/" + android.net.Uri.encode(email_id)
     fun settings_detail(id: String) = "settings_$id"
 
     const val alias_detail = "settings_alias_detail/{alias_id}"
     fun alias_detail_for(alias_id: String): String {
-        val encoded = java.net.URLEncoder.encode(alias_id, "UTF-8")
+        val encoded = android.net.Uri.encode(alias_id)
         return "settings_alias_detail/$encoded"
     }
 
@@ -513,7 +513,7 @@ private object routes {
             org.astermail.android.ui.settings.detail.SETTINGS_FOCUS_LOW_NETWORK
     fun domain_order_for(order_id: String) = "domain_order/$order_id"
     fun domain_bimi_for(domain_id: String) =
-        "settings_domain_bimi/" + java.net.URLEncoder.encode(domain_id, "UTF-8")
+        "settings_domain_bimi/" + android.net.Uri.encode(domain_id)
     fun contact_detail_for(contact_id: String) = "contact_detail/$contact_id"
     fun contact_edit_for(contact_id: String) = "contact_edit/$contact_id"
 }
@@ -771,7 +771,6 @@ private fun AsterNavHost() {
         ) { entry ->
             val raw_email = entry.arguments?.getString("email")
             val prefill = raw_email?.takeIf { it.isNotBlank() }
-                ?.let { java.net.URLDecoder.decode(it, "UTF-8") }
                 .orEmpty()
             val sign_in_settings_vm = org.astermail.android.settings.shared_settings_view_model()
             SignInScreen(
@@ -975,12 +974,8 @@ private fun AsterNavHost() {
                 navArgument("folder_name") { type = NavType.StringType },
             ),
         ) { entry ->
-            val id = java.net.URLDecoder.decode(
-                entry.arguments?.getString("folder_id").orEmpty(), "UTF-8",
-            )
-            val name = java.net.URLDecoder.decode(
-                entry.arguments?.getString("folder_name").orEmpty(), "UTF-8",
-            )
+            val id = entry.arguments?.getString("folder_id").orEmpty()
+            val name = entry.arguments?.getString("folder_name").orEmpty()
             val inbox_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
             }
@@ -1002,12 +997,8 @@ private fun AsterNavHost() {
                 navArgument("label_name") { type = NavType.StringType },
             ),
         ) { entry ->
-            val id = java.net.URLDecoder.decode(
-                entry.arguments?.getString("label_id").orEmpty(), "UTF-8",
-            )
-            val name = java.net.URLDecoder.decode(
-                entry.arguments?.getString("label_name").orEmpty(), "UTF-8",
-            )
+            val id = entry.arguments?.getString("label_id").orEmpty()
+            val name = entry.arguments?.getString("label_name").orEmpty()
             val inbox_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
             }
@@ -1029,12 +1020,8 @@ private fun AsterNavHost() {
                 navArgument("alias_name") { type = NavType.StringType },
             ),
         ) { entry ->
-            val id = java.net.URLDecoder.decode(
-                entry.arguments?.getString("alias_id").orEmpty(), "UTF-8",
-            )
-            val name = java.net.URLDecoder.decode(
-                entry.arguments?.getString("alias_name").orEmpty(), "UTF-8",
-            )
+            val id = entry.arguments?.getString("alias_id").orEmpty()
+            val name = entry.arguments?.getString("alias_name").orEmpty()
             val inbox_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
             }
@@ -1101,15 +1088,10 @@ private fun AsterNavHost() {
             val raw_to = entry.arguments?.getString("to")
             val raw_thread_ghost = entry.arguments?.getString("thread_ghost")
             val reply_to = raw_reply_to?.takeIf { it.isNotBlank() }
-                ?.let { java.net.URLDecoder.decode(it, "UTF-8") }
             val mode = raw_mode?.takeIf { it.isNotBlank() }
-                ?.let { java.net.URLDecoder.decode(it, "UTF-8") }
             val draft_id = raw_draft_id?.takeIf { it.isNotBlank() }
-                ?.let { java.net.URLDecoder.decode(it, "UTF-8") }
             val prefill_to = raw_to?.takeIf { it.isNotBlank() }
-                ?.let { java.net.URLDecoder.decode(it, "UTF-8") }
             val thread_ghost_email = raw_thread_ghost?.takeIf { it.isNotBlank() }
-                ?.let { java.net.URLDecoder.decode(it, "UTF-8") }
             val is_share_entry = !entry.arguments?.getString("share").isNullOrBlank()
             val share_payload = remember(entry.id) {
                 if (!is_share_entry) null
