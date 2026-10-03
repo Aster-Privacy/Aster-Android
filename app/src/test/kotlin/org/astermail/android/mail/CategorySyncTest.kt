@@ -278,6 +278,16 @@ class CategorySyncTest {
     }
 
     @Test
+    fun `moving a cached row changes nothing when the server copy cannot be read`() = runTest {
+        coEvery { mail_api.get_message("deal-1") } throws java.io.IOException("offline")
+
+        val result = repo.set_category("deal-1", "shopping", MailItem(id = "deal-1", item_type = "received"))
+
+        assertTrue(result.isFailure)
+        io.mockk.coVerify(exactly = 0) { mail_api.patch_metadata(any(), any()) }
+    }
+
+    @Test
     fun `moving a message whose metadata this device cannot open changes nothing`() = runTest {
         val unreadable = server_item(with_server_metadata = false).copy(
             encrypted_metadata = java.util.Base64.getEncoder().encodeToString(ByteArray(48) { 7 }),

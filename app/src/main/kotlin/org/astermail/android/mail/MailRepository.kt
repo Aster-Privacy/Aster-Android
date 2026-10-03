@@ -2111,7 +2111,7 @@ class MailRepository @Inject constructor(
     suspend fun set_category(item_id: String, category: String, raw_item: MailItem? = null): Result<MailItem> =
         runCatching {
             val known = raw_item?.takeIf { !it.encrypted_metadata.isNullOrBlank() && !it.metadata_nonce.isNullOrBlank() }
-            val resolved = known ?: resolve_raw_item(item_id) ?: raw_item ?: MailItem(id = item_id)
+            val resolved = known ?: mail_api.get_message(item_id)
             val enc_meta = resolved.encrypted_metadata
             val meta_nonce = resolved.metadata_nonce
             val decrypted = decrypt_blob_metadata(enc_meta, meta_nonce)
