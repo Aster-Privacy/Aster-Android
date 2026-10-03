@@ -56,6 +56,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.content.consume
@@ -5111,7 +5112,7 @@ private fun toggle_sheet_row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(SquircleShape(8.dp))
-            .clickable(onClick = on_click)
+            .selectable(selected = active, onClick = on_click)
             .padding(horizontal = AsterSpacing.sm, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

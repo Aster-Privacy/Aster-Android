@@ -56,6 +56,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -76,6 +78,7 @@ import kotlinx.coroutines.delay
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.lighten
+import org.astermail.android.R
 
 data class TopToastState(
     val message: String,
@@ -335,7 +338,7 @@ fun top_toast_overlay(
                         .size(32.dp)
                         .clip(SquircleShape(999.dp))
                         .background(toast_control_fill(colors))
-                        .clickable {
+                        .clickable(role = Role.Button) {
                             s.on_close?.invoke()
                             on_dismiss()
                         },
@@ -343,7 +346,7 @@ fun top_toast_overlay(
                 ) {
                     Icon(
                         imageVector = TablerIcons.X,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.close),
                         tint = colors.text_secondary,
                         modifier = Modifier.size(16.dp),
                     )
