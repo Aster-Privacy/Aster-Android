@@ -138,4 +138,6 @@
     <string name="revoke_session_confirm_message">इस डिवाइस को अपने खाते से साइन आउट करें?</string>
     <string name="sign_out_all_other_confirm_message">इस डिवाइस को छोड़कर हर डिवाइस साइन आउट करें?</string>
     <string name="alias_forward_limit_reached">आप अपने प्लान के लिए सक्रिय एलियास की अधिकतम संख्या तक पहुंच गए हैं</string>
+    <string name="launch_folder">लॉन्च होने पर खोलें</string>
+    <string name="launch_folder_hint">ऐप खोलने पर दिखाया जाता है। सूचनाएँ और लिंक अब भी उसी संदेश को खोलते हैं जिसकी ओर वे इशारा करते हैं।</string>
 </resources>

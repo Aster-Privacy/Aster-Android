@@ -89,4 +89,6 @@
     <string name="sign_out_all_other_confirm_message">Sair de todos os aparelhos menos deste?</string>
     <string name="alias_forward_limit_reached">Você atingiu o número máximo de aliases ativos do seu plano</string>
     <string name="settings_plan_bullet_daily_emails">1.000 e-mails por dia</string>
+    <string name="launch_folder">Abrir ao iniciar</string>
+    <string name="launch_folder_hint">É exibida ao abrir o app. Notificações e links continuam abrindo a mensagem correspondente.</string>
 </resources>

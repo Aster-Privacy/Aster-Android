@@ -1163,22 +1163,7 @@ class MailRepository @Inject constructor(
     ): Result<String> {
         val delay_ms = clamp_undo_send_seconds(undo_seconds) * 1000L
         val pending_id = java.util.UUID.randomUUID().toString()
-        val pending = PendingUndoSend(
-            started_at_ms = System.currentTimeMillis(),
-            duration_ms = delay_ms,
-            draft_id = draft_id?.takeIf { it.isNotBlank() },
-            to = to,
-            cc = cc,
-            bcc = bcc,
-            subject = subject,
-            body_html = body_html,
-            sender_email = sender_email,
-            sender_display_name = sender_display_name,
-            attachment_names = attachments.map { it.filename },
-            attachment_types = attachments.map { it.content_type },
-            attachment_sizes = attachments.map { it.size_bytes },
-            undo = { undo_pending_send(pending_id) },
-        )
+        val started_at_ms = System.currentTimeMillis()
         val persisted = app_scope.async {
             runCatching {
                 persist_and_schedule_undo_send(
@@ -1208,6 +1193,23 @@ class MailRepository @Inject constructor(
             runCatching { pending_send_dao.delete_by_id(pending_id) }
             return result
         }
+        val queued_id = result.getOrThrow()
+        val pending = PendingUndoSend(
+            started_at_ms = started_at_ms,
+            duration_ms = delay_ms,
+            draft_id = draft_id?.takeIf { it.isNotBlank() },
+            to = to,
+            cc = cc,
+            bcc = bcc,
+            subject = subject,
+            body_html = body_html,
+            sender_email = sender_email,
+            sender_display_name = sender_display_name,
+            attachment_names = attachments.map { it.filename },
+            attachment_types = attachments.map { it.content_type },
+            attachment_sizes = attachments.map { it.size_bytes },
+            undo = { undo_pending_send(queued_id) },
+        )
         _pending_undo_send.value = pending
         app_scope.launch {
             kotlinx.coroutines.delay(delay_ms)

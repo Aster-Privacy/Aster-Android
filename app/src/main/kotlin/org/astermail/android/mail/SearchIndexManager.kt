@@ -227,10 +227,14 @@ class SearchIndexManager @Inject constructor(
         }
     }
 
+    private val poison_purge_pending = java.util.concurrent.atomic.AtomicBoolean(true)
+
     private suspend fun purge_bundle_poisoned() {
-        runCatching { dao.clear_armored_previews() }
-        runCatching { dao.delete_bundle_poisoned() }
-        runCatching { dao.delete_blank_rows() }
+        if (!poison_purge_pending.getAndSet(false)) return
+        val purged = runCatching { dao.clear_armored_previews() }.isSuccess and
+            runCatching { dao.delete_bundle_poisoned() }.isSuccess and
+            runCatching { dao.delete_blank_rows() }.isSuccess
+        if (!purged) poison_purge_pending.set(true)
     }
 
     suspend fun reconcile_inbox_window(
@@ -628,6 +632,7 @@ class SearchIndexManager @Inject constructor(
         mutex.withLock {
             if (epoch.get() != my_epoch) return emptySet()
             dao.insert_all(entities)
+            poison_purge_pending.set(true)
         }
         return indexable.map { it.id }.toSet()
     }

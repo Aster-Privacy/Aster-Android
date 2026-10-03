@@ -128,9 +128,8 @@ class PendingMailActionQueue @Inject constructor(
     suspend fun replace_draft(account_id: String, key: String, payload: PendingActionPayload) {
         withContext(Dispatchers.IO) {
             mutex.withLock {
-                val dao = dao_provider.get()
-                draft_rows_locked(account_id, key).forEach { dao.delete_by_id(it.id) }
-                dao.insert(
+                dao_provider.get().replace_rows(
+                    draft_rows_locked(account_id, key).map { it.id },
                     PendingMailActionEntity(
                         account_id = account_id,
                         kind = PendingActionKind.save_draft.name,

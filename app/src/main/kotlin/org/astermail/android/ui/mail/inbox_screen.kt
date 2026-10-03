@@ -452,7 +452,7 @@ fun InboxScreen(
         )
     }
     val show_payment_failed_banner = payment_failed_due != null
-    LaunchedEffect(Unit) { billing_vm.load_onboarding_checklist() }
+    LaunchedEffect(Unit) { billing_vm.load_onboarding_checklist(force = false) }
     val onboarding = billing_state.onboarding
     val onboarding_prefs = remember {
         context_for_prefs.getSharedPreferences("aster_onboarding", android.content.Context.MODE_PRIVATE)

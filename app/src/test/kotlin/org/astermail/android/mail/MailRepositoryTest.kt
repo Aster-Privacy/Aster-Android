@@ -1932,6 +1932,34 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `undo cancels the send that was already queued for the draft`() = runTest {
+        every { session_key_store.get_user_id() } returns "user_1"
+        pending_send_dao.upsert(pending_row("pend_queued", draft_id = "draft_q"))
+
+        val result = repo.schedule_send_with_undo(
+            to = listOf("friend@astermail.org"),
+            cc = emptyList(),
+            bcc = emptyList(),
+            subject = "Hi",
+            body_html = "<p>hello</p>",
+            sender_email = "me@astermail.org",
+            sender_display_name = null,
+            undo_seconds = 10,
+            draft_id = "draft_q",
+        )
+
+        assertEquals("pend_queued", result.getOrNull())
+        val pending = repo.pending_undo_send.value
+        assertNotNull(pending)
+        pending!!.undo()
+
+        wait_until { pending_send_dao.rows.isEmpty() }
+
+        assertNull(pending_send_dao.get_by_id("pend_queued"))
+        coVerify(exactly = 0) { send_api.send_simple(any()) }
+    }
+
+    @Test
     fun `signal_new_mail emits on new_mail_events`() = runTest {
         val received = java.util.concurrent.atomic.AtomicInteger(0)
         val collector_scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default)
