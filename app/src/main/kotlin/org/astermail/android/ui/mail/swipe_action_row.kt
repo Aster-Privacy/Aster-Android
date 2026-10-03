@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -103,6 +104,18 @@ fun is_removing_swipe_action(action: String): Boolean = action in setOf(
     "archive", "trash", "delete", "spam", "move_to_inbox", "unarchive",
     "restore_trash", "unmark_spam", "delete_permanent",
 )
+
+fun swipe_accessibility_actions(
+    start_action: String,
+    end_action: String,
+    start_label: String,
+    end_label: String,
+    on_swipe_start: () -> Unit,
+    on_swipe_end: () -> Unit,
+): List<CustomAccessibilityAction> = buildList {
+    if (start_action != "none") add(CustomAccessibilityAction(start_label) { on_swipe_start(); true })
+    if (end_action != "none") add(CustomAccessibilityAction(end_label) { on_swipe_end(); true })
+}
 
 fun swipe_tone(color: Color, colors: AsterSemanticColors): Color {
     val target = if (colors.is_dark) 0.30f else 0.46f
