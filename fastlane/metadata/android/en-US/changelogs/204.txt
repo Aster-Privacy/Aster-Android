@@ -1,0 +1,11 @@
+What's new:
+
+- Billing shows the monthly price and yearly savings for each storage add-on, with a meter for the storage you use.
+
+Fixed:
+
+- Sender logos with a transparent background stay visible in every theme.
+- Long links wrap in plain emails.
+- Emails with their own dark mode styles display consistently.
+- Messages no longer show a shipping card when they have no parcel.
+- Remote style sheets in emails stay blocked.
