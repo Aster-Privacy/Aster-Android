@@ -107,6 +107,15 @@ class ContactTransferTest {
     }
 
     @Test
+    fun `group names with commas survive a vcard round trip`() {
+        val groups = listOf("Friends, Family", "Work", "a;b")
+        val vcard = contact_to_vcard(sample().copy(groups = groups))
+
+        assertTrue(vcard.contains("CATEGORIES:Friends\\, Family,Work,a\\;b"))
+        assertEquals(groups, parse_vcards(vcard).first().groups)
+    }
+
+    @Test
     fun `base64 photo parameters become a data url`() {
         val vcard = buildString {
             append("BEGIN:VCARD\r\n")

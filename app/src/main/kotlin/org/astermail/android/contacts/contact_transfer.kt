@@ -119,7 +119,7 @@ private fun unfold(text: String): List<String> {
     return lines
 }
 
-private fun split_vcard_value(value: String): List<String> {
+private fun split_vcard_value(value: String, separator: Char = ';'): List<String> {
     val parts = mutableListOf<String>()
     val current = StringBuilder()
     var index = 0
@@ -130,7 +130,7 @@ private fun split_vcard_value(value: String): List<String> {
             index += 2
             continue
         }
-        if (character == ';') {
+        if (character == separator) {
             parts.add(current.toString())
             current.setLength(0)
             index += 1
@@ -448,7 +448,7 @@ fun parse_vcards(raw_text: String): List<Contact> {
             }
             "IMPP" -> Unit
             "CATEGORIES" -> {
-                for (entry in value.split(",")) {
+                for (entry in split_vcard_value(parsed.value, ',')) {
                     val label = entry.trim()
                     if (label.isNotEmpty()) groups.add(label)
                 }
