@@ -107,7 +107,6 @@ class RatchetEncryptor @Inject constructor(
     private val keys_api: KeysApi,
     private val identity_pins: RatchetIdentityPinStore,
 ) {
-
     private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
@@ -352,10 +351,6 @@ class RatchetEncryptor @Inject constructor(
 
         var bundle: PrekeyBundleResponse? = null
 
-        // Reuse an existing session only if neither party rotated identities
-        // since it was bootstrapped. Sessions created before identity tracking
-        // (null sender/recipient identity) are refreshed once. If the current
-        // bundle cannot be fetched, keep the session rather than failing the send.
         if (state != null) {
             val boot = state.bootstrap!!
             val sender_changed = boot.sender_identity_key != sender_identity_public

@@ -19,7 +19,6 @@ keystore/aster-mail-release.jks
 app/release/
 /app/release
 /core-crypto/src/main/jniLibs/
-/rust/**/target/
 _*.png
 screenshot*.png
 CLAUDE.md

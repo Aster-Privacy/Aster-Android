@@ -27,7 +27,7 @@ Add `--dry-run` to build, sign, and verify without pushing or publishing anythin
 | Verify | Both APKs must carry cert SHA-256 `88b0a8a6…`, the fdroid APK must have no `0xd935` alignment padding, no CRLF in text assets or `META-INF/services`, and its dex must reference no Google Play Services, Firebase, or Play classes. |
 | Publish | Creates the GitHub release with `Aster-Mail.apk`, `Aster-Mail-<version>-full.apk`, and `Aster-Mail-fdroid-<version>.apk`, then re-uploads `Aster-Mail.apk` to the current Aster-Mail **Latest** release, which is what astermail.org serves. |
 | Play | Uploads the AAB with `fastlane supply` if a service account is configured, otherwise copies the AAB to `~/Downloads` and says so. |
-| Audit | Runs `Claude/scripts/audit_android_channels.sh` and prints the per-channel result. |
+| Audit | Runs the script named by `ASTER_CHANNEL_AUDIT`, if set, and prints the per-channel result. |
 
 ## Asset names
 
@@ -91,8 +91,8 @@ in the console by hand. To finish it:
 
 1. In Play Console, go to **Setup > API access**, then create or link a Google Cloud service account.
 2. Grant it the **Release manager** role, limited to `org.astermail.android`.
-3. Create a JSON key for it and save it as `.ops/play_service_account.json`. That path is already
-   excluded from the `Claude` sync repo and must never be committed.
+3. Create a JSON key for it and save it as `.ops/play_service_account.json`, outside the repository.
+   Never commit it.
 4. `gem install fastlane`.
 
 The script picks it up automatically on the next release. Override the path with

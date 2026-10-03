@@ -44,16 +44,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-//
-// Reproduces the compose "From" sender reset bug: generating a ghost alias
-// selects it, then the async settings loads (profile/aliases/prefs fired by
-// LaunchedEffect(Unit) on compose entry, plus the load_aliases() reload after
-// ghost creation) land ~2s later and used to reset the selection back to the
-// pinned sender. See compose_screen.kt from_alias handling.
-//
 @RunWith(AndroidJUnit4::class)
 class GhostAliasSelectionResetTest {
-
     @get:Rule
     val compose_rule = createComposeRule()
 
@@ -61,7 +53,6 @@ class GhostAliasSelectionResetTest {
     private val pinned = "quick.leaf91@astermail.org"
     private val primary = "primary.owner@astermail.org"
 
-    // mirrors the state that lands asynchronously in the real SettingsViewModel
     private class Settings {
         var user_email by mutableStateOf("")
         var aliases by mutableStateOf(listOf<String>())
@@ -76,9 +67,6 @@ class GhostAliasSelectionResetTest {
         return options.toList()
     }
 
-    // The FIXED construct now used in compose_screen.kt: a stable from_alias plus
-    // a manual-override flag; the initial resolution runs in a LaunchedEffect that
-    // bails out once the user has explicitly chosen a sender.
     @Composable
     private fun fixed_from_field(settings: Settings) {
         val alias_options = resolve_options(settings.user_email, settings.aliases)
@@ -108,9 +96,6 @@ class GhostAliasSelectionResetTest {
         }
     }
 
-    // The OLD (buggy) construct: from_alias held by a keyed remember that
-    // re-initialises whenever alias_options / primary_sender_email change, which
-    // is exactly what the async settings load triggers.
     @Composable
     private fun buggy_from_field(settings: Settings) {
         val alias_options = resolve_options(settings.user_email, settings.aliases)
@@ -135,12 +120,10 @@ class GhostAliasSelectionResetTest {
         compose_rule.setContent { AsterTheme { fixed_from_field(settings) } }
         compose_rule.waitForIdle()
 
-        // user generates a ghost alias in the From sheet
         compose_rule.onNodeWithText("gen_ghost").performClick()
         compose_rule.waitForIdle()
         compose_rule.onNodeWithTag("from_value").assertTextEquals(ghost)
 
-        // the deferred settings loads (incl. the pinned default sender) land
         compose_rule.runOnUiThread {
             settings.user_email = primary
             settings.aliases = listOf(pinned)
@@ -148,7 +131,6 @@ class GhostAliasSelectionResetTest {
         }
         compose_rule.waitForIdle()
 
-        // the ghost selection must survive
         compose_rule.onNodeWithTag("from_value").assertTextEquals(ghost)
     }
 
@@ -169,8 +151,6 @@ class GhostAliasSelectionResetTest {
         }
         compose_rule.waitForIdle()
 
-        // demonstrates the bug: the keyed remember discards the ghost and snaps
-        // back to the pinned sender
         compose_rule.onNodeWithTag("from_value").assertTextEquals(pinned)
     }
 }

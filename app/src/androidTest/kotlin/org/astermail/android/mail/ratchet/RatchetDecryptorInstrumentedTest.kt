@@ -43,15 +43,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Runs the exact production RatchetDecryptor + RatchetStateStore + RatchetStateSyncer
- * pipeline on the real Android runtime (real android.util.Base64, real Keystore-backed
- * encrypted storage), with only the network layer (RatchetApi) faked out. This is the
- * on-device counterpart to RatchetDecryptorTest's JVM-hosted coverage.
- */
 @RunWith(AndroidJUnit4::class)
 class RatchetDecryptorInstrumentedTest {
-
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; explicitNulls = false }
     private val sender_email = "ratchet-instrumented-test-sender@test.invalid"
     private val recipient_email = "ratchet-instrumented-test-receiver@test.invalid"

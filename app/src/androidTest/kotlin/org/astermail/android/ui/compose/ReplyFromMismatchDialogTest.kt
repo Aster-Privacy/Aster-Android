@@ -50,16 +50,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-//
-// Exercises the REAL production guard (reply_from_mismatch in
-// reply_from_resolver.kt) wired through the same dialog pattern
-// ComposeScreen uses: do_send gate + AsterDialog with Cancel /
-// Send anyway / Use received address text actions.
-//
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @RunWith(AndroidJUnit4::class)
 class ReplyFromMismatchDialogTest {
-
     @get:Rule
     val compose_rule = createComposeRule()
 

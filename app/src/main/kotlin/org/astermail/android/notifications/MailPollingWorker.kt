@@ -72,7 +72,6 @@ class MailPollingWorker(
     private val context: Context,
     params: WorkerParameters,
 ) : CoroutineWorker(context, params) {
-
     override suspend fun doWork(): Result {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit().putLong(KEY_LAST_WORK_START_MS, System.currentTimeMillis()).apply()
@@ -182,10 +181,6 @@ class MailPollingWorker(
         } catch (_: Throwable) {
             return Result.retry()
         }
-        // `unread` is a mailbox-wide count (inbox + every custom folder/label), so it still
-        // increases when a mail rule routes a new message straight into a folder other than
-        // Inbox. `notifiable`/`inbox` are scoped to the primary inbox view and miss those
-        // messages entirely, which used to mean rule-routed mail never triggered a notification.
         val new_unread = stats.unread
         val new_notifiable = stats.notifiable ?: stats.inbox
 
@@ -726,11 +721,6 @@ class MailPollingWorker(
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()
-            // A worker that started very recently is very likely the reason this process is
-            // alive at all (e.g. JobScheduler cold-starting the app to run the polling chain).
-            // Re-enqueuing WORK_NAME_CHAIN here would race the in-flight run and can cancel it
-            // before doWork() gets a chance to check for new mail, so skip it in that window;
-            // doWork() reschedules itself via schedule_next() once it finishes either way.
             val worker_likely_in_flight =
                 System.currentTimeMillis() - prefs.getLong(KEY_LAST_WORK_START_MS, 0L) < WORKER_IN_FLIGHT_GRACE_MS
             if (!worker_likely_in_flight) {

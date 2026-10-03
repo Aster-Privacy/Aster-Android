@@ -45,16 +45,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-//
-// Reproduces the "I have to tap an email three or four times before it gets
-// selected" report. While the list is still settling from a fling, the
-// scrollable ancestor consumes the press at the initial pointer pass, and a
-// press held past the long press timeout was cancelled by the drag select
-// gesture, so in both cases the row never registered the tap.
-//
 @RunWith(AndroidJUnit4::class)
 class InboxSelectionScrollTapTest {
-
     @get:Rule
     val compose_rule = createComposeRule()
 

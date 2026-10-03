@@ -53,7 +53,6 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MailViewModelTest {
-
     private val dispatcher = StandardTestDispatcher()
     private lateinit var context: android.content.Context
     private lateinit var repository: MailRepository
@@ -2060,7 +2059,6 @@ class MailViewModelTest {
             raw_item = mockk(relaxed = true),
         )
 
-        // Oldest to newest: a(01) b(02) c(03) d(04) e(05).
         val a = item("a", 1)
         val b = item("b", 2)
         val c = item("c", 3)
@@ -2074,11 +2072,6 @@ class MailViewModelTest {
         advanceUntilIdle()
         assertEquals(listOf("e", "d", "c", "b", "a"), vm.inbox_state.value.items.map { it.id })
 
-        // c is archived out-of-band (e.g. from the web client). The server's fresh page
-        // correctly omits it, but this device's in-memory list still holds it with
-        // is_archived = false. The page is a partial window (has_more = true) whose
-        // oldest item is b, so c falls inside the window and must be dropped, while
-        // a is older than the window and must be carried forward.
         val revalidate_page = InboxPage(listOf(e, d, b), has_more = true, next_cursor = "rc1", total = 4)
         coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(revalidate_page)
 

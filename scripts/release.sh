@@ -279,8 +279,10 @@ else
   echo "To automate, see scripts/README_release.md."
 fi
 
-say "channel audit"
-bash "$repo_root/../Claude/scripts/audit_android_channels.sh" "$ver" || true
+if [ -n "${ASTER_CHANNEL_AUDIT:-}" ]; then
+  say "channel audit"
+  bash "$ASTER_CHANNEL_AUDIT" "$ver" || true
+fi
 echo
 echo "Release $ver published."
 if [ "$skip_fdroid" = "1" ]; then
