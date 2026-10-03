@@ -24,6 +24,7 @@ package org.astermail.android.storage.actions
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
 
 @Dao
 interface PendingMailActionDao {
@@ -48,4 +49,10 @@ interface PendingMailActionDao {
 
     @Query("DELETE FROM pending_mail_action")
     suspend fun clear_all()
+
+    @Transaction
+    suspend fun replace_rows(stale_ids: List<Long>, row: PendingMailActionEntity): Long {
+        stale_ids.forEach { delete_by_id(it) }
+        return insert(row)
+    }
 }
