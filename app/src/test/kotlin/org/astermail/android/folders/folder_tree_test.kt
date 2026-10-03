@@ -232,4 +232,30 @@ class folder_tree_test {
         assertEquals(max_folder_depth, deepest.depth)
         assertFalse(deepest.has_children)
     }
+
+    @Test
+    fun index_matches_per_folder_helpers() {
+        val labels = listOf(
+            folder("root", sort_order = 1),
+            folder("child_b", sort_order = 1, parent_token = "root"),
+            folder("child_a", sort_order = 0, parent_token = "root"),
+            folder("grandchild", parent_token = "child_a"),
+            folder("orphan", parent_token = "gone"),
+            folder("self", parent_token = "self"),
+            folder("loop_a", parent_token = "loop_b"),
+            folder("loop_b", parent_token = "loop_a"),
+            folder("sys", is_system = true, parent_token = "root"),
+            folder("tag", folder_type = "label", parent_token = "root"),
+            folder("other_root", sort_order = 0),
+        )
+        val index = folder_tree_index(labels)
+        for (label in labels) {
+            assertEquals(folder_sibling_group(labels, label.id), index.sibling_group(label.id))
+            assertEquals(descendant_tokens(labels, label.label_token), index.descendant_tokens(label.label_token))
+            assertEquals(folder_path(labels, label.label_token), index.path(label.label_token))
+        }
+        assertTrue(index.sibling_group("missing").isEmpty())
+        assertTrue(index.descendant_tokens("missing").isEmpty())
+        assertTrue(index.path("missing").isEmpty())
+    }
 }
