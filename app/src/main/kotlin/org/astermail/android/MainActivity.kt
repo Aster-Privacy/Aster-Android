@@ -878,8 +878,8 @@ private fun AsterNavHost() {
         }
         composable(routes.forgot_password) {
             ForgotPasswordScreen(
-                on_back = { nav_controller.popBackStack() },
-                on_submit = { _ -> nav_controller.popBackStack() },
+                on_back = { pop_once(nav_controller) },
+                on_submit = { _ -> pop_once(nav_controller) },
             )
         }
         composable(routes.inbox) {
@@ -960,11 +960,11 @@ private fun AsterNavHost() {
                     "Go to previous message" -> neighbor_id(-1)
                     else -> null
                 }
-                if (next != null) open_neighbor(next) else nav_controller.popBackStack()
+                if (next != null) open_neighbor(next) else pop_once(nav_controller)
             }
             MailDetailScreen(
                 email_id = email_id,
-                on_back = { nav_controller.popBackStack() },
+                on_back = { pop_once(nav_controller) },
                 on_reply = { msg_id, ghost ->
                     org.astermail.android.ui.compose.publish_compose_thread_seed(detail_thread_state)
                     context.startActivity(ComposeActivity.intent_for(context, reply_to = msg_id, mode = "reply", thread_ghost_email = ghost))
@@ -989,7 +989,7 @@ private fun AsterNavHost() {
                         path.startsWith("search:") -> routes.search_for(path.removePrefix("search:"))
                         else -> null
                     }
-                    if (route != null) nav_controller.navigate(route)
+                    if (route != null) navigate_once(nav_controller, route)
                 },
                 mail_vm = shared_mail_vm,
                 settings_vm = shared_settings_vm,
@@ -1013,7 +1013,7 @@ private fun AsterNavHost() {
                 filter_type = FilterType.folder,
                 filter_value = id,
                 filter_display_name = name,
-                on_open_drawer = { nav_controller.popBackStack() },
+                on_open_drawer = { pop_once(nav_controller) },
                 on_open_email = { eid -> open_mail_detail(nav_controller, eid) },
                 mail_vm = shared_mail_vm,
             )
@@ -1036,7 +1036,7 @@ private fun AsterNavHost() {
                 filter_type = FilterType.label,
                 filter_value = id,
                 filter_display_name = name,
-                on_open_drawer = { nav_controller.popBackStack() },
+                on_open_drawer = { pop_once(nav_controller) },
                 on_open_email = { eid -> open_mail_detail(nav_controller, eid) },
                 mail_vm = shared_mail_vm,
             )
@@ -1059,7 +1059,7 @@ private fun AsterNavHost() {
                 filter_type = FilterType.alias,
                 filter_value = id,
                 filter_display_name = name,
-                on_open_drawer = { nav_controller.popBackStack() },
+                on_open_drawer = { pop_once(nav_controller) },
                 on_open_email = { eid -> open_mail_detail(nav_controller, eid) },
                 mail_vm = shared_mail_vm,
             )
@@ -1126,8 +1126,8 @@ private fun AsterNavHost() {
                 else pending.pending_share.value.also { pending.pending_share.value = null }
             }
             ComposeScreen(
-                on_back = { nav_controller.popBackStack() },
-                on_sent = { nav_controller.popBackStack() },
+                on_back = { pop_entry(nav_controller, entry) },
+                on_sent = { pop_entry(nav_controller, entry) },
                 reply_to = reply_to,
                 mode = mode,
                 draft_id = draft_id,
@@ -1165,39 +1165,39 @@ private fun AsterNavHost() {
                 mail_vm = if (inbox_entry != null) hiltViewModel(inbox_entry) else hiltViewModel(),
             )
         }
-        composable(routes.pending_send_preview) {
+        composable(routes.pending_send_preview) { entry ->
             org.astermail.android.ui.mail.pending_send_preview_screen(
-                on_back = { nav_controller.popBackStack() },
+                on_back = { pop_entry(nav_controller, entry) },
             )
         }
         composable(routes.settings) {
             SettingsScreen(
-                on_back = { nav_controller.popBackStack() },
-                on_open = { id -> nav_controller.navigate(routes.settings_detail(id)) },
+                on_back = { pop_once(nav_controller) },
+                on_open = { id -> navigate_once(nav_controller, routes.settings_detail(id)) },
             )
         }
         composable(routes.settings_search) {
             org.astermail.android.ui.settings.settings_search_screen(
                 on_back = { pop_once(nav_controller) },
-                on_open = { id -> nav_controller.navigate(routes.settings_detail(id)) },
+                on_open = { id -> navigate_once(nav_controller, routes.settings_detail(id)) },
             )
         }
         composable(routes.mailing_lists) {
             MailingListsScreen(
-                on_back = { nav_controller.popBackStack(); Unit },
-                on_open_search = { nav_controller.navigate(routes.search) },
+                on_back = { pop_once(nav_controller) },
+                on_open_search = { navigate_once(nav_controller, routes.search) },
                 on_search_sender = { sender ->
                     org.astermail.android.ui.search.build_sender_mail_query(sender)?.let { query ->
-                        nav_controller.navigate(routes.search_for(query))
+                        navigate_once(nav_controller, routes.search_for(query))
                     }
                 },
             )
         }
         composable(routes.contacts) {
             ContactsScreen(
-                on_back = { nav_controller.popBackStack() },
-                on_open_contact = { id -> nav_controller.navigate(routes.contact_detail_for(id)) },
-                on_create_contact = { nav_controller.navigate(routes.contact_edit_new) },
+                on_back = { pop_once(nav_controller) },
+                on_open_contact = { id -> navigate_once(nav_controller, routes.contact_detail_for(id)) },
+                on_create_contact = { navigate_once(nav_controller, routes.contact_edit_new) },
                 on_compose_to = { addresses ->
                     context.startActivity(
                         ComposeActivity.intent_for(context, prefill_to = addresses.joinToString(",")),
@@ -1219,10 +1219,10 @@ private fun AsterNavHost() {
                 if (contacts_entry != null) hiltViewModel(contacts_entry) else hiltViewModel()
             ContactDetailScreen(
                 contact_id = id,
-                on_back = { nav_controller.popBackStack() },
-                on_edit = { cid -> nav_controller.navigate(routes.contact_edit_for(cid)) },
+                on_back = { pop_entry(nav_controller, entry) },
+                on_edit = { cid -> navigate_once(nav_controller, routes.contact_edit_for(cid)) },
                 on_compose = { email -> context.startActivity(ComposeActivity.intent_for(context, prefill_to = email)) },
-                on_search_mail = { query -> nav_controller.navigate(routes.search_for(query)) },
+                on_search_mail = { query -> navigate_once(nav_controller, routes.search_for(query)) },
                 vm = shared_contacts_vm,
             )
         }
@@ -1236,8 +1236,8 @@ private fun AsterNavHost() {
                 if (contacts_entry != null) hiltViewModel(contacts_entry) else hiltViewModel()
             ContactEditScreen(
                 contact_id = null,
-                on_back = { nav_controller.popBackStack() },
-                on_saved = { nav_controller.popBackStack() },
+                on_back = { pop_once(nav_controller) },
+                on_saved = { pop_entry(nav_controller, entry) },
                 vm = shared_contacts_vm,
             )
         }
@@ -1255,14 +1255,14 @@ private fun AsterNavHost() {
                 if (contacts_entry != null) hiltViewModel(contacts_entry) else hiltViewModel()
             ContactEditScreen(
                 contact_id = id,
-                on_back = { nav_controller.popBackStack() },
-                on_saved = { nav_controller.popBackStack() },
+                on_back = { pop_once(nav_controller) },
+                on_saved = { pop_entry(nav_controller, entry) },
                 vm = shared_contacts_vm,
             )
         }
 
-        val back = { nav_controller.popBackStack() }
-        val open_detail: (String) -> Unit = { id -> nav_controller.navigate(routes.settings_detail(id)) }
+        val back = { pop_once(nav_controller) }
+        val open_detail: (String) -> Unit = { id -> navigate_once(nav_controller, routes.settings_detail(id)) }
 
         composable(routes.settings_detail("appearance")) {
             AppearanceScreen(on_back = { back(); Unit }, on_open = open_detail)
@@ -1285,11 +1285,11 @@ private fun AsterNavHost() {
                 on_open = open_detail,
             )
         }
-        composable(routes.settings_detail("password")) {
-            ChangePasswordScreen(on_back = { back(); Unit })
+        composable(routes.settings_detail("password")) { entry ->
+            ChangePasswordScreen(on_back = { pop_entry(nav_controller, entry) })
         }
-        composable(routes.settings_detail("change_password")) {
-            ChangePasswordScreen(on_back = { back(); Unit })
+        composable(routes.settings_detail("change_password")) { entry ->
+            ChangePasswordScreen(on_back = { pop_entry(nav_controller, entry) })
         }
         composable(routes.settings_detail("two_factor")) {
             TwoFactorScreen(on_back = { back(); Unit })
@@ -2850,6 +2850,17 @@ private fun pop_once(nav_controller: NavHostController) {
     val entry = nav_controller.currentBackStackEntry ?: return
     if (!entry.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return
     nav_controller.popBackStack()
+}
+
+private fun pop_entry(nav_controller: NavHostController, entry: androidx.navigation.NavBackStackEntry) {
+    if (nav_controller.currentBackStackEntry?.id != entry.id) return
+    nav_controller.popBackStack()
+}
+
+private fun navigate_once(nav_controller: NavHostController, route: String) {
+    val entry = nav_controller.currentBackStackEntry ?: return
+    if (!entry.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return
+    nav_controller.navigate(route) { launchSingleTop = true }
 }
 
 private fun open_mail_detail(nav_controller: NavHostController, email_id: String) {
