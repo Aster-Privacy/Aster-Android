@@ -109,6 +109,40 @@ class TrackingPixelMarkerTest {
     }
 
     @Test
+    fun the_banner_the_dialog_and_the_markers_count_the_same_pixels() {
+        val mixed =
+            """<p>Hi<img src="https://track.example.com/o/1.gif" width="1" height="1"></p>""" +
+                """<p>Later<img src="https://track.example.com/o/2.gif" width="1" height="1"></p>""" +
+                """<img src="https://cdn.example.org/spacer.gif" width="2" height="2" alt="">""" +
+                """<img src="https://hidden.example/open?id=1" width="1" height="1" style="display:none">""" +
+                """<p>Bye<img src="//px.example/p.gif" width="1" height="1"></p>"""
+        val report = EmailHtmlSanitizer.analyze_trackers(mixed)
+        val banner = count_external_content(mixed, report)
+
+        assertEquals(4, report.pixel_count)
+        assertEquals(1, report.hidden_pixel_count)
+        assertEquals(
+            listOf("track.example.com" to 2, "hidden.example" to 1, "px.example" to 1),
+            report.pixel_domains,
+        )
+        assertEquals(report.pixel_count, banner.tracker_count)
+        assertEquals(report.pixel_count, report.pixel_domains.sumOf { it.second })
+        assertEquals(1, banner.image_count)
+        assertEquals(
+            listOf("https://cdn.example.org/spacer.gif"),
+            banner.items.filter { it.type == ExternalContentType.image }.map { it.url },
+        )
+        assertEquals(4, banner.items.count { it.type == ExternalContentType.tracker })
+        for (remove in listOf(true, false)) {
+            assertEquals(3, report.marked_pixel_count)
+            assertEquals(
+                report.marked_pixel_count,
+                reader_body(mixed, remove_tracking_pixels = remove).select(marker_selector).size,
+            )
+        }
+    }
+
+    @Test
     fun ordinary_blocked_images_get_no_marker() {
         val body = reader_body(
             """<img src="https://images.example.test/hero.png" width="600" height="200" alt="Hero">""",

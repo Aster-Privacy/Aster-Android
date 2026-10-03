@@ -93,18 +93,20 @@ object EmailHtmlSanitizer {
         }
     }
 
-    private fun sanitize_unsafe(raw_html: String, options: SanitizeOptions): String {
-        val bounded_html = if (raw_html.length > max_sanitizer_input_chars) {
-            raw_html.take(max_sanitizer_input_chars)
-        } else {
-            raw_html
-        }
-        val pre = strip_dangerous_blocks(bounded_html)
-        val head_styles = extract_head_styles(pre)
-        val body_only = extract_body_html(pre)
-        val dirty = Jsoup.parseBodyFragment(body_only, "https://mail-content.invalid/")
+    private fun bounded_input(raw_html: String): String =
+        if (raw_html.length > max_sanitizer_input_chars) raw_html.take(max_sanitizer_input_chars) else raw_html
+
+    private fun clean_body(pre: String, clean_tracking_links: Boolean): Document {
+        val dirty = Jsoup.parseBodyFragment(extract_body_html(pre), "https://mail-content.invalid/")
         val doc = Cleaner(safelist).clean(dirty).apply { outputSettings(raw_output_settings()) }
-        scrub_attributes(doc, options.clean_tracking_links)
+        scrub_attributes(doc, clean_tracking_links)
+        return doc
+    }
+
+    private fun sanitize_unsafe(raw_html: String, options: SanitizeOptions): String {
+        val pre = strip_dangerous_blocks(bounded_input(raw_html))
+        val head_styles = extract_head_styles(pre)
+        val doc = clean_body(pre, options.clean_tracking_links)
         if (options.remove_tracking_pixels) remove_tracking_pixels(doc, options.mark_tracking_pixels)
         scrub_style_blocks(doc, options)
         autolink_bare_urls(doc, options.clean_tracking_links)
@@ -119,10 +121,8 @@ object EmailHtmlSanitizer {
     }
 
     private fun remove_tracking_pixels(doc: Document, keep_position: Boolean) {
-        for (img in doc.select("img[src]")) {
-            val lower = img.attr("src").trim().lowercase()
-            if (!lower.startsWith("http://") && !lower.startsWith("https://")) continue
-            if (!is_tracking_pixel(img)) continue
+        for (img in doc.select("img")) {
+            if (remote_image_source(img) == null || !is_tracking_pixel(img)) continue
             if (keep_position && !BlockedImagePlaceholder.is_hidden(img)) {
                 img.replaceWith(BlockedImagePlaceholder.tracking_slot())
             } else {
@@ -161,26 +161,43 @@ object EmailHtmlSanitizer {
         val param_counts: List<Pair<String, Int>> = emptyList(),
         val pixel_count: Int = 0,
         val cleaned_link_count: Int = 0,
+        val hidden_pixel_count: Int = 0,
+        val image_count: Int = 0,
+        val pixel_urls: List<String> = emptyList(),
+        val image_urls: List<String> = emptyList(),
     ) {
         val total: Int get() = pixel_count + cleaned_link_count
+        val marked_pixel_count: Int get() = pixel_count - hidden_pixel_count
     }
 
-    private const val TRACKER_SCAN_MAX_CHARS = 2 * 1024 * 1024
+    private const val TRACKER_URL_LIST_CAP = 60
+
+    internal fun remote_image_source(img: Element): String? {
+        val src = img.attr("src").ifBlank { img.attr("srcset").trim().substringBefore(' ') }
+        return src.trim().takeUnless { is_local_image_source(src) }
+    }
 
     fun analyze_trackers(html: String?): TrackerReport {
         if (html.isNullOrBlank()) return TrackerReport()
-        if (html.length > TRACKER_SCAN_MAX_CHARS) return TrackerReport()
         return try {
-            val doc = Jsoup.parseBodyFragment(html)
+            val doc = clean_body(strip_dangerous_blocks(bounded_input(html)), clean_tracking_links = false)
             val domains = LinkedHashMap<String, Int>()
             var pixels = 0
-            for (img in doc.select("img[src]")) {
-                val src = img.attr("src").trim()
-                val lower = src.lowercase()
-                if (!lower.startsWith("http://") && !lower.startsWith("https://")) continue
-                if (!is_tracking_pixel(img)) continue
+            var hidden = 0
+            var images = 0
+            val pixel_urls = mutableListOf<String>()
+            val image_urls = mutableListOf<String>()
+            for (img in doc.select("img")) {
+                val src = remote_image_source(img) ?: continue
+                if (!is_tracking_pixel(img)) {
+                    images++
+                    if (image_urls.size < TRACKER_URL_LIST_CAP) image_urls.add(src)
+                    continue
+                }
                 pixels++
-                val host = url_host(src) ?: continue
+                if (BlockedImagePlaceholder.is_hidden(img)) hidden++
+                if (pixel_urls.size < TRACKER_URL_LIST_CAP) pixel_urls.add(src)
+                val host = url_host(src) ?: src
                 domains[host] = (domains[host] ?: 0) + 1
             }
             val params = LinkedHashMap<String, Int>()
@@ -199,6 +216,10 @@ object EmailHtmlSanitizer {
                 param_counts = params.entries.sortedByDescending { it.value }.map { it.key to it.value },
                 pixel_count = pixels,
                 cleaned_link_count = cleaned_links,
+                hidden_pixel_count = hidden,
+                image_count = images,
+                pixel_urls = pixel_urls,
+                image_urls = image_urls,
             )
         } catch (_: Throwable) {
             TrackerReport()
@@ -255,8 +276,8 @@ object EmailHtmlSanitizer {
         if (html.isBlank()) return html
         val doc = Jsoup.parseBodyFragment(html).apply { outputSettings(raw_output_settings()) }
         for (img in doc.select("img")) {
-            val src = img.attr("src").ifBlank { img.attr("srcset").trim().substringBefore(' ') }
-            if (is_local_image_source(src)) {
+            val src = remote_image_source(img)
+            if (src == null) {
                 img.removeAttr("srcset")
                 img.removeAttr("sizes")
                 continue

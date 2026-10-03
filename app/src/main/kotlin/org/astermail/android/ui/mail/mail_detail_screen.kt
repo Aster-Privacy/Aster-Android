@@ -283,11 +283,6 @@ private val EXTERNAL_RESOURCE_PATTERN = Regex(
     RegexOption.IGNORE_CASE,
 )
 
-private val IMG_TAG_PATTERN = Regex(
-    """<img\b[^>]*\bsrc\s*=\s*["']https?://[^"']+["'][^>]*>""",
-    RegexOption.IGNORE_CASE,
-)
-
 private val FONT_FACE_PATTERN = Regex("""@font-face""", RegexOption.IGNORE_CASE)
 
 private val LINK_STYLESHEET_PATTERN = Regex(
@@ -314,7 +309,6 @@ internal data class ExternalContentCounts(
 
 private const val EXTERNAL_ITEM_LIST_CAP = 60
 
-private val SRC_URL_PATTERN = Regex("""(?<![-\w])src\s*=\s*["'](https?://[^"']+)["']""", RegexOption.IGNORE_CASE)
 private val HREF_URL_PATTERN = Regex("""(?<![-\w])href\s*=\s*["'](https?://[^"']+)["']""", RegexOption.IGNORE_CASE)
 private val FONT_URL_PATTERN = Regex("""url\s*\(\s*["']?(https?://[^"')]+)""", RegexOption.IGNORE_CASE)
 
@@ -336,33 +330,13 @@ private fun external_display_url(url: String): String {
     }
 }
 
-private val IMG_WIDTH_PATTERN = Regex("""width\s*=\s*["']?(\d+)""", RegexOption.IGNORE_CASE)
-
-private val IMG_HEIGHT_PATTERN = Regex("""height\s*=\s*["']?(\d+)""", RegexOption.IGNORE_CASE)
-
-private fun count_external_content(html: String): ExternalContentCounts {
-    var images = 0
-    var trackers = 0
+internal fun count_external_content(html: String, report: EmailHtmlSanitizer.TrackerReport): ExternalContentCounts {
     val items = mutableListOf<ExternalContentItem>()
-    IMG_TAG_PATTERN.findAll(html).forEach { match ->
-        val tag = match.value
-        val width_match = IMG_WIDTH_PATTERN.find(tag)
-        val height_match = IMG_HEIGHT_PATTERN.find(tag)
-        val w = width_match?.groupValues?.get(1)?.toIntOrNull()
-        val h = height_match?.groupValues?.get(1)?.toIntOrNull()
-        val is_tracker = w != null && h != null && w <= 2 && h <= 2
-        if (is_tracker) trackers++ else images++
-        if (items.size < EXTERNAL_ITEM_LIST_CAP) {
-            val url = SRC_URL_PATTERN.find(tag)?.groupValues?.get(1)
-            if (!url.isNullOrBlank()) {
-                items.add(
-                    ExternalContentItem(
-                        if (is_tracker) ExternalContentType.tracker else ExternalContentType.image,
-                        url,
-                    ),
-                )
-            }
-        }
+    for (url in report.image_urls) {
+        if (items.size < EXTERNAL_ITEM_LIST_CAP) items.add(ExternalContentItem(ExternalContentType.image, url))
+    }
+    for (url in report.pixel_urls) {
+        if (items.size < EXTERNAL_ITEM_LIST_CAP) items.add(ExternalContentItem(ExternalContentType.tracker, url))
     }
     val fonts = FONT_FACE_PATTERN.findAll(html).count()
     val css = LINK_STYLESHEET_PATTERN.findAll(html).count()
@@ -381,7 +355,7 @@ private fun count_external_content(html: String): ExternalContentCounts {
             }
         }
     }
-    return ExternalContentCounts(images, trackers, fonts, css, items)
+    return ExternalContentCounts(report.image_count, report.pixel_count, fonts, css, items)
 }
 
 private val PROXY_CSS_URL_PATTERN = Regex(
@@ -2640,8 +2614,8 @@ internal fun expanded_message(
             )
         }
 
-        val external_counts = remember(msg.body_html) {
-            if (msg.body_html != null) count_external_content(msg.body_html) else ExternalContentCounts(0, 0, 0, 0)
+        val external_counts = remember(msg.body_html, tracker_report) {
+            if (msg.body_html != null) count_external_content(msg.body_html, tracker_report) else ExternalContentCounts(0, 0, 0, 0)
         }
 
         if (msg.send_status == "failed" || msg.send_status == "bounced") {
