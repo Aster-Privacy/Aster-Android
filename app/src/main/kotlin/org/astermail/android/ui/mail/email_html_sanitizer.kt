@@ -557,7 +557,8 @@ object EmailHtmlSanitizer {
     private val css_webkit_image_set_regex = Regex("-webkit-image-set\\s*\\([^)]*\\)", RegexOption.IGNORE_CASE)
     private val css_cross_fade_regex = Regex("cross-fade\\s*\\([^)]*\\)", RegexOption.IGNORE_CASE)
     private val css_closing_tag_regex = Regex("</(style|script)", RegexOption.IGNORE_CASE)
-    private val media_rule_regex = Regex("@media\\b([^{;]*)\\{", RegexOption.IGNORE_CASE)
+    private const val media_keyword = "@media"
+    private val media_prelude_terminators = charArrayOf('{', ';')
     private val dark_scheme_regex = Regex("prefers-color-scheme\\s*:\\s*dark", RegexOption.IGNORE_CASE)
     private val media_not_regex = Regex("(^|[\\s(])not\\b", RegexOption.IGNORE_CASE)
 
@@ -748,19 +749,24 @@ object EmailHtmlSanitizer {
     private fun strip_dark_mode_media(css: String): String {
         val out = StringBuilder()
         var cursor = 0
+        var search = 0
         while (true) {
-            val match = media_rule_regex.find(css, cursor) ?: break
-            val body_start = match.range.last + 1
-            val queries = split_media_queries(match.groupValues[1])
+            val at = css.indexOf(media_keyword, search, ignoreCase = true)
+            if (at < 0) break
+            val prelude_start = at + media_keyword.length
+            val prelude_end = css.indexOfAny(media_prelude_terminators, prelude_start)
+            if (prelude_end < 0) break
+            val body_start = prelude_end + 1
+            search = body_start
+            val next = css[prelude_start]
+            if (css[prelude_end] == ';' || next.isLetterOrDigit() || next == '_') continue
+            val queries = split_media_queries(css.substring(prelude_start, prelude_end))
             val kept = queries.filterNot { requires_dark_scheme(it) }
-            if (kept.size == queries.size) {
-                out.append(css, cursor, body_start)
-                cursor = body_start
-                continue
-            }
-            out.append(css, cursor, match.range.first)
+            if (kept.size == queries.size) continue
+            out.append(css, cursor, at)
             if (kept.isEmpty()) {
                 cursor = css_block_end(css, body_start)
+                search = cursor
             } else {
                 out.append("@media ").append(kept.joinToString(", ") { it.trim() }).append(" {")
                 cursor = body_start

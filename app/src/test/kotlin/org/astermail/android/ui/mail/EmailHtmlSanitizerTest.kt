@@ -356,6 +356,20 @@ class EmailHtmlSanitizerTest {
         assertTrue(all_dark, all_dark.contains("p{color:#111}"))
     }
 
+    @Test(timeout = 20000)
+    fun scans_unterminated_media_rules_in_linear_time() {
+        listOf("@media ", "@media(", "@media (prefers-color-scheme: dark) and ").forEach { rule ->
+            val out = sanitize_style("p{color:#111}" + rule.repeat(40000))
+            assertTrue(out.contains("p{color:#111}"))
+        }
+    }
+
+    @Test
+    fun leaves_media_statements_and_longer_at_keywords_alone() {
+        val css = "@mediax (prefers-color-scheme: dark){p{color:#eee}}@media (prefers-color-scheme: dark);h1{margin:0}"
+        assertTrue(sanitize_style(css).contains(css))
+    }
+
     @Test
     fun keeps_light_negated_and_unrelated_media_queries() {
         listOf(
