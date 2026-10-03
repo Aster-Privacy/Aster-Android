@@ -95,6 +95,46 @@ class ContactTransferTest {
     }
 
     @Test
+    fun `folding never splits a character and stays within 75 octets`() {
+        val notes = "a".repeat(69) + "\uD83D\uDE00" + "\u00e9".repeat(60) + "\uD83D\uDE00 end"
+        val vcard = contact_to_vcard(sample().copy(notes = notes))
+        val bytes = vcard.toByteArray(Charsets.UTF_8)
+
+        for (line in String(bytes, Charsets.UTF_8).split("\r\n")) {
+            assertTrue(line.toByteArray(Charsets.UTF_8).size <= 75)
+        }
+        assertEquals(notes, parse_vcards(String(bytes, Charsets.UTF_8)).first().notes)
+    }
+
+    @Test
+    fun `group names with commas survive a vcard round trip`() {
+        val groups = listOf("Friends, Family", "Work", "a;b")
+        val vcard = contact_to_vcard(sample().copy(groups = groups))
+
+        assertTrue(vcard.contains("CATEGORIES:Friends\\, Family,Work,a\\;b"))
+        assertEquals(groups, parse_vcards(vcard).first().groups)
+    }
+
+    @Test
+    fun `legacy quoted printable vcard values are decoded`() {
+        val vcard = buildString {
+            append("BEGIN:VCARD\r\n")
+            append("VERSION:2.1\r\n")
+            append("N;CHARSET=UTF-8;ENCODING=QUOTED-PRINTABLE:Dupont;=C3=89lise;;;\r\n")
+            append("EMAIL;INTERNET:elise@example.com\r\n")
+            append("ORG;CHARSET=ISO-8859-1;QUOTED-PRINTABLE:Soci=E9t=E9\r\n")
+            append("NOTE;ENCODING=QUOTED-PRINTABLE;CHARSET=UTF-8:Premi=C3=A8re ligne, =\r\n")
+            append("seconde ligne\r\n")
+            append("END:VCARD\r\n")
+        }
+        val result = parse_vcards(vcard).single()
+
+        assertEquals("\u00c9lise Dupont", result.name)
+        assertEquals("Soci\u00e9t\u00e9", result.company)
+        assertEquals("Premi\u00e8re ligne, seconde ligne", result.notes)
+    }
+
+    @Test
     fun `base64 photo parameters become a data url`() {
         val vcard = buildString {
             append("BEGIN:VCARD\r\n")
