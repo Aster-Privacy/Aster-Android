@@ -172,7 +172,7 @@ private object search_screen_cache {
     var outcome: SearchOutcome? = null
     var outcome_corpus: List<org.astermail.android.mail.InboxItem>? = null
     var people_corpus: List<org.astermail.android.mail.InboxItem>? = null
-    var people: Pair<List<ChipPerson>, List<ChipPerson>>? = null
+    var people: ChipPeopleLists? = null
 
     fun sorted_for(corpus: List<org.astermail.android.mail.InboxItem>) =
         sorted.takeIf { this.corpus === corpus }
@@ -604,13 +604,12 @@ fun SearchScreen(
     val corpus_loading = !search_state.is_indexed && search_state.error == null
     val results_pending = has_query && (computed == null || corpus_loading)
     val hidden_spam_trash = computed?.hidden_spam_trash ?: 0
-    val people_lists by androidx.compose.runtime.produceState(
-        initialValue = search_screen_cache.people_for(visible_corpus)
-            ?: (emptyList<ChipPerson>() to emptyList<ChipPerson>()),
+    val produced_people by androidx.compose.runtime.produceState<Pair<List<org.astermail.android.mail.InboxItem>, ChipPeopleLists>?>(
+        initialValue = search_screen_cache.people_for(visible_corpus)?.let { visible_corpus to it },
         visible_corpus,
     ) {
         search_screen_cache.people_for(visible_corpus)?.let {
-            value = it
+            value = visible_corpus to it
             return@produceState
         }
         val people = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
@@ -618,8 +617,9 @@ fun SearchScreen(
         }
         search_screen_cache.people_corpus = visible_corpus
         search_screen_cache.people = people
-        value = people
+        value = visible_corpus to people
     }
+    val people_lists = chip_people_for(visible_corpus, produced_people)
     val chip_people = people_lists.first
     val chip_recipients = people_lists.second
     val custom_chips = remember(operator_chips) {

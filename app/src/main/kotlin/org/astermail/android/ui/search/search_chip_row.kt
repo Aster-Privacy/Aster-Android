@@ -29,6 +29,15 @@ internal data class ChipPerson(
     val count: Int,
 )
 
+internal typealias ChipPeopleLists = Pair<List<ChipPerson>, List<ChipPerson>>
+
+internal val NO_CHIP_PEOPLE: ChipPeopleLists = emptyList<ChipPerson>() to emptyList()
+
+internal fun chip_people_for(
+    corpus: List<InboxItem>,
+    produced: Pair<List<InboxItem>, ChipPeopleLists>?,
+): ChipPeopleLists = produced?.takeIf { it.first === corpus }?.second ?: NO_CHIP_PEOPLE
+
 internal val ATTACHMENT_CHIP_TYPES = listOf("image", "document", "pdf", "video")
 
 internal val ATTACHMENT_EXTENSIONS: Map<String, List<String>> = mapOf(
