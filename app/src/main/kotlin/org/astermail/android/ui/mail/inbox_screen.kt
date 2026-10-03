@@ -683,8 +683,7 @@ fun InboxScreen(
                 settings_vm.load_preferences()
                 settings_vm.load_tags()
                 settings_vm.load_subscription(force = false)
-                mail_vm.load_inbox(current_folder, force = true)
-                mail_vm.load_stats(force = true)
+                mail_vm.refresh_on_resume(current_folder)
                 billing_vm.load_onboarding_checklist()
             }
         }
@@ -1891,7 +1890,8 @@ fun InboxScreen(
                         skeleton_target ||
                         (!inbox_error_now && !contradicts_unread && (category_skeleton || empty_skeleton))
                     ) && !(is_refreshing && empty_state_seen)
-                val rows_imminent = threads.isEmpty() && threads_pending && inbox_state.items.isNotEmpty()
+                val rows_imminent = threads.isEmpty() &&
+                    (cache_pending || (threads_pending && inbox_state.items.isNotEmpty()))
                 val skeleton_phase by remember_skeleton_phase(
                     wanted = skeleton_now,
                     rows_imminent = rows_imminent,
