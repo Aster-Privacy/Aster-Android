@@ -288,6 +288,13 @@ fun signature_rich_editor(
             }
         },
         update = { view -> controller.editor_view = view },
+        onRelease = { view ->
+            runCatching {
+                view.stopLoading()
+                view.removeJavascriptInterface("aster_bridge")
+                view.destroy()
+            }
+        },
         modifier = modifier,
     )
 }
