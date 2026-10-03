@@ -136,4 +136,8 @@
     <string name="billing_compare_included">शामिल</string>
     <string name="billing_compare_not_included">शामिल नहीं</string>
     <string name="billing_compare_yearly_save">वार्षिक · %1$d%% बचाएं</string>
+    <string name="billing_addon_add_size">%1$s जोड़ें</string>
+    <string name="billing_addon_usage_nudge">आपने अपने स्टोरेज का %1$d%% इस्तेमाल कर लिया है। ईमेल मिलते रहें, इसके लिए और जगह जोड़ें।</string>
+    <string name="billing_addon_supernova_nudge">Supernova में 5 TB स्टोरेज और सबसे ज़्यादा सीमाएं शामिल हैं।</string>
+    <string name="billing_addon_supernova_action">Supernova देखें</string>
 </resources>

@@ -136,4 +136,8 @@
     <string name="billing_compare_included">W planie</string>
     <string name="billing_compare_not_included">Brak w planie</string>
     <string name="billing_compare_yearly_save">Rocznie · Oszczędź %1$d%%</string>
+    <string name="billing_addon_add_size">Dodaj %1$s</string>
+    <string name="billing_addon_usage_nudge">Wykorzystujesz %1$d%% miejsca. Dodaj więcej miejsca, aby nadal otrzymywać pocztę.</string>
+    <string name="billing_addon_supernova_nudge">Supernova obejmuje 5 TB miejsca i najwyższe limity.</string>
+    <string name="billing_addon_supernova_action">Zobacz Supernova</string>
 </resources>

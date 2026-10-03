@@ -136,4 +136,8 @@
     <string name="billing_compare_included">Dahil</string>
     <string name="billing_compare_not_included">Dahil değil</string>
     <string name="billing_compare_yearly_save">Yıllık · %%%1$d tasarruf</string>
+    <string name="billing_addon_add_size">%1$s ekle</string>
+    <string name="billing_addon_usage_nudge">Depolama alanınızın %%%1$d kadarını kullandınız. E-posta almaya devam etmek için daha fazla alan ekleyin.</string>
+    <string name="billing_addon_supernova_nudge">Supernova, 5 TB depolama alanı ve en yüksek limitleri içerir.</string>
+    <string name="billing_addon_supernova_action">Supernova\'yı görüntüle</string>
 </resources>

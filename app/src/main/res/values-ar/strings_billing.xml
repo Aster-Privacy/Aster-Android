@@ -136,4 +136,8 @@
     <string name="billing_compare_included">مضمّن</string>
     <string name="billing_compare_not_included">غير مضمّن</string>
     <string name="billing_compare_yearly_save">سنويًا · وفّر %1$d%%</string>
+    <string name="billing_addon_add_size">إضافة %1$s</string>
+    <string name="billing_addon_usage_nudge">لقد استخدمت %1$d%% من مساحة التخزين. أضف مساحة أكبر لمواصلة تلقي البريد.</string>
+    <string name="billing_addon_supernova_nudge">تتضمن خطة Supernova مساحة تخزين 5 تيرابايت وأعلى الحدود.</string>
+    <string name="billing_addon_supernova_action">عرض Supernova</string>
 </resources>

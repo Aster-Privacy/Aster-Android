@@ -136,4 +136,8 @@
     <string name="billing_compare_included">Включено</string>
     <string name="billing_compare_not_included">Не включено</string>
     <string name="billing_compare_yearly_save">Ежегодно · Экономия %1$d%%</string>
+    <string name="billing_addon_add_size">Добавить %1$s</string>
+    <string name="billing_addon_usage_nudge">Вы использовали %1$d%% хранилища. Добавьте место, чтобы продолжать получать почту.</string>
+    <string name="billing_addon_supernova_nudge">Supernova включает 5 ТБ хранилища и самые высокие лимиты.</string>
+    <string name="billing_addon_supernova_action">Подробнее о Supernova</string>
 </resources>

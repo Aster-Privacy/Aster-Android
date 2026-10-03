@@ -20,9 +20,6 @@ package org.astermail.android.ui.settings.detail
 
 import android.content.ClipData
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.background
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -74,11 +71,16 @@ import compose.icons.tablericons.ChevronRight
 import org.astermail.android.R
 import org.astermail.android.api.billing.BillingHistoryItem
 import org.astermail.android.api.billing.CreditPackageItem
-import org.astermail.android.api.billing.StorageAddonItem
+import org.astermail.android.billing.is_featured_storage_addon
+import org.astermail.android.billing.is_supernova_nudge_addon
+import org.astermail.android.billing.shows_storage_usage_nudge
+import org.astermail.android.billing.storage_addon_per_month_cents
+import org.astermail.android.billing.storage_addon_quote
+import org.astermail.android.billing.storage_addon_save_percent
+import org.astermail.android.billing.storage_usage_percent
 import org.astermail.android.api.billing.UserActiveAddon
 import org.astermail.android.billing.format_money
 import org.astermail.android.design.AsterMaterial
-import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.AsterSemanticColors
 import org.astermail.android.design.components.AsterButton
@@ -94,7 +96,7 @@ import org.astermail.android.design.mirror_in_rtl
 
 @Composable
 internal fun billing_addons_panel(
-    available: List<StorageAddonItem>,
+    quotes: List<storage_addon_quote>,
     active: List<UserActiveAddon>,
     selected_id: String?,
     currency: String,
@@ -103,6 +105,11 @@ internal fun billing_addons_panel(
     interval: String = "month",
     yearly_badge: String? = null,
     on_interval: ((String) -> Unit)? = null,
+    storage_used_bytes: Long = 0L,
+    storage_limit_bytes: Long = 0L,
+    storage_over_limit: Boolean = false,
+    show_supernova_nudge: Boolean = false,
+    on_supernova: () -> Unit = {},
     price_label_for: (Long, String) -> String? = { _, _ -> null },
     active_interval_for: (Long) -> String = { "month" },
     play_product_for: (Long) -> String? = { null },
@@ -114,6 +121,7 @@ internal fun billing_addons_panel(
     val per_month = stringResource(R.string.fix_billing_per_month_short)
     val per_year = stringResource(R.string.fix_billing_per_year_short)
     val suffix_for = { value: String -> if (value == "year") per_year else per_month }
+    val offered = quotes.filter { it.sells(interval) }
     Column(modifier = Modifier.fillMaxWidth()) {
         active.forEach { addon ->
             settings_row_gap(modifier = Modifier)
@@ -148,76 +156,66 @@ internal fun billing_addons_panel(
                 },
             )
         }
-        if (available.isNotEmpty()) {
+        if (offered.isNotEmpty()) {
             settings_row_gap(modifier = Modifier)
-            val selected = available.firstOrNull { it.id == selected_id }
-            Column(modifier = Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md)) {
-                if (on_interval != null) {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        aster_segmented(
-                            value = interval,
-                            options = listOf(
-                                switcher_option(id = "month", label = stringResource(R.string.settings_billing_monthly)),
-                                switcher_option(id = "year", label = stringResource(R.string.settings_billing_yearly), badge = yearly_badge),
-                            ),
-                            on_change = on_interval,
-                        )
-                    }
-                    Spacer(Modifier.height(AsterSpacing.md))
-                }
-                Column(
-                    modifier = Modifier.fillMaxWidth().selectableGroup(),
-                    verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                ) {
-                    available.chunked(4).forEach { row ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                        ) {
-                            row.forEach { addon ->
-                                billing_size_chip(
-                                    label = if (addon.storage_bytes > 0) format_storage_short(addon.storage_bytes) else addon.name,
-                                    selected = addon.id == selected_id,
-                                    enabled = !is_acting,
-                                    on_click = { on_select(addon.id) },
-                                    modifier = Modifier.weight(1f),
-                                )
-                            }
-                            repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
-                        }
-                    }
-                }
-                Spacer(Modifier.height(AsterSpacing.lg))
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = if (selected != null) {
-                            stringResource(R.string.billing_addon_summary, format_storage_short(selected.storage_bytes))
-                        } else {
-                            stringResource(R.string.billing_addon_pick_size)
-                        },
-                        color = if (selected != null) colors.text_primary else colors.text_tertiary,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.weight(1f),
-                    )
-                    if (selected != null) {
-                        Spacer(Modifier.width(AsterSpacing.md))
-                        billing_price_column(
-                            amount = price_label_for(selected.storage_bytes, interval)
-                                ?: format_money(selected.price_cents.toLong(), currency),
-                            unit = suffix_for(interval),
-                            note = null,
-                            enabled = !is_acting,
-                        )
-                    }
-                }
-                Spacer(Modifier.height(AsterSpacing.md))
-                AsterButton(
-                    label = stringResource(R.string.buy_more_storage),
-                    onClick = on_buy,
-                    enabled = !is_acting && selected_id != null,
-                    is_loading = is_buying,
+            if (storage_limit_bytes > 0) {
+                billing_addon_usage(
+                    used_bytes = storage_used_bytes,
+                    limit_bytes = storage_limit_bytes,
+                    over_limit = storage_over_limit,
                 )
+            }
+            if (on_interval != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = AsterSpacing.lg, end = AsterSpacing.lg, top = AsterSpacing.xs, bottom = AsterSpacing.md),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    aster_segmented(
+                        value = interval,
+                        options = listOf(
+                            switcher_option(id = "month", label = stringResource(R.string.settings_billing_monthly)),
+                            switcher_option(id = "year", label = stringResource(R.string.settings_billing_yearly), badge = yearly_badge),
+                        ),
+                        on_change = on_interval,
+                    )
+                }
+            }
+            val selected = offered.firstOrNull { it.addon_id == selected_id }
+            Column(modifier = Modifier.fillMaxWidth().selectableGroup()) {
+                offered.forEachIndexed { index, quote ->
+                    if (index > 0) settings_row_gap()
+                    billing_addon_option(
+                        quote = quote,
+                        interval = interval,
+                        currency = currency,
+                        selected = quote.addon_id == selected_id,
+                        enabled = !is_acting,
+                        per_month_unit = per_month,
+                        show_supernova_nudge = show_supernova_nudge && is_supernova_nudge_addon(quote.storage_bytes),
+                        on_supernova = on_supernova,
+                        on_click = { on_select(quote.addon_id) },
+                    )
+                }
+            }
+            Column(modifier = Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md)) {
+                if (selected == null) {
+                    Text(
+                        text = stringResource(R.string.billing_addon_pick_size),
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = AsterSpacing.sm),
+                    )
+                } else {
+                    AsterButton(
+                        label = stringResource(R.string.billing_addon_add_size, addon_size_label(selected)),
+                        onClick = on_buy,
+                        enabled = !is_acting,
+                        is_loading = is_buying,
+                    )
+                }
                 Spacer(Modifier.height(AsterSpacing.sm))
                 Text(
                     text = stringResource(
@@ -234,35 +232,105 @@ internal fun billing_addons_panel(
     }
 }
 
+private fun addon_size_label(quote: storage_addon_quote): String =
+    if (quote.storage_bytes > 0) format_storage_short(quote.storage_bytes) else quote.name
+
 @Composable
-private fun billing_size_chip(
-    label: String,
+private fun billing_addon_usage(used_bytes: Long, limit_bytes: Long, over_limit: Boolean) {
+    val colors = AsterMaterial.colors
+    val fraction = used_bytes.toFloat() / limit_bytes.toFloat()
+    val full = over_limit || fraction >= 1f
+    val nudge = full || shows_storage_usage_nudge(used_bytes, limit_bytes)
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md)) {
+        billing_meter(
+            label = stringResource(R.string.storage),
+            value_text = stringResource(
+                R.string.storage_used_format,
+                format_storage_short(used_bytes),
+                format_storage_short(limit_bytes),
+            ),
+            fraction = fraction,
+            status = when {
+                full -> billing_meter_status.full
+                nudge -> billing_meter_status.near
+                else -> billing_meter_status.ok
+            },
+            status_text = null,
+        )
+        if (nudge) {
+            Spacer(Modifier.height(AsterSpacing.sm))
+            Text(
+                text = stringResource(
+                    R.string.billing_addon_usage_nudge,
+                    storage_usage_percent(used_bytes, limit_bytes) ?: 100,
+                ),
+                color = if (full) colors.danger else colors.warning,
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun billing_addon_option(
+    quote: storage_addon_quote,
+    interval: String,
+    currency: String,
     selected: Boolean,
     enabled: Boolean,
+    per_month_unit: String,
+    show_supernova_nudge: Boolean,
+    on_supernova: () -> Unit,
     on_click: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
-    Box(
-        modifier = modifier
-            .clip(CircleShape)
-            .background(if (selected) colors.accent_blue else field_surface_color(colors))
-            .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = on_click)
-            .padding(horizontal = AsterSpacing.sm, vertical = 10.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = label,
-            color = when {
-                selected -> colors.on_accent
-                enabled -> colors.text_secondary
-                else -> colors.text_muted
-            },
-            fontSize = 13.sp,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-            maxLines = 1,
-        )
-    }
+    val is_yearly = interval == "year"
+    val billed_cents = quote.cents_for(interval) ?: return
+    val per_month_cents = storage_addon_per_month_cents(quote, interval) ?: billed_cents
+    val billed_text = quote.label_for(interval) ?: format_money(billed_cents.toLong(), currency)
+    val per_month_text = if (is_yearly) format_money(per_month_cents.toLong(), currency) else billed_text
+    val save = if (is_yearly) storage_addon_save_percent(quote) else null
+    billing_option_row(
+        title = addon_size_label(quote),
+        subtitle = if (is_yearly) {
+            stringResource(R.string.billing_billed_yearly_total, billed_text)
+        } else {
+            stringResource(R.string.billing_billed_monthly)
+        },
+        selected = selected,
+        enabled = enabled,
+        title_note = if (is_featured_storage_addon(quote.storage_bytes)) stringResource(R.string.popular) else null,
+        title_note_color = colors.accent_blue,
+        on_click = on_click,
+        trailing = {
+            billing_price_column(
+                amount = per_month_text,
+                unit = per_month_unit,
+                note = save?.let { stringResource(R.string.save_percent, it) },
+                enabled = enabled,
+                note_color = colors.success,
+            )
+        },
+        below = if (show_supernova_nudge) {
+            {
+                Column {
+                    Text(
+                        text = stringResource(R.string.billing_addon_supernova_nudge),
+                        color = colors.text_tertiary,
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp,
+                    )
+                    billing_action_text(
+                        label = stringResource(R.string.billing_addon_supernova_action),
+                        on_click = on_supernova,
+                    )
+                }
+            }
+        } else {
+            null
+        },
+    )
 }
 
 @Composable
