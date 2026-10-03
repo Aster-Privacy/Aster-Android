@@ -45,6 +45,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -53,6 +54,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,6 +76,9 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -356,15 +361,26 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                                     fontSize = 15.sp,
                                 )
                             }
-                            Icon(
-                                imageVector = if (show_passphrase) TablerIcons.EyeOff else TablerIcons.Eye,
-                                contentDescription = null,
-                                tint = colors.text_muted,
+                            val eye_label = stringResource(
+                                if (show_passphrase) R.string.hide_password else R.string.show_password,
+                            )
+                            Box(
                                 modifier = Modifier
                                     .size(20.dp)
                                     .align(Alignment.CenterEnd)
-                                    .clickable { show_passphrase = !show_passphrase },
-                            )
+                                    .wrapContentSize(unbounded = true)
+                                    .minimumInteractiveComponentSize()
+                                    .clickable(role = Role.Button) { show_passphrase = !show_passphrase }
+                                    .semantics { contentDescription = eye_label },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = if (show_passphrase) TablerIcons.EyeOff else TablerIcons.Eye,
+                                    contentDescription = null,
+                                    tint = colors.text_muted,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
                         }
                     }
                     if (error_msg != null) {
@@ -384,7 +400,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                 Box(
                     modifier = Modifier
                         .clip(SquircleShape(12.dp))
-                        .clickable { launch_biometric() }
+                        .clickable(role = Role.Button) { launch_biometric() }
                         .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -481,6 +497,7 @@ fun PinPad(
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             PinIconKey(
                 icon = TablerIcons.Backspace,
+                content_description = stringResource(R.string.delete),
                 enabled = enabled,
                 bg = colors.bg_secondary,
                 on_click = on_backspace,
@@ -488,6 +505,7 @@ fun PinPad(
             PinKey(label = "0", enabled = enabled, bg = colors.bg_secondary, on_click = { on_digit("0") })
             PinIconKey(
                 icon = TablerIcons.Check,
+                content_description = stringResource(R.string.confirm),
                 enabled = enabled,
                 bg = colors.bg_secondary,
                 on_click = on_confirm,
@@ -504,7 +522,7 @@ fun PinKey(label: String?, enabled: Boolean, bg: Color, on_click: () -> Unit) {
             .size(60.dp)
             .clip(CircleShape)
             .background(bg)
-            .then(if (enabled && label != null) Modifier.clickable(onClick = on_click) else Modifier),
+            .then(if (enabled && label != null) Modifier.clickable(role = Role.Button, onClick = on_click) else Modifier),
         contentAlignment = Alignment.Center,
     ) {
         if (label != null) {
@@ -521,6 +539,7 @@ fun PinKey(label: String?, enabled: Boolean, bg: Color, on_click: () -> Unit) {
 @Composable
 fun PinIconKey(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
+    content_description: String,
     enabled: Boolean,
     bg: Color,
     on_click: () -> Unit,
@@ -531,12 +550,12 @@ fun PinIconKey(
             .size(60.dp)
             .clip(CircleShape)
             .background(bg)
-            .then(if (enabled) Modifier.clickable(onClick = on_click) else Modifier),
+            .then(if (enabled) Modifier.clickable(role = Role.Button, onClick = on_click) else Modifier),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = null,
+            contentDescription = content_description,
             tint = if (enabled) colors.text_primary else colors.text_muted,
             modifier = Modifier.size(22.dp),
         )
