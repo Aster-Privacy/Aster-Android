@@ -102,8 +102,10 @@ object EmailHtmlSanitizer {
         val head_styles = extract_head_styles(pre)
         val body_only = extract_body_html(pre)
         val dirty = Jsoup.parseBodyFragment(body_only, "https://mail-content.invalid/")
+        drop_blank_image_sources(dirty)
         val doc = Cleaner(safelist).clean(dirty).apply { outputSettings(raw_output_settings()) }
         scrub_attributes(doc, options.clean_tracking_links)
+        remove_sourceless_images(doc)
         if (options.remove_tracking_pixels) remove_tracking_pixels(doc)
         scrub_style_blocks(doc, options)
         autolink_bare_urls(doc, options.clean_tracking_links)
@@ -115,6 +117,18 @@ object EmailHtmlSanitizer {
         }
         sb.append(doc.body().html())
         return sb.toString()
+    }
+
+    private fun drop_blank_image_sources(doc: Document) {
+        for (img in doc.select("img[src]")) {
+            if (img.attr("src").isBlank()) img.removeAttr("src")
+        }
+    }
+
+    private fun remove_sourceless_images(doc: Document) {
+        for (img in doc.select("img")) {
+            if (img.attr("src").isBlank() && img.attr("srcset").isBlank()) img.remove()
+        }
     }
 
     private fun remove_tracking_pixels(doc: Document) {
