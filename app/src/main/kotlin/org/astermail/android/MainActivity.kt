@@ -851,8 +851,8 @@ private fun AsterNavHost() {
         }
         composable(routes.forgot_password) {
             ForgotPasswordScreen(
-                on_back = { nav_controller.popBackStack() },
-                on_submit = { _ -> nav_controller.popBackStack() },
+                on_back = { pop_once(nav_controller) },
+                on_submit = { _ -> pop_once(nav_controller) },
             )
         }
         composable(routes.inbox) {
@@ -933,11 +933,11 @@ private fun AsterNavHost() {
                     "Go to previous message" -> neighbor_id(-1)
                     else -> null
                 }
-                if (next != null) open_neighbor(next) else nav_controller.popBackStack()
+                if (next != null) open_neighbor(next) else pop_once(nav_controller)
             }
             MailDetailScreen(
                 email_id = email_id,
-                on_back = { nav_controller.popBackStack() },
+                on_back = { pop_once(nav_controller) },
                 on_reply = { msg_id, ghost ->
                     org.astermail.android.ui.compose.publish_compose_thread_seed(detail_thread_state)
                     context.startActivity(ComposeActivity.intent_for(context, reply_to = msg_id, mode = "reply", thread_ghost_email = ghost))
@@ -962,7 +962,7 @@ private fun AsterNavHost() {
                         path.startsWith("search:") -> routes.search_for(path.removePrefix("search:"))
                         else -> null
                     }
-                    if (route != null) nav_controller.navigate(route)
+                    if (route != null) navigate_once(nav_controller, route)
                 },
                 mail_vm = shared_mail_vm,
                 settings_vm = shared_settings_vm,
@@ -990,7 +990,7 @@ private fun AsterNavHost() {
                 filter_type = FilterType.folder,
                 filter_value = id,
                 filter_display_name = name,
-                on_open_drawer = { nav_controller.popBackStack() },
+                on_open_drawer = { pop_once(nav_controller) },
                 on_open_email = { eid -> open_mail_detail(nav_controller, eid) },
                 mail_vm = shared_mail_vm,
             )
@@ -1017,7 +1017,7 @@ private fun AsterNavHost() {
                 filter_type = FilterType.label,
                 filter_value = id,
                 filter_display_name = name,
-                on_open_drawer = { nav_controller.popBackStack() },
+                on_open_drawer = { pop_once(nav_controller) },
                 on_open_email = { eid -> open_mail_detail(nav_controller, eid) },
                 mail_vm = shared_mail_vm,
             )
@@ -1044,7 +1044,7 @@ private fun AsterNavHost() {
                 filter_type = FilterType.alias,
                 filter_value = id,
                 filter_display_name = name,
-                on_open_drawer = { nav_controller.popBackStack() },
+                on_open_drawer = { pop_once(nav_controller) },
                 on_open_email = { eid -> open_mail_detail(nav_controller, eid) },
                 mail_vm = shared_mail_vm,
             )
@@ -1209,10 +1209,10 @@ private fun AsterNavHost() {
                 if (contacts_entry != null) hiltViewModel(contacts_entry) else hiltViewModel()
             ContactDetailScreen(
                 contact_id = id,
-                on_back = { nav_controller.popBackStack() },
-                on_edit = { cid -> nav_controller.navigate(routes.contact_edit_for(cid)) },
+                on_back = { pop_entry(nav_controller, entry) },
+                on_edit = { cid -> navigate_once(nav_controller, routes.contact_edit_for(cid)) },
                 on_compose = { email -> context.startActivity(ComposeActivity.intent_for(context, prefill_to = email)) },
-                on_search_mail = { query -> nav_controller.navigate(routes.search_for(query)) },
+                on_search_mail = { query -> navigate_once(nav_controller, routes.search_for(query)) },
                 vm = shared_contacts_vm,
             )
         }
@@ -1226,8 +1226,8 @@ private fun AsterNavHost() {
                 if (contacts_entry != null) hiltViewModel(contacts_entry) else hiltViewModel()
             ContactEditScreen(
                 contact_id = null,
-                on_back = { nav_controller.popBackStack() },
-                on_saved = { nav_controller.popBackStack() },
+                on_back = { pop_once(nav_controller) },
+                on_saved = { pop_entry(nav_controller, entry) },
                 vm = shared_contacts_vm,
             )
         }
@@ -1245,8 +1245,8 @@ private fun AsterNavHost() {
                 if (contacts_entry != null) hiltViewModel(contacts_entry) else hiltViewModel()
             ContactEditScreen(
                 contact_id = id,
-                on_back = { nav_controller.popBackStack() },
-                on_saved = { nav_controller.popBackStack() },
+                on_back = { pop_once(nav_controller) },
+                on_saved = { pop_entry(nav_controller, entry) },
                 vm = shared_contacts_vm,
             )
         }
