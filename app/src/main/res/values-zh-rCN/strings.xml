@@ -3335,4 +3335,5 @@
     <string name="domain_dkim_rotated_auto">DKIM 密钥已轮换。Aster Mail 已为你更新 DNS 记录。</string>
     <string name="domain_dkim_notice_title">将此项添加为新的 DNS 记录</string>
     <string name="domain_dkim_notice_body">你的邮件已使用新密钥签名。要通过 DKIM 检查，请在 DNS 服务商处添加此 TXT 记录。</string>
+    <string name="color_swatch_option">颜色 %1$d/%2$d</string>
 </resources>

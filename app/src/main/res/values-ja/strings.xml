@@ -3342,4 +3342,5 @@
     <string name="domain_dkim_rotated_auto">DKIM キーをローテーションしました。Aster Mail が DNS レコードを更新しました。</string>
     <string name="domain_dkim_notice_title">新しい DNS レコードとして追加してください</string>
     <string name="domain_dkim_notice_body">メールはすでに新しいキーで署名されています。DKIM チェックに合格するには、この TXT レコードを DNS プロバイダで追加してください。</string>
+    <string name="color_swatch_option">色 %1$d/%2$d</string>
 </resources>

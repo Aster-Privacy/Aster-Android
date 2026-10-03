@@ -98,6 +98,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
@@ -1165,12 +1166,12 @@ private fun operator_chip(op: SearchOperator, on_remove: () -> Unit) {
             modifier = Modifier
                 .size(22.dp)
                 .clip(CircleShape)
-                .clickable(onClick = on_remove),
+                .clickable(role = Role.Button, onClick = on_remove),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = TablerIcons.X,
-                contentDescription = null,
+                contentDescription = stringResource(R.string.remove),
                 tint = colors.accent_blue,
                 modifier = Modifier.size(14.dp),
             )

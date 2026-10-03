@@ -3949,6 +3949,14 @@ private fun swipeable_thread_row(
             user_prefs = user_prefs,
             cached_geometry = cached_geometry,
             refresh_engaged = refresh_engaged,
+            accessibility_actions = swipe_accessibility_actions(
+                start_action = swipe_start_action,
+                end_action = swipe_end_action,
+                start_label = swipe_start_label,
+                end_label = swipe_end_label,
+                on_swipe_start = on_swipe_start,
+                on_swipe_end = on_swipe_end,
+            ),
         )
     }
 }

@@ -3401,4 +3401,5 @@
     <string name="domain_dkim_rotated_auto">DKIM key rotated. Aster Mail updated the DNS record for you.</string>
     <string name="domain_dkim_notice_title">Add this as a new DNS record</string>
     <string name="domain_dkim_notice_body">Your mail is already signed with the new key. To pass DKIM checks, add this TXT record at your DNS provider.</string>
+    <string name="color_swatch_option">Color %1$d of %2$d</string>
 </resources>
