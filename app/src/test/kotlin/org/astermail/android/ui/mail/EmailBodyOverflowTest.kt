@@ -91,6 +91,45 @@ class EmailBodyOverflowTest {
         )
     }
 
+    private fun reset_email(label: String, font_size: String): String =
+        """<table class="email-body_inner" width="570" style="width:570px;margin:0 auto;"><tr><td style="font-size:20px;padding:10px;">""" +
+            """<table width="100%"><tr><td align="center">""" +
+            """<a href="https://accounts.example.com/reset" style="color:#ffffff;background-color:#1DCBEB;width:100%;padding:10px;display:inline-block;font-size:$font_size;">$label</a>""" +
+            """</td></tr></table></td></tr></table>"""
+
+    private fun buttons(document: String) =
+        org.jsoup.Jsoup.parse(document).select("a.aster-email-button")
+
+    @Test
+    fun a_button_label_too_wide_for_a_phone_may_wrap_between_words() {
+        val document = render(EmailHtmlSanitizer.sanitize(reset_email("RESET YOUR PASSWORD", "1.5em")))
+        val button = buttons(document).single()
+
+        assertTrue(button.outerHtml(), button.hasAttr(WRAP_BUTTON_LABEL_ATTRIBUTE))
+        assertEquals("RESET YOUR PASSWORD", button.text())
+        assertTrue(
+            style_block(document).contains("#m a.aster-email-button[$WRAP_BUTTON_LABEL_ATTRIBUTE]{white-space:normal!important}"),
+        )
+    }
+
+    @Test
+    fun a_button_label_that_fits_keeps_its_single_line() {
+        val inherited = render(EmailHtmlSanitizer.sanitize(reset_email("Reset password", "1em")))
+        val small = render(EmailHtmlSanitizer.sanitize(reset_email("Iniciar o inquérito", "13px")))
+        val short_in_a_row = render(
+            EmailHtmlSanitizer.sanitize(
+                """<table width="100%"><tr><td>Steam</td><td>15,60€</td><td>""" +
+                    """<a href="https://example.com/deal" style="display:inline-block;padding:12px 24px;font-size:14px;background-color:#279af1;color:#fff">Get deal</a>""" +
+                    """</td></tr></table>""",
+            ),
+        )
+
+        for (document in listOf(inherited, small, short_in_a_row)) {
+            val button = buttons(document).single()
+            assertFalse(button.outerHtml(), button.hasAttr(WRAP_BUTTON_LABEL_ATTRIBUTE))
+        }
+    }
+
     @Test
     fun a_reflowed_newsletter_keeps_the_device_width_viewport() {
         val document = render(newsletter)
