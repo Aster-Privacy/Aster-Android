@@ -38,6 +38,7 @@ object EmailHtmlSanitizer {
         val remove_tracking_pixels: Boolean = true,
         val block_remote_fonts: Boolean = true,
         val block_remote_css: Boolean = true,
+        val mark_tracking_pixels: Boolean = false,
     )
 
     private val safelist: Safelist by lazy { build_safelist() }
@@ -104,7 +105,7 @@ object EmailHtmlSanitizer {
         val dirty = Jsoup.parseBodyFragment(body_only, "https://mail-content.invalid/")
         val doc = Cleaner(safelist).clean(dirty).apply { outputSettings(raw_output_settings()) }
         scrub_attributes(doc, options.clean_tracking_links)
-        if (options.remove_tracking_pixels) remove_tracking_pixels(doc)
+        if (options.remove_tracking_pixels) remove_tracking_pixels(doc, options.mark_tracking_pixels)
         scrub_style_blocks(doc, options)
         autolink_bare_urls(doc, options.clean_tracking_links)
         mark_email_buttons(doc)
@@ -117,11 +118,16 @@ object EmailHtmlSanitizer {
         return sb.toString()
     }
 
-    private fun remove_tracking_pixels(doc: Document) {
+    private fun remove_tracking_pixels(doc: Document, keep_position: Boolean) {
         for (img in doc.select("img[src]")) {
             val lower = img.attr("src").trim().lowercase()
             if (!lower.startsWith("http://") && !lower.startsWith("https://")) continue
-            if (is_tracking_pixel(img)) img.remove()
+            if (!is_tracking_pixel(img)) continue
+            if (keep_position && !BlockedImagePlaceholder.is_hidden(img)) {
+                img.replaceWith(BlockedImagePlaceholder.tracking_slot())
+            } else {
+                img.remove()
+            }
         }
     }
 
@@ -244,6 +250,7 @@ object EmailHtmlSanitizer {
     internal fun replace_blocked_images(
         html: String,
         labels: BlockedImageLabels = BlockedImageLabels.ENGLISH,
+        mark_tracking_pixels: Boolean = false,
     ): String {
         if (html.isBlank()) return html
         val doc = Jsoup.parseBodyFragment(html).apply { outputSettings(raw_output_settings()) }
@@ -254,7 +261,19 @@ object EmailHtmlSanitizer {
                 img.removeAttr("sizes")
                 continue
             }
-            BlockedImagePlaceholder.prepare(img, src, is_tracking_pixel(img), labels)
+            val tracking = is_tracking_pixel(img)
+            BlockedImagePlaceholder.prepare(img, src, tracking, labels)
+            if (mark_tracking_pixels && tracking && !BlockedImagePlaceholder.is_hidden(img)) {
+                img.before(BlockedImagePlaceholder.tracking_marker(labels.tracking_pixel))
+                img.attr("aria-hidden", "true")
+            }
+        }
+        for (slot in doc.select(BlockedImagePlaceholder.TRACKING_SLOT_SELECTOR)) {
+            if (mark_tracking_pixels) {
+                slot.replaceWith(BlockedImagePlaceholder.tracking_marker(labels.tracking_pixel))
+            } else {
+                slot.remove()
+            }
         }
         for (element in doc.select("[srcset]")) {
             element.removeAttr("srcset")

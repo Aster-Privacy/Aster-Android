@@ -70,7 +70,57 @@ internal object BlockedImagePlaceholder {
 
     private val IMPORTANT = Regex("""\s*!\s*important\s*$""", RegexOption.IGNORE_CASE)
 
+    const val TRACKING_MARKER_ATTRIBUTE = "data-tracking-pixel-marker"
+
+    private const val TRACKING_SLOT_ATTRIBUTE = "data-tracking-pixel-slot"
+
+    const val TRACKING_SLOT_SELECTOR = "span[$TRACKING_SLOT_ATTRIBUTE]"
+
+    private const val TRACKING_MARKER_GLYPH = 11.0
+
+    private const val SHIELD_CHECK_PATH =
+        "M12.516 2.17a.75.75 0 0 0-1.032 0 11.209 11.209 0 0 1-7.877 3.08.75.75 0 0 0-.722.515A12.74 12.74 0 0 0 2.25 9.75c0 5.942 4.064 10.933 9.563 12.348a.749.749 0 0 0 .374 0c5.499-1.415 9.563-6.406 9.563-12.348 0-1.39-.223-2.73-.635-3.985a.75.75 0 0 0-.722-.516l-.143.001c-2.996 0-5.717-1.17-7.734-3.08Zm3.094 8.016a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z"
+
+    private val ZERO_LENGTH = Regex("""^0*\.?0+(?:px|pt|em|rem|%)?$""", RegexOption.IGNORE_CASE)
+
     private data class Size(val width: Double, val height: Double)
+
+    fun tracking_slot(): Element = Element("span").attr(TRACKING_SLOT_ATTRIBUTE, "true")
+
+    fun tracking_marker(label: String): Element = Element("span")
+        .attr(TRACKING_MARKER_ATTRIBUTE, "true")
+        .attr("role", "img")
+        .attr("aria-label", label)
+        .attr("title", label)
+
+    fun is_hidden(img: Element): Boolean {
+        if (is_zero(img.attr("width")) || is_zero(img.attr("height"))) return true
+        val style = style_declarations(img.attr("style"))
+        if (style["display"]?.lowercase() == "none") return true
+        if (style["visibility"]?.lowercase() in setOf("hidden", "collapse")) return true
+        if (style["opacity"]?.toDoubleOrNull()?.let { it <= 0.0 } == true) return true
+        return listOf("width", "height", "max-width", "max-height").any { is_zero(style[it]) }
+    }
+
+    private fun is_zero(value: String?): Boolean = ZERO_LENGTH.matches(value?.trim().orEmpty())
+
+    fun tracking_marker_css(dark: Boolean): String {
+        val fill = if (dark) "#10b981" else "#059669"
+        val outline = if (dark) "#0a0a0a" else "#ffffff"
+        val svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
+            "<path fill=\"$fill\" fill-rule=\"evenodd\" stroke=\"$outline\" stroke-width=\"2\" " +
+            "stroke-linejoin=\"round\" paint-order=\"stroke\" d=\"$SHIELD_CHECK_PATH\"/></svg>"
+        val glyph = format(TRACKING_MARKER_GLYPH)
+        val offset = format(TRACKING_MARKER_GLYPH / 2)
+        val marker = "span[$TRACKING_MARKER_ATTRIBUTE]"
+        return "$marker{position:relative!important;display:inline-block!important;width:0!important;height:0!important;" +
+            "margin:0!important;padding:0!important;border:0!important;overflow:visible!important;" +
+            "vertical-align:middle!important;line-height:0!important;font-size:0!important;background:none!important}" +
+            "$marker::before{content:''!important;position:absolute!important;left:0!important;top:-${offset}px!important;" +
+            "width:${glyph}px!important;height:${glyph}px!important;" +
+            "background:url(\"data:image/svg+xml,${percent_encode(svg)}\") center/${glyph}px ${glyph}px no-repeat!important}" +
+            "@media print{$marker{display:none!important}}"
+    }
 
     fun prepare(img: Element, original_src: String, tracking: Boolean, labels: BlockedImageLabels) {
         val size = placeholder_size(img, tracking)

@@ -45,7 +45,7 @@ private val MEDIA_TAGS = setOf("img", "video", "picture")
 
 private val BLANK_SPACER_TAGS = setOf("div", "p", "span")
 
-private const val SPACER_CONTENT = "img, hr, table, video, audio, iframe, object"
+private const val SPACER_CONTENT = "img, hr, table, video, audio, iframe, object, span[${BlockedImagePlaceholder.TRACKING_MARKER_ATTRIBUTE}]"
 
 private val QUICK_LINK_HINT = Regex("://|www\\.|@", RegexOption.IGNORE_CASE)
 
