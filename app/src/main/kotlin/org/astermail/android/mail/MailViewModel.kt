@@ -70,6 +70,7 @@ private const val BULK_ACTION_CONCURRENCY = 6
 private const val RESTORE_PROTECTION_MS = 15_000L
 private const val REMOVAL_PROTECTION_MS = 15_000L
 private const val STATS_TTL_MS = 30_000L
+private const val RESUME_FRESH_MS = 20_000L
 private const val STATS_DEBOUNCE_MS = 400L
 private const val STATS_DIRTY_MS = 1_200L
 private const val OVERRIDE_TTL_MS = 30_000L
@@ -165,7 +166,7 @@ class MailViewModel @Inject constructor(
         viewModelScope.launch { repository.backfill_sender_alias(hash_by_address) }
     }
 
-    private val _inbox_state = MutableStateFlow(InboxUiState(stats = cached_stats_for_account()))
+    private val _inbox_state = MutableStateFlow(InboxUiState(stats = cached_stats_for_account(), cache_pending = true))
     val inbox_state: StateFlow<InboxUiState> = _inbox_state.asStateFlow()
 
     private val _thread_state = MutableStateFlow(ThreadUiState())
@@ -1302,6 +1303,23 @@ class MailViewModel @Inject constructor(
                 .lifecycle.currentState
                 .isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
         }.getOrDefault(true)
+    }
+
+    @Volatile private var resume_stale = false
+
+    fun refresh_on_resume(folder: String) {
+        val current = _inbox_state.value
+        val loaded_at = folder_cache_time[folder]
+        val age = if (loaded_at == null) Long.MAX_VALUE else System.currentTimeMillis() - loaded_at
+        val fresh = !resume_stale &&
+            current.current_folder == folder &&
+            current.items.isNotEmpty() &&
+            current.error == null &&
+            age in 0..RESUME_FRESH_MS
+        resume_stale = false
+        load_stats(force = true)
+        if (fresh) return
+        load_inbox(folder, force = true)
     }
 
     fun foreground_fallback_tick() {
@@ -4962,6 +4980,8 @@ class MailViewModel @Inject constructor(
             repository.new_mail_events.collect {
                 if (foreground_check()) {
                     silent_revalidate(_inbox_state.value.current_folder)
+                } else {
+                    resume_stale = true
                 }
             }
         }
