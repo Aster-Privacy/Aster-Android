@@ -390,6 +390,8 @@ data class InboxItem(
     val is_decrypt_pending: Boolean = false,
 )
 
+class MetadataUndecryptableException : IllegalStateException("metadata cannot be decrypted on this device")
+
 data class AttachmentMeta(
     val filename: String,
     val content_type: String,
@@ -2418,6 +2420,40 @@ class MailRepository @Inject constructor(
         mail_api.patch_metadata(item_id, request)
         Unit
     }
+
+    suspend fun set_category(item_id: String, category: String, raw_item: MailItem? = null): Result<MailItem> =
+        runCatching {
+            val known = raw_item?.takeIf { !it.encrypted_metadata.isNullOrBlank() && !it.metadata_nonce.isNullOrBlank() }
+            val resolved = known ?: mail_api.get_message(item_id)
+            val enc_meta = resolved.encrypted_metadata
+            val meta_nonce = resolved.metadata_nonce
+            val decrypted = decrypt_blob_metadata(enc_meta, meta_nonce)
+            if (decrypted == null && !enc_meta.isNullOrBlank() && !meta_nonce.isNullOrBlank()) {
+                throw MetadataUndecryptableException()
+            }
+            val now = java.time.Instant.now().toString()
+            val base = decrypted?.let { merge_server_flags(it, resolved) } ?: default_metadata_for(resolved, now)
+            val updated = base.copy(category = category, category_pinned = true, updated_at = now)
+            val (encrypted, nonce) = encrypt_mail_metadata(updated)
+                ?: throw IllegalStateException("metadata key unavailable")
+            mail_api.patch_metadata(item_id, PatchMetadataRequest(encrypted_metadata = encrypted, metadata_nonce = nonce))
+            resolved.copy(encrypted_metadata = encrypted, metadata_nonce = nonce, metadata = updated)
+        }
+
+    private fun default_metadata_for(item: MailItem, now: String): MailItemMetadata = MailItemMetadata(
+        is_read = item.is_read ?: false,
+        is_starred = item.is_starred ?: false,
+        is_pinned = item.is_pinned ?: false,
+        is_trashed = item.is_trashed ?: false,
+        is_archived = item.is_archived ?: false,
+        is_spam = item.is_spam ?: false,
+        has_attachments = item.has_attachments ?: false,
+        attachment_count = item.attachment_count ?: 0,
+        message_ts = item.message_ts ?: now,
+        created_at = now,
+        updated_at = now,
+        item_type = item.item_type ?: "received",
+    )
 
     suspend fun snooze(item_id: String, snoozed_until_iso: String): Result<Unit> =
         run_or_queue(

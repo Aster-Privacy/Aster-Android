@@ -3352,5 +3352,8 @@
     <string name="domain_dkim_rotated_auto">DKIM anahtarı döndürüldü. Aster Mail DNS kaydını sizin için güncelledi.</string>
     <string name="domain_dkim_notice_title">Bunu yeni bir DNS kaydı olarak ekleyin</string>
     <string name="domain_dkim_notice_body">Postalarınız zaten yeni anahtarla imzalanıyor. DKIM denetimlerini geçmek için bu TXT kaydını DNS sağlayıcınıza ekleyin.</string>
+    <string name="move_to_category">Kategoriye taşı</string>
+    <string name="moved_to_category">Kategoriye taşındı</string>
+    <string name="metadata_undecryptable_change">Bu cihaz bu mesajın ayrıntılarını açamıyor, bu yüzden değişikliğiniz kaydedilmiyor. Anahtarlarınızı yeniden yüklemek için oturumu kapatıp yeniden açın. Sunucudaki mesajınız değişmeden duruyor.</string>
     <string name="color_swatch_option">Renk %1$d / %2$d</string>
 </resources>

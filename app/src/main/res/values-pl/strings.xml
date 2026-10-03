@@ -3390,5 +3390,8 @@
     <string name="domain_dkim_rotated_auto">Klucz DKIM obrócony. Aster Mail zaktualizował za Ciebie rekord DNS.</string>
     <string name="domain_dkim_notice_title">Dodaj to jako nowy rekord DNS</string>
     <string name="domain_dkim_notice_body">Twoja poczta jest już podpisywana nowym kluczem. Aby przejść weryfikację DKIM, dodaj ten rekord TXT u swojego dostawcy DNS.</string>
+    <string name="move_to_category">Przenieś do kategorii</string>
+    <string name="moved_to_category">Przeniesiono do kategorii</string>
+    <string name="metadata_undecryptable_change">To urządzenie nie może otworzyć szczegółów tej wiadomości, więc Twoja zmiana nie zostaje zapisana. Aby ponownie wczytać klucze, wyloguj się i zaloguj ponownie. Twoja wiadomość na serwerze pozostaje bez zmian.</string>
     <string name="color_swatch_option">Kolor %1$d z %2$d</string>
 </resources>

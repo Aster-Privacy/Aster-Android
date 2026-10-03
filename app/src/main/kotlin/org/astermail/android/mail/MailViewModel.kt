@@ -487,6 +487,7 @@ class MailViewModel @Inject constructor(
     private var account_generation = 0
     private val star_overrides = TimedOverrides(OVERRIDE_TTL_MS)
     private val pin_overrides = TimedOverrides(OVERRIDE_TTL_MS)
+    private val category_overrides = java.util.concurrent.ConcurrentHashMap<String, Pair<String, Long>>()
     private val tag_overrides = TimedOverrides(TAG_OVERRIDE_TTL_MS)
     internal var override_clock_ms: () -> Long = { System.currentTimeMillis() }
     private val read_overrides = TimedOverrides(READ_OVERRIDE_TTL_MS) { override_clock_ms() }
@@ -631,7 +632,7 @@ class MailViewModel @Inject constructor(
         items.forEach { item_last_confirmed.putIfAbsent(it.id, warmed_at) }
         _inbox_state.value = state.copy(
             items = apply_demo_overlay(
-                apply_tag_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(items)))),
+                apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(items))))),
                 folder,
             ),
             initial = false,
@@ -740,6 +741,7 @@ class MailViewModel @Inject constructor(
         stats_owner_account = null
         star_overrides.clear()
         pin_overrides.clear()
+        category_overrides.clear()
         tag_overrides.clear()
         read_overrides.clear()
         read_flips.clear()
@@ -1136,8 +1138,10 @@ class MailViewModel @Inject constructor(
             val warm = cached.copy(
                 items = apply_demo_overlay(
                     apply_tag_overrides(
-                        apply_pin_overrides(
-                            apply_star_overrides(apply_read_overrides(strip_removed(cached.items, folder))),
+                        apply_category_overrides(
+                            apply_pin_overrides(
+                                apply_star_overrides(apply_read_overrides(strip_removed(cached.items, folder))),
+                            ),
                         ),
                     ),
                     folder,
@@ -1176,7 +1180,7 @@ class MailViewModel @Inject constructor(
                 emptyList()
             } else {
                 apply_demo_overlay(
-                    apply_tag_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(seeded)))),
+                    apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(seeded))))),
                     folder,
                 )
             },
@@ -1210,7 +1214,7 @@ class MailViewModel @Inject constructor(
                             val warmed_at = System.currentTimeMillis()
                             items.forEach { item_last_confirmed.putIfAbsent(it.id, warmed_at) }
                             _inbox_state.value = _inbox_state.value.copy(
-                                items = apply_demo_overlay(apply_tag_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(items)))), folder),
+                                items = apply_demo_overlay(apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(items))))), folder),
                                 initial = false,
                                 cache_pending = false,
                             )
@@ -1251,7 +1255,7 @@ class MailViewModel @Inject constructor(
                     val prior = _inbox_state.value
                     val merge = merge_with_previous(page, previous_for_merge(prior.items), folder)
                     val merged_items = apply_demo_overlay(
-                        apply_tag_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items)))),
+                        apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items))))),
                         folder,
                     )
                     _inbox_state.value = prior.copy(
@@ -1340,7 +1344,7 @@ class MailViewModel @Inject constructor(
                 val prior = _inbox_state.value
                 val merge = merge_with_previous(page, previous_for_merge(prior.items), folder)
                 val merged_items = apply_demo_overlay(
-                    apply_tag_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items)))),
+                    apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items))))),
                     folder,
                 )
                 _inbox_state.value = prior.copy(
@@ -1455,8 +1459,10 @@ class MailViewModel @Inject constructor(
                     continue
                 }
                 val combined = apply_tag_overrides(
-                    apply_pin_overrides(
-                        apply_star_overrides(apply_read_overrides(existing + new_items)),
+                    apply_category_overrides(
+                        apply_pin_overrides(
+                            apply_star_overrides(apply_read_overrides(existing + new_items)),
+                        ),
                     ),
                 )
                 val effective_has_more = page.has_more && cursor_advanced
@@ -2665,6 +2671,76 @@ class MailViewModel @Inject constructor(
                     }
                     apply_pinned(was_pinned)
                     emit_toast(context.getString(if (new_pinned) R.string.pin_failed else R.string.unpin_failed))
+                },
+            )
+        }
+    }
+
+    private fun apply_category_overrides(items: List<InboxItem>): List<InboxItem> {
+        if (category_overrides.isEmpty()) return items
+        val now = override_clock_ms()
+        return items.map { item ->
+            val (category, at) = category_overrides[item.id] ?: return@map item
+            if (now - at >= OVERRIDE_TTL_MS) {
+                category_overrides.remove(item.id)
+                return@map item
+            }
+            if (item.category == category) item else with_category(item, category)
+        }
+    }
+
+    fun move_to_category(item_id: String, category: String) {
+        if (item_id == DEMO_PHISH_ITEM_ID) return
+        val current = _inbox_state.value.items.find { it.id == item_id }
+            ?: _thread_state.value.item?.takeIf { it.id == item_id }
+            ?: folder_cache.values.firstNotNullOfOrNull { cached ->
+                cached.items.find { it.id == item_id }
+            }
+            ?: return
+        if (current.category == category) return
+        val previous_override = category_overrides[item_id]
+        val replace_item: ((InboxItem) -> InboxItem) -> Unit = { transform ->
+            _inbox_state.update { state ->
+                state.copy(items = state.items.map { if (it.id == item_id) transform(it) else it })
+            }
+            _thread_state.update { thread ->
+                val item = thread.item
+                if (item?.id == item_id) thread.copy(item = transform(item)) else thread
+            }
+            folder_cache.keys.toList().forEach { key ->
+                val cached = folder_cache[key] ?: return@forEach
+                if (cached.items.any { it.id == item_id }) {
+                    folder_cache[key] = cached.copy(items = cached.items.map { if (it.id == item_id) transform(it) else it })
+                }
+            }
+        }
+        category_overrides[item_id] = category to override_clock_ms()
+        replace_item { with_category(it, category) }
+        viewModelScope.launch {
+            repository.set_category(item_id, category, current.raw_item).fold(
+                onSuccess = { written ->
+                    replace_item { with_category(it, category, written) }
+                    search_index_manager.on_items_loaded(listOf(with_category(current, category, written)))
+                    emit_toast(context.getString(R.string.moved_to_category))
+                },
+                onFailure = { failure ->
+                    if (previous_override != null) {
+                        category_overrides[item_id] = previous_override
+                    } else {
+                        category_overrides.remove(item_id)
+                    }
+                    replace_item { restore_category(it, current) }
+                    emit_toast(
+                        if (failure is MetadataUndecryptableException) {
+                            context.getString(R.string.metadata_undecryptable_change)
+                        } else {
+                            org.astermail.android.localized_api_error(
+                                context,
+                                failure,
+                                context.getString(R.string.something_went_wrong),
+                            )
+                        },
+                    )
                 },
             )
         }
@@ -4719,7 +4795,7 @@ class MailViewModel @Inject constructor(
                     val prior = _inbox_state.value
                     val merge = merge_with_previous(page, previous_for_merge(prior.items), folder)
                     val merged_items = apply_demo_overlay(
-                        apply_tag_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items)))),
+                        apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items))))),
                         folder,
                     )
                     _inbox_state.value = prior.copy(
@@ -5225,6 +5301,32 @@ class MailViewModel @Inject constructor(
             else -> repository.fetch_inbox(limit = limit, item_type = null, label_token = folder, offset = cursor?.toIntOrNull(), order = list_order)
         }
     }
+}
+
+internal fun with_category(
+    item: InboxItem,
+    category: String,
+    raw: org.astermail.android.api.mail.MailItem = item.raw_item,
+): InboxItem {
+    val meta = (raw.metadata ?: org.astermail.android.api.mail.MailItemMetadata())
+        .copy(category = category, category_pinned = true)
+    return item.copy(category = category, raw_item = raw.copy(metadata = meta))
+}
+
+internal fun restore_category(item: InboxItem, before: InboxItem): InboxItem {
+    val before_meta = before.raw_item.metadata
+    val meta = item.raw_item.metadata?.copy(
+        category = before_meta?.category,
+        category_pinned = before_meta?.category_pinned ?: false,
+    )
+    return item.copy(
+        category = before.category,
+        raw_item = item.raw_item.copy(
+            metadata = meta,
+            encrypted_metadata = before.raw_item.encrypted_metadata,
+            metadata_nonce = before.raw_item.metadata_nonce,
+        ),
+    )
 }
 
 fun org.astermail.android.storage.search.DecryptedMailEntity.to_inbox_item(): InboxItem = InboxItem(

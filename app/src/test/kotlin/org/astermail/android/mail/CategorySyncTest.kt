@@ -242,4 +242,60 @@ class CategorySyncTest {
         assertNull(request.encrypted_metadata)
         assertNull(request.metadata_nonce)
     }
+
+    @Test
+    fun `moving to a category pins it inside the existing encrypted metadata`() = runTest {
+        val captured = capture_patch()
+        val (encrypted, nonce) = seal_like_web(moved_to_travel_on_web.replace("\"travel\"", "\"promotions\"").replace("\"category_pinned\":true", "\"category_pinned\":false"))
+        val listed = server_item(with_server_metadata = false).copy(encrypted_metadata = encrypted, metadata_nonce = nonce)
+
+        val written = repo.set_category("deal-1", "finance", listed).getOrThrow()
+
+        val request = captured.captured
+        assertNull(request.is_read)
+        assertNull(request.is_starred)
+        assertNull(request.is_pinned)
+        val blob = open_blob(request.encrypted_metadata!!, request.metadata_nonce!!)
+        assertEquals("finance", blob.category)
+        assertTrue(blob.category_pinned)
+        assertEquals(4096L, blob.size_bytes)
+        assertEquals("2026-09-30T08:00:00.000Z", blob.created_at)
+        assertEquals(request.encrypted_metadata, written.encrypted_metadata)
+        assertEquals("finance", written.metadata?.category)
+    }
+
+    @Test
+    fun `moving a cached row reads the current metadata from the server first`() = runTest {
+        val captured = capture_patch()
+        coEvery { mail_api.get_message("deal-1") } returns server_item(with_server_metadata = false)
+
+        repo.set_category("deal-1", "shopping", MailItem(id = "deal-1", item_type = "received")).getOrThrow()
+
+        val blob = open_blob(captured.captured.encrypted_metadata!!, captured.captured.metadata_nonce!!)
+        assertEquals("shopping", blob.category)
+        assertTrue(blob.category_pinned)
+        assertEquals(4096L, blob.size_bytes)
+    }
+
+    @Test
+    fun `moving a cached row changes nothing when the server copy cannot be read`() = runTest {
+        coEvery { mail_api.get_message("deal-1") } throws java.io.IOException("offline")
+
+        val result = repo.set_category("deal-1", "shopping", MailItem(id = "deal-1", item_type = "received"))
+
+        assertTrue(result.isFailure)
+        io.mockk.coVerify(exactly = 0) { mail_api.patch_metadata(any(), any()) }
+    }
+
+    @Test
+    fun `moving a message whose metadata this device cannot open changes nothing`() = runTest {
+        val unreadable = server_item(with_server_metadata = false).copy(
+            encrypted_metadata = java.util.Base64.getEncoder().encodeToString(ByteArray(48) { 7 }),
+        )
+
+        val result = repo.set_category("deal-1", "travel", unreadable)
+
+        assertTrue(result.exceptionOrNull() is MetadataUndecryptableException)
+        io.mockk.coVerify(exactly = 0) { mail_api.patch_metadata(any(), any()) }
+    }
 }

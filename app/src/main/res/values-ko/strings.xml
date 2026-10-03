@@ -3335,5 +3335,8 @@
     <string name="domain_dkim_rotated_auto">DKIM 키를 교체했습니다. Aster Mail이 DNS 레코드를 업데이트했습니다.</string>
     <string name="domain_dkim_notice_title">새 DNS 레코드로 추가하세요</string>
     <string name="domain_dkim_notice_body">메일은 이미 새 키로 서명되고 있습니다. DKIM 검사를 통과하려면 DNS 제공업체에서 이 TXT 레코드를 추가하세요.</string>
+    <string name="move_to_category">카테고리로 이동</string>
+    <string name="moved_to_category">카테고리로 이동됨</string>
+    <string name="metadata_undecryptable_change">이 기기에서는 이 메시지의 세부 정보를 열 수 없어 변경사항이 저장되지 않습니다. 키를 다시 불러오려면 로그아웃한 다음 다시 로그인하세요. 서버의 메시지는 그대로입니다.</string>
     <string name="color_swatch_option">색상 %1$d/%2$d</string>
 </resources>
