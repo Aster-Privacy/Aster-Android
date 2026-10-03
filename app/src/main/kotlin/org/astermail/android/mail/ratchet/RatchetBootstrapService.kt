@@ -450,6 +450,7 @@ class RatchetBootstrapService @Inject constructor(
         vault_json.put("ratchet_identity_key", identity_jwk)
         vault_json.put("ratchet_signed_prekey", spk_jwk)
         vault_json.put("ratchet_signed_prekey_public", spk_pub)
+        vault_json.put("ratchet_regen_v4_done", true)
         runCatching { RatchetCrypto.p256_public_raw_from_private_jwk(identity_jwk) }
             .getOrNull()
             ?.let { vault_json.put("ratchet_identity_public", base64_encode(it)) }
