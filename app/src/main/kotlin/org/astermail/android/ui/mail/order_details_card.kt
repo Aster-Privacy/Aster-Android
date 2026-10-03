@@ -95,6 +95,7 @@ internal class order_card_model(
 
 private const val logo_sample_grid = 24
 private const val logo_min_ink_fraction = 0.04f
+private const val logo_opaque_fraction = 0.9f
 
 internal fun merchant_matches_sender_domain(merchant: String, sender_email: String): Boolean {
     val domain = sender_email.substringAfter('@', "").trim().lowercase(Locale.ROOT)
@@ -107,6 +108,8 @@ internal fun merchant_matches_sender_domain(merchant: String, sender_email: Stri
 
 internal fun is_blank_logo_pixels(pixels: IntArray): Boolean {
     if (pixels.isEmpty()) return true
+    val visible = pixels.count { ((it ushr 24) and 0xFF) >= 40 }
+    val transparent_backdrop = visible.toFloat() / pixels.size < logo_opaque_fraction
     var ink = 0
     for (pixel in pixels) {
         val alpha = (pixel ushr 24) and 0xFF
@@ -114,7 +117,7 @@ internal fun is_blank_logo_pixels(pixels: IntArray): Boolean {
         val red = (pixel shr 16) and 0xFF
         val green = (pixel shr 8) and 0xFF
         val blue = pixel and 0xFF
-        if (red > 235 && green > 235 && blue > 235) continue
+        if (!transparent_backdrop && red > 235 && green > 235 && blue > 235) continue
         ink += 1
     }
     return ink.toFloat() / pixels.size < logo_min_ink_fraction
@@ -155,11 +158,15 @@ private fun merchant_avatar(
         }
     }
     var logo_ok by remember(logo_url) { mutableStateOf(false) }
+    var logo_drawable by remember(logo_url) { mutableStateOf<android.graphics.drawable.Drawable?>(null) }
+    val logo_tone = remember_logo_tone(logo_url, logo_drawable)
+    val is_dark = AsterMaterial.colors.is_dark
+    val logo_inset = if (logo_ok && logo_contrast_backdrop(logo_tone, is_dark) != null) size * logo_backdrop_inset else 0.dp
     Box(
         modifier = Modifier
             .size(size)
             .clip(CircleShape)
-            .background(if (logo_ok) Color.White else bg),
+            .background(if (logo_ok) sender_logo_backdrop(logo_tone, is_dark) else bg),
         contentAlignment = Alignment.Center,
     ) {
         if (!logo_ok) {
@@ -184,9 +191,11 @@ private fun merchant_avatar(
                 onState = { state ->
                     logo_ok = state is AsyncImagePainter.State.Success &&
                         !is_blank_logo(state.result.drawable)
+                    if (state is AsyncImagePainter.State.Success) logo_drawable = state.result.drawable
                 },
                 modifier = Modifier
                     .size(size)
+                    .padding(logo_inset)
                     .clip(CircleShape)
                     .graphicsLayer { alpha = if (logo_ok) 1f else 0f },
             )
