@@ -352,7 +352,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                                 visualTransformation = if (show_passphrase) VisualTransformation.None else PasswordVisualTransformation(),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                                 keyboardActions = KeyboardActions(onDone = { if (input.isNotEmpty()) attempt_verify(input) }),
-                                modifier = Modifier.fillMaxWidth().padding(end = 28.dp),
+                                modifier = Modifier.fillMaxWidth().padding(end = 34.dp),
                             )
                             if (input.isEmpty()) {
                                 Text(
