@@ -114,3 +114,50 @@ fun descendant_tokens(labels: List<LabelItem>, token: String): Set<String> {
     }
     return result
 }
+
+class folder_tree_index(labels: List<LabelItem>) {
+    private val folders = labels.filter { is_custom_folder(it) }
+    private val tokens = folders.map { it.label_token }.toSet()
+    private val first_by_id = HashMap<String, LabelItem>().also { map ->
+        for (folder in folders) map.putIfAbsent(folder.id, folder)
+    }
+    private val by_token = folders.associateBy { it.label_token }
+    private val sibling_groups = folders
+        .groupBy { effective_parent(it) }
+        .mapValues { (_, group) -> group.sortedWith(sibling_comparator) }
+    private val children_by_parent = folders.groupBy { it.parent_token }
+
+    private fun effective_parent(label: LabelItem): String? = label.parent_token
+        ?.takeIf { it.isNotBlank() && it in tokens && it != label.label_token }
+
+    fun sibling_group(label_id: String): List<LabelItem> {
+        val target = first_by_id[label_id] ?: return emptyList()
+        return sibling_groups[effective_parent(target)].orEmpty()
+    }
+
+    fun path(token: String): List<String> {
+        val path = mutableListOf<String>()
+        val seen = mutableSetOf<String>()
+        var current = by_token[token]
+        while (current != null && seen.add(current.label_token)) {
+            path.add(current.encrypted_name.orEmpty())
+            current = current.parent_token
+                ?.takeIf { it.isNotBlank() }
+                ?.let { by_token[it] }
+        }
+        return path.reversed()
+    }
+
+    fun descendant_tokens(token: String): Set<String> {
+        val result = mutableSetOf<String>()
+        val queue = ArrayDeque<String>()
+        queue.add(token)
+        while (queue.isNotEmpty()) {
+            val next = queue.removeFirst()
+            for (folder in children_by_parent[next].orEmpty()) {
+                if (result.add(folder.label_token)) queue.add(folder.label_token)
+            }
+        }
+        return result
+    }
+}

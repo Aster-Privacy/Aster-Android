@@ -1949,14 +1949,28 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         ?: accounts_state.accounts.firstOrNull()?.email
         ?: ""
 
-    val folder_nodes = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
+    val folder_nodes = remember(settings_state.labels) {
+        org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
+    }
+    val folder_index = remember(settings_state.labels) {
+        org.astermail.android.folders.folder_tree_index(settings_state.labels)
+    }
 
     val muted_folder_tokens = settings_state.preferences?.muted_folder_tokens.orEmpty()
 
-    val api_folders = folder_nodes.map { node ->
+    val lock_revision by org.astermail.android.folders.folder_lock_store.revision.collectAsState()
+
+    val api_folders = remember(
+        folder_nodes,
+        folder_index,
+        label_unread_deltas,
+        muted_folder_tokens,
+        lock_revision,
+        drawer_context,
+    ) { folder_nodes.map { node ->
         val label = node.label
         val readable_name = label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
-        val siblings = org.astermail.android.folders.folder_sibling_group(settings_state.labels, label.id)
+        val siblings = folder_index.sibling_group(label.id)
         val sibling_index = siblings.indexOfFirst { it.id == label.id }
         drawer_folder_item(
             id = label.label_token,
@@ -1979,14 +1993,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             can_move_down = sibling_index >= 0 && sibling_index < siblings.lastIndex,
             can_have_children = node.depth < org.astermail.android.folders.max_folder_depth,
             parent_token = label.parent_token?.takeIf { it.isNotBlank() },
-            blocked_parent_tokens = org.astermail.android.folders.descendant_tokens(
-                settings_state.labels,
-                label.label_token,
-            ),
+            blocked_parent_tokens = folder_index.descendant_tokens(label.label_token),
         )
-    }
+    } }
 
-    val folder_parent_options = folder_nodes
+    val folder_parent_options = remember(folder_nodes, folder_index) { folder_nodes
         .filter { it.depth < org.astermail.android.folders.max_folder_depth }
         .mapNotNull { node ->
             val label = node.label
@@ -1996,14 +2007,14 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 token = label.label_token,
                 label = readable_name,
                 depth = node.depth,
-                path_label = org.astermail.android.folders.folder_path(settings_state.labels, label.label_token)
+                path_label = folder_index.path(label.label_token)
                     .filter { it.isNotBlank() && !looks_encrypted(it) }
                     .joinToString(" · "),
                 color = label.encrypted_color?.takeIf { it.startsWith("#") },
             )
-        }
+        } }
 
-    val quick_custom_folders = folder_nodes
+    val quick_custom_folders = remember(folder_nodes) { folder_nodes
         .mapNotNull { node ->
             val readable_name = node.label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
                 ?: return@mapNotNull null
@@ -2015,7 +2026,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 parent_id = node.label.parent_token?.takeIf { it.isNotBlank() },
                 color = node.label.encrypted_color?.takeIf { it.startsWith("#") },
             )
-        }
+        } }
 
     val quick_folder_counts = buildMap {
         put("inbox", stats?.unread ?: 0)
@@ -2041,7 +2052,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         Color(0xFF6366F1),
     )
 
-    val api_labels = run {
+    val api_labels = remember(settings_state.tags, settings_state.labels) {
         val visible_tags = org.astermail.android.labels.tag_rows(settings_state.tags)
         val from_tags = visible_tags
             .mapIndexed { idx, tag ->
@@ -2082,7 +2093,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         from_tags + from_labels
     }
 
-    val api_aliases = settings_state.aliases
+    val api_aliases = remember(settings_state.aliases, settings_state.custom_domain_addresses) { settings_state.aliases
         .filter { it.is_enabled && !looks_encrypted(it.encrypted_local_part) }
         .map { alias ->
             drawer_alias_item(
@@ -2097,9 +2108,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 id = addr.id,
                 address = addr.address,
             )
-        }
-
-    val lock_revision by org.astermail.android.folders.folder_lock_store.revision.collectAsState()
+        } }
 
     var pending_unlock_folder by remember { mutableStateOf<Pair<String, String>?>(null) }
     var unlock_verifying by remember { mutableStateOf(false) }
