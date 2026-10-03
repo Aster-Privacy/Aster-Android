@@ -60,6 +60,8 @@ object folder_lock_store {
     private var active_folder_token: String = ""
     private var lock_mode: String = folder_lock_mode_session
 
+    internal var now_ms: () -> Long = System::currentTimeMillis
+
     private val _revision = MutableStateFlow(0)
     val revision: StateFlow<Int> = _revision.asStateFlow()
 
@@ -89,7 +91,7 @@ object folder_lock_store {
     @Synchronized
     private fun session_for(folder_id: String): folder_unlock_session? {
         val session = unlocked[folder_id] ?: return null
-        val now = System.currentTimeMillis()
+        val now = now_ms()
         val idle_expired = now - session.last_used_ms > folder_unlock_timeout_ms
         val absolute_expired = session.expires_at_ms != null && now >= session.expires_at_ms
         if (idle_expired || absolute_expired) {
@@ -101,11 +103,27 @@ object folder_lock_store {
     }
 
     @Synchronized
-    fun is_unlocked(folder_id: String): Boolean {
-        val session = session_for(folder_id) ?: return false
-        unlocked[folder_id] = session.copy(last_used_ms = System.currentTimeMillis())
-        return true
+    fun is_unlocked(folder_id: String): Boolean = session_for(folder_id) != null
+
+    @Synchronized
+    private fun note_folder_used(folder_id: String): folder_unlock_session? {
+        val session = session_for(folder_id) ?: return null
+        val used = session.copy(last_used_ms = now_ms())
+        unlocked[folder_id] = used
+        return used
     }
+
+    @Synchronized
+    private fun is_active_folder(folder_id: String): Boolean =
+        active_folder_token.isNotBlank() && folder_token_by_id[folder_id] == active_folder_token
+
+    @Synchronized
+    private fun unlock_token_for_request(folder_id: String): String? =
+        if (is_active_folder(folder_id)) {
+            note_folder_used(folder_id)?.unlock_token
+        } else {
+            session_for(folder_id)?.unlock_token
+        }
 
     @Synchronized
     fun mark_unlocked(folder_id: String) {
@@ -120,7 +138,7 @@ object folder_lock_store {
         encrypted_folder_key: String? = null,
         folder_key_nonce: String? = null,
     ) {
-        val now = System.currentTimeMillis()
+        val now = now_ms()
         unlocked[folder_id] = folder_unlock_session(
             unlock_token = unlock_token,
             unlocked_at_ms = now,
@@ -193,6 +211,7 @@ object folder_lock_store {
         if (active_folder_token == token) return
         val previous = active_folder_token
         active_folder_token = token
+        folder_id_by_token[token]?.let { note_folder_used(it) }
         if (lock_mode == folder_lock_mode_on_leave && previous.isNotBlank() && previous != token) {
             val folder_id = folder_id_by_token[previous]
             if (folder_id != null && folder_id in protected_folder_ids) {
@@ -258,7 +277,7 @@ object folder_lock_store {
     fun resolve_unlock_header(request: folder_unlock_request): String? {
         if (unlocked.isEmpty()) return null
         label_id_from_path(request.path)?.let { label_id ->
-            return unlock_token_for_id(label_id)
+            return unlock_token_for_request(label_id)
         }
         for (key in folder_scoped_parameters) {
             val value = request.parameters[key]?.firstOrNull()
@@ -296,7 +315,7 @@ object folder_lock_store {
     @Synchronized
     private fun token_for_label_token(label_token: String): String? {
         val folder_id = folder_id_by_token[label_token] ?: return null
-        return unlock_token_for_id(folder_id)
+        return unlock_token_for_request(folder_id)
     }
 
     @Synchronized
