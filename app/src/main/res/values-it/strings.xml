@@ -3374,4 +3374,5 @@
     <string name="move_to_category">Sposta nella categoria</string>
     <string name="moved_to_category">Spostato nella categoria</string>
     <string name="metadata_undecryptable_change">Questo dispositivo non riesce ad aprire i dettagli di questo messaggio, quindi la sua modifica non viene salvata. Per ricaricare le sue chiavi, si disconnetta e acceda di nuovo. Il suo messaggio sul server resta invariato.</string>
+    <string name="color_swatch_option">Colore %1$d di %2$d</string>
 </resources>

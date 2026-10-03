@@ -3345,4 +3345,5 @@
     <string name="move_to_category">カテゴリに移動</string>
     <string name="moved_to_category">カテゴリに移動しました</string>
     <string name="metadata_undecryptable_change">このデバイスではこのメッセージの詳細を開けないため、変更は保存されません。鍵を再読み込みするには、サインアウトして再度サインインしてください。サーバー上のメッセージは変わりません。</string>
+    <string name="color_swatch_option">色 %1$d/%2$d</string>
 </resources>

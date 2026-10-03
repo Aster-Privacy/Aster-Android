@@ -27,6 +27,8 @@ import androidx.compose.foundation.indication
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -458,6 +460,7 @@ fun ThreadInboxRow(
     user_prefs: UserPreferences? = null,
     cached_geometry: SkeletonGeometry? = null,
     refresh_engaged: () -> Boolean = { false },
+    accessibility_actions: List<CustomAccessibilityAction> = emptyList(),
 ) {
     val email = thread.newest
     val colors = AsterMaterial.colors
@@ -523,7 +526,10 @@ fun ThreadInboxRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .semantics { stateDescription = read_state_label }
+            .semantics {
+                stateDescription = read_state_label
+                if (accessibility_actions.isNotEmpty()) customActions = accessibility_actions
+            }
             .then(
                 if (select_mode) {
                     Modifier

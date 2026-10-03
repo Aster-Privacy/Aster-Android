@@ -3375,4 +3375,5 @@
     <string name="move_to_category">Mover a la categoría</string>
     <string name="moved_to_category">Movido a la categoría</string>
     <string name="metadata_undecryptable_change">Este dispositivo no puede abrir los detalles de este mensaje, por lo que tu cambio no se guarda. Para recargar tus claves, cierra sesión y vuelve a iniciarla. Tu mensaje en el servidor sigue igual.</string>
+    <string name="color_swatch_option">Color %1$d de %2$d</string>
 </resources>

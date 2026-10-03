@@ -3401,4 +3401,5 @@
     <string name="move_to_category">Déplacer vers la catégorie</string>
     <string name="moved_to_category">Déplacé vers la catégorie</string>
     <string name="metadata_undecryptable_change">Cet appareil ne peut pas ouvrir les détails de ce message, donc votre modification n\'est pas enregistrée. Pour recharger vos clés, déconnectez-vous puis reconnectez-vous. Votre message sur le serveur reste inchangé.</string>
+    <string name="color_swatch_option">Couleur %1$d sur %2$d</string>
 </resources>

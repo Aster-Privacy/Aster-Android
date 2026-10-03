@@ -34,6 +34,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -78,6 +79,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -1311,8 +1313,9 @@ private fun new_group_dialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    group_colors.forEach { hex ->
+                    group_colors.forEachIndexed { index, hex ->
                         val is_selected = hex.equals(color, ignoreCase = true)
+                        val swatch_label = stringResource(R.string.color_swatch_option, index + 1, group_colors.size)
                         Box(
                             modifier = Modifier
                                 .size(28.dp)
@@ -1324,7 +1327,8 @@ private fun new_group_dialog(
                                     else
                                         Modifier.border(1.dp, colors.border_secondary, CircleShape)
                                 )
-                                .clickable { color = hex },
+                                .selectable(selected = is_selected, role = Role.RadioButton) { color = hex }
+                                .semantics { contentDescription = swatch_label },
                             contentAlignment = Alignment.Center,
                         ) {
                             if (is_selected) {

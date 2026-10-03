@@ -3431,4 +3431,5 @@
     <string name="move_to_category">النقل إلى فئة</string>
     <string name="moved_to_category">تم النقل إلى الفئة</string>
     <string name="metadata_undecryptable_change">لا يستطيع هذا الجهاز فتح تفاصيل هذه الرسالة، لذا لم يُحفظ تغييرك. لإعادة تحميل مفاتيحك، سجّل الخروج ثم الدخول مجددًا. رسالتك على الخادم لم تتغير.</string>
+    <string name="color_swatch_option">اللون %1$d من %2$d</string>
 </resources>

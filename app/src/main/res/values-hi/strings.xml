@@ -3245,4 +3245,5 @@
     <string name="move_to_category">श्रेणी में ले जाएं</string>
     <string name="moved_to_category">श्रेणी में ले जाया गया</string>
     <string name="metadata_undecryptable_change">यह डिवाइस इस संदेश का विवरण नहीं खोल सकता, इसलिए आपका बदलाव सहेजा नहीं गया। अपनी कुंजियां दोबारा लोड करने के लिए, साइन आउट करके फिर से साइन इन करें। सर्वर पर आपका संदेश जस का तस है।</string>
+    <string name="color_swatch_option">रंग %1$d / %2$d</string>
 </resources>

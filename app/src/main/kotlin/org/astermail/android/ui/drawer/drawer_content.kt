@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.draw.clip
@@ -111,6 +112,9 @@ import org.astermail.android.ui.mail.avatar_initial_style
 import org.astermail.android.ui.mail.initial_for
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.focus.focusRequester
 import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
@@ -1394,9 +1398,10 @@ private fun folder_color_dialog(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                label_color_presets.forEach { hex ->
+                label_color_presets.forEachIndexed { index, hex ->
                     val swatch = parse_hex_color(hex)
                     val is_selected = hex.equals(selected_color, ignoreCase = true)
+                    val swatch_label = stringResource(R.string.color_swatch_option, index + 1, label_color_presets.size)
                     Box(
                         modifier = Modifier
                             .size(28.dp)
@@ -1409,7 +1414,8 @@ private fun folder_color_dialog(
                                     Modifier.border(1.dp, colors.border_secondary, CircleShape)
                                 }
                             )
-                            .clickable { selected_color = hex }
+                            .selectable(selected = is_selected, role = Role.RadioButton) { selected_color = hex }
+                            .semantics { contentDescription = swatch_label }
                             .testTag("folder_color_swatch_$hex"),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -1867,9 +1873,10 @@ internal fun create_label_dialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    label_color_presets.forEach { hex ->
+                    label_color_presets.forEachIndexed { index, hex ->
                         val swatch = parse_hex_color(hex)
                         val is_selected = hex.equals(selected_color, ignoreCase = true)
+                        val swatch_label = stringResource(R.string.color_swatch_option, index + 1, label_color_presets.size)
                         Box(
                             modifier = Modifier
                                 .size(28.dp)
@@ -1881,7 +1888,8 @@ internal fun create_label_dialog(
                                     else
                                         Modifier.border(1.dp, colors.border_secondary, CircleShape)
                                 )
-                                .clickable { selected_color = hex },
+                                .selectable(selected = is_selected, role = Role.RadioButton) { selected_color = hex }
+                                .semantics { contentDescription = swatch_label },
                             contentAlignment = Alignment.Center,
                         ) {
                             if (is_selected) {

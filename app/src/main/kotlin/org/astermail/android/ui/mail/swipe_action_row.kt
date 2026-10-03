@@ -29,7 +29,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -42,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,6 +55,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -103,6 +105,18 @@ fun is_removing_swipe_action(action: String): Boolean = action in setOf(
     "archive", "trash", "delete", "spam", "move_to_inbox", "unarchive",
     "restore_trash", "unmark_spam", "delete_permanent",
 )
+
+fun swipe_accessibility_actions(
+    start_action: String,
+    end_action: String,
+    start_label: String,
+    end_label: String,
+    on_swipe_start: () -> Unit,
+    on_swipe_end: () -> Unit,
+): List<CustomAccessibilityAction> = buildList {
+    if (start_action != "none") add(CustomAccessibilityAction(start_label) { on_swipe_start(); true })
+    if (end_action != "none") add(CustomAccessibilityAction(end_label) { on_swipe_end(); true })
+}
 
 fun swipe_tone(color: Color, colors: AsterSemanticColors): Color {
     val target = if (colors.is_dark) 0.30f else 0.46f
@@ -240,7 +254,7 @@ fun swipe_action_row(
                     .let { if (background_shape != null) it.clip(background_shape) else it }
                     .background(surface)
                     .padding(horizontal = AsterSpacing.xl),
-                contentAlignment = if (towards_start) Alignment.CenterStart else Alignment.CenterEnd,
+                contentAlignment = if (towards_start) AbsoluteAlignment.CenterLeft else AbsoluteAlignment.CenterRight,
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -259,7 +273,7 @@ fun swipe_action_row(
                 }
             }
         }
-        Box(modifier = Modifier.offset { IntOffset(offset_x.value.roundToInt(), 0) }) {
+        Box(modifier = Modifier.absoluteOffset { IntOffset(offset_x.value.roundToInt(), 0) }) {
             content()
         }
     }
