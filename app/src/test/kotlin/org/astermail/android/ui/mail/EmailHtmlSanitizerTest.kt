@@ -302,6 +302,74 @@ class EmailHtmlSanitizerTest {
         assertTrue(out.contains("h1{margin:0}"))
     }
 
+    private fun sanitize_style(css: String): String =
+        EmailHtmlSanitizer.sanitize("""<html><head><style>$css</style></head><body><p>hi</p></body></html>""")
+
+    @Test
+    fun strips_dark_mode_media_with_a_media_type_prefix() {
+        listOf(
+            "@media screen and (prefers-color-scheme: dark){p{color:#eee}}",
+            "@media only screen and (prefers-color-scheme: dark){p{color:#eee}}",
+            "@media all and (prefers-color-scheme:dark) and (max-width: 600px){p{color:#eee}}",
+            "@MEDIA ONLY SCREEN AND (PREFERS-COLOR-SCHEME: DARK){p{color:#eee}}",
+            "@media   screen\n  and   (  prefers-color-scheme  :  dark  )  {p{color:#eee}}",
+        ).forEach { rule ->
+            val out = sanitize_style("p{color:#111}" + rule + "h1{margin:0}")
+            assertFalse(rule + " -> " + out, out.contains("color:#eee"))
+            assertFalse(rule + " -> " + out, out.contains("prefers-color-scheme", ignoreCase = true))
+            assertTrue(rule + " -> " + out, out.contains("p{color:#111}"))
+            assertTrue(rule + " -> " + out, out.contains("h1{margin:0}"))
+        }
+    }
+
+    @Test
+    fun strips_nested_rules_inside_a_dark_mode_media_block() {
+        val css = "p{color:#111}" +
+            "@media screen and (prefers-color-scheme: dark){" +
+            "@supports (display:grid){.a{color:#eee}}" +
+            "@media (max-width:600px){.b{color:#ddd}}" +
+            ".c{content:\"}\";color:#ccc}" +
+            "}h1{margin:0}"
+        val out = sanitize_style(css)
+        assertFalse(out, out.contains("#eee"))
+        assertFalse(out, out.contains("#ddd"))
+        assertFalse(out, out.contains("#ccc"))
+        assertTrue(out, out.contains("p{color:#111}"))
+        assertTrue(out, out.contains("h1{margin:0}"))
+    }
+
+    @Test
+    fun strips_dark_mode_media_nested_inside_another_block() {
+        val out = sanitize_style("@supports (display:grid){.g{display:grid}@media screen and (prefers-color-scheme: dark){.g{color:#eee}}}")
+        assertFalse(out, out.contains("#eee"))
+        assertTrue(out, out.contains(".g{display:grid}"))
+    }
+
+    @Test
+    fun drops_only_the_dark_query_from_a_media_query_list() {
+        val out = sanitize_style("@media (max-width: 600px), screen and (prefers-color-scheme: dark){.m{width:100%}}")
+        assertFalse(out, out.contains("prefers-color-scheme"))
+        assertTrue(out, out.contains("@media (max-width: 600px) {.m{width:100%}}"))
+
+        val all_dark = sanitize_style("@media (prefers-color-scheme: dark), only screen and (prefers-color-scheme: dark){.d{color:#eee}}p{color:#111}")
+        assertFalse(all_dark, all_dark.contains("#eee"))
+        assertTrue(all_dark, all_dark.contains("p{color:#111}"))
+    }
+
+    @Test
+    fun keeps_light_negated_and_unrelated_media_queries() {
+        listOf(
+            "@media (prefers-color-scheme: light){p{color:#222}}",
+            "@media screen and (prefers-color-scheme: light){p{color:#222}}",
+            "@media not all and (prefers-color-scheme: dark){p{color:#222}}",
+            "@media screen and (max-width: 600px){p{color:#222}}",
+            "@media only screen and (min-width:480px) and (max-width:600px){p{color:#222}}",
+        ).forEach { rule ->
+            val out = sanitize_style(rule)
+            assertTrue(rule + " -> " + out, out.contains(rule))
+        }
+    }
+
     @Test
     fun analyze_trackers_counts_spy_pixels_by_domain() {
         val html = """
