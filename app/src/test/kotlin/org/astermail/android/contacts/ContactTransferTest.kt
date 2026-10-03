@@ -95,6 +95,18 @@ class ContactTransferTest {
     }
 
     @Test
+    fun `folding never splits a character and stays within 75 octets`() {
+        val notes = "a".repeat(69) + "\uD83D\uDE00" + "\u00e9".repeat(60) + "\uD83D\uDE00 end"
+        val vcard = contact_to_vcard(sample().copy(notes = notes))
+        val bytes = vcard.toByteArray(Charsets.UTF_8)
+
+        for (line in String(bytes, Charsets.UTF_8).split("\r\n")) {
+            assertTrue(line.toByteArray(Charsets.UTF_8).size <= 75)
+        }
+        assertEquals(notes, parse_vcards(String(bytes, Charsets.UTF_8)).first().notes)
+    }
+
+    @Test
     fun `base64 photo parameters become a data url`() {
         val vcard = buildString {
             append("BEGIN:VCARD\r\n")

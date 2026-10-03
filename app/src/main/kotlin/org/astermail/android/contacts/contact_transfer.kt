@@ -76,23 +76,32 @@ private fun unescape_vcard(value: String): String {
 
 private val photo_data_uri = Regex("^data:image/([A-Za-z0-9.+-]+);base64,(.+)$")
 
+private fun utf8_length(code_point: Int): Int =
+    when {
+        code_point < 0x80 -> 1
+        code_point < 0x800 -> 2
+        code_point < 0x10000 -> 3
+        else -> 4
+    }
+
 private fun fold_line(line: String): String {
-    if (line.length <= 75) return line
-    val parts = mutableListOf<String>()
-    var current = StringBuilder()
+    val out = StringBuilder()
+    var octets = 0
     var limit = 75
-    for (character in line) {
-        if (current.length + 1 > limit) {
-            parts.add(if (parts.isEmpty()) current.toString() else " $current")
-            current = StringBuilder()
+    var index = 0
+    while (index < line.length) {
+        val code_point = line.codePointAt(index)
+        val size = utf8_length(code_point)
+        if (octets + size > limit) {
+            out.append("\r\n ")
+            octets = 0
             limit = 74
         }
-        current.append(character)
+        out.appendCodePoint(code_point)
+        octets += size
+        index += Character.charCount(code_point)
     }
-    if (current.isNotEmpty()) {
-        parts.add(if (parts.isEmpty()) current.toString() else " $current")
-    }
-    return parts.joinToString("\r\n")
+    return out.toString()
 }
 
 private fun unfold(text: String): List<String> {
