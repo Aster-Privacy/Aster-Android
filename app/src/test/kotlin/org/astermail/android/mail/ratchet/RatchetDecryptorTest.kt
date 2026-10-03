@@ -445,10 +445,12 @@ class RatchetDecryptorTest {
         val session_key_store = SessionKeyStore(null)
         seed_session_key_store(session_key_store, fixture.receiver_keys)
 
-        val decryptor = new_decryptor(state_store, session_key_store, ratchet_api, syncer, auth_repo)
-        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        val decryptor = new_decryptor(state_store, session_key_store, ratchet_api, syncer, auth_repo, plaintext_cache)
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_lane")
 
         assertEquals("third message", result)
+        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", true) }
     }
 
     @Test
@@ -487,10 +489,12 @@ class RatchetDecryptorTest {
         val session_key_store = SessionKeyStore(null)
         seed_session_key_store(session_key_store, fixture.receiver_keys)
 
-        val decryptor = new_decryptor(state_store, session_key_store, ratchet_api, syncer, auth_repo)
-        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        val decryptor = new_decryptor(state_store, session_key_store, ratchet_api, syncer, auth_repo, plaintext_cache)
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_lane")
 
         assertEquals("third message", result)
+        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", true) }
     }
 
     @Test

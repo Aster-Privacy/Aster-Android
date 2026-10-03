@@ -569,6 +569,7 @@ fun MailDetailScreen(
     val message_reactions by mail_vm.message_reactions.collectAsStateWithLifecycle()
     val decrypt_retry_active by mail_vm.decrypt_retry_active.collectAsStateWithLifecycle()
     val identity_changes by mail_vm.identity_changes.collectAsStateWithLifecycle()
+    val unauthenticated_message_ids by mail_vm.unauthenticated_message_ids.collectAsStateWithLifecycle()
     val identity_changed_senders = remember(identity_changes) {
         identity_changes.mapNotNull { it.sender_email.trim().lowercase().takeIf { e -> e.isNotBlank() } }.toSet()
     }
@@ -1478,6 +1479,7 @@ fun MailDetailScreen(
                             identity_changed = identity_changed_senders.contains(
                                 msg.sender_email.trim().lowercase(),
                             ),
+                            sender_unauthenticated = msg.id in unauthenticated_message_ids,
                             on_acknowledge_identity = {
                                 mail_vm.acknowledge_identity_change(msg.sender_email)
                             },
@@ -2337,6 +2339,7 @@ internal fun expanded_message(
     show_raw_headers: Boolean = false,
     show_header_reply: Boolean = true,
     identity_changed: Boolean = false,
+    sender_unauthenticated: Boolean = false,
     on_acknowledge_identity: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
@@ -2712,7 +2715,7 @@ internal fun expanded_message(
                 phishing_banner(result = phishing_snapshot)
             }
         }
-        if (auth_status == SenderAuthStatus.failed &&
+        if ((auth_status == SenderAuthStatus.failed || sender_unauthenticated) &&
             (phishing_snapshot == null || phishing_snapshot.level == org.astermail.android.security.PhishingLevel.safe)
         ) {
             sender_unverified_banner(

@@ -271,7 +271,7 @@ class RatchetDecryptor @Inject constructor(
                     if (RatchetIdentityPinRules.records_identity(IdentitySighting.RECOVERY_LANE, bootstrap_already_accepted)) {
                         record_identity_pin(conversation_id, sender_email, envelope.sender_identity_key)
                     }
-                    cache_plaintext(message_id, final_recovery)
+                    cache_plaintext(message_id, final_recovery, sender_unauthenticated = true)
                     return@with_lock final_recovery
                 }
                 decrypt_error?.let { throw it }
@@ -303,9 +303,13 @@ class RatchetDecryptor @Inject constructor(
         }
     }
 
-    private suspend fun cache_plaintext(message_id: String?, plaintext: String) {
+    private suspend fun cache_plaintext(
+        message_id: String?,
+        plaintext: String,
+        sender_unauthenticated: Boolean = false,
+    ) {
         if (message_id.isNullOrBlank()) return
-        runCatching { plaintext_cache.put(message_id, plaintext) }
+        runCatching { plaintext_cache.put(message_id, plaintext, sender_unauthenticated) }
     }
 
     private suspend fun consume_pq_prekey(recipient: RatchetRecipientData) {
