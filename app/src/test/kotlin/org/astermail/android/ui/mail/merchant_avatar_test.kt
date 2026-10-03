@@ -60,4 +60,10 @@ class merchant_avatar_test {
         val pixels = IntArray(100) { index -> if (index < 20) 0xFF1A73E8.toInt() else 0xFFFFFFFF.toInt() }
         assertFalse(is_blank_logo_pixels(pixels))
     }
+
+    @Test
+    fun `keeps a white logo drawn on a transparent background`() {
+        val pixels = IntArray(100) { index -> if (index < 20) 0xFFFFFFFF.toInt() else 0x00000000 }
+        assertFalse(is_blank_logo_pixels(pixels))
+    }
 }
