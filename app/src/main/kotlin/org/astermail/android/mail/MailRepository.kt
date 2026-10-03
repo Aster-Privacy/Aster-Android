@@ -3235,11 +3235,13 @@ class MailRepository @Inject constructor(
 
     private suspend fun decrypt_items_batch(items: List<MailItem>): DecryptBatch =
         withContext(Dispatchers.IO) {
-            val overrides = prefetch_ratchet_plaintexts(items)
+            val key_sets = lazy { inbound_ratchet_key_sets() }
+            val base_envelopes = java.util.concurrent.ConcurrentHashMap<String, DecryptedEnvelope>()
+            val overrides = prefetch_ratchet_plaintexts(items, key_sets, base_envelopes)
             val decrypted = items.map { item ->
                 async(Dispatchers.IO) {
                     try {
-                        decrypt_inbox_item(item, overrides[item.id])
+                        decrypt_inbox_item(item, overrides[item.id], key_sets, base_envelopes[item.id])
                     } catch (cancelled: CancellationException) {
                         throw cancelled
                     } catch (error: Throwable) {
@@ -3267,12 +3269,19 @@ class MailRepository @Inject constructor(
         AsterProfileResolverHolder.shared?.request_all(addresses)
     }
 
-    private fun decrypt_inbox_item(item: MailItem, ratchet_override: String? = null): InboxItem {
+    private fun decrypt_inbox_item(
+        item: MailItem,
+        ratchet_override: String? = null,
+        key_sets: Lazy<List<InboundRatchetKeySet>>? = null,
+        base_envelope: DecryptedEnvelope? = null,
+    ): InboxItem {
         val envelope = try_decrypt_envelope(
             item.encrypted_envelope,
             item.envelope_nonce,
             item.id,
             ratchet_override = ratchet_override,
+            key_sets = key_sets,
+            base_envelope = base_envelope,
         )
         val is_undecryptable = envelope?.is_undecryptable
             ?: !item.encrypted_envelope.isNullOrBlank()
@@ -3429,12 +3438,22 @@ class MailRepository @Inject constructor(
         ratchet_override: String? = null,
         decrypt_body_fields: Boolean = true,
         include_draft_attachments: Boolean = false,
+        key_sets: Lazy<List<InboundRatchetKeySet>>? = null,
+        base_envelope: DecryptedEnvelope? = null,
+        base_sink: MutableMap<String, DecryptedEnvelope>? = null,
     ): DecryptedEnvelope? {
         if (encrypted_envelope.isNullOrBlank()) return null
         var unauthenticated = false
         var envelope_pgp_encrypted = false
         var envelope_pgp_signature = org.astermail.android.crypto.PgpSignatureStatus.NONE
         return try {
+            if (base_envelope != null) {
+                return if (decrypt_body_fields) {
+                    decrypt_pgp_body_fields(base_envelope, message_id, ratchet_override)
+                } else {
+                    base_envelope
+                }
+            }
             val nonce_bytes = if (envelope_nonce.isNullOrBlank()) null
                 else android.util.Base64.decode(envelope_nonce, android.util.Base64.DEFAULT)
 
@@ -3478,7 +3497,7 @@ class MailRepository @Inject constructor(
                     decrypt_envelope_pbkdf2(encrypted_envelope)
                 }
                 else -> {
-                    decrypt_inbound_envelope(encrypted_envelope, nonce_bytes)
+                    decrypt_inbound_envelope(encrypted_envelope, nonce_bytes, key_sets?.value)
                         ?: runCatching {
                             decrypt_envelope_identity_key(encrypted_envelope, nonce_bytes)
                         }.getOrNull()
@@ -3506,6 +3525,7 @@ class MailRepository @Inject constructor(
                 parsed
             }
             val envelope = if (unauthenticated) carried?.copy(is_unauthenticated = true) else carried
+            if (envelope != null && message_id != null) base_sink?.put(message_id, envelope)
             when {
                 envelope == null -> null
                 !decrypt_body_fields -> envelope
@@ -3715,8 +3735,12 @@ class MailRepository @Inject constructor(
         return key_sets
     }
 
-    private fun decrypt_inbound_envelope(encrypted_b64: String, nonce: ByteArray): ByteArray? =
-        InboundEnvelopeDecryptor.decrypt(encrypted_b64, nonce, inbound_ratchet_key_sets())
+    private fun decrypt_inbound_envelope(
+        encrypted_b64: String,
+        nonce: ByteArray,
+        key_sets: List<InboundRatchetKeySet>? = null,
+    ): ByteArray? =
+        InboundEnvelopeDecryptor.decrypt(encrypted_b64, nonce, key_sets ?: inbound_ratchet_key_sets())
 
     private fun aes_gcm_decrypt(ciphertext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray =
         aes_gcm_decrypt_bytes(ciphertext, key, iv)
@@ -4497,12 +4521,18 @@ class MailRepository @Inject constructor(
         return result
     }
 
-    private suspend fun resolve_ratchet_plaintext(item: MailItem): String? {
+    private suspend fun resolve_ratchet_plaintext(
+        item: MailItem,
+        key_sets: Lazy<List<InboundRatchetKeySet>>? = null,
+        base_envelopes: java.util.concurrent.ConcurrentHashMap<String, DecryptedEnvelope>? = null,
+    ): String? {
         val envelope = try_decrypt_envelope(
             item.encrypted_envelope,
             item.envelope_nonce,
             item.id,
             decrypt_body_fields = false,
+            key_sets = key_sets,
+            base_sink = base_envelopes,
         ) ?: return null
         val candidate = ratchet_body_candidate(envelope) ?: return null
         val our_email = session_key_store.get_user_email()
@@ -4512,7 +4542,11 @@ class MailRepository @Inject constructor(
 
     private val ratchet_backfill_running = java.util.concurrent.atomic.AtomicBoolean(false)
 
-    private suspend fun prefetch_ratchet_plaintexts(items: List<MailItem>): Map<String, String> {
+    private suspend fun prefetch_ratchet_plaintexts(
+        items: List<MailItem>,
+        key_sets: Lazy<List<InboundRatchetKeySet>>? = null,
+        base_envelopes: java.util.concurrent.ConcurrentHashMap<String, DecryptedEnvelope>? = null,
+    ): Map<String, String> {
         if (items.isEmpty()) return emptyMap()
         val gate = kotlinx.coroutines.sync.Semaphore(RATCHET_PREFETCH_CONCURRENCY)
         val resolved = java.util.concurrent.ConcurrentHashMap<String, String>()
@@ -4523,7 +4557,7 @@ class MailRepository @Inject constructor(
                     items.forEach { item ->
                         launch(Dispatchers.IO) {
                             gate.withPermit {
-                                runCatching { resolve_ratchet_plaintext(item) }
+                                runCatching { resolve_ratchet_plaintext(item, key_sets, base_envelopes) }
                                     .getOrNull()
                                     ?.let { resolved[item.id] = it }
                                 settled.add(item.id)
