@@ -1116,8 +1116,8 @@ private fun AsterNavHost() {
                 else pending.pending_share.value.also { pending.pending_share.value = null }
             }
             ComposeScreen(
-                on_back = { nav_controller.popBackStack() },
-                on_sent = { nav_controller.popBackStack() },
+                on_back = { pop_entry(nav_controller, entry) },
+                on_sent = { pop_entry(nav_controller, entry) },
                 reply_to = reply_to,
                 mode = mode,
                 draft_id = draft_id,
@@ -1155,39 +1155,39 @@ private fun AsterNavHost() {
                 mail_vm = if (inbox_entry != null) hiltViewModel(inbox_entry) else hiltViewModel(),
             )
         }
-        composable(routes.pending_send_preview) {
+        composable(routes.pending_send_preview) { entry ->
             org.astermail.android.ui.mail.pending_send_preview_screen(
-                on_back = { nav_controller.popBackStack() },
+                on_back = { pop_entry(nav_controller, entry) },
             )
         }
         composable(routes.settings) {
             SettingsScreen(
-                on_back = { nav_controller.popBackStack() },
-                on_open = { id -> nav_controller.navigate(routes.settings_detail(id)) },
+                on_back = { pop_once(nav_controller) },
+                on_open = { id -> navigate_once(nav_controller, routes.settings_detail(id)) },
             )
         }
         composable(routes.settings_search) {
             org.astermail.android.ui.settings.settings_search_screen(
                 on_back = { pop_once(nav_controller) },
-                on_open = { id -> nav_controller.navigate(routes.settings_detail(id)) },
+                on_open = { id -> navigate_once(nav_controller, routes.settings_detail(id)) },
             )
         }
         composable(routes.mailing_lists) {
             MailingListsScreen(
-                on_back = { nav_controller.popBackStack(); Unit },
-                on_open_search = { nav_controller.navigate(routes.search) },
+                on_back = { pop_once(nav_controller) },
+                on_open_search = { navigate_once(nav_controller, routes.search) },
                 on_search_sender = { sender ->
                     org.astermail.android.ui.search.build_sender_mail_query(sender)?.let { query ->
-                        nav_controller.navigate(routes.search_for(query))
+                        navigate_once(nav_controller, routes.search_for(query))
                     }
                 },
             )
         }
         composable(routes.contacts) {
             ContactsScreen(
-                on_back = { nav_controller.popBackStack() },
-                on_open_contact = { id -> nav_controller.navigate(routes.contact_detail_for(id)) },
-                on_create_contact = { nav_controller.navigate(routes.contact_edit_new) },
+                on_back = { pop_once(nav_controller) },
+                on_open_contact = { id -> navigate_once(nav_controller, routes.contact_detail_for(id)) },
+                on_create_contact = { navigate_once(nav_controller, routes.contact_edit_new) },
                 on_compose_to = { addresses ->
                     context.startActivity(
                         ComposeActivity.intent_for(context, prefill_to = addresses.joinToString(",")),
@@ -1251,8 +1251,8 @@ private fun AsterNavHost() {
             )
         }
 
-        val back = { nav_controller.popBackStack() }
-        val open_detail: (String) -> Unit = { id -> nav_controller.navigate(routes.settings_detail(id)) }
+        val back = { pop_once(nav_controller) }
+        val open_detail: (String) -> Unit = { id -> navigate_once(nav_controller, routes.settings_detail(id)) }
 
         composable(routes.settings_detail("appearance")) {
             AppearanceScreen(on_back = { back(); Unit }, on_open = open_detail)
@@ -1275,11 +1275,11 @@ private fun AsterNavHost() {
                 on_open = open_detail,
             )
         }
-        composable(routes.settings_detail("password")) {
-            ChangePasswordScreen(on_back = { back(); Unit })
+        composable(routes.settings_detail("password")) { entry ->
+            ChangePasswordScreen(on_back = { pop_entry(nav_controller, entry) })
         }
-        composable(routes.settings_detail("change_password")) {
-            ChangePasswordScreen(on_back = { back(); Unit })
+        composable(routes.settings_detail("change_password")) { entry ->
+            ChangePasswordScreen(on_back = { pop_entry(nav_controller, entry) })
         }
         composable(routes.settings_detail("two_factor")) {
             TwoFactorScreen(on_back = { back(); Unit })
@@ -2818,6 +2818,17 @@ private fun pop_once(nav_controller: NavHostController) {
     val entry = nav_controller.currentBackStackEntry ?: return
     if (!entry.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return
     nav_controller.popBackStack()
+}
+
+private fun pop_entry(nav_controller: NavHostController, entry: androidx.navigation.NavBackStackEntry) {
+    if (nav_controller.currentBackStackEntry?.id != entry.id) return
+    nav_controller.popBackStack()
+}
+
+private fun navigate_once(nav_controller: NavHostController, route: String) {
+    val entry = nav_controller.currentBackStackEntry ?: return
+    if (!entry.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return
+    nav_controller.navigate(route) { launchSingleTop = true }
 }
 
 private fun open_mail_detail(nav_controller: NavHostController, email_id: String) {
