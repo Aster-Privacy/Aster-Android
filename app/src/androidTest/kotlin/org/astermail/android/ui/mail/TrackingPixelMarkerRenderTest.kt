@@ -33,9 +33,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -225,7 +228,7 @@ class TrackingPixelMarkerRenderTest {
         compose_rule.waitForIdle()
         compose_rule.onNodeWithText("4 images", useUnmergedTree = true).assertIsDisplayed()
         compose_rule.onNodeWithText("1 tracker", useUnmergedTree = true).assertIsDisplayed()
-        device_screenshot("tracking_banner")
+        save("tracking_banner", runCatching { compose_rule.onRoot().captureToImage().asAndroidBitmap() }.getOrNull())
 
         compose_rule.onNodeWithText("3 trackers", useUnmergedTree = true).assertIsDisplayed().performClick()
         compose_rule.waitForIdle()
