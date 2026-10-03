@@ -557,7 +557,10 @@ object EmailHtmlSanitizer {
     private val css_webkit_image_set_regex = Regex("-webkit-image-set\\s*\\([^)]*\\)", RegexOption.IGNORE_CASE)
     private val css_cross_fade_regex = Regex("cross-fade\\s*\\([^)]*\\)", RegexOption.IGNORE_CASE)
     private val css_closing_tag_regex = Regex("</(style|script)", RegexOption.IGNORE_CASE)
-    private val dark_mode_media_regex = Regex("@media\\s*\\([^)]*prefers-color-scheme\\s*:\\s*dark[^)]*\\)\\s*\\{", RegexOption.IGNORE_CASE)
+    private const val media_keyword = "@media"
+    private val media_prelude_terminators = charArrayOf('{', ';')
+    private val dark_scheme_regex = Regex("prefers-color-scheme\\s*:\\s*dark", RegexOption.IGNORE_CASE)
+    private val media_not_regex = Regex("(^|[\\s(])not\\b", RegexOption.IGNORE_CASE)
 
     private fun neutralize_unterminated_comments(html: String): String {
         if (!html.contains("<!--")) return html
@@ -744,23 +747,74 @@ object EmailHtmlSanitizer {
     }
 
     private fun strip_dark_mode_media(css: String): String {
-        var result = css
-        val pattern = dark_mode_media_regex
-        var match = pattern.find(result)
-        while (match != null) {
-            var depth = 1
-            var i = match.range.last + 1
-            while (i < result.length && depth > 0) {
-                when (result[i]) {
-                    '{' -> depth++
-                    '}' -> depth--
-                }
-                i++
+        val out = StringBuilder()
+        var cursor = 0
+        var search = 0
+        while (true) {
+            val at = css.indexOf(media_keyword, search, ignoreCase = true)
+            if (at < 0) break
+            val prelude_start = at + media_keyword.length
+            val prelude_end = css.indexOfAny(media_prelude_terminators, prelude_start)
+            if (prelude_end < 0) break
+            val body_start = prelude_end + 1
+            search = body_start
+            val next = css[prelude_start]
+            if (css[prelude_end] == ';' || next.isLetterOrDigit() || next == '_') continue
+            val queries = split_media_queries(css.substring(prelude_start, prelude_end))
+            val kept = queries.filterNot { requires_dark_scheme(it) }
+            if (kept.size == queries.size) continue
+            out.append(css, cursor, at)
+            if (kept.isEmpty()) {
+                cursor = css_block_end(css, body_start)
+                search = cursor
+            } else {
+                out.append("@media ").append(kept.joinToString(", ") { it.trim() }).append(" {")
+                cursor = body_start
             }
-            result = result.substring(0, match.range.first) + result.substring(i)
-            match = pattern.find(result, match.range.first)
         }
-        return result
+        out.append(css, cursor, css.length)
+        return out.toString()
+    }
+
+    private fun requires_dark_scheme(query: String): Boolean =
+        dark_scheme_regex.containsMatchIn(query) && !media_not_regex.containsMatchIn(query)
+
+    private fun split_media_queries(prelude: String): List<String> {
+        val parts = mutableListOf<String>()
+        var depth = 0
+        var start = 0
+        for (i in prelude.indices) {
+            when (prelude[i]) {
+                '(' -> depth++
+                ')' -> if (depth > 0) depth--
+                ',' -> if (depth == 0) {
+                    parts.add(prelude.substring(start, i))
+                    start = i + 1
+                }
+            }
+        }
+        parts.add(prelude.substring(start))
+        return parts
+    }
+
+    private fun css_block_end(css: String, body_start: Int): Int {
+        var depth = 1
+        var quote: Char? = null
+        var i = body_start
+        while (i < css.length) {
+            val c = css[i]
+            if (quote != null) {
+                if (c == '\\') i++ else if (c == quote) quote = null
+            } else {
+                when (c) {
+                    '"', '\'' -> quote = c
+                    '{' -> depth++
+                    '}' -> if (--depth == 0) return i + 1
+                }
+            }
+            i++
+        }
+        return css.length
     }
 
     fun rewrite_img_through_proxy(html: String, proxy_base: String, allow_external: Boolean): String {
