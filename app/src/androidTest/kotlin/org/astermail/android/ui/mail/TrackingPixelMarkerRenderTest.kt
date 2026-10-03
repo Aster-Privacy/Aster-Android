@@ -135,7 +135,7 @@ class TrackingPixelMarkerRenderTest {
             }
         }
         assertTrue("the email never finished loading", loaded.await(30, TimeUnit.SECONDS))
-        Thread.sleep(1500)
+        Thread.sleep(4000)
         compose_rule.waitForIdle()
         device_screenshot(name)
         val result = arrayOf("")
@@ -227,10 +227,10 @@ class TrackingPixelMarkerRenderTest {
         }
         compose_rule.waitForIdle()
         compose_rule.onNodeWithText("4 images", useUnmergedTree = true).assertIsDisplayed()
-        compose_rule.onNodeWithText("1 tracker", useUnmergedTree = true).assertIsDisplayed()
+        compose_rule.onNodeWithText("1 tracking pixel", useUnmergedTree = true).assertIsDisplayed()
         save("tracking_banner", runCatching { compose_rule.onRoot().captureToImage().asAndroidBitmap() }.getOrNull())
 
-        compose_rule.onNodeWithText("3 trackers", useUnmergedTree = true).assertIsDisplayed().performClick()
+        compose_rule.onNodeWithText("3 tracking pixels", useUnmergedTree = true).assertIsDisplayed().performClick()
         compose_rule.waitForIdle()
 
         assertEquals(1, opened)
@@ -239,5 +239,64 @@ class TrackingPixelMarkerRenderTest {
         compose_rule.onNodeWithText("x2").assertIsDisplayed()
         Thread.sleep(500)
         device_screenshot("tracking_banner_dialog")
+    }
+
+    @Test
+    fun the_details_sheet_breaks_the_tracker_total_into_pixels_and_links() {
+        compose_rule.setContent {
+            AsterTheme(use_dark_theme = false) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(AsterMaterial.colors.bg_primary),
+                ) {
+                    message_details_panel(
+                        sender = "Weekly digest <news@example.com>",
+                        reply_to = null,
+                        is_encrypted = false,
+                        tracking_pixel_count = 3,
+                        tracking_link_count = 2,
+                        date_text = "3 October 2026 at 09:14",
+                        received_on = null,
+                        authentication = null,
+                        authentication_failed = false,
+                        on_show_trackers = {},
+                    )
+                }
+            }
+        }
+        compose_rule.waitForIdle()
+        compose_rule.onNodeWithText("View encryption details", useUnmergedTree = true).performClick()
+        compose_rule.waitForIdle()
+
+        compose_rule.onNodeWithText("5 trackers blocked\n3 tracking pixels · 2 tracking links", useUnmergedTree = true)
+            .assertIsDisplayed()
+        Thread.sleep(500)
+        device_screenshot("tracking_details_sheet")
+    }
+
+    @Test
+    fun the_details_sheet_omits_an_empty_part_of_the_breakdown() {
+        compose_rule.setContent {
+            AsterTheme(use_dark_theme = false) {
+                message_details_panel(
+                    sender = "Weekly digest <news@example.com>",
+                    reply_to = null,
+                    is_encrypted = false,
+                    tracking_pixel_count = 0,
+                    tracking_link_count = 1,
+                    date_text = "3 October 2026 at 09:14",
+                    received_on = null,
+                    authentication = null,
+                    authentication_failed = false,
+                    on_show_trackers = {},
+                )
+            }
+        }
+        compose_rule.waitForIdle()
+        compose_rule.onNodeWithText("View encryption details", useUnmergedTree = true).performClick()
+        compose_rule.waitForIdle()
+
+        compose_rule.onNodeWithText("1 tracker blocked\n1 tracking link", useUnmergedTree = true).assertIsDisplayed()
     }
 }

@@ -2347,9 +2347,6 @@ internal fun expanded_message(
             EmailHtmlSanitizer.analyze_trackers(msg.body_html)
         }
     }
-    val tracker_count = remember(tracker_report, msg.trackers_blocked) {
-        maxOf(msg.trackers_blocked, tracker_report.total)
-    }
     var show_tracker_details by remember(msg.id) { mutableStateOf(false) }
     if (show_tracker_details) {
         tracker_details_dialog(report = tracker_report, on_close = { show_tracker_details = false })
@@ -2577,7 +2574,8 @@ internal fun expanded_message(
                 is_encrypted = msg.is_e2e_encrypted,
                 pgp_encrypted = msg.pgp_encrypted,
                 pgp_signature = msg.pgp_signature,
-                tracker_count = tracker_count,
+                tracking_pixel_count = tracker_report.pixel_count,
+                tracking_link_count = tracker_report.cleaned_link_count,
                 date_text = msg.timestamp.format_full_datetime(),
                 received_on = received_on,
                 authentication = auth_summary?.let { summary ->
@@ -3445,7 +3443,7 @@ internal fun compact_banner(
                 .size(15.dp),
         )
         Spacer(Modifier.width(8.dp))
-        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
             if (label.isNotEmpty() || label_suffix == null) {
                 Text(
                     text = label,
@@ -3455,14 +3453,11 @@ internal fun compact_banner(
                     maxLines = if (expanded) 6 else 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     modifier = Modifier
-                        .weight(1f, fill = label_suffix == null)
+                        .fillMaxWidth()
                         .clickable { expanded = !expanded },
                 )
             }
-            if (label_suffix != null) {
-                if (label.isNotEmpty()) Spacer(Modifier.width(4.dp))
-                label_suffix()
-            }
+            label_suffix?.invoke()
         }
         Spacer(Modifier.width(6.dp))
         actions()
@@ -3675,7 +3670,7 @@ internal fun external_content_banner(
     }
     val open_details: (() -> Unit)? = if (counts.items.isNotEmpty()) ({ show_details = true }) else null
     val open_trackers = on_show_trackers ?: open_details
-    val tracker_label = pluralStringResource(R.plurals.n_trackers, counts.tracker_count, counts.tracker_count)
+    val tracker_label = pluralStringResource(R.plurals.n_tracking_pixels, counts.tracker_count, counts.tracker_count)
     compact_banner(
         icon = TablerIcons.PhotoOff,
         label = label,
@@ -3692,7 +3687,7 @@ internal fun external_content_banner(
                         },
                     )
                     .testTag("banner_trackers")
-                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                    .padding(vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
@@ -3984,7 +3979,8 @@ internal fun message_details_panel(
     reply_to: String?,
     date_text: String,
     is_encrypted: Boolean,
-    tracker_count: Int,
+    tracking_pixel_count: Int,
+    tracking_link_count: Int,
     received_on: String?,
     authentication: String?,
     authentication_failed: Boolean,
@@ -4115,7 +4111,8 @@ internal fun message_details_panel(
             is_encrypted = is_encrypted,
             pgp_encrypted = pgp_encrypted,
             pgp_signature = pgp_signature,
-            tracker_count = tracker_count,
+            tracking_pixel_count = tracking_pixel_count,
+            tracking_link_count = tracking_link_count,
             received_on = received_on,
             authentication = authentication,
             authentication_failed = authentication_failed,
@@ -4130,7 +4127,8 @@ private fun security_details_dialog(
     is_encrypted: Boolean,
     pgp_encrypted: Boolean,
     pgp_signature: org.astermail.android.crypto.PgpSignatureStatus,
-    tracker_count: Int,
+    tracking_pixel_count: Int,
+    tracking_link_count: Int,
     received_on: String?,
     authentication: String?,
     authentication_failed: Boolean,
@@ -4138,6 +4136,19 @@ private fun security_details_dialog(
     on_close: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
+    val tracker_count = tracking_pixel_count + tracking_link_count
+    val tracker_breakdown = listOfNotNull(
+        if (tracking_pixel_count > 0) {
+            pluralStringResource(R.plurals.n_tracking_pixels, tracking_pixel_count, tracking_pixel_count)
+        } else {
+            null
+        },
+        if (tracking_link_count > 0) {
+            pluralStringResource(R.plurals.n_tracking_links, tracking_link_count, tracking_link_count)
+        } else {
+            null
+        },
+    ).joinToString(" · ")
     val dialog_context = LocalContext.current
     val dialog_haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
     val dialog_haptics_enabled = org.astermail.android.ui.theme.local_accessibility.current.haptic_enabled
@@ -4183,7 +4194,8 @@ private fun security_details_dialog(
                 detail_meta_row(
                     label = stringResource(R.string.tracker_protection),
                     value = if (tracker_count > 0) {
-                        pluralStringResource(R.plurals.trackers_blocked_count, tracker_count, tracker_count)
+                        pluralStringResource(R.plurals.trackers_blocked_count, tracker_count, tracker_count) +
+                            "\n" + tracker_breakdown
                     } else {
                         stringResource(R.string.no_trackers)
                     },

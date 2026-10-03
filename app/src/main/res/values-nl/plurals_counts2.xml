@@ -28,9 +28,13 @@
         <item quantity="one">%1$d afbeelding</item>
         <item quantity="other">%1$d afbeeldingen</item>
     </plurals>
-    <plurals name="n_trackers">
-        <item quantity="one">%1$d tracker</item>
-        <item quantity="other">%1$d trackers</item>
+    <plurals name="n_tracking_pixels">
+        <item quantity="one">%1$d trackingpixel</item>
+        <item quantity="other">%1$d trackingpixels</item>
+    </plurals>
+    <plurals name="n_tracking_links">
+        <item quantity="one">%1$d volglink</item>
+        <item quantity="other">%1$d volglinks</item>
     </plurals>
     <plurals name="n_fonts">
         <item quantity="one">%1$d lettertype</item>

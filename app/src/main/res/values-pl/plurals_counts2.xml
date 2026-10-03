@@ -42,11 +42,17 @@
         <item quantity="many">%1$d obrazów</item>
         <item quantity="other">%1$d obrazy</item>
     </plurals>
-    <plurals name="n_trackers">
-        <item quantity="one">%1$d element śledzący</item>
-        <item quantity="few">%1$d elementy śledzące</item>
-        <item quantity="many">%1$d elementów śledzących</item>
-        <item quantity="other">%1$d elementu śledzącego</item>
+    <plurals name="n_tracking_pixels">
+        <item quantity="one">%1$d piksel śledzący</item>
+        <item quantity="few">%1$d piksele śledzące</item>
+        <item quantity="many">%1$d pikseli śledzących</item>
+        <item quantity="other">%1$d piksela śledzącego</item>
+    </plurals>
+    <plurals name="n_tracking_links">
+        <item quantity="one">%1$d odnośnik śledzący</item>
+        <item quantity="few">%1$d odnośniki śledzące</item>
+        <item quantity="many">%1$d odnośników śledzących</item>
+        <item quantity="other">%1$d odnośnika śledzącego</item>
     </plurals>
     <plurals name="n_fonts">
         <item quantity="one">%1$d czcionka</item>

@@ -22,8 +22,11 @@
         <item quantity="one">이미지 %1$d개</item>
         <item quantity="other">이미지 %1$d개</item>
     </plurals>
-    <plurals name="n_trackers">
-        <item quantity="other">추적기 %1$d개</item>
+    <plurals name="n_tracking_pixels">
+        <item quantity="other">추적 픽셀 %1$d개</item>
+    </plurals>
+    <plurals name="n_tracking_links">
+        <item quantity="other">추적 링크 %1$d개</item>
     </plurals>
     <plurals name="n_fonts">
         <item quantity="other">글꼴 %1$d개</item>

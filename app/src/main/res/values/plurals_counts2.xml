@@ -32,9 +32,13 @@
         <item quantity="one">%1$d image</item>
         <item quantity="other">%1$d images</item>
     </plurals>
-    <plurals name="n_trackers">
-        <item quantity="one">%1$d tracker</item>
-        <item quantity="other">%1$d trackers</item>
+    <plurals name="n_tracking_pixels">
+        <item quantity="one">%1$d tracking pixel</item>
+        <item quantity="other">%1$d tracking pixels</item>
+    </plurals>
+    <plurals name="n_tracking_links">
+        <item quantity="one">%1$d tracking link</item>
+        <item quantity="other">%1$d tracking links</item>
     </plurals>
     <plurals name="n_fonts">
         <item quantity="one">%1$d font</item>

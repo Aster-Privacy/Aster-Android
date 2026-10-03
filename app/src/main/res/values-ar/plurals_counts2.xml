@@ -56,13 +56,21 @@
         <item quantity="many">%1$d صورة</item>
         <item quantity="other">%1$d صورة</item>
     </plurals>
-    <plurals name="n_trackers">
-        <item quantity="zero">%1$d متعقّب</item>
-        <item quantity="one">متعقّب واحد</item>
-        <item quantity="two">متعقّبان</item>
-        <item quantity="few">%1$d متعقّبات</item>
-        <item quantity="many">%1$d متعقّبًا</item>
-        <item quantity="other">%1$d متعقّب</item>
+    <plurals name="n_tracking_pixels">
+        <item quantity="zero">%1$d بكسل تتبع</item>
+        <item quantity="one">بكسل تتبع واحد</item>
+        <item quantity="two">بكسلا تتبع</item>
+        <item quantity="few">%1$d بكسلات تتبع</item>
+        <item quantity="many">%1$d بكسلًا للتتبع</item>
+        <item quantity="other">%1$d بكسل تتبع</item>
+    </plurals>
+    <plurals name="n_tracking_links">
+        <item quantity="zero">%1$d رابط تتبع</item>
+        <item quantity="one">رابط تتبع واحد</item>
+        <item quantity="two">رابطا تتبع</item>
+        <item quantity="few">%1$d روابط تتبع</item>
+        <item quantity="many">%1$d رابطًا للتتبع</item>
+        <item quantity="other">%1$d رابط تتبع</item>
     </plurals>
     <plurals name="n_fonts">
         <item quantity="zero">%1$d خط</item>

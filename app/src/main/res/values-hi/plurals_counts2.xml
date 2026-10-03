@@ -28,9 +28,13 @@
         <item quantity="one">%1$d छवि</item>
         <item quantity="other">%1$d छवियां</item>
     </plurals>
-    <plurals name="n_trackers">
-        <item quantity="one">%1$d ट्रैकर</item>
-        <item quantity="other">%1$d ट्रैकर</item>
+    <plurals name="n_tracking_pixels">
+        <item quantity="one">%1$d ट्रैकिंग पिक्सल</item>
+        <item quantity="other">%1$d ट्रैकिंग पिक्सल</item>
+    </plurals>
+    <plurals name="n_tracking_links">
+        <item quantity="one">%1$d ट्रैकिंग लिंक</item>
+        <item quantity="other">%1$d ट्रैकिंग लिंक</item>
     </plurals>
     <plurals name="n_fonts">
         <item quantity="one">%1$d फ़ॉन्ट</item>
