@@ -41,6 +41,10 @@ private val NON_CONTENT_TAGS = setOf("script", "style", "template")
 
 private val LINKIFY_SKIP_TAGS = setOf("a", "script", "style", "textarea", "code", "pre", "button")
 
+private val LONG_TOKEN_SKIP_TAGS = setOf("textarea", "code", "pre", "kbd", "samp")
+
+private val LONG_TOKEN = Regex("""\S{30,}""")
+
 private val MEDIA_TAGS = setOf("img", "video", "picture")
 
 private val BLANK_SPACER_TAGS = setOf("div", "p", "span")
@@ -153,6 +157,7 @@ internal fun prepare_email_body(
     val doc = Jsoup.parseBodyFragment(body).apply { outputSettings(raw_body_output_settings()) }
     val root = doc.body()
     linkify_text_nodes(root)
+    if (!is_newsletter) mark_long_tokens(root)
     relax_fixed_heights(root)
     if (is_newsletter) pad_loose_blocks(root)
     if (simple_dark) repair_dark_text_contrast(root)
@@ -382,10 +387,12 @@ private fun collect_text_nodes(root: Element): List<TextNode> {
     return out
 }
 
-private fun linkify_skipped(node: Node, root: Element): Boolean {
+private fun linkify_skipped(node: Node, root: Element): Boolean = inside_tags(node, root, LINKIFY_SKIP_TAGS)
+
+private fun inside_tags(node: Node, root: Element, tags: Set<String>): Boolean {
     var parent = node.parentNode()
     while (parent != null && parent !== root) {
-        if (parent is Element && parent.tagName().lowercase() in LINKIFY_SKIP_TAGS) return true
+        if (parent is Element && parent.tagName().lowercase() in tags) return true
         parent = parent.parentNode()
     }
     return false
@@ -410,6 +417,30 @@ private fun linkify_text_nodes(root: Element) {
             anchor.appendChild(TextNode(link.text))
             replacements.add(anchor)
             last = link.end
+        }
+        if (last < source.length) replacements.add(TextNode(source.substring(last)))
+        node.remove()
+        parent.insertChildren(index, replacements)
+    }
+}
+
+private fun mark_long_tokens(root: Element) {
+    val targets = collect_text_nodes(root).filter {
+        LONG_TOKEN.containsMatchIn(it.wholeText) && !inside_tags(it, root, LONG_TOKEN_SKIP_TAGS)
+    }
+    for (node in targets) {
+        val source = node.wholeText
+        val parent = node.parentNode() as? Element ?: continue
+        val index = node.siblingIndex()
+        val replacements = mutableListOf<Node>()
+        var last = 0
+        for (token in LONG_TOKEN.findAll(source)) {
+            if (token.range.first > last) replacements.add(TextNode(source.substring(last, token.range.first)))
+            val span = Element("span")
+            span.attr("data-aster-long-token", "")
+            span.appendChild(TextNode(token.value))
+            replacements.add(span)
+            last = token.range.last + 1
         }
         if (last < source.length) replacements.add(TextNode(source.substring(last)))
         node.remove()
