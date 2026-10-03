@@ -1,0 +1,12 @@
+What's new:
+
+- Aster Mail for Android reaches version 1.0.
+- You can move a message to another category.
+- You can choose the folder the app opens to.
+
+Fixed:
+
+- Undo cancels the right message when you send several in a row.
+- Swipe actions follow your finger in right-to-left languages.
+- Screen readers announce icon buttons and swipe actions.
+- Shared files and notification taps open after you unlock the app.
