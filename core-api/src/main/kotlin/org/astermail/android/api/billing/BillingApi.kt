@@ -303,6 +303,7 @@ data class StorageAddonItem(
     val name: String = "",
     val storage_bytes: Long = 0,
     val price_cents: Int = 0,
+    val yearly_price_cents: Int? = null,
     val billing_period: String = "month",
     val is_active: Boolean = true,
 )
@@ -314,6 +315,7 @@ data class UserActiveAddon(
     val size_label: String = "",
     val size_bytes: Long = 0,
     val price_cents: Int = 0,
+    val billing_period: String = "month",
     val state: String = "",
     val created_at: String = "",
     val cancel_at_period_end: Boolean = false,
@@ -329,6 +331,7 @@ data class StorageAddonsResponse(
 @Serializable
 data class PurchaseAddonRequest(
     val addon_id: String,
+    val billing_interval: String? = null,
 )
 
 @Serializable

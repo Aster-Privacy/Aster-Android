@@ -1640,7 +1640,10 @@ class BillingViewModel @Inject constructor(
             _state.value = _state.value.copy(is_acting = true, acting_action = "addon_$addon_id", error = null, checkout_url = null)
             try {
                 val response = billing_api.purchase_storage_addon(
-                    org.astermail.android.api.billing.PurchaseAddonRequest(addon_id = addon_id)
+                    org.astermail.android.api.billing.PurchaseAddonRequest(
+                        addon_id = addon_id,
+                        billing_interval = billing_interval.takeIf { it == "year" },
+                    )
                 )
                 _state.value = _state.value.copy(is_acting = false, acting_action = null, checkout_url = response.url)
             } catch (cancelled: CancellationException) {
