@@ -533,4 +533,35 @@ class EmailHtmlSanitizerTest {
         val out = EmailHtmlSanitizer.sanitize(html)
         assertFalse(out.contains("aster-email-button"))
     }
+
+    @Test
+    fun removes_an_import_spliced_together_by_a_stripped_dark_media_block() {
+        val html = """<style>@im@media (prefers-color-scheme: dark){}port url("https://tracker.example.com/a.css"); p { color: red; }</style><p>Hi</p>"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertFalse(out.contains("@import", ignoreCase = true))
+        assertFalse(out.contains("tracker.example.com"))
+    }
+
+    @Test
+    fun removes_an_import_spliced_together_by_a_stripped_at_rule() {
+        val html = """<style>@im@charset "x";port url("https://tracker.example.com/a.css"); p { color: red; }</style><p>Hi</p>"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertFalse(out.contains("@import", ignoreCase = true))
+        assertFalse(out.contains("tracker.example.com"))
+    }
+
+    @Test
+    fun removes_an_expression_spliced_together_in_a_style_attribute() {
+        val html = """<p style="width: expr@import x;ession(alert(1))">Hi</p>"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertFalse(out.contains("expression(", ignoreCase = true))
+    }
+
+    @Test
+    fun drops_css_that_never_stops_splicing() {
+        val nested = "@im".repeat(40) + "@import x;" + "port y;".repeat(40)
+        val html = """<style>$nested p { color: red; }</style><p>Hi</p>"""
+        val out = EmailHtmlSanitizer.sanitize(html)
+        assertFalse(out.contains("@import", ignoreCase = true))
+    }
 }
