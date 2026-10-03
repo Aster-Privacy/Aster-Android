@@ -105,4 +105,14 @@ class SearchResultThreadingTest {
 
         assertEquals(listOf(older_id), expanded)
     }
+
+    @Test
+    fun index_lookup_matches_scanning_the_corpus() {
+        val corpus = listOf(older(), newer())
+        val threads = search_result_threads(corpus, grouping_enabled = true)
+
+        val from_index = thread_member_ids_from_index(threads, search_thread_index(corpus))
+
+        assertEquals(search_thread_member_ids(threads, corpus, grouping_enabled = true), from_index)
+    }
 }

@@ -171,9 +171,14 @@ private object search_screen_cache {
     var filter: String? = null
     var outcome: SearchOutcome? = null
     var outcome_corpus: List<org.astermail.android.mail.InboxItem>? = null
+    var people_corpus: List<org.astermail.android.mail.InboxItem>? = null
+    var people: Pair<List<ChipPerson>, List<ChipPerson>>? = null
 
     fun sorted_for(corpus: List<org.astermail.android.mail.InboxItem>) =
         sorted.takeIf { this.corpus === corpus }
+
+    fun people_for(corpus: List<org.astermail.android.mail.InboxItem>) =
+        people.takeIf { people_corpus === corpus }
 
     fun outcome_for(
         parsed: ParsedQuery,
@@ -599,12 +604,24 @@ fun SearchScreen(
     val corpus_loading = !search_state.is_indexed && search_state.error == null
     val results_pending = has_query && (computed == null || corpus_loading)
     val hidden_spam_trash = computed?.hidden_spam_trash ?: 0
-    val chip_people = remember(visible_corpus) {
-        collect_chip_people(visible_corpus)
+    val people_lists by androidx.compose.runtime.produceState(
+        initialValue = search_screen_cache.people_for(visible_corpus)
+            ?: (emptyList<ChipPerson>() to emptyList<ChipPerson>()),
+        visible_corpus,
+    ) {
+        search_screen_cache.people_for(visible_corpus)?.let {
+            value = it
+            return@produceState
+        }
+        val people = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            collect_chip_people(visible_corpus) to collect_recipient_people(visible_corpus)
+        }
+        search_screen_cache.people_corpus = visible_corpus
+        search_screen_cache.people = people
+        value = people
     }
-    val chip_recipients = remember(visible_corpus) {
-        collect_recipient_people(visible_corpus)
-    }
+    val chip_people = people_lists.first
+    val chip_recipients = people_lists.second
     val custom_chips = remember(operator_chips) {
         operator_chips.filterNot { is_quick_operator(it) }
     }
@@ -616,8 +633,11 @@ fun SearchScreen(
     val result_threads = remember(filtered, grouping_enabled) {
         search_result_threads(filtered, grouping_enabled, context_for_prefs)
     }
-    val thread_member_ids = remember(result_threads, visible_corpus, grouping_enabled) {
-        search_thread_member_ids(result_threads, visible_corpus, grouping_enabled)
+    val thread_index = remember(visible_corpus, grouping_enabled) {
+        if (grouping_enabled) search_thread_index(visible_corpus) else emptyMap()
+    }
+    val thread_member_ids = remember(result_threads, thread_index, grouping_enabled) {
+        if (grouping_enabled) thread_member_ids_from_index(result_threads, thread_index) else emptyMap()
     }
     fun expand_selection(ids: List<String>): List<String> =
         expand_thread_selection(ids, thread_member_ids, grouping_enabled)

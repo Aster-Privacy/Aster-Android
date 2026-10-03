@@ -45,12 +45,17 @@ internal fun search_thread_member_ids(
     grouping_enabled: Boolean,
 ): Map<String, List<String>> {
     if (!grouping_enabled) return emptyMap()
-    val by_thread = corpus.groupBy { item ->
-        item.thread_token?.takeIf { it.isNotBlank() } ?: item.id
-    }
-    return threads.associate { row ->
-        row.newest.id to (by_thread[row.thread_id]?.map { it.id } ?: listOf(row.newest.id))
-    }
+    return thread_member_ids_from_index(threads, search_thread_index(corpus))
+}
+
+internal fun search_thread_index(corpus: List<InboxItem>): Map<String, List<String>> =
+    corpus.groupBy({ item -> item.thread_token?.takeIf { it.isNotBlank() } ?: item.id }, { it.id })
+
+internal fun thread_member_ids_from_index(
+    threads: List<ThreadRow>,
+    by_thread: Map<String, List<String>>,
+): Map<String, List<String>> = threads.associate { row ->
+    row.newest.id to (by_thread[row.thread_id] ?: listOf(row.newest.id))
 }
 
 internal fun expand_thread_selection(
