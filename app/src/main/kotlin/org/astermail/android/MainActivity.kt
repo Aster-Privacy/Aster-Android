@@ -237,6 +237,7 @@ class MainActivity :
                 secure_storage_ready.value = true
             }
         }
+        if (saved_instance_state == null) note_launch_folder(intent)
         consume_open_email_extra(intent)
         consume_share_intent(intent)
         apply_boot_background()
@@ -301,6 +302,19 @@ class MainActivity :
         setIntent(intent)
         consume_open_email_extra(intent)
         consume_share_intent(intent)
+    }
+
+    private fun note_launch_folder(intent: Intent?) {
+        val extra_keys = runCatching { intent?.extras?.keySet()?.toSet() }.getOrNull().orEmpty()
+        val plain = org.astermail.android.mail.is_plain_launch(
+            action = intent?.action,
+            has_data = intent?.data != null,
+            extra_keys = extra_keys,
+            target_extra_keys = setOf(EXTRA_OPEN_EMAIL_ID, EXTRA_OPEN_SESSIONS),
+        )
+        if (plain) {
+            pending_launch.launch_folder.value = org.astermail.android.mail.launch_folder_store.load(this)
+        }
     }
 
     private fun consume_share_intent(intent: Intent?) {
@@ -396,6 +410,20 @@ class pending_launch_state {
     val pending_reveal_folder_tokens = mutableStateOf<List<String>?>(null)
     val pending_share = mutableStateOf<org.astermail.android.share.SharePayload?>(null)
     val pending_share_token = mutableStateOf("")
+    val launch_folder = mutableStateOf<String?>(null)
+
+    fun has_pending_target(): Boolean =
+        pending_open_email_id.value != null ||
+            pending_reveal_email_id.value != null ||
+            pending_share.value != null ||
+            pending_open_sessions.value ||
+            pending_open_billing.value
+
+    fun take_launch_folder(): String? {
+        val value = launch_folder.value
+        launch_folder.value = null
+        return value
+    }
 }
 
 val local_pending_launch = androidx.compose.runtime.staticCompositionLocalOf<pending_launch_state> {
@@ -1671,8 +1699,22 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     val pending = local_pending_launch.current
     val drawer_state = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var selected_folder by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("inbox") }
-    var inbox_category by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("primary") }
+    val settings_vm: org.astermail.android.settings.SettingsViewModel = org.astermail.android.settings.shared_settings_view_model()
+    val launch_prefs = settings_vm.state.value.preferences
+    val launch_target = remember {
+        val stored = pending.take_launch_folder()
+        org.astermail.android.mail.resolve_launch_destination(
+            stored = stored,
+            plain_launch = stored != null,
+            has_pending_target = pending.has_pending_target(),
+            categories_enabled = launch_prefs?.inbox_categories_enabled ?: true,
+            active_category_tabs = launch_prefs
+                ?.let { org.astermail.android.mail.active_category_tabs(it.enabled_categories, emptyList(), 0) }
+                ?: org.astermail.android.mail.CATEGORY_TABS,
+        )
+    }
+    var selected_folder by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(launch_target.folder) }
+    var inbox_category by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(launch_target.category) }
     var filter_kind by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
     var all_mail_include_spam by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var all_mail_include_trash by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
@@ -1698,7 +1740,6 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     val stats = inbox_state.stats
     val label_unread_deltas by mail_vm.label_unread_deltas.collectAsStateWithLifecycle()
 
-    val settings_vm: org.astermail.android.settings.SettingsViewModel = org.astermail.android.settings.shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     androidx.compose.runtime.LaunchedEffect(settings_state.labels) {
         mail_vm.on_labels_loaded(System.identityHashCode(settings_state.labels))

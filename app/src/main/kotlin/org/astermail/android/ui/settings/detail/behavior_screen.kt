@@ -416,6 +416,11 @@ fun BehaviorScreen(
                     on_change = { inbox_categories = it; save_trigger++ },
                 )
                 settings_row_gap(modifier = Modifier)
+                launch_folder_row(
+                    categories_enabled = inbox_categories,
+                    enabled_categories = enabled_categories,
+                )
+                settings_row_gap(modifier = Modifier)
                 choice_group_title(stringResource(R.string.sort_by))
                 listOf(
                     false to stringResource(R.string.sort_newest),

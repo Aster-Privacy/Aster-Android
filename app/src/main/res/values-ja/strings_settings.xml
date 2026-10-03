@@ -89,4 +89,6 @@
     <string name="sign_out_all_other_confirm_message">この端末以外をすべてサインアウトしますか？</string>
     <string name="alias_forward_limit_reached">現在のプランで使えるエイリアスの上限に達しました</string>
     <string name="settings_plan_bullet_daily_emails">1 日あたり 1,000 通</string>
+    <string name="launch_folder">起動時に開く</string>
+    <string name="launch_folder_hint">アプリを開いたときに表示されます。通知やリンクからは引き続き該当のメッセージが開きます。</string>
 </resources>

@@ -89,4 +89,6 @@
     <string name="sign_out_all_other_confirm_message">¿Cerrar sesión en todos los dispositivos menos este?</string>
     <string name="alias_forward_limit_reached">Has llegado al máximo de alias activos de tu plan</string>
     <string name="settings_plan_bullet_daily_emails">1000 correos al día</string>
+    <string name="launch_folder">Abrir al iniciar</string>
+    <string name="launch_folder_hint">Se muestra al abrir la aplicación. Las notificaciones y los enlaces siguen abriendo el mensaje al que apuntan.</string>
 </resources>

@@ -89,4 +89,6 @@
     <string name="sign_out_all_other_confirm_message">要在除此设备外的所有设备上退出登录吗？</string>
     <string name="alias_forward_limit_reached">您的套餐可用的启用别名数量已达上限</string>
     <string name="settings_plan_bullet_daily_emails">每天 1,000 封邮件</string>
+    <string name="launch_folder">启动时打开</string>
+    <string name="launch_folder_hint">打开应用时显示。通知和链接仍会打开其指向的邮件。</string>
 </resources>
