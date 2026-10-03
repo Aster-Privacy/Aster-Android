@@ -3428,4 +3428,5 @@
     <string name="domain_dkim_rotated_auto">تم تدوير مفتاح DKIM. حدّث Aster Mail سجل DNS نيابةً عنك.</string>
     <string name="domain_dkim_notice_title">أضف هذا كسجل DNS جديد</string>
     <string name="domain_dkim_notice_body">يُوقَّع بريدك بالفعل بالمفتاح الجديد. لاجتياز عمليات التحقق من DKIM، أضف سجل TXT هذا لدى مزوّد DNS.</string>
+    <string name="color_swatch_option">اللون %1$d من %2$d</string>
 </resources>

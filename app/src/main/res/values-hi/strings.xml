@@ -3242,4 +3242,5 @@
     <string name="domain_dkim_rotated_auto">DKIM कुंजी बदल दी गई। Aster Mail ने आपके लिए DNS रिकॉर्ड अपडेट कर दिया।</string>
     <string name="domain_dkim_notice_title">इसे नए DNS रिकॉर्ड के रूप में जोड़ें</string>
     <string name="domain_dkim_notice_body">आपके मेल पर पहले से ही नई कुंजी से हस्ताक्षर हो रहे हैं। DKIM जांच पास करने के लिए, अपने DNS प्रदाता पर यह TXT रिकॉर्ड जोड़ें।</string>
+    <string name="color_swatch_option">रंग %1$d / %2$d</string>
 </resources>

@@ -3390,4 +3390,5 @@
     <string name="domain_dkim_rotated_auto">Ключ DKIM обновлен. Aster Mail обновил DNS-запись за вас.</string>
     <string name="domain_dkim_notice_title">Добавьте это как новую DNS-запись</string>
     <string name="domain_dkim_notice_body">Ваши письма уже подписываются новым ключом. Чтобы проходить проверки DKIM, добавьте эту TXT-запись у своего DNS-провайдера.</string>
+    <string name="color_swatch_option">Цвет %1$d из %2$d</string>
 </resources>

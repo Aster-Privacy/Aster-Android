@@ -3335,4 +3335,5 @@
     <string name="domain_dkim_rotated_auto">DKIM 키를 교체했습니다. Aster Mail이 DNS 레코드를 업데이트했습니다.</string>
     <string name="domain_dkim_notice_title">새 DNS 레코드로 추가하세요</string>
     <string name="domain_dkim_notice_body">메일은 이미 새 키로 서명되고 있습니다. DKIM 검사를 통과하려면 DNS 제공업체에서 이 TXT 레코드를 추가하세요.</string>
+    <string name="color_swatch_option">색상 %1$d/%2$d</string>
 </resources>

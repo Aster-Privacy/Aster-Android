@@ -3398,4 +3398,5 @@
     <string name="domain_dkim_rotated_auto">Clé DKIM renouvelée. Aster Mail a mis à jour l\'enregistrement DNS pour vous.</string>
     <string name="domain_dkim_notice_title">Ajoutez ceci comme nouvel enregistrement DNS</string>
     <string name="domain_dkim_notice_body">Vos e-mails sont déjà signés avec la nouvelle clé. Pour réussir les vérifications DKIM, ajoutez cet enregistrement TXT chez votre fournisseur DNS.</string>
+    <string name="color_swatch_option">Couleur %1$d sur %2$d</string>
 </resources>
