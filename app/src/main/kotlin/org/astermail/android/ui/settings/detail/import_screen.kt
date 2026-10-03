@@ -216,17 +216,27 @@ class ImportViewModel @Inject constructor(
             _state.value = _state.value.copy(error = "file_too_large")
             return
         }
-        val total_chunks = ((total_size + CHUNK_SIZE - 1) / CHUNK_SIZE).toInt().coerceAtLeast(1)
         _state.value = _state.value.copy(
             is_uploading = true,
             current_chunk = 0,
-            total_chunks = total_chunks,
+            total_chunks = chunk_count(total_size),
             file_name = file_name,
             error = null,
             job_created = false,
         )
         viewModelScope.launch {
             try {
+                val size = if (total_size <= 0 && open_stream != null) {
+                    withContext(Dispatchers.IO) { measure_stream(open_stream) }
+                } else {
+                    total_size
+                }
+                if (size > MAX_TOTAL_BYTES) {
+                    _state.value = _state.value.copy(is_uploading = false, error = "file_too_large")
+                    return@launch
+                }
+                val total_chunks = chunk_count(size)
+                _state.value = _state.value.copy(total_chunks = total_chunks)
                 val folder_label_map = if (kind == "mbox" && open_stream != null) {
                     withContext(Dispatchers.IO) { resolve_import_folders(open_stream) }
                 } else {
@@ -237,14 +247,14 @@ class ImportViewModel @Inject constructor(
                         kind = kind,
                         total_chunks = total_chunks,
                         chunk_size = CHUNK_SIZE,
-                        total_size = total_size,
+                        total_size = size,
                     ))
                 }
                 val token = init.upload_token
                 var offset = 0L
                 var index = 0
-                while (offset < total_size) {
-                    val len = minOf(CHUNK_SIZE.toLong(), total_size - offset).toInt()
+                while (offset < size) {
+                    val len = minOf(CHUNK_SIZE.toLong(), size - offset).toInt()
                     val chunk = withContext(Dispatchers.IO) { read_bytes(offset, len) }
                     val sha = MessageDigest.getInstance("SHA-256").digest(chunk)
                     val sha_b64 = Base64.encodeToString(sha, Base64.NO_WRAP)
@@ -282,6 +292,22 @@ class ImportViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    private fun chunk_count(total_size: Long): Int =
+        ((total_size + CHUNK_SIZE - 1) / CHUNK_SIZE).toInt().coerceAtLeast(1)
+
+    private fun measure_stream(open_stream: () -> java.io.InputStream?): Long {
+        var size = 0L
+        open_stream()?.use { stream ->
+            val buf = ByteArray(8192)
+            var n = stream.read(buf)
+            while (n >= 0 && size <= MAX_TOTAL_BYTES) {
+                size += n
+                n = stream.read(buf)
+            }
+        }
+        return size
     }
 
     private suspend fun resolve_import_folders(open_stream: () -> java.io.InputStream?): Map<String, String>? {
@@ -434,13 +460,6 @@ fun ImportScreen(
                 if (size_idx >= 0) size = cursor.getLong(size_idx)
             }
         }
-        if (size <= 0) {
-            resolver.openInputStream(uri)?.use { stream ->
-                val buf = ByteArray(8192)
-                var n = stream.read(buf)
-                while (n >= 0) { size += n; n = stream.read(buf) }
-            }
-        }
         val final_size = size
         val final_name = file_name
         scope.launch {
@@ -451,11 +470,15 @@ fun ImportScreen(
                 var read = 0
                 stream.use { s ->
                     var remaining = offset
-                    val skip_buf = ByteArray(8192)
                     while (remaining > 0) {
-                        val n = s.read(skip_buf, 0, minOf(skip_buf.size.toLong(), remaining).toInt())
-                        if (n <= 0) break
-                        remaining -= n
+                        val skipped = s.skip(remaining)
+                        if (skipped > 0) {
+                            remaining -= skipped
+                        } else if (s.read() >= 0) {
+                            remaining -= 1
+                        } else {
+                            break
+                        }
                     }
                     while (read < len) {
                         val n = s.read(bytes, read, len - read)
