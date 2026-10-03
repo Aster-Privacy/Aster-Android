@@ -21,6 +21,7 @@
 
 package org.astermail.android.contacts
 
+import java.io.ByteArrayOutputStream
 import java.util.Locale
 import org.astermail.android.ui.contacts.Contact
 import org.astermail.android.ui.contacts.ContactEntry
@@ -104,10 +105,55 @@ private fun fold_line(line: String): String {
     return out.toString()
 }
 
+private fun is_quoted_printable(params: List<String>): Boolean =
+    params.any { param ->
+        val trimmed = param.trim()
+        trimmed.equals("QUOTED-PRINTABLE", ignoreCase = true) ||
+            (
+                trimmed.substringBefore("=").trim().equals("ENCODING", ignoreCase = true) &&
+                    trimmed.substringAfter("=").trim().equals("QUOTED-PRINTABLE", ignoreCase = true)
+                )
+    }
+
+private fun is_quoted_printable_line(line: String): Boolean {
+    val separator = line.indexOf(':')
+    if (separator <= 0) return false
+    return is_quoted_printable(line.substring(0, separator).split(";").drop(1))
+}
+
+private fun decode_quoted_printable(value: String, charset_name: String): String {
+    val charset = runCatching { charset(charset_name.ifBlank { "UTF-8" }) }.getOrDefault(Charsets.UTF_8)
+    val bytes = ByteArrayOutputStream()
+    var index = 0
+    while (index < value.length) {
+        val character = value[index]
+        if (character == '=') {
+            val high = if (index + 1 < value.length) Character.digit(value[index + 1], 16) else -1
+            val low = if (index + 2 < value.length) Character.digit(value[index + 2], 16) else -1
+            if (high >= 0 && low >= 0) {
+                bytes.write(high * 16 + low)
+                index += 3
+                continue
+            }
+            if (index + 1 == value.length) break
+        }
+        val code_point = value.codePointAt(index)
+        val encoded = String(Character.toChars(code_point)).toByteArray(charset)
+        bytes.write(encoded, 0, encoded.size)
+        index += Character.charCount(code_point)
+    }
+    return String(bytes.toByteArray(), charset)
+}
+
 private fun unfold(text: String): List<String> {
     val raw = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
     val lines = mutableListOf<String>()
     for (line in raw) {
+        val previous = lines.lastOrNull()
+        if (previous != null && previous.endsWith("=") && is_quoted_printable_line(previous)) {
+            lines[lines.size - 1] = previous.dropLast(1) + line
+            continue
+        }
         if (line.startsWith(" ") || line.startsWith("\t")) {
             if (lines.isNotEmpty()) {
                 lines[lines.size - 1] = lines[lines.size - 1] + line.substring(1)
@@ -285,6 +331,7 @@ fun contact_share_file_name(contact: Contact): String {
 
 private val IGNORED_TYPE_TOKENS = setOf(
     "pref", "internet", "voice", "x400", "dom", "intl", "postal", "parcel", "text", "msg",
+    "quoted-printable",
 )
 
 private fun clean_ab_label(raw: String): String =
@@ -403,7 +450,13 @@ fun parse_vcards(raw_text: String): List<Contact> {
             continue
         }
         val fields = current ?: continue
-        val parsed = parse_line(line) ?: continue
+        val parsed = parse_line(line)?.let {
+            if (is_quoted_printable(it.params)) {
+                it.copy(value = decode_quoted_printable(it.value, param_value(it.params, "CHARSET")))
+            } else {
+                it
+            }
+        } ?: continue
         val types = types_of(parsed.params)
         val value = unescape_vcard(parsed.value).trim()
         if (value.isEmpty() && parsed.key != "N") continue
