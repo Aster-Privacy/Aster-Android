@@ -46,15 +46,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-//
-// Reproduces the "tapping an email in select mode does nothing" report: the
-// 32dp star control stayed interactive while the inbox was in selection mode,
-// so every tap landing in the row's top-right corner toggled a star instead of
-// toggling the selection, and the row looked unchanged.
-//
 @RunWith(AndroidJUnit4::class)
 class InboxSelectionTapTest {
-
     @get:Rule
     val compose_rule = createComposeRule()
 
@@ -117,10 +110,6 @@ class InboxSelectionTapTest {
         compose_rule.waitForIdle()
     }
 
-    //
-    // In selection mode a tap on the star control must select the conversation
-    // and must not star it.
-    //
     @Test
     fun tap_on_star_selects_in_select_mode() {
         set_harness(select_mode = true)
@@ -129,9 +118,6 @@ class InboxSelectionTapTest {
         assertEquals(listOf("m1"), selection_log)
     }
 
-    //
-    // Outside selection mode the star keeps working exactly as before.
-    //
     @Test
     fun tap_on_star_stars_outside_select_mode() {
         set_harness(select_mode = false)
@@ -140,10 +126,6 @@ class InboxSelectionTapTest {
         assertEquals(emptyList<String>(), selection_log)
     }
 
-    //
-    // Selection mode must keep exposing the row as one clickable node, so screen
-    // readers still announce the sender and subject together.
-    //
     @Test
     fun the_row_stays_one_clickable_node_for_screen_readers() {
         set_harness(select_mode = true)

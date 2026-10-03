@@ -239,8 +239,6 @@ fun AccessibilityScreen(
         if (prefs == null || !state.preferences_authoritative) {
             preferences_load_placeholder()
         } else {
-
-            // ── Font Size ──────────────────────────────────────────────────────
             section_label(stringResource(R.string.font_size))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 listOf(
@@ -260,7 +258,6 @@ fun AccessibilityScreen(
 
             v_gap(AsterSpacing.lg)
 
-            // ── Vision ─────────────────────────────────────────────────────────
             section_label(stringResource(R.string.vision))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 access_toggle_row(
@@ -290,7 +287,6 @@ fun AccessibilityScreen(
 
             v_gap(AsterSpacing.lg)
 
-            // ── Reading ────────────────────────────────────────────────────────
             section_label(stringResource(R.string.reading))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 access_toggle_row(
@@ -312,7 +308,6 @@ fun AccessibilityScreen(
 
             v_gap(AsterSpacing.lg)
 
-            // ── Motion & Layout ────────────────────────────────────────────────
             section_label(stringResource(R.string.motion_layout))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 access_toggle_row(
@@ -334,7 +329,6 @@ fun AccessibilityScreen(
 
             v_gap(AsterSpacing.lg)
 
-            // ── Network ────────────────────────────────────────────────────────
             section_label(stringResource(R.string.network))
             AsterCard(
                 modifier = Modifier

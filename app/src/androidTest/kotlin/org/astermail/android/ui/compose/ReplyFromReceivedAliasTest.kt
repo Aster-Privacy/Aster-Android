@@ -46,15 +46,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-//
-// Exercises the REAL production reply-From resolution (compute_received_on_alias /
-// resolve_reply_from_alias in reply_from_resolver.kt, the exact functions
-// ComposeScreen calls). The compose harness drives the same rememberSaveable +
-// LaunchedEffect state pattern as ComposeScreen using those production functions.
-//
 @RunWith(AndroidJUnit4::class)
 class ReplyFromReceivedAliasTest {
-
     @get:Rule
     val compose_rule = createComposeRule()
 
@@ -125,9 +118,6 @@ class ReplyFromReceivedAliasTest {
         assertEquals(received_alias, from)
     }
 
-    // Drives the real production resolver through ComposeScreen's actual state
-    // pattern: initial value at first composition (thread not yet loaded), then
-    // the async thread load supplies the received alias via LaunchedEffect.
     @Composable
     private fun reply_from_harness(
         received_on_alias: String?,
@@ -158,12 +148,10 @@ class ReplyFromReceivedAliasTest {
         var received by mutableStateOf<String?>(null)
         compose_rule.setContent { AsterTheme { reply_from_harness(received, null) } }
         compose_rule.waitForIdle()
-        // before the thread loads, nothing owned resolved -> pinned fallback
         compose_rule.onNodeWithTag("from_value").assertTextEquals(pinned)
 
         compose_rule.runOnUiThread { received = received_alias }
         compose_rule.waitForIdle()
-        // async thread load supplies the received alias -> From snaps to it
         compose_rule.onNodeWithTag("from_value").assertTextEquals(received_alias)
     }
 
@@ -179,7 +167,6 @@ class ReplyFromReceivedAliasTest {
 
         compose_rule.runOnUiThread { received = received_alias }
         compose_rule.waitForIdle()
-        // manual choice must not be overridden by the late received-alias resolve
         compose_rule.onNodeWithTag("from_value").assertTextEquals(other_alias)
     }
 }

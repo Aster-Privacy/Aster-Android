@@ -27,7 +27,7 @@ End-to-end UI tests for the Aster Mail Android app, run against a real device.
 
 4. **Create `.maestro/.env`** with test account credentials (copy from `.env.example`).
 
-## Turnstile / CAPTCHA constraint (READ THIS FIRST)
+## Turnstile and CAPTCHA
 
 The prod sign-in and register screens require Cloudflare Turnstile, which Maestro
 cannot solve automatically. The flow kit is built around this reality:
@@ -109,7 +109,7 @@ tags:
 - takeScreenshot: open_inbox
 ```
 
-Use **text selectors** by default — they survive testTag refactors and match what a
+Use **text selectors** by default, because they survive testTag refactors and match what a
 human sees. For ambiguous text (e.g. a button labeled "Cancel" appearing twice),
 use `index` or a sibling `containsChild`.
 

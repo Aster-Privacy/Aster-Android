@@ -49,18 +49,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-//
-// Reproduces the "cannot select search results" bug: SearchScreen rendered its
-// result rows with on_long_click = {}, so long-pressing a result did nothing
-// and there was no way to bulk-delete from search. The fix wires a selection
-// mode (search_results_list + search_select_top_bar + search_select_bottom_bar)
-// mirroring the inbox. These tests drive the real composables end to end:
-// long-press selects, taps toggle, select-all covers every result, and delete
-// removes exactly the selected rows.
-//
 @RunWith(AndroidJUnit4::class)
 class SearchSelectionDeleteTest {
-
     @get:Rule
     val compose_rule = createComposeRule()
 

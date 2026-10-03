@@ -39,7 +39,6 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class StarInstantUpdateTest {
-
     @get:Rule
     val compose_rule = createComposeRule()
 
@@ -83,8 +82,6 @@ class StarInstantUpdateTest {
         }
     }
 
-    // The fixed fingerprint folds per-item flags in, so toggling a star recomputes
-    // `threads` and the rendered star state flips immediately.
     @Test
     fun star_reflects_instantly_with_fixed_fingerprint() {
         compose_rule.setContent { harness(::new_fingerprint) }
@@ -95,9 +92,6 @@ class StarInstantUpdateTest {
         compose_rule.onNodeWithText("starred=true").assertIsDisplayed()
     }
 
-    // Regression guard: the previous fingerprint (size + first/last id) ignored
-    // per-item flags, so `threads` never recomputed on a star toggle and the star
-    // stayed stale. This asserts that broken behavior to lock the fix in place.
     @Test
     fun star_stays_stale_with_old_fingerprint() {
         compose_rule.setContent { harness(::old_fingerprint) }
@@ -105,7 +99,6 @@ class StarInstantUpdateTest {
         compose_rule.onNodeWithText("starred=false").assertIsDisplayed()
         compose_rule.onNodeWithText("toggle").performClick()
         compose_rule.waitForIdle()
-        // Bug: still reads the stale ThreadRow because the fingerprint did not change.
         compose_rule.onNodeWithText("starred=false").assertIsDisplayed()
     }
 }

@@ -45,23 +45,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-//
-// Regression guard for the 500-600 alias ANR crash (Discord report: opening
-// Settings > Aliases with ~600 aliases froze and the app was killed after ~5s).
-//
-// Root cause: aliases_tab rendered every alias eagerly with forEachIndexed inside
-// the detail scaffold's non-lazy verticalScroll Column, so all ~600 heavy rows
-// (Text + Switch + two IconButtons each) were composed, measured and laid out on
-// the main thread in one pass -> ANR at the 5s watchdog.
-//
-// Fix: render the alias list with a LazyColumn so only the visible rows compose.
-// This test drives the real production row composable (alias_list_row) through a
-// LazyColumn built exactly the way aliases_tab now builds it, and proves that a
-// 600-item list composes only the on-screen rows (never all 600 at once).
-//
 @RunWith(AndroidJUnit4::class)
 class AliasesLargeListTest {
-
     @get:Rule
     val compose_rule = createComposeRule()
 
@@ -103,35 +88,18 @@ class AliasesLargeListTest {
         }
         compose_rule.waitForIdle()
 
-        // The first row renders immediately (list is usable, no freeze).
         compose_rule.onNodeWithText("alias.0@astermail.org").assertIsDisplayed()
 
-        // The far-end row is NOT composed on entry - this is what proves the list
-        // is lazy. Under the old eager forEachIndexed all 600 composed up front,
-        // which is exactly the main-thread work that produced the ANR.
         compose_rule.onNodeWithText("alias.$count@astermail.org").assertDoesNotExist()
         compose_rule.onNodeWithText("alias.599@astermail.org").assertDoesNotExist()
 
-        // Scrolling brings the last row into composition on demand.
         compose_rule.onNodeWithTag("alias_list").performScrollToIndex(count - 1)
         compose_rule.waitForIdle()
         compose_rule.onNodeWithText("alias.599@astermail.org").assertIsDisplayed()
 
-        // ...and the early rows are recycled back out of composition.
         compose_rule.onNodeWithText("alias.0@astermail.org").assertDoesNotExist()
     }
 
-    //
-    // Same 600 aliases, but rendered through the EXACT production nesting the real
-    // AliasesScreen uses: detail_scaffold(scrollable = false) -> Column content ->
-    // ScrollableTabRow -> Box(Modifier.weight(1f).fillMaxSize()) -> LazyColumn.
-    //
-    // This guards the structural half of the fix. A LazyColumn given unbounded
-    // height inside a Column throws "infinite max height" at measure time; if the
-    // weight/non-scroll-scaffold wiring were wrong this test would crash on entry
-    // or (if it fell back to composing everything) the far-end row would already
-    // exist without scrolling. Neither happens -> the real nesting is lazy.
-    //
     @Test
     fun aliases_screen_nesting_stays_lazy_with_600_aliases() {
         val aliases = sample_aliases()
@@ -167,14 +135,10 @@ class AliasesLargeListTest {
         }
         compose_rule.waitForIdle()
 
-        // Screen renders (did not crash on the nested LazyColumn) and the first
-        // row is visible.
         compose_rule.onNodeWithText("alias.0@astermail.org").assertIsDisplayed()
 
-        // The far row is not composed up front -> lazy inside the real nesting.
         compose_rule.onNodeWithText("alias.599@astermail.org").assertDoesNotExist()
 
-        // Scrolling the list inside the weighted Box still works.
         compose_rule.onNodeWithTag("alias_list").performScrollToIndex(count - 1)
         compose_rule.waitForIdle()
         compose_rule.onNodeWithText("alias.599@astermail.org").assertIsDisplayed()

@@ -45,19 +45,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-//
-// Reproduces the "search results lost on back" bug: SearchScreen held its
-// query (free_text / operator_chips / active_filter) in plain remember state.
-// Navigation-compose keeps each destination's back stack entry inside a
-// SaveableStateHolder and DISPOSES the search composition while mail_detail
-// is on top, so on back the plain remember state re-initialised to empty and
-// the results list vanished. The fix moves the query into rememberSaveable
-// (with a listSaver for the operator chips), which the SaveableStateHolder
-// preserves across the disposal. See search_screen.kt.
-//
 @RunWith(AndroidJUnit4::class)
 class SearchQuerySurvivesBackNavTest {
-
     @get:Rule
     val compose_rule = createComposeRule()
 
