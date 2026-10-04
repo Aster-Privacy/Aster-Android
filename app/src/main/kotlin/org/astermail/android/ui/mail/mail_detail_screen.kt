@@ -192,6 +192,7 @@ import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.disabled_surface_color
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.ui.common.vertical_scroll_indicator
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
@@ -1320,6 +1321,7 @@ fun MailDetailScreen(
                 state = list_state,
                 modifier = Modifier
                     .fillMaxSize()
+                    .vertical_scroll_indicator(list_state, bottom_inset = bottom_bar_height)
                     .detail_content_handoff(email_id, detail_phase)
                     .clipToBounds()
                     .pointerInput(on_next, on_previous) {
