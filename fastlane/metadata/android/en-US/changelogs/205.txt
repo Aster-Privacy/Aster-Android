@@ -1,0 +1,11 @@
+What's new:
+
+- A message shows how many tracking pixels Aster Mail blocked and which domains they came from.
+- A scroll indicator shows your position in a long message.
+
+Fixed:
+
+- The inbox keeps its position when you come back from a message.
+- Archived mail stays visible in Sent, and Undo restores it.
+- Emails display at their full height.
+- Images with no source no longer leave empty frames.
