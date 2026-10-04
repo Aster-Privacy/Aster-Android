@@ -3410,11 +3410,44 @@ internal fun compact_banner_action(
 }
 
 @Composable
+internal fun compact_banner_row(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    tint: Color,
+    modifier: Modifier = Modifier,
+    on_icon_click: (() -> Unit)? = null,
+    content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit,
+) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.size(19.dp), contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = tint,
+                modifier = Modifier
+                    .then(
+                        if (on_icon_click != null) {
+                            Modifier
+                                .clip(SquircleShape(6.dp))
+                                .clickable(onClick = on_icon_click)
+                                .padding(2.dp)
+                        } else {
+                            Modifier
+                        },
+                    )
+                    .size(15.dp),
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        content()
+    }
+}
+
+@Composable
 internal fun compact_banner(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     on_icon_click: (() -> Unit)? = null,
-    label_suffix: (@Composable () -> Unit)? = null,
+    secondary_row: (@Composable () -> Unit)? = null,
     actions: @Composable () -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -3427,39 +3460,27 @@ internal fun compact_banner(
             .padding(start = AsterSpacing.md, end = AsterSpacing.sm, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = if (on_icon_click != null) colors.accent_blue else colors.text_secondary,
-            modifier = Modifier
-                .then(
-                    if (on_icon_click != null) {
-                        Modifier
-                            .clip(SquircleShape(6.dp))
-                            .clickable(onClick = on_icon_click)
-                            .padding(2.dp)
-                    } else {
-                        Modifier
-                    },
-                )
-                .size(15.dp),
-        )
-        Spacer(Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
-            if (label.isNotEmpty() || label_suffix == null) {
-                Text(
-                    text = label,
-                    color = colors.text_secondary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = if (expanded) 6 else 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { expanded = !expanded },
-                )
+            if (label.isNotEmpty() || secondary_row == null) {
+                compact_banner_row(
+                    icon = icon,
+                    tint = if (on_icon_click != null) colors.accent_blue else colors.text_secondary,
+                    on_icon_click = on_icon_click,
+                ) {
+                    Text(
+                        text = label,
+                        color = colors.text_secondary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = if (expanded) 6 else 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { expanded = !expanded },
+                    )
+                }
             }
-            label_suffix?.invoke()
+            secondary_row?.invoke()
         }
         Spacer(Modifier.width(6.dp))
         actions()
@@ -3677,8 +3698,10 @@ internal fun external_content_banner(
         icon = TablerIcons.PhotoOff,
         label = label,
         on_icon_click = open_details,
-        label_suffix = if (counts.tracker_count > 0) ({
-            Row(
+        secondary_row = if (counts.tracker_count > 0) ({
+            compact_banner_row(
+                icon = TablerIcons.ShieldCheck,
+                tint = colors.success,
                 modifier = Modifier
                     .clip(SquircleShape(6.dp))
                     .then(
@@ -3690,21 +3713,14 @@ internal fun external_content_banner(
                     )
                     .testTag("banner_trackers")
                     .padding(vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(
-                    imageVector = TablerIcons.ShieldCheck,
-                    contentDescription = null,
-                    tint = colors.success,
-                    modifier = Modifier.size(14.dp),
-                )
-                Spacer(Modifier.width(4.dp))
                 Text(
                     text = tracker_label,
                     color = if (open_trackers != null) colors.accent_blue else colors.text_secondary,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
-                    maxLines = 1,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
             }
         }) else null,
