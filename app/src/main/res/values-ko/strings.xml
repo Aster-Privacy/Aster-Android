@@ -2437,6 +2437,8 @@
     <string name="spam_trash_hidden_notice">스팸과 휴지통에 검색과 일치하는 메일이 있습니다.</string>
     <string name="view_spam_trash_messages">메일 보기</string>
     <string name="search_scope_anywhere">메일, 스팸, 휴지통</string>
+    <string name="search_scope_only_in">%1$s에서만</string>
+    <string name="search_scope_everywhere">모든 곳</string>
     <string name="advanced_has_words">포함하는 단어</string>
     <string name="advanced_date_within">기간</string>
     <string name="advanced_search_scope">검색 범위</string>

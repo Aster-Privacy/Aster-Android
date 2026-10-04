@@ -235,3 +235,46 @@ internal fun matches_attachment_type(item: InboxItem, type: String): Boolean {
 
     return extensions.any { haystack.contains(it) }
 }
+
+internal enum class ScopeSuggestionKind {
+    NARROW,
+    WIDEN,
+}
+
+internal data class ScopeSuggestion(
+    val kind: ScopeSuggestionKind,
+    val folder: String,
+)
+
+private fun narrow_operator(folder: String): SearchOperator? =
+    org.astermail.android.mail.search_narrow_query(folder)?.let { parse_query(it).operators.firstOrNull() }
+
+internal fun scope_suggestion(folder: String?, ops: List<SearchOperator>): ScopeSuggestion? {
+    if (folder == null) return null
+    val narrow = narrow_operator(folder) ?: return null
+    val effective = effective_operators(ops)
+    val narrowed = effective.any { it == narrow }
+    val scoped = effective.any { !it.negated && it.key == "in" }
+    val default_scoped = org.astermail.android.mail.search_scope_query(folder) != null
+
+    return when {
+        narrowed && default_scoped -> ScopeSuggestion(ScopeSuggestionKind.WIDEN, folder)
+        narrowed || scoped -> null
+        else -> ScopeSuggestion(ScopeSuggestionKind.NARROW, folder)
+    }
+}
+
+internal fun apply_scope_suggestion(
+    ops: List<SearchOperator>,
+    suggestion: ScopeSuggestion,
+): List<SearchOperator> {
+    val base = ops.filterNot { !it.negated && it.key == "in" }
+
+    return when (suggestion.kind) {
+        ScopeSuggestionKind.WIDEN -> base + SearchOperator(false, "in", "anywhere")
+        ScopeSuggestionKind.NARROW -> {
+            val narrow = narrow_operator(suggestion.folder) ?: return ops
+            base.filterNot { it == narrow } + narrow
+        }
+    }
+}

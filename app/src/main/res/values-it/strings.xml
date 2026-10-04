@@ -2452,6 +2452,8 @@
     <string name="spam_trash_hidden_notice">Alcuni messaggi in Spam e Cestino corrispondono alla tua ricerca.</string>
     <string name="view_spam_trash_messages">Visualizza messaggi</string>
     <string name="search_scope_anywhere">Posta, spam e cestino</string>
+    <string name="search_scope_only_in">Solo in %1$s</string>
+    <string name="search_scope_everywhere">Ovunque</string>
     <string name="advanced_has_words">Contiene le parole</string>
     <string name="advanced_date_within">Intervallo di date</string>
     <string name="advanced_search_scope">Cerca in</string>

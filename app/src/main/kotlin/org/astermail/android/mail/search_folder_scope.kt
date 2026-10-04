@@ -23,19 +23,22 @@ package org.astermail.android.mail
 
 private val search_fetched_item_types = setOf("sent", "draft")
 
+val search_corpus_folders = listOf("sent", "drafts")
+
 fun search_scope_query(folder: String): String? = when (folder) {
     "trash" -> "in:trash"
-    "archive" -> "in:archive"
     "spam" -> "in:spam"
-    "starred" -> "is:starred"
-    "sent" -> "in:sent"
-    "drafts" -> "in:drafts"
     else -> null
 }
 
-fun search_folder_for_scope(value: String): String? = when (value) {
-    "sent" -> "sent"
-    "drafts", "draft" -> "drafts"
+fun search_narrow_query(folder: String): String? = when (folder) {
+    "inbox" -> "in:inbox"
+    "sent" -> "in:sent"
+    "drafts" -> "in:drafts"
+    "archive" -> "in:archive"
+    "starred" -> "is:starred"
+    "trash" -> "in:trash"
+    "spam" -> "in:spam"
     else -> null
 }
 

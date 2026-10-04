@@ -2479,6 +2479,8 @@
     <string name="spam_trash_hidden_notice">Certains messages dans Spam et Corbeille correspondent à votre recherche.</string>
     <string name="view_spam_trash_messages">Voir les messages</string>
     <string name="search_scope_anywhere">Messages, spam et corbeille</string>
+    <string name="search_scope_only_in">Uniquement dans %1$s</string>
+    <string name="search_scope_everywhere">Partout</string>
     <string name="advanced_has_words">Contient les mots</string>
     <string name="advanced_date_within">Période</string>
     <string name="advanced_search_scope">Rechercher dans</string>

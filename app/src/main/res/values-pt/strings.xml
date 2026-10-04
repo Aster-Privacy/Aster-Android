@@ -2452,6 +2452,8 @@
     <string name="spam_trash_hidden_notice">Algumas mensagens no Spam e no Lixo correspondem à sua pesquisa.</string>
     <string name="view_spam_trash_messages">Ver mensagens</string>
     <string name="search_scope_anywhere">E-mail, spam e Lixo</string>
+    <string name="search_scope_only_in">Apenas em %1$s</string>
+    <string name="search_scope_everywhere">Em todo o lado</string>
     <string name="advanced_has_words">Contém as palavras</string>
     <string name="advanced_date_within">Data no intervalo de</string>
     <string name="advanced_search_scope">Pesquisar em</string>

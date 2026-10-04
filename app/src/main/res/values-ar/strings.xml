@@ -2476,6 +2476,8 @@
     <string name="spam_trash_hidden_notice">بعض الرسائل في البريد العشوائي والمهملات تطابق بحثك.</string>
     <string name="view_spam_trash_messages">عرض الرسائل</string>
     <string name="search_scope_anywhere">البريد والبريد العشوائي والمهملات</string>
+    <string name="search_scope_only_in">فقط في %1$s</string>
+    <string name="search_scope_everywhere">في كل مكان</string>
     <string name="advanced_has_words">يحتوي على الكلمات</string>
     <string name="advanced_date_within">نطاق التاريخ</string>
     <string name="advanced_search_scope">البحث في</string>

@@ -2445,6 +2445,8 @@
     <string name="spam_trash_hidden_notice">Einige Nachrichten in Spam und Papierkorb entsprechen Ihrer Suche.</string>
     <string name="view_spam_trash_messages">Nachrichten ansehen</string>
     <string name="search_scope_anywhere">E-Mails, Spam &amp; Papierkorb</string>
+    <string name="search_scope_only_in">Nur in %1$s</string>
+    <string name="search_scope_everywhere">Überall</string>
     <string name="advanced_has_words">Hat die Wörter</string>
     <string name="advanced_date_within">Zeitraum</string>
     <string name="advanced_search_scope">Suchen in</string>

@@ -2444,6 +2444,8 @@
     <string name="spam_trash_hidden_notice">Sommige berichten in Spam en Prullenbak komen overeen met je zoekopdracht.</string>
     <string name="view_spam_trash_messages">Berichten bekijken</string>
     <string name="search_scope_anywhere">Mail, spam en prullenbak</string>
+    <string name="search_scope_only_in">Alleen in %1$s</string>
+    <string name="search_scope_everywhere">Overal</string>
     <string name="advanced_has_words">Bevat de woorden</string>
     <string name="advanced_date_within">Datum binnen</string>
     <string name="advanced_search_scope">Zoeken in</string>

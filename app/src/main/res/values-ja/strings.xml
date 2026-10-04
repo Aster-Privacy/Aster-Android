@@ -2437,6 +2437,8 @@
     <string name="spam_trash_hidden_notice">迷惑メールとゴミ箱に検索条件に一致するメールがあります。</string>
     <string name="view_spam_trash_messages">メールを表示</string>
     <string name="search_scope_anywhere">メール、迷惑メール、ゴミ箱</string>
+    <string name="search_scope_only_in">%1$sのみ</string>
+    <string name="search_scope_everywhere">すべての場所</string>
     <string name="advanced_has_words">含む言葉</string>
     <string name="advanced_date_within">期間</string>
     <string name="advanced_search_scope">検索対象</string>

@@ -2444,6 +2444,8 @@
     <string name="spam_trash_hidden_notice">Spam ve Çöp Kutusundaki bazı mesajlar aramanızla eşleşiyor.</string>
     <string name="view_spam_trash_messages">Mesajları görüntüle</string>
     <string name="search_scope_anywhere">Posta, spam ve çöp kutusu</string>
+    <string name="search_scope_only_in">Yalnızca %1$s içinde</string>
+    <string name="search_scope_everywhere">Her yerde</string>
     <string name="advanced_has_words">Şu kelimeleri içeriyor</string>
     <string name="advanced_date_within">Tarih aralığı</string>
     <string name="advanced_search_scope">Şurada ara</string>

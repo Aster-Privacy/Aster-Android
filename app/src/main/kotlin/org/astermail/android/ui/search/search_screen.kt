@@ -416,6 +416,7 @@ fun SearchScreen(
     on_open_email: (String) -> Unit,
     on_open_draft: (String) -> Unit = on_open_email,
     initial_query: String = "",
+    origin_folder: String? = null,
     mail_vm: MailViewModel = hiltViewModel(),
 ) {
     val colors = AsterMaterial.colors
@@ -528,17 +529,19 @@ fun SearchScreen(
 
     val parsed = remember(query) { parse_query(query.trim()) }
 
-    val scope_folders = remember(parsed) {
-        effective_operators(parsed.operators)
-            .filter { !it.negated && it.key == "in" }
-            .mapNotNull { org.astermail.android.mail.search_folder_for_scope(it.value) }
-            .distinct()
-    }
-    LaunchedEffect(scope_folders) {
-        scope_folders.forEach { mail_vm.load_search_folder(it) }
+    val has_query = query.isNotBlank() || active_filter != null
+
+    var corpus_folders_requested by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(has_query) {
+        if (has_query && !corpus_folders_requested) {
+            corpus_folders_requested = true
+            org.astermail.android.mail.search_corpus_folders.forEach { mail_vm.load_search_folder(it) }
+        }
     }
 
-    val has_query = query.isNotBlank() || active_filter != null
+    val suggestion = remember(origin_folder, operator_chips) {
+        scope_suggestion(origin_folder, operator_chips)
+    }
 
     val lock_revision by org.astermail.android.folders.folder_lock_store.revision.collectAsState()
     val visible_corpus = remember(search_state.all_items, lock_revision) {
@@ -795,7 +798,8 @@ fun SearchScreen(
             )
         }
 
-        if (custom_chips.isNotEmpty()) {
+        val shown_suggestion = suggestion?.takeIf { has_query && !select_mode }
+        if (custom_chips.isNotEmpty() || shown_suggestion != null) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -806,6 +810,11 @@ fun SearchScreen(
                 custom_chips.forEach { op ->
                     operator_chip(op) {
                         operator_chips = operator_chips.filterNot { it === op }
+                    }
+                }
+                if (shown_suggestion != null) {
+                    scope_suggestion_chip(shown_suggestion) {
+                        operator_chips = apply_scope_suggestion(operator_chips, shown_suggestion)
                     }
                 }
             }
@@ -1226,6 +1235,43 @@ private fun operator_chip(op: SearchOperator, on_remove: () -> Unit) {
                 modifier = Modifier.size(14.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun scope_suggestion_chip(suggestion: ScopeSuggestion, on_click: () -> Unit) {
+    val colors = AsterMaterial.colors
+    val label = when (suggestion.kind) {
+        ScopeSuggestionKind.NARROW -> stringResource(
+            R.string.search_scope_only_in,
+            org.astermail.android.ui.mail.folder_display_name(suggestion.folder),
+        )
+        ScopeSuggestionKind.WIDEN -> stringResource(R.string.search_scope_everywhere)
+    }
+    Row(
+        modifier = Modifier
+            .clip(SquircleShape(999.dp))
+            .border(1.dp, colors.accent_blue.copy(alpha = 0.35f), SquircleShape(999.dp))
+            .clickable(role = Role.Button, onClick = on_click)
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .height(22.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = if (suggestion.kind == ScopeSuggestionKind.WIDEN) TablerIcons.World else TablerIcons.Folder,
+            contentDescription = null,
+            tint = colors.accent_blue,
+            modifier = Modifier.size(14.dp),
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = label,
+            color = colors.accent_blue,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
