@@ -41,6 +41,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
@@ -65,6 +66,7 @@ import kotlin.math.sign
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.mail.folder_keeps_archived
 
 const val swipe_claim_slop_multiplier = 1f
 const val swipe_dominance_ratio = 1.2f
@@ -105,6 +107,11 @@ fun is_removing_swipe_action(action: String): Boolean = action in setOf(
     "archive", "trash", "delete", "spam", "move_to_inbox", "unarchive",
     "restore_trash", "unmark_spam", "delete_permanent",
 )
+
+fun archive_removes_row(folder: String): Boolean = !folder_keeps_archived(folder)
+
+fun swipe_action_removes_row(action: String, folder: String): Boolean =
+    is_removing_swipe_action(action) && (action != "archive" || archive_removes_row(folder))
 
 fun swipe_accessibility_actions(
     start_action: String,
@@ -150,11 +157,13 @@ fun swipe_action_row(
     haptic_enabled: Boolean = true,
     list_scrolling: () -> Boolean = { false },
     reset_token: Int = 0,
+    removes_row: (String) -> Boolean = ::is_removing_swipe_action,
     content: @Composable () -> Unit,
 ) {
     val haptics = org.astermail.android.design.remember_haptic()
     var is_dismissed by remember { mutableStateOf(false) }
     val offset_x = remember { Animatable(0f) }
+    val current_removes_row by rememberUpdatedState(removes_row)
     val start_enabled = start_action != "none"
     val end_enabled = end_action != "none"
 
@@ -230,7 +239,7 @@ fun swipe_action_row(
                                 continue
                             }
                             val action = if (travelled > 0f) start_action else end_action
-                            if (is_removing_swipe_action(action)) {
+                            if (current_removes_row(action)) {
                                 is_dismissed = true
                                 launch { offset_x.animateTo(sign(travelled) * limit, tween(180)) }
                             } else {

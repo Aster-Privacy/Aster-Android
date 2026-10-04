@@ -258,6 +258,15 @@ fun reconcile_email_rows(rows: MutableList<Email>, merged: List<Email>) {
     while (rows.size > merged.size) rows.removeAt(rows.size - 1)
 }
 
+private val folders_marking_archived = setOf("sent", "starred", "snoozed")
+
+fun archived_folder_chip(folder: String, is_archived: Boolean, name: String): list_folder_chip? =
+    if (is_archived && folder in folders_marking_archived) {
+        list_folder_chip(name = name, icon = "archive", color = Color(0xFF64748B))
+    } else {
+        null
+    }
+
 private const val UNREAD_MISMATCH_GRACE_MS = 3000L
 
 private const val MIN_FILLED_ROWS = 15
@@ -765,6 +774,7 @@ fun InboxScreen(
                 }
             }
         }
+    val archived_chip_name = stringResource(R.string.archived)
     val state_matches_folder = inbox_state.current_folder == current_folder
     val api_emails = remember(inbox_state.items, settings_state.tags, attachment_ids, settings_state.labels, current_folder, state_matches_folder) {
         if (!state_matches_folder) return@remember null
@@ -772,7 +782,8 @@ fun InboxScreen(
             inbox_item_to_email(
                 if (!it.has_attachments && it.id in attachment_ids) it.copy(has_attachments = true) else it,
                 settings_state.tags,
-                folder_chip = all_mail_folder_chip?.invoke(it),
+                folder_chip = all_mail_folder_chip?.invoke(it)
+                    ?: archived_folder_chip(current_folder, it.is_archived, archived_chip_name),
                 context = toast_context,
             )
         }
@@ -1210,7 +1221,9 @@ fun InboxScreen(
                     return
                 }
                 mail_vm.archive(ids, read_threads.size)
-                emails.removeAll { thread_row_covers(it, read_threads, grouping_enabled) }
+                if (archive_removes_row(current_folder)) {
+                    emails.removeAll { thread_row_covers(it, read_threads, grouping_enabled) }
+                }
             }
             inbox_quick_action_delete_old -> {
                 if (current_folder == "scheduled" || current_folder == "trash") {
@@ -1394,7 +1407,9 @@ fun InboxScreen(
         val thread_count = selected_ids.size
         val to_remove = selected_ids.toSet()
         mail_vm.archive(ids, thread_count)
-        emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+        if (archive_removes_row(current_folder)) {
+            emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+        }
         exit_select_mode()
         notify_if_scope_incomplete(ids.size)
     }
@@ -2251,6 +2266,7 @@ fun InboxScreen(
                                     user_prefs = settings_state.preferences,
                                     cached_geometry = row_geometry,
                                     swipe_reset_token = if (swipe_reset_thread_id == thread.thread_id) swipe_reset_nonce else 0,
+                                    swipe_removes_row = { action -> swipe_action_removes_row(action, current_folder) },
                                 )
                             }
                         }
@@ -3913,6 +3929,7 @@ private fun swipeable_thread_row(
     cached_geometry: SkeletonGeometry? = null,
     list_scrolling: () -> Boolean = { false },
     swipe_reset_token: Int = 0,
+    swipe_removes_row: (String) -> Boolean = ::is_removing_swipe_action,
     refresh_engaged: () -> Boolean = { false },
 ) {
     swipe_action_row(
@@ -3936,6 +3953,7 @@ private fun swipeable_thread_row(
         haptic_enabled = haptic_enabled,
         list_scrolling = list_scrolling,
         reset_token = swipe_reset_token,
+        removes_row = swipe_removes_row,
     ) {
         ThreadInboxRow(
             thread = thread,
@@ -4025,7 +4043,9 @@ private fun execute_swipe_action(
         "archive" -> {
             if (current_folder == "archive") return
             mail_vm.archive(ids, 1)
-            emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
+            if (archive_removes_row(current_folder)) {
+                emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
+            }
         }
         "delete", "trash" -> {
             if (current_folder == "trash") return
