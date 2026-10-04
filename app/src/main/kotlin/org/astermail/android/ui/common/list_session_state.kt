@@ -23,9 +23,14 @@ package org.astermail.android.ui.common
 
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -73,3 +78,21 @@ internal fun session_lazy_list_state_saver(): Saver<LazyListState, Any> = listSa
 @Composable
 fun remember_session_lazy_list_state(): LazyListState =
     rememberSaveable(saver = session_lazy_list_state_saver()) { LazyListState(0, 0) }
+
+class ChangeGate<T>(private var last: T) {
+    fun passes(value: T): Boolean {
+        if (value == last) return false
+        last = value
+        return true
+    }
+}
+
+@Composable
+fun on_return_to_foreground(action: suspend () -> Unit) {
+    val epoch by app_session.foreground_epoch.collectAsStateWithLifecycle()
+    val gate = remember { ChangeGate(epoch) }
+    val latest_action by rememberUpdatedState(action)
+    LaunchedEffect(epoch) {
+        if (gate.passes(epoch)) latest_action()
+    }
+}

@@ -827,8 +827,8 @@ fun InboxScreen(
         reconcile_email_rows(emails, merged)
     }
     val is_refreshing = inbox_state.is_refreshing
-    var sort_mode_user_set by remember { mutableStateOf(false) }
-    var sort_mode by remember { mutableStateOf(InboxSortMode.newest) }
+    var sort_mode_user_set by rememberSaveable { mutableStateOf(false) }
+    var sort_mode by rememberSaveable { mutableStateOf(InboxSortMode.newest) }
     var select_mode by remember { mutableStateOf(false) }
     var select_all_active by remember { mutableStateOf(false) }
     var select_all_loading by remember { mutableStateOf(false) }
@@ -1682,10 +1682,7 @@ fun InboxScreen(
         }
     }
 
-    val foreground_epoch by org.astermail.android.ui.common.app_session.foreground_epoch
-        .collectAsStateWithLifecycle()
-    LaunchedEffect(foreground_epoch) {
-        if (foreground_epoch <= 0) return@LaunchedEffect
+    org.astermail.android.ui.common.on_return_to_foreground {
         list_state.scrollToItem(0)
         header_offset_px.floatValue = 0f
         header_hidden = false
@@ -1778,8 +1775,9 @@ fun InboxScreen(
         settle_clipped_top()
     }
 
+    val select_mode_gate = remember { org.astermail.android.ui.common.ChangeGate(select_mode) }
     LaunchedEffect(select_mode, list_state) {
-        if (select_mode) return@LaunchedEffect
+        if (!select_mode_gate.passes(select_mode) || select_mode) return@LaunchedEffect
         androidx.compose.runtime.withFrameNanos { }
         if (list_state.isScrollInProgress || drag_selecting) return@LaunchedEffect
         if (list_state.firstVisibleItemScrollOffset > 0) {
