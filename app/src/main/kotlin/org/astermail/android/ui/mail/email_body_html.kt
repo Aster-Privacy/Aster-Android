@@ -223,7 +223,6 @@ a{color:$link_hex;text-decoration:underline;-webkit-tap-highlight-color:transpar
 pre,code{overflow-x:auto;max-width:100%}
 #m img[data-aster-failed-label]::after{content:attr(data-aster-failed-label);display:inline-block;padding:4px 8px;border-radius:4px;font-size:12px;background-color:${if (simple_dark) "#1f1f1f" else "#f3f4f6"};color:#9ca3af;border:1px dashed ${if (simple_dark) "#374151" else "#e5e7eb"}}
 img.blocked-image[data-blocked='true']{opacity:1!important;filter:none!important}
-${BlockedImagePlaceholder.tracking_marker_css()}
 $table_css
 a.aster-email-button,#m a.aster-email-button{white-space:nowrap!important;word-break:keep-all!important;overflow-wrap:normal!important;max-width:100%!important}
 .aster_quote,.gmail_quote,.protonmail_quote,.yahoo_quoted,.moz-cite-prefix{display:none}

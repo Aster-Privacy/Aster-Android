@@ -1307,7 +1307,6 @@
     <string name="pending_deletion_error">Ihr Konto konnte nicht wiederhergestellt werden. Bitte versuchen Sie es erneut.</string>
     <string name="image_blocked">Bild blockiert</string>
     <string name="tracking_pixel_blocked">Tracking-Pixel blockiert</string>
-    <string name="tracking_pixels_highlighted">In der Nachricht markiert: %1$d</string>
     <string name="alias_available">Dieser Alias ist verfügbar.</string>
     <string name="alias_not_available">Dieser Alias ist bereits vergeben.</string>
     <string name="alias_check_failed">Verfügbarkeit konnte nicht geprüft werden. Sie können dennoch versuchen, ihn zu erstellen.</string>

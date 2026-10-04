@@ -1306,7 +1306,6 @@
     <string name="pending_deletion_error">Je account kon niet worden hersteld. Probeer het opnieuw.</string>
     <string name="image_blocked">Afbeelding geblokkeerd</string>
     <string name="tracking_pixel_blocked">Trackingpixel geblokkeerd</string>
-    <string name="tracking_pixels_highlighted">Gemarkeerd in het bericht: %1$d</string>
     <string name="alias_available">Deze alias is beschikbaar.</string>
     <string name="alias_not_available">Deze alias is al in gebruik.</string>
     <string name="alias_check_failed">Beschikbaarheid kon niet worden gecontroleerd. Je kunt de alias toch proberen aan te maken.</string>

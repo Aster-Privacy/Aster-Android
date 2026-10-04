@@ -175,7 +175,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.looks_encrypted
@@ -2348,13 +2347,9 @@ internal fun expanded_message(
             EmailHtmlSanitizer.analyze_trackers(msg.body_html)
         }
     }
-    var tracker_highlight by remember(msg.id) { mutableStateOf(TrackingPixelHighlight()) }
-    if (tracker_highlight.list_open) {
-        tracker_details_dialog(
-            report = tracker_report,
-            highlighted_count = tracker_highlight.status_count,
-            on_close = { tracker_highlight = tracker_highlight.close() },
-        )
+    var show_tracker_details by remember(msg.id) { mutableStateOf(false) }
+    if (show_tracker_details) {
+        tracker_details_dialog(report = tracker_report, on_close = { show_tracker_details = false })
     }
     val chevron_rotation by animateFloatAsState(targetValue = if (show_details) 180f else 0f, label = "chevron")
     val auth_status = remember(msg.id, msg.item_type, msg.spf_result, msg.dkim_result, msg.dmarc_result) {
@@ -2592,7 +2587,7 @@ internal fun expanded_message(
                     )
                 },
                 authentication_failed = auth_status == SenderAuthStatus.failed,
-                on_show_trackers = if (tracker_report.total > 0) ({ tracker_highlight = tracker_highlight.open() }) else null,
+                on_show_trackers = if (tracker_report.total > 0) ({ show_tracker_details = true }) else null,
                 raw_headers = msg.raw_headers,
                 show_raw_headers = show_raw_headers,
                 to_recipients = msg.to_addresses.ifEmpty {
@@ -2657,7 +2652,7 @@ internal fun expanded_message(
                     counts = external_counts,
                     on_allow_once = on_load_external,
                     on_always_allow = if (offer_always_allow) on_always_allow_external else null,
-                    on_show_trackers = if (tracker_report.total > 0) ({ tracker_highlight = tracker_highlight.open() }) else null,
+                    on_show_trackers = if (tracker_report.total > 0) ({ show_tracker_details = true }) else null,
                 )
             }
         }
@@ -2770,12 +2765,10 @@ internal fun expanded_message(
                 allow_external = allow_external,
                 inline_images = inline_images,
                 access_token = access_token,
-                highlight_tracking_pixels = tracker_highlight.list_open,
                 on_ready = on_body_ready,
                 on_link_click = on_link_click,
                 on_image_click = on_image_click,
                 on_glass_backing = { body_backing = it },
-                on_tracking_markers_drawn = { tracker_highlight = tracker_highlight.counted(it) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .onGloballyPositioned { body_backing_top = it.positionInParent().y }
@@ -3558,45 +3551,6 @@ private fun blocked_content_details_dialog(
 }
 
 @Composable
-internal fun tracking_pixel_dot() {
-    Box(
-        modifier = Modifier
-            .size((TrackingPixelDot.SIZE_PX + 2 * TrackingPixelDot.OUTER_RING_PX).dp)
-            .background(Color.Black.copy(alpha = 0.35f), CircleShape)
-            .padding((TrackingPixelDot.OUTER_RING_PX - TrackingPixelDot.INNER_RING_PX).dp)
-            .background(Color.White.copy(alpha = 0.9f), CircleShape)
-            .padding(TrackingPixelDot.INNER_RING_PX.dp)
-            .background(Color(android.graphics.Color.parseColor(TrackingPixelDot.FILL)), CircleShape),
-    )
-}
-
-@Composable
-private fun tracking_pixel_highlight_note(count: Int) {
-    val text = stringResource(R.string.tracking_pixels_highlighted, count)
-    val view = androidx.compose.ui.platform.LocalView.current
-    LaunchedEffect(text) {
-        @Suppress("DEPRECATION")
-        view.announceForAccessibility(text)
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 6.dp)
-            .testTag("tracking_pixel_highlight_note")
-            .semantics(mergeDescendants = true) {},
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        tracking_pixel_dot()
-        Spacer(Modifier.width(8.dp))
-        Text(
-            text = text,
-            color = AsterMaterial.colors.text_muted,
-            fontSize = 11.sp,
-        )
-    }
-}
-
-@Composable
 private fun tracker_details_section_label(text: String) {
     Text(
         text = text,
@@ -3611,7 +3565,6 @@ private fun tracker_details_section_label(text: String) {
 internal fun tracker_details_dialog(
     report: EmailHtmlSanitizer.TrackerReport,
     on_close: () -> Unit,
-    highlighted_count: Int? = null,
 ) {
     val colors = AsterMaterial.colors
     org.astermail.android.design.components.AsterDialog(
@@ -3659,9 +3612,6 @@ internal fun tracker_details_dialog(
                                 )
                             }
                         }
-                    }
-                    if (highlighted_count != null && highlighted_count > 0) {
-                        tracking_pixel_highlight_note(highlighted_count)
                     }
                 }
                 if (report.param_counts.isNotEmpty()) {
@@ -5728,12 +5678,10 @@ internal fun email_html_view(
     inline_images: Map<String, String> = emptyMap(),
     access_token: String? = null,
     force_light: Boolean = false,
-    highlight_tracking_pixels: Boolean = false,
     on_ready: () -> Unit = {},
     on_link_click: (String) -> Unit = {},
     on_image_click: (String) -> Unit = {},
     on_glass_backing: (Color) -> Unit = {},
-    on_tracking_markers_drawn: (Int) -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val settings_vm: SettingsViewModel = shared_settings_view_model()
@@ -5772,7 +5720,6 @@ internal fun email_html_view(
         remove_tracking_pixels = tracking_protection_on && settings_state.preferences?.block_tracking_pixels != false,
         block_remote_fonts = settings_state.preferences?.block_remote_fonts != false,
         block_remote_css = settings_state.preferences?.block_remote_css != false,
-        mark_tracking_pixels = !allow_external,
     )
     val dyslexia_font = settings_state.preferences?.dyslexia_font == true
     val underline_links = settings_state.preferences?.underline_links == true
@@ -5992,17 +5939,6 @@ internal fun email_html_view(
     translate_active_ref[0] = translate_active
     val cache_key = remember(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links) { ((((html_cache.key(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) * 31L + (if (dyslexia_font) 1L else 0L)) * 31L + email_font_id.hashCode().toLong()) * 31L + text_zoom.toLong()) * 31L + sanitize_options.hashCode().toLong()) * 31L + (if (underline_links) 1L else 0L) }
     var prebuilt_html by remember(html_hash, allow_external, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links) { mutableStateOf<String?>(if (html.isEmpty()) null else html_cache.get(cache_key)) }
-    val markers_highlighted = highlight_tracking_pixels && !allow_external
-    val displayed_html = remember(prebuilt_html, markers_highlighted) {
-        prebuilt_html?.let { if (markers_highlighted) BlockedImagePlaceholder.with_tracking_markers_shown(it) else it }
-    }
-    val tracking_markers_drawn by rememberUpdatedState(on_tracking_markers_drawn)
-    LaunchedEffect(markers_highlighted, prebuilt_html) {
-        if (!markers_highlighted) return@LaunchedEffect
-        val built = prebuilt_html ?: return@LaunchedEffect
-        val drawn = withContext(Dispatchers.Default) { BlockedImagePlaceholder.count_drawn_tracking_markers(built) }
-        tracking_markers_drawn(drawn)
-    }
     var loaded_built by remember { mutableStateOf("") }
     var loaded_external by remember { mutableStateOf(false) }
     val scale_ref = remember { floatArrayOf(1f) }
@@ -6080,11 +6016,7 @@ internal fun email_html_view(
     fun proxy_html(raw: String): String {
         val cid_normalized = resolve_inline_cids(raw, inline_images)
         if (!allow_external) {
-            val imgs_blocked = EmailHtmlSanitizer.replace_blocked_images(
-                cid_normalized,
-                blocked_image_labels,
-                mark_tracking_pixels = true,
-            )
+            val imgs_blocked = EmailHtmlSanitizer.replace_blocked_images(cid_normalized, blocked_image_labels)
             return EmailHtmlSanitizer.neutralize_blocked_backgrounds(imgs_blocked)
         }
         return proxy_external_urls(cid_normalized, proxy_base)
@@ -6714,7 +6646,7 @@ internal fun email_html_view(
             },
             update = { web_view ->
                 web_ref[0] = web_view
-                val built = displayed_html ?: return@AndroidView
+                val built = prebuilt_html ?: return@AndroidView
                 val is_newsletter = built.contains("data-nl=\"1\"")
                 val wants_white_page = built.contains("data-white=\"1\"")
                 web_view.settings.textZoom = text_zoom

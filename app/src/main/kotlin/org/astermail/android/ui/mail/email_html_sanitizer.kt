@@ -38,7 +38,6 @@ object EmailHtmlSanitizer {
         val remove_tracking_pixels: Boolean = true,
         val block_remote_fonts: Boolean = true,
         val block_remote_css: Boolean = true,
-        val mark_tracking_pixels: Boolean = false,
     )
 
     private val safelist: Safelist by lazy { build_safelist() }
@@ -107,7 +106,7 @@ object EmailHtmlSanitizer {
         val pre = strip_dangerous_blocks(bounded_input(raw_html))
         val head_styles = extract_head_styles(pre)
         val doc = clean_body(pre, options.clean_tracking_links)
-        if (options.remove_tracking_pixels) remove_tracking_pixels(doc, options.mark_tracking_pixels)
+        if (options.remove_tracking_pixels) remove_tracking_pixels(doc)
         scrub_style_blocks(doc, options)
         autolink_bare_urls(doc, options.clean_tracking_links)
         mark_email_buttons(doc)
@@ -120,14 +119,9 @@ object EmailHtmlSanitizer {
         return sb.toString()
     }
 
-    private fun remove_tracking_pixels(doc: Document, keep_position: Boolean) {
+    private fun remove_tracking_pixels(doc: Document) {
         for (img in doc.select("img")) {
-            if (remote_image_source(img) == null || !is_tracking_pixel(img)) continue
-            if (keep_position && !BlockedImagePlaceholder.is_hidden(img)) {
-                img.replaceWith(BlockedImagePlaceholder.tracking_slot())
-            } else {
-                img.remove()
-            }
+            if (remote_image_source(img) != null && is_tracking_pixel(img)) img.remove()
         }
     }
 
@@ -161,13 +155,11 @@ object EmailHtmlSanitizer {
         val param_counts: List<Pair<String, Int>> = emptyList(),
         val pixel_count: Int = 0,
         val cleaned_link_count: Int = 0,
-        val hidden_pixel_count: Int = 0,
         val image_count: Int = 0,
         val pixel_urls: List<String> = emptyList(),
         val image_urls: List<String> = emptyList(),
     ) {
         val total: Int get() = pixel_count + cleaned_link_count
-        val marked_pixel_count: Int get() = pixel_count - hidden_pixel_count
     }
 
     private const val TRACKER_URL_LIST_CAP = 60
@@ -183,7 +175,6 @@ object EmailHtmlSanitizer {
             val doc = clean_body(strip_dangerous_blocks(bounded_input(html)), clean_tracking_links = false)
             val domains = LinkedHashMap<String, Int>()
             var pixels = 0
-            var hidden = 0
             var images = 0
             val pixel_urls = mutableListOf<String>()
             val image_urls = mutableListOf<String>()
@@ -195,7 +186,6 @@ object EmailHtmlSanitizer {
                     continue
                 }
                 pixels++
-                if (BlockedImagePlaceholder.is_hidden(img)) hidden++
                 if (pixel_urls.size < TRACKER_URL_LIST_CAP) pixel_urls.add(src)
                 val host = url_host(src) ?: src
                 domains[host] = (domains[host] ?: 0) + 1
@@ -216,7 +206,6 @@ object EmailHtmlSanitizer {
                 param_counts = params.entries.sortedByDescending { it.value }.map { it.key to it.value },
                 pixel_count = pixels,
                 cleaned_link_count = cleaned_links,
-                hidden_pixel_count = hidden,
                 image_count = images,
                 pixel_urls = pixel_urls,
                 image_urls = image_urls,
@@ -271,7 +260,6 @@ object EmailHtmlSanitizer {
     internal fun replace_blocked_images(
         html: String,
         labels: BlockedImageLabels = BlockedImageLabels.ENGLISH,
-        mark_tracking_pixels: Boolean = false,
     ): String {
         if (html.isBlank()) return html
         val doc = Jsoup.parseBodyFragment(html).apply { outputSettings(raw_output_settings()) }
@@ -282,19 +270,7 @@ object EmailHtmlSanitizer {
                 img.removeAttr("sizes")
                 continue
             }
-            val tracking = is_tracking_pixel(img)
-            BlockedImagePlaceholder.prepare(img, src, tracking, labels)
-            if (mark_tracking_pixels && tracking && !BlockedImagePlaceholder.is_hidden(img)) {
-                img.before(BlockedImagePlaceholder.tracking_marker(labels.tracking_pixel))
-                img.attr("aria-hidden", "true")
-            }
-        }
-        for (slot in doc.select(BlockedImagePlaceholder.TRACKING_SLOT_SELECTOR)) {
-            if (mark_tracking_pixels) {
-                slot.replaceWith(BlockedImagePlaceholder.tracking_marker(labels.tracking_pixel))
-            } else {
-                slot.remove()
-            }
+            BlockedImagePlaceholder.prepare(img, src, is_tracking_pixel(img), labels)
         }
         for (element in doc.select("[srcset]")) {
             element.removeAttr("srcset")

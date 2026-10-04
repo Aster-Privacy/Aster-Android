@@ -18,7 +18,6 @@
 
 package org.astermail.android.ui.mail
 
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 
 internal data class BlockedImageLabels(val image: String, val tracking_pixel: String) {
@@ -71,90 +70,7 @@ internal object BlockedImagePlaceholder {
 
     private val IMPORTANT = Regex("""\s*!\s*important\s*$""", RegexOption.IGNORE_CASE)
 
-    const val TRACKING_MARKER_ATTRIBUTE = "data-tracking-pixel-marker"
-
-    private const val TRACKING_SLOT_ATTRIBUTE = "data-tracking-pixel-slot"
-
-    const val TRACKING_SLOT_SELECTOR = "span[$TRACKING_SLOT_ATTRIBUTE]"
-
-    const val TRACKING_MARKER_SELECTOR = "span[$TRACKING_MARKER_ATTRIBUTE]"
-
-    const val TRACKING_MARKERS_SHOWN_ATTRIBUTE = "data-tracking-markers-shown"
-
-    private val QUOTE_CLASSES = setOf("aster_quote", "gmail_quote", "protonmail_quote", "yahoo_quoted", "moz-cite-prefix")
-
-    private val QUOTE_WRAPPER_CLASSES = setOf("aster-quoted-content", "aster-forwarded-content")
-
-    private val ZERO_LENGTH = Regex("""^0*\.?0+(?:px|pt|em|rem|%)?$""", RegexOption.IGNORE_CASE)
-
     private data class Size(val width: Double, val height: Double)
-
-    fun tracking_slot(): Element = Element("span").attr(TRACKING_SLOT_ATTRIBUTE, "true")
-
-    fun tracking_marker(label: String): Element = Element("span")
-        .attr(TRACKING_MARKER_ATTRIBUTE, "true")
-        .attr("role", "img")
-        .attr("aria-label", label)
-        .attr("title", label)
-
-    fun is_hidden(img: Element): Boolean {
-        if (is_zero(img.attr("width")) || is_zero(img.attr("height"))) return true
-        val style = style_declarations(img.attr("style"))
-        if (style["display"]?.lowercase() == "none") return true
-        if (style["visibility"]?.lowercase() in setOf("hidden", "collapse")) return true
-        if (style["opacity"]?.toDoubleOrNull()?.let { it <= 0.0 } == true) return true
-        return listOf("width", "height", "max-width", "max-height").any { is_zero(style[it]) }
-    }
-
-    private fun is_zero(value: String?): Boolean = ZERO_LENGTH.matches(value?.trim().orEmpty())
-
-    fun tracking_marker_css(): String {
-        val marker = TRACKING_MARKER_SELECTOR
-        val shown = "html[$TRACKING_MARKERS_SHOWN_ATTRIBUTE] $marker"
-        val dot = format(TrackingPixelDot.SIZE_PX)
-        val offset = format(TrackingPixelDot.SIZE_PX / 2)
-        return "$marker{display:none!important}" +
-            "$shown{position:relative!important;display:inline-block!important;width:0!important;height:0!important;" +
-            "margin:0!important;padding:0!important;border:0!important;overflow:visible!important;" +
-            "vertical-align:middle!important;line-height:0!important;font-size:0!important;background:none!important;" +
-            "animation:none!important;transition:none!important}" +
-            "$shown::before{content:''!important;position:absolute!important;left:0!important;top:-${offset}px!important;" +
-            "width:${dot}px!important;height:${dot}px!important;border-radius:50%!important;" +
-            "background:${TrackingPixelDot.FILL}!important;box-shadow:${TrackingPixelDot.box_shadow()}!important;" +
-            "animation:none!important;transition:none!important}" +
-            "@media print{$marker,$shown{display:none!important}}"
-    }
-
-    fun has_tracking_markers(document: String): Boolean = document.contains("$TRACKING_MARKER_ATTRIBUTE=\"")
-
-    fun with_tracking_markers_shown(document: String): String =
-        if (has_tracking_markers(document)) {
-            document.replaceFirst("<html", "<html $TRACKING_MARKERS_SHOWN_ATTRIBUTE")
-        } else {
-            document
-        }
-
-    fun count_drawn_tracking_markers(document: String): Int {
-        if (!has_tracking_markers(document)) return 0
-        return Jsoup.parse(document).select(TRACKING_MARKER_SELECTOR).count { marker ->
-            marker.parents().none { hides_descendant(it, marker) }
-        }
-    }
-
-    private fun hides_descendant(element: Element, descendant: Element): Boolean {
-        if (element.hasAttr("hidden")) return true
-        val style = style_declarations(element.attr("style"))
-        if (style["display"]?.lowercase() == "none") return true
-        if (style["visibility"]?.lowercase() in setOf("hidden", "collapse")) return true
-        if (element.normalName() == "details" && !element.hasAttr("open")) {
-            val summary = element.children().firstOrNull { it.normalName() == "summary" }
-            return summary == null || descendant.parents().none { it === summary }
-        }
-        if (element.classNames().any { it in QUOTE_CLASSES }) {
-            return element.parents().none { parent -> parent.classNames().any { it in QUOTE_WRAPPER_CLASSES } }
-        }
-        return false
-    }
 
     fun prepare(img: Element, original_src: String, tracking: Boolean, labels: BlockedImageLabels) {
         val size = placeholder_size(img, tracking)

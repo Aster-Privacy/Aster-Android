@@ -1318,7 +1318,6 @@
     <string name="pending_deletion_error">تعذّرت استعادة حسابك. يرجى المحاولة مرة أخرى.</string>
     <string name="image_blocked">تم حظر الصورة</string>
     <string name="tracking_pixel_blocked">تم حظر بكسل التتبع</string>
-    <string name="tracking_pixels_highlighted">مميّزة في الرسالة: %1$d</string>
     <string name="alias_available">هذا الاسم المستعار متاح.</string>
     <string name="alias_not_available">هذا الاسم المستعار مستخدم بالفعل.</string>
     <string name="alias_check_failed">تعذر التحقق من التوفر. لا يزال بإمكانك محاولة إنشائه.</string>
