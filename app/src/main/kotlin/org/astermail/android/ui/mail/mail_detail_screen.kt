@@ -5199,6 +5199,13 @@ internal class mail_body_web_view(
     var selection_active: Boolean = false
         private set
 
+    var on_width_change: (() -> Unit)? = null
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        if (body_width_changed(oldw, w)) on_width_change?.invoke()
+    }
+
     private fun wrap(
         callback: android.view.ActionMode.Callback,
     ): android.view.ActionMode.Callback = object : android.view.ActionMode.Callback {
@@ -5875,6 +5882,8 @@ internal fun email_html_view(
     val last_window_y = remember { floatArrayOf(Float.NaN) }
     val has_toggles_ref = remember { booleanArrayOf(true) }
     val reload_policy = remember(height_cache_key) { body_reload_policy() }
+    val height_guard = remember(height_cache_key) { body_height_guard() }
+    val height_recheck = remember(height_cache_key) { mutableStateOf(false) }
     val web_view_context = androidx.compose.ui.platform.LocalContext.current
     val web_view_missing = remember(height_cache_key) { !web_view_support.is_available(web_view_context) }
     val renderer_exhausted = remember(height_cache_key) { mutableStateOf(web_view_missing) }
@@ -5933,6 +5942,7 @@ internal fun email_html_view(
                 if (zoom_last_ref[0] > 0f) zoom_base_ref[0] = zoom_last_ref[0]
             }
             val visual_h = (h * scale_ref[0]).toInt().coerceAtMost(max_body_height_px)
+            if (exact && height_guard.should_remeasure_capped(visual_h, max_body_height_px)) height_recheck.value = true
             val new_dp = visual_h.dp
             fun remember_known_height(value: Float) {
                 if (!is_natural || value <= 0f) return
@@ -6053,6 +6063,7 @@ internal fun email_html_view(
                 continue
             }
             val web = web_ref[0] ?: continue
+            if (!body_width_measurable(web.width, web.resources.displayMetrics.density)) continue
             val content = web.contentHeight
             if (content <= 0) continue
             @Suppress("DEPRECATION")
@@ -6086,7 +6097,9 @@ internal fun email_html_view(
         height_settled = true
         if (!has_measured) {
             val web = web_ref[0]
-            val native = if (web != null && web.contentHeight > 0) {
+            val native = if (web != null && web.contentHeight > 0 &&
+                body_width_measurable(web.width, web.resources.displayMetrics.density)
+            ) {
                 (web.contentHeight * web.scale / web.resources.displayMetrics.density).toInt().dp
             } else {
                 0.dp
@@ -6462,6 +6475,12 @@ internal fun email_html_view(
         on_update_webview = { org.astermail.android.translation.TranslationRuntime.open_webview_update(translate_context) },
       )
       val body_ready_now = html.isNotEmpty() && has_measured && height_settled && page_painted.value
+      LaunchedEffect(height_recheck.value, body_shown) {
+          if (height_recheck.value && body_shown) {
+              height_recheck.value = false
+              remeasure_trigger.value += 1
+          }
+      }
       LaunchedEffect(body_ready_now) {
           if (body_ready_now) {
               body_shown = true
@@ -6524,6 +6543,7 @@ internal fun email_html_view(
             factory = { ctx ->
                 mail_body_web_view(ctx).apply {
                     configure_mail_body_web_view(this, text_zoom, allow_external)
+                    on_width_change = { height_recheck.value = true }
                     var touch_down_x = 0f
                     var touch_down_y = 0f
                     var multi_touch = false
