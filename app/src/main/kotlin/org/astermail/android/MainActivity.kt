@@ -492,13 +492,7 @@ private object routes {
         return "search?q=" + android.net.Uri.encode(query)
     }
     fun search_for_folder(folder: String): String {
-        val scope = when (folder) {
-            "trash" -> "in:trash"
-            "archive" -> "in:archive"
-            "spam" -> "in:spam"
-            "starred" -> "is:starred"
-            else -> null
-        }
+        val scope = org.astermail.android.mail.search_scope_query(folder)
         return if (scope == null) search else search_for(scope)
     }
 
@@ -1163,9 +1157,11 @@ private fun AsterNavHost() {
             val inbox_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
             }
+            val draft_context = androidx.compose.ui.platform.LocalContext.current
             SearchScreen(
                 on_back = { pop_once(nav_controller) },
                 on_open_email = { id -> open_mail_detail(nav_controller, id) },
+                on_open_draft = { id -> draft_context.startActivity(ComposeActivity.intent_for(draft_context, mode = "draft", draft_id = id)) },
                 mail_vm = if (inbox_entry != null) hiltViewModel(inbox_entry) else hiltViewModel(),
             )
         }
@@ -1177,9 +1173,11 @@ private fun AsterNavHost() {
             val inbox_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
             }
+            val draft_context = androidx.compose.ui.platform.LocalContext.current
             SearchScreen(
                 on_back = { pop_once(nav_controller) },
                 on_open_email = { id -> open_mail_detail(nav_controller, id) },
+                on_open_draft = { id -> draft_context.startActivity(ComposeActivity.intent_for(draft_context, mode = "draft", draft_id = id)) },
                 initial_query = q,
                 mail_vm = if (inbox_entry != null) hiltViewModel(inbox_entry) else hiltViewModel(),
             )

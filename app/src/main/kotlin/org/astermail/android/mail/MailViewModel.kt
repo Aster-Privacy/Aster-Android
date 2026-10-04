@@ -4611,6 +4611,24 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    private val search_folders_loading = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+    fun load_search_folder(folder: String) {
+        val item_type = search_folder_item_type(folder) ?: return
+        if (!search_folders_loading.add(folder)) return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                repository.fetch_folder_for_search(folder).onSuccess { items ->
+                    _search_state.update { state ->
+                        state.copy(all_items = replace_search_folder_items(state.all_items, item_type, items))
+                    }
+                }
+            } finally {
+                search_folders_loading.remove(folder)
+            }
+        }
+    }
+
     fun build_search_index(force: Boolean = false) {
         val current = _search_state.value
         if (current.is_indexing) return
@@ -4621,14 +4639,20 @@ class MailViewModel @Inject constructor(
                 val cached = search_index_manager.get_cached_items()
                 if (cached.isNotEmpty() && !force) {
                     _search_state.value = SearchUiState(
-                        all_items = apply_read_overrides(cached.map { it.to_inbox_item() }),
+                        all_items = carry_search_folder_items(
+                            apply_read_overrides(cached.map { it.to_inbox_item() }),
+                            _search_state.value.all_items,
+                        ),
                         is_indexed = true,
                     )
                     search_index_manager.refresh_index_and_wait()
                     val refreshed = search_index_manager.get_cached_items()
                     if (refreshed.isNotEmpty()) {
                         _search_state.value = _search_state.value.copy(
-                            all_items = apply_read_overrides(refreshed.map { it.to_inbox_item() }),
+                            all_items = carry_search_folder_items(
+                                apply_read_overrides(refreshed.map { it.to_inbox_item() }),
+                                _search_state.value.all_items,
+                            ),
                         )
                     }
                 } else {
@@ -4637,7 +4661,7 @@ class MailViewModel @Inject constructor(
                         onSuccess = { items ->
                             search_index_manager.on_items_loaded(apply_read_overrides(items))
                             _search_state.value = SearchUiState(
-                                all_items = items,
+                                all_items = carry_search_folder_items(items, _search_state.value.all_items),
                                 is_indexed = true,
                             )
                             val with_attachments = search_index_manager.resolve_attachment_ids(
