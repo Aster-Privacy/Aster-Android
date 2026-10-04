@@ -181,6 +181,7 @@ data class drawer_label_item(
     val color_hex: String? = null,
     val can_move_up: Boolean = false,
     val can_move_down: Boolean = false,
+    val name_readable: Boolean = true,
 )
 
 data class label_menu_actions(
@@ -905,7 +906,7 @@ fun DrawerContent(
 
     if (show_create_label) {
         create_label_dialog(
-            existing_names = api_label_items.map { it.label },
+            existing_names = api_label_items.filter { it.name_readable }.map { it.label },
             on_dismiss = { show_create_label = false },
             on_create = { name, color, icon ->
                 on_create_label(name, color, icon)
@@ -1029,7 +1030,7 @@ fun DrawerContent(
 
     pending_label_rename?.let { target ->
         folder_rename_dialog(
-            initial_name = target.label,
+            initial_name = if (target.name_readable) target.label else "",
             title = stringResource(R.string.rename_label),
             placeholder = stringResource(R.string.label_name),
             on_dismiss = { pending_label_rename = null },

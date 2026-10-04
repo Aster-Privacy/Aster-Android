@@ -1645,6 +1645,7 @@
     <string name="link_url_placeholder">example.com</string>
     <string name="send_still_trying">Всё ещё отправляется. Aster продолжит попытки в фоне.</string>
     <string name="folder_decrypt_failed">Папка (не удалось расшифровать)</string>
+    <string name="label_decrypt_failed">Не удалось расшифровать</string>
     <string name="settings_search_placeholder">Поиск в настройках</string>
     <string name="settings_search_hint">Введите текст для поиска по всем настройкам</string>
     <string name="settings_profile">Профиль</string>

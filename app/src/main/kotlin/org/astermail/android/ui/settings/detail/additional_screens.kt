@@ -1099,11 +1099,13 @@ internal data class label_screen_row(
     val can_move_down: Boolean,
     val can_delete: Boolean,
     val is_tag: Boolean,
+    val name_readable: Boolean = true,
 )
 
 internal fun label_screen_rows(
     tags: List<org.astermail.android.api.tags.TagItem>,
     labels: List<org.astermail.android.api.labels.LabelItem>,
+    unreadable_name: String = "",
 ): List<label_screen_row> {
     val fallback = Color(0xFF6B7280)
     val tag_rows = org.astermail.android.labels.tag_rows(tags)
@@ -1111,13 +1113,14 @@ internal fun label_screen_rows(
     val from_tags = tag_rows.mapIndexed { idx, tag ->
         label_screen_row(
             id = tag.id,
-            name = tag.encrypted_name.takeIf { it.isNotBlank() } ?: tag.tag_token,
+            name = org.astermail.android.labels.tag_display_name(tag, unreadable_name),
             color = parse_hex_color_safe(tag.encrypted_color) ?: fallback,
             count = tag.item_count,
             can_move_up = idx > 0,
             can_move_down = idx < tag_rows.lastIndex,
             can_delete = true,
             is_tag = true,
+            name_readable = org.astermail.android.labels.tag_name_readable(tag),
         )
     }
     val from_labels = label_rows.mapIndexed { idx, label ->
@@ -1157,7 +1160,11 @@ fun LabelsScreen(
         vm.clear_action_result()
     }
 
-    val rows = label_screen_rows(state.tags, state.labels)
+    val rows = label_screen_rows(
+        tags = state.tags,
+        labels = state.labels,
+        unreadable_name = stringResource(R.string.label_decrypt_failed),
+    )
     var pending_label_delete by remember { mutableStateOf<label_screen_row?>(null) }
     var pending_label_rename by remember { mutableStateOf<label_screen_row?>(null) }
     var show_create_label by remember { mutableStateOf(false) }
@@ -1223,13 +1230,13 @@ fun LabelsScreen(
                 vm.create_tag(name = name, color = color, icon = icon)
                 show_create_label = false
             },
-            existing_names = rows.map { it.name },
+            existing_names = rows.filter { it.name_readable }.map { it.name },
         )
     }
 
     pending_label_rename?.let { target ->
         org.astermail.android.ui.drawer.folder_rename_dialog(
-            initial_name = target.name,
+            initial_name = if (target.name_readable) target.name else "",
             title = stringResource(R.string.rename_label),
             placeholder = stringResource(R.string.label_name),
             on_dismiss = { pending_label_rename = null },

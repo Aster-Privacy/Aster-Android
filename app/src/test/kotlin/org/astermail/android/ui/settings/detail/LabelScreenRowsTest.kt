@@ -145,7 +145,7 @@ class LabelScreenRowsTest {
     }
 
     @Test
-    fun `unreadable names are dropped by the underlying row helpers`() {
+    fun `unreadable tags stay listed and unreadable labels are dropped`() {
         val rows = label_screen_rows(
             tags = listOf(
                 tag("keep", name = "Work", sort_order = 0),
@@ -153,9 +153,11 @@ class LabelScreenRowsTest {
                 tag("cipher", name = "aGVsbG8gd29ybGQgdGhpcyBpcyBiYXNlNjQgcGF5bG9hZA==", sort_order = 2),
             ),
             labels = listOf(label("null_name", name = null)),
+            unreadable_name = "Unable to decrypt",
         )
-        assertEquals(listOf("keep"), rows.map { it.id })
-        assertEquals("Work", rows.single().name)
+        assertEquals(listOf("keep", "blank", "cipher"), rows.map { it.id })
+        assertEquals(listOf("Work", "Unable to decrypt", "Unable to decrypt"), rows.map { it.name })
+        assertEquals(listOf(true, false, false), rows.map { it.name_readable })
     }
 
     @Test

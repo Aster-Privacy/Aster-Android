@@ -1105,8 +1105,8 @@ fun SearchScreen(
         } else {
             selected_items.map { it.tag_tokens.toSet() }.reduce { acc, tokens -> acc intersect tokens }
         }
-        val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags, applied_tags)
-        val unknown_label = stringResource(R.string.unknown)
+        val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags)
+        val unknown_label = stringResource(R.string.label_decrypt_failed)
         org.astermail.android.ui.mail.tag_picker_sheet(
             title = stringResource(R.string.edit_labels),
             empty_message = stringResource(R.string.no_labels_yet_create),

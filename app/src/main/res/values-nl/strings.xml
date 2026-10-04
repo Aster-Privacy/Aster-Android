@@ -1637,6 +1637,7 @@
     <string name="link_url_placeholder">voorbeeld.nl</string>
     <string name="send_still_trying">Nog aan het verzenden. Aster blijft het op de achtergrond proberen.</string>
     <string name="folder_decrypt_failed">Map (ontsleutelen mislukt)</string>
+    <string name="label_decrypt_failed">Kan niet ontsleutelen</string>
     <string name="settings_search_placeholder">Instellingen doorzoeken</string>
     <string name="settings_search_hint">Typ om alle instellingen te doorzoeken</string>
     <string name="settings_profile">Profiel</string>

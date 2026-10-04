@@ -253,12 +253,13 @@ fun RuleEditorScreen(
     val folders = remember(settings_state.labels, system_folder_names) {
         rule_folder_picker_items(settings_state.labels, system_folder_names)
     }
-    val labels = remember(settings_state.labels, settings_state.tags) {
+    val label_decrypt_failed = stringResource(R.string.label_decrypt_failed)
+    val labels = remember(settings_state.labels, settings_state.tags, label_decrypt_failed) {
         val from_tags = org.astermail.android.labels.tag_rows(settings_state.tags)
             .mapIndexed { idx, tag ->
                 picker_item(
                     id = tag.tag_token,
-                    label = tag.encrypted_name,
+                    label = org.astermail.android.labels.tag_display_name(tag, label_decrypt_failed),
                     icon = resolve_label_icon(tag.encrypted_icon?.takeIf { it.isNotBlank() }),
                     icon_tint = tag.encrypted_color?.let { parse_hex_color_safe(it) }
                         ?: rules_label_palette[idx % rules_label_palette.size],

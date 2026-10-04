@@ -2230,8 +2230,8 @@ fun MailDetailScreen(
         val settings_state by settings_vm.state.collectAsStateWithLifecycle()
         val applied_tags = thread_state.item?.takeIf { it.id == email_id }?.tag_tokens?.toSet()
             ?: emptySet()
-        val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags, applied_tags)
-        val unknown_label = stringResource(R.string.unknown)
+        val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags)
+        val unknown_label = stringResource(R.string.label_decrypt_failed)
         tag_picker_sheet(
             title = stringResource(R.string.edit_labels),
             empty_message = stringResource(R.string.no_labels_yet_create),
@@ -4912,7 +4912,7 @@ internal fun tag_picker_sheet(
                     modifier = Modifier.padding(horizontal = AsterSpacing.xl, vertical = AsterSpacing.md),
                 )
             } else {
-                val unknown_tag_label = stringResource(R.string.unknown)
+                val unknown_tag_label = stringResource(R.string.label_decrypt_failed)
                 items.forEach { item ->
                     val display = org.astermail.android.labels.tag_display_name(item, unknown_tag_label)
                     val tag_color = try {

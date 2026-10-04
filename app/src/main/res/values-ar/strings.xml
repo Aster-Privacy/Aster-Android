@@ -1653,6 +1653,7 @@
     <string name="link_url_placeholder">example.com</string>
     <string name="send_still_trying">الإرسال جارٍ. سيواصل Aster المحاولة في الخلفية.</string>
     <string name="folder_decrypt_failed">مجلد (فشل فك التشفير)</string>
+    <string name="label_decrypt_failed">تعذّر فك التشفير</string>
     <string name="settings_search_placeholder">البحث في الإعدادات</string>
     <string name="settings_search_hint">اكتب للبحث في كل الإعدادات</string>
     <string name="settings_profile">الملف الشخصي</string>

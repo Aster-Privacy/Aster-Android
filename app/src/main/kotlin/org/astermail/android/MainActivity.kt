@@ -2099,8 +2099,9 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         Color(0xFF6366F1),
     )
 
-    val api_labels = remember(settings_state.tags, settings_state.labels) {
+    val api_labels = remember(settings_state.tags, settings_state.labels, drawer_context) {
         val visible_tags = org.astermail.android.labels.tag_rows(settings_state.tags)
+        val label_decrypt_failed = drawer_context.getString(R.string.label_decrypt_failed)
         val from_tags = visible_tags
             .mapIndexed { idx, tag ->
                 val color = parse_hex_color_safe(tag.encrypted_color)
@@ -2108,7 +2109,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 val icon = tag.encrypted_icon?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
                 drawer_label_item(
                     id = "tag:${tag.tag_token}",
-                    label = tag.encrypted_name,
+                    label = org.astermail.android.labels.tag_display_name(tag, label_decrypt_failed),
                     color = color,
                     icon = icon,
                     api_id = tag.id,
@@ -2116,6 +2117,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     color_hex = tag.encrypted_color?.takeIf { it.startsWith("#") },
                     can_move_up = idx > 0,
                     can_move_down = idx < visible_tags.lastIndex,
+                    name_readable = org.astermail.android.labels.tag_name_readable(tag),
                 )
             }
         val visible_labels = org.astermail.android.labels.label_rows(settings_state.labels)
