@@ -22,8 +22,11 @@
         <item quantity="one">%1$d 张图片</item>
         <item quantity="other">%1$d 张图片</item>
     </plurals>
-    <plurals name="n_trackers">
-        <item quantity="other">%1$d 个跟踪器</item>
+    <plurals name="n_tracking_pixels">
+        <item quantity="other">%1$d 个跟踪像素</item>
+    </plurals>
+    <plurals name="n_tracking_links">
+        <item quantity="other">%1$d 个跟踪链接</item>
     </plurals>
     <plurals name="n_fonts">
         <item quantity="other">%1$d 个字体</item>

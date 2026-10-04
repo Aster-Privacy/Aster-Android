@@ -22,8 +22,11 @@
         <item quantity="one">%1$d 件の画像</item>
         <item quantity="other">%1$d 件の画像</item>
     </plurals>
-    <plurals name="n_trackers">
-        <item quantity="other">%1$d個のトラッカー</item>
+    <plurals name="n_tracking_pixels">
+        <item quantity="other">%1$d個のトラッキングピクセル</item>
+    </plurals>
+    <plurals name="n_tracking_links">
+        <item quantity="other">%1$d件の追跡リンク</item>
     </plurals>
     <plurals name="n_fonts">
         <item quantity="other">%1$d個のフォント</item>

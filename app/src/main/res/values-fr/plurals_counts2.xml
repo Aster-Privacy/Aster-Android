@@ -35,10 +35,15 @@
         <item quantity="many">%1$d images</item>
         <item quantity="other">%1$d images</item>
     </plurals>
-    <plurals name="n_trackers">
-        <item quantity="one">%1$d traqueur</item>
-        <item quantity="many">%1$d traqueurs</item>
-        <item quantity="other">%1$d traqueurs</item>
+    <plurals name="n_tracking_pixels">
+        <item quantity="one">%1$d pixel de suivi</item>
+        <item quantity="many">%1$d pixels de suivi</item>
+        <item quantity="other">%1$d pixels de suivi</item>
+    </plurals>
+    <plurals name="n_tracking_links">
+        <item quantity="one">%1$d lien de suivi</item>
+        <item quantity="many">%1$d liens de suivi</item>
+        <item quantity="other">%1$d liens de suivi</item>
     </plurals>
     <plurals name="n_fonts">
         <item quantity="one">%1$d police</item>

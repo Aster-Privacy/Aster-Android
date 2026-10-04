@@ -42,11 +42,17 @@
         <item quantity="many">%1$d изображений</item>
         <item quantity="other">%1$d изображения</item>
     </plurals>
-    <plurals name="n_trackers">
-        <item quantity="one">%1$d трекер</item>
-        <item quantity="few">%1$d трекера</item>
-        <item quantity="many">%1$d трекеров</item>
-        <item quantity="other">%1$d трекеров</item>
+    <plurals name="n_tracking_pixels">
+        <item quantity="one">%1$d пиксель отслеживания</item>
+        <item quantity="few">%1$d пикселя отслеживания</item>
+        <item quantity="many">%1$d пикселей отслеживания</item>
+        <item quantity="other">%1$d пикселей отслеживания</item>
+    </plurals>
+    <plurals name="n_tracking_links">
+        <item quantity="one">%1$d отслеживающая ссылка</item>
+        <item quantity="few">%1$d отслеживающие ссылки</item>
+        <item quantity="many">%1$d отслеживающих ссылок</item>
+        <item quantity="other">%1$d отслеживающих ссылок</item>
     </plurals>
     <plurals name="n_fonts">
         <item quantity="one">%1$d шрифт</item>

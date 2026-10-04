@@ -28,9 +28,13 @@
         <item quantity="one">%1$d görsel</item>
         <item quantity="other">%1$d görsel</item>
     </plurals>
-    <plurals name="n_trackers">
-        <item quantity="one">%1$d izleyici</item>
-        <item quantity="other">%1$d izleyici</item>
+    <plurals name="n_tracking_pixels">
+        <item quantity="one">%1$d izleme pikseli</item>
+        <item quantity="other">%1$d izleme pikseli</item>
+    </plurals>
+    <plurals name="n_tracking_links">
+        <item quantity="one">%1$d izleme bağlantısı</item>
+        <item quantity="other">%1$d izleme bağlantısı</item>
     </plurals>
     <plurals name="n_fonts">
         <item quantity="one">%1$d yazı tipi</item>
