@@ -126,6 +126,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.layout.positionInWindow
@@ -3401,8 +3402,7 @@ internal fun compact_banner_action(
         color = if (primary) colors.on_accent else colors.accent_blue,
         fontSize = 13.sp,
         fontWeight = FontWeight.SemiBold,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
+        textAlign = TextAlign.Center,
         modifier = Modifier
             .minimumInteractiveComponentSize()
             .clip(AsterShapes.control)
@@ -3445,6 +3445,7 @@ internal fun compact_banner_row(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun compact_banner(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
@@ -3455,38 +3456,73 @@ internal fun compact_banner(
 ) {
     val colors = AsterMaterial.colors
     var expanded by remember { mutableStateOf(false) }
-    Row(
+    Layout(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = AsterSpacing.md, vertical = 3.dp)
             .acrylic(colors, SquircleShape(10.dp), colors.bg_secondary)
             .padding(start = AsterSpacing.md, end = AsterSpacing.sm),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f).padding(vertical = 6.dp)) {
-            if (label.isNotEmpty() || secondary_row == null) {
-                compact_banner_row(
-                    icon = icon,
-                    tint = if (on_icon_click != null) colors.accent_blue else colors.text_secondary,
-                    on_icon_click = on_icon_click,
-                ) {
-                    Text(
-                        text = label,
-                        color = colors.text_secondary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        maxLines = if (expanded) 6 else 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { expanded = !expanded },
-                    )
+        content = {
+            Column(modifier = Modifier.padding(vertical = 6.dp)) {
+                if (label.isNotEmpty() || secondary_row == null) {
+                    compact_banner_row(
+                        icon = icon,
+                        tint = if (on_icon_click != null) colors.accent_blue else colors.text_secondary,
+                        on_icon_click = on_icon_click,
+                    ) {
+                        Text(
+                            text = label,
+                            color = colors.text_secondary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = if (expanded) 6 else 2,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { expanded = !expanded },
+                        )
+                    }
                 }
+                secondary_row?.invoke()
             }
-            secondary_row?.invoke()
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End),
+            ) {
+                actions()
+            }
+        },
+    ) { measurables, constraints ->
+        val width = constraints.maxWidth
+        val gap = 6.dp.roundToPx()
+        val text_measurable = measurables[0]
+        val actions_measurable = measurables[1]
+        val actions_width = actions_measurable.maxIntrinsicWidth(androidx.compose.ui.unit.Constraints.Infinity)
+        val text_width = text_measurable.maxIntrinsicWidth(androidx.compose.ui.unit.Constraints.Infinity)
+        if (text_width + gap + actions_width <= width) {
+            val actions_placeable = actions_measurable.measure(
+                androidx.compose.ui.unit.Constraints(maxWidth = actions_width),
+            )
+            val text_slot = width - gap - actions_placeable.width
+            val text_placeable = text_measurable.measure(
+                androidx.compose.ui.unit.Constraints(minWidth = text_slot, maxWidth = text_slot),
+            )
+            val height = maxOf(text_placeable.height, actions_placeable.height)
+            layout(width, height) {
+                text_placeable.placeRelative(0, (height - text_placeable.height) / 2)
+                actions_placeable.placeRelative(width - actions_placeable.width, (height - actions_placeable.height) / 2)
+            }
+        } else {
+            val text_placeable = text_measurable.measure(
+                androidx.compose.ui.unit.Constraints(minWidth = width, maxWidth = width),
+            )
+            val actions_placeable = actions_measurable.measure(
+                androidx.compose.ui.unit.Constraints(maxWidth = width),
+            )
+            layout(width, text_placeable.height + actions_placeable.height) {
+                text_placeable.placeRelative(0, 0)
+                actions_placeable.placeRelative(width - actions_placeable.width, text_placeable.height)
+            }
         }
-        Spacer(Modifier.width(6.dp))
-        actions()
     }
 }
 
@@ -3734,7 +3770,6 @@ internal fun external_content_banner(
             onClick = on_allow_once,
         )
         if (on_always_allow != null) {
-            Spacer(Modifier.width(6.dp))
             compact_banner_action(
                 label = stringResource(R.string.detail_external_always_allow),
                 primary = true,
@@ -3767,7 +3802,6 @@ internal fun traffic_saver_banner(
             primary = false,
             onClick = on_load_once,
         )
-        Spacer(Modifier.width(6.dp))
         compact_banner_action(
             label = stringResource(R.string.detail_disable_traffic_saving),
             primary = true,
