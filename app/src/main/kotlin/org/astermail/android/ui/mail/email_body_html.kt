@@ -105,7 +105,7 @@ internal fun build_email_html(
     } else {
         body
     }
-    val declares_light = body.contains(Regex("color-scheme\\s*:\\s*light\\s+only", RegexOption.IGNORE_CASE))
+    val declares_light = body.contains(Regex("color-scheme\\s*:\\s*(?:light\\s+only|only\\s+light)\\b", RegexOption.IGNORE_CASE))
     val declares_light_bg = is_html_body && body.contains(
         Regex(
             "(?:background(?:-color)?\\s*:\\s*(?:#fff(?:fff)?|white|rgb\\(\\s*25[0-5])|bgcolor\\s*=\\s*[\"']?(?:#fff(?:fff)?|white))",
@@ -201,9 +201,15 @@ html,body{background-color:#ffffff!important}
         simple_dark = simple_dark,
     )
 
+    val html_style = when {
+        simple_dark || force_dark_emails -> " style=\"color-scheme:dark!important\""
+        is_html_body -> " style=\"background-color:transparent\""
+        else -> ""
+    }
+
     val csp_meta = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src https://app.astermail.org https://mail-content.invalid data:; style-src 'unsafe-inline'; font-src https://app.astermail.org https://mail-content.invalid data:; script-src 'none'; worker-src 'none'; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; object-src 'none'\">"
 
-    return """<!DOCTYPE html><html${if (has_newsletter_layout) " data-nl=\"1\"" else ""}${if (white_page) " data-white=\"1\"" else ""}${if (simple_dark) " data-dark=\"1\"" else ""}${if (force_dark_emails) " data-dark-force=\"1\"" else ""}${if (is_html_body && !simple_dark) " style=\"background-color:transparent\"" else ""}><head>
+    return """<!DOCTYPE html><html${if (has_newsletter_layout) " data-nl=\"1\"" else ""}${if (white_page) " data-white=\"1\"" else ""}${if (simple_dark) " data-dark=\"1\"" else ""}${if (force_dark_emails) " data-dark-force=\"1\"" else ""}${html_style}><head>
 $csp_meta
 <meta charset="utf-8">
 $viewport_meta

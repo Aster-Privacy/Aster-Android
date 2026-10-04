@@ -210,6 +210,51 @@ class EmailDarkModeTest {
         assertTrue(dark.contains("html,body{background-color:transparent!important;color:" + FORCED_DARK_INK))
     }
 
+    private fun html_start_tag(html: String): String =
+        html.substringAfter("<!DOCTYPE html>").substringBefore("<head>")
+
+    @Test
+    fun an_email_declaring_only_light_keeps_its_light_page() {
+        for (declaration in listOf("only light", "light only", "ONLY  LIGHT !important")) {
+            val html = render(
+                "<style>:root{color-scheme: $declaration}</style><p>Plain text</p>",
+                forced = false,
+            )
+            assertTrue("$declaration must keep the white page: " + html_start_tag(html), html.contains("data-white=\"1\""))
+            assertFalse("$declaration must not be darkened: " + html_start_tag(html), html.contains("data-dark=\"1\""))
+        }
+    }
+
+    @Test
+    fun the_color_scheme_value_must_be_only_light_to_keep_the_page_light() {
+        val html = render("<style>:root{color-scheme: only lightish}</style><p>Plain text</p>", forced = false)
+        assertFalse(html_start_tag(html), html.contains("data-white=\"1\""))
+    }
+
+    @Test
+    fun forced_dark_sets_the_dark_scheme_on_the_root_element_itself() {
+        val html = render(
+            "<style>:root{color-scheme: only light !important}</style>" +
+                "<table width=\"100%\" bgcolor=\"#d3d5d9\"><tr><td><h2 style=\"color:#000000\">Digest</h2><p>Body</p></td></tr></table>",
+            forced = true,
+        )
+        assertTrue(html_start_tag(html), html_start_tag(html).contains("style=\"color-scheme:dark!important\""))
+    }
+
+    @Test
+    fun a_simple_dark_email_sets_the_dark_scheme_on_the_root_element_itself() {
+        val html = render("<style>:root{color-scheme: light}</style><p>Plain text</p>", forced = false)
+        assertTrue(html.contains("data-dark=\"1\""))
+        assertTrue(html_start_tag(html), html_start_tag(html).contains("style=\"color-scheme:dark!important\""))
+    }
+
+    @Test
+    fun a_white_page_does_not_get_the_dark_scheme() {
+        val html = render("<style>:root{color-scheme: only light}</style><p>Plain text</p>", forced = false)
+        assertFalse(html_start_tag(html), html_start_tag(html).contains("color-scheme"))
+        assertTrue(html_start_tag(html), html_start_tag(html).contains("style=\"background-color:transparent\""))
+    }
+
     @Test
     fun every_coloured_palette_theme_counts_as_dark_so_forced_dark_applies() {
         val palette_themes = ColorThemeId.entries.filter { AsterColorThemes.palette_for(it) != null }
