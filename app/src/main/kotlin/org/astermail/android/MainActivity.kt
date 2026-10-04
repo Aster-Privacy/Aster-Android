@@ -715,6 +715,22 @@ private fun AsterNavHost() {
         }
     }
 
+    val nav_pop_enter: androidx.compose.animation.AnimatedContentTransitionScope<androidx.navigation.NavBackStackEntry>.() -> EnterTransition = {
+        val initial = initialState.destination.route
+        if (initial?.startsWith("compose") == true) {
+            androidx.compose.animation.EnterTransition.None
+        } else {
+            nav_backward_enter(nav_duration)
+        }
+    }
+    val nav_pop_exit: androidx.compose.animation.AnimatedContentTransitionScope<androidx.navigation.NavBackStackEntry>.() -> ExitTransition = {
+        if (targetState.destination.route?.startsWith("compose") == true) {
+            androidx.compose.animation.ExitTransition.None
+        } else {
+            nav_backward_exit(nav_duration)
+        }
+    }
+
     androidx.compose.runtime.CompositionLocalProvider(
         org.astermail.android.ui.settings.local_settings_search_opener provides {
             nav_controller.navigate(routes.settings_search)
@@ -743,19 +759,14 @@ private fun AsterNavHost() {
                 nav_forward_exit(nav_duration)
             }
         },
-        popEnterTransition = {
-            val initial = initialState.destination.route
-            if (initial?.startsWith("compose") == true) {
-                androidx.compose.animation.EnterTransition.None
+        popEnterTransition = nav_pop_enter,
+        popExitTransition = nav_pop_exit,
+        predictivePopEnterTransition = { nav_pop_enter() },
+        predictivePopExitTransition = {
+            if (initialState.destination.route?.startsWith("compose") == true) {
+                nav_sheet_exit(nav_duration)
             } else {
-                nav_backward_enter(nav_duration)
-            }
-        },
-        popExitTransition = {
-            if (targetState.destination.route?.startsWith("compose") == true) {
-                androidx.compose.animation.ExitTransition.None
-            } else {
-                nav_backward_exit(nav_duration)
+                nav_pop_exit()
             }
         },
     ) {
