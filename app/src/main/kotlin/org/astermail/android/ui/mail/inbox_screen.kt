@@ -2596,7 +2596,8 @@ fun InboxScreen(
         if (show_bulk_folder_sheet) {
             val unnamed_folder_label = stringResource(R.string.unnamed_folder)
             val folder_decrypt_failed_label = stringResource(R.string.folder_decrypt_failed)
-            val folder_items = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
+            val folder_nodes = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
+            val folder_items = folder_nodes
                 .map { node ->
                     val label = node.label
                     val readable = label.encrypted_name?.takeIf {
@@ -2608,6 +2609,7 @@ fun InboxScreen(
                 title = stringResource(R.string.move_to_folder),
                 empty_message = stringResource(R.string.no_folders_yet_create),
                 items = folder_items,
+                depths = folder_nodes.associate { it.label.label_token to it.depth },
                 on_close = { show_bulk_folder_sheet = false },
                 on_pick = { picked ->
                     val display = picked.encrypted_name?.takeIf { it.isNotBlank() }
