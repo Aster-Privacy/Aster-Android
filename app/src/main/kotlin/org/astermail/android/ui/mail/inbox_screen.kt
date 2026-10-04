@@ -702,6 +702,7 @@ fun InboxScreen(
                 if (!was_backgrounded) return@LifecycleEventObserver
                 was_backgrounded = false
                 settings_vm.load_preferences()
+                settings_vm.load_labels(force = true)
                 settings_vm.load_tags()
                 settings_vm.load_subscription(force = false)
                 mail_vm.refresh_on_resume(current_folder)
