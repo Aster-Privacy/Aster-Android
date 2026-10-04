@@ -1642,6 +1642,13 @@
     <string name="link_url_placeholder">ejemplo.com</string>
     <string name="send_still_trying">Todavía se está enviando. Aster seguirá intentándolo en segundo plano.</string>
     <string name="folder_decrypt_failed">Carpeta (fallo al descifrar)</string>
+    <string name="label_decrypt_failed">No se puede descifrar</string>
+    <string name="parent_label">Etiqueta principal</string>
+    <string name="parent_label_none">Ninguna</string>
+    <string name="error_tag_parent_not_found">Esa etiqueta principal ya no existe.</string>
+    <string name="error_tag_parent_self">Una etiqueta no puede ser su propia etiqueta principal.</string>
+    <string name="error_tag_parent_cycle">Una etiqueta no se puede mover debajo de una de sus propias subetiquetas.</string>
+    <string name="error_tag_parent_too_deep">Las etiquetas no se pueden anidar en más de cinco niveles.</string>
     <string name="settings_search_placeholder">Buscar en ajustes</string>
     <string name="settings_search_hint">Escribe para buscar en todos los ajustes</string>
     <string name="settings_profile">Perfil</string>

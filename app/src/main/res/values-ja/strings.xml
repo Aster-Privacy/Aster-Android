@@ -1633,6 +1633,13 @@
     <string name="link_url_placeholder">example.com</string>
     <string name="send_still_trying">送信中です。Asterがバックグラウンドで再試行します。</string>
     <string name="folder_decrypt_failed">フォルダ（復号失敗）</string>
+    <string name="label_decrypt_failed">復号できません</string>
+    <string name="parent_label">親ラベル</string>
+    <string name="parent_label_none">なし</string>
+    <string name="error_tag_parent_not_found">この親ラベルは存在しません。</string>
+    <string name="error_tag_parent_self">ラベルをそれ自体の親にすることはできません。</string>
+    <string name="error_tag_parent_cycle">ラベルをそのサブラベルの下に移動することはできません。</string>
+    <string name="error_tag_parent_too_deep">ラベルは 5 階層までしかネストできません。</string>
     <string name="settings_search_placeholder">設定を検索</string>
     <string name="settings_search_hint">入力してすべての設定を検索</string>
     <string name="settings_profile">プロフィール</string>

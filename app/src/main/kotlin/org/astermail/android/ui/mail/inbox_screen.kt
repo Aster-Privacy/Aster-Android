@@ -161,6 +161,7 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.mail.DEFAULT_SWIPE_LEFT_ACTION
 import org.astermail.android.mail.DEFAULT_SWIPE_RIGHT_ACTION
+import org.astermail.android.mail.LiveSyncEvent
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.mail.all_mail_folder
 import org.astermail.android.mail.can_move_to_inbox
@@ -676,7 +677,18 @@ fun InboxScreen(
     }
     LaunchedEffect(mail_vm, lifecycle_owner, live_sync_socket) {
         lifecycle_owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            live_sync_socket.run { event -> mail_vm.on_live_sync_event(event) }
+            live_sync_socket.run { event ->
+                when (event) {
+                    LiveSyncEvent.folders_changed -> settings_vm.reload_labels_from_sync()
+                    LiveSyncEvent.tags_changed -> settings_vm.reload_tags_from_sync()
+                    LiveSyncEvent.connected -> {
+                        settings_vm.reload_labels_from_sync()
+                        settings_vm.reload_tags_from_sync()
+                        mail_vm.on_live_sync_event(event)
+                    }
+                    else -> mail_vm.on_live_sync_event(event)
+                }
+            }
         }
     }
     DisposableEffect(lifecycle_owner) {
@@ -690,7 +702,8 @@ fun InboxScreen(
                 if (!was_backgrounded) return@LifecycleEventObserver
                 was_backgrounded = false
                 settings_vm.load_preferences()
-                settings_vm.load_tags()
+                settings_vm.reload_labels_from_sync()
+                settings_vm.reload_tags_from_sync()
                 settings_vm.load_subscription(force = false)
                 mail_vm.refresh_on_resume(current_folder)
                 billing_vm.load_onboarding_checklist()
@@ -2584,7 +2597,8 @@ fun InboxScreen(
         if (show_bulk_folder_sheet) {
             val unnamed_folder_label = stringResource(R.string.unnamed_folder)
             val folder_decrypt_failed_label = stringResource(R.string.folder_decrypt_failed)
-            val folder_items = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
+            val folder_nodes = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
+            val folder_items = folder_nodes
                 .map { node ->
                     val label = node.label
                     val readable = label.encrypted_name?.takeIf {
@@ -2596,6 +2610,7 @@ fun InboxScreen(
                 title = stringResource(R.string.move_to_folder),
                 empty_message = stringResource(R.string.no_folders_yet_create),
                 items = folder_items,
+                depths = folder_nodes.associate { it.label.label_token to it.depth },
                 on_close = { show_bulk_folder_sheet = false },
                 on_pick = { picked ->
                     val display = picked.encrypted_name?.takeIf { it.isNotBlank() }
@@ -2622,8 +2637,8 @@ fun InboxScreen(
             } else {
                 selected_items.map { it.tag_tokens.toSet() }.reduce { acc, tokens -> acc intersect tokens }
             }
-            val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags, applied_tags)
-            val unknown_label = stringResource(R.string.unknown)
+            val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags)
+            val unknown_label = stringResource(R.string.label_decrypt_failed)
             tag_picker_sheet(
                 title = stringResource(R.string.edit_labels),
                 empty_message = stringResource(R.string.no_labels_yet_create),

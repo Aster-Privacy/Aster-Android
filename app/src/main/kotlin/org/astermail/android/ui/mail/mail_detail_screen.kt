@@ -2175,7 +2175,8 @@ fun MailDetailScreen(
         val settings_state by settings_vm.state.collectAsStateWithLifecycle()
         val unnamed_folder_label = stringResource(R.string.unnamed_folder)
         val folder_decrypt_failed_label = stringResource(R.string.folder_decrypt_failed)
-        val folder_items = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
+        val folder_nodes = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
+        val folder_items = folder_nodes
             .map { node ->
                 val label = node.label
                 val readable = label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
@@ -2185,6 +2186,7 @@ fun MailDetailScreen(
             title = stringResource(R.string.move_to_folder),
             empty_message = stringResource(R.string.no_folders_yet_create),
             items = folder_items,
+            depths = folder_nodes.associate { it.label.label_token to it.depth },
             on_close = { show_folder_sheet = false },
             on_pick = { picked ->
                 val display = picked.encrypted_name?.takeIf { it.isNotBlank() }
@@ -2228,8 +2230,8 @@ fun MailDetailScreen(
         val settings_state by settings_vm.state.collectAsStateWithLifecycle()
         val applied_tags = thread_state.item?.takeIf { it.id == email_id }?.tag_tokens?.toSet()
             ?: emptySet()
-        val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags, applied_tags)
-        val unknown_label = stringResource(R.string.unknown)
+        val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags)
+        val unknown_label = stringResource(R.string.label_decrypt_failed)
         tag_picker_sheet(
             title = stringResource(R.string.edit_labels),
             empty_message = stringResource(R.string.no_labels_yet_create),
@@ -4759,6 +4761,8 @@ private fun snooze_detail_label(iso: String): String {
     return millis.format_full_datetime()
 }
 
+internal const val PICKER_TREE_INDENT_DP = 18
+
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 internal fun label_picker_sheet(
@@ -4769,6 +4773,7 @@ internal fun label_picker_sheet(
     on_pick: (org.astermail.android.api.labels.LabelItem) -> Unit,
     applied_tokens: Set<String> = emptySet(),
     on_move_to_inbox: (() -> Unit)? = null,
+    depths: Map<String, Int> = emptyMap(),
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
@@ -4818,6 +4823,7 @@ internal fun label_picker_sheet(
                     val display = item.encrypted_name?.takeIf { it.isNotBlank() }
                         ?: stringResource(R.string.unnamed_folder)
                     val applied = item.label_token in applied_tokens
+                    val depth = (depths[item.label_token] ?: 0).coerceAtLeast(0)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -4825,6 +4831,7 @@ internal fun label_picker_sheet(
                             .padding(horizontal = AsterSpacing.xl, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        if (depth > 0) Spacer(Modifier.width((depth * PICKER_TREE_INDENT_DP).dp))
                         Icon(
                             imageVector = TablerIcons.Folder,
                             contentDescription = null,
@@ -4905,8 +4912,10 @@ internal fun tag_picker_sheet(
                     modifier = Modifier.padding(horizontal = AsterSpacing.xl, vertical = AsterSpacing.md),
                 )
             } else {
-                val unknown_tag_label = stringResource(R.string.unknown)
-                items.forEach { item ->
+                val unknown_tag_label = stringResource(R.string.label_decrypt_failed)
+                val tag_nodes = remember(items) { org.astermail.android.labels.flatten_tag_tree(items) }
+                tag_nodes.forEach { node ->
+                    val item = node.tag
                     val display = org.astermail.android.labels.tag_display_name(item, unknown_tag_label)
                     val tag_color = try {
                         item.encrypted_color?.let { androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(it)) }
@@ -4918,6 +4927,9 @@ internal fun tag_picker_sheet(
                             .padding(horizontal = AsterSpacing.xl, vertical = AsterSpacing.md),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        if (node.depth > 0) {
+                            Spacer(Modifier.width((node.depth * PICKER_TREE_INDENT_DP).dp))
+                        }
                         Box(
                             modifier = Modifier
                                 .size(12.dp)

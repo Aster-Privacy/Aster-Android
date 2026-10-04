@@ -28,8 +28,10 @@ import org.astermail.android.labels.label_rows
 import org.astermail.android.labels.move_row
 import org.astermail.android.labels.tag_reorder_entries
 import org.astermail.android.labels.tag_display_name
+import org.astermail.android.labels.tag_name_readable
 import org.astermail.android.labels.tag_rows
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -119,7 +121,7 @@ class LabelOrderTest {
     }
 
     @Test
-    fun `tag rows are ordered by sort_order and drop unreadable names`() {
+    fun `tag rows are ordered by sort_order and keep unreadable names`() {
         val rows = tag_rows(
             listOf(
                 tag("b", sort_order = 1),
@@ -128,19 +130,17 @@ class LabelOrderTest {
                 tag("encrypted", name = "aGVsbG8gd29ybGQgdGhpcyBpcyBiYXNlNjQgcGF5bG9hZA==", sort_order = 3),
             ),
         )
-        assertEquals(listOf("a", "b"), rows.map { it.id })
+        assertEquals(listOf("a", "b", "blank", "encrypted"), rows.map { it.id })
     }
 
     @Test
-    fun `tag rows keep an unreadable tag that is applied to the selection`() {
-        val tags = listOf(
-            tag("a", sort_order = 0),
-            tag("encrypted", name = "aGVsbG8gd29ybGQgdGhpcyBpcyBiYXNlNjQgcGF5bG9hZA==", sort_order = 1),
-        )
-        assertEquals(listOf("a"), tag_rows(tags).map { it.id })
-        assertEquals(
-            listOf("a", "encrypted"),
-            tag_rows(tags, setOf("token_encrypted")).map { it.id },
+    fun `tag name is readable only when it is decrypted plaintext`() {
+        assertTrue(tag_name_readable(tag("a")))
+        assertFalse(tag_name_readable(tag("blank", name = "")))
+        assertFalse(
+            tag_name_readable(
+                tag("encrypted", name = "aGVsbG8gd29ybGQgdGhpcyBpcyBiYXNlNjQgcGF5bG9hZA=="),
+            ),
         )
     }
 

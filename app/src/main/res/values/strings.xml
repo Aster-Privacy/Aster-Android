@@ -721,6 +721,13 @@
     <string name="drawer_aliases">Aliases</string>
     <string name="no_folders_yet">No folders yet</string>
     <string name="folder_decrypt_failed">Folder (decryption failed)</string>
+    <string name="label_decrypt_failed">Unable to decrypt</string>
+    <string name="parent_label">Parent label</string>
+    <string name="parent_label_none">None</string>
+    <string name="error_tag_parent_not_found">That parent label no longer exists.</string>
+    <string name="error_tag_parent_self">A label can\'t be its own parent.</string>
+    <string name="error_tag_parent_cycle">A label can\'t be moved under one of its own sublabels.</string>
+    <string name="error_tag_parent_too_deep">Labels can\'t be nested more than five levels deep.</string>
     <string name="folder_locked_title">Locked folder</string>
     <string name="folder_locked_description">Enter the password for \"%1$s\" to view its mail.</string>
     <string name="folder_unlock_password_placeholder">Folder password</string>

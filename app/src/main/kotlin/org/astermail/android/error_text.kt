@@ -53,6 +53,10 @@ private val validation_code_strings = mapOf(
     "FOLDER_PASSWORD_NOT_SET" to R.string.error_folder_password_not_set,
     "IMAGE_TOO_LARGE" to R.string.error_image_too_large,
     "PAYLOAD_TOO_LARGE" to R.string.error_upload_too_large,
+    "TAG_PARENT_NOT_FOUND" to R.string.error_tag_parent_not_found,
+    "TAG_PARENT_SELF" to R.string.error_tag_parent_self,
+    "TAG_PARENT_CYCLE" to R.string.error_tag_parent_cycle,
+    "TAG_PARENT_TOO_DEEP" to R.string.error_tag_parent_too_deep,
 )
 
 private fun send_refusal_message(
