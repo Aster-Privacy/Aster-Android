@@ -2854,7 +2854,7 @@
     <string name="show_sender_pictures_subtitle">在收件箱中为每位发件人显示照片或姓名首字母</string>
     <string name="theme_sync_across_devices">在设备之间同步主题</string>
     <string name="theme_sync_across_devices_subtitle">关闭后，此设备可以使用不同的主题。</string>
-    <string name="view_encryption_details">查看加密详情</string>
+    <string name="view_security_details">查看安全详情</string>
     <string name="resubscribe">重新订阅</string>
     <string name="translate_confirm_title">要开启翻译吗？</string>
     <string name="translate_confirm_message">Aster 在您的设备上翻译邮件，因此您阅读的内容不会发送到翻译服务。首次从某种语言翻译时，Aster 会下载 20 到 55 MB 的语言包并保存在此设备上。您可以随时移除语言包。</string>

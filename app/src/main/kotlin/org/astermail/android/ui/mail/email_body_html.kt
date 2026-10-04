@@ -105,7 +105,7 @@ internal fun build_email_html(
     } else {
         body
     }
-    val declares_light = body.contains(Regex("color-scheme\\s*:\\s*light\\s+only", RegexOption.IGNORE_CASE))
+    val declares_light = body.contains(Regex("color-scheme\\s*:\\s*(?:light\\s+only|only\\s+light)\\b", RegexOption.IGNORE_CASE))
     val declares_light_bg = is_html_body && body.contains(
         Regex(
             "(?:background(?:-color)?\\s*:\\s*(?:#fff(?:fff)?|white|rgb\\(\\s*25[0-5])|bgcolor\\s*=\\s*[\"']?(?:#fff(?:fff)?|white))",
@@ -201,9 +201,15 @@ html,body{background-color:#ffffff!important}
         simple_dark = simple_dark,
     )
 
+    val html_style = when {
+        simple_dark || force_dark_emails -> " style=\"color-scheme:dark!important\""
+        is_html_body -> " style=\"background-color:transparent\""
+        else -> ""
+    }
+
     val csp_meta = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src https://app.astermail.org https://mail-content.invalid data:; style-src 'unsafe-inline'; font-src https://app.astermail.org https://mail-content.invalid data:; script-src 'none'; worker-src 'none'; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; object-src 'none'\">"
 
-    return """<!DOCTYPE html><html${if (has_newsletter_layout) " data-nl=\"1\"" else ""}${if (white_page) " data-white=\"1\"" else ""}${if (simple_dark) " data-dark=\"1\"" else ""}${if (force_dark_emails) " data-dark-force=\"1\"" else ""}${if (is_html_body && !simple_dark) " style=\"background-color:transparent\"" else ""}><head>
+    return """<!DOCTYPE html><html${if (has_newsletter_layout) " data-nl=\"1\"" else ""}${if (white_page) " data-white=\"1\"" else ""}${if (simple_dark) " data-dark=\"1\"" else ""}${if (force_dark_emails) " data-dark-force=\"1\"" else ""}${html_style}><head>
 $csp_meta
 <meta charset="utf-8">
 $viewport_meta
@@ -225,6 +231,7 @@ pre,code{overflow-x:auto;max-width:100%}
 img.blocked-image[data-blocked='true']{opacity:1!important;filter:none!important}
 $table_css
 a.aster-email-button,#m a.aster-email-button{white-space:nowrap!important;word-break:keep-all!important;overflow-wrap:normal!important;max-width:100%!important}
+#m a.aster-email-button[$WRAP_BUTTON_LABEL_ATTRIBUTE]{white-space:normal!important}
 .aster_quote,.gmail_quote,.protonmail_quote,.yahoo_quoted,.moz-cite-prefix{display:none}
 .aster-quoted-content .aster_quote,.aster-quoted-content .gmail_quote,.aster-quoted-content .protonmail_quote,.aster-quoted-content .yahoo_quoted,.aster-quoted-content .moz-cite-prefix,.aster-forwarded-content .aster_quote,.aster-forwarded-content .gmail_quote,.aster-forwarded-content .protonmail_quote,.aster-forwarded-content .yahoo_quoted,.aster-forwarded-content .moz-cite-prefix{display:block;margin:0;padding:0}
 blockquote{margin:8px 0;padding-left:12px;border-left:2px solid $bq_border;color:$bq_color}

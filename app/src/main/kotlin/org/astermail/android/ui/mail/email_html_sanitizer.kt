@@ -97,8 +97,10 @@ object EmailHtmlSanitizer {
 
     private fun clean_body(pre: String, clean_tracking_links: Boolean): Document {
         val dirty = Jsoup.parseBodyFragment(extract_body_html(pre), "https://mail-content.invalid/")
+        drop_blank_image_sources(dirty)
         val doc = Cleaner(safelist).clean(dirty).apply { outputSettings(raw_output_settings()) }
         scrub_attributes(doc, clean_tracking_links)
+        remove_sourceless_images(doc)
         return doc
     }
 
@@ -117,6 +119,18 @@ object EmailHtmlSanitizer {
         }
         sb.append(doc.body().html())
         return sb.toString()
+    }
+
+    private fun drop_blank_image_sources(doc: Document) {
+        for (img in doc.select("img[src]")) {
+            if (img.attr("src").isBlank()) img.removeAttr("src")
+        }
+    }
+
+    private fun remove_sourceless_images(doc: Document) {
+        for (img in doc.select("img")) {
+            if (img.attr("src").isBlank() && img.attr("srcset").isBlank()) img.remove()
+        }
     }
 
     private fun remove_tracking_pixels(doc: Document) {

@@ -236,7 +236,7 @@ class EmailAuthBadgeScreenshotTest {
         compose_rule.onAllNodesWithTag("email_auth_badge").assertCountEquals(0)
         val activity = compose_rule.activity
         compose_rule.onNodeWithText(activity.getString(R.string.to_label_prefix, "me")).performClick()
-        compose_rule.onNodeWithText(activity.getString(R.string.view_encryption_details))
+        compose_rule.onNodeWithText(activity.getString(R.string.view_security_details))
             .performScrollTo()
             .performClick()
         val passed = activity.getString(R.string.auth_result_pass)

@@ -258,6 +258,15 @@ fun reconcile_email_rows(rows: MutableList<Email>, merged: List<Email>) {
     while (rows.size > merged.size) rows.removeAt(rows.size - 1)
 }
 
+private val folders_marking_archived = setOf("sent", "starred", "snoozed")
+
+fun archived_folder_chip(folder: String, is_archived: Boolean, name: String): list_folder_chip? =
+    if (is_archived && folder in folders_marking_archived) {
+        list_folder_chip(name = name, icon = "archive", color = Color(0xFF64748B))
+    } else {
+        null
+    }
+
 private const val UNREAD_MISMATCH_GRACE_MS = 3000L
 
 private const val MIN_FILLED_ROWS = 15
@@ -765,6 +774,7 @@ fun InboxScreen(
                 }
             }
         }
+    val archived_chip_name = stringResource(R.string.archived)
     val state_matches_folder = inbox_state.current_folder == current_folder
     val api_emails = remember(inbox_state.items, settings_state.tags, attachment_ids, settings_state.labels, current_folder, state_matches_folder) {
         if (!state_matches_folder) return@remember null
@@ -772,7 +782,8 @@ fun InboxScreen(
             inbox_item_to_email(
                 if (!it.has_attachments && it.id in attachment_ids) it.copy(has_attachments = true) else it,
                 settings_state.tags,
-                folder_chip = all_mail_folder_chip?.invoke(it),
+                folder_chip = all_mail_folder_chip?.invoke(it)
+                    ?: archived_folder_chip(current_folder, it.is_archived, archived_chip_name),
                 context = toast_context,
             )
         }
@@ -827,8 +838,8 @@ fun InboxScreen(
         reconcile_email_rows(emails, merged)
     }
     val is_refreshing = inbox_state.is_refreshing
-    var sort_mode_user_set by remember { mutableStateOf(false) }
-    var sort_mode by remember { mutableStateOf(InboxSortMode.newest) }
+    var sort_mode_user_set by rememberSaveable { mutableStateOf(false) }
+    var sort_mode by rememberSaveable { mutableStateOf(InboxSortMode.newest) }
     var select_mode by remember { mutableStateOf(false) }
     var select_all_active by remember { mutableStateOf(false) }
     var select_all_loading by remember { mutableStateOf(false) }
@@ -1210,7 +1221,9 @@ fun InboxScreen(
                     return
                 }
                 mail_vm.archive(ids, read_threads.size)
-                emails.removeAll { thread_row_covers(it, read_threads, grouping_enabled) }
+                if (archive_removes_row(current_folder)) {
+                    emails.removeAll { thread_row_covers(it, read_threads, grouping_enabled) }
+                }
             }
             inbox_quick_action_delete_old -> {
                 if (current_folder == "scheduled" || current_folder == "trash") {
@@ -1394,7 +1407,9 @@ fun InboxScreen(
         val thread_count = selected_ids.size
         val to_remove = selected_ids.toSet()
         mail_vm.archive(ids, thread_count)
-        emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+        if (archive_removes_row(current_folder)) {
+            emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+        }
         exit_select_mode()
         notify_if_scope_incomplete(ids.size)
     }
@@ -1682,10 +1697,7 @@ fun InboxScreen(
         }
     }
 
-    val foreground_epoch by org.astermail.android.ui.common.app_session.foreground_epoch
-        .collectAsStateWithLifecycle()
-    LaunchedEffect(foreground_epoch) {
-        if (foreground_epoch <= 0) return@LaunchedEffect
+    org.astermail.android.ui.common.on_return_to_foreground {
         list_state.scrollToItem(0)
         header_offset_px.floatValue = 0f
         header_hidden = false
@@ -1778,8 +1790,9 @@ fun InboxScreen(
         settle_clipped_top()
     }
 
+    val select_mode_gate = remember { org.astermail.android.ui.common.ChangeGate(select_mode) }
     LaunchedEffect(select_mode, list_state) {
-        if (select_mode) return@LaunchedEffect
+        if (!select_mode_gate.passes(select_mode) || select_mode) return@LaunchedEffect
         androidx.compose.runtime.withFrameNanos { }
         if (list_state.isScrollInProgress || drag_selecting) return@LaunchedEffect
         if (list_state.firstVisibleItemScrollOffset > 0) {
@@ -1970,7 +1983,7 @@ fun InboxScreen(
                             )
                             "spam" -> SwipeConfig(
                                 start_label = not_spam_label_outer, end_label = delete_label_outer,
-                                start_icon = TablerIcons.Inbox, end_icon = TablerIcons.Trash,
+                                start_icon = spam_action_icon(is_spam = true), end_icon = TablerIcons.Trash,
                                 start_action = "unmark_spam", end_action = "delete",
                             )
                             else -> SwipeConfig(
@@ -2251,6 +2264,7 @@ fun InboxScreen(
                                     user_prefs = settings_state.preferences,
                                     cached_geometry = row_geometry,
                                     swipe_reset_token = if (swipe_reset_thread_id == thread.thread_id) swipe_reset_nonce else 0,
+                                    swipe_removes_row = { action -> swipe_action_removes_row(action, current_folder) },
                                 )
                             }
                         }
@@ -3517,10 +3531,11 @@ internal fun select_mode_bottom_bar(
                             test_tag = "sel_action_unarchive",
                         )
                         bottom_select_action(
-                            icon = TablerIcons.Ban,
+                            icon = spam_action_icon(is_spam = false),
                             label = stringResource(R.string.report_spam),
                             enabled = enabled,
                             onClick = { on_action("spam") },
+                            tint = colors.danger,
                             test_tag = "sel_action_spam",
                         )
                         bottom_select_action(
@@ -3549,7 +3564,7 @@ internal fun select_mode_bottom_bar(
                             test_tag = "mark_read",
                         )
                         bottom_select_action(
-                            icon = TablerIcons.Inbox,
+                            icon = spam_action_icon(is_spam = true),
                             label = stringResource(R.string.swipe_not_spam),
                             enabled = enabled,
                             onClick = { on_action("not_spam") },
@@ -3689,7 +3704,7 @@ internal fun selection_overflow_sheet(
                 overflow_sheet_row("restore", TablerIcons.Inbox, stringResource(R.string.swipe_restore), colors.text_primary) { on_action("restore") }
             }
             if (in_spam) {
-                overflow_sheet_row("not_spam", TablerIcons.Inbox, stringResource(R.string.swipe_not_spam), colors.text_primary) { on_action("not_spam") }
+                overflow_sheet_row("not_spam", spam_action_icon(is_spam = true), stringResource(R.string.swipe_not_spam), colors.text_primary) { on_action("not_spam") }
             }
             if (in_archive) {
                 overflow_sheet_row("unarchive", TablerIcons.Inbox, stringResource(R.string.swipe_restore), colors.text_primary) { on_action("unarchive") }
@@ -3712,7 +3727,7 @@ internal fun selection_overflow_sheet(
                 overflow_sheet_row("trash", TablerIcons.Trash, stringResource(R.string.delete_action), colors.danger) { on_action("trash") }
             }
             if (!in_spam) {
-                overflow_sheet_row("spam", TablerIcons.Ban, stringResource(R.string.report_spam), colors.danger) { on_action("spam") }
+                overflow_sheet_row("spam", spam_action_icon(is_spam = false), stringResource(R.string.report_spam), colors.danger) { on_action("spam") }
             }
             if (on_customize != null) {
                 AsterDivider()
@@ -3913,6 +3928,7 @@ private fun swipeable_thread_row(
     cached_geometry: SkeletonGeometry? = null,
     list_scrolling: () -> Boolean = { false },
     swipe_reset_token: Int = 0,
+    swipe_removes_row: (String) -> Boolean = ::is_removing_swipe_action,
     refresh_engaged: () -> Boolean = { false },
 ) {
     swipe_action_row(
@@ -3936,6 +3952,7 @@ private fun swipeable_thread_row(
         haptic_enabled = haptic_enabled,
         list_scrolling = list_scrolling,
         reset_token = swipe_reset_token,
+        removes_row = swipe_removes_row,
     ) {
         ThreadInboxRow(
             thread = thread,
@@ -3987,17 +4004,17 @@ private fun swipe_action_label(action: String): String = when (action) {
     else -> stringResource(R.string.swipe_archive)
 }
 
-private fun swipe_action_icon(action: String): androidx.compose.ui.graphics.vector.ImageVector = when (action) {
+internal fun swipe_action_icon(action: String): androidx.compose.ui.graphics.vector.ImageVector = when (action) {
     "archive" -> TablerIcons.Archive
     "delete", "trash" -> TablerIcons.Trash
     "toggle_read" -> TablerIcons.MailOpened
     "snooze" -> TablerIcons.Clock
     "star" -> TablerIcons.Star
-    "spam" -> TablerIcons.Ban
+    "spam" -> spam_action_icon(is_spam = false)
     "move_to_inbox" -> TablerIcons.Inbox
     "unarchive" -> TablerIcons.Inbox
     "restore_trash" -> TablerIcons.Inbox
-    "unmark_spam" -> TablerIcons.Inbox
+    "unmark_spam" -> spam_action_icon(is_spam = true)
     "delete_permanent" -> TablerIcons.Trash
     else -> TablerIcons.Archive
 }
@@ -4025,7 +4042,9 @@ private fun execute_swipe_action(
         "archive" -> {
             if (current_folder == "archive") return
             mail_vm.archive(ids, 1)
-            emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
+            if (archive_removes_row(current_folder)) {
+                emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
+            }
         }
         "delete", "trash" -> {
             if (current_folder == "trash") return

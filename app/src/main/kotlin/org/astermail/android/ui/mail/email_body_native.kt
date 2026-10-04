@@ -47,6 +47,17 @@ private val LONG_TOKEN = Regex("""\S{30,}""")
 
 private val MEDIA_TAGS = setOf("img", "video", "picture")
 
+internal const val WRAP_BUTTON_LABEL_ATTRIBUTE = "data-aster-wrap-label"
+
+private const val WRAP_BUTTON_LABEL_WIDTH = 296f
+
+private const val DEFAULT_FONT_PX = 16f
+
+private const val LABEL_CHARACTER_EM = 0.62f
+
+private val INLINE_FONT_SIZE =
+    Regex("""(?:^|;)\s*font-size\s*:\s*(\d+(?:\.\d+)?)\s*(px|pt|em|rem|%)""", RegexOption.IGNORE_CASE)
+
 private val BLANK_SPACER_TAGS = setOf("div", "p", "span")
 
 private const val SPACER_CONTENT = "img, hr, table, video, audio, iframe, object"
@@ -158,6 +169,7 @@ internal fun prepare_email_body(
     val root = doc.body()
     linkify_text_nodes(root)
     if (!is_newsletter) mark_long_tokens(root)
+    mark_wide_button_labels(root)
     relax_fixed_heights(root)
     if (is_newsletter) pad_loose_blocks(root)
     if (simple_dark) repair_dark_text_contrast(root)
@@ -445,6 +457,29 @@ private fun mark_long_tokens(root: Element) {
         if (last < source.length) replacements.add(TextNode(source.substring(last)))
         node.remove()
         parent.insertChildren(index, replacements)
+    }
+}
+
+private fun inline_font_px(element: Element?): Float {
+    if (element == null) return DEFAULT_FONT_PX
+    val match = INLINE_FONT_SIZE.findAll(element.attr("style")).lastOrNull()
+        ?: return inline_font_px(element.parent())
+    val value = match.groupValues[1].toFloatOrNull() ?: return inline_font_px(element.parent())
+    return when (match.groupValues[2].lowercase()) {
+        "px" -> value
+        "pt" -> value * 4f / 3f
+        "rem" -> value * DEFAULT_FONT_PX
+        "em" -> value * inline_font_px(element.parent())
+        else -> value / 100f * inline_font_px(element.parent())
+    }
+}
+
+private fun estimated_label_width(anchor: Element): Float =
+    anchor.text().trim().length * inline_font_px(anchor) * LABEL_CHARACTER_EM
+
+private fun mark_wide_button_labels(root: Element) {
+    for (anchor in root.select("a.aster-email-button")) {
+        if (estimated_label_width(anchor) > WRAP_BUTTON_LABEL_WIDTH) anchor.attr(WRAP_BUTTON_LABEL_ATTRIBUTE, "")
     }
 }
 

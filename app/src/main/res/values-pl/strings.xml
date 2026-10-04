@@ -2897,7 +2897,7 @@
     <string name="show_sender_pictures_subtitle">Pokazuj zdjęcie lub inicjały każdego nadawcy w skrzynce odbiorczej</string>
     <string name="theme_sync_across_devices">Synchronizuj motyw między urządzeniami</string>
     <string name="theme_sync_across_devices_subtitle">Wyłącz, aby na tym urządzeniu zachować osobny motyw.</string>
-    <string name="view_encryption_details">Zobacz szczegóły szyfrowania</string>
+    <string name="view_security_details">Zobacz szczegóły zabezpieczeń</string>
     <string name="resubscribe">Subskrybuj ponownie</string>
     <string name="translate_confirm_title">Włączyć tłumaczenie?</string>
     <string name="translate_confirm_message">Aster tłumaczy pocztę na Twoim urządzeniu, więc nic, co czytasz, nie jest wysyłane do usługi tłumaczeniowej. Przy pierwszym tłumaczeniu z danego języka Aster pobiera pakiet językowy o rozmiarze od 20 do 55 MB i zachowuje go na tym urządzeniu. Pakiety możesz usunąć w dowolnej chwili.</string>

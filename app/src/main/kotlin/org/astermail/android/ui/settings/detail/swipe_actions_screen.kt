@@ -73,6 +73,7 @@ import org.astermail.android.mail.normalize_swipe_action
 import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.mail.spam_action_icon
 
 private data class SwipeActionOption(
     val id: String,
@@ -115,7 +116,7 @@ fun SwipeActionsScreen(on_back: () -> Unit) {
         SwipeActionOption(SWIPE_ACTION_TOGGLE_READ, stringResource(R.string.swipe_mark_as_read), TablerIcons.MailOpened, colors.success),
         SwipeActionOption(SWIPE_ACTION_SNOOZE, stringResource(R.string.snooze), TablerIcons.Clock, colors.warning),
         SwipeActionOption(SWIPE_ACTION_STAR, stringResource(R.string.swipe_star), TablerIcons.Star, colors.star),
-        SwipeActionOption(SWIPE_ACTION_SPAM, stringResource(R.string.swipe_report_spam), TablerIcons.Ban, colors.danger),
+        SwipeActionOption(SWIPE_ACTION_SPAM, stringResource(R.string.swipe_report_spam), spam_action_icon(is_spam = false), colors.danger),
         SwipeActionOption(SWIPE_ACTION_NONE, stringResource(R.string.swipe_none), TablerIcons.CircleOff, colors.text_muted),
     )
 

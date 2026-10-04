@@ -2897,7 +2897,7 @@
     <string name="show_sender_pictures_subtitle">Показывать фото или инициалы каждого отправителя во «Входящих»</string>
     <string name="theme_sync_across_devices">Синхронизировать тему между устройствами</string>
     <string name="theme_sync_across_devices_subtitle">Отключите, чтобы на этом устройстве была своя тема.</string>
-    <string name="view_encryption_details">Посмотреть сведения о шифровании</string>
+    <string name="view_security_details">Посмотреть сведения о безопасности</string>
     <string name="resubscribe">Возобновить подписку</string>
     <string name="translate_confirm_title">Включить перевод?</string>
     <string name="translate_confirm_message">Aster переводит почту на вашем устройстве, поэтому ничего из прочитанного не отправляется в службу перевода. При первом переводе с какого-либо языка Aster загружает языковой пакет размером от 20 до 55 МБ и сохраняет его на этом устройстве. Пакеты можно удалить в любое время.</string>

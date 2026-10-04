@@ -2882,7 +2882,7 @@
     <string name="show_sender_pictures_subtitle">Mostrar uma fotografia ou as iniciais de cada remetente na sua caixa de entrada</string>
     <string name="theme_sync_across_devices">Sincronizar o tema entre dispositivos</string>
     <string name="theme_sync_across_devices_subtitle">Desative para manter um tema diferente neste dispositivo.</string>
-    <string name="view_encryption_details">Ver detalhes da encriptação</string>
+    <string name="view_security_details">Ver detalhes de segurança</string>
     <string name="resubscribe">Subscrever novamente</string>
     <string name="translate_confirm_title">Ativar a tradução?</string>
     <string name="translate_confirm_message">O Aster traduz o correio no seu dispositivo, por isso nada do que lê é enviado para um serviço de tradução. Da primeira vez que traduz a partir de um idioma, o Aster transfere um pacote de idioma de 20 a 55 MB e guarda-o neste dispositivo. Pode remover os pacotes quando quiser.</string>

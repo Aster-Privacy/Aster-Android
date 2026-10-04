@@ -2854,7 +2854,7 @@
     <string name="show_sender_pictures_subtitle">받은편지함에서 보낸 사람마다 사진이나 이니셜을 표시합니다</string>
     <string name="theme_sync_across_devices">기기 간 테마 동기화</string>
     <string name="theme_sync_across_devices_subtitle">끄면 이 기기에서만 다른 테마를 쓸 수 있습니다.</string>
-    <string name="view_encryption_details">암호화 세부 정보 보기</string>
+    <string name="view_security_details">보안 세부 정보 보기</string>
     <string name="resubscribe">다시 구독</string>
     <string name="translate_confirm_title">번역을 켤까요?</string>
     <string name="translate_confirm_message">Aster는 기기에서 메일을 번역하므로 읽는 내용이 번역 서비스로 전송되지 않습니다. 어떤 언어에서 처음 번역할 때 Aster가 20~55MB 크기의 언어 팩을 다운로드해 이 기기에 보관합니다. 언제든지 팩을 제거할 수 있습니다.</string>

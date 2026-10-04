@@ -192,6 +192,7 @@ import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.disabled_surface_color
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.ui.common.vertical_scroll_indicator
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
@@ -1206,7 +1207,7 @@ fun MailDetailScreen(
                         }
                         detail_menu_divider()
                         detail_menu_action(
-                            icon = TablerIcons.AlertOctagon,
+                            icon = spam_action_icon(is_spam),
                             text = if (is_spam) stringResource(R.string.swipe_not_spam) else stringResource(R.string.report_spam),
                             tint = if (is_spam) colors.accent_blue else colors.danger,
                         ) {
@@ -1294,6 +1295,7 @@ fun MailDetailScreen(
                 state = list_state,
                 modifier = Modifier
                     .fillMaxSize()
+                    .vertical_scroll_indicator(list_state, bottom_inset = bottom_bar_height)
                     .detail_content_handoff(email_id, detail_phase)
                     .clipToBounds()
                     .pointerInput(on_next, on_previous) {
@@ -1805,7 +1807,7 @@ fun MailDetailScreen(
                                     show_snooze_sheet = true
                                 }
                                 "spam" -> bottom_action(
-                                    if (is_spam) TablerIcons.ShieldCheck else TablerIcons.Ban,
+                                    spam_action_icon(is_spam),
                                     if (is_spam) stringResource(R.string.swipe_not_spam) else stringResource(R.string.report_spam),
                                     test_tag = "toolbar_spam",
                                 ) {
@@ -4075,7 +4077,7 @@ internal fun message_details_panel(
             )
         }
         Text(
-            text = stringResource(R.string.view_encryption_details),
+            text = stringResource(R.string.view_security_details),
             color = colors.accent_blue,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
@@ -4624,14 +4626,14 @@ internal fun action_menu_sheet(
                         aster_menu_item(
                             stringResource(R.string.swipe_not_spam),
                             on_spam,
-                            icon = TablerIcons.ShieldCheck,
+                            icon = spam_action_icon(is_spam = true),
                             tint = colors.accent_blue,
                         )
                     } else {
                         aster_menu_item(
                             stringResource(R.string.report_spam),
                             on_spam,
-                            icon = TablerIcons.AlertTriangle,
+                            icon = spam_action_icon(is_spam = false),
                             destructive = true,
                         )
                     }
@@ -5229,6 +5231,13 @@ internal class mail_body_web_view(
 
     var selection_active: Boolean = false
         private set
+
+    var on_width_change: (() -> Unit)? = null
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        if (body_width_changed(oldw, w)) on_width_change?.invoke()
+    }
 
     private fun wrap(
         callback: android.view.ActionMode.Callback,
@@ -5906,6 +5915,8 @@ internal fun email_html_view(
     val last_window_y = remember { floatArrayOf(Float.NaN) }
     val has_toggles_ref = remember { booleanArrayOf(true) }
     val reload_policy = remember(height_cache_key) { body_reload_policy() }
+    val height_guard = remember(height_cache_key) { body_height_guard() }
+    val height_recheck = remember(height_cache_key) { mutableStateOf(false) }
     val web_view_context = androidx.compose.ui.platform.LocalContext.current
     val web_view_missing = remember(height_cache_key) { !web_view_support.is_available(web_view_context) }
     val renderer_exhausted = remember(height_cache_key) { mutableStateOf(web_view_missing) }
@@ -5964,6 +5975,7 @@ internal fun email_html_view(
                 if (zoom_last_ref[0] > 0f) zoom_base_ref[0] = zoom_last_ref[0]
             }
             val visual_h = (h * scale_ref[0]).toInt().coerceAtMost(max_body_height_px)
+            if (exact && height_guard.should_remeasure_capped(visual_h, max_body_height_px)) height_recheck.value = true
             val new_dp = visual_h.dp
             fun remember_known_height(value: Float) {
                 if (!is_natural || value <= 0f) return
@@ -6084,6 +6096,7 @@ internal fun email_html_view(
                 continue
             }
             val web = web_ref[0] ?: continue
+            if (!body_width_measurable(web.width, web.resources.displayMetrics.density)) continue
             val content = web.contentHeight
             if (content <= 0) continue
             @Suppress("DEPRECATION")
@@ -6117,7 +6130,9 @@ internal fun email_html_view(
         height_settled = true
         if (!has_measured) {
             val web = web_ref[0]
-            val native = if (web != null && web.contentHeight > 0) {
+            val native = if (web != null && web.contentHeight > 0 &&
+                body_width_measurable(web.width, web.resources.displayMetrics.density)
+            ) {
                 (web.contentHeight * web.scale / web.resources.displayMetrics.density).toInt().dp
             } else {
                 0.dp
@@ -6493,6 +6508,12 @@ internal fun email_html_view(
         on_update_webview = { org.astermail.android.translation.TranslationRuntime.open_webview_update(translate_context) },
       )
       val body_ready_now = html.isNotEmpty() && has_measured && height_settled && page_painted.value
+      LaunchedEffect(height_recheck.value, body_shown) {
+          if (height_recheck.value && body_shown) {
+              height_recheck.value = false
+              remeasure_trigger.value += 1
+          }
+      }
       LaunchedEffect(body_ready_now) {
           if (body_ready_now) {
               body_shown = true
@@ -6555,6 +6576,7 @@ internal fun email_html_view(
             factory = { ctx ->
                 mail_body_web_view(ctx).apply {
                     configure_mail_body_web_view(this, text_zoom, allow_external)
+                    on_width_change = { height_recheck.value = true }
                     var touch_down_x = 0f
                     var touch_down_y = 0f
                     var multi_touch = false
