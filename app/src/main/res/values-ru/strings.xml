@@ -2460,6 +2460,8 @@
     <string name="spam_trash_hidden_notice">Некоторые письма в спаме и корзине соответствуют запросу.</string>
     <string name="view_spam_trash_messages">Показать письма</string>
     <string name="search_scope_anywhere">Почта, спам и корзина</string>
+    <string name="search_scope_only_in">Только в папке %1$s</string>
+    <string name="search_scope_everywhere">Везде</string>
     <string name="advanced_has_words">Содержит слова</string>
     <string name="advanced_date_within">Диапазон даты</string>
     <string name="advanced_search_scope">Искать в</string>

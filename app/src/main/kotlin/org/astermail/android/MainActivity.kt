@@ -487,19 +487,15 @@ private object routes {
     }
     const val compose = "compose?reply_to={reply_to}&mode={mode}&draft_id={draft_id}&to={to}&thread_ghost={thread_ghost}&share={share}"
     const val search = "search"
-    const val search_with_query = "search?q={q}"
+    const val search_with_query = "search?q={q}&from={from}"
     fun search_for(query: String): String {
         return "search?q=" + android.net.Uri.encode(query)
     }
     fun search_for_folder(folder: String): String {
-        val scope = when (folder) {
-            "trash" -> "in:trash"
-            "archive" -> "in:archive"
-            "spam" -> "in:spam"
-            "starred" -> "is:starred"
-            else -> null
-        }
-        return if (scope == null) search else search_for(scope)
+        if (org.astermail.android.mail.search_narrow_query(folder) == null) return search
+        val scope = org.astermail.android.mail.search_scope_query(folder)
+        val from = "from=" + android.net.Uri.encode(folder)
+        return if (scope == null) "search?$from" else search_for(scope) + "&$from"
     }
 
     fun compose_new(to: String = ""): String {
@@ -1163,24 +1159,33 @@ private fun AsterNavHost() {
             val inbox_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
             }
+            val draft_context = androidx.compose.ui.platform.LocalContext.current
             SearchScreen(
                 on_back = { pop_once(nav_controller) },
                 on_open_email = { id -> open_mail_detail(nav_controller, id) },
+                on_open_draft = { id -> draft_context.startActivity(ComposeActivity.intent_for(draft_context, mode = "draft", draft_id = id)) },
                 mail_vm = if (inbox_entry != null) hiltViewModel(inbox_entry) else hiltViewModel(),
             )
         }
         composable(
             route = routes.search_with_query,
-            arguments = listOf(androidx.navigation.navArgument("q") { defaultValue = "" }),
+            arguments = listOf(
+                androidx.navigation.navArgument("q") { defaultValue = "" },
+                androidx.navigation.navArgument("from") { defaultValue = "" },
+            ),
         ) { entry ->
             val q = entry.arguments?.getString("q").orEmpty()
+            val from = entry.arguments?.getString("from").orEmpty().ifEmpty { null }
             val inbox_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
             }
+            val draft_context = androidx.compose.ui.platform.LocalContext.current
             SearchScreen(
                 on_back = { pop_once(nav_controller) },
                 on_open_email = { id -> open_mail_detail(nav_controller, id) },
+                on_open_draft = { id -> draft_context.startActivity(ComposeActivity.intent_for(draft_context, mode = "draft", draft_id = id)) },
                 initial_query = q,
+                origin_folder = from,
                 mail_vm = if (inbox_entry != null) hiltViewModel(inbox_entry) else hiltViewModel(),
             )
         }

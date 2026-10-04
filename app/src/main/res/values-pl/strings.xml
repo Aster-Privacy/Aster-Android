@@ -2460,6 +2460,8 @@
     <string name="spam_trash_hidden_notice">Niektóre wiadomości w Spamie i Koszu odpowiadają Twojemu zapytaniu.</string>
     <string name="view_spam_trash_messages">Zobacz wiadomości</string>
     <string name="search_scope_anywhere">Poczta, spam i kosz</string>
+    <string name="search_scope_only_in">Tylko w folderze %1$s</string>
+    <string name="search_scope_everywhere">Wszędzie</string>
     <string name="advanced_has_words">Zawiera słowa</string>
     <string name="advanced_date_within">Zakres dat</string>
     <string name="advanced_search_scope">Szukaj w</string>

@@ -207,15 +207,21 @@ internal fun parse_query(raw: String): ParsedQuery {
     )
 }
 
+internal fun effective_operators(ops: List<SearchOperator>): List<SearchOperator> {
+    val last_scope = ops.lastOrNull { !it.negated && it.key == "in" } ?: return ops
+    return ops.filter { it.negated || it.key != "in" || it === last_scope }
+}
+
 internal fun matches_item(
     item: InboxItem,
     parsed: ParsedQuery,
     filter: String?,
     apply_scope: Boolean = true,
 ): Boolean {
+    val operators = effective_operators(parsed.operators)
     if (apply_scope) {
-        if (item.is_spam && !scope_includes_spam(parsed.operators)) return false
-        if (item.is_trashed && !scope_includes_trash(parsed.operators)) return false
+        if (item.is_spam && !scope_includes_spam(operators)) return false
+        if (item.is_trashed && !scope_includes_trash(operators)) return false
     }
 
     val filter_ok = when (filter) {
@@ -227,7 +233,7 @@ internal fun matches_item(
     }
     if (!filter_ok) return false
 
-    val attachment_type_ops = parsed.operators.filter {
+    val attachment_type_ops = operators.filter {
         !it.negated && it.key == "has" && ATTACHMENT_EXTENSIONS.containsKey(it.value)
     }
 
@@ -239,7 +245,7 @@ internal fun matches_item(
 
     val grouped_ops = mutableSetOf<SearchOperator>()
 
-    parsed.operators
+    operators
         .filter { !it.negated && ANY_OF_OPERATOR_KEYS.contains(it.key) }
         .groupBy { it.key }
         .forEach { (key, group) ->
@@ -248,7 +254,7 @@ internal fun matches_item(
             if (group.none { evaluate_operator(item, it) }) return false
         }
 
-    for (op in parsed.operators) {
+    for (op in operators) {
         if (attachment_type_ops.contains(op)) continue
         if (grouped_ops.contains(op)) continue
         val pass = evaluate_operator(item, op)
@@ -307,7 +313,9 @@ private fun evaluate_operator(item: InboxItem, op: SearchOperator): Boolean {
             else -> true
         }
         "in" -> when (op.value) {
-            "inbox" -> !item.is_trashed && !item.is_archived && !item.is_spam
+            "inbox" -> is_received_item(item) && !item.is_trashed && !item.is_archived && !item.is_spam
+            "sent" -> item.raw_item.item_type == "sent"
+            "drafts", "draft" -> item.raw_item.item_type == "draft"
             "trash" -> item.is_trashed
             "archive", "archived" -> item.is_archived
             "spam" -> item.is_spam
@@ -339,6 +347,11 @@ private fun evaluate_operator(item: InboxItem, op: SearchOperator): Boolean {
         else -> true
     }
     return if (op.negated) !result else result
+}
+
+private fun is_received_item(item: InboxItem): Boolean {
+    val type = item.raw_item.item_type
+    return type == null || type == "received"
 }
 
 private fun start_of_local_day(days_back: Int): Long {
@@ -401,7 +414,9 @@ private fun parse_item_timestamp(ts: String): Long {
 fun SearchScreen(
     on_back: () -> Unit,
     on_open_email: (String) -> Unit,
+    on_open_draft: (String) -> Unit = on_open_email,
     initial_query: String = "",
+    origin_folder: String? = null,
     mail_vm: MailViewModel = hiltViewModel(),
 ) {
     val colors = AsterMaterial.colors
@@ -515,6 +530,18 @@ fun SearchScreen(
     val parsed = remember(query) { parse_query(query.trim()) }
 
     val has_query = query.isNotBlank() || active_filter != null
+
+    var corpus_folders_requested by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(has_query) {
+        if (has_query && !corpus_folders_requested) {
+            corpus_folders_requested = true
+            org.astermail.android.mail.search_corpus_folders.forEach { mail_vm.load_search_folder(it) }
+        }
+    }
+
+    val suggestion = remember(origin_folder, operator_chips) {
+        scope_suggestion(origin_folder, operator_chips)
+    }
 
     val lock_revision by org.astermail.android.folders.folder_lock_store.revision.collectAsState()
     val visible_corpus = remember(search_state.all_items, lock_revision) {
@@ -771,7 +798,8 @@ fun SearchScreen(
             )
         }
 
-        if (custom_chips.isNotEmpty()) {
+        val shown_suggestion = suggestion?.takeIf { has_query && !select_mode }
+        if (custom_chips.isNotEmpty() || shown_suggestion != null) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -782,6 +810,11 @@ fun SearchScreen(
                 custom_chips.forEach { op ->
                     operator_chip(op) {
                         operator_chips = operator_chips.filterNot { it === op }
+                    }
+                }
+                if (shown_suggestion != null) {
+                    scope_suggestion_chip(shown_suggestion) {
+                        operator_chips = apply_scope_suggestion(operator_chips, shown_suggestion)
                     }
                 }
             }
@@ -990,7 +1023,13 @@ fun SearchScreen(
                 threads = result_threads,
                 select_mode = select_mode,
                 selected_ids = selected_ids,
-                on_open_email = on_open_email,
+                on_open_email = { id ->
+                    if (visible_corpus.firstOrNull { it.id == id }?.raw_item?.item_type == "draft") {
+                        on_open_draft(id)
+                    } else {
+                        on_open_email(id)
+                    }
+                },
                 on_toggle_selection = ::toggle_selection,
                 on_enter_select_mode = { id ->
                     dismiss_keyboard()
@@ -1196,6 +1235,43 @@ private fun operator_chip(op: SearchOperator, on_remove: () -> Unit) {
                 modifier = Modifier.size(14.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun scope_suggestion_chip(suggestion: ScopeSuggestion, on_click: () -> Unit) {
+    val colors = AsterMaterial.colors
+    val label = when (suggestion.kind) {
+        ScopeSuggestionKind.NARROW -> stringResource(
+            R.string.search_scope_only_in,
+            org.astermail.android.ui.mail.folder_display_name(suggestion.folder),
+        )
+        ScopeSuggestionKind.WIDEN -> stringResource(R.string.search_scope_everywhere)
+    }
+    Row(
+        modifier = Modifier
+            .clip(SquircleShape(999.dp))
+            .border(1.dp, colors.accent_blue.copy(alpha = 0.35f), SquircleShape(999.dp))
+            .clickable(role = Role.Button, onClick = on_click)
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .height(22.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = if (suggestion.kind == ScopeSuggestionKind.WIDEN) TablerIcons.World else TablerIcons.Folder,
+            contentDescription = null,
+            tint = colors.accent_blue,
+            modifier = Modifier.size(14.dp),
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = label,
+            color = colors.accent_blue,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

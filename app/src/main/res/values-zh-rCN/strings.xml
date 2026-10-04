@@ -2437,6 +2437,8 @@
     <string name="spam_trash_hidden_notice">垃圾邮件和回收站中有符合搜索条件的邮件。</string>
     <string name="view_spam_trash_messages">查看邮件</string>
     <string name="search_scope_anywhere">邮件、垃圾邮件和回收站</string>
+    <string name="search_scope_only_in">仅在%1$s中</string>
+    <string name="search_scope_everywhere">所有位置</string>
     <string name="advanced_has_words">包含词语</string>
     <string name="advanced_date_within">日期范围</string>
     <string name="advanced_search_scope">搜索范围</string>

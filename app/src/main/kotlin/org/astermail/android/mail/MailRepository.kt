@@ -2221,6 +2221,40 @@ class MailRepository @Inject constructor(
         Pair(item, envelope)
     }
 
+    suspend fun fetch_folder_for_search(folder: String, max_pages: Int = 25): Result<List<InboxItem>> = runCatching {
+        val seen = HashSet<String>()
+        val all = mutableListOf<InboxItem>()
+        var cursor: String? = null
+        var pages = 0
+        while (pages < max_pages) {
+            pages++
+            val items: List<InboxItem>
+            val next: String?
+            when (folder) {
+                "sent" -> {
+                    val response = mail_api.list_messages(
+                        limit = 200,
+                        cursor = cursor,
+                        item_type = "sent",
+                        skip_total = true,
+                    )
+                    items = decrypt_items_parallel(response.items)
+                    next = if (response.has_more) response.next_cursor else null
+                }
+                "drafts" -> {
+                    val response = fetch_drafts(limit = 50, cursor = cursor).getOrThrow()
+                    items = response.items
+                    next = if (response.has_more) response.next_cursor else null
+                }
+                else -> return@runCatching emptyList()
+            }
+            for (item in items) if (seen.add(item.id)) all.add(item)
+            if (next == null) break
+            cursor = next
+        }
+        all.toList()
+    }
+
     suspend fun fetch_all_for_search(max_pages: Int = 100): Result<List<InboxItem>> = runCatching {
         val seen = HashSet<String>()
         val all = mutableListOf<InboxItem>()

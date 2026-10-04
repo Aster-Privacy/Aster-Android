@@ -2398,7 +2398,7 @@ fun InboxScreen(
             Spacer(Modifier.height(status_bar_top))
                     inbox_top_bar(
                         folder_title = display_title ?: folder_display_name(current_folder),
-                        search_scope_title = active_category_label,
+                        search_scoped = org.astermail.android.mail.search_scope_query(current_folder) != null,
                         unread_count = folder_count,
                         on_open_drawer = on_open_drawer,
                         on_open_search = on_open_search,
@@ -2925,7 +2925,7 @@ private fun all_mail_scope_chip(
 @Composable
 internal fun inbox_top_bar(
     folder_title: String,
-    search_scope_title: String? = null,
+    search_scoped: Boolean = false,
     unread_count: Int,
     on_open_drawer: () -> Unit,
     on_open_search: () -> Unit,
@@ -3246,20 +3246,14 @@ internal fun inbox_top_bar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
             ) {
-                val scope_label = search_scope_title ?: folder_title.lowercase(java.util.Locale.getDefault())
-                val full_label = if (search_scope_title != null) {
-                    stringResource(R.string.inbox_search_in_category, search_scope_title)
-                } else {
-                    stringResource(R.string.inbox_search_in_folder, scope_label)
-                }
-                val short_label = if (scope_label.contains('@')) {
-                    stringResource(R.string.inbox_search_in_category, scope_label.substringBefore('@'))
-                } else {
-                    null
-                }
                 val fallback_label = stringResource(R.string.search_mail)
-                val candidates = remember(full_label, short_label, fallback_label) {
-                    listOfNotNull(full_label, short_label, fallback_label).distinct()
+                val full_label = if (search_scoped) {
+                    stringResource(R.string.inbox_search_in_folder, folder_title.lowercase(java.util.Locale.getDefault()))
+                } else {
+                    fallback_label
+                }
+                val candidates = remember(full_label, fallback_label) {
+                    listOf(full_label, fallback_label).distinct()
                 }
                 var candidate_index by remember(candidates) { mutableStateOf(0) }
                 Text(

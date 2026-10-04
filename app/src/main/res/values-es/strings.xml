@@ -2453,6 +2453,8 @@
     <string name="spam_trash_hidden_notice">Algunos mensajes en Spam y Papelera coinciden con tu búsqueda.</string>
     <string name="view_spam_trash_messages">Ver mensajes</string>
     <string name="search_scope_anywhere">Correo, spam y papelera</string>
+    <string name="search_scope_only_in">Solo en %1$s</string>
+    <string name="search_scope_everywhere">En todas partes</string>
     <string name="advanced_has_words">Contiene las palabras</string>
     <string name="advanced_date_within">Intervalo de fechas</string>
     <string name="advanced_search_scope">Buscar en</string>
