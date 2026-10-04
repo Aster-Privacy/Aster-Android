@@ -299,6 +299,7 @@ fun DrawerContent(
     folder_actions: folder_menu_actions = folder_menu_actions(),
     label_actions: label_menu_actions = label_menu_actions(),
     label_parent_options: List<folder_parent_option> = emptyList(),
+    label_blocked_parent_tokens: (drawer_label_item) -> Set<String> = { it.blocked_parent_tokens },
     on_logout: () -> Unit = {},
     on_logout_all: () -> Unit = {},
     on_manage_account: () -> Unit = {},
@@ -748,7 +749,11 @@ fun DrawerContent(
                                     item = item,
                                     expanded = menu_open,
                                     on_dismiss = { menu_open = false },
-                                    on_rename = { pending_label_rename = item },
+                                    on_rename = if (item.kind == "tag" && !item.name_readable) {
+                                        null
+                                    } else {
+                                        { pending_label_rename = item }
+                                    },
                                     on_recolor = { pending_label_recolor = item },
                                     on_change_icon = { pending_label_icon = item },
                                     on_move_up = { label_actions.on_move_order(item, -1) },
@@ -1076,9 +1081,13 @@ fun DrawerContent(
     }
 
     pending_label_move?.let { target ->
+        val blocked_parent_tokens = remember(target.id, label_parent_options) {
+            label_blocked_parent_tokens(target)
+        }
         label_move_dialog(
             target = target,
             parent_options = label_parent_options,
+            blocked_parent_tokens = blocked_parent_tokens,
             on_dismiss = { pending_label_move = null },
             on_confirm = { parent_token ->
                 label_actions.on_move_to(target, parent_token)
@@ -1297,7 +1306,7 @@ private fun label_actions_menu(
     item: drawer_label_item,
     expanded: Boolean,
     on_dismiss: () -> Unit,
-    on_rename: () -> Unit,
+    on_rename: (() -> Unit)?,
     on_recolor: () -> Unit,
     on_change_icon: () -> Unit,
     on_move_up: () -> Unit,
@@ -1310,15 +1319,17 @@ private fun label_actions_menu(
         on_dismiss = on_dismiss,
         modifier = Modifier.testTag("label_actions_menu"),
     ) {
-        aster_menu_item(
-            label = stringResource(R.string.rename),
-            icon = TablerIcons.Pencil,
-            test_tag = "label_action_rename",
-            on_click = {
-                on_dismiss()
-                on_rename()
-            },
-        )
+        if (on_rename != null) {
+            aster_menu_item(
+                label = stringResource(R.string.rename),
+                icon = TablerIcons.Pencil,
+                test_tag = "label_action_rename",
+                on_click = {
+                    on_dismiss()
+                    on_rename()
+                },
+            )
+        }
         aster_menu_item(
             label = stringResource(R.string.change_label_color),
             icon = TablerIcons.Palette,
@@ -1581,20 +1592,23 @@ private fun folder_move_dialog(
 private fun label_move_dialog(
     target: drawer_label_item,
     parent_options: List<folder_parent_option>,
+    blocked_parent_tokens: Set<String>,
     on_dismiss: () -> Unit,
     on_confirm: (String?) -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val none_label = stringResource(R.string.parent_label_none)
-    val options = remember(parent_options, target.id, target.blocked_parent_tokens) {
-        parent_options.filter { it.token !in target.blocked_parent_tokens }
+    val unreadable_label = stringResource(R.string.label_decrypt_failed)
+    val options = remember(parent_options, target.id, blocked_parent_tokens) {
+        parent_options.filter { it.token !in blocked_parent_tokens }
     }
     var selected_parent by remember(target.id, options) {
         mutableStateOf(options.firstOrNull { it.token == target.parent_token })
     }
-    val initial_parent_token = remember(target.id, options) {
-        options.firstOrNull { it.token == target.parent_token }?.token
+    var keeps_unlisted_parent by remember(target.id, options) {
+        mutableStateOf(target.parent_token != null && options.none { it.token == target.parent_token })
     }
+    val selected_token = if (keeps_unlisted_parent) target.parent_token else selected_parent?.token
     var menu_open by remember { mutableStateOf(false) }
 
     org.astermail.android.design.components.AsterAlertDialog(
@@ -1602,8 +1616,8 @@ private fun label_move_dialog(
         title = stringResource(R.string.move_folder_to),
         confirm_label = stringResource(R.string.save),
         cancel_label = stringResource(R.string.cancel),
-        confirm_enabled = selected_parent?.token != initial_parent_token,
-        on_confirm = { on_confirm(selected_parent?.token) },
+        confirm_enabled = selected_token != target.parent_token,
+        on_confirm = { on_confirm(selected_token) },
         extra_content = {
             Box(modifier = Modifier.fillMaxWidth()) {
                 Row(
@@ -1617,7 +1631,7 @@ private fun label_move_dialog(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = selected_parent?.label ?: none_label,
+                        text = if (keeps_unlisted_parent) unreadable_label else selected_parent?.label ?: none_label,
                         color = colors.text_primary,
                         fontSize = 15.sp,
                         modifier = Modifier.weight(1f),
@@ -1635,9 +1649,10 @@ private fun label_move_dialog(
                 ) {
                     aster_menu_item(
                         label = none_label,
-                        selected = selected_parent == null,
+                        selected = !keeps_unlisted_parent && selected_parent == null,
                         on_click = {
                             selected_parent = null
+                            keeps_unlisted_parent = false
                             menu_open = false
                         },
                     )
@@ -1646,9 +1661,10 @@ private fun label_move_dialog(
                             label = " ".repeat(option.depth) + option.label,
                             icon = TablerIcons.Tag,
                             icon_tint = option.color?.let { parse_hex_color_safe(it) },
-                            selected = selected_parent == option,
+                            selected = !keeps_unlisted_parent && selected_parent == option,
                             on_click = {
                                 selected_parent = option
+                                keeps_unlisted_parent = false
                                 menu_open = false
                             },
                         )

@@ -2133,7 +2133,6 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     trail = node.trail,
                     has_next = node.has_next,
                     parent_token = tag_index.parent_of(tag.tag_token),
-                    blocked_parent_tokens = tag_index.blocked_parent_tokens(tag.tag_token),
                 )
             }
         val visible_labels = org.astermail.android.labels.label_rows(settings_state.labels)
@@ -2434,6 +2433,9 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     },
                 ),
                 label_parent_options = label_parent_options,
+                label_blocked_parent_tokens = { item ->
+                    tag_index.blocked_parent_tokens(item.id.removePrefix("tag:"))
+                },
                 on_manage_account = {
                     scope.launch { drawer_state.close() }
                     nav_controller.navigate(routes.settings_detail("profile"))

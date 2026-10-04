@@ -1648,6 +1648,10 @@
     <string name="label_decrypt_failed">Не удалось расшифровать</string>
     <string name="parent_label">Родительская метка</string>
     <string name="parent_label_none">Нет</string>
+    <string name="error_tag_parent_not_found">Эта родительская метка больше не существует.</string>
+    <string name="error_tag_parent_self">Метка не может быть родительской для самой себя.</string>
+    <string name="error_tag_parent_cycle">Метку нельзя переместить в одну из её собственных вложенных меток.</string>
+    <string name="error_tag_parent_too_deep">Метки нельзя вкладывать глубже пяти уровней.</string>
     <string name="settings_search_placeholder">Поиск в настройках</string>
     <string name="settings_search_hint">Введите текст для поиска по всем настройкам</string>
     <string name="settings_profile">Профиль</string>

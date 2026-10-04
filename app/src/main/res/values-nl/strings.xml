@@ -1640,6 +1640,10 @@
     <string name="label_decrypt_failed">Kan niet ontsleutelen</string>
     <string name="parent_label">Bovenliggend label</string>
     <string name="parent_label_none">Geen</string>
+    <string name="error_tag_parent_not_found">Dat bovenliggende label bestaat niet meer.</string>
+    <string name="error_tag_parent_self">Een label kan niet zijn eigen bovenliggende label zijn.</string>
+    <string name="error_tag_parent_cycle">Een label kan niet onder een van zijn eigen sublabels worden geplaatst.</string>
+    <string name="error_tag_parent_too_deep">Labels kunnen niet dieper dan vijf niveaus worden genest.</string>
     <string name="settings_search_placeholder">Instellingen doorzoeken</string>
     <string name="settings_search_hint">Typ om alle instellingen te doorzoeken</string>
     <string name="settings_profile">Profiel</string>

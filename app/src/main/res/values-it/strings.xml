@@ -1644,6 +1644,10 @@
     <string name="label_decrypt_failed">Impossibile decifrare</string>
     <string name="parent_label">Etichetta principale</string>
     <string name="parent_label_none">Nessuna</string>
+    <string name="error_tag_parent_not_found">Questa etichetta principale non esiste più.</string>
+    <string name="error_tag_parent_self">Un\'etichetta non può essere la propria etichetta principale.</string>
+    <string name="error_tag_parent_cycle">Un\'etichetta non può essere spostata sotto una delle proprie sottoetichette.</string>
+    <string name="error_tag_parent_too_deep">Le etichette non possono essere annidate oltre cinque livelli.</string>
     <string name="settings_search_placeholder">Cerca nelle impostazioni</string>
     <string name="settings_search_hint">Digita per cercare in tutte le impostazioni</string>
     <string name="settings_profile">Profilo</string>

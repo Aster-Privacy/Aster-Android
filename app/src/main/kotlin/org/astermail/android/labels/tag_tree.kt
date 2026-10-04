@@ -137,5 +137,13 @@ class tag_tree_index(tags: List<TagItem>) {
 
 fun flatten_tag_tree(tags: List<TagItem>): List<tag_node> = tag_tree_index(tags).nodes
 
+fun remove_tag_reparenting_children(tags: List<TagItem>, tag_id: String): List<TagItem> {
+    val removed = tags.firstOrNull { it.id == tag_id } ?: return tags
+    val inherited = removed.parent_token?.takeIf { it.isNotBlank() }
+    return tags.filter { it.id != tag_id }.map { tag ->
+        if (tag.parent_token == removed.tag_token) tag.copy(parent_token = inherited) else tag
+    }
+}
+
 fun place_tag_among_siblings(siblings: List<TagItem>, tag: TagItem): List<TagItem> =
     siblings.filter { it.id != tag.id } + tag

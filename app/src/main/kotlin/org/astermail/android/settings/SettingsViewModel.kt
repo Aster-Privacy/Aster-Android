@@ -316,6 +316,7 @@ private val cached_preferences_json = kotlinx.serialization.json.Json {
 
 private const val SUBSCRIPTION_TTL_MS = 300_000L
 private const val TAGS_TTL_MS = 60_000L
+private const val SYNC_RELOAD_DEBOUNCE_MS = 300L
 private const val PREFERENCES_TTL_MS = 30_000L
 private const val PROFILE_TTL_MS = 60_000L
 private const val LIST_TTL_MS = 60_000L
@@ -392,6 +393,15 @@ class SettingsViewModel @Inject constructor(
     private var prefs_load_succeeded = false
     private var twin_address_job: kotlinx.coroutines.Job? = null
     private var twin_address_generation = 0
+    private var account_generation = 0
+    private var tags_load_job: kotlinx.coroutines.Job? = null
+    private var tags_reload_job: kotlinx.coroutines.Job? = null
+    private var labels_reload_job: kotlinx.coroutines.Job? = null
+    private var tags_load_sequence = 0
+    private var tags_applied_sequence = 0
+    private var tags_mutation_sequence = 0
+    private var pending_tag_mutations = 0
+    private var tags_reload_deferred = false
 
     private val account_data_writer = org.astermail.android.crypto.AccountDataWriter(
         session_key_store,
@@ -938,6 +948,15 @@ class SettingsViewModel @Inject constructor(
         twin_address_generation++
         twin_address_job?.cancel()
         twin_address_job = null
+        account_generation++
+        tags_load_job?.cancel()
+        tags_load_job = null
+        tags_reload_job?.cancel()
+        tags_reload_job = null
+        labels_reload_job?.cancel()
+        labels_reload_job = null
+        pending_tag_mutations = 0
+        tags_reload_deferred = false
         prefs_load_succeeded = false
         account_uses_encrypted_prefs = false
         last_preferences_raw_json = null
@@ -4306,71 +4325,89 @@ class SettingsViewModel @Inject constructor(
         val now = System.currentTimeMillis()
         val labels_key = folder_type ?: "all"
         if (!force && last_labels_load_ms[labels_key]?.let { now - it < LIST_TTL_MS } == true) return
-        viewModelScope.launch {
-            _state.value = _state.value.copy(is_loading = true, error = null)
-            try {
-                val response = labels_api.list_labels(include_counts = true, folder_type = folder_type)
-                last_labels_load_ms[labels_key] = System.currentTimeMillis()
-                var decrypted = withContext(default_dispatcher) { response.labels.map { decrypt_label(it) } }
-                val any_decryption_failed = response.labels.indices.any { i ->
+        viewModelScope.launch { fetch_labels(folder_type, silent = false) }
+    }
+
+    fun reload_labels_from_sync() {
+        labels_reload_job?.cancel()
+        labels_reload_job = viewModelScope.launch {
+            delay(SYNC_RELOAD_DEBOUNCE_MS)
+            fetch_labels(folder_type = null, silent = true)
+        }
+    }
+
+    private suspend fun fetch_labels(folder_type: String?, silent: Boolean) {
+        val gen = account_generation
+        val labels_key = folder_type ?: "all"
+        if (!silent) _state.value = _state.value.copy(is_loading = true, error = null)
+        try {
+            val response = labels_api.list_labels(include_counts = true, folder_type = folder_type)
+            if (gen != account_generation) return
+            last_labels_load_ms[labels_key] = System.currentTimeMillis()
+            var decrypted = withContext(default_dispatcher) { response.labels.map { decrypt_label(it) } }
+            val any_decryption_failed = response.labels.indices.any { i ->
+                !response.labels[i].encrypted_name.isNullOrBlank() &&
+                    decrypted[i].encrypted_name.isNullOrBlank()
+            }
+            if (any_decryption_failed && auth_repository.try_refresh_vault_keys()) {
+                decrypted = withContext(default_dispatcher) { response.labels.map { decrypt_label(it) } }
+            }
+            if (gen != account_generation) return
+            val still_all_failed = response.labels.any { !it.encrypted_name.isNullOrBlank() } &&
+                decrypted.all { it.encrypted_name.isNullOrBlank() }
+            if (org.astermail.android.BuildConfig.DEBUG) {
+                val decrypt_failed = response.labels.indices.count { i ->
                     !response.labels[i].encrypted_name.isNullOrBlank() &&
                         decrypted[i].encrypted_name.isNullOrBlank()
                 }
-                if (any_decryption_failed && auth_repository.try_refresh_vault_keys()) {
-                    decrypted = withContext(default_dispatcher) { response.labels.map { decrypt_label(it) } }
-                }
-                val still_all_failed = response.labels.any { !it.encrypted_name.isNullOrBlank() } &&
-                    decrypted.all { it.encrypted_name.isNullOrBlank() }
-                if (org.astermail.android.BuildConfig.DEBUG) {
-                    val decrypt_failed = response.labels.indices.count { i ->
-                        !response.labels[i].encrypted_name.isNullOrBlank() &&
-                            decrypted[i].encrypted_name.isNullOrBlank()
-                    }
-                    android.util.Log.i(
-                        "SettingsVM",
-                        "load_labels received=${response.labels.size} decrypt_failed=$decrypt_failed " +
-                            "all_failed=$still_all_failed identity_key=${session_key_store.get_identity_key() != null}",
-                    )
-                }
-                if (still_all_failed) {
-                    val had_readable_labels = _state.value.labels.any { !it.encrypted_name.isNullOrBlank() }
-                    _state.value = if (had_readable_labels) {
-                        _state.value.copy(is_loading = false)
-                    } else {
-                        _state.value.copy(labels = decrypted, is_loading = false)
-                    }
-                    return@launch
-                }
-                val server_tokens = decrypted.map { it.label_token }.toSet()
-                val surviving = _state.value.labels.filter {
-                    it.label_token in optimistic_label_tokens && it.label_token !in server_tokens
-                }
-                val preserved = if (folder_type != null) {
-                    _state.value.labels.filter { existing ->
-                        existing.label_token !in optimistic_label_tokens &&
-                            existing.folder_type != folder_type &&
-                            !(folder_type == "folder" && existing.folder_type == "custom")
-                    }
-                } else emptyList()
-                optimistic_label_tokens.removeAll(server_tokens)
-                _state.value = _state.value.copy(
-                    labels = decrypted + surviving + preserved,
-                    is_loading = false,
-                )
-                org.astermail.android.folders.folder_lock_store.set_folders(_state.value.labels)
-                org.astermail.android.notifications.MailPollingWorker.set_protected_folder_tokens(
-                    context,
-                    _state.value.labels.filter { org.astermail.android.folders.is_folder_protected(it) }
-                        .map { it.label_token },
-                )
-            } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
-                if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_labels failed", t)
-                _state.value = _state.value.copy(
-                    is_loading = false,
-                    error = user_facing_error(t),
+                android.util.Log.i(
+                    "SettingsVM",
+                    "load_labels received=${response.labels.size} decrypt_failed=$decrypt_failed " +
+                        "all_failed=$still_all_failed identity_key=${session_key_store.get_identity_key() != null}",
                 )
             }
+            if (still_all_failed) {
+                val had_readable_labels = _state.value.labels.any { !it.encrypted_name.isNullOrBlank() }
+                val current = _state.value
+                val is_loading_after = if (silent) current.is_loading else false
+                _state.value = if (had_readable_labels) {
+                    current.copy(is_loading = is_loading_after)
+                } else {
+                    current.copy(labels = decrypted, is_loading = is_loading_after)
+                }
+                return
+            }
+            val server_tokens = decrypted.map { it.label_token }.toSet()
+            val surviving = _state.value.labels.filter {
+                it.label_token in optimistic_label_tokens && it.label_token !in server_tokens
+            }
+            val preserved = if (folder_type != null) {
+                _state.value.labels.filter { existing ->
+                    existing.label_token !in optimistic_label_tokens &&
+                        existing.folder_type != folder_type &&
+                        !(folder_type == "folder" && existing.folder_type == "custom")
+                }
+            } else emptyList()
+            optimistic_label_tokens.removeAll(server_tokens)
+            val current = _state.value
+            _state.value = current.copy(
+                labels = decrypted + surviving + preserved,
+                is_loading = if (silent) current.is_loading else false,
+            )
+            org.astermail.android.folders.folder_lock_store.set_folders(_state.value.labels)
+            org.astermail.android.notifications.MailPollingWorker.set_protected_folder_tokens(
+                context,
+                _state.value.labels.filter { org.astermail.android.folders.is_folder_protected(it) }
+                    .map { it.label_token },
+            )
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_labels failed", t)
+            if (silent || gen != account_generation) return
+            _state.value = _state.value.copy(
+                is_loading = false,
+                error = user_facing_error(t),
+            )
         }
     }
 
@@ -4527,26 +4564,71 @@ class SettingsViewModel @Inject constructor(
 
     fun load_tags(force: Boolean = true) {
         val now = System.currentTimeMillis()
-        if (!force && last_tags_load_ms > 0L && now - last_tags_load_ms < TAGS_TTL_MS) return
-        last_tags_load_ms = now
-        viewModelScope.launch {
-            try {
-                val response = tags_api.list_tags(include_counts = true)
-                var decrypted = withContext(default_dispatcher) { response.tags.map { decrypt_tag(it) } }
-                val all_decryption_failed = response.tags.any { it.encrypted_name.isNotBlank() } &&
-                    decrypted.all { it.encrypted_name.isBlank() }
-                if (all_decryption_failed && auth_repository.try_refresh_vault_keys()) {
-                    decrypted = withContext(default_dispatcher) { response.tags.map { decrypt_tag(it) } }
-                }
-                val merged = org.astermail.android.labels.merge_tag_snapshot(_state.value.tags, decrypted)
-                _state.value = _state.value.copy(tags = merged)
-                persist_cached_tags(merged)
-            } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(
-                    error = user_facing_error(t),
-                )
+        if (!force) {
+            if (last_tags_load_ms > 0L && now - last_tags_load_ms < TAGS_TTL_MS) return
+            if (tags_load_job?.isActive == true) return
+        }
+        tags_load_job = viewModelScope.launch { fetch_tags(silent = false) }
+    }
+
+    fun reload_tags_from_sync() {
+        tags_reload_job?.cancel()
+        tags_reload_job = viewModelScope.launch {
+            delay(SYNC_RELOAD_DEBOUNCE_MS)
+            fetch_tags(silent = true)
+        }
+    }
+
+    private suspend fun fetch_tags(silent: Boolean) {
+        val gen = account_generation
+        val account_key = cache_account_key()
+        val sequence = ++tags_load_sequence
+        val mutation = tags_mutation_sequence
+        try {
+            val response = tags_api.list_tags(include_counts = true)
+            var decrypted = withContext(default_dispatcher) { response.tags.map { decrypt_tag(it) } }
+            val all_decryption_failed = response.tags.any { it.encrypted_name.isNotBlank() } &&
+                decrypted.all { it.encrypted_name.isBlank() }
+            if (all_decryption_failed && auth_repository.try_refresh_vault_keys()) {
+                decrypted = withContext(default_dispatcher) { response.tags.map { decrypt_tag(it) } }
             }
+            if (gen != account_generation || account_key != cache_account_key()) return
+            if (sequence < tags_applied_sequence) return
+            if (pending_tag_mutations > 0) {
+                tags_reload_deferred = true
+                return
+            }
+            if (mutation != tags_mutation_sequence) {
+                reload_tags_from_sync()
+                return
+            }
+            tags_applied_sequence = sequence
+            last_tags_load_ms = System.currentTimeMillis()
+            val merged = org.astermail.android.labels.merge_tag_snapshot(_state.value.tags, decrypted)
+            _state.value = _state.value.copy(tags = merged)
+            persist_cached_tags(merged)
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            if (silent || gen != account_generation) return
+            _state.value = _state.value.copy(
+                error = user_facing_error(t),
+            )
+        }
+    }
+
+    private fun begin_tag_mutation(): Int {
+        tags_mutation_sequence++
+        pending_tag_mutations++
+        return account_generation
+    }
+
+    private fun end_tag_mutation(gen: Int) {
+        if (gen != account_generation) return
+        tags_mutation_sequence++
+        pending_tag_mutations = (pending_tag_mutations - 1).coerceAtLeast(0)
+        if (pending_tag_mutations == 0 && tags_reload_deferred) {
+            tags_reload_deferred = false
+            reload_tags_from_sync()
         }
     }
 
@@ -4912,25 +4994,36 @@ class SettingsViewModel @Inject constructor(
 
     fun delete_tag(tag_id: String) {
         viewModelScope.launch {
+            val gen = begin_tag_mutation()
+            var deleted = false
             try {
                 tags_api.delete_tag(tag_id)
+                if (gen != account_generation) return@launch
                 _state.value = _state.value.copy(
-                    tags = _state.value.tags.filter { it.id != tag_id },
+                    tags = org.astermail.android.labels.remove_tag_reparenting_children(_state.value.tags, tag_id),
                 )
                 persist_cached_tags(_state.value.tags)
+                deleted = true
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                if (gen != account_generation) return@launch
                 _state.value = _state.value.copy(
                     action_result = localized_api_error(context, t, context.getString(R.string.failed_delete_tag)),
                 )
+            } finally {
+                end_tag_mutation(gen)
             }
+            if (deleted) reload_tags_from_sync()
         }
     }
 
     fun rename_tag(tag_id: String, name: String) {
         val trimmed = name.trim()
         if (trimmed.isBlank()) return
+        val target = _state.value.tags.firstOrNull { it.id == tag_id } ?: return
+        if (!org.astermail.android.labels.tag_name_readable(target)) return
         viewModelScope.launch {
+            val gen = begin_tag_mutation()
             val previous = _state.value.tags
             _state.value = _state.value.copy(
                 tags = previous.map { if (it.id == tag_id) it.copy(encrypted_name = trimmed) else it },
@@ -4945,19 +5038,23 @@ class SettingsViewModel @Inject constructor(
                         name_nonce = name_field.nonce_b64,
                     ),
                 )
-                persist_cached_tags(_state.value.tags)
+                if (gen == account_generation) persist_cached_tags(_state.value.tags)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                if (gen != account_generation) return@launch
                 _state.value = _state.value.copy(
                     tags = previous,
                     action_result = localized_api_error(context, t, context.getString(R.string.failed_update_label)),
                 )
+            } finally {
+                end_tag_mutation(gen)
             }
         }
     }
 
     fun recolor_tag(tag_id: String, color: String) {
         viewModelScope.launch {
+            val gen = begin_tag_mutation()
             val previous = _state.value.tags
             _state.value = _state.value.copy(
                 tags = previous.map { if (it.id == tag_id) it.copy(encrypted_color = color) else it },
@@ -4972,19 +5069,23 @@ class SettingsViewModel @Inject constructor(
                         color_nonce = color_field.nonce_b64,
                     ),
                 )
-                persist_cached_tags(_state.value.tags)
+                if (gen == account_generation) persist_cached_tags(_state.value.tags)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                if (gen != account_generation) return@launch
                 _state.value = _state.value.copy(
                     tags = previous,
                     action_result = localized_api_error(context, t, context.getString(R.string.failed_update_label)),
                 )
+            } finally {
+                end_tag_mutation(gen)
             }
         }
     }
 
     fun set_tag_icon(tag_id: String, icon: String?) {
         viewModelScope.launch {
+            val gen = begin_tag_mutation()
             val previous = _state.value.tags
             _state.value = _state.value.copy(
                 tags = previous.map { if (it.id == tag_id) it.copy(encrypted_icon = icon) else it },
@@ -4999,13 +5100,16 @@ class SettingsViewModel @Inject constructor(
                         icon_nonce = icon_field.nonce_b64,
                     ),
                 )
-                persist_cached_tags(_state.value.tags)
+                if (gen == account_generation) persist_cached_tags(_state.value.tags)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                if (gen != account_generation) return@launch
                 _state.value = _state.value.copy(
                     tags = previous,
                     action_result = localized_api_error(context, t, context.getString(R.string.failed_update_label)),
                 )
+            } finally {
+                end_tag_mutation(gen)
             }
         }
     }
@@ -5014,6 +5118,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val previous = _state.value.tags
             val moving = previous.firstOrNull { it.id == tag_id } ?: return@launch
+            val gen = begin_tag_mutation()
             val target_parent = parent_token?.takeIf { it.isNotBlank() }
             val siblings = org.astermail.android.labels.place_tag_among_siblings(
                 org.astermail.android.labels.tag_tree_index(previous).children(target_parent),
@@ -5027,27 +5132,39 @@ class SettingsViewModel @Inject constructor(
                     if (tag.id == tag_id) placed.copy(parent_token = target_parent) else placed
                 },
             )
+            var moved = false
             try {
-                tags_api.update_tag(tag_id, UpdateTagRequest(parent_token = target_parent.orEmpty()))
-            } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(
-                    tags = previous,
-                    action_result = localized_api_error(context, t, context.getString(R.string.failed_update_label)),
-                )
-                return@launch
-            }
-            if (order_entries.isNotEmpty()) {
                 try {
-                    tags_api.bulk_reorder_tags(
-                        org.astermail.android.api.tags.BulkReorderTagsRequest(tags = order_entries),
-                    )
+                    tags_api.update_tag(tag_id, UpdateTagRequest(parent_token = target_parent.orEmpty()))
                 } catch (t: Throwable) {
                     if (t is kotlinx.coroutines.CancellationException) throw t
+                    if (gen != account_generation) return@launch
+                    _state.value = _state.value.copy(
+                        tags = previous,
+                        action_result = localized_api_error(
+                            context,
+                            t,
+                            context.getString(R.string.failed_update_label),
+                        ),
+                    )
+                    return@launch
                 }
+                if (order_entries.isNotEmpty()) {
+                    try {
+                        tags_api.bulk_reorder_tags(
+                            org.astermail.android.api.tags.BulkReorderTagsRequest(tags = order_entries),
+                        )
+                    } catch (t: Throwable) {
+                        if (t is kotlinx.coroutines.CancellationException) throw t
+                    }
+                }
+                if (gen != account_generation) return@launch
+                persist_cached_tags(_state.value.tags)
+                moved = true
+            } finally {
+                end_tag_mutation(gen)
             }
-            persist_cached_tags(_state.value.tags)
-            load_tags()
+            if (moved) load_tags()
         }
     }
 
@@ -5060,6 +5177,7 @@ class SettingsViewModel @Inject constructor(
             val changed = org.astermail.android.labels.tag_reorder_entries(reordered)
             if (changed.isEmpty()) return@launch
             val positions = reordered.withIndex().associate { (position, tag) -> tag.id to position }
+            val gen = begin_tag_mutation()
             _state.value = _state.value.copy(
                 tags = current.map { tag -> positions[tag.id]?.let { tag.copy(sort_order = it) } ?: tag },
             )
@@ -5067,13 +5185,16 @@ class SettingsViewModel @Inject constructor(
                 tags_api.bulk_reorder_tags(
                     org.astermail.android.api.tags.BulkReorderTagsRequest(tags = changed),
                 )
-                persist_cached_tags(_state.value.tags)
+                if (gen == account_generation) persist_cached_tags(_state.value.tags)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                if (gen != account_generation) return@launch
                 _state.value = _state.value.copy(
                     tags = current,
                     action_result = localized_api_error(context, t, context.getString(R.string.failed_update_label)),
                 )
+            } finally {
+                end_tag_mutation(gen)
             }
         }
     }

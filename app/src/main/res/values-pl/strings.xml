@@ -1648,6 +1648,10 @@
     <string name="label_decrypt_failed">Nie można odszyfrować</string>
     <string name="parent_label">Etykieta nadrzędna</string>
     <string name="parent_label_none">Brak</string>
+    <string name="error_tag_parent_not_found">Ta etykieta nadrzędna już nie istnieje.</string>
+    <string name="error_tag_parent_self">Etykieta nie może być własną etykietą nadrzędną.</string>
+    <string name="error_tag_parent_cycle">Etykiety nie można przenieść pod jedną z jej własnych etykiet podrzędnych.</string>
+    <string name="error_tag_parent_too_deep">Etykiet nie można zagnieżdżać głębiej niż na pięć poziomów.</string>
     <string name="settings_search_placeholder">Szukaj w ustawieniach</string>
     <string name="settings_search_hint">Zacznij pisać, aby przeszukać wszystkie ustawienia</string>
     <string name="settings_profile">Profil</string>

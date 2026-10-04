@@ -1643,6 +1643,10 @@
     <string name="label_decrypt_failed">Não foi possível descriptografar</string>
     <string name="parent_label">Etiqueta pai</string>
     <string name="parent_label_none">Nenhuma</string>
+    <string name="error_tag_parent_not_found">Essa etiqueta pai não existe mais.</string>
+    <string name="error_tag_parent_self">Uma etiqueta não pode ser a própria etiqueta pai.</string>
+    <string name="error_tag_parent_cycle">Uma etiqueta não pode ser movida para baixo de uma de suas próprias subetiquetas.</string>
+    <string name="error_tag_parent_too_deep">As etiquetas não podem ser aninhadas em mais de cinco níveis.</string>
     <string name="settings_search_placeholder">Pesquisar configurações</string>
     <string name="settings_search_hint">Digite para pesquisar em todas as configurações</string>
     <string name="settings_profile">Perfil</string>

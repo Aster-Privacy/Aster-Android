@@ -1165,11 +1165,14 @@ fun LabelsScreen(
         vm.clear_action_result()
     }
 
-    val rows = label_screen_rows(
-        tags = state.tags,
-        labels = state.labels,
-        unreadable_name = stringResource(R.string.label_decrypt_failed),
-    )
+    val unreadable_name = stringResource(R.string.label_decrypt_failed)
+    val rows = remember(state.tags, state.labels, unreadable_name) {
+        label_screen_rows(
+            tags = state.tags,
+            labels = state.labels,
+            unreadable_name = unreadable_name,
+        )
+    }
     val label_parent_options = remember(state.tags) {
         org.astermail.android.ui.drawer.tag_parent_options(
             org.astermail.android.labels.tag_tree_index(state.tags),
@@ -1224,7 +1227,11 @@ fun LabelsScreen(
                         on_move_up = { if (row.is_tag) vm.move_tag(row.id, -1) else vm.move_label_row(row.id, -1) },
                         on_move_down = { if (row.is_tag) vm.move_tag(row.id, 1) else vm.move_label_row(row.id, 1) },
                         on_delete = { pending_label_delete = row },
-                        on_rename = if (row.can_delete) ({ pending_label_rename = row }) else null,
+                        on_rename = if (row.can_delete && (!row.is_tag || row.name_readable)) {
+                            { pending_label_rename = row }
+                        } else {
+                            null
+                        },
                         depth = row.depth,
                     )
                     if (idx < rows.lastIndex) settings_row_gap(modifier = Modifier)

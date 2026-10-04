@@ -679,11 +679,11 @@ fun InboxScreen(
         lifecycle_owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             live_sync_socket.run { event ->
                 when (event) {
-                    LiveSyncEvent.folders_changed -> settings_vm.load_labels(force = true)
-                    LiveSyncEvent.tags_changed -> settings_vm.load_tags()
+                    LiveSyncEvent.folders_changed -> settings_vm.reload_labels_from_sync()
+                    LiveSyncEvent.tags_changed -> settings_vm.reload_tags_from_sync()
                     LiveSyncEvent.connected -> {
-                        settings_vm.load_labels()
-                        settings_vm.load_tags(force = false)
+                        settings_vm.reload_labels_from_sync()
+                        settings_vm.reload_tags_from_sync()
                         mail_vm.on_live_sync_event(event)
                     }
                     else -> mail_vm.on_live_sync_event(event)
@@ -702,8 +702,8 @@ fun InboxScreen(
                 if (!was_backgrounded) return@LifecycleEventObserver
                 was_backgrounded = false
                 settings_vm.load_preferences()
-                settings_vm.load_labels(force = true)
-                settings_vm.load_tags()
+                settings_vm.reload_labels_from_sync()
+                settings_vm.reload_tags_from_sync()
                 settings_vm.load_subscription(force = false)
                 mail_vm.refresh_on_resume(current_folder)
                 billing_vm.load_onboarding_checklist()

@@ -44,6 +44,38 @@ class tag_tree_test {
     )
 
     @Test
+    fun deleting_a_nested_tag_moves_its_children_to_the_grandparent() {
+        val remaining = remove_tag_reparenting_children(
+            listOf(
+                tag("root"),
+                tag("middle", parent_token = "root"),
+                tag("leaf", parent_token = "middle"),
+                tag("deep", parent_token = "leaf"),
+            ),
+            "id_middle",
+        )
+        assertEquals(listOf("root", "leaf", "deep"), remaining.map { it.tag_token })
+        assertEquals("root", remaining.first { it.tag_token == "leaf" }.parent_token)
+        assertEquals("leaf", remaining.first { it.tag_token == "deep" }.parent_token)
+    }
+
+    @Test
+    fun deleting_a_root_tag_moves_its_children_to_the_root() {
+        val remaining = remove_tag_reparenting_children(
+            listOf(tag("root"), tag("child", parent_token = "root"), tag("other")),
+            "id_root",
+        )
+        assertEquals(listOf("child", "other"), remaining.map { it.tag_token })
+        assertNull(remaining.first { it.tag_token == "child" }.parent_token)
+    }
+
+    @Test
+    fun deleting_an_unknown_tag_leaves_the_list_unchanged() {
+        val tags = listOf(tag("root"), tag("child", parent_token = "root"))
+        assertEquals(tags, remove_tag_reparenting_children(tags, "id_missing"))
+    }
+
+    @Test
     fun children_follow_their_parent_in_sibling_order() {
         val nodes = flatten_tag_tree(
             listOf(
