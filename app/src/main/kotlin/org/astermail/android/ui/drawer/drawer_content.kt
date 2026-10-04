@@ -171,6 +171,23 @@ data class folder_parent_option(
     val color: String? = null,
 )
 
+fun tag_parent_options(
+    index: org.astermail.android.labels.tag_tree_index,
+): List<folder_parent_option> = index.nodes
+    .filter { it.depth < org.astermail.android.labels.max_tag_depth }
+    .filter { org.astermail.android.labels.tag_name_readable(it.tag) }
+    .map { node ->
+        folder_parent_option(
+            token = node.tag.tag_token,
+            label = node.tag.encrypted_name,
+            depth = node.depth,
+            path_label = index.path(node.tag.tag_token)
+                .filter { org.astermail.android.labels.tag_name_readable(it) }
+                .joinToString(" \u00b7 ") { it.encrypted_name },
+            color = node.tag.encrypted_color?.takeIf { it.startsWith("#") },
+        )
+    }
+
 data class drawer_label_item(
     val id: String,
     val label: String,
@@ -182,6 +199,11 @@ data class drawer_label_item(
     val can_move_up: Boolean = false,
     val can_move_down: Boolean = false,
     val name_readable: Boolean = true,
+    val depth: Int = 0,
+    val trail: List<Boolean> = emptyList(),
+    val has_next: Boolean = false,
+    val parent_token: String? = null,
+    val blocked_parent_tokens: Set<String> = emptySet(),
 )
 
 data class label_menu_actions(
@@ -190,6 +212,7 @@ data class label_menu_actions(
     val on_set_icon: (drawer_label_item, String?) -> Unit = { _, _ -> },
     val on_move_order: (drawer_label_item, Int) -> Unit = { _, _ -> },
     val on_delete: (drawer_label_item) -> Unit = {},
+    val on_move_to: (drawer_label_item, String?) -> Unit = { _, _ -> },
 )
 
 fun resolve_label_icon(key: String?): ImageVector =
@@ -269,12 +292,13 @@ fun DrawerContent(
     on_switch_account: (StoredAccount) -> Unit = {},
     on_add_account: () -> Unit = {},
     on_open_workspace_sheet: () -> Unit = {},
-    on_create_label: (name: String, color: String, icon: String?) -> Unit = { _, _, _ -> },
+    on_create_label: (name: String, color: String, icon: String?, parent_token: String?) -> Unit = { _, _, _, _ -> },
     on_create_folder: (name: String, parent_token: String?) -> Unit = { _, _ -> },
     on_sort_folders: (() -> Unit)? = null,
     folder_parent_options: List<folder_parent_option> = emptyList(),
     folder_actions: folder_menu_actions = folder_menu_actions(),
     label_actions: label_menu_actions = label_menu_actions(),
+    label_parent_options: List<folder_parent_option> = emptyList(),
     on_logout: () -> Unit = {},
     on_logout_all: () -> Unit = {},
     on_manage_account: () -> Unit = {},
@@ -362,6 +386,7 @@ fun DrawerContent(
     var pending_label_recolor by remember { mutableStateOf<drawer_label_item?>(null) }
     var pending_label_icon by remember { mutableStateOf<drawer_label_item?>(null) }
     var pending_label_delete by remember { mutableStateOf<drawer_label_item?>(null) }
+    var pending_label_move by remember { mutableStateOf<drawer_label_item?>(null) }
 
     val folder_items = api_folder_items.ifEmpty { default_folder_items }
     val label_items = api_label_items.ifEmpty { default_label_items }
@@ -715,6 +740,9 @@ fun DrawerContent(
                                             menu_open = true
                                         }
                                     },
+                                    depth = item.depth,
+                                    trail = item.trail,
+                                    has_next = item.has_next,
                                 )
                                 label_actions_menu(
                                     item = item,
@@ -726,6 +754,11 @@ fun DrawerContent(
                                     on_move_up = { label_actions.on_move_order(item, -1) },
                                     on_move_down = { label_actions.on_move_order(item, 1) },
                                     on_delete = { pending_label_delete = item },
+                                    on_move_to = if (item.kind == "tag") {
+                                        { pending_label_move = item }
+                                    } else {
+                                        null
+                                    },
                                 )
                             }
                         }
@@ -908,10 +941,11 @@ fun DrawerContent(
         create_label_dialog(
             existing_names = api_label_items.filter { it.name_readable }.map { it.label },
             on_dismiss = { show_create_label = false },
-            on_create = { name, color, icon ->
-                on_create_label(name, color, icon)
+            on_create = { name, color, icon, parent_token ->
+                on_create_label(name, color, icon, parent_token)
                 show_create_label = false
             },
+            parent_options = label_parent_options,
         )
     }
 
@@ -1037,6 +1071,18 @@ fun DrawerContent(
             on_confirm = { name ->
                 label_actions.on_rename(target, name)
                 pending_label_rename = null
+            },
+        )
+    }
+
+    pending_label_move?.let { target ->
+        label_move_dialog(
+            target = target,
+            parent_options = label_parent_options,
+            on_dismiss = { pending_label_move = null },
+            on_confirm = { parent_token ->
+                label_actions.on_move_to(target, parent_token)
+                pending_label_move = null
             },
         )
     }
@@ -1257,6 +1303,7 @@ private fun label_actions_menu(
     on_move_up: () -> Unit,
     on_move_down: () -> Unit,
     on_delete: () -> Unit,
+    on_move_to: (() -> Unit)? = null,
 ) {
     aster_menu(
         expanded = expanded,
@@ -1290,6 +1337,17 @@ private fun label_actions_menu(
                 on_change_icon()
             },
         )
+        if (on_move_to != null) {
+            aster_menu_item(
+                label = stringResource(R.string.move_folder_to),
+                icon = TablerIcons.Tag,
+                test_tag = "label_action_move_to",
+                on_click = {
+                    on_dismiss()
+                    on_move_to()
+                },
+            )
+        }
         aster_menu_item(
             label = stringResource(R.string.move_folder_up),
             icon = TablerIcons.ArrowUp,
@@ -1505,6 +1563,88 @@ private fun folder_move_dialog(
                         aster_menu_item(
                             label = " ".repeat(option.depth) + option.label,
                             icon = TablerIcons.Folder,
+                            icon_tint = option.color?.let { parse_hex_color_safe(it) },
+                            selected = selected_parent == option,
+                            on_click = {
+                                selected_parent = option
+                                menu_open = false
+                            },
+                        )
+                    }
+                }
+            }
+        },
+    )
+}
+
+@Composable
+private fun label_move_dialog(
+    target: drawer_label_item,
+    parent_options: List<folder_parent_option>,
+    on_dismiss: () -> Unit,
+    on_confirm: (String?) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val none_label = stringResource(R.string.parent_label_none)
+    val options = remember(parent_options, target.id, target.blocked_parent_tokens) {
+        parent_options.filter { it.token !in target.blocked_parent_tokens }
+    }
+    var selected_parent by remember(target.id, options) {
+        mutableStateOf(options.firstOrNull { it.token == target.parent_token })
+    }
+    val initial_parent_token = remember(target.id, options) {
+        options.firstOrNull { it.token == target.parent_token }?.token
+    }
+    var menu_open by remember { mutableStateOf(false) }
+
+    org.astermail.android.design.components.AsterAlertDialog(
+        on_dismiss = on_dismiss,
+        title = stringResource(R.string.move_folder_to),
+        confirm_label = stringResource(R.string.save),
+        cancel_label = stringResource(R.string.cancel),
+        confirm_enabled = selected_parent?.token != initial_parent_token,
+        on_confirm = { on_confirm(selected_parent?.token) },
+        extra_content = {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(AsterRadius.item))
+                        .background(island_surface_color(colors))
+                        .clickable { menu_open = true }
+                        .testTag("label_move_selector")
+                        .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = selected_parent?.label ?: none_label,
+                        color = colors.text_primary,
+                        fontSize = 15.sp,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        imageVector = TablerIcons.ChevronDown,
+                        contentDescription = null,
+                        tint = colors.text_muted,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+                aster_menu(
+                    expanded = menu_open,
+                    on_dismiss = { menu_open = false },
+                ) {
+                    aster_menu_item(
+                        label = none_label,
+                        selected = selected_parent == null,
+                        on_click = {
+                            selected_parent = null
+                            menu_open = false
+                        },
+                    )
+                    options.forEach { option ->
+                        aster_menu_item(
+                            label = " ".repeat(option.depth) + option.label,
+                            icon = TablerIcons.Tag,
                             icon_tint = option.color?.let { parse_hex_color_safe(it) },
                             selected = selected_parent == option,
                             on_click = {
@@ -1796,13 +1936,17 @@ internal fun create_folder_dialog(
 @Composable
 internal fun create_label_dialog(
     on_dismiss: () -> Unit,
-    on_create: (name: String, color: String, icon: String?) -> Unit,
+    on_create: (name: String, color: String, icon: String?, parent_token: String?) -> Unit,
     existing_names: List<String> = emptyList(),
+    parent_options: List<folder_parent_option> = emptyList(),
 ) {
     val colors = AsterMaterial.colors
     var name_value by remember { mutableStateOf("") }
     var selected_color by remember { mutableStateOf(default_label_color) }
     var selected_icon by remember { mutableStateOf<String?>(null) }
+    var selected_parent by remember { mutableStateOf<folder_parent_option?>(null) }
+    var parent_menu_open by remember { mutableStateOf(false) }
+    val none_parent_label = stringResource(R.string.parent_label_none)
     val accent = parse_hex_color(selected_color)
     val name_focus = remember { androidx.compose.ui.focus.FocusRequester() }
     val trimmed_name = name_value.trim()
@@ -1820,7 +1964,7 @@ internal fun create_label_dialog(
         cancel_label = stringResource(R.string.cancel),
         on_confirm = {
             if (trimmed_name.isNotEmpty() && !is_duplicate_name) {
-                on_create(trimmed_name, selected_color, selected_icon)
+                on_create(trimmed_name, selected_color, selected_icon, selected_parent?.token)
             }
         },
         confirm_enabled = trimmed_name.isNotEmpty() && !is_duplicate_name,
@@ -1860,6 +2004,66 @@ internal fun create_label_dialog(
                         .fillMaxWidth()
                         .focusRequester(name_focus),
                 )
+
+                if (parent_options.isNotEmpty()) {
+                    Spacer(Modifier.height(AsterSpacing.md))
+                    Text(
+                        text = stringResource(R.string.parent_label),
+                        color = colors.text_muted,
+                        fontSize = 13.sp,
+                    )
+                    Spacer(Modifier.height(AsterSpacing.xs))
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(AsterRadius.item))
+                                .background(island_surface_color(colors))
+                                .clickable { parent_menu_open = true }
+                                .testTag("parent_label_selector")
+                                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = selected_parent?.label ?: none_parent_label,
+                                color = colors.text_primary,
+                                fontSize = 15.sp,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Icon(
+                                imageVector = TablerIcons.ChevronDown,
+                                contentDescription = null,
+                                tint = colors.text_muted,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+                        aster_menu(
+                            expanded = parent_menu_open,
+                            on_dismiss = { parent_menu_open = false },
+                        ) {
+                            aster_menu_item(
+                                label = none_parent_label,
+                                selected = selected_parent == null,
+                                on_click = {
+                                    selected_parent = null
+                                    parent_menu_open = false
+                                },
+                            )
+                            parent_options.forEach { option ->
+                                aster_menu_item(
+                                    label = " ".repeat(option.depth) + option.label,
+                                    icon = TablerIcons.Tag,
+                                    icon_tint = option.color?.let { parse_hex_color_safe(it) },
+                                    selected = selected_parent == option,
+                                    on_click = {
+                                        selected_parent = option
+                                        parent_menu_open = false
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
 
                 Spacer(Modifier.height(AsterSpacing.md))
                 Text(
@@ -2786,6 +2990,9 @@ private fun drawer_label_row(
     selected: Boolean,
     on_click: () -> Unit,
     on_long_click: (() -> Unit)? = null,
+    depth: Int = 0,
+    trail: List<Boolean> = emptyList(),
+    has_next: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     val bg by animateColorAsState(
@@ -2814,6 +3021,7 @@ private fun drawer_label_row(
         modifier = row_modifier,
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        tree_indent_guides(depth, trail, has_next)
         Icon(
             imageVector = icon,
             contentDescription = null,

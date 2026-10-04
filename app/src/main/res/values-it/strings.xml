@@ -1642,6 +1642,8 @@
     <string name="send_still_trying">Invio in corso. Aster continuerà a provare in background.</string>
     <string name="folder_decrypt_failed">Cartella (decifratura non riuscita)</string>
     <string name="label_decrypt_failed">Impossibile decifrare</string>
+    <string name="parent_label">Etichetta principale</string>
+    <string name="parent_label_none">Nessuna</string>
     <string name="settings_search_placeholder">Cerca nelle impostazioni</string>
     <string name="settings_search_hint">Digita per cercare in tutte le impostazioni</string>
     <string name="settings_profile">Profilo</string>

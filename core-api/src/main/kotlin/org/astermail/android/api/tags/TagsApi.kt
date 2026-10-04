@@ -50,6 +50,7 @@ data class TagItem(
     val item_count: Long? = null,
     val created_at: String? = null,
     val updated_at: String? = null,
+    val parent_token: String? = null,
 )
 
 @Serializable
@@ -69,6 +70,7 @@ data class CreateTagRequest(
     val encrypted_icon: String? = null,
     val icon_nonce: String? = null,
     val sort_order: Int? = null,
+    val parent_token: String? = null,
 )
 
 @Serializable
@@ -87,6 +89,7 @@ data class UpdateTagRequest(
     val encrypted_icon: String? = null,
     val icon_nonce: String? = null,
     val sort_order: Int? = null,
+    val parent_token: String? = null,
 )
 
 @Serializable

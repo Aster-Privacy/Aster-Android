@@ -1646,6 +1646,8 @@
     <string name="send_still_trying">Nadal trwa wysyłanie. Aster będzie ponawiać próby w tle.</string>
     <string name="folder_decrypt_failed">Folder (nie udało się odszyfrować)</string>
     <string name="label_decrypt_failed">Nie można odszyfrować</string>
+    <string name="parent_label">Etykieta nadrzędna</string>
+    <string name="parent_label_none">Brak</string>
     <string name="settings_search_placeholder">Szukaj w ustawieniach</string>
     <string name="settings_search_hint">Zacznij pisać, aby przeszukać wszystkie ustawienia</string>
     <string name="settings_profile">Profil</string>

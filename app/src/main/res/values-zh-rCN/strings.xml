@@ -1634,6 +1634,8 @@
     <string name="send_still_trying">仍在发送。Aster 会在后台继续尝试。</string>
     <string name="folder_decrypt_failed">文件夹（解密失败）</string>
     <string name="label_decrypt_failed">无法解密</string>
+    <string name="parent_label">上级标签</string>
+    <string name="parent_label_none">无</string>
     <string name="settings_search_placeholder">搜索设置</string>
     <string name="settings_search_hint">输入即可搜索所有设置</string>
     <string name="settings_profile">个人资料</string>

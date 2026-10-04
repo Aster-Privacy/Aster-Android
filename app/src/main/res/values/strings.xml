@@ -722,6 +722,8 @@
     <string name="no_folders_yet">No folders yet</string>
     <string name="folder_decrypt_failed">Folder (decryption failed)</string>
     <string name="label_decrypt_failed">Unable to decrypt</string>
+    <string name="parent_label">Parent label</string>
+    <string name="parent_label_none">None</string>
     <string name="folder_locked_title">Locked folder</string>
     <string name="folder_locked_description">Enter the password for \"%1$s\" to view its mail.</string>
     <string name="folder_unlock_password_placeholder">Folder password</string>

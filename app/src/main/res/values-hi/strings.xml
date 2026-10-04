@@ -615,6 +615,8 @@
     <string name="no_folders_yet">अभी कोई फ़ोल्डर नहीं</string>
     <string name="folder_decrypt_failed">फ़ोल्डर (डिक्रिप्ट नहीं हो सका)</string>
     <string name="label_decrypt_failed">डिक्रिप्ट नहीं हो सका</string>
+    <string name="parent_label">मूल लेबल</string>
+    <string name="parent_label_none">कोई नहीं</string>
     <string name="folder_locked_title">लॉक किया फ़ोल्डर</string>
     <string name="folder_locked_description">\"%1$s\" की मेल देखने के लिए उसका पासवर्ड डालें।</string>
     <string name="folder_unlock_password_placeholder">फ़ोल्डर का पासवर्ड</string>

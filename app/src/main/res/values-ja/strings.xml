@@ -1634,6 +1634,8 @@
     <string name="send_still_trying">送信中です。Asterがバックグラウンドで再試行します。</string>
     <string name="folder_decrypt_failed">フォルダ（復号失敗）</string>
     <string name="label_decrypt_failed">復号できません</string>
+    <string name="parent_label">親ラベル</string>
+    <string name="parent_label_none">なし</string>
     <string name="settings_search_placeholder">設定を検索</string>
     <string name="settings_search_hint">入力してすべての設定を検索</string>
     <string name="settings_profile">プロフィール</string>

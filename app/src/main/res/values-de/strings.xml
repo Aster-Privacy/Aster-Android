@@ -1639,6 +1639,8 @@
     <string name="send_still_trying">Wird noch gesendet. Aster versucht es im Hintergrund weiter.</string>
     <string name="folder_decrypt_failed">Ordner (Entschlüsselung fehlgeschlagen)</string>
     <string name="label_decrypt_failed">Entschlüsselung nicht möglich</string>
+    <string name="parent_label">Übergeordnetes Label</string>
+    <string name="parent_label_none">Keines</string>
     <string name="settings_search_placeholder">Einstellungen durchsuchen</string>
     <string name="settings_search_hint">Tippen Sie, um alle Einstellungen zu durchsuchen</string>
     <string name="settings_profile">Profil</string>

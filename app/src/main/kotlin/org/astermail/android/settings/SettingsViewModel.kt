@@ -4555,6 +4555,7 @@ class SettingsViewModel @Inject constructor(
         color: String? = null,
         icon: String? = null,
         on_created: ((String) -> Unit)? = null,
+        parent_token: String? = null,
     ) {
         viewModelScope.launch {
             try {
@@ -4579,6 +4580,7 @@ class SettingsViewModel @Inject constructor(
                         color_nonce = color_field?.nonce_b64,
                         encrypted_icon = icon_field?.ciphertext_b64,
                         icon_nonce = icon_field?.nonce_b64,
+                        parent_token = parent_token?.takeIf { it.isNotBlank() },
                     ),
                 )
                 load_tags()
@@ -5008,10 +5010,51 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun set_tag_parent(tag_id: String, parent_token: String?) {
+        viewModelScope.launch {
+            val previous = _state.value.tags
+            val moving = previous.firstOrNull { it.id == tag_id } ?: return@launch
+            val target_parent = parent_token?.takeIf { it.isNotBlank() }
+            val siblings = org.astermail.android.labels.place_tag_among_siblings(
+                org.astermail.android.labels.tag_tree_index(previous).children(target_parent),
+                moving,
+            )
+            val order_entries = org.astermail.android.labels.tag_reorder_entries(siblings)
+            val positions = siblings.withIndex().associate { (position, tag) -> tag.id to position }
+            _state.value = _state.value.copy(
+                tags = previous.map { tag ->
+                    val placed = positions[tag.id]?.let { tag.copy(sort_order = it) } ?: tag
+                    if (tag.id == tag_id) placed.copy(parent_token = target_parent) else placed
+                },
+            )
+            try {
+                tags_api.update_tag(tag_id, UpdateTagRequest(parent_token = target_parent.orEmpty()))
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(
+                    tags = previous,
+                    action_result = localized_api_error(context, t, context.getString(R.string.failed_update_label)),
+                )
+                return@launch
+            }
+            if (order_entries.isNotEmpty()) {
+                try {
+                    tags_api.bulk_reorder_tags(
+                        org.astermail.android.api.tags.BulkReorderTagsRequest(tags = order_entries),
+                    )
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException) throw t
+                }
+            }
+            persist_cached_tags(_state.value.tags)
+            load_tags()
+        }
+    }
+
     fun move_tag(tag_id: String, direction: Int) {
         viewModelScope.launch {
             val current = _state.value.tags
-            val rows = org.astermail.android.labels.tag_rows(current)
+            val rows = org.astermail.android.labels.tag_tree_index(current).sibling_group(tag_id)
             val index = rows.indexOfFirst { it.id == tag_id }
             val reordered = org.astermail.android.labels.move_row(rows, index, direction) ?: return@launch
             val changed = org.astermail.android.labels.tag_reorder_entries(reordered)

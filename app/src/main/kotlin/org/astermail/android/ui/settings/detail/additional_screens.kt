@@ -1100,6 +1100,7 @@ internal data class label_screen_row(
     val can_delete: Boolean,
     val is_tag: Boolean,
     val name_readable: Boolean = true,
+    val depth: Int = 0,
 )
 
 internal fun label_screen_rows(
@@ -1108,19 +1109,23 @@ internal fun label_screen_rows(
     unreadable_name: String = "",
 ): List<label_screen_row> {
     val fallback = Color(0xFF6B7280)
-    val tag_rows = org.astermail.android.labels.tag_rows(tags)
+    val tag_index = org.astermail.android.labels.tag_tree_index(tags)
     val label_rows = org.astermail.android.labels.label_rows(labels)
-    val from_tags = tag_rows.mapIndexed { idx, tag ->
+    val from_tags = tag_index.nodes.map { node ->
+        val tag = node.tag
+        val siblings = tag_index.sibling_group(tag.id)
+        val sibling_index = siblings.indexOfFirst { it.id == tag.id }
         label_screen_row(
             id = tag.id,
             name = org.astermail.android.labels.tag_display_name(tag, unreadable_name),
             color = parse_hex_color_safe(tag.encrypted_color) ?: fallback,
             count = tag.item_count,
-            can_move_up = idx > 0,
-            can_move_down = idx < tag_rows.lastIndex,
+            can_move_up = sibling_index > 0,
+            can_move_down = sibling_index >= 0 && sibling_index < siblings.lastIndex,
             can_delete = true,
             is_tag = true,
             name_readable = org.astermail.android.labels.tag_name_readable(tag),
+            depth = node.depth,
         )
     }
     val from_labels = label_rows.mapIndexed { idx, label ->
@@ -1165,6 +1170,11 @@ fun LabelsScreen(
         labels = state.labels,
         unreadable_name = stringResource(R.string.label_decrypt_failed),
     )
+    val label_parent_options = remember(state.tags) {
+        org.astermail.android.ui.drawer.tag_parent_options(
+            org.astermail.android.labels.tag_tree_index(state.tags),
+        )
+    }
     var pending_label_delete by remember { mutableStateOf<label_screen_row?>(null) }
     var pending_label_rename by remember { mutableStateOf<label_screen_row?>(null) }
     var show_create_label by remember { mutableStateOf(false) }
@@ -1215,6 +1225,7 @@ fun LabelsScreen(
                         on_move_down = { if (row.is_tag) vm.move_tag(row.id, 1) else vm.move_label_row(row.id, 1) },
                         on_delete = { pending_label_delete = row },
                         on_rename = if (row.can_delete) ({ pending_label_rename = row }) else null,
+                        depth = row.depth,
                     )
                     if (idx < rows.lastIndex) settings_row_gap(modifier = Modifier)
                 }
@@ -1226,11 +1237,12 @@ fun LabelsScreen(
     if (show_create_label) {
         org.astermail.android.ui.drawer.create_label_dialog(
             on_dismiss = { show_create_label = false },
-            on_create = { name, color, icon ->
-                vm.create_tag(name = name, color = color, icon = icon)
+            on_create = { name, color, icon, parent_token ->
+                vm.create_tag(name = name, color = color, icon = icon, parent_token = parent_token)
                 show_create_label = false
             },
             existing_names = rows.filter { it.name_readable }.map { it.name },
+            parent_options = label_parent_options,
         )
     }
 
@@ -1276,6 +1288,7 @@ internal fun label_settings_row(
     on_move_down: () -> Unit,
     on_delete: () -> Unit,
     on_rename: (() -> Unit)? = null,
+    depth: Int = 0,
 ) {
     val colors = AsterMaterial.colors
     Row(
@@ -1285,6 +1298,7 @@ internal fun label_settings_row(
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (depth > 0) Spacer(Modifier.width((depth * 16).dp))
         Box(modifier = Modifier.size(12.dp).background(color, CircleShape))
         Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {

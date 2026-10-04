@@ -1634,6 +1634,8 @@
     <string name="send_still_trying">아직 보내는 중입니다. Aster가 백그라운드에서 계속 시도합니다.</string>
     <string name="folder_decrypt_failed">폴더 (복호화 실패)</string>
     <string name="label_decrypt_failed">복호화할 수 없음</string>
+    <string name="parent_label">상위 라벨</string>
+    <string name="parent_label_none">없음</string>
     <string name="settings_search_placeholder">설정 검색</string>
     <string name="settings_search_hint">입력해서 모든 설정을 검색하세요</string>
     <string name="settings_profile">프로필</string>

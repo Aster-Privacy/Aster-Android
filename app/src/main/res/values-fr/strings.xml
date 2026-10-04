@@ -2169,6 +2169,8 @@
     <string name="send_still_trying">Envoi en cours. Aster continue d\'essayer en arrière-plan.</string>
     <string name="folder_decrypt_failed">Dossier (échec du déchiffrement)</string>
     <string name="label_decrypt_failed">Déchiffrement impossible</string>
+    <string name="parent_label">Libellé parent</string>
+    <string name="parent_label_none">Aucun</string>
     <string name="settings_search_placeholder">Rechercher dans les paramètres</string>
     <string name="settings_search_hint">Saisissez du texte pour chercher dans tous les paramètres</string>
     <string name="attachment_too_large">« %1$s » dépasse la limite de %2$s par fichier</string>

@@ -4913,7 +4913,9 @@ internal fun tag_picker_sheet(
                 )
             } else {
                 val unknown_tag_label = stringResource(R.string.label_decrypt_failed)
-                items.forEach { item ->
+                val tag_nodes = remember(items) { org.astermail.android.labels.flatten_tag_tree(items) }
+                tag_nodes.forEach { node ->
+                    val item = node.tag
                     val display = org.astermail.android.labels.tag_display_name(item, unknown_tag_label)
                     val tag_color = try {
                         item.encrypted_color?.let { androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(it)) }
@@ -4925,6 +4927,9 @@ internal fun tag_picker_sheet(
                             .padding(horizontal = AsterSpacing.xl, vertical = AsterSpacing.md),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        if (node.depth > 0) {
+                            Spacer(Modifier.width((node.depth * PICKER_TREE_INDENT_DP).dp))
+                        }
                         Box(
                             modifier = Modifier
                                 .size(12.dp)

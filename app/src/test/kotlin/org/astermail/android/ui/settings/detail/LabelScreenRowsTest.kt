@@ -37,6 +37,7 @@ class LabelScreenRowsTest {
         color: String? = null,
         sort_order: Int = 0,
         item_count: Long? = null,
+        parent: String? = null,
     ) = TagItem(
         id = id,
         tag_token = "token_$id",
@@ -45,6 +46,7 @@ class LabelScreenRowsTest {
         encrypted_color = color,
         sort_order = sort_order,
         item_count = item_count,
+        parent_token = parent?.let { "token_$it" },
     )
 
     private fun label(
@@ -158,6 +160,28 @@ class LabelScreenRowsTest {
         assertEquals(listOf("keep", "blank", "cipher"), rows.map { it.id })
         assertEquals(listOf("Work", "Unable to decrypt", "Unable to decrypt"), rows.map { it.name })
         assertEquals(listOf(true, false, false), rows.map { it.name_readable })
+    }
+
+    @Test
+    fun `nested tags follow their parent and move among siblings only`() {
+        val rows = label_screen_rows(
+            tags = listOf(
+                tag("second", sort_order = 1),
+                tag("first", sort_order = 0),
+                tag("child_b", sort_order = 1, parent = "first"),
+                tag("child_a", sort_order = 0, parent = "first"),
+            ),
+            labels = emptyList(),
+        )
+        assertEquals(listOf("first", "child_a", "child_b", "second"), rows.map { it.id })
+        assertEquals(listOf(0, 1, 1, 0), rows.map { it.depth })
+        val by_id = rows.associateBy { it.id }
+        assertFalse(by_id.getValue("child_a").can_move_up)
+        assertTrue(by_id.getValue("child_a").can_move_down)
+        assertTrue(by_id.getValue("child_b").can_move_up)
+        assertFalse(by_id.getValue("child_b").can_move_down)
+        assertTrue(by_id.getValue("first").can_move_down)
+        assertTrue(by_id.getValue("second").can_move_up)
     }
 
     @Test

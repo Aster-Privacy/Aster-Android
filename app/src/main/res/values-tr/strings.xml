@@ -1638,6 +1638,8 @@
     <string name="send_still_trying">Hâlâ gönderiliyor. Aster arka planda denemeyi sürdürecek.</string>
     <string name="folder_decrypt_failed">Klasör (şifre çözülemedi)</string>
     <string name="label_decrypt_failed">Şifre çözülemedi</string>
+    <string name="parent_label">Üst etiket</string>
+    <string name="parent_label_none">Yok</string>
     <string name="settings_search_placeholder">Ayarlarda ara</string>
     <string name="settings_search_hint">Tüm ayarlarda aramak için yazın</string>
     <string name="settings_profile">Profil</string>

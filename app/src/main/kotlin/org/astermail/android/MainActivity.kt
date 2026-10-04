@@ -2099,11 +2099,22 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         Color(0xFF6366F1),
     )
 
-    val api_labels = remember(settings_state.tags, settings_state.labels, drawer_context) {
-        val visible_tags = org.astermail.android.labels.tag_rows(settings_state.tags)
+    val tag_index = remember(settings_state.tags) {
+        org.astermail.android.labels.tag_tree_index(settings_state.tags)
+    }
+
+    val label_parent_options = remember(tag_index) {
+        org.astermail.android.ui.drawer.tag_parent_options(tag_index)
+    }
+
+    val api_labels = remember(tag_index, settings_state.labels, drawer_context) {
+        val tag_nodes = tag_index.nodes
         val label_decrypt_failed = drawer_context.getString(R.string.label_decrypt_failed)
-        val from_tags = visible_tags
-            .mapIndexed { idx, tag ->
+        val from_tags = tag_nodes
+            .mapIndexed { idx, node ->
+                val tag = node.tag
+                val siblings = tag_index.sibling_group(tag.id)
+                val sibling_index = siblings.indexOfFirst { it.id == tag.id }
                 val color = parse_hex_color_safe(tag.encrypted_color)
                     ?: label_colors[idx % label_colors.size]
                 val icon = tag.encrypted_icon?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
@@ -2115,9 +2126,14 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     api_id = tag.id,
                     kind = "tag",
                     color_hex = tag.encrypted_color?.takeIf { it.startsWith("#") },
-                    can_move_up = idx > 0,
-                    can_move_down = idx < visible_tags.lastIndex,
+                    can_move_up = sibling_index > 0,
+                    can_move_down = sibling_index >= 0 && sibling_index < siblings.lastIndex,
                     name_readable = org.astermail.android.labels.tag_name_readable(tag),
+                    depth = node.depth,
+                    trail = node.trail,
+                    has_next = node.has_next,
+                    parent_token = tag_index.parent_of(tag.tag_token),
+                    blocked_parent_tokens = tag_index.blocked_parent_tokens(tag.tag_token),
                 )
             }
         val visible_labels = org.astermail.android.labels.label_rows(settings_state.labels)
@@ -2359,8 +2375,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 on_open_workspace_sheet = {
                     accounts_vm.refresh_with_profile()
                 },
-                on_create_label = { name, color, icon ->
-                    settings_vm.create_tag(name = name, color = color, icon = icon)
+                on_create_label = { name, color, icon, parent_token ->
+                    settings_vm.create_tag(name = name, color = color, icon = icon, parent_token = parent_token)
                 },
                 on_create_folder = { name, parent_token ->
                     settings_vm.create_folder(
@@ -2413,7 +2429,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         if (item.kind == "tag") settings_vm.delete_tag(item.api_id)
                         else settings_vm.delete_label(item.api_id)
                     },
+                    on_move_to = { item, parent_token ->
+                        if (item.kind == "tag") settings_vm.set_tag_parent(item.api_id, parent_token)
+                    },
                 ),
+                label_parent_options = label_parent_options,
                 on_manage_account = {
                     scope.launch { drawer_state.close() }
                     nav_controller.navigate(routes.settings_detail("profile"))

@@ -1641,6 +1641,8 @@
     <string name="send_still_trying">Ainda enviando. O Aster vai continuar tentando em segundo plano.</string>
     <string name="folder_decrypt_failed">Pasta (falha ao descriptografar)</string>
     <string name="label_decrypt_failed">Não foi possível descriptografar</string>
+    <string name="parent_label">Etiqueta pai</string>
+    <string name="parent_label_none">Nenhuma</string>
     <string name="settings_search_placeholder">Pesquisar configurações</string>
     <string name="settings_search_hint">Digite para pesquisar em todas as configurações</string>
     <string name="settings_profile">Perfil</string>
