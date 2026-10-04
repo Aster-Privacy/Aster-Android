@@ -161,6 +161,7 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.mail.DEFAULT_SWIPE_LEFT_ACTION
 import org.astermail.android.mail.DEFAULT_SWIPE_RIGHT_ACTION
+import org.astermail.android.mail.LiveSyncEvent
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.mail.all_mail_folder
 import org.astermail.android.mail.can_move_to_inbox
@@ -676,7 +677,18 @@ fun InboxScreen(
     }
     LaunchedEffect(mail_vm, lifecycle_owner, live_sync_socket) {
         lifecycle_owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            live_sync_socket.run { event -> mail_vm.on_live_sync_event(event) }
+            live_sync_socket.run { event ->
+                when (event) {
+                    LiveSyncEvent.folders_changed -> settings_vm.load_labels(force = true)
+                    LiveSyncEvent.tags_changed -> settings_vm.load_tags()
+                    LiveSyncEvent.connected -> {
+                        settings_vm.load_labels()
+                        settings_vm.load_tags(force = false)
+                        mail_vm.on_live_sync_event(event)
+                    }
+                    else -> mail_vm.on_live_sync_event(event)
+                }
+            }
         }
     }
     DisposableEffect(lifecycle_owner) {
