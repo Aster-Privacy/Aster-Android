@@ -2927,7 +2927,7 @@
     <string name="show_sender_pictures_subtitle">اعرض صورة أو الأحرف الأولى لكل مرسل في بريدك الوارد</string>
     <string name="theme_sync_across_devices">مزامنة السمة بين الأجهزة</string>
     <string name="theme_sync_across_devices_subtitle">أوقف هذا الخيار للاحتفاظ بسمة مختلفة على هذا الجهاز.</string>
-    <string name="view_encryption_details">عرض تفاصيل التشفير</string>
+    <string name="view_security_details">عرض تفاصيل الأمان</string>
     <string name="resubscribe">إعادة الاشتراك</string>
     <string name="translate_confirm_title">هل تريد تشغيل الترجمة؟</string>
     <string name="translate_confirm_message">يترجم Aster البريد على جهازك، لذا لا يُرسل أي شيء تقرأه إلى خدمة ترجمة. في أول مرة تترجم فيها من لغة ما، ينزّل Aster حزمة لغة بحجم 20 إلى 55 ميغابايت ويحتفظ بها على هذا الجهاز. يمكنك إزالة الحزم في أي وقت.</string>

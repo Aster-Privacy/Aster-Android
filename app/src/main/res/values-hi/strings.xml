@@ -380,7 +380,7 @@
     <string name="to_label_prefix">%s को</string>
     <string name="received_on_label">मिलने की तारीख</string>
     <string name="reply_to_label">जवाब भेजने का पता</string>
-    <string name="view_encryption_details">एन्क्रिप्शन का ब्योरा देखें</string>
+    <string name="view_security_details">सुरक्षा का ब्योरा देखें</string>
     <string name="security_details_title">सुरक्षा का ब्योरा</string>
     <string name="failed_to_trash">ट्रैश में नहीं डाला जा सका</string>
     <string name="failed_report_spam">स्पैम की शिकायत नहीं हो सकी</string>

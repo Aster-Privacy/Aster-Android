@@ -2868,7 +2868,7 @@
     <string name="show_sender_pictures_subtitle">Ein Foto oder die Initialen jedes Absenders im Posteingang anzeigen</string>
     <string name="theme_sync_across_devices">Design auf allen Geräten synchronisieren</string>
     <string name="theme_sync_across_devices_subtitle">Schalten Sie dies aus, um auf diesem Gerät ein eigenes Design zu behalten.</string>
-    <string name="view_encryption_details">Verschlüsselungsdetails ansehen</string>
+    <string name="view_security_details">Sicherheitsdetails ansehen</string>
     <string name="resubscribe">Erneut abonnieren</string>
     <string name="translate_confirm_title">Übersetzung aktivieren?</string>
     <string name="translate_confirm_message">Aster übersetzt E-Mails auf Ihrem Gerät, sodass nichts, was Sie lesen, an einen Übersetzungsdienst gesendet wird. Wenn Sie zum ersten Mal aus einer Sprache übersetzen, lädt Aster ein Sprachpaket von 20 bis 55 MB herunter und behält es auf diesem Gerät. Sie können Pakete jederzeit entfernen.</string>

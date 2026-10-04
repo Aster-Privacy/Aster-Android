@@ -2856,7 +2856,7 @@
     <string name="show_sender_pictures_subtitle">受信トレイで各差出人の写真またはイニシャルを表示します</string>
     <string name="theme_sync_across_devices">デバイス間でテーマを同期</string>
     <string name="theme_sync_across_devices_subtitle">オフにすると、この端末だけ別のテーマを使えます。</string>
-    <string name="view_encryption_details">暗号化の詳細を表示</string>
+    <string name="view_security_details">セキュリティの詳細を表示</string>
     <string name="resubscribe">再登録</string>
     <string name="translate_confirm_title">翻訳を有効にしますか？</string>
     <string name="translate_confirm_message">Aster はデバイス上でメールを翻訳するため、読んだ内容が翻訳サービスに送信されることはありません。ある言語から初めて翻訳するときに、Aster は 20〜55 MB の言語パックをダウンロードし、このデバイスに保存します。パックはいつでも削除できます。</string>

@@ -2867,7 +2867,7 @@
     <string name="show_sender_pictures_subtitle">Gelen kutunuzda her gönderen için bir fotoğraf veya baş harfler gösterin</string>
     <string name="theme_sync_across_devices">Temayı cihazlar arasında eşitle</string>
     <string name="theme_sync_across_devices_subtitle">Bu cihazda farklı bir tema kullanmak için kapatın.</string>
-    <string name="view_encryption_details">Şifreleme ayrıntılarını görüntüle</string>
+    <string name="view_security_details">Güvenlik ayrıntılarını görüntüle</string>
     <string name="resubscribe">Yeniden abone ol</string>
     <string name="translate_confirm_title">Çeviri açılsın mı?</string>
     <string name="translate_confirm_message">Aster postaları cihazınızda çevirir, bu yüzden okuduğunuz hiçbir şey bir çeviri hizmetine gönderilmez. Bir dilden ilk kez çeviri yaptığınızda Aster 20 ila 55 MB boyutunda bir dil paketi indirir ve bu cihazda saklar. Paketleri istediğiniz zaman kaldırabilirsiniz.</string>

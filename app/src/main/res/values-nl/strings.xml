@@ -2867,7 +2867,7 @@
     <string name="show_sender_pictures_subtitle">Toon een foto of initialen voor elke afzender in je Postvak IN</string>
     <string name="theme_sync_across_devices">Thema synchroniseren tussen apparaten</string>
     <string name="theme_sync_across_devices_subtitle">Zet dit uit om op dit apparaat een eigen thema te houden.</string>
-    <string name="view_encryption_details">Versleutelingsdetails bekijken</string>
+    <string name="view_security_details">Beveiligingsdetails bekijken</string>
     <string name="resubscribe">Opnieuw abonneren</string>
     <string name="translate_confirm_title">Vertaling inschakelen?</string>
     <string name="translate_confirm_message">Aster vertaalt e-mail op je apparaat, dus niets wat je leest wordt naar een vertaaldienst gestuurd. De eerste keer dat je vanuit een taal vertaalt, downloadt Aster een taalpakket van 20 tot 55 MB en bewaart het op dit apparaat. Je kunt pakketten op elk moment verwijderen.</string>
