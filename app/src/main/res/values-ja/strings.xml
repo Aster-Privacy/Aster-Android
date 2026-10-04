@@ -1303,6 +1303,7 @@
     <string name="pending_deletion_error">アカウントを復元できませんでした。もう一度お試しください。</string>
     <string name="image_blocked">画像はブロックされました</string>
     <string name="tracking_pixel_blocked">トラッキングピクセルはブロックされました</string>
+    <string name="tracking_pixels_highlighted">メッセージ内で強調表示: %1$d</string>
     <string name="alias_available">このエイリアスは使用可能です。</string>
     <string name="alias_not_available">このエイリアスは既に使用されています。</string>
     <string name="alias_check_failed">空き状況を確認できませんでした。作成を試すことはできます。</string>

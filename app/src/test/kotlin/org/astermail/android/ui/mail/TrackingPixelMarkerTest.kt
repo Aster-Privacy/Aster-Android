@@ -190,21 +190,21 @@ class TrackingPixelMarkerTest {
     }
 
     @Test
-    fun a_marker_never_takes_layout_space_and_does_not_print() {
-        for (dark in listOf(false, true)) {
-            val css = BlockedImagePlaceholder.tracking_marker_css(dark)
+    fun markers_are_hidden_unless_the_document_asks_for_them() {
+        val css = BlockedImagePlaceholder.tracking_marker_css()
+        val shown = "html[data-tracking-markers-shown] $marker_selector"
 
-            assertTrue(css.contains("$marker_selector{position:relative!important;display:inline-block!important;width:0!important;height:0!important"))
-            assertTrue(css.contains("$marker_selector::before{content:''!important;position:absolute!important"))
-            assertTrue(css.contains("width:11px!important;height:11px!important"))
-            assertTrue(css.contains("@media print{$marker_selector{display:none!important}}"))
-            val urls = Regex("""url\("([^"]+)"\)""").findAll(css).map { it.groupValues[1] }.toList()
-            assertEquals(1, urls.size)
-            assertTrue(urls.single().startsWith("data:image/svg+xml,"))
-            val svg = java.net.URLDecoder.decode(urls.single().substringAfter(','), "UTF-8")
-            assertTrue(svg.contains(if (dark) "fill=\"#10b981\"" else "fill=\"#059669\""))
-            assertTrue(svg.contains(if (dark) "stroke=\"#0a0a0a\"" else "stroke=\"#ffffff\""))
-        }
+        assertTrue(css.startsWith("$marker_selector{display:none!important}"))
+        assertTrue(css.contains("$shown{position:relative!important;display:inline-block!important;width:0!important;height:0!important"))
+        assertTrue(css.contains("$shown::before{content:''!important;position:absolute!important"))
+        assertTrue(css.contains("width:6px!important;height:6px!important;border-radius:50%!important"))
+        assertTrue(css.contains("background:#059669!important"))
+        assertTrue(css.contains("box-shadow:0 0 0 1px rgba(255,255,255,0.9),0 0 0 2px rgba(0,0,0,0.35)!important"))
+        assertTrue(css.contains("@media print{$marker_selector,$shown{display:none!important}}"))
+        assertFalse(css.contains("url(", ignoreCase = true))
+        assertFalse(css.contains("@keyframes"))
+        assertFalse(Regex("""animation:(?!none)""").containsMatchIn(css))
+        assertFalse(Regex("""transition:(?!none)""").containsMatchIn(css))
     }
 
     @Test
@@ -226,6 +226,63 @@ class TrackingPixelMarkerTest {
         )
 
         assertTrue(document.contains("data-tracking-pixel-marker"))
-        assertTrue(document.contains(BlockedImagePlaceholder.tracking_marker_css(false)))
+        assertTrue(document.contains(BlockedImagePlaceholder.tracking_marker_css()))
+        assertFalse(document.contains("<html data-tracking-markers-shown"))
+
+        val shown = BlockedImagePlaceholder.with_tracking_markers_shown(document)
+        assertTrue(shown.startsWith("<!DOCTYPE html><html data-tracking-markers-shown"))
+        assertEquals(document.length + " data-tracking-markers-shown".length, shown.length)
+        assertEquals(1, BlockedImagePlaceholder.count_drawn_tracking_markers(shown))
+    }
+
+    private fun reader_document(body: String): String = build_email_html(
+        body = reader_body(body, remove_tracking_pixels = true).html(),
+        is_dark = false,
+        fg_hex = "#111827",
+        link_hex = "#2563eb",
+        forwarded_label = "Forwarded message",
+        image_failed_label = "Image could not be loaded",
+        force_dark_emails = false,
+        dyslexia_font = false,
+        translate_mode = "off",
+    )
+
+    @Test
+    fun an_email_without_markers_is_left_alone_when_highlighting() {
+        val document = reader_document("""<p>Nothing to see</p><img src="https://images.example.test/a.png" width="300" height="100">""")
+
+        assertEquals(document, BlockedImagePlaceholder.with_tracking_markers_shown(document))
+        assertEquals(0, BlockedImagePlaceholder.count_drawn_tracking_markers(document))
+    }
+
+    @Test
+    fun the_highlight_count_matches_the_markers_and_skips_hidden_pixels() {
+        val three_pixels =
+            """<p>One<img src="https://a.example/1.gif" width="1" height="1"></p>""" +
+                """<p>Two<img src="https://a.example/2.gif" width="1" height="1"></p>""" +
+                """<p>Three<img src="https://b.example/3.gif" width="1" height="1"></p>""" +
+                """<img src="https://hidden.example/4.gif" width="1" height="1" style="display:none">"""
+        val document = reader_document(three_pixels)
+        val report = EmailHtmlSanitizer.analyze_trackers(three_pixels)
+
+        assertEquals(4, report.pixel_count)
+        assertEquals(3, report.marked_pixel_count)
+        assertEquals(3, BlockedImagePlaceholder.count_drawn_tracking_markers(document))
+    }
+
+    @Test
+    fun markers_inside_collapsed_or_hidden_content_are_not_counted() {
+        val marker = """<span data-tracking-pixel-marker="true" role="img" aria-label="Tracking pixel blocked"></span>"""
+        val document = "<!DOCTYPE html><html><head></head><body><div id=\"m\">" +
+            "<p>Shown$marker</p>" +
+            "<details class=\"aster-quoted-wrapper\"><summary>More$marker</summary><div>Quoted$marker</div></details>" +
+            "<details open><summary>Open</summary><div>Expanded$marker</div></details>" +
+            "<div style=\"display: none\">Gone$marker</div>" +
+            "<div hidden>Gone$marker</div>" +
+            "<div class=\"gmail_quote\">Quote$marker</div>" +
+            "<div class=\"aster-quoted-content\"><div class=\"gmail_quote\">Revealed$marker</div></div>" +
+            "</div></body></html>"
+
+        assertEquals(4, BlockedImagePlaceholder.count_drawn_tracking_markers(document))
     }
 }

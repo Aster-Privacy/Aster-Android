@@ -1309,6 +1309,7 @@
     <string name="pending_deletion_error">Não foi possível restaurar a sua conta. Tente novamente.</string>
     <string name="image_blocked">Imagem bloqueada</string>
     <string name="tracking_pixel_blocked">Píxel de rastreio bloqueado</string>
+    <string name="tracking_pixels_highlighted">Destacados na mensagem: %1$d</string>
     <string name="alias_available">Este alias está disponível.</string>
     <string name="alias_not_available">Este alias já está em uso.</string>
     <string name="alias_check_failed">Não foi possível verificar a disponibilidade. Pode tentar criá-lo mesmo assim.</string>

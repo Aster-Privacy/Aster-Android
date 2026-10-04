@@ -84,12 +84,12 @@ class TrackingPixelMarkerRenderTest {
         save(name, runCatching { InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot() }.getOrNull())
     }
 
-    private fun document(body: String, dark: Boolean): String {
+    private fun document(body: String, dark: Boolean, shown: Boolean): String {
         val sanitized = EmailHtmlSanitizer.sanitize(
             body,
             EmailHtmlSanitizer.SanitizeOptions(mark_tracking_pixels = true),
         )
-        return build_email_html(
+        val document = build_email_html(
             body = EmailHtmlSanitizer.replace_blocked_images(sanitized, mark_tracking_pixels = true),
             is_dark = dark,
             fg_hex = if (dark) "#E8E8E8" else "#111827",
@@ -100,13 +100,14 @@ class TrackingPixelMarkerRenderTest {
             dyslexia_font = false,
             translate_mode = "off",
         )
+        return if (shown) BlockedImagePlaceholder.with_tracking_markers_shown(document) else document
     }
 
-    private fun render(name: String, body: String, dark: Boolean): JSONObject {
+    private fun render(name: String, body: String, dark: Boolean, shown: Boolean): JSONObject {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val loaded = CountDownLatch(1)
         val web_ref = arrayOfNulls<WebView>(1)
-        val html = document(body, dark)
+        val html = document(body, dark, shown)
         compose_rule.setContent {
             Column(
                 modifier = Modifier
@@ -144,14 +145,17 @@ class TrackingPixelMarkerRenderTest {
             web_ref[0]!!.evaluateJavascript(
                 "(function(){" +
                     "var all=document.querySelectorAll('span[data-tracking-pixel-marker]');" +
-                    "var m=all[0];var r=m.getBoundingClientRect();var g=getComputedStyle(m,'::before');" +
+                    "var m=all[0];var r=m.getBoundingClientRect();var s=getComputedStyle(m);var g=getComputedStyle(m,'::before');" +
                     "var root=document.getElementById('m');var with_markers=root.getBoundingClientRect().height;" +
                     "var text=root.querySelector('p').getBoundingClientRect().width;" +
+                    "var style={count:all.length,display:s.display,width:r.width,height:r.height,dot_w:g.width,dot_h:g.height," +
+                    "radius:g.borderTopLeftRadius,fill:g.backgroundColor,shadow:g.boxShadow,animation:g.animationName+'|'+s.animationName," +
+                    "role:m.getAttribute('role'),label:m.getAttribute('aria-label')};" +
                     "for(var i=0;i<all.length;i++){all[i].style.setProperty('display','none','important');}" +
                     "var without=root.getBoundingClientRect().height;" +
                     "var text_without=root.querySelector('p').getBoundingClientRect().width;" +
-                    "return JSON.stringify({count:all.length,width:r.width,height:r.height,glyph_w:g.width,glyph_h:g.height," +
-                    "label:m.getAttribute('aria-label'),with_markers:with_markers,without:without,text:text,text_without:text_without});" +
+                    "style.with_markers=with_markers;style.without=without;style.text=text;style.text_without=text_without;" +
+                    "return JSON.stringify(style);" +
                     "})()",
             ) { value ->
                 result[0] = value
@@ -163,30 +167,58 @@ class TrackingPixelMarkerRenderTest {
         return JSONObject(if (json.startsWith("\"")) JSONObject("{\"v\":$json}").getString("v") else json)
     }
 
-    private fun assert_marker_takes_no_space(metrics: JSONObject) {
+    private fun assert_layout_unchanged(metrics: JSONObject) {
         assertEquals(1, metrics.getInt("count"))
-        assertEquals(0.0, metrics.getDouble("width"), 0.01)
-        assertEquals(0.0, metrics.getDouble("height"), 0.01)
-        assertEquals("11px", metrics.getString("glyph_w"))
-        assertEquals("11px", metrics.getString("glyph_h"))
+        assertEquals("img", metrics.getString("role"))
         assertEquals("Tracking pixel blocked", metrics.getString("label"))
         assertEquals(metrics.getDouble("without"), metrics.getDouble("with_markers"), 0.01)
         assertEquals(metrics.getDouble("text_without"), metrics.getDouble("text"), 0.01)
     }
 
-    @Test
-    fun a_marker_on_a_light_newsletter_takes_no_space() {
-        assert_marker_takes_no_space(render("tracking_marker_newsletter_light", newsletter, dark = false))
+    private fun assert_hidden(metrics: JSONObject) {
+        assert_layout_unchanged(metrics)
+        assertEquals("none", metrics.getString("display"))
+        assertEquals(0.0, metrics.getDouble("width"), 0.01)
+        assertEquals(0.0, metrics.getDouble("height"), 0.01)
+    }
+
+    private fun assert_dot(metrics: JSONObject) {
+        assert_layout_unchanged(metrics)
+        assertEquals("inline-block", metrics.getString("display"))
+        assertEquals(0.0, metrics.getDouble("width"), 0.01)
+        assertEquals(0.0, metrics.getDouble("height"), 0.01)
+        assertEquals("6px", metrics.getString("dot_w"))
+        assertEquals("6px", metrics.getString("dot_h"))
+        assertEquals("50%", metrics.getString("radius"))
+        assertEquals("rgb(5, 150, 105)", metrics.getString("fill"))
+        assertTrue(metrics.getString("shadow").contains("rgba(255, 255, 255, 0.9) 0px 0px 0px 1px"))
+        assertTrue(metrics.getString("shadow").contains("rgba(0, 0, 0, 0.35) 0px 0px 0px 2px"))
+        assertEquals("none|none", metrics.getString("animation"))
     }
 
     @Test
-    fun a_marker_on_a_dark_plain_email_takes_no_space() {
-        assert_marker_takes_no_space(render("tracking_marker_plain_dark", plain, dark = true))
+    fun markers_are_hidden_by_default_on_a_light_newsletter() {
+        assert_hidden(render("tracking_marker_hidden_newsletter_light", newsletter, dark = false, shown = false))
     }
 
     @Test
-    fun a_marker_on_a_light_plain_email_takes_no_space() {
-        assert_marker_takes_no_space(render("tracking_marker_plain_light", plain, dark = false))
+    fun markers_are_hidden_by_default_on_a_dark_plain_email() {
+        assert_hidden(render("tracking_marker_hidden_plain_dark", plain, dark = true, shown = false))
+    }
+
+    @Test
+    fun a_shown_marker_is_a_dot_that_takes_no_space_on_a_light_email() {
+        assert_dot(render("tracking_marker_dot_plain_light", plain, dark = false, shown = true))
+    }
+
+    @Test
+    fun a_shown_marker_is_a_dot_that_takes_no_space_on_a_dark_email() {
+        assert_dot(render("tracking_marker_dot_plain_dark", plain, dark = true, shown = true))
+    }
+
+    @Test
+    fun a_shown_marker_on_a_light_newsletter_in_the_dark_theme() {
+        assert_dot(render("tracking_marker_dot_newsletter_in_dark_theme", newsletter, dark = true, shown = true))
     }
 
     @Test
