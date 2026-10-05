@@ -861,6 +861,7 @@ class MailPollingWorker(
                         Intent.FLAG_ACTIVITY_CLEAR_TOP or
                         Intent.FLAG_ACTIVITY_SINGLE_TOP
                     putExtra(MainActivity.EXTRA_OPEN_EMAIL_ID, item_id)
+                    putExtra(internal_launch_token.EXTRA_TOKEN, internal_launch_token.get(context))
                 }
                 builder.setContentIntent(
                     PendingIntent.getActivity(
@@ -1125,6 +1126,7 @@ class MailPollingWorker(
                     Intent.FLAG_ACTIVITY_CLEAR_TOP or
                     Intent.FLAG_ACTIVITY_SINGLE_TOP
                 putExtra(MainActivity.EXTRA_OPEN_EMAIL_ID, item_id)
+                putExtra(internal_launch_token.EXTRA_TOKEN, internal_launch_token.get(context))
             }
             val pending = PendingIntent.getActivity(
                 context, message_id, open_intent,
