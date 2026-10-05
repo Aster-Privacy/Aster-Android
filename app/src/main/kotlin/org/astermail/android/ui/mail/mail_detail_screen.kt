@@ -100,6 +100,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -192,6 +193,9 @@ import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.disabled_surface_color
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.ui.common.horizontal_pan_signal
+import org.astermail.android.ui.common.horizontal_scroll_indicator
+import org.astermail.android.ui.common.local_horizontal_pan_signal
 import org.astermail.android.ui.common.vertical_scroll_indicator
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
@@ -906,6 +910,7 @@ fun MailDetailScreen(
     }
 
     val list_state = rememberLazyListState()
+    val pan_signal = remember { horizontal_pan_signal() }
     val show_topbar_subject by remember {
         derivedStateOf { list_state.firstVisibleItemIndex > 0 || list_state.firstVisibleItemScrollOffset > 80 }
     }
@@ -1291,11 +1296,13 @@ fun MailDetailScreen(
                     .chrome_surface(colors)
                     .clipToBounds(),
             ) {
+            CompositionLocalProvider(local_horizontal_pan_signal provides pan_signal) {
             if (email != null) LazyColumn(
                 state = list_state,
                 modifier = Modifier
                     .fillMaxSize()
                     .vertical_scroll_indicator(list_state, bottom_inset = bottom_bar_height)
+                    .horizontal_scroll_indicator(pan_signal, bottom_inset = bottom_bar_height)
                     .detail_content_handoff(email_id, detail_phase)
                     .clipToBounds()
                     .pointerInput(on_next, on_previous) {
@@ -1634,6 +1641,7 @@ fun MailDetailScreen(
                 }
 
                 item { Spacer(Modifier.height(bottom_bar_height + 16.dp)) }
+            }
             }
             detail_skeleton_layer(
                 phase = detail_phase,
@@ -5246,6 +5254,21 @@ internal class mail_body_web_view(
 
     var on_width_change: (() -> Unit)? = null
 
+    var on_horizontal_scroll: ((Int, Int, Int) -> Unit)? = null
+
+    fun report_horizontal_scroll() {
+        on_horizontal_scroll?.invoke(
+            computeHorizontalScrollOffset(),
+            computeHorizontalScrollExtent(),
+            computeHorizontalScrollRange(),
+        )
+    }
+
+    override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
+        super.onScrollChanged(l, t, oldl, oldt)
+        if (l != oldl) report_horizontal_scroll()
+    }
+
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         if (body_width_changed(oldw, w)) on_width_change?.invoke()
@@ -5326,7 +5349,7 @@ internal fun configure_mail_body_web_view(
     @Suppress("DEPRECATION")
     web.settings.savePassword = false
     web.isVerticalScrollBarEnabled = false
-    web.isHorizontalScrollBarEnabled = true
+    web.isHorizontalScrollBarEnabled = false
     web.overScrollMode = android.view.View.OVER_SCROLL_IF_CONTENT_SCROLLS
     web.isNestedScrollingEnabled = false
 }
@@ -5722,6 +5745,7 @@ internal fun email_html_view(
     }
     val link_hex = String.format(java.util.Locale.US, "#%06X", colors.accent_blue.toArgb() and 0xFFFFFF)
 
+    val pan_signal = local_horizontal_pan_signal.current
     val screen_width_dp = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp
     val text_zoom = when (settings_state.preferences?.font_size_scale) {
         "small" -> 85
@@ -6355,6 +6379,7 @@ internal fun email_html_view(
                     zoom_active = false
                     return
                 }
+                (view as? mail_body_web_view)?.report_horizontal_scroll()
                 if (zoom_base_ref[0] <= 0f) zoom_base_ref[0] = newScale
                 val ratio = newScale / zoom_base_ref[0]
                 scale_ref[0] = if (is_nl_ref[0]) nl_scale_ref[0] else ratio
@@ -6589,6 +6614,7 @@ internal fun email_html_view(
                 mail_body_web_view(ctx).apply {
                     configure_mail_body_web_view(this, text_zoom, allow_external)
                     on_width_change = { height_recheck.value = true }
+                    on_horizontal_scroll = { offset, extent, range -> pan_signal?.report(offset, extent, range) }
                     var touch_down_x = 0f
                     var touch_down_y = 0f
                     var multi_touch = false
