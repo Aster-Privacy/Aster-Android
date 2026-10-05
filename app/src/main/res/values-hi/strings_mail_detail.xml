@@ -3,6 +3,7 @@
     <string name="detail_show_details">विवरण दिखाएं</string>
     <string name="detail_hide_details">विवरण छिपाएं</string>
     <string name="detail_external_images_blocked">इस संदेश में बाहरी सामग्री है। इसे लोड करने पर प्रेषक को आपकी गतिविधि का पता चल सकता है।</string>
+    <string name="detail_external_load">लोड करें</string>
     <string name="detail_external_allow_once">एक बार लोड करें</string>
     <string name="detail_external_always_allow">हमेशा अनुमति दें</string>
     <string name="detail_external_images_traffic_blocked">ट्रैफ़िक बचाने के लिए बाहरी तस्वीरें रोकी गई हैं।</string>

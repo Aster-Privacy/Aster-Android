@@ -85,8 +85,9 @@ class EmailDarkModeTest {
     fun forced_css_strips_author_backgrounds_but_spares_image_backgrounds() {
         val css = forced_dark_mode_css("#8ab4f8", "#4b5563", "#9ca3af")
         assertTrue(css.contains("background-color:transparent!important"))
-        assertTrue(css.contains("td:not([style*=\"background-image\" i])"))
-        assertTrue(css.contains("table:not([style*=\"background-image\" i])"))
+        assertTrue(css.contains("td:not([style*=\"url(\" i])"))
+        assertTrue(css.contains("table:not([style*=\"url(\" i])"))
+        assertTrue(css.contains(":not([$BACKGROUND_IMAGE_ATTRIBUTE])"))
         assertTrue(css, css.contains("color:#8ab4f8!important"))
         assertTrue(css.contains("html,body{background-color:transparent!important"))
     }

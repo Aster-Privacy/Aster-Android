@@ -21,10 +21,15 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
@@ -130,6 +135,94 @@ internal fun pinned_lazy_extent(
     val floor = offset + viewport_px + if (can_scroll_forward) 1f else 0f
     val content = max(estimate.content_px, floor)
     return lazy_extent(content, if (can_scroll_forward) offset else content - viewport_px)
+}
+
+internal data class horizontal_track(val start: Float, val end: Float)
+
+internal fun horizontal_track_bounds(
+    container_width_px: Float,
+    corner_px: Float,
+    track_inset_px: Float,
+    rtl: Boolean,
+): horizontal_track = if (rtl) {
+    horizontal_track(corner_px + track_inset_px, container_width_px - track_inset_px)
+} else {
+    horizontal_track(track_inset_px, container_width_px - corner_px - track_inset_px)
+}
+
+@Stable
+class horizontal_pan_signal {
+    var offset_px by mutableFloatStateOf(0f)
+        private set
+    var extent_px by mutableFloatStateOf(0f)
+        private set
+    var range_px by mutableFloatStateOf(0f)
+        private set
+    var moves by mutableIntStateOf(0)
+        private set
+
+    fun report(offset_px: Int, extent_px: Int, range_px: Int) {
+        val offset = offset_px.toFloat()
+        val extent = extent_px.toFloat()
+        val range = range_px.toFloat()
+        if (offset == this.offset_px && extent == this.extent_px && range == this.range_px) return
+        this.offset_px = offset
+        this.extent_px = extent
+        this.range_px = range
+        moves++
+    }
+}
+
+val local_horizontal_pan_signal = staticCompositionLocalOf<horizontal_pan_signal?> { null }
+
+@Composable
+fun Modifier.horizontal_scroll_indicator(
+    signal: horizontal_pan_signal,
+    bottom_inset: Dp = 0.dp,
+): Modifier {
+    val color = AsterMaterial.colors.text_muted.copy(alpha = indicator_alpha)
+    val reduce_motion = aster_reduce_motion()
+    val live_reduce_motion by rememberUpdatedState(reduce_motion)
+    val alpha = remember(signal) { Animatable(0f) }
+
+    LaunchedEffect(signal) {
+        snapshotFlow { signal.moves }.collectLatest { moves ->
+            if (moves == 0) return@collectLatest
+            if (live_reduce_motion) alpha.snapTo(1f) else alpha.animateTo(1f, tween(indicator_fade_in_ms))
+            delay(indicator_hide_delay_ms)
+            if (live_reduce_motion) alpha.snapTo(0f) else alpha.animateTo(0f, tween(indicator_fade_out_ms))
+        }
+    }
+
+    return drawWithContent {
+        drawContent()
+        val current_alpha = alpha.value
+        if (current_alpha <= 0f) return@drawWithContent
+        val thickness = indicator_width.toPx()
+        val track = horizontal_track_bounds(
+            container_width_px = size.width,
+            corner_px = indicator_edge_inset.toPx() + thickness,
+            track_inset_px = indicator_track_inset.toPx(),
+            rtl = layoutDirection == LayoutDirection.Rtl,
+        )
+        val thumb = scroll_thumb_geometry(
+            viewport_px = signal.extent_px,
+            content_px = signal.range_px,
+            offset_px = signal.offset_px,
+            track_px = track.end - track.start,
+            min_thumb_px = indicator_min_thumb.toPx(),
+        ) ?: return@drawWithContent
+        drawRoundRect(
+            color = color,
+            topLeft = Offset(
+                x = track.start + thumb.top,
+                y = size.height - bottom_inset.toPx() - indicator_edge_inset.toPx() - thickness,
+            ),
+            size = Size(thumb.height, thickness),
+            cornerRadius = CornerRadius(thickness / 2f),
+            alpha = current_alpha,
+        )
+    }
 }
 
 @Composable

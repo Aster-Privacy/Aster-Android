@@ -253,15 +253,18 @@ fun RuleEditorScreen(
     val folders = remember(settings_state.labels, system_folder_names) {
         rule_folder_picker_items(settings_state.labels, system_folder_names)
     }
-    val labels = remember(settings_state.labels, settings_state.tags) {
-        val from_tags = org.astermail.android.labels.tag_rows(settings_state.tags)
-            .mapIndexed { idx, tag ->
+    val label_decrypt_failed = stringResource(R.string.label_decrypt_failed)
+    val labels = remember(settings_state.labels, settings_state.tags, label_decrypt_failed) {
+        val from_tags = org.astermail.android.labels.flatten_tag_tree(settings_state.tags)
+            .mapIndexed { idx, node ->
+                val tag = node.tag
                 picker_item(
                     id = tag.tag_token,
-                    label = tag.encrypted_name,
+                    label = org.astermail.android.labels.tag_display_name(tag, label_decrypt_failed),
                     icon = resolve_label_icon(tag.encrypted_icon?.takeIf { it.isNotBlank() }),
                     icon_tint = tag.encrypted_color?.let { parse_hex_color_safe(it) }
                         ?: rules_label_palette[idx % rules_label_palette.size],
+                    depth = node.depth,
                 )
             }
         val from_labels = org.astermail.android.labels.label_rows(settings_state.labels)
@@ -277,6 +280,11 @@ fun RuleEditorScreen(
                 )
             }
         from_tags + from_labels
+    }
+    val label_parent_options = remember(settings_state.tags) {
+        org.astermail.android.ui.drawer.tag_parent_options(
+            org.astermail.android.labels.tag_tree_index(settings_state.tags),
+        )
     }
     val alias_options = remember(settings_state.aliases) {
         settings_state.aliases
@@ -901,12 +909,14 @@ fun RuleEditorScreen(
         )
         "label" -> create_label_dialog(
             on_dismiss = { create_target = null; create_for_action = null },
-            on_create = { label_name, label_color, label_icon ->
+            parent_options = label_parent_options,
+            on_create = { label_name, label_color, label_icon, label_parent_token ->
                 val action_index = create_for_action
                 settings_vm.create_tag(
                     name = label_name,
                     color = label_color,
                     icon = label_icon,
+                    parent_token = label_parent_token,
                     on_created = { token ->
                         if (action_index != null) {
                             val updated = apply_created_target(actions.getOrNull(action_index), token)

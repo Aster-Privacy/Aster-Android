@@ -181,6 +181,7 @@ object LoginAlertNotifier {
         val open_intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(MainActivity.EXTRA_OPEN_SESSIONS, true)
+            putExtra(internal_launch_token.EXTRA_TOKEN, internal_launch_token.get(context))
         }
         val content_pending = PendingIntent.getActivity(
             context, id, open_intent,
@@ -262,6 +263,7 @@ object LoginAlertNotifier {
         val open_intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(MainActivity.EXTRA_OPEN_SESSIONS, true)
+            putExtra(internal_launch_token.EXTRA_TOKEN, internal_launch_token.get(context))
         }
         val pending = PendingIntent.getActivity(
             context, notification_id, open_intent,

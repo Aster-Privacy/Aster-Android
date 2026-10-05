@@ -853,6 +853,7 @@ fun label_multi_picker(
                         test_tag = "rule_label_${l.label}",
                         icon = l.icon,
                         icon_tint = l.icon_tint,
+                        depth = l.depth,
                     )
                 }
                 if (on_create != null) {

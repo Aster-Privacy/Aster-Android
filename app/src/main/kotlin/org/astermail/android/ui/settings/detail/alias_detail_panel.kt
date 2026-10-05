@@ -404,7 +404,10 @@ private fun alias_delivery_section(
         else -> stringResource(R.string.folder_inbox)
     }
 
-    val tags = state.tags.filter { it.encrypted_name.isNotBlank() }
+    val label_decrypt_failed = stringResource(R.string.label_decrypt_failed)
+    val tags = state.tags.map { tag ->
+        tag.copy(encrypted_name = org.astermail.android.labels.tag_display_name(tag, label_decrypt_failed))
+    }
     val selected_tag = alias.delivery_label_token?.let { token ->
         tags.firstOrNull { it.tag_token == token }
     }

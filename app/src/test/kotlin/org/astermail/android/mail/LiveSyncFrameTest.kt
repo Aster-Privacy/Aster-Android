@@ -53,6 +53,12 @@ class LiveSyncFrameTest {
     }
 
     @Test
+    fun parses_folder_and_tag_changes() {
+        assertEquals(LiveSyncFrame.folders_changed, parse_live_sync_frame("""{"type":"folders_changed"}"""))
+        assertEquals(LiveSyncFrame.tags_changed, parse_live_sync_frame("""{"type":"tags_changed"}"""))
+    }
+
+    @Test
     fun ignores_unknown_and_malformed_frames() {
         assertNull(parse_live_sync_frame("""{"type":"prekey_low"}"""))
         assertNull(parse_live_sync_frame("not json"))

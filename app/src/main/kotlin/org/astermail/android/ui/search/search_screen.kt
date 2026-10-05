@@ -1073,7 +1073,8 @@ fun SearchScreen(
     if (show_folder_sheet) {
         val unnamed_folder_label = stringResource(R.string.unnamed_folder)
         val folder_decrypt_failed_label = stringResource(R.string.folder_decrypt_failed)
-        val folder_items = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
+        val folder_nodes = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
+        val folder_items = folder_nodes
             .map { node ->
                 val label = node.label
                 val readable = label.encrypted_name?.takeIf {
@@ -1085,6 +1086,7 @@ fun SearchScreen(
             title = stringResource(R.string.move_to_folder),
             empty_message = stringResource(R.string.no_folders_yet_create),
             items = folder_items,
+            depths = folder_nodes.associate { it.label.label_token to it.depth },
             on_close = { show_folder_sheet = false },
             on_pick = { picked ->
                 val display = picked.encrypted_name?.takeIf { it.isNotBlank() } ?: unnamed_folder_label
@@ -1103,8 +1105,8 @@ fun SearchScreen(
         } else {
             selected_items.map { it.tag_tokens.toSet() }.reduce { acc, tokens -> acc intersect tokens }
         }
-        val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags, applied_tags)
-        val unknown_label = stringResource(R.string.unknown)
+        val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags)
+        val unknown_label = stringResource(R.string.label_decrypt_failed)
         org.astermail.android.ui.mail.tag_picker_sheet(
             title = stringResource(R.string.edit_labels),
             empty_message = stringResource(R.string.no_labels_yet_create),

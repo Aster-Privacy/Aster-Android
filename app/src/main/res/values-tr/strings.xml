@@ -1637,6 +1637,13 @@
     <string name="link_url_placeholder">ornek.com</string>
     <string name="send_still_trying">Hâlâ gönderiliyor. Aster arka planda denemeyi sürdürecek.</string>
     <string name="folder_decrypt_failed">Klasör (şifre çözülemedi)</string>
+    <string name="label_decrypt_failed">Şifre çözülemedi</string>
+    <string name="parent_label">Üst etiket</string>
+    <string name="parent_label_none">Yok</string>
+    <string name="error_tag_parent_not_found">Bu üst etiket artık mevcut değil.</string>
+    <string name="error_tag_parent_self">Bir etiket kendi üst etiketi olamaz.</string>
+    <string name="error_tag_parent_cycle">Bir etiket kendi alt etiketlerinden birinin altına taşınamaz.</string>
+    <string name="error_tag_parent_too_deep">Etiketler beş düzeyden daha derine iç içe yerleştirilemez.</string>
     <string name="settings_search_placeholder">Ayarlarda ara</string>
     <string name="settings_search_hint">Tüm ayarlarda aramak için yazın</string>
     <string name="settings_profile">Profil</string>

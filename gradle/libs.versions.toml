@@ -107,7 +107,7 @@ jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutines" }
-play-integrity = { group = "com.google.android.play", name = "integrity", version = "1.4.0" }
+play-integrity = { group = "com.google.android.play", name = "integrity", version = "1.6.0" }
 androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
 androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle" }
 androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }
