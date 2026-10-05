@@ -1,0 +1,11 @@
+What's new:
+
+- Search finds sent mail and drafts, and it searches all mail by default.
+- Labels can contain other labels, and folder and label changes appear right away.
+- A scroll indicator appears while you pan a zoomed email.
+
+Fixed:
+
+- Encrypted messages that didn't open before now open.
+- Email text and backgrounds stay readable in dark mode.
+- Lock screen notifications follow your device settings.
