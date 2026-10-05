@@ -3747,19 +3747,20 @@ class MailRepository @Inject constructor(
                 for (index in 0 until entries.length()) {
                     val entry = entries.optJSONObject(index) ?: continue
                     val previous_jwk = entry.optString("ratchet_identity_key", "")
-                    if (previous_jwk.isBlank()) continue
+                    val previous_pq_secret = entry
+                        .optString("ratchet_pq_identity_key", "")
+                        .ifBlank {
+                            entry.optString("ratchet_pq_identity_seed", "")
+                                .takeIf { it.isNotBlank() }
+                                ?.let { org.astermail.android.mail.ratchet.expand_pq_identity_secret(it) }
+                                .orEmpty()
+                        }
+                        .ifBlank { null }
+                    if (previous_jwk.isBlank() && previous_pq_secret == null) continue
                     key_sets.add(
                         InboundRatchetKeySet(
                             identity_jwk = previous_jwk,
-                            pq_identity_secret_b64 = entry
-                                .optString("ratchet_pq_identity_key", "")
-                                .ifBlank {
-                                    entry.optString("ratchet_pq_identity_seed", "")
-                                        .takeIf { it.isNotBlank() }
-                                        ?.let { org.astermail.android.mail.ratchet.expand_pq_identity_secret(it) }
-                                        .orEmpty()
-                                }
-                                .ifBlank { null },
+                            pq_identity_secret_b64 = previous_pq_secret,
                         ),
                     )
                 }
