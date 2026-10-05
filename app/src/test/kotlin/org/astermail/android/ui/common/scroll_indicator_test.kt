@@ -142,4 +142,37 @@ class scroll_indicator_test {
         assertTrue(pinned.content_px > 1000f)
         assertNotNull(scroll_thumb_geometry(1000f, pinned.content_px, pinned.offset_px, 1000f, 32f))
     }
+
+    @Test
+    fun horizontal_track_leaves_the_vertical_thumb_corner_free() {
+        val ltr = horizontal_track_bounds(1000f, corner_px = 14f, track_inset_px = 8f, rtl = false)
+        assertEquals(8f, ltr.start, delta)
+        assertEquals(978f, ltr.end, delta)
+        val rtl = horizontal_track_bounds(1000f, corner_px = 14f, track_inset_px = 8f, rtl = true)
+        assertEquals(22f, rtl.start, delta)
+        assertEquals(992f, rtl.end, delta)
+    }
+
+    @Test
+    fun a_zoomed_page_gets_a_horizontal_thumb_and_a_fitted_one_does_not() {
+        val track = horizontal_track_bounds(1000f, corner_px = 14f, track_inset_px = 8f, rtl = false)
+        val length = track.end - track.start
+        val zoomed = scroll_thumb_geometry(1000f, 2500f, 750f, length, 32f)!!
+        assertEquals(length * 0.4f, zoomed.height, delta)
+        assertEquals((length - zoomed.height) * 0.5f, zoomed.top, delta)
+        assertNull(scroll_thumb_geometry(1000f, 1000f, 0f, length, 32f))
+    }
+
+    @Test
+    fun pan_signal_counts_only_real_moves() {
+        val signal = horizontal_pan_signal()
+        signal.report(0, 1080, 2700)
+        signal.report(0, 1080, 2700)
+        assertEquals(1, signal.moves)
+        signal.report(540, 1080, 2700)
+        assertEquals(2, signal.moves)
+        assertEquals(540f, signal.offset_px, delta)
+        assertEquals(1080f, signal.extent_px, delta)
+        assertEquals(2700f, signal.range_px, delta)
+    }
 }
