@@ -292,6 +292,40 @@ class EmailBodyNativeTest {
     }
 
     @Test
+    fun a_hidden_preheader_stays_hidden_when_the_text_resets_a_zero_font_size() {
+        val preheader = "display:none;font-size:1px;color:#ffffff;line-height:1px;" +
+            "max-height:0px;max-width:0px;opacity:0;overflow:hidden;"
+        val prepared = prepare(
+            "<div style=\"$preheader\">Your parcel is on its way</div>" +
+                "<div style=\"font-size:0px;padding:20px 0\">" +
+                "<div style=\"display:inline-block;width:100%\">" +
+                "<div style=\"font-family:Arial;font-size:14px;line-height:1.5\">Order 1234 has shipped</div>" +
+                "</div></div>",
+        )
+
+        assertTrue(prepared.contains(preheader))
+        assertTrue(prepared.contains("font-size:0px;padding:20px 0"))
+    }
+
+    @Test
+    fun a_hidden_preheader_stays_hidden_above_images_in_zero_font_size_columns() {
+        val prepared = prepare(
+            "<div style=\"display:none;opacity:0\">Preview</div>" +
+                "<div style=\"font-size:0px\"><img src=\"https://a.test/banner.png\" width=\"600\"></div>",
+        )
+
+        assertTrue(prepared.contains("display:none;opacity:0"))
+    }
+
+    @Test
+    fun text_left_at_a_zero_font_size_is_shown() {
+        val prepared = prepare("<div style=\"font-size:0px;color:red\"><span>Hi there</span></div>")
+
+        assertFalse(prepared.contains("font-size:0px"))
+        assertTrue(prepared.contains("color:red"))
+    }
+
+    @Test
     fun partial_opacity_is_not_treated_as_hidden() {
         val prepared = prepare("<div style=\"opacity:0.5\"><p>Hi there</p></div>")
 

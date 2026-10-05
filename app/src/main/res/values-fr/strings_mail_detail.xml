@@ -3,6 +3,7 @@
     <string name="detail_show_details">Afficher les détails</string>
     <string name="detail_hide_details">Masquer les détails</string>
     <string name="detail_external_images_blocked">Ce message contient du contenu distant. Le charger peut révéler votre activité à l\'expéditeur.</string>
+    <string name="detail_external_load">Charger</string>
     <string name="detail_external_allow_once">Charger une fois</string>
     <string name="detail_external_always_allow">Toujours autoriser</string>
     <string name="detail_unsubscribe_title">Cet expéditeur prend en charge le désabonnement en un clic.</string>

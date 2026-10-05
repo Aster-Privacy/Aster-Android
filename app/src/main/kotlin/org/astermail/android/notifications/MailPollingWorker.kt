@@ -797,6 +797,15 @@ class MailPollingWorker(
             return active_mail_notifications >= 1
         }
 
+        data class LockScreenPolicy(val visibility: Int, val redacted_public_version: Boolean)
+
+        fun message_lock_screen_policy(private_mode: Boolean): LockScreenPolicy {
+            return LockScreenPolicy(
+                visibility = NotificationCompat.VISIBILITY_PRIVATE,
+                redacted_public_version = private_mode,
+            )
+        }
+
         private fun message_notified_recently(context: Context): Boolean {
             val last = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .getLong(KEY_LAST_MESSAGE_NOTIFY_MS, 0L)
@@ -861,6 +870,7 @@ class MailPollingWorker(
                         Intent.FLAG_ACTIVITY_CLEAR_TOP or
                         Intent.FLAG_ACTIVITY_SINGLE_TOP
                     putExtra(MainActivity.EXTRA_OPEN_EMAIL_ID, item_id)
+                    putExtra(internal_launch_token.EXTRA_TOKEN, internal_launch_token.get(context))
                 }
                 builder.setContentIntent(
                     PendingIntent.getActivity(
@@ -877,8 +887,9 @@ class MailPollingWorker(
                         .addLine(one_line_preview),
                 )
             }
-            if (private_mode) {
-                builder.setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            val lock_screen = message_lock_screen_policy(private_mode)
+            builder.setVisibility(lock_screen.visibility)
+            if (lock_screen.redacted_public_version) {
                 builder.setPublicVersion(
                     base_builder(context)
                         .setContentTitle(localized(context).getString(R.string.app_name))
@@ -886,8 +897,6 @@ class MailPollingWorker(
                         .setGroup(GROUP_KEY_NEW_MAIL)
                         .build(),
                 )
-            } else {
-                builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             }
             val manager = NotificationManagerCompat.from(context)
             manager.cancel(NOTIFICATION_ID)
@@ -1125,6 +1134,7 @@ class MailPollingWorker(
                     Intent.FLAG_ACTIVITY_CLEAR_TOP or
                     Intent.FLAG_ACTIVITY_SINGLE_TOP
                 putExtra(MainActivity.EXTRA_OPEN_EMAIL_ID, item_id)
+                putExtra(internal_launch_token.EXTRA_TOKEN, internal_launch_token.get(context))
             }
             val pending = PendingIntent.getActivity(
                 context, message_id, open_intent,

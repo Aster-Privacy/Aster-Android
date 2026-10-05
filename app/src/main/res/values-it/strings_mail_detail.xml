@@ -3,6 +3,7 @@
     <string name="detail_show_details">Mostra i dettagli</string>
     <string name="detail_hide_details">Nascondi i dettagli</string>
     <string name="detail_external_images_blocked">Questo messaggio contiene contenuti remoti. Caricandoli, il mittente può vedere la tua attività.</string>
+    <string name="detail_external_load">Carica</string>
     <string name="detail_external_allow_once">Carica una volta</string>
     <string name="detail_external_always_allow">Consenti sempre</string>
     <string name="detail_external_images_traffic_blocked">Le immagini remote sono bloccate per risparmiare dati.</string>

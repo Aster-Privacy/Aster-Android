@@ -3,6 +3,7 @@
     <string name="detail_show_details">عرض التفاصيل</string>
     <string name="detail_hide_details">إخفاء التفاصيل</string>
     <string name="detail_external_images_blocked">تحتوي هذه الرسالة على محتوى خارجي. قد يكشف تحميله نشاطك للمرسل.</string>
+    <string name="detail_external_load">تحميل</string>
     <string name="detail_external_allow_once">تحميل مرة واحدة</string>
     <string name="detail_external_always_allow">السماح دائمًا</string>
     <string name="detail_external_images_traffic_blocked">تم حجب الصور الخارجية لتوفير البيانات.</string>

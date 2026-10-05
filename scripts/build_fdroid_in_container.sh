@@ -35,8 +35,6 @@ docker pull "$image"
 MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' docker run --rm -i \
   -v "$(to_docker_path "$repo_root"):/src:ro" \
   -v "$(to_docker_path "$out"):/out" \
-  -v aster_fdroid_gradle_home:/home/vagrant/.gradle \
-  -v aster_fdroid_gradlew_cache:/home/vagrant/.cache \
   -e "ref=$ref" \
   "$image" bash -s <<'IN_CONTAINER'
 set -euo pipefail

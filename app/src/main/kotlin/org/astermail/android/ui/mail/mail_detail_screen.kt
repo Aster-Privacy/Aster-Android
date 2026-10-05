@@ -97,9 +97,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -125,6 +127,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.layout.positionInWindow
@@ -192,6 +195,9 @@ import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.disabled_surface_color
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.ui.common.horizontal_pan_signal
+import org.astermail.android.ui.common.horizontal_scroll_indicator
+import org.astermail.android.ui.common.local_horizontal_pan_signal
 import org.astermail.android.ui.common.vertical_scroll_indicator
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
@@ -906,6 +912,7 @@ fun MailDetailScreen(
     }
 
     val list_state = rememberLazyListState()
+    val pan_signal = remember { horizontal_pan_signal() }
     val show_topbar_subject by remember {
         derivedStateOf { list_state.firstVisibleItemIndex > 0 || list_state.firstVisibleItemScrollOffset > 80 }
     }
@@ -1291,11 +1298,13 @@ fun MailDetailScreen(
                     .chrome_surface(colors)
                     .clipToBounds(),
             ) {
+            CompositionLocalProvider(local_horizontal_pan_signal provides pan_signal) {
             if (email != null) LazyColumn(
                 state = list_state,
                 modifier = Modifier
                     .fillMaxSize()
                     .vertical_scroll_indicator(list_state, bottom_inset = bottom_bar_height)
+                    .horizontal_scroll_indicator(pan_signal, bottom_inset = bottom_bar_height)
                     .detail_content_handoff(email_id, detail_phase)
                     .clipToBounds()
                     .pointerInput(on_next, on_previous) {
@@ -1634,6 +1643,7 @@ fun MailDetailScreen(
                 }
 
                 item { Spacer(Modifier.height(bottom_bar_height + 16.dp)) }
+            }
             }
             detail_skeleton_layer(
                 phase = detail_phase,
@@ -3399,72 +3409,130 @@ internal fun compact_banner_action(
     val colors = AsterMaterial.colors
     Text(
         text = label,
-        color = colors.accent_blue,
+        color = if (primary) colors.on_accent else colors.accent_blue,
         fontSize = 13.sp,
-        fontWeight = if (primary) FontWeight.SemiBold else FontWeight.Medium,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
+        fontWeight = FontWeight.SemiBold,
+        textAlign = TextAlign.Center,
         modifier = Modifier
-            .clip(SquircleShape(6.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 6.dp, vertical = 4.dp),
+            .minimumInteractiveComponentSize()
+            .clip(AsterShapes.control)
+            .background(if (primary) colors.accent_blue else tonal_surface_color(colors, colors.accent_blue))
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 5.dp),
     )
 }
 
+@Composable
+internal fun compact_banner_row(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    tint: Color,
+    modifier: Modifier = Modifier,
+    on_icon_click: (() -> Unit)? = null,
+    content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit,
+) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.size(19.dp), contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = tint,
+                modifier = Modifier
+                    .then(
+                        if (on_icon_click != null) {
+                            Modifier
+                                .clip(SquircleShape(6.dp))
+                                .clickable(onClick = on_icon_click)
+                                .padding(2.dp)
+                        } else {
+                            Modifier
+                        },
+                    )
+                    .size(15.dp),
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        content()
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun compact_banner(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     on_icon_click: (() -> Unit)? = null,
-    label_suffix: (@Composable () -> Unit)? = null,
+    secondary_row: (@Composable () -> Unit)? = null,
     actions: @Composable () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     var expanded by remember { mutableStateOf(false) }
-    Row(
+    Layout(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = AsterSpacing.md, vertical = 3.dp)
             .acrylic(colors, SquircleShape(10.dp), colors.bg_secondary)
-            .padding(start = AsterSpacing.md, end = AsterSpacing.sm, top = 6.dp, bottom = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = if (on_icon_click != null) colors.accent_blue else colors.text_secondary,
-            modifier = Modifier
-                .then(
-                    if (on_icon_click != null) {
-                        Modifier
-                            .clip(SquircleShape(6.dp))
-                            .clickable(onClick = on_icon_click)
-                            .padding(2.dp)
-                    } else {
-                        Modifier
-                    },
-                )
-                .size(15.dp),
-        )
-        Spacer(Modifier.width(8.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            if (label.isNotEmpty() || label_suffix == null) {
-                Text(
-                    text = label,
-                    color = colors.text_secondary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = if (expanded) 6 else 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { expanded = !expanded },
-                )
+            .padding(start = AsterSpacing.md, end = AsterSpacing.sm),
+        content = {
+            Column(modifier = Modifier.padding(vertical = 6.dp)) {
+                if (label.isNotEmpty() || secondary_row == null) {
+                    compact_banner_row(
+                        icon = icon,
+                        tint = if (on_icon_click != null) colors.accent_blue else colors.text_secondary,
+                        on_icon_click = on_icon_click,
+                    ) {
+                        Text(
+                            text = label,
+                            color = colors.text_secondary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = if (expanded) 6 else 2,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { expanded = !expanded },
+                        )
+                    }
+                }
+                secondary_row?.invoke()
             }
-            label_suffix?.invoke()
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End),
+            ) {
+                actions()
+            }
+        },
+    ) { measurables, constraints ->
+        val width = constraints.maxWidth
+        val gap = 6.dp.roundToPx()
+        val text_measurable = measurables[0]
+        val actions_measurable = measurables[1]
+        val actions_width = actions_measurable.maxIntrinsicWidth(androidx.compose.ui.unit.Constraints.Infinity)
+        val text_width = text_measurable.maxIntrinsicWidth(androidx.compose.ui.unit.Constraints.Infinity)
+        if (text_width + gap + actions_width <= width) {
+            val actions_placeable = actions_measurable.measure(
+                androidx.compose.ui.unit.Constraints(maxWidth = actions_width),
+            )
+            val text_slot = width - gap - actions_placeable.width
+            val text_placeable = text_measurable.measure(
+                androidx.compose.ui.unit.Constraints(minWidth = text_slot, maxWidth = text_slot),
+            )
+            val height = maxOf(text_placeable.height, actions_placeable.height)
+            layout(width, height) {
+                text_placeable.placeRelative(0, (height - text_placeable.height) / 2)
+                actions_placeable.placeRelative(width - actions_placeable.width, (height - actions_placeable.height) / 2)
+            }
+        } else {
+            val text_placeable = text_measurable.measure(
+                androidx.compose.ui.unit.Constraints(minWidth = width, maxWidth = width),
+            )
+            val actions_placeable = actions_measurable.measure(
+                androidx.compose.ui.unit.Constraints(maxWidth = width),
+            )
+            layout(width, text_placeable.height + actions_placeable.height) {
+                text_placeable.placeRelative(0, 0)
+                actions_placeable.placeRelative(width - actions_placeable.width, text_placeable.height)
+            }
         }
-        Spacer(Modifier.width(6.dp))
-        actions()
     }
 }
 
@@ -3679,8 +3747,10 @@ internal fun external_content_banner(
         icon = TablerIcons.PhotoOff,
         label = label,
         on_icon_click = open_details,
-        label_suffix = if (counts.tracker_count > 0) ({
-            Row(
+        secondary_row = if (counts.tracker_count > 0) ({
+            compact_banner_row(
+                icon = TablerIcons.ShieldCheck,
+                tint = colors.success,
                 modifier = Modifier
                     .clip(SquircleShape(6.dp))
                     .then(
@@ -3692,32 +3762,26 @@ internal fun external_content_banner(
                     )
                     .testTag("banner_trackers")
                     .padding(vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(
-                    imageVector = TablerIcons.ShieldCheck,
-                    contentDescription = null,
-                    tint = colors.success,
-                    modifier = Modifier.size(14.dp),
-                )
-                Spacer(Modifier.width(4.dp))
                 Text(
                     text = tracker_label,
                     color = if (open_trackers != null) colors.accent_blue else colors.text_secondary,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
-                    maxLines = 1,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
             }
         }) else null,
     ) {
         compact_banner_action(
-            label = stringResource(R.string.detail_external_allow_once),
-            primary = false,
+            label = stringResource(
+                if (on_always_allow != null) R.string.detail_external_allow_once else R.string.detail_external_load,
+            ),
+            primary = on_always_allow == null,
             onClick = on_allow_once,
         )
         if (on_always_allow != null) {
-            Text("·", color = AsterMaterial.colors.text_muted, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 4.dp))
             compact_banner_action(
                 label = stringResource(R.string.detail_external_always_allow),
                 primary = true,
@@ -3750,7 +3814,6 @@ internal fun traffic_saver_banner(
             primary = false,
             onClick = on_load_once,
         )
-        Text("·", color = AsterMaterial.colors.text_muted, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 4.dp))
         compact_banner_action(
             label = stringResource(R.string.detail_disable_traffic_saving),
             primary = true,
@@ -5246,6 +5309,21 @@ internal class mail_body_web_view(
 
     var on_width_change: (() -> Unit)? = null
 
+    var on_horizontal_scroll: ((Int, Int, Int) -> Unit)? = null
+
+    fun report_horizontal_scroll() {
+        on_horizontal_scroll?.invoke(
+            computeHorizontalScrollOffset(),
+            computeHorizontalScrollExtent(),
+            computeHorizontalScrollRange(),
+        )
+    }
+
+    override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
+        super.onScrollChanged(l, t, oldl, oldt)
+        if (l != oldl) report_horizontal_scroll()
+    }
+
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         if (body_width_changed(oldw, w)) on_width_change?.invoke()
@@ -5326,7 +5404,7 @@ internal fun configure_mail_body_web_view(
     @Suppress("DEPRECATION")
     web.settings.savePassword = false
     web.isVerticalScrollBarEnabled = false
-    web.isHorizontalScrollBarEnabled = true
+    web.isHorizontalScrollBarEnabled = false
     web.overScrollMode = android.view.View.OVER_SCROLL_IF_CONTENT_SCROLLS
     web.isNestedScrollingEnabled = false
 }
@@ -5722,6 +5800,7 @@ internal fun email_html_view(
     }
     val link_hex = String.format(java.util.Locale.US, "#%06X", colors.accent_blue.toArgb() and 0xFFFFFF)
 
+    val pan_signal = local_horizontal_pan_signal.current
     val screen_width_dp = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp
     val text_zoom = when (settings_state.preferences?.font_size_scale) {
         "small" -> 85
@@ -6355,6 +6434,7 @@ internal fun email_html_view(
                     zoom_active = false
                     return
                 }
+                (view as? mail_body_web_view)?.report_horizontal_scroll()
                 if (zoom_base_ref[0] <= 0f) zoom_base_ref[0] = newScale
                 val ratio = newScale / zoom_base_ref[0]
                 scale_ref[0] = if (is_nl_ref[0]) nl_scale_ref[0] else ratio
@@ -6589,6 +6669,7 @@ internal fun email_html_view(
                 mail_body_web_view(ctx).apply {
                     configure_mail_body_web_view(this, text_zoom, allow_external)
                     on_width_change = { height_recheck.value = true }
+                    on_horizontal_scroll = { offset, extent, range -> pan_signal?.report(offset, extent, range) }
                     var touch_down_x = 0f
                     var touch_down_y = 0f
                     var multi_touch = false

@@ -3,6 +3,7 @@
     <string name="detail_show_details">Показать подробности</string>
     <string name="detail_hide_details">Скрыть подробности</string>
     <string name="detail_external_images_blocked">В письме есть внешнее содержимое. Если загрузить его, отправитель узнает, что вы открыли письмо.</string>
+    <string name="detail_external_load">Загрузить</string>
     <string name="detail_external_allow_once">Загрузить один раз</string>
     <string name="detail_external_always_allow">Всегда разрешать</string>
     <string name="detail_external_images_traffic_blocked">Внешние изображения заблокированы ради экономии трафика.</string>

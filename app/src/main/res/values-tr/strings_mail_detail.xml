@@ -3,6 +3,7 @@
     <string name="detail_show_details">Ayrıntıları göster</string>
     <string name="detail_hide_details">Ayrıntıları gizle</string>
     <string name="detail_external_images_blocked">Bu ileti uzak içerik barındırıyor. Yüklerseniz gönderen, etkinliğinizi görebilir.</string>
+    <string name="detail_external_load">Yükle</string>
     <string name="detail_external_allow_once">Bir kez yükle</string>
     <string name="detail_external_always_allow">Her zaman izin ver</string>
     <string name="detail_external_images_traffic_blocked">Veri tasarrufu için dış görseller engellendi.</string>

@@ -3,6 +3,7 @@
     <string name="detail_show_details">Show details</string>
     <string name="detail_hide_details">Hide details</string>
     <string name="detail_external_images_blocked">This message contains remote content. Loading it can reveal your activity to the sender.</string>
+    <string name="detail_external_load">Load</string>
     <string name="detail_external_allow_once">Load once</string>
     <string name="detail_external_always_allow">Always allow</string>
     <string name="detail_external_images_traffic_blocked">Remote images are blocked to save traffic.</string>
