@@ -113,8 +113,8 @@ internal fun build_email_html(
         ),
     )
     val seeded_background = detect_body_background(render_body)
-    val designed_light =
-        declares_light || declares_light_bg || has_newsletter_layout || background_reads_light(seeded_background)
+    val designed_light = declares_light || declares_light_bg || has_newsletter_layout ||
+        background_reads_light(seeded_background) || (is_html_body && declares_light_background(render_body))
     val white_page = is_dark && is_html_body && designed_light && !force_dark_emails
     val simple_dark = is_dark && is_html_body && !white_page
     val force_light = is_html_body && !simple_dark
@@ -191,7 +191,11 @@ html,body{background-color:#ffffff!important}
     } else {
         ""
     }
-    val dark_ready_body = if (force_dark_emails) lighten_dark_email_text(render_body) else render_body
+    val dark_ready_body = when {
+        force_dark_emails -> lighten_dark_email_text(render_body)
+        simple_dark -> lighten_dark_stylesheet_text(render_body)
+        else -> render_body
+    }
 
     val prepared_body = prepare_email_body(
         body = dark_ready_body,
