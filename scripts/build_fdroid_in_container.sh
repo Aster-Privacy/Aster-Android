@@ -17,7 +17,7 @@ if [ -z "$ref" ] || [ -z "$out" ]; then
   exit 2
 fi
 
-image="${ASTER_FDROID_IMAGE:-registry.gitlab.com/fdroid/fdroidserver:buildserver-trixie}"
+image="${ASTER_FDROID_IMAGE:-registry.gitlab.com/fdroid/fdroidserver:buildserver-trixie@sha256:9cb68105642ca4e7b295f0ceab10f069f5b3247dc18fa7c36046e9d81aa469a8}"
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 mkdir -p "$out"
 out="$(cd "$out" && pwd)"
@@ -30,7 +30,7 @@ to_docker_path() {
 }
 
 command -v docker >/dev/null || { echo "docker not found" >&2; exit 1; }
-docker image inspect "$image" >/dev/null 2>&1 || docker pull "$image"
+docker pull "$image"
 
 MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' docker run --rm -i \
   -v "$(to_docker_path "$repo_root"):/src:ro" \
