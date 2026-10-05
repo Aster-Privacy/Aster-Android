@@ -223,6 +223,18 @@ private val HIDING_DECLARATION = Regex(
     RegexOption.IGNORE_CASE,
 )
 
+private val SUBTREE_HIDING_DECLARATION = Regex(
+    """(?<![a-z-])(?:display\s*:\s*none|visibility\s*:\s*(?:hidden|collapse)|""" +
+        """opacity\s*:\s*0(?:\.0+)?(?![.\d])|""" +
+        """max-height\s*:\s*0(?:\.0+)?(?:px|pt|em|rem|%)?(?![.\d]))""",
+    RegexOption.IGNORE_CASE,
+)
+
+private val ZERO_FONT_SIZE =
+    Regex("""(?<![a-z-])font-size\s*:\s*0(?:\.0+)?(?:px|pt|em|rem|%)?(?![.\d])""", RegexOption.IGNORE_CASE)
+
+private val FONT_SIZE_DECLARATION = Regex("""(?<![a-z-])font-size\s*:""", RegexOption.IGNORE_CASE)
+
 private val CSS_COMMENT = Regex("""/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL)
 
 private val CSS_RULE = Regex("""([^{}@]+)\{([^{}]*)\}""")
@@ -274,6 +286,25 @@ private fun stylesheet_hidden_elements(root: Element): List<Element> {
         .toList()
 }
 
+private fun is_hidden(node: Node, sheet_hidden: List<Element>, is_text: Boolean): Boolean {
+    var sized = false
+    var current: Node? = node
+    while (current != null) {
+        if (current is Element) {
+            if (sheet_hidden.any { it === current }) return true
+            val style = current.attr("style")
+            if (SUBTREE_HIDING_DECLARATION.containsMatchIn(style)) return true
+            if (ZERO_FONT_SIZE.containsMatchIn(style)) {
+                if (is_text && !sized) return true
+            } else if (FONT_SIZE_DECLARATION.containsMatchIn(style)) {
+                sized = true
+            }
+        }
+        current = current.parentNode()
+    }
+    return false
+}
+
 private fun reveal_fully_hidden_content(root: Element) {
     val inline_hidden = root.select("[style]").filter { HIDING_DECLARATION.containsMatchIn(it.attr("style")) }
     val sheet_hidden = stylesheet_hidden_elements(root)
@@ -281,9 +312,9 @@ private fun reveal_fully_hidden_content(root: Element) {
     if (hidden.isEmpty()) return
     val texts = collect_text_nodes(root).filter { it.wholeText.replace(INVISIBLE_CHARACTERS, "").isNotBlank() }
     if (texts.isEmpty()) return
-    if (texts.any { !is_within(it, hidden) }) return
+    if (texts.any { !is_hidden(it, sheet_hidden, is_text = true) }) return
     val visible_media = root.select("img, video, picture, svg, canvas")
-        .any { !is_within(it, hidden) && !(it.tagName().lowercase() == "img" && is_tracking_pixel(it)) }
+        .any { !is_hidden(it, sheet_hidden, is_text = false) && !(it.tagName().lowercase() == "img" && is_tracking_pixel(it)) }
     if (visible_media) return
     for (element in inline_hidden) {
         val style = HIDING_DECLARATION.replace(element.attr("style"), "").trim()
