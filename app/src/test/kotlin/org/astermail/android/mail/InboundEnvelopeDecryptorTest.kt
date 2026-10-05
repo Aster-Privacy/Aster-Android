@@ -179,6 +179,57 @@ class InboundEnvelopeDecryptorTest {
     }
 
     @Test
+    fun a_pq_envelope_opens_when_its_key_halves_sit_in_different_key_sets() {
+        val block = vectors.getJSONObject("pq_hybrid")
+        val ecdh_only = InboundRatchetKeySet(
+            identity_jwk = recipient_identity_jwk(),
+            pq_identity_secret_b64 = null,
+        )
+        val pq_with_another_identity = InboundRatchetKeySet(
+            identity_jwk = wrong_key_set().identity_jwk,
+            pq_identity_secret_b64 = vectors.getString("recipient_ml_kem768_decapsulation_key_b64"),
+        )
+        val pq_only = InboundRatchetKeySet(
+            identity_jwk = "",
+            pq_identity_secret_b64 = vectors.getString("recipient_ml_kem768_decapsulation_key_b64"),
+        )
+
+        assertArrayEquals(
+            expected_plaintext(),
+            InboundEnvelopeDecryptor.decrypt(
+                block.getString("envelope_b64"),
+                decode(block.getString("nonce_b64")),
+                listOf(pq_with_another_identity, ecdh_only),
+            ),
+        )
+        assertArrayEquals(
+            expected_plaintext(),
+            InboundEnvelopeDecryptor.decrypt(
+                block.getString("envelope_b64"),
+                decode(block.getString("nonce_b64")),
+                listOf(ecdh_only, pq_only),
+            ),
+        )
+    }
+
+    @Test
+    fun a_pq_envelope_stays_closed_when_a_key_half_is_missing_from_every_key_set() {
+        val block = vectors.getJSONObject("pq_hybrid")
+        val pq_with_another_identity = InboundRatchetKeySet(
+            identity_jwk = wrong_key_set().identity_jwk,
+            pq_identity_secret_b64 = vectors.getString("recipient_ml_kem768_decapsulation_key_b64"),
+        )
+
+        assertNull(
+            InboundEnvelopeDecryptor.decrypt(
+                block.getString("envelope_b64"),
+                decode(block.getString("nonce_b64")),
+                listOf(pq_with_another_identity, wrong_key_set()),
+            ),
+        )
+    }
+
+    @Test
     fun rejects_a_tampered_ciphertext() {
         val block = vectors.getJSONObject("ecdh_compressed")
         val tampered = decode(block.getString("envelope_b64"))

@@ -81,6 +81,18 @@ object InboundEnvelopeDecryptor {
             if (plaintext != null) return plaintext
         }
 
+        if (marker != PQ_HYBRID_MARKER) return null
+
+        for ((identity_index, identity_set) in key_sets.withIndex()) {
+            if (identity_set.identity_jwk.isBlank()) continue
+            for ((pq_index, pq_set) in key_sets.withIndex()) {
+                if (pq_index == identity_index) continue
+                val pq_secret = pq_set.pq_identity_secret_b64 ?: continue
+                val plaintext = decrypt_pq_hybrid(enc, nonce, identity_set.identity_jwk, pq_secret)
+                if (plaintext != null) return plaintext
+            }
+        }
+
         return null
     }
 
