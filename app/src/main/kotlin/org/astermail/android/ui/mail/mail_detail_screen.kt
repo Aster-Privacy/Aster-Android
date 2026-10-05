@@ -3736,7 +3736,9 @@ internal fun external_content_banner(
         }) else null,
     ) {
         compact_banner_action(
-            label = stringResource(R.string.detail_external_allow_once),
+            label = stringResource(
+                if (on_always_allow != null) R.string.detail_external_allow_once else R.string.detail_external_load,
+            ),
             primary = false,
             onClick = on_allow_once,
         )

@@ -3,6 +3,7 @@
     <string name="detail_show_details">Details tonen</string>
     <string name="detail_hide_details">Details verbergen</string>
     <string name="detail_external_images_blocked">Dit bericht bevat externe inhoud. Als je die laadt, kan de afzender zien dat je het bericht opent.</string>
+    <string name="detail_external_load">Laden</string>
     <string name="detail_external_allow_once">Eén keer laden</string>
     <string name="detail_external_always_allow">Altijd toestaan</string>
     <string name="detail_external_images_traffic_blocked">Externe afbeeldingen zijn geblokkeerd om data te sparen.</string>

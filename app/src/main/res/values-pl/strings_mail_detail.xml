@@ -3,6 +3,7 @@
     <string name="detail_show_details">Pokaż szczegóły</string>
     <string name="detail_hide_details">Ukryj szczegóły</string>
     <string name="detail_external_images_blocked">Ta wiadomość zawiera treści zewnętrzne. Ich wczytanie może zdradzić nadawcy Twoją aktywność.</string>
+    <string name="detail_external_load">Wczytaj</string>
     <string name="detail_external_allow_once">Wczytaj raz</string>
     <string name="detail_external_always_allow">Zawsze zezwalaj</string>
     <string name="detail_external_images_traffic_blocked">Zewnętrzne obrazy są blokowane, aby oszczędzać transfer.</string>
