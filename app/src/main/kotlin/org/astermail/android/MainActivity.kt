@@ -111,6 +111,7 @@ import org.astermail.android.design.ColorThemeId
 import org.astermail.android.design.parse_hex_color_safe
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
+import org.astermail.android.notifications.internal_launch_token
 import org.astermail.android.storage.ThemeMode
 import org.astermail.android.ui.auth.ForgotPasswordScreen
 import org.astermail.android.ui.auth.OnboardingScreen
@@ -318,7 +319,11 @@ class MainActivity :
             action = intent?.action,
             has_data = intent?.data != null,
             extra_keys = extra_keys,
-            target_extra_keys = setOf(EXTRA_OPEN_EMAIL_ID, EXTRA_OPEN_SESSIONS),
+            target_extra_keys = if (internal_launch_token.is_trusted(this, intent)) {
+                setOf(EXTRA_OPEN_EMAIL_ID, EXTRA_OPEN_SESSIONS)
+            } else {
+                emptySet()
+            },
         )
         if (plain) {
             pending_launch.launch_folder.value = org.astermail.android.mail.launch_folder_store.load(this)
@@ -341,12 +346,15 @@ class MainActivity :
 
     private fun consume_open_email_extra(intent: Intent?) {
         consume_billing_return(intent)
+        val trusted = internal_launch_token.is_trusted(this, intent)
+        intent?.removeExtra(internal_launch_token.EXTRA_TOKEN)
         if (intent?.getBooleanExtra(EXTRA_OPEN_SESSIONS, false) == true) {
             intent.removeExtra(EXTRA_OPEN_SESSIONS)
-            pending_launch.pending_open_sessions.value = true
+            if (trusted) pending_launch.pending_open_sessions.value = true
         }
         val email_id = intent?.getStringExtra(EXTRA_OPEN_EMAIL_ID)?.takeIf { it.isNotBlank() } ?: return
         intent.removeExtra(EXTRA_OPEN_EMAIL_ID)
+        if (!trusted) return
         pending_launch.pending_open_email_id.value = email_id
         pending_launch.pending_reveal_email_id.value = email_id
         pending_launch.pending_reveal_folder_tokens.value = null
