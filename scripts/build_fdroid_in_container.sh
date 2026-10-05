@@ -30,7 +30,8 @@ to_docker_path() {
 }
 
 command -v docker >/dev/null || { echo "docker not found" >&2; exit 1; }
-docker image inspect "$image" >/dev/null 2>&1 || docker pull "$image"
+docker pull "$image"
+echo "fdroid build image: $(docker image inspect --format '{{index .RepoDigests 0}}' "$image")"
 
 MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' docker run --rm -i \
   -v "$(to_docker_path "$repo_root"):/src:ro" \
