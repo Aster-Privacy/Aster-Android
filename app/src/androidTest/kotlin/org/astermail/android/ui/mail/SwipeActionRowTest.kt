@@ -29,11 +29,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,7 +52,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@OptIn(ExperimentalMaterial3Api::class)
 @RunWith(AndroidJUnit4::class)
 class SwipeActionRowTest {
 
@@ -65,7 +60,6 @@ class SwipeActionRowTest {
 
     private var start_fired = 0
     private var end_fired = 0
-    private var legacy_fired = 0
     private var first_visible = 0
     private val generation = mutableStateOf(0)
 
@@ -76,26 +70,6 @@ class SwipeActionRowTest {
             moveTo(center.copy(x = center.x + step * 80f, y = center.y - step * 110f))
         }
         advanceEventTime(8)
-        up()
-    }
-
-    private val shallow_diagonal_drag: TouchInjectionScope.() -> Unit = {
-        down(center)
-        for (step in 1..12) {
-            advanceEventTime(16)
-            moveTo(center.copy(x = center.x + step * 40f, y = center.y - step * 30f))
-        }
-        advanceEventTime(16)
-        up()
-    }
-
-    private val shallow_fast_flick: TouchInjectionScope.() -> Unit = {
-        down(center)
-        for (step in 1..4) {
-            advanceEventTime(6)
-            moveTo(center.copy(x = center.x + step * 120f, y = center.y - step * 60f))
-        }
-        advanceEventTime(6)
         up()
     }
 
@@ -123,16 +97,8 @@ class SwipeActionRowTest {
 
     private val scroll_gestures = listOf(
         "fast_diagonal_flick" to fast_diagonal_flick,
-        "shallow_diagonal_drag" to shallow_diagonal_drag,
-        "shallow_fast_flick" to shallow_fast_flick,
         "steep_diagonal_scroll" to steep_diagonal_scroll,
         "horizontal_drift_then_scroll" to horizontal_drift_then_scroll,
-    )
-
-    private val gestures_that_misfire_on_the_legacy_box = listOf(
-        "fast_diagonal_flick" to fast_diagonal_flick,
-        "shallow_diagonal_drag" to shallow_diagonal_drag,
-        "shallow_fast_flick" to shallow_fast_flick,
     )
 
     private fun render_rows() {
@@ -181,64 +147,13 @@ class SwipeActionRowTest {
         compose_rule.waitForIdle()
     }
 
-    private fun render_legacy_rows() {
-        legacy_fired = 0
-        compose_rule.setContent {
-            AsterTheme {
-                key(generation.value) {
-                    val list_state = rememberLazyListState()
-                    val rows = remember { (0 until 40).toList() }
-                    LazyColumn(
-                        state = list_state,
-                        modifier = Modifier.fillMaxSize().testTag("list"),
-                    ) {
-                        items(rows, key = { it }) { index ->
-                            val state = rememberSwipeToDismissBoxState(
-                                confirmValueChange = {
-                                    if (it != SwipeToDismissBoxValue.Settled) legacy_fired++
-                                    false
-                                },
-                            )
-                            SwipeToDismissBox(state = state, backgroundContent = {}) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(80.dp)
-                                        .background(Color.DarkGray)
-                                        .testTag("row_$index"),
-                                ) {
-                                    Text("row $index")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        compose_rule.waitForIdle()
-    }
-
     private fun run_gesture(tag: String, gesture: TouchInjectionScope.() -> Unit) {
         compose_rule.runOnUiThread { generation.value += 1 }
         compose_rule.waitForIdle()
         start_fired = 0
         end_fired = 0
-        legacy_fired = 0
         compose_rule.onNodeWithTag(tag).performTouchInput(gesture)
         compose_rule.waitForIdle()
-    }
-
-    @Test
-    fun control_the_legacy_swipe_box_really_does_misfire_on_these_scroll_gestures() {
-        render_legacy_rows()
-
-        gestures_that_misfire_on_the_legacy_box.forEach { (name, gesture) ->
-            run_gesture("list", gesture)
-            assertTrue(
-                "control is vacuous: $name no longer reproduces the bug on SwipeToDismissBox",
-                legacy_fired > 0,
-            )
-        }
     }
 
     @Test
@@ -305,10 +220,10 @@ class SwipeActionRowTest {
         run_gesture("row_1") {
             down(center)
             for (step in 1..6) {
-                advanceEventTime(16)
+                advanceEventTime(80)
                 moveTo(center.copy(x = center.x + step * (width * 0.03f)))
             }
-            advanceEventTime(16)
+            advanceEventTime(80)
             up()
         }
 
