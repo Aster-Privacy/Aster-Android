@@ -7230,41 +7230,24 @@ private fun open_attachment_externally(
 ): Boolean {
     val mime = safe_view_mime(filename, content_type)
     val safe_name = sanitize_filename(filename)
-    val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        val values = ContentValues().apply {
-            put(MediaStore.Downloads.DISPLAY_NAME, safe_name)
-            put(MediaStore.Downloads.MIME_TYPE, mime)
-            put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
-            put(MediaStore.Downloads.IS_PENDING, 1)
-        }
-        val pending = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-            ?: return false
-        context.contentResolver.openOutputStream(pending)?.use {
-            it.write(bytes)
-            it.flush()
-        } ?: return false
-        val done = ContentValues().apply { put(MediaStore.Downloads.IS_PENDING, 0) }
-        context.contentResolver.update(pending, done, null, null)
-        pending
-    } else {
-        val dir = java.io.File(context.cacheDir, "shared_attachments").apply { mkdirs() }
-        val target = java.io.File(dir, System.nanoTime().toString() + "_" + safe_name)
-        target.outputStream().use {
-            it.write(bytes)
-            it.flush()
-        }
-        androidx.core.content.FileProvider.getUriForFile(
-            context,
-            context.packageName + ".fileprovider",
-            target,
-        )
-    }
+    val target = org.astermail.android.share.write_opened_attachment(context.cacheDir, safe_name, bytes)
+    val uri = androidx.core.content.FileProvider.getUriForFile(
+        context,
+        context.packageName + ".fileprovider",
+        target,
+    )
     val intent = Intent(Intent.ACTION_VIEW).apply {
         setDataAndType(uri, mime)
+        clipData = android.content.ClipData.newRawUri(safe_name, uri)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
-    context.startActivity(intent)
+    try {
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        runCatching { target.parentFile?.deleteRecursively() }
+        throw e
+    }
     return true
 }
 

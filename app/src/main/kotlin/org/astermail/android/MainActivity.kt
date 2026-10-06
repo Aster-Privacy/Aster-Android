@@ -374,6 +374,10 @@ class MainActivity :
     }
 
     override fun onDestroy() {
+        if (isFinishing) {
+            val cache_dir = applicationContext.cacheDir
+            Thread { runCatching { org.astermail.android.share.clear_opened_attachments(cache_dir) } }.start()
+        }
         LockdownStore.unregister_listener(applicationContext, lockdown_listener)
         super.onDestroy()
     }

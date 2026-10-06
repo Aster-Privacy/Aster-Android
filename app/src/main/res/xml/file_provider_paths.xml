@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
     <cache-path name="shared_attachments" path="shared_attachments/" />
+    <cache-path name="opened_attachments" path="opened_attachments/" />
     <cache-path name="shared_exports" path="exports/" />
     <external-path name="public_downloads" path="Download/" />
 </paths>
