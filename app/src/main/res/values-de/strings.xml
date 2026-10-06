@@ -1644,7 +1644,7 @@
     <string name="error_tag_parent_not_found">Dieses übergeordnete Label existiert nicht mehr.</string>
     <string name="error_tag_parent_self">Ein Label kann nicht sein eigenes übergeordnetes Label sein.</string>
     <string name="error_tag_parent_cycle">Ein Label kann nicht unter eines seiner eigenen Unterlabels verschoben werden.</string>
-    <string name="error_tag_parent_too_deep">Labels können höchstens fünf Ebenen tief verschachtelt werden.</string>
+    <string name="error_tag_parent_too_deep">Labels können höchstens zehn Ebenen tief verschachtelt werden.</string>
     <string name="settings_search_placeholder">Einstellungen durchsuchen</string>
     <string name="settings_search_hint">Tippen Sie, um alle Einstellungen zu durchsuchen</string>
     <string name="settings_profile">Profil</string>

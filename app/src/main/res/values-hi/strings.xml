@@ -620,7 +620,7 @@
     <string name="error_tag_parent_not_found">वह मूल लेबल अब मौजूद नहीं है।</string>
     <string name="error_tag_parent_self">कोई लेबल अपना ही मूल लेबल नहीं हो सकता।</string>
     <string name="error_tag_parent_cycle">किसी लेबल को उसके अपने ही उप-लेबल के अंतर्गत नहीं ले जाया जा सकता।</string>
-    <string name="error_tag_parent_too_deep">लेबल को पांच स्तरों से अधिक गहराई तक नेस्ट नहीं किया जा सकता।</string>
+    <string name="error_tag_parent_too_deep">लेबल को दस स्तरों से अधिक गहराई तक नेस्ट नहीं किया जा सकता।</string>
     <string name="folder_locked_title">लॉक किया फ़ोल्डर</string>
     <string name="folder_locked_description">\"%1$s\" की मेल देखने के लिए उसका पासवर्ड डालें।</string>
     <string name="folder_unlock_password_placeholder">फ़ोल्डर का पासवर्ड</string>

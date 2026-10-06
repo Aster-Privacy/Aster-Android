@@ -4931,7 +4931,7 @@ internal fun label_picker_sheet(
                             .padding(horizontal = AsterSpacing.xl, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        if (depth > 0) Spacer(Modifier.width((depth * PICKER_TREE_INDENT_DP).dp))
+                        if (depth > 0) Spacer(Modifier.width((org.astermail.android.util.indent_depth(depth) * PICKER_TREE_INDENT_DP).dp))
                         Icon(
                             imageVector = TablerIcons.Folder,
                             contentDescription = null,
@@ -5028,7 +5028,7 @@ internal fun tag_picker_sheet(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         if (node.depth > 0) {
-                            Spacer(Modifier.width((node.depth * PICKER_TREE_INDENT_DP).dp))
+                            Spacer(Modifier.width((org.astermail.android.util.indent_depth(node.depth) * PICKER_TREE_INDENT_DP).dp))
                         }
                         Box(
                             modifier = Modifier

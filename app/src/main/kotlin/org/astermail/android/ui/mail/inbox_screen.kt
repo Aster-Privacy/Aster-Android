@@ -2870,7 +2870,7 @@ private fun folder_tree_dropdown_items(
                 ?.let { org.astermail.android.design.parse_hex_color_safe(it) },
             selected = node.id == current_folder,
             count = folder_unread_counts[node.id] ?: 0,
-            indent = (node.depth * 14).dp,
+            indent = (org.astermail.android.util.indent_depth(node.depth) * 14).dp,
             leading = if (!has_nesting) null else ({
                 if (node.has_children) {
                     Box(

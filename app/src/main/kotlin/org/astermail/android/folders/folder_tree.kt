@@ -23,7 +23,7 @@ package org.astermail.android.folders
 
 import org.astermail.android.api.labels.LabelItem
 
-const val max_folder_depth = 4
+const val max_folder_depth = 9
 
 data class folder_node(
     val label: LabelItem,

@@ -135,15 +135,24 @@ class tag_tree_test {
                 tag("t2", parent_token = "t1"),
                 tag("t3", parent_token = "t2"),
                 tag("t4", parent_token = "t3"),
+                tag("t5", parent_token = "t4"),
+                tag("t6", parent_token = "t5"),
+                tag("t7", parent_token = "t6"),
+                tag("t8", parent_token = "t7"),
+                tag("t9", parent_token = "t8"),
                 tag("r", sort_order = 1),
                 tag("rc", parent_token = "r"),
             ),
         )
-        assertEquals(4, index.depths["t4"])
+        assertEquals(10, max_tag_depth + 1)
+        assertEquals(max_tag_depth, index.depths["t9"])
         assertEquals(1, index.subtree_height("r"))
-        assertEquals(setOf("r", "rc", "t3", "t4"), index.blocked_parent_tokens("r"))
-        assertEquals(setOf("rc", "t4"), index.blocked_parent_tokens("rc"))
-        assertEquals(setOf("t1", "t2", "t3", "t4"), index.descendant_tokens("t0"))
+        assertEquals(setOf("r", "rc", "t8", "t9"), index.blocked_parent_tokens("r"))
+        assertEquals(setOf("rc", "t9"), index.blocked_parent_tokens("rc"))
+        assertEquals(
+            setOf("t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"),
+            index.descendant_tokens("t0"),
+        )
         assertEquals(listOf("t0", "t1", "t2"), index.path("t2").map { it.tag_token })
     }
 

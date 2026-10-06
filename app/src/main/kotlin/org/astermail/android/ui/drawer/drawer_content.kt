@@ -2741,10 +2741,12 @@ private fun tree_indent_guides(
     has_next: Boolean = false,
 ) {
     if (depth <= 0) return
+    val visible_trail = org.astermail.android.util.indent_trail(trail, depth)
+    val visible_depth = org.astermail.android.util.indent_depth(depth)
     val guide_color = AsterMaterial.colors.border_secondary
     androidx.compose.foundation.Canvas(
         modifier = Modifier
-            .width((depth * 18).dp)
+            .width((visible_depth * 18).dp)
             .height(46.dp),
     ) {
         val stroke_width = 1.5.dp.toPx()
@@ -2757,8 +2759,8 @@ private fun tree_indent_guides(
             width = stroke_width,
             cap = androidx.compose.ui.graphics.StrokeCap.Round,
         )
-        for (level in 0 until depth - 1) {
-            if (trail.getOrNull(level + 1) == true) {
+        for (level in 0 until visible_depth - 1) {
+            if (visible_trail.getOrNull(level + 1) == true) {
                 val x = level * slot + line_offset
                 drawLine(
                     color = guide_color,
@@ -2768,7 +2770,7 @@ private fun tree_indent_guides(
                 )
             }
         }
-        val branch_x = (depth - 1) * slot + line_offset
+        val branch_x = (visible_depth - 1) * slot + line_offset
         if (has_next) {
             drawLine(
                 color = guide_color,

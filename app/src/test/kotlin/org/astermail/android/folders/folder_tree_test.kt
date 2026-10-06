@@ -131,12 +131,14 @@ class folder_tree_test {
     fun caps_depth_at_max() {
         var parent: String? = null
         val labels = mutableListOf<LabelItem>()
-        for (i in 0..6) {
+        for (i in 0..11) {
             labels.add(folder("f$i", parent_token = parent))
             parent = "f$i"
         }
         val nodes = flatten_folder_tree(labels)
-        assertEquals(7, nodes.size)
+        assertEquals(10, max_folder_depth + 1)
+        assertEquals(12, nodes.size)
+        assertEquals(max_folder_depth, nodes.maxOf { it.depth })
         assertTrue(nodes.all { it.depth <= max_folder_depth })
     }
 

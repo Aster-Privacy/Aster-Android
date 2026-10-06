@@ -1305,7 +1305,7 @@ internal fun label_settings_row(
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (depth > 0) Spacer(Modifier.width((depth * 16).dp))
+        if (depth > 0) Spacer(Modifier.width((org.astermail.android.util.indent_depth(depth) * 16).dp))
         Box(modifier = Modifier.size(12.dp).background(color, CircleShape))
         Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
@@ -1451,7 +1451,7 @@ fun FoldersScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        if (node.depth > 0) Spacer(Modifier.width((node.depth * 16).dp))
+                        if (node.depth > 0) Spacer(Modifier.width((org.astermail.android.util.indent_depth(node.depth) * 16).dp))
                         Box(modifier = Modifier.weight(1f)) {
                             detail_row(
                                 title = folder_name,

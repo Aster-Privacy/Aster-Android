@@ -171,7 +171,7 @@ fun row_select(
             .clickable(onClick = on_click)
             .then(if (test_tag != null) Modifier.testTag(test_tag) else Modifier)
             .padding(horizontal = AsterSpacing.lg, vertical = 12.dp)
-            .padding(start = (depth * 16).dp),
+            .padding(start = (org.astermail.android.util.indent_depth(depth) * 16).dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {

@@ -1639,7 +1639,7 @@
     <string name="error_tag_parent_not_found">해당 상위 라벨이 더 이상 존재하지 않습니다.</string>
     <string name="error_tag_parent_self">라벨은 자기 자신의 상위 라벨이 될 수 없습니다.</string>
     <string name="error_tag_parent_cycle">라벨을 자신의 하위 라벨 아래로 이동할 수 없습니다.</string>
-    <string name="error_tag_parent_too_deep">라벨은 5단계까지만 중첩할 수 있습니다.</string>
+    <string name="error_tag_parent_too_deep">라벨은 10단계까지만 중첩할 수 있습니다.</string>
     <string name="settings_search_placeholder">설정 검색</string>
     <string name="settings_search_hint">입력해서 모든 설정을 검색하세요</string>
     <string name="settings_profile">프로필</string>

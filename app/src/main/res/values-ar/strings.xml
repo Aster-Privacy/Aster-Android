@@ -1659,7 +1659,7 @@
     <string name="error_tag_parent_not_found">هذا التصنيف الأصل لم يعد موجودًا.</string>
     <string name="error_tag_parent_self">لا يمكن أن يكون التصنيف أصلًا لنفسه.</string>
     <string name="error_tag_parent_cycle">لا يمكن نقل تصنيف إلى أحد تصنيفاته الفرعية.</string>
-    <string name="error_tag_parent_too_deep">لا يمكن تداخل التصنيفات لأكثر من خمسة مستويات.</string>
+    <string name="error_tag_parent_too_deep">لا يمكن تداخل التصنيفات لأكثر من عشرة مستويات.</string>
     <string name="settings_search_placeholder">البحث في الإعدادات</string>
     <string name="settings_search_hint">اكتب للبحث في كل الإعدادات</string>
     <string name="settings_profile">الملف الشخصي</string>

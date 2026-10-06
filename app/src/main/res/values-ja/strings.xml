@@ -1639,7 +1639,7 @@
     <string name="error_tag_parent_not_found">この親ラベルは存在しません。</string>
     <string name="error_tag_parent_self">ラベルをそれ自体の親にすることはできません。</string>
     <string name="error_tag_parent_cycle">ラベルをそのサブラベルの下に移動することはできません。</string>
-    <string name="error_tag_parent_too_deep">ラベルは 5 階層までしかネストできません。</string>
+    <string name="error_tag_parent_too_deep">ラベルは 10 階層までしかネストできません。</string>
     <string name="settings_search_placeholder">設定を検索</string>
     <string name="settings_search_hint">入力してすべての設定を検索</string>
     <string name="settings_profile">プロフィール</string>

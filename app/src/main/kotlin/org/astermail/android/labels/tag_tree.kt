@@ -23,7 +23,7 @@ package org.astermail.android.labels
 
 import org.astermail.android.api.tags.TagItem
 
-const val max_tag_depth = 4
+const val max_tag_depth = 9
 
 data class tag_node(
     val tag: TagItem,

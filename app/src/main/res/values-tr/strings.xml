@@ -1643,7 +1643,7 @@
     <string name="error_tag_parent_not_found">Bu üst etiket artık mevcut değil.</string>
     <string name="error_tag_parent_self">Bir etiket kendi üst etiketi olamaz.</string>
     <string name="error_tag_parent_cycle">Bir etiket kendi alt etiketlerinden birinin altına taşınamaz.</string>
-    <string name="error_tag_parent_too_deep">Etiketler beş düzeyden daha derine iç içe yerleştirilemez.</string>
+    <string name="error_tag_parent_too_deep">Etiketler on düzeyden daha derine iç içe yerleştirilemez.</string>
     <string name="settings_search_placeholder">Ayarlarda ara</string>
     <string name="settings_search_hint">Tüm ayarlarda aramak için yazın</string>
     <string name="settings_profile">Profil</string>
