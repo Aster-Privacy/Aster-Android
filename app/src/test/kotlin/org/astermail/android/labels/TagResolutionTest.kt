@@ -96,4 +96,50 @@ class TagResolutionTest {
         val tokens = listOf("home", "work")
         assertEquals(tokens, merge_tag_tokens(tokens, emptyMap()))
     }
+
+    private fun member(id: String, thread: String?, vararg tags: String) =
+        ConversationMember(id = id, thread_token = thread, tag_tokens = tags.toList())
+
+    @Test
+    fun a_conversation_shows_the_labels_of_every_loaded_message() {
+        val newest = member("c", "t1")
+        val loaded = listOf(member("a", "t1", "work"), member("b", "t1", "urgent", "work"), newest)
+        assertEquals(listOf("work", "urgent"), conversation_tag_tokens(newest, loaded))
+    }
+
+    @Test
+    fun another_conversation_does_not_lend_its_labels() {
+        val own = member("a", "t1", "work")
+        val loaded = listOf(own, member("x", "t2", "urgent"), member("y", null, "home"))
+        assertEquals(listOf("work"), conversation_tag_tokens(own, loaded))
+    }
+
+    @Test
+    fun a_message_without_a_thread_keeps_only_its_own_labels() {
+        val own = member("a", null, "work")
+        val loaded = listOf(member("b", null, "urgent"), member("c", "", "home"))
+        assertEquals(listOf("work"), conversation_tag_tokens(own, loaded))
+        assertEquals(listOf("work"), conversation_tag_tokens(member("a", "", "work"), loaded))
+    }
+
+    @Test
+    fun no_open_message_means_no_labels() {
+        assertEquals(emptyList<String>(), conversation_tag_tokens(null, listOf(member("a", "t1", "work"))))
+    }
+
+    @Test
+    fun a_label_change_targets_every_message_in_the_conversation_once() {
+        val own = member("c", "t1")
+        val loaded = listOf(member("a", "t1"), own, member("x", "t2"))
+        assertEquals(
+            listOf("c", "a", "b"),
+            conversation_item_ids(own, loaded, listOf("a", "b", "c", "")),
+        )
+    }
+
+    @Test
+    fun a_single_message_targets_only_itself() {
+        val own = member("a", null)
+        assertEquals(listOf("a"), conversation_item_ids(own, listOf(member("b", null)), emptyList()))
+    }
 }
