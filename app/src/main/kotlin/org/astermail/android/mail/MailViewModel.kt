@@ -53,6 +53,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.astermail.android.R
 import org.astermail.android.api.mail.MailUserStatsResponse
 import org.astermail.android.crypto.same_address_ignoring_dots
+import org.astermail.android.labels.as_conversation_member
 import org.astermail.android.mail.ratchet.PostQuantumCoverage
 import org.astermail.android.notifications.MailPollingWorker
 import org.astermail.android.api.send.ExternalAttachmentPayload
@@ -675,6 +676,7 @@ class MailViewModel @Inject constructor(
         val on_undo: (() -> Unit)? = null,
         val duration_ms: Long? = null,
         val on_timeout: (() -> Unit)? = null,
+        val id: Long = org.astermail.android.ui.common.next_toast_key(),
     )
 
     private val _toast_events = MutableSharedFlow<ToastEvent>(extraBufferCapacity = 32)
@@ -3110,6 +3112,54 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    private fun patch_thread_item_tag(ids: Set<String>, tag_token: String, add: Boolean): InboxItem? {
+        val thread = _thread_state.value
+        val item = thread.item?.takeIf { it.id in ids } ?: return null
+        val new_tokens = if (add) (item.tag_tokens + tag_token).distinct() else item.tag_tokens - tag_token
+        _thread_state.value = thread.copy(
+            item = item.copy(
+                tag_tokens = new_tokens,
+                raw_item = item.raw_item.copy(tag_tokens = new_tokens),
+            ),
+        )
+        return item
+    }
+
+    private fun restore_thread_item_tags(previous: InboxItem?, failed_ids: Set<String>) {
+        if (previous == null || previous.id !in failed_ids) return
+        val thread = _thread_state.value
+        val current = thread.item?.takeIf { it.id == previous.id } ?: return
+        _thread_state.value = thread.copy(
+            item = current.copy(
+                tag_tokens = previous.tag_tokens,
+                raw_item = current.raw_item.copy(tag_tokens = previous.raw_item.tag_tokens),
+            ),
+        )
+    }
+
+    private fun conversation_ids_for(item_id: String): List<String> {
+        val thread = _thread_state.value
+        val loaded = _inbox_state.value.items
+        val own = (thread.item?.takeIf { it.id == item_id } ?: loaded.find { it.id == item_id })
+            ?: return listOf(item_id)
+        val message_ids = if (thread.item?.id == item_id) thread.messages.map { it.id } else emptyList()
+        return org.astermail.android.labels.conversation_item_ids(
+            own = own.as_conversation_member(),
+            loaded = loaded.map { it.as_conversation_member() },
+            message_ids = message_ids,
+        )
+    }
+
+    fun apply_tag_to_conversation(item_id: String, tag_token: String, display_name: String) {
+        val ids = conversation_ids_for(item_id)
+        if (ids.size <= 1) apply_tag(item_id, tag_token, display_name) else apply_tag_bulk(ids, tag_token, display_name)
+    }
+
+    fun remove_tag_from_conversation(item_id: String, tag_token: String, display_name: String) {
+        val ids = conversation_ids_for(item_id)
+        if (ids.size <= 1) remove_tag(item_id, tag_token, display_name) else remove_tag_bulk(ids, tag_token, display_name)
+    }
+
     fun apply_tag_bulk(item_ids: List<String>, tag_token: String, display_name: String) {
         val ids = item_ids.filter { it != DEMO_PHISH_ITEM_ID }
         if (ids.isEmpty()) return
@@ -3126,6 +3176,7 @@ class MailViewModel @Inject constructor(
                 } else it
             },
         )
+        val prev_thread_item = patch_thread_item_tag(id_set, tag_token, add = true)
         patch_cached_tag_tokens(id_set, tag_token)
         id_set.forEach { set_tag_override(it, tag_token, true) }
         viewModelScope.launch {
@@ -3136,6 +3187,7 @@ class MailViewModel @Inject constructor(
                 emit_toast(context.getString(R.string.added_to_label, display_name))
             } else {
                 failed_ids.forEach { clear_tag_override(it, tag_token) }
+                restore_thread_item_tags(prev_thread_item, failed_ids)
                 patch_cached_tag_tokens(failed_ids.toSet(), tag_token, add = false)
                 _inbox_state.value = _inbox_state.value.copy(
                     items = _inbox_state.value.items.map {
@@ -3164,6 +3216,7 @@ class MailViewModel @Inject constructor(
                 } else it
             },
         )
+        val prev_thread_item = patch_thread_item_tag(id_set, tag_token, add = false)
         patch_cached_tag_tokens(id_set, tag_token, add = false)
         id_set.forEach { set_tag_override(it, tag_token, false) }
         viewModelScope.launch {
@@ -3174,6 +3227,7 @@ class MailViewModel @Inject constructor(
                 emit_toast(context.getString(R.string.removed_from_label, display_name))
             } else {
                 failed_ids.forEach { clear_tag_override(it, tag_token) }
+                restore_thread_item_tags(prev_thread_item, failed_ids)
                 patch_cached_tag_tokens(failed_ids.toSet(), tag_token)
                 _inbox_state.value = _inbox_state.value.copy(
                     items = _inbox_state.value.items.map {

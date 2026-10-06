@@ -22,12 +22,11 @@ import compose.icons.tablericons.Mail
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.delay
 import org.astermail.android.R
 import org.astermail.android.mail.UndoSendViewModel
 import org.astermail.android.ui.common.TopToastState
@@ -37,46 +36,40 @@ import org.astermail.android.ui.common.app_toast
 fun undo_send_toast(on_view: () -> Unit, undo_vm: UndoSendViewModel = hiltViewModel()) {
     val context = LocalContext.current
     val pending by undo_vm.pending_undo_send.collectAsStateWithLifecycle()
-    var dismissed_send_id by remember { mutableStateOf<Long?>(null) }
-    var shown by remember { mutableStateOf(false) }
-    LaunchedEffect(pending?.started_at_ms) {
-        val p = pending
-        if (p == null) {
-            if (shown) {
-                app_toast.dismiss()
-                shown = false
+    val dismissed_send_id by undo_vm.dismissed_send_id.collectAsStateWithLifecycle()
+    val view by rememberUpdatedState(on_view)
+    val send_id = pending?.started_at_ms
+    LaunchedEffect(send_id, dismissed_send_id == send_id) {
+        val p = pending ?: return@LaunchedEffect
+        val id = p.started_at_ms
+        if (dismissed_send_id == id) return@LaunchedEffect
+        val end_ms = id + p.duration_ms
+        try {
+            while (true) {
+                val remaining_ms = end_ms - System.currentTimeMillis()
+                if (remaining_ms <= 0) break
+                val seconds_left = ((remaining_ms + 999) / 1000).toInt().coerceAtLeast(1)
+                app_toast.show_sticky(
+                    TopToastState(
+                        message = context.getString(R.string.sending_in_countdown, seconds_left),
+                        undo_label = context.getString(R.string.undo),
+                        on_undo = {
+                            undo_vm.dismiss(id)
+                            p.undo()
+                        },
+                        secondary_label = context.getString(R.string.view_message),
+                        secondary_icon = TablerIcons.Mail,
+                        on_secondary = { view() },
+                        on_tap = { view() },
+                        show_close = true,
+                        on_close = { undo_vm.dismiss(id) },
+                        key = id,
+                    ),
+                )
+                delay(1000L - (remaining_ms % 1000L))
             }
-            return@LaunchedEffect
+        } finally {
+            app_toast.hide_sticky(id)
         }
-        val end_ms = p.started_at_ms + p.duration_ms
-        while (true) {
-            if (dismissed_send_id == p.started_at_ms) {
-                app_toast.dismiss()
-                shown = false
-                return@LaunchedEffect
-            }
-            val remaining_ms = end_ms - System.currentTimeMillis()
-            if (remaining_ms <= 0) break
-            val seconds_left = ((remaining_ms + 999) / 1000).toInt().coerceAtLeast(1)
-            app_toast.show(
-                TopToastState(
-                    message = context.getString(R.string.sending_in_countdown, seconds_left),
-                    undo_label = context.getString(R.string.undo),
-                    on_undo = { p.undo() },
-                    secondary_label = context.getString(R.string.view_message),
-                    secondary_icon = TablerIcons.Mail,
-                    on_secondary = on_view,
-                    on_tap = on_view,
-                    show_close = true,
-                    on_close = { dismissed_send_id = p.started_at_ms },
-                    duration_ms = remaining_ms,
-                    key = p.started_at_ms,
-                ),
-            )
-            shown = true
-            kotlinx.coroutines.delay(1000L - (remaining_ms % 1000L))
-        }
-        app_toast.dismiss()
-        shown = false
     }
 }

@@ -184,6 +184,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.looks_encrypted
+import org.astermail.android.labels.as_conversation_member
 import org.astermail.android.subscriptions.MailingListsViewModel
 import org.astermail.android.ui.common.TopToastState
 import org.astermail.android.ui.common.app_toast
@@ -957,21 +958,20 @@ fun MailDetailScreen(
         }
     }
 
+    batch_action_toast(mail_vm)
+
     LaunchedEffect(mail_vm) {
         mail_vm.toast_events.collect { evt ->
-            if (evt.on_undo != null) {
-                org.astermail.android.ui.common.app_toast.show(
-                    org.astermail.android.ui.common.TopToastState(
-                        message = evt.message,
-                        undo_label = evt.undo_label,
-                        on_undo = evt.on_undo,
-                        duration_ms = evt.duration_ms,
-                        on_timeout = evt.on_timeout,
-                    ),
-                )
-            } else {
-                show_toast(evt.message)
-            }
+            org.astermail.android.ui.common.app_toast.show(
+                org.astermail.android.ui.common.TopToastState(
+                    message = evt.message,
+                    undo_label = evt.undo_label,
+                    on_undo = evt.on_undo,
+                    duration_ms = evt.duration_ms,
+                    on_timeout = evt.on_timeout,
+                    key = evt.id,
+                ),
+            )
         }
     }
 
@@ -1339,7 +1339,12 @@ fun MailDetailScreen(
                 item(key = "subject_header") {
                     var subject_expanded by remember(subject_text) { mutableStateOf(false) }
                     var subject_truncated by remember(subject_text) { mutableStateOf(false) }
-                    val applied_tag_tokens = api_item?.raw_item?.tag_tokens ?: emptyList()
+                    val applied_tag_tokens = remember(api_item, inbox_state_for_folder.items) {
+                        org.astermail.android.labels.conversation_tag_tokens(
+                            api_item?.as_conversation_member(),
+                            inbox_state_for_folder.items.map { it.as_conversation_member() },
+                        )
+                    }
                     val settings_state_now by settings_vm.state.collectAsStateWithLifecycle()
                     val applied_tags = remember(applied_tag_tokens, settings_state_now.tags) {
                         applied_tag_tokens.mapNotNull { token ->
@@ -1914,6 +1919,7 @@ fun MailDetailScreen(
             },
             on_label = {
                 show_action_sheet = false
+                settings_vm.load_tags(force = settings_vm.state.value.tags.isEmpty())
                 show_label_sheet = true
             },
             on_customize_toolbar = {
@@ -2241,8 +2247,13 @@ fun MailDetailScreen(
 
     if (show_label_sheet) {
         val settings_state by settings_vm.state.collectAsStateWithLifecycle()
-        val applied_tags = thread_state.item?.takeIf { it.id == email_id }?.tag_tokens?.toSet()
-            ?: emptySet()
+        val label_item = thread_state.item?.takeIf { it.id == email_id }
+        val applied_tags = remember(label_item, inbox_state_for_folder.items) {
+            org.astermail.android.labels.conversation_tag_tokens(
+                label_item?.as_conversation_member(),
+                inbox_state_for_folder.items.map { it.as_conversation_member() },
+            ).toSet()
+        }
         val tag_items = org.astermail.android.labels.tag_rows(settings_state.tags)
         val unknown_label = stringResource(R.string.label_decrypt_failed)
         tag_picker_sheet(
@@ -2253,9 +2264,9 @@ fun MailDetailScreen(
             on_pick = { picked ->
                 val display = org.astermail.android.labels.tag_display_name(picked, unknown_label)
                 if (picked.tag_token in applied_tags) {
-                    mail_vm.remove_tag(email_id, picked.tag_token, display)
+                    mail_vm.remove_tag_from_conversation(email_id, picked.tag_token, display)
                 } else {
-                    mail_vm.apply_tag(email_id, picked.tag_token, display)
+                    mail_vm.apply_tag_to_conversation(email_id, picked.tag_token, display)
                 }
             },
             applied_tokens = applied_tags,

@@ -331,4 +331,78 @@ class SwipeActionRowTest {
         assertEquals(0, start_fired)
         assertEquals(0, end_fired)
     }
+
+    private fun row_left(): Float =
+        compose_rule.onNodeWithTag("row_1").fetchSemanticsNode().boundsInRoot.left
+
+    @Test
+    fun a_touch_during_the_snap_back_never_leaves_the_row_stranded() {
+        render_rows()
+        compose_rule.runOnUiThread { generation.value += 1 }
+        compose_rule.waitForIdle()
+        val resting_left = row_left()
+
+        compose_rule.mainClock.autoAdvance = false
+        compose_rule.onNodeWithTag("row_1").performTouchInput {
+            down(center)
+            for (step in 1..6) {
+                advanceEventTime(80)
+                moveTo(center.copy(x = center.x + step * (width * 0.03f)))
+            }
+            advanceEventTime(80)
+            up()
+        }
+        compose_rule.mainClock.advanceTimeBy(64)
+        assertTrue("the row should still be snapping back", row_left() > resting_left + 1f)
+
+        compose_rule.onNodeWithTag("row_1").performTouchInput {
+            down(center)
+            advanceEventTime(40)
+            up()
+        }
+        compose_rule.mainClock.advanceTimeBy(1000)
+        compose_rule.mainClock.autoAdvance = true
+        compose_rule.waitForIdle()
+
+        assertEquals("the row must return to rest", resting_left, row_left(), 0.5f)
+        assertEquals(0, start_fired)
+        assertEquals(0, end_fired)
+    }
+
+    @Test
+    fun a_scroll_during_the_snap_back_never_leaves_the_row_stranded() {
+        render_rows()
+        compose_rule.runOnUiThread { generation.value += 1 }
+        compose_rule.waitForIdle()
+        val resting_left = row_left()
+
+        compose_rule.mainClock.autoAdvance = false
+        compose_rule.onNodeWithTag("row_1").performTouchInput {
+            down(center)
+            for (step in 1..6) {
+                advanceEventTime(80)
+                moveTo(center.copy(x = center.x + step * (width * 0.03f)))
+            }
+            advanceEventTime(80)
+            up()
+        }
+        compose_rule.mainClock.advanceTimeBy(64)
+
+        compose_rule.onNodeWithTag("row_1").performTouchInput {
+            down(center)
+            for (step in 1..4) {
+                advanceEventTime(16)
+                moveTo(center.copy(y = center.y - step * 12f))
+            }
+            advanceEventTime(16)
+            up()
+        }
+        compose_rule.mainClock.advanceTimeBy(1000)
+        compose_rule.mainClock.autoAdvance = true
+        compose_rule.waitForIdle()
+
+        assertEquals("the row must return to rest", resting_left, row_left(), 0.5f)
+        assertEquals(0, start_fired)
+        assertEquals(0, end_fired)
+    }
 }

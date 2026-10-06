@@ -22,6 +22,7 @@
 package org.astermail.android.labels
 
 import org.astermail.android.api.tags.TagItem
+import org.astermail.android.mail.InboxItem
 
 fun merge_tag_snapshot(previous: List<TagItem>, incoming: List<TagItem>): List<TagItem> {
     if (previous.isEmpty()) return incoming
@@ -45,3 +46,31 @@ fun merge_tag_tokens(server_tokens: List<String>, pending: Map<String, Boolean>)
     val added = pending.entries.filter { it.value && it.key !in kept }.map { it.key }
     return if (added.isEmpty()) kept else kept + added
 }
+
+data class ConversationMember(
+    val id: String,
+    val thread_token: String?,
+    val tag_tokens: List<String>,
+)
+
+fun InboxItem.as_conversation_member(): ConversationMember =
+    ConversationMember(id = id, thread_token = thread_token, tag_tokens = tag_tokens)
+
+private fun conversation_siblings(own: ConversationMember, loaded: List<ConversationMember>): List<ConversationMember> {
+    val token = own.thread_token?.takeIf { it.isNotBlank() } ?: return emptyList()
+    return loaded.filter { it.id != own.id && it.thread_token == token }
+}
+
+fun conversation_tag_tokens(own: ConversationMember?, loaded: List<ConversationMember>): List<String> {
+    if (own == null) return emptyList()
+    return (own.tag_tokens + conversation_siblings(own, loaded).flatMap { it.tag_tokens }).distinct()
+}
+
+fun conversation_item_ids(
+    own: ConversationMember,
+    loaded: List<ConversationMember>,
+    message_ids: List<String>,
+): List<String> =
+    (listOf(own.id) + message_ids + conversation_siblings(own, loaded).map { it.id })
+        .filter { it.isNotBlank() }
+        .distinct()
