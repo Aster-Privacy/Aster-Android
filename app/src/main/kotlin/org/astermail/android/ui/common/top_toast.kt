@@ -42,12 +42,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,7 +63,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animate
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.graphicsLayer
@@ -74,7 +78,8 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
+import java.util.concurrent.atomic.AtomicLong
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.lighten
@@ -92,11 +97,17 @@ data class TopToastState(
     val on_close: (() -> Unit)? = null,
     val duration_ms: Long? = null,
     val on_timeout: (() -> Unit)? = null,
-    val key: Long = System.currentTimeMillis(),
+    val key: Long = next_toast_key(),
     val accumulation_key: String? = null,
 )
 
+private val toast_key_counter = AtomicLong(0L)
+
+fun next_toast_key(): Long = toast_key_counter.incrementAndGet()
+
 private val toast_control_size = 32.dp
+
+private val toast_max_width = 560.dp
 
 @Composable
 private fun toast_action(
@@ -167,22 +178,11 @@ private fun toast_control_fill(colors: org.astermail.android.design.AsterSemanti
 @Composable
 fun top_toast_overlay(
     state: TopToastState?,
-    on_dismiss: () -> Unit,
-    duration_ms: Long = 4500,
+    on_dismiss: (TopToastState) -> Unit,
+    on_hold: (TopToastState, Boolean) -> Unit = { _, _ -> },
 ) {
-    var toast_dragging by remember { mutableStateOf(false) }
-    LaunchedEffect(state?.key) { toast_dragging = false }
-    LaunchedEffect(state?.key, toast_dragging) {
-        if (state != null && !toast_dragging) {
-            delay(state.duration_ms ?: duration_ms)
-            state.on_timeout?.invoke()
-            on_dismiss()
-        }
-    }
-    val toast_scope = rememberCoroutineScope()
     var last_state by remember { mutableStateOf<TopToastState?>(null) }
     if (state != null) last_state = state
-    val colors = AsterMaterial.colors
     Box(modifier = Modifier.fillMaxWidth().statusBarsPadding(), contentAlignment = Alignment.TopCenter) {
         AnimatedVisibility(
             visible = state != null,
@@ -202,156 +202,192 @@ fun top_toast_overlay(
                 fadeOut(animationSpec = tween(140)) +
                 scaleOut(animationSpec = tween(180), targetScale = 0.94f, transformOrigin = TransformOrigin(0.5f, 0f)),
         ) {
-            val s = last_state ?: return@AnimatedVisibility
-            val shape = SquircleShape(26.dp)
-            val fill = toast_surface_fill(colors)
-            val drag_offset = remember(s.key) { Animatable(0f) }
-            var toast_height by remember(s.key) { mutableStateOf(0f) }
-            LaunchedEffect(s.key) { drag_offset.snapTo(0f) }
-            val row_modifier = Modifier
-                .padding(horizontal = 12.dp, vertical = 10.dp)
-                .onSizeChanged { toast_height = it.height.toFloat() }
-                .graphicsLayer {
-                    val raw = drag_offset.value
-                    translationY = if (raw > 0f) raw * toast_pull_resistance else raw
-                    alpha = if (raw < 0f) {
-                        (1f + raw / (toast_height.coerceAtLeast(1f) * 1.6f)).coerceIn(0.15f, 1f)
-                    } else {
-                        1f
-                    }
-                }
-                .shadow(18.dp, shape, clip = false)
-                .clip(shape)
-                .background(fill)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                ) {
-                    if (s.on_tap != null) {
-                        s.on_tap.invoke()
-                        on_dismiss()
-                    }
-                }
-                .pointerInput(s.key) {
-                    val tracker = VelocityTracker()
-                    detectVerticalDragGestures(
-                        onDragStart = {
-                            tracker.resetTracking()
-                            toast_dragging = true
-                        },
-                        onDragCancel = {
-                            toast_dragging = false
-                            toast_scope.launch {
-                                drag_offset.animateTo(
-                                    targetValue = 0f,
-                                    animationSpec = spring(
-                                        dampingRatio = 0.68f,
-                                        stiffness = Spring.StiffnessMediumLow,
-                                    ),
-                                )
-                            }
-                        },
-                        onDragEnd = {
-                            toast_dragging = false
-                            val velocity = tracker.calculateVelocity().y
-                            val travelled = drag_offset.value
-                            val far_enough = travelled < -toast_dismiss_distance.toPx()
-                            val fast_enough = velocity < -toast_dismiss_velocity.toPx()
-                            if (far_enough || fast_enough) {
-                                toast_scope.launch {
-                                    drag_offset.animateTo(
-                                        targetValue = -(toast_height + 120f),
-                                        animationSpec = tween(durationMillis = 150),
-                                    )
-                                    s.on_close?.invoke()
-                                    on_dismiss()
-                                }
-                            } else {
-                                toast_scope.launch {
-                                    drag_offset.animateTo(
-                                        targetValue = 0f,
-                                        animationSpec = spring(
-                                            dampingRatio = 0.62f,
-                                            stiffness = Spring.StiffnessMediumLow,
-                                        ),
-                                    )
-                                }
-                            }
-                        },
-                    ) { change, drag ->
-                        tracker.addPosition(change.uptimeMillis, change.position)
-                        change.consume()
-                        toast_scope.launch { drag_offset.snapTo(drag_offset.value + drag) }
-                    }
-                }
-                .padding(start = 18.dp, end = 10.dp, top = 12.dp, bottom = 12.dp)
-            Row(
-                modifier = row_modifier,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = s.message,
-                    color = colors.text_primary,
-                    fontSize = 14.sp,
-                    lineHeight = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                    style = androidx.compose.ui.text.TextStyle(fontFeatureSettings = "tnum"),
-                    maxLines = if (s.secondary_label == null && s.undo_label == null) 2 else 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
+            val shown = last_state ?: return@AnimatedVisibility
+            key(shown.key) {
+                toast_card(
+                    toast = shown,
+                    is_current = state?.key == shown.key,
+                    on_dismiss = on_dismiss,
+                    on_hold = on_hold,
                 )
-                if (s.undo_label != null && s.on_undo != null) {
-                    Spacer(Modifier.width(10.dp))
-                    toast_action(
-                        label = s.undo_label,
-                        on_click = {
-                            s.on_undo.invoke()
-                            on_dismiss()
-                        },
-                    )
-                }
-                if (s.secondary_label != null) {
-                    Spacer(Modifier.width(6.dp))
-                    val secondary_click = {
-                        s.on_secondary?.invoke()
-                        on_dismiss()
-                    }
-                    if (s.secondary_icon != null) {
-                        toast_icon_action(
-                            icon = s.secondary_icon,
-                            label = s.secondary_label,
-                            enabled = s.on_secondary != null,
-                            on_click = secondary_click,
-                        )
-                    } else {
-                        toast_action(
-                            label = s.secondary_label,
-                            enabled = s.on_secondary != null,
-                            on_click = secondary_click,
-                        )
-                    }
-                }
-                Spacer(Modifier.width(8.dp))
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(SquircleShape(999.dp))
-                        .background(toast_control_fill(colors))
-                        .clickable(role = Role.Button) {
-                            s.on_close?.invoke()
-                            on_dismiss()
-                        },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = TablerIcons.X,
-                        contentDescription = stringResource(R.string.close),
-                        tint = colors.text_secondary,
-                        modifier = Modifier.size(16.dp),
-                    )
+            }
+        }
+    }
+}
+
+@Composable
+private fun toast_card(
+    toast: TopToastState,
+    is_current: Boolean,
+    on_dismiss: (TopToastState) -> Unit,
+    on_hold: (TopToastState, Boolean) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val shape = SquircleShape(26.dp)
+    val fill = toast_surface_fill(colors)
+    val scope = rememberCoroutineScope()
+    val latest by rememberUpdatedState(toast)
+    val active by rememberUpdatedState(is_current)
+    val dismiss by rememberUpdatedState(on_dismiss)
+    val hold by rememberUpdatedState(on_hold)
+    var offset by remember { mutableFloatStateOf(0f) }
+    var toast_height by remember { mutableFloatStateOf(0f) }
+    var consumed by remember { mutableStateOf(false) }
+    var dragging by remember { mutableStateOf(false) }
+    var settle by remember { mutableStateOf<Job?>(null) }
+    val finish: ((TopToastState) -> Unit) -> Unit = { action ->
+        if (active && !consumed) {
+            consumed = true
+            val target = latest
+            action(target)
+            dismiss(target)
+        }
+    }
+    val set_dragging: (Boolean) -> Unit = { value ->
+        if (dragging != value) {
+            dragging = value
+            hold(latest, value)
+        }
+    }
+    LaunchedEffect(is_current) {
+        if (is_current) {
+            settle?.cancel()
+            consumed = false
+            offset = 0f
+        }
+    }
+    DisposableEffect(Unit) {
+        onDispose { if (dragging) hold(latest, false) }
+    }
+    val row_modifier = Modifier
+        .padding(horizontal = 12.dp, vertical = 10.dp)
+        .widthIn(max = toast_max_width)
+        .onSizeChanged { toast_height = it.height.toFloat() }
+        .graphicsLayer {
+            val raw = offset
+            translationY = if (raw > 0f) raw * toast_pull_resistance else raw
+            alpha = if (raw < 0f) {
+                (1f + raw / (toast_height.coerceAtLeast(1f) * 1.6f)).coerceIn(0.15f, 1f)
+            } else {
+                1f
+            }
+        }
+        .shadow(18.dp, shape, clip = false)
+        .clip(shape)
+        .background(fill)
+        .clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null,
+        ) {
+            if (latest.on_tap != null) finish { it.on_tap?.invoke() }
+        }
+        .pointerInput(Unit) {
+            val tracker = VelocityTracker()
+            val spring_back: (Float) -> Unit = { damping ->
+                settle?.cancel()
+                settle = scope.launch {
+                    animate(
+                        initialValue = offset,
+                        targetValue = 0f,
+                        animationSpec = spring(
+                            dampingRatio = damping,
+                            stiffness = Spring.StiffnessMediumLow,
+                        ),
+                    ) { value, _ -> offset = value }
                 }
             }
+            detectVerticalDragGestures(
+                onDragStart = {
+                    tracker.resetTracking()
+                    settle?.cancel()
+                    set_dragging(true)
+                },
+                onDragCancel = {
+                    set_dragging(false)
+                    spring_back(0.68f)
+                },
+                onDragEnd = {
+                    set_dragging(false)
+                    val velocity = tracker.calculateVelocity().y
+                    val far_enough = offset < -toast_dismiss_distance.toPx()
+                    val fast_enough = velocity < -toast_dismiss_velocity.toPx()
+                    if ((far_enough || fast_enough) && active && !consumed) {
+                        settle?.cancel()
+                        settle = scope.launch {
+                            animate(
+                                initialValue = offset,
+                                targetValue = -(toast_height + 120f),
+                                animationSpec = tween(durationMillis = 150),
+                            ) { value, _ -> offset = value }
+                            finish { it.on_close?.invoke() }
+                        }
+                    } else {
+                        spring_back(0.62f)
+                    }
+                },
+            ) { change, drag ->
+                tracker.addPosition(change.uptimeMillis, change.position)
+                change.consume()
+                offset += drag
+            }
+        }
+        .padding(start = 18.dp, end = 10.dp, top = 12.dp, bottom = 12.dp)
+    Row(
+        modifier = row_modifier,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = toast.message,
+            color = colors.text_primary,
+            fontSize = 14.sp,
+            lineHeight = 18.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center,
+            style = androidx.compose.ui.text.TextStyle(fontFeatureSettings = "tnum"),
+            maxLines = if (toast.secondary_label == null && toast.undo_label == null) 2 else 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false),
+        )
+        if (toast.undo_label != null && toast.on_undo != null) {
+            Spacer(Modifier.width(10.dp))
+            toast_action(
+                label = toast.undo_label,
+                on_click = { finish { it.on_undo?.invoke() } },
+            )
+        }
+        if (toast.secondary_label != null) {
+            Spacer(Modifier.width(6.dp))
+            val secondary_click = { finish { it.on_secondary?.invoke() } }
+            if (toast.secondary_icon != null) {
+                toast_icon_action(
+                    icon = toast.secondary_icon,
+                    label = toast.secondary_label,
+                    enabled = toast.on_secondary != null,
+                    on_click = secondary_click,
+                )
+            } else {
+                toast_action(
+                    label = toast.secondary_label,
+                    enabled = toast.on_secondary != null,
+                    on_click = secondary_click,
+                )
+            }
+        }
+        Spacer(Modifier.width(8.dp))
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(SquircleShape(999.dp))
+                .background(toast_control_fill(colors))
+                .clickable(role = Role.Button) { finish { it.on_close?.invoke() } },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = TablerIcons.X,
+                contentDescription = stringResource(R.string.close),
+                tint = colors.text_secondary,
+                modifier = Modifier.size(16.dp),
+            )
         }
     }
 }

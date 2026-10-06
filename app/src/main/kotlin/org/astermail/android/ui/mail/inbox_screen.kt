@@ -597,7 +597,6 @@ fun InboxScreen(
         )
     }
 
-    var top_toast_state by remember { mutableStateOf<org.astermail.android.ui.common.TopToastState?>(null) }
     val locked_data_context = LocalContext.current
     LaunchedEffect(locked_data_vm) {
         locked_data_vm.outcomes.collect { outcome ->
@@ -606,8 +605,8 @@ fun InboxScreen(
             if (unlocked_some) settings_vm.load_aliases(force = true)
             if (outcome == org.astermail.android.mail.LockedDataRecoveryOutcome.SUCCESS) {
                 show_recover_data_dialog = false
-                top_toast_state = org.astermail.android.ui.common.TopToastState(
-                    message = locked_data_context.getString(R.string.recover_data_success),
+                org.astermail.android.ui.common.app_toast.show(
+                    locked_data_context.getString(R.string.recover_data_success),
                 )
             }
         }
@@ -633,41 +632,19 @@ fun InboxScreen(
     }
     LaunchedEffect(mail_vm) {
         mail_vm.toast_events.collect { evt ->
-            top_toast_state = org.astermail.android.ui.common.TopToastState(
-                message = evt.message,
-                undo_label = evt.undo_label,
-                on_undo = evt.on_undo,
-                duration_ms = evt.duration_ms,
-                on_timeout = evt.on_timeout,
+            org.astermail.android.ui.common.app_toast.show(
+                org.astermail.android.ui.common.TopToastState(
+                    message = evt.message,
+                    undo_label = evt.undo_label,
+                    on_undo = evt.on_undo,
+                    duration_ms = evt.duration_ms,
+                    on_timeout = evt.on_timeout,
+                    key = evt.id,
+                ),
             )
         }
     }
-    val batch_action by mail_vm.batch_action_state.collectAsStateWithLifecycle()
-    LaunchedEffect(batch_action) {
-        val ba = batch_action
-        if (ba == null) {
-            if (top_toast_state?.accumulation_key != null) top_toast_state = null
-            return@LaunchedEffect
-        }
-        val current = top_toast_state
-        if (current != null && current.accumulation_key == ba.action_key) {
-            top_toast_state = current.copy(
-                message = ba.message,
-                on_undo = { ba.on_undo(); mail_vm.clear_batch_action(ba.action_key) },
-                key = System.currentTimeMillis(),
-            )
-        } else {
-            top_toast_state = org.astermail.android.ui.common.TopToastState(
-                message = ba.message,
-                undo_label = ba.undo_label,
-                on_undo = { ba.on_undo(); mail_vm.clear_batch_action(ba.action_key) },
-                on_timeout = { mail_vm.clear_batch_action(ba.action_key) },
-                on_close = { mail_vm.clear_batch_action(ba.action_key) },
-                accumulation_key = ba.action_key,
-            )
-        }
-    }
-    undo_send_toast(on_view = on_view_pending_send)
+    batch_action_toast(mail_vm)
 
     val lifecycle_owner = LocalLifecycleOwner.current
     val live_sync_socket = remember(prefetch_context) {
@@ -1202,7 +1179,7 @@ fun InboxScreen(
     val quick_action_no_old_text = stringResource(R.string.quick_action_no_old)
 
     fun quick_action_notice(message: String) {
-        top_toast_state = org.astermail.android.ui.common.TopToastState(message = message)
+        org.astermail.android.ui.common.app_toast.show(message)
     }
 
     fun run_quick_action(action: String) {
@@ -2484,11 +2461,6 @@ fun InboxScreen(
                     alpha = chrome_alpha,
                     solid = colors.bg_primary,
                 ),
-        )
-
-        org.astermail.android.ui.common.top_toast_overlay(
-            state = top_toast_state,
-            on_dismiss = { top_toast_state = null },
         )
 
         androidx.compose.animation.AnimatedVisibility(

@@ -957,21 +957,20 @@ fun MailDetailScreen(
         }
     }
 
+    batch_action_toast(mail_vm)
+
     LaunchedEffect(mail_vm) {
         mail_vm.toast_events.collect { evt ->
-            if (evt.on_undo != null) {
-                org.astermail.android.ui.common.app_toast.show(
-                    org.astermail.android.ui.common.TopToastState(
-                        message = evt.message,
-                        undo_label = evt.undo_label,
-                        on_undo = evt.on_undo,
-                        duration_ms = evt.duration_ms,
-                        on_timeout = evt.on_timeout,
-                    ),
-                )
-            } else {
-                show_toast(evt.message)
-            }
+            org.astermail.android.ui.common.app_toast.show(
+                org.astermail.android.ui.common.TopToastState(
+                    message = evt.message,
+                    undo_label = evt.undo_label,
+                    on_undo = evt.on_undo,
+                    duration_ms = evt.duration_ms,
+                    on_timeout = evt.on_timeout,
+                    key = evt.id,
+                ),
+            )
         }
     }
 

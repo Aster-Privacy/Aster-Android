@@ -675,6 +675,7 @@ class MailViewModel @Inject constructor(
         val on_undo: (() -> Unit)? = null,
         val duration_ms: Long? = null,
         val on_timeout: (() -> Unit)? = null,
+        val id: Long = org.astermail.android.ui.common.next_toast_key(),
     )
 
     private val _toast_events = MutableSharedFlow<ToastEvent>(extraBufferCapacity = 32)
