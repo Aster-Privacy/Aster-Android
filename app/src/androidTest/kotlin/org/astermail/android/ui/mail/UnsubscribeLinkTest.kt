@@ -56,6 +56,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
@@ -96,7 +97,11 @@ class UnsubscribeLinkTest {
         </div>
     """.trimIndent()
 
-    private fun newsletter(id: String = "news", with_header: Boolean = true) = ThreadMessage(
+    private fun newsletter(
+        id: String = "news",
+        with_header: Boolean = true,
+        with_body: Boolean = with_header,
+    ) = ThreadMessage(
         id = id,
         sender_name = "Notícias da Semana",
         sender_email = "newsletter@news.example",
@@ -104,7 +109,7 @@ class UnsubscribeLinkTest {
         to_addresses = listOf("diogo@santos.cc"),
         timestamp = 1_791_300_000_000L,
         body = "As notícias desta semana",
-        body_html = if (with_header) newsletter_html else "<p>Olá, até sexta.</p>",
+        body_html = if (with_body) newsletter_html else "<p>Olá, até sexta.</p>",
         is_encrypted = false,
         is_external = true,
         spf_result = "pass",
@@ -253,10 +258,31 @@ class UnsubscribeLinkTest {
     }
 
     @Test
+    fun link_does_not_make_the_sender_row_taller() {
+        show(listOf(newsletter(with_header = false, with_body = true)))
+        compose_rule.onAllNodesWithTag("unsubscribe_link").assertCountEquals(0)
+        val without = compose_rule.onNodeWithTag("message_header_0").fetchSemanticsNode().boundsInRoot.height
+        show(listOf(newsletter()))
+        compose_rule.onAllNodesWithTag("unsubscribe_link").assertCountEquals(1)
+        val with_link = compose_rule.onNodeWithTag("message_header_0").fetchSemanticsNode().boundsInRoot.height
+        assertEquals(without, with_link, 1f)
+    }
+
+    @Test
+    fun tapping_the_recipient_line_still_opens_the_details() {
+        show(listOf(newsletter()))
+        val recipient = localized_string("pt-PT", R.string.to_label_prefix).replace("%s", "diogo@santos.cc")
+        compose_rule.onNodeWithText(recipient).performClick()
+        compose_rule.waitForIdle()
+        compose_rule.onNodeWithText(localized_string("pt-PT", R.string.view_security_details)).assertExists()
+        assertEquals(0, unsubscribe_calls.size)
+    }
+
+    @Test
     fun a_tap_just_below_the_text_still_hits_the_link() {
         show(listOf(newsletter()))
         val link = compose_rule.onNodeWithTag("unsubscribe_link").fetchSemanticsNode()
-        val below = with(compose_rule.density) { 6.dp.toPx() }
+        val below = with(compose_rule.density) { 10.dp.toPx() }
         compose_rule.onNodeWithTag("unsubscribe_link").performTouchInput {
             click(Offset(width / 2f, height + below))
         }
@@ -306,7 +332,7 @@ class UnsubscribeLinkTest {
         val theme = if (dark) "dark" else "light"
         show(listOf(newsletter()), dark = !dark, wait_for_bodies = true)
         show(listOf(newsletter()), dark = dark, wait_for_bodies = true)
-        repeat(20) {
+        repeat(60) {
             compose_rule.waitForIdle()
             Thread.sleep(250)
         }

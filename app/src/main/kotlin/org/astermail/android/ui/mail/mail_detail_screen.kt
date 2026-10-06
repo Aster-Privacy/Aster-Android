@@ -3597,14 +3597,12 @@ internal fun unsubscribe_link(
         text = label,
         color = colors.accent_blue,
         fontSize = 12.sp,
+        lineHeight = 16.sp,
         fontWeight = FontWeight.Medium,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
         modifier = modifier
-            .clip(SquircleShape(8.dp))
+            .clip(SquircleShape(4.dp))
             .clickable(role = Role.Button, onClickLabel = label, onClick = on_unsubscribe)
             .semantics { contentDescription = label }
-            .padding(vertical = 5.dp)
             .testTag("unsubscribe_link"),
     )
 }
