@@ -192,6 +192,27 @@ fun classify(
         return custom_match
     }
 
+    val list_shaped =
+        headers.containsKey("list-id") ||
+            headers.containsKey("list-post") ||
+            headers.containsKey("mailing-list") ||
+            !envelope.list_unsubscribe.isNullOrEmpty() ||
+            headers.containsKey("list-unsubscribe")
+    val auto_submitted = (headers["auto-submitted"] ?: "").lowercase(java.util.Locale.ROOT)
+    val machine_sent = auto_submitted != "" && auto_submitted != "no"
+    val bulk_precedence =
+        precedence == "bulk" || precedence == "list" || precedence == "auto_replied"
+
+    if (PERSONAL_MAILBOX_DOMAINS.contains(from_domain) &&
+        !list_shaped &&
+        !machine_sent &&
+        !bulk_precedence &&
+        !in_any(MARKETING_DOMAIN_SUFFIXES) &&
+        !in_any(BULK_INFRA_DOMAIN_SUFFIXES)
+    ) {
+        return "primary"
+    }
+
     if (domain_in_set(from_domain, SOCIAL_DOMAIN_SUFFIXES)) {
         return "social"
     }
@@ -216,12 +237,6 @@ fun classify(
         return "shopping"
     }
 
-    val list_shaped =
-        headers.containsKey("list-id") ||
-            headers.containsKey("list-post") ||
-            headers.containsKey("mailing-list") ||
-            !envelope.list_unsubscribe.isNullOrEmpty() ||
-            headers.containsKey("list-unsubscribe")
     val hard_sell = matches_any(subject, PROMOTIONS_SUBJECT_PATTERNS)
     val discussion_shaped =
         headers.containsKey("list-post") ||
@@ -256,15 +271,12 @@ fun classify(
     val has_unsubscribe =
         !envelope.list_unsubscribe.isNullOrEmpty() ||
             headers.containsKey("list-unsubscribe")
-    val auto_submitted = (headers["auto-submitted"] ?: "").lowercase(java.util.Locale.ROOT)
-    val bulk_precedence =
-        precedence == "bulk" || precedence == "list" || precedence == "auto_replied"
     val is_automated =
         has_unsubscribe ||
             bulk_precedence ||
             headers.containsKey("feedback-id") ||
             headers.containsKey("x-csa-complaints") ||
-            (auto_submitted != "" && auto_submitted != "no") ||
+            machine_sent ||
             BULK_SENDER_LOCALPARTS.contains(localpart) ||
             in_any(MARKETING_DOMAIN_SUFFIXES) ||
             in_any(BULK_INFRA_DOMAIN_SUFFIXES)
