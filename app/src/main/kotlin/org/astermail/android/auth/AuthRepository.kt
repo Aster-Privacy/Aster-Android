@@ -311,13 +311,9 @@ class AuthRepository @Inject constructor(
             dotted_hash to auth_api.get_user_salt(dotted_hash)
         }
         val salt_bytes = base64_decode(salt_resp.salt)
-        AuthSaltGuard.require_usable_auth_salt(salt_bytes, cached_vault_bytes())
+        require_usable_auth_salt(salt_bytes)
         val password_bytes = password.toByteArray(Charsets.UTF_8)
-        val password_hash_bytes = CryptoNative.derive_pbkdf2_hash(
-            password_bytes,
-            salt_bytes,
-            pbkdf2_iterations,
-        )
+        val password_hash_bytes = derive_login_hash(password_bytes, salt_bytes)
         val password_hash_b64 = base64_encode(password_hash_bytes)
 
         val remember_me = true
@@ -883,9 +879,13 @@ class AuthRepository @Inject constructor(
             ?: session_key_store.get_password_salt()
             ?: throw ApiError.UnknownError(context.getString(R.string.session_expired_sign_in))
 
-        val current_password_hash = CryptoNative.derive_pbkdf2_hash(
-            current_password_bytes, stored_salt, pbkdf2_iterations,
-        )
+        val current_password_hash = try {
+            derive_login_hash(current_password_bytes, stored_salt)
+        } catch (collision: AuthSaltCollisionException) {
+            current_password_bytes.fill(0)
+            new_password_bytes.fill(0)
+            throw collision
+        }
 
         val (encrypted_vault_b64, vault_nonce_b64) = session_key_store.get_encrypted_vault()
             ?: throw ApiError.UnknownError(context.getString(R.string.session_unavailable_sign_in_again))
@@ -1741,9 +1741,9 @@ class AuthRepository @Inject constructor(
             }.getOrNull()
         }
         val salt = server_salt ?: session_key_store.get_password_salt() ?: return null
-        AuthSaltGuard.require_usable_auth_salt(salt, cached_vault_bytes())
+        require_usable_auth_salt(salt)
         val password_bytes = password.toByteArray(Charsets.UTF_8)
-        val hash = CryptoNative.derive_pbkdf2_hash(password_bytes, salt, pbkdf2_iterations)
+        val hash = derive_login_hash(password_bytes, salt)
         password_bytes.fill(0)
         salt.fill(0)
         val encoded = base64_encode(hash)
@@ -2128,6 +2128,20 @@ class AuthRepository @Inject constructor(
 
     private fun cached_vault_bytes(): ByteArray? =
         runCatching { session_key_store.get_encrypted_vault()?.first?.let { base64_decode(it) } }.getOrNull()
+
+    private fun require_usable_auth_salt(salt: ByteArray) =
+        AuthSaltGuard.require_usable_auth_salt(
+            salt,
+            cached_vault_bytes(),
+            session_key_store.get_remembered_vault_salts(),
+        )
+
+    private fun derive_login_hash(password_bytes: ByteArray, salt: ByteArray): ByteArray =
+        AuthSaltGuard.derive_with_usable_auth_salt(
+            salt,
+            cached_vault_bytes(),
+            session_key_store.get_remembered_vault_salts(),
+        ) { usable_salt -> CryptoNative.derive_pbkdf2_hash(password_bytes, usable_salt, pbkdf2_iterations) }
 
     private fun base64_encode(bytes: ByteArray): String =
         android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)

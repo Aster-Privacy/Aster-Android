@@ -39,13 +39,38 @@ object AuthSaltGuard {
         return constant_time_equals(auth_salt, prefix)
     }
 
-    fun require_usable_auth_salt(auth_salt: ByteArray, encrypted_vault: ByteArray?) {
+    fun collides_with_remembered_salts(auth_salt: ByteArray, remembered_vault_salts: Collection<ByteArray>): Boolean {
+        var collides = false
+        for (remembered in remembered_vault_salts) {
+            if (constant_time_equals(auth_salt, remembered)) collides = true
+        }
+        return collides
+    }
+
+    fun require_usable_auth_salt(
+        auth_salt: ByteArray,
+        encrypted_vault: ByteArray?,
+        remembered_vault_salts: Collection<ByteArray> = emptyList(),
+    ) {
         if (auth_salt.size < min_auth_salt_bytes) {
             throw AuthSaltCollisionException("auth salt is shorter than $min_auth_salt_bytes bytes")
         }
         if (collides_with_vault_salt(auth_salt, encrypted_vault)) {
             throw AuthSaltCollisionException("auth salt equals the vault key salt")
         }
+        if (collides_with_remembered_salts(auth_salt, remembered_vault_salts)) {
+            throw AuthSaltCollisionException("auth salt equals a vault key salt seen on this device")
+        }
+    }
+
+    fun derive_with_usable_auth_salt(
+        auth_salt: ByteArray,
+        encrypted_vault: ByteArray?,
+        remembered_vault_salts: Collection<ByteArray>,
+        derive: (ByteArray) -> ByteArray,
+    ): ByteArray {
+        require_usable_auth_salt(auth_salt, encrypted_vault, remembered_vault_salts)
+        return derive(auth_salt)
     }
 
     fun constant_time_equals(a: ByteArray, b: ByteArray): Boolean {
