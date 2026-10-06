@@ -5710,7 +5710,10 @@ private fun translation_banner(
             }
             is TranslationBannerState.WebViewOutdated -> {
                 Text(
-                    text = stringResource(R.string.translation_webview_outdated),
+                    text = stringResource(
+                        R.string.translation_webview_outdated,
+                        org.astermail.android.translation.TranslationRuntime.webview_name(LocalContext.current),
+                    ),
                     color = colors.text_primary,
                     fontSize = 13.sp,
                     modifier = Modifier.weight(1f),

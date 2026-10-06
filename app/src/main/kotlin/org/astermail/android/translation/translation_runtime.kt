@@ -30,6 +30,7 @@ import androidx.webkit.WebViewCompat
 object TranslationRuntime {
     const val MIN_WEBVIEW_MAJOR = 91
     private const val DEFAULT_WEBVIEW_PACKAGE = "com.google.android.webview"
+    internal const val DEFAULT_WEBVIEW_NAME = "Android System WebView"
 
     internal fun parse_major(version_name: String?): Int? =
         version_name?.trim()?.substringBefore('.')?.toIntOrNull()
@@ -41,6 +42,17 @@ object TranslationRuntime {
 
     fun webview_supported(context: Context): Boolean =
         major_supported(parse_major(webview_package_info(context)?.versionName))
+
+    internal fun display_name(label: String?): String =
+        label?.trim()?.takeIf { it.isNotEmpty() } ?: DEFAULT_WEBVIEW_NAME
+
+    fun webview_name(context: Context): String {
+        val application = webview_package_info(context)?.applicationInfo
+        val label = application?.let {
+            runCatching { context.packageManager.getApplicationLabel(it).toString() }.getOrNull()
+        }
+        return display_name(label)
+    }
 
     fun open_webview_update(context: Context) {
         val name = webview_package_info(context)?.packageName ?: DEFAULT_WEBVIEW_PACKAGE

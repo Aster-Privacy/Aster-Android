@@ -744,7 +744,10 @@ internal fun ColumnScope.translation_settings_section(
         v_gap(AsterSpacing.md)
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = stringResource(R.string.translate_webview_outdated_notice),
+                text = stringResource(
+                    R.string.translate_webview_outdated_notice,
+                    org.astermail.android.translation.TranslationRuntime.webview_name(context),
+                ),
                 color = colors.text_primary,
                 fontSize = 13.sp,
                 modifier = Modifier.padding(start = AsterSpacing.lg, end = AsterSpacing.lg, top = AsterSpacing.md, bottom = 4.dp),

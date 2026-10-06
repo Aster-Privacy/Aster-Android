@@ -1349,9 +1349,9 @@
     <string name="translation_show_original">Orijinali göster</string>
     <string name="translation_failed">Çeviri başarısız oldu</string>
     <string name="translation_wifi_required">Bu dil paketini indirmek için Wi-Fi\'ye bağlanın veya Ayarlar\'da Yalnızca Wi-Fi ile indir seçeneğini kapatın.</string>
-    <string name="translation_webview_outdated">E-postaları çevirmek için Android System WebView uygulamasını güncelleyin.</string>
+    <string name="translation_webview_outdated">E-postaları çevirmek için %1$s uygulamasını güncelleyin.</string>
     <string name="translation_webview_update">Güncelle</string>
-    <string name="translate_webview_outdated_notice">Çeviri için Android System WebView uygulamasının daha yeni bir sürümü gerekir. Bu cihazda e-postaları çevirmek için Android System WebView uygulamasını Google Play\'den güncelleyin.</string>
+    <string name="translate_webview_outdated_notice">Çeviri için %1$s uygulamasının daha yeni bir sürümü gerekir. Bu cihazda e-postaları çevirmek için %1$s uygulamasını Google Play\'den güncelleyin.</string>
     <string name="customize_toolbar">Araç çubuğunu özelleştir</string>
     <string name="customize_toolbar_subtitle">E-posta okurken veya seçerken alt çubukta hangi eylemlerin görüneceğini seçin.</string>
     <string name="reading_toolbar">E-posta okuma</string>
