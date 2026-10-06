@@ -58,8 +58,14 @@ object X3dh {
     private fun select_pq_target(
         recipient_pq_prekey: Pair<Int, ByteArray>?,
         recipient_pq_identity: ByteArray?,
+        signature_covers_pq_identity: Boolean,
     ): PqTarget? {
-        if (recipient_pq_prekey != null && recipient_pq_prekey.second.size == ML_KEM_768_EK_LEN) {
+        val identity_usable = recipient_pq_identity != null && recipient_pq_identity.size == ML_KEM_768_EK_LEN
+        val prefer_signed_identity = signature_covers_pq_identity && identity_usable
+        if (!prefer_signed_identity &&
+            recipient_pq_prekey != null &&
+            recipient_pq_prekey.second.size == ML_KEM_768_EK_LEN
+        ) {
             return PqTarget(
                 public_key = recipient_pq_prekey.second,
                 key_id = recipient_pq_prekey.first,
@@ -83,7 +89,7 @@ object X3dh {
     fun supports_pq(
         recipient_pq_prekey: Pair<Int, ByteArray>?,
         recipient_pq_identity: ByteArray?,
-    ): Boolean = select_pq_target(recipient_pq_prekey, recipient_pq_identity) != null
+    ): Boolean = select_pq_target(recipient_pq_prekey, recipient_pq_identity, false) != null
 
     fun perform_sender(
         sender_identity_jwk: String,
@@ -91,6 +97,7 @@ object X3dh {
         recipient_signed_prekey_raw: ByteArray,
         recipient_pq_prekey: Pair<Int, ByteArray>? = null,
         recipient_pq_identity: ByteArray? = null,
+        signature_covers_pq_identity: Boolean = false,
     ): SenderResult {
         val sender_identity_priv = RatchetCrypto.parse_p256_private_jwk(sender_identity_jwk)
         val recipient_identity_pub = RatchetCrypto.parse_p256_public_raw(recipient_identity_raw)
@@ -102,7 +109,7 @@ object X3dh {
         val dh2 = RatchetCrypto.ecdh(ephemeral_kp.private_key, recipient_identity_pub)
         val dh3 = RatchetCrypto.ecdh(ephemeral_kp.private_key, recipient_spk_pub)
 
-        val pq_target = select_pq_target(recipient_pq_prekey, recipient_pq_identity)
+        val pq_target = select_pq_target(recipient_pq_prekey, recipient_pq_identity, signature_covers_pq_identity)
 
         val pq_pair = if (pq_target != null) {
             val encap = RatchetCrypto.ml_kem_768_encapsulate(pq_target.public_key)

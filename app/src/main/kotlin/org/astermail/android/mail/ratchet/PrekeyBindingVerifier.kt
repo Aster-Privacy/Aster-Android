@@ -39,6 +39,11 @@ enum class PrekeyBindingResult {
     INVALID,
 }
 
+data class PrekeyBindingVerdict(
+    val result: PrekeyBindingResult,
+    val covers_pq_identity: Boolean,
+)
+
 object PrekeyBindingVerifier {
     private const val signature_header = "-----BEGIN PGP SIGNATURE-----"
     private const val signed_message_header = "-----BEGIN PGP SIGNED MESSAGE-----"
@@ -99,6 +104,27 @@ object PrekeyBindingVerifier {
             if (!same_key(parts[2], pq_identity_key_b64)) return PrekeyBindingResult.INVALID
         }
         return PrekeyBindingResult.VERIFIED
+    }
+
+    fun verify_binding(
+        signature_block: String,
+        recipient_public_key_armored: String?,
+        kem_identity_key_b64: String,
+        signed_prekey_b64: String,
+        pq_identity_key_b64: String? = null,
+    ): PrekeyBindingVerdict {
+        val result = verify(
+            signature_block,
+            recipient_public_key_armored,
+            kem_identity_key_b64,
+            signed_prekey_b64,
+            pq_identity_key_b64,
+        )
+        val covers_pq_identity = result == PrekeyBindingResult.VERIFIED &&
+            runCatching { decode_signature_field(signature_block)?.let { extract_signed_text(it) } }
+                .getOrNull()
+                ?.startsWith(canonical_prefix_v2) == true
+        return PrekeyBindingVerdict(result, covers_pq_identity)
     }
 
     fun owner_fingerprint(armored_public_key: String?): String? {
