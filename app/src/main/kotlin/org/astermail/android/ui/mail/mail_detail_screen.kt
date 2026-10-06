@@ -98,6 +98,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -133,6 +134,8 @@ import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.TransformOrigin
@@ -3455,6 +3458,23 @@ internal fun compact_banner_row(
     }
 }
 
+internal fun compact_banner_actions_inline(
+    available_width: Int,
+    gap: Int,
+    actions_width: Int,
+    text_single_line_width: Int,
+    min_text_width: Int,
+    max_text_lines: Int,
+    text_may_wrap: Boolean,
+    text_lines_at: (Int) -> Int,
+): Boolean {
+    if (text_single_line_width + gap + actions_width <= available_width) return true
+    if (!text_may_wrap) return false
+    val text_width = available_width - gap - actions_width
+    if (text_width < min_text_width) return false
+    return text_lines_at(text_width) <= max_text_lines
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun compact_banner(
@@ -3465,7 +3485,10 @@ internal fun compact_banner(
     actions: @Composable () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    var expanded by remember { mutableStateOf(false) }
+    val label_style = LocalTextStyle.current.merge(
+        TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Medium),
+    )
+    val text_measurer = rememberTextMeasurer()
     Layout(
         modifier = Modifier
             .fillMaxWidth()
@@ -3483,19 +3506,17 @@ internal fun compact_banner(
                         Text(
                             text = label,
                             color = colors.text_secondary,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = if (expanded) 6 else 2,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            style = label_style,
                             modifier = Modifier
                                 .weight(1f)
-                                .clickable { expanded = !expanded },
+                                .testTag("compact_banner_label"),
                         )
                     }
                 }
                 secondary_row?.invoke()
             }
             FlowRow(
+                modifier = Modifier.testTag("compact_banner_actions"),
                 horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End),
             ) {
                 actions()
@@ -3508,7 +3529,23 @@ internal fun compact_banner(
         val actions_measurable = measurables[1]
         val actions_width = actions_measurable.maxIntrinsicWidth(androidx.compose.ui.unit.Constraints.Infinity)
         val text_width = text_measurable.maxIntrinsicWidth(androidx.compose.ui.unit.Constraints.Infinity)
-        if (text_width + gap + actions_width <= width) {
+        val icon_column = 27.dp.roundToPx()
+        val inline = compact_banner_actions_inline(
+            available_width = width,
+            gap = gap,
+            actions_width = actions_width,
+            text_single_line_width = text_width,
+            min_text_width = icon_column + 120.dp.roundToPx(),
+            max_text_lines = 3,
+            text_may_wrap = secondary_row == null && label.isNotEmpty(),
+        ) { slot ->
+            text_measurer.measure(
+                text = label,
+                style = label_style,
+                constraints = androidx.compose.ui.unit.Constraints(maxWidth = maxOf(0, slot - icon_column)),
+            ).lineCount
+        }
+        if (inline) {
             val actions_placeable = actions_measurable.measure(
                 androidx.compose.ui.unit.Constraints(maxWidth = actions_width),
             )
