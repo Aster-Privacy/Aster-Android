@@ -25,11 +25,16 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.AlertTriangle
 import compose.icons.tablericons.Ban
 import compose.icons.tablericons.Inbox
+import compose.icons.tablericons.Mail
 import compose.icons.tablericons.Shield
 import compose.icons.tablericons.ShieldCheck
 import compose.icons.tablericons.ShieldLock
 import compose.icons.tablericons.ShieldOff
 import compose.icons.tablericons.ShieldX
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.vector.VectorPath
+import org.astermail.android.ui.icons.mail_check_icon
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
@@ -37,9 +42,31 @@ import org.junit.Test
 class SpamActionIconTest {
 
     @Test
-    fun not_spam_is_the_inbox_and_report_spam_is_a_warning_triangle() {
-        assertEquals(TablerIcons.Inbox, spam_action_icon(is_spam = true))
+    fun not_spam_is_a_mail_check_and_report_spam_is_a_warning_triangle() {
+        assertEquals(mail_check_icon, spam_action_icon(is_spam = true))
         assertEquals(TablerIcons.AlertTriangle, spam_action_icon(is_spam = false))
+    }
+
+    @Test
+    fun not_spam_is_no_longer_the_inbox_tray_or_a_plain_envelope() {
+        assertNotEquals(TablerIcons.Inbox, spam_action_icon(is_spam = true))
+        assertNotEquals(TablerIcons.Mail, spam_action_icon(is_spam = true))
+    }
+
+    @Test
+    fun mail_check_matches_the_tabler_outline_style() {
+        assertEquals(24f, mail_check_icon.viewportWidth)
+        assertEquals(24f, mail_check_icon.viewportHeight)
+        assertEquals(24f, mail_check_icon.defaultWidth.value)
+        assertEquals(24f, mail_check_icon.defaultHeight.value)
+        val paths = (0 until mail_check_icon.root.size).map { mail_check_icon.root[it] as VectorPath }
+        assertEquals(3, paths.size)
+        paths.forEach { path ->
+            assertEquals(2f, path.strokeLineWidth)
+            assertEquals(StrokeCap.Round, path.strokeLineCap)
+            assertEquals(StrokeJoin.Round, path.strokeLineJoin)
+            assertEquals(null, path.fill)
+        }
     }
 
     @Test
