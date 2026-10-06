@@ -309,7 +309,7 @@ class MainActivity :
         super.onNewIntent(intent)
         setIntent(intent)
         consume_open_email_extra(intent)
-        consume_share_intent(intent)
+        consume_share_intent(intent, from_new_intent = true)
     }
 
     private fun note_launch_folder(intent: Intent?) {
@@ -329,8 +329,69 @@ class MainActivity :
         }
     }
 
-    private fun consume_share_intent(intent: Intent?) {
-        val payload = org.astermail.android.share.parse_share_intent(intent) ?: return
+    private fun app_reads_shared_storage(): Boolean = listOf(
+        android.Manifest.permission.READ_EXTERNAL_STORAGE,
+        android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        "android.permission.MANAGE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+    ).any { checkSelfPermission(it) == android.content.pm.PackageManager.PERMISSION_GRANTED }
+
+    private fun share_caller_is_system(intent: Intent): Boolean {
+        intent.removeExtra(Intent.EXTRA_REFERRER)
+        intent.removeExtra(Intent.EXTRA_REFERRER_NAME)
+        val source = runCatching { referrer }.getOrNull()
+        val caller_package = org.astermail.android.share.share_referrer_package(source?.scheme, source?.host)
+            ?: return false
+        if (caller_package == "android") return true
+        return runCatching {
+            packageManager.getApplicationInfo(caller_package, 0).flags and
+                android.content.pm.ApplicationInfo.FLAG_SYSTEM != 0
+        }.getOrDefault(false)
+    }
+
+    private fun share_caller_access(uri: Uri, from_new_intent: Boolean): org.astermail.android.share.ShareCallerAccess {
+        if (Build.VERSION.SDK_INT < 35) return org.astermail.android.share.ShareCallerAccess.UNKNOWN
+        return try {
+            val caller = if (from_new_intent) currentCaller else initialCaller
+            val result = caller.checkContentUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            if (result == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                org.astermail.android.share.ShareCallerAccess.GRANTED
+            } else {
+                org.astermail.android.share.ShareCallerAccess.DENIED
+            }
+        } catch (_: SecurityException) {
+            org.astermail.android.share.ShareCallerAccess.DENIED
+        } catch (_: Throwable) {
+            org.astermail.android.share.ShareCallerAccess.UNKNOWN
+        }
+    }
+
+    private fun share_stream_gate(intent: Intent?, from_new_intent: Boolean): (Uri) -> Boolean {
+        if (intent == null) return { false }
+        val caller = org.astermail.android.share.ShareCallerContext(
+            own_package = packageName,
+            has_read_grant = intent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0,
+            caller_is_system = share_caller_is_system(intent),
+            app_reads_shared_storage = app_reads_shared_storage(),
+        )
+        return { uri ->
+            org.astermail.android.share.is_share_stream_allowed(
+                uri.scheme,
+                uri.authority,
+                caller,
+                share_caller_access(uri, from_new_intent),
+            )
+        }
+    }
+
+    private fun consume_share_intent(intent: Intent?, from_new_intent: Boolean = false) {
+        val payload = org.astermail.android.share.parse_share_intent(
+            intent,
+            share_stream_gate(intent, from_new_intent),
+        ) ?: return
         intent?.action = null
         pending_launch.pending_share_token.value = android.os.SystemClock.elapsedRealtimeNanos().toString()
         pending_launch.pending_share.value = payload
