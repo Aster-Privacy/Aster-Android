@@ -2280,6 +2280,7 @@
     <string name="app_lock_verify_title">Vérifier votre identité</string>
     <string name="app_lock_enter_to_change">Saisissez votre code PIN actuel pour le modifier.</string>
     <string name="app_lock_enter_to_disable">Saisissez votre code PIN pour désactiver le verrouillage.</string>
+    <string name="app_lock_enter_to_enable_biometric">Pour activer le déverrouillage biométrique, saisissez votre code PIN.</string>
     <string name="settings_alias_directories">Répertoires d\'alias</string>
     <string name="alias_directories">Répertoires d\'alias</string>
     <string name="alias_directories_description">Les répertoires d\'alias vous permettent de recevoir du courrier sur n\'importe quelle adresse partageant un même préfixe. Partagez votre répertoire : n\'importe qui peut vous écrire sans connaître votre vraie adresse.</string>

@@ -2258,6 +2258,7 @@
     <string name="app_lock_verify_title">Подтверждение личности</string>
     <string name="app_lock_enter_to_change">Введите текущий PIN-код, чтобы изменить его.</string>
     <string name="app_lock_enter_to_disable">Введите PIN-код, чтобы отключить блокировку приложения.</string>
+    <string name="app_lock_enter_to_enable_biometric">Чтобы включить биометрическую разблокировку, введите PIN-код.</string>
     <string name="settings_alias_directories">Каталоги псевдонимов</string>
     <string name="alias_directories">Каталоги псевдонимов</string>
     <string name="alias_directories_description">Каталоги псевдонимов позволяют получать почту на любой адрес с общим префиксом. Поделитесь каталогом, и вам смогут написать, не зная настоящего адреса.</string>

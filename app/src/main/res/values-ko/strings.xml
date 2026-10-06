@@ -2243,6 +2243,7 @@
     <string name="app_lock_verify_title">본인 확인</string>
     <string name="app_lock_enter_to_change">변경하려면 현재 PIN을 입력하세요.</string>
     <string name="app_lock_enter_to_disable">앱 잠금을 끄려면 PIN을 입력하세요.</string>
+    <string name="app_lock_enter_to_enable_biometric">생체 인식 잠금 해제를 켜려면 PIN을 입력하세요.</string>
     <string name="settings_alias_directories">별칭 디렉터리</string>
     <string name="alias_directories">별칭 디렉터리</string>
     <string name="alias_directories_description">별칭 디렉터리를 쓰면 공통 키로 시작하는 어떤 주소로도 메일을 받을 수 있습니다. 디렉터리를 알려 주면 실제 주소를 밝히지 않고도 연락받을 수 있습니다.</string>

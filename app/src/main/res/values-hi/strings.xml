@@ -2156,6 +2156,7 @@
     <string name="app_lock_verify_title">पहचान की पुष्टि करें</string>
     <string name="app_lock_enter_to_change">इसे बदलने के लिए अपना मौजूदा PIN डालें।</string>
     <string name="app_lock_enter_to_disable">ऐप लॉक बंद करने के लिए अपना PIN डालें।</string>
+    <string name="app_lock_enter_to_enable_biometric">बायोमेट्रिक अनलॉक चालू करने के लिए अपना PIN डालें।</string>
     <string name="settings_alias_directories">एलियास डायरेक्टरी</string>
     <string name="alias_directories">एलियास डायरेक्टरी</string>
     <string name="alias_directories_description">एलियास डायरेक्टरी से आप साझा कुंजी उपसर्ग वाले किसी भी पते पर ईमेल पा सकते हैं। अपनी डायरेक्टरी साझा करें और कोई भी आपका असली पता जाने बिना आप तक पहुंच सकता है।</string>

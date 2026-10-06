@@ -2434,6 +2434,7 @@
     <string name="app_lock_verify_title">Verify identity</string>
     <string name="app_lock_enter_to_change">Enter your current PIN to change it.</string>
     <string name="app_lock_enter_to_disable">Enter your PIN to disable app lock.</string>
+    <string name="app_lock_enter_to_enable_biometric">To turn on biometric unlock, enter your PIN.</string>
 
     <!-- Alias Directories screen -->
     <string name="settings_alias_directories">Alias Directories</string>

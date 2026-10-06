@@ -2268,6 +2268,7 @@
     <string name="app_lock_verify_title">تأكيد الهوية</string>
     <string name="app_lock_enter_to_change">أدخل رمز PIN الحالي لتغييره.</string>
     <string name="app_lock_enter_to_disable">أدخل رمز PIN لتعطيل قفل التطبيق.</string>
+    <string name="app_lock_enter_to_enable_biometric">لتفعيل فتح القفل بالمقاييس الحيوية، أدخل رمز PIN.</string>
     <string name="settings_alias_directories">أدلة الأسماء المستعارة</string>
     <string name="alias_directories">أدلة الأسماء المستعارة</string>
     <string name="alias_directories_description">تتيح لك أدلة الأسماء المستعارة استقبال البريد على أي عنوان يبدأ بمفتاح مشترك. شارك دليلك ليصل إليك أي شخص دون كشف عنوانك الحقيقي.</string>

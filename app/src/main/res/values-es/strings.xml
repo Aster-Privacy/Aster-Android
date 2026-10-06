@@ -2254,6 +2254,7 @@
     <string name="app_lock_verify_title">Verifica tu identidad</string>
     <string name="app_lock_enter_to_change">Escribe tu PIN actual para cambiarlo.</string>
     <string name="app_lock_enter_to_disable">Escribe tu PIN para desactivar el bloqueo de la app.</string>
+    <string name="app_lock_enter_to_enable_biometric">Para activar el desbloqueo biométrico, escribe tu PIN.</string>
     <string name="settings_alias_directories">Directorios de alias</string>
     <string name="alias_directories">Directorios de alias</string>
     <string name="alias_directories_description">Los directorios de alias te permiten recibir correo en cualquier dirección con un prefijo compartido. Comparte tu directorio y cualquiera podrá escribirte sin conocer tu dirección real.</string>

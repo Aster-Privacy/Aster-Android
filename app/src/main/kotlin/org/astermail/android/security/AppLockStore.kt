@@ -133,7 +133,7 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
         mark_session_unlocked()
     }
 
-    fun verify_pin(pin: String): Boolean {
+    fun verify_pin(pin: String, unlock_session: Boolean = true): Boolean {
         if (is_locked_out()) return false
         val raw_hash = prefs.getString(KEY_PIN_HASH, null) ?: return false
         val raw_salt = prefs.getString(KEY_PIN_SALT, null) ?: return false
@@ -144,7 +144,7 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
         if (ok) {
             prefs.edit().putInt(KEY_LOCKOUT_COUNT, 0).putLong(KEY_LOCKOUT_UNTIL, 0L)
                 .putLong(KEY_LOCKOUT_UNTIL_ELAPSED, 0L).apply()
-            mark_session_unlocked()
+            if (unlock_session) mark_session_unlocked()
         } else {
             record_failed_attempt()
         }

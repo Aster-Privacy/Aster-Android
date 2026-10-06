@@ -2258,6 +2258,7 @@
     <string name="app_lock_verify_title">Potwierdź tożsamość</string>
     <string name="app_lock_enter_to_change">Podaj obecny PIN, aby go zmienić.</string>
     <string name="app_lock_enter_to_disable">Podaj PIN, aby wyłączyć blokadę aplikacji.</string>
+    <string name="app_lock_enter_to_enable_biometric">Aby włączyć odblokowywanie biometryczne, podaj PIN.</string>
     <string name="settings_alias_directories">Katalogi aliasów</string>
     <string name="alias_directories">Katalogi aliasów</string>
     <string name="alias_directories_description">Katalogi aliasów pozwalają odbierać pocztę na dowolnym adresie ze wspólnym przedrostkiem. Udostępnij katalog, a każdy skontaktuje się z Tobą bez znajomości prawdziwego adresu.</string>

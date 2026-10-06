@@ -105,8 +105,10 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.security.AppLockStore
+import org.astermail.android.security.BiometricEnrollOrigin
 import org.astermail.android.security.BiometricGatePreparation
 import org.astermail.android.security.BiometricUnlockGate
+import org.astermail.android.security.should_rebind_after_pin
 import kotlin.math.roundToInt
 
 @Composable
@@ -166,6 +168,14 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
         mutableStateOf(BiometricManager.from(context).canAuthenticate(BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS)
     }
     var biometric_prompted by remember { mutableStateOf(false) }
+    var biometric_enrolled by remember {
+        mutableStateOf(
+            run {
+                BiometricUnlockGate.reconcile(context)
+                BiometricUnlockGate.is_enrolled(context)
+            },
+        )
+    }
 
     val wrong_pin_str = stringResource(R.string.app_lock_wrong_pin)
     val locked_out_str = stringResource(R.string.app_lock_locked_out)
@@ -183,15 +193,12 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
 
     fun launch_biometric() {
         val activity = context as? FragmentActivity ?: return
-        val preparation = BiometricUnlockGate.prepare(context)
-        val cipher = when (preparation) {
-            is BiometricGatePreparation.Enroll -> preparation.cipher
-            is BiometricGatePreparation.Verify -> preparation.cipher
-            BiometricGatePreparation.Unavailable -> {
-                biometric_available = false
-                error_msg = biometric_failed_str
-                return
-            }
+        val preparation = BiometricUnlockGate.prepare_unlock(context)
+        val cipher = (preparation as? BiometricGatePreparation.Verify)?.cipher
+        if (cipher == null) {
+            biometric_enrolled = BiometricUnlockGate.is_enrolled(context)
+            error_msg = biometric_failed_str
+            return
         }
         val executor = ContextCompat.getMainExecutor(context)
         val info = BiometricPrompt.PromptInfo.Builder()
@@ -208,16 +215,12 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                     error_msg = biometric_failed_str
                     return
                 }
-                val ok = when (preparation) {
-                    is BiometricGatePreparation.Enroll ->
-                        BiometricUnlockGate.complete_enroll(context, authenticated_cipher)
-                    else ->
-                        BiometricUnlockGate.complete_verify(context, authenticated_cipher)
-                }
+                val ok = BiometricUnlockGate.complete_verify(context, authenticated_cipher)
                 if (ok) {
                     store.mark_session_unlocked()
                 } else {
                     BiometricUnlockGate.reset(context)
+                    biometric_enrolled = false
                     error_msg = biometric_failed_str
                 }
             }
@@ -233,8 +236,24 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
         }).authenticate(info, BiometricPrompt.CryptoObject(cipher))
     }
 
-    LaunchedEffect(biometric_available) {
-        if (biometric_available && !biometric_prompted && BiometricUnlockGate.is_enrolled(context)) {
+    fun finish_pin_unlock() {
+        val activity = context as? FragmentActivity
+        val rebind = should_rebind_after_pin(BiometricUnlockGate.is_rebind_pending(context), biometric_available)
+        if (activity == null || !rebind) {
+            store.mark_session_unlocked()
+            return
+        }
+        BiometricUnlockGate.clear_rebind_pending(context)
+        launch_biometric_enroll(
+            activity = activity,
+            origin = BiometricEnrollOrigin.AFTER_PIN_ON_LOCK_SCREEN,
+            pin_verified = true,
+            biometric_available = biometric_available,
+        ) { store.mark_session_unlocked() }
+    }
+
+    LaunchedEffect(biometric_available, biometric_enrolled) {
+        if (biometric_available && biometric_enrolled && !biometric_prompted) {
             biometric_prompted = true
             launch_biometric()
         }
@@ -245,7 +264,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
         scope.launch {
             verifying = true
             val ok = try {
-                withContext(Dispatchers.Default) { store.verify_pin(value) }
+                withContext(Dispatchers.Default) { store.verify_pin(value, unlock_session = false) }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -253,7 +272,10 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
             } finally {
                 verifying = false
             }
-            if (ok) return@launch
+            if (ok) {
+                finish_pin_unlock()
+                return@launch
+            }
             input = ""
             if (store.is_locked_out()) {
                 locked_out = true
@@ -396,7 +418,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                 }
             }
 
-            if (biometric_available) {
+            if (biometric_available && biometric_enrolled) {
                 Box(
                     modifier = Modifier
                         .clip(SquircleShape(12.dp))

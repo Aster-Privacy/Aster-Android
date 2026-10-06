@@ -2248,6 +2248,7 @@
     <string name="app_lock_verify_title">Identiteit bevestigen</string>
     <string name="app_lock_enter_to_change">Voer je huidige pincode in om die te wijzigen.</string>
     <string name="app_lock_enter_to_disable">Voer je pincode in om de appvergrendeling uit te zetten.</string>
+    <string name="app_lock_enter_to_enable_biometric">Voer je pincode in om biometrisch ontgrendelen aan te zetten.</string>
     <string name="settings_alias_directories">Aliasdirectory\'s</string>
     <string name="alias_directories">Aliasdirectory\'s</string>
     <string name="alias_directories_description">Met aliasdirectory\'s ontvang je e-mail op elk adres dat met een gedeelde sleutel begint. Deel je directory, dan kan iedereen je bereiken zonder dat je je echte adres prijsgeeft.</string>

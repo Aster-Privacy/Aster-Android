@@ -2249,6 +2249,7 @@
     <string name="app_lock_verify_title">Identität bestätigen</string>
     <string name="app_lock_enter_to_change">Geben Sie Ihre aktuelle PIN ein, um sie zu ändern.</string>
     <string name="app_lock_enter_to_disable">Geben Sie Ihre PIN ein, um die App-Sperre abzuschalten.</string>
+    <string name="app_lock_enter_to_enable_biometric">Geben Sie Ihre PIN ein, um das biometrische Entsperren einzuschalten.</string>
     <string name="settings_alias_directories">Alias-Verzeichnisse</string>
     <string name="alias_directories">Alias-Verzeichnisse</string>
     <string name="alias_directories_description">Mit Alias-Verzeichnissen empfangen Sie E-Mails an jeder Adresse mit einem gemeinsamen Präfix. Teilen Sie Ihr Verzeichnis, und jeder kann Sie erreichen, ohne dass Ihre echte Adresse preisgegeben wird.</string>

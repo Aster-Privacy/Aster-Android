@@ -2243,6 +2243,7 @@
     <string name="app_lock_verify_title">验证身份</string>
     <string name="app_lock_enter_to_change">请输入当前 PIN 码以进行更改。</string>
     <string name="app_lock_enter_to_disable">请输入 PIN 码以关闭应用锁。</string>
+    <string name="app_lock_enter_to_enable_biometric">请输入 PIN 码以开启生物识别解锁。</string>
     <string name="settings_alias_directories">别名目录</string>
     <string name="alias_directories">别名目录</string>
     <string name="alias_directories_description">别名目录让您可以使用共享的前缀，在任意地址收信。分享您的目录，任何人都能联系到您，而无需暴露您的真实地址。</string>

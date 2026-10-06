@@ -2243,6 +2243,7 @@
     <string name="app_lock_verify_title">本人確認</string>
     <string name="app_lock_enter_to_change">変更するには現在の PIN を入力してください。</string>
     <string name="app_lock_enter_to_disable">アプリロックを解除するには PIN を入力してください。</string>
+    <string name="app_lock_enter_to_enable_biometric">生体認証でのロック解除をオンにするには PIN を入力してください。</string>
     <string name="settings_alias_directories">エイリアスディレクトリ</string>
     <string name="alias_directories">エイリアスディレクトリ</string>
     <string name="alias_directories_description">エイリアスディレクトリを使うと、共通のキーで始まるどのアドレス宛のメールも受け取れます。ディレクトリを教えれば、本当のアドレスを知られずに連絡してもらえます。</string>

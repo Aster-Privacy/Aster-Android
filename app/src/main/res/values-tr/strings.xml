@@ -2248,6 +2248,7 @@
     <string name="app_lock_verify_title">Kimliğinizi doğrulayın</string>
     <string name="app_lock_enter_to_change">Değiştirmek için mevcut PIN\'inizi girin.</string>
     <string name="app_lock_enter_to_disable">Uygulama kilidini kapatmak için PIN\'inizi girin.</string>
+    <string name="app_lock_enter_to_enable_biometric">Biyometrik kilit açmayı etkinleştirmek için PIN\'inizi girin.</string>
     <string name="settings_alias_directories">Takma ad dizinleri</string>
     <string name="alias_directories">Takma ad dizinleri</string>
     <string name="alias_directories_description">Takma ad dizinleri, ortak bir anahtarla başlayan her adreste posta almanızı sağlar. Dizininizi paylaşın, gerçek adresinizi göstermeden size ulaşılsın.</string>
