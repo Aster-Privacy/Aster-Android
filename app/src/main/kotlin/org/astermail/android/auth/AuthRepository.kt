@@ -1073,6 +1073,7 @@ class AuthRepository @Inject constructor(
         runCatching { mail_repository.clear_account_data() }
         runCatching { current_id?.let { identity_pins.get().clear_account(it) } }
         runCatching { org.astermail.android.util.purge_sensitive_export_files(context, 0L) }
+        runCatching { wipe_decrypted_caches(context.cacheDir) }
         runCatching { org.astermail.android.billing.AttachmentLimits.reset() }
         runCatching { org.astermail.android.billing.AvailablePlansCache.reset() }
         runCatching { org.astermail.android.billing.PlanLimitsCache.reset() }
@@ -1099,9 +1100,15 @@ class AuthRepository @Inject constructor(
         runCatching { database.thread_snapshot_dao().clear_all() }
         current_id?.let { runCatching { org.astermail.android.mail.clear_folder_cache_stats(context, it) } }
         if (remove_account) {
+            val outbox_ids = runCatching {
+                current_id?.let { id -> database.pending_send_dao().get_for_account(id).map { it.id } }
+            }.getOrNull()
             runCatching {
                 current_id?.let { database.pending_send_dao().clear_for_account(it) }
                     ?: database.pending_send_dao().clear_all()
+            }
+            runCatching {
+                wipe_outbox_attachments(context.filesDir, if (current_id == null) null else outbox_ids.orEmpty())
             }
             current_id?.let { runCatching { mail_repository.clear_pending_actions(it) } }
         }
@@ -1680,6 +1687,7 @@ class AuthRepository @Inject constructor(
         mail_repository.clear_account_data()
         runCatching { current_id?.let { identity_pins.get().clear_account(it) } }
         runCatching { org.astermail.android.util.purge_sensitive_export_files(context, 0L) }
+        runCatching { wipe_decrypted_caches(context.cacheDir) }
         runCatching { theme_store.clear() }
         runCatching { org.astermail.android.ui.theme.custom_theme_image.delete(context) }
         runCatching { offer_preferences_store.reset() }
@@ -1705,7 +1713,11 @@ class AuthRepository @Inject constructor(
         if (current_id != null) {
             runCatching { org.astermail.android.mail.clear_folder_cache_stats(context, current_id) }
             runCatching { mail_repository.clear_pending_actions(current_id) }
+            val outbox_ids = runCatching {
+                database.pending_send_dao().get_for_account(current_id).map { it.id }
+            }.getOrDefault(emptyList())
             runCatching { database.pending_send_dao().clear_for_account(current_id) }
+            runCatching { wipe_outbox_attachments(context.filesDir, outbox_ids) }
             account_store.remove(current_id)
             runCatching { session_snapshot_store.remove(current_id) }
         }
