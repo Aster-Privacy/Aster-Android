@@ -1,0 +1,8 @@
+Fixed:
+
+- Confirmation messages no longer stack or freeze at the top of the screen when you act quickly.
+- Undo appears right away after you act on an open email.
+- Inbox rows no longer stay partly open after a swipe.
+- You can add and remove labels while an email is open.
+- The unsubscribe button stays beside its banner text.
+- Not spam has its own icon.
