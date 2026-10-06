@@ -282,9 +282,6 @@ data class SettingsUiState(
     val muted_categories_override: List<String>? = null,
     val default_sender_id: String? = null,
     val default_sender_loaded: Boolean = false,
-    val connection_method: String = "direct",
-    val connection_loading: Boolean = false,
-    val connection_saving: Boolean = false,
     val product_updates: Boolean = true,
     val product_updates_available: Boolean = false,
 )
@@ -849,41 +846,6 @@ class SettingsViewModel @Inject constructor(
             } finally {
                 _state.update { it.copy(revoking_session_ids = it.revoking_session_ids - session_id) }
                 auth_repository.handle_unauthorized_signal(force = true)
-            }
-        }
-    }
-
-    fun load_connection_preference() {
-        viewModelScope.launch {
-            _state.value = _state.value.copy(connection_loading = true)
-            try {
-                val response = settings_api.get_connection_preference()
-                _state.value = _state.value.copy(
-                    connection_method = response.method ?: "direct",
-                    connection_loading = false,
-                )
-            } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(connection_loading = false)
-            }
-        }
-    }
-
-    fun update_connection_preference(method: String) {
-        val previous = _state.value.connection_method
-        if (method == previous) return
-        _state.value = _state.value.copy(connection_method = method, connection_saving = true)
-        viewModelScope.launch {
-            try {
-                settings_api.update_connection_preference(method)
-                _state.value = _state.value.copy(connection_saving = false)
-            } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(
-                    connection_method = previous,
-                    connection_saving = false,
-                    action_result = localized_api_error(context, t, context.getString(R.string.failed_save_connection_preference)),
-                )
             }
         }
     }

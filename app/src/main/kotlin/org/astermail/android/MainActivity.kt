@@ -137,7 +137,6 @@ import org.astermail.android.ui.settings.SettingsScreen
 import org.astermail.android.ui.settings.detail.AboutScreen
 import org.astermail.android.ui.settings.detail.AccessibilityScreen
 import org.astermail.android.ui.settings.detail.ApiKeysScreen
-import org.astermail.android.ui.settings.detail.ConnectionScreen
 import org.astermail.android.ui.settings.detail.DefaultSenderScreen
 import org.astermail.android.ui.settings.detail.SmtpTokensScreen
 import org.astermail.android.ui.settings.detail.DeveloperScreen
@@ -1640,9 +1639,6 @@ composable(routes.settings_detail("family")) {
         }
         composable(routes.settings_detail("family_kids")) {
             KidsReservedScreen(on_back = { back(); Unit })
-        }
-        composable(routes.settings_detail("connection")) {
-            ConnectionScreen(on_back = { back(); Unit })
         }
         composable(routes.settings_detail("smtp_tokens")) {
             SmtpTokensScreen(
