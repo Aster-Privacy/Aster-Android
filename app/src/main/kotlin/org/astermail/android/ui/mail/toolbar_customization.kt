@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.ui.graphics.vector.ImageVector
 import org.astermail.android.R
 import org.astermail.android.design.auto_mirrored
+import org.astermail.android.ui.icons.mail_check_icon
 
 data class ToolbarAction(
     val id: String,
@@ -115,7 +116,7 @@ fun selection_toolbar_action_by_id(id: String): ToolbarAction? =
     selection_toolbar_action_catalog.find { it.id == id }
 
 fun spam_action_icon(is_spam: Boolean): ImageVector =
-    if (is_spam) TablerIcons.ShieldCheck else TablerIcons.AlertTriangle
+    if (is_spam) mail_check_icon else TablerIcons.AlertTriangle
 
 private val star_off_toolbar_action = ToolbarAction("star", R.string.unstar, TablerIcons.StarOff)
 
