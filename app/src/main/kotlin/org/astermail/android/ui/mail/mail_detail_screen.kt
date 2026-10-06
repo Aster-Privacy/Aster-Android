@@ -181,6 +181,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.looks_encrypted
@@ -2387,6 +2389,21 @@ internal fun expanded_message(
         summarize_email_authentication(msg)
     }
 
+    val unsub_info = remember(msg.body_html, msg.body, msg.raw_headers, msg.dkim_result) {
+        detect_unsubscribe_info(
+            html_content = msg.body_html,
+            text_content = msg.body,
+            list_unsubscribe = msg.raw_headers.firstOrNull {
+                it.first.equals("list-unsubscribe", ignoreCase = true)
+            }?.second,
+            list_unsubscribe_post = msg.raw_headers.firstOrNull {
+                it.first.equals("list-unsubscribe-post", ignoreCase = true)
+            }?.second,
+            dkim_result = msg.dkim_result,
+        )
+    }
+    val show_unsub_link = unsubscribe_link_visible(show_unsub, unsub_info)
+
     val card_color = inbox_card_read_color(colors)
     val card_shape = remember(is_first_card, is_last_card) {
         inbox_group_shape(is_first_card, is_last_card)
@@ -2535,6 +2552,16 @@ internal fun expanded_message(
                             Spacer(Modifier.height(4.dp))
                             alias_chip(header_alias_label, modifier = Modifier.widthIn(max = 200.dp))
                         }
+                        AnimatedVisibility(
+                            visible = show_unsub_link,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut(),
+                        ) {
+                            LaunchedEffect(msg.id) {
+                                on_track(msg.sender_email, msg.sender_name, unsub_info.unsubscribe_link)
+                            }
+                            unsubscribe_link(on_unsubscribe = { on_unsubscribe(unsub_info) })
+                        }
                     }
                     Spacer(Modifier.width(AsterSpacing.sm))
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -2626,20 +2653,6 @@ internal fun expanded_message(
             )
         }
 
-        val unsub_info = remember(msg.body_html, msg.body, msg.raw_headers, msg.dkim_result) {
-            detect_unsubscribe_info(
-                html_content = msg.body_html,
-                text_content = msg.body,
-                list_unsubscribe = msg.raw_headers.firstOrNull {
-                    it.first.equals("list-unsubscribe", ignoreCase = true)
-                }?.second,
-                list_unsubscribe_post = msg.raw_headers.firstOrNull {
-                    it.first.equals("list-unsubscribe-post", ignoreCase = true)
-                }?.second,
-                dkim_result = msg.dkim_result,
-            )
-        }
-
         val external_counts = remember(msg.body_html, tracker_report) {
             if (msg.body_html != null) count_external_content(msg.body_html, tracker_report) else ExternalContentCounts(0, 0, 0, 0)
         }
@@ -2648,21 +2661,7 @@ internal fun expanded_message(
             send_failure_banner(reason = msg.send_error)
         }
 
-        val show_unsub_banner = show_unsub && unsub_info.has_unsubscribe
         val show_external_banner = external_counts.total > 0 && !allow_external
-
-        AnimatedVisibility(
-            visible = show_unsub_banner,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut(),
-        ) {
-            LaunchedEffect(msg.id) {
-                on_track(msg.sender_email, msg.sender_name, unsub_info.unsubscribe_link)
-            }
-            unsubscribe_banner(
-                on_unsubscribe = { on_unsubscribe(unsub_info) },
-            )
-        }
 
         AnimatedVisibility(
             visible = show_external_banner,
@@ -3584,20 +3583,31 @@ internal fun compact_banner(
     }
 }
 
+internal fun unsubscribe_link_visible(show_unsub: Boolean, info: UnsubscribeInfo): Boolean =
+    show_unsub && info.has_unsubscribe
+
 @Composable
-internal fun unsubscribe_banner(
+internal fun unsubscribe_link(
     on_unsubscribe: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    compact_banner(
-        icon = TablerIcons.Mail,
-        label = stringResource(R.string.detail_unsubscribe_title),
-    ) {
-        compact_banner_action(
-            label = stringResource(R.string.unsubscribe),
-            primary = true,
-            onClick = on_unsubscribe,
-        )
-    }
+    val colors = AsterMaterial.colors
+    val label = stringResource(R.string.unsubscribe)
+    Text(
+        text = label,
+        color = colors.accent_blue,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Medium,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier
+            .padding(top = 2.dp)
+            .clip(SquircleShape(8.dp))
+            .clickable(role = Role.Button, onClickLabel = label, onClick = on_unsubscribe)
+            .semantics { contentDescription = label }
+            .padding(vertical = 5.dp)
+            .testTag("unsubscribe_link"),
+    )
 }
 
 @Composable
