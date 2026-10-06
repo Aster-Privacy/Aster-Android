@@ -81,6 +81,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.foundation.lazy.LazyColumn
@@ -127,8 +129,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.layout.positionInWindow
@@ -147,6 +153,8 @@ import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.roundToIntRect
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.Dp
@@ -741,6 +749,7 @@ fun MailDetailScreen(
     var show_category_sheet by remember { mutableStateOf(false) }
     val categories_enabled = settings_state.preferences?.inbox_categories_enabled ?: true
     var action_target_id by remember { mutableStateOf<String?>(null) }
+    var action_menu_anchor by remember { mutableStateOf<IntRect?>(null) }
 
     var show_encryption_dropdown by remember { mutableStateOf(false) }
     var hidden_group_revealed by remember(email_id) { mutableStateOf(false) }
@@ -1573,8 +1582,9 @@ fun MailDetailScreen(
                             on_reply = { on_reply(msg.id, thread_ghost_email) },
                             on_reply_all = { on_reply_all(msg.id, thread_ghost_email) },
                             on_forward = { on_forward(msg.id, thread_ghost_email) },
-                            on_more = {
+                            on_more = { bounds ->
                                 action_target_id = msg.id
+                                action_menu_anchor = bounds.takeUnless { it == IntRect.Zero }
                                 show_action_sheet = true
                             },
                             on_attachment_tap = { att ->
@@ -1849,6 +1859,7 @@ fun MailDetailScreen(
                         }
                         bottom_action(TablerIcons.Dots, stringResource(R.string.more)) {
                             action_target_id = null
+                            action_menu_anchor = null
                             show_action_sheet = true
                         }
                     }
@@ -1926,6 +1937,7 @@ fun MailDetailScreen(
                 show_action_sheet = false
                 on_navigate?.invoke("settings/customize_toolbar")
             },
+            anchor = action_menu_anchor,
         )
     }
 
@@ -2323,7 +2335,7 @@ internal fun expanded_message(
     on_reply: () -> Unit,
     on_reply_all: () -> Unit,
     on_forward: () -> Unit,
-    on_more: () -> Unit,
+    on_more: (IntRect) -> Unit,
     on_attachment_tap: (MessageAttachment) -> Unit = {},
     on_attachment_download: (MessageAttachment) -> Unit = {},
     on_attachment_options: (MessageAttachment) -> Unit = {},
@@ -2554,11 +2566,22 @@ internal fun expanded_message(
                                 )
                             }
                         }
+                        val more_coordinates = remember { arrayOfNulls<LayoutCoordinates>(1) }
                         Box(
                             modifier = Modifier
                                 .size(40.dp)
+                                .onGloballyPositioned { more_coordinates[0] = it }
                                 .clip(CircleShape)
-                                .clickable(role = Role.Button, onClick = on_more)
+                                .clickable(role = Role.Button) {
+                                    val coordinates = more_coordinates[0]
+                                    on_more(
+                                        if (coordinates != null && coordinates.isAttached) {
+                                            coordinates.boundsInWindow().roundToIntRect()
+                                        } else {
+                                            IntRect.Zero
+                                        },
+                                    )
+                                }
                                 .testTag("message_more_$message_index"),
                             contentAlignment = Alignment.Center,
                         ) {
@@ -4637,6 +4660,12 @@ private object action_menu_position_provider : PopupPositionProvider {
 }
 
 private val action_menu_shadow_gutter = 22.dp
+private val action_menu_anchor_gap = 4.dp
+private val action_menu_screen_margin = 12.dp
+
+private class action_menu_placement {
+    var upward by mutableStateOf(false)
+}
 
 @Composable
 internal fun action_menu_sheet(
@@ -4656,8 +4685,11 @@ internal fun action_menu_sheet(
     on_snooze: () -> Unit = {},
     on_label: () -> Unit = {},
     on_customize_toolbar: () -> Unit = {},
+    anchor: IntRect? = null,
 ) {
     val colors = AsterMaterial.colors
+    val parent_view = LocalView.current
+    val placement = remember { action_menu_placement() }
     val visible_state = remember { MutableTransitionState(false) }
     visible_state.targetState = expanded
     if (!visible_state.currentState && !visible_state.targetState) return
@@ -4673,6 +4705,94 @@ internal fun action_menu_sheet(
         onDismissRequest = on_close,
         properties = PopupProperties(focusable = true),
     ) {
+        val popup_view = LocalView.current
+        val layout_direction = LocalLayoutDirection.current
+        val bars = WindowInsets.systemBars
+        val origin = when {
+            anchor == null -> TransformOrigin(1f, 1f)
+            layout_direction == LayoutDirection.Rtl -> TransformOrigin(0f, if (placement.upward) 1f else 0f)
+            else -> TransformOrigin(1f, if (placement.upward) 1f else 0f)
+        }
+        val menu: @Composable (Modifier) -> Unit = { menu_modifier ->
+            AnimatedVisibility(
+                visibleState = visible_state,
+                modifier = menu_modifier,
+                enter = fadeIn(
+                        animationSpec = tween(
+                            menu_pop_fade_enter,
+                            easing = AsterEasing.menu_enter,
+                        ),
+                    ) +
+                        scaleIn(
+                            animationSpec = tween(
+                                menu_pop_enter,
+                                easing = AsterEasing.menu_enter,
+                            ),
+                            initialScale = org.astermail.android.design.AsterScale.menu_enter_from,
+                            transformOrigin = origin,
+                        ),
+                    exit = fadeOut(animationSpec = tween(menu_pop_fade_exit)) +
+                        scaleOut(
+                            animationSpec = tween(
+                                menu_pop_exit,
+                                easing = AsterEasing.menu_exit,
+                            ),
+                            targetScale = org.astermail.android.design.AsterScale.menu_exit_to,
+                            transformOrigin = origin,
+                        ),
+                ) {
+                    aster_menu_surface(
+                        modifier = Modifier.testTag("action_menu"),
+                        min_width = 240.dp,
+                        max_width = 320.dp,
+                        max_height = 460.dp,
+                    ) {
+                        aster_menu_item(stringResource(R.string.reply), on_reply, icon = TablerIcons.ArrowBackUp.auto_mirrored())
+                        aster_menu_item(stringResource(R.string.reply_all), on_reply_all, icon = TablerIcons.ArrowsLeft)
+                        aster_menu_item(stringResource(R.string.forward), on_forward, icon = TablerIcons.MailForward)
+                        aster_menu_item(
+                            if (is_starred) stringResource(R.string.unstar) else stringResource(R.string.star),
+                            on_star,
+                            icon = TablerIcons.Star,
+                        )
+                        aster_menu_item(stringResource(R.string.mark_as_unread), on_mark_unread, icon = TablerIcons.Mail)
+                        aster_menu_item(stringResource(R.string.label), on_label, icon = TablerIcons.Tag)
+                        aster_menu_item(stringResource(R.string.snooze), on_snooze, icon = TablerIcons.Moon)
+                        aster_menu_item(
+                            if (is_archived) stringResource(R.string.swipe_move_to_inbox) else stringResource(R.string.swipe_archive),
+                            on_archive,
+                            icon = if (is_archived) TablerIcons.Inbox else TablerIcons.Archive,
+                        )
+                        if (is_spam) {
+                            aster_menu_item(
+                                stringResource(R.string.swipe_not_spam),
+                                on_spam,
+                                icon = spam_action_icon(is_spam = true),
+                                tint = colors.accent_blue,
+                            )
+                        } else {
+                            aster_menu_item(
+                                stringResource(R.string.report_spam),
+                                on_spam,
+                                icon = spam_action_icon(is_spam = false),
+                                destructive = true,
+                            )
+                        }
+                        aster_menu_item(
+                            stringResource(R.string.move_to_trash),
+                            on_trash,
+                            icon = TablerIcons.Trash,
+                            destructive = true,
+                        )
+                        aster_menu_item(
+                            stringResource(R.string.customize_toolbar),
+                            on_customize_toolbar,
+                            icon = TablerIcons.Adjustments,
+                            tint = colors.text_secondary,
+                        )
+                    }
+                }
+        }
         Box(modifier = Modifier.fillMaxSize()) {
             Box(
                 modifier = Modifier
@@ -4683,85 +4803,52 @@ internal fun action_menu_sheet(
                         onClick = on_close,
                     ),
             )
-            AnimatedVisibility(
-                visibleState = visible_state,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .navigationBarsPadding()
-                    .padding(end = action_menu_shadow_gutter, bottom = action_menu_shadow_gutter),
-                enter = fadeIn(
-                    animationSpec = tween(
-                        menu_pop_fade_enter,
-                        easing = AsterEasing.menu_enter,
-                    ),
-                ) +
-                    scaleIn(
-                        animationSpec = tween(
-                            menu_pop_enter,
-                            easing = AsterEasing.menu_enter,
+            if (anchor == null) {
+                menu(
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .navigationBarsPadding()
+                        .padding(end = action_menu_shadow_gutter, bottom = action_menu_shadow_gutter),
+                )
+            } else {
+                Layout(
+                    content = { menu(Modifier) },
+                    modifier = Modifier.fillMaxSize(),
+                ) { measurables, constraints ->
+                    val margin = action_menu_screen_margin.roundToPx()
+                    val gap = action_menu_anchor_gap.roundToPx()
+                    val top_limit = bars.getTop(this) + margin
+                    val bottom_limit = constraints.maxHeight - bars.getBottom(this) - margin
+                    val placeable = measurables.first().measure(
+                        Constraints(
+                            maxWidth = (constraints.maxWidth - margin * 2).coerceAtLeast(0),
+                            maxHeight = (bottom_limit - top_limit).coerceAtLeast(0),
                         ),
-                        initialScale = org.astermail.android.design.AsterScale.menu_enter_from,
-                        transformOrigin = TransformOrigin(1f, 1f),
-                    ),
-                exit = fadeOut(animationSpec = tween(menu_pop_fade_exit)) +
-                    scaleOut(
-                        animationSpec = tween(
-                            menu_pop_exit,
-                            easing = AsterEasing.menu_exit,
-                        ),
-                        targetScale = org.astermail.android.design.AsterScale.menu_exit_to,
-                        transformOrigin = TransformOrigin(1f, 1f),
-                    ),
-            ) {
-                aster_menu_surface(
-                    modifier = Modifier.testTag("action_menu"),
-                    min_width = 240.dp,
-                    max_width = 320.dp,
-                    max_height = 460.dp,
-                ) {
-                    aster_menu_item(stringResource(R.string.reply), on_reply, icon = TablerIcons.ArrowBackUp.auto_mirrored())
-                    aster_menu_item(stringResource(R.string.reply_all), on_reply_all, icon = TablerIcons.ArrowsLeft)
-                    aster_menu_item(stringResource(R.string.forward), on_forward, icon = TablerIcons.MailForward)
-                    aster_menu_item(
-                        if (is_starred) stringResource(R.string.unstar) else stringResource(R.string.star),
-                        on_star,
-                        icon = TablerIcons.Star,
                     )
-                    aster_menu_item(stringResource(R.string.mark_as_unread), on_mark_unread, icon = TablerIcons.Mail)
-                    aster_menu_item(stringResource(R.string.label), on_label, icon = TablerIcons.Tag)
-                    aster_menu_item(stringResource(R.string.snooze), on_snooze, icon = TablerIcons.Moon)
-                    aster_menu_item(
-                        if (is_archived) stringResource(R.string.swipe_move_to_inbox) else stringResource(R.string.swipe_archive),
-                        on_archive,
-                        icon = if (is_archived) TablerIcons.Inbox else TablerIcons.Archive,
-                    )
-                    if (is_spam) {
-                        aster_menu_item(
-                            stringResource(R.string.swipe_not_spam),
-                            on_spam,
-                            icon = spam_action_icon(is_spam = true),
-                            tint = colors.accent_blue,
-                        )
-                    } else {
-                        aster_menu_item(
-                            stringResource(R.string.report_spam),
-                            on_spam,
-                            icon = spam_action_icon(is_spam = false),
-                            destructive = true,
-                        )
+                    layout(constraints.maxWidth, constraints.maxHeight) {
+                        val parent_screen = IntArray(2).also { parent_view.getLocationOnScreen(it) }
+                        val parent_window = IntArray(2).also { parent_view.getLocationInWindow(it) }
+                        val popup_screen = IntArray(2).also { popup_view.getLocationOnScreen(it) }
+                        val dx = parent_screen[0] - parent_window[0] - popup_screen[0]
+                        val dy = parent_screen[1] - parent_window[1] - popup_screen[1]
+                        val left = anchor.left + dx
+                        val right = anchor.right + dx
+                        val top = anchor.top + dy
+                        val bottom = anchor.bottom + dy
+                        val width = constraints.maxWidth
+                        val raw_x = if (layout_direction == LayoutDirection.Rtl) left else right - placeable.width
+                        val x = raw_x.coerceIn(margin, (width - placeable.width - margin).coerceAtLeast(margin))
+                        val below = bottom + gap
+                        val above = top - gap - placeable.height
+                        val upward = below + placeable.height > bottom_limit && above >= top_limit
+                        if (placement.upward != upward) placement.upward = upward
+                        val y = if (upward) {
+                            above
+                        } else {
+                            below.coerceAtMost((bottom_limit - placeable.height).coerceAtLeast(top_limit))
+                        }
+                        placeable.place(x, y)
                     }
-                    aster_menu_item(
-                        stringResource(R.string.move_to_trash),
-                        on_trash,
-                        icon = TablerIcons.Trash,
-                        destructive = true,
-                    )
-                    aster_menu_item(
-                        stringResource(R.string.customize_toolbar),
-                        on_customize_toolbar,
-                        icon = TablerIcons.Adjustments,
-                        tint = colors.text_secondary,
-                    )
                 }
             }
         }
