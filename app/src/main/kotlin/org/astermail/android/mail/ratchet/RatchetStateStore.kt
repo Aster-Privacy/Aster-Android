@@ -67,6 +67,17 @@ class RatchetStateStore @Inject constructor(
         prefs.edit().remove(key_for(conversation_id)).commit()
     }
 
+    suspend fun sync_floor(conversation_id: String): Long = mutex.withLock {
+        prefs.getLong(floor_key_for(conversation_id), 0L)
+    }
+
+    suspend fun raise_sync_floor(conversation_id: String, sync_version: Long): Unit = mutex.withLock {
+        val key = floor_key_for(conversation_id)
+        if (sync_version > prefs.getLong(key, 0L)) {
+            prefs.edit().putLong(key, sync_version).commit()
+        }
+    }
+
     fun derive_state_encryption_key(): ByteArray? =
         state_encryption_key_candidates().firstOrNull()
 
@@ -124,6 +135,8 @@ class RatchetStateStore @Inject constructor(
     }
 
     private fun key_for(conversation_id: String): String = "ratchet_state_$conversation_id"
+
+    private fun floor_key_for(conversation_id: String): String = "ratchet_sync_floor_$conversation_id"
 
     companion object {
         private const val prefs_name = "aster_ratchet_state_v1"
