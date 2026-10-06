@@ -6093,6 +6093,8 @@ internal fun email_html_view(
     val translate_active = translate_active_early
     val translate_active_ref = remember { booleanArrayOf(false) }
     translate_active_ref[0] = translate_active
+    val allow_external_ref = remember { booleanArrayOf(false) }
+    allow_external_ref[0] = allow_external
     val cache_key = remember(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links) { ((((html_cache.key(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) * 31L + (if (dyslexia_font) 1L else 0L)) * 31L + email_font_id.hashCode().toLong()) * 31L + text_zoom.toLong()) * 31L + sanitize_options.hashCode().toLong()) * 31L + (if (underline_links) 1L else 0L) }
     var prebuilt_html by remember(html_hash, allow_external, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links) { mutableStateOf<String?>(if (html.isEmpty()) null else html_cache.get(cache_key)) }
     var loaded_built by remember { mutableStateOf("") }
@@ -6577,10 +6579,25 @@ internal fun email_html_view(
                     }
                     return null
                 }
-                if (req_uri.scheme != "https") return null
-                if (req_uri.host != "app.astermail.org") return null
-                if (req_uri.path != "/api/images/v1/proxy") return null
-                if (req_uri.getQueryParameter("url").isNullOrBlank()) return null
+                if (request.isForMainFrame) return null
+                val request_action = mail_body_request_action(
+                    scheme = req_uri.scheme,
+                    host = req_uri.host,
+                    path = req_uri.path,
+                    proxied_url = try { req_uri.getQueryParameter("url") } catch (_: Throwable) { null },
+                    allow_external = allow_external_ref[0],
+                )
+                if (request_action == MailBodyRequestAction.LOCAL) return null
+                if (request_action == MailBodyRequestAction.BLOCK) {
+                    return android.webkit.WebResourceResponse(
+                        "text/plain",
+                        null,
+                        403,
+                        "Forbidden",
+                        mapOf("Cache-Control" to "no-store"),
+                        java.io.ByteArrayInputStream(ByteArray(0)),
+                    )
+                }
                 fun image_response(
                     content_type: String,
                     stream: java.io.InputStream,

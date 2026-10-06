@@ -302,10 +302,91 @@ object EmailHtmlSanitizer {
         RegexOption.IGNORE_CASE,
     )
 
-    private val css_remote_url = Regex(
-        """url\(\s*["']?(?!data:|cid:|#)[^"')\s]+["']?\s*\)""",
-        RegexOption.IGNORE_CASE,
-    )
+    private val css_url_open = Regex("""url\(""", RegexOption.IGNORE_CASE)
+    private val css_local_target = Regex("""^(?:data:|cid:|#)""", RegexOption.IGNORE_CASE)
+    private val css_hex_escape = Regex("""\\([0-9a-fA-F]{1,6})(\r\n|[ \t\r\n\u000C])?""")
+    private val css_char_escape = Regex("""\\([g-zG-Z\-])""")
+    private val css_bare_import = Regex("""@import\b[^;]*;?""", RegexOption.IGNORE_CASE)
+    private val css_any_image_set = Regex("""(?:-webkit-)?image-set\s*\([^)]*\)""", RegexOption.IGNORE_CASE)
+    private val css_any_cross_fade = Regex("""(?:-webkit-)?cross-fade\s*\([^)]*\)""", RegexOption.IGNORE_CASE)
+
+    private fun is_plain_css_letter(code: Int): Boolean =
+        (code in 'a'.code..'z'.code) || (code in 'A'.code..'Z'.code) || code == '-'.code
+
+    fun decode_css_escapes(css: String): String {
+        if (!css.contains('\\')) return css
+        val hex_decoded = css_hex_escape.replace(css) { m ->
+            val code = m.groupValues[1].toIntOrNull(16)
+            if (code != null && is_plain_css_letter(code)) code.toChar().toString() else m.value
+        }
+        return css_char_escape.replace(hex_decoded) { m -> m.groupValues[1] }
+    }
+
+    private data class CssUrlSpan(val start: Int, val end: Int, val target: String)
+
+    private fun css_url_spans(css: String): List<CssUrlSpan> {
+        val spans = mutableListOf<CssUrlSpan>()
+        var from = 0
+        while (from < css.length) {
+            val open = css_url_open.find(css, from) ?: break
+            var index = open.range.last + 1
+            while (index < css.length && css[index].isWhitespace()) index++
+            val quote = css.getOrNull(index)?.takeIf { it == '"' || it == '\'' }
+            val target = StringBuilder()
+            if (quote != null) {
+                index++
+                while (index < css.length && css[index] != quote) {
+                    if (css[index] == '\\' && index + 1 < css.length) {
+                        target.append(css[index + 1])
+                        index += 2
+                        continue
+                    }
+                    target.append(css[index])
+                    index++
+                }
+                if (index < css.length) index++
+                while (index < css.length && css[index] != ')') index++
+            } else {
+                while (index < css.length && css[index] != ')') {
+                    target.append(css[index])
+                    index++
+                }
+            }
+            val end = if (index < css.length) index + 1 else css.length
+            spans.add(CssUrlSpan(open.range.first, end, target.toString().trim()))
+            from = end
+        }
+        return spans
+    }
+
+    fun has_remote_css_url(css: String): Boolean {
+        val decoded = decode_css_escapes(strip_css_comments(css))
+        if (css_bare_import.containsMatchIn(decoded)) return true
+        if (css_any_image_set.containsMatchIn(decoded)) return true
+        if (css_any_cross_fade.containsMatchIn(decoded)) return true
+        return css_url_spans(decoded).any { !css_local_target.containsMatchIn(it.target) }
+    }
+
+    fun strip_remote_css_urls(css: String): String {
+        val decoded = decode_css_escapes(strip_css_comments(css))
+        val spans = css_url_spans(decoded)
+        val out = StringBuilder(decoded.length)
+        var cursor = 0
+        for (span in spans) {
+            out.append(decoded, cursor, span.start)
+            if (css_local_target.containsMatchIn(span.target)) {
+                out.append(decoded, span.start, span.end)
+            } else {
+                out.append("none")
+            }
+            cursor = span.end
+        }
+        out.append(decoded, cursor, decoded.length)
+        return out.toString()
+            .replace(css_any_image_set, "none")
+            .replace(css_any_cross_fade, "none")
+            .replace(css_bare_import, "")
+    }
 
     fun strip_css_comments(css: String): String {
         if (!css.contains("/*")) return css
@@ -357,15 +438,15 @@ object EmailHtmlSanitizer {
             }
         }
         for (el in doc.select("[style]")) {
-            val style = strip_css_comments(el.attr("style"))
-            if (css_remote_url.containsMatchIn(style)) {
-                el.attr("style", css_remote_url.replace(style, "none"))
+            val style = el.attr("style")
+            if (has_remote_css_url(style)) {
+                el.attr("style", strip_remote_css_urls(style))
                 apply_bg_placeholder(el)
             }
         }
         for (st in doc.select("style")) {
-            val css = strip_css_comments(st.data())
-            if (css_remote_url.containsMatchIn(css)) st.html(css_remote_url.replace(css, "none"))
+            val css = st.data()
+            if (has_remote_css_url(css)) st.html(strip_remote_css_urls(css))
         }
         return doc.body().html()
     }
@@ -748,7 +829,9 @@ object EmailHtmlSanitizer {
         sanitize_until_stable(css) { sanitize_style_value_pass(it) }
 
     private fun sanitize_style_value_pass(css: String): String {
-        var out = strip_css_comments(css)
+        var out = decode_css_escapes(strip_css_comments(css))
+        out = out.replace(css_any_image_set, "none")
+        out = out.replace(css_any_cross_fade, "none")
         out = out.replace("<", "")
         out = out.replace(css_expression_regex, "blocked(")
         out = out.replace(css_javascript_regex, "blocked:")
@@ -766,13 +849,13 @@ object EmailHtmlSanitizer {
         sanitize_until_stable(css) { sanitize_css_block_pass(it, options) }
 
     private fun sanitize_css_block_pass(css: String, options: SanitizeOptions): String {
-        var out = strip_css_comments(css)
+        var out = decode_css_escapes(strip_css_comments(css))
         if (options.block_remote_css) {
             out = out.replace(css_import_regex, "")
         }
         if (options.block_remote_fonts) {
             out = font_face_block.replace(out) { m ->
-                if (css_remote_url.containsMatchIn(m.value)) "" else m.value
+                if (css_url_spans(m.value).any { !css_local_target.containsMatchIn(it.target) }) "" else m.value
             }
         }
         out = out.replace(css_charset_regex, "")
