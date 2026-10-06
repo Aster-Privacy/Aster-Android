@@ -3601,7 +3601,6 @@ internal fun unsubscribe_link(
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
         modifier = modifier
-            .padding(top = 2.dp)
             .clip(SquircleShape(8.dp))
             .clickable(role = Role.Button, onClickLabel = label, onClick = on_unsubscribe)
             .semantics { contentDescription = label }

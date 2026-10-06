@@ -50,6 +50,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -303,7 +304,12 @@ class UnsubscribeLinkTest {
 
     private fun capture(dark: Boolean) {
         val theme = if (dark) "dark" else "light"
+        show(listOf(newsletter()), dark = !dark, wait_for_bodies = true)
         show(listOf(newsletter()), dark = dark, wait_for_bodies = true)
+        repeat(20) {
+            compose_rule.waitForIdle()
+            Thread.sleep(250)
+        }
         compose_rule.onAllNodesWithTag("unsubscribe_link").assertCountEquals(1)
         save_screen("unsubscribe_link_pt_$theme")
         compose_rule.onNodeWithTag("unsubscribe_link").performClick()
