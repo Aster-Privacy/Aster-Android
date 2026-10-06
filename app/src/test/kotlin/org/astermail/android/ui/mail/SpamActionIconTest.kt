@@ -24,7 +24,12 @@ package org.astermail.android.ui.mail
 import compose.icons.TablerIcons
 import compose.icons.tablericons.AlertTriangle
 import compose.icons.tablericons.Ban
+import compose.icons.tablericons.Inbox
+import compose.icons.tablericons.Shield
 import compose.icons.tablericons.ShieldCheck
+import compose.icons.tablericons.ShieldLock
+import compose.icons.tablericons.ShieldOff
+import compose.icons.tablericons.ShieldX
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
@@ -32,9 +37,29 @@ import org.junit.Test
 class SpamActionIconTest {
 
     @Test
-    fun not_spam_is_a_shield_check_and_report_spam_is_a_warning_triangle() {
-        assertEquals(TablerIcons.ShieldCheck, spam_action_icon(is_spam = true))
+    fun not_spam_is_the_inbox_and_report_spam_is_a_warning_triangle() {
+        assertEquals(TablerIcons.Inbox, spam_action_icon(is_spam = true))
         assertEquals(TablerIcons.AlertTriangle, spam_action_icon(is_spam = false))
+    }
+
+    @Test
+    fun not_spam_never_borrows_the_tracking_protection_shield() {
+        assertNotEquals(TablerIcons.ShieldCheck, spam_action_icon(is_spam = true))
+        listOf(
+            TablerIcons.Shield,
+            TablerIcons.ShieldCheck,
+            TablerIcons.ShieldLock,
+            TablerIcons.ShieldOff,
+            TablerIcons.ShieldX,
+        ).forEach { shield ->
+            assertNotEquals(shield, spam_action_icon(is_spam = true))
+            assertNotEquals(shield, spam_action_icon(is_spam = false))
+        }
+    }
+
+    @Test
+    fun not_spam_and_report_spam_stay_distinct() {
+        assertNotEquals(spam_action_icon(is_spam = false), spam_action_icon(is_spam = true))
     }
 
     @Test

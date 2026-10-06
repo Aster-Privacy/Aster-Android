@@ -115,7 +115,7 @@ fun selection_toolbar_action_by_id(id: String): ToolbarAction? =
     selection_toolbar_action_catalog.find { it.id == id }
 
 fun spam_action_icon(is_spam: Boolean): ImageVector =
-    if (is_spam) TablerIcons.ShieldCheck else TablerIcons.AlertTriangle
+    if (is_spam) TablerIcons.Inbox else TablerIcons.AlertTriangle
 
 private val star_off_toolbar_action = ToolbarAction("star", R.string.unstar, TablerIcons.StarOff)
 
