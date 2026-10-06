@@ -29,31 +29,32 @@ class RatchetIdentityPinRulesTest {
 
     @Test
     fun first_sighting_pins_when_nothing_is_stored() {
-        assertEquals(IdentityPinDecision.PIN_FIRST, RatchetIdentityPinRules.decide(null, "fp-a", confirmed = false))
-        assertEquals(IdentityPinDecision.PIN_FIRST, RatchetIdentityPinRules.decide("", "fp-a", confirmed = false))
-        assertEquals(IdentityPinDecision.PIN_FIRST, RatchetIdentityPinRules.decide("   ", "fp-a", confirmed = true))
+        assertEquals(IdentityPinDecision.PIN_FIRST, RatchetIdentityPinRules.decide(null, "fp-a"))
+        assertEquals(IdentityPinDecision.PIN_FIRST, RatchetIdentityPinRules.decide("", "fp-a"))
+        assertEquals(IdentityPinDecision.PIN_FIRST, RatchetIdentityPinRules.decide("   ", "fp-a"))
     }
 
     @Test
     fun matching_fingerprint_keeps_the_pin() {
-        assertEquals(IdentityPinDecision.KEEP, RatchetIdentityPinRules.decide("fp-a", "fp-a", confirmed = false))
-        assertEquals(IdentityPinDecision.KEEP, RatchetIdentityPinRules.decide("fp-a", "fp-a", confirmed = true))
+        assertEquals(IdentityPinDecision.KEEP, RatchetIdentityPinRules.decide("fp-a", "fp-a"))
+        assertEquals(IdentityPinDecision.KEEP, RatchetIdentityPinRules.decide("fp-a", "fp-a"))
     }
 
     @Test
     fun unconfirmed_drift_never_overwrites_the_pin() {
-        assertEquals(IdentityPinDecision.FLAG_DRIFT, RatchetIdentityPinRules.decide("fp-a", "fp-b", confirmed = false))
+        assertEquals(IdentityPinDecision.FLAG_DRIFT, RatchetIdentityPinRules.decide("fp-a", "fp-b"))
     }
 
     @Test
-    fun confirmed_drift_replaces_the_pin() {
-        assertEquals(IdentityPinDecision.REPLACE, RatchetIdentityPinRules.decide("fp-a", "fp-b", confirmed = true))
+    fun no_decision_overwrites_an_existing_pin() {
+        assertFalse(IdentityPinDecision.values().any { it.name == "REPLACE" })
+        assertEquals(IdentityPinDecision.FLAG_DRIFT, RatchetIdentityPinRules.decide("fp-a", "fp-b"))
     }
 
     @Test
-    fun chained_decrypt_always_records_the_identity() {
-        assertTrue(RatchetIdentityPinRules.records_identity(IdentitySighting.CHAINED, bootstrap_already_accepted = false))
-        assertTrue(RatchetIdentityPinRules.records_identity(IdentitySighting.CHAINED, bootstrap_already_accepted = true))
+    fun chained_decrypt_never_records_the_envelope_identity() {
+        assertFalse(RatchetIdentityPinRules.records_identity(IdentitySighting.CHAINED, bootstrap_already_accepted = false))
+        assertFalse(RatchetIdentityPinRules.records_identity(IdentitySighting.CHAINED, bootstrap_already_accepted = true))
     }
 
     @Test

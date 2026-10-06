@@ -280,7 +280,7 @@ class RatchetDecryptor @Inject constructor(
 
             val sighting = if (chained) IdentitySighting.CHAINED else IdentitySighting.BOOTSTRAP
             if (RatchetIdentityPinRules.records_identity(sighting, bootstrap_already_accepted)) {
-                record_identity_pin(conversation_id, sender_email, envelope.sender_identity_key, chained)
+                record_identity_pin(conversation_id, sender_email, envelope.sender_identity_key)
             }
             if (is_fresh_bootstrap || sighting == IdentitySighting.BOOTSTRAP) {
                 runCatching {
@@ -324,7 +324,6 @@ class RatchetDecryptor @Inject constructor(
         conversation_id: String,
         sender_email: String,
         sender_identity_key: String,
-        confirmed: Boolean = false,
     ) {
         val outcome = runCatching {
             identity_pins.record(
@@ -332,7 +331,6 @@ class RatchetDecryptor @Inject constructor(
                 sender_email = sender_email,
                 sender_identity_key_b64 = sender_identity_key,
                 observed_at = System.currentTimeMillis(),
-                confirmed = confirmed,
             )
         }.getOrNull()
         if (outcome == IdentityPinOutcome.CHANGED && org.astermail.android.BuildConfig.DEBUG) {
