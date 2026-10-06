@@ -49,4 +49,15 @@ class TranslationRuntimeTest {
     fun allows_translation_when_the_version_is_unknown() {
         assertTrue(TranslationRuntime.major_supported(null))
     }
+
+    @Test
+    fun names_the_app_that_provides_the_webview() {
+        assertEquals("Chrome", TranslationRuntime.display_name(" Chrome "))
+    }
+
+    @Test
+    fun falls_back_to_the_standard_webview_name_when_the_label_is_missing() {
+        assertEquals("Android System WebView", TranslationRuntime.display_name(null))
+        assertEquals("Android System WebView", TranslationRuntime.display_name("  "))
+    }
 }
