@@ -95,4 +95,19 @@ class CompactBannerLayoutTest {
         assertTrue(inline(available_width = 375, actions_width = 80, text_width = 200) { measured = true })
         assertFalse(measured)
     }
+
+    @Test
+    fun `a summary that fits on one line keeps the actions beside it`() {
+        assertTrue(compact_banner_summary_inline(available_width = 347, gap = gap, actions_width = 130, one_line_width = 205, two_row_width = 132))
+    }
+
+    @Test
+    fun `a summary on two rows keeps the actions beside it when one line is too wide`() {
+        assertTrue(compact_banner_summary_inline(available_width = 347, gap = gap, actions_width = 147, one_line_width = 262, two_row_width = 167))
+    }
+
+    @Test
+    fun `a summary too wide even on two rows moves the actions under it`() {
+        assertFalse(compact_banner_summary_inline(available_width = 347, gap = gap, actions_width = 200, one_line_width = 330, two_row_width = 230))
+    }
 }
