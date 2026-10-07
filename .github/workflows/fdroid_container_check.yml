@@ -23,6 +23,9 @@ on:
       - '.github/workflows/fdroid_container_check.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   fdroid_container:
     runs-on: ubuntu-latest
