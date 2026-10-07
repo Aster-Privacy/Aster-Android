@@ -21,6 +21,8 @@
 
 package org.astermail.android.auth
 
+import org.astermail.android.api.ApiError
+import org.bouncycastle.bcpg.ArmoredOutputStream
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -33,6 +35,21 @@ class PgpRepublishPolicyTest {
     private val legacy_public_key = "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nxjMEasZN8BYJKwYBBAHaRw8BAQdAIO0/XAsSqime0+2L7zpFMXSgARaDGlHh\nNMX55nLQfejNF1Rlc3QgPHRlc3RAZXhhbXBsZS5jb20+wsATBBMWCgCFBYJq\nxk3wAwsJBwkQZssM4TsRRj9FFAAAAAAAHAAgc2FsdEBub3RhdGlvbnMub3Bl\nbnBncGpzLm9yZw40zfldLV55EuMpddODAxYbLMK0nRbEHphNUgtAPGyiBRUK\nCA4MBBYAAgECGQECmwMCHgEWIQT0LnjpjkFfi/sfrq5mywzhOxFGPwAAl0MB\nAKr1BBy5gKOZ8mRrkzOSS0ZoF/dDd4dIntrWXolbV4DYAP93q6uuTrGpd6mv\nkl04nQK/W6WDi2hzQvIM9Lyb3l8JAs44BGrGTfASCisGAQQBl1UBBQEBB0Be\nnRhW9bGJ8a82/lRPFE9IQ05ikNx47hzfSfjI5dubXAMBCAfCvgQYFgoAcAWC\nasZN8AkQZssM4TsRRj9FFAAAAAAAHAAgc2FsdEBub3RhdGlvbnMub3BlbnBn\ncGpzLm9yZ4WmywfzX0GS1PmSiXc5BcKWQ4RoOQbQJwt8gdHyAUvrApsMFiEE\n9C546Y5BX4v7H66uZssM4TsRRj8AAN62AQCACIu5KvPOhsz0yY6rpVIWL/S1\nPJ8by1o+QJw5CePf3QD/Tu1sQ8ssYRhzTW9SOf4KWNmd8XUjg6IiuYxrjk0j\nCAk=\n=9wbt\n-----END PGP PUBLIC KEY BLOCK-----\n"
 
     private val local_fingerprint = "69679760F85854F309B64BD56A297D62F9684B41"
+
+    private val legacy_primary_with_modern_subkey =
+        "xjMEYAAAABYJKwYBBAHaRw8BAQdABQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQXOJgRgAAAAGQcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcH"
+
+    private val modern_v4_secret_key =
+        "xUkEYAAAABsHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwBg"
+
+    private val modern_v6_public_key =
+        "xioGYAAAABsAAAAgCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQk="
+
+    private fun armor(packets_b64: String): String {
+        val out = java.io.ByteArrayOutputStream()
+        ArmoredOutputStream(out).use { it.write(java.util.Base64.getDecoder().decode(packets_b64)) }
+        return out.toString(Charsets.UTF_8.name())
+    }
 
     @Test
     fun modern_algorithm_ids_on_v4_are_non_standard() {
@@ -59,6 +76,31 @@ class PgpRepublishPolicyTest {
     @Test
     fun armored_legacy_key_is_not_flagged() {
         assertFalse(armored_pgp_key_is_non_standard(legacy_public_key))
+    }
+
+    @Test
+    fun modern_v4_subkey_under_legacy_primary_is_detected() {
+        assertTrue(armored_pgp_key_is_non_standard(armor(legacy_primary_with_modern_subkey)))
+    }
+
+    @Test
+    fun armored_modern_v4_secret_key_is_detected() {
+        assertTrue(armored_pgp_key_is_non_standard(armor(modern_v4_secret_key)))
+    }
+
+    @Test
+    fun armored_v6_key_with_modern_algorithm_is_not_flagged() {
+        assertFalse(armored_pgp_key_is_non_standard(armor(modern_v6_public_key)))
+    }
+
+    @Test
+    fun only_network_and_server_failures_are_retried() {
+        assertTrue(published_pgp_key_lookup_is_transient(ApiError.NetworkError))
+        assertTrue(published_pgp_key_lookup_is_transient(ApiError.ServerError(503)))
+        assertTrue(published_pgp_key_lookup_is_transient(java.net.SocketTimeoutException()))
+        assertFalse(published_pgp_key_lookup_is_transient(ApiError.UnauthorizedError))
+        assertFalse(published_pgp_key_lookup_is_transient(ApiError.ForbiddenError()))
+        assertFalse(published_pgp_key_lookup_is_transient(IllegalStateException()))
     }
 
     @Test

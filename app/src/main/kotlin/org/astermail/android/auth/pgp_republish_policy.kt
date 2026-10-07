@@ -21,6 +21,7 @@
 
 package org.astermail.android.auth
 
+import org.astermail.android.api.ApiError
 import org.bouncycastle.openpgp.PGPPublicKey
 import org.bouncycastle.openpgp.PGPPublicKeyRing
 import org.bouncycastle.openpgp.PGPSecretKeyRing
@@ -71,6 +72,14 @@ fun armored_pgp_key_is_non_standard(armored_key: String): Boolean = try {
     keys.any { pgp_key_packet_is_non_standard(it.version, it.algorithm) }
 } catch (_: Throwable) {
     false
+}
+
+fun published_pgp_key_lookup_is_transient(error: Throwable): Boolean = when (error) {
+    is ApiError.NetworkError,
+    is ApiError.ServerError,
+    is java.io.IOException,
+    -> true
+    else -> false
 }
 
 fun decide_pgp_republish(

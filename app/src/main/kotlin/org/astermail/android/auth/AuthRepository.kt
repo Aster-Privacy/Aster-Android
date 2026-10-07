@@ -101,6 +101,8 @@ data class TotpChallenge(
 private const val UNAUTHORIZED_CHECK_COOLDOWN_MS = 10_000L
 private const val RECOVERY_BACKUP_ATTEMPTS = 3
 private const val SIGNUP_PGP_KEYGEN_ATTEMPTS = 3
+private const val PUBLISHED_PGP_KEY_LOOKUP_ATTEMPTS = 3
+private const val PUBLISHED_PGP_KEY_LOOKUP_BACKOFF_MS = 750L
 private const val RECOVERY_BACKUP_RETRY_DELAY_MS = 1_200L
 
 sealed interface LoginOutcome {
@@ -1819,27 +1821,17 @@ class AuthRepository @Inject constructor(
         val passphrase_bytes = session_key_store.get_passphrase() ?: return
 
         try {
-            if (published_pgp_key_exists()) return
+            val published = published_pgp_key_state()
+            if (published != PublishedPgpKey.Absent) return
             val passphrase = passphrase_chars(passphrase_bytes)
             try {
-                republish_pgp_key_with_password(identity_key, passphrase)
+                republish_pgp_key_with_password(identity_key, passphrase, published)
             } finally {
                 passphrase.fill(' ')
             }
         } finally {
             passphrase_bytes.fill(0)
         }
-    }
-
-    private suspend fun published_pgp_key_exists(): Boolean = try {
-        encryption_api.get_pgp_key_info()
-        true
-    } catch (_: org.astermail.android.api.ApiError.NotFoundError) {
-        false
-    } catch (cancelled: CancellationException) {
-        throw cancelled
-    } catch (_: Throwable) {
-        true
     }
 
     suspend fun select_signing_identity_key(): String? {
@@ -1865,14 +1857,22 @@ class AuthRepository @Inject constructor(
         return null
     }
 
-    private suspend fun published_pgp_key_state(): PublishedPgpKey = try {
-        PublishedPgpKey.Present(encryption_api.get_pgp_key_info().fingerprint)
-    } catch (_: org.astermail.android.api.ApiError.NotFoundError) {
-        PublishedPgpKey.Absent
-    } catch (cancelled: CancellationException) {
-        throw cancelled
-    } catch (_: Throwable) {
-        PublishedPgpKey.Unknown
+    private suspend fun published_pgp_key_state(): PublishedPgpKey {
+        repeat(PUBLISHED_PGP_KEY_LOOKUP_ATTEMPTS) { attempt ->
+            try {
+                return PublishedPgpKey.Present(encryption_api.get_pgp_key_info().fingerprint)
+            } catch (_: org.astermail.android.api.ApiError.NotFoundError) {
+                return PublishedPgpKey.Absent
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Throwable) {
+                if (!published_pgp_key_lookup_is_transient(error)) return PublishedPgpKey.Unknown
+                if (attempt < PUBLISHED_PGP_KEY_LOOKUP_ATTEMPTS - 1) {
+                    delay(PUBLISHED_PGP_KEY_LOOKUP_BACKOFF_MS * (attempt + 1))
+                }
+            }
+        }
+        return PublishedPgpKey.Unknown
     }
 
     private fun log_pgp_republish_skipped(decision: PgpRepublishDecision) {
@@ -1927,16 +1927,24 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    private suspend fun republish_pgp_key_with_password(identity_key: String, password: String) {
+    private suspend fun republish_pgp_key_with_password(
+        identity_key: String,
+        password: String,
+        published: PublishedPgpKey? = null,
+    ) {
         val password_chars = password.toCharArray()
         try {
-            republish_pgp_key_with_password(identity_key, password_chars)
+            republish_pgp_key_with_password(identity_key, password_chars, published)
         } finally {
             password_chars.fill(' ')
         }
     }
 
-    private suspend fun republish_pgp_key_with_password(identity_key: String, password: CharArray) {
+    private suspend fun republish_pgp_key_with_password(
+        identity_key: String,
+        password: CharArray,
+        published: PublishedPgpKey? = null,
+    ) {
         val secret_ring = org.bouncycastle.openpgp.PGPSecretKeyRing(
             org.bouncycastle.openpgp.PGPUtil.getDecoderStream(identity_key.byteInputStream()),
             org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator(),
@@ -1958,7 +1966,7 @@ class AuthRepository @Inject constructor(
         val decision = decide_pgp_republish(
             local_fingerprint = fingerprint,
             local_key_non_standard = armored_pgp_key_is_non_standard(identity_key),
-            published = published_pgp_key_state(),
+            published = published ?: published_pgp_key_state(),
         )
         if (decision != PgpRepublishDecision.REPUBLISH) {
             log_pgp_republish_skipped(decision)
@@ -1980,9 +1988,15 @@ class AuthRepository @Inject constructor(
     }
 
     private suspend fun rewrap_server_pgp_key(new_password: String) {
-        val identity_key = session_key_store.get_identity_key() ?: return
-        if (!identity_key.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY")) return
-        republish_pgp_key_with_password(identity_key, new_password)
+        val current_identity = session_key_store.get_identity_key() ?: return
+        if (!current_identity.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY")) return
+        val published = published_pgp_key_state()
+        val identity_key = (published as? PublishedPgpKey.Present)
+            ?.fingerprint
+            ?.takeIf { it.isNotBlank() }
+            ?.let { matching_signing_key(it) }
+            ?: current_identity
+        republish_pgp_key_with_password(identity_key, new_password, published)
     }
 
     private fun encrypt_pgp_private_key_for_server(
