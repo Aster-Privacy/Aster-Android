@@ -2601,18 +2601,221 @@ class MailRepositoryTest {
     }
 
     @Test
-    fun `schedule with mixed recipients is refused before any request`() = runTest {
+    fun `mixed schedule seals the internal copy and keeps the outside half external`() = runTest {
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any(), any()) } returns "shared_body"
+        coEvery { scheduled_api.create_scheduled(any()) } returns
+            org.astermail.android.api.scheduled.CreateScheduledResponse(id = "sched_mixed", success = true)
         val scheduled_at = java.time.Instant.now().plus(java.time.Duration.ofDays(1)).toString()
 
         val result = repo.schedule_email(
             subject = "Later",
             body_html = "<p>later</p>",
+            sender_email = "me@astermail.org",
             to = listOf("to@astermail.org", "friend@example.com"),
             scheduled_at = scheduled_at,
         )
 
-        assertTrue(result.exceptionOrNull() is MixedRecipientsException)
-        coVerify(exactly = 0) { scheduled_api.create_scheduled(any()) }
+        assertEquals("sched_mixed", result.getOrThrow())
+        val request = slot<org.astermail.android.api.scheduled.CreateScheduledRequest>()
+        coVerify(exactly = 1) { scheduled_api.create_scheduled(capture(request)) }
+        val sent = request.captured
+        assertEquals(true, sent.is_external)
+        assertNotNull(sent.ephemeral_key)
+        val delivery = sent.delivery!!
+        assertEquals("shared_body", delivery.internal_encrypted_body)
+        assertTrue(delivery.recipient_bodies.isNullOrEmpty())
+        assertEquals(listOf("to@astermail.org", "friend@example.com"), delivery.to)
+        coVerify(exactly = 1) {
+            ratchet_encryptor.encrypt_envelope(any(), listOf("to@astermail.org"), any(), any())
+        }
+        coVerify(exactly = 0) {
+            ratchet_encryptor.encrypt_envelope(any(), match { "friend@example.com" in it }, any(), any())
+        }
+    }
+
+    @Test
+    fun `mixed schedule seals a hidden internal bcc on its own`() = runTest {
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), listOf("to@astermail.org"), any(), any()) } returns "shared_body"
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), listOf("hidden@astermail.org"), any(), any()) } returns "hidden_body"
+        coEvery { scheduled_api.create_scheduled(any()) } returns
+            org.astermail.android.api.scheduled.CreateScheduledResponse(id = "sched_mixed_bcc", success = true)
+        val scheduled_at = java.time.Instant.now().plus(java.time.Duration.ofDays(1)).toString()
+
+        repo.schedule_email(
+            subject = "Later",
+            body_html = "<p>later</p>",
+            sender_email = "me@astermail.org",
+            to = listOf("to@astermail.org", "friend@example.com"),
+            bcc = listOf("hidden@astermail.org"),
+            scheduled_at = scheduled_at,
+        ).getOrThrow()
+
+        val request = slot<org.astermail.android.api.scheduled.CreateScheduledRequest>()
+        coVerify(exactly = 1) { scheduled_api.create_scheduled(capture(request)) }
+        val delivery = request.captured.delivery!!
+        assertEquals("shared_body", delivery.internal_encrypted_body)
+        assertEquals(mapOf("hidden@astermail.org" to "hidden_body"), delivery.recipient_bodies)
+    }
+
+    @Test
+    fun `mixed send is queued with a sealed internal copy`() = runTest {
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), listOf("to@astermail.org"), any(), any()) } returns "shared_body"
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), listOf("hidden@astermail.org"), any(), any()) } returns "hidden_body"
+
+        val result = repo.send_email(
+            to = listOf("to@astermail.org", "friend@example.com"),
+            bcc = listOf("hidden@astermail.org"),
+            subject = "Hi",
+            body_html = "<p>hello</p>",
+            sender_email = "me@astermail.org",
+        )
+
+        assertTrue(result.getOrThrow().success)
+        val request = slot<org.astermail.android.api.send.QueueEmailRequest>()
+        coVerify(exactly = 1) { send_api.queue_email(capture(request)) }
+        val queued = request.captured
+        assertEquals(MIXED_SEND_QUEUE_DELAY_SECONDS, queued.delay_seconds)
+        assertEquals(false, queued.is_e2e_encrypted)
+        assertEquals("shared_body", queued.internal_encrypted_body)
+        assertEquals(mapOf("hidden@astermail.org" to "hidden_body"), queued.recipient_bodies)
+        assertNotNull(queued.folder_token)
+        coVerify(exactly = 0) { send_api.send_simple(any()) }
+        coVerify(exactly = 0) {
+            ratchet_encryptor.encrypt_envelope(any(), match { "friend@example.com" in it }, any(), any())
+        }
+    }
+
+    private fun stub_mixed_queue(queue_id: String = "q_1") {
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any(), any()) } returns "shared_body"
+        coEvery { send_api.queue_email(any()) } returns
+            org.astermail.android.api.send.QueueEmailResponse(queue_id = queue_id, delay_seconds = 1)
+    }
+
+    private suspend fun send_mixed(client_send_id: String? = null) = repo.send_email(
+        to = listOf("to@astermail.org", "friend@example.com"),
+        subject = "Hi",
+        body_html = "<p>hello</p>",
+        sender_email = "me@astermail.org",
+        client_send_id = client_send_id,
+    )
+
+    @Test
+    fun `mixed send carries the client send id to the queue`() = runTest {
+        stub_mixed_queue()
+        coEvery { send_api.queue_status("q_1") } returns
+            org.astermail.android.api.send.QueueStatusResponse(queue_id = "q_1", status = "sent")
+
+        val key = "0f8fad5b-d9cb-469f-a165-70867728950e"
+        assertTrue(send_mixed(client_send_id = key).getOrThrow().success)
+
+        val request = slot<org.astermail.android.api.send.QueueEmailRequest>()
+        coVerify(exactly = 1) { send_api.queue_email(capture(request)) }
+        assertEquals(key, request.captured.client_send_id)
+    }
+
+    @Test
+    fun `mixed send returns the sent item once the queue reports sent`() = runTest {
+        stub_mixed_queue()
+        coEvery { send_api.queue_status("q_1") } returnsMany listOf(
+            org.astermail.android.api.send.QueueStatusResponse(queue_id = "q_1", status = "pending"),
+            org.astermail.android.api.send.QueueStatusResponse(queue_id = "q_1", status = "sending"),
+            org.astermail.android.api.send.QueueStatusResponse(queue_id = "q_1", status = "sent", mail_item_id = "item_9"),
+        )
+
+        val response = send_mixed().getOrThrow()
+
+        assertTrue(response.success)
+        assertEquals("item_9", response.mail_item_id)
+        coVerify(exactly = 3) { send_api.queue_status("q_1") }
+    }
+
+    @Test
+    fun `mixed send fails when the queue reports failed`() = runTest {
+        stub_mixed_queue()
+        coEvery { send_api.queue_status("q_1") } returns
+            org.astermail.android.api.send.QueueStatusResponse(queue_id = "q_1", status = "failed")
+
+        val err = send_mixed().exceptionOrNull()
+
+        assertTrue(err is QueuedSendFailedException)
+        assertTrue(is_permanent_send_failure_cause(err))
+        assertEquals(SendFailureReason.REJECTED, send_failure_reason_for(err))
+    }
+
+    @Test
+    fun `mixed send fails when the queued copy was cancelled`() = runTest {
+        stub_mixed_queue()
+        coEvery { send_api.queue_status("q_1") } returns
+            org.astermail.android.api.send.QueueStatusResponse(queue_id = "q_1", status = "cancelled")
+
+        assertTrue(send_mixed().exceptionOrNull() is QueuedSendFailedException)
+    }
+
+    @Test
+    fun `mixed send still pending at the poll limit counts as sent`() = runTest {
+        stub_mixed_queue()
+        coEvery { send_api.queue_status("q_1") } returns
+            org.astermail.android.api.send.QueueStatusResponse(queue_id = "q_1", status = "pending")
+
+        val response = send_mixed().getOrThrow()
+
+        assertTrue(response.success)
+        assertNull(response.mail_item_id)
+        coVerify(exactly = MIXED_SEND_STATUS_POLLS) { send_api.queue_status("q_1") }
+    }
+
+    @Test
+    fun `mixed send ignores status lookup errors`() = runTest {
+        stub_mixed_queue()
+        coEvery { send_api.queue_status("q_1") } throws
+            org.astermail.android.api.ApiError.NetworkError
+
+        assertTrue(send_mixed().getOrThrow().success)
+        coVerify(exactly = MIXED_SEND_STATUS_POLLS) { send_api.queue_status("q_1") }
+    }
+
+    @Test
+    fun `mixed send without a queue id skips the status lookup`() = runTest {
+        stub_mixed_queue(queue_id = "")
+
+        assertTrue(send_mixed().getOrThrow().success)
+        coVerify(exactly = 0) { send_api.queue_status(any()) }
+    }
+
+    @Test
+    fun `mixed send with a message password is refused before any request`() = runTest {
+        val result = repo.send_email(
+            to = listOf("to@astermail.org", "friend@example.com"),
+            subject = "Hi",
+            body_html = "<p>hello</p>",
+            expires_at = java.time.Instant.now().plus(java.time.Duration.ofDays(1)).toString(),
+            expiry_password = "correct horse battery staple",
+        )
+
+        assertTrue(result.exceptionOrNull() is MixedRecipientsPasswordException)
+        coVerify(exactly = 0) { send_api.queue_email(any()) }
+        coVerify(exactly = 0) { send_api.send_simple(any()) }
+        coVerify(exactly = 0) { ratchet_encryptor.encrypt_envelope(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `mixed send without ratchet keys is refused before any request`() = runTest {
+        every { session_key_store.has_ratchet_keys() } returns false
+
+        val result = repo.send_email(
+            to = listOf("to@astermail.org", "friend@example.com"),
+            subject = "Hi",
+            body_html = "<p>hello</p>",
+            sender_email = "me@astermail.org",
+        )
+
+        assertTrue(result.isFailure)
+        coVerify(exactly = 0) { send_api.queue_email(any()) }
+        coVerify(exactly = 0) { send_api.send_simple(any()) }
     }
 
     @Test

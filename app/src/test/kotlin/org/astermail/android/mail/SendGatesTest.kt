@@ -51,14 +51,26 @@ class SendGatesTest {
     }
 
     @Test
-    fun `schedule block rejects mixed recipients before require encryption`() {
+    fun `schedule block applies the encryption requirement to the outside half of a mixed schedule`() {
         val block = scheduled_send_block(
             recipients = listOf("a@astermail.org", "b@example.com"),
             scheduled_at_ms = now + day,
             now_ms = now,
             require_encryption = true,
         )
-        assertEquals(ScheduledSendBlock.MIXED_RECIPIENTS, block)
+        assertEquals(ScheduledSendBlock.REQUIRES_ENCRYPTION, block)
+    }
+
+    @Test
+    fun `schedule block allows mixed recipients without the encryption requirement`() {
+        assertNull(
+            scheduled_send_block(
+                recipients = listOf("a@astermail.org", "b@example.com"),
+                scheduled_at_ms = now + day,
+                now_ms = now,
+                require_encryption = false,
+            ),
+        )
     }
 
     @Test

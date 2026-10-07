@@ -1683,7 +1683,7 @@
     <string name="attachment_already_attached">\"%1$s\" já está anexado</string>
     <string name="attachment_read_failed">Não foi possível ler \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">E-mails agendados ainda não aceitam anexos. Remova-os ou envie agora.</string>
-    <string name="cannot_mix_recipients">Usuários do Aster e endereços externos não podem ir no mesmo e-mail. Enviá-los em duas mensagens separadas vai funcionar.</string>
+    <string name="password_needs_outside_recipients_only">A proteção por senha só funciona quando todos os destinatários usam outro provedor de e-mail. Para incluir usuários do Aster, desative a proteção por senha ou envie a eles uma mensagem separada.</string>
     <string name="import_provider_gmail">Google</string>
     <string name="import_provider_outlook">Microsoft</string>
     <string name="import_provider_yahoo">Yahoo</string>

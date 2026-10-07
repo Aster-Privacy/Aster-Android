@@ -72,6 +72,7 @@ import org.astermail.android.api.scheduled.ScheduledDetailResponse
 import org.astermail.android.api.scheduled.ScheduledSummary
 import org.astermail.android.api.send.ExternalAttachmentPayload
 import org.astermail.android.api.send.ExternalSendRequest
+import org.astermail.android.api.send.QueueEmailRequest
 import org.astermail.android.api.send.SendApi
 import org.astermail.android.api.send.SendAttachmentPayload
 import org.astermail.android.api.send.SimpleSendRequest
@@ -101,7 +102,15 @@ enum class PendingSendOutcome { SENT, GONE, RETRY, FAILED, DEFERRED, WAIT_FOR_NE
 
 class TransientSendException : Exception("send retry pending")
 
-class MixedRecipientsException : Exception("internal and external recipients in one send")
+class MixedRecipientsPasswordException : Exception("message password with internal recipients")
+
+const val MIXED_SEND_QUEUE_DELAY_SECONDS = 1
+
+const val MIXED_SEND_STATUS_POLLS = 8
+
+const val MIXED_SEND_STATUS_POLL_MS = 1_250L
+
+class QueuedSendFailedException : Exception("queued send did not go out")
 
 class WeakMessagePasswordException(message: String) : Exception(message)
 
@@ -1505,6 +1514,25 @@ class MailRepository @Inject constructor(
         if (session_key_store.has_ratchet_keys()) return true
         runCatching { auth_repository.get().try_refresh_vault_keys() }
         return session_key_store.has_ratchet_keys()
+    }
+
+    private suspend fun await_queued_send(queue_id: String): String? {
+        if (queue_id.isBlank()) return null
+        repeat(MIXED_SEND_STATUS_POLLS) {
+            kotlinx.coroutines.delay(MIXED_SEND_STATUS_POLL_MS)
+            val status = try {
+                send_api.queue_status(queue_id)
+            } catch (e: kotlin.coroutines.cancellation.CancellationException) {
+                throw e
+            } catch (_: Throwable) {
+                null
+            }
+            when (status?.status) {
+                "sent" -> return status.mail_item_id
+                "failed", "cancelled" -> throw QueuedSendFailedException()
+            }
+        }
+        return null
     }
 
     private fun is_permanent_send_failure(err: Throwable?): Boolean = is_permanent_send_failure_cause(err)
@@ -4821,7 +4849,8 @@ class MailRepository @Inject constructor(
         allow_non_post_quantum: Boolean = false,
         client_send_id: String? = null,
     ): Result<SimpleSendResponse> = runCatching {
-        if (has_mixed_recipients(to + cc + bcc)) throw MixedRecipientsException()
+        val is_mixed = has_mixed_recipients(to + cc + bcc)
+        if (is_mixed && !expiry_password.isNullOrEmpty()) throw MixedRecipientsPasswordException()
         val envelope = build_envelope_json(
             subject = subject,
             body_html = body_html,
@@ -4839,6 +4868,70 @@ class MailRepository @Inject constructor(
 
         if (sent_folder_token.isNullOrBlank()) {
             throw IllegalStateException(context.getString(R.string.send_sent_folder_unavailable))
+        }
+
+        if (is_mixed) {
+            val from_addr = sender_email ?: session_key_store.get_user_email() ?: ""
+            if (from_addr.isBlank() || !ensure_ratchet_keys_ready()) {
+                throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
+            }
+            val hidden_bcc = hidden_internal_bcc(to, cc, bcc)
+            val shared_internal = shared_targets(to, cc, bcc).filter { is_internal_recipient(it) }
+            val existing_bundle = extract_subject_bundle(recipient_body_html)
+            val wrapped = ASTER_SUBJECT_BUNDLE_PREFIX + org.json.JSONObject().apply {
+                put("s", subject.ifBlank { existing_bundle.subject.orEmpty() })
+                put("b", existing_bundle.body)
+            }.toString()
+            val sealed = seal_with_private_bcc(
+                from_addr,
+                shared_internal,
+                hidden_bcc,
+                wrapped,
+                allow_non_post_quantum,
+            )
+            val mixed_attachments = if (attachments.isNotEmpty()) {
+                build_mixed_attachments(shared_internal + hidden_bcc, attachments, from_addr)
+            } else {
+                emptyList()
+            }
+            val signed_payload = build_signed_mime(
+                subject = subject,
+                body_html = recipient_body_html,
+                from = from_addr,
+                to = to,
+                cc = cc,
+                bcc = bcc,
+                attachments = attachments,
+                expiry_password = null,
+            )
+            val queued = send_api.queue_email(
+                QueueEmailRequest(
+                    to = to,
+                    cc = cc,
+                    bcc = bcc,
+                    subject = subject,
+                    body = recipient_body_html,
+                    delay_seconds = MIXED_SEND_QUEUE_DELAY_SECONDS,
+                    is_e2e_encrypted = false,
+                    internal_encrypted_body = sealed.first,
+                    recipient_bodies = sealed.second.takeIf { it.isNotEmpty() },
+                    encrypted_envelope = encrypted_envelope,
+                    envelope_nonce = envelope_nonce,
+                    folder_token = sent_folder_token,
+                    thread_token = ensure_external_thread_token(thread_token),
+                    sender_email = sender_email,
+                    sender_alias_hash = sender_alias_hash,
+                    sender_display_name = sender_display_name,
+                    expires_at = expires_at,
+                    attachments = mixed_attachments,
+                    signed_mime = signed_payload?.mime_base64,
+                    signed_mime_signature = signed_payload?.signature,
+                    signed_mime_micalg = signed_payload?.micalg,
+                    client_send_id = client_send_id,
+                ),
+            )
+            val mail_item_id = await_queued_send(queued.queue_id)
+            return@runCatching SimpleSendResponse(success = true, message = "", mail_item_id = mail_item_id)
         }
 
         if (all_external) {
@@ -5188,6 +5281,29 @@ class MailRepository @Inject constructor(
         val own_seal = if (attachments.isEmpty()) null else own_seal_inputs()
         try {
             return build_attachment_payloads(attachments, recipient_keys, own_seal, private_keys)
+        } finally {
+            own_seal?.second?.fill(' ')
+        }
+    }
+
+    internal suspend fun build_mixed_attachments(
+        internal_recipients: List<String>,
+        attachments: List<ExternalAttachmentPayload>,
+        sender_email: String,
+    ): List<SendAttachmentPayload> {
+        val seen = HashSet<String>()
+        val unique = internal_recipients.filter { seen.add(normalize_own_address(it)) }
+        if (unique.isEmpty()) {
+            throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
+        }
+        val private_keys = unique.associateWith { recipient ->
+            fetch_internal_public_keys(listOf(recipient), sender_email).ifEmpty {
+                throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
+            }
+        }
+        val own_seal = own_seal_inputs()
+        try {
+            return build_attachment_payloads(attachments, emptyList(), own_seal, private_keys)
         } finally {
             own_seal?.second?.fill(' ')
         }
@@ -5697,7 +5813,7 @@ class MailRepository @Inject constructor(
         allow_non_post_quantum: Boolean = false,
     ): Result<String> = runCatching {
         val all_recipients = to + cc + bcc
-        if (has_mixed_recipients(all_recipients)) throw MixedRecipientsException()
+        val is_mixed = has_mixed_recipients(all_recipients)
         val scheduled_at_ms = java.time.Instant.parse(scheduled_at).toEpochMilli()
         if (exceeds_sealed_schedule_window(scheduled_at_ms, System.currentTimeMillis())) {
             throw IllegalStateException(context.getString(R.string.scheduled_too_far_ahead))
@@ -5726,7 +5842,7 @@ class MailRepository @Inject constructor(
         }
 
         val request = if (is_external) {
-            build_external_scheduled_request(
+            val external_request = build_external_scheduled_request(
                 envelope_json,
                 recipients_json,
                 all_recipients.size,
@@ -5734,22 +5850,21 @@ class MailRepository @Inject constructor(
                 sent_folder_token,
                 sender_alias_hash,
             )
-        } else {
-            val from_addr = sender_email?.takeIf { it.isNotBlank() }
-                ?: session_key_store.get_user_email().orEmpty()
-            if (from_addr.isBlank() || !ensure_ratchet_keys_ready()) {
-                throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
+            if (is_mixed) {
+                external_request.copy(
+                    delivery = build_scheduled_delivery(
+                        subject, body_html, sender_email, sender_display_name, to, cc, bcc,
+                        shared_targets(to, cc, bcc).filter { is_internal_recipient(it) },
+                        allow_non_post_quantum,
+                    ),
+                )
+            } else {
+                external_request
             }
-            val existing_bundle = extract_subject_bundle(body_html)
-            val wrapped = ASTER_SUBJECT_BUNDLE_PREFIX + org.json.JSONObject().apply {
-                put("s", subject.ifBlank { existing_bundle.subject.orEmpty() })
-                put("b", existing_bundle.body)
-            }.toString()
-            val sealed = seal_with_private_bcc(
-                from_addr,
+        } else {
+            val delivery = build_scheduled_delivery(
+                subject, body_html, sender_email, sender_display_name, to, cc, bcc,
                 shared_targets(to, cc, bcc),
-                hidden_internal_bcc(to, cc, bcc),
-                wrapped,
                 allow_non_post_quantum,
             )
             val key = scheduled_local_key()
@@ -5767,15 +5882,7 @@ class MailRepository @Inject constructor(
                     folder_token = sent_folder_token,
                     is_external = false,
                     sender_alias_hash = sender_alias_hash,
-                    delivery = org.astermail.android.api.scheduled.ScheduledDelivery(
-                        to = to,
-                        cc = cc,
-                        bcc = bcc,
-                        sender_email = sender_email?.takeIf { it.isNotBlank() },
-                        sender_display_name = sender_display_name?.takeIf { it.isNotBlank() },
-                        internal_encrypted_body = sealed.first,
-                        recipient_bodies = sealed.second,
-                    ),
+                    delivery = delivery,
                 )
             } finally {
                 key.fill(0)
@@ -5784,6 +5891,45 @@ class MailRepository @Inject constructor(
 
         val response = scheduled_api.create_scheduled(request)
         response.id ?: throw IllegalStateException("no scheduled item id returned")
+    }
+
+    private suspend fun build_scheduled_delivery(
+        subject: String,
+        body_html: String,
+        sender_email: String?,
+        sender_display_name: String?,
+        to: List<String>,
+        cc: List<String>,
+        bcc: List<String>,
+        shared_internal: List<String>,
+        allow_non_post_quantum: Boolean,
+    ): org.astermail.android.api.scheduled.ScheduledDelivery {
+        val from_addr = sender_email?.takeIf { it.isNotBlank() }
+            ?: session_key_store.get_user_email().orEmpty()
+        if (from_addr.isBlank() || !ensure_ratchet_keys_ready()) {
+            throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
+        }
+        val existing_bundle = extract_subject_bundle(body_html)
+        val wrapped = ASTER_SUBJECT_BUNDLE_PREFIX + org.json.JSONObject().apply {
+            put("s", subject.ifBlank { existing_bundle.subject.orEmpty() })
+            put("b", existing_bundle.body)
+        }.toString()
+        val sealed = seal_with_private_bcc(
+            from_addr,
+            shared_internal,
+            hidden_internal_bcc(to, cc, bcc),
+            wrapped,
+            allow_non_post_quantum,
+        )
+        return org.astermail.android.api.scheduled.ScheduledDelivery(
+            to = to,
+            cc = cc,
+            bcc = bcc,
+            sender_email = sender_email?.takeIf { it.isNotBlank() },
+            sender_display_name = sender_display_name?.takeIf { it.isNotBlank() },
+            internal_encrypted_body = sealed.first,
+            recipient_bodies = sealed.second,
+        )
     }
 
     private fun scheduled_b64(bytes: ByteArray): String =
@@ -6169,7 +6315,8 @@ internal fun is_server_rejection(err: Throwable): Boolean = when (err) {
     is org.astermail.android.api.ApiError.SendQuotaReached -> true
     is org.astermail.android.api.ApiError.StorageQuotaExceeded -> true
     is org.astermail.android.api.ApiError.ForbiddenError -> err.code !in retryable_forbidden_codes
-    is MixedRecipientsException -> true
+    is MixedRecipientsPasswordException -> true
+    is QueuedSendFailedException -> true
     else -> false
 }
 

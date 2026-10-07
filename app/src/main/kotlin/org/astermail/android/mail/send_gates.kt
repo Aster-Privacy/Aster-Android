@@ -27,7 +27,7 @@ const val MAX_SEALED_SCHEDULE_DAYS = 28L
 
 private const val DAY_MS = 24L * 60L * 60L * 1000L
 
-enum class ScheduledSendBlock { TOO_FAR_AHEAD, MIXED_RECIPIENTS, REQUIRES_ENCRYPTION }
+enum class ScheduledSendBlock { TOO_FAR_AHEAD, REQUIRES_ENCRYPTION }
 
 private fun address_key(address: String): String = address.trim().lowercase(Locale.ROOT)
 
@@ -43,7 +43,6 @@ fun scheduled_send_block(
     val addresses = recipients.filter { it.isNotBlank() }
     return when {
         exceeds_sealed_schedule_window(scheduled_at_ms, now_ms) -> ScheduledSendBlock.TOO_FAR_AHEAD
-        has_mixed_recipients(addresses) -> ScheduledSendBlock.MIXED_RECIPIENTS
         require_encryption && addresses.any { !is_internal_recipient(it) } ->
             ScheduledSendBlock.REQUIRES_ENCRYPTION
         else -> null
