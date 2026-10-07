@@ -24,6 +24,7 @@ package org.astermail.android.ui.settings.detail
 import compose.icons.TablerIcons
 import compose.icons.tablericons.AlertTriangle
 import compose.icons.tablericons.Check
+import compose.icons.tablericons.Clock
 import compose.icons.tablericons.CreditCard
 import compose.icons.tablericons.CurrencyDollar
 import compose.icons.tablericons.Lock
@@ -92,6 +93,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
 import org.astermail.android.api.domains.DomainSearchResult
+import org.astermail.android.api.domains.is_purchasable
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
@@ -179,9 +181,13 @@ fun DomainPurchaseScreen(
 }
 
 @Composable
-internal fun domain_status_disc(available: Boolean, size: Dp = 18.dp) {
+internal fun domain_status_disc(available: Boolean, size: Dp = 18.dp, unchecked: Boolean = false) {
     val colors = AsterMaterial.colors
-    val disc = if (available) colors.success else colors.danger
+    val disc = when {
+        available -> colors.success
+        unchecked -> colors.warning
+        else -> colors.danger
+    }
     Box(
         modifier = Modifier
             .size(size)
@@ -189,7 +195,11 @@ internal fun domain_status_disc(available: Boolean, size: Dp = 18.dp) {
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = if (available) TablerIcons.Check else TablerIcons.X,
+            imageVector = when {
+                available -> TablerIcons.Check
+                unchecked -> TablerIcons.Clock
+                else -> TablerIcons.X
+            },
             contentDescription = null,
             tint = readable_on(disc),
             modifier = Modifier.size(size * 0.62f),
@@ -420,7 +430,7 @@ private fun purchase_search_content(vm: DomainPurchaseViewModel, state: DomainPu
 }
 
 @Composable
-private fun search_rate_limit_banner() {
+private fun search_notice_banner(message: String = stringResource(R.string.domain_purchase_search_rate_limited)) {
     val colors = AsterMaterial.colors
     Row(
         modifier = Modifier
@@ -439,7 +449,7 @@ private fun search_rate_limit_banner() {
         )
         Spacer(Modifier.width(8.dp))
         Text(
-            text = stringResource(R.string.domain_purchase_search_rate_limited),
+            text = message,
             color = colors.text_secondary,
             fontSize = 14.sp,
         )
@@ -452,11 +462,14 @@ private fun search_results_list(vm: DomainPurchaseViewModel, state: DomainPurcha
     var visible_count by remember(state.searched_query) { mutableIntStateOf(domain_results_page_size) }
     val showing_stale = state.searching && state.searched_query != state.query.trim()
     val visible_results = state.results.take(visible_count)
-    val best_match = visible_results.firstOrNull { it.available && it.price_cents != null }
+    val best_match = visible_results.firstOrNull { it.is_purchasable() }
     val rest_results = if (best_match == null) visible_results else visible_results.filter { it.domain != best_match.domain }
 
     if (state.search_rate_limited) {
-        search_rate_limit_banner()
+        search_notice_banner()
+        v_gap(AsterSpacing.sm)
+    } else if (state.results.any { it.availability_unknown }) {
+        search_notice_banner(message = stringResource(R.string.domain_purchase_unchecked_hint))
         v_gap(AsterSpacing.sm)
     }
 
@@ -583,7 +596,8 @@ private fun domain_discount_badge(percent: Int, renewal_label: String) {
 @Composable
 private fun domain_result_row(result: DomainSearchResult, primary: Boolean, on_select: () -> Unit) {
     val colors = AsterMaterial.colors
-    val available = result.available && result.price_cents != null
+    val available = result.is_purchasable()
+    val unchecked = result.availability_unknown
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -593,7 +607,7 @@ private fun domain_result_row(result: DomainSearchResult, primary: Boolean, on_s
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        domain_status_disc(available = available)
+        domain_status_disc(available = available, unchecked = unchecked)
         Spacer(Modifier.width(10.dp))
         Row(
             modifier = Modifier.weight(1f),
@@ -604,7 +618,7 @@ private fun domain_result_row(result: DomainSearchResult, primary: Boolean, on_s
                 color = if (available) colors.text_primary else colors.text_muted,
                 fontSize = if (available && primary) 16.sp else 15.sp,
                 fontWeight = if (available && primary) FontWeight.SemiBold else FontWeight.Normal,
-                textDecoration = if (available) null else TextDecoration.LineThrough,
+                textDecoration = if (available || unchecked) null else TextDecoration.LineThrough,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f, fill = false),
@@ -628,6 +642,14 @@ private fun domain_result_row(result: DomainSearchResult, primary: Boolean, on_s
                 ),
                 color = colors.accent_blue,
                 fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+            )
+        } else if (unchecked) {
+            Text(
+                text = stringResource(R.string.domain_purchase_unchecked),
+                color = colors.text_muted,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
             )

@@ -2736,6 +2736,8 @@
     <string name="domain_purchase_search_placeholder">Search for a domain name</string>
     <string name="domain_purchase_per_year">%1$s/yr</string>
     <string name="domain_purchase_taken">Taken</string>
+    <string name="domain_purchase_unchecked">Couldn\'t check</string>
+    <string name="domain_purchase_unchecked_hint">Couldn\'t check this domain right now. Try again later.</string>
     <string name="domain_purchase_no_results">No available domains found</string>
     <string name="domain_purchase_renews_at">Renews at %1$s/yr</string>
     <string name="domain_purchase_years">Registration period</string>

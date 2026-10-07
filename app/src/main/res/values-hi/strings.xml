@@ -2450,6 +2450,8 @@
     <string name="domain_purchase_search_placeholder">डोमेन नाम खोजें</string>
     <string name="domain_purchase_per_year">%1$s/साल</string>
     <string name="domain_purchase_taken">लिया जा चुका है</string>
+    <string name="domain_purchase_unchecked">जाँच नहीं हो सकी</string>
+    <string name="domain_purchase_unchecked_hint">अभी इस डोमेन की जाँच नहीं हो सकी। बाद में फिर से कोशिश करें।</string>
     <string name="domain_purchase_no_results">कोई उपलब्ध डोमेन नहीं मिला</string>
     <string name="domain_purchase_renews_at">%1$s/वर्ष पर नवीनीकृत होता है</string>
     <string name="domain_purchase_years">पंजीकरण की अवधि</string>
