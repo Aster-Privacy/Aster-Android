@@ -228,6 +228,6 @@ class InlineImageSourcesTest {
             translate_mode = "off",
         )
         val policy = document.substringAfter("Content-Security-Policy\" content=\"").substringBefore("\"")
-        assertTrue("the inline image host must be allowed by img-src: $policy", policy.contains("img-src https://app.astermail.org https://mail-content.invalid"))
+        assertTrue("the inline image host must be allowed by img-src: $policy", policy.contains("img-src https://app.astermail.org/api/images/v1/proxy https://mail-content.invalid"))
     }
 }
