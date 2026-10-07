@@ -440,4 +440,50 @@ class MailCategorizerTest {
         assertEquals("newsletters", category_for_tab("newsletters", tabs))
         assertEquals("transactions", category_for_tab("transactions", tabs))
     }
+
+    @Test
+    fun personal_mailbox_mail_with_feedback_id_stays_primary() {
+        val env = envelope(
+            from_email = "sam@proton.me",
+            from_name = "Sam",
+            subject = "Test delivery confirmation",
+            raw_headers = listOf(
+                "Feedback-ID" to "1234567:user:proton",
+                "DKIM-Signature" to "v=1; a=rsa-sha256; d=proton.me; s=protonmail; bh=abc",
+            ),
+        )
+        assertEquals("primary", classify(env, null))
+    }
+
+    @Test
+    fun personal_mailbox_mail_from_generic_localpart_stays_primary() {
+        val env = envelope(
+            from_email = "contact@gmail.com",
+            from_name = "Sam",
+            subject = "Payment for dinner last night",
+        )
+        assertEquals("primary", classify(env, null))
+    }
+
+    @Test
+    fun personal_mailbox_address_on_a_list_is_not_forced_primary() {
+        val env = envelope(
+            from_email = "deals@gmail.com",
+            subject = "Weekend sale starts now",
+            list_unsubscribe = "<mailto:unsubscribe@example.com>",
+        )
+        assertEquals("promotions", classify(env, null))
+    }
+
+    @Test
+    fun personal_mailbox_address_sent_through_bulk_service_is_not_forced_primary() {
+        val env = envelope(
+            from_email = "billing@outlook.com",
+            subject = "Your receipt",
+            raw_headers = listOf(
+                "DKIM-Signature" to "v=1; a=rsa-sha256; d=sendgrid.net; s=s1; bh=abc",
+            ),
+        )
+        assertEquals("transactions", classify(env, null))
+    }
 }
