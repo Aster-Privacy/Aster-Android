@@ -176,8 +176,6 @@ class AuthRepository @Inject constructor(
         java.util.Collections.synchronizedSet(mutableSetOf<String>())
     private val recovery_email_backfill_attempted_user_ids =
         java.util.Collections.synchronizedSet(mutableSetOf<String>())
-    private val signing_heal_attempted_user_ids =
-        java.util.Collections.synchronizedSet(mutableSetOf<String>())
     private val system_folder_heal_attempted_user_ids =
         java.util.Collections.synchronizedSet(mutableSetOf<String>())
     fun trigger_system_folder_bootstrap() {
@@ -1863,24 +1861,23 @@ class AuthRepository @Inject constructor(
             matching_signing_key(published_fingerprint)?.let { return it }
         }
 
-        val current_identity = session_key_store.get_identity_key() ?: return null
-        if (!current_identity.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY")) return null
+        log_pgp_republish_skipped(PgpRepublishDecision.SKIP_PUBLISHED_KEY_DIFFERS)
+        return null
+    }
 
-        val user_id = session_key_store.get_user_id() ?: return null
-        if (!signing_heal_attempted_user_ids.add(user_id)) return null
+    private suspend fun published_pgp_key_state(): PublishedPgpKey = try {
+        PublishedPgpKey.Present(encryption_api.get_pgp_key_info().fingerprint)
+    } catch (_: org.astermail.android.api.ApiError.NotFoundError) {
+        PublishedPgpKey.Absent
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (_: Throwable) {
+        PublishedPgpKey.Unknown
+    }
 
-        val passphrase_bytes = session_key_store.get_passphrase() ?: return null
-        val passphrase = passphrase_chars(passphrase_bytes)
-        return try {
-            republish_pgp_key_with_password(current_identity, passphrase)
-            current_identity
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (_: Throwable) {
-            null
-        } finally {
-            passphrase.fill(' ')
-            passphrase_bytes.fill(0)
+    private fun log_pgp_republish_skipped(decision: PgpRepublishDecision) {
+        if (BuildConfig.DEBUG) {
+            android.util.Log.w("AuthRepository", "pgp republish skipped: ${decision.name.lowercase()}")
         }
     }
 
@@ -1957,6 +1954,16 @@ class AuthRepository @Inject constructor(
             BigInteger(1, master_public.fingerprint),
         )
         val key_id = String.format(Locale.US, "%016X", master_public.keyID)
+
+        val decision = decide_pgp_republish(
+            local_fingerprint = fingerprint,
+            local_key_non_standard = armored_pgp_key_is_non_standard(identity_key),
+            published = published_pgp_key_state(),
+        )
+        if (decision != PgpRepublishDecision.REPUBLISH) {
+            log_pgp_republish_skipped(decision)
+            throw PgpRepublishBlocked(decision)
+        }
 
         val (encrypted_private_key, private_key_nonce) =
             encrypt_pgp_private_key_for_server(identity_key, password)
