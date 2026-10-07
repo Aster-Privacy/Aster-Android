@@ -86,6 +86,17 @@ class EmailDarkContrastTest {
         return inks.filter { reads_too_dark_on_dark(it) }
     }
 
+    private val important_background = Regex("background(?:-color)?\\s*:\\s*([^;}]*!\\s*important)", RegexOption.IGNORE_CASE)
+
+    private fun important_light_backgrounds(content: Element): List<String> =
+        content.select("style").flatMap { sheet ->
+            css_rule.findAll(sheet.data())
+                .filter { rule -> !declares_background_image(rule.groupValues[2]) }
+                .filter { rule -> important_background.findAll(rule.groupValues[2]).any { reads_light(it.groupValues[1]) } }
+                .map { it.value.trim() }
+                .toList()
+        }
+
     private val exclusion = Regex(":not\\(\\[([a-z-]+)(?:\\*=\"([^\"]*)\"(?: i)?)?\\]\\)")
 
     private fun forced_neutralizer(html: String): (Element) -> Boolean {
@@ -112,6 +123,8 @@ class EmailDarkContrastTest {
                 val neutralized = forced_neutralizer(html)
                 val kept = surfaces.filter { !neutralized(it) }
                 assertTrue("$label: light backgrounds kept under forced dark: ${kept.map { it.cssSelector() }}", kept.isEmpty())
+                val outranking = important_light_backgrounds(content)
+                assertTrue("$label: important light backgrounds outrank forced dark: $outranking", outranking.isEmpty())
                 assertTrue("$label: dark text left under forced dark: $inks", inks.isEmpty())
             }
             root.hasAttr("data-dark") -> {
@@ -200,6 +213,95 @@ class EmailDarkContrastTest {
         val html = render(EmailHtmlSanitizer.sanitize(sectioned_newsletter), forced = false)
         assertTrue(html.contains("data-white=\"1\""))
         assert_consistent("sectioned newsletter", html)
+    }
+
+    private val builder_newsletter =
+        "<!doctype html><html><head><style>body,td{font-family:Arial,sans-serif}" +
+            ".wrap-table{background-color:#e9eef4}.copy{color:#1f3b57}</style>" +
+            "<style>@media only screen and (max-width:639px){#panel-1 .col-box{background-color:#fff !important}}" +
+            "@media only screen and (min-width:640px){.col-box{max-width:600px !important}}" +
+            "#panel-2 .col-box{background-color:transparent !important}</style></head>" +
+            "<body bgcolor=\"#e9eef4\" style=\"margin:0;color:#1f3b57\">" +
+            "<table class=\"wrap-table\" width=\"100%\" bgcolor=\"#e9eef4\"><tr><td>" +
+            "<div id=\"panel-1\"><div class=\"col-box\" style=\"max-width:600px;background-color:#ffffff\">" +
+            "<table width=\"600\" bgcolor=\"#ffffff\"><tr><td bgcolor=\"#ffffff\" style=\"background-color:#ffffff\">" +
+            "<h1>Garden club news</h1><p>The plant swap is on Saturday.</p>" +
+            "<p class=\"copy\">Bring cuttings or spare pots.</p></td></tr></table></div></div>" +
+            "<div id=\"panel-2\"><div class=\"col-box\"><p class=\"copy\">You joined the garden club list.</p></div></div>" +
+            "</td></tr></table></body></html>"
+
+    private fun style_blocks(html: String): String =
+        Jsoup.parse(html).getElementById("m")!!.select("style").joinToString("\n") { it.data() }
+
+    @Test
+    fun an_important_light_background_inside_a_media_query_is_cleared_under_forced_dark() {
+        val html = render(EmailHtmlSanitizer.sanitize(builder_newsletter), forced = true)
+        assert_consistent("builder newsletter", html)
+        val css = style_blocks(html)
+        assertTrue(css, css.contains("#panel-1 .col-box{background-color:transparent !important}"))
+        assertTrue(css, css.contains(".copy{color:$FORCED_DARK_INK}"))
+        assertTrue(css, css.contains("@media only screen and (max-width:639px)"))
+    }
+
+    @Test
+    fun an_important_id_and_class_rule_cannot_outrank_forced_dark() {
+        for (rule in listOf(
+            "#hero .box{background-color:#ffffff !important}",
+            "#hero .box{background:#FFF!important;padding:4px}",
+            "div#hero > .box.card{background-color:rgb(255, 255, 255) !important}",
+            "#hero .box{background-color:white !IMPORTANT}",
+        )) {
+            val body = "<style>$rule.ink{color:#1f3b57}</style><div id=\"hero\"><div class=\"box card\">" +
+                "<p class=\"ink\">Styled line</p><p>Plain line</p></div></div>"
+            val html = render(body, forced = true)
+            assert_consistent(rule, html)
+            val css = style_blocks(html)
+            assertTrue(css, css.contains("transparent"))
+            assertTrue(css, css.contains(".ink{color:$FORCED_DARK_INK}"))
+        }
+    }
+
+    @Test
+    fun body_and_cell_bgcolor_with_text_from_body_and_classes_stay_in_step() {
+        val raw = "<!doctype html><html><head><style>.lead{color:#1f3b57}" +
+            "@media (max-width:568px){#s .cell{background-color:#fff !important}}</style></head>" +
+            "<body bgcolor=\"#e9eef4\" style=\"color:#1f3b57\"><table id=\"s\" width=\"100%\"><tr>" +
+            "<td class=\"cell\" bgcolor=\"#ffffff\" style=\"background-color:#ffffff;color:#1f3b57\">" +
+            "<p class=\"lead\">Release notes</p><p>Plain line</p></td></tr></table></body></html>"
+        assert_consistent_in_dark("body and cell bgcolor", EmailHtmlSanitizer.sanitize(raw))
+    }
+
+    @Test
+    fun without_forced_dark_a_builder_newsletter_stays_light_with_its_own_text() {
+        val html = render(EmailHtmlSanitizer.sanitize(builder_newsletter), forced = false)
+        assertTrue(html.contains("data-white=\"1\""))
+        assert_consistent("builder newsletter", html)
+        val css = style_blocks(html)
+        assertTrue(css, css.contains("#panel-1 .col-box{background-color:#fff !important}"))
+        assertTrue(css, css.contains(".copy{color:#1f3b57}"))
+        val light = render(EmailHtmlSanitizer.sanitize(builder_newsletter), forced = forces_dark_emails(preference = true, theme_dark = false), theme_dark = false)
+        assertFalse(light, light.contains("data-dark"))
+        assertEquals(css, style_blocks(light))
+    }
+
+    @Test
+    fun important_background_images_in_a_stylesheet_keep_their_colours_under_forced_dark() {
+        val rule = "#hero .box{background:#ffffff url(https://mail-content.invalid/hero.png) no-repeat !important;color:#ffffff}"
+        val html = render(
+            "<style>$rule</style><div id=\"hero\"><div class=\"box\"><p>Hero</p></div></div>",
+            forced = true,
+        )
+        val css = style_blocks(html)
+        assertTrue(css, css.contains(rule))
+        val box = Jsoup.parse(html).selectFirst("#m .box")!!
+        assertTrue(box.outerHtml(), box.hasAttr(BACKGROUND_IMAGE_ATTRIBUTE))
+    }
+
+    @Test
+    fun translucent_and_brand_important_backgrounds_are_left_alone_under_forced_dark() {
+        val rule = "#a .tint{background-color:rgba(255,255,255,0.2) !important}#a .brand{background-color:#0b5394 !important}"
+        val html = render("<style>$rule</style><div id=\"a\"><div class=\"tint\">One</div><div class=\"brand\">Two</div></div>", forced = true)
+        assertTrue(style_blocks(html), style_blocks(html).contains(rule))
     }
 
     @Test
