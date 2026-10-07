@@ -64,7 +64,11 @@ data class DomainSearchResult(
     val price_cents: Int? = null,
     val renewal_price_cents: Int? = null,
     val currency: String = "usd",
+    val availability_unknown: Boolean = false,
 )
+
+fun DomainSearchResult.is_purchasable(): Boolean =
+    available && !availability_unknown && price_cents != null
 
 @Serializable
 data class DomainSearchResponse(

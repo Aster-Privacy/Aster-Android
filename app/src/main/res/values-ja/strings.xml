@@ -2481,6 +2481,8 @@
     <string name="domain_purchase_search_placeholder">ドメイン名を検索</string>
     <string name="domain_purchase_per_year">%1$s/年</string>
     <string name="domain_purchase_taken">取得済み</string>
+    <string name="domain_purchase_unchecked">確認できません</string>
+    <string name="domain_purchase_unchecked_hint">現在このドメインを確認できません。しばらくしてからもう一度お試しください。</string>
     <string name="domain_purchase_no_results">利用可能なドメインが見つかりません</string>
     <string name="domain_purchase_renews_at">更新料 %1$s/年</string>
     <string name="domain_purchase_years">登録期間</string>
