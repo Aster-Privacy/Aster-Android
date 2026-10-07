@@ -105,6 +105,7 @@ import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.ui.search.build_contact_mail_query
 import androidx.compose.material.icons.filled.Star
 import org.astermail.android.ui.common.page_surface
+import org.astermail.android.ui.common.show_copy_failed_toast
 
 @Composable
 fun ContactDetailScreen(
@@ -126,8 +127,14 @@ fun ContactDetailScreen(
     val copied_value_message = stringResource(R.string.copied)
     val copy_value: (String) -> Unit = { value ->
         clipboard_scope.launch {
-            clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("", value)))
-            Toast.makeText(context, copied_value_message, Toast.LENGTH_SHORT).show()
+            val copied = runCatching {
+                clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("", value)))
+            }.isSuccess
+            if (copied) {
+                Toast.makeText(context, copied_value_message, Toast.LENGTH_SHORT).show()
+            } else {
+                show_copy_failed_toast(context)
+            }
         }
     }
 
@@ -373,10 +380,16 @@ fun ContactDetailScreen(
                         modifier = Modifier.weight(1f),
                     ) {
                         clipboard_scope.launch {
-                            clipboard.setClipEntry(
-                                ClipEntry(ClipData.newPlainText("", primary_email)),
-                            )
-                            Toast.makeText(context, copied_message, Toast.LENGTH_SHORT).show()
+                            val copied = runCatching {
+                                clipboard.setClipEntry(
+                                    ClipEntry(ClipData.newPlainText("", primary_email)),
+                                )
+                            }.isSuccess
+                            if (copied) {
+                                Toast.makeText(context, copied_message, Toast.LENGTH_SHORT).show()
+                            } else {
+                                show_copy_failed_toast(context)
+                            }
                         }
                     }
                 }
