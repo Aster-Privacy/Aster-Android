@@ -1,0 +1,10 @@
+What's new:
+
+- Unsubscribe is now a link under the sender instead of a card above the email.
+- The blocked content banner fits on one line, with Load and an Always allow menu.
+
+Fixed:
+
+- Mail from personal addresses stays in Inbox.
+- The message menu opens next to its button.
+- Forced dark mode no longer leaves white panels behind light text.
