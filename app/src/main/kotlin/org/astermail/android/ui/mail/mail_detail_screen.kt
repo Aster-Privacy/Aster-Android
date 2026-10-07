@@ -189,6 +189,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
@@ -3462,6 +3464,179 @@ internal fun compact_banner_action(
 }
 
 @Composable
+internal fun compact_banner_menu_action(
+    content_description: String,
+    items: @Composable androidx.compose.foundation.layout.ColumnScope.(close: () -> Unit) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        Box(
+            modifier = Modifier
+                .minimumInteractiveComponentSize()
+                .clip(AsterShapes.control)
+                .background(tonal_surface_color(colors, colors.accent_blue))
+                .clickable(role = Role.Button, onClick = { expanded = true })
+                .semantics { contentDescription = content_description }
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .testTag("compact_banner_more"),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = TablerIcons.ChevronDown,
+                contentDescription = null,
+                tint = colors.accent_blue,
+                modifier = Modifier.size(16.dp),
+            )
+        }
+        aster_menu(expanded = expanded, on_dismiss = { expanded = false }) {
+            items { expanded = false }
+        }
+    }
+}
+
+@Composable
+private fun compact_banner_icon(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    tint: Color,
+    on_icon_click: (() -> Unit)? = null,
+) {
+    Box(modifier = Modifier.size(19.dp), contentAlignment = Alignment.Center) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier
+                .then(
+                    if (on_icon_click != null) {
+                        Modifier
+                            .clip(SquircleShape(6.dp))
+                            .clickable(onClick = on_icon_click)
+                            .padding(2.dp)
+                    } else {
+                        Modifier
+                    },
+                )
+                .size(15.dp),
+        )
+    }
+}
+
+private val compact_summary_policy = object : androidx.compose.ui.layout.MeasurePolicy {
+    override fun androidx.compose.ui.layout.MeasureScope.measure(
+        measurables: List<androidx.compose.ui.layout.Measurable>,
+        constraints: androidx.compose.ui.unit.Constraints,
+    ): androidx.compose.ui.layout.MeasureResult {
+        val (first_icon, first_text, separator, second_icon, second_text) = measurables
+        val icon_gap = 8.dp.roundToPx()
+        val loose = androidx.compose.ui.unit.Constraints()
+        val first_icon_placeable = first_icon.measure(loose)
+        val second_icon_placeable = second_icon.measure(loose)
+        val text_start = first_icon_placeable.width + icon_gap
+        val one_line_width = text_start +
+            first_text.maxIntrinsicWidth(androidx.compose.ui.unit.Constraints.Infinity) +
+            separator.maxIntrinsicWidth(androidx.compose.ui.unit.Constraints.Infinity) +
+            second_text.maxIntrinsicWidth(androidx.compose.ui.unit.Constraints.Infinity)
+        if (one_line_width <= constraints.maxWidth) {
+            val first = first_text.measure(loose)
+            val sep = separator.measure(loose)
+            val second = second_text.measure(loose)
+            val height = maxOf(first_icon_placeable.height, first.height, sep.height, second.height)
+            return layout(constraints.constrainWidth(one_line_width), height) {
+                first_icon_placeable.placeRelative(0, (height - first_icon_placeable.height) / 2)
+                first.placeRelative(text_start, (height - first.height) / 2)
+                sep.placeRelative(text_start + first.width, (height - sep.height) / 2)
+                second.placeRelative(text_start + first.width + sep.width, (height - second.height) / 2)
+            }
+        }
+        val text_max = maxOf(0, constraints.maxWidth - text_start)
+        val first = first_text.measure(androidx.compose.ui.unit.Constraints(maxWidth = text_max))
+        val second = second_text.measure(androidx.compose.ui.unit.Constraints(maxWidth = text_max))
+        val first_row = maxOf(first_icon_placeable.height, first.height)
+        val second_row = maxOf(second_icon_placeable.height, second.height)
+        val width = constraints.constrainWidth(text_start + maxOf(first.width, second.width))
+        return layout(width, first_row + second_row) {
+            first_icon_placeable.placeRelative(0, (first_row - first_icon_placeable.height) / 2)
+            first.placeRelative(text_start, (first_row - first.height) / 2)
+            second_icon_placeable.placeRelative(0, first_row + (second_row - second_icon_placeable.height) / 2)
+            second.placeRelative(text_start, first_row + (second_row - second.height) / 2)
+        }
+    }
+
+    override fun androidx.compose.ui.layout.IntrinsicMeasureScope.maxIntrinsicWidth(
+        measurables: List<androidx.compose.ui.layout.IntrinsicMeasurable>,
+        height: Int,
+    ): Int {
+        val (first_icon, first_text, separator, _, second_text) = measurables
+        return first_icon.maxIntrinsicWidth(height) + 8.dp.roundToPx() +
+            first_text.maxIntrinsicWidth(height) + separator.maxIntrinsicWidth(height) + second_text.maxIntrinsicWidth(height)
+    }
+
+    override fun androidx.compose.ui.layout.IntrinsicMeasureScope.minIntrinsicWidth(
+        measurables: List<androidx.compose.ui.layout.IntrinsicMeasurable>,
+        height: Int,
+    ): Int {
+        val (first_icon, first_text, _, _, second_text) = measurables
+        return first_icon.maxIntrinsicWidth(height) + 8.dp.roundToPx() +
+            maxOf(first_text.maxIntrinsicWidth(height), second_text.maxIntrinsicWidth(height))
+    }
+}
+
+@Composable
+internal fun compact_banner_summary(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon_tint: Color,
+    on_icon_click: (() -> Unit)?,
+    label: String,
+    second_icon: androidx.compose.ui.graphics.vector.ImageVector,
+    second_icon_tint: Color,
+    second_label: String,
+    second_label_color: Color,
+    second_label_modifier: Modifier,
+) {
+    val colors = AsterMaterial.colors
+    Layout(
+        content = {
+            compact_banner_icon(icon = icon, tint = icon_tint, on_icon_click = on_icon_click)
+            Text(
+                text = label,
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.testTag("compact_banner_label"),
+            )
+            Text(
+                text = " · ",
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                modifier = Modifier.clearAndSetSemantics {},
+            )
+            compact_banner_icon(icon = second_icon, tint = second_icon_tint)
+            Text(
+                text = second_label,
+                color = second_label_color,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = second_label_modifier,
+            )
+        },
+        measurePolicy = compact_summary_policy,
+    )
+}
+
+internal fun compact_banner_summary_inline(
+    available_width: Int,
+    gap: Int,
+    actions_width: Int,
+    one_line_width: Int,
+    two_row_width: Int,
+): Boolean = minOf(one_line_width, two_row_width) + gap + actions_width <= available_width
+
+@Composable
 internal fun compact_banner_row(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     tint: Color,
@@ -3470,25 +3645,7 @@ internal fun compact_banner_row(
     content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit,
 ) {
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        Box(modifier = Modifier.size(19.dp), contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = tint,
-                modifier = Modifier
-                    .then(
-                        if (on_icon_click != null) {
-                            Modifier
-                                .clip(SquircleShape(6.dp))
-                                .clickable(onClick = on_icon_click)
-                                .padding(2.dp)
-                        } else {
-                            Modifier
-                        },
-                    )
-                    .size(15.dp),
-            )
-        }
+        compact_banner_icon(icon = icon, tint = tint, on_icon_click = on_icon_click)
         Spacer(Modifier.width(8.dp))
         content()
     }
@@ -3518,6 +3675,7 @@ internal fun compact_banner(
     label: String,
     on_icon_click: (() -> Unit)? = null,
     secondary_row: (@Composable () -> Unit)? = null,
+    summary: (@Composable () -> Unit)? = null,
     actions: @Composable () -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -3533,7 +3691,9 @@ internal fun compact_banner(
             .padding(start = AsterSpacing.md, end = AsterSpacing.sm),
         content = {
             Column(modifier = Modifier.padding(vertical = 6.dp)) {
-                if (label.isNotEmpty() || secondary_row == null) {
+                if (summary != null) {
+                    summary()
+                } else if (label.isNotEmpty() || secondary_row == null) {
                     compact_banner_row(
                         icon = icon,
                         tint = if (on_icon_click != null) colors.accent_blue else colors.text_secondary,
@@ -3549,7 +3709,7 @@ internal fun compact_banner(
                         )
                     }
                 }
-                secondary_row?.invoke()
+                if (summary == null) secondary_row?.invoke()
             }
             FlowRow(
                 modifier = Modifier.testTag("compact_banner_actions"),
@@ -3566,7 +3726,13 @@ internal fun compact_banner(
         val actions_width = actions_measurable.maxIntrinsicWidth(androidx.compose.ui.unit.Constraints.Infinity)
         val text_width = text_measurable.maxIntrinsicWidth(androidx.compose.ui.unit.Constraints.Infinity)
         val icon_column = 27.dp.roundToPx()
-        val inline = compact_banner_actions_inline(
+        val inline = if (summary != null) compact_banner_summary_inline(
+            available_width = width,
+            gap = gap,
+            actions_width = actions_width,
+            one_line_width = text_width,
+            two_row_width = text_measurable.minIntrinsicWidth(androidx.compose.ui.unit.Constraints.Infinity),
+        ) else compact_banner_actions_inline(
             available_width = width,
             gap = gap,
             actions_width = actions_width,
@@ -3824,29 +3990,44 @@ internal fun external_content_banner(
     val open_details: (() -> Unit)? = if (counts.items.isNotEmpty()) ({ show_details = true }) else null
     val open_trackers = on_show_trackers ?: open_details
     val tracker_label = pluralStringResource(R.plurals.n_tracking_pixels, counts.tracker_count, counts.tracker_count)
+    val tracker_link_modifier = Modifier
+        .clip(SquircleShape(6.dp))
+        .then(
+            if (open_trackers != null) {
+                Modifier.clickable(role = Role.Button, onClick = open_trackers)
+            } else {
+                Modifier
+            },
+        )
+        .testTag("banner_trackers")
+        .padding(vertical = 2.dp)
+    val tracker_color = if (open_trackers != null) colors.accent_blue else colors.text_secondary
     compact_banner(
         icon = TablerIcons.PhotoOff,
         label = label,
         on_icon_click = open_details,
+        summary = if (counts.tracker_count > 0 && label.isNotEmpty()) ({
+            compact_banner_summary(
+                icon = TablerIcons.PhotoOff,
+                icon_tint = if (open_details != null) colors.accent_blue else colors.text_secondary,
+                on_icon_click = open_details,
+                label = label,
+                second_icon = TablerIcons.ShieldCheck,
+                second_icon_tint = colors.success,
+                second_label = tracker_label,
+                second_label_color = tracker_color,
+                second_label_modifier = tracker_link_modifier,
+            )
+        }) else null,
         secondary_row = if (counts.tracker_count > 0) ({
             compact_banner_row(
                 icon = TablerIcons.ShieldCheck,
                 tint = colors.success,
-                modifier = Modifier
-                    .clip(SquircleShape(6.dp))
-                    .then(
-                        if (open_trackers != null) {
-                            Modifier.clickable(role = Role.Button, onClick = open_trackers)
-                        } else {
-                            Modifier
-                        },
-                    )
-                    .testTag("banner_trackers")
-                    .padding(vertical = 2.dp),
+                modifier = tracker_link_modifier,
             ) {
                 Text(
                     text = tracker_label,
-                    color = if (open_trackers != null) colors.accent_blue else colors.text_secondary,
+                    color = tracker_color,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 2,
@@ -3856,18 +4037,23 @@ internal fun external_content_banner(
         }) else null,
     ) {
         compact_banner_action(
-            label = stringResource(
-                if (on_always_allow != null) R.string.detail_external_allow_once else R.string.detail_external_load,
-            ),
-            primary = on_always_allow == null,
+            label = stringResource(R.string.detail_external_load),
+            primary = true,
             onClick = on_allow_once,
         )
         if (on_always_allow != null) {
-            compact_banner_action(
-                label = stringResource(R.string.detail_external_always_allow),
-                primary = true,
-                onClick = on_always_allow,
-            )
+            compact_banner_menu_action(
+                content_description = stringResource(R.string.more_options),
+            ) { close ->
+                aster_menu_item(
+                    label = stringResource(R.string.detail_external_always_allow),
+                    on_click = {
+                        close()
+                        on_always_allow()
+                    },
+                    test_tag = "compact_banner_always_allow",
+                )
+            }
         }
     }
 }
