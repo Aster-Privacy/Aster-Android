@@ -2497,6 +2497,8 @@
     <string name="domain_purchase_search_placeholder">Busca un nombre de dominio</string>
     <string name="domain_purchase_per_year">%1$s/año</string>
     <string name="domain_purchase_taken">No disponible</string>
+    <string name="domain_purchase_unchecked">Sin comprobar</string>
+    <string name="domain_purchase_unchecked_hint">No se pudo comprobar este dominio ahora. Inténtalo de nuevo más tarde.</string>
     <string name="domain_purchase_no_results">No se encontraron dominios disponibles</string>
     <string name="domain_purchase_renews_at">Se renueva a %1$s/año</string>
     <string name="domain_purchase_years">Período de registro</string>

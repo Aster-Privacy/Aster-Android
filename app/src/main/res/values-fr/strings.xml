@@ -2523,6 +2523,8 @@
     <string name="domain_purchase_search_placeholder">Rechercher un nom de domaine</string>
     <string name="domain_purchase_per_year">%1$s/an</string>
     <string name="domain_purchase_taken">Indisponible</string>
+    <string name="domain_purchase_unchecked">Non vérifié</string>
+    <string name="domain_purchase_unchecked_hint">Impossible de vérifier ce domaine pour le moment. Réessayez plus tard.</string>
     <string name="domain_purchase_no_results">Aucun domaine disponible trouvé</string>
     <string name="domain_purchase_renews_at">Renouvellement à %1$s/an</string>
     <string name="domain_purchase_years">Période d\'enregistrement</string>

@@ -2520,6 +2520,8 @@
     <string name="domain_purchase_search_placeholder">ابحث عن اسم نطاق</string>
     <string name="domain_purchase_per_year">%1$s/سنة</string>
     <string name="domain_purchase_taken">محجوز</string>
+    <string name="domain_purchase_unchecked">تعذّر التحقق</string>
+    <string name="domain_purchase_unchecked_hint">تعذّر التحقق من هذا النطاق الآن. حاول مرة أخرى لاحقًا.</string>
     <string name="domain_purchase_no_results">لم يتم العثور على نطاقات متاحة</string>
     <string name="domain_purchase_renews_at">يتجدد بسعر %1$s/سنة</string>
     <string name="domain_purchase_years">مدة التسجيل</string>

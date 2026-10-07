@@ -2489,6 +2489,8 @@
     <string name="domain_purchase_search_placeholder">Nach einem Domainnamen suchen</string>
     <string name="domain_purchase_per_year">%1$s/Jahr</string>
     <string name="domain_purchase_taken">Vergeben</string>
+    <string name="domain_purchase_unchecked">Nicht geprüft</string>
+    <string name="domain_purchase_unchecked_hint">Diese Domain konnte gerade nicht geprüft werden. Versuchen Sie es später erneut.</string>
     <string name="domain_purchase_no_results">Keine verfügbaren Domains gefunden</string>
     <string name="domain_purchase_renews_at">Verlängerung: %1$s/Jahr</string>
     <string name="domain_purchase_years">Registrierungszeitraum</string>

@@ -2504,6 +2504,8 @@
     <string name="domain_purchase_search_placeholder">Поиск доменного имени</string>
     <string name="domain_purchase_per_year">%1$s/год</string>
     <string name="domain_purchase_taken">Занят</string>
+    <string name="domain_purchase_unchecked">Не проверен</string>
+    <string name="domain_purchase_unchecked_hint">Сейчас не удалось проверить этот домен. Попробуйте позже.</string>
     <string name="domain_purchase_no_results">Доступных доменов не найдено</string>
     <string name="domain_purchase_renews_at">Продление: %1$s/год</string>
     <string name="domain_purchase_years">Срок регистрации</string>

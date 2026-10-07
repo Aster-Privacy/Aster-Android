@@ -9,6 +9,12 @@ kotlin {
     }
 }
 
+val app_version_name: String = Regex("""versionName\s*=\s*"([^"]+)"""")
+    .find(providers.fileContents(rootProject.layout.projectDirectory.file("app/build.gradle.kts")).asText.get())
+    ?.groupValues
+    ?.get(1)
+    ?: error("versionName not found in app/build.gradle.kts")
+
 android {
     namespace = "org.astermail.android.api"
     compileSdk = 37
@@ -16,7 +22,7 @@ android {
     defaultConfig {
         minSdk = 26
         buildConfigField("String", "API_BASE_URL", "\"https://app.astermail.org\"")
-        buildConfigField("String", "VERSION_NAME", "\"0.1.0\"")
+        buildConfigField("String", "VERSION_NAME", "\"$app_version_name\"")
         buildConfigField("String", "WEBAUTHN_ORIGIN", "\"https://app.astermail.org\"")
     }
 

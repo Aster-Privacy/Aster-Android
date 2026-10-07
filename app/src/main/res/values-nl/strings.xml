@@ -2488,6 +2488,8 @@
     <string name="domain_purchase_search_placeholder">Zoek een domeinnaam</string>
     <string name="domain_purchase_per_year">%1$s/jaar</string>
     <string name="domain_purchase_taken">Bezet</string>
+    <string name="domain_purchase_unchecked">Niet gecontroleerd</string>
+    <string name="domain_purchase_unchecked_hint">Dit domein kan nu niet worden gecontroleerd. Probeer het later opnieuw.</string>
     <string name="domain_purchase_no_results">Geen beschikbare domeinen gevonden</string>
     <string name="domain_purchase_renews_at">Verlengt tegen %1$s/jaar</string>
     <string name="domain_purchase_years">Registratieperiode</string>

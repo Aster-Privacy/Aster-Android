@@ -2488,6 +2488,8 @@
     <string name="domain_purchase_search_placeholder">Bir alan adı arayın</string>
     <string name="domain_purchase_per_year">%1$s/yıl</string>
     <string name="domain_purchase_taken">Alınmış</string>
+    <string name="domain_purchase_unchecked">Kontrol edilemedi</string>
+    <string name="domain_purchase_unchecked_hint">Bu alan adı şu anda kontrol edilemedi. Daha sonra tekrar deneyin.</string>
     <string name="domain_purchase_no_results">Uygun alan adı bulunamadı</string>
     <string name="domain_purchase_renews_at">Yenileme: %1$s/yıl</string>
     <string name="domain_purchase_years">Kayıt süresi</string>

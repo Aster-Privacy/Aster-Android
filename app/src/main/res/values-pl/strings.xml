@@ -2504,6 +2504,8 @@
     <string name="domain_purchase_search_placeholder">Wyszukaj nazwę domeny</string>
     <string name="domain_purchase_per_year">%1$s/rok</string>
     <string name="domain_purchase_taken">Zajęta</string>
+    <string name="domain_purchase_unchecked">Nie sprawdzono</string>
+    <string name="domain_purchase_unchecked_hint">Nie można teraz sprawdzić tej domeny. Spróbuj ponownie później.</string>
     <string name="domain_purchase_no_results">Nie znaleziono dostępnych domen</string>
     <string name="domain_purchase_renews_at">Odnowienie za %1$s/rok</string>
     <string name="domain_purchase_years">Okres rejestracji</string>
