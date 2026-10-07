@@ -1,0 +1,4 @@
+Fixed:
+
+- The app no longer closes when you touch and hold a text field. Cut, Copy, and Paste work in every field again.
+- Attachments you open stay in private app storage and are removed when you sign out.
