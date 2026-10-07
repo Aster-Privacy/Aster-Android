@@ -41,6 +41,12 @@ class SessionKeyStore(context: Context? = null) {
     }
     private val prefs: SharedPreferences? = context?.let { SecurePrefs.open(it, prefs_name) }
 
+    private val vault_salt_prefs: SharedPreferences? =
+        context?.getSharedPreferences(vault_salts_prefs_name, Context.MODE_PRIVATE)
+
+    @Volatile
+    private var remembered_vault_salts: List<String> = emptyList()
+
     @Volatile
     private var key_material: ByteArray? = null
 
@@ -118,12 +124,16 @@ class SessionKeyStore(context: Context? = null) {
     private var ratchet_pq_identity_public: String? = null
 
     init {
+        runCatching {
+            remembered_vault_salts = VaultSaltMemory.parse(vault_salt_prefs?.getString(key_vault_salts, null))
+        }
         prefs?.let { p ->
             runCatching {
                 key_material = decode_b64_field(p, key_session_key)
                 passphrase = decode_b64_field(p, key_passphrase)
                 identity_key = p.getString(key_identity, null)
                 encrypted_vault = p.getString(key_enc_vault, null)
+                encrypted_vault?.let { remember_vault_salt_locked(it) }
                 vault_nonce = p.getString(key_vault_nonce, null)
                 password_salt = decode_b64_field(p, key_password_salt)
                 user_id = p.getString(key_user_id, null)
@@ -311,11 +321,25 @@ class SessionKeyStore(context: Context? = null) {
         synchronized(lock) {
             this.encrypted_vault = encrypted_vault_b64
             this.vault_nonce = vault_nonce_b64
+            remember_vault_salt_locked(encrypted_vault_b64)
             prefs?.edit()
                 ?.putString(key_enc_vault, encrypted_vault_b64)
                 ?.putString(key_vault_nonce, vault_nonce_b64)
                 ?.commit()
         }
+    }
+
+    fun get_remembered_vault_salts(): List<ByteArray> {
+        synchronized(lock) {
+            return VaultSaltMemory.decode(remembered_vault_salts)
+        }
+    }
+
+    private fun remember_vault_salt_locked(encrypted_vault_b64: String) {
+        val updated = VaultSaltMemory.remember(remembered_vault_salts, encrypted_vault_b64)
+        if (updated == remembered_vault_salts) return
+        remembered_vault_salts = updated
+        vault_salt_prefs?.edit()?.putString(key_vault_salts, VaultSaltMemory.serialize(updated))?.commit()
     }
 
     fun put_password_salt(salt: ByteArray) {
@@ -581,6 +605,8 @@ class SessionKeyStore(context: Context? = null) {
 
     companion object {
         private const val prefs_name = "aster_session_keys_v1"
+        private const val vault_salts_prefs_name = "aster_vault_salts_v1"
+        private const val key_vault_salts = "vault_salts"
         private const val key_session_key = "session_key"
         private const val key_passphrase = "passphrase"
         private const val key_identity = "identity_key"

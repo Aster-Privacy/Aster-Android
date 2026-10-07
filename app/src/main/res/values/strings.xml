@@ -786,14 +786,6 @@
     <string name="settings_security_subtitle">Password, 2FA, sessions</string>
     <string name="settings_encryption">Encryption</string>
     <string name="settings_encryption_subtitle">PGP keys and recovery</string>
-    <string name="settings_connection">Connection</string>
-    <string name="connection_description">Choose how Aster Mail connects to our servers.</string>
-    <string name="connection_method_header">Connection method</string>
-    <string name="connection_direct">Direct</string>
-    <string name="connection_direct_description">Connect straight to Aster servers for the fastest experience.</string>
-    <string name="connection_cdn_relay">CDN relay</string>
-    <string name="connection_cdn_relay_description">Route traffic through a content delivery relay to mask your IP address.</string>
-    <string name="failed_save_connection_preference">Couldn\'t save connection preference</string>
     <string name="settings_smtp_tokens">SMTP tokens</string>
     <string name="smtp_tokens_description">An SMTP token is a send-only password bound to one of your verified custom-domain addresses. Use it to send mail from automated systems, scripts, or third-party services over standard SMTP.</string>
     <string name="smtp_tokens_empty">No SMTP tokens yet.</string>
@@ -2442,6 +2434,7 @@
     <string name="app_lock_verify_title">Verify identity</string>
     <string name="app_lock_enter_to_change">Enter your current PIN to change it.</string>
     <string name="app_lock_enter_to_disable">Enter your PIN to disable app lock.</string>
+    <string name="app_lock_enter_to_enable_biometric">To turn on biometric unlock, enter your PIN.</string>
 
     <!-- Alias Directories screen -->
     <string name="settings_alias_directories">Alias Directories</string>
@@ -3245,15 +3238,12 @@
     <string name="plan_badge_nova">Nova</string>
     <string name="plan_badge_supernova">Supernova</string>
     <string name="plan_badge_thanks">Thanks for being a %1$s subscriber.</string>
-    <string name="connection_relay_connected">Relay on. Your connection may be slower.</string>
-    <string name="connection_relay_disconnected">Disconnected</string>
     <string name="search_groups">Search groups</string>
     <string name="search_trash">Search trash</string>
     <string name="no_groups_match">No groups match \"%1$s\"</string>
     <string name="captcha_verifying">Verifying that you\'re human</string>
     <string name="captcha_unavailable">The verification check didn\'t load. Check your connection, then try again.</string>
     <string name="captcha_retry">Try again</string>
-    <string name="connection_relay_failed">Couldn\'t change the connection method. Try again.</string>
     <string name="all_emails">All emails</string>
     <string name="read_only">Read only</string>
     <string name="with_attachments">With attachments</string>

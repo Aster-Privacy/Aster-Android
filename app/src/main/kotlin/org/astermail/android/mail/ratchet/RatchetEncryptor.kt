@@ -207,7 +207,7 @@ class RatchetEncryptor @Inject constructor(
         username: String,
         recipient_email: String,
         bundle: PrekeyBundleResponse,
-    ) {
+    ): Boolean {
         val pinned_owner = identity_pins.owner_key_pin(recipient_email)?.takeIf { it.isNotBlank() }
         val signature = bundle.signed_prekey_signature
         val signed = PrekeyBindingVerifier.is_pgp_signature(signature)
@@ -215,14 +215,14 @@ class RatchetEncryptor @Inject constructor(
             if (BuildConfig.DEBUG) {
                 android.util.Log.w("AsterRatchet", "prekey bundle carries a legacy unsigned binding")
             }
-            return
+            return false
         }
 
         val verifying_key = fetch_verifying_key(username, recipient_email)
-        val result = when {
-            !signed -> PrekeyBindingResult.UNSIGNED_LEGACY
-            verifying_key == null -> PrekeyBindingResult.UNVERIFIABLE
-            else -> PrekeyBindingVerifier.verify(
+        val verdict = when {
+            !signed -> PrekeyBindingVerdict(PrekeyBindingResult.UNSIGNED_LEGACY, false)
+            verifying_key == null -> PrekeyBindingVerdict(PrekeyBindingResult.UNVERIFIABLE, false)
+            else -> PrekeyBindingVerifier.verify_binding(
                 signature_block = signature,
                 recipient_public_key_armored = verifying_key,
                 kem_identity_key_b64 = bundle.kem_identity_key,
@@ -230,6 +230,7 @@ class RatchetEncryptor @Inject constructor(
                 pq_identity_key_b64 = bundle.pq_kem_public_key,
             )
         }
+        val result = verdict.result
         val served_owner = PrekeyBindingVerifier.owner_fingerprint(verifying_key)
 
         when (RatchetIdentityPinRules.decide_owner_key(pinned_owner, served_owner, result)) {
@@ -272,6 +273,7 @@ class RatchetEncryptor @Inject constructor(
                 )
             }
         }
+        return verdict.covers_pq_identity
     }
 
     private suspend fun verify_identity_pin(
@@ -389,7 +391,8 @@ class RatchetEncryptor @Inject constructor(
                 return null
             }
 
-            verify_prekey_binding(conversation_id, username, recipient_email, resolved_bundle)
+            val signature_covers_pq_identity =
+                verify_prekey_binding(conversation_id, username, recipient_email, resolved_bundle)
             verify_identity_pin(conversation_id, recipient_email, resolved_bundle)
 
             bundle = resolved_bundle
@@ -409,6 +412,7 @@ class RatchetEncryptor @Inject constructor(
                 recipient_signed_prekey_raw = recipient_spk_raw,
                 recipient_pq_prekey = pq_prekey_pair,
                 recipient_pq_identity = pq_identity_raw,
+                signature_covers_pq_identity = signature_covers_pq_identity,
             )
 
             try {

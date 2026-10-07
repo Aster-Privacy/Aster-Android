@@ -4671,7 +4671,7 @@ class MailRepository @Inject constructor(
                     is_undecryptable = true
                     is_decrypt_pending = true
                 } else if (decrypted != org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL) {
-                    is_unauthenticated = false
+                    is_unauthenticated = ratchet_plaintext_cache.is_sender_unauthenticated(message_id)
                     body_text = decrypted
                     body_html = null
                     ratchet_decrypted = true

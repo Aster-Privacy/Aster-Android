@@ -62,23 +62,23 @@ sealed class AttachmentImport {
     data class Failed(val name: String) : AttachmentImport()
 }
 
-fun parse_share_intent(intent: Intent?): SharePayload? {
+fun parse_share_intent(intent: Intent?, allow_stream: (Uri) -> Boolean): SharePayload? {
     if (intent == null) return null
     val payload = when (intent.action) {
-        Intent.ACTION_SEND, Intent.ACTION_SEND_MULTIPLE -> parse_send_intent(intent)
+        Intent.ACTION_SEND, Intent.ACTION_SEND_MULTIPLE -> parse_send_intent(intent, allow_stream)
         Intent.ACTION_SENDTO, Intent.ACTION_VIEW -> parse_mailto_intent(intent)
         else -> null
     } ?: return null
     return payload.takeIf { !it.is_empty }
 }
 
-private fun parse_send_intent(intent: Intent): SharePayload {
+private fun parse_send_intent(intent: Intent, allow_stream: (Uri) -> Boolean): SharePayload {
     val subject = intent.getCharSequenceExtra(Intent.EXTRA_SUBJECT)?.toString().orEmpty()
     val body = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString().orEmpty()
     val to = address_list(intent, Intent.EXTRA_EMAIL)
     val cc = address_list(intent, Intent.EXTRA_CC)
     val bcc = address_list(intent, Intent.EXTRA_BCC)
-    val streams = stream_uris(intent)
+    val streams = stream_uris(intent, allow_stream)
     val mailto = to.firstOrNull()?.let { first ->
         if (first.startsWith("mailto:", ignoreCase = true)) parse_mailto_uri(Uri.parse(first)) else null
     }
@@ -99,7 +99,7 @@ private fun parse_send_intent(intent: Intent): SharePayload {
     )
 }
 
-private fun stream_uris(intent: Intent): List<Uri> {
+private fun stream_uris(intent: Intent, allow_stream: (Uri) -> Boolean): List<Uri> {
     val collected = mutableListOf<Uri>()
     val many = IntentCompat.getParcelableArrayListExtra(intent, Intent.EXTRA_STREAM, Uri::class.java)
     if (many != null) {
@@ -115,7 +115,7 @@ private fun stream_uris(intent: Intent): List<Uri> {
             clip.getItemAt(index).uri?.let { collected.add(it) }
         }
     }
-    return collected.filter { is_attachable_uri(it) }.distinct()
+    return collected.distinct().filter { allow_stream(it) }
 }
 
 private fun is_attachable_uri(uri: Uri): Boolean {
@@ -246,7 +246,7 @@ fun import_shared_attachment(context: Context, uri: Uri): AttachmentImport {
 
 private fun is_private_app_file(context: Context, uri: Uri): Boolean {
     if (uri.scheme.equals("content", ignoreCase = true)) {
-        return uri.authority == context.packageName + ".fileprovider"
+        return is_own_share_authority(uri.authority, context.packageName)
     }
     if (!uri.scheme.equals("file", ignoreCase = true)) return false
     val path = runCatching { File(uri.path.orEmpty()).canonicalPath }.getOrNull() ?: return true

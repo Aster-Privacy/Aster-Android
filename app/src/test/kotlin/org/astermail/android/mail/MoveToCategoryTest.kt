@@ -84,6 +84,7 @@ class MoveToCategoryTest {
             mockk(relaxed = true),
             mockk(relaxed = true),
             mockk(relaxed = true),
+            mockk(relaxed = true),
         )
     }
 

@@ -214,6 +214,21 @@ private fun lighten_color_declarations(css: String): String {
     }
 }
 
+private fun clear_light_backgrounds(css: String): String {
+    if (declares_background_image(css)) return css
+    return BACKGROUND_COLOR_DECLARATION.replace(css) { match ->
+        val value = match.groups[1]!!
+        val cleared = COLOR_TOKEN.replace(value.value) { token ->
+            if (reads_as_light_surface(token.value)) "transparent" else token.value
+        }
+        if (cleared == value.value) {
+            match.value
+        } else {
+            match.value.substring(0, value.range.first - match.range.first) + cleared
+        }
+    }
+}
+
 private fun mark_stylesheet_background_images(doc: org.jsoup.nodes.Document, css: String): Boolean {
     var marked = false
     for (rule in STYLE_RULE.findAll(css)) {
@@ -235,12 +250,15 @@ private fun mark_stylesheet_background_images(doc: org.jsoup.nodes.Document, css
     return marked
 }
 
-private fun lighten_style_blocks(doc: org.jsoup.nodes.Document): Boolean {
+private fun lighten_style_blocks(
+    doc: org.jsoup.nodes.Document,
+    rewrite: (String) -> String = ::lighten_color_declarations,
+): Boolean {
     var changed = false
     for (element in doc.select("style")) {
         val css = element.data()
         val lightened = STYLE_RULE_BODY.replace(css) { rule ->
-            "{" + lighten_color_declarations(rule.groupValues[1]) + "}"
+            "{" + rewrite(rule.groupValues[1]) + "}"
         }
         if (lightened != css) {
             element.empty()
@@ -287,7 +305,7 @@ internal fun lighten_dark_email_text(body: String): String = try {
             changed = true
         }
     }
-    if (lighten_style_blocks(doc)) changed = true
+    if (lighten_style_blocks(doc) { clear_light_backgrounds(lighten_color_declarations(it)) }) changed = true
     for (element in doc.select("font[color]")) {
         if (reads_too_dark_on_dark(element.attr("color"))) {
             element.attr("color", FORCED_DARK_INK)

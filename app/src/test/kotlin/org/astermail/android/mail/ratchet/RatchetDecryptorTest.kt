@@ -128,7 +128,7 @@ class RatchetDecryptorTest {
     private fun pin_store(replayed_bootstrap: Boolean = false): RatchetIdentityPinStore {
         val identity_pins = mockk<RatchetIdentityPinStore>(relaxed = true)
         coEvery { identity_pins.is_replayed_bootstrap(any(), any()) } returns replayed_bootstrap
-        coEvery { identity_pins.record(any(), any(), any(), any(), any()) } returns IdentityPinOutcome.UNCHANGED
+        coEvery { identity_pins.record(any(), any(), any(), any()) } returns IdentityPinOutcome.UNCHANGED
         return identity_pins
     }
 
@@ -445,10 +445,12 @@ class RatchetDecryptorTest {
         val session_key_store = SessionKeyStore(null)
         seed_session_key_store(session_key_store, fixture.receiver_keys)
 
-        val decryptor = new_decryptor(state_store, session_key_store, ratchet_api, syncer, auth_repo)
-        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        val decryptor = new_decryptor(state_store, session_key_store, ratchet_api, syncer, auth_repo, plaintext_cache)
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_lane")
 
         assertEquals("third message", result)
+        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", true) }
     }
 
     @Test
@@ -487,10 +489,12 @@ class RatchetDecryptorTest {
         val session_key_store = SessionKeyStore(null)
         seed_session_key_store(session_key_store, fixture.receiver_keys)
 
-        val decryptor = new_decryptor(state_store, session_key_store, ratchet_api, syncer, auth_repo)
-        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        val decryptor = new_decryptor(state_store, session_key_store, ratchet_api, syncer, auth_repo, plaintext_cache)
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_lane")
 
         assertEquals("third message", result)
+        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", true) }
     }
 
     @Test
@@ -689,11 +693,11 @@ class RatchetDecryptorTest {
         val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)
 
         assertEquals("third message", result)
-        coVerify(exactly = 0) { identity_pins.record(any(), any(), any(), any(), any()) }
+        coVerify(exactly = 0) { identity_pins.record(any(), any(), any(), any()) }
     }
 
     @Test
-    fun `chained decrypt records the sender identity as confirmed`() = runTest {
+    fun `chained decrypt never records the unauthenticated envelope identity`() = runTest {
         val fixture = build_fixture()
 
         val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "first message")
@@ -723,14 +727,11 @@ class RatchetDecryptorTest {
         val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)
 
         assertEquals("second message", result)
-        val sender_identity_b64 = RatchetCrypto.b64_encode(fixture.sender_identity_raw)
-        coVerify(exactly = 1) {
-            identity_pins.record(fixture.conversation_id, sender_email, sender_identity_b64, any(), true)
-        }
+        coVerify(exactly = 0) { identity_pins.record(any(), any(), any(), any()) }
     }
 
     @Test
-    fun `new bootstrap records the sender identity unconfirmed and remembers the ephemeral key`() = runTest {
+    fun `new bootstrap records the sender identity and remembers the ephemeral key`() = runTest {
         val fixture = build_fixture()
         val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "hello kchaos")
         val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
@@ -757,7 +758,7 @@ class RatchetDecryptorTest {
 
         assertEquals("hello kchaos", result)
         coVerify(exactly = 1) {
-            identity_pins.record(fixture.conversation_id, sender_email, any(), any(), false)
+            identity_pins.record(fixture.conversation_id, sender_email, any(), any())
         }
         val ephemeral_b64 = RatchetCrypto.b64_encode(fixture.sender_ephemeral_raw)
         coVerify(exactly = 1) { identity_pins.record_bootstrap(fixture.conversation_id, ephemeral_b64) }
@@ -791,7 +792,7 @@ class RatchetDecryptorTest {
         val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)
 
         assertEquals("hello kchaos", result)
-        coVerify(exactly = 0) { identity_pins.record(any(), any(), any(), any(), any()) }
+        coVerify(exactly = 0) { identity_pins.record(any(), any(), any(), any()) }
     }
 
     private fun lane_for_sender(

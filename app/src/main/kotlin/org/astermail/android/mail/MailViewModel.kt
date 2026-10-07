@@ -151,7 +151,10 @@ class MailViewModel @Inject constructor(
     private val sent_mail_reseal_finisher: SentMailResealFinisher,
     private val account_data_conversion: AccountDataConversion,
     private val device_recovery: org.astermail.android.auth.DeviceRecovery,
+    ratchet_plaintext_cache: org.astermail.android.mail.ratchet.RatchetPlaintextCache,
 ) : ViewModel() {
+
+    val unauthenticated_message_ids: StateFlow<Set<String>> = ratchet_plaintext_cache.unauthenticated_ids
 
     val identity_changes: StateFlow<List<org.astermail.android.mail.ratchet.IdentityChange>> =
         identity_pins.unacknowledged_changes

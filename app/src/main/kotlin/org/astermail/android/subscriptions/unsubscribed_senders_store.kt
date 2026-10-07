@@ -42,8 +42,14 @@ import org.astermail.android.api.subscriptions.UnsubscribeRequest
 import org.astermail.android.mail.MailRepository
 
 private const val PREFS_NAME = "aster_unsubscribed_senders"
-private const val CONFIRMED_PREFIX = "confirmed_"
-private const val PENDING_PREFIX = "pending_"
+private const val KEY_PREFS_NAME = "aster_unsubscribed_sender_keys"
+private const val KEY_TOKEN_KEY = "token_key"
+private const val CONFIRMED_PREFIX = "v2_confirmed_"
+private const val PENDING_PREFIX = "v2_pending_"
+private const val LEGACY_CONFIRMED_PREFIX = "confirmed_"
+private const val LEGACY_PENDING_PREFIX = "pending_"
+private const val HMAC_ALGORITHM = "HmacSHA256"
+internal const val UNSUBSCRIBED_TOKEN_KEY_BYTES = 32
 private const val REFRESH_INTERVAL_MS = 60_000L
 private const val REFRESH_PAGE_SIZE = 100
 private const val REFRESH_MAX_PAGES = 50
@@ -52,19 +58,52 @@ private const val RECORD_RETRY_DELAY_MS = 2_000L
 private const val MAX_SENDER_NAME_LENGTH = 255
 private const val MAX_UNSUBSCRIBE_FIELD_LENGTH = 2048
 
-private fun sha256_hex(value: String): String =
-    java.security.MessageDigest.getInstance("SHA-256")
-        .digest(value.toByteArray(Charsets.UTF_8))
-        .joinToString("") { "%02x".format(it) }
+private fun hmac_sha256(key: ByteArray, value: String): ByteArray {
+    val mac = javax.crypto.Mac.getInstance(HMAC_ALGORITHM)
+    mac.init(javax.crypto.spec.SecretKeySpec(key, HMAC_ALGORITHM))
+    return mac.doFinal(value.toByteArray(Charsets.UTF_8))
+}
+
+private fun to_hex(bytes: ByteArray): String = bytes.joinToString("") { "%02x".format(it) }
 
 internal fun normalize_sender_email(sender_email: String): String =
     sender_email.trim().lowercase(java.util.Locale.ROOT)
 
-internal fun unsubscribed_account_key(account_email: String?): String =
-    sha256_hex(normalize_sender_email(account_email.orEmpty()))
+internal fun unsubscribed_account_secret(token_key: ByteArray, account_email: String?): ByteArray =
+    hmac_sha256(token_key, "account\n" + normalize_sender_email(account_email.orEmpty()))
 
-internal fun unsubscribed_sender_token(account_email: String?, sender_email: String): String =
-    sha256_hex(normalize_sender_email(account_email.orEmpty()) + "\n" + normalize_sender_email(sender_email))
+internal fun unsubscribed_account_key(token_key: ByteArray, account_email: String?): String =
+    to_hex(hmac_sha256(unsubscribed_account_secret(token_key, account_email), "slot"))
+
+internal fun unsubscribed_sender_token(token_key: ByteArray, account_email: String?, sender_email: String): String =
+    to_hex(
+        hmac_sha256(
+            unsubscribed_account_secret(token_key, account_email),
+            "sender\n" + normalize_sender_email(sender_email),
+        ),
+    )
+
+internal fun legacy_unsubscribed_pref_keys(pref_keys: Collection<String>): Set<String> =
+    pref_keys.filterTo(HashSet()) {
+        it.startsWith(LEGACY_CONFIRMED_PREFIX) || it.startsWith(LEGACY_PENDING_PREFIX)
+    }
+
+private fun load_or_create_unsubscribed_token_key(context: Context): ByteArray {
+    val fresh = ByteArray(UNSUBSCRIBED_TOKEN_KEY_BYTES).also { java.security.SecureRandom().nextBytes(it) }
+    val key_prefs = runCatching {
+        org.astermail.android.storage.SecurePrefs.open(context, KEY_PREFS_NAME)
+    }.getOrNull() ?: return fresh
+    val stored = runCatching {
+        key_prefs.getString(KEY_TOKEN_KEY, null)?.let { java.util.Base64.getDecoder().decode(it) }
+    }.getOrNull()
+    if (stored != null && stored.size == UNSUBSCRIBED_TOKEN_KEY_BYTES) return stored
+    runCatching {
+        key_prefs.edit()
+            .putString(KEY_TOKEN_KEY, java.util.Base64.getEncoder().encodeToString(fresh))
+            .commit()
+    }
+    return fresh
+}
 
 internal fun build_unsubscribe_track_request(
     sender_email: String,
@@ -104,12 +143,32 @@ class UnsubscribedSendersStore @Inject constructor(
     private var last_refresh_ms = 0L
     private var refresh_job: Job? = null
 
-    private fun prefs() = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val token_key: ByteArray by lazy { load_or_create_unsubscribed_token_key(context) }
+    private var legacy_purged = false
+
+    private fun prefs(): android.content.SharedPreferences {
+        val stored = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        synchronized(lock) {
+            if (!legacy_purged) {
+                legacy_purged = true
+                val legacy = legacy_unsubscribed_pref_keys(stored.all.keys)
+                if (legacy.isNotEmpty()) {
+                    val editor = stored.edit()
+                    legacy.forEach { editor.remove(it) }
+                    editor.apply()
+                }
+            }
+        }
+        return stored
+    }
+
+    private fun account_key_for(account_email: String?): String =
+        unsubscribed_account_key(token_key, account_email)
 
     private fun account_email(): String? = repository.get_user_email()
 
     private fun ensure_loaded(): String = synchronized(lock) {
-        val account_key = unsubscribed_account_key(account_email())
+        val account_key = account_key_for(account_email())
         if (loaded_account_key != account_key) {
             val stored = prefs()
             confirmed = stored.getStringSet(CONFIRMED_PREFIX + account_key, null).orEmpty().toSet()
@@ -138,7 +197,7 @@ class UnsubscribedSendersStore @Inject constructor(
     }
 
     fun token_for(sender_email: String): String =
-        unsubscribed_sender_token(account_email(), sender_email)
+        unsubscribed_sender_token(token_key, account_email(), sender_email)
 
     fun load_cached() {
         ensure_loaded()
@@ -159,7 +218,7 @@ class UnsubscribedSendersStore @Inject constructor(
                 } catch (_: Throwable) {
                     null
                 } ?: return@launch
-                if (unsubscribed_account_key(account_email()) != account_key) return@launch
+                if (account_key_for(account_email()) != account_key) return@launch
                 update(account_key) { _, current_pending ->
                     server_tokens to (current_pending - server_tokens)
                 }
@@ -183,7 +242,7 @@ class UnsubscribedSendersStore @Inject constructor(
             )
             for (subscription in response.subscriptions) {
                 if (subscription.status == "unsubscribed") {
-                    collected += unsubscribed_sender_token(account, subscription.sender_email)
+                    collected += unsubscribed_sender_token(token_key, account, subscription.sender_email)
                 }
             }
             page++
@@ -196,7 +255,7 @@ class UnsubscribedSendersStore @Inject constructor(
         val account_key = ensure_loaded()
         val account = account_email()
         val server_tokens = unsubscribed_sender_emails
-            .map { unsubscribed_sender_token(account, it) }
+            .map { unsubscribed_sender_token(token_key, account, it) }
             .toSet()
         update(account_key) { _, current_pending ->
             server_tokens to (current_pending - server_tokens)
@@ -238,7 +297,7 @@ class UnsubscribedSendersStore @Inject constructor(
         }
         scope.launch {
             repeat(RECORD_ATTEMPTS) { attempt ->
-                if (unsubscribed_account_key(account_email()) != account_key) return@launch
+                if (account_key_for(account_email()) != account_key) return@launch
                 val recorded = try {
                     val tracked = api.track_subscription(request)
                     tracked.subscription_id.isNotBlank() &&

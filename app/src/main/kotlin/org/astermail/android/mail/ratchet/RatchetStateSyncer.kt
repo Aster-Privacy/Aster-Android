@@ -26,11 +26,6 @@ import javax.inject.Singleton
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
 import org.astermail.android.BuildConfig
 import org.astermail.android.api.ratchet.PostStateOutcome
 import org.astermail.android.api.ratchet.PutStateOutcome
@@ -42,12 +37,6 @@ class RatchetStateSyncer @Inject constructor(
     private val state_store: RatchetStateStore,
     private val ratchet_api: RatchetApi,
 ) {
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-        explicitNulls = false
-    }
 
     private val locks = mutableMapOf<String, Mutex>()
     private val locks_guard = Mutex()
@@ -71,17 +60,18 @@ class RatchetStateSyncer @Inject constructor(
         return false
     }
 
-    fun decode_server_state(plaintext_json: String): RatchetState? {
-        return try {
-            val parsed = json.parseToJsonElement(plaintext_json)
-            if (parsed is JsonObject && parsed.containsKey("state")) {
-                json.decodeFromString(RatchetState.serializer(), parsed["state"]!!.toString())
-            } else {
-                json.decodeFromString(RatchetState.serializer(), plaintext_json)
-            }
-        } catch (_: Throwable) {
-            null
-        }
+    private fun open_state(
+        ciphertext: ByteArray,
+        key: ByteArray,
+        nonce: ByteArray,
+        conversation_id: String,
+    ): Pair<ByteArray, Boolean>? {
+        val bound = runCatching {
+            RatchetCrypto.aes_gcm_decrypt(ciphertext, key, nonce, RatchetStateContainer.bound_aad(conversation_id))
+        }.getOrNull()
+        if (bound != null) return bound to true
+        val legacy = runCatching { RatchetCrypto.aes_gcm_decrypt(ciphertext, key, nonce, null) }.getOrNull()
+        return legacy?.let { it to false }
     }
 
     suspend fun fetch_from_server(conversation_id: String): RatchetState? {
@@ -98,21 +88,24 @@ class RatchetStateSyncer @Inject constructor(
             missing_state_at.remove(conversation_id)
             val ciphertext = RatchetCrypto.b64_decode(resp.encrypted_state)
             val nonce = RatchetCrypto.b64_decode(resp.state_nonce)
-            var state: RatchetState? = null
+            val floor = state_store.sync_floor(conversation_id)
+            var accepted: RatchetStateContainerResult.Accepted? = null
             for (candidate in keys) {
-                val plaintext = try {
-                    RatchetCrypto.aes_gcm_decrypt(ciphertext, candidate, nonce, null)
-                } catch (c: kotlinx.coroutines.CancellationException) {
-                    throw c
-                } catch (_: Throwable) {
-                    continue
-                }
-                state = decode_server_state(String(plaintext, Charsets.UTF_8))
-                if (state != null) break
+                val (plaintext, opened_bound) = open_state(ciphertext, candidate, nonce, conversation_id) ?: continue
+                val decoded = RatchetStateContainer.decode(
+                    String(plaintext, Charsets.UTF_8),
+                    conversation_id,
+                    floor,
+                    opened_bound,
+                )
+                plaintext.fill(0)
+                if (decoded is RatchetStateContainerResult.Accepted) accepted = decoded
+                break
             }
-            if (state == null) return null
+            if (accepted == null) return null
+            accepted.sync_version?.let { state_store.raise_sync_floor(conversation_id, it) }
             known_versions[conversation_id] = resp.state_version
-            state
+            accepted.state
         } catch (c: kotlinx.coroutines.CancellationException) {
             throw c
         } catch (t: Throwable) {
@@ -144,13 +137,6 @@ class RatchetStateSyncer @Inject constructor(
         }
     }
 
-    private fun encode_container(conversation_id: String, state: RatchetState): String {
-        val state_element = json.encodeToString(RatchetState.serializer(), state)
-        return buildJsonObject {
-            put("state", json.parseToJsonElement(state_element))
-            put("conversation_id", JsonPrimitive(conversation_id))
-        }.toString()
-    }
 
     private suspend fun absorb_remote(
         conversation_id: String,
@@ -167,14 +153,18 @@ class RatchetStateSyncer @Inject constructor(
         try {
             val conv_b64 = RatchetCrypto.b64_encode(conversation_id.toByteArray(Charsets.UTF_8))
             var working = state
-            var container_text = encode_container(conversation_id, working)
-            var fingerprint = container_text.hashCode()
+            var fingerprint = RatchetStateContainer.state_fingerprint(working)
             if (synced_fingerprints[conversation_id] == fingerprint &&
                 known_versions.containsKey(conversation_id)
             ) {
                 return true
             }
-            var plaintext = container_text.toByteArray(Charsets.UTF_8)
+            var sync_version = RatchetStateContainer.next_version(
+                state_store.sync_floor(conversation_id),
+                System.currentTimeMillis(),
+            )
+            var plaintext = RatchetStateContainer.encode(conversation_id, working, sync_version)
+                .toByteArray(Charsets.UTF_8)
 
             var known_version: Int? = known_versions[conversation_id]
             var last_error = "sync failed"
@@ -190,6 +180,7 @@ class RatchetStateSyncer @Inject constructor(
                     if (existing == null) {
                         when (val outcome = try_post(conv_b64, ct_b64, nonce_b64)) {
                             is PostStateOutcome.Success -> {
+                                state_store.raise_sync_floor(conversation_id, sync_version)
                                 known_versions[conversation_id] = outcome.response.state_version
                                 missing_state_at.remove(conversation_id)
                                 synced_fingerprints[conversation_id] = fingerprint
@@ -215,9 +206,13 @@ class RatchetStateSyncer @Inject constructor(
                         known_versions[conversation_id] = existing.state_version
                         absorb_remote(conversation_id, working)?.let { merged ->
                             working = merged
-                            container_text = encode_container(conversation_id, working)
-                            fingerprint = container_text.hashCode()
-                            plaintext = container_text.toByteArray(Charsets.UTF_8)
+                            fingerprint = RatchetStateContainer.state_fingerprint(working)
+                            sync_version = RatchetStateContainer.next_version(
+                                state_store.sync_floor(conversation_id),
+                                System.currentTimeMillis(),
+                            )
+                            plaintext = RatchetStateContainer.encode(conversation_id, working, sync_version)
+                                .toByteArray(Charsets.UTF_8)
                             known_version = known_versions[conversation_id] ?: known_version
                         }
                         continue
@@ -227,6 +222,7 @@ class RatchetStateSyncer @Inject constructor(
                 val current_version = known_version ?: continue
                 when (val outcome = try_put(conv_b64, ct_b64, nonce_b64, current_version)) {
                     is PutStateOutcome.Success -> {
+                        state_store.raise_sync_floor(conversation_id, sync_version)
                         known_versions[conversation_id] = outcome.response.state_version
                         missing_state_at.remove(conversation_id)
                         synced_fingerprints[conversation_id] = fingerprint
@@ -236,9 +232,13 @@ class RatchetStateSyncer @Inject constructor(
                         val merged = absorb_remote(conversation_id, working)
                         if (merged != null) {
                             working = merged
-                            container_text = encode_container(conversation_id, working)
-                            fingerprint = container_text.hashCode()
-                            plaintext = container_text.toByteArray(Charsets.UTF_8)
+                            fingerprint = RatchetStateContainer.state_fingerprint(working)
+                            sync_version = RatchetStateContainer.next_version(
+                                state_store.sync_floor(conversation_id),
+                                System.currentTimeMillis(),
+                            )
+                            plaintext = RatchetStateContainer.encode(conversation_id, working, sync_version)
+                                .toByteArray(Charsets.UTF_8)
                             known_version = known_versions[conversation_id]
                         } else {
                             val recheck = try { ratchet_api.fetch_state(conv_b64) } catch (c: kotlinx.coroutines.CancellationException) { throw c } catch (_: Throwable) { null }

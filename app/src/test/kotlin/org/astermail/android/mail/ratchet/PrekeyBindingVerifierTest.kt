@@ -107,6 +107,21 @@ gRKzSyjwC70dx0oKjgEArFHdfXOpF3N8dKZ+VbVNDbxDd7Mp5meU2ARKw0x1
     }
 
     @Test
+    fun only_a_verified_v2_signature_covers_the_pq_identity_key() {
+        val v2 = PrekeyBindingVerifier.verify_binding(v2_signature, alice_public, ik, spk, pq)
+        assertEquals(PrekeyBindingResult.VERIFIED, v2.result)
+        assertEquals(true, v2.covers_pq_identity)
+
+        val v1 = PrekeyBindingVerifier.verify_binding(v1_signature, alice_public, ik, spk, pq)
+        assertEquals(PrekeyBindingResult.VERIFIED, v1.result)
+        assertEquals(false, v1.covers_pq_identity)
+
+        val swapped = PrekeyBindingVerifier.verify_binding(v2_signature, alice_public, ik, spk, other_key())
+        assertEquals(PrekeyBindingResult.INVALID, swapped.result)
+        assertEquals(false, swapped.covers_pq_identity)
+    }
+
+    @Test
     fun base64_wrapped_signatures_are_detected_as_pgp() {
         assertTrue(PrekeyBindingVerifier.is_pgp_signature(v1_signature))
         assertTrue(PrekeyBindingVerifier.is_pgp_signature(v2_signature))

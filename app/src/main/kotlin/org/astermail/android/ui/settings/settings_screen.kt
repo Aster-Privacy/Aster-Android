@@ -114,7 +114,6 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
             settings_row_item("security", R.string.settings_security, icon = TablerIcons.Shield),
             settings_row_item("encryption", R.string.settings_encryption, icon = TablerIcons.Key),
             settings_row_item("trusted_devices", R.string.trusted_devices, icon = TablerIcons.DeviceDesktop),
-            settings_row_item("connection", R.string.settings_connection, icon = TablerIcons.Wifi),
         ),
     ),
     settings_section(

@@ -74,7 +74,7 @@ class BiometricUnlockGateInstrumentedTest {
     fun an_unsecured_device_never_yields_an_unlockable_cipher() {
         if (device_is_secured()) return
 
-        val preparation = BiometricUnlockGate.prepare(context)
+        val preparation = BiometricUnlockGate.prepare_enroll(context)
 
         assertEquals(BiometricGatePreparation.Unavailable, preparation)
         assertNull(stored_key())
@@ -84,7 +84,7 @@ class BiometricUnlockGateInstrumentedTest {
     fun the_generated_key_demands_user_authentication_on_every_use() {
         if (!device_is_secured()) return
 
-        val preparation = BiometricUnlockGate.prepare(context)
+        val preparation = BiometricUnlockGate.prepare_enroll(context)
 
         if (preparation is BiometricGatePreparation.Unavailable) return
 
@@ -104,7 +104,7 @@ class BiometricUnlockGateInstrumentedTest {
     fun an_unauthenticated_cipher_cannot_produce_a_token() {
         if (!device_is_secured()) return
 
-        val preparation = BiometricUnlockGate.prepare(context)
+        val preparation = BiometricUnlockGate.prepare_enroll(context)
 
         if (preparation !is BiometricGatePreparation.Enroll) return
 
@@ -134,7 +134,7 @@ class BiometricUnlockGateInstrumentedTest {
     fun complete_enroll_fails_and_writes_nothing_without_authentication() {
         if (!device_is_secured()) return
 
-        val preparation = BiometricUnlockGate.prepare(context)
+        val preparation = BiometricUnlockGate.prepare_enroll(context)
 
         if (preparation !is BiometricGatePreparation.Enroll) return
 
@@ -142,7 +142,7 @@ class BiometricUnlockGateInstrumentedTest {
 
         assertFalse(enrolled)
 
-        val second = BiometricUnlockGate.prepare(context)
+        val second = BiometricUnlockGate.prepare_enroll(context)
 
         assertTrue(second is BiometricGatePreparation.Enroll)
     }
@@ -162,7 +162,7 @@ class BiometricUnlockGateInstrumentedTest {
 
     @Test
     fun reset_removes_the_keystore_entry() {
-        BiometricUnlockGate.prepare(context)
+        BiometricUnlockGate.prepare_enroll(context)
         BiometricUnlockGate.reset(context)
 
         assertNull(stored_key())

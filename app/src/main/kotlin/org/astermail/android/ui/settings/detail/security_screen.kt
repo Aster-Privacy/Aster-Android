@@ -110,6 +110,7 @@ import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.host_activity
 import org.astermail.android.auth.create_passkey_json
 import org.astermail.android.auth.request_passkey_json
+import org.astermail.android.ui.common.find_host_activity
 import org.astermail.android.ui.security.AppLockSetupSheet
 import org.astermail.android.ui.security.AppLockVerifySheet
 import org.astermail.android.settings.shared_settings_view_model
@@ -910,7 +911,7 @@ fun SecurityScreen(
     }
 }
 
-private enum class AppLockModal { setup, verify_to_change, change, disable }
+private enum class AppLockModal { setup, verify_to_change, change, disable, verify_to_enable_biometric }
 
 @Composable
 private fun vanguard_section(
@@ -928,6 +929,15 @@ private fun vanguard_section(
     var show_disable_confirm by remember { mutableStateOf(false) }
     var app_lock_enabled by remember { mutableStateOf(store.is_configured()) }
     var modal by remember { mutableStateOf<AppLockModal?>(null) }
+    val lock_context = LocalContext.current
+    val biometric_available = remember {
+        androidx.biometric.BiometricManager.from(lock_context).canAuthenticate(
+            androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG,
+        ) == androidx.biometric.BiometricManager.BIOMETRIC_SUCCESS
+    }
+    var biometric_enabled by remember {
+        mutableStateOf(org.astermail.android.security.BiometricUnlockGate.is_enrolled(lock_context))
+    }
 
     section_label(stringResource(R.string.section_vanguard))
 
@@ -1013,6 +1023,16 @@ private fun vanguard_section(
                             else modal = AppLockModal.disable
                         },
                         on_change_pin = { modal = AppLockModal.verify_to_change },
+                        biometric_available = biometric_available,
+                        biometric_enabled = biometric_enabled,
+                        on_toggle_biometric = { want ->
+                            if (want) {
+                                modal = AppLockModal.verify_to_enable_biometric
+                            } else {
+                                org.astermail.android.security.BiometricUnlockGate.reset(lock_context)
+                                biometric_enabled = false
+                            }
+                        },
                     )
                 }
             }
@@ -1068,6 +1088,7 @@ private fun vanguard_section(
                 vm.disable_vanguard {
                     store.disable()
                     app_lock_enabled = false
+                    biometric_enabled = false
                 }
             },
         )
@@ -1077,7 +1098,7 @@ private fun vanguard_section(
         AppLockModal.setup, AppLockModal.change -> AppLockSetupSheet(
             store = store,
             on_dismiss = { modal = null },
-            on_success = { app_lock_enabled = true; modal = null },
+            on_success = { app_lock_enabled = true; biometric_enabled = false; modal = null },
         )
         AppLockModal.verify_to_change -> AppLockVerifySheet(
             store = store,
@@ -1089,7 +1110,24 @@ private fun vanguard_section(
             store = store,
             description = stringResource(R.string.app_lock_enter_to_disable),
             on_dismiss = { modal = null },
-            on_success = { store.disable(); app_lock_enabled = false; modal = null },
+            on_success = { store.disable(); app_lock_enabled = false; biometric_enabled = false; modal = null },
+        )
+        AppLockModal.verify_to_enable_biometric -> AppLockVerifySheet(
+            store = store,
+            description = stringResource(R.string.app_lock_enter_to_enable_biometric),
+            on_dismiss = { modal = null },
+            on_success = {
+                modal = null
+                val activity = lock_context.find_host_activity() as? androidx.fragment.app.FragmentActivity
+                if (activity != null) {
+                    org.astermail.android.ui.security.launch_biometric_enroll(
+                        activity = activity,
+                        origin = org.astermail.android.security.BiometricEnrollOrigin.SETTINGS_AFTER_PIN,
+                        pin_verified = true,
+                        biometric_available = biometric_available,
+                    ) { enrolled -> biometric_enabled = enrolled }
+                }
+            },
         )
         null -> {}
     }
@@ -1101,6 +1139,9 @@ private fun app_lock_row(
     enabled: Boolean,
     on_toggle: (Boolean) -> Unit,
     on_change_pin: () -> Unit,
+    biometric_available: Boolean,
+    biometric_enabled: Boolean,
+    on_toggle_biometric: (Boolean) -> Unit,
 ) {
     val colors = AsterMaterial.colors
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -1139,6 +1180,33 @@ private fun app_lock_row(
                     .clickable(onClick = on_change_pin)
                     .padding(horizontal = AsterSpacing.xs, vertical = 2.dp),
             )
+        }
+        if (enabled && biometric_available) {
+            Spacer(Modifier.height(AsterSpacing.md))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f).padding(end = AsterSpacing.md)) {
+                    Text(
+                        text = stringResource(R.string.app_lock_use_biometric),
+                        color = colors.text_primary,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = stringResource(R.string.app_lock_biometric_subtitle),
+                        color = colors.text_muted,
+                        fontSize = 13.sp,
+                    )
+                }
+                AsterSwitch(
+                    checked = biometric_enabled,
+                    onCheckedChange = on_toggle_biometric,
+                )
+            }
         }
     }
 }

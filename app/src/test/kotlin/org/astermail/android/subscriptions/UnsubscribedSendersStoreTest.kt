@@ -29,6 +29,52 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class UnsubscribedSendersStoreTest {
+    private val key = ByteArray(UNSUBSCRIBED_TOKEN_KEY_BYTES) { it.toByte() }
+    private val other_key = ByteArray(UNSUBSCRIBED_TOKEN_KEY_BYTES) { (it + 1).toByte() }
+
+    private fun unsubscribed_sender_token(account: String?, sender: String): String =
+        unsubscribed_sender_token(key, account, sender)
+
+    private fun unsubscribed_account_key(account: String?): String =
+        unsubscribed_account_key(key, account)
+
+    private fun sha256_hex(value: String): String =
+        java.security.MessageDigest.getInstance("SHA-256")
+            .digest(value.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
+
+    @Test
+    fun sender_token_is_not_the_unkeyed_hash() {
+        assertNotEquals(
+            sha256_hex("me@astermail.org\nnews@example.com"),
+            unsubscribed_sender_token("me@astermail.org", "news@example.com"),
+        )
+        assertNotEquals(
+            sha256_hex("me@astermail.org"),
+            unsubscribed_account_key("me@astermail.org"),
+        )
+    }
+
+    @Test
+    fun sender_token_and_account_slot_depend_on_the_device_key() {
+        assertNotEquals(
+            unsubscribed_sender_token(key, "me@astermail.org", "news@example.com"),
+            unsubscribed_sender_token(other_key, "me@astermail.org", "news@example.com"),
+        )
+        assertNotEquals(
+            unsubscribed_account_key(key, "me@astermail.org"),
+            unsubscribed_account_key(other_key, "me@astermail.org"),
+        )
+    }
+
+    @Test
+    fun migration_drops_only_the_unkeyed_slots() {
+        val legacy = legacy_unsubscribed_pref_keys(
+            listOf("confirmed_ab12", "pending_ab12", "v2_confirmed_cd34", "v2_pending_cd34"),
+        )
+        assertEquals(setOf("confirmed_ab12", "pending_ab12"), legacy)
+    }
+
     @Test
     fun sender_token_ignores_case_and_whitespace() {
         assertEquals(

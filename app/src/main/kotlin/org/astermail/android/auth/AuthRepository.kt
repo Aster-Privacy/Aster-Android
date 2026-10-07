@@ -311,13 +311,9 @@ class AuthRepository @Inject constructor(
             dotted_hash to auth_api.get_user_salt(dotted_hash)
         }
         val salt_bytes = base64_decode(salt_resp.salt)
-        AuthSaltGuard.require_usable_auth_salt(salt_bytes, cached_vault_bytes())
+        require_usable_auth_salt(salt_bytes)
         val password_bytes = password.toByteArray(Charsets.UTF_8)
-        val password_hash_bytes = CryptoNative.derive_pbkdf2_hash(
-            password_bytes,
-            salt_bytes,
-            pbkdf2_iterations,
-        )
+        val password_hash_bytes = derive_login_hash(password_bytes, salt_bytes)
         val password_hash_b64 = base64_encode(password_hash_bytes)
 
         val remember_me = true
@@ -883,9 +879,13 @@ class AuthRepository @Inject constructor(
             ?: session_key_store.get_password_salt()
             ?: throw ApiError.UnknownError(context.getString(R.string.session_expired_sign_in))
 
-        val current_password_hash = CryptoNative.derive_pbkdf2_hash(
-            current_password_bytes, stored_salt, pbkdf2_iterations,
-        )
+        val current_password_hash = try {
+            derive_login_hash(current_password_bytes, stored_salt)
+        } catch (collision: AuthSaltCollisionException) {
+            current_password_bytes.fill(0)
+            new_password_bytes.fill(0)
+            throw collision
+        }
 
         val (encrypted_vault_b64, vault_nonce_b64) = session_key_store.get_encrypted_vault()
             ?: throw ApiError.UnknownError(context.getString(R.string.session_unavailable_sign_in_again))
@@ -1073,6 +1073,7 @@ class AuthRepository @Inject constructor(
         runCatching { mail_repository.clear_account_data() }
         runCatching { current_id?.let { identity_pins.get().clear_account(it) } }
         runCatching { org.astermail.android.util.purge_sensitive_export_files(context, 0L) }
+        runCatching { wipe_decrypted_caches(context.cacheDir) }
         runCatching { org.astermail.android.billing.AttachmentLimits.reset() }
         runCatching { org.astermail.android.billing.AvailablePlansCache.reset() }
         runCatching { org.astermail.android.billing.PlanLimitsCache.reset() }
@@ -1099,9 +1100,15 @@ class AuthRepository @Inject constructor(
         runCatching { database.thread_snapshot_dao().clear_all() }
         current_id?.let { runCatching { org.astermail.android.mail.clear_folder_cache_stats(context, it) } }
         if (remove_account) {
+            val outbox_ids = runCatching {
+                current_id?.let { id -> database.pending_send_dao().get_for_account(id).map { it.id } }
+            }.getOrNull()
             runCatching {
                 current_id?.let { database.pending_send_dao().clear_for_account(it) }
                     ?: database.pending_send_dao().clear_all()
+            }
+            runCatching {
+                wipe_outbox_attachments(context.filesDir, if (current_id == null) null else outbox_ids.orEmpty())
             }
             current_id?.let { runCatching { mail_repository.clear_pending_actions(it) } }
         }
@@ -1680,6 +1687,7 @@ class AuthRepository @Inject constructor(
         mail_repository.clear_account_data()
         runCatching { current_id?.let { identity_pins.get().clear_account(it) } }
         runCatching { org.astermail.android.util.purge_sensitive_export_files(context, 0L) }
+        runCatching { wipe_decrypted_caches(context.cacheDir) }
         runCatching { theme_store.clear() }
         runCatching { org.astermail.android.ui.theme.custom_theme_image.delete(context) }
         runCatching { offer_preferences_store.reset() }
@@ -1705,7 +1713,11 @@ class AuthRepository @Inject constructor(
         if (current_id != null) {
             runCatching { org.astermail.android.mail.clear_folder_cache_stats(context, current_id) }
             runCatching { mail_repository.clear_pending_actions(current_id) }
+            val outbox_ids = runCatching {
+                database.pending_send_dao().get_for_account(current_id).map { it.id }
+            }.getOrDefault(emptyList())
             runCatching { database.pending_send_dao().clear_for_account(current_id) }
+            runCatching { wipe_outbox_attachments(context.filesDir, outbox_ids) }
             account_store.remove(current_id)
             runCatching { session_snapshot_store.remove(current_id) }
         }
@@ -1741,9 +1753,9 @@ class AuthRepository @Inject constructor(
             }.getOrNull()
         }
         val salt = server_salt ?: session_key_store.get_password_salt() ?: return null
-        AuthSaltGuard.require_usable_auth_salt(salt, cached_vault_bytes())
+        require_usable_auth_salt(salt)
         val password_bytes = password.toByteArray(Charsets.UTF_8)
-        val hash = CryptoNative.derive_pbkdf2_hash(password_bytes, salt, pbkdf2_iterations)
+        val hash = derive_login_hash(password_bytes, salt)
         password_bytes.fill(0)
         salt.fill(0)
         val encoded = base64_encode(hash)
@@ -2128,6 +2140,20 @@ class AuthRepository @Inject constructor(
 
     private fun cached_vault_bytes(): ByteArray? =
         runCatching { session_key_store.get_encrypted_vault()?.first?.let { base64_decode(it) } }.getOrNull()
+
+    private fun require_usable_auth_salt(salt: ByteArray) =
+        AuthSaltGuard.require_usable_auth_salt(
+            salt,
+            cached_vault_bytes(),
+            session_key_store.get_remembered_vault_salts(),
+        )
+
+    private fun derive_login_hash(password_bytes: ByteArray, salt: ByteArray): ByteArray =
+        AuthSaltGuard.derive_with_usable_auth_salt(
+            salt,
+            cached_vault_bytes(),
+            session_key_store.get_remembered_vault_salts(),
+        ) { usable_salt -> CryptoNative.derive_pbkdf2_hash(password_bytes, usable_salt, pbkdf2_iterations) }
 
     private fun base64_encode(bytes: ByteArray): String =
         android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)

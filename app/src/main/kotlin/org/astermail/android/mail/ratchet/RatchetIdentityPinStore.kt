@@ -72,7 +72,6 @@ class RatchetIdentityPinStore @Inject constructor(
         sender_email: String,
         sender_identity_key_b64: String,
         observed_at: Long,
-        confirmed: Boolean = false,
     ): IdentityPinOutcome {
         if (conversation_id.isBlank() || sender_identity_key_b64.isBlank()) {
             return IdentityPinOutcome.UNCHANGED
@@ -83,23 +82,12 @@ class RatchetIdentityPinStore @Inject constructor(
 
         return mutex.withLock {
             val stored = read_string(scope, pin_key(conversation_id))
-            when (RatchetIdentityPinRules.decide(stored, current, confirmed)) {
+            when (RatchetIdentityPinRules.decide(stored, current)) {
                 IdentityPinDecision.PIN_FIRST -> {
                     prefs.edit().putString(key, current).commit()
                     IdentityPinOutcome.FIRST_CONTACT
                 }
                 IdentityPinDecision.KEEP -> IdentityPinOutcome.UNCHANGED
-                IdentityPinDecision.REPLACE -> {
-                    synchronized(pending_guard) {
-                        val updated = pending.value.filterNot { it.conversation_id == conversation_id }
-                        prefs.edit()
-                            .putString(key, current)
-                            .putString(scoped(scope, pending_key), encode_pending(updated))
-                            .commit()
-                        pending.value = updated
-                    }
-                    IdentityPinOutcome.CHANGED
-                }
                 IdentityPinDecision.FLAG_DRIFT -> {
                     synchronized(pending_guard) {
                         val updated = pending.value

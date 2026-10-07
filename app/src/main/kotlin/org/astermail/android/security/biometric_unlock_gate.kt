@@ -49,6 +49,8 @@ object BiometricUnlockGate {
     private const val KEY_TOKEN_CIPHERTEXT = "token_ciphertext"
     private const val KEY_TOKEN_IV = "token_iv"
     private const val KEY_TOKEN_DIGEST = "token_digest"
+    private const val KEY_BINDING_VERSION = "binding_version"
+    private const val KEY_REBIND_PENDING = "rebind_pending"
     private const val TOKEN_BYTES = 32
     private const val GCM_TAG_BITS = 128
 
@@ -79,18 +81,30 @@ object BiometricUnlockGate {
         return generator.generateKey()
     }
 
-    fun reset(context: Context) {
+    private fun delete_key() {
         runCatching {
             val store = keystore()
             if (store.containsAlias(KEY_ALIAS)) store.deleteEntry(KEY_ALIAS)
         }
+    }
+
+    private fun drop_binding(context: Context, rebind_pending: Boolean) {
+        delete_key()
         runCatching {
             prefs(context).edit()
                 .remove(KEY_TOKEN_CIPHERTEXT)
                 .remove(KEY_TOKEN_IV)
                 .remove(KEY_TOKEN_DIGEST)
-                .apply()
+                .remove(KEY_BINDING_VERSION)
+                .apply {
+                    if (rebind_pending) putBoolean(KEY_REBIND_PENDING, true) else remove(KEY_REBIND_PENDING)
+                }
+                .commit()
         }
+    }
+
+    fun reset(context: Context) {
+        drop_binding(context, rebind_pending = false)
     }
 
     private fun has_token(context: Context): Boolean {
@@ -98,36 +112,61 @@ object BiometricUnlockGate {
         return p.contains(KEY_TOKEN_CIPHERTEXT) && p.contains(KEY_TOKEN_IV) && p.contains(KEY_TOKEN_DIGEST)
     }
 
-    fun is_enrolled(context: Context): Boolean = has_token(context)
+    private fun binding_state(context: Context, key_present: Boolean, key_valid: Boolean) =
+        BiometricBindingState(
+            has_token = has_token(context),
+            binding_version = prefs(context).getInt(KEY_BINDING_VERSION, 0),
+            key_present = key_present,
+            key_valid = key_valid,
+        )
 
-    fun prepare(context: Context): BiometricGatePreparation = try {
-        if (has_token(context)) {
-            val key = load_key()
-            if (key == null) {
-                reset(context)
-                prepare_enroll()
-            } else {
-                val p = prefs(context)
-                val iv = Base64.decode(p.getString(KEY_TOKEN_IV, "") ?: "", Base64.NO_WRAP)
-                val cipher = Cipher.getInstance(TRANSFORMATION)
-                cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_BITS, iv))
-                BiometricGatePreparation.Verify(cipher)
-            }
+    fun reconcile(context: Context) {
+        runCatching {
+            val key_present = runCatching { load_key() != null }.getOrDefault(false)
+            val state = binding_state(context, key_present = key_present, key_valid = key_present)
+            if (biometric_binding_is_stale(state)) drop_binding(context, rebind_pending = true)
+        }
+    }
+
+    fun is_enrolled(context: Context): Boolean = runCatching {
+        val p = prefs(context)
+        has_token(context) && p.getInt(KEY_BINDING_VERSION, 0) == BIOMETRIC_BINDING_VERSION
+    }.getOrDefault(false)
+
+    fun is_rebind_pending(context: Context): Boolean =
+        runCatching { prefs(context).getBoolean(KEY_REBIND_PENDING, false) }.getOrDefault(false)
+
+    fun clear_rebind_pending(context: Context) {
+        runCatching { prefs(context).edit().remove(KEY_REBIND_PENDING).commit() }
+    }
+
+    fun prepare_unlock(context: Context): BiometricGatePreparation = try {
+        val key = load_key()
+        val state = binding_state(context, key_present = key != null, key_valid = key != null)
+        if (key == null || biometric_unlock_action(state) != BiometricUnlockAction.VERIFY) {
+            if (biometric_binding_is_stale(state)) drop_binding(context, rebind_pending = true)
+            BiometricGatePreparation.Unavailable
         } else {
-            prepare_enroll()
+            val iv = Base64.decode(prefs(context).getString(KEY_TOKEN_IV, "") ?: "", Base64.NO_WRAP)
+            val cipher = Cipher.getInstance(TRANSFORMATION)
+            cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_BITS, iv))
+            BiometricGatePreparation.Verify(cipher)
         }
     } catch (invalidated: KeyPermanentlyInvalidatedException) {
-        reset(context)
-        runCatching { prepare_enroll() }.getOrElse { BiometricGatePreparation.Unavailable }
+        drop_binding(context, rebind_pending = true)
+        BiometricGatePreparation.Unavailable
     } catch (t: Throwable) {
         BiometricGatePreparation.Unavailable
     }
 
-    private fun prepare_enroll(): BiometricGatePreparation {
-        val key = load_key() ?: create_key()
+    fun prepare_enroll(context: Context): BiometricGatePreparation = try {
+        drop_binding(context, rebind_pending = false)
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.ENCRYPT_MODE, key)
-        return BiometricGatePreparation.Enroll(cipher)
+        cipher.init(Cipher.ENCRYPT_MODE, create_key())
+        BiometricGatePreparation.Enroll(cipher)
+    } catch (t: Throwable) {
+        delete_key()
+        BiometricGatePreparation.Unavailable
     }
 
     fun complete_enroll(context: Context, cipher: Cipher): Boolean = try {
@@ -137,6 +176,8 @@ object BiometricUnlockGate {
             .putString(KEY_TOKEN_CIPHERTEXT, Base64.encodeToString(ciphertext, Base64.NO_WRAP))
             .putString(KEY_TOKEN_IV, Base64.encodeToString(cipher.iv, Base64.NO_WRAP))
             .putString(KEY_TOKEN_DIGEST, Base64.encodeToString(digest(token), Base64.NO_WRAP))
+            .putInt(KEY_BINDING_VERSION, BIOMETRIC_BINDING_VERSION)
+            .remove(KEY_REBIND_PENDING)
             .commit()
         token.fill(0)
         true

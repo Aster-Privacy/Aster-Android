@@ -109,6 +109,7 @@ class MailViewModelTest {
             mockk(relaxed = true),
             mockk(relaxed = true),
             mockk(relaxed = true),
+            mockk(relaxed = true),
         )
     }
 
@@ -2168,6 +2169,7 @@ class MailViewModelTest {
             search_index_manager,
             folder_cache_store,
             identity_pins,
+            mockk(relaxed = true),
             mockk(relaxed = true),
             mockk(relaxed = true),
             mockk(relaxed = true),

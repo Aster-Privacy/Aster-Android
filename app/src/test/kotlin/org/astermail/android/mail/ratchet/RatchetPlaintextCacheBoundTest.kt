@@ -32,6 +32,7 @@ import kotlinx.coroutines.test.runTest
 import org.astermail.android.storage.SecurePrefs
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -138,5 +139,57 @@ class RatchetPlaintextCacheBoundTest {
         assertEquals(1, entries.size)
         assertNotNull(cache.get("message_repeat"))
         assertEquals("body_9", cache.get("message_repeat"))
+    }
+
+    @Test
+    fun `recovery lane plaintext stays flagged as unauthenticated`() = runTest {
+        cache.put("lane", "from the lane", sender_unauthenticated = true)
+        cache.put("chain", "from the chain")
+
+        assertEquals(setOf("lane"), cache.unauthenticated_ids.value)
+        assertEquals("from the lane", cache.get("lane"))
+
+        val reopened = RatchetPlaintextCache(mockk(relaxed = true), state_store)
+        assertEquals(setOf("lane"), reopened.unauthenticated_ids.value)
+
+        cache.put("lane", "verified later")
+        assertTrue(cache.unauthenticated_ids.value.isEmpty())
+    }
+
+    @Test
+    fun `a recovery lane message reports its sender as unauthenticated`() = runTest {
+        cache.put("lane", "from the lane", sender_unauthenticated = true)
+        cache.put("chain", "from the chain")
+
+        assertTrue(cache.is_sender_unauthenticated("lane"))
+        assertFalse(cache.is_sender_unauthenticated("chain"))
+        assertFalse(cache.is_sender_unauthenticated(null))
+        assertFalse(cache.is_sender_unauthenticated(""))
+    }
+
+    @Test
+    fun `the unauthenticated flag is kept when the plaintext cannot be stored`() = runTest {
+        every { state_store.derive_state_encryption_key() } returns null
+
+        cache.put("lane", "from the lane", sender_unauthenticated = true)
+        cache.put("chain", "from the chain")
+
+        assertNull(stored["ratchet_plaintext_lane"])
+        assertTrue(cache.is_sender_unauthenticated("lane"))
+        assertFalse(cache.is_sender_unauthenticated("chain"))
+    }
+
+    @Test
+    fun `evicting or clearing drops the unauthenticated flag`() = runTest {
+        cache.put("message_0", "body_0", sender_unauthenticated = true)
+        repeat(RatchetPlaintextCache.max_entries) { index ->
+            cache.put("message_${index + 1}", "body_${index + 1}")
+        }
+        assertNull(cache.get("message_0"))
+        assertTrue(cache.unauthenticated_ids.value.isEmpty())
+
+        cache.put("lane", "body", sender_unauthenticated = true)
+        cache.clear()
+        assertTrue(cache.unauthenticated_ids.value.isEmpty())
     }
 }
