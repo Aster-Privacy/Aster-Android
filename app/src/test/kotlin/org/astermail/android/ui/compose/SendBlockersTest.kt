@@ -46,10 +46,44 @@ class SendBlockersTest {
     )
 
     @Test
-    fun `mixed recipients are blocked before sending`() {
+    fun `mixed recipients are not blocked`() {
+        assertNull(blocker(listOf("friend@astermail.org", "someone@example.com")))
+        assertNull(blocker(listOf("someone@example.com", "friend@astermail.org"), has_expiry = true))
+    }
+
+    @Test
+    fun `a password with mixed recipients is blocked`() {
         assertEquals(
-            SendBlocker.MIXED_RECIPIENTS,
-            blocker(listOf("friend@astermail.org", "someone@example.com")),
+            SendBlocker.MIXED_RECIPIENTS_PASSWORD,
+            blocker(
+                listOf("friend@astermail.org", "someone@example.com"),
+                has_expiry = true,
+                has_expiry_password = true,
+            ),
+        )
+    }
+
+    @Test
+    fun `a plan lock is reported before the mixed password block`() {
+        assertEquals(
+            SendBlocker.EXPIRY_PASSWORD_LOCKED,
+            blocker(
+                listOf("friend@astermail.org", "someone@example.com"),
+                has_expiry = true,
+                has_expiry_password = true,
+                expiry_password_locked = true,
+            ),
+        )
+    }
+
+    @Test
+    fun `a password for outside recipients only is allowed`() {
+        assertNull(
+            blocker(
+                listOf("someone@example.com", "other@example.net"),
+                has_expiry = true,
+                has_expiry_password = true,
+            ),
         )
     }
 

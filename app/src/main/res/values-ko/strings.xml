@@ -1676,7 +1676,7 @@
     <string name="attachment_already_attached">\"%1$s\"은(는) 이미 첨부되어 있습니다</string>
     <string name="attachment_read_failed">\"%1$s\"을(를) 읽지 못했습니다</string>
     <string name="scheduled_send_no_attachments">예약 전송 메일에는 아직 첨부 파일을 넣을 수 없습니다. 첨부 파일을 삭제하거나 지금 보내세요.</string>
-    <string name="cannot_mix_recipients">Aster 사용자와 외부 주소는 같은 이메일에 함께 넣을 수 없습니다. 두 통의 별도 메시지로 보내면 됩니다.</string>
+    <string name="password_needs_outside_recipients_only">비밀번호 보호는 모든 수신자가 다른 이메일 서비스를 사용할 때만 작동합니다. Aster 사용자를 포함하려면 비밀번호 보호를 끄거나 별도의 메시지를 보내세요.</string>
     <string name="import_provider_gmail">Google</string>
     <string name="import_provider_outlook">Microsoft</string>
     <string name="import_provider_yahoo">Yahoo</string>

@@ -195,8 +195,8 @@ class SendFailureClassificationTest {
     }
 
     @Test
-    fun `mixed recipients are a permanent failure`() {
-        assertTrue(is_permanent_send_failure_cause(MixedRecipientsException()))
+    fun `a password with mixed recipients is a permanent failure`() {
+        assertTrue(is_permanent_send_failure_cause(MixedRecipientsPasswordException()))
     }
 
     @Test

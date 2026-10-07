@@ -25,7 +25,7 @@ import org.astermail.android.mail.has_mixed_recipients
 import org.astermail.android.mail.is_internal_recipient
 
 enum class SendBlocker {
-    MIXED_RECIPIENTS,
+    MIXED_RECIPIENTS_PASSWORD,
     EXPIRATION_LOCKED,
     EXPIRY_PASSWORD_LOCKED,
     EXPIRY_PASSWORD_INTERNAL,
@@ -49,9 +49,9 @@ internal fun send_blocker_for(
     require_encryption: Boolean,
 ): SendBlocker? {
     if (via_connected_account) return null
-    if (has_mixed_recipients(recipients)) return SendBlocker.MIXED_RECIPIENTS
     if (has_expiry && expiration_locked) return SendBlocker.EXPIRATION_LOCKED
     if (has_expiry_password && expiry_password_locked) return SendBlocker.EXPIRY_PASSWORD_LOCKED
+    if (has_expiry_password && has_mixed_recipients(recipients)) return SendBlocker.MIXED_RECIPIENTS_PASSWORD
     val internal_only = all_recipients_internal(recipients)
     if (has_expiry_password && internal_only) return SendBlocker.EXPIRY_PASSWORD_INTERNAL
     if (has_expiry && require_encryption && !internal_only) return SendBlocker.EXPIRY_NEEDS_SECURE_MESSAGE

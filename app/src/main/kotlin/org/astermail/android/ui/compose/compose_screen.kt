@@ -1847,8 +1847,8 @@ fun ComposeScreen(
         if (send_blocker != null) {
             send_lock.set(false)
             when (send_blocker) {
-                SendBlocker.MIXED_RECIPIENTS ->
-                    send_error = context.getString(R.string.cannot_mix_recipients)
+                SendBlocker.MIXED_RECIPIENTS_PASSWORD ->
+                    send_error = context.getString(R.string.password_needs_outside_recipients_only)
                 SendBlocker.EXPIRATION_LOCKED, SendBlocker.EXPIRY_PASSWORD_LOCKED ->
                     org.astermail.android.ui.upgrade.UpgradeStore.show_plan_limit(null, null)
                 SendBlocker.EXPIRY_PASSWORD_INTERNAL -> {
@@ -1876,7 +1876,6 @@ fun ComposeScreen(
                 send_error = context.getString(
                     when (scheduled_block) {
                         org.astermail.android.mail.ScheduledSendBlock.TOO_FAR_AHEAD -> R.string.scheduled_too_far_ahead
-                        org.astermail.android.mail.ScheduledSendBlock.MIXED_RECIPIENTS -> R.string.cannot_mix_recipients
                         org.astermail.android.mail.ScheduledSendBlock.REQUIRES_ENCRYPTION -> R.string.scheduled_requires_encryption
                     },
                 )

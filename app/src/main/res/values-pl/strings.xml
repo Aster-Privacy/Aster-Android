@@ -1688,7 +1688,7 @@
     <string name="attachment_already_attached">\"%1$s\" jest już załączony</string>
     <string name="attachment_read_failed">Nie udało się odczytać \"%1$s\"</string>
     <string name="scheduled_send_no_attachments">Zaplanowane wiadomości nie obsługują jeszcze załączników. Usuń je albo wyślij teraz.</string>
-    <string name="cannot_mix_recipients">Użytkownicy Aster i adresy zewnętrzne nie mogą być w tej samej wiadomości. Wyślij do nich dwie osobne wiadomości.</string>
+    <string name="password_needs_outside_recipients_only">Ochrona hasłem działa tylko wtedy, gdy wszyscy odbiorcy korzystają z innego dostawcy poczty. Aby uwzględnić użytkowników Aster, wyłącz ochronę hasłem lub wyślij im osobną wiadomość.</string>
     <string name="import_provider_gmail">Gmail</string>
     <string name="import_provider_outlook">Outlook</string>
     <string name="import_provider_yahoo">Yahoo</string>

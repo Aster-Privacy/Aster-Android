@@ -1676,7 +1676,7 @@
     <string name="attachment_already_attached">“%1$s”已经添加</string>
     <string name="attachment_read_failed">无法读取“%1$s”</string>
     <string name="scheduled_send_no_attachments">定时发送暂不支持附件。请先移除附件或立即发送。</string>
-    <string name="cannot_mix_recipients">Aster 用户和外部地址不能放在同一封邮件中，分两封发送就可以。</string>
+    <string name="password_needs_outside_recipients_only">仅当所有收件人都使用其他邮件服务商时，密码保护才有效。如需包含 Aster 用户，请关闭密码保护或另外给他们发送一封邮件。</string>
     <string name="import_provider_gmail">Google</string>
     <string name="import_provider_outlook">Microsoft</string>
     <string name="import_provider_yahoo">Yahoo</string>

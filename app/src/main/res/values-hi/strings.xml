@@ -2807,7 +2807,7 @@
     <string name="error_verification_required">इस खाते का उपयोग जारी रखने के लिए, अपना रिकवरी ईमेल सत्यापित करें।</string>
     <string name="scheduled_already_sending">यह ईमेल पहले से भेजा जा रहा है, इसलिए अब आप इसे बदल नहीं सकते।</string>
     <string name="scheduled_for">%1$s के लिए शेड्यूल किया गया</string>
-    <string name="cannot_mix_recipients">Aster उपयोगकर्ता और बाहरी पते एक ही ईमेल में नहीं भेजे जा सकते। इन्हें दो अलग संदेशों के रूप में भेजना काम करेगा।</string>
+    <string name="password_needs_outside_recipients_only">पासवर्ड सुरक्षा तभी काम करती है जब सभी प्राप्तकर्ता किसी दूसरे ईमेल प्रदाता का उपयोग करते हैं। Aster उपयोगकर्ताओं को शामिल करने के लिए, पासवर्ड सुरक्षा बंद करें या उन्हें अलग संदेश भेजें।</string>
     <string name="contact_groups">समूह</string>
     <string name="new_group">नया समूह</string>
     <string name="group_name">समूह का नाम</string>
