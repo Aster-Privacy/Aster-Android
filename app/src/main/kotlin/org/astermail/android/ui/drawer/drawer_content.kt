@@ -626,6 +626,7 @@ fun DrawerContent(
                                     label = item.label,
                                     count = item.count,
                                     is_unread_count = true,
+                                    muted = item.muted,
                                     selected = item.id == selected_id,
                                     on_click = {
                                         on_navigate_folder(item.id, item.label)
@@ -2903,6 +2904,7 @@ private fun drawer_row(
     on_toggle_expand: () -> Unit = {},
     on_long_click: (() -> Unit)? = null,
     icon_tint: Color? = null,
+    muted: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     val bg by animateColorAsState(
@@ -2970,6 +2972,17 @@ private fun drawer_row(
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
+            if (muted) {
+                Icon(
+                    imageVector = TablerIcons.BellOff,
+                    contentDescription = stringResource(R.string.folder_notifications_muted),
+                    tint = colors.text_muted,
+                    modifier = Modifier
+                        .padding(start = 8.dp, end = if (count > 0) 8.dp else 0.dp)
+                        .size(16.dp)
+                        .testTag("folder_muted_indicator"),
+                )
+            }
             if (count > 0) {
                 count_badge(
                     value = count,
