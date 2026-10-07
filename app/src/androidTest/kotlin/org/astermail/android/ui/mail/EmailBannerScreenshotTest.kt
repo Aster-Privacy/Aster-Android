@@ -69,7 +69,6 @@ class EmailBannerScreenshotTest {
                         .background(AsterMaterial.colors.bg_primary)
                         .padding(vertical = 8.dp),
                 ) {
-                    unsubscribe_banner(on_unsubscribe = {})
                     external_content_banner(
                         counts = ExternalContentCounts(image_count = 12, tracker_count = 3, font_count = 2, css_count = 1),
                         on_allow_once = {},
