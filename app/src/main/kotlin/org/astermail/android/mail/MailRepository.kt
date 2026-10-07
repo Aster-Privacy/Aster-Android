@@ -106,6 +106,12 @@ class MixedRecipientsPasswordException : Exception("message password with intern
 
 const val MIXED_SEND_QUEUE_DELAY_SECONDS = 1
 
+const val MIXED_SEND_STATUS_POLLS = 8
+
+const val MIXED_SEND_STATUS_POLL_MS = 1_250L
+
+class QueuedSendFailedException : Exception("queued send did not go out")
+
 class WeakMessagePasswordException(message: String) : Exception(message)
 
 fun has_mixed_recipients(recipients: List<String>): Boolean {
@@ -1508,6 +1514,25 @@ class MailRepository @Inject constructor(
         if (session_key_store.has_ratchet_keys()) return true
         runCatching { auth_repository.get().try_refresh_vault_keys() }
         return session_key_store.has_ratchet_keys()
+    }
+
+    private suspend fun await_queued_send(queue_id: String): String? {
+        if (queue_id.isBlank()) return null
+        repeat(MIXED_SEND_STATUS_POLLS) {
+            kotlinx.coroutines.delay(MIXED_SEND_STATUS_POLL_MS)
+            val status = try {
+                send_api.queue_status(queue_id)
+            } catch (e: kotlin.coroutines.cancellation.CancellationException) {
+                throw e
+            } catch (_: Throwable) {
+                null
+            }
+            when (status?.status) {
+                "sent" -> return status.mail_item_id
+                "failed", "cancelled" -> throw QueuedSendFailedException()
+            }
+        }
+        return null
     }
 
     private fun is_permanent_send_failure(err: Throwable?): Boolean = is_permanent_send_failure_cause(err)
@@ -4879,7 +4904,7 @@ class MailRepository @Inject constructor(
                 attachments = attachments,
                 expiry_password = null,
             )
-            send_api.queue_email(
+            val queued = send_api.queue_email(
                 QueueEmailRequest(
                     to = to,
                     cc = cc,
@@ -4902,9 +4927,11 @@ class MailRepository @Inject constructor(
                     signed_mime = signed_payload?.mime_base64,
                     signed_mime_signature = signed_payload?.signature,
                     signed_mime_micalg = signed_payload?.micalg,
+                    client_send_id = client_send_id,
                 ),
             )
-            return@runCatching SimpleSendResponse(success = true, message = "", mail_item_id = null)
+            val mail_item_id = await_queued_send(queued.queue_id)
+            return@runCatching SimpleSendResponse(success = true, message = "", mail_item_id = mail_item_id)
         }
 
         if (all_external) {
@@ -6289,6 +6316,7 @@ internal fun is_server_rejection(err: Throwable): Boolean = when (err) {
     is org.astermail.android.api.ApiError.StorageQuotaExceeded -> true
     is org.astermail.android.api.ApiError.ForbiddenError -> err.code !in retryable_forbidden_codes
     is MixedRecipientsPasswordException -> true
+    is QueuedSendFailedException -> true
     else -> false
 }
 

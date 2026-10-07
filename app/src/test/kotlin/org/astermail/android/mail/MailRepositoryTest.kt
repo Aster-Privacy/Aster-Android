@@ -2688,6 +2688,104 @@ class MailRepositoryTest {
         }
     }
 
+    private fun stub_mixed_queue(queue_id: String = "q_1") {
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any(), any()) } returns "shared_body"
+        coEvery { send_api.queue_email(any()) } returns
+            org.astermail.android.api.send.QueueEmailResponse(queue_id = queue_id, delay_seconds = 1)
+    }
+
+    private suspend fun send_mixed(client_send_id: String? = null) = repo.send_email(
+        to = listOf("to@astermail.org", "friend@example.com"),
+        subject = "Hi",
+        body_html = "<p>hello</p>",
+        sender_email = "me@astermail.org",
+        client_send_id = client_send_id,
+    )
+
+    @Test
+    fun `mixed send carries the client send id to the queue`() = runTest {
+        stub_mixed_queue()
+        coEvery { send_api.queue_status("q_1") } returns
+            org.astermail.android.api.send.QueueStatusResponse(queue_id = "q_1", status = "sent")
+
+        val key = "0f8fad5b-d9cb-469f-a165-70867728950e"
+        assertTrue(send_mixed(client_send_id = key).getOrThrow().success)
+
+        val request = slot<org.astermail.android.api.send.QueueEmailRequest>()
+        coVerify(exactly = 1) { send_api.queue_email(capture(request)) }
+        assertEquals(key, request.captured.client_send_id)
+    }
+
+    @Test
+    fun `mixed send returns the sent item once the queue reports sent`() = runTest {
+        stub_mixed_queue()
+        coEvery { send_api.queue_status("q_1") } returnsMany listOf(
+            org.astermail.android.api.send.QueueStatusResponse(queue_id = "q_1", status = "pending"),
+            org.astermail.android.api.send.QueueStatusResponse(queue_id = "q_1", status = "sending"),
+            org.astermail.android.api.send.QueueStatusResponse(queue_id = "q_1", status = "sent", mail_item_id = "item_9"),
+        )
+
+        val response = send_mixed().getOrThrow()
+
+        assertTrue(response.success)
+        assertEquals("item_9", response.mail_item_id)
+        coVerify(exactly = 3) { send_api.queue_status("q_1") }
+    }
+
+    @Test
+    fun `mixed send fails when the queue reports failed`() = runTest {
+        stub_mixed_queue()
+        coEvery { send_api.queue_status("q_1") } returns
+            org.astermail.android.api.send.QueueStatusResponse(queue_id = "q_1", status = "failed")
+
+        val err = send_mixed().exceptionOrNull()
+
+        assertTrue(err is QueuedSendFailedException)
+        assertTrue(is_permanent_send_failure_cause(err))
+        assertEquals(SendFailureReason.REJECTED, send_failure_reason_for(err))
+    }
+
+    @Test
+    fun `mixed send fails when the queued copy was cancelled`() = runTest {
+        stub_mixed_queue()
+        coEvery { send_api.queue_status("q_1") } returns
+            org.astermail.android.api.send.QueueStatusResponse(queue_id = "q_1", status = "cancelled")
+
+        assertTrue(send_mixed().exceptionOrNull() is QueuedSendFailedException)
+    }
+
+    @Test
+    fun `mixed send still pending at the poll limit counts as sent`() = runTest {
+        stub_mixed_queue()
+        coEvery { send_api.queue_status("q_1") } returns
+            org.astermail.android.api.send.QueueStatusResponse(queue_id = "q_1", status = "pending")
+
+        val response = send_mixed().getOrThrow()
+
+        assertTrue(response.success)
+        assertNull(response.mail_item_id)
+        coVerify(exactly = MIXED_SEND_STATUS_POLLS) { send_api.queue_status("q_1") }
+    }
+
+    @Test
+    fun `mixed send ignores status lookup errors`() = runTest {
+        stub_mixed_queue()
+        coEvery { send_api.queue_status("q_1") } throws
+            org.astermail.android.api.ApiError.NetworkError
+
+        assertTrue(send_mixed().getOrThrow().success)
+        coVerify(exactly = MIXED_SEND_STATUS_POLLS) { send_api.queue_status("q_1") }
+    }
+
+    @Test
+    fun `mixed send without a queue id skips the status lookup`() = runTest {
+        stub_mixed_queue(queue_id = "")
+
+        assertTrue(send_mixed().getOrThrow().success)
+        coVerify(exactly = 0) { send_api.queue_status(any()) }
+    }
+
     @Test
     fun `mixed send with a message password is refused before any request`() = runTest {
         val result = repo.send_email(

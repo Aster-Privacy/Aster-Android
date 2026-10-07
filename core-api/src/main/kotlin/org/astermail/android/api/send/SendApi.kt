@@ -23,6 +23,7 @@ package org.astermail.android.api.send
 
 import io.ktor.client.call.body
 import io.ktor.client.plugins.timeout
+import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -150,6 +151,7 @@ data class QueueEmailRequest(
     val signed_mime: String? = null,
     val signed_mime_signature: String? = null,
     val signed_mime_micalg: String? = null,
+    val client_send_id: String? = null,
 )
 
 @Serializable
@@ -158,6 +160,13 @@ data class QueueEmailResponse(
     val scheduled_send_time: String? = null,
     val can_cancel_until: String? = null,
     val delay_seconds: Int = 0,
+)
+
+@Serializable
+data class QueueStatusResponse(
+    val queue_id: String = "",
+    val status: String = "",
+    val mail_item_id: String? = null,
 )
 
 @Serializable
@@ -202,6 +211,7 @@ interface SendApi {
     suspend fun send_simple(request: SimpleSendRequest): SimpleSendResponse
     suspend fun send_external(request: ExternalSendRequest): ExternalSendResponse
     suspend fun queue_email(request: QueueEmailRequest): QueueEmailResponse
+    suspend fun queue_status(queue_id: String): QueueStatusResponse
     suspend fun react(request: ReactRequest): ReactResponse
     suspend fun unreact(request: UnreactRequest): UnreactResponse
 }
@@ -270,6 +280,12 @@ class SendApiImpl(private val client: ApiClient) : SendApi {
 
     override suspend fun queue_email(request: QueueEmailRequest): QueueEmailResponse {
         return post_streamed("${client.base_url}/api/mail/v1/undo_send/queue", request)
+    }
+
+    override suspend fun queue_status(queue_id: String): QueueStatusResponse {
+        val encoded = java.net.URLEncoder.encode(queue_id, "UTF-8")
+        val response = client.http.get("${client.base_url}/api/mail/v1/undo_send/$encoded/status")
+        return decode_or_throw(response)
     }
 
     override suspend fun react(request: ReactRequest): ReactResponse {

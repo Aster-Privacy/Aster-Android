@@ -50,6 +50,15 @@ class SendFailureClassificationTest {
     }
 
     @Test
+    fun `a queued send the server failed is a permanent rejection`() {
+        val err = QueuedSendFailedException()
+
+        assertTrue(is_permanent_send_failure_cause(err))
+        assertFalse(is_transient_send_cause(err))
+        assertEquals(SendFailureReason.REJECTED, send_failure_reason_for(err))
+    }
+
+    @Test
     fun `an oversized request body is a permanent failure`() {
         assertTrue(is_permanent_send_failure_cause(ApiError.AttachmentTooLarge("too large")))
     }
