@@ -1,0 +1,9 @@
+What's new:
+
+- Send one email to Aster users and outside addresses together.
+- Folders with notifications off show a muted icon in the side menu.
+
+Fixed:
+
+- The Add recovery email prompt no longer appears at startup when you already have one.
+- Alias and folder features that need a paid plan show an upgrade prompt on plans that don't include them.
