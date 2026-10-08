@@ -320,6 +320,11 @@ fun DrawerContent(
     on_sidebar_toggle: (String, Boolean) -> Unit = { _, _ -> },
 ) {
     val colors = AsterMaterial.colors
+    val folder_plan_vm: org.astermail.android.billing.PlanLimitsViewModel =
+        androidx.hilt.navigation.compose.hiltViewModel()
+    val folder_plan_state by folder_plan_vm.state.collectAsStateWithLifecycle()
+    val folder_lock_locked = !folder_plan_state.is_loading &&
+        folder_plan_vm.is_feature_locked("has_password_protected_folders")
     var show_workspace_sheet by remember { mutableStateOf(false) }
     val current_workspace = user_email
 
@@ -670,7 +675,11 @@ fun DrawerContent(
                                     on_recolor = { pending_recolor = item },
                                     on_move_to = { pending_move = item },
                                     on_lock = {
-                                        if (item.password_set) pending_remove_lock = item else pending_set_lock = item
+                                        when {
+                                            item.password_set -> pending_remove_lock = item
+                                            folder_lock_locked -> on_select("plan")
+                                            else -> pending_set_lock = item
+                                        }
                                     },
                                     on_toggle_mute = { folder_actions.on_toggle_mute(item) },
                                     on_move_up = { folder_actions.on_move_order(item, -1) },

@@ -509,6 +509,28 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `recovery email presence is unknown until the server answers`() = runTest {
+        assertFalse(vm.state.value.recovery_email_known)
+
+        coEvery { recovery_email_api.get_state() } returns
+            org.astermail.android.api.recovery_email.RecoveryEmailStateResponse(exists = true)
+        vm.refresh_recovery_email_presence()
+        advanceUntilIdle()
+
+        assertTrue(vm.state.value.recovery_email_known)
+        assertTrue(vm.state.value.recovery_email_set)
+    }
+
+    @Test
+    fun `failed recovery email check leaves presence unknown`() = runTest {
+        coEvery { recovery_email_api.get_state() } throws java.io.IOException("offline")
+        vm.refresh_recovery_email_presence()
+        advanceUntilIdle()
+
+        assertFalse(vm.state.value.recovery_email_known)
+    }
+
+    @Test
     fun `load_ghost_aliases populates list`() = runTest {
         val aliases = listOf(
             GhostAlias(id = "g1", domain = "astermail.org", encrypted_local_part = ""),

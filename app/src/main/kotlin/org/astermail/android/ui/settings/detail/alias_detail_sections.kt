@@ -79,6 +79,7 @@ internal fun alias_inline_field(
     value: String,
     test_tag: String,
     on_save: (String) -> Unit,
+    locked: Boolean = false,
 ) {
     var draft by remember(value) { mutableStateOf(value) }
     Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs)) {
@@ -87,11 +88,14 @@ internal fun alias_inline_field(
             onValueChange = { if (it.length <= 500 || it.length < draft.length) draft = it },
             label = label,
             placeholder = placeholder,
+            enabled = !locked,
             modifier = Modifier
                 .keep_visible_above_keyboard()
                 .testTag(test_tag),
         )
-        if (draft.trim() != value.trim()) {
+        if (locked) {
+            panel_hint_text(stringResource(R.string.alias_feature_locked))
+        } else if (draft.trim() != value.trim()) {
             Text(
                 text = stringResource(R.string.save),
                 color = AsterMaterial.colors.accent_blue,
@@ -328,8 +332,9 @@ internal fun alias_contacts_section(
     alias_id: String,
     detail: AliasDetailState,
     vm: SettingsViewModel,
+    plan_locked: Boolean = false,
 ) {
-    if (detail.contacts_locked) {
+    if (detail.contacts_locked || plan_locked) {
         panel_locked_section(stringResource(R.string.alias_contacts_title))
         return
     }

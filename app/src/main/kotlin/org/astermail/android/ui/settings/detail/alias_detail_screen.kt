@@ -83,8 +83,11 @@ fun alias_detail_screen(
     val context = LocalContext.current
     val avatars_locked = plan_vm.is_feature_locked("has_alias_avatars") && !plan_state.is_loading
     val pin_locked = plan_vm.is_feature_locked("has_advanced_aliases") && !plan_state.is_loading
+    val instant_delete_locked = plan_vm.is_feature_locked("has_instant_alias_delete") && !plan_state.is_loading
+    val contacts_locked = plan_vm.is_feature_locked("max_reverse_contacts_per_alias") && !plan_state.is_loading
     var menu_open by remember { mutableStateOf(false) }
     var confirm_delete by remember { mutableStateOf(false) }
+    var alias_too_new_date by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         vm.load_aliases()
@@ -220,6 +223,7 @@ fun alias_detail_screen(
                 null
             },
             avatars_locked = avatars_locked,
+            contacts_locked = contacts_locked,
         )
 
         v_gap(AsterSpacing.md)
@@ -229,11 +233,36 @@ fun alias_detail_screen(
                 title = stringResource(R.string.delete_alias),
                 icon = TablerIcons.Trash,
                 icon_tint = colors.danger,
-                on_click = { confirm_delete = true },
+                on_click = {
+                    val eligible_at = alias_delete_eligible_at(alias.created_at)
+                    if (instant_delete_locked && eligible_at != null && System.currentTimeMillis() < eligible_at) {
+                        alias_too_new_date = format_alias_date(eligible_at)
+                    } else {
+                        confirm_delete = true
+                    }
+                },
             )
         }
 
         v_gap(AsterSpacing.lg)
+    }
+
+    alias_too_new_date?.let { date ->
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { alias_too_new_date = null },
+            title = stringResource(R.string.alias_too_new_title),
+            message = stringResource(R.string.alias_too_new_message, date),
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.close),
+                    onClick = { alias_too_new_date = null },
+                )
+                org.astermail.android.design.components.AsterDialogPrimaryButton(
+                    label = stringResource(R.string.upgrade),
+                    onClick = { alias_too_new_date = null; on_open("billing") },
+                )
+            },
+        )
     }
 
     if (confirm_delete) {
