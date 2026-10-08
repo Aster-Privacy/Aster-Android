@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import org.astermail.android.network.connection_route
 import org.astermail.android.ui.settings.detail.profile_picture_shown_view
 import org.astermail.android.ui.settings.detail.profile_picture_slide_sign
 import org.astermail.android.ui.settings.detail.profile_picture_view
@@ -140,14 +139,6 @@ class ProfilePictureGalleryTest {
     }
 
     @Test
-    fun gallery_only_available_on_direct_connection_without_lockdown() {
-        assertTrue(is_profile_picture_gallery_available(connection_route.direct, false))
-        assertFalse(is_profile_picture_gallery_available(connection_route.direct, true))
-        assertFalse(is_profile_picture_gallery_available(connection_route.routed, false))
-        assertFalse(is_profile_picture_gallery_available(connection_route.routed, true))
-    }
-
-    @Test
     fun shown_view_falls_back_to_main_when_unavailable() {
         assertEquals(profile_picture_view.gallery, profile_picture_shown_view(profile_picture_view.gallery, true))
         assertEquals(profile_picture_view.main, profile_picture_shown_view(profile_picture_view.gallery, false))
@@ -163,7 +154,7 @@ class ProfilePictureGalleryTest {
     }
 
     @Test
-    fun routed_connection_makes_zero_requests() = runBlocking {
+    fun unavailable_gallery_makes_zero_requests() = runBlocking {
         available = false
         val gallery = gallery()
         try {

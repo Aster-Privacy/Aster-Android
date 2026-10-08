@@ -4,7 +4,7 @@
     <string name="profile_picture_gallery">Выбрать из галереи</string>
     <string name="profile_picture_gallery_hint">Выберите один из фонов Aster</string>
     <string name="profile_picture_upload">Загрузить с устройства</string>
-    <string name="profile_picture_upload_hint">JPEG, PNG или WebP, до 5 МБ</string>
+    <string name="profile_picture_upload_hint">Используйте фото с устройства</string>
     <string name="profile_picture_gallery_failed">Не удалось загрузить галерею. Проверьте подключение и повторите попытку.</string>
     <string name="profile_picture_cat_all">Все</string>
     <string name="profile_picture_cat_space">Космос</string>

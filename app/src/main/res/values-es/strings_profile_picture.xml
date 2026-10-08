@@ -4,7 +4,7 @@
     <string name="profile_picture_gallery">Elegir de la galería</string>
     <string name="profile_picture_gallery_hint">Elige uno de los fondos de Aster</string>
     <string name="profile_picture_upload">Subir desde el dispositivo</string>
-    <string name="profile_picture_upload_hint">JPEG, PNG o WebP, hasta 5 MB</string>
+    <string name="profile_picture_upload_hint">Usa una foto de tu dispositivo</string>
     <string name="profile_picture_gallery_failed">No se cargó la galería. Comprueba tu conexión y vuelve a intentarlo.</string>
     <string name="profile_picture_cat_all">Todo</string>
     <string name="profile_picture_cat_space">Espacio</string>

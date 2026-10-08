@@ -4,7 +4,7 @@
     <string name="profile_picture_gallery">ギャラリーから選択</string>
     <string name="profile_picture_gallery_hint">Asterの背景から1つ選びます</string>
     <string name="profile_picture_upload">デバイスからアップロード</string>
-    <string name="profile_picture_upload_hint">JPEG、PNG、WebP、5 MBまで</string>
+    <string name="profile_picture_upload_hint">デバイス内の写真を使用します</string>
     <string name="profile_picture_gallery_failed">ギャラリーを読み込めませんでした。接続を確認して、もう一度お試しください。</string>
     <string name="profile_picture_cat_all">すべて</string>
     <string name="profile_picture_cat_space">宇宙</string>

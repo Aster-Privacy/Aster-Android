@@ -100,7 +100,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import compose.icons.TablerIcons
@@ -120,12 +119,10 @@ import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.mirror_in_rtl
-import org.astermail.android.network.connection_route_state
 import org.astermail.android.security.LockdownStore
 import org.astermail.android.settings.GalleryItem
 import org.astermail.android.settings.gallery_categories_present
 import org.astermail.android.settings.gallery_thumb_url
-import org.astermail.android.settings.is_profile_picture_gallery_available
 import org.astermail.android.settings.profile_picture_gallery_holder
 import org.astermail.android.storage.AccountStore
 import org.astermail.android.ui.common.current_user_avatar
@@ -166,7 +163,6 @@ internal fun profile_picture_shown_view(
 @Composable
 private fun remember_gallery_available(): Boolean {
     val context = LocalContext.current
-    val route by connection_route_state.route.collectAsStateWithLifecycle()
     var lockdown by remember(context) { mutableStateOf(LockdownStore.is_enabled(context)) }
     DisposableEffect(context) {
         val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
@@ -176,7 +172,7 @@ private fun remember_gallery_available(): Boolean {
         lockdown = LockdownStore.is_enabled(context)
         onDispose { LockdownStore.unregister_listener(context, listener) }
     }
-    return is_profile_picture_gallery_available(route, lockdown)
+    return !lockdown
 }
 
 private fun Modifier.block_input(blocked: Boolean): Modifier =

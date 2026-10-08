@@ -4,7 +4,7 @@
     <string name="profile_picture_gallery">الاختيار من المعرض</string>
     <string name="profile_picture_gallery_hint">اختر إحدى خلفيات Aster</string>
     <string name="profile_picture_upload">الرفع من الجهاز</string>
-    <string name="profile_picture_upload_hint">JPEG أو PNG أو WebP، حتى 5 ميغابايت</string>
+    <string name="profile_picture_upload_hint">استخدم صورة من جهازك</string>
     <string name="profile_picture_gallery_failed">تعذّر تحميل المعرض. تحقق من اتصالك ثم حاول مرة أخرى.</string>
     <string name="profile_picture_cat_all">الكل</string>
     <string name="profile_picture_cat_space">الفضاء</string>
