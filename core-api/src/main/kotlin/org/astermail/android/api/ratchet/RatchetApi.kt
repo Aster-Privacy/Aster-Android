@@ -118,6 +118,13 @@ data class EnvelopeCapabilityResponse(
     val pq_identity_attested: Boolean = false,
 )
 
+@Serializable
+data class PlaintextEscrowEntry(
+    val message_id: String = "",
+    val encrypted_plaintext: String,
+    val plaintext_nonce: String,
+)
+
 sealed class PutStateOutcome {
     data class Success(val response: RatchetStateResponse) : PutStateOutcome()
     object VersionConflict : PutStateOutcome()
@@ -140,6 +147,8 @@ interface RatchetApi {
     suspend fun delete_state(conversation_id_b64: String): Boolean
     suspend fun upload_prekey_bundle(request: UploadPrekeyBundleRequest): Boolean
     suspend fun report_envelope_capability(request: ReportEnvelopeCapabilityRequest): EnvelopeCapabilityResponse?
+    suspend fun upload_plaintext_escrow(entry: PlaintextEscrowEntry): Boolean = false
+    suspend fun fetch_plaintext_escrow(message_id: String): PlaintextEscrowEntry? = null
 }
 
 class RatchetApiImpl(private val client: ApiClient) : RatchetApi {
@@ -240,5 +249,21 @@ class RatchetApiImpl(private val client: ApiClient) : RatchetApi {
         if (response.status.value !in 200..299) return null
         return try { response.body() } catch (_: Throwable) { null }
     }
-}
 
+    override suspend fun upload_plaintext_escrow(entry: PlaintextEscrowEntry): Boolean {
+        val response = client.http.post("${client.base_url}/api/crypto/v1/ratchet/plaintext") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(entry)
+        }
+        return response.status.value in 200..299
+    }
+
+    override suspend fun fetch_plaintext_escrow(message_id: String): PlaintextEscrowEntry? {
+        val encoded = java.net.URLEncoder.encode(message_id, "UTF-8").replace("+", "%20")
+        val response = client.http.get("${client.base_url}/api/crypto/v1/ratchet/plaintext/$encoded")
+        if (response.status.value == 404) return null
+        if (response.status.value !in 200..299) return null
+        return try { response.body() } catch (_: Throwable) { null }
+    }
+}

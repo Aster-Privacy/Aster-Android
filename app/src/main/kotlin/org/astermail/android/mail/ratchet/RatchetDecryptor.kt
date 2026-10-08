@@ -24,6 +24,7 @@ package org.astermail.android.mail.ratchet
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -50,6 +51,7 @@ class RatchetDecryptor @Inject constructor(
     private val auth_repository: dagger.Lazy<org.astermail.android.auth.AuthRepository>,
     private val identity_pins: RatchetIdentityPinStore,
     private val plaintext_cache: RatchetPlaintextCache,
+    private val escrow: MessageEscrow,
 ) {
 
     private data class ReceiverKeySet(
@@ -66,6 +68,12 @@ class RatchetDecryptor @Inject constructor(
     private var forced_recovery_until = 0L
 
     private val pq_secret_missed_at = java.util.concurrent.ConcurrentHashMap<Int, Long>()
+
+    private val escrow_upgrade_attempted = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+    private val background = kotlinx.coroutines.CoroutineScope(
+        kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO,
+    )
 
     fun begin_forced_recovery() {
         forced_recovery_until = System.currentTimeMillis() + FORCED_RECOVERY_WINDOW_MS
@@ -114,6 +122,73 @@ class RatchetDecryptor @Inject constructor(
         } catch (t: Throwable) {
             if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.e("AsterRatchet", "decrypt threw")
             RATCHET_UNDECRYPTABLE_SENTINEL
+        }
+    }
+
+    fun schedule_escrow_upgrade(
+        body: String,
+        our_addresses: List<String>,
+        sender_email: String,
+        message_id: String?,
+    ) {
+        if (message_id.isNullOrBlank()) return
+        if (!plaintext_cache.is_sender_unauthenticated(message_id)) return
+        if (message_id in escrow_upgrade_attempted) return
+        background.launch {
+            runCatching { upgrade_from_escrow(body, our_addresses, sender_email, message_id) }
+        }
+    }
+
+    suspend fun upgrade_from_escrow(
+        body: String,
+        our_addresses: List<String>,
+        sender_email: String,
+        message_id: String?,
+    ): String? {
+        if (message_id.isNullOrBlank()) return null
+        if (!plaintext_cache.is_sender_unauthenticated(message_id)) return null
+        if (!escrow_upgrade_attempted.add(message_id)) return null
+        if (!looks_like_ratchet_envelope(body)) return null
+        val envelope = parse_envelope(body) ?: return null
+        for (recipient in escrow_candidates(envelope, our_addresses, sender_email)) {
+            val escrowed = fetch_escrow(message_id, recipient) ?: continue
+            cache_plaintext(message_id, escrowed)
+            return escrowed
+        }
+        return null
+    }
+
+    private fun escrow_candidates(
+        envelope: RatchetEnvelope,
+        our_addresses: List<String>,
+        sender_email: String,
+    ): List<RatchetRecipientData> {
+        val owned_lower = our_addresses.map { it.trim().lowercase(java.util.Locale.ROOT) }.filter { it.isNotBlank() }.toSet()
+        val sender_lower = sender_email.trim().lowercase(java.util.Locale.ROOT)
+        val (owned, others) = envelope.recipients.entries.partition {
+            it.key.trim().lowercase(java.util.Locale.ROOT) in owned_lower
+        }
+        val fallback = others
+            .filter { it.key.trim().lowercase(java.util.Locale.ROOT) != sender_lower }
+            .take(MAX_ALIAS_RECIPIENT_ATTEMPTS)
+        return (owned + fallback).map { it.value }
+    }
+
+    private suspend fun fetch_escrow(message_id: String?, recipient: RatchetRecipientData): String? {
+        if (message_id.isNullOrBlank()) return null
+        return try {
+            escrow.fetch(MessageEscrow.dedupe_key(message_id, recipient.header))
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    private fun upload_escrow(message_id: String?, recipient: RatchetRecipientData, plaintext: String) {
+        if (message_id.isNullOrBlank()) return
+        runCatching {
+            escrow.upload_in_background(MessageEscrow.dedupe_key(message_id, recipient.header), plaintext)
         }
     }
 
@@ -254,6 +329,11 @@ class RatchetDecryptor @Inject constructor(
             }
 
             if (plaintext == null) {
+                val escrowed = fetch_escrow(message_id, recipient)
+                if (escrowed != null) {
+                    cache_plaintext(message_id, escrowed)
+                    return@with_lock escrowed
+                }
                 val recovered = try_recovery_lane(
                     recipient,
                     conversation_id,
@@ -297,6 +377,7 @@ class RatchetDecryptor @Inject constructor(
             val final_state = state ?: return@with_lock null
             val resolved = plaintext ?: return@with_lock null
             cache_plaintext(message_id, resolved)
+            upload_escrow(message_id, recipient, resolved)
             state_store.save(final_state)
             syncer.sync(conversation_id, final_state)
             resolved
