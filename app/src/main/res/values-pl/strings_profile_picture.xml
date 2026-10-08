@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_picture_title">Zmień zdjęcie profilowe</string>
+    <string name="profile_picture_gallery">Wybierz z galerii</string>
+    <string name="profile_picture_gallery_hint">Wybierz jedno z teł Aster</string>
+    <string name="profile_picture_upload">Prześlij z urządzenia</string>
+    <string name="profile_picture_upload_hint">JPEG, PNG lub WebP, do 5 MB</string>
+    <string name="profile_picture_gallery_failed">Nie udało się wczytać galerii. Sprawdź połączenie i spróbuj ponownie.</string>
+    <string name="profile_picture_cat_all">Wszystko</string>
+    <string name="profile_picture_cat_space">Kosmos</string>
+    <string name="profile_picture_cat_night_sky">Nocne niebo</string>
+    <string name="profile_picture_cat_water">Woda</string>
+    <string name="profile_picture_cat_planets">Planety</string>
+    <string name="profile_picture_cat_landscapes">Krajobrazy</string>
+    <string name="profile_picture_cat_forest">Las</string>
+    <string name="profile_picture_cat_cities">Miasta</string>
+    <string name="profile_picture_cat_aurora">Zorza</string>
+    <string name="profile_picture_cat_mountains">Góry</string>
+    <string name="profile_picture_cat_ocean">Ocean</string>
+    <string name="profile_picture_cat_desert">Pustynia</string>
+</resources>

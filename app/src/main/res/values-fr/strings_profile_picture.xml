@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_picture_title">Modifier la photo de profil</string>
+    <string name="profile_picture_gallery">Choisir dans la galerie</string>
+    <string name="profile_picture_gallery_hint">Choisissez l’un des fonds Aster</string>
+    <string name="profile_picture_upload">Importer depuis l’appareil</string>
+    <string name="profile_picture_upload_hint">JPEG, PNG ou WebP, jusqu’à 5 Mo</string>
+    <string name="profile_picture_gallery_failed">La galerie ne s’est pas chargée. Vérifiez votre connexion, puis réessayez.</string>
+    <string name="profile_picture_cat_all">Tout</string>
+    <string name="profile_picture_cat_space">Espace</string>
+    <string name="profile_picture_cat_night_sky">Ciel nocturne</string>
+    <string name="profile_picture_cat_water">Eau</string>
+    <string name="profile_picture_cat_planets">Planètes</string>
+    <string name="profile_picture_cat_landscapes">Paysages</string>
+    <string name="profile_picture_cat_forest">Forêt</string>
+    <string name="profile_picture_cat_cities">Villes</string>
+    <string name="profile_picture_cat_aurora">Aurore</string>
+    <string name="profile_picture_cat_mountains">Montagnes</string>
+    <string name="profile_picture_cat_ocean">Océan</string>
+    <string name="profile_picture_cat_desert">Désert</string>
+</resources>

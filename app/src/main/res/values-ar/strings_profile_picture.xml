@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_picture_title">تغيير صورة الملف الشخصي</string>
+    <string name="profile_picture_gallery">الاختيار من المعرض</string>
+    <string name="profile_picture_gallery_hint">اختر إحدى خلفيات Aster</string>
+    <string name="profile_picture_upload">الرفع من الجهاز</string>
+    <string name="profile_picture_upload_hint">JPEG أو PNG أو WebP، حتى 5 ميغابايت</string>
+    <string name="profile_picture_gallery_failed">تعذّر تحميل المعرض. تحقق من اتصالك ثم حاول مرة أخرى.</string>
+    <string name="profile_picture_cat_all">الكل</string>
+    <string name="profile_picture_cat_space">الفضاء</string>
+    <string name="profile_picture_cat_night_sky">سماء الليل</string>
+    <string name="profile_picture_cat_water">الماء</string>
+    <string name="profile_picture_cat_planets">الكواكب</string>
+    <string name="profile_picture_cat_landscapes">مناظر طبيعية</string>
+    <string name="profile_picture_cat_forest">الغابة</string>
+    <string name="profile_picture_cat_cities">المدن</string>
+    <string name="profile_picture_cat_aurora">الشفق القطبي</string>
+    <string name="profile_picture_cat_mountains">الجبال</string>
+    <string name="profile_picture_cat_ocean">المحيط</string>
+    <string name="profile_picture_cat_desert">الصحراء</string>
+</resources>

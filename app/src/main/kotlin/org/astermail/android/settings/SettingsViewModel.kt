@@ -764,7 +764,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    suspend fun update_profile_picture(data_uri: String): Boolean {
+    suspend fun update_profile_picture(data_uri: String?): Boolean {
         val previous_user = _state.value.user
         val previous_account = account_store.get_current()
         apply_profile_picture_locally(data_uri)

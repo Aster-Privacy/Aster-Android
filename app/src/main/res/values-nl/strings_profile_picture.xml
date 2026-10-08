@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_picture_title">Profielfoto wijzigen</string>
+    <string name="profile_picture_gallery">Kiezen uit galerij</string>
+    <string name="profile_picture_gallery_hint">Kies een van de Aster-achtergronden</string>
+    <string name="profile_picture_upload">Uploaden vanaf apparaat</string>
+    <string name="profile_picture_upload_hint">JPEG, PNG of WebP, maximaal 5 MB</string>
+    <string name="profile_picture_gallery_failed">De galerij is niet geladen. Controleer je verbinding en probeer het opnieuw.</string>
+    <string name="profile_picture_cat_all">Alles</string>
+    <string name="profile_picture_cat_space">Ruimte</string>
+    <string name="profile_picture_cat_night_sky">Nachtelijke hemel</string>
+    <string name="profile_picture_cat_water">Water</string>
+    <string name="profile_picture_cat_planets">Planeten</string>
+    <string name="profile_picture_cat_landscapes">Landschappen</string>
+    <string name="profile_picture_cat_forest">Bos</string>
+    <string name="profile_picture_cat_cities">Steden</string>
+    <string name="profile_picture_cat_aurora">Poollicht</string>
+    <string name="profile_picture_cat_mountains">Bergen</string>
+    <string name="profile_picture_cat_ocean">Oceaan</string>
+    <string name="profile_picture_cat_desert">Woestijn</string>
+</resources>

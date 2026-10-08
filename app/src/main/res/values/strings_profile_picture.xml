@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_picture_title">Change profile picture</string>
+    <string name="profile_picture_gallery">Choose from gallery</string>
+    <string name="profile_picture_gallery_hint">Pick one of the Aster backgrounds</string>
+    <string name="profile_picture_upload">Upload from device</string>
+    <string name="profile_picture_upload_hint">JPEG, PNG, or WebP, up to 5 MB</string>
+    <string name="profile_picture_gallery_failed">The gallery didn\'t load. Check your connection, and then try again.</string>
+    <string name="profile_picture_cat_all">All</string>
+    <string name="profile_picture_cat_space">Space</string>
+    <string name="profile_picture_cat_night_sky">Night sky</string>
+    <string name="profile_picture_cat_water">Water</string>
+    <string name="profile_picture_cat_planets">Planets</string>
+    <string name="profile_picture_cat_landscapes">Landscapes</string>
+    <string name="profile_picture_cat_forest">Forest</string>
+    <string name="profile_picture_cat_cities">Cities</string>
+    <string name="profile_picture_cat_aurora">Aurora</string>
+    <string name="profile_picture_cat_mountains">Mountains</string>
+    <string name="profile_picture_cat_ocean">Ocean</string>
+    <string name="profile_picture_cat_desert">Desert</string>
+</resources>
