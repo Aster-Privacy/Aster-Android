@@ -1149,6 +1149,7 @@
     <string name="error_ssl">La connexion sécurisée a échoué. Veuillez réessayer.</string>
     <string name="error_generic">Une erreur est survenue. Veuillez réessayer.</string>
     <string name="error_too_many_attempts">Trop de tentatives. Veuillez patienter un instant et réessayer.</string>
+    <string name="error_username_taken">Ce nom d’utilisateur est déjà pris. Choisissez-en un autre.</string>
 
     <!-- Recovery -->
     <string name="error_send_recovery">Échec de l\'envoi de l\'e-mail de récupération</string>

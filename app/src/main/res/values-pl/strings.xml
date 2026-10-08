@@ -1086,6 +1086,7 @@
     <string name="error_ssl">Bezpieczne połączenie nie powiodło się. Spróbuj ponownie.</string>
     <string name="error_generic">Coś poszło nie tak. Spróbuj ponownie.</string>
     <string name="error_too_many_attempts">Zbyt wiele prób. Poczekaj chwilę i spróbuj ponownie.</string>
+    <string name="error_username_taken">Ta nazwa użytkownika jest już zajęta. Wybierz inną.</string>
 
     <string name="error_send_recovery">Nie udało się wysłać e-maila do odzyskiwania</string>
     <string name="error_invalid_recovery_code">Kod odzyskiwania wygląda tak: ASTER-XXXX-XXXX-XXXX-XXXX. Sprawdź kod i wpisz go ponownie.</string>

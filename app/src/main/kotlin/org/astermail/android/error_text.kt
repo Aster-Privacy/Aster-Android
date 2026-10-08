@@ -28,6 +28,7 @@ import org.astermail.android.api.server_supplied_detail
 
 const val FAMILY_2FA_REQUIRED_CODE = "FAMILY_2FA_REQUIRED"
 const val PENDING_LOGIN_EXPIRED_CODE = "PENDING_LOGIN_EXPIRED"
+const val USERNAME_IN_USE_CODE = "USERNAME_IN_USE"
 
 fun localized_server_code(context: Context, t: Throwable): String? {
     val forbidden = t as? ApiError.ForbiddenError ?: return null
@@ -103,8 +104,12 @@ fun server_code_string_res(code: String): Int? = when (code) {
     "VERIFICATION_REQUIRED" -> R.string.error_verification_required
     "CLIENT_UPGRADE_REQUIRED" -> R.string.error_client_upgrade_required
     "ALIAS_REENCRYPTION_INCOMPLETE" -> R.string.error_alias_reencryption_incomplete
+    USERNAME_IN_USE_CODE -> R.string.error_username_taken
     else -> null
 }
+
+fun is_username_taken(t: Throwable): Boolean =
+    t is ApiError.Conflict && t.code == USERNAME_IN_USE_CODE
 
 private fun localized_server_code_string(context: Context, code: String): String? =
     server_code_string_res(code)?.let { context.getString(it) }

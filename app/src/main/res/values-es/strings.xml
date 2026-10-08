@@ -1087,6 +1087,7 @@
     <string name="error_ssl">No se pudo establecer una conexión segura. Inténtalo de nuevo.</string>
     <string name="error_generic">Algo salió mal. Inténtalo de nuevo.</string>
     <string name="error_too_many_attempts">Demasiados intentos. Espera un momento e inténtalo de nuevo.</string>
+    <string name="error_username_taken">Este nombre de usuario ya está en uso. Elige otro.</string>
 
     <string name="error_send_recovery">Error al enviar el correo de recuperación</string>
     <string name="error_invalid_recovery_code">Un código de recuperación tiene este formato: ASTER-XXXX-XXXX-XXXX-XXXX. Comprueba el código y vuelve a introducirlo.</string>

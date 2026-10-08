@@ -24,8 +24,10 @@ package org.astermail.android
 
 import org.astermail.android.api.ApiError
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ServerCodeErrorTest {
@@ -46,6 +48,20 @@ class ServerCodeErrorTest {
             seen.add(res!!)
         }
         assertEquals(codes.size, seen.size)
+    }
+
+    @Test
+    fun maps_a_taken_username_to_its_own_string() {
+        assertEquals(R.string.error_username_taken, server_code_string_res(USERNAME_IN_USE_CODE))
+    }
+
+    @Test
+    fun flags_only_a_username_conflict_as_taken() {
+        assertTrue(is_username_taken(ApiError.Conflict("This username is already taken", USERNAME_IN_USE_CODE)))
+        assertFalse(is_username_taken(ApiError.Conflict("Registration failed", "CONFLICT")))
+        assertFalse(is_username_taken(ApiError.Conflict("conflict", null)))
+        assertFalse(is_username_taken(ApiError.RateLimited()))
+        assertFalse(is_username_taken(ApiError.ForbiddenError("nope", USERNAME_IN_USE_CODE)))
     }
 
     @Test
