@@ -1087,6 +1087,7 @@
     <string name="error_ssl">Sichere Verbindung fehlgeschlagen. Bitte versuchen Sie es erneut.</string>
     <string name="error_generic">Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.</string>
     <string name="error_too_many_attempts">Zu viele Versuche. Bitte warten Sie einen Moment und versuchen Sie es erneut.</string>
+    <string name="error_username_taken">Dieser Benutzername ist bereits vergeben. Wähle einen anderen.</string>
 
     <string name="error_send_recovery">Wiederherstellungs-E-Mail konnte nicht gesendet werden</string>
     <string name="error_invalid_recovery_code">Ein Wiederherstellungscode sieht so aus: ASTER-XXXX-XXXX-XXXX-XXXX. Prüfen Sie den Code und geben Sie ihn erneut ein.</string>

@@ -1086,6 +1086,7 @@
     <string name="error_ssl">安全な接続に失敗しました。もう一度お試しください。</string>
     <string name="error_generic">問題が発生しました。もう一度お試しください。</string>
     <string name="error_too_many_attempts">試行回数が多すぎます。しばらく待ってからもう一度お試しください。</string>
+    <string name="error_username_taken">このユーザ名はすでに使われています。別の名前を選んでください。</string>
 
     <string name="error_send_recovery">復旧用メールを送信できませんでした</string>
     <string name="error_invalid_recovery_code">リカバリーコードは ASTER-XXXX-XXXX-XXXX-XXXX の形式です。コードを確認して、もう一度入力してください。</string>

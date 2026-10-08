@@ -1086,6 +1086,7 @@
     <string name="error_ssl">安全连接失败。请重试。</string>
     <string name="error_generic">出了点问题，请重试。</string>
     <string name="error_too_many_attempts">尝试次数过多，请稍等片刻后重试。</string>
+    <string name="error_username_taken">该用户名已被占用。请选择其他用户名。</string>
 
     <string name="error_send_recovery">恢复邮件发送失败</string>
     <string name="error_invalid_recovery_code">恢复代码的格式为 ASTER-XXXX-XXXX-XXXX-XXXX。请检查代码后重新输入。</string>

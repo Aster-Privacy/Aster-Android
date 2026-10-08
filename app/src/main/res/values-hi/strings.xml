@@ -1472,6 +1472,7 @@
     <string name="error_ssl">सुरक्षित कनेक्शन नहीं बन सका। फिर से कोशिश करें।</string>
     <string name="error_generic">कुछ गड़बड़ हो गई। फिर से कोशिश करें।</string>
     <string name="error_too_many_attempts">बहुत ज़्यादा कोशिशें हो गईं। थोड़ी देर रुककर फिर से कोशिश करें।</string>
+    <string name="error_username_taken">यह उपयोगकर्ता नाम पहले से लिया जा चुका है। दूसरा चुनें।</string>
     <string name="error_send_recovery">रिकवरी ईमेल नहीं भेजी जा सकी</string>
     <string name="error_invalid_recovery_code">रिकवरी कोड ASTER-XXXX-XXXX-XXXX-XXXX जैसा दिखता है। कोड जांचें और उसे फिर से डालें।</string>
     <string name="error_invalid_code">वह रिकवरी कोड मेल नहीं खाया। आपकी सहेजी गई सूची से कोई दूसरा कोड काम करना चाहिए।</string>
