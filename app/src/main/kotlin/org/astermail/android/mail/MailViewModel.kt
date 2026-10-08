@@ -141,6 +141,8 @@ data class SearchUiState(
     val error: String? = null,
 )
 
+data class ListScrollAnchor(val key: String, val offset: Int)
+
 @HiltViewModel
 class MailViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -190,6 +192,7 @@ class MailViewModel @Inject constructor(
         if (!changed && folder_cache_store.categories_signature() == signature) return
         folder_cache_store.set_categories_signature(signature)
         search_index_manager.expire_inbox_sync()
+        list_scroll_anchors.clear()
         folder_cache.clear()
         folder_cache_time.clear()
         clear_folder_cache_store()
@@ -468,6 +471,9 @@ class MailViewModel @Inject constructor(
     }
 
     private val folder_cache = java.util.concurrent.ConcurrentHashMap<String, InboxUiState>()
+    val list_scroll_anchors = java.util.concurrent.ConcurrentHashMap<String, ListScrollAnchor>()
+    var consumed_scroll_top_token: Int = 0
+    var last_list_scope_key: String = ""
     private val folder_cache_time = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val disk_rows = java.util.concurrent.ConcurrentHashMap<String, List<InboxItem>>()
     private val disk_probed = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
@@ -671,6 +677,7 @@ class MailViewModel @Inject constructor(
     )
 
     private fun on_list_layout_changed(user_initiated_reload: () -> Unit) {
+        list_scroll_anchors.clear()
         folder_cache.clear()
         folder_cache_time.clear()
         val signature = list_layout_signature()
@@ -739,6 +746,8 @@ class MailViewModel @Inject constructor(
 
     fun reset_for_account_switch() {
         account_generation++
+        list_scroll_anchors.clear()
+        consumed_scroll_top_token = 0
         offline_prefetch_job?.cancel()
         offline_prefetch_job = null
         offline_warmed_at.clear()
