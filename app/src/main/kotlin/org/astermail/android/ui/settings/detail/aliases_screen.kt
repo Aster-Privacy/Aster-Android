@@ -396,6 +396,7 @@ fun AliasesScreen(
             initial_domain = create_alias_prefill?.second,
             vm = vm,
             premium_domains_allowed = premium_domains_allowed,
+            display_name_locked = alias_avatars_locked,
             on_upgrade = { on_open("billing") },
         )
     }
@@ -2047,12 +2048,12 @@ private fun directories_tab(
 
 private const val ALIAS_DELETE_COOLDOWN_MILLIS = 30L * 24L * 60L * 60L * 1000L
 
-private fun alias_delete_eligible_at(created_at: String): Long? {
+internal fun alias_delete_eligible_at(created_at: String): Long? {
     val created = parse_iso_millis(created_at) ?: return null
     return created + ALIAS_DELETE_COOLDOWN_MILLIS
 }
 
-private fun format_alias_date(millis: Long): String =
+internal fun format_alias_date(millis: Long): String =
     millis.format_long_date()
 
 private fun parse_iso_millis(iso: String): Long? = try {
@@ -3173,6 +3174,7 @@ private fun create_alias_dialog(
     initial_local_part: String = "",
     initial_domain: String? = null,
     premium_domains_allowed: Boolean = true,
+    display_name_locked: Boolean = false,
     on_upgrade: () -> Unit = {},
 ) {
     var local_part by remember { mutableStateOf(initial_local_part) }
@@ -3331,6 +3333,8 @@ private fun create_alias_dialog(
                     value = display_name,
                     onValueChange = { display_name = it },
                     label = stringResource(R.string.display_name_optional),
+                    helper_text = if (display_name_locked) stringResource(R.string.alias_feature_locked) else null,
+                    enabled = !display_name_locked,
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -3383,7 +3387,7 @@ private fun create_alias_dialog(
                             local_part,
                             active_domain,
                             t,
-                            display_name.trim().ifBlank { null },
+                            display_name.trim().takeUnless { display_name_locked || it.isBlank() },
                             note.replace(Regex("[\\x00-\\x08\\x0B-\\x1F\\x7F]"), "").trim().ifBlank { null },
                         )
                     }

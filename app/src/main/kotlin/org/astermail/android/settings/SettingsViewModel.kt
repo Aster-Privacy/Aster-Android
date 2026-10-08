@@ -244,6 +244,7 @@ data class SettingsUiState(
     val mail_rules: List<org.astermail.android.api.mail_rules.MailRule> = emptyList(),
     val recovery_email_address: String? = null,
     val recovery_email_set: Boolean = false,
+    val recovery_email_known: Boolean = false,
     val recovery_email_verified: Boolean = false,
     val recovery_email_step_up_required: Boolean = false,
     val login_alerts_enabled: Boolean? = null,
@@ -4063,14 +4064,17 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun refresh_recovery_email_presence() {
+        val gen = account_generation
         viewModelScope.launch {
             try {
                 val response = recovery_email_api.get_state()
+                if (gen != account_generation) return@launch
                 val is_set = response.exists
                     ?: (!response.encrypted_email.isNullOrBlank() && !response.email_nonce.isNullOrBlank())
                 _state.update {
                     it.copy(
                         recovery_email_set = is_set,
+                        recovery_email_known = true,
                         recovery_email_verified = response.verified,
                         security_status = it.security_status?.copy(
                             recovery_email_set = is_set,
@@ -4109,6 +4113,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     recovery_email_address = address,
                     recovery_email_set = is_set,
+                    recovery_email_known = true,
                     recovery_email_verified = response.verified,
                     recovery_email_step_up_required =
                         response.step_up_required ?: response.verified,
@@ -4156,6 +4161,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     recovery_email_address = normalized,
                     recovery_email_set = true,
+                    recovery_email_known = true,
                     recovery_email_verified = false,
                     recovery_email_step_up_required = false,
                     security_status = _state.value.security_status?.copy(
@@ -4210,6 +4216,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     recovery_email_address = null,
                     recovery_email_set = false,
+                    recovery_email_known = true,
                     recovery_email_verified = false,
                     recovery_email_step_up_required = false,
                     security_status = _state.value.security_status?.copy(
