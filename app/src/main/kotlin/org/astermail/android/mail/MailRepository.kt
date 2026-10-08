@@ -4563,15 +4563,18 @@ class MailRepository @Inject constructor(
         candidate: String,
         message_id: String?,
     ): String {
-        val cached = if (!message_id.isNullOrBlank()) ratchet_plaintext_cache.get(message_id) else null
-        if (cached != null) return cached
-        if (!message_id.isNullOrBlank() && ratchet_recently_undecryptable(message_id)) {
-            return org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL
-        }
         val delivered_to = org.astermail.android.ui.mail.extract_delivered_to(envelope.raw_headers)
         val our_addresses = buildList {
             session_key_store.get_user_email()?.let { add(it) }
             if (!delivered_to.isNullOrBlank()) add(delivered_to)
+        }
+        val cached = if (!message_id.isNullOrBlank()) ratchet_plaintext_cache.get(message_id) else null
+        if (cached != null) {
+            ratchet_decryptor.schedule_escrow_upgrade(candidate, our_addresses, envelope.from_email, message_id)
+            return cached
+        }
+        if (!message_id.isNullOrBlank() && ratchet_recently_undecryptable(message_id)) {
+            return org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL
         }
         val result = ratchet_decryptor.try_decrypt(candidate, our_addresses, envelope.from_email, message_id)
         if (!message_id.isNullOrBlank()) {

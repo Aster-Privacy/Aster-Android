@@ -29,6 +29,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
+import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -39,6 +40,7 @@ import org.astermail.android.crypto.ratchet.RecoveryLane
 import org.astermail.android.storage.SessionKeyStore
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -114,6 +116,7 @@ class RatchetDecryptorTest {
         auth_repo: AuthRepository,
         plaintext_cache: RatchetPlaintextCache = mockk(relaxed = true),
         identity_pins: RatchetIdentityPinStore = mockk(relaxed = true),
+        escrow: MessageEscrow = escrow_returning(null),
     ): RatchetDecryptor = RatchetDecryptor(
         state_store,
         session_key_store,
@@ -123,7 +126,14 @@ class RatchetDecryptorTest {
         dagger.Lazy { auth_repo },
         identity_pins,
         plaintext_cache,
+        escrow,
     )
+
+    private fun escrow_returning(plaintext: String?): MessageEscrow {
+        val escrow = mockk<MessageEscrow>(relaxed = true)
+        coEvery { escrow.fetch(any()) } returns plaintext
+        return escrow
+    }
 
     private fun pin_store(replayed_bootstrap: Boolean = false): RatchetIdentityPinStore {
         val identity_pins = mockk<RatchetIdentityPinStore>(relaxed = true)
@@ -407,6 +417,150 @@ class RatchetDecryptorTest {
 
         assertEquals(RATCHET_UNDECRYPTABLE_SENTINEL, result)
         coVerify(exactly = 0) { state_store.save(bogus_server_state) }
+    }
+
+    private fun lane_only_body(fixture: Fixture): Pair<String, RatchetState> {
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "first message")
+        val receiver_state = receiver_state_from(fixture)
+        assertEquals("first message", DoubleRatchet.decrypt(receiver_state, recipient_data_for(fixture, enc0)))
+
+        val stale_state = deep_copy(receiver_state)
+        val corrupt_kp = RatchetCrypto.generate_p256_keypair()
+        stale_state.dh_keypair = stale_state.dh_keypair.copy(
+            secret_key = RatchetCrypto.b64_encode(RatchetCrypto.private_to_raw_d(corrupt_kp.private_key)),
+        )
+
+        val reply_state = deep_copy(receiver_state)
+        val enc_reply = DoubleRatchet.encrypt(reply_state, "reply from kchaos")
+        DoubleRatchet.decrypt(fixture.sender_state, recipient_data_for(fixture, enc_reply))
+
+        val enc2 = DoubleRatchet.encrypt(fixture.sender_state, "third message")
+        val body = envelope_json(
+            fixture.sender_identity_raw,
+            recipient_data_for(fixture, enc2).copy(recovery = lane_for(fixture, enc2)),
+        )
+        return body to stale_state
+    }
+
+    private fun lane_decryptor(
+        fixture: Fixture,
+        stale_state: RatchetState,
+        plaintext_cache: RatchetPlaintextCache,
+        escrow: MessageEscrow,
+    ): RatchetDecryptor {
+        val state_store = mockk<RatchetStateStore>(relaxed = true)
+        coEvery { state_store.load(fixture.conversation_id) } returns stale_state
+        val syncer = mockk<RatchetStateSyncer>(relaxed = true)
+        coEvery { syncer.fetch_from_server(fixture.conversation_id) } returns null
+        coEvery { syncer.sync(any(), any()) } returns true
+        val auth_repo = mockk<AuthRepository>(relaxed = true)
+        coEvery { auth_repo.try_refresh_vault_keys() } returns false
+        val session_key_store = SessionKeyStore(null)
+        seed_session_key_store(session_key_store, fixture.receiver_keys)
+        return new_decryptor(
+            state_store,
+            session_key_store,
+            mockk(relaxed = true),
+            syncer,
+            auth_repo,
+            plaintext_cache,
+            escrow = escrow,
+        )
+    }
+
+    @Test
+    fun `an escrow hit is used before the recovery lane and stays authenticated`() = runTest {
+        val fixture = build_fixture()
+        val (body, stale_state) = lane_only_body(fixture)
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        val escrow = escrow_returning("third message from escrow")
+
+        val decryptor = lane_decryptor(fixture, stale_state, plaintext_cache, escrow)
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_lane")
+
+        assertEquals("third message from escrow", result)
+        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message from escrow", false) }
+        coVerify(exactly = 0) { plaintext_cache.put(any(), any(), true) }
+        verify(exactly = 0) { escrow.upload_in_background(any(), any()) }
+    }
+
+    @Test
+    fun `recovery lane plaintext is never uploaded to the escrow`() = runTest {
+        val fixture = build_fixture()
+        val (body, stale_state) = lane_only_body(fixture)
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        val escrow = escrow_returning(null)
+
+        val decryptor = lane_decryptor(fixture, stale_state, plaintext_cache, escrow)
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_lane")
+
+        assertEquals("third message", result)
+        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", true) }
+        coVerify(atLeast = 1) { escrow.fetch(match { it.startsWith("msg_lane:") }) }
+        verify(exactly = 0) { escrow.upload_in_background(any(), any()) }
+    }
+
+    @Test
+    fun `an authenticated decrypt uploads the plaintext to the escrow`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "hello kchaos")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
+
+        val state_store = mockk<RatchetStateStore>(relaxed = true)
+        coEvery { state_store.load(any()) } returns null
+        val syncer = mockk<RatchetStateSyncer>(relaxed = true)
+        coEvery { syncer.fetch_from_server(any()) } returns null
+        coEvery { syncer.sync(any(), any()) } returns true
+        val session_key_store = SessionKeyStore(null)
+        seed_session_key_store(session_key_store, fixture.receiver_keys)
+        val escrow = escrow_returning(null)
+
+        val decryptor = new_decryptor(
+            state_store,
+            session_key_store,
+            mockk(relaxed = true),
+            syncer,
+            mockk(relaxed = true),
+            escrow = escrow,
+        )
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_chain")
+
+        assertEquals("hello kchaos", result)
+        val expected_key = "msg_chain:${enc0.header.dh_public}:${enc0.header.message_number}"
+        verify(exactly = 1) { escrow.upload_in_background(expected_key, "hello kchaos") }
+    }
+
+    @Test
+    fun `an unauthenticated cache entry is upgraded from the escrow once`() = runTest {
+        val fixture = build_fixture()
+        val (body, stale_state) = lane_only_body(fixture)
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        every { plaintext_cache.is_sender_unauthenticated("msg_lane") } returns true
+        val escrow = escrow_returning("third message")
+
+        val decryptor = lane_decryptor(fixture, stale_state, plaintext_cache, escrow)
+        val first = decryptor.upgrade_from_escrow(body, listOf(recipient_email), sender_email, "msg_lane")
+        val second = decryptor.upgrade_from_escrow(body, listOf(recipient_email), sender_email, "msg_lane")
+
+        assertEquals("third message", first)
+        assertNull(second)
+        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", false) }
+        coVerify(exactly = 1) { escrow.fetch(any()) }
+    }
+
+    @Test
+    fun `an authenticated cache entry never queries the escrow`() = runTest {
+        val fixture = build_fixture()
+        val (body, stale_state) = lane_only_body(fixture)
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        every { plaintext_cache.is_sender_unauthenticated(any()) } returns false
+        val escrow = escrow_returning("third message")
+
+        val decryptor = lane_decryptor(fixture, stale_state, plaintext_cache, escrow)
+        val result = decryptor.upgrade_from_escrow(body, listOf(recipient_email), sender_email, "msg_lane")
+
+        assertNull(result)
+        coVerify(exactly = 0) { escrow.fetch(any()) }
     }
 
     @Test
