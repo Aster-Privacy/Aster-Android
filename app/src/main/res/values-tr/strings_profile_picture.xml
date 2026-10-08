@@ -4,7 +4,7 @@
     <string name="profile_picture_gallery">Galeriden seç</string>
     <string name="profile_picture_gallery_hint">Aster arka planlarından birini seçin</string>
     <string name="profile_picture_upload">Cihazdan yükle</string>
-    <string name="profile_picture_upload_hint">JPEG, PNG veya WebP, en fazla 5 MB</string>
+    <string name="profile_picture_upload_hint">Cihazınızdaki bir fotoğrafı kullanın</string>
     <string name="profile_picture_gallery_failed">Galeri yüklenemedi. Bağlantınızı kontrol edip yeniden deneyin.</string>
     <string name="profile_picture_cat_all">Tümü</string>
     <string name="profile_picture_cat_space">Uzay</string>

@@ -4,7 +4,7 @@
     <string name="profile_picture_gallery">Wybierz z galerii</string>
     <string name="profile_picture_gallery_hint">Wybierz jedno z teł Aster</string>
     <string name="profile_picture_upload">Prześlij z urządzenia</string>
-    <string name="profile_picture_upload_hint">JPEG, PNG lub WebP, do 5 MB</string>
+    <string name="profile_picture_upload_hint">Użyj zdjęcia z urządzenia</string>
     <string name="profile_picture_gallery_failed">Nie udało się wczytać galerii. Sprawdź połączenie i spróbuj ponownie.</string>
     <string name="profile_picture_cat_all">Wszystko</string>
     <string name="profile_picture_cat_space">Kosmos</string>

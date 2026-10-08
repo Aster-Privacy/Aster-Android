@@ -4,7 +4,7 @@
     <string name="profile_picture_gallery">Kiezen uit galerij</string>
     <string name="profile_picture_gallery_hint">Kies een van de Aster-achtergronden</string>
     <string name="profile_picture_upload">Uploaden vanaf apparaat</string>
-    <string name="profile_picture_upload_hint">JPEG, PNG of WebP, maximaal 5 MB</string>
+    <string name="profile_picture_upload_hint">Gebruik een foto van je apparaat</string>
     <string name="profile_picture_gallery_failed">De galerij is niet geladen. Controleer je verbinding en probeer het opnieuw.</string>
     <string name="profile_picture_cat_all">Alles</string>
     <string name="profile_picture_cat_space">Ruimte</string>

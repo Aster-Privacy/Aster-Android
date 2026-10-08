@@ -35,8 +35,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import okhttp3.CookieJar
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.astermail.android.network.connection_route
-import org.astermail.android.network.connection_route_state
 import org.astermail.android.security.LockdownStore
 
 const val profile_picture_gallery_base_url = "https://aster-wallpapers.pages.dev"
@@ -66,12 +64,9 @@ data class GalleryItem(
     val category: String,
 )
 
-class GalleryUnavailableException : IOException("gallery unavailable on a routed connection")
+class GalleryUnavailableException : IOException("gallery unavailable in lockdown")
 
 fun is_gallery_slug(slug: String): Boolean = gallery_slug_pattern.matches(slug)
-
-fun is_profile_picture_gallery_available(route: connection_route, lockdown_enabled: Boolean): Boolean =
-    route == connection_route.direct && !lockdown_enabled
 
 fun gallery_thumb_url(slug: String, base_url: String = profile_picture_gallery_base_url): String =
     "$base_url/thumb/$slug.webp"
@@ -159,10 +154,7 @@ class ProfilePictureGallery(
 }
 
 fun profile_picture_gallery_available_now(context: Context): Boolean =
-    is_profile_picture_gallery_available(
-        connection_route_state.get(),
-        LockdownStore.is_enabled(context.applicationContext),
-    )
+    !LockdownStore.is_enabled(context.applicationContext)
 
 object profile_picture_gallery_holder {
 
