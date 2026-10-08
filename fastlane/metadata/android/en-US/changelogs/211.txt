@@ -1,0 +1,1 @@
+Fixed: the inbox keeps your scroll position when you open an email and go back. Turning inbox categories on or off rebuilds the inbox right away. Dark mode keeps light text readable in emails that set their own colors.
