@@ -346,4 +346,42 @@ class EmailDarkContrastTest {
             assertEquals(value, 0, dark_ink(doc.getElementById("m")!!).size)
         }
     }
+
+    private val dispatch_email =
+        "<!doctype html><html><head><style>.body,body,html{background:#fff\n!important;margin:0}" +
+            "h1,h2{color:#4c12a0}.copy{color:#333333}</style></head>" +
+            "<body class=\"body\"><table width=\"100%\" bgcolor=\"#f5f5f5\"><tr><td>" +
+            "<table width=\"600\" style=\"background-color:#fff\"><tr><td>" +
+            "<h1>Your items are on their way</h1>" +
+            "<p class=\"copy\">Your items have been dispatched.</p>" +
+            "<h2>Order information</h2><p style=\"color:#000\">Order number: 1234</p>" +
+            "<a href=\"https://example.com/track\" style=\"background-color:#ffffff;border:1px solid #4c12a0;" +
+            "border-radius:24px;color:#4c12a0;display:inline-block;padding:10px 20px\">Track your parcel</a>" +
+            "</td></tr></table></td></tr></table></body></html>"
+
+    @Test
+    fun a_dispatch_email_with_a_white_stylesheet_page_and_button_stays_readable_in_dark() {
+        val body = EmailHtmlSanitizer.sanitize(dispatch_email)
+        assert_consistent_in_dark("dispatch email", body)
+        val forced = Jsoup.parse(render(body, forced = true))
+        val button = forced.select("#m a").first { it.text() == "Track your parcel" }
+        assertFalse("button kept a white surface: ${button.attr("style")}", declares_light_background(button.attr("style")))
+        assertFalse(forced.select("#m style").html().contains("background:#fff"))
+        val automatic = Jsoup.parse(render(body, forced = false))
+        assertEquals("1", automatic.selectFirst("html")!!.attr("data-white"))
+        assertTrue(automatic.select("#m a").first { it.text() == "Track your parcel" }.attr("style").contains("#ffffff"))
+    }
+
+    @Test
+    fun named_light_backgrounds_are_cleared_under_forced_dark() {
+        val html = render(
+            "<div style=\"background-color:whitesmoke\"><p style=\"color:#111\">Line</p>" +
+                "<a href=\"https://example.com\" style=\"background:ivory;color:#222\">Open</a></div>",
+            forced = true,
+        )
+        val content = Jsoup.parse(html).getElementById("m")!!
+        assertFalse(content.html().contains("whitesmoke"))
+        assertFalse(content.html().contains("ivory"))
+        assert_consistent("named light backgrounds", html)
+    }
 }
