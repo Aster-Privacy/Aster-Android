@@ -18,4 +18,5 @@
     <string name="profile_picture_cat_mountains">山</string>
     <string name="profile_picture_cat_ocean">海</string>
     <string name="profile_picture_cat_desert">砂漠</string>
+    <string name="profile_picture_credit">写真: %1$s。トリミングとサイズ変更を行っています。</string>
 </resources>

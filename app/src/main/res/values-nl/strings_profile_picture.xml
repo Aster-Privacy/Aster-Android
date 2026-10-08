@@ -18,4 +18,5 @@
     <string name="profile_picture_cat_mountains">Bergen</string>
     <string name="profile_picture_cat_ocean">Oceaan</string>
     <string name="profile_picture_cat_desert">Woestijn</string>
+    <string name="profile_picture_credit">Foto: %1$s. Bijgesneden en geschaald.</string>
 </resources>

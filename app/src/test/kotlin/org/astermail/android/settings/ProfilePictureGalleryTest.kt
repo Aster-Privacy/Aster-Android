@@ -24,6 +24,7 @@ package org.astermail.android.settings
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonPrimitive
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.astermail.android.ui.settings.detail.profile_picture_shown_view
@@ -253,6 +254,62 @@ class ProfilePictureGalleryTest {
         } catch (_: IOException) {
         }
         assertEquals(1, server.requestCount)
+    }
+
+    private fun credit_of(credit_json: String?): String? {
+        val field = if (credit_json == null) "" else ""","credit":$credit_json"""
+        return parse_gallery_manifest("""{"items":[{"slug":"a","category":"space"$field}]}""").single().credit
+    }
+
+    @Test
+    fun credit_is_parsed_when_present() {
+        assertEquals("ESA/Webb, CC BY 4.0", credit_of("\"ESA/Webb, CC BY 4.0\""))
+    }
+
+    @Test
+    fun credit_missing_is_null() {
+        assertNull(credit_of(null))
+    }
+
+    @Test
+    fun credit_non_string_is_null() {
+        assertNull(credit_of("42"))
+        assertNull(credit_of("true"))
+        assertNull(credit_of("null"))
+        assertNull(credit_of("{}"))
+        assertNull(credit_of("[\"x\"]"))
+    }
+
+    private fun sanitize(raw: String): String? = parse_gallery_credit(JsonPrimitive(raw))
+
+    @Test
+    fun credit_blank_is_null() {
+        assertNull(credit_of("\"\""))
+        assertNull(credit_of("\"   \""))
+        assertNull(sanitize("\n\t\r\u200e\u2066\u0000"))
+    }
+
+    @Test
+    fun credit_whitespace_is_collapsed_and_trimmed() {
+        assertEquals("NASA, ESA, CSA", sanitize("  NASA,   ESA, \u00a0 CSA  "))
+    }
+
+    @Test
+    fun credit_strips_newlines_controls_and_bidi_marks() {
+        assertEquals(
+            "Photo by A B C D E F G H I",
+            sanitize("Photo by A\nB\rC\u0000D\u007fE\u202eF\u2067G\u200fH\u2069I"),
+        )
+        assertEquals("x y", sanitize("x\u0085\u009fy"))
+        assertEquals("A B C", credit_of("\"A\\nB\\u202eC\""))
+    }
+
+    @Test
+    fun credit_is_capped_at_two_hundred_characters() {
+        val long = "a".repeat(199) + " " + "b".repeat(50)
+        val credit = credit_of("\"$long\"")!!
+        assertEquals("a".repeat(199), credit)
+        assertEquals(200, credit_of("\"${"c".repeat(300)}\"")!!.length)
     }
 
     @Test

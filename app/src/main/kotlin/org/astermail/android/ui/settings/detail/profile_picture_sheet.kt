@@ -91,6 +91,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -651,6 +652,7 @@ private fun profile_picture_gallery_view(
                     items(visible, key = { it.slug }) { item ->
                         gallery_tile(
                             slug = item.slug,
+                            credit = item.credit,
                             pending = pending_slug == item.slug,
                             enabled = pending_slug == null && !busy,
                             on_click = { on_choose(item.slug) },
@@ -704,6 +706,7 @@ private fun gallery_chip(
 @Composable
 private fun gallery_tile(
     slug: String,
+    credit: String?,
     pending: Boolean,
     enabled: Boolean,
     on_click: () -> Unit,
@@ -716,35 +719,56 @@ private fun gallery_tile(
             .crossfade(150)
             .build()
     }
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(1f)
-            .clip(tile_shape)
-            .background(field_surface_color(colors), tile_shape)
-            .clickable(enabled = enabled, role = Role.Button, onClick = on_click)
-            .testTag("profile_picture_tile_$slug"),
-        contentAlignment = Alignment.Center,
+    val caption = credit?.let {
+        stringResource(R.string.profile_picture_credit, "\u2068$it\u2069")
+    }
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
     ) {
-        AsyncImage(
-            model = request,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-        )
-        if (pending) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.45f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(22.dp),
-                    strokeWidth = 2.dp,
-                    color = Color.White,
-                )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .clip(tile_shape)
+                .background(field_surface_color(colors), tile_shape)
+                .clickable(enabled = enabled, role = Role.Button, onClick = on_click)
+                .semantics { if (caption != null) contentDescription = caption }
+                .testTag("profile_picture_tile_$slug"),
+            contentAlignment = Alignment.Center,
+        ) {
+            AsyncImage(
+                model = request,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+            if (pending) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.45f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(22.dp),
+                        strokeWidth = 2.dp,
+                        color = Color.White,
+                    )
+                }
             }
+        }
+        if (caption != null) {
+            Text(
+                text = caption,
+                color = colors.text_muted,
+                fontSize = 10.sp,
+                lineHeight = 13.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clearAndSetSemantics {}
+                    .testTag("profile_picture_credit_$slug"),
+            )
         }
     }
 }

@@ -18,4 +18,5 @@
     <string name="profile_picture_cat_mountains">पहाड़</string>
     <string name="profile_picture_cat_ocean">महासागर</string>
     <string name="profile_picture_cat_desert">रेगिस्तान</string>
+    <string name="profile_picture_credit">फ़ोटो: %1$s. क्रॉप और रीसाइज़ की गई।</string>
 </resources>
