@@ -49,6 +49,30 @@ class HtmlBodyDetectionTest {
     }
 
     @Test
+    fun treats_angle_bracket_addresses_as_plain_text() {
+        assertFalse(looks_like_html_body("<a@b.com> wrote"))
+        assertFalse(looks_like_html_body("Write to <body.shop@example.com> today"))
+        assertFalse(looks_like_html_body("Ask <html-team@example.com> first"))
+        assertFalse(looks_like_html_body("see <https://example.com/a?b=1> and <i@example.com> soon"))
+        assertFalse(
+            looks_like_html_body(
+                "Of course and done :)\r\n\r\nOn 10/8/26 04:00, Aster Team wrote:\r\n" +
+                    "> This is his email: someone@example.com\r\n> <mailto:someone@example.com>\r\n" +
+                    "> On Wed, Oct 7, 2026, 3:16 AM, Dr.-Ing. Mario Heiderich <mario@example.de>\r\n> wrote:\r\n",
+            ),
+        )
+    }
+
+    @Test
+    fun still_recognizes_markup_after_the_tag_name_fix() {
+        assertTrue(looks_like_html_body("hi<br>there</p>"))
+        assertTrue(looks_like_html_body("hi<br/>there"))
+        assertTrue(looks_like_html_body("<a href=\"https://example.com\">x</a>"))
+        assertTrue(looks_like_html_body("<div\nclass=\"x\">y</div>"))
+        assertTrue(looks_like_html_body("<b>bold</b>"))
+    }
+
+    @Test
     fun treats_a_full_document_as_html() {
         assertTrue(looks_like_html_body("<html><head></head><body>Hi</body></html>"))
         assertTrue(looks_like_html_body("<body style=\"margin:0\">Hi"))

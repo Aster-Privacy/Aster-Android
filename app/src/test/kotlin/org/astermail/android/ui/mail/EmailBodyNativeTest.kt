@@ -21,6 +21,8 @@
 
 package org.astermail.android.ui.mail
 
+import org.astermail.android.mail.build_plain_text_html
+import org.jsoup.Jsoup
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -374,5 +376,294 @@ class EmailBodyNativeTest {
             "<img src=\"https://a.test/b.png\" width=\"600\">",
             renderable_html_part("<img src=\"https://a.test/b.png\" width=\"600\">", "Hi there"),
         )
+    }
+
+    private fun prepare_plain(text: String): String = prepare(build_plain_text_html(text))
+
+    private fun visible_text(prepared: String): String {
+        val doc = Jsoup.parseBodyFragment(prepared)
+        doc.select("details.aster-quoted-wrapper").remove()
+        return doc.body().text()
+    }
+
+    private fun hidden_text(prepared: String): String =
+        Jsoup.parseBodyFragment(prepared).select("details.aster-quoted-wrapper .aster-quoted-content")
+            .joinToString("\n") { it.text() }
+
+    private fun folds(prepared: String): Boolean = prepared.contains("aster-quoted-wrapper")
+
+    private val localized_attributions = listOf(
+        "de" to "Am 07.10.2026 um 14:03 schrieb Max Muster <max@example.de>:",
+        "fr" to "Le mer. 7 oct. 2026 à 14:03, Jean Dupont <jean@example.fr> a écrit :",
+        "es" to "El mié, 7 oct 2026 a las 14:03, Ana <ana@example.es> escribió:",
+        "it" to "Il giorno mer 7 ott 2026 alle ore 14:03 Luca <luca@example.it> ha scritto:",
+        "pt" to "Em qua., 7 de out. de 2026 às 14:03, Rui <rui@example.pt> escreveu:",
+        "nl" to "Op wo 7 okt 2026 om 14:03 schreef Jan <jan@example.nl>:",
+        "sv" to "Den ons 7 okt. 2026 kl 14:03 skrev Erik <erik@example.se>:",
+        "pl" to "W dniu 7.10.2026 o 14:03, Jan Kowalski <jan@example.pl> pisze:",
+        "ru" to "7 окт. 2026 г., в 14:03, Иван <ivan@example.ru> написал(а):",
+        "zh" to "Li <li@example.cn> 于2026年10月7日周三 14:03写道：",
+        "ko" to "2026년 10월 7일 (수) 오후 2:03, Kim <kim@example.kr>님이 작성:",
+    )
+
+    @Test
+    fun a_localized_plain_attribution_folds_the_quote() {
+        for ((lang, line) in localized_attributions) {
+            val prepared = prepare_plain(listOf("Reply body here.", "", line, "> earlier text", "> more").joinToString("\n"))
+
+            assertTrue(lang, visible_text(prepared).contains("Reply body here."))
+            assertFalse(lang, visible_text(prepared).contains("earlier text"))
+            assertTrue(lang, hidden_text(prepared).contains("earlier text"))
+        }
+    }
+
+    @Test
+    fun a_localized_html_attribution_folds_the_blockquote() {
+        val prepared = prepare(
+            "<div>Danke!</div><div class=\"x\">Am 07.10.2026 um 14:03 schrieb Max &lt;max@example.de&gt;:<br></div>" +
+                "<blockquote>alt</blockquote>",
+        )
+
+        assertTrue(visible_text(prepared).contains("Danke!"))
+        assertFalse(visible_text(prepared).contains("alt"))
+    }
+
+    @Test
+    fun the_reported_plain_reply_folds_from_the_attribution_down() {
+        val body = listOf(
+            "Of course and done :)",
+            "",
+            "Cheers,",
+            ".mario",
+            "",
+            "On 10/8/26 04:00, Aster Team wrote:",
+            "> Received! Looking forward to talking then.",
+            ">",
+            "> Would you also be able to invite my co-founder to the meeting as well?",
+            "> This is his email: someone@example.com",
+            "> <mailto:someone@example.com>",
+            ">",
+            "> Thanks,",
+            "> Athanasios",
+            ">",
+            "> On Wed, Oct 7, 2026, 3:16 AM, Dr.-Ing. Mario Heiderich <mario@example.de>",
+            "> wrote:",
+            ">",
+            ">     Hi Athanasios,",
+            "",
+        ).joinToString("\r\n")
+        val prepared = prepare_plain(body)
+        val visible = visible_text(prepared)
+        val hidden = hidden_text(prepared)
+
+        assertTrue(visible.contains("Of course and done :)"))
+        assertTrue(visible.contains("Cheers,"))
+        assertTrue(visible.contains(".mario"))
+        assertFalse(visible.contains("Aster Team wrote:"))
+        assertFalse(visible.contains("Received!"))
+        assertFalse(visible.contains("Hi Athanasios"))
+        assertTrue(hidden.contains("On 10/8/26 04:00, Aster Team wrote:"))
+        assertTrue(hidden.contains("Received! Looking forward"))
+        assertTrue(hidden.contains("Hi Athanasios"))
+    }
+
+    @Test
+    fun a_quote_sharing_a_paragraph_with_the_reply_folds() {
+        val prepared = prepare_plain(
+            "Sounds good.\nThanks\nOn Tue, Oct 6, 2026 at 2:59 AM Someone <a@example.com> wrote:\n" +
+                "> earlier text\n> more earlier text",
+        )
+
+        assertTrue(visible_text(prepared).contains("Sounds good."))
+        assertTrue(visible_text(prepared).contains("Thanks"))
+        assertFalse(visible_text(prepared).contains("earlier text"))
+        assertFalse(visible_text(prepared).contains("wrote:"))
+    }
+
+    @Test
+    fun a_wrapped_attribution_folds() {
+        val prepared = prepare_plain(
+            "Works for me.\n\nOn Wed, Oct 7, 2026, 3:16 AM, Dr.-Ing. Someone Long <a@example.com>\nwrote:\n> earlier text",
+        )
+
+        assertTrue(visible_text(prepared).contains("Works for me."))
+        assertFalse(visible_text(prepared).contains("earlier text"))
+        assertFalse(visible_text(prepared).contains("wrote:"))
+    }
+
+    @Test
+    fun a_message_with_no_reply_text_stays_expanded() {
+        val prepared = prepare_plain("On Mon, Oct 5, 2026 Someone wrote:\n> only quote")
+
+        assertFalse(folds(prepared))
+        assertTrue(prepared.contains("only quote"))
+    }
+
+    @Test
+    fun an_html_header_block_after_a_rule_folds() {
+        val prepared = prepare(
+            "<div>Thanks, see attached.</div><div id=\"appendonsend\"></div>" +
+                "<hr style=\"display:inline-block;width:98%\">" +
+                "<div id=\"divRplyFwdMsg\" dir=\"ltr\"><font face=\"Calibri\"><b>From:</b> Someone &lt;a@example.com&gt;<br>" +
+                "<b>Sent:</b> Wednesday, October 7, 2026 2:03 PM<br>" +
+                "<b>To:</b> Me &lt;b@example.com&gt;<br>" +
+                "<b>Subject:</b> Re: plans</font><div>&nbsp;</div></div>" +
+                "<div>earlier body text</div>",
+        )
+        val doc = Jsoup.parseBodyFragment(prepared)
+
+        assertTrue(visible_text(prepared).contains("Thanks, see attached."))
+        assertFalse(visible_text(prepared).contains("earlier body text"))
+        assertFalse(visible_text(prepared).contains("Subject:"))
+        assertEquals(doc.select("hr").size, doc.select("details.aster-quoted-wrapper hr").size)
+    }
+
+    @Test
+    fun a_word_style_header_block_folds() {
+        val prepared = prepare(
+            "<div class=\"WordSection1\"><p class=\"MsoNormal\">Approved.<o:p></o:p></p>" +
+                "<div style=\"border:none;border-top:solid #E1E1E1 1.0pt;padding:3.0pt 0in 0in 0in\">" +
+                "<p class=\"MsoNormal\"><b>From:</b> Someone &lt;a@example.com&gt;<br><b>Sent:</b> Tuesday, " +
+                "October 6, 2026 9:00 AM<br><b>To:</b> Me<br><b>Subject:</b> Budget<o:p></o:p></p></div>" +
+                "<p class=\"MsoNormal\">older request<o:p></o:p></p></div>",
+        )
+
+        assertTrue(visible_text(prepared).contains("Approved."))
+        assertFalse(visible_text(prepared).contains("older request"))
+    }
+
+    @Test
+    fun a_plain_header_block_under_a_separator_folds() {
+        val prepared = prepare_plain(
+            listOf(
+                "Confirmed for Friday.",
+                "",
+                "________________________________",
+                "From: Someone <a@example.com>",
+                "Sent: Tuesday, October 6, 2026 9:00 AM",
+                "To: Me <b@example.com>",
+                "Subject: Friday",
+                "",
+                "older request",
+            ).joinToString("\n"),
+        )
+
+        assertTrue(visible_text(prepared).contains("Confirmed for Friday."))
+        assertFalse(visible_text(prepared).contains("older request"))
+        assertFalse(visible_text(prepared).contains("____"))
+    }
+
+    @Test
+    fun a_german_header_block_folds() {
+        val prepared = prepare_plain(
+            "Passt.\n\nVon: Max <max@example.de>\nGesendet: Dienstag, 6. Oktober 2026 09:00\nAn: Ich\nBetreff: Termin\n\nalte Nachricht",
+        )
+
+        assertTrue(visible_text(prepared).contains("Passt."))
+        assertFalse(visible_text(prepared).contains("alte Nachricht"))
+    }
+
+    @Test
+    fun a_localized_original_message_marker_folds() {
+        val prepared = prepare_plain("Passt.\n\n-----Ursprüngliche Nachricht-----\nalte Nachricht")
+
+        assertTrue(visible_text(prepared).contains("Passt."))
+        assertFalse(visible_text(prepared).contains("alte Nachricht"))
+    }
+
+    @Test
+    fun a_lone_from_line_does_not_fold() {
+        val prepared = prepare_plain("From: the team, with thanks.\nSee you soon.\nSubject to change.")
+
+        assertFalse(folds(prepared))
+    }
+
+    @Test
+    fun interleaved_inline_replies_stay_visible() {
+        val prepared = prepare_plain(
+            listOf(
+                "Answers inline.",
+                "",
+                "On Tue, Oct 6, 2026 at 9:00 AM Someone <a@example.com> wrote:",
+                "> Can you make Friday?",
+                "",
+                "Yes, Friday works.",
+                "",
+                "> And bring the slides?",
+                "",
+                "Will do.",
+            ).joinToString("\n"),
+        )
+
+        assertFalse(folds(prepared))
+        assertTrue(visible_text(prepared).contains("Yes, Friday works."))
+        assertTrue(visible_text(prepared).contains("Will do."))
+        assertTrue(visible_text(prepared).contains("And bring the slides?"))
+    }
+
+    @Test
+    fun a_bottom_posted_reply_stays_visible_below_the_toggle() {
+        val prepared = prepare_plain(
+            "On Tue, Oct 6, 2026 at 9:00 AM Someone <a@example.com> wrote:\n> Can you make Friday?\n> Let me know.\n\n" +
+                "Yes, Friday works.",
+        )
+
+        assertTrue(visible_text(prepared).contains("Yes, Friday works."))
+        assertFalse(visible_text(prepared).contains("Can you make Friday?"))
+        assertTrue(prepared.indexOf("aster-quoted-wrapper") < prepared.indexOf("Yes, Friday works."))
+    }
+
+    @Test
+    fun a_signature_after_the_quote_stays_visible() {
+        val prepared = prepare_plain(
+            "Sounds good.\n\nOn Tue, Oct 6, 2026 at 9:00 AM Someone <a@example.com> wrote:\n> earlier text\n\n-- \n" +
+                "Jordan, Example Inc.",
+        )
+
+        assertTrue(visible_text(prepared).contains("Sounds good."))
+        assertTrue(visible_text(prepared).contains("Jordan, Example Inc."))
+        assertFalse(visible_text(prepared).contains("earlier text"))
+    }
+
+    @Test
+    fun a_trailing_quote_run_without_attribution_folds() {
+        val prepared = prepare_plain("Agreed.\n\n> earlier one\n> earlier two")
+
+        assertTrue(visible_text(prepared).contains("Agreed."))
+        assertFalse(visible_text(prepared).contains("earlier one"))
+    }
+
+    @Test
+    fun a_nested_attribution_inside_a_wrapper_folds() {
+        val prepared = prepare(
+            "<div dir=\"ltr\"><div>Top reply.</div><div><br></div><div class=\"q\"><div>On Tue, Oct 6, 2026 at 9:00 AM " +
+                "Someone &lt;a@example.com&gt; wrote:<br></div><blockquote>older</blockquote></div></div>",
+        )
+
+        assertTrue(visible_text(prepared).contains("Top reply."))
+        assertFalse(visible_text(prepared).contains("older"))
+    }
+
+    @Test
+    fun a_sentence_ending_in_wrote_does_not_fold() {
+        val prepared = prepare_plain("Based on what you wrote:\nthe plan is fine.\nOne more thing.")
+
+        assertFalse(folds(prepared))
+    }
+
+    @Test
+    fun a_sentence_that_starts_with_on_does_not_fold() {
+        val prepared = prepare_plain("On reflection, I agree.\nWe should ship it.\nThanks.")
+
+        assertFalse(folds(prepared))
+    }
+
+    @Test
+    fun folding_twice_keeps_one_toggle() {
+        val text = "Reply.\n\nOn Tue, Oct 6, 2026 at 9:00 AM Someone <a@example.com> wrote:\n> earlier"
+        val twice = prepare(prepare_plain(text))
+
+        assertEquals(1, twice.split("aster-quote-toggle").size - 1)
+        assertTrue(visible_text(twice).contains("Reply."))
     }
 }

@@ -80,11 +80,11 @@ fun strip_body_html(html: String): String {
 }
 
 private val HTML_TAG_PATTERN = Regex(
-    "<\\s*(?:/?)(?:html|body|div|p|br|span|a|blockquote|table|tbody|tr|td|th|ul|ol|li|h[1-6]|img|b|i|u|em|strong|pre|code|font|hr)\\b[^>]*>",
+    "<\\s*(?:/?)(?:html|body|div|p|br|span|a|blockquote|table|tbody|tr|td|th|ul|ol|li|h[1-6]|img|b|i|u|em|strong|pre|code|font|hr)(?=[\\s/>])[^>]*>",
     RegexOption.IGNORE_CASE,
 )
 
-private val HTML_DOCUMENT_PATTERN = Regex("<\\s*(?:html|body)\\b[^>]*>", RegexOption.IGNORE_CASE)
+private val HTML_DOCUMENT_PATTERN = Regex("<\\s*(?:html|body)(?=[\\s/>])[^>]*>", RegexOption.IGNORE_CASE)
 
 private val HTML_CLOSING_PATTERN = Regex(
     "</\\s*(?:html|body|div|p|span|a|blockquote|table|tbody|tr|td|th|ul|ol|li|h[1-6]|b|i|u|em|strong|pre|code|font)\\s*>",
