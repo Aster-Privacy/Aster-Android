@@ -2836,7 +2836,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         settings_vm.refresh_recovery_methods()
     }
 
-    androidx.compose.runtime.LaunchedEffect(recovery_prompt_due) {
+    androidx.compose.runtime.LaunchedEffect(recovery_prompt_due, accounts_state.current_account_id) {
         if (recovery_prompt_due) settings_vm.refresh_recovery_email_presence()
     }
 
@@ -2858,7 +2858,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         !first_run_setup_pending &&
         !recovery_prompt_dismissed &&
         now_ms >= recovery_snooze_until &&
-        (needs_codes || codes_running_low || !settings_state.recovery_email_set)
+        (
+            needs_codes ||
+                codes_running_low ||
+                (settings_state.recovery_email_known && !settings_state.recovery_email_set)
+            )
 
     val recovery_prompt_wants_codes = needs_codes || codes_running_low
 

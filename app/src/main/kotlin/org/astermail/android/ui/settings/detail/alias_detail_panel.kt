@@ -87,6 +87,7 @@ internal fun alias_detail_panel(
     rule_label: AliasRuleLabelNote? = null,
     on_view_sent: (() -> Unit)? = null,
     avatars_locked: Boolean = false,
+    contacts_locked: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     Column(
@@ -134,7 +135,7 @@ internal fun alias_detail_panel(
             panel_card { alias_sender_pinning_section(alias.id, detail, vm) }
             panel_card { alias_rules_section(alias.id, detail, vm) }
             panel_card { alias_blocked_log_section(detail) }
-            panel_card { alias_contacts_section(alias.id, detail, vm) }
+            panel_card { alias_contacts_section(alias.id, detail, vm, contacts_locked) }
         }
     }
 }
@@ -341,6 +342,7 @@ private fun alias_details_section(
             value = alias.encrypted_display_name.orEmpty(),
             test_tag = "alias_field_display_name",
             on_save = { vm.update_alias_display_name(alias.id, it) },
+            locked = avatars_locked,
         )
         alias_inline_field(
             label = stringResource(R.string.alias_note_title),
