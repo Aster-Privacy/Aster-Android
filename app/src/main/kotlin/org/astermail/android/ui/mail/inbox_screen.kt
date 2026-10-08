@@ -909,6 +909,24 @@ fun InboxScreen(
     } else {
         null
     }
+    val other_category_labels = if (categories_enabled) {
+        org.astermail.android.mail.category_entries(
+            active_tabs,
+            org.astermail.android.mail.sanitize_custom_categories(
+                settings_state.preferences?.custom_categories.orEmpty(),
+            ),
+        ).associate { it.id to it.label }
+    } else {
+        emptyMap()
+    }
+    val other_category_mail = remember(categories_enabled, inbox_state.items, active_category, active_tabs, other_category_labels) {
+        if (!categories_enabled || inbox_state.current_folder != "inbox") {
+            emptyList()
+        } else {
+            org.astermail.android.mail.other_category_mail(inbox_state.items, active_category, active_tabs)
+                .mapNotNull { summary -> other_category_labels[summary.id]?.let { summary to it } }
+        }
+    }
     var active_filter by rememberSaveable { mutableStateOf(inbox_filter_all) }
     val filter_active = active_filter != inbox_filter_all
     val tools_visible = show_inbox_tools()
@@ -2000,6 +2018,8 @@ fun InboxScreen(
                     ) {
                         empty_category_state(
                             category_label = active_category_label,
+                            other_categories = if (active_filter == inbox_filter_all) other_category_mail else emptyList(),
+                            on_select_category = on_select_category,
                             on_load_more = if (inbox_state.has_more) {
                                 { mail_vm.load_more() }
                             } else {
@@ -4255,6 +4275,8 @@ private fun folder_retention_banner(days: Int, trash: Boolean) {
 @Composable
 private fun empty_category_state(
     category_label: String? = null,
+    other_categories: List<Pair<org.astermail.android.mail.CategoryMailSummary, String>> = emptyList(),
+    on_select_category: (String) -> Unit = {},
     on_load_more: (() -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
@@ -4277,24 +4299,43 @@ private fun empty_category_state(
                 modifier = Modifier.size(48.dp),
             )
             Text(
-                text = if (category_label != null) {
-                    stringResource(R.string.nothing_in_category, category_label)
-                } else {
-                    stringResource(R.string.nothing_in_this_tab)
+                text = when {
+                    other_categories.isNotEmpty() -> stringResource(R.string.category_mail_elsewhere_title)
+                    category_label != null -> stringResource(R.string.nothing_in_category, category_label)
+                    else -> stringResource(R.string.nothing_in_this_tab)
                 },
                 style = MaterialTheme.typography.titleMedium,
                 color = colors.text_primary,
                 fontWeight = FontWeight.SemiBold,
             )
-            Text(
-                text = if (category_label != null) {
-                    stringResource(R.string.other_categories_have_mail)
-                } else {
-                    stringResource(R.string.other_tabs_have_mail)
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.text_muted,
-            )
+            if (other_categories.isEmpty()) {
+                Text(
+                    text = if (category_label != null) {
+                        stringResource(R.string.other_categories_have_mail)
+                    } else {
+                        stringResource(R.string.other_tabs_have_mail)
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.text_muted,
+                )
+            }
+            other_categories.forEach { (summary, label) ->
+                TextButton(
+                    onClick = { on_select_category(summary.id) },
+                    modifier = Modifier.testTag("category_jump_${summary.id}"),
+                ) {
+                    Text(
+                        text = if (summary.unread > 0) {
+                            pluralStringResource(R.plurals.category_unread_jump, summary.unread, summary.unread, label)
+                        } else {
+                            stringResource(R.string.open_category_named, label)
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.accent_blue,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+            }
             if (on_load_more != null) {
                 TextButton(
                     onClick = on_load_more,
