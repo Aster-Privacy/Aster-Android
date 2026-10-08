@@ -59,6 +59,14 @@ private val NAMED_COLOR_LUMINANCE: Map<String, Double> = mapOf(
     "olive" to 0.1637, "green" to 0.1544, "slategray" to 0.2079, "slategrey" to 0.2079,
 )
 
+private val LIGHT_NAMED_COLOR_LUMINANCE: Map<String, Double> = mapOf(
+    "white" to 1.0, "snow" to 0.9647, "ghostwhite" to 0.9486, "whitesmoke" to 0.9131,
+    "ivory" to 0.9922, "floralwhite" to 0.9636, "seashell" to 0.9466, "oldlace" to 0.9306,
+    "linen" to 0.9113, "cornsilk" to 0.9471, "beige" to 0.9157, "lightyellow" to 0.9867,
+    "honeydew" to 0.9643, "mintcream" to 0.9773, "azure" to 0.9775, "aliceblue" to 0.9289,
+    "lavenderblush" to 0.9297, "gainsboro" to 0.7157, "lightgray" to 0.6518, "lightgrey" to 0.6518,
+)
+
 private val COLOR_DECLARATION =
     Regex("(?<![-a-z])color\\s*:\\s*([^;}\"'<]+)", RegexOption.IGNORE_CASE)
 private val STYLE_RULE_BODY = Regex("\\{([^{}]*)\\}")
@@ -76,7 +84,11 @@ private val BACKGROUND_SOURCE = Regex(
     "background(?:-color)?\\s*:\\s*([^;}\"'<]+)|bgcolor\\s*=\\s*[\"']?([^\"'\\s>]+)",
     RegexOption.IGNORE_CASE,
 )
-private val COLOR_TOKEN = Regex("#[0-9a-f]{3,8}\\b|(?:rgb|hsl)a?\\([^)]*\\)|\\bwhite\\b", RegexOption.IGNORE_CASE)
+private val COLOR_TOKEN = Regex(
+    "#[0-9a-f]{3,8}\\b|(?:rgb|hsl)a?\\([^)]*\\)|(?<![-\\w])(?:" +
+        LIGHT_NAMED_COLOR_LUMINANCE.keys.joinToString("|") + ")(?![-\\w])",
+    RegexOption.IGNORE_CASE,
+)
 
 private fun channel(value: Double): Double {
     val clamped = value.coerceIn(0.0, 1.0)
@@ -119,6 +131,7 @@ internal fun color_luminance(raw: String): Double? {
     val value = raw.trim().lowercase()
     if (value.isEmpty()) return null
     NAMED_COLOR_LUMINANCE[value]?.let { return it }
+    LIGHT_NAMED_COLOR_LUMINANCE[value]?.let { return it }
     if (value.startsWith("#")) {
         val hex = value.drop(1)
         val expanded = when (hex.length) {
@@ -299,7 +312,7 @@ internal fun lighten_dark_email_text(body: String): String = try {
     for (element in doc.select("[style]")) {
         if (element.hasAttr(KEEP_BACKGROUND_ATTRIBUTE) || element.hasAttr(BACKGROUND_IMAGE_ATTRIBUTE)) continue
         val style = element.attr("style")
-        val lightened = lighten_color_declarations(style)
+        val lightened = clear_light_backgrounds(lighten_color_declarations(style))
         if (lightened != style) {
             element.attr("style", lightened)
             changed = true
@@ -316,6 +329,8 @@ internal fun lighten_dark_email_text(body: String): String = try {
 } catch (_: Throwable) {
     body
 }
+
+internal const val DARK_PAGE_SELECTOR = "html:root,html:root>body"
 
 private const val KEEPS_BACKGROUND =
     ":not([style*=\"url(\" i]):not([background]):not([$BACKGROUND_IMAGE_ATTRIBUTE])" +
@@ -338,7 +353,7 @@ internal fun forced_dark_mode_css(
     val readable_links = "$readable_link,$readable_link *"
     return """
 html{color-scheme:dark!important}
-html,body{background-color:transparent!important;color:$FORCED_DARK_INK!important}
+$DARK_PAGE_SELECTOR{background:transparent!important;color:$FORCED_DARK_INK!important}
 $neutralized{background-color:transparent!important;background-image:none!important}
 $readable_links{color:$link_hex!important}
 a[style*="background" i] *,[bgcolor] > a *{color:inherit!important}

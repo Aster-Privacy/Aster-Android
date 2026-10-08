@@ -185,8 +185,18 @@ class MailViewModel @Inject constructor(
     fun set_custom_categories(
         rules: List<org.astermail.android.api.preferences.CustomCategoryRule>,
     ) {
-        if (!repository.set_custom_categories(rules)) return
-        on_list_layout_changed { refresh() }
+        val changed = repository.set_custom_categories(rules)
+        val signature = repository.custom_categories_fingerprint.toString(16)
+        if (!changed && folder_cache_store.categories_signature() == signature) return
+        folder_cache_store.set_categories_signature(signature)
+        search_index_manager.expire_inbox_sync()
+        folder_cache.clear()
+        folder_cache_time.clear()
+        clear_folder_cache_store()
+        folder_cache_store.set_layout_signature(list_layout_signature())
+        replace_on_revalidate = true
+        refresh_job?.cancel()
+        refresh()
     }
 
     fun set_conversation_grouping(enabled: Boolean) {
@@ -670,6 +680,7 @@ class MailViewModel @Inject constructor(
         }
         clear_folder_cache_store()
         folder_cache_store.set_layout_signature(signature)
+        replace_on_revalidate = true
         user_initiated_reload()
     }
 

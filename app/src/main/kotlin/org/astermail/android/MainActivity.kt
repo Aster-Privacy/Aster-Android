@@ -2011,7 +2011,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     val theme_vm_inbox: ThemeViewModel = hiltViewModel()
 
     androidx.compose.runtime.LaunchedEffect(prefs?.custom_categories) {
-        mail_vm.set_custom_categories(prefs?.custom_categories ?: emptyList())
+        if (prefs != null) mail_vm.set_custom_categories(prefs.custom_categories.orEmpty())
     }
 
     androidx.compose.runtime.LaunchedEffect(prefs?.conversation_grouping) {

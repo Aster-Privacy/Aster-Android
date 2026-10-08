@@ -89,7 +89,7 @@ class EmailDarkModeTest {
         assertTrue(css.contains("table:not([style*=\"url(\" i])"))
         assertTrue(css.contains(":not([$BACKGROUND_IMAGE_ATTRIBUTE])"))
         assertTrue(css, css.contains("color:#8ab4f8!important"))
-        assertTrue(css.contains("html,body{background-color:transparent!important"))
+        assertTrue(css.contains("$DARK_PAGE_SELECTOR{background:transparent!important"))
     }
 
     private val newsletter =
@@ -120,7 +120,7 @@ class EmailDarkModeTest {
         )
         assertTrue(
             "forced dark must keep light body text: " + html,
-            html.contains("html,body{background-color:transparent!important;color:" + FORCED_DARK_INK),
+            html.contains("$DARK_PAGE_SELECTOR{background:transparent!important;color:" + FORCED_DARK_INK),
         )
     }
 
@@ -208,7 +208,7 @@ class EmailDarkModeTest {
         val dark = render(newsletter, forced = forces_dark_emails(true, theme_dark = true), theme_dark = true)
         assertFalse(light.contains("data-dark-force"))
         assertTrue(dark.contains("data-dark-force=\"1\""))
-        assertTrue(dark.contains("html,body{background-color:transparent!important;color:" + FORCED_DARK_INK))
+        assertTrue(dark.contains("$DARK_PAGE_SELECTOR{background:transparent!important;color:" + FORCED_DARK_INK))
     }
 
     private fun html_start_tag(html: String): String =

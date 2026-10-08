@@ -304,6 +304,10 @@ class SearchIndexManager @Inject constructor(
         runCatching { pause_prefs.edit().putLong(KEY_LAST_INBOX_SYNC, System.currentTimeMillis()).apply() }
     }
 
+    fun expire_inbox_sync() {
+        runCatching { pause_prefs.edit().remove(KEY_LAST_INBOX_SYNC).apply() }
+    }
+
     private fun record_window_absences(ids: List<String>): List<String> {
         val confirmed = mutableListOf<String>()
         for (id in ids) {

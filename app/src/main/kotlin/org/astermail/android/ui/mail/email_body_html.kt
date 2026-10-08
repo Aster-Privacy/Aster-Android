@@ -149,7 +149,7 @@ internal fun build_email_html(
     val dark_css = when {
         simple_dark -> """
 html{color-scheme:dark}
-html,body{background-color:transparent!important;color:#e8e8e8!important}
+$DARK_PAGE_SELECTOR{background:transparent!important;color:#e8e8e8!important}
 """
         white_page -> """
 html,body{background-color:#ffffff!important}
