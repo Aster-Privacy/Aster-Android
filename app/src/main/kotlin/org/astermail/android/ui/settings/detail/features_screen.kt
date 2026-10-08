@@ -173,7 +173,7 @@ private fun build_features(): List<feature_row> = listOf(
     row(R.string.settings_feat_android_app, yes_cell, yes_cell, yes_cell, yes_cell),
     row(R.string.settings_feat_desktop_app, yes_cell, yes_cell, yes_cell, yes_cell),
     row(R.string.settings_feat_browser_ext, yes_cell, yes_cell, yes_cell, yes_cell),
-    row(R.string.settings_feat_imap_smtp, no_cell, yes_cell, yes_cell, yes_cell),
+    row(R.string.settings_feat_imap_smtp, yes_cell, yes_cell, yes_cell, yes_cell),
 )
 
 @Composable
