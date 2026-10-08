@@ -2382,7 +2382,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         nav_controller.navigate(routes.search_for("to:$name"))
                     }
                 },
-                inbox_unread = stats?.unread ?: 0,
+                inbox_unread = if (categories_enabled && category_unread.isNotEmpty()) {
+                    category_unread["primary"] ?: 0
+                } else {
+                    stats?.unread ?: 0
+                },
                 drafts_count = stats?.drafts ?: 0,
                 scheduled_count = stats?.scheduled ?: 0,
                 snoozed_count = stats?.snoozed ?: 0,
