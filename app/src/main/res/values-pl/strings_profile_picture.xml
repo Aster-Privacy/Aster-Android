@@ -18,4 +18,5 @@
     <string name="profile_picture_cat_mountains">Góry</string>
     <string name="profile_picture_cat_ocean">Ocean</string>
     <string name="profile_picture_cat_desert">Pustynia</string>
+    <string name="profile_picture_credit">Zdjęcie: %1$s. Przycięte i przeskalowane.</string>
 </resources>

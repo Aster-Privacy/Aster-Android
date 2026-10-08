@@ -18,4 +18,5 @@
     <string name="profile_picture_cat_mountains">Montañas</string>
     <string name="profile_picture_cat_ocean">Océano</string>
     <string name="profile_picture_cat_desert">Desierto</string>
+    <string name="profile_picture_credit">Foto: %1$s. Recortada y redimensionada.</string>
 </resources>

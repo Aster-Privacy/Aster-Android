@@ -30,6 +30,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import okhttp3.CookieJar
@@ -58,10 +59,16 @@ private const val gallery_timeout_seconds = 15L
 private const val gallery_max_image_bytes = 5L * 1024 * 1024
 private val gallery_slug_pattern = Regex("^[a-z0-9][a-z0-9_-]{0,80}$")
 private val gallery_json = Json { ignoreUnknownKeys = true }
+private const val gallery_max_credit_length = 200
+private val gallery_credit_control_characters =
+    Regex("""[\u0000-\u001f\u007f-\u009f\u200e\u200f\u202a-\u202e\u2066-\u2069]""")
+private val gallery_credit_whitespace =
+    Regex("""[\s\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+""")
 
 data class GalleryItem(
     val slug: String,
     val category: String,
+    val credit: String? = null,
 )
 
 class GalleryUnavailableException : IOException("gallery unavailable in lockdown")
@@ -70,6 +77,18 @@ fun is_gallery_slug(slug: String): Boolean = gallery_slug_pattern.matches(slug)
 
 fun gallery_thumb_url(slug: String, base_url: String = profile_picture_gallery_base_url): String =
     "$base_url/thumb/$slug.webp"
+
+fun parse_gallery_credit(value: JsonElement?): String? {
+    val primitive = value as? JsonPrimitive ?: return null
+    if (!primitive.isString) return null
+    val credit = primitive.content
+        .replace(gallery_credit_control_characters, " ")
+        .replace(gallery_credit_whitespace, " ")
+        .trim()
+        .take(gallery_max_credit_length)
+        .trim()
+    return credit.ifEmpty { null }
+}
 
 fun parse_gallery_manifest(payload: String): List<GalleryItem> {
     val root = runCatching { gallery_json.parseToJsonElement(payload) }.getOrNull() as? JsonObject
@@ -84,7 +103,7 @@ fun parse_gallery_manifest(payload: String): List<GalleryItem> {
         if (!is_gallery_slug(slug)) continue
         if (category !in profile_picture_gallery_categories || slug in seen) continue
         seen.add(slug)
-        items.add(GalleryItem(slug, category))
+        items.add(GalleryItem(slug, category, parse_gallery_credit(obj["credit"])))
     }
     return items
 }

@@ -18,4 +18,5 @@
     <string name="profile_picture_cat_mountains">Горы</string>
     <string name="profile_picture_cat_ocean">Океан</string>
     <string name="profile_picture_cat_desert">Пустыня</string>
+    <string name="profile_picture_credit">Фото: %1$s. Обрезано и масштабировано.</string>
 </resources>
