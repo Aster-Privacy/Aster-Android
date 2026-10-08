@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_picture_title">Изменить фото профиля</string>
+    <string name="profile_picture_gallery">Выбрать из галереи</string>
+    <string name="profile_picture_gallery_hint">Выберите один из фонов Aster</string>
+    <string name="profile_picture_upload">Загрузить с устройства</string>
+    <string name="profile_picture_upload_hint">JPEG, PNG или WebP, до 5 МБ</string>
+    <string name="profile_picture_gallery_failed">Не удалось загрузить галерею. Проверьте подключение и повторите попытку.</string>
+    <string name="profile_picture_cat_all">Все</string>
+    <string name="profile_picture_cat_space">Космос</string>
+    <string name="profile_picture_cat_night_sky">Ночное небо</string>
+    <string name="profile_picture_cat_water">Вода</string>
+    <string name="profile_picture_cat_planets">Планеты</string>
+    <string name="profile_picture_cat_landscapes">Пейзажи</string>
+    <string name="profile_picture_cat_forest">Лес</string>
+    <string name="profile_picture_cat_cities">Города</string>
+    <string name="profile_picture_cat_aurora">Северное сияние</string>
+    <string name="profile_picture_cat_mountains">Горы</string>
+    <string name="profile_picture_cat_ocean">Океан</string>
+    <string name="profile_picture_cat_desert">Пустыня</string>
+</resources>

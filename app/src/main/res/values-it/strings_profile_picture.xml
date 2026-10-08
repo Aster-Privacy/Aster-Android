@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_picture_title">Cambia immagine del profilo</string>
+    <string name="profile_picture_gallery">Scegli dalla galleria</string>
+    <string name="profile_picture_gallery_hint">Scegli uno degli sfondi di Aster</string>
+    <string name="profile_picture_upload">Carica dal dispositivo</string>
+    <string name="profile_picture_upload_hint">JPEG, PNG o WebP, fino a 5 MB</string>
+    <string name="profile_picture_gallery_failed">La galleria non si è caricata. Controlla la connessione e riprova.</string>
+    <string name="profile_picture_cat_all">Tutto</string>
+    <string name="profile_picture_cat_space">Spazio</string>
+    <string name="profile_picture_cat_night_sky">Cielo notturno</string>
+    <string name="profile_picture_cat_water">Acqua</string>
+    <string name="profile_picture_cat_planets">Pianeti</string>
+    <string name="profile_picture_cat_landscapes">Paesaggi</string>
+    <string name="profile_picture_cat_forest">Foresta</string>
+    <string name="profile_picture_cat_cities">Città</string>
+    <string name="profile_picture_cat_aurora">Aurora</string>
+    <string name="profile_picture_cat_mountains">Montagne</string>
+    <string name="profile_picture_cat_ocean">Oceano</string>
+    <string name="profile_picture_cat_desert">Deserto</string>
+</resources>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_picture_title">プロフィール写真を変更</string>
+    <string name="profile_picture_gallery">ギャラリーから選択</string>
+    <string name="profile_picture_gallery_hint">Asterの背景から1つ選びます</string>
+    <string name="profile_picture_upload">デバイスからアップロード</string>
+    <string name="profile_picture_upload_hint">JPEG、PNG、WebP、5 MBまで</string>
+    <string name="profile_picture_gallery_failed">ギャラリーを読み込めませんでした。接続を確認して、もう一度お試しください。</string>
+    <string name="profile_picture_cat_all">すべて</string>
+    <string name="profile_picture_cat_space">宇宙</string>
+    <string name="profile_picture_cat_night_sky">夜空</string>
+    <string name="profile_picture_cat_water">水</string>
+    <string name="profile_picture_cat_planets">惑星</string>
+    <string name="profile_picture_cat_landscapes">風景</string>
+    <string name="profile_picture_cat_forest">森</string>
+    <string name="profile_picture_cat_cities">都市</string>
+    <string name="profile_picture_cat_aurora">オーロラ</string>
+    <string name="profile_picture_cat_mountains">山</string>
+    <string name="profile_picture_cat_ocean">海</string>
+    <string name="profile_picture_cat_desert">砂漠</string>
+</resources>

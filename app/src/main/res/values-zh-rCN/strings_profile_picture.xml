@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_picture_title">更改个人资料照片</string>
+    <string name="profile_picture_gallery">从图库中选择</string>
+    <string name="profile_picture_gallery_hint">选择一张 Aster 背景</string>
+    <string name="profile_picture_upload">从设备上传</string>
+    <string name="profile_picture_upload_hint">JPEG、PNG 或 WebP，最大 5 MB</string>
+    <string name="profile_picture_gallery_failed">图库未能加载。请检查网络连接，然后重试。</string>
+    <string name="profile_picture_cat_all">全部</string>
+    <string name="profile_picture_cat_space">太空</string>
+    <string name="profile_picture_cat_night_sky">夜空</string>
+    <string name="profile_picture_cat_water">水</string>
+    <string name="profile_picture_cat_planets">行星</string>
+    <string name="profile_picture_cat_landscapes">风景</string>
+    <string name="profile_picture_cat_forest">森林</string>
+    <string name="profile_picture_cat_cities">城市</string>
+    <string name="profile_picture_cat_aurora">极光</string>
+    <string name="profile_picture_cat_mountains">山脉</string>
+    <string name="profile_picture_cat_ocean">海洋</string>
+    <string name="profile_picture_cat_desert">沙漠</string>
+</resources>

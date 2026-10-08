@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_picture_title">प्रोफ़ाइल फ़ोटो बदलें</string>
+    <string name="profile_picture_gallery">गैलरी से चुनें</string>
+    <string name="profile_picture_gallery_hint">Aster की किसी एक पृष्ठभूमि को चुनें</string>
+    <string name="profile_picture_upload">डिवाइस से अपलोड करें</string>
+    <string name="profile_picture_upload_hint">JPEG, PNG या WebP, 5 MB तक</string>
+    <string name="profile_picture_gallery_failed">गैलरी लोड नहीं हुई। अपना कनेक्शन जाँचें और फिर से कोशिश करें।</string>
+    <string name="profile_picture_cat_all">सभी</string>
+    <string name="profile_picture_cat_space">अंतरिक्ष</string>
+    <string name="profile_picture_cat_night_sky">रात का आकाश</string>
+    <string name="profile_picture_cat_water">पानी</string>
+    <string name="profile_picture_cat_planets">ग्रह</string>
+    <string name="profile_picture_cat_landscapes">परिदृश्य</string>
+    <string name="profile_picture_cat_forest">जंगल</string>
+    <string name="profile_picture_cat_cities">शहर</string>
+    <string name="profile_picture_cat_aurora">ऑरोरा</string>
+    <string name="profile_picture_cat_mountains">पहाड़</string>
+    <string name="profile_picture_cat_ocean">महासागर</string>
+    <string name="profile_picture_cat_desert">रेगिस्तान</string>
+</resources>

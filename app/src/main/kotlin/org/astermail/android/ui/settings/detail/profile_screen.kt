@@ -58,6 +58,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,6 +72,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
@@ -158,7 +162,10 @@ fun ProfileScreen(
     LaunchedEffect(Unit) { address_vm.load_eligibility() }
 
     var photo_uploading by remember { mutableStateOf(false) }
+    var photo_removing by remember { mutableStateOf(false) }
     var photo_failed by remember { mutableStateOf(false) }
+    var show_photo_sheet by rememberSaveable { mutableStateOf(false) }
+    val photo_busy = photo_uploading || photo_removing
 
     val image_picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
         uri ?: return@rememberLauncherForActivityResult
@@ -170,6 +177,48 @@ fun ProfileScreen(
             photo_uploading = false
             photo_failed = !success
         }
+    }
+
+    if (show_photo_sheet) {
+        profile_picture_sheet(
+            account_store = vm.account_store,
+            picture = user?.profile_picture,
+            has_saved_picture = !user?.profile_picture.isNullOrBlank(),
+            uploading = photo_uploading,
+            removing = photo_removing,
+            failed = photo_failed,
+            on_dismiss = { show_photo_sheet = false },
+            on_upload = {
+                photo_failed = false
+                image_picker.launch(
+                    androidx.activity.result.PickVisualMediaRequest(
+                        ActivityResultContracts.PickVisualMedia.ImageOnly,
+                    ),
+                )
+            },
+            on_remove = {
+                if (!photo_busy) {
+                    scope.launch {
+                        photo_removing = true
+                        photo_failed = false
+                        val success = vm.update_profile_picture(null)
+                        photo_removing = false
+                        photo_failed = !success
+                    }
+                }
+            },
+            on_choose_image = { bytes ->
+                scope.async {
+                    photo_uploading = true
+                    photo_failed = false
+                    val data_uri = withContext(Dispatchers.Default) { image_bytes_as_data_uri(bytes) }
+                    val success = if (data_uri != null) vm.update_profile_picture(data_uri) else false
+                    photo_uploading = false
+                    photo_failed = !success
+                    success
+                }.await()
+            },
+        )
     }
 
     LaunchedEffect(state.save_status) {
@@ -219,40 +268,40 @@ fun ProfileScreen(
                 .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(contentAlignment = Alignment.Center) {
+            val change_photo_label = stringResource(R.string.change_photo)
+            plan_ring(size = 112.dp, enabled = remember_has_paid_plan()) {
                 Box(
                     modifier = Modifier
+                        .size(112.dp)
                         .clip(CircleShape)
-                        .clickable(enabled = !photo_uploading) {
+                        .clickable(
+                            role = Role.Button,
+                            onClickLabel = change_photo_label,
+                        ) {
                             photo_failed = false
-                            image_picker.launch(
-                                androidx.activity.result.PickVisualMediaRequest(
-                                    ActivityResultContracts.PickVisualMedia.ImageOnly,
-                                ),
-                            )
-                        },
+                            show_photo_sheet = true
+                        }
+                        .testTag("profile_avatar"),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    plan_ring(size = 112.dp, enabled = remember_has_paid_plan()) {
-                        current_user_avatar(
-                            account_store = vm.account_store,
-                            size = 112.dp,
-                            profile_picture_url = user?.profile_picture,
-                        )
-                    }
-                }
-                if (photo_uploading) {
-                    Box(
-                        modifier = Modifier
-                            .size(112.dp)
-                            .clip(CircleShape)
-                            .background(colors.bg_primary.copy(alpha = 0.60f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp,
-                            color = colors.accent_blue,
-                        )
+                    current_user_avatar(
+                        account_store = vm.account_store,
+                        size = 112.dp,
+                        profile_picture_url = user?.profile_picture,
+                    )
+                    if (photo_busy) {
+                        Box(
+                            modifier = Modifier
+                                .size(112.dp)
+                                .background(colors.bg_primary.copy(alpha = 0.60f)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp,
+                                color = colors.accent_blue,
+                            )
+                        }
                     }
                 }
             }
@@ -739,6 +788,10 @@ private fun decode_avatar_bitmap(context: Context, uri: Uri): Bitmap? {
         }
     }
     val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return null
+    return decode_avatar_bytes(bytes)
+}
+
+private fun decode_avatar_bytes(bytes: ByteArray): Bitmap? {
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
     BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
     if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
@@ -760,21 +813,34 @@ private fun decode_avatar_bitmap(context: Context, uri: Uri): Bitmap? {
     return scaled
 }
 
+private fun encode_avatar_data_uri(bitmap: Bitmap): String? {
+    val format = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        Bitmap.CompressFormat.WEBP_LOSSY
+    } else {
+        @Suppress("DEPRECATION")
+        Bitmap.CompressFormat.WEBP
+    }
+    val out = ByteArrayOutputStream()
+    val compressed = bitmap.compress(format, 80, out)
+    bitmap.recycle()
+    if (!compressed) return null
+    val b64 = android.util.Base64.encodeToString(out.toByteArray(), android.util.Base64.NO_WRAP)
+    return "data:image/webp;base64,$b64"
+}
+
 internal fun read_image_as_data_uri(context: Context, uri: Uri): String? {
     return try {
         val bitmap = decode_avatar_bitmap(context, uri) ?: return null
-        val format = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Bitmap.CompressFormat.WEBP_LOSSY
-        } else {
-            @Suppress("DEPRECATION")
-            Bitmap.CompressFormat.WEBP
-        }
-        val out = ByteArrayOutputStream()
-        val compressed = bitmap.compress(format, 80, out)
-        bitmap.recycle()
-        if (!compressed) return null
-        val b64 = android.util.Base64.encodeToString(out.toByteArray(), android.util.Base64.NO_WRAP)
-        "data:image/webp;base64,$b64"
+        encode_avatar_data_uri(bitmap)
+    } catch (_: Throwable) {
+        null
+    }
+}
+
+internal fun image_bytes_as_data_uri(bytes: ByteArray): String? {
+    return try {
+        val bitmap = decode_avatar_bytes(bytes) ?: return null
+        encode_avatar_data_uri(bitmap)
     } catch (_: Throwable) {
         null
     }

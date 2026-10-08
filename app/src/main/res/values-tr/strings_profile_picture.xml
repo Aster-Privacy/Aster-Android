@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_picture_title">Profil resmini değiştir</string>
+    <string name="profile_picture_gallery">Galeriden seç</string>
+    <string name="profile_picture_gallery_hint">Aster arka planlarından birini seçin</string>
+    <string name="profile_picture_upload">Cihazdan yükle</string>
+    <string name="profile_picture_upload_hint">JPEG, PNG veya WebP, en fazla 5 MB</string>
+    <string name="profile_picture_gallery_failed">Galeri yüklenemedi. Bağlantınızı kontrol edip yeniden deneyin.</string>
+    <string name="profile_picture_cat_all">Tümü</string>
+    <string name="profile_picture_cat_space">Uzay</string>
+    <string name="profile_picture_cat_night_sky">Gece gökyüzü</string>
+    <string name="profile_picture_cat_water">Su</string>
+    <string name="profile_picture_cat_planets">Gezegenler</string>
+    <string name="profile_picture_cat_landscapes">Manzaralar</string>
+    <string name="profile_picture_cat_forest">Orman</string>
+    <string name="profile_picture_cat_cities">Şehirler</string>
+    <string name="profile_picture_cat_aurora">Kutup ışıkları</string>
+    <string name="profile_picture_cat_mountains">Dağlar</string>
+    <string name="profile_picture_cat_ocean">Okyanus</string>
+    <string name="profile_picture_cat_desert">Çöl</string>
+</resources>
