@@ -147,6 +147,20 @@ interface TokenProvider {
     suspend fun clear()
 }
 
+private val sign_in_path_suffixes = listOf(
+    "/auth/login",
+    "/auth/register",
+    "/auth/salt",
+    "/auth/refresh",
+    "/auth/totp/verify",
+    "/auth/totp/backup-code",
+    "/auth/hardware-keys/assert/initiate",
+    "/auth/hardware-keys/assert/verify",
+)
+
+fun is_sign_in_path(path: String): Boolean =
+    path.contains("/recovery/") || sign_in_path_suffixes.any { path.endsWith(it) }
+
 fun build_user_agent(app_version: String = BuildConfig.VERSION_NAME): String {
     val android_version = Build.VERSION.RELEASE ?: "0"
     return "AsterMail-Android/$app_version (Android $android_version)"
@@ -271,14 +285,8 @@ class ApiClient(
                     token_provider.refresh(failed)
                 }
                 sendWithoutRequest { request ->
-                    val path = request.url.buildString()
-                    val is_public = path.endsWith("/auth/login") ||
-                        path.endsWith("/auth/register") ||
-                        path.endsWith("/auth/salt") ||
-                        path.endsWith("/auth/refresh") ||
-                        path.contains("/recovery/")
                     val same_host = api_host == null || request.url.host == api_host
-                    !is_public && same_host
+                    !is_sign_in_path(request.url.build().encodedPath) && same_host
                 }
             }
         }
@@ -451,6 +459,7 @@ class ApiClient(
     }
 
     private suspend fun reattach_fresh_bearer(request: HttpRequestBuilder) {
+        if (is_sign_in_path(request.url.build().encodedPath)) return
         runCatching {
             val tokens = token_provider.load() ?: return
             request.headers.remove(HttpHeaders.Authorization)
