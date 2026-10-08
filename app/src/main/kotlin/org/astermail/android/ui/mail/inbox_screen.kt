@@ -162,6 +162,7 @@ import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.mail.DEFAULT_SWIPE_LEFT_ACTION
 import org.astermail.android.mail.DEFAULT_SWIPE_RIGHT_ACTION
 import org.astermail.android.mail.LiveSyncEvent
+import org.astermail.android.mail.ListScrollAnchor
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.mail.all_mail_folder
 import org.astermail.android.mail.can_move_to_inbox
@@ -279,6 +280,10 @@ private const val LOCAL_READ_MUTATION_TTL_MS = 15_000L
 
 private const val EMPTY_STATE_SETTLE_MS = 700L
 private const val CATEGORY_DRAIN_SKELETON_MAX_MS = 2500L
+
+private const val SCROLL_RESTORE_WINDOW_MS = 2_500L
+
+private class InboxScrollRestore(val anchor: ListScrollAnchor?)
 
 private const val REFRESH_SCROLL_SETTLE_MS = 1500L
 
@@ -988,16 +993,28 @@ fun InboxScreen(
 
     var last_scroll_reset_key by rememberSaveable { mutableStateOf("") }
     var pending_scroll_reset by remember { mutableStateOf(false) }
+    val scroll_scope_key = "$sort_mode|$current_folder|${if (categories_enabled) active_category else ""}"
+    val scroll_restore = remember {
+        val fresh_top_request = scroll_top_token > 0 && scroll_top_token != mail_vm.consumed_scroll_top_token
+        if (fresh_top_request) {
+            mail_vm.consumed_scroll_top_token = scroll_top_token
+            mail_vm.list_scroll_anchors.clear()
+        }
+        val same_scope = mail_vm.last_list_scope_key == scroll_scope_key
+        if (!same_scope) mail_vm.list_scroll_anchors.clear()
+        InboxScrollRestore(if (fresh_top_request || !same_scope) null else mail_vm.list_scroll_anchors[scroll_scope_key])
+    }
+    var scroll_restore_active by remember { mutableStateOf(scroll_restore.anchor != null) }
     LaunchedEffect(sort_mode, current_folder, active_category, categories_enabled) {
-        val reset_key = "$sort_mode|$current_folder|${if (categories_enabled) active_category else ""}"
-        if (last_scroll_reset_key.isNotEmpty() && last_scroll_reset_key != reset_key) {
+        val reset_key = scroll_scope_key
+        if (last_scroll_reset_key.isNotEmpty() && last_scroll_reset_key != reset_key && !scroll_restore_active) {
             pending_scroll_reset = true
             list_state.scrollToItem(0)
         }
         last_scroll_reset_key = reset_key
     }
     LaunchedEffect(pending_scroll_reset, threads.firstOrNull()?.thread_id, threads.size) {
-        if (pending_scroll_reset && threads.isNotEmpty()) {
+        if (pending_scroll_reset && threads.isNotEmpty() && !scroll_restore_active) {
             list_state.scrollToItem(0)
             pending_scroll_reset = false
         }
@@ -1048,7 +1065,68 @@ fun InboxScreen(
         threads
     }
     val top_thread_key = visible_threads.firstOrNull()?.thread_id
+    val latest_visible_threads by rememberUpdatedState(visible_threads)
+    LaunchedEffect(list_state) {
+        val anchor = scroll_restore.anchor
+        if (anchor == null) {
+            scroll_restore_active = false
+            return@LaunchedEffect
+        }
+        val drag_watch = launch {
+            list_state.interactionSource.interactions
+                .first { it is androidx.compose.foundation.interaction.DragInteraction.Start }
+            scroll_restore_active = false
+        }
+        withTimeoutOrNull(SCROLL_RESTORE_WINDOW_MS) {
+            snapshotFlow { list_state.layoutInfo }.collect { info ->
+                if (!scroll_restore_active) return@collect
+                val first = info.visibleItemsInfo.firstOrNull() ?: return@collect
+                if (first.key == anchor.key) {
+                    if (list_state.firstVisibleItemScrollOffset != anchor.offset) {
+                        list_state.requestScrollToItem(first.index, anchor.offset)
+                    }
+                    return@collect
+                }
+                val rows = latest_visible_threads
+                val row_position = rows.indexOfFirst { it.thread_id == anchor.key }
+                if (row_position < 0) return@collect
+                val visible_row = info.visibleItemsInfo.firstOrNull { item ->
+                    val key = item.key
+                    key is String && !key.startsWith("_")
+                }
+                val leading = visible_row?.let { row ->
+                    val position = rows.indexOfFirst { it.thread_id == row.key }
+                    if (position < 0) 0 else row.index - position
+                } ?: 0
+                list_state.requestScrollToItem(leading.coerceAtLeast(0) + row_position, anchor.offset)
+            }
+        }
+        drag_watch.cancel()
+        scroll_restore_active = false
+    }
+    LaunchedEffect(list_state, scroll_scope_key) {
+        mail_vm.last_list_scope_key = scroll_scope_key
+        snapshotFlow {
+            val info = list_state.layoutInfo
+            val key = info.visibleItemsInfo.firstOrNull()?.key
+            if (info.totalItemsCount == 0) {
+                null
+            } else if (key is String && !key.startsWith("_")) {
+                ListScrollAnchor(key, list_state.firstVisibleItemScrollOffset)
+            } else {
+                ListScrollAnchor("", 0)
+            }
+        }.distinctUntilChanged().collect { anchor ->
+            if (anchor == null || scroll_restore_active) return@collect
+            if (anchor.key.isEmpty()) {
+                mail_vm.list_scroll_anchors.remove(scroll_scope_key)
+            } else {
+                mail_vm.list_scroll_anchors[scroll_scope_key] = anchor
+            }
+        }
+    }
     LaunchedEffect(top_thread_key) {
+        if (scroll_restore_active) return@LaunchedEffect
         val near_top = list_state.firstVisibleItemIndex == 0 ||
             (list_state.firstVisibleItemIndex == 1 && list_state.firstVisibleItemScrollOffset == 0)
         if (top_thread_key != null && near_top && !list_state.isScrollInProgress) {
@@ -1746,7 +1824,7 @@ fun InboxScreen(
         val previous_top = top_anchor_key[0]
         top_anchor_key[0] = top_thread_key
         if (previous_top == null || top_thread_key == null || previous_top == top_thread_key) return@SideEffect
-        if (drag_selecting || list_state.isScrollInProgress) return@SideEffect
+        if (drag_selecting || list_state.isScrollInProgress || scroll_restore_active) return@SideEffect
         val info = list_state.layoutInfo
         val anchor = info.visibleItemsInfo.firstOrNull { it.key == previous_top } ?: return@SideEffect
         if (anchor.offset < info.viewportStartOffset - anchor.size / 2) return@SideEffect
@@ -1772,7 +1850,7 @@ fun InboxScreen(
         val previous_count = last_visible_thread_count[0]
         last_visible_thread_count[0] = visible_threads.size
         if (previous_count < 0 || visible_threads.size >= previous_count) return@LaunchedEffect
-        if (drag_selecting) return@LaunchedEffect
+        if (drag_selecting || scroll_restore_active) return@LaunchedEffect
         androidx.compose.runtime.withFrameNanos { }
         if (list_state.isScrollInProgress || drag_selecting) return@LaunchedEffect
         if (list_state.firstVisibleItemIndex != 0) return@LaunchedEffect
