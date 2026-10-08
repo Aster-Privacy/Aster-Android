@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="category_mail_elsewhere_title">Je e-mail staat in andere categorieën</string>
-    <string name="open_category_named">%1$s openen</string>
-    <plurals name="category_unread_jump">
-        <item quantity="one">%1$d ongelezen e-mail in %2$s</item>
-        <item quantity="other">%1$d ongelezen e-mails in %2$s</item>
-    </plurals>
-</resources>

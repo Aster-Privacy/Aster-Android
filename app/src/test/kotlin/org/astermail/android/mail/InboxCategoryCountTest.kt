@@ -26,7 +26,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class InboxCategoryJumpTest {
+class InboxCategoryCountTest {
 
     private fun envelope(
         from_email: String,
@@ -144,36 +144,29 @@ class InboxCategoryJumpTest {
     }
 
     @Test
-    fun other_category_mail_lists_tabs_with_unread_first() {
+    fun unread_counts_are_scoped_to_each_category() {
         val items = listOf(
             item("a", "promotions", is_read = true),
             item("b", "updates", is_read = false),
             item("c", "updates", is_read = true),
             item("d", "social", is_read = false, is_spam = true),
         )
-        val result = other_category_mail(items, "primary", CATEGORY_TABS)
-        assertEquals(listOf("updates", "promotions"), result.map { it.id })
-        assertEquals(1, result[0].unread)
-        assertEquals(2, result[0].threads)
-        assertEquals(0, result[1].unread)
+        val counts = category_unread_counts(items, CATEGORY_TABS)
+        assertEquals(0, counts["primary"])
+        assertEquals(1, counts["updates"])
+        assertEquals(0, counts["promotions"])
+        assertEquals(0, counts["social"])
     }
 
     @Test
-    fun other_category_mail_skips_active_tab_and_dedupes_threads() {
+    fun unread_counts_dedupe_threads_by_newest_message() {
         val items = listOf(
             item("a", "updates", thread = "t1", timestamp = "2026-10-08T08:00:00Z"),
             item("b", "updates", thread = "t1", timestamp = "2026-10-08T09:00:00Z", is_read = true),
             item("c", "primary"),
         )
-        val result = other_category_mail(items, "primary", CATEGORY_TABS)
-        assertEquals(1, result.size)
-        assertEquals(1, result[0].threads)
-        assertEquals(1, result[0].unread)
-    }
-
-    @Test
-    fun other_category_mail_is_empty_when_everything_is_in_active_tab() {
-        val items = listOf(item("a", "primary"), item("b", "primary", is_read = true))
-        assertTrue(other_category_mail(items, "primary", CATEGORY_TABS).isEmpty())
+        val counts = category_unread_counts(items, CATEGORY_TABS)
+        assertEquals(1, counts["primary"])
+        assertEquals(1, counts["updates"])
     }
 }

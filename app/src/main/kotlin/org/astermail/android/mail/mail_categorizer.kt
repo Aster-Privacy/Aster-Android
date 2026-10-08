@@ -357,34 +357,3 @@ fun category_unread_counts(
     }
     return counts
 }
-
-data class CategoryMailSummary(
-    val id: String,
-    val unread: Int,
-    val threads: Int,
-)
-
-fun other_category_mail(
-    items: List<InboxItem>,
-    active_category: String,
-    active_tabs: List<String> = CATEGORY_TABS,
-): List<CategoryMailSummary> {
-    val by_thread = LinkedHashMap<String, MutableList<InboxItem>>()
-    for (item in items) {
-        if (item.is_trashed || item.is_archived || item.is_spam) continue
-        by_thread.getOrPut(item.thread_token ?: item.id) { mutableListOf() }.add(item)
-    }
-    val unread = HashMap<String, Int>()
-    val threads = HashMap<String, Int>()
-    for ((_, msgs) in by_thread) {
-        val newest = msgs.maxByOrNull { it.timestamp } ?: continue
-        val tab = category_for_tab(newest.category, active_tabs)
-        if (tab == active_category) continue
-        threads[tab] = (threads[tab] ?: 0) + 1
-        if (msgs.any { !it.is_read }) unread[tab] = (unread[tab] ?: 0) + 1
-    }
-    return active_tabs
-        .filter { (threads[it] ?: 0) > 0 }
-        .map { CategoryMailSummary(it, unread[it] ?: 0, threads[it] ?: 0) }
-        .sortedByDescending { if (it.unread > 0) 1 else 0 }
-}
