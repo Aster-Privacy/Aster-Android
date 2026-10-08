@@ -22,14 +22,16 @@
 package org.astermail.android.ui.settings.detail
 
 import android.content.SharedPreferences
-import androidx.activity.compose.BackHandler
+import android.os.Build
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -45,13 +47,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -63,14 +70,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -79,14 +84,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -97,16 +103,21 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.WindowCompat
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import compose.icons.TablerIcons
 import compose.icons.tablericons.ArrowLeft
 import compose.icons.tablericons.ChevronRight
 import compose.icons.tablericons.Photo
+import compose.icons.tablericons.Trash
 import compose.icons.tablericons.Upload
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -115,8 +126,8 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.aster_reduce_motion
-import org.astermail.android.design.components.AsterDragHandle
-import org.astermail.android.design.components.AsterGhostButton
+import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.mirror_in_rtl
@@ -127,8 +138,11 @@ import org.astermail.android.settings.gallery_thumb_url
 import org.astermail.android.settings.profile_picture_gallery_holder
 import org.astermail.android.storage.AccountStore
 import org.astermail.android.ui.common.current_user_avatar
-import org.astermail.android.ui.common.aster_sheet_shape
-import org.astermail.android.ui.common.sheet_container_color
+import org.astermail.android.ui.common.nav_anim_duration_ms
+import org.astermail.android.ui.common.nav_backward_exit
+import org.astermail.android.ui.common.nav_forward_enter
+import org.astermail.android.ui.common.plan_ring
+import org.astermail.android.ui.common.remember_has_paid_plan
 
 enum class profile_picture_view {
     main,
@@ -145,11 +159,10 @@ private enum class gallery_status {
 private val view_ease = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 private const val view_duration_ms = 240
 private val view_shift = 32.dp
-private val header_height = 48.dp
-private val stage_max_height = 420.dp
-private val preview_size = 144.dp
-private val tile_shape = RoundedCornerShape(16.dp)
-private val option_shape = RoundedCornerShape(16.dp)
+private val top_bar_height = 56.dp
+private val hero_size = 128.dp
+private val tile_min_size = 104.dp
+private val option_icon_box = 40.dp
 
 internal fun profile_picture_slide_sign(target: profile_picture_view, rtl: Boolean): Int {
     val forward = if (target == profile_picture_view.gallery) 1 else -1
@@ -207,7 +220,7 @@ private fun view_transition(): AnimatedContentTransitionScope<profile_picture_vi
             } else {
                 val sign = profile_picture_slide_sign(targetState, rtl)
                 val spec_float = tween<Float>(view_duration_ms, easing = view_ease)
-                val spec_offset = tween<androidx.compose.ui.unit.IntOffset>(view_duration_ms, easing = view_ease)
+                val spec_offset = tween<IntOffset>(view_duration_ms, easing = view_ease)
                 (
                     fadeIn(animationSpec = spec_float) +
                         slideInHorizontally(animationSpec = spec_offset) { sign * shift_px }
@@ -220,11 +233,12 @@ private fun view_transition(): AnimatedContentTransitionScope<profile_picture_vi
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun profile_picture_sheet(
     account_store: AccountStore,
     picture: String?,
+    display_name: String,
+    email: String,
     has_saved_picture: Boolean,
     uploading: Boolean,
     removing: Boolean,
@@ -237,9 +251,9 @@ fun profile_picture_sheet(
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val sheet_state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val gallery = remember(context) { profile_picture_gallery_holder.get(context) }
     val gallery_available = remember_gallery_available()
+    val has_paid_plan = remember_has_paid_plan()
 
     var view by remember { mutableStateOf(profile_picture_view.main) }
     var status by remember { mutableStateOf(gallery_status.idle) }
@@ -253,10 +267,20 @@ fun profile_picture_sheet(
     val shown_view = profile_picture_shown_view(view, gallery_available)
     val busy = uploading || removing
 
+    val reduce_motion = aster_reduce_motion()
+    val anim_duration = if (reduce_motion) 0 else nav_anim_duration_ms
+    val visible_state = remember { MutableTransitionState(false).apply { targetState = true } }
+    val request_dismiss: () -> Unit = { visible_state.targetState = false }
+
+    LaunchedEffect(visible_state.currentState, visible_state.targetState) {
+        if (!visible_state.targetState && !visible_state.currentState) on_dismiss()
+    }
+
     LaunchedEffect(gallery_available) {
         if (!gallery_available) {
             load_job?.cancel()
             pick_job?.cancel()
+            pending_slug = null
             view = profile_picture_view.main
             if (status == gallery_status.loading) status = gallery_status.idle
         }
@@ -306,130 +330,168 @@ fun profile_picture_sheet(
         }
     }
 
-    val stage_height = min(stage_max_height, (LocalConfiguration.current.screenHeightDp * 0.6f).dp)
+    val go_back: () -> Unit = {
+        if (profile_picture_shown_view(view, gallery_available) == profile_picture_view.gallery) {
+            view = profile_picture_view.main
+        } else {
+            request_dismiss()
+        }
+    }
+
+    val page_color = colors.bg_primary.copy(alpha = 1f)
+    val light_bars = page_color.luminance() > 0.5f
     val transition = view_transition()
 
-    ModalBottomSheet(
-        onDismissRequest = on_dismiss,
-        sheetState = sheet_state,
-        shape = aster_sheet_shape,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+    Dialog(
+        onDismissRequest = go_back,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+            dismissOnClickOutside = false,
+        ),
     ) {
-        BackHandler(enabled = shown_view == profile_picture_view.gallery) {
-            view = profile_picture_view.main
+        val dialog_view = LocalView.current
+        SideEffect {
+            val window = (dialog_view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            window.setDimAmount(0f)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) window.isNavigationBarContrastEnforced = false
+            WindowCompat.getInsetsController(window, dialog_view).apply {
+                isAppearanceLightStatusBars = light_bars
+                isAppearanceLightNavigationBars = light_bars
+            }
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                @Suppress("DEPRECATION")
+                window.navigationBarColor = android.graphics.Color.TRANSPARENT
+                @Suppress("DEPRECATION")
+                window.statusBarColor = android.graphics.Color.TRANSPARENT
+            }
         }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = AsterSpacing.lg)
-                .padding(bottom = AsterSpacing.lg)
-                .testTag("profile_picture_sheet"),
+        AnimatedVisibility(
+            visibleState = visible_state,
+            enter = nav_forward_enter(anim_duration),
+            exit = nav_backward_exit(anim_duration),
         ) {
-            AnimatedContent(
-                targetState = shown_view,
-                transitionSpec = transition,
-                contentAlignment = Alignment.CenterStart,
-                label = "profile_picture_header",
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(header_height),
-            ) { target ->
-                Row(
+                    .fillMaxSize()
+                    .background(page_color)
+                    .statusBarsPadding()
+                    .testTag("profile_picture_sheet"),
+            ) {
+                profile_picture_top_bar(
+                    shown_view = shown_view,
+                    transition = transition,
+                    on_back = go_back,
+                )
+                AnimatedContent(
+                    targetState = shown_view,
+                    transitionSpec = transition,
+                    contentAlignment = Alignment.TopStart,
+                    label = "profile_picture_stage",
                     modifier = Modifier
-                        .fillMaxSize()
-                        .block_input(is_leaving()),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
-                ) {
-                    if (target == profile_picture_view.gallery) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .clickable(role = Role.Button) { view = profile_picture_view.main }
-                                .testTag("profile_picture_back"),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = TablerIcons.ArrowLeft,
-                                contentDescription = stringResource(R.string.back),
-                                tint = colors.text_secondary,
-                                modifier = Modifier.size(20.dp).mirror_in_rtl(),
+                        .fillMaxWidth()
+                        .weight(1f),
+                ) { target ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .block_input(is_leaving()),
+                    ) {
+                        if (target == profile_picture_view.main) {
+                            profile_picture_main_view(
+                                account_store = account_store,
+                                picture = picture,
+                                display_name = display_name,
+                                email = email,
+                                has_paid_plan = has_paid_plan,
+                                has_saved_picture = has_saved_picture,
+                                busy = busy || pending_slug != null,
+                                failed = failed,
+                                gallery_available = gallery_available,
+                                on_gallery = open_gallery,
+                                on_upload = on_upload,
+                                on_remove = on_remove,
+                            )
+                        } else {
+                            profile_picture_gallery_view(
+                                status = status,
+                                items = items,
+                                filter = filter,
+                                pending_slug = pending_slug,
+                                busy = busy,
+                                failed = gallery_error,
+                                on_filter = { filter = it },
+                                on_retry = load_gallery,
+                                on_choose = choose,
                             )
                         }
-                    }
-                    Text(
-                        text = stringResource(
-                            if (target == profile_picture_view.gallery) {
-                                R.string.profile_picture_gallery
-                            } else {
-                                R.string.profile_picture_title
-                            },
-                        ),
-                        color = colors.text_primary,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false),
-                    )
-                }
-            }
-            Spacer(Modifier.height(AsterSpacing.sm))
-            AnimatedContent(
-                targetState = shown_view,
-                transitionSpec = transition,
-                contentAlignment = Alignment.TopStart,
-                label = "profile_picture_stage",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(stage_height),
-            ) { target ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .block_input(is_leaving()),
-                ) {
-                    if (target == profile_picture_view.main) {
-                        profile_picture_main_view(
-                            account_store = account_store,
-                            picture = picture,
-                            has_saved_picture = has_saved_picture,
-                            busy = busy || pending_slug != null,
-                            failed = failed,
-                            gallery_available = gallery_available,
-                            on_gallery = open_gallery,
-                            on_upload = on_upload,
-                            on_remove = on_remove,
-                        )
-                    } else {
-                        profile_picture_gallery_view(
-                            status = status,
-                            items = items,
-                            filter = filter,
-                            pending_slug = pending_slug,
-                            busy = busy,
-                            failed = gallery_error,
-                            on_filter = { filter = it },
-                            on_retry = load_gallery,
-                            on_choose = choose,
-                        )
                     }
                 }
             }
         }
     }
+}
 
-    LaunchedEffect(Unit) { sheet_state.show() }
+@Composable
+private fun profile_picture_top_bar(
+    shown_view: profile_picture_view,
+    transition: AnimatedContentTransitionScope<profile_picture_view>.() -> ContentTransform,
+    on_back: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(top_bar_height)
+            .padding(horizontal = AsterSpacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AsterIconButton(
+            icon = TablerIcons.ArrowLeft,
+            content_description = stringResource(
+                if (shown_view == profile_picture_view.gallery) R.string.back else R.string.close,
+            ),
+            onClick = on_back,
+            tint = colors.text_primary,
+            icon_size = 24,
+            auto_mirror = true,
+            modifier = Modifier.testTag("profile_picture_back"),
+        )
+        AnimatedContent(
+            targetState = shown_view,
+            transitionSpec = transition,
+            contentAlignment = Alignment.CenterStart,
+            label = "profile_picture_title",
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = AsterSpacing.xs),
+        ) { target ->
+            Text(
+                text = stringResource(
+                    if (target == profile_picture_view.gallery) {
+                        R.string.profile_picture_gallery
+                    } else {
+                        R.string.profile_picture_title
+                    },
+                ),
+                color = colors.text_primary,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
 }
 
 @Composable
 private fun profile_picture_main_view(
     account_store: AccountStore,
     picture: String?,
+    display_name: String,
+    email: String,
+    has_paid_plan: Boolean,
     has_saved_picture: Boolean,
     busy: Boolean,
     failed: Boolean,
@@ -442,77 +504,117 @@ private fun profile_picture_main_view(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState())
+            .navigationBarsPadding()
+            .padding(horizontal = AsterSpacing.lg)
+            .padding(top = AsterSpacing.lg, bottom = AsterSpacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(Modifier.height(4.dp))
-        Box(
-            modifier = Modifier
-                .size(preview_size)
-                .clip(CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            current_user_avatar(
-                account_store = account_store,
-                size = preview_size,
-                profile_picture_url = picture,
-            )
-            if (busy) {
-                Box(
-                    modifier = Modifier
-                        .size(preview_size)
-                        .background(Color.Black.copy(alpha = 0.45f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(28.dp),
-                        strokeWidth = 2.5.dp,
-                        color = Color.White,
-                    )
+        plan_ring(size = hero_size, enabled = has_paid_plan) {
+            Box(
+                modifier = Modifier
+                    .size(hero_size)
+                    .clip(CircleShape)
+                    .testTag("profile_picture_preview"),
+                contentAlignment = Alignment.Center,
+            ) {
+                current_user_avatar(
+                    account_store = account_store,
+                    size = hero_size,
+                    profile_picture_url = picture,
+                )
+                if (busy) {
+                    Box(
+                        modifier = Modifier
+                            .size(hero_size)
+                            .background(colors.bg_primary.copy(alpha = 0.60f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(28.dp),
+                            strokeWidth = 2.5.dp,
+                            color = colors.accent_blue,
+                        )
+                    }
                 }
             }
         }
-        Spacer(Modifier.height(AsterSpacing.xl))
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-        ) {
-            if (gallery_available) {
-                profile_picture_option_row(
-                    icon = TablerIcons.Photo,
-                    label = stringResource(R.string.profile_picture_gallery),
-                    hint = stringResource(R.string.profile_picture_gallery_hint),
-                    enabled = !busy,
-                    test_tag = "profile_picture_option_gallery",
-                    on_click = on_gallery,
-                )
-            }
-            profile_picture_option_row(
-                icon = TablerIcons.Upload,
-                label = stringResource(R.string.profile_picture_upload),
-                hint = stringResource(R.string.profile_picture_upload_hint),
-                enabled = !busy,
-                test_tag = "profile_picture_option_upload",
-                on_click = on_upload,
+        Spacer(Modifier.height(AsterSpacing.lg))
+        if (display_name.isNotBlank()) {
+            Text(
+                text = display_name,
+                color = colors.text_primary,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth(),
             )
+        }
+        if (email.isNotBlank()) {
+            Spacer(Modifier.height(AsterSpacing.xs))
+            Text(
+                text = email,
+                color = colors.text_secondary,
+                fontSize = 15.sp,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        Spacer(Modifier.height(AsterSpacing.xl))
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = settings_group_inset),
+            ) {
+                if (gallery_available) {
+                    profile_picture_option_row(
+                        icon = TablerIcons.Photo,
+                        label = stringResource(R.string.profile_picture_gallery),
+                        hint = stringResource(R.string.profile_picture_gallery_hint),
+                        enabled = !busy,
+                        danger = false,
+                        test_tag = "profile_picture_option_gallery",
+                        on_click = on_gallery,
+                    )
+                    settings_row_gap()
+                }
+                profile_picture_option_row(
+                    icon = TablerIcons.Upload,
+                    label = stringResource(R.string.profile_picture_upload),
+                    hint = stringResource(R.string.profile_picture_upload_hint),
+                    enabled = !busy,
+                    danger = false,
+                    test_tag = "profile_picture_option_upload",
+                    on_click = on_upload,
+                )
+                if (has_saved_picture) {
+                    settings_row_gap()
+                    profile_picture_option_row(
+                        icon = TablerIcons.Trash,
+                        label = stringResource(R.string.remove_photo),
+                        hint = stringResource(R.string.profile_picture_remove_hint),
+                        enabled = !busy,
+                        danger = true,
+                        test_tag = "profile_picture_option_remove",
+                        on_click = on_remove,
+                    )
+                }
+            }
         }
         if (failed) {
             Spacer(Modifier.height(AsterSpacing.md))
             Text(
                 text = stringResource(R.string.error_try_again),
                 color = colors.danger,
-                fontSize = 12.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        if (has_saved_picture) {
-            Spacer(Modifier.height(AsterSpacing.md))
-            AsterGhostButton(
-                label = stringResource(R.string.remove_photo),
-                onClick = on_remove,
-                enabled = !busy,
             )
         }
     }
@@ -520,37 +622,49 @@ private fun profile_picture_main_view(
 
 @Composable
 private fun profile_picture_option_row(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     label: String,
     hint: String,
     enabled: Boolean,
+    danger: Boolean,
     test_tag: String,
     on_click: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
+    val accent = if (danger) colors.danger else colors.accent_blue
+    val title_color = when {
+        !enabled -> colors.text_muted
+        danger -> colors.danger
+        else -> colors.text_primary
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(option_shape)
-            .background(field_surface_color(colors), option_shape)
             .clickable(enabled = enabled, role = Role.Button, onClick = on_click)
-            .padding(horizontal = AsterSpacing.lg, vertical = 14.dp)
+            .heightIn(min = settings_row_min_height)
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm)
             .testTag(test_tag),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .size(option_icon_box)
+                .clip(CircleShape)
+                .background(accent.copy(alpha = if (enabled) 0.12f else 0.06f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = if (enabled) colors.accent_blue else colors.text_muted,
-                modifier = Modifier.size(24.dp),
+                tint = if (enabled) accent else colors.text_muted,
+                modifier = Modifier.size(22.dp),
             )
         }
-        Spacer(Modifier.width(14.dp))
+        Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
-                color = if (enabled) colors.text_primary else colors.text_muted,
+                color = title_color,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
             )
@@ -560,12 +674,14 @@ private fun profile_picture_option_row(
                 fontSize = 13.sp,
             )
         }
-        Icon(
-            imageVector = TablerIcons.ChevronRight,
-            contentDescription = null,
-            tint = colors.text_muted,
-            modifier = Modifier.size(16.dp).mirror_in_rtl(),
-        )
+        if (!danger) {
+            Icon(
+                imageVector = TablerIcons.ChevronRight,
+                contentDescription = null,
+                tint = colors.text_muted,
+                modifier = Modifier.size(16.dp).mirror_in_rtl(),
+            )
+        }
     }
 }
 
@@ -582,9 +698,15 @@ private fun profile_picture_gallery_view(
     on_choose: (String) -> Unit,
 ) {
     val colors = AsterMaterial.colors
+    val nav_bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     when (status) {
         gallery_status.idle, gallery_status.loading -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .navigationBarsPadding(),
+                contentAlignment = Alignment.Center,
+            ) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(28.dp),
                     strokeWidth = 2.5.dp,
@@ -596,6 +718,7 @@ private fun profile_picture_gallery_view(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .navigationBarsPadding()
                     .padding(horizontal = AsterSpacing.lg),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -623,7 +746,12 @@ private fun profile_picture_gallery_view(
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                    contentPadding = PaddingValues(bottom = AsterSpacing.md),
+                    contentPadding = PaddingValues(
+                        start = AsterSpacing.lg,
+                        end = AsterSpacing.lg,
+                        top = AsterSpacing.xs,
+                        bottom = AsterSpacing.sm,
+                    ),
                 ) {
                     item(key = "all") {
                         gallery_chip(
@@ -640,14 +768,32 @@ private fun profile_picture_gallery_view(
                         )
                     }
                 }
+                if (failed) {
+                    Text(
+                        text = stringResource(R.string.error_try_again),
+                        color = colors.danger,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xs),
+                    )
+                }
                 LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
+                    columns = GridCells.Adaptive(minSize = tile_min_size),
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
                         .testTag("profile_picture_gallery_grid"),
-                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                    verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                    contentPadding = PaddingValues(
+                        start = AsterSpacing.lg,
+                        end = AsterSpacing.lg,
+                        top = AsterSpacing.sm,
+                        bottom = AsterSpacing.xl + nav_bottom,
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+                    verticalArrangement = Arrangement.spacedBy(AsterSpacing.lg),
                 ) {
                     items(visible, key = { it.slug }) { item ->
                         gallery_tile(
@@ -658,18 +804,6 @@ private fun profile_picture_gallery_view(
                             on_click = { on_choose(item.slug) },
                         )
                     }
-                }
-                if (failed) {
-                    Text(
-                        text = stringResource(R.string.error_try_again),
-                        color = colors.danger,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = AsterSpacing.md),
-                    )
                 }
             }
         }
@@ -724,14 +858,15 @@ private fun gallery_tile(
     }
     Column(
         modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1f)
-                .clip(tile_shape)
-                .background(field_surface_color(colors), tile_shape)
+                .clip(CircleShape)
+                .background(field_surface_color(colors), CircleShape)
                 .clickable(enabled = enabled, role = Role.Button, onClick = on_click)
                 .semantics { if (caption != null) contentDescription = caption }
                 .testTag("profile_picture_tile_$slug"),
@@ -747,13 +882,13 @@ private fun gallery_tile(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.45f)),
+                        .background(colors.bg_primary.copy(alpha = 0.55f)),
                     contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(22.dp),
+                        modifier = Modifier.size(24.dp),
                         strokeWidth = 2.dp,
-                        color = Color.White,
+                        color = colors.accent_blue,
                     )
                 }
             }
@@ -764,6 +899,7 @@ private fun gallery_tile(
                 color = colors.text_muted,
                 fontSize = 10.sp,
                 lineHeight = 13.sp,
+                textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
                     .clearAndSetSemantics {}

@@ -179,10 +179,42 @@ fun ProfileScreen(
         }
     }
 
+    LaunchedEffect(state.save_status) {
+        if (state.save_status == SaveStatus.SAVED) {
+            kotlinx.coroutines.delay(1500)
+            vm.reset_save_status()
+        }
+    }
+
+    val name_save_label = when (state.save_status) {
+        SaveStatus.SAVING -> stringResource(R.string.saving)
+        SaveStatus.SAVED -> stringResource(R.string.saved)
+        SaveStatus.ERROR -> stringResource(R.string.error_try_again)
+        else -> stringResource(R.string.save)
+    }
+    val is_name_saving = state.save_status == SaveStatus.SAVING
+
+    val plan_code = state.subscription?.plan?.code
+    val plan_kind = remember(plan_code) { aster_plan_kind_of(plan_code) }
+    val plan_label = state.subscription?.let {
+        it.effective_plan_name?.takeIf { name -> name.isNotBlank() } ?: stringResource(R.string.plan_free)
+    } ?: ""
+    val member_since = remember(user?.created_at) { format_settings_date(user?.created_at) }
+    val is_supernova = plan_kind == aster_plan_kind.supernova
+    val resolved_name = listOfNotNull(
+        display_name.takeIf { it.isNotBlank() },
+        live_account?.display_name?.takeIf { it.isNotBlank() },
+        user?.display_name?.takeIf { it.isNotBlank() },
+        user?.username?.takeIf { it.isNotBlank() },
+        live_account?.email?.substringBefore("@")?.takeIf { it.isNotBlank() },
+    ).firstOrNull() ?: stringResource(R.string.your_name)
+
     if (show_photo_sheet) {
         profile_picture_sheet(
             account_store = vm.account_store,
             picture = user?.profile_picture,
+            display_name = resolved_name,
+            email = email,
             has_saved_picture = !user?.profile_picture.isNullOrBlank(),
             uploading = photo_uploading,
             removing = photo_removing,
@@ -220,36 +252,6 @@ fun ProfileScreen(
             },
         )
     }
-
-    LaunchedEffect(state.save_status) {
-        if (state.save_status == SaveStatus.SAVED) {
-            kotlinx.coroutines.delay(1500)
-            vm.reset_save_status()
-        }
-    }
-
-    val name_save_label = when (state.save_status) {
-        SaveStatus.SAVING -> stringResource(R.string.saving)
-        SaveStatus.SAVED -> stringResource(R.string.saved)
-        SaveStatus.ERROR -> stringResource(R.string.error_try_again)
-        else -> stringResource(R.string.save)
-    }
-    val is_name_saving = state.save_status == SaveStatus.SAVING
-
-    val plan_code = state.subscription?.plan?.code
-    val plan_kind = remember(plan_code) { aster_plan_kind_of(plan_code) }
-    val plan_label = state.subscription?.let {
-        it.effective_plan_name?.takeIf { name -> name.isNotBlank() } ?: stringResource(R.string.plan_free)
-    } ?: ""
-    val member_since = remember(user?.created_at) { format_settings_date(user?.created_at) }
-    val is_supernova = plan_kind == aster_plan_kind.supernova
-    val resolved_name = listOfNotNull(
-        display_name.takeIf { it.isNotBlank() },
-        live_account?.display_name?.takeIf { it.isNotBlank() },
-        user?.display_name?.takeIf { it.isNotBlank() },
-        user?.username?.takeIf { it.isNotBlank() },
-        live_account?.email?.substringBefore("@")?.takeIf { it.isNotBlank() },
-    ).firstOrNull() ?: stringResource(R.string.your_name)
 
     val profile_loaded = user != null &&
         (state.subscription != null || state.subscription_load_failed) &&
@@ -770,47 +772,149 @@ private const val MAX_DISPLAY_NAME_LENGTH = 100
 private fun sanitize_display_name(value: String): String =
     value.filter { it != '<' && it != '>' && it != '\u0000' }.take(MAX_DISPLAY_NAME_LENGTH)
 
-private const val MAX_AVATAR_DIMENSION = 256
+internal const val AVATAR_OUTPUT_SIZE = 512
+internal const val AVATAR_QUALITY = 88
+internal const val AVATAR_MIN_QUALITY = 48
+private const val AVATAR_QUALITY_STEP = 10
+internal const val AVATAR_TARGET_DATA_URI_CHARS = 400_000
+internal const val AVATAR_MAX_DATA_URI_CHARS = 512_000
+private const val AVATAR_MAX_SOURCE_BYTES = 64L * 1024 * 1024
+private const val AVATAR_DATA_URI_PREFIX = "data:image/webp;base64,"
 
-private fun decode_avatar_bitmap(context: Context, uri: Uri): Bitmap? {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-        val source = ImageDecoder.createSource(context.contentResolver, uri)
-        return ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
-            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
-            val largest = maxOf(info.size.width, info.size.height)
-            if (largest > MAX_AVATAR_DIMENSION) {
-                val scale = MAX_AVATAR_DIMENSION.toFloat() / largest
-                decoder.setTargetSize(
-                    (info.size.width * scale).toInt().coerceAtLeast(1),
-                    (info.size.height * scale).toInt().coerceAtLeast(1),
-                )
-            }
-        }
+internal fun avatar_sample_size(width: Int, height: Int, target: Int = AVATAR_OUTPUT_SIZE): Int {
+    if (width <= 0 || height <= 0 || target <= 0) return 1
+    val shortest = minOf(width, height)
+    var sample = 1
+    while (shortest / (sample * 2) >= target) {
+        sample *= 2
     }
-    val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return null
-    return decode_avatar_bytes(bytes)
+    return sample
 }
 
-private fun decode_avatar_bytes(bytes: ByteArray): Bitmap? {
+internal fun avatar_decode_size(width: Int, height: Int, target: Int = AVATAR_OUTPUT_SIZE): IntArray {
+    val shortest = minOf(width, height)
+    if (width <= 0 || height <= 0 || shortest <= target) return intArrayOf(width, height)
+    val scale = target.toDouble() / shortest
+    return intArrayOf(
+        kotlin.math.ceil(width * scale).toInt().coerceIn(1, width),
+        kotlin.math.ceil(height * scale).toInt().coerceIn(1, height),
+    )
+}
+
+internal fun avatar_square_crop(width: Int, height: Int): IntArray {
+    val side = minOf(width, height).coerceAtLeast(1)
+    return intArrayOf(((width - side) / 2).coerceAtLeast(0), ((height - side) / 2).coerceAtLeast(0), side)
+}
+
+internal fun avatar_output_size(side: Int, target: Int = AVATAR_OUTPUT_SIZE): Int =
+    side.coerceIn(1, target)
+
+internal fun avatar_next_quality(quality: Int): Int? {
+    if (quality <= AVATAR_MIN_QUALITY) return null
+    return (quality - AVATAR_QUALITY_STEP).coerceAtLeast(AVATAR_MIN_QUALITY)
+}
+
+@androidx.annotation.RequiresApi(Build.VERSION_CODES.P)
+private fun decode_avatar_source(source: ImageDecoder.Source): Bitmap =
+    ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
+        decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+        val width = info.size.width
+        val height = info.size.height
+        val (target_width, target_height) = avatar_decode_size(width, height)
+        if (target_width != width || target_height != height) {
+            decoder.setTargetSize(target_width, target_height)
+        }
+    }
+
+private fun exif_orientation(bytes: ByteArray): Int = try {
+    android.media.ExifInterface(java.io.ByteArrayInputStream(bytes)).getAttributeInt(
+        android.media.ExifInterface.TAG_ORIENTATION,
+        android.media.ExifInterface.ORIENTATION_NORMAL,
+    )
+} catch (_: Throwable) {
+    android.media.ExifInterface.ORIENTATION_NORMAL
+}
+
+private fun apply_exif_orientation(bitmap: Bitmap, orientation: Int): Bitmap {
+    val matrix = android.graphics.Matrix()
+    when (orientation) {
+        android.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.setScale(-1f, 1f)
+        android.media.ExifInterface.ORIENTATION_ROTATE_180 -> matrix.setRotate(180f)
+        android.media.ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.setScale(1f, -1f)
+        android.media.ExifInterface.ORIENTATION_TRANSPOSE -> {
+            matrix.setRotate(90f)
+            matrix.postScale(-1f, 1f)
+        }
+        android.media.ExifInterface.ORIENTATION_ROTATE_90 -> matrix.setRotate(90f)
+        android.media.ExifInterface.ORIENTATION_TRANSVERSE -> {
+            matrix.setRotate(-90f)
+            matrix.postScale(-1f, 1f)
+        }
+        android.media.ExifInterface.ORIENTATION_ROTATE_270 -> matrix.setRotate(-90f)
+        else -> return bitmap
+    }
+    val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+    if (rotated !== bitmap) bitmap.recycle()
+    return rotated
+}
+
+private fun decode_avatar_bytes_legacy(bytes: ByteArray): Bitmap? {
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
     BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
     if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
-    var sample = 1
-    while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= MAX_AVATAR_DIMENSION) {
-        sample *= 2
+    val options = BitmapFactory.Options().apply {
+        inSampleSize = avatar_sample_size(bounds.outWidth, bounds.outHeight)
+        inPreferredConfig = Bitmap.Config.ARGB_8888
     }
-    val decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample }) ?: return null
-    val largest = maxOf(decoded.width, decoded.height)
-    if (largest <= MAX_AVATAR_DIMENSION) return decoded
-    val scale = MAX_AVATAR_DIMENSION.toFloat() / largest
-    val scaled = Bitmap.createScaledBitmap(
-        decoded,
-        (decoded.width * scale).toInt().coerceAtLeast(1),
-        (decoded.height * scale).toInt().coerceAtLeast(1),
-        true,
+    val decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options) ?: return null
+    return apply_exif_orientation(decoded, exif_orientation(bytes))
+}
+
+private fun decode_avatar_bitmap(context: Context, uri: Uri): Bitmap? {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        return decode_avatar_source(ImageDecoder.createSource(context.contentResolver, uri))
+    }
+    val bytes = context.contentResolver.openInputStream(uri)?.use { stream ->
+        val out = ByteArrayOutputStream()
+        val buffer = ByteArray(64 * 1024)
+        var total = 0L
+        while (true) {
+            val read = stream.read(buffer)
+            if (read < 0) break
+            total += read
+            if (total > AVATAR_MAX_SOURCE_BYTES) return null
+            out.write(buffer, 0, read)
+        }
+        out.toByteArray()
+    } ?: return null
+    return decode_avatar_bytes_legacy(bytes)
+}
+
+private fun decode_avatar_bytes(bytes: ByteArray): Bitmap? {
+    if (bytes.isEmpty()) return null
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        return decode_avatar_source(ImageDecoder.createSource(java.nio.ByteBuffer.wrap(bytes)))
+    }
+    return decode_avatar_bytes_legacy(bytes)
+}
+
+private fun square_avatar_bitmap(source: Bitmap): Bitmap {
+    val (left, top, side) = avatar_square_crop(source.width, source.height)
+    val size = avatar_output_size(side)
+    val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(output)
+    val paint = android.graphics.Paint(
+        android.graphics.Paint.FILTER_BITMAP_FLAG or
+            android.graphics.Paint.ANTI_ALIAS_FLAG or
+            android.graphics.Paint.DITHER_FLAG,
     )
-    if (scaled !== decoded) decoded.recycle()
-    return scaled
+    canvas.drawBitmap(
+        source,
+        android.graphics.Rect(left, top, left + side, top + side),
+        android.graphics.Rect(0, 0, size, size),
+        paint,
+    )
+    return output
 }
 
 private fun encode_avatar_data_uri(bitmap: Bitmap): String? {
@@ -820,18 +924,35 @@ private fun encode_avatar_data_uri(bitmap: Bitmap): String? {
         @Suppress("DEPRECATION")
         Bitmap.CompressFormat.WEBP
     }
-    val out = ByteArrayOutputStream()
-    val compressed = bitmap.compress(format, 80, out)
-    bitmap.recycle()
-    if (!compressed) return null
-    val b64 = android.util.Base64.encodeToString(out.toByteArray(), android.util.Base64.NO_WRAP)
-    return "data:image/webp;base64,$b64"
+    var quality: Int? = AVATAR_QUALITY
+    var smallest: String? = null
+    while (quality != null) {
+        val out = ByteArrayOutputStream()
+        if (!bitmap.compress(format, quality, out)) return null
+        val b64 = android.util.Base64.encodeToString(out.toByteArray(), android.util.Base64.NO_WRAP)
+        val data_uri = AVATAR_DATA_URI_PREFIX + b64
+        if (data_uri.length <= AVATAR_TARGET_DATA_URI_CHARS) return data_uri
+        smallest = data_uri
+        quality = avatar_next_quality(quality)
+    }
+    return smallest?.takeIf { it.length <= AVATAR_MAX_DATA_URI_CHARS }
+}
+
+private fun avatar_data_uri_from(decoded: Bitmap?): String? {
+    decoded ?: return null
+    var square: Bitmap? = null
+    return try {
+        square = square_avatar_bitmap(decoded)
+        encode_avatar_data_uri(square)
+    } finally {
+        square?.recycle()
+        decoded.recycle()
+    }
 }
 
 internal fun read_image_as_data_uri(context: Context, uri: Uri): String? {
     return try {
-        val bitmap = decode_avatar_bitmap(context, uri) ?: return null
-        encode_avatar_data_uri(bitmap)
+        avatar_data_uri_from(decode_avatar_bitmap(context, uri))
     } catch (_: Throwable) {
         null
     }
@@ -839,8 +960,7 @@ internal fun read_image_as_data_uri(context: Context, uri: Uri): String? {
 
 internal fun image_bytes_as_data_uri(bytes: ByteArray): String? {
     return try {
-        val bitmap = decode_avatar_bytes(bytes) ?: return null
-        encode_avatar_data_uri(bitmap)
+        avatar_data_uri_from(decode_avatar_bytes(bytes))
     } catch (_: Throwable) {
         null
     }

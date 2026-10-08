@@ -19,4 +19,5 @@
     <string name="profile_picture_cat_ocean">Okyanus</string>
     <string name="profile_picture_cat_desert">Çöl</string>
     <string name="profile_picture_credit">Fotoğraf: %1$s. Kırpıldı ve yeniden boyutlandırıldı.</string>
+    <string name="profile_picture_remove_hint">Bunun yerine baş harflerini göster</string>
 </resources>

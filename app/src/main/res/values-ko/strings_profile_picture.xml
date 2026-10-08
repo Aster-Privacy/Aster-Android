@@ -19,4 +19,5 @@
     <string name="profile_picture_cat_ocean">바다</string>
     <string name="profile_picture_cat_desert">사막</string>
     <string name="profile_picture_credit">사진: %1$s. 자르고 크기를 조정했습니다.</string>
+    <string name="profile_picture_remove_hint">대신 이니셜을 표시합니다</string>
 </resources>

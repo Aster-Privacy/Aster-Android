@@ -802,7 +802,6 @@ fun SubscriptionsScreen(
                 }
             }
         }
-        billing_wordmark()
         if (sub == null && (state.is_loading || !plan_load_settled)) {
             skeleton_hero_card(lines = 3)
             v_gap(AsterSpacing.lg)
@@ -1116,11 +1115,10 @@ fun SubscriptionsScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
             compare_code?.let { code ->
-                billing_compare_sheet(
+                billing_compare_view(
                     feed = comparison_feed,
                     individual_options = individual_plan_options,
                     family_options = family_plan_options,
-                    initial_type = if (code in FAMILY_PLAN_CODES) "family" else "individual",
                     initial_code = code,
                     current_code = if (sub != null) current_code else null,
                     currency = detected_currency,

@@ -19,4 +19,5 @@
     <string name="profile_picture_cat_ocean">海洋</string>
     <string name="profile_picture_cat_desert">沙漠</string>
     <string name="profile_picture_credit">照片：%1$s。已裁剪并调整大小。</string>
+    <string name="profile_picture_remove_hint">改为显示你的姓名首字母</string>
 </resources>

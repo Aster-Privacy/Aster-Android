@@ -78,6 +78,9 @@ fun is_gallery_slug(slug: String): Boolean = gallery_slug_pattern.matches(slug)
 fun gallery_thumb_url(slug: String, base_url: String = profile_picture_gallery_base_url): String =
     "$base_url/thumb/$slug.webp"
 
+fun gallery_full_url(slug: String, base_url: String = profile_picture_gallery_base_url): String =
+    "$base_url/full/$slug.webp"
+
 fun parse_gallery_credit(value: JsonElement?): String? {
     val primitive = value as? JsonPrimitive ?: return null
     if (!primitive.isString) return null
@@ -134,7 +137,7 @@ class ProfilePictureGallery(
         if (!is_available()) throw GalleryUnavailableException()
         val items = withContext(Dispatchers.IO) {
             val body = get("$base_url/manifest.json").decodeToString()
-            parse_gallery_manifest(body)
+            curate_gallery_items(parse_gallery_manifest(body))
         }
         if (items.isEmpty()) throw IOException("gallery manifest empty")
         cached = items
@@ -146,7 +149,14 @@ class ProfilePictureGallery(
     suspend fun fetch_image(slug: String): ByteArray {
         if (!is_gallery_slug(slug)) throw IOException("gallery image not allowed")
         if (!is_available()) throw GalleryUnavailableException()
-        return withContext(Dispatchers.IO) { get(gallery_thumb_url(slug, base_url)) }
+        return withContext(Dispatchers.IO) {
+            try {
+                get(gallery_full_url(slug, base_url))
+            } catch (_: IOException) {
+                if (!is_available()) throw GalleryUnavailableException()
+                get(gallery_thumb_url(slug, base_url))
+            }
+        }
     }
 
     private fun get(url: String): ByteArray {

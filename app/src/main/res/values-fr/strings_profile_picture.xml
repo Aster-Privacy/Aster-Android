@@ -19,4 +19,5 @@
     <string name="profile_picture_cat_ocean">Océan</string>
     <string name="profile_picture_cat_desert">Désert</string>
     <string name="profile_picture_credit">Photo : %1$s. Recadrée et redimensionnée.</string>
+    <string name="profile_picture_remove_hint">Afficher vos initiales à la place</string>
 </resources>

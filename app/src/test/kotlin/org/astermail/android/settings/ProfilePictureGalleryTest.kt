@@ -224,15 +224,56 @@ class ProfilePictureGalleryTest {
     }
 
     @Test
-    fun fetch_image_reads_thumb_path() = runBlocking {
+    fun fetch_image_reads_full_path() = runBlocking {
         val bytes = byteArrayOf(1, 2, 3, 4)
         server.enqueue(MockResponse().setResponseCode(200).setBody(okio.Buffer().write(bytes)))
         val result = gallery().fetch_image("aurora-7")
         assertArrayEquals(bytes, result)
+        assertEquals(1, server.requestCount)
         val request = server.takeRequest(1, TimeUnit.SECONDS)!!
-        assertEquals("/thumb/aurora-7.webp", request.path)
+        assertEquals("/full/aurora-7.webp", request.path)
         assertNull(request.getHeader("Cookie"))
         assertNull(request.getHeader("Referer"))
+    }
+
+    @Test
+    fun fetch_image_falls_back_to_thumb_when_full_fails() = runBlocking {
+        val bytes = byteArrayOf(5, 6, 7)
+        server.enqueue(MockResponse().setResponseCode(404))
+        server.enqueue(MockResponse().setResponseCode(200).setBody(okio.Buffer().write(bytes)))
+        val result = gallery().fetch_image("fjord_2")
+        assertArrayEquals(bytes, result)
+        assertEquals("/full/fjord_2.webp", server.takeRequest(1, TimeUnit.SECONDS)!!.path)
+        assertEquals("/thumb/fjord_2.webp", server.takeRequest(1, TimeUnit.SECONDS)!!.path)
+    }
+
+    @Test
+    fun fetch_image_does_not_fall_back_once_lockdown_turns_on() = runBlocking {
+        val gallery = gallery()
+        server.dispatcher = object : okhttp3.mockwebserver.Dispatcher() {
+            override fun dispatch(request: okhttp3.mockwebserver.RecordedRequest): MockResponse {
+                available = false
+                return MockResponse().setResponseCode(500)
+            }
+        }
+        try {
+            gallery.fetch_image("andromeda")
+            fail("expected unavailable")
+        } catch (_: GalleryUnavailableException) {
+        }
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test
+    fun fetch_image_rejects_redirect_on_full_and_thumb() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(302).setHeader("Location", "https://example.invalid/x"))
+        server.enqueue(MockResponse().setResponseCode(302).setHeader("Location", "https://example.invalid/y"))
+        try {
+            gallery().fetch_image("andromeda")
+            fail("expected failure")
+        } catch (_: IOException) {
+        }
+        assertEquals(2, server.requestCount)
     }
 
     @Test
@@ -315,5 +356,10 @@ class ProfilePictureGalleryTest {
     @Test
     fun thumb_url_shape() {
         assertEquals("https://aster-wallpapers.pages.dev/thumb/x.webp", gallery_thumb_url("x"))
+    }
+
+    @Test
+    fun full_url_shape() {
+        assertEquals("https://aster-wallpapers.pages.dev/full/x.webp", gallery_full_url("x"))
     }
 }
