@@ -1,1 +1,10 @@
-Fixed: money transfer and payment emails, such as e-Transfer notifications, now appear in your Inbox instead of Notifications. With inbox categories on, the Inbox unread count now counts only the mail in your Inbox. Messages from other Aster users no longer show a sender warning on a second device.
+What's new:
+
+- Choose your profile picture from a gallery of images.
+
+Fixed:
+
+- Payment emails, such as e-Transfer notifications, now appear in your Inbox instead of Notifications.
+- With inbox categories on, the Inbox unread count shows only mail in your Inbox.
+- Messages from other Aster users no longer show a sender warning on a second device.
+- Signing up with a taken username tells you and returns you to the username step.
