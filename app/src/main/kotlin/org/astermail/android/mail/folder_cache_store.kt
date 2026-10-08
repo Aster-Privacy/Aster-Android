@@ -30,6 +30,7 @@ import org.astermail.android.storage.search.FolderRowDao
 
 private const val folder_cache_meta_prefs = "aster_folder_cache_meta"
 private const val folder_cache_layout_key = "layout_signature"
+private const val folder_cache_categories_key = "categories_signature"
 private const val folder_cache_stats_prefix = "stats_"
 private val folder_cache_stats_json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
 
@@ -63,6 +64,13 @@ class FolderCacheStore @Inject constructor(
 
     fun set_layout_signature(signature: String) {
         runCatching { meta?.edit()?.putString(folder_cache_layout_key, signature)?.apply() }
+    }
+
+    fun categories_signature(): String? =
+        runCatching { meta?.getString(folder_cache_categories_key, null) }.getOrNull()
+
+    fun set_categories_signature(signature: String) {
+        runCatching { meta?.edit()?.putString(folder_cache_categories_key, signature)?.apply() }
     }
 
     fun cached_stats(account_id: String?): org.astermail.android.api.mail.MailUserStatsResponse? {

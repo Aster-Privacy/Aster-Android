@@ -25,6 +25,7 @@ import app.cash.turbine.test
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
+import io.mockk.verify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -2849,5 +2850,101 @@ class MailViewModelTest {
         assertTrue(vm.inbox_state.value.items.none { it.is_read })
         io.mockk.unmockkStatic(Dispatchers::class)
         coVerify(exactly = 0) { repository.mark_read("id_1", true, any()) }
+    }
+    private fun rows_in_category(
+        prefix: String,
+        count: Int,
+        category: String,
+        day: Int,
+        has_more: Boolean,
+        next_cursor: String?,
+    ): InboxPage {
+        val base = fake_inbox_page(count)
+        return base.copy(
+            items = base.items.mapIndexed { i, item ->
+                item.copy(
+                    id = "${prefix}_$i",
+                    thread_token = "${prefix}_thread_$i",
+                    category = category,
+                    timestamp = "2026-04-%02dT10:%02d:00Z".format(day, 59 - i),
+                )
+            },
+            has_more = has_more,
+            next_cursor = next_cursor,
+        )
+    }
+
+    @Test
+    fun `removing custom categories replaces rows still sorted by the old categories`() = runTest {
+        val old_rows = rows_in_category("old", 30, "custom:politics", day = 20, has_more = true, next_cursor = "c1")
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(old_rows)
+        vm.load_inbox()
+        advanceUntilIdle()
+        assertEquals(30, vm.inbox_state.value.items.size)
+
+        val fresh = rows_in_category("fresh", 3, "promotions", day = 26, has_more = true, next_cursor = "c2")
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fresh)
+        every { repository.set_custom_categories(any()) } returns true
+        every { repository.custom_categories_fingerprint } returns 1
+
+        vm.set_custom_categories(emptyList())
+        advanceUntilIdle()
+
+        val items = vm.inbox_state.value.items
+        assertEquals(fresh.items.map { it.id }, items.map { it.id })
+        assertTrue(items.none { it.category.startsWith("custom:") })
+        assertEquals("c2", vm.inbox_state.value.next_cursor)
+        verify { search_index_manager.expire_inbox_sync() }
+        verify { folder_cache_store.set_categories_signature("1") }
+    }
+
+    @Test
+    fun `a disk cache saved under other category rules is replaced at startup`() = runTest {
+        var clears = 0
+        coEvery { folder_cache_store.clear_all() } coAnswers { clears++ }
+        val old_rows = rows_in_category("old", 30, "custom:politics", day = 20, has_more = true, next_cursor = "c1")
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(old_rows)
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        val fresh = rows_in_category("fresh", 3, "updates", day = 26, has_more = true, next_cursor = "c2")
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fresh)
+        every { repository.set_custom_categories(any()) } returns false
+        every { repository.custom_categories_fingerprint } returns 5
+        every { folder_cache_store.categories_signature() } returns "9"
+
+        vm.set_custom_categories(emptyList())
+        advanceUntilIdle()
+
+        assertEquals(fresh.items.map { it.id }, vm.inbox_state.value.items.map { it.id })
+        assertEquals(1, clears)
+        verify { search_index_manager.expire_inbox_sync() }
+        verify { folder_cache_store.set_categories_signature("5") }
+    }
+
+    @Test
+    fun `unchanged category rules with a matching disk cache keep the list`() = runTest {
+        var clears = 0
+        coEvery { folder_cache_store.clear_all() } coAnswers { clears++ }
+        var fetches = 0
+        val rows = rows_in_category("kept", 30, "primary", day = 20, has_more = true, next_cursor = "c1")
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } coAnswers {
+            fetches++
+            Result.success(rows)
+        }
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        every { repository.set_custom_categories(any()) } returns false
+        every { repository.custom_categories_fingerprint } returns 5
+        every { folder_cache_store.categories_signature() } returns "5"
+
+        vm.set_custom_categories(emptyList())
+        advanceUntilIdle()
+
+        assertEquals(30, vm.inbox_state.value.items.size)
+        assertEquals(0, clears)
+        verify(exactly = 0) { search_index_manager.expire_inbox_sync() }
+        assertEquals(1, fetches)
     }
 }
