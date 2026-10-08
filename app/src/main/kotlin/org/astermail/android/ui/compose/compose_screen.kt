@@ -2726,7 +2726,7 @@ fun ComposeScreen(
                             .fillMaxWidth()
                             .height(72.dp)
                             .clickable(
-                                interactionSource = org.astermail.android.design.remember_click_interaction(),
+                                interactionSource = null,
                                 indication = null,
                             ) {
                                 body_editor_ref.value?.let { et ->

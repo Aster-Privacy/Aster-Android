@@ -94,7 +94,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.aster_reduce_motion
-import org.astermail.android.design.aster_ripple
+import androidx.compose.material3.ripple
 
 private val menu_surface_shape = AsterShapes.island
 private val menu_item_shape = AsterShapes.control
@@ -376,7 +376,7 @@ fun aster_menu_item(
             .clip(menu_item_shape)
             .clickable(
                 interactionSource = interaction,
-                indication = aster_ripple(color = colors.text_secondary),
+                indication = ripple(color = colors.text_secondary),
                 enabled = enabled,
                 role = Role.Button,
                 onClick = on_click,

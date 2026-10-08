@@ -21,7 +21,6 @@
 
 package org.astermail.android.design.components
 
-import org.astermail.android.design.remember_click_interaction
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -58,7 +57,7 @@ import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.AsterShapes
-import org.astermail.android.design.aster_ripple
+import androidx.compose.material3.ripple
 import org.astermail.android.design.control_surface_color
 import org.astermail.android.design.disabled_surface_color
 import org.astermail.android.design.darken
@@ -222,7 +221,7 @@ private fun depth_button(
 ) {
     val colors = AsterMaterial.colors
     val interactive = enabled && !is_loading
-    val interaction = remember_click_interaction()
+    val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale = press_scale(pressed, interactive, "btn_scale")
     val resting_fill = if (enabled) fill else disabled_surface_color(colors)
@@ -293,7 +292,7 @@ fun AsterGhostButton(
 ) {
     val colors = AsterMaterial.colors
     val interactive = enabled && !is_loading
-    val interaction = remember_click_interaction()
+    val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale = press_scale(pressed, interactive, "ghost_btn_scale")
     val content_color = if (enabled) colors.accent_blue else colors.text_muted
@@ -306,7 +305,7 @@ fun AsterGhostButton(
                 enabled = interactive,
                 role = Role.Button,
                 interactionSource = interaction,
-                indication = aster_ripple(color = colors.accent_blue),
+                indication = ripple(color = colors.accent_blue),
                 onClick = onClick,
             )
             .padding(horizontal = AsterSpacing.lg),

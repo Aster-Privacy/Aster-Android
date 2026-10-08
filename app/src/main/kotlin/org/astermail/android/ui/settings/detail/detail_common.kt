@@ -86,7 +86,7 @@ import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.aster_haptic
-import org.astermail.android.design.aster_tap_feedback
+import org.astermail.android.design.aster_perform_haptic
 import org.astermail.android.design.components.AsterAlert
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
@@ -388,7 +388,7 @@ internal fun settings_toggle_row(
                 indication = androidx.compose.material3.ripple(),
                 interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
                 onValueChange = { value ->
-                    view.aster_tap_feedback(
+                    view.aster_perform_haptic(
                         if (value) aster_haptic.toggle_on else aster_haptic.toggle_off,
                     )
                     on_change(value)
