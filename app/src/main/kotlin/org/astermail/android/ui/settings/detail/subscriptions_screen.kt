@@ -161,7 +161,7 @@ private val family_features = listOf(
     R.string.settings_plan_bullet_family_members,
     R.string.settings_plan_bullet_unlimited_aliases,
     R.string.settings_plan_bullet_shared_aliases,
-    R.string.settings_plan_bullet_nova_domains,
+    R.string.settings_plan_bullet_unlimited_domains,
     R.string.settings_plan_bullet_e2ee,
     R.string.settings_plan_bullet_zero_knowledge,
     R.string.settings_plan_bullet_priority_support,
