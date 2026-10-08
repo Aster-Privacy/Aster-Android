@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="category_mail_elsewhere_title">As suas mensagens estão noutras categorias</string>
+    <string name="open_category_named">Abrir %1$s</string>
+    <plurals name="category_unread_jump">
+        <item quantity="one">%1$d e-mail não lido em %2$s</item>
+        <item quantity="many">%1$d e-mails não lidos em %2$s</item>
+        <item quantity="other">%1$d e-mails não lidos em %2$s</item>
+    </plurals>
+</resources>

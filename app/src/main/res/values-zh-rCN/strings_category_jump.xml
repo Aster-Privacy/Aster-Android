@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="category_mail_elsewhere_title">你的邮件在其他类别中</string>
+    <string name="open_category_named">打开%1$s</string>
+    <plurals name="category_unread_jump">
+        <item quantity="other">%2$s 中有 %1$d 封未读邮件</item>
+    </plurals>
+</resources>

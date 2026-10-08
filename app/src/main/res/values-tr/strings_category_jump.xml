@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="category_mail_elsewhere_title">E-postalarınız diğer kategorilerde</string>
+    <string name="open_category_named">Aç: %1$s</string>
+    <plurals name="category_unread_jump">
+        <item quantity="one">%2$s içinde %1$d okunmamış e-posta</item>
+        <item quantity="other">%2$s içinde %1$d okunmamış e-posta</item>
+    </plurals>
+</resources>

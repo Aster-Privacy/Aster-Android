@@ -1299,3 +1299,13 @@ val TRANSACTIONS_SUBJECT_PATTERNS: List<Regex> = listOf(
     Regex("""\breturn\s+(?:label|confirmation|received)\b""", RegexOption.IGNORE_CASE),
     Regex("""\bpre[\s-]?order\b""", RegexOption.IGNORE_CASE),
 )
+
+val PERSON_TO_PERSON_PAYMENT_SUBJECT_PATTERNS: List<Regex> = listOf(
+    Regex("""\be[\s-]?transfer\b""", RegexOption.IGNORE_CASE),
+    Regex("""\bvirement\s+interac\b""", RegexOption.IGNORE_CASE),
+    Regex("""\bsent\s+you\s+(?:money|funds|a\s+payment|an?\s+e[\s-]?transfer|\p{Sc})""", RegexOption.IGNORE_CASE),
+    Regex("""\bpaid\s+you\b""", RegexOption.IGNORE_CASE),
+    Regex("""\byou(?:'ve|\s+have)?\s+(?:got|received)\s+(?:money|funds|\p{Sc})""", RegexOption.IGNORE_CASE),
+    Regex("""\brequest(?:ed|ing|s)?\s+(?:money|funds|\p{Sc}[\d.,]+|a\s+payment)\s+from\s+you\b""", RegexOption.IGNORE_CASE),
+    Regex("""\bvous\s+a\s+envoy""", RegexOption.IGNORE_CASE),
+)

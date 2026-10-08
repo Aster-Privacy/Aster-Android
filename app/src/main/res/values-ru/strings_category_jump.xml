@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="category_mail_elsewhere_title">Ваши письма находятся в других категориях</string>
+    <string name="open_category_named">Открыть «%1$s»</string>
+    <plurals name="category_unread_jump">
+        <item quantity="one">%1$d непрочитанное письмо в категории «%2$s»</item>
+        <item quantity="few">%1$d непрочитанных письма в категории «%2$s»</item>
+        <item quantity="many">%1$d непрочитанных писем в категории «%2$s»</item>
+        <item quantity="other">%1$d непрочитанного письма в категории «%2$s»</item>
+    </plurals>
+</resources>
