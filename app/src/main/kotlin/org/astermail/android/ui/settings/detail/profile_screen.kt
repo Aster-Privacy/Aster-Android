@@ -214,6 +214,7 @@ fun ProfileScreen(
                     val data_uri = withContext(Dispatchers.Default) { image_bytes_as_data_uri(bytes) }
                     val success = if (data_uri != null) vm.update_profile_picture(data_uri) else false
                     photo_uploading = false
+                    photo_failed = !success
                     success
                 }.await()
             },
