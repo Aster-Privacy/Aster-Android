@@ -760,7 +760,7 @@ fun SearchScreen(
         if (select_mode) {
             search_select_top_bar(
                 selected_count = selected_ids.size,
-                on_close = ::exit_select_mode,
+                on_close = { exit_select_mode() },
                 on_select_all = {
                     val all_selected = result_threads.isNotEmpty() &&
                         selected_ids.size >= result_threads.size
@@ -1030,7 +1030,7 @@ fun SearchScreen(
                         on_open_email(id)
                     }
                 },
-                on_toggle_selection = ::toggle_selection,
+                on_toggle_selection = { toggle_selection(it) },
                 on_enter_select_mode = { id ->
                     dismiss_keyboard()
                     select_mode = true
@@ -1050,7 +1050,7 @@ fun SearchScreen(
                 search_select_bottom_bar(
                     selected_count = selected_ids.size,
                     custom_actions = selection_toolbar_slots,
-                    on_action = ::run_selection_action,
+                    on_action = { run_selection_action(it) },
                     on_more = { show_selection_overflow = true },
                     selection_all_starred = selection_all_starred,
                     selection_all_read = selection_all_read,

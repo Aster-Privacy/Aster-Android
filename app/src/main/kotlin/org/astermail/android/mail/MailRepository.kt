@@ -173,6 +173,7 @@ private const val BULK_SCOPE_COMPLETION_DELAY_MS = 750L
 private const val BULK_SCOPE_MAX_ROUNDS = 1_000
 internal const val SNOOZE_BULK_LIMIT = 100
 internal const val BULK_SCOPE_ID_LIMIT = 1_000
+private val SYSTEM_FOLDER_IDS = setOf("inbox", "sent", "drafts", "starred", "trash", "spam", "archive", "scheduled", "snoozed")
 private const val ENVELOPE_KEY_CACHE_MAX_ENTRIES = 32
 private const val SCHEDULED_KEY_VERSION = "astermail-scheduled-v1"
 private val ACTIVE_SCHEDULED_STATUSES = setOf("pending", "sending", "failed")
@@ -3203,13 +3204,20 @@ class MailRepository @Inject constructor(
 
     fun folder_supports_bulk_scope(folder: String): Boolean = when (folder) {
         "inbox", "sent", "starred", "trash", "spam", "archive", "snoozed" -> true
-        else -> (folder.startsWith("label:") && folder.length > "label:".length) ||
+        else -> scope_label_token(folder) != null ||
             (folder.startsWith("tag:") && folder.length > "tag:".length)
+    }
+
+    internal fun scope_label_token(folder: String): String? = when {
+        folder.startsWith("label:") -> folder.removePrefix("label:").takeIf { it.isNotEmpty() }
+        folder in SYSTEM_FOLDER_IDS || is_all_mail_folder(folder) -> null
+        is_folder_token(folder) -> folder
+        else -> null
     }
 
     suspend fun collect_scope_ids(folder: String): Result<ScopeIds> = runCatching {
         require(folder_supports_bulk_scope(folder)) { "folder $folder has no scope listing" }
-        val label_token = folder.takeIf { it.startsWith("label:") }?.removePrefix("label:")
+        val label_token = scope_label_token(folder)
         val tag_token = folder.takeIf { it.startsWith("tag:") }?.removePrefix("tag:")
         val is_token_scope = label_token != null || tag_token != null
         val locked = org.astermail.android.folders.folder_lock_store.locked_folder_tokens()
@@ -3311,12 +3319,14 @@ class MailRepository @Inject constructor(
             "spam" -> BulkScopeFilter(is_spam = true)
             "archive" -> BulkScopeFilter(is_archived = true, is_trashed = false, is_spam = false)
             "snoozed" -> BulkScopeFilter(is_snoozed = true, is_trashed = false, is_spam = false)
-            else -> when {
-                folder.startsWith("label:") ->
-                    BulkScopeFilter(label_token = folder.removePrefix("label:"), is_trashed = false, is_spam = false)
-                folder.startsWith("tag:") ->
-                    BulkScopeFilter(tag_token = folder.removePrefix("tag:"), is_trashed = false, is_spam = false)
-                else -> BulkScopeFilter(is_trashed = false, is_spam = false)
+            else -> {
+                val label_token = scope_label_token(folder)
+                val tag_token = folder.takeIf { it.startsWith("tag:") }?.removePrefix("tag:")?.takeIf { it.isNotEmpty() }
+                when {
+                    label_token != null -> BulkScopeFilter(label_token = label_token, is_trashed = false, is_spam = false)
+                    tag_token != null -> BulkScopeFilter(tag_token = tag_token, is_trashed = false, is_spam = false)
+                    else -> throw IllegalArgumentException("folder $folder has no bulk scope")
+                }
             }
         }
     }

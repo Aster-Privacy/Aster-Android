@@ -1057,7 +1057,7 @@ fun InboxScreen(
         "scheduled" -> inbox_state.stats?.scheduled ?: 0
         "spam" -> inbox_state.stats?.spam ?: 0
         "trash" -> inbox_state.stats?.trash ?: 0
-        else -> if (current_folder.startsWith("label:") || current_folder.startsWith("tag:")) {
+        else -> if (mail_vm.folder_supports_scope_selection(current_folder)) {
             inbox_state.total
         } else {
             0
@@ -2480,10 +2480,10 @@ fun InboxScreen(
                             select_mode = true
                             selected_ids.clear()
                         },
-                        on_refresh = ::do_refresh,
+                        on_refresh = { do_refresh() },
                         on_mark_all_read = { target_read -> mark_all_read(target_read) },
                         has_unread = threads.any { it.has_unread },
-                        on_select_all = ::select_all,
+                        on_select_all = { select_all() },
                         on_open_settings = on_open_settings,
                         on_open_upgrade = on_open_upgrade,
                         show_upgrade = show_upgrade_button,
@@ -2502,13 +2502,13 @@ fun InboxScreen(
                         show_tools = tools_visible,
                         active_filter = active_filter,
                         on_filter_change = { active_filter = it },
-                        on_quick_action = ::run_quick_action,
+                        on_quick_action = { run_quick_action(it) },
                         selection_content = if (select_mode) {
                             {
                                 select_mode_top_bar(
                                     selected_count = selection_count,
-                                    on_close = ::exit_select_mode,
-                                    on_select_all = ::toggle_select_all,
+                                    on_close = { exit_select_mode() },
+                                    on_select_all = { toggle_select_all() },
                                     counting = select_all_loading,
                                     all_selected = select_all_active ||
                                         (visible_threads.isNotEmpty() && selection_count >= visible_threads.size),
@@ -2566,7 +2566,7 @@ fun InboxScreen(
             select_mode_bottom_bar(
                 selected_count = selection_count,
                 custom_actions = selection_toolbar_slots,
-                on_action = ::run_selection_action,
+                on_action = { run_selection_action(it) },
                 on_more = { show_selection_overflow = true },
                 current_folder = current_folder,
                 selection_all_starred = selection_all_starred,
@@ -2818,7 +2818,7 @@ fun InboxScreen(
                 confirm_thread_id_pending = null
             }
             org.astermail.android.design.components.AsterAlertDialog(
-                on_dismiss = ::dismiss_confirm,
+                on_dismiss = { dismiss_confirm() },
                 title = stringResource(when (pending_action) {
                     "archive" -> R.string.confirm_archive_title
                     "delete", "trash" -> R.string.confirm_trash_title

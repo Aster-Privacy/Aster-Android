@@ -623,6 +623,41 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `custom folder opened by its bare token supports bulk scope`() {
+        assertTrue(repo.folder_supports_bulk_scope("4JB5b0fX1K/XLf+Q3RpcSg=="))
+        assertEquals("4JB5b0fX1K/XLf+Q3RpcSg==", repo.folder_to_bulk_scope("4JB5b0fX1K/XLf+Q3RpcSg==").label_token)
+        assertFalse(repo.folder_supports_bulk_scope("all"))
+        assertFalse(repo.folder_supports_bulk_scope("all+spam"))
+        assertFalse(repo.folder_supports_bulk_scope("not a token"))
+        assertEquals(null, repo.folder_to_bulk_scope("spam").label_token)
+        assertEquals(null, repo.folder_to_bulk_scope("sent").label_token)
+    }
+
+    @Test
+    fun `unknown folders never fall back to an unscoped bulk filter`() {
+        listOf("all", "all+spam", "drafts", "scheduled", "routing:alias_token", "label:", "tag:").forEach { folder ->
+            assertTrue(folder, runCatching { repo.folder_to_bulk_scope(folder) }.isFailure)
+        }
+    }
+
+    @Test
+    fun `bulk_scope_action on a bare folder token scopes by that folder`() = runTest {
+        coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 306)
+
+        val result = repo.bulk_scope_action("4JB5b0fX1K/XLf+Q3RpcSg==", "archive")
+
+        assertEquals(306, result.getOrThrow().affected_count)
+        coVerify {
+            mail_api.bulk_action(
+                BulkScopeRequest(
+                    action = "archive",
+                    scope = BulkScopeFilter(label_token = "4JB5b0fX1K/XLf+Q3RpcSg==", is_trashed = false, is_spam = false),
+                ),
+            )
+        }
+    }
+
+    @Test
     fun `custom tag folder supports bulk scope`() {
         assertTrue(repo.folder_supports_bulk_scope("tag:work_token"))
         assertFalse(repo.folder_supports_bulk_scope("tag:"))
@@ -756,7 +791,7 @@ class MailRepositoryTest {
 
     @Test
     fun `every scoped folder except trash and spam excludes trashed and spam mail`() {
-        listOf("inbox", "sent", "starred", "archive", "snoozed", "label:a", "tag:b").forEach { folder ->
+        listOf("inbox", "sent", "starred", "archive", "snoozed", "label:a", "tag:b", "4JB5b0fX1K/XLf+Q3RpcSg==").forEach { folder ->
             val scope = repo.folder_to_bulk_scope(folder)
             assertEquals(folder, false, scope.is_trashed)
             assertEquals(folder, false, scope.is_spam)
