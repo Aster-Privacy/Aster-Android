@@ -27,6 +27,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.slot
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.test.runTest
 import org.astermail.android.api.keys.KeysApi
@@ -52,6 +53,7 @@ import org.astermail.android.storage.SessionKeyStore
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -409,5 +411,30 @@ class RatchetEncryptorIdentityPinTest {
         assertTrue(thrown is RatchetEncryptionException)
         assertTrue(thrown !is RecipientKeyUntrustedException)
         coVerify(exactly = 0) { state_store.save(any()) }
+    }
+
+    private fun recipient_x3dh_version(envelope: String): Int? {
+        val parsed = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+            .decodeFromString(RatchetEnvelope.serializer(), envelope)
+        return parsed.recipients.values.single().x3dh_v
+    }
+
+    @Test
+    fun `reused session sends the x3dh version its synced bootstrap was created with`() = runTest {
+        every { identity_pins.evaluate(conversation_id, recipient_identity_b64) } returns
+            IdentityPinOutcome.UNCHANGED
+        val saved = slot<RatchetState>()
+        coEvery { state_store.save(capture(saved)) } returns Unit
+
+        val first = send().getOrThrow()
+        assertNotNull(first)
+        assertNull(recipient_x3dh_version(first!!))
+
+        val synced = saved.captured
+        synced.bootstrap = synced.bootstrap!!.copy(x3dh_version = 2)
+        coEvery { state_store.load(conversation_id) } returns synced
+
+        val second = send().getOrThrow()
+        assertEquals(2, recipient_x3dh_version(second!!))
     }
 }

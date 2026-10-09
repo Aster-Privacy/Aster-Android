@@ -377,6 +377,7 @@ class RatchetEncryptor @Inject constructor(
         var ephemeral_b64: String? = null
         var pq_ciphertext_b64: String? = null
         var pq_key_id: Int? = null
+        var x3dh_version: Int? = null
 
         if (state == null) {
             val resolved_bundle = (bundle ?: try {
@@ -442,6 +443,7 @@ class RatchetEncryptor @Inject constructor(
             ephemeral_b64 = boot.ephemeral_key
             pq_ciphertext_b64 = boot.pq_ciphertext
             pq_key_id = boot.pq_key_id
+            x3dh_version = boot.x3dh_version
         }
 
         val recovery_keys = resolve_recovery_lane_keys(bundle, state.bootstrap)
@@ -474,6 +476,7 @@ class RatchetEncryptor @Inject constructor(
             nonce = RatchetCrypto.b64_encode(encrypted.nonce),
             pq_ciphertext = pq_ciphertext_b64,
             pq_key_id = pq_key_id,
+            x3dh_v = x3dh_version,
             recovery = RecoveryLaneData(
                 v = recovery.v,
                 epk = recovery.epk,

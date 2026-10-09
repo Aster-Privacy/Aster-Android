@@ -82,6 +82,7 @@ data class BootstrapData(
     val sender_identity_key: String? = null,
     val recipient_identity_key: String? = null,
     val recipient_pq_identity_key: String? = null,
+    val x3dh_version: Int? = null,
 )
 
 @Serializable
