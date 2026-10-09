@@ -431,6 +431,52 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `snooze_bulk sends 300 ids as three requests of at most 100`() = runTest {
+        val sent = mutableListOf<List<String>>()
+        coEvery { snooze_api.bulk_snooze(any()) } answers {
+            val request = firstArg<org.astermail.android.api.snooze.BulkSnoozeRequest>()
+            sent.add(request.mail_item_ids)
+            org.astermail.android.api.snooze.BulkSnoozeResponse(snoozed_count = request.mail_item_ids.size)
+        }
+        val ids = (1..300).map { "id_$it" }
+
+        val outcome = repo.snooze_bulk(ids, "2026-10-10T09:00:00Z").getOrThrow()
+
+        assertEquals(listOf(100, 100, 100), sent.map { it.size })
+        assertEquals(ids, sent.flatten())
+        assertTrue(outcome.failed_ids.isEmpty())
+        assertEquals(0, outcome.skipped)
+        coVerify(exactly = 0) { snooze_api.snooze(any()) }
+    }
+
+    @Test
+    fun `snooze_bulk reports the ids of a rejected chunk and keeps going`() = runTest {
+        var call = 0
+        coEvery { snooze_api.bulk_snooze(any()) } answers {
+            call += 1
+            if (call == 2) throw org.astermail.android.api.ApiError.PlanLimitExceeded("limit", "snoozed emails")
+            val request = firstArg<org.astermail.android.api.snooze.BulkSnoozeRequest>()
+            org.astermail.android.api.snooze.BulkSnoozeResponse(snoozed_count = request.mail_item_ids.size - 1)
+        }
+        val ids = (1..250).map { "id_$it" }
+
+        val outcome = repo.snooze_bulk(ids, "2026-10-10T09:00:00Z").getOrThrow()
+
+        assertEquals(3, call)
+        assertEquals(ids.subList(100, 200).toSet(), outcome.failed_ids)
+        assertEquals(2, outcome.skipped)
+    }
+
+    @Test
+    fun `snooze_bulk fails on a transient error so the action can be retried`() = runTest {
+        coEvery { snooze_api.bulk_snooze(any()) } throws java.io.IOException("offline")
+
+        val result = repo.snooze_bulk(listOf("a", "b"), "2026-10-10T09:00:00Z")
+
+        assertTrue(result.isFailure)
+    }
+
+    @Test
     fun `mark_read calls patch_metadata with is_read true`() = runTest {
         repo.mark_read("item_1", true)
         coVerify { mail_api.patch_metadata("item_1", PatchMetadataRequest(is_read = true)) }

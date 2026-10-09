@@ -897,6 +897,52 @@ class MailViewModelTest {
     }
 
     @Test
+    fun `snooze_bulk sends the whole selection in one repository call`() = runTest {
+        val page = fake_inbox_page(5)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        val bulk_calls = mutableListOf<List<String>>()
+        var single_calls = 0
+        coEvery { repository.snooze_bulk(any(), any()) } answers {
+            bulk_calls.add(firstArg())
+            Result.success(MailRepository.SnoozeBulkOutcome())
+        }
+        coEvery { repository.snooze(any(), any()) } answers {
+            single_calls += 1
+            Result.success(Unit)
+        }
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        val ids = listOf("id_1", "id_2", "id_3")
+        vm.snooze_bulk(ids, "2026-09-03T09:00:00Z", "Tomorrow")
+        advanceUntilIdle()
+
+        assertFalse(vm.inbox_state.value.items.any { it.id in ids })
+        assertEquals(listOf(ids), bulk_calls)
+        assertEquals(0, single_calls)
+    }
+
+    @Test
+    fun `snooze_bulk restores only the ids the server rejected`() = runTest {
+        val page = fake_inbox_page(5)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        coEvery { repository.snooze_bulk(any(), any()) } returns
+            Result.success(MailRepository.SnoozeBulkOutcome(failed_ids = setOf("id_2")))
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.snooze_bulk(listOf("id_1", "id_2", "id_3"), "2026-09-03T09:00:00Z", "Tomorrow")
+        advanceUntilIdle()
+
+        val remaining = vm.inbox_state.value.items.map { it.id }
+        assertTrue("id_2" in remaining)
+        assertFalse("id_1" in remaining)
+        assertFalse("id_3" in remaining)
+    }
+
+    @Test
     fun `toggle_star flips star state and calls repository`() = runTest {
         val page = fake_inbox_page(2)
         coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)

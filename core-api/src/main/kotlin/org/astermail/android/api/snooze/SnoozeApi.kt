@@ -46,8 +46,21 @@ data class SnoozeResponse(
     val snoozed_until: String = "",
 )
 
+@Serializable
+data class BulkSnoozeRequest(
+    val mail_item_ids: List<String>,
+    val snoozed_until: String,
+)
+
+@Serializable
+data class BulkSnoozeResponse(
+    val snoozed_count: Int = 0,
+    val failed_count: Int = 0,
+)
+
 interface SnoozeApi {
     suspend fun snooze(request: SnoozeRequest): SnoozeResponse
+    suspend fun bulk_snooze(request: BulkSnoozeRequest): BulkSnoozeResponse
     suspend fun unsnooze_by_mail_item(mail_item_id: String)
 }
 
@@ -56,6 +69,15 @@ class SnoozeApiImpl(private val client: ApiClient) : SnoozeApi {
 
     override suspend fun snooze(request: SnoozeRequest): SnoozeResponse {
         val response = client.http.post("${client.base_url}$base") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun bulk_snooze(request: BulkSnoozeRequest): BulkSnoozeResponse {
+        val response = client.http.post("${client.base_url}$base/bulk") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)

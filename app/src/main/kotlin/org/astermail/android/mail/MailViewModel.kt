@@ -3362,19 +3362,21 @@ class MailViewModel @Inject constructor(
         pending_removed_ids.addAll(ids)
         protect_removed(ids)
         viewModelScope.launch {
+            var resync = false
             try {
-                val failed_ids = run_bulk_action(ids) { id ->
-                    repository.snooze(id, snoozed_until_iso).isSuccess
+                val outcome = repository.snooze_bulk(ids, snoozed_until_iso).getOrElse {
+                    if (it is kotlinx.coroutines.CancellationException) throw it
+                    MailRepository.SnoozeBulkOutcome(failed_ids = id_set)
                 }
-                val ok_ids = ids.filter { it !in failed_ids }.toSet()
-                if (ok_ids.isNotEmpty()) {
+                val failed_set = outcome.failed_ids
+                if (failed_set.size < ids.size) {
                     invalidate_caches(listOf("inbox", "snoozed"))
                     load_stats(force = true)
                 }
-                if (failed_ids.isNotEmpty()) {
-                    val failed_set = failed_ids.toSet()
+                if (failed_set.isNotEmpty() || outcome.skipped > 0) {
                     undo_local_restore(removed_items.filter { it.id in failed_set })
                     undo_search_restore(search_removed.filter { it.id in failed_set })
+                    resync = outcome.skipped > 0
                     emit_toast(context.getString(R.string.couldnt_snooze))
                 } else {
                     emit_toast(context.getString(R.string.snoozed_until, label))
@@ -3386,6 +3388,10 @@ class MailViewModel @Inject constructor(
                 emit_toast(context.getString(R.string.couldnt_snooze))
             } finally {
                 pending_removed_ids.removeAll(id_set)
+            }
+            if (resync) {
+                clear_removal_protection(id_set)
+                refresh()
             }
         }
     }

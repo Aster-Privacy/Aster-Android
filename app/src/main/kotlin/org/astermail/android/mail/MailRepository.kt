@@ -171,6 +171,7 @@ internal const val SCOPE_ID_MAX = 50_000
 private const val SCOPE_ID_MAX_PAGES = 200
 private const val BULK_SCOPE_COMPLETION_DELAY_MS = 750L
 private const val BULK_SCOPE_MAX_ROUNDS = 1_000
+internal const val SNOOZE_BULK_LIMIT = 100
 private const val ENVELOPE_KEY_CACHE_MAX_ENTRIES = 32
 private const val SCHEDULED_KEY_VERSION = "astermail-scheduled-v1"
 private val ACTIVE_SCHEDULED_STATUSES = setOf("pending", "sending", "failed")
@@ -622,7 +623,7 @@ class MailRepository @Inject constructor(
                 payload.folder?.let { star_scope_now(it, payload.value == "true") } ?: Result.success(Unit)
             PendingActionKind.pin -> replay_each(ids) { toggle_pin_now(it, true) }
             PendingActionKind.unpin -> replay_each(ids) { toggle_pin_now(it, false) }
-            PendingActionKind.snooze -> replay_each(ids) { snooze_now(it, payload.value.orEmpty()) }
+            PendingActionKind.snooze -> snooze_bulk_now(ids, payload.value.orEmpty())
             PendingActionKind.unsnooze -> replay_each(ids) { unsnooze_now(it) }
             PendingActionKind.add_label -> when {
                 token == null -> Result.success(Unit)
@@ -2536,6 +2537,36 @@ class MailRepository @Inject constructor(
             ),
         )
         Unit
+    }
+
+    data class SnoozeBulkOutcome(val failed_ids: Set<String> = emptySet(), val skipped: Int = 0)
+
+    suspend fun snooze_bulk(item_ids: List<String>, snoozed_until_iso: String): Result<SnoozeBulkOutcome> =
+        run_or_queue(
+            PendingActionKind.snooze,
+            PendingActionPayload(ids = item_ids, value = snoozed_until_iso),
+            SnoozeBulkOutcome(),
+        ) { snooze_bulk_now(item_ids, snoozed_until_iso) }
+
+    private suspend fun snooze_bulk_now(item_ids: List<String>, snoozed_until_iso: String): Result<SnoozeBulkOutcome> {
+        val failed = mutableSetOf<String>()
+        var skipped = 0
+        for (chunk in item_ids.filter { it.isNotBlank() }.distinct().chunked(SNOOZE_BULK_LIMIT)) {
+            try {
+                val response = snooze_api.bulk_snooze(
+                    org.astermail.android.api.snooze.BulkSnoozeRequest(
+                        mail_item_ids = chunk,
+                        snoozed_until = snoozed_until_iso,
+                    ),
+                )
+                skipped += (chunk.size - response.snoozed_count).coerceAtLeast(0)
+            } catch (error: Throwable) {
+                if (error is CancellationException && error !is TimeoutCancellationException) throw error
+                if (is_transient_failure(error) || error is ApiError.UnauthorizedError) return Result.failure(error)
+                failed.addAll(chunk)
+            }
+        }
+        return Result.success(SnoozeBulkOutcome(failed, skipped))
     }
 
     suspend fun unsnooze(item_id: String): Result<Unit> =
