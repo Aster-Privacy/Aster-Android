@@ -1007,6 +1007,9 @@ fun ComposeScreen(
         .compose_font_color_argb(
             org.astermail.android.api.preferences.effective_compose_font_color(settings_state.preferences),
         )
+    val compose_display_color_argb = compose_default_color_argb?.let {
+        compose_display_text_color(it, colors.bg_primary.toArgb(), colors.text_primary.toArgb())
+    }
     val apply_compose_defaults: (android.text.Editable) -> Unit = apply_defaults@{ editable ->
         editable.getSpans(0, editable.length, android.text.style.AbsoluteSizeSpan::class.java)
             .forEach { editable.removeSpan(it) }
@@ -1022,7 +1025,7 @@ fun ComposeScreen(
         }
         compose_default_color_argb?.let {
             editable.setSpan(
-                android.text.style.ForegroundColorSpan(it),
+                compose_default_color_span(it, compose_display_color_argb ?: it),
                 0,
                 editable.length,
                 android.text.Spanned.SPAN_INCLUSIVE_INCLUSIVE,
@@ -1030,7 +1033,7 @@ fun ComposeScreen(
         }
     }
 
-    LaunchedEffect(compose_default_size_px, compose_default_color_argb, body_editor_ref.value) {
+    LaunchedEffect(compose_default_size_px, compose_default_color_argb, compose_display_color_argb, body_editor_ref.value) {
         val editable = body_editor_ref.value?.text ?: return@LaunchedEffect
         apply_compose_defaults(editable)
     }
