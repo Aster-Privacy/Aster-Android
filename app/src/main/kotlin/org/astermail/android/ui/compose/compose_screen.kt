@@ -2938,6 +2938,7 @@ fun ComposeScreen(
             primary = primary_sender_email,
             options = alias_options,
             custom_domain_set = settings_state.custom_domain_addresses.map { it.address }.toSet(),
+            catch_all_set = alias_options.toSet() - base_alias_options.toSet(),
             on_close = { show_from_sheet = false },
             on_select = { selected ->
                 from_alias = selected
@@ -4210,6 +4211,7 @@ private fun FromAliasSheet(
     primary: String,
     options: List<String>,
     custom_domain_set: Set<String> = emptySet(),
+    catch_all_set: Set<String> = emptySet(),
     on_close: () -> Unit,
     on_select: (String) -> Unit,
     on_set_primary: (String) -> Unit,
@@ -4296,6 +4298,7 @@ private fun FromAliasSheet(
                 items(visible_options, key = { it }) { opt ->
                     val label = when {
                         opt == first_option -> stringResource(R.string.primary_account)
+                        catch_all_set.contains(opt) -> stringResource(R.string.catch_all)
                         custom_domain_set.contains(opt) -> stringResource(R.string.custom_domain)
                         else -> stringResource(R.string.alias)
                     }
@@ -4328,7 +4331,9 @@ private fun FromAliasSheet(
                                 fontSize = 12.sp,
                             )
                         }
-                        Icon(
+                        if (catch_all_set.contains(opt)) {
+                            Spacer(Modifier.size(36.dp))
+                        } else Icon(
                             imageVector = if (opt == primary) pin_icon_filled else pin_icon,
                             contentDescription = stringResource(R.string.set_as_primary),
                             tint = if (opt == primary) colors.accent_blue else colors.text_muted,
