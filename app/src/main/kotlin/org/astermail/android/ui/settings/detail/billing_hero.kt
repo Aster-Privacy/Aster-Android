@@ -76,13 +76,11 @@ import org.astermail.android.design.mirror_in_rtl
 internal enum class billing_hero_status { free, active, ending, attention }
 
 @Composable
-internal fun billing_wordmark() {
+internal fun billing_wordmark(modifier: Modifier = Modifier) {
     Image(
         painter = painterResource(R.drawable.aster_wordmark),
         contentDescription = null,
-        modifier = Modifier
-            .padding(start = AsterSpacing.xs, top = AsterSpacing.xs, bottom = AsterSpacing.lg)
-            .height(26.dp),
+        modifier = modifier.height(20.dp),
     )
 }
 
@@ -130,6 +128,8 @@ internal fun billing_hero_card(
     AsterCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                billing_wordmark(modifier = Modifier.padding(top = 2.dp))
+                Spacer(Modifier.width(AsterSpacing.sm))
                 Text(
                     text = plan_name,
                     color = colors.text_primary,

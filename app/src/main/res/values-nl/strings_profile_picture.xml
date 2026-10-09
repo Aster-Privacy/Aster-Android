@@ -19,4 +19,5 @@
     <string name="profile_picture_cat_ocean">Oceaan</string>
     <string name="profile_picture_cat_desert">Woestijn</string>
     <string name="profile_picture_credit">Foto: %1$s. Bijgesneden en geschaald.</string>
+    <string name="profile_picture_remove_hint">Toon in plaats daarvan je initialen</string>
 </resources>
