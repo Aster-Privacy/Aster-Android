@@ -1,0 +1,11 @@
+What's new:
+
+- Changing your profile picture opens a full page with a large preview, and the gallery fills the screen.
+- Each picture in the gallery shows its credit underneath.
+- Compare plans opens full screen and shows only the differences at first.
+
+Fixed:
+
+- Profile pictures from the gallery or your device are sharp and centered.
+- Signing in to another account with a passkey no longer fails with "Too many attempts."
+- Tapping a button plays one sound instead of two.
