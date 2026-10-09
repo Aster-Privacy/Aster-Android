@@ -1176,7 +1176,40 @@ private fun wrap_in_quote_details(nodes: List<Node>, insert_before: Node?, paren
     return details
 }
 
+private val LINE_FEED = Regex("\r?\n")
+
+private fun break_preformatted_lines(root: Element) {
+    for (pre in root.select("pre")) {
+        val targets = mutableListOf<TextNode>()
+        fun gather(node: Node) {
+            for (child in node.childNodes()) {
+                if (child is TextNode && child.wholeText.contains('\n')) targets.add(child)
+                else if (child is Element) gather(child)
+            }
+        }
+        gather(pre)
+        for (node in targets) {
+            val parts = node.wholeText.split(LINE_FEED)
+            var anchor: Node = node
+            parts.forEachIndexed { index, part ->
+                if (index > 0) {
+                    val br = Element("br")
+                    anchor.after(br)
+                    anchor = br
+                }
+                if (part.isNotEmpty()) {
+                    val text = TextNode(part)
+                    anchor.after(text)
+                    anchor = text
+                }
+            }
+            node.remove()
+        }
+    }
+}
+
 private fun collapse_by_quote_lines(root: Element) {
+    break_preformatted_lines(root)
     val lines = collect_quote_lines(root)
     val texts = lines.map { it.text }
     val found = find_quote_start(texts) ?: find_trailing_quote(texts) ?: return

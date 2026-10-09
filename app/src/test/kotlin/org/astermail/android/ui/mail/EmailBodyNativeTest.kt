@@ -666,4 +666,26 @@ class EmailBodyNativeTest {
         assertEquals(1, twice.split("aster-quote-toggle").size - 1)
         assertTrue(visible_text(twice).contains("Reply."))
     }
+
+    @Test
+    fun a_quote_inside_preformatted_html_folds() {
+        val prepared = prepare(
+            "<pre>Sounds good.\n\nOn Tue, Oct 6, 2026 at 9:00 AM Someone &lt;a@example.com&gt; wrote:\n" +
+                "&gt; earlier text\n&gt; more text\n</pre>",
+        )
+
+        assertTrue(visible_text(prepared).contains("Sounds good."))
+        assertFalse(visible_text(prepared).contains("earlier text"))
+        assertTrue(hidden_text(prepared).contains("earlier text"))
+    }
+
+    @Test
+    fun a_crlf_plain_quote_folds() {
+        val prepared = prepare_plain(
+            "Thanks.\r\n\r\nOn Tue, Oct 6, 2026 at 9:00 AM Someone <a@example.com> wrote:\r\n> earlier text\r\n",
+        )
+
+        assertTrue(visible_text(prepared).contains("Thanks."))
+        assertFalse(visible_text(prepared).contains("earlier text"))
+    }
 }
