@@ -223,7 +223,12 @@ fun remember_active_theme_blur(): ImageBitmap? {
     return state.value
 }
 
-fun DrawScope.draw_theme_window_slice(bitmap: ImageBitmap, window: Size, origin: androidx.compose.ui.geometry.Offset) {
+fun DrawScope.draw_theme_window_slice(
+    bitmap: ImageBitmap,
+    window: Size,
+    origin: androidx.compose.ui.geometry.Offset,
+    filter: FilterQuality = FilterQuality.High,
+) {
     if (window.width <= 0f || window.height <= 0f) return
     if (size.width <= 0f || size.height <= 0f) return
     val scale = maxOf(window.width / bitmap.width, window.height / bitmap.height)
@@ -238,7 +243,7 @@ fun DrawScope.draw_theme_window_slice(bitmap: ImageBitmap, window: Size, origin:
             srcSize = IntSize(src_w, src_h),
             dstOffset = IntOffset(-origin.x.roundToInt(), -origin.y.roundToInt()),
             dstSize = IntSize(window.width.roundToInt(), window.height.roundToInt()),
-            filterQuality = FilterQuality.High,
+            filterQuality = filter,
         )
     }
 }

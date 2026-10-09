@@ -179,7 +179,12 @@ fun aster_theme_root(content: @Composable () -> Unit) {
                             container.width.toFloat(),
                             container.height.toFloat(),
                         )
-                        draw_theme_window_slice(bitmap, window, origin)
+                        draw_theme_window_slice(
+                            bitmap,
+                            window,
+                            origin,
+                            androidx.compose.ui.graphics.FilterQuality.Low,
+                        )
                         drawRect(color = veil_ink.copy(alpha = org.astermail.android.ui.theme.theme_veil_alpha))
                     }
                 }

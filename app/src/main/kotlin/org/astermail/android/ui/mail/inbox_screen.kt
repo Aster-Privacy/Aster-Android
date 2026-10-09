@@ -1063,10 +1063,12 @@ fun InboxScreen(
             0
         }
     }
-    val visible_threads = if (filter_active) {
-        threads.filter { thread_matches_inbox_filter(it, active_filter) }
-    } else {
-        threads
+    val visible_threads = remember(threads, filter_active, active_filter) {
+        if (filter_active) {
+            threads.filter { thread_matches_inbox_filter(it, active_filter) }
+        } else {
+            threads
+        }
     }
     val top_thread_key = visible_threads.firstOrNull()?.thread_id
     val latest_visible_threads by rememberUpdatedState(visible_threads)

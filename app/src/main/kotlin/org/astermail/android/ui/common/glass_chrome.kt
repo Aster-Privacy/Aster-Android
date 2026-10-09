@@ -37,6 +37,7 @@ import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Dp
@@ -93,7 +94,7 @@ fun Modifier.glass_chrome(
                 }
             }
             drawRect(color = solid)
-            draw_theme_window_slice(blur, window, origin)
+            draw_theme_window_slice(blur, window, origin, FilterQuality.Low)
             drawRect(color = veil.copy(alpha = theme_veil_alpha))
             drawRect(color = tint.copy(alpha = tint.alpha * 0.7f))
             if (masked) {
@@ -129,7 +130,7 @@ fun Modifier.glass_bar(colors: AsterSemanticColors): Modifier {
         .drawBehind {
             drawRect(color = solid)
             val window = Size(container.width.toFloat(), container.height.toFloat())
-            draw_theme_window_slice(blur, window, origin)
+            draw_theme_window_slice(blur, window, origin, FilterQuality.Low)
             drawRect(color = veil.copy(alpha = theme_veil_alpha))
             drawRect(color = tint.copy(alpha = tint.alpha * glass_bar_tint_strength))
         }
