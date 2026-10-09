@@ -234,6 +234,7 @@ fun RegisterPasswordStep(
                 captcha_reset_trigger += 1
             },
             reset_trigger = captcha_reset_trigger,
+            show_fallback = false,
         )
 
         captcha_status_row(

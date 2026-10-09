@@ -228,7 +228,7 @@ fun SettingsScreen(
                         .padding(horizontal = AsterSpacing.lg)
                         .fillMaxWidth(),
                 ) {
-                    Column(modifier = Modifier.padding(vertical = AsterSpacing.xs)) {
+                    Column {
                         section.rows.forEachIndexed { index, row ->
                             if (index > 0) settings_row_gap()
                             settings_row(row) {

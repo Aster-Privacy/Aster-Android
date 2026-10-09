@@ -802,7 +802,7 @@ fun ComposeScreen(
             signature_separator_enabled,
         )
     }
-    var signature_html by rememberSaveable {
+    var signature_html by rememberSaveable(saver = bounded_text_saver) {
         mutableStateOf(
             html_signature_with_separator(
                 preloaded_signature_obj?.takeIf { it.is_html }?.content.orEmpty(),
@@ -812,7 +812,7 @@ fun ComposeScreen(
     }
     var active_signature_placement by remember { mutableStateOf(preloaded_signature_obj?.placement) }
     var active_signature_id by remember { mutableStateOf(preloaded_signature_obj?.id) }
-    var body by rememberSaveable {
+    var body by rememberSaveable(saver = bounded_text_saver) {
         mutableStateOf(
             when {
                 prefill.body.isNotBlank() -> prefill.body
@@ -845,7 +845,7 @@ fun ComposeScreen(
     }
     var initial_to_chips by rememberSaveable { mutableStateOf<List<String>>(emptyList()) }
     var initial_subject by rememberSaveable { mutableStateOf("") }
-    var initial_body by rememberSaveable { mutableStateOf(if (prefill.body.isNotBlank()) "" else body) }
+    var initial_body by rememberSaveable(saver = bounded_text_saver) { mutableStateOf(if (prefill.body.isNotBlank()) "" else body) }
     var initial_cc_chips by rememberSaveable { mutableStateOf<List<String>>(emptyList()) }
     var initial_bcc_chips by rememberSaveable { mutableStateOf<List<String>>(emptyList()) }
     val signature_loaded by settings_vm.signature_loaded.collectAsStateWithLifecycle()
@@ -4625,6 +4625,10 @@ private fun signature_web_card(html: String) {
 
 @Composable
 internal fun signature_html_web_preview(html: String, modifier: Modifier = Modifier) {
+    if (!org.astermail.android.ui.common.remember_webview_usable()) {
+        org.astermail.android.ui.common.webview_unavailable_notice(modifier)
+        return
+    }
     androidx.compose.ui.viewinterop.AndroidView(
         factory = { ctx ->
             android.webkit.WebView(ctx).apply {
@@ -5575,3 +5579,12 @@ private fun compose_status_banner(
         )
     }
 }
+
+internal const val max_saved_text_chars = 50_000
+
+internal fun bounded_saved_text(value: String): String? = value.takeIf { it.length <= max_saved_text_chars }
+
+private val bounded_text_saver = androidx.compose.runtime.saveable.Saver<androidx.compose.runtime.MutableState<String>, String>(
+    save = { bounded_saved_text(it.value) },
+    restore = { androidx.compose.runtime.mutableStateOf(it) },
+)

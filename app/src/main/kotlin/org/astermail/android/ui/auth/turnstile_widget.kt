@@ -24,22 +24,39 @@ package org.astermail.android.ui.auth
 import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.webkit.WebViewAssetLoader
+import kotlinx.coroutines.delay
+import org.astermail.android.R
+import org.astermail.android.design.AsterMaterial
 
 private const val TURNSTILE_SITE_KEY = "0x4AAAAAACNiLyqNYRKmMGIY"
 private const val TURNSTILE_DOMAIN = "app.astermail.org"
@@ -68,6 +85,7 @@ private val turnstile_allowed_hosts = setOf(
 
 private class AssetLoaderWebViewClient(
     private val asset_loader: WebViewAssetLoader,
+    private val on_render_gone: () -> Unit,
 ) : WebViewClient() {
     override fun shouldInterceptRequest(
         view: WebView,
@@ -94,6 +112,7 @@ private class AssetLoaderWebViewClient(
             (view?.parent as? android.view.ViewGroup)?.removeView(view)
             view?.destroy()
         }
+        on_render_gone()
         return true
     }
 }
@@ -105,6 +124,7 @@ fun TurnstileWidget(
     on_error: (String) -> Unit = {},
     on_expired: () -> Unit = {},
     reset_trigger: Int = 0,
+    show_fallback: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val theme = if (org.astermail.android.design.AsterMaterial.colors.is_dark) "dark" else "light"
@@ -112,13 +132,65 @@ fun TurnstileWidget(
     val current_on_error = rememberUpdatedState(on_error)
     val current_on_expired = rememberUpdatedState(on_expired)
     val web_view_ref = remember { mutableStateOf<WebView?>(null) }
+    var attempts by remember { mutableIntStateOf(0) }
+    var exhausted by remember { mutableStateOf(false) }
+    var generation by remember { mutableIntStateOf(0) }
+    var last_failure_at by remember { mutableLongStateOf(0L) }
+    val guarded_on_token: (String) -> Unit = { token ->
+        attempts = 0
+        exhausted = false
+        current_on_token.value(token)
+    }
+    val guarded_on_error: (String) -> Unit = { reason ->
+        last_failure_at = SystemClock.elapsedRealtime()
+        if (attempts >= turnstile_max_auto_resets) exhausted = true
+        current_on_error.value(reason)
+    }
+    val guarded_on_expired: () -> Unit = {
+        last_failure_at = SystemClock.elapsedRealtime()
+        current_on_expired.value()
+    }
+    val live_on_expired = rememberUpdatedState(guarded_on_expired)
+    val live_on_token = rememberUpdatedState(guarded_on_token)
+    val live_on_error = rememberUpdatedState(guarded_on_error)
 
     LaunchedEffect(reset_trigger) {
-        if (reset_trigger > 0) {
-            web_view_ref.value?.evaluateJavascript("_reset()", null)
+        if (reset_trigger <= 0) return@LaunchedEffect
+        val automatic = SystemClock.elapsedRealtime() - last_failure_at < turnstile_auto_window_ms
+        if (!automatic) {
+            attempts = 0
+            exhausted = false
+            val view = web_view_ref.value
+            if (view == null) generation += 1 else view.evaluateJavascript("_reset()", null)
+            return@LaunchedEffect
         }
+        if (exhausted) return@LaunchedEffect
+        if (attempts >= turnstile_max_auto_resets) {
+            exhausted = true
+            return@LaunchedEffect
+        }
+        delay(turnstile_reset_backoff_ms(attempts))
+        attempts += 1
+        web_view_ref.value?.evaluateJavascript("_reset()", null)
     }
 
+    Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+    if (exhausted && show_fallback) {
+        Text(
+            text = stringResource(R.string.captcha_unavailable),
+            style = MaterialTheme.typography.bodySmall,
+            color = AsterMaterial.colors.text_secondary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+        TextButton(onClick = {
+            attempts = 0
+            exhausted = false
+            generation += 1
+        }) {
+            Text(text = stringResource(R.string.captcha_retry))
+        }
+    } else if (!exhausted || web_view_ref.value != null) key(generation) {
     AndroidView(
         factory = { context ->
             runCatching {
@@ -143,14 +215,17 @@ fun TurnstileWidget(
                     settings.setGeolocationEnabled(false)
                     settings.userAgentString = (settings.userAgentString ?: "")
                         .replace("; wv", "")
-                    webViewClient = AssetLoaderWebViewClient(asset_loader)
+                    webViewClient = AssetLoaderWebViewClient(asset_loader) {
+                        web_view_ref.value = null
+                        exhausted = true
+                        live_on_error.value("render_process_gone")
+                    }
                     setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                    setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
                     addJavascriptInterface(
                         TurnstileBridge(
-                            on_token = { current_on_token.value(it) },
-                            on_error = { current_on_error.value(it) },
-                            on_expired = { current_on_expired.value() },
+                            on_token = { live_on_token.value(it) },
+                            on_error = { live_on_error.value(it) },
+                            on_expired = { live_on_expired.value() },
                         ),
                         "AsterBridge",
                     )
@@ -160,11 +235,12 @@ fun TurnstileWidget(
                 }.also { web_view_ref.value = it }
             }.getOrElse { error ->
                 web_view_ref.value = null
+                exhausted = true
                 current_on_error.value(error.message ?: "webview_unavailable")
                 android.widget.FrameLayout(context)
             }
         },
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .height(75.dp),
         onRelease = { view ->
@@ -180,4 +256,12 @@ fun TurnstileWidget(
             web_view_ref.value = null
         },
     )
+    }
+    }
 }
+
+private const val turnstile_max_auto_resets = 3
+private const val turnstile_auto_window_ms = 1_500L
+
+internal fun turnstile_reset_backoff_ms(attempt: Int): Long =
+    1_000L shl attempt.coerceIn(0, 4)

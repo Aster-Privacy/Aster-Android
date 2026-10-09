@@ -81,6 +81,10 @@ internal fun build_quoted_preview_body(
 
 @Composable
 internal fun quoted_html_preview(html: String, modifier: Modifier = Modifier) {
+    if (!org.astermail.android.ui.common.remember_webview_usable()) {
+        org.astermail.android.ui.common.webview_unavailable_notice(modifier)
+        return
+    }
     val colors = AsterMaterial.colors
     val settings_vm = shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()

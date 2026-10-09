@@ -436,6 +436,7 @@ private fun aster_variant_body(
                 on_error = cb.on_captcha_error,
                 on_expired = cb.on_captcha_expired,
                 reset_trigger = fields.captcha_reset_trigger,
+                show_fallback = false,
             )
             captcha_status_row(
                 failed = fields.captcha_failed,

@@ -247,6 +247,10 @@ fun signature_rich_editor(
     on_html_change: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    if (!org.astermail.android.ui.common.remember_webview_usable()) {
+        org.astermail.android.ui.common.webview_unavailable_notice(modifier)
+        return
+    }
     val document = remember { build_signature_document(sanitize_signature_html(initial_html)) }
 
     DisposableEffect(Unit) {

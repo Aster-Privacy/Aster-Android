@@ -1357,6 +1357,7 @@
     <string name="translation_failed">Не удалось перевести</string>
     <string name="translation_wifi_required">Чтобы загрузить этот языковой пакет, подключитесь к Wi-Fi или отключите параметр «Загружать только по Wi-Fi» в настройках.</string>
     <string name="translation_webview_outdated">Чтобы переводить письма, обновите %1$s.</string>
+    <string name="webview_unavailable">Чтобы показать это содержимое, обновите %1$s.</string>
     <string name="translation_webview_update">Обновить</string>
     <string name="translate_webview_outdated_notice">Для перевода нужна более новая версия %1$s. Чтобы переводить письма на этом устройстве, обновите %1$s в Google Play.</string>
     <string name="customize_toolbar">Настроить панель инструментов</string>

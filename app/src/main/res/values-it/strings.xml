@@ -1354,6 +1354,7 @@
     <string name="translation_failed">Traduzione non riuscita</string>
     <string name="translation_wifi_required">Per scaricare questo pacchetto lingua, connettiti a una rete Wi-Fi o disattiva Scarica solo con Wi-Fi nelle Impostazioni.</string>
     <string name="translation_webview_outdated">Per tradurre le email, aggiorna %1$s.</string>
+    <string name="webview_unavailable">Per mostrare questo contenuto, aggiorna %1$s.</string>
     <string name="translation_webview_update">Aggiorna</string>
     <string name="translate_webview_outdated_notice">La traduzione richiede una versione più recente di %1$s. Per tradurre le email su questo dispositivo, aggiorna %1$s da Google Play.</string>
     <string name="customize_toolbar">Personalizza barra strumenti</string>

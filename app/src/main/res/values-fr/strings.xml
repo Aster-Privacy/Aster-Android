@@ -2016,6 +2016,7 @@
     <string name="translation_failed">Échec de la traduction</string>
     <string name="translation_wifi_required">Pour télécharger ce pack linguistique, connectez-vous à un réseau Wi-Fi ou désactivez Télécharger uniquement en Wi-Fi dans les Paramètres.</string>
     <string name="translation_webview_outdated">Pour traduire vos e-mails, mettez à jour %1$s.</string>
+    <string name="webview_unavailable">Pour afficher ce contenu, mettez à jour %1$s.</string>
     <string name="translation_webview_update">Mettre à jour</string>
     <string name="translate_webview_outdated_notice">La traduction nécessite une version plus récente de %1$s. Pour traduire vos e-mails sur cet appareil, mettez à jour %1$s depuis Google Play.</string>
     <string name="reading_toolbar">Lecture d\'e-mail</string>

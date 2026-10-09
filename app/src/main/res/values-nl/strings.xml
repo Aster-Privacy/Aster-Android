@@ -1351,6 +1351,7 @@
     <string name="translation_failed">Vertalen mislukt</string>
     <string name="translation_wifi_required">Maak verbinding met wifi of zet Alleen downloaden via wifi uit in Instellingen om dit taalpakket te downloaden.</string>
     <string name="translation_webview_outdated">Werk %1$s bij om e-mail te vertalen.</string>
+    <string name="webview_unavailable">Werk %1$s bij om deze inhoud te tonen.</string>
     <string name="translation_webview_update">Bijwerken</string>
     <string name="translate_webview_outdated_notice">Vertalen vereist een nieuwere versie van %1$s. Werk %1$s bij via Google Play om e-mail op dit apparaat te vertalen.</string>
     <string name="customize_toolbar">Werkbalk aanpassen</string>

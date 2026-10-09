@@ -1348,6 +1348,7 @@
     <string name="translation_failed">翻訳に失敗しました</string>
     <string name="translation_wifi_required">この言語パックをダウンロードするには、Wi-Fi に接続するか、設定で「Wi-Fi 接続時のみダウンロード」をオフにしてください。</string>
     <string name="translation_webview_outdated">メールを翻訳するには、%1$s を更新してください。</string>
+    <string name="webview_unavailable">このコンテンツを表示するには、%1$s を更新してください。</string>
     <string name="translation_webview_update">更新</string>
     <string name="translate_webview_outdated_notice">翻訳には新しいバージョンの %1$s が必要です。このデバイスでメールを翻訳するには、Google Play で %1$s を更新してください。</string>
     <string name="customize_toolbar">ツールバーをカスタマイズ</string>
