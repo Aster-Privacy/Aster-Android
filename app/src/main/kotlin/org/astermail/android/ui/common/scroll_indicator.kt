@@ -18,30 +18,46 @@ package org.astermail.android.ui.common
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.MutatePriority
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.stopScroll
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.aster_haptic
 import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.design.remember_haptic
+import org.astermail.android.ui.theme.local_accessibility
 import kotlin.math.max
 import kotlin.math.min
 
@@ -53,6 +69,11 @@ private const val indicator_hide_delay_ms = 1000L
 private const val indicator_fade_in_ms = 90
 private const val indicator_fade_out_ms = 280
 private const val indicator_alpha = 0.55f
+private val bar_touch_width = 28.dp
+private val bar_width = 6.dp
+private val bar_width_active = 10.dp
+private val bar_min_thumb = 44.dp
+private const val bar_hide_delay_ms = 1400L
 
 internal data class scroll_thumb(val top: Float, val height: Float)
 
@@ -69,6 +90,19 @@ internal fun scroll_thumb_geometry(
     val height = (track_px * viewport_px / content_px).coerceIn(min(min_thumb_px, track_px), track_px)
     val progress = (offset_px / (content_px - viewport_px)).coerceIn(0f, 1f)
     return scroll_thumb(top = progress * (track_px - height), height = height)
+}
+
+internal fun thumb_drag_to_content_delta(
+    thumb_delta_px: Float,
+    track_px: Float,
+    thumb_px: Float,
+    content_px: Float,
+    viewport_px: Float,
+): Float {
+    val travel = track_px - thumb_px
+    val range = content_px - viewport_px
+    if (travel <= 0f || range <= 0f) return 0f
+    return thumb_delta_px * range / travel
 }
 
 internal fun scroll_thumb_left(
@@ -226,67 +260,126 @@ fun Modifier.horizontal_scroll_indicator(
 }
 
 @Composable
-fun Modifier.vertical_scroll_indicator(
+fun vertical_scroll_bar(
     state: LazyListState,
+    modifier: Modifier = Modifier,
     bottom_inset: Dp = 0.dp,
-): Modifier {
-    val color = AsterMaterial.colors.text_muted.copy(alpha = indicator_alpha)
+) {
+    val colors = AsterMaterial.colors
+    val idle_color = colors.text_muted.copy(alpha = indicator_alpha)
+    val active_color = colors.accent_blue
     val reduce_motion = aster_reduce_motion()
     val live_reduce_motion by rememberUpdatedState(reduce_motion)
+    val haptics = remember_haptic()
+    val haptic_enabled = local_accessibility.current.haptic_enabled
+    val scope = rememberCoroutineScope()
     val alpha = remember(state) { Animatable(0f) }
     val estimator = remember(state) { lazy_extent_estimator() }
+    val geometry = remember(state) { FloatArray(5) }
+    var dragging by remember(state) { mutableStateOf(false) }
+    val shown by remember(state) { derivedStateOf { alpha.value > 0f } }
 
     LaunchedEffect(state) {
-        snapshotFlow { state.isScrollInProgress }.collectLatest { scrolling ->
-            if (scrolling) {
+        snapshotFlow { state.layoutInfo.visibleItemsInfo.map { Triple(it.index, it.key, it.size) } }
+            .collect { items -> items.forEach { estimator.record(it.first, it.second, it.third) } }
+    }
+
+    LaunchedEffect(state) {
+        snapshotFlow { state.isScrollInProgress || dragging }.collectLatest { active ->
+            if (active) {
                 if (live_reduce_motion) alpha.snapTo(1f) else alpha.animateTo(1f, tween(indicator_fade_in_ms))
             } else {
-                delay(indicator_hide_delay_ms)
+                delay(bar_hide_delay_ms)
                 if (live_reduce_motion) alpha.snapTo(0f) else alpha.animateTo(0f, tween(indicator_fade_out_ms))
             }
         }
     }
 
-    return drawWithContent {
-        drawContent()
-        val info = state.layoutInfo
-        val visible = info.visibleItemsInfo
-        visible.forEach { estimator.record(it.index, it.key, it.size) }
-        val current_alpha = alpha.value
-        if (current_alpha <= 0f || visible.isEmpty()) return@drawWithContent
-        val viewport = (info.viewportEndOffset - info.viewportStartOffset).toFloat()
-        val first = visible.first()
-        val extent = pinned_lazy_extent(
-            estimate = estimator.extent(
-                total_items = info.totalItemsCount,
-                first_index = first.index,
-                first_scroll_px = -first.offset,
-                spacing_px = info.mainAxisItemSpacing,
-                padding_px = info.beforeContentPadding + info.afterContentPadding,
-            ),
-            viewport_px = viewport,
-            can_scroll_backward = state.canScrollBackward,
-            can_scroll_forward = state.canScrollForward,
+    if (!shown && !dragging) return
+
+    fun scroll_thumb_by(thumb_delta_px: Float) {
+        val content_delta = thumb_drag_to_content_delta(
+            thumb_delta_px = thumb_delta_px,
+            track_px = geometry[2],
+            thumb_px = geometry[1],
+            content_px = geometry[3],
+            viewport_px = geometry[4],
         )
-        val track_top = indicator_track_inset.toPx()
-        val track = size.height - track_top - indicator_track_inset.toPx() - bottom_inset.toPx()
-        val thumb = scroll_thumb_geometry(
-            viewport_px = viewport,
-            content_px = extent.content_px,
-            offset_px = extent.offset_px,
-            track_px = track,
-            min_thumb_px = indicator_min_thumb.toPx(),
-        ) ?: return@drawWithContent
-        val width = indicator_width.toPx()
-        drawRoundRect(
-            color = color,
-            topLeft = Offset(
-                x = scroll_thumb_left(size.width, width, indicator_edge_inset.toPx(), layoutDirection == LayoutDirection.Rtl),
-                y = track_top + thumb.top,
-            ),
-            size = Size(width, thumb.height),
-            cornerRadius = CornerRadius(width / 2f),
-            alpha = current_alpha,
-        )
+        if (content_delta != 0f) state.dispatchRawDelta(content_delta)
     }
+
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .padding(bottom = bottom_inset)
+            .width(bar_touch_width)
+            .pointerInput(state) {
+                detectVerticalDragGestures(
+                    onDragStart = { start ->
+                        dragging = true
+                        scope.launch { state.stopScroll(MutatePriority.UserInput) }
+                        if (haptic_enabled) haptics(aster_haptic.tick)
+                        val track_top = indicator_track_inset.toPx()
+                        val thumb_top = track_top + geometry[0]
+                        val thumb_height = geometry[1]
+                        if (start.y < thumb_top || start.y > thumb_top + thumb_height) {
+                            val travel = (geometry[2] - thumb_height).coerceAtLeast(0f)
+                            val target = (start.y - track_top - thumb_height / 2f).coerceIn(0f, travel)
+                            scroll_thumb_by(target - geometry[0])
+                        }
+                    },
+                    onDragEnd = { dragging = false },
+                    onDragCancel = { dragging = false },
+                    onVerticalDrag = { change, delta ->
+                        change.consume()
+                        scroll_thumb_by(delta)
+                    },
+                )
+            }
+            .drawBehind {
+                val info = state.layoutInfo
+                val visible = info.visibleItemsInfo
+                if (visible.isEmpty()) return@drawBehind
+                visible.forEach { estimator.record(it.index, it.key, it.size) }
+                val viewport = (info.viewportEndOffset - info.viewportStartOffset).toFloat()
+                val first = visible.first()
+                val extent = pinned_lazy_extent(
+                    estimate = estimator.extent(
+                        total_items = info.totalItemsCount,
+                        first_index = first.index,
+                        first_scroll_px = -first.offset,
+                        spacing_px = info.mainAxisItemSpacing,
+                        padding_px = info.beforeContentPadding + info.afterContentPadding,
+                    ),
+                    viewport_px = viewport,
+                    can_scroll_backward = state.canScrollBackward,
+                    can_scroll_forward = state.canScrollForward,
+                )
+                val track_top = indicator_track_inset.toPx()
+                val track = size.height - track_top - indicator_track_inset.toPx()
+                val thumb = scroll_thumb_geometry(
+                    viewport_px = viewport,
+                    content_px = extent.content_px,
+                    offset_px = extent.offset_px,
+                    track_px = track,
+                    min_thumb_px = bar_min_thumb.toPx(),
+                ) ?: return@drawBehind
+                geometry[0] = thumb.top
+                geometry[1] = thumb.height
+                geometry[2] = track
+                geometry[3] = extent.content_px
+                geometry[4] = viewport
+                val width = (if (dragging) bar_width_active else bar_width).toPx()
+                drawRoundRect(
+                    color = if (dragging) active_color else idle_color,
+                    topLeft = Offset(
+                        x = scroll_thumb_left(size.width, width, indicator_edge_inset.toPx(), layoutDirection == LayoutDirection.Rtl),
+                        y = track_top + thumb.top,
+                    ),
+                    size = Size(width, thumb.height),
+                    cornerRadius = CornerRadius(width / 2f),
+                    alpha = if (dragging) 1f else alpha.value,
+                )
+            },
+    )
 }

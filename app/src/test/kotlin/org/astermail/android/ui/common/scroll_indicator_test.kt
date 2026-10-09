@@ -175,4 +175,16 @@ class scroll_indicator_test {
         assertEquals(1080f, signal.extent_px, delta)
         assertEquals(2700f, signal.range_px, delta)
     }
+
+    @Test
+    fun dragging_the_thumb_across_its_travel_scrolls_the_whole_range() {
+        assertEquals(3000f, thumb_drag_to_content_delta(750f, 1000f, 250f, 4000f, 1000f), delta)
+        assertEquals(-400f, thumb_drag_to_content_delta(-100f, 1000f, 250f, 4000f, 1000f), delta)
+    }
+
+    @Test
+    fun thumb_drag_does_nothing_when_nothing_can_scroll() {
+        assertEquals(0f, thumb_drag_to_content_delta(50f, 1000f, 1000f, 1000f, 1000f), delta)
+        assertEquals(0f, thumb_drag_to_content_delta(50f, 1000f, 250f, 800f, 1000f), delta)
+    }
 }
