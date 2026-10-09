@@ -1,6 +1,6 @@
 What's new:
 
-- Swipe from the edge of the screen to open the side menu.
+- Swipe from the screen edge to open the side menu.
 - Drag the scroll bar to move through long messages.
 - Profile pictures open on a full page with a preview.
 - Compare plans opens full screen.
@@ -11,5 +11,5 @@ Fixed:
 - The reaction button opens the emoji picker.
 - Copy and Share appear above the text you select.
 - Profile pictures are sharp and centered.
-- Passkey sign-in to another account works again.
+- Passkey sign-in to a second account works.
 - Fewer crashes.
