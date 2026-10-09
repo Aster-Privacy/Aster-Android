@@ -437,4 +437,36 @@ class RatchetEncryptorIdentityPinTest {
         val second = send().getOrThrow()
         assertEquals(2, recipient_x3dh_version(second!!))
     }
+
+    @Test
+    fun `bundle advertising transcript binding bootstraps with x3dh version 2`() = runTest {
+        bundle = bundle.copy(x3dh_max_version = 2)
+        coEvery { ratchet_api.fetch_prekey_bundle(any(), any()) } returns bundle
+        every { identity_pins.evaluate(conversation_id, recipient_identity_b64) } returns
+            IdentityPinOutcome.UNCHANGED
+        val saved = slot<RatchetState>()
+        coEvery { state_store.save(capture(saved)) } returns Unit
+
+        val first = send().getOrThrow()
+        assertEquals(2, recipient_x3dh_version(first!!))
+        assertEquals(2, saved.captured.bootstrap?.x3dh_version)
+
+        coEvery { state_store.load(conversation_id) } returns saved.captured
+        val second = send().getOrThrow()
+        assertEquals(2, recipient_x3dh_version(second!!))
+    }
+
+    @Test
+    fun `bundle advertising only version 1 keeps the legacy x3dh`() = runTest {
+        bundle = bundle.copy(x3dh_max_version = 1)
+        coEvery { ratchet_api.fetch_prekey_bundle(any(), any()) } returns bundle
+        every { identity_pins.evaluate(conversation_id, recipient_identity_b64) } returns
+            IdentityPinOutcome.UNCHANGED
+        val saved = slot<RatchetState>()
+        coEvery { state_store.save(capture(saved)) } returns Unit
+
+        val first = send().getOrThrow()
+        assertNull(recipient_x3dh_version(first!!))
+        assertNull(saved.captured.bootstrap?.x3dh_version)
+    }
 }
