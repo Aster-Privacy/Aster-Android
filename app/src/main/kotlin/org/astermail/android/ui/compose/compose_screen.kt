@@ -342,6 +342,7 @@ fun ComposeScreen(
         settings_vm.load_default_sender()
         settings_vm.load_aliases()
         settings_vm.load_custom_domain_addresses()
+        settings_vm.load_domains(prefetch_dns = false)
         settings_vm.load_ghost_aliases()
         settings_vm.load_preferences()
         settings_vm.load_signature()
@@ -380,7 +381,7 @@ fun ComposeScreen(
     val external_sender_tokens = remember(external_accounts_state) {
         org.astermail.android.imports.external_sender_map(external_accounts_state)
     }
-    val alias_options = remember(user_email, settings_state.aliases, settings_state.custom_domain_addresses, settings_state.ghost_aliases, thread_ghost_match, external_sender_tokens) {
+    val base_alias_options = remember(user_email, settings_state.aliases, settings_state.custom_domain_addresses, settings_state.ghost_aliases, thread_ghost_match, external_sender_tokens) {
         val options = mutableListOf<String>()
         if (user_email.isNotBlank()) options.add(user_email)
         settings_state.aliases
@@ -413,6 +414,35 @@ fun ComposeScreen(
             }
         }
         options.toList()
+    }
+    val catch_all_unlocked = is_catch_all_unlocked(plan_state.limits)
+    val alias_options = remember(
+        base_alias_options,
+        catch_all_unlocked,
+        settings_state.domains,
+        settings_state.aliases,
+        settings_state.custom_domain_addresses,
+        settings_state.ghost_aliases,
+        thread_state.messages,
+        thread_state.item,
+        reply_to,
+        mode,
+    ) {
+        val target = if (is_thread_compose(reply_to, mode)) {
+            thread_snapshot_from(thread_state).messages.firstOrNull { it.id == reply_to }
+        } else {
+            null
+        }
+        val disabled = settings_state.aliases.filterNot { it.is_enabled }.map { it.address } +
+            settings_state.custom_domain_addresses.filterNot { it.is_enabled }.map { it.address } +
+            settings_state.ghost_aliases.filterNot { it.is_enabled }.map { it.address }
+        base_alias_options + catch_all_sender_options(
+            unlocked = catch_all_unlocked,
+            domains = settings_state.domains,
+            candidates = catch_all_reply_candidates(target, base_alias_options),
+            existing = base_alias_options,
+            disabled = disabled,
+        )
     }
 
     val alias_hash_map = remember(
@@ -518,7 +548,7 @@ fun ComposeScreen(
     val live_identity = remember(
         user_email,
         settings_state.user,
-        alias_options,
+        base_alias_options,
         primary_sender_email,
         alias_display_name_map,
         settings_state.ghost_aliases,
@@ -528,7 +558,7 @@ fun ComposeScreen(
         compose_identity_snapshot(
             user_email = user_email,
             display_name = settings_state.user?.display_name.orEmpty(),
-            alias_options = alias_options,
+            alias_options = base_alias_options,
             primary_sender_email = primary_sender_email,
             alias_display_names = alias_display_name_map,
             ghost_addresses = settings_state.ghost_aliases.map { it.address },

@@ -2439,13 +2439,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun load_domains() {
+    fun load_domains(prefetch_dns: Boolean = true) {
         viewModelScope.launch {
             _state.value = _state.value.copy(domains_loading = true)
             try {
                 val response = settings_api.list_domains()
                 _state.value = _state.value.copy(domains = response.domains, domains_loading = false)
-                prefetch_domain_dns_records(response.domains.map { it.id })
+                if (prefetch_dns) prefetch_domain_dns_records(response.domains.map { it.id })
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) {
                     _state.value = _state.value.copy(domains_loading = false)
