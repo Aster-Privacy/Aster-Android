@@ -40,6 +40,7 @@ import androidx.compose.ui.semantics.testTagsAsResourceId
 import org.astermail.android.security.AppLockViewModel
 import org.astermail.android.ui.auth.mark_signed_up_now
 import org.astermail.android.security.LockdownStore
+import org.astermail.android.ui.common.edge_swipe_to_open
 import org.astermail.android.ui.common.nav_anim_duration_ms
 import org.astermail.android.ui.security.AppLockScreen
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -2609,6 +2610,9 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         val folder_anim_duration = if (local_accessibility.current.reduce_motion) 0 else nav_anim_duration_ms
         AnimatedContent(
             targetState = folder_key,
+            modifier = Modifier.edge_swipe_to_open(enabled = !drawer_state.isOpen) {
+                scope.launch { drawer_state.open() }
+            },
             transitionSpec = {
                 val from_depth = folder_key_depth(initialState)
                 val to_depth = folder_key_depth(targetState)
