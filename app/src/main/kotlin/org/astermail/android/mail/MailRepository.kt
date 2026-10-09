@@ -624,7 +624,7 @@ class MailRepository @Inject constructor(
             PendingActionKind.pin -> replay_each(ids) { toggle_pin_now(it, true) }
             PendingActionKind.unpin -> replay_each(ids) { toggle_pin_now(it, false) }
             PendingActionKind.snooze -> snooze_bulk_now(ids, payload.value.orEmpty())
-            PendingActionKind.unsnooze -> replay_each(ids) { unsnooze_now(it) }
+            PendingActionKind.unsnooze -> unsnooze_bulk_now(ids).map { }
             PendingActionKind.add_label -> when {
                 token == null -> Result.success(Unit)
                 patch -> replay_each(ids) { add_label_to_item_now(it, token) }
@@ -2577,6 +2577,42 @@ class MailRepository @Inject constructor(
     private suspend fun unsnooze_now(item_id: String): Result<Unit> = runCatching {
         snooze_api.unsnooze_by_mail_item(item_id)
     }
+
+    suspend fun unsnooze_bulk(item_ids: List<String>): Result<Set<String>> =
+        run_or_queue(PendingActionKind.unsnooze, PendingActionPayload(ids = item_ids), emptySet()) {
+            unsnooze_bulk_now(item_ids)
+        }
+
+    private suspend fun unsnooze_bulk_now(item_ids: List<String>): Result<Set<String>> {
+        val failed = mutableSetOf<String>()
+        var per_item = false
+        for (chunk in item_ids.filter { it.isNotBlank() }.distinct().chunked(SNOOZE_BULK_LIMIT)) {
+            if (!per_item) {
+                try {
+                    snooze_api.bulk_unsnooze(org.astermail.android.api.snooze.BulkUnsnoozeRequest(mail_item_ids = chunk))
+                    continue
+                } catch (error: Throwable) {
+                    if (error is CancellationException && error !is TimeoutCancellationException) throw error
+                    if (!is_missing_endpoint(error)) {
+                        if (is_transient_failure(error) || error is ApiError.UnauthorizedError) return Result.failure(error)
+                        failed.addAll(chunk)
+                        continue
+                    }
+                    per_item = true
+                }
+            }
+            for (id in chunk) {
+                val error = unsnooze_now(id).exceptionOrNull() ?: continue
+                if (error is CancellationException && error !is TimeoutCancellationException) throw error
+                if (is_transient_failure(error) || error is ApiError.UnauthorizedError) return Result.failure(error)
+                failed.add(id)
+            }
+        }
+        return Result.success(failed)
+    }
+
+    private fun is_missing_endpoint(error: Throwable): Boolean =
+        error is ApiError.NotFoundError || (error is ApiError.ServerError && error.code == 405)
 
     suspend fun list_notifiable_folders(): Result<List<org.astermail.android.api.labels.LabelItem>> = runCatching {
         labels_api.list_labels(include_counts = true)

@@ -477,6 +477,73 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `unsnooze_bulk sends 300 ids as three requests of at most 100`() = runTest {
+        val sent = mutableListOf<List<String>>()
+        coEvery { snooze_api.bulk_unsnooze(any()) } answers {
+            val request = firstArg<org.astermail.android.api.snooze.BulkUnsnoozeRequest>()
+            sent.add(request.mail_item_ids)
+            org.astermail.android.api.snooze.BulkUnsnoozeResponse(unsnoozed_count = request.mail_item_ids.size)
+        }
+        var single_calls = 0
+        coEvery { snooze_api.unsnooze_by_mail_item(any()) } answers { single_calls += 1 }
+        val ids = (1..300).map { "id_$it" }
+
+        val failed = repo.unsnooze_bulk(ids).getOrThrow()
+
+        assertEquals(listOf(100, 100, 100), sent.map { it.size })
+        assertEquals(ids, sent.flatten())
+        assertTrue(failed.isEmpty())
+        assertEquals(0, single_calls)
+    }
+
+    @Test
+    fun `unsnooze_bulk falls back to one request per message when the server has no bulk route`() = runTest {
+        var bulk_calls = 0
+        coEvery { snooze_api.bulk_unsnooze(any()) } answers {
+            bulk_calls += 1
+            throw org.astermail.android.api.ApiError.NotFoundError
+        }
+        val single = mutableListOf<String>()
+        coEvery { snooze_api.unsnooze_by_mail_item(any()) } answers {
+            val id = firstArg<String>()
+            if (id == "id_150") throw org.astermail.android.api.ApiError.ForbiddenError("locked", null)
+            single.add(id)
+        }
+        val ids = (1..250).map { "id_$it" }
+
+        val failed = repo.unsnooze_bulk(ids).getOrThrow()
+
+        assertEquals(1, bulk_calls)
+        assertEquals(ids - "id_150", single)
+        assertEquals(setOf("id_150"), failed)
+    }
+
+    @Test
+    fun `unsnooze_bulk reports the ids of a rejected chunk and keeps going`() = runTest {
+        var call = 0
+        coEvery { snooze_api.bulk_unsnooze(any()) } answers {
+            call += 1
+            if (call == 2) throw org.astermail.android.api.ApiError.ForbiddenError("locked", null)
+            org.astermail.android.api.snooze.BulkUnsnoozeResponse(unsnoozed_count = 100)
+        }
+        val ids = (1..250).map { "id_$it" }
+
+        val failed = repo.unsnooze_bulk(ids).getOrThrow()
+
+        assertEquals(3, call)
+        assertEquals(ids.subList(100, 200).toSet(), failed)
+    }
+
+    @Test
+    fun `unsnooze_bulk fails on a transient error so the action can be retried`() = runTest {
+        coEvery { snooze_api.bulk_unsnooze(any()) } throws java.io.IOException("offline")
+
+        val result = repo.unsnooze_bulk(listOf("a", "b"))
+
+        assertTrue(result.isFailure)
+    }
+
+    @Test
     fun `mark_read calls patch_metadata with is_read true`() = runTest {
         repo.mark_read("item_1", true)
         coVerify { mail_api.patch_metadata("item_1", PatchMetadataRequest(is_read = true)) }

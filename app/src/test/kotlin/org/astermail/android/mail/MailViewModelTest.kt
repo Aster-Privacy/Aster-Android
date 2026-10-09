@@ -943,6 +943,33 @@ class MailViewModelTest {
     }
 
     @Test
+    fun `unsnooze_bulk sends the whole selection in one repository call`() = runTest {
+        val page = fake_inbox_page(5)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        val bulk_calls = mutableListOf<List<String>>()
+        var single_calls = 0
+        coEvery { repository.unsnooze_bulk(any()) } answers {
+            bulk_calls.add(firstArg())
+            Result.success(emptySet())
+        }
+        coEvery { repository.unsnooze(any()) } answers {
+            single_calls += 1
+            Result.success(Unit)
+        }
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        val ids = listOf("id_1", "id_2", "id_3")
+        vm.unsnooze_bulk(ids)
+        advanceUntilIdle()
+
+        assertFalse(vm.inbox_state.value.items.any { it.id in ids })
+        assertEquals(listOf(ids), bulk_calls)
+        assertEquals(0, single_calls)
+    }
+
+    @Test
     fun `toggle_star flips star state and calls repository`() = runTest {
         val page = fake_inbox_page(2)
         coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)

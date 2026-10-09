@@ -67,7 +67,6 @@ private const val WARM_CACHE_MIN_ITEMS = 8
 private const val WARM_CACHE_WINDOW = 200
 private const val WARM_CACHE_MAX_AGE_MS = 300_000L
 private const val WARM_CACHE_STALE_MAX_AGE_MS = 86_400_000L
-private const val BULK_ACTION_CONCURRENCY = 6
 private const val RESTORE_PROTECTION_MS = 15_000L
 private const val REMOVAL_PROTECTION_MS = 15_000L
 private const val STATS_TTL_MS = 30_000L
@@ -3115,9 +3114,7 @@ class MailViewModel @Inject constructor(
         val ids = item_ids.filter { it != DEMO_PHISH_ITEM_ID }
         if (ids.isEmpty()) return
         viewModelScope.launch {
-            val failed_ids = run_bulk_action(ids) { id ->
-                repository.unsnooze(id).isSuccess
-            }
+            val failed_ids = repository.unsnooze_bulk(ids).getOrElse { ids.toSet() }
             val ok_ids = ids.filter { it !in failed_ids }.toSet()
             if (ok_ids.isNotEmpty()) {
                 _inbox_state.value = _inbox_state.value.copy(
@@ -3457,18 +3454,6 @@ class MailViewModel @Inject constructor(
         }
         _search_state.value.all_items.forEach { if (it.id in id_set && it.id !in prior) prior[it.id] = it.is_read }
         return prior
-    }
-
-    private suspend fun run_bulk_action(
-        ids: List<String>,
-        action: suspend (String) -> Boolean,
-    ): Set<String> = kotlinx.coroutines.coroutineScope {
-        val failed = mutableSetOf<String>()
-        ids.chunked(BULK_ACTION_CONCURRENCY).forEach { chunk ->
-            val results = chunk.map { id -> async { id to runCatching { action(id) }.getOrDefault(false) } }.awaitAll()
-            results.forEach { (id, ok) -> if (!ok) failed.add(id) }
-        }
-        failed
     }
 
     private fun count_label(n: Int, singular: String, plural: String): String {
