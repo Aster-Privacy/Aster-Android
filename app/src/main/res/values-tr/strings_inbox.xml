@@ -8,6 +8,8 @@
     <string name="selection_scope_offer">%2$s içindeki %1$d ögenin tümünü seç</string>
     <string name="selection_scope_offer_categories">%2$s içindeki %1$d ögenin tümünü seç (tüm kategoriler dahil)</string>
     <string name="selection_scope_confirmed">%2$s içindeki %1$d ögenin tümü seçildi</string>
+    <string name="scope_applied_to_first">Bu işlem %2$d iletiden ilk %1$d iletiyi kapsar.</string>
+    <string name="scope_collect_failed">Bu klasördeki tüm iletiler yüklenemedi, bu yüzden hiçbir şey değişmedi. Tekrar deneyin.</string>
     <string name="inbox_a11y_state_read">Okundu</string>
     <string name="inbox_a11y_state_unread">Okunmamış</string>
 </resources>

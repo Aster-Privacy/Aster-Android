@@ -8,6 +8,8 @@
     <string name="selection_scope_offer">%2$s の %1$d 件すべてを選択</string>
     <string name="selection_scope_offer_categories">%2$s の %1$d 件すべてを選択（すべてのカテゴリを含む）</string>
     <string name="selection_scope_confirmed">%2$s の %1$d 件すべてを選択中</string>
+    <string name="scope_applied_to_first">この操作は %2$d 件中、最初の %1$d 件に適用されます。</string>
+    <string name="scope_collect_failed">このフォルダのメッセージをすべて読み込めなかったため、何も変更されていません。もう一度お試しください。</string>
     <string name="inbox_a11y_state_read">既読</string>
     <string name="inbox_a11y_state_unread">未読</string>
 </resources>

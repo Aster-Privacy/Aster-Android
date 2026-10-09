@@ -166,7 +166,11 @@ private const val DRAFT_UPDATE_CONFLICT_RETRIES = 2
 private const val METADATA_PATCH_BATCH_SIZE = 100
 private const val METADATA_RESOLVE_CONCURRENCY = 8
 private const val BULK_SCOPE_COMPLETION_ATTEMPTS = 10
+internal const val SCOPE_ID_PAGE_SIZE = 500
+internal const val SCOPE_ID_MAX = 50_000
+private const val SCOPE_ID_MAX_PAGES = 200
 private const val BULK_SCOPE_COMPLETION_DELAY_MS = 750L
+private const val BULK_SCOPE_MAX_ROUNDS = 1_000
 private const val ENVELOPE_KEY_CACHE_MAX_ENTRIES = 32
 private const val SCHEDULED_KEY_VERSION = "astermail-scheduled-v1"
 private val ACTIVE_SCHEDULED_STATUSES = setOf("pending", "sending", "failed")
@@ -2586,7 +2590,7 @@ class MailRepository @Inject constructor(
         val moved = item_ids.filter { it !in failed }
         if (moved.isEmpty()) return failed
         if (from_label_token != null && from_label_token != folder_token) {
-            remove_label_bulk_now(moved, from_label_token)
+            failed.addAll(remove_label_bulk_now(moved, from_label_token))
         }
         return failed
     }
@@ -3110,11 +3114,13 @@ class MailRepository @Inject constructor(
         var response = mail_api.bulk_action(BulkScopeRequest(action = action, scope = scope))
         var total = response.affected_count
         var attempts = 0
-        while (!response.completed && attempts < BULK_SCOPE_COMPLETION_ATTEMPTS) {
+        var stalled = 0
+        while (!response.completed && stalled < BULK_SCOPE_COMPLETION_ATTEMPTS && attempts < BULK_SCOPE_MAX_ROUNDS) {
             attempts++
             delay(BULK_SCOPE_COMPLETION_DELAY_MS)
             response = mail_api.bulk_action(BulkScopeRequest(action = action, scope = scope))
             total += response.affected_count
+            stalled = if (response.affected_count > 0) 0 else stalled + 1
         }
         if (!response.completed) {
             throw IllegalStateException("bulk $action on $folder did not finish after $attempts retries")
@@ -3131,6 +3137,82 @@ class MailRepository @Inject constructor(
         "inbox", "sent", "starred", "trash", "spam", "archive", "snoozed" -> true
         else -> (folder.startsWith("label:") && folder.length > "label:".length) ||
             (folder.startsWith("tag:") && folder.length > "tag:".length)
+    }
+
+    suspend fun collect_scope_ids(folder: String): Result<ScopeIds> = runCatching {
+        require(folder_supports_bulk_scope(folder)) { "folder $folder has no scope listing" }
+        val label_token = folder.takeIf { it.startsWith("label:") }?.removePrefix("label:")
+        val tag_token = folder.takeIf { it.startsWith("tag:") }?.removePrefix("tag:")
+        val is_token_scope = label_token != null || tag_token != null
+        val locked = org.astermail.android.folders.folder_lock_store.locked_folder_tokens()
+        val now_ms = System.currentTimeMillis()
+        val ids = LinkedHashSet<String>()
+        var offset = 0
+        var cursor: String? = null
+        var capped = false
+        var pages = 0
+        while (pages < SCOPE_ID_MAX_PAGES) {
+            pages++
+            val response = mail_api.list_messages(
+                limit = SCOPE_ID_PAGE_SIZE,
+                cursor = if (is_token_scope) null else cursor,
+                offset = if (is_token_scope) offset else null,
+                item_type = when (folder) {
+                    "inbox" -> "received"
+                    "sent" -> "sent"
+                    else -> null
+                },
+                is_starred = if (folder == "starred") true else null,
+                is_trashed = when {
+                    folder == "trash" -> true
+                    folder == "inbox" || is_token_scope -> false
+                    else -> null
+                },
+                is_archived = when (folder) {
+                    "archive" -> true
+                    "inbox" -> false
+                    else -> null
+                },
+                is_spam = when (folder) {
+                    "spam" -> true
+                    "inbox", "starred" -> false
+                    else -> null
+                },
+                is_snoozed = when (folder) {
+                    "snoozed" -> true
+                    "inbox" -> false
+                    else -> null
+                },
+                label_token = label_token,
+                tag_token = tag_token,
+                group_by_thread = false,
+                order = "desc",
+                skip_total = true,
+                include_envelope = false,
+            )
+            if (response.items.isEmpty()) break
+            offset += response.items.size
+            for (raw in response.items) {
+                if (raw.is_reaction == true) continue
+                if (folder == "inbox") {
+                    val until = raw.snoozed_until ?: raw.metadata?.snoozed_until
+                    if (until != null && (parse_timestamp_ms(until) ?: 0L) > now_ms) continue
+                }
+                if (locked.isNotEmpty() &&
+                    org.astermail.android.folders.raw_item_folder_tokens(raw).any { it in locked }
+                ) continue
+                ids.add(raw.id)
+                if (ids.size >= SCOPE_ID_MAX) {
+                    capped = true
+                    break
+                }
+            }
+            if (capped || !response.has_more) break
+            if (!is_token_scope) {
+                cursor = response.next_cursor ?: break
+            }
+        }
+        ScopeIds(ids = ids.toList(), capped = capped)
     }
 
     private fun folder_to_bulk_scope(folder: String): org.astermail.android.api.mail.BulkScopeFilter {
@@ -6235,6 +6317,11 @@ class AttachmentKeyUnavailableException : Exception("attachment key unavailable"
 private const val OFFLINE_PREFETCH_LIMIT = 25
 private const val OFFLINE_PREFETCH_CONCURRENCY = 2
 private const val OFFLINE_PREFETCH_TIMEOUT_MS = 20_000L
+
+data class ScopeIds(
+    val ids: List<String>,
+    val capped: Boolean,
+)
 
 data class InboxPage(
     val items: List<InboxItem>,

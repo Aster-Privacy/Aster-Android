@@ -2906,4 +2906,99 @@ class MailRepositoryTest {
         assertEquals("failed", pending_send_dao.get_by_id("pend_weak")?.status)
         coVerify(exactly = 0) { send_api.send_external(any()) }
     }
+
+    @Test
+    fun `collect_scope_ids pages the inbox by cursor until the folder is exhausted`() = runTest {
+        val first = (1..500).map { MailItem(id = "a$it") }
+        val second = (1..300).map { MailItem(id = "b$it") } + MailItem(id = "a1") + MailItem(id = "r1", is_reaction = true)
+        coEvery { mail_api.list_messages(any(), null, any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = first, has_more = true, next_cursor = "c2")
+        coEvery { mail_api.list_messages(any(), "c2", any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = second, has_more = false, next_cursor = null)
+
+        val result = repo.collect_scope_ids("inbox").getOrThrow()
+
+        assertEquals(800, result.ids.size)
+        assertFalse(result.capped)
+        assertFalse("r1" in result.ids)
+        coVerify(exactly = 2) {
+            mail_api.list_messages(
+                limit = SCOPE_ID_PAGE_SIZE,
+                cursor = any(),
+                offset = null,
+                item_type = "received",
+                is_starred = any(),
+                is_trashed = false,
+                is_archived = false,
+                is_spam = false,
+                label_token = null,
+                tag_token = null,
+                group_by_thread = false,
+                is_snoozed = false,
+                routing_token = any(),
+                order = "desc",
+                skip_total = true,
+                include_envelope = false,
+                pinned_first = any(),
+            )
+        }
+    }
+
+    @Test
+    fun `collect_scope_ids pages a folder by offset`() = runTest {
+        coEvery { mail_api.list_messages(any(), any(), 0, any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = (1..500).map { MailItem(id = "f$it") }, has_more = true)
+        coEvery { mail_api.list_messages(any(), any(), 500, any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = (501..540).map { MailItem(id = "f$it") }, has_more = false)
+
+        val result = repo.collect_scope_ids("label:work").getOrThrow()
+
+        assertEquals(540, result.ids.size)
+        coVerify {
+            mail_api.list_messages(
+                limit = any(),
+                cursor = null,
+                offset = 500,
+                item_type = null,
+                is_starred = any(),
+                is_trashed = false,
+                is_archived = any(),
+                is_spam = any(),
+                label_token = "work",
+                tag_token = null,
+                group_by_thread = false,
+                is_snoozed = any(),
+                routing_token = any(),
+                order = any(),
+                skip_total = any(),
+                include_envelope = any(),
+                pinned_first = any(),
+            )
+        }
+    }
+
+    @Test
+    fun `collect_scope_ids refuses folders without a scope listing`() = runTest {
+        assertTrue(repo.collect_scope_ids("drafts").isFailure)
+    }
+
+    @Test
+    fun `bulk_scope_action keeps going while the server makes progress`() = runTest {
+        val responses = ArrayDeque<BulkScopeResponse>()
+        repeat(15) { responses.add(BulkScopeResponse(affected_count = 500, completed = false)) }
+        responses.add(BulkScopeResponse(affected_count = 0, completed = true))
+        coEvery { mail_api.bulk_action(any()) } answers { responses.removeFirst() }
+
+        val result = repo.bulk_scope_action("inbox", "archive").getOrThrow()
+
+        assertEquals(7500, result.affected_count)
+        assertTrue(result.completed)
+    }
+
+    @Test
+    fun `bulk_scope_action fails once the server stops making progress`() = runTest {
+        coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 0, completed = false)
+
+        assertTrue(repo.bulk_scope_action("inbox", "archive").isFailure)
+    }
 }

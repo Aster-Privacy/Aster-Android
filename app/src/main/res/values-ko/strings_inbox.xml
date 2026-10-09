@@ -8,6 +8,8 @@
     <string name="selection_scope_offer">%2$s의 %1$d개 모두 선택</string>
     <string name="selection_scope_offer_categories">%2$s의 %1$d개 모두 선택 (모든 카테고리 포함)</string>
     <string name="selection_scope_confirmed">%2$s의 %1$d개가 모두 선택됨</string>
+    <string name="scope_applied_to_first">이 작업은 메시지 %2$d개 중 처음 %1$d개에 적용됩니다.</string>
+    <string name="scope_collect_failed">이 폴더의 모든 메시지를 불러오지 못해 변경된 내용이 없습니다. 다시 시도하세요.</string>
     <string name="inbox_a11y_state_read">읽음</string>
     <string name="inbox_a11y_state_unread">읽지 않음</string>
 </resources>

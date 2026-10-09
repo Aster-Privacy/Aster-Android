@@ -8,6 +8,8 @@
     <string name="selection_scope_offer">选择%2$s中的全部 %1$d 封</string>
     <string name="selection_scope_offer_categories">选择%2$s中的全部 %1$d 封（含所有类别）</string>
     <string name="selection_scope_confirmed">已选择%2$s中的全部 %1$d 封</string>
+    <string name="scope_applied_to_first">此操作仅适用于 %2$d 封邮件中的前 %1$d 封。</string>
+    <string name="scope_collect_failed">无法加载此文件夹中的全部邮件，因此未做任何更改。请重试。</string>
     <string name="inbox_a11y_state_read">已读</string>
     <string name="inbox_a11y_state_unread">未读</string>
 </resources>

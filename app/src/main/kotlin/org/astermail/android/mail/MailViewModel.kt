@@ -4020,7 +4020,7 @@ class MailViewModel @Inject constructor(
         invalidate_caches(listOf("inbox", "archive", "label:$label_token"))
         viewModelScope.launch {
             try {
-                val removed = item_ids.all { repository.remove_label_from_item(it, label_token).isSuccess }
+                val removed = repository.remove_label_bulk(item_ids, label_token).isEmpty()
                 val restored = repository.unarchive(item_ids, raw_items).isSuccess
                 if (removed && restored) {
                     runCatching { search_index_manager.mark_unarchived(item_ids) }
@@ -4502,6 +4502,22 @@ class MailViewModel @Inject constructor(
 
     fun notify_partial_scope_selection(applied: Int, total: Int) {
         emit_toast(context.getString(R.string.applied_to_loaded_only, applied, total))
+    }
+
+    fun collect_scope_selection_ids(folder: String, expected_total: Int, on_ready: (List<String>) -> Unit) {
+        viewModelScope.launch {
+            repository.collect_scope_ids(folder)
+                .onSuccess { result ->
+                    if (result.capped) {
+                        emit_toast(context.getString(R.string.scope_applied_to_first, result.ids.size, maxOf(expected_total, result.ids.size)))
+                    }
+                    on_ready(result.ids)
+                }
+                .onFailure { error ->
+                    if (error is kotlinx.coroutines.CancellationException) throw error
+                    emit_toast(context.getString(R.string.scope_collect_failed))
+                }
+        }
     }
 
     fun star_scope(folder: String, is_starred: Boolean) {

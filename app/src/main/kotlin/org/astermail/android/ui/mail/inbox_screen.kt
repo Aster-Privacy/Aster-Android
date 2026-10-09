@@ -1602,47 +1602,49 @@ fun InboxScreen(
         }
     }
 
+    fun with_selection_ids(on_ready: (List<String>) -> Unit) {
+        val loaded = selected_email_ids()
+        if (!scope_selection) {
+            on_ready(loaded)
+            return
+        }
+        mail_vm.collect_scope_selection_ids(current_folder, folder_total) { ids ->
+            on_ready((loaded + ids).distinct())
+        }
+    }
+
     fun snooze_selected(iso: String, label: String) {
         val to_remove = selected_ids.toSet()
-        val ids = selected_email_ids()
-        notify_if_scope_incomplete(ids.size)
-        mail_vm.snooze_bulk(ids, iso, label)
-        emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+        with_selection_ids { ids ->
+            mail_vm.snooze_bulk(ids, iso, label)
+            emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+        }
         exit_select_mode()
     }
 
     fun move_selected_to_folder(label_token: String, display_name: String) {
-        val ids = selected_email_ids()
-        notify_if_scope_incomplete(ids.size)
-        mail_vm.move_to_folder_bulk(ids, label_token, display_name)
+        with_selection_ids { ids -> mail_vm.move_to_folder_bulk(ids, label_token, display_name) }
         exit_select_mode()
     }
 
     fun move_selected_to_inbox() {
-        val ids = selected_email_ids()
-        notify_if_scope_incomplete(ids.size)
-        mail_vm.move_to_inbox(ids, current_folder)
+        val from_folder = current_folder
+        with_selection_ids { ids -> mail_vm.move_to_inbox(ids, from_folder) }
         exit_select_mode()
     }
 
     fun label_selected(tag_token: String, display_name: String) {
-        val ids = selected_email_ids()
-        notify_if_scope_incomplete(ids.size)
-        mail_vm.apply_tag_bulk(ids, tag_token, display_name)
+        with_selection_ids { ids -> mail_vm.apply_tag_bulk(ids, tag_token, display_name) }
         exit_select_mode()
     }
 
     fun unlabel_selected(tag_token: String, display_name: String) {
-        val ids = selected_email_ids()
-        notify_if_scope_incomplete(ids.size)
-        mail_vm.remove_tag_bulk(ids, tag_token, display_name)
+        with_selection_ids { ids -> mail_vm.remove_tag_bulk(ids, tag_token, display_name) }
         exit_select_mode()
     }
 
     fun unsnooze_selected() {
-        val ids = selected_email_ids()
-        notify_if_scope_incomplete(ids.size)
-        mail_vm.unsnooze_bulk(ids)
+        with_selection_ids { ids -> mail_vm.unsnooze_bulk(ids) }
         exit_select_mode()
     }
 
